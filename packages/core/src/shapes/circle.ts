@@ -1,15 +1,15 @@
 import {
+    TAU,
+} from '../math/constants';
+
+import {
     arc,
     Arc,
 } from './arc';
 
-import {
+import type {
     ShapeOptions,
-} from './_base';
-
-import {
-    TAU,
-} from '../math/constants';
+} from './base/types';
 
 export type Circle = Omit<Arc, 'startAngle' | 'endAngle'>;
 

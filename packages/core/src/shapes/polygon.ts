@@ -8,7 +8,7 @@ import {
 
 import {
     shape,
-} from './_base';
+} from './base';
 
 import {
     drawPoints,
@@ -35,16 +35,20 @@ export const getPolygonPoints = (sides: number, cx: number, cy: number, radius: 
     return [points[points.length - 1]].concat(points);
 };
 
-export const polygon = shape<Polygon>((context, state) => {
-    const {
-        points,
-    } = state;
+export const polygon = shape<Polygon>({
+    name: 'polygon',
+    calculators: {
+        points: linePointCalculator,
+    },
+    onRender(context, state) {
+        const {
+            points,
+        } = state;
 
-    drawPoints(points, context);
+        drawPoints(points, context);
 
-    if (arePointsEqual(points[0], points[points.length - 1])) {
-        context.closePath();
-    }
-}, {
-    points: linePointCalculator,
+        if (arePointsEqual(points[0], points[points.length - 1])) {
+            context.closePath();
+        }
+    },
 });

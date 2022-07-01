@@ -15,7 +15,7 @@ import {
     Calculator,
     shape,
     ShapeValueFunction,
-} from './_base';
+} from './base';
 
 export type LinePoint = [x: number, y: number];
 export type DrawLineFn = (points: LinePoint[]) => ShapeValueFunction<LinePoint[]>;
@@ -85,12 +85,16 @@ export const drawPoints = (points: LinePoint[], context: CanvasRenderingContext2
     }
 };
 
-export const line = shape<Line>((context, state) => {
-    const {
-        points,
-    } = state;
+export const line = shape<Line>({
+    name: 'line',
+    calculators: {
+        points: linePointCalculator,
+    },
+    onRender(context, state) {
+        const {
+            points,
+        } = state;
 
-    drawPoints(points, context);
-}, {
-    points: linePointCalculator,
+        drawPoints(points, context);
+    },
 });

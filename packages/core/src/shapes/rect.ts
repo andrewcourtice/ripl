@@ -1,7 +1,7 @@
 import {
     BaseShape,
     shape,
-} from './_base';
+} from './base';
 
 export interface Rect extends BaseShape {
     x: number;
@@ -10,14 +10,17 @@ export interface Rect extends BaseShape {
     height: number;
 }
 
-export const rect = shape<Rect>((context, state) => {
-    const {
-        x,
-        y,
-        width,
-        height,
-    } = state;
+export const rect = shape<Rect>({
+    name: 'rect',
+    onRender(context, state) {
+        const {
+            x,
+            y,
+            width,
+            height,
+        } = state;
 
-    context.beginPath();
-    context.rect(x, y, width, height);
+        context.beginPath();
+        context.rect(x, y, width, height);
+    },
 });
