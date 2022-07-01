@@ -1,0 +1,23 @@
+{
+    "name": "@thingy/app-demo",
+    "version": "1.0.0",
+    "description": "",
+    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "license": "MIT",
+    "main": "src/index.ts",
+    "scripts": {
+        "start": "vite dev",
+        "build": "vite build"
+    },
+    "dependencies": {
+        "@thingy/core": "workspace:^",
+        "svelte": "^3.48.0"
+    },
+    "devDependencies": {
+        "@sveltejs/vite-plugin-svelte": "1.0.0-next.49",
+        "@tsconfig/svelte": "^3.0.0",
+        "svelte-preprocess": "^4.10.7",
+        "vite": "^2.9.13"
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "name": "@thingy/core",
+    "version": "1.0.0",
+    "description": "",
+    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "license": "MIT",
+    "main": "src/index.ts"
+}

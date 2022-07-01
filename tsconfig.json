@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "target": "es2018",
+        "module": "esnext",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "isolatedModules": true,
+        "removeComments": false,
+        "skipLibCheck": true,
+        "declaration": true,
+        "allowSyntheticDefaultImports": true,
+        "forceConsistentCasingInFileNames": true,
+        "lib": [
+            "ESNext",
+            "DOM",
+        ]
+    },
+    "include": [
+        "global.d.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
