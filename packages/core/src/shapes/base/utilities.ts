@@ -69,7 +69,7 @@ function getKeyframeValueFns<TValue>(value: ShapeValueKeyFrame<TValue>[], calcul
         const keyframe = deltaFrames.find(frame => time >= frame.offset);
 
         if (keyframe) {
-            return keyframe.calculate(keyframe.scale(time, true));
+            return keyframe.calculate(keyframe.scale(time));
         }
     };
 }
@@ -82,7 +82,7 @@ export function getValueFns<TShape extends BaseShape>(options: ShapeOptions<TSha
         const calculator = calculators[prop] || ((va, vb) => {
             if (isNumber(va) && isNumber(vb)) {
                 const scale = continuous([0, 1], [va, vb]);
-                return time => scale(time, true);
+                return time => scale(time);
             }
 
             return time => time > 0.5 ? vb : va;

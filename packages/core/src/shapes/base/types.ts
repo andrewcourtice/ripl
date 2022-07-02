@@ -34,7 +34,7 @@ export type ShapeCalculators<TShape extends BaseShape> = {
 }
 
 export type ShapeRenderFunction<TShape extends BaseShape> = (context: CanvasRenderingContext2D, state: TShape) => void;
-export type FrameCallback<TShape extends BaseShape> = (key: keyof TShape, value: TShape[typeof key]) => void;
+export type FrameCallback<TShape extends BaseShape> = (key: keyof TShape, value: TShape[keyof TShape]) => void;
 export type ContextRen = {
     [P in keyof BaseShape]?: (context: CanvasRenderingContext2D, value: BaseShape[P]) => void;
 }
@@ -56,5 +56,5 @@ export interface ShapeRenderer<TShape extends BaseShape> {
     clone: () => ShapeRenderer<TShape>;
     update: (options: ShapeOptions<TShape>) => void;
     frame: (time: number, callback?: FrameCallback<TShape>) => TShape;
-    render: (context: CanvasRenderingContext2D, time?: number) => void;
+    render: (context: CanvasRenderingContext2D, time?: number, base?: BaseShape) => void;
 }

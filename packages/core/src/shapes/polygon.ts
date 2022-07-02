@@ -4,6 +4,7 @@ import {
 
 import {
     arePointsEqual,
+    Point,
 } from '../math/trigonometry';
 
 import {
@@ -13,7 +14,6 @@ import {
 import {
     drawPoints,
     Line,
-    LinePoint,
     linePointCalculator,
 } from './line';
 
@@ -29,7 +29,7 @@ export const getPolygonPoints = (sides: number, cx: number, cy: number, radius: 
         return [
             cx + x,
             cy + y,
-        ] as LinePoint;
+        ] as Point;
     });
 
     return [points[points.length - 1]].concat(points);

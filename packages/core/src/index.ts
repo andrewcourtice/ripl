@@ -8,6 +8,8 @@ export * from './shapes/polygon';
 export * from './math/colour';
 export * from './math/number';
 export * from './math/scale';
+export * from './math/interpolate';
+export * from './math/trigonometry';
 
 export * from './animation/ease';
-export * from './animation/tween';
+export * from './animation/transition';

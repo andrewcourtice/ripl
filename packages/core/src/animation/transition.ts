@@ -7,26 +7,29 @@ import {
     easeLinear,
 } from './ease';
 
-export interface TweenOptions {
+export interface TransitionOptions {
     duration: number;
     ease: Ease;
+    loop: boolean;
     //delay: number | ((index: number) => number);
 }
 
-export type TweenCallback = (time: number) => void;
+export type TransitionCallback = (time: number) => void;
 
-export function tween(callback: TweenCallback, options?: Partial<TweenOptions>): Promise<void> {
+export function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Promise<void> {
     const {
         duration,
         ease,
+        loop,
     } = {
         duration: 1000,
         ease: easeLinear,
+        loop: false,
         ...options,
-    } as TweenOptions;
+    } as TransitionOptions;
 
     return new Promise<void>(resolve => {
-        const start = performance.now();
+        let start = performance.now();
 
         const tick = () => {
             const current = performance.now();
@@ -37,6 +40,11 @@ export function tween(callback: TweenCallback, options?: Partial<TweenOptions>):
             callback(time);
 
             if (elapsed < duration) {
+                return requestAnimationFrame(tick);
+            }
+
+            if (loop) {
+                start = performance.now();
                 requestAnimationFrame(tick);
             } else {
                 resolve();
