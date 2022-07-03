@@ -14,6 +14,10 @@ export function isNumber(value: unknown): value is number {
     return typeof value === 'number';
 }
 
+export function isString(value: unknown): value is string {
+    return typeof value === 'string';
+}
+
 export function isNil(value: unknown): value is null | undefined {
     return value == null;
 }

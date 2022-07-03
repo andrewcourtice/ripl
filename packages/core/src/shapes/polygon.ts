@@ -5,7 +5,7 @@ import {
 import {
     arePointsEqual,
     Point,
-} from '../math/trigonometry';
+} from '../math/geometry';
 
 import {
     shape,
@@ -21,10 +21,11 @@ export type Polygon = Line;
 
 export const getPolygonPoints = (sides: number, cx: number, cy: number, radius: number) => {
     const angle = TAU / sides;
+    const offset = angle / 2;
 
     const points = Array.from({ length: sides }, (_, i) => {
-        const x = radius * Math.cos(i * angle);
-        const y = radius * Math.sin(i * angle);
+        const x = radius * Math.cos(i * angle - offset);
+        const y = radius * Math.sin(i * angle - offset);
 
         return [
             cx + x,
@@ -40,6 +41,7 @@ export const polygon = shape<Polygon>({
     calculators: {
         points: linePointCalculator,
     },
+    //validate: options => options.points.length >= 3,
     onRender(context, state) {
         const {
             points,

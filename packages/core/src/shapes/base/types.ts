@@ -18,6 +18,8 @@ export interface BaseShape {
     lineDashOffset?: CanvasRenderingContext2D['lineDashOffset'];
     lineCap?: CanvasRenderingContext2D['lineCap'];
     lineJoin?: CanvasRenderingContext2D['lineJoin'];
+    font?: CanvasRenderingContext2D['font'];
+    filter?: CanvasRenderingContext2D['filter'];
 }
 
 export type ShapeOptions<TShape extends BaseShape> = {

@@ -43,4 +43,10 @@ export const CONTEXT_MAP = {
     lineDashOffset: (context, value) => {
         if (value) context.lineDashOffset = value;
     },
+    font: (context, value) => {
+        if (value) context.font = value;
+    },
+    filter: (context, value) => {
+        if (value) context.filter = value;
+    },
 } as ContextRen;

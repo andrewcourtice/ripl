@@ -7,6 +7,10 @@ import {
     getValueFns,
 } from './utilities';
 
+import {
+    isString,
+} from '../../utilities/type';
+
 import type {
     BaseShape,
     FrameCallback,
@@ -36,6 +40,29 @@ function getFrameCallback<TShape extends BaseShape>(valueFns: ShapeValueFunction
 
         return state;
     };
+}
+
+export function getContext(canvas: string | HTMLCanvasElement) {
+    const el = isString(canvas) ? document.querySelector(canvas) as HTMLCanvasElement : canvas;
+    const context = el?.getContext('2d');
+
+    if (!context) {
+        throw new Error('Failed to resolve canvas element');
+    }
+
+    const dpr = window.devicePixelRatio;
+
+    const {
+        width,
+        height,
+    } = el.getBoundingClientRect();
+
+    el.width = width * dpr;
+    el.height = height * dpr;
+
+    context.scale(dpr, dpr);
+
+    return context;
 }
 
 export function shape<TShape extends BaseShape>(definition: ShapeDefinition<TShape>): Shape<TShape> {
@@ -120,7 +147,7 @@ export function group<TShape>(items: ShapeRenderer<TShape>[], options: ShapeOpti
     };
 
     const render = (context: CanvasRenderingContext2D, time: number = 1) => {
-        //context.save();
+        context.save();
 
         const state = frame(time, (key, value) => {
             if (key in CONTEXT_MAP) {
@@ -132,7 +159,7 @@ export function group<TShape>(items: ShapeRenderer<TShape>[], options: ShapeOpti
             item.render(context, time, state);
         }
 
-        //context.restore();
+        context.restore();
     };
 
     return {

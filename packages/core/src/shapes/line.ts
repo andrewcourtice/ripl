@@ -3,13 +3,9 @@ import {
 } from '../math/number';
 
 import {
-    continuous,
-} from '../math/scale';
-
-import {
     Point,
     waypoint,
-} from '../math/trigonometry';
+} from '../math/geometry';
 
 import {
     BaseShape,
@@ -17,6 +13,9 @@ import {
     ShapeCalculator,
     ShapeValueFunction,
 } from './base';
+import {
+    interpolateNumber,
+} from '../math/interpolate';
 
 export type DrawLineFn = (points: Point[]) => ShapeValueFunction<Point[]>;
 
@@ -35,7 +34,7 @@ export const extrapolatePointSet = (setA: Point[], setB: Point[]): Point[][] => 
     const [
         src,
         dest,
-    ] = sets.sort((sa, sb) => sb.length - sa.length);
+    ] = sets.slice().sort((sa, sb) => sb.length - sa.length);
 
     const destLength = dest.length;
     const srcLength = src.length;
@@ -64,27 +63,23 @@ export const extrapolatePointSet = (setA: Point[], setB: Point[]): Point[][] => 
     return [
         src,
         extrapolated,
-    ].sort(set => sets.indexOf(set));
+    ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
 };
 
 export const linePointCalculator: ShapeCalculator<Point[]> = (setA, setB) => {
     const [
-        eSetA,
-        eSetB,
+        extSetA,
+        extSetB,
     ] = extrapolatePointSet(setA, setB);
 
-    const scales = eSetA.map(([x1, y1], index) => {
-        const [x2, y2] = eSetB[index];
-        const xScale = continuous([0, 1], [x1, x2]);
-        const yScale = continuous([0, 1], [y1, y2]);
+    return time => extSetA.map(([x1, y1], index) => {
+        const [x2, y2] = extSetB[index];
 
-        return [xScale, yScale];
+        return [
+            interpolateNumber(x1, x2, time),
+            interpolateNumber(y1, y2, time),
+        ];
     });
-
-    return time => scales.map(([xScale, yScale]) => [
-        xScale(time),
-        yScale(time),
-    ]);
 };
 
 export const drawLinePoints: DrawLineFn = points => {

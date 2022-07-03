@@ -1,4 +1,8 @@
 import {
+    interpolateNumber,
+} from '../../math/interpolate';
+
+import {
     continuous,
 } from '../../math/scale';
 
@@ -65,6 +69,8 @@ function getKeyframeValueFns<TValue>(value: ShapeValueKeyFrame<TValue>[], calcul
         };
     }).reverse();
 
+    //console.log(deltaFrames);
+
     return time => {
         const keyframe = deltaFrames.find(frame => time >= frame.offset);
 
@@ -74,19 +80,20 @@ function getKeyframeValueFns<TValue>(value: ShapeValueKeyFrame<TValue>[], calcul
     };
 }
 
+export function defaultCalculator<TShape extends BaseShape>(valueA: TShape[keyof TShape], valueB: TShape[keyof TShape]): ShapeValueFunction<TShape[keyof TShape]> {
+    if (isNumber(valueA) && isNumber(valueB)) {
+        return time => interpolateNumber(valueA, valueB, time) as typeof valueA;
+    }
+
+    return time => time > 0.5 ? valueB : valueA;
+}
+
 export function getValueFns<TShape extends BaseShape>(options: ShapeOptions<TShape>, calculators: ShapeCalculators<TShape> = {}): ShapeValueFunctions<TShape> {
     const output = {} as ShapeValueFunctions<TShape>;
 
     for (const prop in options) {
         const value = options[prop];
-        const calculator = calculators[prop] || ((va, vb) => {
-            if (isNumber(va) && isNumber(vb)) {
-                const scale = continuous([0, 1], [va, vb]);
-                return time => scale(time);
-            }
-
-            return time => time > 0.5 ? vb : va;
-        });
+        const calculator = calculators[prop] || defaultCalculator;
 
         if (isFunction(value)) {
             output[prop] = value;
