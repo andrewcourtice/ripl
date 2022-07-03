@@ -3,12 +3,10 @@ import {
 } from '../math/geometry';
 
 import {
-    BaseShape,
     shape,
 } from './base';
 
 import {
-    drawPoints,
     Line,
     linePointCalculator,
 } from './line';

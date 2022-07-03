@@ -60,7 +60,11 @@ export function getContext(canvas: string | HTMLCanvasElement) {
     el.width = width * dpr;
     el.height = height * dpr;
 
-    context.scale(dpr, dpr);
+    const {
+        font,
+    } = window.getComputedStyle(document.body);
+
+    context.font = font;
 
     return context;
 }
