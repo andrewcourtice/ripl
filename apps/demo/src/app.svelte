@@ -36,7 +36,7 @@ import {
     interpolateString,
     type Point,
     type ShapeRenderer,
-group
+    group
 } from '@thingy/core';
 
 let time = 1;
@@ -62,6 +62,42 @@ function runTween() {
 onMount(() => {
     ctx = getContext(canvas);
 
+    // const r = rect({
+    //     x: [
+    //         {
+    //             offset: 0.5,
+    //             value: 22
+    //         },
+    //         {
+    //             offset: 0.75,
+    //             value: 50
+    //         }
+    //     ],
+    //     y: 6,
+    //     width: 22,
+    //     height: 50,
+    // });
+
+    // const r = rect({
+    //     x: [
+    //         {
+    //             offset: 0.5,
+    //             value: 789
+    //         },
+    //         {
+    //             offset: 0.75,
+    //             value: 500
+    //         }
+    //     ],
+    //     y: 6,
+    //     width: 22,
+    //     height: 50,
+    // });
+
+    // const state = r.frame(0.5)
+
+    // r.render(ctx);
+
     const length = 20;
     const xScale = continuous([0, length - 1], [10, canvas.width - 10]);
     const yScale = continuous([-100, 100], [canvas.height - 10, 10]);
@@ -76,7 +112,8 @@ onMount(() => {
         strokeStyle: '#000000',
         lineJoin: 'round',
         lineCap: 'round',
-        lineWidth: 2,
+        lineWidth: 4,
+        lineDash: () => [2, 8],
         points: !(i % 2) ? drawLinePoints(getPoints()) : [getPoints(), getPoints()]
     }));
 
@@ -91,43 +128,45 @@ onMount(() => {
         fillStyle: ['#000000', '#FF0000'],
     })
 
+    
+
     const polygons = [
-        polygon({
-            points: drawLinePoints(
-                getPolygonPoints(8, canvas.width / 2, canvas.height / 2, 200)
-            ),
-            strokeStyle: '#000000',
-            lineWidth: 2,
-        }),
         // polygon({
+        //     points: drawLinePoints(
+        //         getPolygonPoints(8, canvas.width / 2, canvas.height / 2, 200)
+        //     ),
         //     strokeStyle: '#000000',
-        //     points: [
-        //         {
-        //             value: getPolygonPoints(4, canvas.width / 2, canvas.height / 2, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(8, 110, 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(5, canvas.width - 110, 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(10, canvas.width - 110, canvas.height - 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(3, 110, canvas.height - 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(6, 110, 110, 100)
-        //         },
-        //         // {
-        //         //     value: getPolygonPoints(12, canvas.width / 2, canvas.height / 2, 100)
-        //         // },
-        //         // {
-        //         //     value: getPolygonPoints(3, canvas.width / 2, canvas.height / 2, 100)
-        //         // },
-        //     ],
+        //     lineWidth: 2,
         // }),
+        polygon({
+            strokeStyle: '#000000',
+            points: [
+                {
+                    value: getPolygonPoints(4, canvas.width / 2, canvas.height / 2, 100)
+                },
+                {
+                    value: getPolygonPoints(8, 110, 110, 100)
+                },
+                {
+                    value: getPolygonPoints(5, canvas.width - 110, 110, 100)
+                },
+                {
+                    value: getPolygonPoints(10, canvas.width - 110, canvas.height - 110, 100)
+                },
+                {
+                    value: getPolygonPoints(3, 110, canvas.height - 110, 100)
+                },
+                {
+                    value: getPolygonPoints(6, 110, 110, 100)
+                },
+                // {
+                //     value: getPolygonPoints(12, canvas.width / 2, canvas.height / 2, 100)
+                // },
+                // {
+                //     value: getPolygonPoints(3, canvas.width / 2, canvas.height / 2, 100)
+                // },
+            ],
+        }),
         // polygon({
         //     points: [
         //         getPolygonPoints(6, canvas.width / 2, canvas.height / 2, 200),
