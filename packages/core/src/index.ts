@@ -9,6 +9,7 @@ export * from './shapes/ellipse';
 export * from './shapes/text';
 
 export * from './math/colour';
+export * from './math/geometry';
 export * from './math/interpolate';
 export * from './math/number';
 export * from './math/scale';
