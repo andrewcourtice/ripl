@@ -7,26 +7,40 @@ import {
 } from '../../math/scale';
 
 import {
-    BaseShape,
-    ContextRen,
-    ShapeCalculators,
+    BaseCalculators,
+    BaseElement,
+    ElementCalculator,
+    ElementCalculators,
 } from './types';
 
-export const CALCULATORS: ShapeCalculators<BaseShape> = {
-    strokeStyle: (valueA, valueB) => time => blendHex(valueA, valueB, time),
-    fillStyle: (valueA, valueB) => time => blendHex(valueA, valueB, time),
+const colorCalculator: ElementCalculator<BaseElement['fillStyle']> = (valueA, valueB) => time => {
+    if (valueA && valueB) {
+        return blendHex(valueA, valueB, time);
+    }
+};
+
+export const CALCULATORS: ElementCalculators<BaseElement> = {
+    strokeStyle: colorCalculator,
+    fillStyle: colorCalculator,
     lineDash: (valueA, valueB) => {
         const scales = valueA?.map((segA, i) => continuous([0, 1], [segA, valueB[i]]));
         return time => scales?.map(scale => scale(time, true));
     },
 };
 
-export const CONTEXT_MAP = {
+const CONTEXT_DEFAULTS = {
+    strokeStyle: 'rgba(0, 0, 0, 0)',
+    fillStyle: 'rgba(0, 0, 0, 0)',
+} as {
+    [P in keyof BaseElement]-?: BaseElement[P];
+};
+
+export const CONTEXT_OPERATIONS = {
     strokeStyle: (context, value) => {
-        if (value) context.strokeStyle = value;
+        context.strokeStyle = value || CONTEXT_DEFAULTS.strokeStyle;
     },
     fillStyle: (context, value) => {
-        if (value) context.fillStyle = value;
+        context.fillStyle = value || CONTEXT_DEFAULTS.fillStyle;
     },
     lineWidth: (context, value) => {
         if (value) context.lineWidth = value;
@@ -49,4 +63,4 @@ export const CONTEXT_MAP = {
     filter: (context, value) => {
         if (value) context.filter = value;
     },
-} as ContextRen;
+} as BaseCalculators;

@@ -8,12 +8,12 @@ import {
 } from './arc';
 
 import type {
-    ShapeOptions,
+    ElementProperties,
 } from './base/types';
 
 export type Circle = Omit<Arc, 'startAngle' | 'endAngle'>;
 
-export function circle(options: ShapeOptions<Circle>) {
+export function circle(options: ElementProperties<Circle>) {
     return arc({
         ...options,
         startAngle: 0,

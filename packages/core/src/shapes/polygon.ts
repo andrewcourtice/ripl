@@ -42,15 +42,15 @@ export const polygon = shape<Polygon>({
         points: linePointCalculator,
     },
     //validate: options => options.points.length >= 3,
-    onRender(context, state) {
+    onRender(context, path, { state }) {
         const {
             points,
         } = state;
 
-        drawPoints(points, context);
+        drawPoints(points, context, path);
 
         if (arePointsEqual(points[0], points[points.length - 1])) {
-            context.closePath();
+            path.closePath();
         }
     },
 });

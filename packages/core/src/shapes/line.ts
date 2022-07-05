@@ -8,18 +8,18 @@ import {
 } from '../math/geometry';
 
 import {
-    BaseShape,
+    BaseElement,
+    ElementCalculator,
+    ElementValueFunction,
     shape,
-    ShapeCalculator,
-    ShapeValueFunction,
 } from './base';
 import {
     interpolateNumber,
 } from '../math/interpolate';
 
-export type DrawLineFn = (points: Point[]) => ShapeValueFunction<Point[]>;
+export type DrawLineFn = (points: Point[]) => ElementValueFunction<Point[]>;
 
-export interface Line extends BaseShape {
+export interface Line extends BaseElement {
     points: Point[];
 }
 
@@ -66,7 +66,7 @@ export const extrapolatePointSet = (setA: Point[], setB: Point[]): Point[][] => 
     ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
 };
 
-export const linePointCalculator: ShapeCalculator<Point[]> = (setA, setB) => {
+export const linePointCalculator: ElementCalculator<Point[]> = (setA, setB) => {
     const [
         extSetA,
         extSetB,
@@ -100,17 +100,15 @@ export const drawLinePoints: DrawLineFn = points => {
     };
 };
 
-export const drawPoints = (points: Point[], context: CanvasRenderingContext2D) => {
+export const drawPoints = (points: Point[], context: CanvasRenderingContext2D, path: Path2D) => {
     let moveOnly = true;
-
-    context.beginPath();
 
     for (const [x, y] of points) {
         if (moveOnly) {
-            context.moveTo(x, y);
+            path.moveTo(x, y);
             moveOnly = false;
         } else {
-            context.lineTo(x, y);
+            path.lineTo(x, y);
         }
     }
 };
@@ -120,11 +118,11 @@ export const line = shape<Line>({
     calculators: {
         points: linePointCalculator,
     },
-    onRender(context, state) {
+    onRender(context, path, { state }) {
         const {
             points,
         } = state;
 
-        drawPoints(points, context);
+        drawPoints(points, context, path);
     },
 });

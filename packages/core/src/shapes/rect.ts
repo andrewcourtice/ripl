@@ -1,9 +1,9 @@
 import {
-    BaseShape,
+    BaseElement,
     shape,
 } from './base';
 
-export interface Rect extends BaseShape {
+export interface Rect extends BaseElement {
     x: number;
     y: number;
     width: number;
@@ -12,7 +12,7 @@ export interface Rect extends BaseShape {
 
 export const rect = shape<Rect>({
     name: 'rect',
-    onRender(context, state) {
+    onRender(context, path, { state }) {
         const {
             x,
             y,
@@ -21,6 +21,6 @@ export const rect = shape<Rect>({
         } = state;
 
         context.beginPath();
-        context.rect(x, y, width, height);
+        path.rect(x, y, width, height);
     },
 });

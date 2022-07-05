@@ -3,10 +3,10 @@ import {
 } from './base';
 
 import {
-    BaseShape,
+    BaseElement,
 } from './base/types';
 
-export interface Arc extends BaseShape {
+export interface Arc extends BaseElement {
     x: number;
     y: number;
     radius: number;
@@ -16,7 +16,7 @@ export interface Arc extends BaseShape {
 
 export const arc = shape<Arc>({
     name: 'arc',
-    onRender(context, state) {
+    onRender(context, path, { state }) {
         const {
             x,
             y,
@@ -25,7 +25,6 @@ export const arc = shape<Arc>({
             endAngle,
         } = state;
 
-        context.beginPath();
-        context.arc(x, y, radius, startAngle, endAngle);
+        path.arc(x, y, radius, startAngle, endAngle);
     },
 });

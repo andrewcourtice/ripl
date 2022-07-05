@@ -15,25 +15,25 @@ import {
 } from '../../utilities/type';
 
 import type {
-    BaseShape,
-    ShapeCalculator,
-    ShapeCalculators,
-    ShapeOptions,
-    ShapeValueBounds,
-    ShapeValueFunction,
-    ShapeValueFunctions,
-    ShapeValueKeyFrame,
+    BaseElement,
+    ElementCalculator,
+    ElementCalculators,
+    ElementProperties,
+    ElementValueBounds,
+    ElementValueFunction,
+    ElementValueFunctions,
+    ElementValueKeyFrame,
 } from './types';
 
-function isShapeValueBound(value: unknown): value is ShapeValueBounds<any> {
+function isElementValueBound(value: unknown): value is ElementValueBounds<any> {
     return isArray(value) && value.length === 2;
 }
 
-function isShapeValueKeyFrame(value: unknown): value is ShapeValueKeyFrame<any>[] {
+function isElementValueKeyFrame(value: unknown): value is ElementValueKeyFrame<any>[] {
     return isArray(value) && value.every(keyframe => isObject(keyframe) && 'value' in keyframe);
 }
 
-function getKeyframeValueFns<TValue>(value: ShapeValueKeyFrame<TValue>[], calculator?: ShapeCalculator<TValue>): ShapeValueFunction<TValue | undefined> {
+function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calculator?: ElementCalculator<TValue>): ElementValueFunction<TValue | undefined> {
     const lastIndex = value.length - 1;
     const keyframes = value.map(({ offset, value }, index) => ({
         value,
@@ -80,7 +80,7 @@ function getKeyframeValueFns<TValue>(value: ShapeValueKeyFrame<TValue>[], calcul
     };
 }
 
-export function defaultCalculator<TShape extends BaseShape>(valueA: TShape[keyof TShape], valueB: TShape[keyof TShape]): ShapeValueFunction<TShape[keyof TShape]> {
+export function defaultCalculator<TElement extends BaseElement>(valueA: TElement[keyof TElement], valueB: TElement[keyof TElement]): ElementValueFunction<TElement[keyof TElement]> {
     if (isNumber(valueA) && isNumber(valueB)) {
         return time => interpolateNumber(valueA, valueB, time) as typeof valueA;
     }
@@ -88,29 +88,29 @@ export function defaultCalculator<TShape extends BaseShape>(valueA: TShape[keyof
     return time => time > 0.5 ? valueB : valueA;
 }
 
-export function getValueFns<TShape extends BaseShape>(options: ShapeOptions<TShape>, calculators: ShapeCalculators<TShape> = {}): ShapeValueFunctions<TShape> {
-    const output = {} as ShapeValueFunctions<TShape>;
+export function getValueFns<TElement extends BaseElement>(properties: Partial<ElementProperties<TElement>>, calculators: ElementCalculators<TElement> = {}): ElementValueFunctions<TElement> {
+    const output = {} as ElementValueFunctions<TElement>;
 
-    for (const prop in options) {
-        const value = options[prop];
-        const calculator = calculators[prop] || defaultCalculator;
+    for (const key in properties) {
+        const value = properties[key];
+        const calculator = calculators[key] || defaultCalculator;
 
         if (isFunction(value)) {
-            output[prop] = value;
+            output[key] = value;
             continue;
         }
 
-        if (isShapeValueKeyFrame(value)) {
-            output[prop] = getKeyframeValueFns(value, calculator);
+        if (isElementValueKeyFrame(value)) {
+            output[key] = getKeyframeValueFns(value, calculator);
             continue;
         }
 
-        if (isShapeValueBound(value)) {
-            output[prop] = calculator!(value[0], value[1]);
+        if (isElementValueBound(value)) {
+            output[key] = calculator!(value[0], value[1]);
             continue;
         }
 
-        output[prop] = time => value;
+        output[key] = time => value;
     }
 
     return output;

@@ -1,19 +1,17 @@
 import {
-    BaseShape,
-    shape,
+    BaseElement,
+    element,
 } from './base';
 
-export interface Text extends BaseShape {
+export interface Text extends BaseElement {
     x: number;
     y: number;
     content: string | number;
 }
 
-export const text = shape<Text>({
+export const text = element<Text>({
     name: 'text',
-    autoFill: false,
-    autoStroke: false,
-    onRender(context, state) {
+    onRender(context, { state }) {
         const {
             x,
             y,

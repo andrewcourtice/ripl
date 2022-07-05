@@ -3,10 +3,10 @@ import {
 } from './base';
 
 import {
-    BaseShape,
+    BaseElement,
 } from './base/types';
 
-export interface Ellipse extends BaseShape {
+export interface Ellipse extends BaseElement {
     x: number;
     y: number;
     radiusX: number;
@@ -18,7 +18,7 @@ export interface Ellipse extends BaseShape {
 
 export const ellipse = shape<Ellipse>({
     name: 'ellipse',
-    onRender(context, state) {
+    onRender(context, path, { state }) {
         const {
             x,
             y,
@@ -30,7 +30,7 @@ export const ellipse = shape<Ellipse>({
         } = state;
 
         context.beginPath();
-        context.ellipse(
+        path.ellipse(
             x,
             y,
             radiusX,
