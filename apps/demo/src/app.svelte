@@ -10,6 +10,8 @@
             <input class="app__time-range" type="range" min="0" max="1" step="0.001" bind:value="{time}">
         </div>
         <button on:click="{demo.tween}">Tween</button>
+        <button on:click="{demo.add}">Add circles</button>
+        <button on:click="{demo.remove}">Remove circles</button>
     </div>
 </div>
 
@@ -57,7 +59,9 @@ let demo: ReturnType<typeof createDemo>;
 
 function createDemo() {
     const scn = scene(canvas);
-    const rnd = renderer(scn);
+    const rnd = renderer(scn, {
+        autoStart: false
+    });
     
     const length = 20;
     const xScale = continuous([0, length - 1], [10, canvas.width - 10]);
@@ -75,7 +79,7 @@ function createDemo() {
         Math.round(Math.random() * 255)
     )
     
-    const circles = Array.from({ length: 3000 }, (_, i) => circle({
+    const circles = Array.from({ length: 1000 }, (_, i) => circle({
         // fillStyle: ['#00FF00', '#0000FF'],
         fillStyle: ['#000000', '#FF0000'],
         x: [Math.random() * canvas.width, Math.random() * canvas.width],
@@ -85,7 +89,7 @@ function createDemo() {
 
     const points = getPoints();
     
-    const lines = Array.from({ length: 2 }, (_, i) => line({
+    const splines = Array.from({ length: 2 }, (_, i) => spline({
         strokeStyle: '#000000',
         fillStyle: null,
         lineJoin: 'round',
@@ -94,9 +98,49 @@ function createDemo() {
         lineDash: () => [2, 8],
         points: () => drawLinePoints(points)(time)
     }));
+
+    const lines = Array.from({ length: 2 }, (_, i) => line({
+        strokeStyle: '#CCCCCC',
+        fillStyle: null,
+        lineJoin: 'round',
+        lineCap: 'round',
+        lineWidth: 4,
+        lineDash: () => [2, 8],
+        points: () => drawLinePoints(points)(time)
+    }));
+
+    const thing = line({
+        strokeStyle: '#000000',
+        points: getPolygonPoints(6, canvas.width / 2, canvas.height / 2, 300)
+    });
     
-    scn.add(circles);
-    scn.add(lines);
+    //scn.add(circles);
+    scn.add(splines);
+    // scn.add(lines);
+    // scn.add(thing);
+
+    const grp1 = group();
+    const grp2 = group();
+    const grp3 = group();
+
+    const add = () => {
+        grp3.add(circles);
+    };
+    const remove = () => grp3.remove(circles);
+
+    grp1.add([
+        ...lines,
+        grp2
+    ]);
+
+    grp2.add([
+        grp3,
+        thing
+    ]);
+
+    scn.add(grp1);
+
+    //console.log(grp1.elements);
     
     interaction(scn, rnd);
 
@@ -115,13 +159,17 @@ function createDemo() {
             ease: easeOutQuad,
             delay: i => i * (2000 / circles.length),
             callback: circle => {
-                circle.update(circle.frame(1))
+                circle.update(circle.state(1))
             }
         });
     }
 
+    rnd.start();
+
     return {
-        tween
+        tween,
+        add,
+        remove
     }
 }
 
