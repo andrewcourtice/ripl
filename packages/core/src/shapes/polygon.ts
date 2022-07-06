@@ -1,3 +1,14 @@
+
+import {
+    shape,
+} from '../core/shape';
+
+import {
+    drawPoints,
+    Line,
+    linePointCalculator,
+} from './line';
+
 import {
     TAU,
 } from '../math/constants';
@@ -6,16 +17,6 @@ import {
     arePointsEqual,
     Point,
 } from '../math/geometry';
-
-import {
-    shape,
-} from './base';
-
-import {
-    drawPoints,
-    Line,
-    linePointCalculator,
-} from './line';
 
 export type Polygon = Line;
 

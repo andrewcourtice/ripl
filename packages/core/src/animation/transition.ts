@@ -1,11 +1,11 @@
 import {
-    min,
-} from '../math/number';
-
-import {
     Ease,
     easeLinear,
 } from './ease';
+
+import {
+    min,
+} from '../math/number';
 
 export interface TransitionOptions {
     duration: number;

@@ -1,15 +1,15 @@
 import {
-    midpoint,
-} from '../math/geometry';
-
-import {
     shape,
-} from './base';
+} from '../core/shape';
 
 import {
     Line,
     linePointCalculator,
 } from './line';
+
+import {
+    midpoint,
+} from '../math/geometry';
 
 export type Spline = Line
 

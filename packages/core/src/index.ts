@@ -1,4 +1,11 @@
-export * from './shapes/base';
+export * from './core/constants';
+export * from './core/element';
+export * from './core/group';
+export * from './core/interaction';
+export * from './core/renderer';
+export * from './core/scene';
+export * from './core/shape';
+
 export * from './shapes/arc';
 export * from './shapes/circle';
 export * from './shapes/line';
@@ -8,6 +15,7 @@ export * from './shapes/spline';
 export * from './shapes/ellipse';
 export * from './shapes/text';
 
+export * from './math/constants';
 export * from './math/colour';
 export * from './math/geometry';
 export * from './math/interpolate';

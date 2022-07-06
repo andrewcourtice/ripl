@@ -1,7 +1,10 @@
 import {
-    BaseElement,
     shape,
-} from './base';
+} from '../core/shape';
+
+import {
+    BaseElement,
+} from '../core/element';
 
 export interface Rect extends BaseElement {
     x: number;

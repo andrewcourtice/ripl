@@ -1,23 +1,30 @@
 import {
     blendHex,
-} from '../../math/colour';
+} from '../math/colour';
 
 import {
     continuous,
-} from '../../math/scale';
+} from '../math/scale';
 
 import {
-    BaseCalculators,
     BaseElement,
     ElementCalculator,
     ElementCalculators,
-} from './types';
+} from './element';
+
+export type ElementContextOps = {
+    [P in keyof BaseElement]?: (context: CanvasRenderingContext2D, value?: BaseElement[P]) => void;
+}
 
 const colorCalculator: ElementCalculator<BaseElement['fillStyle']> = (valueA, valueB) => time => {
     if (valueA && valueB) {
         return blendHex(valueA, valueB, time);
     }
 };
+
+export const EVENTS = {
+    groupUpdated: 'group:updated',
+} as const;
 
 export const CALCULATORS: ElementCalculators<BaseElement> = {
     strokeStyle: colorCalculator,
@@ -28,19 +35,12 @@ export const CALCULATORS: ElementCalculators<BaseElement> = {
     },
 };
 
-const CONTEXT_DEFAULTS = {
-    strokeStyle: 'rgba(0, 0, 0, 0)',
-    fillStyle: 'rgba(0, 0, 0, 0)',
-} as {
-    [P in keyof BaseElement]-?: BaseElement[P];
-};
-
 export const CONTEXT_OPERATIONS = {
     strokeStyle: (context, value) => {
-        context.strokeStyle = value || CONTEXT_DEFAULTS.strokeStyle;
+        if (value) context.strokeStyle = value;
     },
     fillStyle: (context, value) => {
-        context.fillStyle = value || CONTEXT_DEFAULTS.fillStyle;
+        if (value) context.fillStyle = value;
     },
     lineWidth: (context, value) => {
         if (value) context.lineWidth = value;
@@ -63,4 +63,4 @@ export const CONTEXT_OPERATIONS = {
     filter: (context, value) => {
         if (value) context.filter = value;
     },
-} as BaseCalculators;
+} as ElementContextOps;

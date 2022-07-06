@@ -1,4 +1,14 @@
 import {
+    shape,
+} from '../core/shape';
+
+import {
+    BaseElement,
+    ElementCalculator,
+    ElementValueFunction,
+} from '../core/element';
+
+import {
     fractional,
 } from '../math/number';
 
@@ -7,12 +17,6 @@ import {
     waypoint,
 } from '../math/geometry';
 
-import {
-    BaseElement,
-    ElementCalculator,
-    ElementValueFunction,
-    shape,
-} from './base';
 import {
     interpolateNumber,
 } from '../math/interpolate';

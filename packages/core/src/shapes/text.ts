@@ -1,7 +1,7 @@
 import {
     BaseElement,
     element,
-} from './base';
+} from '../core/element';
 
 export interface Text extends BaseElement {
     x: number;

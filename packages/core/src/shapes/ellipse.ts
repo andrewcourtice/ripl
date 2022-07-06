@@ -1,10 +1,10 @@
 import {
     shape,
-} from './base';
+} from '../core/shape';
 
 import {
     BaseElement,
-} from './base/types';
+} from '../core/element';
 
 export interface Ellipse extends BaseElement {
     x: number;
