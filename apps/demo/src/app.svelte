@@ -41,21 +41,95 @@ import {
     renderer,
     scene,
     type Scene,
-    interaction,
-} from '@thingy/core';
+TAU,
+} from '@ripl/core';
 
 let time = 1;
 let canvas: HTMLCanvasElement;
 let demo: ReturnType<typeof createDemo>;
 
-// $: if (canvas) {   
-//     if (ctx) {
-//         ctx.clearRect(0, 0, canvas.width, canvas.height);
-//         stack.forEach(({ render }) => render(ctx, time));
-//     }
+// $: if (demo) {   
+//     demo.render(time);
 // }
 
+function createSineDemo() {
+    const scn = scene(canvas);
+    const rnd = renderer(scn, {
+        autoStart: false
+    });
 
+    let frequency = 3;
+    let amplitude = 2;
+    let start = 0;
+    let lowerBound = canvas.height * 0.75;
+    let upperBound = canvas.height * 0.25;
+
+    let scaleX = continuous([0, TAU], [0, canvas.width]);
+    let scaleY = continuous([-amplitude, amplitude], [lowerBound, upperBound]);
+    let inScaleX = continuous([0, canvas.width], [0, TAU]);
+
+    let mouseX = 0;
+    let mouseY = 0;
+
+    const getWave = (func: keyof Pick<Math, 'sin' | 'cos'>, color: string) => spline({
+        strokeStyle: color,
+        lineWidth: 4,
+        points: () => Array.from({ length: 5 }, (_, i) => {
+            const x = i * (TAU / 4);
+            const y = amplitude * Math[func]((start + x) * frequency);
+
+            return [
+                scaleX(x), 
+                scaleY(y)
+            ];
+        })
+    });
+
+    const xAxisLine = line({
+        strokeStyle: '#CCCCCC',
+        lineWidth: 2,
+        points: () => [
+            [0, lowerBound + 10],
+            [canvas.width, lowerBound + 10]
+        ]
+    });
+
+    const highlightMarker = circle({
+        fillStyle: '#000000',
+        strokeStyle: '#FFFFFF',
+        lineWidth: 4,
+        radius: 10,
+        x: () => mouseX,
+        y: () => scaleY(amplitude * Math.sin(((start + inScaleX(mouseX)) * frequency)))
+    });
+
+    scn.on('scenemousemove', (x, y) => {
+        mouseX = x;
+        mouseY = y;
+    });
+    
+    rnd.on('tick', (currentTime, startTime) => {
+        const elapsedSeconds = (currentTime - startTime) / 1000;
+        start = (TAU / 8) * elapsedSeconds;
+    });
+
+    scn.add([
+        getWave('sin', '#FF0000'),
+        getWave('cos', '#0000FF'),
+        highlightMarker,
+        xAxisLine
+    ]);
+
+    //scn.context.clearRect(0, 0, scn.canvas.width, scn.canvas.height)
+    //scn.render();
+    //xAxisLine.render(canvas.getContext('2d'));
+
+    rnd.start();
+
+    return {
+        render: t => scn.render(t)
+    }
+}
 
 function createDemo() {
     const scn = scene(canvas);
@@ -91,23 +165,23 @@ function createDemo() {
     
     const splines = Array.from({ length: 2 }, (_, i) => spline({
         strokeStyle: '#000000',
-        fillStyle: null,
+        //fillStyle: '#000000',
         lineJoin: 'round',
         lineCap: 'round',
-        lineWidth: 4,
-        lineDash: () => [2, 8],
+        lineWidth: 8,
+        //lineDash: () => [2, 8],
         points: () => drawLinePoints(points)(time)
     }));
 
-    const lines = Array.from({ length: 2 }, (_, i) => line({
-        strokeStyle: '#CCCCCC',
-        fillStyle: null,
-        lineJoin: 'round',
-        lineCap: 'round',
-        lineWidth: 4,
-        lineDash: () => [2, 8],
-        points: () => drawLinePoints(points)(time)
-    }));
+    // const lines = Array.from({ length: 2 }, (_, i) => line({
+    //     strokeStyle: '#CCCCCC',
+    //     fillStyle: null,
+    //     lineJoin: 'round',
+    //     lineCap: 'round',
+    //     lineWidth: 8,
+    //     //lineDash: () => [2, 8],
+    //     points: () => drawLinePoints(points)(time)
+    // }));
 
     const thing = line({
         strokeStyle: '#000000',
@@ -115,7 +189,7 @@ function createDemo() {
     });
     
     //scn.add(circles);
-    scn.add(splines);
+    // scn.add(splines);
     // scn.add(lines);
     // scn.add(thing);
 
@@ -129,7 +203,7 @@ function createDemo() {
     const remove = () => grp3.remove(circles);
 
     grp1.add([
-        ...lines,
+        //...lines,
         grp2
     ]);
 
@@ -139,10 +213,28 @@ function createDemo() {
     ]);
 
     scn.add(grp1);
+    scn.add(splines);
 
-    //console.log(grp1.elements);
-    
-    interaction(scn, rnd);
+    let x = 0;
+    let y = 0;
+    let showCursor = false;
+
+    const cursor = circle({
+        strokeStyle: () => showCursor ? '#000000' : undefined,
+        lineWidth: 2,
+        radius: 20,
+        x: () => x,
+        y: () => y,
+    });
+
+    scn.add(cursor);
+
+    scn.on('scenemouseenter', () => showCursor = true);
+    scn.on('scenemouseleave', () => showCursor = false);
+    scn.on('scenemousemove', (mx, my) => {
+        x = mx;
+        y = my;
+    });
 
     async function tween() {
         circles.forEach(({ to }) => to({
@@ -176,81 +268,19 @@ function createDemo() {
 onMount(() => {
     demo = createDemo();
 
+    // let lowerBound = canvas.height * 0.75;
+    // let upperBound = canvas.height * 0.25;
 
+    // const xAxisLine = line({
+    //     strokeStyle: '#CCCCCC',
+    //     lineWidth: 2,
+    //     points: () => [
+    //         [0, lowerBound + 10],
+    //         [canvas.width, lowerBound + 10]
+    //     ]
+    // });
 
-
-
-    // const circleGroup = group([
-    //     //...circles,
-    //     ...lines,
-    //     ...circles
-    // ], {
-    //     fillStyle: ['#000000', '#FF0000'],
-
-    // })
-    
-
-    
-
-    // const polygons = [
-        // polygon({
-        //     points: drawLinePoints(
-        //         getPolygonPoints(8, canvas.width / 2, canvas.height / 2, 200)
-        //     ),
-        //     strokeStyle: '#000000',
-        //     lineWidth: 2,
-        // }),
-        // polygon({
-        //     strokeStyle: '#000000',
-        //     points: [
-        //         {
-        //             value: getPolygonPoints(4, canvas.width / 2, canvas.height / 2, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(8, 110, 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(5, canvas.width - 110, 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(10, canvas.width - 110, canvas.height - 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(3, 110, canvas.height - 110, 100)
-        //         },
-        //         {
-        //             value: getPolygonPoints(6, 110, 110, 100)
-        //         },
-        //         // {
-        //         //     value: getPolygonPoints(12, canvas.width / 2, canvas.height / 2, 100)
-        //         // },
-        //         // {
-        //         //     value: getPolygonPoints(3, canvas.width / 2, canvas.height / 2, 100)
-        //         // },
-        //     ],
-        // }),
-        // polygon({
-        //     points: [
-        //         getPolygonPoints(6, canvas.width / 2, canvas.height / 2, 200),
-        //         getPolygonPoints(10, canvas.width / 2, canvas.height / 2, 200)
-        //     ],
-        //     strokeStyle: '#000000',
-        //     lineWidth: 2,
-        // })
-    // ];
-
-    // const texts = [
-    //     text({
-    //         strokeStyle: '#000000',
-    //         x: canvas.width / 2,
-    //         y: canvas.height / 2,
-    //         content: t => interpolateString(tag => [
-    //             tag`rgb(${255}, ${255}, ${255})`,
-    //             tag`rgb(${0}, ${0}, ${0})`
-    //         ], t, v => Math.round(v))
-    //     })
-    // ]
-
+    // xAxisLine.render(canvas.getContext('2d'));
 });
 </script>
 
