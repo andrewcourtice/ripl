@@ -19,6 +19,13 @@ import {
     isFunction,
 } from '../utilities/type';
 
+
+export interface RendererEventMap {
+    start(startTime: number): void;
+    stop(startTime: number, endTime: number): void;
+    tick(currentTime: number, startTime: number): void;
+}
+
 export interface RendererTransition {
     startTime: number;
     duration: number;
@@ -30,7 +37,7 @@ export interface RendererTransitionOptions {
     duration: number;
     ease: Ease;
     delay: number | ((index: number) => number);
-    callback: (element: Element<any>) => void;
+    callback(element: Element<any>): void;
 }
 
 export interface RendererOptions {
@@ -38,9 +45,11 @@ export interface RendererOptions {
 }
 
 export interface Renderer {
-    start: () => void;
-    stop: () => void;
-    transition: (element: Element<any> | Element<any>[], options?: Partial<RendererTransitionOptions>) => Promise<void>;
+    start(): void;
+    stop(): void;
+    transition(element: Element<any> | Element<any>[], options?: Partial<RendererTransitionOptions>): Promise<void>;
+    on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
+    off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
     running: boolean;
     get busy(): boolean;
 }
@@ -65,10 +74,19 @@ export function renderer(
         throw new Error('Failed to get context');
     }
 
+    const transitionMap = new Map<symbol, RendererTransition>();
+    const eventMap = {
+        start: new Set(),
+        stop: new Set(),
+        tick: new Set(),
+    } as {
+        [P in keyof RendererEventMap]: Set<RendererEventMap[P]>;
+    };
+
     let running = false;
     let handle: number | undefined;
-
-    const transitionMap = new Map<symbol, RendererTransition>();
+    let startTime = performance.now();
+    let currentTime = performance.now();
 
     const tick = () => {
         if (!running) {
@@ -77,7 +95,11 @@ export function renderer(
 
         context.clearRect(0, 0, canvas.width, canvas.height);
 
-        const currentTime = performance.now();
+        currentTime = performance.now();
+
+        for (const handler of eventMap.tick) {
+            handler(currentTime, startTime);
+        }
 
         for (const element of scene.elements) {
             let time = 0;
@@ -115,21 +137,35 @@ export function renderer(
     };
 
     const start = () => {
-        if (!running) {
-            running = true;
-            transitionMap.clear();
-            requestAnimationFrame(tick);
+        if (running) {
+            return;
         }
+
+        running = true;
+        startTime = performance.now();
+        transitionMap.clear();
+
+        for (const handler of eventMap.start) {
+            handler(startTime);
+        }
+
+        requestAnimationFrame(tick);
     };
 
     const stop = () => {
-        if (running) {
-            if (handle) {
-                cancelAnimationFrame(handle);
-            }
+        if (!running) {
+            return;
+        }
 
-            running = false;
-            transitionMap.clear();
+        if (handle) {
+            cancelAnimationFrame(handle);
+        }
+
+        running = false;
+        transitionMap.clear();
+
+        for (const handler of eventMap.stop) {
+            handler(startTime, currentTime);
         }
     };
 
@@ -173,6 +209,14 @@ export function renderer(
         });
     };
 
+    const on = <TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) => {
+        eventMap[event]?.add(handler);
+    };
+
+    const off = <TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) => {
+        eventMap[event]?.delete(handler);
+    };
+
     if (autoStart) {
         start();
     }
@@ -181,9 +225,11 @@ export function renderer(
         start,
         stop,
         transition,
+        on,
+        off,
         running,
         get busy() {
-            return !!transitionMap.size;
+            return transitionMap.size > 0;
         },
     };
 }

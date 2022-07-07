@@ -1,19 +1,18 @@
 export * from './core/constants';
 export * from './core/element';
 export * from './core/group';
-export * from './core/interaction';
 export * from './core/renderer';
 export * from './core/scene';
 export * from './core/shape';
 
-export * from './shapes/arc';
-export * from './shapes/circle';
-export * from './shapes/line';
-export * from './shapes/polygon';
-export * from './shapes/rect';
-export * from './shapes/spline';
-export * from './shapes/ellipse';
-export * from './shapes/text';
+export * from './elements/arc';
+export * from './elements/circle';
+export * from './elements/line';
+export * from './elements/polygon';
+export * from './elements/rect';
+export * from './elements/spline';
+export * from './elements/ellipse';
+export * from './elements/text';
 
 export * from './math/constants';
 export * from './math/colour';

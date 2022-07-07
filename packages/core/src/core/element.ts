@@ -60,18 +60,19 @@ export type ElementCalculators<TElement extends BaseElement> = {
     [P in keyof TElement]?: ElementCalculator<TElement[P]>;
 }
 
-export type ElementRenderFunction<TElement extends BaseElement> = (context: CanvasRenderingContext2D, frame: ElementRenderFrame<TElement>) => void;
+export type ElementRenderFunction<TElement extends BaseElement, TReturn = unknown> = (context: CanvasRenderingContext2D, frame: ElementRenderFrame<TElement>) => TReturn;
 export type ElementValidator<TElement extends BaseElement> = (properties: ElementProperties<TElement>) => boolean;
 
-export interface ElementDefinition<TElement extends BaseElement> {
+export interface ElementDefinition<TElement extends BaseElement, TReturn = unknown> {
     name: string;
     renderless?: boolean;
     calculators?: ElementCalculators<TElement>;
     validate?: ElementValidator<TElement>;
-    onRender: ElementRenderFunction<TElement>;
+    onRender: ElementRenderFunction<TElement, TReturn>;
 }
 
 export interface ElementOptions<TElement extends BaseElement> {
+    class?: string;
     calculators?: ElementCalculators<TElement>;
 }
 
@@ -89,14 +90,14 @@ export interface ElementRenderData {
 
 export type FrameCallback<TElement extends BaseElement> = (key: keyof TElement, value: TElement[keyof TElement]) => void;
 
-export interface Element<TElement extends BaseElement> {
+export interface Element<TElement extends BaseElement, TResult = unknown> {
     id: symbol;
     name: string;
     clone: () => Element<TElement>;
     update: (properties: Partial<ElementProperties<TElement>>) => void;
     state: (time: number, callback?: FrameCallback<TElement>) => TElement;
     to: (newState: Partial<TElement>) => void;
-    render: (context: CanvasRenderingContext2D, time?: number) => void;
+    render: (context: CanvasRenderingContext2D, time?: number) => TResult;
 
     /**
      * @internal
@@ -105,6 +106,8 @@ export interface Element<TElement extends BaseElement> {
     set parent(element: Element<any> | undefined);
     get eventBus(): EventBus;
     set eventBus(element: EventBus | undefined);
+    get path(): string;
+    get result(): TResult | undefined;
 }
 
 function isElementValueBound(value: unknown): value is ElementValueBounds<any> {
@@ -115,7 +118,7 @@ function isElementValueKeyFrame(value: unknown): value is ElementValueKeyFrame<a
     return isArray(value) && value.every(keyframe => isObject(keyframe) && 'value' in keyframe);
 }
 
-function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calculator?: ElementCalculator<TValue>): ElementValueFunction<TValue | undefined> {
+function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calculator: ElementCalculator<TValue>): ElementValueFunction<TValue | undefined> {
     const lastIndex = value.length - 1;
     const keyframes = value.map(({ offset, value }, index) => ({
         value,
@@ -150,8 +153,6 @@ function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calc
             ...frameA,
         };
     }).reverse();
-
-    //console.log(deltaFrames);
 
     return time => {
         const keyframe = deltaFrames.find(frame => time >= frame.offset);
@@ -198,7 +199,7 @@ function getValueFns<TElement extends BaseElement>(properties: Partial<ElementPr
     return output;
 }
 
-export function element<TElement extends BaseElement>(definition: ElementDefinition<TElement>): ElementConstructor<TElement> {
+export function element<TElement extends BaseElement, TReturn = unknown>(definition: ElementDefinition<TElement, TReturn>): ElementConstructor<TElement> {
     const {
         name,
         validate,
@@ -212,6 +213,7 @@ export function element<TElement extends BaseElement>(definition: ElementDefinit
 
         const {
             calculators,
+            class: elClass,
         } = options || {};
 
         if (validate && !validate(properties)) {
@@ -230,6 +232,7 @@ export function element<TElement extends BaseElement>(definition: ElementDefinit
         let parent: Element<any> | undefined;
 
         let currentState: TElement;
+        let result: TReturn;
 
         const getEventBus = () => eventBus || parent?.eventBus || defaultEventBus;
 
@@ -283,13 +286,15 @@ export function element<TElement extends BaseElement>(definition: ElementDefinit
                     }
                 });
 
-                onRender(context, {
+                result = onRender(context, {
                     state: currentState,
                     time,
                 });
             } finally {
                 context.restore();
             }
+
+            return result;
         };
 
         return {
@@ -306,6 +311,14 @@ export function element<TElement extends BaseElement>(definition: ElementDefinit
             },
             set parent(par) {
                 parent = par;
+            },
+
+            get result() {
+                return result;
+            },
+
+            get path() {
+                return [parent?.path || '', `.${elClass}`].join(' ');
             },
 
             get eventBus() {

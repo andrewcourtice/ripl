@@ -8,7 +8,7 @@ import {
 
 export type ShapeRenderFunction<TElement extends BaseElement> = (context: CanvasRenderingContext2D, path: Path2D, frame: ElementRenderFrame<TElement>) => void;
 
-export interface ShapeDefinition<TElement extends BaseElement> extends Omit<ElementDefinition<TElement>, 'onRender'> {
+export interface ShapeDefinition<TElement extends BaseElement> extends Omit<ElementDefinition<TElement, Path2D>, 'onRender'> {
     autoStroke?: boolean;
     autoFill?: boolean;
     onRender: ShapeRenderFunction<TElement>;
@@ -59,6 +59,10 @@ export function shape<TElement extends BaseElement>(definition: ShapeDefinition<
             },
             set parent(par) {
                 el.parent = par;
+            },
+
+            get result() {
+                return el.result;
             },
 
             get eventBus() {

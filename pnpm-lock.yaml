@@ -20,8 +20,8 @@ importers:
 
   apps/demo:
     specifiers:
+      '@ripl/core': workspace:^
       '@sveltejs/vite-plugin-svelte': 1.0.0-next.49
-      '@thingy/core': workspace:^
       '@tsconfig/svelte': ^3.0.0
       flex-layout-attribute: ^1.0.3
       sass: ^1.53.0
@@ -29,7 +29,7 @@ importers:
       svelte-preprocess: ^4.10.7
       vite: ^2.9.13
     dependencies:
-      '@thingy/core': link:../../packages/core
+      '@ripl/core': link:../../packages/core
       flex-layout-attribute: 1.0.3
       svelte: 3.48.0
     devDependencies:

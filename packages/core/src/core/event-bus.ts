@@ -1,13 +1,13 @@
+import type {
+    Disposable,
+} from '../global/types';
+
 export type EventHandler = (...args: any) => void;
 
-export interface EventListener {
-    dispose(): void;
-}
-
 export interface EventBus {
-    on(event: string, handler: EventHandler): EventListener;
+    on(event: string, handler: EventHandler): Disposable;
     off(event: string, handler: EventHandler): void;
-    once(event: string, handler: EventHandler): EventListener;
+    once(event: string, handler: EventHandler): Disposable;
     emit(event: string, ...args: any[]): void;
 }
 
@@ -15,7 +15,7 @@ export function eventBus(): EventBus {
 
     const listeners: Record<string, EventHandler[]> = {};
 
-    function on(event: string, handler: EventHandler): EventListener {
+    function on(event: string, handler: EventHandler): Disposable {
         if (!listeners[event]) {
             listeners[event] = [];
         }
@@ -41,7 +41,7 @@ export function eventBus(): EventBus {
         }
     }
 
-    function once(event: string, handler: EventHandler): EventListener {
+    function once(event: string, handler: EventHandler): Disposable {
         const callback = (...args: any[]) => {
             handler(...args);
             off(event, callback);

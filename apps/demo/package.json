@@ -1,5 +1,5 @@
 {
-    "name": "@thingy/app-demo",
+    "name": "@ripl/app-demo",
     "version": "1.0.0",
     "description": "",
     "repository": "https://github.com/andrewcourtice/thingy.git",
@@ -11,7 +11,7 @@
         "build": "vite build"
     },
     "dependencies": {
-        "@thingy/core": "workspace:^",
+        "@ripl/core": "workspace:^",
         "flex-layout-attribute": "^1.0.3",
         "svelte": "^3.48.0"
     },

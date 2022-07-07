@@ -14,17 +14,8 @@ export interface Group extends Element<any> {
     set: (elements: Element<any>[]) => void;
     add: (element: Element<any> | Element<any>[]) => void;
     remove: (element: Element<any> | Element<any>[]) => void;
+    query: (query: string) => Element<any>[] | undefined;
     get elements(): Set<Element<any>>;
-}
-
-function getGroupElements(elements: Set<Element<any>>) {
-    return new Set(Array.from(elements).flatMap(item => {
-        if (item.name === 'group') {
-            return Array.from((item as Group).elements);
-        }
-
-        return item;
-    }));
 }
 
 export function group(
@@ -36,7 +27,7 @@ export function group(
 
     const el = element({
         name: 'group',
-        renderless: true,
+        //renderless: true,
         onRender(context, { time }) {
             for (const child of children) {
                 child.render(context, time);
@@ -49,6 +40,16 @@ export function group(
 
     function notify() {
         el.eventBus.emit(EVENTS.groupUpdated, el.id);
+    }
+
+    function getGroupElements() {
+        return new Set(Array.from(children).flatMap(item => {
+            if (item.name === 'group') {
+                return Array.from((item as Group).elements);
+            }
+
+            return item;
+        }));
     }
 
     function set(elements: Element<any>[]) {
@@ -72,11 +73,22 @@ export function group(
         notify();
     }
 
+    function query(query: string) {
+        let matches: Element<any>[] | undefined;
+
+        for (const element of getGroupElements()) {
+
+        }
+
+        return matches;
+    }
+
     return {
         ...el,
         set,
         add,
         remove,
+        query,
 
         get parent() {
             return el.parent;
@@ -93,7 +105,7 @@ export function group(
         },
 
         get elements() {
-            return getGroupElements(children);
+            return getGroupElements();
         },
     };
 }
