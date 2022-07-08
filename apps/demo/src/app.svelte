@@ -163,7 +163,7 @@ function createDemo() {
 
     const points = getPoints();
     
-    const splines = Array.from({ length: 2 }, (_, i) => spline({
+    const splines = Array.from({ length: 2 }, (_, i) => line({
         strokeStyle: '#000000',
         //fillStyle: '#000000',
         lineJoin: 'round',
@@ -202,29 +202,32 @@ function createDemo() {
     };
     const remove = () => grp3.remove(circles);
 
+    scn.add(splines);
     grp1.add([
         //...lines,
         grp2
     ]);
 
     grp2.add([
+        thing,
         grp3,
-        thing
     ]);
 
     scn.add(grp1);
-    scn.add(splines);
 
     let x = 0;
     let y = 0;
+    let cursorStroke = '#000000';
     let showCursor = false;
 
     const cursor = circle({
-        strokeStyle: () => showCursor ? '#000000' : undefined,
-        lineWidth: 2,
+        strokeStyle: () => showCursor ? cursorStroke : undefined,
+        lineWidth: 4,
         radius: 20,
         x: () => x,
         y: () => y,
+    }, {
+        pointerEvents: 'none'
     });
 
     scn.add(cursor);
@@ -236,12 +239,22 @@ function createDemo() {
         y = my;
     });
 
+    scn.on('elementmouseenter', element => {
+        if (element.name === 'arc') {
+            cursorStroke = element.state().fillStyle;
+        }
+    });
+
+    scn.on('elementmouseleave', element => {
+        cursorStroke = '#000000';
+    });
+
     async function tween() {
         circles.forEach(({ to }) => to({
             fillStyle: getColor(),
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
-            radius: Math.random() * 5
+            radius: Math.random() * 10
         }));
 
         //lines.forEach()
@@ -250,13 +263,11 @@ function createDemo() {
             duration: 2000,
             ease: easeOutQuad,
             delay: i => i * (2000 / circles.length),
-            callback: circle => {
-                circle.update(circle.state(1))
-            }
         });
     }
 
     rnd.start();
+    //scn.render();
 
     return {
         tween,
