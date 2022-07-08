@@ -7,11 +7,12 @@ export * from './core/shape';
 
 export * from './elements/arc';
 export * from './elements/circle';
+export * from './elements/ellipse';
+export * from './elements/image';
 export * from './elements/line';
 export * from './elements/polygon';
 export * from './elements/rect';
 export * from './elements/spline';
-export * from './elements/ellipse';
 export * from './elements/text';
 
 export * from './math/constants';

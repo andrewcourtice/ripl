@@ -10,33 +10,33 @@ import {
     ElementProperties,
 } from './element';
 
-export interface Group extends Element<any> {
-    set: (elements: Element<any>[]) => void;
-    add: (element: Element<any> | Element<any>[]) => void;
-    remove: (element: Element<any> | Element<any>[]) => void;
-    query: (query: string) => Element<any>[] | undefined;
-    get elements(): Set<Element<any>>;
+import type {
+    OneOrMore,
+} from '../global/types';
+
+export interface Group extends Element {
+    set(elements: Element<any>[]): void;
+    add(element: OneOrMore<Element<any>>): void;
+    remove(element: OneOrMore<Element<any>>): void;
+    query(query: string): Element[] | undefined;
+    get elements(): Set<Element>;
 }
 
 export function group(
-    elements?: Element<any>[],
     properties?: ElementProperties<BaseElement>,
     options?: ElementOptions<BaseElement>
 ): Group {
-    let children = new Set(elements);
+    let children = new Set<Element>();
 
     const el = element({
         name: 'group',
         //renderless: true,
-        onRender(context, { time }) {
+        onRender({ context, time }) {
             for (const child of children) {
                 child.render(context, time);
             }
         },
     })(properties || {}, options);
-
-
-    elements?.forEach(element => element.parent = el);
 
     function notify() {
         el.eventBus.emit(EVENTS.groupUpdated, el.id);
@@ -52,21 +52,21 @@ export function group(
         }));
     }
 
-    function set(elements: Element<any>[]) {
+    function set(elements: Element[]) {
         children = new Set(elements);
         notify();
     }
 
-    function add(element: Element<any> | Element<any>[]) {
-        ([] as Element<any>[]).concat(element).forEach(item => {
+    function add(element: OneOrMore<Element<any>>) {
+        ([] as Element[]).concat(element).forEach(item => {
             item.parent = el;
             children.add(item);
         });
         notify();
     }
 
-    function remove(element: Element<any> | Element<any>[]) {
-        ([] as Element<any>[]).concat(element).forEach(item => {
+    function remove(element: OneOrMore<Element<any>>) {
+        ([] as Element[]).concat(element).forEach(item => {
             item.parent = undefined;
             children.delete(item);
         });
@@ -74,7 +74,7 @@ export function group(
     }
 
     function query(query: string) {
-        let matches: Element<any>[] | undefined;
+        let matches: Element[] | undefined;
 
         for (const element of getGroupElements()) {
 

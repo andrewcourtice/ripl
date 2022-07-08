@@ -104,7 +104,7 @@ export const drawLinePoints: DrawLineFn = points => {
     };
 };
 
-export const drawPoints = (points: Point[], context: CanvasRenderingContext2D, path: Path2D) => {
+export const drawPoints = (points: Point[], path: Path2D) => {
     let moveOnly = true;
 
     for (const [x, y] of points) {
@@ -122,11 +122,11 @@ export const line = shape<Line>({
     calculators: {
         points: linePointCalculator,
     },
-    onRender(context, path, { state }) {
+    onRender({ path, state }) {
         const {
             points,
         } = state;
 
-        drawPoints(points, context, path);
+        drawPoints(points, path);
     },
 });

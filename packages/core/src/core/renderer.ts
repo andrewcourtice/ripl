@@ -19,6 +19,11 @@ import {
     isFunction,
 } from '../utilities/type';
 
+import type {
+    OneOrMore,
+} from '../global/types';
+
+export type RendererFillMode = 'none' | 'forwards';
 
 export interface RendererEventMap {
     start(startTime: number): void;
@@ -30,14 +35,15 @@ export interface RendererTransition {
     startTime: number;
     duration: number;
     ease: Ease;
-    callback: Function;
+    callback(): void;
 }
 
 export interface RendererTransitionOptions {
     duration: number;
     ease: Ease;
     delay: number | ((index: number) => number);
-    callback(element: Element<any>): void;
+    fillMode: RendererFillMode;
+    callback(element: Element): void;
 }
 
 export interface RendererOptions {
@@ -47,7 +53,7 @@ export interface RendererOptions {
 export interface Renderer {
     start(): void;
     stop(): void;
-    transition(element: Element<any> | Element<any>[], options?: Partial<RendererTransitionOptions>): Promise<void>;
+    transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>): Promise<void>;
     on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
     off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
     running: boolean;
@@ -169,9 +175,9 @@ export function renderer(
         }
     };
 
-    const transition = (element: Element<any> | Element<any>[], options?: Partial<RendererTransitionOptions>) => {
+    const transition = (element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) => {
         return new Promise<void>(resolve => {
-            const elements = ([] as Element<any>[]).concat(element);
+            const elements = ([] as Element[]).concat(element);
             const totalCount = elements.length;
 
             let completeCount = 0;
@@ -182,28 +188,37 @@ export function renderer(
                     ease,
                     delay,
                     callback,
+                    fillMode,
                 } = {
                     duration: 0,
                     delay: 0,
                     ease: easeLinear,
+                    fillMode: 'forwards',
                     callback: () => {},
                     ...options,
-                };
+                } as RendererTransitionOptions;
 
                 const startTime = performance.now() + (isFunction(delay) ? delay(index) : delay);
+
+                const onComplete = () => {
+                    completeCount += 1;
+
+                    if (fillMode === 'forwards') {
+                        element.update(element.state());
+                    }
+
+                    callback(element);
+
+                    if (completeCount >= totalCount) {
+                        resolve();
+                    }
+                };
 
                 transitionMap.set(element.id, {
                     duration,
                     ease,
                     startTime,
-                    callback: () => {
-                        completeCount += 1;
-                        callback(element);
-
-                        if (completeCount >= totalCount) {
-                            resolve();
-                        }
-                    },
+                    callback: onComplete,
                 });
             });
         });

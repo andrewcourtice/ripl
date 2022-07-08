@@ -18,12 +18,11 @@ export const spline = shape<Spline>({
     calculators: {
         points: linePointCalculator,
     },
-    onRender(context, path, { state }) {
+    onRender({ path, state }) {
         const {
             points,
         } = state;
 
-        context.beginPath();
         path.moveTo(points[0][0], points[0][1]);
 
         points.forEach(([x1, y1], index) => {

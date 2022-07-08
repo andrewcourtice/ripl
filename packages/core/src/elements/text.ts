@@ -11,7 +11,7 @@ export interface Text extends BaseElement {
 
 export const text = element<Text>({
     name: 'text',
-    onRender(context, { state }) {
+    onRender({ context, state }) {
         const {
             x,
             y,

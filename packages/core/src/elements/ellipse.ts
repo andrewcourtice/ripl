@@ -18,7 +18,7 @@ export interface Ellipse extends BaseElement {
 
 export const ellipse = shape<Ellipse>({
     name: 'ellipse',
-    onRender(context, path, { state }) {
+    onRender({ path, state }) {
         const {
             x,
             y,
@@ -29,7 +29,6 @@ export const ellipse = shape<Ellipse>({
             endAngle,
         } = state;
 
-        context.beginPath();
         path.ellipse(
             x,
             y,

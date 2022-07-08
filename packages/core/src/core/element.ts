@@ -35,17 +35,6 @@ export type ElementValue<TValue = number> = TValue
 | ElementValueKeyFrame<TValue>[]
 | ElementValueFunction<TValue>;
 
-export interface BaseElement {
-    strokeStyle?: string;
-    fillStyle?: string;
-    lineWidth?: number;
-    lineDash?: number[];
-    lineDashOffset?: CanvasRenderingContext2D['lineDashOffset'];
-    lineCap?: CanvasRenderingContext2D['lineCap'];
-    lineJoin?: CanvasRenderingContext2D['lineJoin'];
-    font?: CanvasRenderingContext2D['font'];
-    filter?: CanvasRenderingContext2D['filter'];
-}
 
 export type ElementProperties<TElement extends BaseElement> = {
     [P in keyof TElement]: ElementValue<TElement[P]>;
@@ -60,8 +49,11 @@ export type ElementCalculators<TElement extends BaseElement> = {
     [P in keyof TElement]?: ElementCalculator<TElement[P]>;
 }
 
-export type ElementRenderFunction<TElement extends BaseElement, TReturn = unknown> = (context: CanvasRenderingContext2D, frame: ElementRenderFrame<TElement>) => TReturn;
+export type ElementConstructor<TElement extends BaseElement> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement>;
+export type ElementRenderFunction<TElement extends BaseElement, TReturn = unknown> = (frame: ElementRenderFrame<TElement>) => TReturn;
 export type ElementValidator<TElement extends BaseElement> = (properties: ElementProperties<TElement>) => boolean;
+export type FrameCallback<TElement extends BaseElement> = (key: keyof TElement, value: TElement[keyof TElement]) => void;
+export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 
 export interface ElementDefinition<TElement extends BaseElement, TReturn = unknown> {
     name: string;
@@ -73,12 +65,12 @@ export interface ElementDefinition<TElement extends BaseElement, TReturn = unkno
 
 export interface ElementOptions<TElement extends BaseElement> {
     class?: string;
+    pointerEvents?: ElementPointerEvents;
     calculators?: ElementCalculators<TElement>;
 }
 
-export type ElementConstructor<TElement extends BaseElement> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement>;
-
 export interface ElementRenderFrame<TElement extends BaseElement> {
+    context: CanvasRenderingContext2D;
     state: TElement;
     time: number;
 }
@@ -88,22 +80,34 @@ export interface ElementRenderData {
     base?: BaseElement;
 }
 
-export type FrameCallback<TElement extends BaseElement> = (key: keyof TElement, value: TElement[keyof TElement]) => void;
+export interface BaseElement {
+    strokeStyle?: string;
+    fillStyle?: string;
+    lineWidth?: number;
+    lineDash?: number[];
+    lineDashOffset?: CanvasRenderingContext2D['lineDashOffset'];
+    lineCap?: CanvasRenderingContext2D['lineCap'];
+    lineJoin?: CanvasRenderingContext2D['lineJoin'];
+    font?: CanvasRenderingContext2D['font'];
+    filter?: CanvasRenderingContext2D['filter'];
+}
 
-export interface Element<TElement extends BaseElement, TResult = unknown> {
+export interface Element<TElement extends BaseElement = BaseElement, TResult = unknown> {
     id: symbol;
     name: string;
-    clone: () => Element<TElement>;
-    update: (properties: Partial<ElementProperties<TElement>>) => void;
-    state: (time: number, callback?: FrameCallback<TElement>) => TElement;
-    to: (newState: Partial<TElement>) => void;
-    render: (context: CanvasRenderingContext2D, time?: number) => TResult;
+    class?: string;
+    pointerEvents: ElementPointerEvents;
+    clone(): Element<TElement>;
+    update(properties: Partial<ElementProperties<TElement>>): void;
+    state(time?: number, callback?: FrameCallback<TElement>): TElement;
+    to(newState: Partial<TElement>): void;
+    render(context: CanvasRenderingContext2D, time?: number): TResult;
 
     /**
      * @internal
      */
-    get parent(): Element<any> | undefined;
-    set parent(element: Element<any> | undefined);
+    get parent(): Element | undefined;
+    set parent(element: Element | undefined);
     get eventBus(): EventBus;
     set eventBus(element: EventBus | undefined);
     get path(): string;
@@ -214,6 +218,7 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
         const {
             calculators,
             class: elClass,
+            pointerEvents = 'all',
         } = options || {};
 
         if (validate && !validate(properties)) {
@@ -244,13 +249,17 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
             };
         };
 
-        const state = (time: number, callback?: FrameCallback<TElement>) => {
+        const state = (time?: number, callback?: FrameCallback<TElement>) => {
+            if (isNil(time) && currentState) {
+                return currentState;
+            }
+
             const state = {
-                ...parent?.state(time),
+                ...parent?.state(time || 0),
             } as TElement;
 
             for (const key in valueFns) {
-                const value = valueFns[key](time);
+                const value = valueFns[key](time || 0);
                 state[key] = value;
 
                 if (callback) {
@@ -262,7 +271,7 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
         };
 
         const to = (newState: Partial<TElement>) => {
-            currentState = currentState || state(0);
+            currentState = currentState || state();
 
             const properties = {} as ElementProperties<TElement>;
 
@@ -286,9 +295,10 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
                     }
                 });
 
-                result = onRender(context, {
-                    state: currentState,
+                result = onRender({
+                    context,
                     time,
+                    state: currentState,
                 });
             } finally {
                 context.restore();
@@ -305,6 +315,8 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
             state,
             to,
             render,
+            pointerEvents,
+            class: elClass,
 
             get parent() {
                 return parent;

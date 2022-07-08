@@ -48,10 +48,9 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
             }
         });
 
-        // this turned off temporarily
-        // observer.observe(element, {
-        //     box: 'border-box',
-        // });
+        observer.observe(element, {
+            box: 'border-box',
+        });
 
         disposer = {
             dispose: () => observer.disconnect(),

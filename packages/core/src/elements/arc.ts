@@ -16,7 +16,7 @@ export interface Arc extends BaseElement {
 
 export const arc = shape<Arc>({
     name: 'arc',
-    onRender(context, path, { state }) {
+    onRender({ path, state }) {
         const {
             x,
             y,

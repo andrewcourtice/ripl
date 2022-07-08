@@ -3,7 +3,9 @@ import {
 } from './constants';
 
 import {
+    BaseElement,
     Element,
+    ElementProperties,
 } from './element';
 
 import {
@@ -34,12 +36,18 @@ import type {
 } from '../global/types';
 
 interface SceneEventMap {
-    elementmouseenter(element: Element<any>): void;
-    elementmouseleave(element: Element<any>): void;
-    elementmousemove(element: Element<any>): void;
+    resize(width: number, height: number): void;
+    elementmouseenter(element: Element): void;
+    elementmouseleave(element: Element): void;
+    elementmousemove(element: Element): void;
     scenemouseenter(event: MouseEvent): void;
     scenemouseleave(event: MouseEvent): void;
     scenemousemove(x: number, y: number, event: MouseEvent): void;
+}
+
+export interface SceneOptions {
+    properties?: ElementProperties<BaseElement>;
+    renderOnResize: boolean;
 }
 
 export interface Scene {
@@ -51,10 +59,10 @@ export interface Scene {
     off<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
     render(time?: number): void;
     dispose(): void;
-    get elements(): Set<Element<any>>;
+    get elements(): Set<Element>;
 }
 
-export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]): Scene {
+export function scene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
     const canvas = isString(target) ? document.querySelector(target) as HTMLCanvasElement : target;
     const context = canvas?.getContext('2d');
 
@@ -62,11 +70,13 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         throw new Error('Failed to resolve canvas element');
     }
 
-    const grp = group(els);
-    const bus = eventBus();
-    const disposals = new Set<Disposable>();
+    const {
+        properties,
+        renderOnResize = true,
+    } = options || {};
 
     const eventMap = {
+        resize: new Set(),
         elementmouseenter: new Set(),
         elementmouseleave: new Set(),
         elementmousemove: new Set(),
@@ -77,19 +87,29 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         [P in keyof SceneEventMap]: Set<SceneEventMap[P]>;
     };
 
-    let stack = grp.elements;
+    const sceneGroup = group(properties);
+    const sceneEventBus = eventBus();
+    const disposals = new Set<Disposable>();
+
+    let stack = sceneGroup.elements;
     let scaleX = continuous([0, canvas.width], [0, canvas.width]);
     let scaleY = continuous([0, canvas.height], [0, canvas.height]);
 
     let left = 0;
     let top = 0;
-    let activeElement: Element<any> | undefined;
+    let activeElement: Element | undefined;
 
     const updateScaling = (width: number, height: number) => {
         const dpr = window.devicePixelRatio;
+        const scaledWidth = width * dpr;
+        const scaledHeight = height * dpr;
 
-        canvas.width = width * dpr;
-        canvas.height = height * dpr;
+        if (scaledWidth === canvas.width && scaledHeight === canvas.height) {
+            return;
+        }
+
+        canvas.width = scaledWidth;
+        canvas.height = scaledHeight;
         scaleX = continuous([0, width], [0, canvas.width]);
         scaleY = continuous([0, height], [0, canvas.height]);
     };
@@ -102,22 +122,27 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         context.font = font;
     };
 
-    updateStyling();
-    onDOMElementResize(canvas, ({ width, height }) => {
-        updateScaling(width, height);
-    });
-
-
     const attachDOMEvent = <TEvent extends keyof HTMLElementEventMap>(event: TEvent, handler: DOMEventHandler<TEvent>) => {
         disposals.add(onDOMEvent(canvas, event, handler));
     };
 
-    const isElementActive = (element: Element<any>, x: number, y: number) => {
+    const isElementActive = (element: Element, x: number, y: number) => {
+        const pointerEvents = element.pointerEvents;
         const path = element?.result;
 
-        return path instanceof Path2D
-            && (context.isPointInPath(path, x, y)
-            || context.isPointInStroke(path, x, y));
+
+        if (pointerEvents === 'none' || !(path instanceof Path2D)) {
+            return false;
+        }
+
+        switch (pointerEvents) {
+            case 'fill':
+                return context.isPointInPath(path, x, y);
+            case 'stroke':
+                return context.isPointInStroke(path, x, y);
+        }
+
+        return context.isPointInPath(path, x, y) || context.isPointInStroke(path, x, y);
     };
 
     const on = <TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]) => {
@@ -149,13 +174,13 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         const x = scaleX(event.clientX - left, true);
         const y = scaleY(event.clientY - top, true);
 
-        const onElMousemove = (element: Element<any>) => eventMap.elementmousemove.forEach(handler => handler(element));
-        const onElMouseenter = (element: Element<any>) => eventMap.elementmouseenter.forEach(handler => handler(element));
-        const onElMouseleave = (element: Element<any>) => eventMap.elementmouseleave.forEach(handler => handler(element));
+        const onElMousemove = (element: Element) => eventMap.elementmousemove.forEach(handler => handler(element));
+        const onElMouseenter = (element: Element) => eventMap.elementmouseenter.forEach(handler => handler(element));
+        const onElMouseleave = (element: Element) => eventMap.elementmouseleave.forEach(handler => handler(element));
 
         eventMap.scenemousemove.forEach(handler => handler(x, y, event));
 
-        let matchedElement: Element<any> | undefined;
+        let matchedElement: Element | undefined;
 
         for (const element of Array.from(stack).reverse()) {
             if (isElementActive(element, x, y)) {
@@ -179,9 +204,21 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         activeElement = matchedElement;
     });
 
-    grp.eventBus = bus;
-    bus.on(EVENTS.groupUpdated, () => {
-        stack = grp.elements;
+    const render = (time?: number) => sceneGroup.render(context, time);
+
+    updateStyling();
+    onDOMElementResize(canvas, ({ width, height }) => {
+        updateScaling(width, height);
+        eventMap.resize.forEach(handler => handler(width, height));
+
+        if (renderOnResize) {
+            render();
+        }
+    });
+
+    sceneGroup.eventBus = sceneEventBus;
+    sceneEventBus.on(EVENTS.groupUpdated, () => {
+        stack = sceneGroup.elements;
     });
 
     return {
@@ -189,10 +226,10 @@ export function scene(target: string | HTMLCanvasElement, els?: Element<any>[]):
         canvas,
         on,
         off,
+        render,
         dispose,
-        add: grp.add.bind(grp),
-        remove: grp.remove.bind(grp),
-        render: time => grp.render(context, time),
+        add: sceneGroup.add.bind(sceneGroup),
+        remove: sceneGroup.remove.bind(sceneGroup),
         get elements() {
             return stack;
         },

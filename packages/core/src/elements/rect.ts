@@ -15,7 +15,7 @@ export interface Rect extends BaseElement {
 
 export const rect = shape<Rect>({
     name: 'rect',
-    onRender(context, path, { state }) {
+    onRender({ path, state }) {
         const {
             x,
             y,
@@ -23,7 +23,6 @@ export const rect = shape<Rect>({
             height,
         } = state;
 
-        context.beginPath();
         path.rect(x, y, width, height);
     },
 });

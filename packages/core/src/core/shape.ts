@@ -6,7 +6,11 @@ import {
     ElementRenderFrame,
 } from './element';
 
-export type ShapeRenderFunction<TElement extends BaseElement> = (context: CanvasRenderingContext2D, path: Path2D, frame: ElementRenderFrame<TElement>) => void;
+export type ShapeRenderFunction<TElement extends BaseElement> = (frame: ShapeRenderFrame<TElement>) => void;
+
+export interface ShapeRenderFrame<TElement extends BaseElement> extends ElementRenderFrame<TElement> {
+    path: Path2D;
+}
 
 export interface ShapeDefinition<TElement extends BaseElement> extends Omit<ElementDefinition<TElement, Path2D>, 'onRender'> {
     autoStroke?: boolean;
@@ -24,14 +28,18 @@ export function shape<TElement extends BaseElement>(definition: ShapeDefinition<
 
     const elConstructor = element<TElement>({
         ...elementDefinition,
-        onRender(context, frame) {
+        onRender(frame) {
             const {
+                context,
                 state,
             } = frame;
 
             const path = new Path2D();
 
-            onRender(context, path, frame);
+            onRender({
+                ...frame,
+                path,
+            });
 
             if (autoStroke && state.strokeStyle) {
                 context.stroke(path);
