@@ -23,18 +23,6 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
         dispose: () => {},
     } as Disposable;
 
-    const handleWithClientRect = () => {
-        const {
-            width,
-            height,
-        } = element.getBoundingClientRect();
-
-        handler({
-            width,
-            height,
-        });
-    };
-
     if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(entries => {
             for (const entry of entries) {
@@ -56,10 +44,18 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
             dispose: () => observer.disconnect(),
         };
     } else {
-        disposer = onDOMEvent(window, 'resize', handleWithClientRect);
-    }
+        disposer = onDOMEvent(window, 'resize', () => {
+            const {
+                width,
+                height,
+            } = element.getBoundingClientRect();
 
-    handleWithClientRect();
+            handler({
+                width,
+                height,
+            });
+        });
+    }
 
     return disposer;
 }

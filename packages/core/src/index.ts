@@ -1,4 +1,5 @@
 export * from './core/constants';
+export * from './core/context';
 export * from './core/element';
 export * from './core/group';
 export * from './core/renderer';

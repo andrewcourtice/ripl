@@ -254,12 +254,13 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
                 return currentState;
             }
 
+            const _time = time ?? 0;
             const state = {
-                ...parent?.state(time || 0),
+                ...parent?.state(_time),
             } as TElement;
 
             for (const key in valueFns) {
-                const value = valueFns[key](time || 0);
+                const value = valueFns[key](_time);
                 state[key] = value;
 
                 if (callback) {

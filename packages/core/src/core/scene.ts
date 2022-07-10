@@ -13,6 +13,11 @@ import {
 } from './event-bus';
 
 import {
+    getContext,
+    rescaleCanvas,
+} from './context';
+
+import {
     Group,
     group,
 } from './group';
@@ -20,10 +25,6 @@ import {
 import {
     continuous,
 } from '../math/scale';
-
-import {
-    isString,
-} from '../utilities/type';
 
 import {
     DOMEventHandler,
@@ -63,12 +64,11 @@ export interface Scene {
 }
 
 export function scene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
-    const canvas = isString(target) ? document.querySelector(target) as HTMLCanvasElement : target;
-    const context = canvas?.getContext('2d');
-
-    if (!context) {
-        throw new Error('Failed to resolve canvas element');
-    }
+    const {
+        canvas,
+        context,
+        clear,
+    } = getContext(target);
 
     const {
         properties,
@@ -91,7 +91,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     const sceneEventBus = eventBus();
     const disposals = new Set<Disposable>();
 
-    let stack = sceneGroup.elements;
+    let elements = sceneGroup.elements;
     let scaleX = continuous([0, canvas.width], [0, canvas.width]);
     let scaleY = continuous([0, canvas.height], [0, canvas.height]);
 
@@ -100,16 +100,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     let activeElement: Element | undefined;
 
     const updateScaling = (width: number, height: number) => {
-        const dpr = window.devicePixelRatio;
-        const scaledWidth = width * dpr;
-        const scaledHeight = height * dpr;
-
-        if (scaledWidth === canvas.width && scaledHeight === canvas.height) {
-            return;
-        }
-
-        canvas.width = scaledWidth;
-        canvas.height = scaledHeight;
+        rescaleCanvas(canvas, width, height);
         scaleX = continuous([0, width], [0, canvas.width]);
         scaleY = continuous([0, height], [0, canvas.height]);
     };
@@ -182,7 +173,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
 
         let matchedElement: Element | undefined;
 
-        for (const element of Array.from(stack).reverse()) {
+        for (const element of Array.from(elements).reverse()) {
             if (isElementActive(element, x, y)) {
                 matchedElement = element;
                 break;
@@ -204,21 +195,24 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         activeElement = matchedElement;
     });
 
-    const render = (time?: number) => sceneGroup.render(context, time);
+    const render = (time?: number) => {
+        clear();
+        sceneGroup.render(context, time);
+    };
 
     updateStyling();
     onDOMElementResize(canvas, ({ width, height }) => {
         updateScaling(width, height);
         eventMap.resize.forEach(handler => handler(width, height));
 
-        if (renderOnResize) {
+        if (renderOnResize && elements.size > 0) {
             render();
         }
     });
 
     sceneGroup.eventBus = sceneEventBus;
     sceneEventBus.on(EVENTS.groupUpdated, () => {
-        stack = sceneGroup.elements;
+        elements = sceneGroup.elements;
     });
 
     return {
@@ -231,7 +225,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         add: sceneGroup.add.bind(sceneGroup),
         remove: sceneGroup.remove.bind(sceneGroup),
         get elements() {
-            return stack;
+            return elements;
         },
     };
 }
