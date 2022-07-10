@@ -1,7 +1,7 @@
 import sveltePreprocess from 'svelte-preprocess';
 
 import {
-    svelte
+    svelte,
 } from '@sveltejs/vite-plugin-svelte';
 
 import {
@@ -15,6 +15,9 @@ export default defineConfig({
     json: {
         stringify: true,
     },
+    preview: {
+        port: 6565,
+    },
     build: {
         sourcemap: 'hidden',
         commonjsOptions: {
@@ -27,8 +30,8 @@ export default defineConfig({
                 sveltePreprocess({
                     typescript: true,
                     scss: true,
-                })
-            ]
+                }),
+            ],
         }),
     ],
 });

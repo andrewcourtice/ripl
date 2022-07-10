@@ -8,7 +8,8 @@
     "main": "src/index.ts",
     "scripts": {
         "start": "vite dev",
-        "build": "vite build"
+        "build": "vite build",
+        "preview": "vite preview"
     },
     "dependencies": {
         "@ripl/core": "workspace:^",

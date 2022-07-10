@@ -1,0 +1,8 @@
+---
+import Example from '../../layouts/example.astro';
+import BasicExample from '../../components/examples/basic.svelte';
+---
+
+<Example title="Basic">
+    <BasicExample client:only="svelte"></BasicExample>
+</Example>

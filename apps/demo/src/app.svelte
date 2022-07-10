@@ -42,6 +42,7 @@ import {
     scene,
     type Scene,
 TAU,
+clamp,
 } from '@ripl/core';
 
 let time = 1;
@@ -250,6 +251,7 @@ function createDemo() {
     });
 
     async function tween() {
+        console.log(getColor());
         circles.forEach(({ to }) => to({
             fillStyle: getColor(),
             x: Math.random() * canvas.width,

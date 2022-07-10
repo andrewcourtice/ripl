@@ -1,0 +1,24 @@
+{
+    "name": "@ripl/app-website",
+    "version": "1.0.0",
+    "private": true,
+    "description": "",
+    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "license": "MIT",
+    "scripts": {
+        "dev": "astro dev",
+        "start": "astro dev",
+        "build": "astro build",
+        "preview": "astro preview"
+    },
+    "dependencies": {
+        "@ripl/core": "workspace:^",
+        "flex-layout-attribute": "^1.0.3"
+    },
+    "devDependencies": {
+        "@astrojs/svelte": "^0.2.1",
+        "astro": "^1.0.0-beta.65",
+        "svelte": "^3.46.4"
+    }
+}
