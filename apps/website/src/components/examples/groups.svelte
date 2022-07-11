@@ -14,8 +14,7 @@ import {
 import {
     getContext,
     circle,
-    spline,
-continuous,
+    group,
 } from '@ripl/core';
 
 let time = 0;
@@ -29,35 +28,36 @@ onMount(() => {
     const {
         canvas,
         context,
-        clear,
+        clear
     } = getContext('.example__canvas');
 
-    const xScale = continuous([1, 5], [0, canvas.width]);
-    const yScale = continuous([0, 2], [canvas.height, 0]);
-
-    const spl = spline({
-        strokeStyle: '#000000',
+    const circle1 = circle({
         lineWidth: 4,
-        points: [
-            [xScale(1), yScale(1)],
-            [xScale(2), yScale(2)],
-            [xScale(3), yScale(1)],
-            [xScale(4), yScale(0)],
-            [xScale(5), yScale(1)],
-        ]
+        x: canvas.width * 0.25,
+        y: canvas.height * 0.25,
+        radius: [canvas.width * 0.10, canvas.width * 0.15]
     });
 
-    const crc = circle({
+    const circle2 = circle1.clone();
+    
+    circle2.update({
+        fillStyle: ['#FF0000', '#00FF00'],
+        x: canvas.width * 0.75,
+        y: canvas.height * 0.75,
+    });
+
+    const group1 = group({
         fillStyle: ['#000000', '#CCCCCC'],
-        lineWidth: 4,
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: [canvas.width / 5, canvas.width / 3]
     });
+
+    group1.add([
+        circle1,
+        circle2
+    ]);
 
     render = time => {
         clear();
-        spl.render(context, time);
+        group1.render(context, time);
     }
 });
 </script>
