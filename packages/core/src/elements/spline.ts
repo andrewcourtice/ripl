@@ -49,7 +49,9 @@ export const spline = shape<Spline>({
             tension,
         } = state;
 
-        const pnts = [points[0]].concat(points, [points[points.length - 1]]);
+        const firstPaddedPoint = [points[0][0], points[0][1]];
+        const lastPaddedPoint = [points[points.length - 1][0], points[points.length - 1][1]];
+        const pnts = [firstPaddedPoint].concat(points, [lastPaddedPoint]);
 
         // console.log(pnts);
 
