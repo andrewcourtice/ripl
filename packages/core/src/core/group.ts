@@ -83,29 +83,14 @@ export function group(
         return matches;
     }
 
-    return {
-        ...el,
+    return Object.assign(el, {
         set,
         add,
         remove,
         query,
 
-        get parent() {
-            return el.parent;
-        },
-        set parent(par) {
-            el.parent = par;
-        },
-
-        get eventBus() {
-            return el.eventBus;
-        },
-        set eventBus(bus) {
-            el.eventBus = bus;
-        },
-
         get elements() {
             return getGroupElements();
         },
-    };
+    });
 }
