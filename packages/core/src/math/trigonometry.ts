@@ -1,5 +1,5 @@
-export function degreesToRadians(degress: number): number {
-    return degress * Math.PI / 180;
+export function degreesToRadians(degrees: number): number {
+    return degrees * Math.PI / 180;
 }
 
 export function radiansToDegrees(radians: number): number {

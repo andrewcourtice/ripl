@@ -4,8 +4,8 @@ import {
 
 export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
     const dpr = window.devicePixelRatio;
-    const scaledWidth = width * dpr;
-    const scaledHeight = height * dpr;
+    const scaledWidth = Math.floor(width * dpr);
+    const scaledHeight = Math.floor(height * dpr);
 
     if (scaledWidth === canvas.width && scaledHeight === canvas.height) {
         return;

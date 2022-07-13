@@ -4,7 +4,7 @@ import {
 
 import {
     Line,
-    linePointCalculator,
+    linePointInterpolator,
 } from './line';
 
 import {
@@ -40,8 +40,8 @@ function getControlPoint([x0, y0]: Point, [x1, y1]: Point, [x2, y2]: Point, tens
 
 export const spline = shape<Spline>({
     name: 'spline',
-    calculators: {
-        points: linePointCalculator,
+    interpolators: {
+        points: linePointInterpolator,
     },
     onRender({ path, context, state }) {
         const {

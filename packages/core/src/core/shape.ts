@@ -58,8 +58,27 @@ export function shape<TElement extends BaseElement>(definition: ShapeDefinition<
 
         const clone = () => shape(definition)(properties, options);
 
-        return Object.assign(el, {
+        return {
+            ...el,
             clone,
-        });
+
+            get parent() {
+                return el.parent;
+            },
+            set parent(par) {
+                el.parent = par;
+            },
+
+            get result() {
+                return el.result;
+            },
+
+            get eventBus() {
+                return el.eventBus;
+            },
+            set eventBus(bus) {
+                el.eventBus = bus;
+            },
+        };
     };
 }

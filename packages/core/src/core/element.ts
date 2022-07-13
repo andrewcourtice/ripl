@@ -1,10 +1,11 @@
 import {
-    CALCULATORS,
     CONTEXT_OPERATIONS,
+    INTERPOLATORS,
 } from './constants';
 
 import {
     interpolateNumber,
+    Interpolator,
 } from '../math/interpolate';
 
 import {
@@ -23,7 +24,6 @@ import defaultEventBus,{
     EventBus,
 } from './event-bus';
 
-export type ElementValueFunction<TValue = number> = (time: number) => TValue;
 export type ElementValueBounds<TValue = number> = [first: TValue, last: TValue];
 export type ElementValueKeyFrame<TValue = number> = {
     offset?: number;
@@ -33,7 +33,7 @@ export type ElementValueKeyFrame<TValue = number> = {
 export type ElementValue<TValue = number> = TValue
 | ElementValueBounds<TValue>
 | ElementValueKeyFrame<TValue>[]
-| ElementValueFunction<TValue>;
+| Interpolator<TValue>;
 
 
 export type ElementProperties<TElement extends BaseElement> = {
@@ -41,12 +41,12 @@ export type ElementProperties<TElement extends BaseElement> = {
 };
 
 export type ElementValueFunctions<TElement extends BaseElement> = {
-    [P in keyof TElement]: ElementValueFunction<TElement[P]>;
+    [P in keyof TElement]: Interpolator<TElement[P]>;
 };
 
-export type ElementCalculator<TValue> = (valueA: TValue, valueB: TValue) => ElementValueFunction<TValue>
-export type ElementCalculators<TElement extends BaseElement> = {
-    [P in keyof TElement]?: ElementCalculator<TElement[P]>;
+export type ElementInterpolator<TValue> = (valueA: TValue, valueB: TValue) => Interpolator<TValue>
+export type ElementInterpolators<TElement extends BaseElement> = {
+    [P in keyof TElement]?: ElementInterpolator<TElement[P]>;
 }
 
 export type ElementConstructor<TElement extends BaseElement> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement>;
@@ -58,7 +58,7 @@ export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 export interface ElementDefinition<TElement extends BaseElement, TReturn = unknown> {
     name: string;
     renderless?: boolean;
-    calculators?: ElementCalculators<TElement>;
+    interpolators?: ElementInterpolators<TElement>;
     validate?: ElementValidator<TElement>;
     onRender: ElementRenderFunction<TElement, TReturn>;
 }
@@ -66,7 +66,7 @@ export interface ElementDefinition<TElement extends BaseElement, TReturn = unkno
 export interface ElementOptions<TElement extends BaseElement> {
     class?: string;
     pointerEvents?: ElementPointerEvents;
-    calculators?: ElementCalculators<TElement>;
+    interpolators?: ElementInterpolators<TElement>;
 }
 
 export interface ElementRenderFrame<TElement extends BaseElement> {
@@ -81,15 +81,28 @@ export interface ElementRenderData {
 }
 
 export interface BaseElement {
-    strokeStyle?: string;
-    fillStyle?: string;
-    lineWidth?: number;
+    strokeStyle?: CanvasRenderingContext2D['strokeStyle'];
+    fillStyle?: CanvasRenderingContext2D['fillStyle'];
+    lineWidth?: CanvasRenderingContext2D['lineWidth'];
     lineDash?: number[];
     lineDashOffset?: CanvasRenderingContext2D['lineDashOffset'];
     lineCap?: CanvasRenderingContext2D['lineCap'];
     lineJoin?: CanvasRenderingContext2D['lineJoin'];
+    miterLimit?: CanvasRenderingContext2D['miterLimit'];
+
     font?: CanvasRenderingContext2D['font'];
+    direction?: CanvasRenderingContext2D['direction'];
+    textAlign?: CanvasRenderingContext2D['textAlign'];
+    textBaseline?: CanvasRenderingContext2D['textBaseline'];
+
     filter?: CanvasRenderingContext2D['filter'];
+    globalAlpha?: CanvasRenderingContext2D['globalAlpha'];
+    globalCompositeOperation?: CanvasRenderingContext2D['globalCompositeOperation'];
+
+    shadowBlur?: CanvasRenderingContext2D['shadowBlur'];
+    shadowColor?: CanvasRenderingContext2D['shadowColor'];
+    shadowOffsetX?: CanvasRenderingContext2D['shadowOffsetX'];
+    shadowOffsetY?: CanvasRenderingContext2D['shadowOffsetY'];
 }
 
 export interface Element<TElement extends BaseElement = BaseElement, TResult = unknown> {
@@ -122,7 +135,7 @@ function isElementValueKeyFrame(value: unknown): value is ElementValueKeyFrame<a
     return isArray(value) && value.every(keyframe => isObject(keyframe) && 'value' in keyframe);
 }
 
-function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calculator: ElementCalculator<TValue>): ElementValueFunction<TValue | undefined> {
+function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], calculator: ElementInterpolator<TValue>): Interpolator<TValue | undefined> {
     const lastIndex = value.length - 1;
     const keyframes = value.map(({ offset, value }, index) => ({
         value,
@@ -167,20 +180,20 @@ function getKeyframeValueFns<TValue>(value: ElementValueKeyFrame<TValue>[], calc
     };
 }
 
-function defaultCalculator<TElement extends BaseElement>(valueA: TElement[keyof TElement], valueB: TElement[keyof TElement]): ElementValueFunction<TElement[keyof TElement]> {
+function defaultInterpolator<TElement extends BaseElement>(valueA: TElement[keyof TElement], valueB: TElement[keyof TElement]): Interpolator<TElement[keyof TElement]> {
     if (isNumber(valueA) && isNumber(valueB)) {
-        return time => interpolateNumber(valueA, valueB, time) as typeof valueA;
+        return interpolateNumber(valueA, valueB) as Interpolator<typeof valueA>;
     }
 
     return time => time > 0.5 ? valueB : valueA;
 }
 
-function getValueFns<TElement extends BaseElement>(properties: Partial<ElementProperties<TElement>>, calculators: ElementCalculators<TElement> = {}): ElementValueFunctions<TElement> {
+function getInterpolators<TElement extends BaseElement>(properties: Partial<ElementProperties<TElement>>, interpolators: ElementInterpolators<TElement> = {}): ElementValueFunctions<TElement> {
     const output = {} as ElementValueFunctions<TElement>;
 
     for (const key in properties) {
         const value = properties[key];
-        const calculator = calculators[key] || defaultCalculator;
+        const interpolator = interpolators[key] || defaultInterpolator;
 
         if (isFunction(value)) {
             output[key] = value;
@@ -188,12 +201,12 @@ function getValueFns<TElement extends BaseElement>(properties: Partial<ElementPr
         }
 
         if (isElementValueKeyFrame(value)) {
-            output[key] = getKeyframeValueFns(value, calculator);
+            output[key] = getKeyframeInterpolator(value, interpolator);
             continue;
         }
 
         if (isElementValueBound(value)) {
-            output[key] = calculator!(value[0], value[1]);
+            output[key] = interpolator!(value[0], value[1]);
             continue;
         }
 
@@ -209,14 +222,14 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
         validate,
         onRender,
         renderless,
-        calculators: rootCalculators,
+        interpolators: rootInterpolators,
     } = definition;
 
     return (properties, options): Element<TElement> => {
         const id = Symbol();
 
         const {
-            calculators,
+            interpolators,
             class: elClass,
             pointerEvents = 'all',
         } = options || {};
@@ -225,16 +238,16 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
             throw new Error('invalid shape options provided');
         }
 
-        const mergedCalculators = {
-            ...CALCULATORS,
-            ...rootCalculators,
-            ...calculators,
-        } as ElementCalculators<TElement>;
+        const mergedInterpolators = {
+            ...INTERPOLATORS,
+            ...rootInterpolators,
+            ...interpolators,
+        } as ElementInterpolators<TElement>;
 
-        let valueFns = getValueFns(properties, mergedCalculators);
+        let valueFns = getInterpolators(properties, mergedInterpolators);
 
         let eventBus: EventBus | undefined;
-        let parent: Element<any> | undefined;
+        let parent: Element | undefined;
 
         let currentState: TElement;
         let result: TReturn;
@@ -245,7 +258,7 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
         const update = (properties: Partial<ElementProperties<TElement>>) => {
             valueFns = {
                 ...valueFns,
-                ...getValueFns(properties, mergedCalculators),
+                ...getInterpolators(properties, mergedInterpolators),
             };
         };
 
@@ -255,20 +268,26 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
             }
 
             const _time = time ?? 0;
-            const state = {
-                ...parent?.state(_time),
-            } as TElement;
+            const parentState = parent?.state(_time) || {};
+            const output = {} as TElement;
 
-            for (const key in valueFns) {
-                const value = valueFns[key](_time);
-                state[key] = value;
+            const updateOutput = (key: keyof TElement, value: unknown) => {
+                output[key] = value;
 
                 if (callback) {
                     callback(key, value);
                 }
+            };
+
+            for (const key in parentState) {
+                updateOutput(key, parentState[key]);
             }
 
-            return state;
+            for (const key in valueFns) {
+                updateOutput(key, valueFns[key](_time));
+            }
+
+            return output;
         };
 
         const to = (newState: Partial<TElement>) => {

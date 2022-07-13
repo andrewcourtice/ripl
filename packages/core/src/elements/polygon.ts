@@ -6,7 +6,7 @@ import {
 import {
     drawPoints,
     Line,
-    linePointCalculator,
+    linePointInterpolator,
 } from './line';
 
 import {
@@ -39,8 +39,8 @@ export const getPolygonPoints = (sides: number, cx: number, cy: number, radius: 
 
 export const polygon = shape<Polygon>({
     name: 'polygon',
-    calculators: {
-        points: linePointCalculator,
+    interpolators: {
+        points: linePointInterpolator,
     },
     //validate: options => options.points.length >= 3,
     onRender({ path, state }) {

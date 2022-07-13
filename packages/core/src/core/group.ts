@@ -30,7 +30,7 @@ export function group(
 
     const el = element({
         name: 'group',
-        //renderless: true,
+        renderless: true,
         onRender({ context, time }) {
             for (const child of children) {
                 child.render(context, time);
@@ -83,14 +83,29 @@ export function group(
         return matches;
     }
 
-    return Object.assign(el, {
+    return {
+        ...el,
         set,
         add,
         remove,
         query,
 
+        get parent() {
+            return el.parent;
+        },
+        set parent(par) {
+            el.parent = par;
+        },
+
+        get eventBus() {
+            return el.eventBus;
+        },
+        set eventBus(bus) {
+            el.eventBus = bus;
+        },
+
         get elements() {
             return getGroupElements();
         },
-    });
+    };
 }

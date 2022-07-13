@@ -4,8 +4,8 @@ import {
 
 import {
     BaseElement,
-    ElementCalculator,
-    ElementValueFunction,
+    ElementInterpolator,
+    Interpolator,
 } from '../core/element';
 
 import {
@@ -21,7 +21,7 @@ import {
     interpolateNumber,
 } from '../math/interpolate';
 
-export type DrawLineFn = (points: Point[]) => ElementValueFunction<Point[]>;
+export type DrawLineFn = (points: Point[]) => Interpolator<Point[]>;
 
 export interface Line extends BaseElement {
     points: Point[];
@@ -70,7 +70,7 @@ export const extrapolatePointSet = (setA: Point[], setB: Point[]): Point[][] => 
     ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
 };
 
-export const linePointCalculator: ElementCalculator<Point[]> = (setA, setB) => {
+export const linePointInterpolator: ElementInterpolator<Point[]> = (setA, setB) => {
     const [
         extSetA,
         extSetB,
@@ -119,8 +119,8 @@ export const drawPoints = (points: Point[], path: Path2D) => {
 
 export const line = shape<Line>({
     name: 'line',
-    calculators: {
-        points: linePointCalculator,
+    interpolators: {
+        points: linePointInterpolator,
     },
     onRender({ path, state }) {
         const {

@@ -92,8 +92,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     const disposals = new Set<Disposable>();
 
     let elements = sceneGroup.elements;
-    let scaleX = continuous([0, canvas.width], [0, canvas.width]);
-    let scaleY = continuous([0, canvas.height], [0, canvas.height]);
+    let scaleX = continuous([0, canvas.width], [0, canvas.width], true);
+    let scaleY = continuous([0, canvas.height], [0, canvas.height], true);
 
     let left = 0;
     let top = 0;
@@ -101,8 +101,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
 
     const updateScaling = (width: number, height: number) => {
         rescaleCanvas(canvas, width, height);
-        scaleX = continuous([0, width], [0, canvas.width]);
-        scaleY = continuous([0, height], [0, canvas.height]);
+        scaleX = continuous([0, width], [0, canvas.width], true);
+        scaleY = continuous([0, height], [0, canvas.height], true);
     };
 
     const updateStyling = () => {
@@ -162,8 +162,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     });
 
     attachDOMEvent('mousemove', event => {
-        const x = scaleX(event.clientX - left, true);
-        const y = scaleY(event.clientY - top, true);
+        const x = scaleX(event.clientX - left);
+        const y = scaleY(event.clientY - top);
 
         const onElMousemove = (element: Element) => eventMap.elementmousemove.forEach(handler => handler(element));
         const onElMouseenter = (element: Element) => eventMap.elementmouseenter.forEach(handler => handler(element));
@@ -201,6 +201,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     };
 
     updateStyling();
+
     onDOMElementResize(canvas, ({ width, height }) => {
         updateScaling(width, height);
         eventMap.resize.forEach(handler => handler(width, height));

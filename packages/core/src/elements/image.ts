@@ -1,7 +1,7 @@
 import {
     BaseElement,
     element,
-    ElementCalculator,
+    ElementInterpolator,
 } from '../core/element';
 
 export interface Image extends BaseElement {
@@ -13,7 +13,7 @@ export interface Image extends BaseElement {
 const refCanvas = document.createElement('canvas');
 const refContext = refCanvas.getContext('2d');
 
-const imageCalculator: ElementCalculator<Image['image']> = (valueA, valueB) => {
+const imageInterpolator: ElementInterpolator<Image['image']> = (valueA, valueB) => {
     refCanvas.width = +valueA.width;
     refCanvas.height = +valueA.height;
 
@@ -35,8 +35,8 @@ const imageCalculator: ElementCalculator<Image['image']> = (valueA, valueB) => {
 
 export const image = element<Image>({
     name: 'image',
-    calculators: {
-        image: imageCalculator,
+    interpolators: {
+        image: imageInterpolator,
     },
     onRender({ context, state }) {
         const {

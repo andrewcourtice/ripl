@@ -2,40 +2,30 @@ import {
     clamp,
 } from './number';
 
-export type ScaleCalculator<TValue> = (value: TValue) => number;
-export interface Scale<TDomain = number> {
-    (value: TDomain, clamp?: boolean): number;
+import {
+    interpolateNumber,
+} from './interpolate';
+
+export type ScaleMethod<TInput = number, TOutput = number> = (value: TInput) => TOutput;
+
+export interface Scale<TDomain = number, TRange = number> {
+    (value: TDomain): TRange;
     domain: TDomain[];
-    range: number[];
+    range: TRange[];
+    inverse: ScaleMethod<TRange, TDomain>;
 }
 
-export function scale<TDomain = number>(domain: TDomain[], range: number[], calculator: ScaleCalculator<TDomain>): Scale<TDomain> {
-    const [
-        min,
-        max,
-    ] = range;
-
-    const output = (value: TDomain, clampOutput?: boolean) => {
-        let result = calculator(value);
-
-        if (clampOutput) {
-            result = clamp(result, min, max);
-        }
-
-        return result;
-    };
+export function bindScale<TDomain = number, TRange = number>(domain: TDomain[], range: TRange[], method: ScaleMethod<TDomain, TRange>): Scale<TDomain, TRange> {
+    const output = (value: TDomain) => method(value);
 
     output.domain = domain;
     output.range = range;
+    output.inverse = () => {};
 
     return output;
 }
 
-
-export function continuous(
-    domain: number[],
-    range: number[]
-): Scale<number> {
+function getLinearScaleMethod(domain: number[], range: number[], clampOutput?: boolean): ScaleMethod {
     const [
         domainMin,
         domainMax,
@@ -46,13 +36,39 @@ export function continuous(
         rangeMax,
     ] = range;
 
-    const domainLength = domainMax - domainMin;
-    const rangeLength = rangeMax - rangeMin;
+    const domainDelta = domainMax - domainMin;
+    const interpolator = interpolateNumber(rangeMin, rangeMax);
 
-    return scale(domain, range, value => {
-        return (value - domainMin) * rangeLength / domainLength + rangeMin;
-    });
+    return (value: number) => {
+        const position = (value - domainMin) / domainDelta;
+        const result = interpolator(position);
+
+        return clampOutput
+            ? clamp(result, rangeMin, rangeMax)
+            : result;
+    };
 }
+
+export function continuous(
+    domain: number[],
+    range: number[],
+    clampOutput?: boolean
+): Scale<number> {
+    const method = getLinearScaleMethod(domain, range, clampOutput);
+    const scale = bindScale(domain, range, method);
+
+    scale.inverse = getLinearScaleMethod(range, domain, clampOutput);
+
+    return scale;
+}
+
+// export function logarithmic(
+//     domain: number[],
+//     range: number[],
+//     base?: number = 10
+// ): Scale<number> {
+
+// }
 
 export function discrete<TDomain>(
     domain: TDomain[],
@@ -64,10 +80,16 @@ export function discrete<TDomain>(
     ] = range;
 
     const rangeLength = rangeMax - rangeMin;
-    const domainLength = domain.length;
-    const step = rangeLength / domainLength;
+    const domainLength = domain.length - 1;
+    const ratio = rangeLength / domainLength;
 
-    return scale(domain, range, value => {
-        return rangeMin + (domain.indexOf(value) * step);
+    const scale = bindScale(domain, range, value => {
+        return rangeMin + (domain.indexOf(value) * ratio);
     });
+
+    scale.inverse = value => {
+        return domain[Math.floor(value / rangeLength)];
+    };
+
+    return scale;
 }

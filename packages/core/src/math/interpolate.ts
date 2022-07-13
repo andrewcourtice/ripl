@@ -2,6 +2,7 @@ import {
     isNil,
 } from '../utilities/type';
 
+export type Interpolator<TValue = number> = (position: number) => TValue;
 export type StringInterpolationSet = [valueA: StringInterpolatorTag, valueB: StringInterpolatorTag];
 export type StringInterpolationFormatter = (value: number) => number;
 export interface StringInterpolatorTag {
@@ -16,11 +17,22 @@ function tagIntStr(fragments: TemplateStringsArray, ...args: number[]): StringIn
     };
 }
 
-export function interpolateNumber(valueA: number, valueB: number, position: number): number {
-    return valueA + (valueB - valueA) * position;
+export function interpolateNumber(valueA: number, valueB: number): Interpolator {
+    const valueDelta = valueB - valueA;
+    return position => valueA + valueDelta * position;
 }
 
-export function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolationSet, position: number, formatter?: StringInterpolationFormatter): string {
+export function interpolateDate(valueA: Date, valueB: Date): Interpolator<Date> {
+    const date = new Date();
+    const interpolator = interpolateNumber(valueA.getTime(), valueB.getTime());
+
+    return position => {
+        date.setTime(interpolator(position));
+        return date;
+    };
+}
+
+export function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolationSet, formatter?: StringInterpolationFormatter): Interpolator<string> {
     const [tagA, tagB] = callback(tagIntStr);
 
     if (tagA.args.length !== tagB.args.length) {
@@ -28,16 +40,12 @@ export function interpolateString(callback: (tag: typeof tagIntStr) => StringInt
     }
 
     const format = formatter || (value => value);
+    const interpolators = tagA.args.map((arg, index) => interpolateNumber(arg, tagB.args[index]));
 
-    return tagA.fragments.reduce((input, fragment, index) => {
+    return position => tagA.fragments.reduce((input, fragment, index) => {
         const output = input + fragment;
-        const valueA = tagA.args[index];
-        const valueB = tagB.args[index];
+        const interpolator = interpolators[index];
 
-        if (isNil(valueA) || isNil(valueB)) {
-            return output;
-        }
-
-        return output + format(interpolateNumber(valueA, valueB, position));
+        return output + format(interpolator(position));
     }, '');
 }
