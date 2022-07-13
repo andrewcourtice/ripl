@@ -53,62 +53,41 @@ export const spline = shape<Spline>({
         const lastPaddedPoint = [points[points.length - 1][0], points[points.length - 1][1]];
         const pnts = [firstPaddedPoint].concat(points, [lastPaddedPoint]);
 
-        // console.log(pnts);
+        // const controlPointsLength = pnts.length - 2 - 1; // number of padded points: 2, - 1 as array of control points is one less than num of points
 
-        const controlPoints = Array.from({ length: pnts.length - 2 }, (_, index) => {
-            const [x0, y0] = pnts[index];
-            const [x1, y1] = pnts[index + 1];
-            const [x2, y2] = pnts[index + 2];
+        // const controlPoints = Array.from({ length: controlPointsLength }, (_, index) => {
+        //     const [x0, y0] = pnts[index];
+        //     const [x1, y1] = pnts[index + 1];
+        //     const [x2, y2] = pnts[index + 2];
+        //     const [x3, y3] = pnts[index + 3];
 
-            return getControlPoint([x0, y0], [x1, y1], [x2, y2], tension);
-        });
+        //     const firstCtrlPoints = getControlPoint([x0, y0], [x1, y1], [x2, y2], tension);
+        //     const secondCtrlPoints = getControlPoint([x1, y1], [x2, y2], [x3, y3], tension);
 
-        // console.log(controlPoints);
-
-        // const controlPointsLastIndex = controlPoints.length - 1;
-        const newCtrlPoints: number[][] = [];
-        for (let i = 0; i <= (controlPoints.length - 2); i++) {
-            // console.log('hello');
-            newCtrlPoints[i] = [
-                controlPoints[i][2],
-                controlPoints[i][3],
-                controlPoints[i + 1][0],
-                controlPoints[i + 1][1],
-            ];
-
-            if (i === 0) {
-                newCtrlPoints[i] = [
-                    controlPoints[i][0],
-                    controlPoints[i][1],
-                    controlPoints[i + 1][0],
-                    controlPoints[i + 1][1],
-                ];
-            }
-
-            if (i === controlPoints.length - 2) {
-                newCtrlPoints[i] = [
-                    controlPoints[i][2],
-                    controlPoints[i][3],
-                    controlPoints[i + 1][2],
-                    controlPoints[i + 1][3],
-                ];
-            }
-        }
-
-        // console.log(newCtrlPoints);
-
-
+        //     return [
+        //         index === 0 ? firstCtrlPoints[0] : firstCtrlPoints[2],
+        //         index === 0 ? firstCtrlPoints[1] : firstCtrlPoints[3],
+        //         index === controlPointsLength - 1 ? secondCtrlPoints[2] : secondCtrlPoints[0],
+        //         index === controlPointsLength - 1 ? secondCtrlPoints[3] : secondCtrlPoints[1],
+        //     ];
+        // });
 
         path.moveTo(pnts[0][0], pnts[0][1]);
 
         for (let index = 1; index <= points.length - 1; index++) {
-            // console.log('helo');
-            // const [x0, y0] = pnts[index - 1];
-            // const [x1, y1] = pnts[index];
+            const [x0, y0] = pnts[index - 1];
+            const [x1, y1] = pnts[index];
             const [x2, y2] = pnts[index + 1];
+            const [x3, y3] = pnts[index + 2];
 
-            // const [cpx1, cpy1, cpx2, cpy2] = getControlPoint([x0, y0], [x1, y1], [x2, y2]);
-            const [cpx1, cpy1, cpx2, cpy2] = newCtrlPoints[index - 1];
+            const firstCtrlPoints = getControlPoint([x0, y0], [x1, y1], [x2, y2], tension);
+            const secondCtrlPoints = getControlPoint([x1, y1], [x2, y2], [x3, y3], tension);
+
+            const cpx1 = index === 1 ? firstCtrlPoints[0] : firstCtrlPoints[2];
+            const cpy1 = index === 1 ? firstCtrlPoints[1] : firstCtrlPoints[3];
+            const cpx2 = index === points.length - 1 ? secondCtrlPoints[2] : secondCtrlPoints[0];
+            const cpy2 = index === points.length - 1 ? secondCtrlPoints[3] : secondCtrlPoints[1];
+
             // path.moveTo(x1, y1);
             path.bezierCurveTo(cpx1, cpy1 ,cpx2, cpy2, x2, y2);
             context.stroke(path);
