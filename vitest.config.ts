@@ -6,7 +6,7 @@ export default defineConfig({
     test: {
         watch: false,
         environment: 'jsdom',
-        outputFile: 'test-results.xml',
+        outputFile: './.reports/test-results.xml',
         reporters: [
             'verbose',
             'junit',
