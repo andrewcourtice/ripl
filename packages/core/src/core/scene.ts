@@ -23,18 +23,18 @@ import {
 } from './group';
 
 import {
-    continuous,
-} from '../math/scale';
+    scaleContinuous,
+} from '../scales';
 
 import {
     DOMEventHandler,
     onDOMElementResize,
     onDOMEvent,
-} from '../utilities/dom';
+} from '../utilities';
 
 import type {
     Disposable,
-} from '../global/types';
+} from '../global';
 
 interface SceneEventMap {
     resize(width: number, height: number): void;
@@ -92,8 +92,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
     const disposals = new Set<Disposable>();
 
     let elements = sceneGroup.elements;
-    let scaleX = continuous([0, canvas.width], [0, canvas.width], true);
-    let scaleY = continuous([0, canvas.height], [0, canvas.height], true);
+    let scaleX = scaleContinuous([0, canvas.width], [0, canvas.width], true);
+    let scaleY = scaleContinuous([0, canvas.height], [0, canvas.height], true);
 
     let left = 0;
     let top = 0;
@@ -101,8 +101,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
 
     const updateScaling = (width: number, height: number) => {
         rescaleCanvas(canvas, width, height);
-        scaleX = continuous([0, width], [0, canvas.width], true);
-        scaleY = continuous([0, height], [0, canvas.height], true);
+        scaleX = scaleContinuous([0, width], [0, canvas.width], true);
+        scaleY = scaleContinuous([0, height], [0, canvas.height], true);
     };
 
     const updateStyling = () => {

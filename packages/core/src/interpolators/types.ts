@@ -1,0 +1,1 @@
+export type Interpolator<TValue = number> = (position: number) => TValue;

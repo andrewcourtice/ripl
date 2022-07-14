@@ -1,20 +1,16 @@
 import {
     shape,
-} from '../core/shape';
+} from '../core';
+
+import {
+    getHypLength,
+    Point,
+} from '../math';
 
 import {
     Line,
     linePointInterpolator,
 } from './line';
-
-import {
-    midpoint,
-    Point,
-} from '../math/geometry';
-
-import {
-    getHypLength,
-} from '../math/trigonometry';
 
 export interface Spline extends Line {
     tension?: number;

@@ -1,8 +1,11 @@
 import {
-    isNil,
-} from '../utilities/type';
+    interpolateNumber,
+} from './number';
 
-export type Interpolator<TValue = number> = (position: number) => TValue;
+import type {
+    Interpolator,
+} from './types';
+
 export type StringInterpolationSet = [valueA: StringInterpolatorTag, valueB: StringInterpolatorTag];
 export type StringInterpolationFormatter = (value: number) => number;
 export interface StringInterpolatorTag {
@@ -14,21 +17,6 @@ function tagIntStr(fragments: TemplateStringsArray, ...args: number[]): StringIn
     return {
         fragments,
         args,
-    };
-}
-
-export function interpolateNumber(valueA: number, valueB: number): Interpolator {
-    const valueDelta = valueB - valueA;
-    return position => valueA + valueDelta * position;
-}
-
-export function interpolateDate(valueA: Date, valueB: Date): Interpolator<Date> {
-    const date = new Date();
-    const interpolator = interpolateNumber(valueA.getTime(), valueB.getTime());
-
-    return position => {
-        date.setTime(interpolator(position));
-        return date;
     };
 }
 

@@ -12,7 +12,7 @@ import {
 
 import type {
     OneOrMore,
-} from '../global/types';
+} from '../global';
 
 export interface Group extends Element {
     set(elements: Element<any>[]): void;

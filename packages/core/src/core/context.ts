@@ -1,6 +1,6 @@
 import {
     isString,
-} from '../utilities/type';
+} from '../utilities';
 
 export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
     const dpr = window.devicePixelRatio;

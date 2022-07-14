@@ -6,11 +6,11 @@ import {
 import type {
     ElementOptions,
     ElementProperties,
-} from '../core/element';
+} from '../core';
 
 import {
     TAU,
-} from '../math/constants';
+} from '../math';
 
 export type Circle = Omit<Arc, 'startAngle' | 'endAngle'>;
 

@@ -1,10 +1,7 @@
 import {
-    shape,
-} from '../core/shape';
-
-import {
     BaseElement,
-} from '../core/element';
+    shape,
+} from '../core';
 
 export interface Arc extends BaseElement {
     x: number;

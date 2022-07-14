@@ -4,13 +4,13 @@ import {
 } from './constants';
 
 import {
-    interpolateNumber,
-    Interpolator,
-} from '../math/interpolate';
+    scaleContinuous,
+} from '../scales';
 
 import {
-    continuous,
-} from '../math/scale';
+    interpolateNumber,
+    Interpolator,
+} from '../interpolators';
 
 import {
     isArray,
@@ -18,7 +18,7 @@ import {
     isNil,
     isNumber,
     isObject,
-} from '../utilities/type';
+} from '../utilities';
 
 import defaultEventBus,{
     EventBus,
@@ -161,7 +161,7 @@ function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], 
     const deltaFrames = Array.from({ length: keyframes.length - 1 }, (_, index) => {
         const frameA = keyframes[index];
         const frameB = keyframes[index + 1];
-        const scale = continuous([frameA.offset, frameB.offset], [0, 1]);
+        const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);
         const calculate = calculator(frameA.value, frameB.value);
 
         return {

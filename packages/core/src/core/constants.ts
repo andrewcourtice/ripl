@@ -1,10 +1,7 @@
 import {
-    blendHex,
-} from '../math/colour';
-
-import {
+    interpolateColor,
     interpolateNumber,
-} from '../math/interpolate';
+} from '../interpolators';
 
 import {
     BaseElement,
@@ -12,19 +9,9 @@ import {
     ElementInterpolators,
 } from './element';
 
-type ElementColor = BaseElement['strokeStyle']
-| BaseElement['fillStyle']
-| BaseElement['shadowColor'];
-
 export type ElementContextOps = {
     [P in keyof BaseElement]?: (context: CanvasRenderingContext2D, value?: BaseElement[P]) => void;
 }
-
-const colorInterpolator: ElementInterpolator<ElementColor> = (valueA, valueB) => time => {
-    if (valueA && valueB) {
-        return blendHex(valueA, valueB, time);
-    }
-};
 
 const basicContextSetter = (key: keyof CanvasRenderingContext2D) => {
     return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[typeof key]) => {
@@ -39,9 +26,9 @@ export const EVENTS = {
 } as const;
 
 export const INTERPOLATORS: ElementInterpolators<BaseElement> = {
-    strokeStyle: colorInterpolator,
-    fillStyle: colorInterpolator,
-    shadowColor: colorInterpolator,
+    strokeStyle: interpolateColor as ElementInterpolator<BaseElement['strokeStyle']>,
+    fillStyle: interpolateColor as ElementInterpolator<BaseElement['fillStyle']>,
+    shadowColor: interpolateColor as ElementInterpolator<BaseElement['shadowColor']>,
     lineDash: (valueA, valueB) => {
         const interpolators = valueA?.map((segA, i) => interpolateNumber(segA, valueB[i]));
         return time => interpolators?.map(interpolate => interpolate(time));

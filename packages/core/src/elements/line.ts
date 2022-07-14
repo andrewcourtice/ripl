@@ -1,25 +1,19 @@
 import {
-    shape,
-} from '../core/shape';
-
-import {
     BaseElement,
     ElementInterpolator,
-    Interpolator,
-} from '../core/element';
+    shape,
+} from '../core';
 
 import {
     fractional,
-} from '../math/number';
-
-import {
     Point,
     waypoint,
-} from '../math/geometry';
+} from '../math';
 
 import {
     interpolateNumber,
-} from '../math/interpolate';
+    Interpolator,
+} from '../interpolators';
 
 export type DrawLineFn = (points: Point[]) => Interpolator<Point[]>;
 
@@ -76,14 +70,19 @@ export const linePointInterpolator: ElementInterpolator<Point[]> = (setA, setB) 
         extSetB,
     ] = extrapolatePointSet(setA, setB);
 
-    return time => extSetA.map(([x1, y1], index) => {
-        const [x2, y2] = extSetB[index];
+    const interpolators = extSetA.map((pointA, index) => {
+        const pointB = extSetB[index];
 
         return [
-            interpolateNumber(x1, x2, time),
-            interpolateNumber(y1, y2, time),
+            interpolateNumber(pointA[0], pointB[0]),
+            interpolateNumber(pointA[1], pointB[1]),
         ];
     });
+
+    return time => interpolators.map(([ix, iy]) => [
+        ix(time),
+        iy(time),
+    ]);
 };
 
 export const drawLinePoints: DrawLineFn = points => {

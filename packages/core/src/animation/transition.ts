@@ -5,7 +5,7 @@ import {
 
 import {
     min,
-} from '../math/number';
+} from '../math';
 
 export interface TransitionOptions {
     duration: number;

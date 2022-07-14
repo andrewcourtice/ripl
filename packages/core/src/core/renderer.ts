@@ -9,19 +9,19 @@ import {
 import {
     Ease,
     easeLinear,
-} from '../animation/ease';
+} from '../animation';
 
 import {
     min,
-} from '../math/number';
+} from '../math';
 
 import {
     isFunction,
-} from '../utilities/type';
+} from '../utilities';
 
 import type {
     OneOrMore,
-} from '../global/types';
+} from '../global';
 
 export type RendererFillMode = 'none' | 'forwards';
 

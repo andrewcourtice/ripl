@@ -1,6 +1,6 @@
 import {
     Disposable,
-} from '../global/types';
+} from '../global';
 
 export type DOMEventHandler<TEvent extends keyof HTMLElementEventMap> = (event: HTMLElementEventMap[TEvent]) => void;
 export type DOMElementResizeHandler = (event: DOMElementResizeEvent) => void;

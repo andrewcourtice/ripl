@@ -1,6 +1,6 @@
 import type {
     Disposable,
-} from '../global/types';
+} from '../global';
 
 export type EventHandler = (...args: any) => void;
 

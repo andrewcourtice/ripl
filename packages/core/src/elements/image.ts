@@ -2,7 +2,7 @@ import {
     BaseElement,
     element,
     ElementInterpolator,
-} from '../core/element';
+} from '../core';
 
 export interface Image extends BaseElement {
     image: CanvasImageSource;
