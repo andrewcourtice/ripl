@@ -20,7 +20,7 @@ import {
     getContext,
     circle,
     spline,
-    continuous,
+    scaleContinuous,
     scene,
     renderer,
     TAU,
@@ -51,8 +51,8 @@ function mainDemo() {
 
     // RAND POINTS
     const length = 20;
-    const xScale = continuous([0, length - 1], [50, canvas.width - 50]);
-    const yScale = continuous([-100, 100], [canvas.height - 50, 50]);
+    const xScale = scaleContinuous([0, length - 1], [50, canvas.width - 50]);
+    const yScale = scaleContinuous([-100, 100], [canvas.height - 50, 50]);
     const rand = () => Math.random() * (Math.random() < 0.5 ? -1 : 1);
     
     const getPoints = () => Array.from({ length }, (_, i) => [
@@ -63,8 +63,8 @@ function mainDemo() {
     const points = getPoints();
 
     // SINE DOMAIN 5 POINTS
-    // const xScale = continuous([1, 5], [50, canvas.width - 50]);
-    // const yScale = continuous([0, 2], [canvas.height - 50, 50]);
+    // const xScale = scaleContinuous([1, 5], [50, canvas.width - 50]);
+    // const yScale = scaleContinuous([0, 2], [canvas.height - 50, 50]);
 
     // const points = [
     //         [xScale(1), yScale(1)],
@@ -81,9 +81,9 @@ function mainDemo() {
     // let lowerBound = canvas.height * 0.75;
     // let upperBound = canvas.height * 0.25;
 
-    // let scaleX = continuous([0, TAU], [0, canvas.width]);
-    // let scaleY = continuous([-amplitude, amplitude], [lowerBound, upperBound]);
-    // let inScaleX = continuous([0, canvas.width], [0, TAU]);
+    // let scaleX = scaleContinuous([0, TAU], [0, canvas.width]);
+    // let scaleY = scaleContinuous([-amplitude, amplitude], [lowerBound, upperBound]);
+    // let inScaleX = scaleContinuous([0, canvas.width], [0, TAU]);
 
     // const points = Array.from({ length: 200 }, (_, i) => {
     //         const x = i * (TAU / 200);
@@ -117,7 +117,7 @@ function mainDemo() {
     markerGroup.add(markers);
 
     const crc = circle({
-        fillStyle: ['#AAAAAA', '#DDDDDD'],
+        fillStyle: ['rgb(30, 105, 120)', 'rgba(150, 105, 120, 0.2)'],
         lineWidth: 4,
         x: canvas.width / 2,
         y: canvas.height / 2,

@@ -13,12 +13,14 @@ import {
 
 import {
     circle,
-    continuous,
+    clamp,
+    scaleContinuous,
     easeOutQuint,
     group,
     line,
     renderer,
     scene,
+    serialiseRGB,
 } from '@ripl/core';
 
 let transitionCircles = () => {};
@@ -32,11 +34,19 @@ onMount(() => {
         autoStart: false
     });
 
-    const rScale = continuous([0, 1], [5, 15]);
-    const xScale = continuous([0, 1], [10, mainScene.canvas.width - 10]);
-    const yScale = continuous([0, 1], [10, mainScene.canvas.height - 10]);
+    const rScale = scaleContinuous([0, 1], [5, 15]);
+    const xScale = scaleContinuous([0, 1], [10, mainScene.canvas.width - 10]);
+    const yScale = scaleContinuous([0, 1], [10, mainScene.canvas.height - 10]);
+
+    const getColor = () => serialiseRGB(
+        clamp(Math.random() * 255, 80, 230),
+        clamp(Math.random() * 255, 80, 230),
+        clamp(Math.random() * 255, 80, 230),
+        1
+    );
 
     const circles = Array.from({ length: 1000 }, (_, index) => circle({
+        fillStyle: getColor(),
         radius: [rScale(Math.random()), rScale(Math.random())],
         x: [xScale(Math.random()), xScale(Math.random())],
         y: [yScale(Math.random()), yScale(Math.random())],
@@ -82,6 +92,7 @@ onMount(() => {
     
     transitionCircles = () => {
         circles.forEach(crc => crc.to({
+            fillStyle: getColor(),
             radius: rScale(Math.random()),
             x: xScale(Math.random()),
             y: yScale(Math.random()),

@@ -15,7 +15,7 @@ import {
     getContext,
     circle,
     group,
-    continuous,
+    scaleContinuous,
     transition,
     easeOutQuint,
 } from '@ripl/core';
@@ -29,9 +29,9 @@ onMount(() => {
         clear
     } = getContext('.example__canvas');
 
-    const rScale = continuous([0, 1], [5, 15]);
-    const xScale = continuous([0, 1], [10, canvas.width - 10]);
-    const yScale = continuous([0, 1], [10, canvas.height - 10]);
+    const rScale = scaleContinuous([0, 1], [5, 15]);
+    const xScale = scaleContinuous([0, 1], [10, canvas.width - 10]);
+    const yScale = scaleContinuous([0, 1], [10, canvas.height - 10]);
 
     const circles = Array.from({ length: 1000 }, (_, index) => circle({
         radius: [rScale(Math.random()), rScale(Math.random())],
