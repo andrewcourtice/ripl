@@ -1,6 +1,6 @@
 import type {
     Disposable,
-} from '../global';
+} from '@ripl/utilities';
 
 export type EventHandler = (...args: any) => void;
 

@@ -16,7 +16,7 @@ export function bindScale<TDomain = number, TRange = number>(domain: TDomain[], 
 
     output.domain = domain;
     output.range = range;
-    output.inverse = () => {};
+    output.inverse = (() => {}) as unknown as ScaleMethod<TRange, TDomain>;
 
     return output;
 }

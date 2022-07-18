@@ -1,4 +1,8 @@
 import {
+    arrayFind,
+} from './collection';
+
+import type {
     Disposable,
 } from '../global';
 
@@ -25,14 +29,13 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
 
     if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(entries => {
-            for (const entry of entries) {
-                if (entry.target === element) {
-                    handler({
-                        width: entry.contentRect.width,
-                        height: entry.contentRect.height,
-                    });
-                    break;
-                }
+            const entry = arrayFind(entries, ({ target }) => target === element);
+
+            if (entry) {
+                handler({
+                    width: entry.contentRect.width,
+                    height: entry.contentRect.height,
+                });
             }
         });
 

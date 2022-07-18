@@ -15,6 +15,10 @@ import {
     Interpolator,
 } from '../interpolators';
 
+import {
+    arrayForEach,
+} from '@ripl/utilities';
+
 export type DrawLineFn = (points: Point[]) => Interpolator<Point[]>;
 
 export interface Line extends BaseElement {
@@ -106,14 +110,14 @@ export const drawLinePoints: DrawLineFn = points => {
 export const drawPoints = (points: Point[], path: Path2D) => {
     let moveOnly = true;
 
-    for (const [x, y] of points) {
+    arrayForEach(points, ([x, y]) => {
         if (moveOnly) {
             path.moveTo(x, y);
             moveOnly = false;
         } else {
             path.lineTo(x, y);
         }
-    }
+    });
 };
 
 export const line = shape<Line>({

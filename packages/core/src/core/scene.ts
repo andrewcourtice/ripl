@@ -30,7 +30,8 @@ import {
     DOMEventHandler,
     onDOMElementResize,
     onDOMEvent,
-} from '../utilities';
+    setFind,
+} from '@ripl/utilities';
 
 import type {
     Disposable,
@@ -171,14 +172,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
 
         eventMap.scenemousemove.forEach(handler => handler(x, y, event));
 
-        let matchedElement: Element | undefined;
-
-        for (const element of Array.from(elements).reverse()) {
-            if (isElementActive(element, x, y)) {
-                matchedElement = element;
-                break;
-            }
-        }
+        const matchedElement = setFind(elements, element => isElementActive(element, x, y), -1);
 
         if (matchedElement && matchedElement === activeElement) {
             return onElMousemove(matchedElement);

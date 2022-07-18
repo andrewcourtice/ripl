@@ -17,11 +17,9 @@ import {
 
 import {
     isFunction,
-} from '../utilities';
-
-import type {
     OneOrMore,
-} from '../global';
+    setForEach,
+} from '@ripl/utilities';
 
 export type RendererFillMode = 'none' | 'forwards';
 
@@ -35,12 +33,14 @@ export interface RendererTransition {
     startTime: number;
     duration: number;
     ease: Ease;
+    loop: boolean;
     callback(): void;
 }
 
 export interface RendererTransitionOptions {
     duration: number;
     ease: Ease;
+    loop: boolean;
     delay: number | ((index: number) => number);
     fillMode: RendererFillMode;
     callback(element: Element): void;
@@ -48,6 +48,7 @@ export interface RendererTransitionOptions {
 
 export interface RendererOptions {
     autoStart?: boolean;
+    autoStop?: boolean;
 }
 
 export interface Renderer {
@@ -66,8 +67,10 @@ export function renderer(
 ): Renderer {
     const {
         autoStart,
+        autoStop,
     } = {
         autoStart: true,
+        autoStop: true,
         ...options,
     };
 
@@ -103,11 +106,8 @@ export function renderer(
 
         currentTime = performance.now();
 
-        for (const handler of eventMap.tick) {
-            handler(currentTime, startTime);
-        }
-
-        for (const element of scene.elements) {
+        setForEach(eventMap.tick, handler => handler(currentTime, startTime));
+        setForEach(scene.elements, element => {
             let time = 0;
 
             if (transitionMap.has(element.id)) {
@@ -115,11 +115,13 @@ export function renderer(
                     startTime,
                     duration,
                     ease,
+                    loop,
                     callback,
                 } = {
                     startTime: currentTime,
                     duration: 0,
                     ease: easeLinear,
+                    loop: false,
                     callback: () => {},
                     ...transitionMap.get(element.id),
                 };
@@ -137,7 +139,7 @@ export function renderer(
             }
 
             element.render(context, time);
-        }
+        });
 
         handle = requestAnimationFrame(tick);
     };
@@ -151,10 +153,7 @@ export function renderer(
         startTime = performance.now();
         transitionMap.clear();
 
-        for (const handler of eventMap.start) {
-            handler(startTime);
-        }
-
+        setForEach(eventMap.start, handler => handler(startTime));
         requestAnimationFrame(tick);
     };
 
@@ -170,12 +169,18 @@ export function renderer(
         running = false;
         transitionMap.clear();
 
-        for (const handler of eventMap.stop) {
-            handler(startTime, currentTime);
+        setForEach(eventMap.stop, handler => handler(startTime, currentTime));
+    };
+
+    const stopOnIdle = () => {
+        if (autoStop && transitionMap.size === 0) {
+            stop();
         }
     };
 
     const transition = (element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) => {
+        start();
+
         return new Promise<void>(resolve => {
             const elements = ([] as Element[]).concat(element);
             const totalCount = elements.length;
@@ -185,13 +190,15 @@ export function renderer(
             elements.forEach((element, index) => {
                 const {
                     duration,
-                    ease,
                     delay,
+                    loop,
+                    ease,
                     callback,
                     fillMode,
                 } = {
                     duration: 0,
                     delay: 0,
+                    loop: false,
                     ease: easeLinear,
                     fillMode: 'forwards',
                     callback: () => {},
@@ -208,6 +215,7 @@ export function renderer(
                     }
 
                     callback(element);
+                    stopOnIdle();
 
                     if (completeCount >= totalCount) {
                         resolve();
@@ -216,6 +224,7 @@ export function renderer(
 
                 transitionMap.set(element.id, {
                     duration,
+                    loop,
                     ease,
                     startTime,
                     callback: onComplete,
@@ -234,6 +243,11 @@ export function renderer(
 
     if (autoStart) {
         start();
+    }
+
+    if (autoStop) {
+        scene.on('scenemouseenter', start);
+        scene.on('scenemouseleave', stopOnIdle);
     }
 
     return {

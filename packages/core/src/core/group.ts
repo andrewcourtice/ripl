@@ -10,9 +10,10 @@ import {
     ElementProperties,
 } from './element';
 
-import type {
+import {
     OneOrMore,
-} from '../global';
+    setForEach,
+} from '@ripl/utilities';
 
 export interface Group extends Element {
     set(elements: Element<any>[]): void;
@@ -32,9 +33,7 @@ export function group(
         name: 'group',
         renderless: true,
         onRender({ context, time }) {
-            for (const child of children) {
-                child.render(context, time);
-            }
+            setForEach(children, ({ render }) => render(context, time));
         },
     })(properties || {}, options);
 
@@ -76,9 +75,9 @@ export function group(
     function query(query: string) {
         let matches: Element[] | undefined;
 
-        for (const element of getGroupElements()) {
+        // for (const element of getGroupElements()) {
 
-        }
+        // }
 
         return matches;
     }

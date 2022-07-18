@@ -60,15 +60,21 @@ importers:
       astro: 1.0.0-beta.65
       svelte: 3.48.0
 
-  apps/website_old:
+  packages/charts:
     specifiers:
       '@ripl/core': workspace:^
-      flex-layout-attribute: ^1.0.3
+      '@ripl/utilities': workspace:^
     dependencies:
-      '@ripl/core': link:../../packages/core
-      flex-layout-attribute: 1.0.3
+      '@ripl/core': link:../core
+      '@ripl/utilities': link:../utilities
 
   packages/core:
+    specifiers:
+      '@ripl/utilities': workspace:^
+    dependencies:
+      '@ripl/utilities': link:../utilities
+
+  packages/utilities:
     specifiers: {}
 
 packages:

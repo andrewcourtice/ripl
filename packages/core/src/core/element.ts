@@ -13,16 +13,22 @@ import {
 } from '../interpolators';
 
 import {
+    arrayFind,
     isArray,
     isFunction,
     isNil,
     isNumber,
     isObject,
-} from '../utilities';
+} from '@ripl/utilities';
 
 import defaultEventBus,{
     EventBus,
 } from './event-bus';
+
+import {
+    objectForEach,
+    objectMap,
+} from '@ripl/utilities';
 
 export type ElementValueBounds<TValue = number> = [first: TValue, last: TValue];
 export type ElementValueKeyFrame<TValue = number> = {
@@ -169,10 +175,10 @@ function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], 
             calculate,
             ...frameA,
         };
-    }).reverse();
+    });
 
     return time => {
-        const keyframe = deltaFrames.find(frame => time >= frame.offset);
+        const keyframe = arrayFind(deltaFrames, frame => time >= frame.offset, -1);
 
         if (keyframe) {
             return keyframe.calculate(keyframe.scale(time));
@@ -189,31 +195,23 @@ function defaultInterpolator<TElement extends BaseElement>(valueA: TElement[keyo
 }
 
 function getInterpolators<TElement extends BaseElement>(properties: Partial<ElementProperties<TElement>>, interpolators: ElementInterpolators<TElement> = {}): ElementValueFunctions<TElement> {
-    const output = {} as ElementValueFunctions<TElement>;
-
-    for (const key in properties) {
-        const value = properties[key];
+    return objectMap(properties, (key, value) => {
         const interpolator = interpolators[key] || defaultInterpolator;
 
         if (isFunction(value)) {
-            output[key] = value;
-            continue;
+            return value;
         }
 
         if (isElementValueKeyFrame(value)) {
-            output[key] = getKeyframeInterpolator(value, interpolator);
-            continue;
+            return getKeyframeInterpolator(value, interpolator);
         }
 
         if (isElementValueBound(value)) {
-            output[key] = interpolator!(value[0], value[1]);
-            continue;
+            return interpolator!(value[0], value[1]);
         }
 
-        output[key] = time => value;
-    }
-
-    return output;
+        return time => value;
+    });
 }
 
 export function element<TElement extends BaseElement, TReturn = unknown>(definition: ElementDefinition<TElement, TReturn>): ElementConstructor<TElement> {
@@ -271,7 +269,7 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
             const parentState = parent?.state(_time) || {};
             const output = {} as TElement;
 
-            const updateOutput = (key: keyof TElement, value: unknown) => {
+            const updateOutput = (key: keyof TElement, value: TElement[keyof TElement]) => {
                 output[key] = value;
 
                 if (callback) {
@@ -279,13 +277,8 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
                 }
             };
 
-            for (const key in parentState) {
-                updateOutput(key, parentState[key]);
-            }
-
-            for (const key in valueFns) {
-                updateOutput(key, valueFns[key](_time));
-            }
+            objectForEach(parentState, updateOutput);
+            objectForEach(valueFns, (key, value) => updateOutput(key, value(_time)));
 
             return output;
         };
@@ -293,14 +286,9 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
         const to = (newState: Partial<TElement>) => {
             currentState = currentState || state();
 
-            const properties = {} as ElementProperties<TElement>;
-
-            for (const key in currentState) {
-                const startValue = currentState[key];
-                const endValue = newState[key] || startValue;
-
-                properties[key] = [startValue, endValue] as ElementValueBounds<typeof currentState[typeof key]>;
-            }
+            const properties = objectMap(currentState, (key, startValue) => {
+                return [startValue, newState[key] || startValue];
+            });
 
             update(properties);
         };
