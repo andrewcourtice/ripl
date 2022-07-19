@@ -27,15 +27,13 @@ import {
 } from '../scales';
 
 import {
+    Disposable,
+    DOMElementEventMap,
     DOMEventHandler,
     onDOMElementResize,
     onDOMEvent,
     setFind,
 } from '@ripl/utilities';
-
-import type {
-    Disposable,
-} from '../global';
 
 interface SceneEventMap {
     resize(width: number, height: number): void;
@@ -114,7 +112,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         context.font = font;
     };
 
-    const attachDOMEvent = <TEvent extends keyof HTMLElementEventMap>(event: TEvent, handler: DOMEventHandler<TEvent>) => {
+    const attachDOMEvent = <TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) => {
         disposals.add(onDOMEvent(canvas, event, handler));
     };
 

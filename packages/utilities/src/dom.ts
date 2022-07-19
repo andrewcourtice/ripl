@@ -4,17 +4,23 @@ import {
 
 import type {
     Disposable,
-} from '../global';
+} from './types';
 
-export type DOMEventHandler<TEvent extends keyof HTMLElementEventMap> = (event: HTMLElementEventMap[TEvent]) => void;
+export type DOMEventHandler<TElement, TEvent extends keyof DOMElementEventMap<TElement>> = (this: TElement, event: DOMElementEventMap<TElement>[TEvent]) => void;
 export type DOMElementResizeHandler = (event: DOMElementResizeEvent) => void;
+
+export type DOMElementEventMap<TElement> = TElement extends MediaQueryList ? MediaQueryListEventMap
+    : TElement extends HTMLElement ? HTMLElementEventMap
+        : TElement extends Window ? WindowEventMap
+            : TElement extends Document ? DocumentEventMap
+                : Record<string, Event>
 
 export interface DOMElementResizeEvent {
     width: number;
     height: number;
 }
 
-export function onDOMEvent<TEvent extends keyof HTMLElementEventMap>(element: HTMLElement, event: TEvent, handler: DOMEventHandler<TEvent>): Disposable {
+export function onDOMEvent<TElement extends EventTarget, TEvent extends keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable {
     element.addEventListener(event, handler);
 
     return {
