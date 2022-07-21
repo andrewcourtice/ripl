@@ -1,4 +1,5 @@
-import type {
+import {
+    arrayForEach,
     Disposable,
 } from '@ripl/utilities';
 
@@ -11,7 +12,7 @@ export interface EventBus {
     emit(event: string, ...args: any[]): void;
 }
 
-export function eventBus(): EventBus {
+export function createEventBus(): EventBus {
 
     const listeners: Record<string, EventHandler[]> = {};
 
@@ -57,7 +58,7 @@ export function eventBus(): EventBus {
             return;
         }
 
-        handlers.forEach(handler => handler(...args));
+        arrayForEach(handlers, handler => handler(...args));
     }
 
     return {
@@ -68,4 +69,4 @@ export function eventBus(): EventBus {
     };
 }
 
-export default eventBus();
+export default createEventBus();

@@ -61,7 +61,7 @@ export interface Renderer {
     get busy(): boolean;
 }
 
-export function renderer(
+export function createRenderer(
     scene: Scene,
     options?: RendererOptions
 ): Renderer {
@@ -83,7 +83,7 @@ export function renderer(
         throw new Error('Failed to get context');
     }
 
-    const transitionMap = new Map<symbol, RendererTransition>();
+    const transitionMap = new Map<string, RendererTransition>();
     const eventMap = {
         start: new Set(),
         stop: new Set(),

@@ -19,6 +19,7 @@ import {
     isNil,
     isNumber,
     isObject,
+    stringUniqueId,
 } from '@ripl/utilities';
 
 import defaultEventBus,{
@@ -55,35 +56,33 @@ export type ElementInterpolators<TElement extends BaseElement> = {
     [P in keyof TElement]?: ElementInterpolator<TElement[P]>;
 }
 
-export type ElementConstructor<TElement extends BaseElement> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement>;
+export type ElementDefinition<TElement extends BaseElement, TResult = unknown> = (properties: ElementProperties<TElement>, options: ElementOptions<TElement>, instance: ElementInstance<TElement>) => ElementRenderFunction<TElement, TResult>;
+export type ElementConstructor<TElement extends BaseElement, TResult = unknown> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement, TResult>;
 export type ElementRenderFunction<TElement extends BaseElement, TReturn = unknown> = (frame: ElementRenderFrame<TElement>) => TReturn;
-export type ElementValidator<TElement extends BaseElement> = (properties: ElementProperties<TElement>) => boolean;
 export type FrameCallback<TElement extends BaseElement> = (key: keyof TElement, value: TElement[keyof TElement]) => void;
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 
-export interface ElementDefinition<TElement extends BaseElement, TReturn = unknown> {
-    name: string;
-    renderless?: boolean;
+export interface ElementDefinitionOptions<TElement extends BaseElement> {
+    abstract?: boolean;
     interpolators?: ElementInterpolators<TElement>;
-    validate?: ElementValidator<TElement>;
-    onRender: ElementRenderFunction<TElement, TReturn>;
 }
 
 export interface ElementOptions<TElement extends BaseElement> {
+    id?: string;
     class?: string;
+    data?: unknown;
     pointerEvents?: ElementPointerEvents;
     interpolators?: ElementInterpolators<TElement>;
+}
+
+export interface ElementInstance<TElement extends BaseElement> {
+    onUpdate(handler: () => void): void;
 }
 
 export interface ElementRenderFrame<TElement extends BaseElement> {
     context: CanvasRenderingContext2D;
     state: TElement;
     time: number;
-}
-
-export interface ElementRenderData {
-    [key: PropertyKey]: unknown;
-    base?: BaseElement;
 }
 
 export interface BaseElement {
@@ -112,9 +111,10 @@ export interface BaseElement {
 }
 
 export interface Element<TElement extends BaseElement = BaseElement, TResult = unknown> {
-    id: symbol;
-    name: string;
+    id: string;
+    type: string;
     class?: string;
+    data?: unknown;
     pointerEvents: ElementPointerEvents;
     clone(): Element<TElement>;
     update(properties: Partial<ElementProperties<TElement>>): void;
@@ -214,50 +214,54 @@ function getInterpolators<TElement extends BaseElement>(properties: Partial<Elem
     });
 }
 
-export function element<TElement extends BaseElement, TReturn = unknown>(definition: ElementDefinition<TElement, TReturn>): ElementConstructor<TElement> {
+export function createElement<TElement extends BaseElement, TResult = unknown>(type: string, definition: ElementDefinition<TElement, TResult>, definitionOptions: ElementDefinitionOptions<TElement> = {}): ElementConstructor<TElement, TResult> {
     const {
-        name,
-        validate,
-        onRender,
-        renderless,
+        abstract,
         interpolators: rootInterpolators,
-    } = definition;
+    } = definitionOptions;
 
-    return (properties, options): Element<TElement> => {
-        const id = Symbol();
+    return (properties, instanceOptions = {}) => {
+        const handlers = {
+            onUpdate: new Set(),
+        } as Record<keyof ElementInstance<TElement>, Set<() => void>>;
+
+        const instance = {
+            onUpdate: handler => handlers.onUpdate.add(handler),
+        } as ElementInstance<TElement>;
 
         const {
-            interpolators,
-            class: elClass,
+            id = `${type}:${stringUniqueId()}`,
             pointerEvents = 'all',
-        } = options || {};
+            data,
+            class: elClass,
+            interpolators: instanceInterpolators,
+        } = instanceOptions;
 
-        if (validate && !validate(properties)) {
-            throw new Error('invalid shape options provided');
-        }
-
-        const mergedInterpolators = {
+        const interpolators = {
             ...INTERPOLATORS,
             ...rootInterpolators,
-            ...interpolators,
+            ...instanceInterpolators,
         } as ElementInterpolators<TElement>;
 
-        let valueFns = getInterpolators(properties, mergedInterpolators);
+        const onRender = definition(properties, instanceOptions, instance);
+
+        let valueFns = getInterpolators(properties, interpolators);
 
         let eventBus: EventBus | undefined;
         let parent: Element | undefined;
-
         let currentState: TElement;
-        let result: TReturn;
+        let result: TResult;
 
         const getEventBus = () => eventBus || parent?.eventBus || defaultEventBus;
 
-        const clone = () => element(definition)(properties, options);
+        const clone = () => createElement(type, definition, definitionOptions)(properties, instanceOptions);
         const update = (properties: Partial<ElementProperties<TElement>>) => {
             valueFns = {
                 ...valueFns,
-                ...getInterpolators(properties, mergedInterpolators),
+                ...getInterpolators(properties, interpolators),
             };
+
+            handlers.onUpdate.forEach(handler => handler());
         };
 
         const state = (time?: number, callback?: FrameCallback<TElement>) => {
@@ -298,7 +302,7 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
 
             try {
                 currentState = state(time, (key, value) => {
-                    if (!renderless && key in CONTEXT_OPERATIONS) {
+                    if (!abstract && key in CONTEXT_OPERATIONS) {
                         CONTEXT_OPERATIONS[key]?.(context, value);
                     }
                 });
@@ -317,7 +321,8 @@ export function element<TElement extends BaseElement, TReturn = unknown>(definit
 
         return {
             id,
-            name,
+            type,
+            data,
             clone,
             update,
             state,

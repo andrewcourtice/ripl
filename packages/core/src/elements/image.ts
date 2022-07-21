@@ -1,6 +1,6 @@
 import {
     BaseElement,
-    element,
+    createElement,
     ElementInterpolator,
 } from '../core';
 
@@ -33,22 +33,20 @@ const imageInterpolator: ElementInterpolator<Image['image']> = (valueA, valueB) 
     };
 };
 
-export const image = element<Image>({
-    name: 'image',
+export const createImage = createElement<Image>('image', () => ({ context, state }) => {
+    const {
+        image,
+        x,
+        y,
+    } = state;
+
+    if (image instanceof ImageData) {
+        return context.putImageData(image, x, y);
+    }
+
+    context.drawImage(image, x, y);
+}, {
     interpolators: {
         image: imageInterpolator,
-    },
-    onRender({ context, state }) {
-        const {
-            image,
-            x,
-            y,
-        } = state;
-
-        if (image instanceof ImageData) {
-            return context.putImageData(image, x, y);
-        }
-
-        context.drawImage(image, x, y);
     },
 });

@@ -1,6 +1,6 @@
 import {
     BaseElement,
-    shape,
+    createShape,
 } from '../core';
 
 export interface Ellipse extends BaseElement {
@@ -13,27 +13,24 @@ export interface Ellipse extends BaseElement {
     endAngle: number;
 }
 
-export const ellipse = shape<Ellipse>({
-    name: 'ellipse',
-    onRender({ path, state }) {
-        const {
-            x,
-            y,
-            radiusX,
-            radiusY,
-            rotation,
-            startAngle,
-            endAngle,
-        } = state;
+export const createEllipse = createShape<Ellipse>('ellipse', () => ({ path, state }) => {
+    const {
+        x,
+        y,
+        radiusX,
+        radiusY,
+        rotation,
+        startAngle,
+        endAngle,
+    } = state;
 
-        path.ellipse(
-            x,
-            y,
-            radiusX,
-            radiusY,
-            rotation,
-            startAngle,
-            endAngle
-        );
-    },
+    path.ellipse(
+        x,
+        y,
+        radiusX,
+        radiusY,
+        rotation,
+        startAngle,
+        endAngle
+    );
 });

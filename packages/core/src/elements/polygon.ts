@@ -1,54 +1,48 @@
-
 import {
-    shape,
+    BaseElement,
+    createShape,
 } from '../core';
 
 import {
-    arePointsEqual,
-    Point,
-    TAU,
+    getPolygonPoints,
 } from '../math';
 
 import {
+    interpolateNumber,
+} from '../interpolators';
+
+import {
     drawPoints,
-    Line,
-    linePointInterpolator,
-} from './line';
+} from './polyline';
 
-export type Polygon = Line;
+export interface Polygon extends BaseElement {
+    cx: number;
+    cy: number;
+    radius: number;
+    sides: number;
+}
 
-export const getPolygonPoints = (sides: number, cx: number, cy: number, radius: number) => {
-    const angle = TAU / sides;
-    const offset = angle / 2;
+export const createPolygon = createShape<Polygon>('polygon', () => ({ state, path }) => {
+    const {
+        sides,
+        cx,
+        cy,
+        radius,
+    } = state;
 
-    const points = Array.from({ length: sides }, (_, i) => {
-        const x = radius * Math.cos(i * angle - offset);
-        const y = radius * Math.sin(i * angle - offset);
+    const points = getPolygonPoints(sides, cx, cy, radius);
 
-        return [
-            cx + x,
-            cy + y,
-        ] as Point;
-    });
-
-    return [points[points.length - 1]].concat(points);
-};
-
-export const polygon = shape<Polygon>({
-    name: 'polygon',
+    drawPoints(points, path);
+    path.closePath();
+}, {
     interpolators: {
-        points: linePointInterpolator,
-    },
-    //validate: options => options.points.length >= 3,
-    onRender({ path, state }) {
-        const {
-            points,
-        } = state;
+        sides: (sidesA, sidesB) => {
+            const interpolator = interpolateNumber(
+                Math.max(sidesA, 3),
+                Math.max(sidesB, 3)
+            );
 
-        drawPoints(points, path);
-
-        if (arePointsEqual(points[0], points[points.length - 1])) {
-            path.closePath();
-        }
+            return position => Math.floor(interpolator(position));
+        },
     },
 });

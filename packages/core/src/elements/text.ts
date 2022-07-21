@@ -1,6 +1,6 @@
 import {
     BaseElement,
-    element,
+    createElement,
 } from '../core';
 
 export interface Text extends BaseElement {
@@ -9,23 +9,20 @@ export interface Text extends BaseElement {
     content: string | number;
 }
 
-export const text = element<Text>({
-    name: 'text',
-    onRender({ context, state }) {
-        const {
-            x,
-            y,
-            content,
-            fillStyle,
-            strokeStyle,
-        } = state;
+export const createText = createElement<Text>('text', () => ({ context, state }) => {
+    const {
+        x,
+        y,
+        content,
+        fillStyle,
+        strokeStyle,
+    } = state;
 
-        if (strokeStyle) {
-            return context.strokeText(content.toString(), x, y);
-        }
+    if (strokeStyle) {
+        return context.strokeText(content.toString(), x, y);
+    }
 
-        if (fillStyle) {
-            return context.fillText(content.toString(), x, y);
-        }
-    },
+    if (fillStyle) {
+        return context.fillText(content.toString(), x, y);
+    }
 });

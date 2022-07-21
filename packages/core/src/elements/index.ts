@@ -4,6 +4,7 @@ export * from './ellipse';
 export * from './image';
 export * from './line';
 export * from './polygon';
+export * from './polyline';
 export * from './rect';
 export * from './spline';
 export * from './text';

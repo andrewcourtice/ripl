@@ -1,6 +1,6 @@
 import {
-    arc,
     Arc,
+    createArc,
 } from './arc';
 
 import type {
@@ -14,8 +14,8 @@ import {
 
 export type Circle = Omit<Arc, 'startAngle' | 'endAngle'>;
 
-export function circle(properties: ElementProperties<Circle>, options?: ElementOptions<Circle>) {
-    return arc({
+export function createCircle(properties: ElementProperties<Circle>, options?: ElementOptions<Circle>) {
+    return createArc({
         ...properties,
         startAngle: 0,
         endAngle: TAU,

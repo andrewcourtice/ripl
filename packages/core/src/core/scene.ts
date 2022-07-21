@@ -9,7 +9,7 @@ import {
 } from './element';
 
 import {
-    eventBus,
+    createEventBus,
 } from './event-bus';
 
 import {
@@ -18,8 +18,8 @@ import {
 } from './context';
 
 import {
+    createGroup,
     Group,
-    group,
 } from './group';
 
 import {
@@ -62,7 +62,7 @@ export interface Scene {
     get elements(): Set<Element>;
 }
 
-export function scene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
+export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
     const {
         canvas,
         context,
@@ -86,11 +86,11 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         [P in keyof SceneEventMap]: Set<SceneEventMap[P]>;
     };
 
-    const sceneGroup = group(properties);
-    const sceneEventBus = eventBus();
+    const group = createGroup(properties);
+    const eventBus = createEventBus();
     const disposals = new Set<Disposable>();
 
-    let elements = sceneGroup.elements;
+    let elements = group.elements;
     let scaleX = scaleContinuous([0, canvas.width], [0, canvas.width], true);
     let scaleY = scaleContinuous([0, canvas.height], [0, canvas.height], true);
 
@@ -189,7 +189,7 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
 
     const render = (time?: number) => {
         clear();
-        sceneGroup.render(context, time);
+        group.render(context, time);
     };
 
     updateStyling();
@@ -203,9 +203,9 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         }
     });
 
-    sceneGroup.eventBus = sceneEventBus;
-    sceneEventBus.on(EVENTS.groupUpdated, () => {
-        elements = sceneGroup.elements;
+    group.eventBus = eventBus;
+    eventBus.on(EVENTS.groupUpdated, () => {
+        elements = group.elements;
     });
 
     return {
@@ -215,8 +215,8 @@ export function scene(target: string | HTMLCanvasElement, options?: SceneOptions
         off,
         render,
         dispose,
-        add: sceneGroup.add.bind(sceneGroup),
-        remove: sceneGroup.remove.bind(sceneGroup),
+        add: group.add.bind(group),
+        remove: group.remove.bind(group),
         get elements() {
             return elements;
         },

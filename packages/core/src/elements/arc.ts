@@ -1,6 +1,6 @@
 import {
     BaseElement,
-    shape,
+    createShape,
 } from '../core';
 
 export interface Arc extends BaseElement {
@@ -11,17 +11,14 @@ export interface Arc extends BaseElement {
     endAngle: number;
 }
 
-export const arc = shape<Arc>({
-    name: 'arc',
-    onRender({ path, state }) {
-        const {
-            x,
-            y,
-            radius,
-            startAngle,
-            endAngle,
-        } = state;
+export const createArc = createShape<Arc>('arc', () => ({ path, state }) => {
+    const {
+        x,
+        y,
+        radius,
+        startAngle,
+        endAngle,
+    } = state;
 
-        path.arc(x, y, radius, startAngle, endAngle);
-    },
+    path.arc(x, y, radius, startAngle, endAngle);
 });

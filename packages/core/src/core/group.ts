@@ -4,8 +4,8 @@ import {
 
 import {
     BaseElement,
+    createElement,
     Element,
-    element,
     ElementOptions,
     ElementProperties,
 } from './element';
@@ -23,18 +23,18 @@ export interface Group extends Element {
     get elements(): Set<Element>;
 }
 
-export function group(
+export function createGroup(
     properties?: ElementProperties<BaseElement>,
     options?: ElementOptions<BaseElement>
 ): Group {
     let children = new Set<Element>();
 
-    const el = element({
-        name: 'group',
-        renderless: true,
-        onRender({ context, time }) {
+    const el = createElement('group', () => {
+        return ({ context, time }) => {
             setForEach(children, ({ render }) => render(context, time));
-        },
+        };
+    }, {
+        abstract: true,
     })(properties || {}, options);
 
     function notify() {
@@ -43,7 +43,7 @@ export function group(
 
     function getGroupElements() {
         return new Set(Array.from(children).flatMap(item => {
-            if (item.name === 'group') {
+            if (item.type === 'group') {
                 return Array.from((item as Group).elements);
             }
 
@@ -75,9 +75,9 @@ export function group(
     function query(query: string) {
         let matches: Element[] | undefined;
 
-        // for (const element of getGroupElements()) {
+        const tokens = query.split(' ');
 
-        // }
+
 
         return matches;
     }
