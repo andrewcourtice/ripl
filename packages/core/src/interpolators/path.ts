@@ -1,14 +1,20 @@
 import {
+    BorderRadius,
     fractional,
     getPolygonPoints,
+    getWaypoint,
+    normaliseBorderRadius,
     Point,
     TAU,
-    waypoint,
 } from '../math';
 
 import {
     interpolateNumber,
 } from './number';
+
+import {
+    arrayMap,
+} from '@ripl/utilities';
 
 import type {
     Interpolator,
@@ -38,7 +44,7 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     Array.from({ length: partitionCount }, (_, pcIndex) => {
         const insertionIndex = pcIndex * (pointsPerPartition + 1);
         const points = Array.from({ length: pointsPerPartition }, (_, pppIndex) => {
-            return waypoint(dest[pcIndex], dest[pcIndex + 1], (1 / pointsPerPartition) * pppIndex);
+            return getWaypoint(dest[pcIndex], dest[pcIndex + 1], (1 / pointsPerPartition) * pppIndex);
         });
 
         extrapolated.splice(insertionIndex, 0, ...points);
@@ -90,7 +96,7 @@ export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
         const lowerBound = Math.floor(offset);
         const upperBound = Math.ceil(offset);
 
-        return waypoint(points[lowerBound], points[upperBound], fractional(offset));
+        return getWaypoint(points[lowerBound], points[upperBound], fractional(offset));
     };
 }
 
@@ -131,4 +137,12 @@ export function interpolateCirclePoint(
         cx + radius * Math.cos(position * TAU - offset),
         cy + radius * Math.sin(position * TAU - offset),
     ];
+}
+
+export function interpolateBorderRadius(radiusA: number | BorderRadius, radiusB: number | BorderRadius): Interpolator<BorderRadius> {
+    const nRadiusA = normaliseBorderRadius(radiusA);
+    const nRadiusB = normaliseBorderRadius(radiusB);
+    const interpolators = arrayMap(nRadiusA, (value, index) => interpolateNumber(value, nRadiusB[index]));
+
+    return position => arrayMap(interpolators, ib => ib(position)) as BorderRadius;
 }

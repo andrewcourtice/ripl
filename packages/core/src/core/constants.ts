@@ -9,13 +9,17 @@ import {
     ElementInterpolators,
 } from './element';
 
+import {
+    isNil,
+} from '@ripl/utilities';
+
 export type ElementContextOps = {
     [P in keyof BaseElement]?: (context: CanvasRenderingContext2D, value?: BaseElement[P]) => void;
 }
 
 const basicContextSetter = (key: keyof CanvasRenderingContext2D) => {
     return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[typeof key]) => {
-        if (value) {
+        if (!isNil(value)) {
             context[key] = value;
         }
     };

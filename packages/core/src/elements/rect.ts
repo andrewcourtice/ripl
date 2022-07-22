@@ -4,19 +4,13 @@ import {
 } from '../core';
 
 import {
-    arrayMap,
-    isArray,
-} from '@ripl/utilities';
-import {
-    interpolateNumber, Interpolator,
-} from '../interpolators';
+    BorderRadius,
+    normaliseBorderRadius,
+} from '../math';
 
-type BorderRadius = [
-    topLeft: number,
-    topRight: number,
-    bottomRight: number,
-    bottomLeft: number,
-];
+import {
+    interpolateBorderRadius,
+} from '../interpolators';
 
 export interface Rect extends BaseElement {
     x: number;
@@ -24,29 +18,6 @@ export interface Rect extends BaseElement {
     width: number;
     height: number;
     borderRadius?: number | BorderRadius;
-}
-
-function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius {
-    return isArray(borderRadius)
-        ? borderRadius
-        : [
-            borderRadius,
-            borderRadius,
-            borderRadius,
-            borderRadius,
-        ];
-}
-
-function interpolateBorderRadius(radiusA?: number | BorderRadius, radiusB?: number | BorderRadius): Interpolator<BorderRadius> {
-    if (!radiusA || !radiusB) {
-        return () => [0, 0, 0, 0];
-    }
-
-    const nRadiusA = normaliseBorderRadius(radiusA);
-    const nRadiusB = normaliseBorderRadius(radiusB);
-    const interpolators = arrayMap(nRadiusA, (value, index) => interpolateNumber(value, nRadiusB[index]));
-
-    return position => arrayMap(interpolators, ib => ib(position)) as BorderRadius;
 }
 
 export const createRect = createShape<Rect>('rect', () => ({ path, state }) => {
@@ -81,6 +52,12 @@ export const createRect = createShape<Rect>('rect', () => ({ path, state }) => {
     path.closePath();
 }, {
     interpolators: {
-        borderRadius: interpolateBorderRadius,
+        borderRadius: (bRadiusA, bRadiusB) => {
+            if (bRadiusA && bRadiusB) {
+                return interpolateBorderRadius(bRadiusA, bRadiusB);
+            }
+
+            return () => undefined;
+        },
     },
 });

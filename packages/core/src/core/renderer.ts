@@ -7,6 +7,10 @@ import {
 } from './scene';
 
 import {
+    isGroup,
+} from './group';
+
+import {
     Ease,
     easeLinear,
 } from '../animation';
@@ -182,9 +186,11 @@ export function createRenderer(
         start();
 
         return new Promise<void>(resolve => {
-            const elements = ([] as Element[]).concat(element);
-            const totalCount = elements.length;
+            const elements = ([] as Element[]).concat(element).flatMap(element => {
+                return isGroup(element) ? Array.from(element.elements) : element;
+            });
 
+            const totalCount = elements.length;
             let completeCount = 0;
 
             elements.forEach((element, index) => {

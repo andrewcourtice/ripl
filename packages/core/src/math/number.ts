@@ -21,7 +21,7 @@ export function fractional(value: number): number {
     return value - Math.floor(value);
 }
 
-export function numExtent<TValue>(values: TValue[], accessor: (value: TValue) => number): [min: number, max: number] {
+export function getExtent<TValue>(values: TValue[], accessor: (value: TValue) => number): [min: number, max: number] {
     let min = accessor(values[0]);
     let max = accessor(values[0]);
 
@@ -36,4 +36,14 @@ export function numExtent<TValue>(values: TValue[], accessor: (value: TValue) =>
         min,
         max,
     ];
+}
+
+export function getTotal<TValue>(values: TValue[], accessor: (value: TValue) => number): number {
+    let total = 0;
+
+    arrayForEach(values, item => {
+        total += accessor(item);
+    });
+
+    return total;
 }

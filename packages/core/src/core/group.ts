@@ -19,8 +19,15 @@ export interface Group extends Element {
     set(elements: Element<any>[]): void;
     add(element: OneOrMore<Element<any>>): void;
     remove(element: OneOrMore<Element<any>>): void;
+    clear(): void;
     query(query: string): Element[] | undefined;
     get elements(): Set<Element>;
+}
+
+const TYPE = 'group';
+
+export function isGroup(element: Element): element is Group {
+    return element.type === TYPE;
 }
 
 export function createGroup(
@@ -29,7 +36,7 @@ export function createGroup(
 ): Group {
     let children = new Set<Element>();
 
-    const el = createElement('group', () => {
+    const el = createElement(TYPE, () => {
         return ({ context, time }) => {
             setForEach(children, ({ render }) => render(context, time));
         };
@@ -43,7 +50,7 @@ export function createGroup(
 
     function getGroupElements() {
         return new Set(Array.from(children).flatMap(item => {
-            if (item.type === 'group') {
+            if (isGroup(item)) {
                 return Array.from((item as Group).elements);
             }
 
@@ -72,6 +79,12 @@ export function createGroup(
         notify();
     }
 
+    function clear() {
+        children.forEach(item => item.parent = undefined);
+        children.clear();
+        notify();
+    }
+
     function query(query: string) {
         let matches: Element[] | undefined;
 
@@ -87,6 +100,7 @@ export function createGroup(
         set,
         add,
         remove,
+        clear,
         query,
 
         get parent() {

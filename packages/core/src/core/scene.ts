@@ -55,6 +55,7 @@ export interface Scene {
     context: CanvasRenderingContext2D;
     add: Group['add'];
     remove: Group['remove'];
+    clear: Group['clear'];
     on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
     off<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
     render(time?: number): void;
@@ -205,6 +206,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
 
     group.eventBus = eventBus;
     eventBus.on(EVENTS.groupUpdated, () => {
+        console.log(group.elements);
         elements = group.elements;
     });
 
@@ -217,6 +219,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         dispose,
         add: group.add.bind(group),
         remove: group.remove.bind(group),
+        clear: group.clear.bind(group),
         get elements() {
             return elements;
         },
