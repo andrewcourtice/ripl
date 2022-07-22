@@ -1,6 +1,6 @@
 import {
-    group,
-    line,
+    createGroup,
+    createPolyline,
     Scene,
 } from '@ripl/core';
 
@@ -35,12 +35,12 @@ export function axis(scene: Scene, options?: Partial<AxisOptions>) {
         canvas,
     } = scene;
 
-    const axisGroup = group({
+    const axisGroup = createGroup({
         strokeStyle: color,
     });
 
     if (x.enabled) {
-        const xAxisLine = line({
+        const xAxisLine = createPolyline({
             points: () => [
                 [padding, canvas.width - padding],
                 [],
@@ -49,9 +49,9 @@ export function axis(scene: Scene, options?: Partial<AxisOptions>) {
     }
 
     if (y.enabled) {
-        const yAxisGroup = group();
+        const yAxisGroup = createGroup();
 
-        const yAxisLine = line({
+        const yAxisLine = createPolyline({
             points: () => [
                 [padding, padding],
                 [padding, canvas.height - padding],
