@@ -23,10 +23,6 @@ import {
 } from './group';
 
 import {
-    scaleContinuous,
-} from '../scales';
-
-import {
     Disposable,
     DOMElementEventMap,
     DOMEventHandler,
@@ -60,14 +56,18 @@ export interface Scene {
     off<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
     render(time?: number): void;
     dispose(): void;
+    get width(): number;
+    get height(): number;
     get elements(): Set<Element>;
 }
 
 export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
-    const {
+    let {
         canvas,
         context,
         clear,
+        width,
+        height,
     } = getContext(target);
 
     const {
@@ -92,17 +92,16 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
     const disposals = new Set<Disposable>();
 
     let elements = group.elements;
-    let scaleX = scaleContinuous([0, canvas.width], [0, canvas.width], true);
-    let scaleY = scaleContinuous([0, canvas.height], [0, canvas.height], true);
 
     let left = 0;
     let top = 0;
     let activeElement: Element | undefined;
 
-    const updateScaling = (width: number, height: number) => {
+    const updateScaling = (_width: number, _height: number) => {
+        width = _width;
+        height = _height;
+
         rescaleCanvas(canvas, width, height);
-        scaleX = scaleContinuous([0, width], [0, canvas.width], true);
-        scaleY = scaleContinuous([0, height], [0, canvas.height], true);
     };
 
     const updateStyling = () => {
@@ -162,8 +161,8 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
     });
 
     attachDOMEvent('mousemove', event => {
-        const x = scaleX(event.clientX - left);
-        const y = scaleY(event.clientY - top);
+        const x = event.clientX - left;
+        const y = event.clientY - top;
 
         const onElMousemove = (element: Element) => eventMap.elementmousemove.forEach(handler => handler(element));
         const onElMouseenter = (element: Element) => eventMap.elementmouseenter.forEach(handler => handler(element));
@@ -206,7 +205,6 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
 
     group.eventBus = eventBus;
     eventBus.on(EVENTS.groupUpdated, () => {
-        console.log(group.elements);
         elements = group.elements;
     });
 
@@ -220,6 +218,14 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         add: group.add.bind(group),
         remove: group.remove.bind(group),
         clear: group.clear.bind(group),
+
+        get width() {
+            return width;
+        },
+        get height() {
+            return height;
+        },
+
         get elements() {
             return elements;
         },

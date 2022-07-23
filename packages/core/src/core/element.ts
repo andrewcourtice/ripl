@@ -343,7 +343,7 @@ export function createElement<TElement extends BaseElement, TResult = unknown>(t
             },
 
             get path() {
-                return [parent?.path || '', `.${elClass}`].join(' ');
+                return [parent?.id || '', id].join('/');
             },
 
             get eventBus() {

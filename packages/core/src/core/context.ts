@@ -3,6 +3,7 @@ import {
 } from '@ripl/utilities';
 
 export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
+    const context = canvas.getContext('2d');
     const dpr = window.devicePixelRatio;
     const scaledWidth = Math.floor(width * dpr);
     const scaledHeight = Math.floor(height * dpr);
@@ -13,6 +14,10 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
 
     canvas.width = scaledWidth;
     canvas.height = scaledHeight;
+
+    if (context) {
+        context.scale(dpr, dpr);
+    }
 }
 
 export function getContext(target: string | HTMLCanvasElement) {
@@ -36,5 +41,7 @@ export function getContext(target: string | HTMLCanvasElement) {
         canvas,
         context,
         clear,
+        width,
+        height,
     };
 }

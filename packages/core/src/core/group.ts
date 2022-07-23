@@ -19,8 +19,9 @@ export interface Group extends Element {
     set(elements: Element<any>[]): void;
     add(element: OneOrMore<Element<any>>): void;
     remove(element: OneOrMore<Element<any>>): void;
+    find(query: string): Element | undefined;
+    findAll(query: string): Element[] | undefined;
     clear(): void;
-    query(query: string): Element[] | undefined;
     get elements(): Set<Element>;
 }
 
@@ -85,7 +86,11 @@ export function createGroup(
         notify();
     }
 
-    function query(query: string) {
+    function find(query: string): Element | undefined {
+
+    }
+
+    function findAll(query: string) {
         let matches: Element[] | undefined;
 
         const tokens = query.split(' ');
@@ -101,7 +106,8 @@ export function createGroup(
         add,
         remove,
         clear,
-        query,
+        find,
+        findAll,
 
         get parent() {
             return el.parent;
