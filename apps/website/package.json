@@ -15,6 +15,7 @@
     "dependencies": {
         "@ripl/core": "workspace:^",
         "@ripl/charts": "workspace:^",
+        "@ripl/utilities": "workspace:^",
         "flex-layout-attribute": "^1.0.3"
     },
     "devDependencies": {

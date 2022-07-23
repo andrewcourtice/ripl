@@ -13,8 +13,8 @@ import {
 
 import {
     getContext,
-    circle,
-    group,
+    createGroup,
+    createCircle
 } from '@ripl/core';
 
 let time = 0;
@@ -28,25 +28,27 @@ onMount(() => {
     const {
         canvas,
         context,
-        clear
+        clear,
+        width,
+        height
     } = getContext('.example__canvas');
 
-    const circle1 = circle({
+    const circle1 = createCircle({
         lineWidth: 4,
-        x: canvas.width * 0.25,
-        y: canvas.height * 0.25,
-        radius: [canvas.width * 0.10, canvas.width * 0.15]
+        cx: width * 0.25,
+        cy: height * 0.25,
+        radius: [width * 0.10, width * 0.15]
     });
 
     const circle2 = circle1.clone();
     
     circle2.update({
         fillStyle: ['#FF0000', '#00FF00'],
-        x: canvas.width * 0.75,
-        y: canvas.height * 0.75,
+        cx: width * 0.75,
+        cy: height * 0.75,
     });
 
-    const group1 = group({
+    const group1 = createGroup({
         fillStyle: ['#000000', '#CCCCCC'],
     });
 

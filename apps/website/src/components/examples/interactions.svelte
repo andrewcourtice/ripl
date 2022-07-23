@@ -12,15 +12,15 @@ import {
 } from 'svelte';
 
 import {
-    circle,
     clamp,
     scaleContinuous,
     easeOutQuint,
-    group,
-    line,
-    renderer,
-    scene,
     serialiseRGB,
+    createScene,
+    createRenderer,
+    createCircle,
+    createGroup,
+    createLine,
 } from '@ripl/core';
 
 let transitionCircles = () => {};
@@ -29,14 +29,14 @@ onMount(() => {
     let x = 0;
     let y = 0;
 
-    const mainScene = scene('.example__canvas');
-    const mainRenderer = renderer(mainScene, {
+    const scene = createScene('.example__canvas');
+    const renderer = createRenderer(scene, {
         autoStart: false
     });
 
-    const rScale = scaleContinuous([0, 1], [5, 15]);
-    const xScale = scaleContinuous([0, 1], [10, mainScene.canvas.width - 10]);
-    const yScale = scaleContinuous([0, 1], [10, mainScene.canvas.height - 10]);
+    const rScale = scaleContinuous([0, 1], [5, 10]);
+    const xScale = scaleContinuous([0, 1], [10, scene.width - 10]);
+    const yScale = scaleContinuous([0, 1], [10, scene.height - 10]);
 
     const getColor = () => serialiseRGB(
         clamp(Math.random() * 255, 80, 230),
@@ -45,32 +45,32 @@ onMount(() => {
         1
     );
 
-    const circles = Array.from({ length: 1000 }, (_, index) => circle({
+    const circles = Array.from({ length: 1000 }, (_, index) => createCircle({
         fillStyle: getColor(),
         radius: [rScale(Math.random()), rScale(Math.random())],
-        x: [xScale(Math.random()), xScale(Math.random())],
-        y: [yScale(Math.random()), yScale(Math.random())],
+        cx: [xScale(Math.random()), xScale(Math.random())],
+        cy: [yScale(Math.random()), yScale(Math.random())],
     }));
     
-    const circleGroup = group({
+    const circleGroup = createGroup({
         fillStyle: '#333333',
     });
 
-    const crosshairHLine = line({
-        points: () => [
-            [x, 0],
-            [x, mainScene.canvas.height]
-        ]
+    const crosshairHLine = createLine({
+        x1: 0,
+        y1: () => y,
+        x2: scene.width,
+        y2: () => y
     });
 
-    const crosshairVLine = line({
-        points: () => [
-            [0, y],
-            [mainScene.canvas.width, y]
-        ]
+    const crosshairVLine = createLine({
+        x1: () => x,
+        y1: 0,
+        x2: () => x,
+        y2: scene.height
     });
 
-    const crosshairGroup = group({
+    const crosshairGroup = createGroup({
         strokeStyle: '#CCCCCC'
     });
     
@@ -80,12 +80,12 @@ onMount(() => {
         crosshairVLine,
     ]);
 
-    mainScene.add([
+    scene.add([
         circleGroup,
         crosshairGroup
     ]);
 
-    mainScene.on('scenemousemove', (sx, sy) => {
+    scene.on('scenemousemove', (sx, sy) => {
         x = sx;
         y = sy;
     });
@@ -94,17 +94,17 @@ onMount(() => {
         circles.forEach(crc => crc.to({
             fillStyle: getColor(),
             radius: rScale(Math.random()),
-            x: xScale(Math.random()),
-            y: yScale(Math.random()),
+            cx: xScale(Math.random()),
+            cy: yScale(Math.random()),
         }));
 
-        mainRenderer.transition(circles, {
+        renderer.transition(circles, {
             duration: 3000,
             ease: easeOutQuint,
             delay: index => index * (1000 / circles.length)
         });
     }
 
-    mainRenderer.start();
+    renderer.start();
 });
 </script>

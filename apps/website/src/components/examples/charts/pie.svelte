@@ -1,6 +1,7 @@
 <Example>
     <div slot="sidebar">
-        <button on:click={render}>Render</button>
+        <button on:click={update}>Update</button>
+        <button on:click={addValue}>Add</button>
         <button on:click={chart.clear}>Clear</button>
     </div>
 </Example>
@@ -21,6 +22,10 @@ import {
     createPieChart
 } from '@ripl/charts';
 
+import {
+    stringUniqueId
+} from '@ripl/utilities';
+
 let chart: ReturnType<typeof createPieChart>;
 
 const getColor = () => serialiseRGB(
@@ -30,53 +35,77 @@ const getColor = () => serialiseRGB(
     1
 );
 
-const data = [
+let data = [
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'Australia',
         value: 55,
         color: getColor()
     },
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'Poland',
         value: 21,
         color: getColor()
     },
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'South Africa',
         value: 185,
         color: getColor()
     },
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'New Zealand',
         value: 18,
         color: getColor()
     },
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'USA',
         value: 129,
         color: getColor()
     },
     {
-        id: 1,
+        id: stringUniqueId(),
         label: 'Sweden',
         value: 15,
         color: getColor()
     },
 ];
 
-function render() {
-    chart.update({});
-    chart.render();
+function getNewValue() {
+    return {
+        id: stringUniqueId(),
+        label: stringUniqueId(10),
+        value: Math.round(Math.random() * 180),
+        color: getColor()
+    }
+}
+
+function addValue() {
+    data.push(getNewValue());
+
+    chart.update({
+        data
+    });
+}
+
+function update() {
+    data = data.map(item => ({
+        ...item,
+        value: Math.round(Math.random() * 180)
+    }));
+
+    chart.update({
+        data
+    });
 }
 
 onMount(() => {
     chart = createPieChart<typeof data>('.example__canvas', {
         data,
+        key: 'id',
         value: 'value',
         color: 'color',
         label: 'label',

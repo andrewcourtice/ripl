@@ -13,8 +13,8 @@ import {
 
 import {
     getContext,
-    circle,
-    group,
+    createCircle,
+    createGroup,
     scaleContinuous,
     transition,
     easeOutQuint,
@@ -33,13 +33,13 @@ onMount(() => {
     const xScale = scaleContinuous([0, 1], [10, canvas.width - 10]);
     const yScale = scaleContinuous([0, 1], [10, canvas.height - 10]);
 
-    const circles = Array.from({ length: 1000 }, (_, index) => circle({
+    const circles = Array.from({ length: 1000 }, (_, index) => createCircle({
         radius: [rScale(Math.random()), rScale(Math.random())],
         x: [xScale(Math.random()), xScale(Math.random())],
         y: [yScale(Math.random()), yScale(Math.random())],
     }));
     
-    const grp = group({
+    const grp = createGroup({
         fillStyle: '#000000',
     });
     

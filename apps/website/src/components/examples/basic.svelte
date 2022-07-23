@@ -18,16 +18,12 @@ import {
 
 import {
     getContext,
-    circle,
-    spline,
+    createCircle,
+    createGroup,
+    createSpline,
     scaleContinuous,
-    scene,
-    renderer,
-    TAU,
-    line,
-    drawLinePoints,
     Point,
-    group,
+    interpolatePath
 } from '@ripl/core';
 
 let time = 1;
@@ -47,12 +43,14 @@ function mainDemo() {
         canvas,
         context,
         clear,
+        width,
+        height
     } = getContext('.example__canvas');
 
     // RAND POINTS
     const length = 20;
-    const xScale = scaleContinuous([0, length - 1], [50, canvas.width - 50]);
-    const yScale = scaleContinuous([-100, 100], [canvas.height - 50, 50]);
+    const xScale = scaleContinuous([0, length - 1], [50, width - 50]);
+    const yScale = scaleContinuous([-100, 100], [height - 50, 50]);
     const rand = () => Math.random() * (Math.random() < 0.5 ? -1 : 1);
     
     const getPoints = () => Array.from({ length }, (_, i) => [
@@ -63,8 +61,8 @@ function mainDemo() {
     const points = getPoints();
 
     // SINE DOMAIN 5 POINTS
-    // const xScale = scaleContinuous([1, 5], [50, canvas.width - 50]);
-    // const yScale = scaleContinuous([0, 2], [canvas.height - 50, 50]);
+    // const xScale = scaleContinuous([1, 5], [50, width - 50]);
+    // const yScale = scaleContinuous([0, 2], [height - 50, 50]);
 
     // const points = [
     //         [xScale(1), yScale(1)],
@@ -78,12 +76,12 @@ function mainDemo() {
     // let frequency = 3;
     // let amplitude = 2;
     // let start = 0;
-    // let lowerBound = canvas.height * 0.75;
-    // let upperBound = canvas.height * 0.25;
+    // let lowerBound = height * 0.75;
+    // let upperBound = height * 0.25;
 
-    // let scaleX = scaleContinuous([0, TAU], [0, canvas.width]);
+    // let scaleX = scaleContinuous([0, TAU], [0, width]);
     // let scaleY = scaleContinuous([-amplitude, amplitude], [lowerBound, upperBound]);
-    // let inScaleX = scaleContinuous([0, canvas.width], [0, TAU]);
+    // let inScaleX = scaleContinuous([0, width], [0, TAU]);
 
     // const points = Array.from({ length: 200 }, (_, i) => {
     //         const x = i * (TAU / 200);
@@ -96,32 +94,31 @@ function mainDemo() {
     //     }) as Point[];
 
 
-    const spl = spline({
+    const spl = createSpline({
         strokeStyle: '#000000',
-        lineWidth: 4,
-        points: () => drawLinePoints(points)(time),
-        // points,
+        lineWidth: 2,
+        points: interpolatePath(points),
         tension: () => tension,
     });
 
-    const markers = points.map((point) => circle({
+    const markers = points.map((point) => createCircle({
         fillStyle: '#000000',
         lineWidth: 4,
-        x: point[0],
-        y: point[1],
+        cx: point[0],
+        cy: point[1],
         radius: 10,
     }));
 
-    const markerGroup = group();
+    const markerGroup = createGroup();
 
     markerGroup.add(markers);
 
-    const crc = circle({
+    const crc = createCircle({
         fillStyle: ['rgb(30, 105, 120)', 'rgba(150, 105, 120, 0.2)'],
         lineWidth: 4,
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: [canvas.width / 5, canvas.width / 3]
+        cx: width / 2,
+        cy: height / 2,
+        radius: [width / 5, width / 3]
     });
 
     render = time => {
