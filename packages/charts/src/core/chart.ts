@@ -5,7 +5,7 @@ import {
     Scene,
 } from '@ripl/core';
 
-export type ChartRenderFunction<TData = unknown> = (data: TData) => Promise<void>;
+export type ChartRenderFunction = () => Promise<void>;
 
 export interface ChartOptions {
     autoRender?: boolean;
@@ -13,7 +13,7 @@ export interface ChartOptions {
 }
 
 export interface Chart<TOptions extends ChartOptions, TData = unknown> {
-    render(data: TData): void;
+    render(): void;
     update(options: Partial<TOptions>): void;
     clear: Scene['clear'];
 }
@@ -29,7 +29,7 @@ export type ChartDefinition<TOptions extends ChartOptions> = (instance: ChartIns
 export type ChartConstructor<TOptions extends ChartOptions> = <TData>(target: string | HTMLCanvasElement, options: TOptions) => Chart<TOptions>;
 
 const OPTIONS = {
-    autoRender: false,
+    autoRender: true,
 } as ChartOptions;
 
 export function createChart<TOptions extends ChartOptions>(definition: ChartDefinition<TOptions>): ChartConstructor<TOptions> {
@@ -54,18 +54,34 @@ export function createChart<TOptions extends ChartOptions>(definition: ChartDefi
 
         const onRender = definition(instance);
 
-        const render = (data) => {
-            onRender(data);
+        const render = () => {
+            //scene.clear();
+
+            try {
+                onRender();
+            } catch {
+                scene.clear();
+                // render error message
+            }
         };
 
         const update = (options: Partial<TOptions>) => {
-            instance.options = {
+            const updatedOptions = {
                 ...chartOptions,
                 ...options,
             };
 
+            instance.options = updatedOptions;
             handlers.onUpdate.forEach(handler => handler());
+
+            if (updatedOptions.autoRender) {
+                render();
+            }
         };
+
+        if (chartOptions.autoRender) {
+            render();
+        }
 
         return {
             render,
