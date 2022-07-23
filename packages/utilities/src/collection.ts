@@ -1,5 +1,4 @@
 import {
-    predicateIdentity,
     predicateKey,
 } from './predicate';
 
@@ -20,12 +19,12 @@ export type ObjectIteratee<TKey, TValue, TResult = void> = (key: TKey, value: TV
 export type SetIteratee<TValue, TResult = void> = (value: TValue) => TResult;
 
 export type ArrayGroupIdentity<TValue> = keyof TValue | Indexer<TValue>;
-export type ArrayJoinPredicate<TValue> = keyof TValue | Predicate<TValue>;
+export type ArrayJoinPredicate<TLeft, TRight> = keyof (TLeft & TRight) | Predicate<TLeft, TRight>;
 
-export interface ArrayJoin<TValue> {
-    get left(): TValue[];
-    get middle(): TValue[];
-    get right(): TValue[];
+export interface ArrayJoin<TLeft, TRight> {
+    left: TLeft[];
+    inner: [left: TLeft, right: TRight][];
+    right: TRight[];
 }
 
 const BREAK = Symbol('break');
@@ -72,43 +71,30 @@ export function arrayFind<TValue>(input: TValue[], predicate: ArrayIteratee<TVal
     return match;
 }
 
-function compareArray<TValue>(left: TValue[], right: TValue[], predicate: ArrayJoinPredicate<TValue>, outcome: (match?: TValue) => boolean): TValue[] {
-    const output = [] as TValue[];
+export function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight>): ArrayJoin<TLeft, TRight> {
+    const left = new Set(leftInput);
+    const right = new Set(rightInput);
+    const inner = new Set<[left: TLeft, right: TRight]>();
+
     const compare = (isFunction(predicate)
         ? predicate
         : (left, right) => predicateKey(left, right, predicate)
-    ) as Predicate<TValue>;
+    ) as Predicate<TLeft, TRight>;
 
-    arrayForEach(left, valLeft => {
-        const match = arrayFind(right, valRight => compare(valLeft, valRight));
+    arrayForEach(leftInput, valLeft => {
+        const valRight = arrayFind(rightInput, valRight => compare(valLeft, valRight));
 
-        if (outcome(match)) {
-            output.push(valLeft);
+        if (!isNil(valRight)) {
+            inner.add([valLeft, valRight]);
+            left.delete(valLeft);
+            right.delete(valRight);
         }
     });
 
-    return output;
-}
-
-export function arrayIntersection<TValue>(left: TValue[], right: TValue[], predicate: ArrayJoinPredicate<TValue> = predicateIdentity): TValue[] {
-    return compareArray(left, right, predicate, match => !isNil(match));
-}
-
-export function arrayDifference<TValue>(left: TValue[], right: TValue[], predicate: ArrayJoinPredicate<TValue> = predicateIdentity): TValue[] {
-    return compareArray(left, right, predicate, isNil);
-}
-
-export function arrayJoin<TValue>(left: TValue[], right: TValue[], predicate: ArrayJoinPredicate<TValue>): ArrayJoin<TValue> {
     return {
-        get left() {
-            return arrayDifference(left, right, predicate);
-        },
-        get middle() {
-            return arrayIntersection(left, right, predicate);
-        },
-        get right() {
-            return arrayDifference(right, left, predicate);
-        },
+        left: Array.from(left),
+        inner: Array.from(inner),
+        right: Array.from(right),
     };
 }
 
