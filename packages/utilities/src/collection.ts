@@ -58,18 +58,31 @@ export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIterat
     return output;
 }
 
-export function arrayFind<TValue>(input: TValue[], predicate: ArrayIteratee<TValue, boolean>, direction: IterationDirection = 1): TValue | undefined {
-    let match: TValue | undefined;
+export function arrayFilter<TValue>(input: TValue[], predicate: ArrayIteratee<TValue, boolean>): TValue[] {
+    const output = [] as TValue[];
 
     iterateArray(input, (value, index) => {
         if (predicate(value, index)) {
-            match = value;
+            output.push(value);
+        }
+    });
+
+    return output;
+}
+
+export function arrayFind<TValue>(input: TValue[], predicate: ArrayIteratee<TValue, boolean>, direction: IterationDirection = 1): TValue | undefined {
+    let output: TValue | undefined;
+
+    iterateArray(input, (value, index) => {
+        if (predicate(value, index)) {
+            output = value;
             return BREAK;
         }
     }, direction);
 
-    return match;
+    return output;
 }
+
 
 export function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight>): ArrayJoin<TLeft, TRight> {
     const left = new Set(leftInput);
@@ -81,7 +94,7 @@ export function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[
         : (left, right) => predicateKey(left, right, predicate)
     ) as Predicate<TLeft, TRight>;
 
-    arrayForEach(leftInput, valLeft => {
+    iterateArray(leftInput, valLeft => {
         const valRight = arrayFind(rightInput, valRight => compare(valLeft, valRight));
 
         if (!isNil(valRight)) {
@@ -106,7 +119,7 @@ export function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity
         : value => value[identity]
     ) as Indexer<TValue>;
 
-    arrayForEach(input, value => {
+    iterateArray(input, value => {
         const group = groupIdentity(value);
         output[group] = (output[group] || []).concat(value);
     });
