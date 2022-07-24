@@ -11,6 +11,8 @@ import {
 } from './element';
 
 import {
+    arrayFilter,
+    arrayFind,
     OneOrMore,
     setForEach,
 } from '@ripl/utilities';
@@ -22,10 +24,21 @@ export interface Group extends Element {
     find(query: string): Element | undefined;
     findAll(query: string): Element[] | undefined;
     clear(): void;
-    get elements(): Set<Element>;
+    get elements(): Element[];
 }
 
 const TYPE = 'group';
+
+function getQueryTest(query: string) {
+    switch (query[0]) {
+        case '#':
+            return (element: Element) => element.id === query;
+        case '.':
+            return (element: Element) => element.class === query;
+        default:
+            return (element: Element) => element.type === query;
+    }
+}
 
 export function isGroup(element: Element): element is Group {
     return element.type === TYPE;
@@ -50,13 +63,13 @@ export function createGroup(
     }
 
     function getGroupElements() {
-        return new Set(Array.from(children).flatMap(item => {
+        return Array.from(children).flatMap(item => {
             if (isGroup(item)) {
                 return Array.from((item as Group).elements);
             }
 
             return item;
-        }));
+        });
     }
 
     function set(elements: Element[]) {
@@ -86,18 +99,12 @@ export function createGroup(
         notify();
     }
 
-    function find(query: string): Element | undefined {
-
+    function find(query: string) {
+        return arrayFind(getGroupElements(), getQueryTest(query));
     }
 
     function findAll(query: string) {
-        let matches: Element[] | undefined;
-
-        const tokens = query.split(' ');
-
-
-
-        return matches;
+        return arrayFilter(getGroupElements(), getQueryTest(query));
     }
 
     return {
