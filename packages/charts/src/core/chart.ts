@@ -5,7 +5,7 @@ import {
     Scene,
 } from '@ripl/core';
 
-export type ChartRenderFunction = () => Promise<void>;
+export type ChartRenderFunction = () => Promise<any>;
 
 export interface ChartOptions {
     autoRender?: boolean;
@@ -52,16 +52,21 @@ export function createChart<TOptions extends ChartOptions>(definition: ChartDefi
             onUpdate: handler => handlers.onUpdate.add(handler),
         } as ChartInstance<TOptions>;
 
+        let hasRendered = false;
         const onRender = definition(instance);
 
-        const render = () => {
-            //scene.clear();
+        const renderErrorState = () => {
 
+        };
+
+        const render = async () => {
             try {
-                onRender();
+                await onRender();
             } catch {
                 scene.clear();
                 // render error message
+            } finally {
+                hasRendered = true;
             }
         };
 
@@ -82,6 +87,16 @@ export function createChart<TOptions extends ChartOptions>(definition: ChartDefi
         if (chartOptions.autoRender) {
             render();
         }
+
+        scene.on('resize', () => {
+            if (!hasRendered) {
+                return;
+            }
+
+            //renderer.update({ immediate: true });
+            render();
+            //renderer.update({ immediate: false });
+        });
 
         return {
             render,

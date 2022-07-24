@@ -4,17 +4,21 @@ import {
 } from '../core/chart';
 
 import {
+    Arc,
     createArc,
+    createGroup,
     createText,
     easeOutQuint,
+    Element,
     getArcCentroid,
     getTotal,
     scaleContinuous,
     TAU,
+    Text,
 } from '@ripl/core';
 
 import {
-    arrayForEach,
+    arrayFilter,
     arrayJoin,
     arrayMap,
     isFunction,
@@ -32,14 +36,11 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
     const {
         scene,
         renderer,
-        onUpdate,
     } = instance;
 
-    let segments: ReturnType<typeof createArc>[] = [];
-    let labels: ReturnType<typeof createText>[] = [];
-    let queue = [] as (() => void)[];
+    let groups = [] as ReturnType<typeof createGroup>[]; //this is temporary
 
-    const calculate = () => {
+    return async () => {
         const {
             data,
             key,
@@ -57,9 +58,8 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
 
         const total = getTotal(data, getValue);
         const scale = scaleContinuous([0, total], [0, TAU], true);
-        const cx = scene.width / 2;
-        const cy = scene.height / 2;
         const offset = TAU / 4;
+        const padAngle = 0.05 / data.length;
 
         let startAngle = -offset;
 
@@ -68,6 +68,8 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
             const value = getValue(item);
             const color = getColor(item);
             const label = getLabel(item);
+            const cx = scene.width / 2;
+            const cy = scene.height / 2;
             const endAngle = startAngle + scale(value);
             const radius = size * 0.45;
             const innerRadius = size * 0.25;
@@ -77,8 +79,11 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
                 value,
                 color,
                 label,
+                cx,
+                cy,
                 startAngle,
                 endAngle,
+                padAngle,
                 radius,
                 innerRadius,
                 item,
@@ -90,37 +95,39 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
         });
 
         const {
-            left: entries,
-            inner: updates,
-            right: exits,
-        } = arrayJoin(calculations, segments, (item, segment) => item.key === segment.id);
+            left,
+            inner,
+            right,
+        } = arrayJoin(calculations, groups, (item, group) => item.key === group.id);
 
-        segments = [];
-        labels = [];
-        queue = [];
-
-        const enters = arrayMap(entries, item => {
+        const entries = arrayMap(left, item => {
             const {
                 key,
                 value,
                 color,
                 label,
+                cx,
+                cy,
                 startAngle,
                 endAngle,
+                padAngle,
                 radius,
                 innerRadius,
             } = item;
 
+            const group = createGroup(undefined, {
+                id: key,
+            });
+
             const segmentArc = createArc({
                 cx,
                 cy,
-                startAngle: [startAngle - Math.PI / 4, startAngle],
+                startAngle,
+                padAngle,
                 endAngle: [startAngle, endAngle],
                 radius: [0, radius],
                 innerRadius: [0, innerRadius],
                 fillStyle: color || '#FF0000',
-            }, {
-                id: key,
             });
 
             const [
@@ -138,66 +145,83 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
                 globalAlpha: [0, 1],
             });
 
-            segments.push(segmentArc);
-            labels.push(segmentLabel);
-
-            return [
+            group.add([
                 segmentArc,
                 segmentLabel,
-            ];
+            ]);
+
+            return group;
         });
 
-        queue.push(async () => {
-            scene.add(enters.flat());
-
-            await renderer.transition(enters.map(en => en[0]), {
-                duration: 2000,
-                ease: easeOutQuint,
-                delay: index => index * (2000 / segments.length),
-            });
-
-            return renderer.transition(enters.map(en => en[1]), {
-                duration: 3000,
-                ease: easeOutQuint,
-            });
-        });
-
-        const ups = arrayMap(updates, ([item, segment]) => {
+        const updates = arrayMap(inner, ([item, group]) => {
             const {
                 color,
-                startAngle,
-                endAngle,
+                cx,
+                cy,
                 radius,
                 innerRadius,
+                startAngle,
+                endAngle,
             } = item;
 
-            segment.to({
-                startAngle,
-                endAngle,
+            const arc = group.find('arc') as Element<Arc>;
+            const label = group.find('text') as Element<Text>;
+
+            arc.to({
+                cx,
+                cy,
                 radius,
                 innerRadius,
+                startAngle,
+                endAngle,
                 fillStyle: color,
-            });
+            }, 1);
 
-            segments.push(segment);
+            const [
+                centroidx,
+                centroidY,
+            ] = getArcCentroid(arc.state(1));
 
-            return segment;
+            label.to({
+                x: centroidx,
+                y: centroidY,
+            }, 1);
+
+            return group;
         });
 
-        queue.push(async () => {
-            //scene.add(ups);
+        groups = [
+            ...entries,
+            ...updates,
+        ];
 
-            await renderer.transition(ups, {
+        scene.add(entries);
+
+        const transitionEntries = async () => {
+            const elements = entries.flatMap(group => group.elements);
+
+            await renderer.transition(arrayFilter(elements, el => el.type === 'arc'), {
+                duration: 1000,
+                ease: easeOutQuint,
+                delay: (index, length) => index * (1000 / length),
+            });
+
+            return renderer.transition(arrayFilter(elements, el => el.type === 'text'), {
                 duration: 2000,
                 ease: easeOutQuint,
             });
-        });
-    };
+        };
 
-    calculate();
-    onUpdate(calculate);
+        const transitionUpdates = async () => {
+            return renderer.transition(updates, {
+                duration: 1000,
+                ease: easeOutQuint,
+            });
+        };
 
-    return async () => {
-        await Promise.all(arrayMap(queue, exec => exec()));
+        return Promise.all([
+            transitionEntries(),
+            transitionUpdates(),
+        ]);
     };
 });
