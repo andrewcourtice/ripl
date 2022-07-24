@@ -23,12 +23,12 @@ import {
 } from './group';
 
 import {
+    arrayFind,
     Disposable,
     DOMElementEventMap,
     DOMEventHandler,
     onDOMElementResize,
     onDOMEvent,
-    setFind,
 } from '@ripl/utilities';
 
 interface SceneEventMap {
@@ -58,7 +58,7 @@ export interface Scene {
     dispose(): void;
     get width(): number;
     get height(): number;
-    get elements(): Set<Element>;
+    get elements(): Element[];
 }
 
 export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
@@ -170,7 +170,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
 
         eventMap.scenemousemove.forEach(handler => handler(x, y, event));
 
-        const matchedElement = setFind(elements, element => isElementActive(element, x, y), -1);
+        const matchedElement = arrayFind(elements, element => isElementActive(element, x, y), -1);
 
         if (matchedElement && matchedElement === activeElement) {
             return onElMousemove(matchedElement);
@@ -198,7 +198,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         updateScaling(width, height);
         eventMap.resize.forEach(handler => handler(width, height));
 
-        if (renderOnResize && elements.size > 0) {
+        if (renderOnResize && elements.length > 0) {
             render();
         }
     });

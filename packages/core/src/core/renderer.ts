@@ -20,6 +20,7 @@ import {
 } from '../math';
 
 import {
+    arrayForEach,
     isFunction,
     OneOrMore,
     setForEach,
@@ -45,7 +46,7 @@ export interface RendererTransitionOptions {
     duration: number;
     ease: Ease;
     loop: boolean;
-    delay: number | ((index: number) => number);
+    delay: number | ((index: number, length: number) => number);
     fillMode: RendererFillMode;
     callback(element: Element): void;
 }
@@ -53,11 +54,13 @@ export interface RendererTransitionOptions {
 export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
+    immediate?: boolean;
 }
 
 export interface Renderer {
     start(): void;
     stop(): void;
+    update(options: Partial<RendererOptions>): void;
     transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>): Promise<void>;
     on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
     off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
@@ -69,10 +72,7 @@ export function createRenderer(
     scene: Scene,
     options?: RendererOptions
 ): Renderer {
-    const {
-        autoStart,
-        autoStop,
-    } = {
+    let rendererOptions = {
         autoStart: true,
         autoStop: true,
         ...options,
@@ -82,10 +82,6 @@ export function createRenderer(
         canvas,
         context,
     } = scene;
-
-    if (!context) {
-        throw new Error('Failed to get context');
-    }
 
     const transitionMap = new Map<string, RendererTransition>();
     const eventMap = {
@@ -111,7 +107,7 @@ export function createRenderer(
         currentTime = performance.now();
 
         setForEach(eventMap.tick, handler => handler(currentTime, startTime));
-        setForEach(scene.elements, element => {
+        arrayForEach(scene.elements, element => {
             let time = 0;
 
             if (transitionMap.has(element.id)) {
@@ -177,7 +173,7 @@ export function createRenderer(
     };
 
     const stopOnIdle = () => {
-        if (autoStop && transitionMap.size === 0) {
+        if (rendererOptions.autoStop && transitionMap.size === 0) {
             stop();
         }
     };
@@ -187,8 +183,12 @@ export function createRenderer(
 
         return new Promise<void>(resolve => {
             const elements = ([] as Element[]).concat(element).flatMap(element => {
-                return isGroup(element) ? Array.from(element.elements) : element;
+                return isGroup(element) ? element.elements : element;
             });
+
+            if (!elements.length) {
+                resolve();
+            }
 
             const totalCount = elements.length;
             let completeCount = 0;
@@ -211,7 +211,10 @@ export function createRenderer(
                     ...options,
                 } as RendererTransitionOptions;
 
-                const startTime = performance.now() + (isFunction(delay) ? delay(index) : delay);
+                const startTime = performance.now() + (isFunction(delay)
+                    ? delay(index, elements.length)
+                    : delay
+                );
 
                 const onComplete = () => {
                     completeCount += 1;
@@ -229,14 +232,21 @@ export function createRenderer(
                 };
 
                 transitionMap.set(element.id, {
-                    duration,
                     loop,
                     ease,
                     startTime,
+                    duration: rendererOptions.immediate ? 1 : duration,
                     callback: onComplete,
                 });
             });
         });
+    };
+
+    const update = (options: Partial<RendererOptions>) => {
+        rendererOptions = {
+            ...rendererOptions,
+            ...options,
+        };
     };
 
     const on = <TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) => {
@@ -247,11 +257,11 @@ export function createRenderer(
         eventMap[event]?.delete(handler);
     };
 
-    if (autoStart) {
+    if (rendererOptions.autoStart) {
         start();
     }
 
-    if (autoStop) {
+    if (rendererOptions.autoStop) {
         scene.on('scenemouseenter', start);
         scene.on('scenemouseleave', stopOnIdle);
     }
@@ -259,6 +269,7 @@ export function createRenderer(
     return {
         start,
         stop,
+        update,
         transition,
         on,
         off,

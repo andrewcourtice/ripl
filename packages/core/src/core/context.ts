@@ -16,7 +16,7 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
     canvas.height = scaledHeight;
 
     if (context) {
-        context.scale(dpr, dpr);
+        context.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 }
 

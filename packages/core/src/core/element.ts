@@ -119,7 +119,7 @@ export interface Element<TElement extends BaseElement = BaseElement, TResult = u
     clone(): Element<TElement>;
     update(properties: Partial<ElementProperties<TElement>>): void;
     state(time?: number, callback?: FrameCallback<TElement>): TElement;
-    to(newState: Partial<TElement>): void;
+    to(newState: Partial<TElement>, time?: number): void;
     render(context: CanvasRenderingContext2D, time?: number): TResult;
 
     /**
@@ -187,6 +187,10 @@ function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], 
 }
 
 function defaultInterpolator<TElement extends BaseElement>(valueA: TElement[keyof TElement], valueB: TElement[keyof TElement]): Interpolator<TElement[keyof TElement]> {
+    if (valueA === valueB) {
+        return () => valueB;
+    }
+
     if (isNumber(valueA) && isNumber(valueB)) {
         return interpolateNumber(valueA, valueB) as Interpolator<typeof valueA>;
     }
@@ -287,11 +291,12 @@ export function createElement<TElement extends BaseElement, TResult = unknown>(t
             return output;
         };
 
-        const to = (newState: Partial<TElement>) => {
-            currentState = currentState || state();
+        const to = (newState: Partial<TElement>, time?: number) => {
+            const currentState = state();
+            const targetState = state(time);
 
             const properties = objectMap(currentState, (key, startValue) => {
-                return [startValue, newState[key] || startValue];
+                return [startValue, newState[key] || targetState[key] || startValue];
             });
 
             update(properties);
