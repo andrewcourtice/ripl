@@ -17,6 +17,7 @@ export interface Arc extends BaseElement {
     endAngle: number;
     radius: number;
     innerRadius?: number;
+    padAngle?: number;
     borderRadius?: number;
 }
 
@@ -37,15 +38,23 @@ export function getArcCentroid(arc: Arc): Point {
 }
 
 export const createArc = createShape<Arc>('arc', () => ({ path, state }) => {
-    const {
+    let {
         cx,
         cy,
         radius,
         innerRadius,
         startAngle,
         endAngle,
+        padAngle,
         borderRadius,
     } = state;
+
+    if (padAngle) {
+        const offset = padAngle / 2;
+
+        startAngle = Math.min(startAngle + offset, endAngle);
+        endAngle = Math.max(endAngle - offset, startAngle);
+    }
 
     if (isNil(innerRadius)) {
         return path.arc(cx, cy, radius, startAngle, endAngle);
