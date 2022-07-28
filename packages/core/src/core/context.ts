@@ -1,4 +1,8 @@
 import {
+    scaleContinuous,
+} from '../scales';
+
+import {
     isString,
 } from '@ripl/utilities';
 
@@ -8,8 +12,13 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
     const scaledWidth = Math.floor(width * dpr);
     const scaledHeight = Math.floor(height * dpr);
 
+    const output = {
+        xScale: scaleContinuous([0, width], [0, scaledWidth]),
+        yScale: scaleContinuous([0, height], [0, scaledHeight]),
+    };
+
     if (scaledWidth === canvas.width && scaledHeight === canvas.height) {
-        return;
+        return output;
     }
 
     canvas.width = scaledWidth;
@@ -18,6 +27,8 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
     if (context) {
         context.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
+
+    return output;
 }
 
 export function getContext(target: string | HTMLCanvasElement) {
@@ -33,7 +44,10 @@ export function getContext(target: string | HTMLCanvasElement) {
         height,
     } = canvas.getBoundingClientRect();
 
-    rescaleCanvas(canvas, width, height);
+    const {
+        xScale,
+        yScale,
+    } = rescaleCanvas(canvas, width, height);
 
     const clear = () => context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -43,5 +57,7 @@ export function getContext(target: string | HTMLCanvasElement) {
         clear,
         width,
         height,
+        xScale,
+        yScale,
     };
 }

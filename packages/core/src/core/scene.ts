@@ -1,15 +1,15 @@
 import {
-    EVENTS,
-} from './constants';
-
-import {
     BaseElement,
+    createElementEvent,
     Element,
+    ElementEventMap,
     ElementProperties,
 } from './element';
 
 import {
-    createEventBus,
+    createEvent,
+    Event,
+    EventHandler,
 } from './event-bus';
 
 import {
@@ -23,6 +23,7 @@ import {
 } from './group';
 
 import {
+    arrayFilter,
     arrayFind,
     Disposable,
     DOMElementEventMap,
@@ -31,14 +32,18 @@ import {
     onDOMEvent,
 } from '@ripl/utilities';
 
-interface SceneEventMap {
-    resize(width: number, height: number): void;
-    elementmouseenter(element: Element): void;
-    elementmouseleave(element: Element): void;
-    elementmousemove(element: Element): void;
-    scenemouseenter(event: MouseEvent): void;
-    scenemouseleave(event: MouseEvent): void;
-    scenemousemove(x: number, y: number, event: MouseEvent): void;
+interface SceneEventMap extends ElementEventMap {
+    resize: Event<{
+        width: number;
+        height: number;
+    }>;
+    scenemouseenter: Event<MouseEvent>;
+    scenemouseleave: Event<MouseEvent>;
+    scenemousemove: Event<{
+        x: number;
+        y: number;
+        event: MouseEvent;
+    }>;
 }
 
 export interface SceneOptions {
@@ -52,8 +57,11 @@ export interface Scene {
     add: Group['add'];
     remove: Group['remove'];
     clear: Group['clear'];
-    on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
-    off<TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]): void;
+    find: Group['find'];
+    findAll: Group['findAll'];
+    graph: Group['graph'];
+    on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>): Disposable | undefined;
+    emit<TEvent extends keyof SceneEventMap>(event: TEvent, payload: SceneEventMap[TEvent]): void;
     render(time?: number): void;
     dispose(): void;
     get width(): number;
@@ -68,6 +76,8 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         clear,
         width,
         height,
+        xScale,
+        yScale,
     } = getContext(target);
 
     const {
@@ -75,51 +85,41 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         renderOnResize = true,
     } = options || {};
 
-    const eventMap = {
-        resize: new Set(),
-        elementmouseenter: new Set(),
-        elementmouseleave: new Set(),
-        elementmousemove: new Set(),
-        scenemouseenter: new Set(),
-        scenemouseleave: new Set(),
-        scenemousemove: new Set(),
-    } as {
-        [P in keyof SceneEventMap]: Set<SceneEventMap[P]>;
-    };
-
     const group = createGroup(properties);
-    const eventBus = createEventBus();
     const disposals = new Set<Disposable>();
 
-    let elements = group.elements;
+    let graphHandle: number | undefined;
+    let elements = group.graph();
 
     let left = 0;
     let top = 0;
     let activeElement: Element | undefined;
 
-    const updateScaling = (_width: number, _height: number) => {
+    function updateScaling(_width: number, _height: number) {
         width = _width;
         height = _height;
 
-        rescaleCanvas(canvas, width, height);
-    };
+        ({
+            xScale,
+            yScale,
+        } = rescaleCanvas(canvas, width, height));
+    }
 
-    const updateStyling = () => {
+    function updateStyling() {
         const {
             font,
         } = window.getComputedStyle(document.body);
 
         context.font = font;
-    };
+    }
 
-    const attachDOMEvent = <TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) => {
+    function attachDOMEvent<TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) {
         disposals.add(onDOMEvent(canvas, event, handler));
-    };
+    }
 
-    const isElementActive = (element: Element, x: number, y: number) => {
+    function isElementActive(element: Element, x: number, y: number) {
         const pointerEvents = element.pointerEvents;
         const path = element?.result;
-
 
         if (pointerEvents === 'none' || !(path instanceof Path2D)) {
             return false;
@@ -133,19 +133,24 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         }
 
         return context.isPointInPath(path, x, y) || context.isPointInStroke(path, x, y);
-    };
+    }
 
-    const on = <TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]) => {
-        eventMap[event]?.add(handler);
-    };
+    function on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>) {
+        return group.on(event as keyof ElementEventMap, handler as EventHandler<ElementEventMap[keyof ElementEventMap]>);
+    }
 
-    const off = <TEvent extends keyof SceneEventMap>(event: TEvent, handler: SceneEventMap[TEvent]) => {
-        eventMap[event]?.delete(handler);
-    };
+    function emit<TEvent extends keyof SceneEventMap>(event: TEvent, payload: SceneEventMap[TEvent]) {
+        group.emit(event as keyof ElementEventMap, payload as ElementEventMap[keyof ElementEventMap]);
+    }
 
-    const dispose = () => {
+    function render(time?: number) {
+        clear();
+        group.render(context, time);
+    }
+
+    function dispose() {
         disposals.forEach(({ dispose }) => dispose);
-    };
+    }
 
     attachDOMEvent('mouseenter', event => {
         ({
@@ -153,71 +158,97 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
             top,
         } = canvas.getBoundingClientRect());
 
-        eventMap.scenemouseenter.forEach(handler => handler(event));
+        emit('scenemouseenter', createEvent(event));
     });
 
     attachDOMEvent('mouseleave', event => {
-        eventMap.scenemouseleave.forEach(handler => handler(event));
+        emit('scenemouseleave', createEvent(event));
     });
 
     attachDOMEvent('mousemove', event => {
-        const x = event.clientX - left;
-        const y = event.clientY - top;
+        const x = xScale(event.clientX - left);
+        const y = yScale(event.clientY - top);
 
-        const onElMousemove = (element: Element) => eventMap.elementmousemove.forEach(handler => handler(element));
-        const onElMouseenter = (element: Element) => eventMap.elementmouseenter.forEach(handler => handler(element));
-        const onElMouseleave = (element: Element) => eventMap.elementmouseleave.forEach(handler => handler(element));
-
-        eventMap.scenemousemove.forEach(handler => handler(x, y, event));
+        emit('scenemousemove', createEvent({
+            x,
+            y,
+            event,
+        }));
 
         const matchedElement = arrayFind(elements, element => isElementActive(element, x, y), -1);
+        const baseEvent = createEvent(event);
 
         if (matchedElement && matchedElement === activeElement) {
-            return onElMousemove(matchedElement);
+            return matchedElement.emit('elementmousemove', {
+                element: matchedElement,
+                ...baseEvent,
+            });
         }
 
         if (matchedElement) {
-            onElMouseenter(matchedElement);
+            matchedElement.emit('elementmouseenter', {
+                element: matchedElement,
+                ...baseEvent,
+            });
         }
 
         if (activeElement) {
-            onElMouseleave(activeElement);
+            activeElement.emit('elementmouseleave', {
+                element: activeElement,
+                ...baseEvent,
+            });
         }
 
         activeElement = matchedElement;
     });
 
-    const render = (time?: number) => {
-        clear();
-        group.render(context, time);
-    };
+    attachDOMEvent('click', event => {
+        const x = xScale(event.clientX - left);
+        const y = yScale(event.clientY - top);
+
+        const element = arrayFind(elements, element => isElementActive(element, x, y), -1);
+
+        element?.emit('elementclick', createElementEvent(element, event));
+    });
 
     updateStyling();
 
     onDOMElementResize(canvas, ({ width, height }) => {
         updateScaling(width, height);
-        eventMap.resize.forEach(handler => handler(width, height));
+        emit('resize', createEvent({
+            width,
+            height,
+        }));
 
         if (renderOnResize && elements.length > 0) {
             render();
         }
     });
 
-    group.eventBus = eventBus;
-    eventBus.on(EVENTS.groupUpdated, () => {
-        elements = group.elements;
+    group.on('scenegraph', () => {
+        if (graphHandle) {
+            cancelAnimationFrame(graphHandle);
+            graphHandle = undefined;
+        }
+
+        graphHandle = requestAnimationFrame(() => {
+            elements = group.graph();
+        });
     });
 
     return {
         context,
         canvas,
         on,
-        off,
+        emit,
         render,
         dispose,
-        add: group.add.bind(group),
-        remove: group.remove.bind(group),
-        clear: group.clear.bind(group),
+        add: group.add,
+        remove: group.remove,
+        clear: group.clear,
+        find: group.find,
+        findAll: group.findAll,
+        graph: group.graph,
 
         get width() {
             return width;

@@ -1,64 +1,85 @@
 import {
-    arrayForEach,
     Disposable,
 } from '@ripl/utilities';
 
-export type EventHandler = (...args: any) => void;
+export type EventHandler<TPayload> = (payload: TPayload) => void;
 
-export interface EventBus {
-    on(event: string, handler: EventHandler): Disposable;
-    off(event: string, handler: EventHandler): void;
-    once(event: string, handler: EventHandler): Disposable;
-    emit(event: string, ...args: any[]): void;
+export interface EventMap {
+    [key: string]: unknown;
 }
 
-export function createEventBus(): EventBus {
+export interface EventBus<TEventMap = EventMap> {
+    on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
+    off<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): void;
+    once<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
+    emit<TEvent extends keyof TEventMap>(event: TEvent, payload: TEventMap[TEvent]): void;
+    destroy(): void;
+}
 
-    const listeners: Record<string, EventHandler[]> = {};
+export interface Event<TData = unknown> {
+    data?: TData;
+    bubble: boolean;
+    stopPropagation(): void;
+}
 
-    function on(event: string, handler: EventHandler): Disposable {
-        if (!listeners[event]) {
-            listeners[event] = [];
-        }
+export function createEvent<TData = unknown>(data?: TData): Event<TData> {
+    return {
+        data,
+        bubble: true,
+        stopPropagation() {
+            this.bubble = false;
+        },
+    };
+}
 
-        listeners[event].push(handler);
+export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
+
+    const listeners = new Map<keyof TEventMap, Set<EventHandler<TEventMap[keyof TEventMap]>>>();
+
+    function on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {
+        const handlers = listeners.get(event) || new Set();
+
+        handlers.add(handler);
+        listeners.set(event, handlers);
 
         return {
             dispose: () => off(event, handler),
         };
     }
 
-    function off(event: string, handler: EventHandler): void {
-        const handlers = listeners[event];
+    function off<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): void {
+        const handlers = listeners.get(event);
 
         if (!handlers) {
             return;
         }
 
-        listeners[event] = handlers.filter(listener => listener !== handler);
+        handlers.delete(handler);
 
-        if (listeners[event].length === 0) {
-            delete listeners[event];
+        if (!handlers.size) {
+            listeners.delete(event);
         }
     }
 
-    function once(event: string, handler: EventHandler): Disposable {
-        const callback = (...args: any[]) => {
+    function once<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {
+        const callback = ((...args: Parameters<typeof handler>) => {
             handler(...args);
             off(event, callback);
-        };
+        });
 
         return on(event, callback);
     }
 
-    function emit(event: string, ...args: any[]): void {
-        const handlers = listeners[event];
+    function emit<TEvent extends keyof TEventMap>(event: TEvent, payload: TEventMap[TEvent]): void {
+        const handlers = listeners.get(event);
 
-        if (!handlers) {
-            return;
+        if (handlers) {
+            handlers.forEach(handler => handler(payload));
         }
+    }
 
-        arrayForEach(handlers, handler => handler(...args));
+    function destroy() {
+        listeners.clear();
     }
 
     return {
@@ -66,6 +87,7 @@ export function createEventBus(): EventBus {
         off,
         once,
         emit,
+        destroy,
     };
 }
 

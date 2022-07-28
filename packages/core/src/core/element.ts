@@ -22,14 +22,22 @@ import {
     stringUniqueId,
 } from '@ripl/utilities';
 
-import defaultEventBus,{
+import {
+    createEvent,
+    createEventBus,
+    Event,
     EventBus,
+    EventHandler,
 } from './event-bus';
 
 import {
     objectForEach,
     objectMap,
 } from '@ripl/utilities';
+
+import {
+    Group,
+} from './group';
 
 export type ElementValueBounds<TValue = number> = [first: TValue, last: TValue];
 export type ElementValueKeyFrame<TValue = number> = {
@@ -44,16 +52,16 @@ export type ElementValue<TValue = number> = TValue
 
 
 export type ElementProperties<TElement extends BaseElement> = {
-    [P in keyof TElement]: ElementValue<TElement[P]>;
+    [TKey in keyof TElement]: ElementValue<TElement[TKey]>;
 };
 
 export type ElementValueFunctions<TElement extends BaseElement> = {
-    [P in keyof TElement]: Interpolator<TElement[P]>;
+    [TKey in keyof TElement]: Interpolator<TElement[TKey]>;
 };
 
 export type ElementInterpolator<TValue> = (valueA: TValue, valueB: TValue) => Interpolator<TValue>
 export type ElementInterpolators<TElement extends BaseElement> = {
-    [P in keyof TElement]?: ElementInterpolator<TElement[P]>;
+    [TKey in keyof TElement]?: ElementInterpolator<TElement[TKey]>;
 }
 
 export type ElementDefinition<TElement extends BaseElement, TResult = unknown> = (properties: ElementProperties<TElement>, options: ElementOptions<TElement>, instance: ElementInstance<TElement>) => ElementRenderFunction<TElement, TResult>;
@@ -76,7 +84,7 @@ export interface ElementOptions<TElement extends BaseElement> {
 }
 
 export interface ElementInstance<TElement extends BaseElement> {
-    onUpdate(handler: () => void): void;
+    onUpdate(handler: EventHandler<ElementEventMap['elementupdated']>): void;
 }
 
 export interface ElementRenderFrame<TElement extends BaseElement> {
@@ -110,12 +118,30 @@ export interface BaseElement {
     shadowOffsetY?: CanvasRenderingContext2D['shadowOffsetY'];
 }
 
+export interface ElementEvent<TData = unknown> extends Event<TData> {
+    element: Element;
+}
+
+export interface ElementEventMap<TElement extends BaseElement = BaseElement> {
+    scenegraph: ElementEvent;
+    elementattached: ElementEvent<Group>;
+    elementdetached: ElementEvent<Group>;
+    elementupdated: ElementEvent<Partial<ElementProperties<TElement>>>;
+    elementmouseenter: ElementEvent<MouseEvent>;
+    elementmouseleave: ElementEvent<MouseEvent>;
+    elementmousemove: ElementEvent<MouseEvent>;
+    elementclick: ElementEvent<MouseEvent>;
+}
+
 export interface Element<TElement extends BaseElement = BaseElement, TResult = unknown> {
     id: string;
     type: string;
     class?: string;
     data?: unknown;
     pointerEvents: ElementPointerEvents;
+    on: EventBus<ElementEventMap>['on'];
+    emit: EventBus<ElementEventMap>['emit'];
+    once: EventBus<ElementEventMap>['once'];
     clone(): Element<TElement>;
     update(properties: Partial<ElementProperties<TElement>>): void;
     state(time?: number, callback?: FrameCallback<TElement>): TElement;
@@ -125,10 +151,9 @@ export interface Element<TElement extends BaseElement = BaseElement, TResult = u
     /**
      * @internal
      */
-    get parent(): Element | undefined;
-    set parent(element: Element | undefined);
-    get eventBus(): EventBus;
-    set eventBus(element: EventBus | undefined);
+    destroy(): void;
+    get parent(): Group | undefined;
+    set parent(group: Group | undefined);
     get path(): string;
     get result(): TResult | undefined;
 }
@@ -198,7 +223,10 @@ function defaultInterpolator<TElement extends BaseElement>(valueA: TElement[keyo
     return time => time > 0.5 ? valueB : valueA;
 }
 
-function getInterpolators<TElement extends BaseElement>(properties: Partial<ElementProperties<TElement>>, interpolators: ElementInterpolators<TElement> = {}): ElementValueFunctions<TElement> {
+function getInterpolators<TElement extends BaseElement>(
+    properties: Partial<ElementProperties<TElement>>,
+    interpolators: ElementInterpolators<TElement> = {}
+): ElementValueFunctions<TElement> {
     return objectMap(properties, (key, value) => {
         const interpolator = interpolators[key] || defaultInterpolator;
 
@@ -218,19 +246,28 @@ function getInterpolators<TElement extends BaseElement>(properties: Partial<Elem
     });
 }
 
-export function createElement<TElement extends BaseElement, TResult = unknown>(type: string, definition: ElementDefinition<TElement, TResult>, definitionOptions: ElementDefinitionOptions<TElement> = {}): ElementConstructor<TElement, TResult> {
+export function createElementEvent<TElement extends Element, TData = unknown>(element: TElement, data: TData): ElementEvent<TData> {
+    return {
+        element,
+        ...createEvent(data),
+    };
+}
+
+export function createElement<TElement extends BaseElement, TResult = unknown>(
+    type: string,
+    definition: ElementDefinition<TElement, TResult>,
+    definitionOptions: ElementDefinitionOptions<TElement> = {}
+): ElementConstructor<TElement, TResult> {
     const {
         abstract,
         interpolators: rootInterpolators,
     } = definitionOptions;
 
     return (properties, instanceOptions = {}) => {
-        const handlers = {
-            onUpdate: new Set(),
-        } as Record<keyof ElementInstance<TElement>, Set<() => void>>;
+        const eventBus = createEventBus<ElementEventMap>();
 
         const instance = {
-            onUpdate: handler => handlers.onUpdate.add(handler),
+            onUpdate: handler => eventBus.on('elementupdated', handler),
         } as ElementInstance<TElement>;
 
         const {
@@ -251,24 +288,72 @@ export function createElement<TElement extends BaseElement, TResult = unknown>(t
 
         let valueFns = getInterpolators(properties, interpolators);
 
-        let eventBus: EventBus | undefined;
-        let parent: Element | undefined;
+        let parent: Group | undefined;
         let currentState: TElement;
         let result: TResult;
 
-        const getEventBus = () => eventBus || parent?.eventBus || defaultEventBus;
+        const element: Element<TElement, TResult> = {
+            id,
+            type,
+            data,
+            clone,
+            update,
+            state,
+            to,
+            render,
+            pointerEvents,
+            class: elClass,
 
-        const clone = () => createElement(type, definition, definitionOptions)(properties, instanceOptions);
-        const update = (properties: Partial<ElementProperties<TElement>>) => {
+            emit,
+            on: eventBus.on,
+            once: eventBus.once,
+
+            destroy,
+
+            get parent() {
+                return parent;
+            },
+
+            set parent(group: Group | undefined) {
+                parent = group;
+            },
+
+            get result() {
+                return result;
+            },
+
+            get path() {
+                return [parent?.id || '', id].join('/');
+            },
+        };
+
+        function destroy() {
+            parent?.remove(element);
+            eventBus.destroy();
+        }
+
+        function emit<TEvent extends keyof ElementEventMap>(event: TEvent, payload: ElementEventMap[TEvent]) {
+            eventBus.emit(event, payload);
+
+            if (parent && payload.bubble) {
+                parent.emit(event, payload);
+            }
+        }
+
+        function clone() {
+            return createElement(type, definition, definitionOptions)(properties, instanceOptions);
+        }
+
+        function update(properties: Partial<ElementProperties<TElement>>) {
             valueFns = {
                 ...valueFns,
                 ...getInterpolators(properties, interpolators),
             };
 
-            handlers.onUpdate.forEach(handler => handler());
-        };
+            emit('elementupdated', createElementEvent(element, properties));
+        }
 
-        const state = (time?: number, callback?: FrameCallback<TElement>) => {
+        function state(time?: number, callback?: FrameCallback<TElement>) {
             if (isNil(time) && currentState) {
                 return currentState;
             }
@@ -289,20 +374,24 @@ export function createElement<TElement extends BaseElement, TResult = unknown>(t
             objectForEach(valueFns, (key, value) => updateOutput(key, value(_time)));
 
             return output;
-        };
+        }
 
-        const to = (newState: Partial<TElement>, time?: number) => {
+        function to(newState: Partial<TElement>, time?: number) {
             const currentState = state();
             const targetState = state(time);
 
             const properties = objectMap(currentState, (key, startValue) => {
-                return [startValue, newState[key] || targetState[key] || startValue];
+                const endValue = newState[key] ?? targetState[key] ?? startValue;
+
+                return startValue === endValue
+                    ? startValue
+                    : [startValue, endValue];
             });
 
             update(properties);
-        };
+        }
 
-        const render = (context: CanvasRenderingContext2D, time: number = 0) => {
+        function render(context: CanvasRenderingContext2D, time: number = 0) {
             context.save();
 
             try {
@@ -322,41 +411,8 @@ export function createElement<TElement extends BaseElement, TResult = unknown>(t
             }
 
             return result;
-        };
+        }
 
-        return {
-            id,
-            type,
-            data,
-            clone,
-            update,
-            state,
-            to,
-            render,
-            pointerEvents,
-            class: elClass,
-
-            get parent() {
-                return parent;
-            },
-            set parent(par) {
-                parent = par;
-            },
-
-            get result() {
-                return result;
-            },
-
-            get path() {
-                return [parent?.id || '', id].join('/');
-            },
-
-            get eventBus() {
-                return getEventBus();
-            },
-            set eventBus(bus) {
-                eventBus = bus;
-            },
-        };
+        return element;
     };
 }

@@ -97,7 +97,7 @@ export function createRenderer(
     let startTime = performance.now();
     let currentTime = performance.now();
 
-    const tick = () => {
+    function tick() {
         if (!running) {
             return;
         }
@@ -142,9 +142,9 @@ export function createRenderer(
         });
 
         handle = requestAnimationFrame(tick);
-    };
+    }
 
-    const start = () => {
+    function start() {
         if (running) {
             return;
         }
@@ -155,9 +155,9 @@ export function createRenderer(
 
         setForEach(eventMap.start, handler => handler(startTime));
         requestAnimationFrame(tick);
-    };
+    }
 
-    const stop = () => {
+    function stop() {
         if (!running) {
             return;
         }
@@ -170,15 +170,15 @@ export function createRenderer(
         transitionMap.clear();
 
         setForEach(eventMap.stop, handler => handler(startTime, currentTime));
-    };
+    }
 
-    const stopOnIdle = () => {
+    function stopOnIdle() {
         if (rendererOptions.autoStop && transitionMap.size === 0) {
             stop();
         }
-    };
+    }
 
-    const transition = (element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) => {
+    function transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) {
         start();
 
         return new Promise<void>(resolve => {
@@ -223,11 +223,14 @@ export function createRenderer(
                         element.update(element.state());
                     }
 
-                    callback(element);
-                    stopOnIdle();
+                    try {
+                        callback(element);
+                    } finally {
+                        stopOnIdle();
 
-                    if (completeCount >= totalCount) {
-                        resolve();
+                        if (completeCount >= totalCount) {
+                            resolve();
+                        }
                     }
                 };
 
@@ -240,22 +243,22 @@ export function createRenderer(
                 });
             });
         });
-    };
+    }
 
-    const update = (options: Partial<RendererOptions>) => {
+    function update(options: Partial<RendererOptions>) {
         rendererOptions = {
             ...rendererOptions,
             ...options,
         };
-    };
+    }
 
-    const on = <TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) => {
+    function on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) {
         eventMap[event]?.add(handler);
-    };
+    }
 
-    const off = <TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) => {
+    function off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) {
         eventMap[event]?.delete(handler);
-    };
+    }
 
     if (rendererOptions.autoStart) {
         start();

@@ -25,10 +25,6 @@ const basicContextSetter = (key: keyof CanvasRenderingContext2D) => {
     };
 };
 
-export const EVENTS = {
-    groupUpdated: 'group:updated',
-} as const;
-
 export const INTERPOLATORS: ElementInterpolators<BaseElement> = {
     strokeStyle: interpolateColor as ElementInterpolator<BaseElement['strokeStyle']>,
     fillStyle: interpolateColor as ElementInterpolator<BaseElement['fillStyle']>,
