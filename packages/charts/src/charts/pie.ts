@@ -190,6 +190,27 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
             return group;
         });
 
+        const exits = arrayMap(right, group => {
+            const arc = group.find('arc') as Element<Arc>;
+            const label = group.find('text') as Element<Text>;
+
+            const {
+                startAngle,
+            } = arc.state();
+
+            arc.to({
+                endAngle: startAngle,
+                radius: 0,
+                innerRadius: 0,
+            }, 1);
+
+            label.to({
+                globalAlpha: 0,
+            });
+
+            return group;
+        });
+
         groups = [
             ...entries,
             ...updates,
@@ -197,7 +218,7 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
 
         scene.add(entries);
 
-        const transitionEntries = async () => {
+        async function transitionEntries() {
             const elements = entries.flatMap(group => group.elements);
 
             await renderer.transition(arrayFilter(elements, el => el.type === 'arc'), {
@@ -210,18 +231,27 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
                 duration: 2000,
                 ease: easeOutQuint,
             });
-        };
+        }
 
-        const transitionUpdates = async () => {
+        async function transitionUpdates() {
             return renderer.transition(updates, {
                 duration: 1000,
                 ease: easeOutQuint,
             });
-        };
+        }
+
+        async function transitionExits() {
+            return renderer.transition(exits, {
+                duration: 1000,
+                ease: easeOutQuint,
+                callback: element => element.destroy(),
+            });
+        }
 
         return Promise.all([
             transitionEntries(),
             transitionUpdates(),
+            transitionExits(),
         ]);
     };
 });
