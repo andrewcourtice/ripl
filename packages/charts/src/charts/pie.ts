@@ -196,10 +196,14 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
 
             const {
                 startAngle,
+                endAngle,
             } = arc.state();
 
+            const midAngle = (startAngle + endAngle) / 2;
+
             arc.to({
-                endAngle: startAngle,
+                startAngle: midAngle,
+                endAngle: midAngle,
                 radius: 0,
                 innerRadius: 0,
             }, 1);
