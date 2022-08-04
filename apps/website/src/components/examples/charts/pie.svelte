@@ -2,6 +2,7 @@
     <div slot="sidebar">
         <button on:click={update}>Update</button>
         <button on:click={addValue}>Add</button>
+        <button on:click={removeValue}>Remove</button>
     </div>
 </Example>
 
@@ -85,10 +86,13 @@ function getNewValue() {
 function addValue() {
     const index = Math.floor(Math.random() * data.length - 1);
     data.splice(index, 0, getNewValue());
+    chart.update({ data });
+}
 
-    chart.update({
-        data
-    });
+function removeValue() {
+    const index = Math.floor(Math.random() * data.length - 1);
+    data.splice(index, 1);
+    chart.update({ data });
 }
 
 function update() {
