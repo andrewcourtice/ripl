@@ -166,8 +166,8 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
     });
 
     attachDOMEvent('mousemove', event => {
-        const x = xScale(event.clientX - left);
-        const y = yScale(event.clientY - top);
+        const x = event.clientX - left;
+        const y = event.clientY - top;
 
         emit('scenemousemove', createEvent({
             x,
@@ -175,7 +175,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
             event,
         }));
 
-        const matchedElement = arrayFind(elements, element => isElementActive(element, x, y), -1);
+        const matchedElement = arrayFind(elements, element => isElementActive(element, xScale(x), yScale(y)), -1);
         const baseEvent = createEvent(event);
 
         if (matchedElement && matchedElement === activeElement) {
