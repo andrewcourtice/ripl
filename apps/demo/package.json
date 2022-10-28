@@ -14,13 +14,13 @@
     "dependencies": {
         "@ripl/core": "workspace:^",
         "flex-layout-attribute": "^1.0.3",
-        "svelte": "^3.48.0"
+        "svelte": "^3.52.0"
     },
     "devDependencies": {
-        "@sveltejs/vite-plugin-svelte": "1.0.0-next.49",
+        "@sveltejs/vite-plugin-svelte": "1.1.0",
         "@tsconfig/svelte": "^3.0.0",
-        "sass": "^1.53.0",
+        "sass": "^1.55.0",
         "svelte-preprocess": "^4.10.7",
-        "vite": "^2.9.13"
+        "vite": "^3.2.0"
     }
 }

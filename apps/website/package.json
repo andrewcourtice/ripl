@@ -13,14 +13,14 @@
         "preview": "astro preview"
     },
     "dependencies": {
-        "@ripl/core": "workspace:^",
         "@ripl/charts": "workspace:^",
+        "@ripl/core": "workspace:^",
         "@ripl/utilities": "workspace:^",
         "flex-layout-attribute": "^1.0.3"
     },
     "devDependencies": {
-        "@astrojs/svelte": "^0.2.1",
-        "astro": "^1.0.0-beta.65",
-        "svelte": "^3.46.4"
+        "@astrojs/svelte": "^1.0.2",
+        "astro": "^1.6.0",
+        "svelte": "^3.52.0"
     }
 }
