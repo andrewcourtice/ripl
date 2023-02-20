@@ -19,8 +19,8 @@
         "flex-layout-attribute": "^1.0.3"
     },
     "devDependencies": {
-        "@astrojs/svelte": "^1.0.2",
-        "astro": "^1.6.0",
-        "svelte": "^3.52.0"
+        "@astrojs/svelte": "^2.0.2",
+        "astro": "^2.0.14",
+        "svelte": "^3.55.1"
     }
 }

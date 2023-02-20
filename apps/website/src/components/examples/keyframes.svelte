@@ -20,9 +20,9 @@ import {
     interpolatePolygonPoint,
     createPolyline,
     createArc,
-TAU,
-createText,
-getArcCentroid,
+    TAU,
+    createText,
+    getArcCentroid,
 } from '@ripl/core';
 
 let time = 0;

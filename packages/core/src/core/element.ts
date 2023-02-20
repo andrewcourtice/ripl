@@ -242,7 +242,7 @@ function getInterpolators<TElement extends BaseElement>(
             return interpolator!(value[0], value[1]);
         }
 
-        return time => value;
+        return () => value;
     });
 }
 

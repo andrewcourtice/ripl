@@ -22,8 +22,11 @@ import {
     createGroup,
     createSpline,
     scaleContinuous,
-    Point,
     interpolatePath
+} from '@ripl/core';
+
+import type {
+    Point,
 } from '@ripl/core';
 
 let time = 1;
