@@ -2,7 +2,7 @@
     "name": "@ripl/utilities",
     "version": "1.0.0",
     "description": "",
-    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "license": "MIT",
     "main": "src/index.ts"

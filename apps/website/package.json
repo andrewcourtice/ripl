@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "private": true,
     "description": "",
-    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "license": "MIT",
     "scripts": {
@@ -13,14 +13,15 @@
         "preview": "astro preview"
     },
     "dependencies": {
-        "@ripl/charts": "workspace:^",
-        "@ripl/core": "workspace:^",
-        "@ripl/utilities": "workspace:^",
-        "flex-layout-attribute": "^1.0.3"
+        "@ripl/charts": "1.0.0",
+        "@ripl/core": "1.0.0",
+        "@ripl/utilities": "1.0.0",
+        "flex-layout-attribute": "^1.0.3",
+        "sass": "^1.66.1"
     },
     "devDependencies": {
-        "@astrojs/svelte": "^2.0.2",
-        "astro": "^2.0.14",
-        "svelte": "^3.55.1"
+        "@astrojs/svelte": "^3.1.1",
+        "astro": "^2.10.13",
+        "svelte": "^4.2.0"
     }
 }

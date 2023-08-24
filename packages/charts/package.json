@@ -2,12 +2,12 @@
     "name": "@ripl/charts",
     "version": "1.0.0",
     "description": "",
-    "repository": "https://github.com/andrewcourtice/thingy.git",
+    "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "license": "MIT",
     "main": "src/index.ts",
     "dependencies": {
-        "@ripl/core": "workspace:^",
-        "@ripl/utilities": "workspace:^"
+        "@ripl/core": "1.0.0",
+        "@ripl/utilities": "1.0.0"
     }
 }

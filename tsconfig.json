@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
         "strict": true,
-        "target": "es2018",
-        "module": "esnext",
+        "target": "ES2020",
+        "module": "ESNext",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "isolatedModules": true,
@@ -14,9 +14,12 @@
         "lib": [
             "ESNext",
             "DOM",
+        ],
+        "types": [
+            "vitest/importMeta"
         ]
     },
-    "include": [
+    "files": [
         "global.d.ts"
     ],
     "exclude": [
