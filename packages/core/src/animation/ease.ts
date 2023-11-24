@@ -1,4 +1,6 @@
-export type Ease = (time: number) => number;
+import type {
+    Ease,
+} from './types';
 
 export const easeLinear: Ease = time => time;
 export const easeInQuad: Ease = time => time * time;

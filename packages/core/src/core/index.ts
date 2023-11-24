@@ -5,3 +5,4 @@ export * from './group';
 export * from './renderer';
 export * from './scene';
 export * from './shape';
+export * from './types';

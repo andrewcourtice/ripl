@@ -6,13 +6,10 @@ import {
     isArray,
 } from '@ripl/utilities';
 
-export type Point = [x: number, y: number];
-export type BorderRadius = [
-    topLeft: number,
-    topRight: number,
-    bottomRight: number,
-    bottomLeft: number,
-];
+import type {
+    BorderRadius,
+    Point,
+} from './types';
 
 export function degreesToRadians(degrees: number): number {
     return degrees * Math.PI / 180;

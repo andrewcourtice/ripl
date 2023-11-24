@@ -2,25 +2,12 @@ import {
     Disposable,
 } from '@ripl/utilities';
 
-export type EventHandler<TPayload> = (payload: TPayload) => void;
-
-export interface EventMap {
-    [key: string]: unknown;
-}
-
-export interface EventBus<TEventMap = EventMap> {
-    on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
-    off<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): void;
-    once<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
-    emit<TEvent extends keyof TEventMap>(event: TEvent, payload: TEventMap[TEvent]): void;
-    destroy(): void;
-}
-
-export interface Event<TData = unknown> {
-    data?: TData;
-    bubble: boolean;
-    stopPropagation(): void;
-}
+import type {
+    Event,
+    EventBus,
+    EventHandler,
+    EventMap,
+} from './types';
 
 export function createEvent<TData = unknown>(data?: TData): Event<TData> {
     return {
@@ -33,7 +20,6 @@ export function createEvent<TData = unknown>(data?: TData): Event<TData> {
 }
 
 export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
-
     const listeners = new Map<keyof TEventMap, Set<EventHandler<TEventMap[keyof TEventMap]>>>();
 
     function on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {

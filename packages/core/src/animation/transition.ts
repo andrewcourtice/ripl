@@ -1,5 +1,4 @@
 import {
-    Ease,
     easeLinear,
 } from './ease';
 
@@ -7,14 +6,10 @@ import {
     min,
 } from '../math';
 
-export interface TransitionOptions {
-    duration: number;
-    ease: Ease;
-    loop: boolean;
-    //delay: number | ((index: number) => number);
-}
-
-export type TransitionCallback = (time: number) => void;
+import type {
+    TransitionCallback,
+    TransitionOptions,
+} from './types';
 
 export function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Promise<void> {
     const {

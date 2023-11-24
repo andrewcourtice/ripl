@@ -1,9 +1,5 @@
 import {
-    BaseElement,
     createElement,
-    Element,
-    ElementOptions,
-    ElementProperties,
 } from './element';
 
 import {
@@ -17,16 +13,13 @@ import {
     createEvent,
 } from './event-bus';
 
-export interface Group extends Element {
-    set(elements: Element<any>[]): void;
-    add(element: OneOrMore<Element<any>>): void;
-    remove(element: OneOrMore<Element<any>>): void;
-    graph(includeGroups?: boolean): Element[];
-    find(query: string): Element | undefined;
-    findAll(query: string): Element[];
-    clear(): void;
-    get elements(): Element[];
-}
+import type {
+    BaseElement,
+    Element,
+    ElementOptions,
+    ElementProperties,
+    Group,
+} from './types';
 
 const TYPE = 'group';
 

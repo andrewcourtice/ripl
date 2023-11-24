@@ -25,9 +25,6 @@ import {
 import {
     createEvent,
     createEventBus,
-    Event,
-    EventBus,
-    EventHandler,
 } from './event-bus';
 
 import {
@@ -35,128 +32,24 @@ import {
     objectMap,
 } from '@ripl/utilities';
 
-import {
+import type {
+    BaseElement,
+    Element,
+    ElementConstructor,
+    ElementDefinition,
+    ElementDefinitionOptions,
+    ElementEvent,
+    ElementEventMap,
+    ElementInstance,
+    ElementInterpolator,
+    ElementInterpolators,
+    ElementProperties,
+    ElementValueBounds,
+    ElementValueFunctions,
+    ElementValueKeyFrame,
+    FrameCallback,
     Group,
-} from './group';
-
-export type ElementValueBounds<TValue = number> = [first: TValue, last: TValue];
-export type ElementValueKeyFrame<TValue = number> = {
-    offset?: number;
-    value: TValue;
-}
-
-export type ElementValue<TValue = number> = TValue
-| ElementValueBounds<TValue>
-| ElementValueKeyFrame<TValue>[]
-| Interpolator<TValue>;
-
-
-export type ElementProperties<TElement extends BaseElement> = {
-    [TKey in keyof TElement]: ElementValue<TElement[TKey]>;
-};
-
-export type ElementValueFunctions<TElement extends BaseElement> = {
-    [TKey in keyof TElement]: Interpolator<TElement[TKey]>;
-};
-
-export type ElementInterpolator<TValue> = (valueA: TValue, valueB: TValue) => Interpolator<TValue>
-export type ElementInterpolators<TElement extends BaseElement> = {
-    [TKey in keyof TElement]?: ElementInterpolator<TElement[TKey]>;
-}
-
-export type ElementDefinition<TElement extends BaseElement, TResult = unknown> = (properties: ElementProperties<TElement>, options: ElementOptions<TElement>, instance: ElementInstance<TElement>) => ElementRenderFunction<TElement, TResult>;
-export type ElementConstructor<TElement extends BaseElement, TResult = unknown> = (properties: ElementProperties<TElement>, options?: ElementOptions<TElement>) => Element<TElement, TResult>;
-export type ElementRenderFunction<TElement extends BaseElement, TReturn = unknown> = (frame: ElementRenderFrame<TElement>) => TReturn;
-export type FrameCallback<TElement extends BaseElement> = (key: keyof TElement, value: TElement[keyof TElement]) => void;
-export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
-
-export interface ElementDefinitionOptions<TElement extends BaseElement> {
-    abstract?: boolean;
-    interpolators?: ElementInterpolators<TElement>;
-}
-
-export interface ElementOptions<TElement extends BaseElement> {
-    id?: string;
-    class?: string;
-    data?: unknown;
-    pointerEvents?: ElementPointerEvents;
-    interpolators?: ElementInterpolators<TElement>;
-}
-
-export interface ElementInstance<TElement extends BaseElement> {
-    onUpdate(handler: EventHandler<ElementEventMap['elementupdated']>): void;
-}
-
-export interface ElementRenderFrame<TElement extends BaseElement> {
-    context: CanvasRenderingContext2D;
-    state: TElement;
-    time: number;
-}
-
-export interface BaseElement {
-    strokeStyle?: CanvasRenderingContext2D['strokeStyle'];
-    fillStyle?: CanvasRenderingContext2D['fillStyle'];
-    lineWidth?: CanvasRenderingContext2D['lineWidth'];
-    lineDash?: number[];
-    lineDashOffset?: CanvasRenderingContext2D['lineDashOffset'];
-    lineCap?: CanvasRenderingContext2D['lineCap'];
-    lineJoin?: CanvasRenderingContext2D['lineJoin'];
-    miterLimit?: CanvasRenderingContext2D['miterLimit'];
-
-    font?: CanvasRenderingContext2D['font'];
-    direction?: CanvasRenderingContext2D['direction'];
-    textAlign?: CanvasRenderingContext2D['textAlign'];
-    textBaseline?: CanvasRenderingContext2D['textBaseline'];
-
-    filter?: CanvasRenderingContext2D['filter'];
-    globalAlpha?: CanvasRenderingContext2D['globalAlpha'];
-    globalCompositeOperation?: CanvasRenderingContext2D['globalCompositeOperation'];
-
-    shadowBlur?: CanvasRenderingContext2D['shadowBlur'];
-    shadowColor?: CanvasRenderingContext2D['shadowColor'];
-    shadowOffsetX?: CanvasRenderingContext2D['shadowOffsetX'];
-    shadowOffsetY?: CanvasRenderingContext2D['shadowOffsetY'];
-}
-
-export interface ElementEvent<TData = unknown> extends Event<TData> {
-    element: Element;
-}
-
-export interface ElementEventMap<TElement extends BaseElement = BaseElement> {
-    scenegraph: ElementEvent;
-    elementattached: ElementEvent<Group>;
-    elementdetached: ElementEvent<Group>;
-    elementupdated: ElementEvent<Partial<ElementProperties<TElement>>>;
-    elementmouseenter: ElementEvent<MouseEvent>;
-    elementmouseleave: ElementEvent<MouseEvent>;
-    elementmousemove: ElementEvent<MouseEvent>;
-    elementclick: ElementEvent<MouseEvent>;
-}
-
-export interface Element<TElement extends BaseElement = BaseElement, TResult = unknown> {
-    id: string;
-    type: string;
-    class?: string;
-    data?: unknown;
-    pointerEvents: ElementPointerEvents;
-    on: EventBus<ElementEventMap>['on'];
-    emit: EventBus<ElementEventMap>['emit'];
-    once: EventBus<ElementEventMap>['once'];
-    clone(): Element<TElement>;
-    update(properties: Partial<ElementProperties<TElement>>): void;
-    state(time?: number, callback?: FrameCallback<TElement>): TElement;
-    to(newState: Partial<TElement>, time?: number): void;
-    render(context: CanvasRenderingContext2D, time?: number): TResult;
-
-    /**
-     * @internal
-     */
-    destroy(): void;
-    get parent(): Group | undefined;
-    set parent(group: Group | undefined);
-    get path(): string;
-    get result(): TResult | undefined;
-}
+} from './types';
 
 function isElementValueBound(value: unknown): value is ElementValueBounds<any> {
     return isArray(value) && value.length === 2;

@@ -1,23 +1,13 @@
 import {
-    BaseElement,
     createElement,
-    ElementConstructor,
-    ElementDefinition,
-    ElementDefinitionOptions,
-    ElementRenderFrame,
 } from './element';
 
-export type ShapeRenderFunction<TElement extends BaseElement> = (frame: ShapeRenderFrame<TElement>) => void;
-export type ShapeDefinition<TElement extends BaseElement> = (...args: Parameters<ElementDefinition<TElement, Path2D>>) => ShapeRenderFunction<TElement>;
-
-export interface ShapeRenderFrame<TElement extends BaseElement> extends ElementRenderFrame<TElement> {
-    path: Path2D;
-}
-
-export interface ShapeDefinitionOptions<TElement extends BaseElement> extends Omit<ElementDefinitionOptions<TElement>, 'onRender'> {
-    autoStroke?: boolean;
-    autoFill?: boolean;
-}
+import type {
+    BaseElement,
+    ElementConstructor,
+    ShapeDefinition,
+    ShapeDefinitionOptions,
+} from './types';
 
 export function createShape<TElement extends BaseElement>(type: string, definition: ShapeDefinition<TElement>, definitionOptions: ShapeDefinitionOptions<TElement> = {}): ElementConstructor<TElement, Path2D> {
     const {

@@ -1,15 +1,9 @@
 import {
-    BaseElement,
     createElementEvent,
-    Element,
-    ElementEventMap,
-    ElementProperties,
 } from './element';
 
 import {
     createEvent,
-    Event,
-    EventHandler,
 } from './event-bus';
 
 import {
@@ -19,11 +13,9 @@ import {
 
 import {
     createGroup,
-    Group,
 } from './group';
 
 import {
-    arrayFilter,
     arrayFind,
     Disposable,
     DOMElementEventMap,
@@ -32,42 +24,14 @@ import {
     onDOMEvent,
 } from '@ripl/utilities';
 
-interface SceneEventMap extends ElementEventMap {
-    resize: Event<{
-        width: number;
-        height: number;
-    }>;
-    scenemouseenter: Event<MouseEvent>;
-    scenemouseleave: Event<MouseEvent>;
-    scenemousemove: Event<{
-        x: number;
-        y: number;
-        event: MouseEvent;
-    }>;
-}
-
-export interface SceneOptions {
-    properties?: ElementProperties<BaseElement>;
-    renderOnResize: boolean;
-}
-
-export interface Scene {
-    canvas: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-    add: Group['add'];
-    remove: Group['remove'];
-    clear: Group['clear'];
-    find: Group['find'];
-    findAll: Group['findAll'];
-    graph: Group['graph'];
-    on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>): Disposable | undefined;
-    emit<TEvent extends keyof SceneEventMap>(event: TEvent, payload: SceneEventMap[TEvent]): void;
-    render(time?: number): void;
-    dispose(): void;
-    get width(): number;
-    get height(): number;
-    get elements(): Element[];
-}
+import {
+    Element,
+    ElementEventMap,
+    EventHandler,
+    Scene,
+    SceneEventMap,
+    SceneOptions,
+} from './types';
 
 export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
     let {

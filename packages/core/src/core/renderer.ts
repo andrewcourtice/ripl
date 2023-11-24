@@ -1,17 +1,8 @@
 import {
-    Element,
-} from './element';
-
-import {
-    Scene,
-} from './scene';
-
-import {
     isGroup,
 } from './group';
 
 import {
-    Ease,
     easeLinear,
 } from '../animation';
 
@@ -26,47 +17,15 @@ import {
     setForEach,
 } from '@ripl/utilities';
 
-export type RendererFillMode = 'none' | 'forwards';
-
-export interface RendererEventMap {
-    start(startTime: number): void;
-    stop(startTime: number, endTime: number): void;
-    tick(currentTime: number, startTime: number): void;
-}
-
-export interface RendererTransition {
-    startTime: number;
-    duration: number;
-    ease: Ease;
-    loop: boolean;
-    callback(): void;
-}
-
-export interface RendererTransitionOptions {
-    duration: number;
-    ease: Ease;
-    loop: boolean;
-    delay: number | ((index: number, length: number) => number);
-    fillMode: RendererFillMode;
-    callback(element: Element): void;
-}
-
-export interface RendererOptions {
-    autoStart?: boolean;
-    autoStop?: boolean;
-    immediate?: boolean;
-}
-
-export interface Renderer {
-    start(): void;
-    stop(): void;
-    update(options: Partial<RendererOptions>): void;
-    transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>): Promise<void>;
-    on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
-    off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]): void;
-    running: boolean;
-    get busy(): boolean;
-}
+import type {
+    Element,
+    Renderer,
+    RendererEventMap,
+    RendererOptions,
+    RendererTransition,
+    RendererTransitionOptions,
+    Scene,
+} from './types';
 
 export function createRenderer(
     scene: Scene,
@@ -276,7 +235,11 @@ export function createRenderer(
         transition,
         on,
         off,
-        running,
+
+        get running() {
+            return running;
+        },
+
         get busy() {
             return transitionMap.size > 0;
         },

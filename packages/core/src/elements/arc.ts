@@ -1,14 +1,16 @@
 import {
-    isNil,
-} from '@ripl/utilities';
-import {
     BaseElement,
     createShape,
 } from '../core';
 
 import {
-    getThetaPoint, Point,
+    getThetaPoint,
+    Point,
 } from '../math';
+
+import {
+    isNil,
+} from '@ripl/utilities';
 
 export interface Arc extends BaseElement {
     cx: number;
