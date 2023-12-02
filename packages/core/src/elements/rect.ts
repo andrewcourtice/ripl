@@ -1,10 +1,11 @@
 import {
-    BaseElement,
-    createShape,
+    BaseElementState,
+    defineShape,
 } from '../core';
 
 import {
     BorderRadius,
+    Box,
     normaliseBorderRadius,
 } from '../math';
 
@@ -12,7 +13,7 @@ import {
     interpolateBorderRadius,
 } from '../interpolators';
 
-export interface Rect extends BaseElement {
+export interface RectState extends BaseElementState {
     x: number;
     y: number;
     width: number;
@@ -20,36 +21,53 @@ export interface Rect extends BaseElement {
     borderRadius?: number | BorderRadius;
 }
 
-export const createRect = createShape<Rect>('rect', () => ({ path, state }) => {
-    const {
-        x,
-        y,
-        width,
-        height,
-        borderRadius,
-    } = state;
+export const createRect = defineShape<RectState>('rect', ({
+    setBoundingBoxHandler,
+}) => {
+    setBoundingBoxHandler(({ state }) => new Box(
+        state.y,
+        state.x,
+        state.y + state.height,
+        state.x + state.width
+    ));
 
-    if (!borderRadius) {
-        return path.rect(x, y, width, height);
-    }
+    return ({ path, state }) => {
+        const {
+            x,
+            y,
+            width,
+            height,
+            borderRadius,
+        } = state;
 
-    const [
-        borderTopLeft,
-        borderTopRight,
-        borderBottomRight,
-        borderBottomLeft,
-    ] = normaliseBorderRadius(borderRadius);
+        if (!borderRadius) {
+            return path.rect(x, y, width, height);
+        }
 
-    path.moveTo(x + borderTopLeft, y);
-    path.lineTo(x + width - borderTopRight, y);
-    path.arcTo(x + width, y, x + width, y + borderTopRight, borderTopRight);
-    path.lineTo(x + width, y + height - borderBottomRight);
-    path.arcTo(x + width, y + height, x + width - borderBottomRight, y + height, borderBottomRight);
-    path.lineTo(x + borderBottomLeft, y + height);
-    path.arcTo(x, y + height, x, y + height - borderBottomLeft, borderBottomLeft);
-    path.lineTo(x, y + borderTopLeft);
-    path.arcTo(x, y, x + borderTopLeft, y, borderTopLeft);
-    path.closePath();
+        const borders = normaliseBorderRadius(borderRadius);
+
+        if (path.roundRect) {
+            return path.roundRect(x, y, width, height, borders);
+        }
+
+        const [
+            borderTopLeft,
+            borderTopRight,
+            borderBottomRight,
+            borderBottomLeft,
+        ] = borders;
+
+        path.moveTo(x + borderTopLeft, y);
+        path.lineTo(x + width - borderTopRight, y);
+        path.arcTo(x + width, y, x + width, y + borderTopRight, borderTopRight);
+        path.lineTo(x + width, y + height - borderBottomRight);
+        path.arcTo(x + width, y + height, x + width - borderBottomRight, y + height, borderBottomRight);
+        path.lineTo(x + borderBottomLeft, y + height);
+        path.arcTo(x, y + height, x, y + height - borderBottomLeft, borderBottomLeft);
+        path.lineTo(x, y + borderTopLeft);
+        path.arcTo(x, y, x + borderTopLeft, y, borderTopLeft);
+        path.closePath();
+    };
 }, {
     interpolators: {
         borderRadius: (bRadiusA, bRadiusB) => {

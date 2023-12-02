@@ -1,6 +1,14 @@
 import {
-    createElement,
+    createEvent,
+} from './event-bus';
+
+import {
+    defineElement,
 } from './element';
+
+import {
+    getContainingBox,
+} from '../math';
 
 import {
     arrayFilter,
@@ -9,15 +17,10 @@ import {
     setForEach,
 } from '@ripl/utilities';
 
-import {
-    createEvent,
-} from './event-bus';
-
 import type {
-    BaseElement,
+    BaseElementState,
     Element,
     ElementOptions,
-    ElementProperties,
     Group,
 } from './types';
 
@@ -38,19 +41,20 @@ export function isGroup(element: Element): element is Group {
     return element.type === TYPE;
 }
 
-export function createGroup(
-    properties?: ElementProperties<BaseElement>,
-    options?: ElementOptions<BaseElement>
-): Group {
+export function createGroup(options?: ElementOptions<BaseElementState>): Group {
     let children = new Set<Element>();
 
-    const el = createElement(TYPE, () => {
+    const el = defineElement(TYPE, ({ setBoundingBoxHandler }) => {
+        setBoundingBoxHandler(() => {
+            return getContainingBox(Array.from(children), el => el.getBoundingBox());
+        });
+
         return ({ context, time }) => {
             setForEach(children, ({ render }) => render(context, time));
         };
     }, {
         abstract: true,
-    })(properties || {}, options);
+    })(options);
 
     const group = {
         ...el,
@@ -76,7 +80,7 @@ export function createGroup(
     };
 
     function updateSceneGraph() {
-        el.emit('scenegraph', {
+        el.emit('scene:graph', {
             element: el,
             ...createEvent(),
         });

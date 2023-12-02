@@ -7,7 +7,7 @@ import {
 } from './event-bus';
 
 import {
-    getContext,
+    createContext,
     rescaleCanvas,
 } from './context';
 
@@ -42,14 +42,14 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         height,
         xScale,
         yScale,
-    } = getContext(target);
+    } = createContext(target);
 
     const {
-        properties,
+        props,
         renderOnResize = true,
     } = options || {};
 
-    const group = createGroup(properties);
+    const group = createGroup({ props });
     const disposals = new Set<Disposable>();
 
     let graphHandle: number | undefined;
@@ -81,24 +81,6 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         disposals.add(onDOMEvent(canvas, event, handler));
     }
 
-    function isElementActive(element: Element, x: number, y: number) {
-        const pointerEvents = element.pointerEvents;
-        const path = element?.result;
-
-        if (pointerEvents === 'none' || !(path instanceof Path2D)) {
-            return false;
-        }
-
-        switch (pointerEvents) {
-            case 'fill':
-                return context.isPointInPath(path, x, y);
-            case 'stroke':
-                return context.isPointInStroke(path, x, y);
-        }
-
-        return context.isPointInPath(path, x, y) || context.isPointInStroke(path, x, y);
-    }
-
     function on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>) {
         return group.on(event as keyof ElementEventMap, handler as EventHandler<ElementEventMap[keyof ElementEventMap]>);
     }
@@ -122,42 +104,44 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
             top,
         } = canvas.getBoundingClientRect());
 
-        emit('scenemouseenter', createEvent(event));
+        emit('scene:mouseenter', createEvent(event));
     });
 
     attachDOMEvent('mouseleave', event => {
-        emit('scenemouseleave', createEvent(event));
+        emit('scene:mouseleave', createEvent(event));
     });
 
     attachDOMEvent('mousemove', event => {
         const x = event.clientX - left;
         const y = event.clientY - top;
 
-        emit('scenemousemove', createEvent({
+        emit('scene:mousemove', createEvent({
             x,
             y,
             event,
         }));
 
-        const matchedElement = arrayFind(elements, element => isElementActive(element, xScale(x), yScale(y)), -1);
         const baseEvent = createEvent(event);
+        const matchedElement = arrayFind(elements, element => element.intersectsWith(xScale(x), yScale(y), {
+            isPointer: true,
+        }), -1);
 
         if (matchedElement && matchedElement === activeElement) {
-            return matchedElement.emit('elementmousemove', {
+            return matchedElement.emit('element:mousemove', {
                 element: matchedElement,
                 ...baseEvent,
             });
         }
 
         if (matchedElement) {
-            matchedElement.emit('elementmouseenter', {
+            matchedElement.emit('element:mouseenter', {
                 element: matchedElement,
                 ...baseEvent,
             });
         }
 
         if (activeElement) {
-            activeElement.emit('elementmouseleave', {
+            activeElement.emit('element:mouseleave', {
                 element: activeElement,
                 ...baseEvent,
             });
@@ -170,16 +154,20 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         const x = xScale(event.clientX - left);
         const y = yScale(event.clientY - top);
 
-        const element = arrayFind(elements, element => isElementActive(element, x, y), -1);
+        const element = arrayFind(elements, element => element.intersectsWith(x, y, {
+            isPointer: true,
+        }), -1);
 
-        element?.emit('elementclick', createElementEvent(element, event));
+        console.log(element);
+
+        element?.emit('element:click', createElementEvent(element, event));
     });
 
     updateStyling();
 
     onDOMElementResize(canvas, ({ width, height }) => {
         updateScaling(width, height);
-        emit('resize', createEvent({
+        emit('scene:resize', createEvent({
             width,
             height,
         }));
@@ -189,7 +177,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         }
     });
 
-    group.on('scenegraph', () => {
+    group.on('scene:graph', () => {
         if (graphHandle) {
             cancelAnimationFrame(graphHandle);
             graphHandle = undefined;

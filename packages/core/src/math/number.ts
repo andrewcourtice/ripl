@@ -1,5 +1,6 @@
 import {
     arrayForEach,
+    arrayMap,
 } from '@ripl/utilities';
 
 export function min(...values: number[]): number {
@@ -8,6 +9,14 @@ export function min(...values: number[]): number {
 
 export function max(...values: number[]): number {
     return Math.max(...values);
+}
+
+export function minOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
+    return min(...arrayMap(values, accessor));
+}
+
+export function maxOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
+    return max(...arrayMap(values, accessor));
 }
 
 export function clamp(value: number, lower: number, upper: number): number {

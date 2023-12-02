@@ -1,4 +1,8 @@
 import {
+    createEventBus,
+} from './event-bus';
+
+import {
     isGroup,
 } from './group';
 
@@ -14,7 +18,6 @@ import {
     arrayForEach,
     isFunction,
     OneOrMore,
-    setForEach,
 } from '@ripl/utilities';
 
 import type {
@@ -43,13 +46,12 @@ export function createRenderer(
     } = scene;
 
     const transitionMap = new Map<string, RendererTransition>();
-    const eventMap = {
-        start: new Set(),
-        stop: new Set(),
-        tick: new Set(),
-    } as {
-        [P in keyof RendererEventMap]: Set<RendererEventMap[P]>;
-    };
+
+    const {
+        on,
+        off,
+        emit,
+    } = createEventBus<RendererEventMap>();
 
     let running = false;
     let handle: number | undefined;
@@ -65,25 +67,17 @@ export function createRenderer(
 
         currentTime = performance.now();
 
-        setForEach(eventMap.tick, handler => handler(currentTime, startTime));
         arrayForEach(scene.elements, element => {
             let time = 0;
 
             if (transitionMap.has(element.id)) {
                 const {
-                    startTime,
-                    duration,
-                    ease,
-                    loop,
-                    callback,
-                } = {
-                    startTime: currentTime,
-                    duration: 0,
-                    ease: easeLinear,
-                    loop: false,
-                    callback: () => {},
-                    ...transitionMap.get(element.id),
-                };
+                    startTime = currentTime,
+                    duration = 0,
+                    ease = easeLinear,
+                    loop = false,
+                    callback = () => {},
+                } = transitionMap.get(element.id) || {};
 
                 const elapsed = currentTime - startTime;
 
@@ -98,6 +92,20 @@ export function createRenderer(
             }
 
             element.render(context, time);
+
+            if (rendererOptions.debug?.boundingBoxes) {
+                const {
+                    left,
+                    top,
+                    width,
+                    height,
+                } = element.getBoundingBox();
+
+                context.save();
+                context.strokeStyle = '#FF0000';
+                context.strokeRect(left, top, width, height);
+                context.restore();
+            }
         });
 
         handle = requestAnimationFrame(tick);
@@ -112,7 +120,7 @@ export function createRenderer(
         startTime = performance.now();
         transitionMap.clear();
 
-        setForEach(eventMap.start, handler => handler(startTime));
+        emit('renderer:start', { startTime });
         requestAnimationFrame(tick);
     }
 
@@ -128,7 +136,10 @@ export function createRenderer(
         running = false;
         transitionMap.clear();
 
-        setForEach(eventMap.stop, handler => handler(startTime, currentTime));
+        emit('renderer:stop', {
+            startTime,
+            endTime: currentTime,
+        });
     }
 
     function stopOnIdle() {
@@ -179,7 +190,7 @@ export function createRenderer(
                     completeCount += 1;
 
                     if (fillMode === 'forwards') {
-                        element.update(element.state());
+                        element.setProps(element.getState());
                     }
 
                     try {
@@ -211,21 +222,13 @@ export function createRenderer(
         };
     }
 
-    function on<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) {
-        eventMap[event]?.add(handler);
-    }
-
-    function off<TEvent extends keyof RendererEventMap>(event: TEvent, handler: RendererEventMap[TEvent]) {
-        eventMap[event]?.delete(handler);
-    }
-
     if (rendererOptions.autoStart) {
         start();
     }
 
     if (rendererOptions.autoStop) {
-        scene.on('scenemouseenter', start);
-        scene.on('scenemouseleave', stopOnIdle);
+        scene.on('scene:mouseenter', start);
+        scene.on('scene:mouseleave', stopOnIdle);
     }
 
     return {

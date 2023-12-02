@@ -1,9 +1,10 @@
 import {
-    BaseElement,
-    createShape,
+    BaseElementState,
+    defineShape,
 } from '../core';
 
 import {
+    Box,
     getPolygonPoints,
 } from '../math';
 
@@ -15,25 +16,36 @@ import {
     drawPoints,
 } from './polyline';
 
-export interface Polygon extends BaseElement {
+export interface PolygonState extends BaseElementState {
     cx: number;
     cy: number;
     radius: number;
     sides: number;
 }
 
-export const createPolygon = createShape<Polygon>('polygon', () => ({ state, path }) => {
-    const {
-        sides,
-        cx,
-        cy,
-        radius,
-    } = state;
+export const createPolygon = defineShape<PolygonState>('polygon', ({
+    setBoundingBoxHandler,
+}) => {
+    setBoundingBoxHandler(({ state }) => new Box(
+        state.cy - state.radius,
+        state.cx - state.radius,
+        state.cy + state.radius,
+        state.cx + state.radius
+    ));
 
-    const points = getPolygonPoints(sides, cx, cy, radius);
+    return ({ state, path }) => {
+        const {
+            sides,
+            cx,
+            cy,
+            radius,
+        } = state;
 
-    drawPoints(points, path);
-    path.closePath();
+        const points = getPolygonPoints(sides, cx, cy, radius);
+
+        drawPoints(points, path);
+        path.closePath();
+    };
 }, {
     interpolators: {
         sides: (sidesA, sidesB) => {

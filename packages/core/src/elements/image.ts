@@ -1,10 +1,10 @@
 import {
-    BaseElement,
-    createElement,
+    BaseElementState,
+    defineElement,
     ElementInterpolator,
 } from '../core';
 
-export interface Image extends BaseElement {
+export interface ImageState extends BaseElementState {
     image: CanvasImageSource;
     x: number;
     y: number;
@@ -13,7 +13,7 @@ export interface Image extends BaseElement {
 const refCanvas = document.createElement('canvas');
 const refContext = refCanvas.getContext('2d');
 
-const imageInterpolator: ElementInterpolator<Image['image']> = (valueA, valueB) => {
+const imageInterpolator: ElementInterpolator<ImageState['image']> = (valueA, valueB) => {
     refCanvas.width = +valueA.width;
     refCanvas.height = +valueA.height;
 
@@ -33,7 +33,7 @@ const imageInterpolator: ElementInterpolator<Image['image']> = (valueA, valueB) 
     };
 };
 
-export const createImage = createElement<Image>('image', () => ({ context, state }) => {
+export const createImage = defineElement<ImageState>('image', () => ({ context, state }) => {
     const {
         image,
         x,

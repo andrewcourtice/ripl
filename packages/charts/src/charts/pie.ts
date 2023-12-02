@@ -115,19 +115,21 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
                 innerRadius,
             } = item;
 
-            const group = createGroup(undefined, {
+            const group = createGroup({
                 id: key,
             });
 
             const segmentArc = createArc({
-                cx,
-                cy,
-                startAngle,
-                padAngle,
-                endAngle: [startAngle, endAngle],
-                radius: [0, radius],
-                innerRadius: [0, innerRadius],
-                fillStyle: color || '#FF0000',
+                props: {
+                    cx,
+                    cy,
+                    startAngle,
+                    padAngle,
+                    endAngle: [startAngle, endAngle],
+                    radius: [0, radius],
+                    innerRadius: [0, innerRadius],
+                    fillStyle: color || '#FF0000',
+                },
             });
 
             const [
@@ -136,13 +138,15 @@ export const createPieChart = createChart<PieChartOptions>(instance => {
             ] = getArcCentroid(segmentArc.state(1));
 
             const segmentLabel = createText({
-                fillStyle: '#000000',
-                x: centroidx,
-                y: centroidY,
-                content: label,
-                textAlign: 'center',
-                textBaseline: 'middle',
-                globalAlpha: [0, 1],
+                props: {
+                    fillStyle: '#000000',
+                    x: centroidx,
+                    y: centroidY,
+                    content: label,
+                    textAlign: 'center',
+                    textBaseline: 'middle',
+                    globalAlpha: [0, 1],
+                },
             });
 
             group.add([

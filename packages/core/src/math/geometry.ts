@@ -3,6 +3,11 @@ import {
 } from './constants';
 
 import {
+    Box,
+} from './structs';
+
+import {
+    arrayForEach,
     isArray,
 } from '@ripl/utilities';
 
@@ -64,6 +69,31 @@ export function getPolygonPoints(
     }
 
     return points;
+}
+
+export function getContainingBox<TValue>(value: TValue[], identity: (value: TValue) => Box): Box {
+    let top = 0,
+        left = 0,
+        bottom = 0,
+        right = 0;
+
+    arrayForEach(value, item => {
+        const box = identity(item);
+
+        top = Math.min(top, box.top);
+        left = Math.min(left, box.left);
+        bottom = Math.max(bottom, box.bottom);
+        right = Math.max(right, box.right);
+    });
+
+    return new Box(top, left, bottom, right);
+}
+
+export function isPointInBox([x, y]: Point, { left, top, bottom, right }: Box) {
+    return x >= left
+        && x <= right
+        && y >= top
+        && y <= bottom;
 }
 
 export function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius {

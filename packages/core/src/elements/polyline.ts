@@ -1,9 +1,11 @@
 import {
-    BaseElement,
-    createShape,
+    BaseElementState,
+    defineShape,
 } from '../core';
 
 import {
+    Box,
+    getExtent,
     Point,
 } from '../math';
 
@@ -15,7 +17,7 @@ import {
     arrayForEach,
 } from '@ripl/utilities';
 
-export interface PolyLine extends BaseElement {
+export interface PolyLineState extends BaseElementState {
     points: Point[];
 }
 
@@ -32,12 +34,28 @@ export const drawPoints = (points: Point[], path: Path2D) => {
     });
 };
 
-export const createPolyline = createShape<PolyLine>('polyline', () => ({ path, state }) => {
-    const {
-        points,
-    } = state;
+export const createPolyline = defineShape<PolyLineState>('polyline', ({
+    setBoundingBoxHandler,
+}) => {
+    setBoundingBoxHandler(({ state }) => {
+        const [left, right] = getExtent(state.points, point => point[0]);
+        const [top, bottom] = getExtent(state.points, point => point[1]);
 
-    drawPoints(points, path);
+        return new Box(
+            left,
+            top,
+            bottom,
+            right
+        );
+    });
+
+    return ({ path, state }) => {
+        const {
+            points,
+        } = state;
+
+        drawPoints(points, path);
+    };
 }, {
     interpolators: {
         points: interpolatePoints,

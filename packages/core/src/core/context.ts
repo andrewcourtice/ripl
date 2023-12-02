@@ -31,7 +31,7 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
     return output;
 }
 
-export function getContext(target: string | HTMLCanvasElement) {
+export function createContext(target: string | HTMLCanvasElement) {
     const canvas = isString(target) ? document.querySelector(target) as HTMLCanvasElement : target;
     const context = canvas?.getContext('2d');
 
