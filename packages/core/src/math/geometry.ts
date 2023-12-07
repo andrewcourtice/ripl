@@ -8,7 +8,7 @@ import {
 
 import {
     arrayForEach,
-    isArray,
+    typeIsArray,
 } from '@ripl/utilities';
 
 import type {
@@ -97,7 +97,7 @@ export function isPointInBox([x, y]: Point, { left, top, bottom, right }: Box) {
 }
 
 export function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius {
-    return isArray(borderRadius)
+    return typeIsArray(borderRadius)
         ? borderRadius
         : [
             borderRadius,
@@ -105,4 +105,8 @@ export function normaliseBorderRadius(borderRadius: number | BorderRadius): Bord
             borderRadius,
             borderRadius,
         ];
+}
+
+export function typeIsPoint(value: unknown): value is Point {
+    return typeIsArray(value) && value.length === 2;
 }

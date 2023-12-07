@@ -12,7 +12,7 @@ import {
 } from '../math';
 
 import {
-    isNil,
+    typeIsNil,
 } from '@ripl/utilities';
 
 export interface ArcState extends BaseElementState {
@@ -58,7 +58,7 @@ export const createArc = defineShape<ArcState>('arc', ({
         const [outerX1, outerY1] = getThetaPoint(startAngle, radius, cx, cy);
         const [outerX2, outerY2] = getThetaPoint(endAngle, radius, cx, cy);
 
-        if (isNil(innerRadius)) {
+        if (typeIsNil(innerRadius)) {
             return new Box(
                 min(cy, outerY1, outerY2),
                 min(cx, outerX1, outerX2),
@@ -97,7 +97,7 @@ export const createArc = defineShape<ArcState>('arc', ({
             endAngle = Math.max(endAngle - offset, startAngle);
         }
 
-        if (isNil(innerRadius)) {
+        if (typeIsNil(innerRadius)) {
             return path.arc(cx, cy, radius, startAngle, endAngle);
         }
 

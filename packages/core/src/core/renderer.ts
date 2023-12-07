@@ -16,8 +16,8 @@ import {
 
 import {
     arrayForEach,
-    isFunction,
     OneOrMore,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 import type {
@@ -27,6 +27,7 @@ import type {
     RendererOptions,
     RendererTransition,
     RendererTransitionOptions,
+    RendererTransitionOptionsArg,
     Scene,
 } from './types';
 
@@ -76,6 +77,7 @@ export function createRenderer(
                     duration = 0,
                     ease = easeLinear,
                     loop = false,
+                    interpolator = () => ({}),
                     callback = () => {},
                 } = transitionMap.get(element.id) || {};
 
@@ -84,6 +86,10 @@ export function createRenderer(
                 if (elapsed > 0) {
                     time = ease(min(elapsed / duration, 1));
 
+                    element.update({
+                        state: interpolator(time),
+                    });
+
                     if (elapsed >= duration) {
                         transitionMap.delete(element.id);
                         callback();
@@ -91,7 +97,7 @@ export function createRenderer(
                 }
             }
 
-            element.render(context, time);
+            element.render(context);
 
             if (rendererOptions.debug?.boundingBoxes) {
                 const {
@@ -148,11 +154,15 @@ export function createRenderer(
         }
     }
 
-    function transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) {
+    function transition<TElement extends Element>(element: OneOrMore<TElement>, options?: RendererTransitionOptionsArg<TElement>) {
         start();
 
+        const getOptions = typeIsFunction(options)
+            ? options
+            : () => options || {} as RendererTransitionOptions<TElement>;
+
         return new Promise<void>(resolve => {
-            const elements = ([] as Element[]).concat(element).flatMap(element => {
+            const elements = ([] as TElement[]).concat(element).flatMap(element => {
                 return isGroup(element) ? element.elements : element;
             });
 
@@ -165,33 +175,23 @@ export function createRenderer(
 
             elements.forEach((element, index) => {
                 const {
-                    duration,
-                    delay,
-                    loop,
-                    ease,
-                    callback,
-                    fillMode,
-                } = {
-                    duration: 0,
-                    delay: 0,
-                    loop: false,
-                    ease: easeLinear,
-                    fillMode: 'forwards',
-                    callback: () => {},
-                    ...options,
-                } as RendererTransitionOptions;
+                    duration = 0,
+                    delay = 0,
+                    loop = false,
+                    ease = easeLinear,
+                    callback = () => {},
+                    fillMode = 'forwards',
+                    state,
+                } = getOptions(element, index, totalCount);
 
-                const startTime = performance.now() + (isFunction(delay)
-                    ? delay(index, elements.length)
-                    : delay
-                );
+                const startTime = performance.now() + delay;
 
                 const onComplete = () => {
                     completeCount += 1;
 
-                    if (fillMode === 'forwards') {
-                        element.setProps(element.getState());
-                    }
+                    // if (fillMode === 'forwards') {
+                    //     element.setProps(element.getState());
+                    // }
 
                     try {
                         callback(element);
@@ -209,6 +209,7 @@ export function createRenderer(
                     ease,
                     startTime,
                     duration: rendererOptions.immediate ? 1 : duration,
+                    interpolator: element.interpolate(state),
                     callback: onComplete,
                 });
             });

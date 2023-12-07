@@ -1,6 +1,6 @@
 import {
     CONTEXT_OPERATIONS,
-    INTERPOLATORS,
+    TRACKED_EVENTS,
 } from './constants';
 
 import {
@@ -9,31 +9,36 @@ import {
 } from './event-bus';
 
 import {
-    scaleContinuous,
-} from '../scales';
-
-import {
-    interpolateNumber,
-    Interpolator,
-} from '../interpolators';
-
-import {
     Box,
     isPointInBox,
 } from '../math';
 
 import {
+    scaleContinuous,
+} from '../scales';
+
+import {
+    interpolateBorderRadius,
+    interpolateColor,
+    interpolateDate,
+    interpolateNumber,
+    interpolatePoints,
+    Interpolator,
+    InterpolatorFactory,
+} from '../interpolators';
+
+import {
     arrayFind,
-    isArray,
-    isFunction,
-    isNil,
-    isNumber,
-    isObject,
+    objectFreeze,
+    objectReduce,
     stringUniqueId,
+    typeIsArray,
+    typeIsFunction,
+    typeIsNil,
+    typeIsObject,
 } from '@ripl/utilities';
 
 import {
-    objectForEach,
     objectMap,
 } from '@ripl/utilities';
 
@@ -48,108 +53,70 @@ import type {
     ElementEvent,
     ElementEventMap,
     ElementInstance,
-    ElementInterpolator,
-    ElementInterpolators,
+    ElementInterpolationState,
     ElementIntersectionHandler,
     ElementIntersectionOptions,
-    ElementProducers,
-    ElementProperties,
+    ElementOptions,
     ElementValidationHandler,
-    ElementValueBounds,
-    ElementValueKeyFrame,
+    EventHandler,
     FrameCallback,
     Group,
+    RendererTransitionKeyFrame,
 } from './types';
+import {
+    interpolateAny,
+} from '../interpolators/any';
 
-function isElementValueBound(value: unknown): value is ElementValueBounds<any> {
-    return isArray(value) && value.length === 2;
+function isElementValueKeyFrame(value: unknown): value is RendererTransitionKeyFrame<any>[] {
+    return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
 }
 
-function isElementValueKeyFrame(value: unknown): value is ElementValueKeyFrame<any>[] {
-    return isArray(value) && value.every(keyframe => isObject(keyframe) && 'value' in keyframe);
-}
+function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: RendererTransitionKeyFrame<TValue>[], interpolator: InterpolatorFactory<TValue>): Interpolator<TValue | undefined> {
+    let keyframes = [{
+        offset: 0,
+        value: currentValue,
+    }].concat(frames);
 
-function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], calculator: ElementInterpolator<TValue>): Interpolator<TValue | undefined> {
-    const lastIndex = value.length - 1;
-    const keyframes = value.map(({ offset, value }, index) => ({
+    keyframes = frames.map(({ offset, value }, index) => ({
         value,
-        offset: isNil(offset) ? index / lastIndex : offset,
+        offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
     }));
 
-    if (keyframes[0].offset !== 0) {
-        keyframes.unshift({
-            offset: 0,
-            value: keyframes[0].value,
-        });
-    }
-
-    if (keyframes[lastIndex].offset !== 1) {
+    if (keyframes.at(-1)?.offset !== 1) {
         keyframes.push({
             offset: 1,
-            value: keyframes[lastIndex ].value,
+            value: keyframes.at(-1)?.value ?? currentValue,
         });
     }
 
     keyframes.sort(({ offset: oa }, { offset: ob }) => oa - ob);
 
-    const deltaFrames = Array.from({ length: keyframes.length - 1 }, (_, index) => {
+    const frameScale = scaleContinuous([0, 1], [0, keyframes.length - 1], true);
+    const interpolators = Array.from({ length: keyframes.length - 1 }, (_, index) => {
         const frameA = keyframes[index];
         const frameB = keyframes[index + 1];
         const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);
-        const calculate = calculator(frameA.value, frameB.value);
+        const interpolate = interpolator(frameA.value, frameB.value);
 
-        return {
-            scale,
-            calculate,
-            ...frameA,
-        };
+        return (time: number) => interpolate(scale(time));
     });
 
-    return time => {
-        const keyframe = arrayFind(deltaFrames, frame => time >= frame.offset, -1);
-
-        if (keyframe) {
-            return keyframe.calculate(keyframe.scale(time));
-        }
-    };
+    return time => interpolators[Math.floor(frameScale(time))](time);
 }
 
-function defaultInterpolator<TState extends BaseElementState>(valueA: TState[keyof TState], valueB: TState[keyof TState]): Interpolator<TState[keyof TState]> {
-    if (valueA === valueB) {
-        return () => valueB;
-    }
+function getInterpolator<TValue>(value: TValue) {
+    const interpolator = arrayFind([
+        interpolateNumber,
+        interpolateColor,
+        interpolateDate,
+        interpolateBorderRadius,
+        interpolatePoints,
+    ], ({ test }) => !!test?.(value));
 
-    if (isNumber(valueA) && isNumber(valueB)) {
-        return interpolateNumber(valueA, valueB) as Interpolator<typeof valueA>;
-    }
-
-    return time => time > 0.5 ? valueB : valueA;
+    return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
-function getProducers<TState extends BaseElementState>(
-    properties: Partial<ElementProperties<TState>>,
-    interpolators: ElementInterpolators<TState> = {}
-): ElementProducers<TState> {
-    return objectMap(properties, (key, value) => {
-        const interpolator = interpolators[key] || defaultInterpolator;
-
-        if (isFunction(value)) {
-            return value;
-        }
-
-        if (isElementValueKeyFrame(value)) {
-            return getKeyframeInterpolator(value, interpolator);
-        }
-
-        if (isElementValueBound(value)) {
-            return interpolator!(value[0], value[1]);
-        }
-
-        return () => value;
-    });
-}
-
-export function createElementEvent<TElement extends Element, TData = unknown>(element: TElement, data: TData): ElementEvent<TData> {
+export function createElementEvent<TData = unknown>(element: Element<any, any>, data: TData): ElementEvent<TData> {
     return {
         element,
         ...createEvent(data),
@@ -160,43 +127,49 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
     type: string,
     definition: ElementDefinition<TState, TAttrs>,
     definitionOptions: ElementDefinitionOptions<TState> = {}
-): ElementConstructor<TState, TAttrs> {
+) {
     const {
         abstract,
-        interpolators: definitionInterpolators,
     } = definitionOptions;
 
-    return (instanceOptions = {}) => {
+    const constructor: ElementConstructor<TState, TAttrs> = (instanceOptions = {}) => {
         const eventBus = createEventBus<ElementEventMap>();
 
         let {
             id = `${type}:${stringUniqueId()}`,
-            props = {},
+            state = {} as TState,
             attrs = {
                 pointerEvents: 'all',
             } as TAttrs,
             data,
             class: elClass,
-            interpolators: instanceInterpolators,
+            interpolators = {},
         } = instanceOptions;
 
         let getBoundingBoxHandler: ElementBoundingBoxHandler<TState> = () => new Box(0, 0, 0, 0);
-        let intersectsWithHandler: ElementIntersectionHandler<TState> = () => false;
+        let intersectsWithHandler: ElementIntersectionHandler<TState> = point => isPointInBox(point, getBoundingBox());
         let validationHandler: ElementValidationHandler<TState> = () => true;
-
-        const interpolators = {
-            ...INTERPOLATORS,
-            ...definitionInterpolators,
-            ...instanceInterpolators,
-        } as ElementInterpolators<TState>;
 
         const instance = {
             emit,
             on: eventBus.on,
             once: eventBus.once,
 
-            getAttrs: () => attrs,
-            getAttr: key => attrs[key],
+            get id() {
+                return id;
+            },
+
+            get attrs () {
+                return objectFreeze(attrs);
+            },
+
+            get state() {
+                return objectFreeze(getState());
+            },
+
+            get interpolators() {
+                return objectFreeze(interpolators);
+            },
 
             setBoundingBoxHandler: handler => getBoundingBoxHandler = handler,
             setIntersectionHandler: handler => intersectsWithHandler = handler,
@@ -205,34 +178,47 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
 
         const onRender = definition(instance);
 
-        let producers = getProducers(props, interpolators);
-
         let ctx: CanvasRenderingContext2D | undefined;
         let parent: Group | undefined;
-        let currentState: TState;
 
         const element: Element<TState, TAttrs> = {
-            id,
-            type,
-            data,
             clone,
-            setProps,
-            setAttrs,
-            getState,
-            setEndState,
+            update,
+            interpolate,
             getBoundingBox,
             intersectsWith,
             render,
             class: elClass,
 
             emit,
-            on: eventBus.on,
-            once: eventBus.once,
+            has: eventBus.has,
+            on: trackEvents('on'),
+            once: trackEvents('once'),
 
             destroy,
 
+            get id() {
+                return id;
+            },
+
+            get type() {
+                return type;
+            },
+
             get attrs () {
-                return Object.freeze(attrs) as TAttrs;
+                return objectFreeze(attrs);
+            },
+
+            get state() {
+                return objectFreeze(getState());
+            },
+
+            get interpolators() {
+                return objectFreeze(interpolators);
+            },
+
+            get data() {
+                return data;
             },
 
             get parent() {
@@ -261,62 +247,47 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
             }
         }
 
-        function clone() {
-            return defineElement(type, definition, definitionOptions)(instanceOptions);
-        }
+        function trackEvents<TEvent extends keyof ElementEventMap>(method: 'on' | 'once') {
+            return (event: TEvent, handler: EventHandler<ElementEventMap[TEvent]>) => {
+                const listener = eventBus[method](event, handler);
 
-        function setProps(properties: Partial<ElementProperties<TState>>) {
-            producers = {
-                ...producers,
-                ...getProducers(properties, interpolators),
-            };
-
-            emit('element:updated', createElementEvent(element, properties));
-        }
-
-        function setAttrs(attributes: Partial<TAttrs>) {
-            attrs = {
-                ...attrs,
-                ...attributes,
-            };
-        }
-
-        function getState(time?: number, callback?: FrameCallback<TState>) {
-            if (isNil(time) && currentState) {
-                return currentState;
-            }
-
-            const _time = time ?? 0;
-            const parentState = parent?.getState(_time) || {};
-            const output = {} as TState;
-
-            const updateOutput = (key: keyof TState, value: TState[keyof TState]) => {
-                output[key] = value;
-
-                if (callback) {
-                    callback(key, value);
+                if (!TRACKED_EVENTS.includes(event)) {
+                    return listener;
                 }
+
+                const elEvent = createElementEvent(element, event);
+                emit('scene:track', elEvent);
+
+                return {
+                    dispose: () => (emit('scene:untrack', elEvent), listener.dispose()),
+                };
             };
-
-            objectForEach(parentState, updateOutput);
-            objectForEach(producers, (key, value) => updateOutput(key, value(_time)));
-
-            return output;
         }
 
-        function setEndState(newState: Partial<TState>, time?: number) {
-            const currentState = getState();
-            const targetState = getState(time);
+        function clone() {
+            return constructor(instanceOptions);
+        }
 
-            const properties = objectMap(currentState, (key, startValue) => {
-                const endValue = newState[key] ?? targetState[key] ?? startValue;
+        function update(options: ElementOptions<TState, TAttrs>) {
+            id = options.id ?? id;
+            data = options.data ?? data;
+            Object.assign(state, options.state);
+            Object.assign(attrs, options.attrs);
+            Object.assign(interpolators, options.interpolators);
 
-                return startValue === endValue
-                    ? startValue
-                    : [startValue, endValue];
-            });
+            return element;
+        }
 
-            setProps(properties);
+        function getState(callback?: FrameCallback<TState>) {
+            const parentState = parent?.state || {};
+            const output = {
+                ...parentState,
+                ...state,
+            };
+
+            return callback
+                ? objectMap(output, (key, value) => (callback(key, value), value))
+                : output;
         }
 
         function getBoundingBox() {
@@ -346,13 +317,39 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
             });
         }
 
-        function render(context: CanvasRenderingContext2D, time: number = 0) {
+        function interpolate(newState: ElementInterpolationState<TState>): Interpolator<TState> {
+            const currentState = getState();
+
+            const interpolators = objectReduce(newState, (output, key, value) => {
+                const currentValue = currentState[key];
+
+                if (typeIsNil(currentValue)) {
+                    return output;
+                }
+
+                if (typeIsFunction(value)) {
+                    return (output[key] = value, output);
+                }
+
+                const interpolator = element.interpolators[key] || getInterpolator(currentValue);
+
+                if (isElementValueKeyFrame(value)) {
+                    return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);
+                }
+
+                return (output[key] = interpolator(currentValue, value), output);
+            }, {} as Record<keyof TState, Interpolator<any>>);
+
+            return time => objectMap(interpolators, (_, value) => value(time));
+        }
+
+        function render(context: CanvasRenderingContext2D) {
             ctx = context;
 
             context.save();
 
             try {
-                currentState = getState(time, (key, value) => {
+                const state = getState((key, value) => {
                     if (!abstract && key in CONTEXT_OPERATIONS) {
                         CONTEXT_OPERATIONS[key]?.(context, value);
                     }
@@ -360,8 +357,7 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
 
                 onRender({
                     context,
-                    time,
-                    state: currentState,
+                    state,
                 });
             } finally {
                 context.restore();
@@ -370,4 +366,6 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
 
         return element;
     };
+
+    return constructor;
 }

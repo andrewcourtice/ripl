@@ -12,14 +12,20 @@ import {
 } from './context';
 
 import {
-    createGroup,
+    createGroup, isGroup,
 } from './group';
 
 import {
+    arrayDedupe,
+    arrayFilter,
     arrayFind,
+    arrayForEach,
+    arrayJoin,
+    arrayReduce,
     Disposable,
     DOMElementEventMap,
     DOMEventHandler,
+    functionMemoize,
     onDOMElementResize,
     onDOMEvent,
 } from '@ripl/utilities';
@@ -45,19 +51,33 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
     } = createContext(target);
 
     const {
-        props,
+        state,
         renderOnResize = true,
     } = options || {};
 
-    const group = createGroup({ props });
+    const group = createGroup({ state });
     const disposals = new Set<Disposable>();
+    const activeElements = [] as Element[];
 
     let graphHandle: number | undefined;
     let elements = group.graph();
 
     let left = 0;
     let top = 0;
-    let activeElement: Element | undefined;
+
+    const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
+        const elements = arrayReduce(group.graph(true), (output, element) => {
+            if (!element.has(event)) {
+                return output;
+            }
+
+            return output.concat(isGroup(element)
+                ? element.graph()
+                : element);
+        }, [] as Element[]);
+
+        return arrayDedupe(elements);
+    });
 
     function updateScaling(_width: number, _height: number) {
         width = _width;
@@ -89,9 +109,9 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         group.emit(event as keyof ElementEventMap, payload as ElementEventMap[keyof ElementEventMap]);
     }
 
-    function render(time?: number) {
+    function render() {
         clear();
-        group.render(context, time);
+        group.render(context);
     }
 
     function dispose() {
@@ -114,6 +134,8 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
     attachDOMEvent('mousemove', event => {
         const x = event.clientX - left;
         const y = event.clientY - top;
+        const trueX = xScale(x);
+        const trueY = yScale(y);
 
         emit('scene:mousemove', createEvent({
             x,
@@ -121,44 +143,54 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
             event,
         }));
 
+        const trackedElements = [
+            ...getTrackedElements('element:mousemove'),
+            ...getTrackedElements('element:mouseenter'),
+            ...getTrackedElements('element:mouseleave'),
+        ];
+
         const baseEvent = createEvent(event);
-        const matchedElement = arrayFind(elements, element => element.intersectsWith(xScale(x), yScale(y), {
+        const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
             isPointer: true,
-        }), -1);
+        }));
 
-        if (matchedElement && matchedElement === activeElement) {
-            return matchedElement.emit('element:mousemove', {
-                element: matchedElement,
+        const {
+            left: entries,
+            inner: updates,
+            right: exits,
+        } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
+
+        arrayForEach(entries, element => {
+            element.emit('element:mouseenter', {
+                element,
                 ...baseEvent,
             });
-        }
 
-        if (matchedElement) {
-            matchedElement.emit('element:mouseenter', {
-                element: matchedElement,
+            activeElements.push(element);
+        });
+
+        arrayForEach(updates, ([element]) => element.emit('element:mousemove', {
+            element,
+            ...baseEvent,
+        }));
+
+        arrayForEach(exits, element => {
+            element.emit('element:mouseleave', {
+                element,
                 ...baseEvent,
             });
-        }
 
-        if (activeElement) {
-            activeElement.emit('element:mouseleave', {
-                element: activeElement,
-                ...baseEvent,
-            });
-        }
-
-        activeElement = matchedElement;
+            activeElements.splice(activeElements.indexOf(element), 1);
+        });
     });
 
     attachDOMEvent('click', event => {
         const x = xScale(event.clientX - left);
         const y = yScale(event.clientY - top);
 
-        const element = arrayFind(elements, element => element.intersectsWith(x, y, {
+        const element = arrayFind(getTrackedElements('element:click'), element => element.intersectsWith(x, y, {
             isPointer: true,
         }), -1);
-
-        console.log(element);
 
         element?.emit('element:click', createElementEvent(element, event));
     });
@@ -177,7 +209,7 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         }
     });
 
-    group.on('scene:graph', () => {
+    on('scene:graph', () => {
         if (graphHandle) {
             cancelAnimationFrame(graphHandle);
             graphHandle = undefined;
@@ -185,8 +217,12 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
 
         graphHandle = requestAnimationFrame(() => {
             elements = group.graph();
+            getTrackedElements.cache.clear();
         });
     });
+
+    on('scene:track', ({ data }) => data && getTrackedElements.cache.delete(data));
+    on('scene:untrack', ({ data }) => data && getTrackedElements.cache.delete(data));
 
     return {
         context,

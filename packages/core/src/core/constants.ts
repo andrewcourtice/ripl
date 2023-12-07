@@ -4,31 +4,33 @@ import {
 } from '../interpolators';
 
 import {
-    BaseElement,
+    BaseElementState,
+    ElementEventMap,
     ElementInterpolator,
     ElementInterpolators,
-} from './element';
+} from './types';
 
 import {
-    isNil,
+    GetMutableKeys,
+    typeIsNil,
 } from '@ripl/utilities';
 
 export type ElementContextOps = {
-    [P in keyof BaseElement]?: (context: CanvasRenderingContext2D, value?: BaseElement[P]) => void;
+    [P in keyof BaseElementState]?: (context: CanvasRenderingContext2D, value?: BaseElementState[P]) => void;
 }
 
-const basicContextSetter = (key: keyof CanvasRenderingContext2D) => {
-    return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[typeof key]) => {
-        if (!isNil(value)) {
+function basicContextSetter<TKey extends GetMutableKeys<CanvasRenderingContext2D>>(key: TKey) {
+    return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[TKey]) => {
+        if (!typeIsNil(value)) {
             context[key] = value;
         }
     };
-};
+}
 
-export const INTERPOLATORS: ElementInterpolators<BaseElement> = {
-    strokeStyle: interpolateColor as ElementInterpolator<BaseElement['strokeStyle']>,
-    fillStyle: interpolateColor as ElementInterpolator<BaseElement['fillStyle']>,
-    shadowColor: interpolateColor as ElementInterpolator<BaseElement['shadowColor']>,
+export const INTERPOLATORS: ElementInterpolators<BaseElementState> = {
+    strokeStyle: interpolateColor as ElementInterpolator<BaseElementState['strokeStyle']>,
+    fillStyle: interpolateColor as ElementInterpolator<BaseElementState['fillStyle']>,
+    shadowColor: interpolateColor as ElementInterpolator<BaseElementState['shadowColor']>,
     lineDash: (valueA, valueB) => {
         const interpolators = valueA?.map((segA, i) => interpolateNumber(segA, valueB[i]));
         return time => interpolators?.map(interpolate => interpolate(time));
@@ -61,3 +63,10 @@ export const CONTEXT_OPERATIONS = {
         if (value) context.setLineDash(value);
     },
 } as ElementContextOps;
+
+export const TRACKED_EVENTS = [
+    'element:click',
+    'element:mousemove',
+    'element:mouseenter',
+    'element:mouseleave',
+] as (keyof ElementEventMap)[];

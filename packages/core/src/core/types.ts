@@ -4,6 +4,7 @@ import type {
 
 import type {
     Interpolator,
+    InterpolatorFactory,
 } from '../interpolators';
 
 import type {
@@ -11,6 +12,7 @@ import type {
 } from '../math';
 
 import type {
+    Disposable,
     OneOrMore,
 } from '@ripl/utilities';
 
@@ -21,6 +23,7 @@ export interface EventMap {
 }
 
 export interface EventBus<TEventMap = EventMap> {
+    has<TEvent extends keyof TEventMap>(event: OneOrMore<TEvent>): boolean;
     on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
     off<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): void;
     once<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable;
@@ -34,29 +37,8 @@ export interface Event<TData = unknown> {
     stopPropagation(): void;
 }
 
-export type ElementValueBounds<TValue = number> = [first: TValue, last: TValue];
-export type ElementValueKeyFrame<TValue = number> = {
-    offset?: number;
-    value: TValue;
-}
-
-export type ElementValue<TValue = number> = TValue
-| ElementValueBounds<TValue>
-| ElementValueKeyFrame<TValue>[]
-| Interpolator<TValue>;
-
-
-export type ElementProperties<TState extends BaseElementState> = {
-    [TKey in keyof TState]: ElementValue<TState[TKey]>;
-};
-
-export type ElementProducers<TState extends BaseElementState> = {
-    [TKey in keyof TState]: Interpolator<TState[TKey]>;
-};
-
-export type ElementInterpolator<TValue> = (valueA: TValue, valueB: TValue) => Interpolator<TValue>
 export type ElementInterpolators<TState extends BaseElementState> = {
-    [TKey in keyof TState]?: ElementInterpolator<TState[TKey]>;
+    [TKey in keyof TState]?: InterpolatorFactory<TState[TKey]>;
 }
 
 export type ElementDefinition<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> = (instance: ElementInstance<TState, TAttrs>) => ElementRenderFunction<TState>;
@@ -65,7 +47,7 @@ export type ElementRenderFunction<TState extends BaseElementState, TReturn = unk
 export type FrameCallback<TState extends BaseElementState> = (key: keyof TState, value: TState[keyof TState]) => void;
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 export type ElementValidationType = 'info' | 'warning' | 'error';
-export type ElementValidationHandler<TState extends BaseElementState> = (props: ElementProperties<TState>) => void | true | OneOrMore<ElementValidationResult>;
+export type ElementValidationHandler<TState extends BaseElementState> = (state: TState) => void | true | OneOrMore<ElementValidationResult>;
 export type ElementBoundingBoxHandler<TState extends BaseElementState> = (data: ElementBoundingBoxData<TState>) => Box;
 export type ElementIntersectionHandler<TState extends BaseElementState> = (point: Point, data: ElementIntersectionData<TState>) => boolean;
 
@@ -98,15 +80,18 @@ export interface ElementOptions<TState extends BaseElementState, TAttrs extends 
     class?: string;
     data?: unknown;
     attrs?: TAttrs;
-    props?: ElementProperties<TState>;
+    state?: TState;
     interpolators?: ElementInterpolators<TState>;
 }
+
 export interface ElementInstance<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> {
     on: EventBus<ElementEventMap>['on'];
     emit: EventBus<ElementEventMap>['emit'];
     once: EventBus<ElementEventMap>['once'];
-    getAttrs(): TAttrs;
-    getAttr<TKey extends keyof TAttrs>(key: TKey): TAttrs[TKey];
+    get id(): string;
+    get state(): Readonly<TState>;
+    get attrs(): Readonly<TAttrs>;
+    get interpolators(): Readonly<ElementInterpolators<TState>>;
     setValidationHandler(handler: ElementValidationHandler<TState>): void;
     setBoundingBoxHandler(handler: ElementBoundingBoxHandler<TState>): void;
     setIntersectionHandler(handler: ElementIntersectionHandler<TState>): void;
@@ -115,7 +100,6 @@ export interface ElementInstance<TState extends BaseElementState, TAttrs extends
 export interface ElementRenderFrame<TState extends BaseElementState> {
     context: CanvasRenderingContext2D;
     state: TState;
-    time: number;
 }
 
 export interface BaseElementState {
@@ -144,6 +128,7 @@ export interface BaseElementState {
 }
 
 export interface BaseElementAttrs {
+    [key: string]: unknown;
     pointerEvents?: ElementPointerEvents;
 }
 
@@ -153,9 +138,11 @@ export interface ElementEvent<TData = unknown> extends Event<TData> {
 
 export interface ElementEventMap<TState extends BaseElementState = BaseElementState> {
     'scene:graph': ElementEvent;
+    'scene:track': ElementEvent<keyof ElementEventMap>;
+    'scene:untrack': ElementEvent<keyof ElementEventMap>;
     'element:attached': ElementEvent<Group>;
     'element:detached': ElementEvent<Group>;
-    'element:updated': ElementEvent<Partial<ElementProperties<TState>>>;
+    'element:updated': ElementEvent<ElementOptions<TState>>;
     'element:mouseenter': ElementEvent<MouseEvent>;
     'element:mouseleave': ElementEvent<MouseEvent>;
     'element:mousemove': ElementEvent<MouseEvent>;
@@ -163,31 +150,32 @@ export interface ElementEventMap<TState extends BaseElementState = BaseElementSt
 }
 
 export interface Element<TState extends BaseElementState = BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> {
-    id: string;
-    type: string;
     class?: string;
-    data?: unknown;
+    has: EventBus<ElementEventMap>['has'];
     on: EventBus<ElementEventMap>['on'];
     emit: EventBus<ElementEventMap>['emit'];
     once: EventBus<ElementEventMap>['once'];
     clone(): Element<TState, TAttrs>;
     getBoundingBox(): Box;
     intersectsWith(x: number, y: number, options?: ElementIntersectionOptions): boolean;
-    setProps(props: Partial<ElementProperties<TState>>): void;
-    setAttrs(attrs: Partial<TAttrs>): void;
-    getState(time?: number, callback?: FrameCallback<TState>): TState;
-    setEndState(newState: Partial<TState>, time?: number): void;
-    render(context: CanvasRenderingContext2D, time?: number): void;
-
-    get attrs(): TAttrs;
-
-    /**
-     * @internal
-     */
+    interpolate(newState: ElementInterpolationState<TState>): Interpolator<TState>;
+    update(options: ElementOptions<TState, TAttrs>): this;
+    render(context: CanvasRenderingContext2D): void;
     destroy(): void;
+
+    get id(): string;
+    get type(): string;
+    get state(): Readonly<TState>;
+    get attrs(): Readonly<TAttrs>;
+    get interpolators(): Readonly<ElementInterpolators<TState>>;
+    get data(): unknown;
     get parent(): Group | undefined;
     set parent(group: Group | undefined);
     get path(): string;
+}
+
+export interface GroupOptions extends ElementOptions<BaseElementState> {
+    children?: OneOrMore<Element>;
 }
 
 export interface Group extends Element {
@@ -240,21 +228,36 @@ export interface RendererEventMap {
     };
 }
 
-export interface RendererTransition {
+export interface RendererTransition<TState extends BaseElementState = BaseElementState> {
     startTime: number;
     duration: number;
     ease: Ease;
     loop: boolean;
+    interpolator: Interpolator<TState>;
     callback(): void;
 }
 
-export interface RendererTransitionOptions {
-    duration: number;
-    ease: Ease;
-    loop: boolean;
-    delay: number | ((index: number, length: number) => number);
-    fillMode: RendererFillMode;
-    callback(element: Element): void;
+export type RendererTransitionKeyFrame<TValue = number> = {
+    offset?: number;
+    value: TValue;
+}
+
+export type RendererTransitionStateValue<TValue = number> = TValue
+| RendererTransitionKeyFrame<TValue>[]
+| Interpolator<TValue>;
+
+export type ElementInterpolationState<TState extends BaseElementState> = {
+    [TKey in keyof TState]?: RendererTransitionStateValue<NonNullable<TState>[TKey]>;
+};
+
+export interface RendererTransitionOptions<TElement extends Element> {
+    duration?: number;
+    ease?: Ease;
+    loop?: boolean;
+    delay?: number;
+    fillMode?: RendererFillMode;
+    state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
+    callback?(element: Element): void;
 }
 
 export interface RendererOptions {
@@ -266,11 +269,17 @@ export interface RendererOptions {
     };
 }
 
+export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
+    element: TElement extends Group ? Element : TElement,
+    index: number,
+    length: number
+) => RendererTransitionOptions<TElement>);
+
 export interface Renderer {
     start(): void;
     stop(): void;
     update(options: Partial<RendererOptions>): void;
-    transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>): Promise<void>;
+    transition<TElement extends Element>(element: OneOrMore<TElement>, options?: RendererTransitionOptionsArg<TElement>): Promise<void>;
     on: EventBus<RendererEventMap>['on'];
     off: EventBus<RendererEventMap>['off'];
     get running(): boolean;
@@ -292,7 +301,7 @@ export interface SceneEventMap extends ElementEventMap {
 }
 
 export interface SceneOptions {
-    props?: ElementProperties<BaseElementState>;
+    state?: BaseElementState;
     renderOnResize: boolean;
 }
 

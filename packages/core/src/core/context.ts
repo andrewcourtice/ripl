@@ -3,7 +3,7 @@ import {
 } from '../scales';
 
 import {
-    isString,
+    typeIsString,
 } from '@ripl/utilities';
 
 export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
@@ -32,7 +32,7 @@ export function rescaleCanvas(canvas: HTMLCanvasElement, width: number, height: 
 }
 
 export function createContext(target: string | HTMLCanvasElement) {
-    const canvas = isString(target) ? document.querySelector(target) as HTMLCanvasElement : target;
+    const canvas = typeIsString(target) ? document.querySelector(target) as HTMLCanvasElement : target;
     const context = canvas?.getContext('2d');
 
     if (!context) {

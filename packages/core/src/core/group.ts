@@ -18,10 +18,9 @@ import {
 } from '@ripl/utilities';
 
 import type {
-    BaseElementState,
     Element,
-    ElementOptions,
     Group,
+    GroupOptions,
 } from './types';
 
 const TYPE = 'group';
@@ -41,22 +40,27 @@ export function isGroup(element: Element): element is Group {
     return element.type === TYPE;
 }
 
-export function createGroup(options?: ElementOptions<BaseElementState>): Group {
-    let children = new Set<Element>();
+export function createGroup(options?: GroupOptions) {
+    const {
+        children: elements = [],
+        ...elOptions
+    } = options || {};
+
+    let children = new Set<Element>(([] as Element[]).concat(elements));
 
     const el = defineElement(TYPE, ({ setBoundingBoxHandler }) => {
         setBoundingBoxHandler(() => {
             return getContainingBox(Array.from(children), el => el.getBoundingBox());
         });
 
-        return ({ context, time }) => {
-            setForEach(children, ({ render }) => render(context, time));
+        return ({ context }) => {
+            setForEach(children, ({ render }) => render(context));
         };
     }, {
         abstract: true,
-    })(options);
+    })(elOptions);
 
-    const group = {
+    const group: Group = {
         ...el,
         set,
         add,
@@ -65,6 +69,26 @@ export function createGroup(options?: ElementOptions<BaseElementState>): Group {
         graph,
         find,
         findAll,
+
+        get id() {
+            return el.id;
+        },
+
+        get type() {
+            return el.type;
+        },
+
+        get attrs () {
+            return el.attrs;
+        },
+
+        get state() {
+            return el.state;
+        },
+
+        get data() {
+            return el.data;
+        },
 
         get parent() {
             return el.parent;
@@ -76,6 +100,10 @@ export function createGroup(options?: ElementOptions<BaseElementState>): Group {
 
         get elements() {
             return Array.from(children);
+        },
+
+        update(options) {
+            return (el.update(options), group);
         },
     };
 
@@ -91,7 +119,7 @@ export function createGroup(options?: ElementOptions<BaseElementState>): Group {
         updateSceneGraph();
     }
 
-    function add(element: OneOrMore<Element<any>>) {
+    function add(element: OneOrMore<Element>) {
         const elements = ([] as Element[]).concat(element);
 
         if (!elements.length) {

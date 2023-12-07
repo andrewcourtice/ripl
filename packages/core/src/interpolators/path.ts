@@ -6,6 +6,7 @@ import {
     normaliseBorderRadius,
     Point,
     TAU,
+    typeIsPoint,
 } from '../math';
 
 import {
@@ -13,11 +14,11 @@ import {
 } from './number';
 
 import {
-    arrayMap,
+    arrayMap, typeIsArray, typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
-    Interpolator,
+    Interpolator, InterpolatorFactory,
 } from './types';
 
 function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
@@ -63,7 +64,7 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
 }
 
-export function interpolatePoints(setA: Point[], setB: Point[]): Interpolator<Point[]> {
+export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
     const [
         extSetA,
         extSetB,
@@ -82,7 +83,9 @@ export function interpolatePoints(setA: Point[], setB: Point[]): Interpolator<Po
         ix(position),
         iy(position),
     ]);
-}
+};
+
+interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));
 
 export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
     const lastIndex = points.length - 1;
@@ -139,10 +142,16 @@ export function interpolateCirclePoint(
     ];
 }
 
-export function interpolateBorderRadius(radiusA: number | BorderRadius, radiusB: number | BorderRadius): Interpolator<BorderRadius> {
+export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius> = (radiusA, radiusB) => {
     const nRadiusA = normaliseBorderRadius(radiusA);
     const nRadiusB = normaliseBorderRadius(radiusB);
     const interpolators = arrayMap(nRadiusA, (value, index) => interpolateNumber(value, nRadiusB[index]));
 
     return position => arrayMap(interpolators, ib => ib(position)) as BorderRadius;
-}
+};
+
+interpolateBorderRadius.test = value => typeIsNumber(value) || (
+    typeIsArray(value)
+    && value.length <= 4
+    && value.every(typeIsNumber)
+);

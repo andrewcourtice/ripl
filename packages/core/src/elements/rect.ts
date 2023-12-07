@@ -9,10 +9,6 @@ import {
     normaliseBorderRadius,
 } from '../math';
 
-import {
-    interpolateBorderRadius,
-} from '../interpolators';
-
 export interface RectState extends BaseElementState {
     x: number;
     y: number;
@@ -68,14 +64,4 @@ export const createRect = defineShape<RectState>('rect', ({
         path.arcTo(x, y, x + borderTopLeft, y, borderTopLeft);
         path.closePath();
     };
-}, {
-    interpolators: {
-        borderRadius: (bRadiusA, bRadiusB) => {
-            if (bRadiusA && bRadiusB) {
-                return interpolateBorderRadius(bRadiusA, bRadiusB);
-            }
-
-            return () => undefined;
-        },
-    },
 });

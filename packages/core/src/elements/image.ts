@@ -1,8 +1,11 @@
 import {
     BaseElementState,
     defineElement,
-    ElementInterpolator,
 } from '../core';
+
+import {
+    InterpolatorFactory,
+} from '../interpolators';
 
 export interface ImageState extends BaseElementState {
     image: CanvasImageSource;
@@ -13,7 +16,7 @@ export interface ImageState extends BaseElementState {
 const refCanvas = document.createElement('canvas');
 const refContext = refCanvas.getContext('2d');
 
-const imageInterpolator: ElementInterpolator<ImageState['image']> = (valueA, valueB) => {
+const imageInterpolator: InterpolatorFactory<ImageState['image']> = (valueA, valueB) => {
     refCanvas.width = +valueA.width;
     refCanvas.height = +valueA.height;
 

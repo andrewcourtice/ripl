@@ -6,11 +6,15 @@ import {
     interpolateNumber,
 } from './number';
 
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 import type {
-    Interpolator,
+    InterpolatorFactory,
 } from './types';
 
-export function interpolateColor(colorA: string, colorB: string): Interpolator<string> {
+export const interpolateColor: InterpolatorFactory<string> = (colorA, colorB) => {
     const parserA = getColorParser(colorA);
     const parserB = getColorParser(colorB);
 
@@ -31,4 +35,6 @@ export function interpolateColor(colorA: string, colorB: string): Interpolator<s
         interpolators[2](position),
         interpolators[3](position)
     );
-}
+};
+
+interpolateColor.test = value => typeIsString(value) && !!getColorParser(value);

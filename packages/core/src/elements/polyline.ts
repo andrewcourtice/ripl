@@ -10,10 +10,6 @@ import {
 } from '../math';
 
 import {
-    interpolatePoints,
-} from '../interpolators';
-
-import {
     arrayForEach,
 } from '@ripl/utilities';
 
@@ -56,8 +52,4 @@ export const createPolyline = defineShape<PolyLineState>('polyline', ({
 
         drawPoints(points, path);
     };
-}, {
-    interpolators: {
-        points: interpolatePoints,
-    },
 });

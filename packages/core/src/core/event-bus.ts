@@ -22,6 +22,10 @@ export function createEvent<TData = unknown>(data?: TData): Event<TData> {
 export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
     const listeners = new Map<keyof TEventMap, Set<EventHandler<TEventMap[keyof TEventMap]>>>();
 
+    function has<TEvent extends keyof TEventMap>(event: TEvent) {
+        return !!listeners.get(event)?.size;
+    }
+
     function on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {
         const handlers = listeners.get(event) || new Set();
 
@@ -69,6 +73,7 @@ export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
     }
 
     return {
+        has,
         on,
         off,
         once,

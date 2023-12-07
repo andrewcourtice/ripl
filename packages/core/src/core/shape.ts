@@ -22,7 +22,7 @@ export function defineShape<TState extends BaseElementState, TAttrs extends Base
         ...elDefinitionOptions
     } = definitionOptions;
 
-    const elConstructor = defineElement<TState, TAttrs>(type, elInstance => {
+    return defineElement<TState, TAttrs>(type, elInstance => {
         let path: Path2D | undefined;
 
         const shapeInstance = {
@@ -42,7 +42,6 @@ export function defineShape<TState extends BaseElementState, TAttrs extends Base
         } as ShapeInstance<TState, TAttrs>;
 
         const {
-            getAttr,
             setIntersectionHandler,
         } = shapeInstance;
 
@@ -54,7 +53,9 @@ export function defineShape<TState extends BaseElementState, TAttrs extends Base
                 return isAnyIntersecting();
             }
 
-            const pointerEvents = getAttr('pointerEvents');
+            const {
+                pointerEvents,
+            } = shapeInstance.attrs;
 
             if (!path || pointerEvents === 'none') {
                 return false;
@@ -97,12 +98,4 @@ export function defineShape<TState extends BaseElementState, TAttrs extends Base
             }
         };
     }, elDefinitionOptions);
-
-    return (options) => {
-        const el = elConstructor(options);
-
-        el.clone = () => elConstructor(options);
-
-        return el;
-    };
 }

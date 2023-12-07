@@ -3,10 +3,6 @@ import {
 } from '../core';
 
 import {
-    interpolatePoints,
-} from '../interpolators';
-
-import {
     Box,
     getExtent,
     getHypLength,
@@ -85,8 +81,4 @@ export const createSpline = defineShape<SplineState>('spline', ({
             context.stroke(path);
         }
     };
-}, {
-    interpolators: {
-        points: interpolatePoints,
-    },
 });

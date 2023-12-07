@@ -15,7 +15,6 @@ export interface TextState extends BaseElementState {
 
 export const createText = defineElement<TextState>('text', ({
     setBoundingBoxHandler,
-    setIntersectionHandler,
 }) => {
     setBoundingBoxHandler(({ state, context }) => {
         const {
