@@ -55,9 +55,14 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
         renderOnResize = true,
     } = options || {};
 
-    const group = createGroup({ state });
     const disposals = new Set<Disposable>();
     const activeElements = [] as Element[];
+    const group = createGroup({
+        state: {
+            font: window.getComputedStyle(canvas).font,
+            ...state,
+        },
+    });
 
     let graphHandle: number | undefined;
     let elements = group.graph();
@@ -87,14 +92,6 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
             xScale,
             yScale,
         } = rescaleCanvas(canvas, width, height));
-    }
-
-    function updateStyling() {
-        const {
-            font,
-        } = window.getComputedStyle(document.body);
-
-        context.font = font;
     }
 
     function attachDOMEvent<TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) {
@@ -194,8 +191,6 @@ export function createScene(target: string | HTMLCanvasElement, options?: SceneO
 
         element?.emit('element:click', createElementEvent(element, event));
     });
-
-    updateStyling();
 
     onDOMElementResize(canvas, ({ width, height }) => {
         updateScaling(width, height);

@@ -11,7 +11,7 @@ import {
 } from '../animation';
 
 import {
-    min,
+    clamp,
 } from '../math';
 
 import {
@@ -69,29 +69,28 @@ export function createRenderer(
         currentTime = performance.now();
 
         arrayForEach(scene.elements, element => {
-            let time = 0;
-
             if (transitionMap.has(element.id)) {
+                let time = 0;
+
                 const {
-                    startTime = currentTime,
-                    duration = 0,
-                    ease = easeLinear,
-                    loop = false,
-                    interpolator = () => ({}),
-                    callback = () => {},
-                } = transitionMap.get(element.id) || {};
+                    startTime,
+                    duration,
+                    ease,
+                    loop,
+                    direction,
+                    interpolator,
+                    callback,
+                } = transitionMap.get(element.id)!;
 
                 const elapsed = currentTime - startTime;
 
                 if (elapsed > 0) {
-                    time = ease(min(elapsed / duration, 1));
+                    time = clamp(elapsed / duration, 0, 1);
+                    time = ease(direction === 'reverse' ? 1 - time : time);
 
-                    element.update({
-                        state: interpolator(time),
-                    });
+                    element.setState(interpolator(time));
 
                     if (elapsed >= duration) {
-                        transitionMap.delete(element.id);
                         callback();
                     }
                 }
@@ -174,13 +173,15 @@ export function createRenderer(
             let completeCount = 0;
 
             elements.forEach((element, index) => {
+                transitionMap.get(element.id)?.callback();
+
                 const {
                     duration = 0,
                     delay = 0,
                     loop = false,
                     ease = easeLinear,
                     callback = () => {},
-                    fillMode = 'forwards',
+                    direction = 'forward',
                     state,
                 } = getOptions(element, index, totalCount);
 
@@ -188,6 +189,7 @@ export function createRenderer(
 
                 const onComplete = () => {
                     completeCount += 1;
+                    transitionMap.delete(element.id);
 
                     // if (fillMode === 'forwards') {
                     //     element.setProps(element.getState());
@@ -208,6 +210,7 @@ export function createRenderer(
                     loop,
                     ease,
                     startTime,
+                    direction,
                     duration: rendererOptions.immediate ? 1 : duration,
                     interpolator: element.interpolate(state),
                     callback: onComplete,

@@ -1,6 +1,7 @@
 import {
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -8,10 +9,15 @@ import {
     TAU,
 } from '../math';
 
+export type Circle = ReturnType<typeof createCircle>;
 export interface CircleState extends BaseElementState {
     cx: number;
     cy: number;
     radius: number;
+}
+
+export function elementIsCircle(element: Element): element is Circle {
+    return element.type === 'circle';
 }
 
 export const createCircle = defineShape<CircleState>('circle', ({

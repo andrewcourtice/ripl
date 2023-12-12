@@ -46,7 +46,7 @@ export function createGroup(options?: GroupOptions) {
         ...elOptions
     } = options || {};
 
-    let children = new Set<Element>(([] as Element[]).concat(elements));
+    let children = new Set<Element>();
 
     const el = defineElement(TYPE, ({ setBoundingBoxHandler }) => {
         setBoundingBoxHandler(() => {
@@ -102,8 +102,12 @@ export function createGroup(options?: GroupOptions) {
             return Array.from(children);
         },
 
-        update(options) {
-            return (el.update(options), group);
+        setAttrs(attrs) {
+            return (el.setAttrs(attrs), group);
+        },
+
+        setState(state) {
+            return (el.setState(state), group);
         },
     };
 
@@ -134,7 +138,7 @@ export function createGroup(options?: GroupOptions) {
         updateSceneGraph();
     }
 
-    function remove(element: OneOrMore<Element<any>>) {
+    function remove(element: OneOrMore<Element>) {
         const elements = ([] as Element[]).concat(element);
 
         if (!elements.length) {
@@ -173,6 +177,8 @@ export function createGroup(options?: GroupOptions) {
     function findAll(query: string) {
         return arrayFilter(graph(true), getQueryTest(query));
     }
+
+    add(elements);
 
     return group;
 }

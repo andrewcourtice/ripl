@@ -1,13 +1,6 @@
 import {
-    interpolateColor,
-    interpolateNumber,
-} from '../interpolators';
-
-import {
     BaseElementState,
     ElementEventMap,
-    ElementInterpolator,
-    ElementInterpolators,
 } from './types';
 
 import {
@@ -26,16 +19,6 @@ function basicContextSetter<TKey extends GetMutableKeys<CanvasRenderingContext2D
         }
     };
 }
-
-export const INTERPOLATORS: ElementInterpolators<BaseElementState> = {
-    strokeStyle: interpolateColor as ElementInterpolator<BaseElementState['strokeStyle']>,
-    fillStyle: interpolateColor as ElementInterpolator<BaseElementState['fillStyle']>,
-    shadowColor: interpolateColor as ElementInterpolator<BaseElementState['shadowColor']>,
-    lineDash: (valueA, valueB) => {
-        const interpolators = valueA?.map((segA, i) => interpolateNumber(segA, valueB[i]));
-        return time => interpolators?.map(interpolate => interpolate(time));
-    },
-};
 
 export const CONTEXT_OPERATIONS = {
     strokeStyle: basicContextSetter('strokeStyle'),

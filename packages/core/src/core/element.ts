@@ -18,6 +18,7 @@ import {
 } from '../scales';
 
 import {
+    interpolateAny,
     interpolateBorderRadius,
     interpolateColor,
     interpolateDate,
@@ -29,6 +30,8 @@ import {
 
 import {
     arrayFind,
+    CachedFunction,
+    functionCache,
     objectFreeze,
     objectReduce,
     stringUniqueId,
@@ -56,16 +59,12 @@ import type {
     ElementInterpolationState,
     ElementIntersectionHandler,
     ElementIntersectionOptions,
-    ElementOptions,
     ElementValidationHandler,
     EventHandler,
     FrameCallback,
     Group,
     RendererTransitionKeyFrame,
 } from './types';
-import {
-    interpolateAny,
-} from '../interpolators/any';
 
 function isElementValueKeyFrame(value: unknown): value is RendererTransitionKeyFrame<any>[] {
     return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
@@ -109,30 +108,30 @@ function getInterpolator<TValue>(value: TValue) {
         interpolateNumber,
         interpolateColor,
         interpolateDate,
-        interpolateBorderRadius,
         interpolatePoints,
+        interpolateBorderRadius,
     ], ({ test }) => !!test?.(value));
 
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
-export function createElementEvent<TData = unknown>(element: Element<any, any>, data: TData): ElementEvent<TData> {
+export function createElementEvent<TData = unknown>(element: Element, data: TData): ElementEvent<TData> {
     return {
         element,
         ...createEvent(data),
     };
 }
 
-export function defineElement<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs>(
+export function defineElement<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}>(
     type: string,
-    definition: ElementDefinition<TState, TAttrs>,
+    definition: ElementDefinition<TState, TAttrs, TExtension>,
     definitionOptions: ElementDefinitionOptions<TState> = {}
 ) {
     const {
         abstract,
     } = definitionOptions;
 
-    const constructor: ElementConstructor<TState, TAttrs> = (instanceOptions = {}) => {
+    const constructor: ElementConstructor<TState, TAttrs, TExtension> = (instanceOptions = {}) => {
         const eventBus = createEventBus<ElementEventMap>();
 
         let {
@@ -142,13 +141,19 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
                 pointerEvents: 'all',
             } as TAttrs,
             data,
-            class: elClass,
+            class: elClass = [],
             interpolators = {},
         } = instanceOptions;
 
-        let getBoundingBoxHandler: ElementBoundingBoxHandler<TState> = () => new Box(0, 0, 0, 0);
-        let intersectsWithHandler: ElementIntersectionHandler<TState> = point => isPointInBox(point, getBoundingBox());
+        let context: CanvasRenderingContext2D | undefined;
+        let parent: Group | undefined;
+        let extension = {} as TExtension;
+
+        let getBoundingBoxHandler: CachedFunction<ElementBoundingBoxHandler<TState>> = functionCache(() => new Box(0, 0, 0, 0));
+        let intersectsWithHandler: CachedFunction<ElementIntersectionHandler<TState>> = functionCache(point => isPointInBox(point, getBoundingBox()));
         let validationHandler: ElementValidationHandler<TState> = () => true;
+
+        const classList = new Set(([] as string[]).concat(elClass));
 
         const instance = {
             emit,
@@ -159,36 +164,33 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
                 return id;
             },
 
-            get attrs () {
+            getAttrs () {
                 return objectFreeze(attrs);
             },
 
-            get state() {
+            getState() {
                 return objectFreeze(getState());
             },
 
-            get interpolators() {
-                return objectFreeze(interpolators);
+            extend(value) {
+                extension = value;
             },
 
-            setBoundingBoxHandler: handler => getBoundingBoxHandler = handler,
-            setIntersectionHandler: handler => intersectsWithHandler = handler,
+            setBoundingBoxHandler: handler => getBoundingBoxHandler = functionCache(handler),
+            setIntersectionHandler: handler => intersectsWithHandler = functionCache(handler),
             setValidationHandler: handler => validationHandler = handler,
-        } as ElementInstance<TState, TAttrs>;
+        } as ElementInstance<TState, TAttrs, TExtension>;
 
         const onRender = definition(instance);
 
-        let ctx: CanvasRenderingContext2D | undefined;
-        let parent: Group | undefined;
-
-        const element: Element<TState, TAttrs> = {
+        const element: Element<TState, TAttrs, TExtension> = {
+            ...extension,
             clone,
-            update,
             interpolate,
             getBoundingBox,
             intersectsWith,
             render,
-            class: elClass,
+            classList,
 
             emit,
             has: eventBus.has,
@@ -196,13 +198,23 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
             once: trackEvents('once'),
 
             destroy,
+            setAttrs,
+            setState,
 
             get id() {
                 return id;
             },
 
+            set id(value) {
+                id = value;
+            },
+
             get type() {
                 return type;
+            },
+
+            get class() {
+                return Array.from(classList).join('.');
             },
 
             get attrs () {
@@ -268,13 +280,13 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
             return constructor(instanceOptions);
         }
 
-        function update(options: ElementOptions<TState, TAttrs>) {
-            id = options.id ?? id;
-            data = options.data ?? data;
-            Object.assign(state, options.state);
-            Object.assign(attrs, options.attrs);
-            Object.assign(interpolators, options.interpolators);
+        function setState(newState: Partial<TState>) {
+            Object.assign(state, newState);
+            return element;
+        }
 
+        function setAttrs(newAttrs: Partial<TAttrs>) {
+            Object.assign(attrs, newAttrs);
             return element;
         }
 
@@ -291,18 +303,18 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
         }
 
         function getBoundingBox() {
-            if (!ctx) {
+            if (!context) {
                 throw new Error('Failed operation - This operation requires the element to first be rendered to a context');
             }
 
             return getBoundingBoxHandler({
-                context: ctx,
+                context,
                 state: getState(),
             });
         }
 
         function intersectsWith(x: number, y: number, options?: ElementIntersectionOptions) {
-            if (!ctx) {
+            if (!context) {
                 throw new Error('Failed operation - This operation requires the element to first be rendered to a context');
             }
 
@@ -312,7 +324,7 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
 
             return intersectsWithHandler([x, y], {
                 isPointer,
-                context: ctx,
+                context,
                 state: getState(),
             });
         }
@@ -343,14 +355,18 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
             return time => objectMap(interpolators, (_, value) => value(time));
         }
 
-        function render(context: CanvasRenderingContext2D) {
-            ctx = context;
+        function render(ctx: CanvasRenderingContext2D, renderState?: Partial<TState>) {
+            context = ctx;
+
+            if (renderState) {
+                setState(renderState);
+            }
 
             context.save();
 
             try {
                 const state = getState((key, value) => {
-                    if (!abstract && key in CONTEXT_OPERATIONS) {
+                    if (!abstract && context && key in CONTEXT_OPERATIONS) {
                         CONTEXT_OPERATIONS[key]?.(context, value);
                     }
                 });
@@ -359,6 +375,9 @@ export function defineElement<TState extends BaseElementState, TAttrs extends Ba
                     context,
                     state,
                 });
+
+                getBoundingBoxHandler.invalidate();
+                intersectsWithHandler.invalidate();
             } finally {
                 context.restore();
             }

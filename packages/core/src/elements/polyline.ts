@@ -1,6 +1,7 @@
 import {
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -13,8 +14,13 @@ import {
     arrayForEach,
 } from '@ripl/utilities';
 
+export type Polyline = ReturnType<typeof createPolyline>;
 export interface PolyLineState extends BaseElementState {
     points: Point[];
+}
+
+export function elementIsPolyline(element: Element): element is Polyline {
+    return element.type === 'polyline';
 }
 
 export const drawPoints = (points: Point[], path: Path2D) => {

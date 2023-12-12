@@ -41,8 +41,8 @@ export type ElementInterpolators<TState extends BaseElementState> = {
     [TKey in keyof TState]?: InterpolatorFactory<TState[TKey]>;
 }
 
-export type ElementDefinition<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> = (instance: ElementInstance<TState, TAttrs>) => ElementRenderFunction<TState>;
-export type ElementConstructor<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> = (options?: ElementOptions<TState, TAttrs>) => Element<TState, TAttrs>;
+export type ElementDefinition<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> = (instance: ElementInstance<TState, TAttrs, TExtension>) => ElementRenderFunction<TState>;
+export type ElementConstructor<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> = (options?: ElementOptions<TState, TAttrs>) => Element<TState, TAttrs, TExtension>;
 export type ElementRenderFunction<TState extends BaseElementState, TReturn = unknown> = (frame: ElementRenderFrame<TState>) => TReturn;
 export type FrameCallback<TState extends BaseElementState> = (key: keyof TState, value: TState[keyof TState]) => void;
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
@@ -77,24 +77,11 @@ export interface ElementDefinitionOptions<TState extends BaseElementState> {
 
 export interface ElementOptions<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> {
     id?: string;
-    class?: string;
+    class?: OneOrMore<string>;
     data?: unknown;
     attrs?: TAttrs;
     state?: TState;
     interpolators?: ElementInterpolators<TState>;
-}
-
-export interface ElementInstance<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> {
-    on: EventBus<ElementEventMap>['on'];
-    emit: EventBus<ElementEventMap>['emit'];
-    once: EventBus<ElementEventMap>['once'];
-    get id(): string;
-    get state(): Readonly<TState>;
-    get attrs(): Readonly<TAttrs>;
-    get interpolators(): Readonly<ElementInterpolators<TState>>;
-    setValidationHandler(handler: ElementValidationHandler<TState>): void;
-    setBoundingBoxHandler(handler: ElementBoundingBoxHandler<TState>): void;
-    setIntersectionHandler(handler: ElementIntersectionHandler<TState>): void;
 }
 
 export interface ElementRenderFrame<TState extends BaseElementState> {
@@ -149,22 +136,24 @@ export interface ElementEventMap<TState extends BaseElementState = BaseElementSt
     'element:click': ElementEvent<MouseEvent>;
 }
 
-export interface Element<TState extends BaseElementState = BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> {
-    class?: string;
-    has: EventBus<ElementEventMap>['has'];
+export interface ElementInstance<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> {
     on: EventBus<ElementEventMap>['on'];
     emit: EventBus<ElementEventMap>['emit'];
     once: EventBus<ElementEventMap>['once'];
-    clone(): Element<TState, TAttrs>;
-    getBoundingBox(): Box;
-    intersectsWith(x: number, y: number, options?: ElementIntersectionOptions): boolean;
-    interpolate(newState: ElementInterpolationState<TState>): Interpolator<TState>;
-    update(options: ElementOptions<TState, TAttrs>): this;
-    render(context: CanvasRenderingContext2D): void;
-    destroy(): void;
-
     get id(): string;
+    getState(): Readonly<TState>;
+    getAttrs(): Readonly<TAttrs>;
+    extend(extension: TExtension): void;
+    setValidationHandler(handler: ElementValidationHandler<TState>): void;
+    setBoundingBoxHandler(handler: ElementBoundingBoxHandler<TState>): void;
+    setIntersectionHandler(handler: ElementIntersectionHandler<TState>): void;
+}
+
+export type Element<TState extends BaseElementState = BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> = {
+    get id(): string;
+    set id(value: string);
     get type(): string;
+    get class(): string;
     get state(): Readonly<TState>;
     get attrs(): Readonly<TAttrs>;
     get interpolators(): Readonly<ElementInterpolators<TState>>;
@@ -172,16 +161,32 @@ export interface Element<TState extends BaseElementState = BaseElementState, TAt
     get parent(): Group | undefined;
     set parent(group: Group | undefined);
     get path(): string;
-}
+
+    classList: Set<string>;
+
+    has: EventBus<ElementEventMap>['has'];
+    on: EventBus<ElementEventMap>['on'];
+    emit: EventBus<ElementEventMap>['emit'];
+    once: EventBus<ElementEventMap>['once'];
+
+    clone(): Element<TState, TAttrs>;
+    getBoundingBox(): Box;
+    intersectsWith(x: number, y: number, options?: ElementIntersectionOptions): boolean;
+    interpolate(newState: ElementInterpolationState<TState>): Interpolator<TState>;
+    setState(newState: Partial<TState>): Element<TState, TAttrs, TExtension>;
+    setAttrs(newAttrs: Partial<TAttrs>): Element<TState, TAttrs, TExtension>;
+    render(context: CanvasRenderingContext2D, state?: Partial<TState>): void;
+    destroy(): void;
+} & TExtension;
 
 export interface GroupOptions extends ElementOptions<BaseElementState> {
     children?: OneOrMore<Element>;
 }
 
 export interface Group extends Element {
-    set(elements: Element<any>[]): void;
-    add(element: OneOrMore<Element<any>>): void;
-    remove(element: OneOrMore<Element<any>>): void;
+    set(elements: Element[]): void;
+    add(element: OneOrMore<Element>): void;
+    remove(element: OneOrMore<Element>): void;
     graph(includeGroups?: boolean): Element[];
     find(query: string): Element | undefined;
     findAll(query: string): Element[];
@@ -190,7 +195,7 @@ export interface Group extends Element {
 }
 
 export type ShapeRenderFunction<TState extends BaseElementState> = (frame: ShapeRenderFrame<TState>) => void;
-export type ShapeDefinition<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> = (instance: ShapeInstance<TState, TAttrs>) => ShapeRenderFunction<TState>;
+export type ShapeDefinition<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> = (instance: ShapeInstance<TState, TAttrs, TExtension>) => ShapeRenderFunction<TState>;
 export type ShapeBoundingBoxHandler<TState extends BaseElementState> = (data: ShapeBoundingBoxData<TState>) => Box;
 export type ShapeIntersectionHandler<TState extends BaseElementState> = (point: Point, data: ShapeIntersectionData<TState>) => boolean;
 
@@ -202,7 +207,7 @@ export interface ShapeBoundingBoxData<TState extends BaseElementState> extends E
     path?: Path2D;
 }
 
-export interface ShapeInstance<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs> extends ElementInstance<TState, TAttrs> {
+export interface ShapeInstance<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}> extends ElementInstance<TState, TAttrs, TExtension> {
     setBoundingBoxHandler(handler: ShapeBoundingBoxHandler<TState>): void;
     setIntersectionHandler(handler: ShapeIntersectionHandler<TState>): void;
 }
@@ -216,7 +221,7 @@ export interface ShapeDefinitionOptions<TState extends BaseElementState> extends
     autoFill?: boolean;
 }
 
-export type RendererFillMode = 'none' | 'forwards';
+export type RendererTransitionDirection = 'forward' | 'reverse';
 
 export interface RendererEventMap {
     'renderer:start': {
@@ -233,6 +238,7 @@ export interface RendererTransition<TState extends BaseElementState = BaseElemen
     duration: number;
     ease: Ease;
     loop: boolean;
+    direction: RendererTransitionDirection;
     interpolator: Interpolator<TState>;
     callback(): void;
 }
@@ -255,7 +261,7 @@ export interface RendererTransitionOptions<TElement extends Element> {
     ease?: Ease;
     loop?: boolean;
     delay?: number;
-    fillMode?: RendererFillMode;
+    direction?: RendererTransitionDirection;
     state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
     callback?(element: Element): void;
 }

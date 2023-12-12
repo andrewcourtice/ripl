@@ -1,5 +1,6 @@
 import {
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -13,8 +14,13 @@ import {
     PolyLineState,
 } from './polyline';
 
+export type Spline = ReturnType<typeof createSpline>;
 export interface SplineState extends PolyLineState {
     tension?: number;
+}
+
+export function elementIsSpline(element: Element): element is Spline {
+    return element.type === 'spline';
 }
 
 function getControlPoint([x0, y0]: Point, [x1, y1]: Point, [x2, y2]: Point, tension: number = 0.5) {

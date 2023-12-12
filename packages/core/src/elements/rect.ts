@@ -1,6 +1,7 @@
 import {
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -9,12 +10,17 @@ import {
     normaliseBorderRadius,
 } from '../math';
 
+export type Rect = ReturnType<typeof createRect>;
 export interface RectState extends BaseElementState {
     x: number;
     y: number;
     width: number;
     height: number;
     borderRadius?: number | BorderRadius;
+}
+
+export function elementIsRect(element: Element): element is Rect {
+    return element.type === 'rect';
 }
 
 export const createRect = defineShape<RectState>('rect', ({

@@ -1,16 +1,22 @@
 import {
     BaseElementState,
     defineElement,
+    Element,
 } from '../core';
 
 import {
     Box,
 } from '../math';
 
+export type Text = ReturnType<typeof createText>;
 export interface TextState extends BaseElementState {
     x: number;
     y: number;
     content: string | number;
+}
+
+export function elementIsText(element: Element): element is Text {
+    return element.type === 'text';
 }
 
 export const createText = defineElement<TextState>('text', ({

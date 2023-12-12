@@ -1,6 +1,8 @@
 import {
+    BaseElementAttrs,
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -15,6 +17,7 @@ import {
     typeIsNil,
 } from '@ripl/utilities';
 
+export type Arc = ReturnType<typeof createArc>;
 export interface ArcState extends BaseElementState {
     cx: number;
     cy: number;
@@ -26,7 +29,15 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
-export function getArcCentroid(arc: ArcState): Point {
+export type ArcExtension = {
+    centroid(): Point;
+}
+
+export function elementIsArc(element: Element): element is Arc {
+    return element.type === 'arc';
+}
+
+export function getArcCentroid(state: ArcState): Point {
     const {
         cx,
         cy,
@@ -34,7 +45,7 @@ export function getArcCentroid(arc: ArcState): Point {
         startAngle,
         endAngle,
         innerRadius = 0,
-    } = arc;
+    } = state;
 
     const angle = (startAngle + endAngle) / 2;
     const distance = innerRadius + (radius - innerRadius) / 2;
@@ -42,9 +53,15 @@ export function getArcCentroid(arc: ArcState): Point {
     return getThetaPoint(angle, distance, cx, cy);
 }
 
-export const createArc = defineShape<ArcState>('arc', ({
+export const createArc = defineShape<ArcState, BaseElementAttrs, ArcExtension>('arc', ({
+    extend,
+    getState,
     setBoundingBoxHandler,
 }) => {
+    extend({
+        centroid: () => getArcCentroid(getState()),
+    });
+
     setBoundingBoxHandler(({ state }) => {
         const {
             cx,

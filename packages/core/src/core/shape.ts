@@ -11,18 +11,18 @@ import type {
     ShapeInstance,
 } from './types';
 
-export function defineShape<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs>(
+export function defineShape<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs, TExtension extends Record<PropertyKey, any> = {}>(
     type: string,
-    definition: ShapeDefinition<TState, TAttrs>,
+    definition: ShapeDefinition<TState, TAttrs, TExtension>,
     definitionOptions: ShapeDefinitionOptions<TState> = {}
-): ElementConstructor<TState, TAttrs> {
+): ElementConstructor<TState, TAttrs, TExtension> {
     const {
         autoFill = true,
         autoStroke = true,
         ...elDefinitionOptions
     } = definitionOptions;
 
-    return defineElement<TState, TAttrs>(type, elInstance => {
+    return defineElement<TState, TAttrs, TExtension>(type, elInstance => {
         let path: Path2D | undefined;
 
         const shapeInstance = {
@@ -39,7 +39,7 @@ export function defineShape<TState extends BaseElementState, TAttrs extends Base
                     path,
                 }));
             },
-        } as ShapeInstance<TState, TAttrs>;
+        } as ShapeInstance<TState, TAttrs, TExtension>;
 
         const {
             setIntersectionHandler,

@@ -1,6 +1,7 @@
 import {
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -16,11 +17,16 @@ import {
     drawPoints,
 } from './polyline';
 
+export type Polygon = ReturnType<typeof createPolygon>;
 export interface PolygonState extends BaseElementState {
     cx: number;
     cy: number;
     radius: number;
     sides: number;
+}
+
+export function elementIsPolygon(element: Element): element is Polygon {
+    return element.type === 'polygon';
 }
 
 export const createPolygon = defineShape<PolygonState>('polygon', ({

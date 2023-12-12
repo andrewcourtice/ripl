@@ -1,6 +1,7 @@
 import {
     BaseElementState,
     defineShape,
+    Element,
 } from '../core';
 
 import {
@@ -9,11 +10,16 @@ import {
     min,
 } from '../math';
 
+export type Line = ReturnType<typeof createLine>;
 export interface LineState extends BaseElementState {
     x1: number;
     y1: number;
     x2: number;
     y2: number;
+}
+
+export function elementIsLine(element: Element): element is Line {
+    return element.type === 'line';
 }
 
 export const createLine = defineShape<LineState>('line', ({

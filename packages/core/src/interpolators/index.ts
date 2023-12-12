@@ -1,3 +1,4 @@
+export * from './any';
 export * from './color';
 export * from './date';
 export * from './number';
