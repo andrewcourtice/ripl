@@ -1,22 +1,20 @@
 import {
+    Context,
+} from './context';
+
+import {
     BaseElementState,
     ElementEventMap,
-} from './types';
+} from './element';
 
 import {
     GetMutableKeys,
     typeIsNil,
 } from '@ripl/utilities';
 
-export type ElementContextOps = {
-    [P in keyof BaseElementState]?: (context: CanvasRenderingContext2D, value?: BaseElementState[P]) => void;
-}
-
-function basicContextSetter<TKey extends GetMutableKeys<CanvasRenderingContext2D>>(key: TKey) {
-    return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[TKey]) => {
-        if (!typeIsNil(value)) {
-            context[key] = value;
-        }
+function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
+    return (context: Context, value: Context[TKey]) => {
+        context[key] = value;
     };
 }
 
@@ -42,10 +40,10 @@ export const CONTEXT_OPERATIONS = {
     shadowColor: basicContextSetter('shadowColor'),
     shadowOffsetX: basicContextSetter('shadowOffsetX'),
     shadowOffsetY: basicContextSetter('shadowOffsetY'),
-    lineDash: (context, value) => {
-        if (value) context.setLineDash(value);
-    },
-} as ElementContextOps;
+    lineDash: basicContextSetter('lineDash'),
+} as {
+    [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
+};
 
 export const TRACKED_EVENTS = [
     'element:click',

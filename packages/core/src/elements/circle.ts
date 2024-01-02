@@ -1,7 +1,8 @@
 import {
     BaseElementState,
-    defineShape,
-    Element,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
@@ -9,34 +10,63 @@ import {
     TAU,
 } from '../math';
 
-export type Circle = ReturnType<typeof createCircle>;
 export interface CircleState extends BaseElementState {
     cx: number;
     cy: number;
     radius: number;
 }
 
-export function elementIsCircle(element: Element): element is Circle {
-    return element.type === 'circle';
+export function elementIsCircle(value: unknown): value is Circle {
+    return value instanceof Circle;
 }
 
-export const createCircle = defineShape<CircleState>('circle', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state }) => new Box(
-        state.cy - state.radius,
-        state.cx - state.radius,
-        state.cy + state.radius,
-        state.cx + state.radius
-    ));
+export function createCircle(...options: ConstructorParameters<typeof Circle>) {
+    return new Circle(...options);
+}
 
-    return ({ path, state }) => {
-        const {
-            cx,
-            cy,
-            radius,
-        } = state;
+export class Circle extends Shape<CircleState> {
 
-        path.arc(cx, cy, radius, 0, TAU);
-    };
-});
+    public get cx() {
+        return this.getStateValue('cx');
+    }
+
+    public set cx(value) {
+        this.setStateValue('cx', value);
+    }
+
+    public get cy() {
+        return this.getStateValue('cy');
+    }
+
+    public set cy(value) {
+        this.setStateValue('cy', value);
+    }
+
+    public get radius() {
+        return this.getStateValue('radius');
+    }
+
+    public set radius(value) {
+        this.setStateValue('radius', value);
+    }
+
+    constructor(options: ShapeOptions<CircleState>) {
+        super('circle', options);
+    }
+
+    public getBoundingBox(): Box {
+        return new Box(
+            this.cy - this.radius,
+            this.cx - this.radius,
+            this.cy + this.radius,
+            this.cx + this.radius
+        );
+    }
+
+    public render(context: Context) {
+        return super.render(context, path => {
+            path.arc(this.cx, this.cy, this.radius, 0, TAU);
+        });
+    }
+
+}

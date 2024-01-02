@@ -1,8 +1,8 @@
 import {
-    BaseElementAttrs,
     BaseElementState,
-    defineShape,
-    Element,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
@@ -10,14 +10,12 @@ import {
     getThetaPoint,
     max,
     min,
-    Point,
 } from '../math';
 
 import {
     typeIsNil,
 } from '@ripl/utilities';
 
-export type Arc = ReturnType<typeof createArc>;
 export interface ArcState extends BaseElementState {
     cx: number;
     cy: number;
@@ -29,40 +27,101 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
-export type ArcExtension = {
-    centroid(): Point;
+export function elementIsArc(value: unknown): value is Arc {
+    return value instanceof Arc;
 }
 
-export function elementIsArc(element: Element): element is Arc {
-    return element.type === 'arc';
+export function createArc(...options: ConstructorParameters<typeof Arc>) {
+    return new Arc(...options);
 }
 
-export function getArcCentroid(state: ArcState): Point {
-    const {
-        cx,
-        cy,
-        radius,
-        startAngle,
-        endAngle,
-        innerRadius = 0,
-    } = state;
+export class Arc extends Shape<ArcState> {
 
-    const angle = (startAngle + endAngle) / 2;
-    const distance = innerRadius + (radius - innerRadius) / 2;
+    public get cx() {
+        return this.getStateValue('cx');
+    }
 
-    return getThetaPoint(angle, distance, cx, cy);
-}
+    public set cx(value) {
+        this.setStateValue('cx', value);
+    }
 
-export const createArc = defineShape<ArcState, BaseElementAttrs, ArcExtension>('arc', ({
-    extend,
-    getState,
-    setBoundingBoxHandler,
-}) => {
-    extend({
-        centroid: () => getArcCentroid(getState()),
-    });
+    public get cy() {
+        return this.getStateValue('cy');
+    }
 
-    setBoundingBoxHandler(({ state }) => {
+    public set cy(value) {
+        this.setStateValue('cy', value);
+    }
+
+    public get startAngle() {
+        return this.getStateValue('startAngle');
+    }
+
+    public set startAngle(value) {
+        this.setStateValue('startAngle', value);
+    }
+
+    public get endAngle() {
+        return this.getStateValue('endAngle');
+    }
+
+    public set endAngle(value) {
+        this.setStateValue('endAngle', value);
+    }
+
+    public get radius() {
+        return this.getStateValue('radius');
+    }
+
+    public set radius(value) {
+        this.setStateValue('radius', value);
+    }
+
+    public get innerRadius() {
+        return this.getStateValue('innerRadius');
+    }
+
+    public set innerRadius(value) {
+        this.setStateValue('innerRadius', value);
+    }
+
+    public get padAngle() {
+        return this.getStateValue('padAngle');
+    }
+
+    public set padAngle(value) {
+        this.setStateValue('padAngle', value);
+    }
+
+    public get borderRadius() {
+        return this.getStateValue('borderRadius');
+    }
+
+    public set borderRadius(value) {
+        this.setStateValue('borderRadius', value);
+    }
+
+    public get centroid() {
+        const {
+            cx,
+            cy,
+            radius,
+            startAngle,
+            endAngle,
+            innerRadius = 0,
+        } = this;
+
+        const angle = (startAngle + endAngle) / 2;
+        const distance = innerRadius + (radius - innerRadius) / 2;
+
+        return getThetaPoint(angle, distance, cx, cy);
+    }
+
+    constructor(options: ShapeOptions<ArcState>) {
+        super('arc', options);
+    }
+
+    public getBoundingBox() {
         const {
             cx,
             cy,
@@ -70,7 +129,7 @@ export const createArc = defineShape<ArcState, BaseElementAttrs, ArcExtension>('
             innerRadius,
             startAngle,
             endAngle,
-        } = state;
+        } = this;
 
         const [outerX1, outerY1] = getThetaPoint(startAngle, radius, cx, cy);
         const [outerX2, outerY2] = getThetaPoint(endAngle, radius, cx, cy);
@@ -93,9 +152,9 @@ export const createArc = defineShape<ArcState, BaseElementAttrs, ArcExtension>('
             max(innerY1, innerY2, outerY1, outerY2),
             max(innerX1, innerX2, outerX1, outerX2)
         );
-    });
+    }
 
-    return ({ path, state }) => {
+    public render(context: Context) {
         let {
             cx,
             cy,
@@ -104,28 +163,30 @@ export const createArc = defineShape<ArcState, BaseElementAttrs, ArcExtension>('
             startAngle,
             endAngle,
             padAngle,
-            borderRadius,
-        } = state;
+        } = this;
 
-        if (padAngle) {
-            const offset = padAngle / 2;
+        return super.render(context, path => {
+            if (padAngle) {
+                const offset = padAngle / 2;
 
-            startAngle = Math.min(startAngle + offset, endAngle);
-            endAngle = Math.max(endAngle - offset, startAngle);
-        }
+                startAngle = Math.min(startAngle + offset, endAngle);
+                endAngle = Math.max(endAngle - offset, startAngle);
+            }
 
-        if (typeIsNil(innerRadius)) {
-            return path.arc(cx, cy, radius, startAngle, endAngle);
-        }
+            if (typeIsNil(innerRadius)) {
+                return path.arc(cx, cy, radius, startAngle, endAngle);
+            }
 
-        const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
-        const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
+            const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
 
-        path.moveTo(x1, y1);
-        path.arc(cx, cy, radius, startAngle, endAngle);
-        path.lineTo(x2, y2);
-        path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
-        path.lineTo(x1, y1);
-        path.closePath();
-    };
-});
+            path.moveTo(x1, y1);
+            path.arc(cx, cy, radius, startAngle, endAngle);
+            path.lineTo(x2, y2);
+            path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+            path.lineTo(x1, y1);
+            path.closePath();
+        });
+    }
+
+}

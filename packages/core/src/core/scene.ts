@@ -1,18 +1,17 @@
 import {
-    createElementEvent,
+    Element,
+    ElementEventMap,
 } from './element';
 
 import {
-    createEvent,
-} from './event-bus';
-
-import {
+    Context,
     createContext,
-    rescaleCanvas,
 } from './context';
 
 import {
-    createGroup, isGroup,
+    Group,
+    GroupOptions,
+    isGroup,
 } from './group';
 
 import {
@@ -26,222 +25,171 @@ import {
     DOMElementEventMap,
     DOMEventHandler,
     functionMemoize,
-    onDOMElementResize,
     onDOMEvent,
 } from '@ripl/utilities';
 
-import {
-    Element,
-    ElementEventMap,
-    EventHandler,
-    Scene,
-    SceneEventMap,
-    SceneOptions,
-} from './types';
+export interface SceneEventMap extends ElementEventMap {
+    'scene:resize': {
+        width: number;
+        height: number;
+    };
+    'scene:mouseenter': MouseEvent;
+    'scene:mouseleave': MouseEvent;
+    'scene:mousemove': {
+        x: number;
+        y: number;
+        event: MouseEvent;
+    };
+}
 
-export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
-    let {
-        canvas,
-        context,
-        clear,
-        width,
-        height,
-        xScale,
-        yScale,
-    } = createContext(target);
+export interface SceneOptions extends GroupOptions {
+    renderOnResize: boolean;
+}
 
-    const {
-        state,
-        renderOnResize = true,
-    } = options || {};
+export class Scene extends Group<SceneEventMap> {
 
-    const disposals = new Set<Disposable>();
-    const activeElements = [] as Element[];
-    const group = createGroup({
-        state: {
-            font: window.getComputedStyle(canvas).font,
-            ...state,
-        },
-    });
+    readonly context: Context;
+    public buffer: Element[];
+    private disposals = new Set<Disposable>();
 
-    let graphHandle: number | undefined;
-    let elements = group.graph();
-
-    let left = 0;
-    let top = 0;
-
-    const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
-        const elements = arrayReduce(group.graph(true), (output, element) => {
-            if (!element.has(event)) {
-                return output;
-            }
-
-            return output.concat(isGroup(element)
-                ? element.graph()
-                : element);
-        }, [] as Element[]);
-
-        return arrayDedupe(elements);
-    });
-
-    function updateScaling(_width: number, _height: number) {
-        width = _width;
-        height = _height;
-
-        ({
-            xScale,
-            yScale,
-        } = rescaleCanvas(canvas, width, height));
-    }
-
-    function attachDOMEvent<TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) {
-        disposals.add(onDOMEvent(canvas, event, handler));
-    }
-
-    function on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>) {
-        return group.on(event as keyof ElementEventMap, handler as EventHandler<ElementEventMap[keyof ElementEventMap]>);
-    }
-
-    function emit<TEvent extends keyof SceneEventMap>(event: TEvent, payload: SceneEventMap[TEvent]) {
-        group.emit(event as keyof ElementEventMap, payload as ElementEventMap[keyof ElementEventMap]);
-    }
-
-    function render() {
-        clear();
-        group.render(context);
-    }
-
-    function dispose() {
-        disposals.forEach(({ dispose }) => dispose);
-    }
-
-    attachDOMEvent('mouseenter', event => {
-        ({
-            left,
-            top,
-        } = canvas.getBoundingClientRect());
-
-        emit('scene:mouseenter', createEvent(event));
-    });
-
-    attachDOMEvent('mouseleave', event => {
-        emit('scene:mouseleave', createEvent(event));
-    });
-
-    attachDOMEvent('mousemove', event => {
-        const x = event.clientX - left;
-        const y = event.clientY - top;
-        const trueX = xScale(x);
-        const trueY = yScale(y);
-
-        emit('scene:mousemove', createEvent({
-            x,
-            y,
-            event,
-        }));
-
-        const trackedElements = [
-            ...getTrackedElements('element:mousemove'),
-            ...getTrackedElements('element:mouseenter'),
-            ...getTrackedElements('element:mouseleave'),
-        ];
-
-        const baseEvent = createEvent(event);
-        const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
-            isPointer: true,
-        }));
+    constructor(target: string | HTMLCanvasElement, options?: SceneOptions) {
+        const context = createContext('canvas', target);
 
         const {
-            left: entries,
-            inner: updates,
-            right: exits,
-        } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
+            renderOnResize,
+            ...groupOptions
+        } = options || {};
 
-        arrayForEach(entries, element => {
-            element.emit('element:mouseenter', {
-                element,
-                ...baseEvent,
+        super({
+            font: window.getComputedStyle(context.element).font,
+            ...groupOptions,
+        });
+
+        this.context = context;
+        this.buffer = this.graph();
+
+        let graphHandle: number | undefined;
+        let left = 0;
+        let top = 0;
+
+        const activeElements = [] as Element[];
+        const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
+            const elements = arrayReduce(this.graph(true), (output, element) => {
+                if (!element.has(event)) {
+                    return output;
+                }
+
+                return output.concat(isGroup(element)
+                    ? element.graph()
+                    : element);
+            }, [] as Element[]);
+
+            return arrayDedupe(elements);
+        });
+
+        this.attachDOMEvent('mouseenter', event => {
+            ({
+                left,
+                top,
+            } = this.context.element.getBoundingClientRect());
+
+            this.emit('scene:mouseenter', event);
+        });
+
+        this.attachDOMEvent('mouseleave', event => {
+            this.emit('scene:mouseleave', event);
+        });
+
+        this.attachDOMEvent('mousemove', event => {
+            const x = event.clientX - left;
+            const y = event.clientY - top;
+            const trueX = this.context.xScale(x);
+            const trueY = this.context.yScale(y);
+
+            this.emit('scene:mousemove', {
+                x,
+                y,
+                event,
             });
 
-            activeElements.push(element);
-        });
+            const trackedElements = [
+                ...getTrackedElements('element:mousemove'),
+                ...getTrackedElements('element:mouseenter'),
+                ...getTrackedElements('element:mouseleave'),
+            ];
 
-        arrayForEach(updates, ([element]) => element.emit('element:mousemove', {
-            element,
-            ...baseEvent,
-        }));
+            const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
+                isPointer: true,
+            }));
 
-        arrayForEach(exits, element => {
-            element.emit('element:mouseleave', {
-                element,
-                ...baseEvent,
+            const {
+                left: entries,
+                inner: updates,
+                right: exits,
+            } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
+
+            arrayForEach(entries, element => {
+                element.emit('element:mouseenter', event);
+                activeElements.push(element);
             });
 
-            activeElements.splice(activeElements.indexOf(element), 1);
+            arrayForEach(updates, ([element]) => element.emit('element:mousemove', event));
+
+            arrayForEach(exits, element => {
+                element.emit('element:mouseleave', event);
+                activeElements.splice(activeElements.indexOf(element), 1);
+            });
         });
-    });
 
-    attachDOMEvent('click', event => {
-        const x = xScale(event.clientX - left);
-        const y = yScale(event.clientY - top);
+        this.attachDOMEvent('click', event => {
+            const x = this.context.xScale(event.clientX - left);
+            const y = this.context.yScale(event.clientY - top);
 
-        const element = arrayFind(getTrackedElements('element:click'), element => element.intersectsWith(x, y, {
-            isPointer: true,
-        }), -1);
+            const element = arrayFind(getTrackedElements('element:click'), element => element.intersectsWith(x, y, {
+                isPointer: true,
+            }), -1);
 
-        element?.emit('element:click', createElementEvent(element, event));
-    });
-
-    onDOMElementResize(canvas, ({ width, height }) => {
-        updateScaling(width, height);
-        emit('scene:resize', createEvent({
-            width,
-            height,
-        }));
-
-        if (renderOnResize && elements.length > 0) {
-            render();
-        }
-    });
-
-    on('scene:graph', () => {
-        if (graphHandle) {
-            cancelAnimationFrame(graphHandle);
-            graphHandle = undefined;
-        }
-
-        graphHandle = requestAnimationFrame(() => {
-            elements = group.graph();
-            getTrackedElements.cache.clear();
+            element?.emit('element:click', event);
         });
-    });
 
-    on('scene:track', ({ data }) => data && getTrackedElements.cache.delete(data));
-    on('scene:untrack', ({ data }) => data && getTrackedElements.cache.delete(data));
+        context.on('context:resize', () => {
+            if (renderOnResize && !!this.buffer.length) {
+                this.render();
+            }
+        });
 
-    return {
-        context,
-        canvas,
-        on,
-        emit,
-        render,
-        dispose,
-        add: group.add,
-        remove: group.remove,
-        clear: group.clear,
-        find: group.find,
-        findAll: group.findAll,
-        graph: group.graph,
+        this.on('scene:graph', () => {
+            if (graphHandle) {
+                cancelAnimationFrame(graphHandle);
+                graphHandle = undefined;
+            }
 
-        get width() {
-            return width;
-        },
-        get height() {
-            return height;
-        },
+            graphHandle = requestAnimationFrame(() => {
+                this.buffer = this.graph();
+                getTrackedElements.cache.clear();
+            });
+        });
 
-        get elements() {
-            return elements;
-        },
-    };
+        this.on('scene:track', ({ data }) => getTrackedElements.cache.delete(data));
+        this.on('scene:untrack', ({ data }) => getTrackedElements.cache.delete(data));
+    }
+
+    private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+        this.disposals.add(onDOMEvent(this.context.element, event, handler));
+    }
+
+    public destroy(): void {
+        this.disposals.forEach(disposal => disposal.dispose());
+        super.destroy();
+    }
+
+    public render(): void {
+        this.context.clear();
+        arrayForEach(this.buffer, element => element.render(this.context));
+    }
+
+}
+
+export function createScene(...options: ConstructorParameters<typeof Scene>) {
+    return new Scene(...options);
 }

@@ -1,9 +1,8 @@
 import {
-    createEvent,
-} from './event-bus';
-
-import {
-    defineElement,
+    BaseElementState,
+    Element,
+    ElementEventMap,
+    ElementOptions,
 } from './element';
 
 import {
@@ -13,117 +12,64 @@ import {
 import {
     arrayFilter,
     arrayFind,
+    arrayForEach,
     OneOrMore,
-    setForEach,
 } from '@ripl/utilities';
+import {
+    Context,
+} from './context';
 
-import type {
-    Element,
-    Group,
-    GroupOptions,
-} from './types';
-
-const TYPE = 'group';
+export interface GroupOptions extends ElementOptions {
+    children?: OneOrMore<Element>;
+}
 
 function getQueryTest(query: string) {
     switch (query[0]) {
         case '#':
             return (element: Element) => element.id === query.substring(1, query.length);
         case '.':
-            return (element: Element) => element.class === query.substring(1, query.length);
+            return (element: Element) => element.classList.has(query.substring(1, query.length));
         default:
             return (element: Element) => element.type === query;
     }
 }
 
-export function isGroup(element: Element): element is Group {
-    return element.type === TYPE;
+export function isGroup(value: unknown): value is Group {
+    return value instanceof Group;
 }
 
-export function createGroup(options?: GroupOptions) {
-    const {
-        children: elements = [],
-        ...elOptions
-    } = options || {};
+export function createGroup(...options: ConstructorParameters<typeof Group>) {
+    return new Group(...options);
+}
 
-    let children = new Set<Element>();
+export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> {
 
-    const el = defineElement(TYPE, ({ setBoundingBoxHandler }) => {
-        setBoundingBoxHandler(() => {
-            return getContainingBox(Array.from(children), el => el.getBoundingBox());
-        });
+    #elements = new Set<Element>();
 
-        return ({ context }) => {
-            setForEach(children, ({ render }) => render(context));
-        };
-    }, {
-        abstract: true,
-    })(elOptions);
-
-    const group: Group = {
-        ...el,
-        set,
-        add,
-        remove,
-        clear,
-        graph,
-        find,
-        findAll,
-
-        get id() {
-            return el.id;
-        },
-
-        get type() {
-            return el.type;
-        },
-
-        get attrs () {
-            return el.attrs;
-        },
-
-        get state() {
-            return el.state;
-        },
-
-        get data() {
-            return el.data;
-        },
-
-        get parent() {
-            return el.parent;
-        },
-
-        set parent(group: Group | undefined) {
-            el.parent = group;
-        },
-
-        get elements() {
-            return Array.from(children);
-        },
-
-        setAttrs(attrs) {
-            return (el.setAttrs(attrs), group);
-        },
-
-        setState(state) {
-            return (el.setState(state), group);
-        },
-    };
-
-    function updateSceneGraph() {
-        el.emit('scene:graph', {
-            element: el,
-            ...createEvent(),
-        });
+    public get children() {
+        return Array.from(this.#elements);
     }
 
-    function set(elements: Element[]) {
-        children = new Set(elements);
-        updateSceneGraph();
+    constructor({
+        children = [],
+        ...options
+    }: GroupOptions) {
+        super('group', options);
+
+        this.abstract = true;
+        this.add(children);
     }
 
-    function add(element: OneOrMore<Element>) {
+    public updateSceneGraph() {
+        this.emit('scene:graph', undefined);
+    }
+
+    public set(elements: Element[]) {
+        this.#elements = new Set(elements);
+        this.updateSceneGraph();
+    }
+
+    public add(element: OneOrMore<Element>) {
         const elements = ([] as Element[]).concat(element);
 
         if (!elements.length) {
@@ -131,34 +77,34 @@ export function createGroup(options?: GroupOptions) {
         }
 
         elements.forEach(item => {
-            item.parent = group;
-            children.add(item);
+            item.parent = this;
+            this.#elements.add(item);
         });
 
-        updateSceneGraph();
+        this.updateSceneGraph();
     }
 
-    function remove(element: OneOrMore<Element>) {
+    public remove(element: OneOrMore<Element>) {
         const elements = ([] as Element[]).concat(element);
 
         if (!elements.length) {
             return;
         }
 
-        elements.forEach(item => {
+        this.#elements.forEach(item => {
             item.parent = undefined;
-            children.delete(item);
+            this.#elements.delete(item);
         });
 
-        updateSceneGraph();
+        this.updateSceneGraph();
     }
 
-    function clear() {
-        remove(Array.from(children));
+    public clear() {
+        this.remove(this.children);
     }
 
-    function graph(includeGroups?: boolean) {
-        return Array.from(children).flatMap(item => {
+    public graph(includeGroups?: boolean): Element[] {
+        return this.children.flatMap(item => {
             if (!isGroup(item)) {
                 return item;
             }
@@ -170,15 +116,20 @@ export function createGroup(options?: GroupOptions) {
         });
     }
 
-    function find(query: string) {
-        return arrayFind(graph(true), getQueryTest(query));
+    public find(query: string) {
+        return arrayFind(this.graph(true), getQueryTest(query));
     }
 
-    function findAll(query: string) {
-        return arrayFilter(graph(true), getQueryTest(query));
+    public findAll(query: string) {
+        return arrayFilter(this.graph(true), getQueryTest(query));
     }
 
-    add(elements);
+    public getBoundingBox() {
+        return getContainingBox(this.children, element => element.getBoundingBox());
+    }
 
-    return group;
+    public render(context: Context): void {
+        arrayForEach(this.children, element => element.render(context));
+    }
+
 }
