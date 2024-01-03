@@ -1,23 +1,20 @@
 import {
     BaseElementState,
-    defineShape,
-    Element,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
     Box,
     getPolygonPoints,
+    max,
 } from '../math';
-
-import {
-    interpolateNumber,
-} from '../interpolators';
 
 import {
     drawPoints,
 } from './polyline';
 
-export type Polygon = ReturnType<typeof createPolygon>;
 export interface PolygonState extends BaseElementState {
     cx: number;
     cy: number;
@@ -25,42 +22,73 @@ export interface PolygonState extends BaseElementState {
     sides: number;
 }
 
-export function elementIsPolygon(element: Element): element is Polygon {
-    return element.type === 'polygon';
-}
+export class Polygon extends Shape<PolygonState> {
 
-export const createPolygon = defineShape<PolygonState>('polygon', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state }) => new Box(
-        state.cy - state.radius,
-        state.cx - state.radius,
-        state.cy + state.radius,
-        state.cx + state.radius
-    ));
+    public get cx() {
+        return this.getStateValue('cx');
+    }
 
-    return ({ state, path }) => {
-        const {
-            sides,
-            cx,
-            cy,
-            radius,
-        } = state;
+    public set cx(value) {
+        this.setStateValue('cx', value);
+    }
 
-        const points = getPolygonPoints(sides, cx, cy, radius);
+    public get cy() {
+        return this.getStateValue('cy');
+    }
 
-        drawPoints(points, path);
-        path.closePath();
-    };
-}, {
-    interpolators: {
-        sides: (sidesA, sidesB) => {
-            const interpolator = interpolateNumber(
-                Math.max(sidesA, 3),
-                Math.max(sidesB, 3)
+    public set cy(value) {
+        this.setStateValue('cy', value);
+    }
+
+    public get radius() {
+        return this.getStateValue('radius');
+    }
+
+    public set radius(value) {
+        this.setStateValue('radius', value);
+    }
+
+    public get sides() {
+        return this.getStateValue('sides');
+    }
+
+    public set sides(value) {
+        this.setStateValue('sides', max(value, 3));
+    }
+
+    constructor(options: ShapeOptions<PolygonState>) {
+        super('polygon', options);
+    }
+
+    public getBoundingBox() {
+        return new Box(
+            this.cy - this.radius,
+            this.cx - this.radius,
+            this.cy + this.radius,
+            this.cx + this.radius
+        );
+    }
+
+    public render(context: Context) {
+        return super.render(context, path => {
+            const points = getPolygonPoints(
+                this.sides,
+                this.cx,
+                this.cy,
+                this.radius
             );
 
-            return position => Math.floor(interpolator(position));
-        },
-    },
-});
+            drawPoints(points, path);
+            path.closePath();
+        });
+    }
+
+}
+
+export function createPolygon(...options: ConstructorParameters<typeof Polygon>) {
+    return new Polygon(...options);
+}
+
+export function elementIsPolygon(value: unknown): value is Polygon {
+    return value instanceof Polygon;
+}

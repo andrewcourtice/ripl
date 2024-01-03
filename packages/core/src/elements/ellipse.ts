@@ -19,14 +19,6 @@ export interface EllipseState extends BaseElementState {
     endAngle: number;
 }
 
-export function elementIsEllipse(value: unknown): value is Ellipse {
-    return value instanceof Ellipse;
-}
-
-export function createEllipse(...options: ConstructorParameters<typeof Ellipse>) {
-    return new Ellipse(...options);
-}
-
 export class Ellipse extends Shape<EllipseState> {
 
     public get cx() {
@@ -112,4 +104,12 @@ export class Ellipse extends Shape<EllipseState> {
         });
     }
 
+}
+
+export function createEllipse(...options: ConstructorParameters<typeof Ellipse>) {
+    return new Ellipse(...options);
+}
+
+export function elementIsEllipse(value: unknown): value is Ellipse {
+    return value instanceof Ellipse;
 }

@@ -5,6 +5,7 @@ import {
 
 import {
     Context,
+    ContextType,
     createContext,
 } from './context';
 
@@ -29,10 +30,7 @@ import {
 } from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
-    'scene:resize': {
-        width: number;
-        height: number;
-    };
+    'scene:resize': null;
     'scene:mouseenter': MouseEvent;
     'scene:mouseleave': MouseEvent;
     'scene:mousemove': {
@@ -43,7 +41,8 @@ export interface SceneEventMap extends ElementEventMap {
 }
 
 export interface SceneOptions extends GroupOptions {
-    renderOnResize: boolean;
+    type?: ContextType;
+    renderOnResize?: boolean;
 }
 
 export class Scene extends Group<SceneEventMap> {
@@ -52,13 +51,24 @@ export class Scene extends Group<SceneEventMap> {
     public buffer: Element[];
     private disposals = new Set<Disposable>();
 
-    constructor(target: string | HTMLCanvasElement, options?: SceneOptions) {
-        const context = createContext('canvas', target);
+    public get width() {
+        return this.context.width;
+    }
 
+    public get height() {
+        return this.context.height;
+    }
+
+    constructor(target: string | HTMLElement, options?: SceneOptions) {
         const {
-            renderOnResize,
+            type,
+            renderOnResize = true,
             ...groupOptions
         } = options || {};
+
+        const context = createContext(target, {
+            type,
+        });
 
         super({
             font: window.getComputedStyle(context.element).font,
@@ -153,6 +163,7 @@ export class Scene extends Group<SceneEventMap> {
         });
 
         context.on('context:resize', () => {
+            this.emit('scene:resize', null);
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }

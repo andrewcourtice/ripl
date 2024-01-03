@@ -1,107 +1,80 @@
 import {
+    ContextType,
     createRenderer,
     createScene,
     Renderer,
     Scene,
 } from '@ripl/core';
 
-export type ChartRenderFunction = () => Promise<any>;
-
-export interface ChartOptions {
+export type BaseChartOptions = Record<PropertyKey, any>;
+export type ChartOptions<TOptions extends BaseChartOptions> = {
     autoRender?: boolean;
     animated?: boolean;
-}
+    type?: ContextType;
+} & TOptions;
 
-export interface Chart<TOptions extends ChartOptions, TData = unknown> {
-    render(): void;
-    update(options: Partial<TOptions>): void;
-    clear: Scene['clear'];
-}
+export class Chart<TOptions extends BaseChartOptions> {
 
-export interface ChartInstance<TOptions extends ChartOptions> {
-    options: TOptions;
-    scene: Scene;
-    renderer: Renderer;
-    onUpdate(handler: () => void): void;
-}
+    private scene: Scene;
+    private renderer: Renderer;
+    private autoRender: boolean;
+    private animated: boolean;
 
-export type ChartDefinition<TOptions extends ChartOptions> = (instance: ChartInstance<TOptions>) => ChartRenderFunction;
-export type ChartConstructor<TOptions extends ChartOptions> = <TData>(target: string | HTMLCanvasElement, options: TOptions) => Chart<TOptions>;
+    private hasRendered: boolean = false;
 
-const OPTIONS = {
-    autoRender: true,
-} as ChartOptions;
+    protected options: TOptions;
 
-export function createChart<TOptions extends ChartOptions>(definition: ChartDefinition<TOptions>): ChartConstructor<TOptions> {
-    return (target, options) => {
-        const scene = createScene(target);
-        const renderer = createRenderer(scene);
-        const chartOptions = {
-            ...OPTIONS,
-            ...options,
-        } as TOptions;
+    constructor(target: string | HTMLElement, options?: ChartOptions<TOptions>) {
+        const {
+            type,
+            autoRender = true,
+            animated = true,
+            ...opts
+        } = options || {};
 
-        const handlers = {
-            onUpdate: new Set(),
-        } as Record<keyof ChartInstance<TOptions>, Set<() => void>>;
+        this.autoRender = autoRender;
+        this.animated = animated;
+        this.options = opts as TOptions;
 
-        const instance = {
-            scene,
-            renderer,
-            options: chartOptions,
-            onUpdate: handler => handlers.onUpdate.add(handler),
-        } as ChartInstance<TOptions>;
-
-        let hasRendered = false;
-        const onRender = definition(instance);
-
-        const renderErrorState = () => {
-
-        };
-
-        const render = async () => {
-            try {
-                await onRender();
-            } catch {
-                scene.clear();
-                // render error message
-            } finally {
-                hasRendered = true;
-            }
-        };
-
-        const update = (options: Partial<TOptions>) => {
-            const updatedOptions = {
-                ...chartOptions,
-                ...options,
-            };
-
-            instance.options = updatedOptions;
-            handlers.onUpdate.forEach(handler => handler());
-
-            if (updatedOptions.autoRender) {
-                render();
-            }
-        };
-
-        if (chartOptions.autoRender) {
-            render();
-        }
-
-        scene.on('resize', () => {
-            if (!hasRendered) {
-                return;
-            }
-
-            //renderer.update({ immediate: true });
-            render();
-            //renderer.update({ immediate: false });
+        this.scene = createScene(target, {
+            type,
         });
 
-        return {
-            render,
-            update,
-            clear: scene.clear.bind(scene),
+        this.renderer = createRenderer(this.scene);
+    }
+
+    protected init() {
+        this.scene.on('scene:resize', () => {
+            if (this.hasRendered) {
+                this.render();
+            }
+        });
+
+        if (this.autoRender) {
+            this.render();
+        }
+    }
+
+    public update(options: Partial<TOptions>) {
+        this.options = {
+            ...this.options,
+            ...options,
         };
-    };
+
+        if (this.autoRender) {
+            this.render();
+        }
+    }
+
+    public async render(callback?: (scene: Scene, renderer: Renderer) => Promise<any>) {
+        try {
+            await callback?.(this.scene, this.renderer);
+        } catch (error) {
+            console.log('failed', error);
+            this.scene.context.clear();
+        } finally {
+            this.hasRendered = true;
+        }
+    }
+
 }

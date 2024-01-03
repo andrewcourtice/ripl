@@ -9,7 +9,6 @@ import {
 
 import {
     GetMutableKeys,
-    typeIsNil,
 } from '@ripl/utilities';
 
 function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {

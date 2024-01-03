@@ -85,3 +85,11 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
     }
 
 }
+
+export function createShape(...options: ConstructorParameters<typeof Shape>) {
+    return new Shape(...options);
+}
+
+export function elementIsShape(value: unknown): value is Shape {
+    return value instanceof Shape;
+}

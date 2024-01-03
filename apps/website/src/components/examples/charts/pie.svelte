@@ -19,6 +19,7 @@ import {
 } from '@ripl/core';
 
 import {
+    PieChart,
     createPieChart
 } from '@ripl/charts';
 
@@ -26,7 +27,7 @@ import {
     stringUniqueId
 } from '@ripl/utilities';
 
-let chart: ReturnType<typeof createPieChart>;
+let chart: PieChart<typeof data[number]>;
 
 const getColor = () => serialiseRGB(
     clamp(Math.random() * 255, 80, 230),
@@ -107,12 +108,16 @@ function update() {
 }
 
 onMount(() => {
-    chart = createPieChart<typeof data>('.example__canvas', {
-        data,
-        key: 'id',
-        value: 'value',
-        color: 'color',
-        label: 'label',
-    });
+    try {
+        chart = createPieChart<typeof data[number]>('.example__root', {
+            data,
+            key: 'id',
+            value: 'value',
+            color: 'color',
+            label: 'label',
+        });
+    } catch (e) {
+        console.error(e);
+    }
 });
 </script>

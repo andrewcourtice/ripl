@@ -17,12 +17,15 @@ import {
 } from 'svelte';
 
 import {
-    getContext,
+    createContext,
     createCircle,
     createGroup,
-    createSpline,
     scaleContinuous,
+    createPolyline,
+    polylineSplineRenderer,
+
     interpolatePath
+
 } from '@ripl/core';
 
 import type {
@@ -35,25 +38,19 @@ let showPoints = true;
 let render = (time: number) => {};
 
 $: {
-    showPoints = showPoints;
     tension = tension;
+    showPoints = showPoints;
     render(time);
 }
 
 
 function mainDemo() {
-    const {
-        canvas,
-        context,
-        clear,
-        width,
-        height
-    } = getContext('.example__canvas');
+    const context = createContext('.example__root');
 
     // RAND POINTS
     const length = 20;
-    const xScale = scaleContinuous([0, length - 1], [50, width - 50]);
-    const yScale = scaleContinuous([-100, 100], [height - 50, 50]);
+    const xScale = scaleContinuous([0, length - 1], [50, context.width - 50]);
+    const yScale = scaleContinuous([-100, 100], [context.height - 50, 50]);
     const rand = () => Math.random() * (Math.random() < 0.5 ? -1 : 1);
     
     const getPoints = () => Array.from({ length }, (_, i) => [
@@ -97,11 +94,15 @@ function mainDemo() {
     //     }) as Point[];
 
 
-    const spl = createSpline({
+    const spl = createPolyline({
+        points: points.slice(0, 1),
         strokeStyle: '#000000',
         lineWidth: 2,
-        points: interpolatePath(points),
-        tension: () => tension,
+        renderer: polylineSplineRenderer(tension)
+    });
+
+    const splI = spl.interpolate({
+        points: interpolatePath(points)
     });
 
     const markers = points.map((point) => createCircle({
@@ -112,30 +113,49 @@ function mainDemo() {
         radius: 10,
     }));
 
-    const markerGroup = createGroup();
-
-    markerGroup.add(markers);
-
-    const crc = createCircle({
-        fillStyle: ['rgb(30, 105, 120)', 'rgba(150, 105, 120, 0.2)'],
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: [width / 5, width / 3]
+    const markerGroup = createGroup({
+        children: markers
     });
 
-    render = time => {
-        clear();
-        crc.render(context, time);
+    const crc = createCircle({
+        fillStyle: 'rgb(30, 105, 120)',
+        lineWidth: 4,
+        cx: context.width / 2,
+        cy: context.height / 2,
+        radius: context.width / 5,
+    });
 
-        if(showPoints) {
-            markerGroup.render(context, time);
+    const crcI = crc.interpolate({
+        fillStyle: 'rgba(150, 105, 120, 0.2)',
+        radius: context.width / 3
+    })
+
+    render = time => {
+        context.clear();
+
+        try {
+            crcI(time);
+            crc.render(context);
+
+            splI(time);
+            spl.renderer = polylineSplineRenderer(tension);
+            spl.render(context);
+    
+            if (showPoints) {
+                markerGroup.render(context);
+            }
+        } catch (e) {
+            console.error(e)
         }
-        spl.render(context, time);
     }
 }
 
 onMount(() => {
-    mainDemo();
+    try {
+        mainDemo();
+
+    } catch (e) {
+        console.error(e)
+    }
 });
 </script>

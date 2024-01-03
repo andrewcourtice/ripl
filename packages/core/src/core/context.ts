@@ -26,6 +26,10 @@ export interface ContextEventMap extends EventMap {
     'context:resize': null;
 }
 
+export interface ContextOptions {
+    type?: ContextType;
+}
+
 export interface Path<TImpl = unknown> {
     readonly impl: TImpl;
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void;
@@ -377,6 +381,8 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
             return;
         }
 
+        this.width = width;
+        this.height = height;
         this.element.width = scaledWidth;
         this.element.height = scaledHeight;
 
@@ -461,6 +467,10 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
 
 }
 
-export function createContext(type: ContextType, target: string | Element): Context {
+export function createContext(target: string | Element, options?: ContextOptions): Context {
+    const {
+        type = 'canvas',
+    } = options || {};
+
     return new CanvasContext(target);
 }

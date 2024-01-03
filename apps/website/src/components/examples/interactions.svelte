@@ -24,6 +24,7 @@ import {
     createCircle,
     createGroup,
     createLine,
+    typeIsElement,
 } from '@ripl/core';
 
 let transitionCircles = () => {};
@@ -35,7 +36,7 @@ onMount(() => {
     let x = 0;
     let y = 0;
 
-    const scene = createScene('.example__canvas');
+    const scene = createScene('.example__root');
     const renderer = createRenderer(scene, {
         autoStart: false
     });
@@ -52,87 +53,80 @@ onMount(() => {
     );
 
     const circles = Array.from({ length: 1000 }, (_, index) => createCircle({
-        fillStyle: '#000000',
-        radius: [rScale(Math.random()), rScale(Math.random())],
-        cx: [xScale(Math.random()), xScale(Math.random())],
-        cy: [yScale(Math.random()), yScale(Math.random())],
-    }, {
-        class: index % 2 === 0 ? 'even' : 'odd'
+        class: index % 2 === 0 ? 'even' : 'odd',
+        fillStyle: getColor(),
+        radius: rScale(Math.random()),
+        cx: xScale(Math.random()),
+        cy: yScale(Math.random()),
     }));
     
     const circleGroup = createGroup({
         fillStyle: '#333333',
+        children: circles
     });
 
     const crosshairHLine = createLine({
         x1: 0,
-        y1: () => y,
+        y1: y,
         x2: scene.width,
-        y2: () => y
-    }, {
-        pointerEvents: 'none'
+        y2: y,
+        pointerEvents: 'none',
     });
 
     const crosshairVLine = createLine({
-        x1: () => x,
+        x1: x,
         y1: 0,
-        x2: () => x,
-        y2: scene.height
-    }, {
-        pointerEvents: 'none'
+        x2: x,
+        y2: scene.height,
+        pointerEvents: 'none',
     });
 
     const crosshairGroup = createGroup({
-        strokeStyle: '#CCCCCC'
+        strokeStyle: '#CCCCCC',
+        children: [
+            crosshairHLine,
+            crosshairVLine
+        ]
     });
-    
-    circleGroup.add(circles);
-    crosshairGroup.add([
-        crosshairHLine,
-        crosshairVLine,
-    ]);
 
     scene.add([
         circleGroup,
         crosshairGroup
     ]);
 
-    scene.on('scenemousemove', ({ data }) => {
-        if (data) {
-            x = data.x;
-            y = data.y;
+    scene.on('scene:mousemove', ({ data }) => {
+        crosshairHLine.y1 = data.y;
+        crosshairHLine.y2 = data.y;
+        crosshairVLine.x1 = data.x;
+        crosshairVLine.x2 = data.x;
+    });
+
+    circleGroup.on('element:click', ({ target }) => {
+        if (typeIsElement(target)) {
+            target.fillStyle = '#FF0000';
         }
     });
-
-    circleGroup.on('elementclick', ({ element }) => {
-        console.log(element);
-        element.update({
-            fillStyle: '#FF0000'
-        });
-    });
     
-    transitionCircles = () => {
-        circles.forEach(crc => crc.to({
-            //fillStyle: getColor(),
-            radius: rScale(Math.random()),
-            cx: xScale(Math.random()),
-            cy: yScale(Math.random()),
-        }));
-
-        renderer.transition(circles, {
+    transitionCircles = () => {      
+        renderer.transition(circles, (element, index, length) => ({
             duration: 3000,
             ease: easeOutQuint,
-            delay: index => index * (1000 / circles.length)
-        });
+            delay: index * (1000 / length),
+            state: {
+                radius: rScale(Math.random()),
+                cx: xScale(Math.random()),
+                cy: yScale(Math.random()),
+            }
+        }));
     }
     
-    add = () => scene.add(circleGroup);
-    remove = () => scene.remove(circleGroup);
-    removeOne = () => {
-        const even = scene.findAll('.even');
-        console.log(even);
-        even.forEach(el => el.destroy());
-    }
+    // add = () => scene.add(circleGroup);
+    // remove = () => scene.remove(circleGroup);
+    // removeOne = () => {
+    //     const even = scene.findAll('.even');
+    //     console.log(even);
+    //     even.forEach(el => el.destroy());
+    // }
 
     renderer.start();
 });

@@ -23,7 +23,7 @@ export class Event<TData = undefined> {
         return this.#bubbles;
     }
 
-    constructor(type: string, target: EventBus, options?: EventOptions<TData>) {
+    constructor(type: string, target: EventBus<any>, options?: EventOptions<TData>) {
         const {
             data,
             bubbles = true,

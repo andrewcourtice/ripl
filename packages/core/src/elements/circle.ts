@@ -16,14 +16,6 @@ export interface CircleState extends BaseElementState {
     radius: number;
 }
 
-export function elementIsCircle(value: unknown): value is Circle {
-    return value instanceof Circle;
-}
-
-export function createCircle(...options: ConstructorParameters<typeof Circle>) {
-    return new Circle(...options);
-}
-
 export class Circle extends Shape<CircleState> {
 
     public get cx() {
@@ -69,4 +61,12 @@ export class Circle extends Shape<CircleState> {
         });
     }
 
+}
+
+export function createCircle(...options: ConstructorParameters<typeof Circle>) {
+    return new Circle(...options);
+}
+
+export function elementIsCircle(value: unknown): value is Circle {
+    return value instanceof Circle;
 }

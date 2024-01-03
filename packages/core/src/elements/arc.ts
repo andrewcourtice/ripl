@@ -27,14 +27,6 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
-export function elementIsArc(value: unknown): value is Arc {
-    return value instanceof Arc;
-}
-
-export function createArc(...options: ConstructorParameters<typeof Arc>) {
-    return new Arc(...options);
-}
-
 export class Arc extends Shape<ArcState> {
 
     public get cx() {
@@ -189,4 +181,12 @@ export class Arc extends Shape<ArcState> {
         });
     }
 
+}
+
+export function createArc(...options: ConstructorParameters<typeof Arc>) {
+    return new Arc(...options);
+}
+
+export function elementIsArc(value: unknown): value is Arc {
+    return value instanceof Arc;
 }

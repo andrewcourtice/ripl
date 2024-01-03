@@ -45,7 +45,8 @@ import {
 import type {
     Group,
 } from './group';
-import {
+
+import type {
     Context,
 } from './context';
 
@@ -93,6 +94,8 @@ export interface ElementEventMap extends EventMap {
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
     id?: string;
     class?: OneOrMore<string>;
+    data?: unknown;
+    pointerEvents?: ElementPointerEvents;
 } & TState;
 
 export type ElementInterpolationKeyFrame<TValue = number> = {
@@ -109,8 +112,13 @@ export type ElementInterpolators<TState extends BaseElementState> = {
 };
 
 export type ElementInterpolationState<TState extends BaseElementState> = {
-    [TKey in keyof TState]: ElementInterpolationStateValue<TState[TKey]>;
+    [TKey in keyof TState]?: ElementInterpolationStateValue<TState[TKey]>;
 };
+
+export interface ElementValidationResult {
+    type: ElementValidationType;
+    message: string;
+}
 
 function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
     return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
@@ -174,8 +182,9 @@ export class Element<
     public readonly classList: Set<string>;
 
     public abstract: boolean = false;
-    public pointerEvents: ElementPointerEvents = 'none';
+    public pointerEvents: ElementPointerEvents = 'all';
     public parent?: Group<TEventMap>;
+    public data: unknown;
 
     // Props
 
@@ -334,18 +343,22 @@ export class Element<
     constructor(type: string, {
         id = `${type}:${stringUniqueId()}`,
         class: classes = [],
+        data,
+        pointerEvents = 'all',
         ...state
     }: ElementOptions<TState>) {
         super();
 
         this.type = type;
         this.id = id;
+        this.data = data;
         this.state = state as TState;
+        this.pointerEvents = pointerEvents;
         this.classList = new Set(([] as string[]).concat(classes));
     }
 
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
-        return (this.parent as unknown as TState)?.[key] ?? this.state[key];
+        return this.state[key] ?? (this.parent as unknown as TState)?.[key];
     }
 
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
@@ -415,9 +428,11 @@ export class Element<
         context.save();
 
         try {
-            objectForEach(CONTEXT_OPERATIONS, (key, value) => {
-                if (!this.abstract && !typeIsNil(this.state[key])) {
-                    value(context, this.state[key]);
+            objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
+                const value = this[key];
+
+                if (!this.abstract && !typeIsNil(value)) {
+                    operation(context, value);
                 }
             });
 
@@ -426,4 +441,12 @@ export class Element<
             context.restore();
         }
     }
+}
+
+export function createElement(...options: ConstructorParameters<typeof Element>) {
+    return new Element(...options);
+}
+
+export function typeIsElement(value: unknown): value is Element {
+    return value instanceof Element;
 }

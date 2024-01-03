@@ -53,7 +53,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     constructor({
         children = [],
         ...options
-    }: GroupOptions) {
+    }: GroupOptions = {}) {
         super('group', options);
 
         this.abstract = true;

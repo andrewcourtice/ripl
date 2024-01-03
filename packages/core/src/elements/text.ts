@@ -1,58 +1,96 @@
 import {
     BaseElementState,
-    defineElement,
+    Context,
     Element,
+    ElementOptions,
 } from '../core';
 
 import {
     Box,
 } from '../math';
 
-export type Text = ReturnType<typeof createText>;
 export interface TextState extends BaseElementState {
     x: number;
     y: number;
     content: string | number;
 }
 
-export function elementIsText(element: Element): element is Text {
-    return element.type === 'text';
-}
+export class Text extends Element<TextState> {
 
-export const createText = defineElement<TextState>('text', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state, context }) => {
+    public get x() {
+        return this.getStateValue('x');
+    }
+
+    public set x(value) {
+        this.setStateValue('x', value);
+    }
+
+    public get y() {
+        return this.getStateValue('y');
+    }
+
+    public set y(value) {
+        this.setStateValue('y', value);
+    }
+
+    public get content() {
+        return this.getStateValue('content');
+    }
+
+    public set content(value) {
+        this.setStateValue('content', value);
+    }
+
+    constructor(options: ElementOptions<TextState>) {
+        super('text', options);
+    }
+
+    public getBoundingBox() {
+        if (!this.context) {
+            return super.getBoundingBox();
+        }
+
         const {
             actualBoundingBoxAscent,
             actualBoundingBoxLeft,
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
-        } = context.measureText(state.content.toString());
+        } = this.context.measureText(this.content.toString());
 
         return new Box(
-            state.y - actualBoundingBoxAscent,
-            state.x - actualBoundingBoxLeft,
-            state.y + actualBoundingBoxDescent,
-            state.x + actualBoundingBoxRight
+            this.y - actualBoundingBoxAscent,
+            this.x - actualBoundingBoxLeft,
+            this.y + actualBoundingBoxDescent,
+            this.x + actualBoundingBoxRight
         );
-    });
+    }
 
-    return ({ context, state }) => {
-        const {
-            x,
-            y,
-            content,
-            fillStyle,
-            strokeStyle,
-        } = state;
+    public render(context: Context) {
+        return super.render(context, () => {
+            const {
+                x,
+                y,
+                content,
+                fillStyle,
+                strokeStyle,
+            } = this;
 
-        if (strokeStyle) {
-            return context.strokeText(content.toString(), x, y);
-        }
+            if (strokeStyle) {
+                return context.strokeText(content.toString(), x, y);
+            }
 
-        if (fillStyle) {
-            return context.fillText(content.toString(), x, y);
-        }
-    };
-});
+            if (fillStyle) {
+                return context.fillText(content.toString(), x, y);
+            }
+        });
+    }
+
+}
+
+export function createText(...options: ConstructorParameters<typeof Text>) {
+    return new Text(...options);
+}
+
+export function elementIsText(value: unknown): value is Text {
+    return value instanceof Text;
+}

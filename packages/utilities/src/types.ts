@@ -1,4 +1,5 @@
 export type AnyFunction = (...args: any[]) => any;
+export type AnyAsyncFunction = (...args: any[]) => any;
 export type OneOrMore<TValue> = TValue | TValue[];
 export type Predicate<TLeft, TRight = TLeft> = (left: TLeft, right: TRight) => boolean;
 export type Indexer<TValue> = (value: TValue) => PropertyKey;
