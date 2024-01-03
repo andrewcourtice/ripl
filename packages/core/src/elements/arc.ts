@@ -93,7 +93,11 @@ export class Arc extends Shape<ArcState> {
         this.setStateValue('borderRadius', value);
     }
 
-    public get centroid() {
+    constructor(options: ShapeOptions<ArcState>) {
+        super('arc', options);
+    }
+
+    public getCentroid(alterations?: Partial<ArcState>) {
         const {
             cx,
             cy,
@@ -101,16 +105,20 @@ export class Arc extends Shape<ArcState> {
             startAngle,
             endAngle,
             innerRadius = 0,
-        } = this;
+        } = {
+            cx: this.cx,
+            cy: this.cy,
+            radius: this.radius,
+            startAngle: this.startAngle,
+            endAngle: this.endAngle,
+            innerRadius: this.innerRadius,
+            ...alterations,
+        };
 
         const angle = (startAngle + endAngle) / 2;
         const distance = innerRadius + (radius - innerRadius) / 2;
 
         return getThetaPoint(angle, distance, cx, cy);
-    }
-
-    constructor(options: ShapeOptions<ArcState>) {
-        super('arc', options);
     }
 
     public getBoundingBox() {

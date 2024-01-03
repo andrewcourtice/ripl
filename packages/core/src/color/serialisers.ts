@@ -2,9 +2,17 @@ import {
     scaleRGB,
 } from './scales';
 
+import {
+    clamp,
+} from '../math';
+
 import type {
     ColorRGBA,
 } from './types';
+
+function clampRGBValue(value: number) {
+    return clamp(value, 0, 255);
+}
 
 export function rgbChannelToHEX(channel: number): string {
     const hex = Math.floor(channel).toString(16);
@@ -24,9 +32,9 @@ export function serialiseHEX(...args: ColorRGBA): string {
 }
 
 export function serialiseRGB(...args: ColorRGBA): string {
-    return `rgb(${args[0]}, ${args[1]}, ${args[2]})`;
+    return `rgb(${clampRGBValue(args[0])}, ${clampRGBValue(args[1])}, ${clampRGBValue(args[2])})`;
 }
 
 export function serialiseRGBA(...args: ColorRGBA): string {
-    return `rgba(${args[0]}, ${args[1]}, ${args[2]}, ${args[3]})`;
+    return `rgba(${clampRGBValue(args[0])}, ${clampRGBValue(args[1])}, ${clampRGBValue(args[2])}, ${clamp(args[3], 0, 1)})`;
 }

@@ -16,6 +16,7 @@ import {
     getTotal,
     Group,
     scaleContinuous,
+    setColorAlpha,
     TAU,
     Text,
     TextState,
@@ -65,7 +66,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const total = getTotal(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], true);
             const offset = TAU / 4;
-            const padAngle = 0.05 / data.length;
+            const padAngle = 0.1 / data.length;
 
             let startAngle = -offset;
 
@@ -127,10 +128,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     cy,
                     startAngle,
                     padAngle,
+                    strokeStyle: color,
+                    fillStyle: setColorAlpha(color, 0.55),
+                    lineWidth: 2,
                     endAngle: startAngle,
                     radius: 0,
                     innerRadius: 0,
-                    fillStyle: color || '#FF0000',
                     data: {
                         endAngle,
                         radius,
@@ -138,20 +141,29 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     } as Partial<ArcState>,
                 });
 
+                segmentArc.on('element:mouseenter', () => {
+                    segmentArc.fillStyle = segmentArc.strokeStyle;
+
+                    segmentArc.once('element:mouseleave', () => {
+                        segmentArc.fillStyle = setColorAlpha(segmentArc.strokeStyle, 0.5);
+                    });
+                });
+
                 const [
-                    centroidx,
+                    centroidX,
                     centroidY,
-                ] = segmentArc.centroid;
+                ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
 
                 const segmentLabel = createText({
                     class: 'segment__label',
                     fillStyle: '#000000',
-                    x: centroidx,
+                    x: centroidX,
                     y: centroidY,
                     content: label,
                     textAlign: 'center',
                     textBaseline: 'middle',
                     globalAlpha: 0,
+                    zIndex: 1,
                 });
 
                 return createGroup({
@@ -178,21 +190,23 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const arc = group.find('arc') as Arc;
                 const label = group.find('text') as Text;
 
-                arc.data = {
+                const arcData = {
                     cx,
                     cy,
                     radius,
                     innerRadius,
                     startAngle,
                     endAngle,
-                    fillStyle: color,
+                    strokeStyle: color,
+                    fillStyle: setColorAlpha(color, 0.55),
                 } as Partial<ArcState>;
 
                 const [
                     centroidx,
                     centroidY,
-                ] = arc.centroid;
+                ] = arc.getCentroid(arcData);
 
+                arc.data = arcData;
                 label.data = {
                     x: centroidx,
                     y: centroidY,

@@ -176,7 +176,7 @@ export class Scene extends Group<SceneEventMap> {
             }
 
             graphHandle = requestAnimationFrame(() => {
-                this.buffer = this.graph();
+                this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
                 getTrackedElements.cache.clear();
             });
         });

@@ -50,7 +50,6 @@ export function parseHEX(value: string): ColorRGBA {
         throw new ColorParseError(value, 'hex');
     }
 
-
     const alpha = scaleRGB.inverse(parseInt(components[4] ?? 'ff', 16));
 
     return [

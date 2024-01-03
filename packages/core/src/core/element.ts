@@ -76,6 +76,7 @@ export interface BaseElementState {
     strokeStyle?: Context['strokeStyle'];
     textAlign?: Context['textAlign'];
     textBaseline?: Context['textBaseline'];
+    zIndex?: number;
 }
 
 export interface ElementEventMap extends EventMap {
@@ -89,6 +90,7 @@ export interface ElementEventMap extends EventMap {
     'element:mouseleave': MouseEvent;
     'element:mousemove': MouseEvent;
     'element:click': MouseEvent;
+    'element:destroyed': null;
 }
 
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
@@ -340,6 +342,14 @@ export class Element<
         this.setStateValue('textBaseline', value);
     }
 
+    public get zIndex(): number {
+        return (this.parent?.zIndex ?? 0) + (this.state.zIndex ?? 0);
+    }
+
+    public set zIndex(value) {
+        this.setStateValue('zIndex', value);
+    }
+
     constructor(type: string, {
         id = `${type}:${stringUniqueId()}`,
         class: classes = [],
@@ -440,6 +450,11 @@ export class Element<
         } finally {
             context.restore();
         }
+    }
+
+    public destroy() {
+        this.parent?.remove(this);
+        super.destroy();
     }
 }
 

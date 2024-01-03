@@ -65,7 +65,7 @@ export interface RendererTransitionOptions<TElement extends Element> {
     delay?: number;
     direction?: RendererTransitionDirection;
     state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
-    callback?(element: Element): void;
+    onComplete?(element: Element): void;
 }
 
 export interface RendererOptions {
@@ -86,7 +86,7 @@ export type RendererTransitionOptionsArg<TElement extends Element> = RendererTra
 export class Renderer extends EventBus<RendererEventMap> {
 
     private scene: Scene;
-    private transitionMap = new Map<string, RendererTransition>();
+    private transitionMap = new Map<string, Map<symbol, RendererTransition>>();
 
     private running = false;
     private handle?: number;
@@ -117,7 +117,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (autoStop) {
-            scene.on('scene:mouseenter', () => this.start());
+            scene.on('scene:mousemove', () => this.start());
             scene.on('scene:mouseleave', () => this.stopOnIdle());
         }
     }
@@ -135,7 +135,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             if (this.transitionMap.has(element.id)) {
                 let time = 0;
 
-                const {
+                this.transitionMap.get(element.id)?.forEach(({
                     startTime,
                     duration,
                     ease,
@@ -143,20 +143,20 @@ export class Renderer extends EventBus<RendererEventMap> {
                     direction,
                     interpolator,
                     callback,
-                } = this.transitionMap.get(element.id)!;
+                }) => {
+                    const elapsed = this.currentTime - startTime;
 
-                const elapsed = this.currentTime - startTime;
+                    if (elapsed > 0) {
+                        time = clamp(elapsed / duration, 0, 1);
+                        time = ease(direction === 'reverse' ? 1 - time : time);
 
-                if (elapsed > 0) {
-                    time = clamp(elapsed / duration, 0, 1);
-                    time = ease(direction === 'reverse' ? 1 - time : time);
+                        interpolator(time);
 
-                    interpolator(time);
-
-                    if (elapsed >= duration) {
-                        callback();
+                        if (elapsed >= duration) {
+                            callback();
+                        }
                     }
-                }
+                });
             }
 
             element.render(this.scene.context);
@@ -239,30 +239,31 @@ export class Renderer extends EventBus<RendererEventMap> {
             let completeCount = 0;
 
             elements.forEach((element, index) => {
-                this.transitionMap.get(element.id)?.callback();
-
                 const {
                     duration = 0,
                     delay = 0,
                     loop = false,
                     ease = easeLinear,
-                    callback = () => {},
+                    onComplete = () => {},
                     direction = 'forward',
                     state,
                 } = getOptions(element, index, totalCount);
 
+                const transitionId = Symbol();
                 const startTime = performance.now() + delay;
 
-                const onComplete = () => {
-                    completeCount += 1;
-                    this.transitionMap.delete(element.id);
+                const callback = () => {
+                    const elementTransitions = this.transitionMap.get(element.id);
 
-                    // if (fillMode === 'forwards') {
-                    //     element.setProps(element.getState());
-                    // }
+                    completeCount += 1;
+                    elementTransitions?.delete(transitionId);
+
+                    if (!elementTransitions?.size) {
+                        this.transitionMap.delete(element.id);
+                    }
 
                     try {
-                        callback(element);
+                        onComplete(element);
                     } finally {
                         this.stopOnIdle();
 
@@ -272,15 +273,19 @@ export class Renderer extends EventBus<RendererEventMap> {
                     }
                 };
 
-                this.transitionMap.set(element.id, {
+                const transitions = this.transitionMap.get(element.id) || new Map<symbol, RendererTransition>();
+
+                transitions.set(transitionId, {
                     loop,
                     ease,
                     startTime,
                     direction,
                     duration,
+                    callback,
                     interpolator: element.interpolate(state),
-                    callback: onComplete,
                 });
+
+                this.transitionMap.set(element.id, transitions);
             });
         });
     }
