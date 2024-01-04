@@ -39,58 +39,73 @@ function getQueryTest(query: string) {
 
 
 function query(root: Group, value: string) {
-    const MAP = {
-        //identifier: /(#|\.)/,
-        id: /#/,
-        class: /\./,
-        name: /([a-zA-Z\d\-_]+)/,
-        siblings: /(\s[~|>|\+]\s|\s)/,
-    };
+    const ID = /#/;
+    const CLASS = /\./;
+    const NAME = /([a-zA-Z\d\-_]+)/;
+    const SIBLINGS = /(\s[~|>|\+]\s|\s)/;
+    const TAG_NAME = new RegExp(`^${NAME.source}`);
+    const ID_NAME = new RegExp(`${ID.source}${NAME.source}`);
+    const CLASS_NAME = new RegExp(`${CLASS.source}${NAME.source}`, 'g');
+    const ATTR = new RegExp(`(\\[${NAME.source}="(.*)"\\])+`, 'g');
+    const QUERY = new RegExp(`^(((${ID.source}|${CLASS.source})?${NAME.source})+${SIBLINGS.source}?)+`, 'g');
 
-    const TEST = new RegExp(`^(((${MAP.id.source}|${MAP.class.source})?${MAP.name.source})+${MAP.siblings.source}?)+`, 'g');
-    const TAG = new RegExp(`^${MAP.name.source}`);
-    const ID = new RegExp(`${MAP.id.source}${MAP.name.source}`);
-    const CLASS = new RegExp(`${MAP.class.source}${MAP.name.source}`, 'g');
+    // if (!QUERY.test(value)) {
+    //     throw new Error('Invalid query selector');
+    // }
 
-    if (!TEST.test(value)) {
-        throw new Error('Invalid query selector');
-    }
+    const segments = value.split(SIBLINGS);
 
-    const segments = value.split(MAP.siblings);
-
-    let refEl = root as Element | undefined;
+    let refElements = [root] as Element[];
     let refPool = root.graph(true);
 
     arrayForEach(segments, segment => {
-        if (!refEl) {
+        if (!refElements.length) {
             return;
         }
 
-        if (MAP.siblings.test(segment) && isGroup(refEl)) {
-            refPool = /^\s$/.test(segment)
-                ? refEl.graph(true)
-                : refEl.children;
+        arrayForEach(refElements, refEl => {
+            if (SIBLINGS.test(segment) && isGroup(refEl)) {
+                refPool = /^\s$/.test(segment)
+                    ? refEl.graph(true)
+                    : refEl.children;
 
-            return;
-        }
+                return;
+            }
 
-        const tag = segment.match(TAG)?.at(0);
-        const id = segment.match(ID)?.at(0);
-        const classes = Array.from(segment.matchAll(CLASS), m => m.at(0));
+            const tag = segment.match(TAG_NAME)?.at(0);
+            const id = segment.match(ID_NAME)?.at(0);
+            const classes = Array.from(segment.matchAll(CLASS_NAME), match => match.at(0));
+            const attrs = Array.from(segment.matchAll(ATTR), match => match.at(0));
 
-        console.log(classes);
+            refElements = arrayFilter(refPool, element => {
+                const tagMatch = !tag || stringEquals(element.type, tag);
+                const idMatch = !id || stringEquals(element.id, id.replace(ID, ''));
+                const classMatch = !classes.length || classes.every(cls => !!cls && element.classList.has(cls.replace(CLASS, '')));
 
-        refEl = arrayFind(refPool, element => {
-            const tagMatch = !tag || stringEquals(element.type, tag);
-            const idMatch = !id || stringEquals(element.id, id.replace(MAP.id, ''));
-            const classMatch = !classes.length || classes.every(cls => element.classList.has(cls.replace(MAP.class, '')));
+                const attrsMatch = !attrs.length || attrs.every(attr => {
+                    if (!attr) {
+                        return false;
+                    }
 
-            return tagMatch && idMatch && classMatch;
+                    const [
+                        _m,
+                        _c,
+                        key,
+                        value,
+                    ] = Array.from(attr.matchAll(ATTR)).at(0) || [];
+
+                    return !!(key && value) && JSON.stringify(element[key]).replaceAll(/(^"|"$)/g, '') === value;
+                });
+
+                return tagMatch
+                    && idMatch
+                    && classMatch
+                    && attrsMatch;
+            });
         });
-
     });
 
-    return refEl;
+    return refElements;
 }
 
 export function isGroup(value: unknown): value is Group {
