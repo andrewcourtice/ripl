@@ -6,3 +6,7 @@ export function stringUniqueId(length: number = 6): string {
         return output + value.toString(16).padStart(2, '0');
     }, '');
 }
+
+export function stringEquals(valueA: string, valueB: string) {
+    return valueA.toLowerCase() === valueB.toLowerCase();
+}

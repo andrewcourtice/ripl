@@ -48,7 +48,7 @@ import type {
 
 import type {
     Context,
-} from './context';
+} from '../context';
 
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 export type ElementValidationType = 'info' | 'warning' | 'error';

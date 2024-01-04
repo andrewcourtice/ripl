@@ -1,6 +1,6 @@
 import {
     Context,
-} from './context';
+} from '../context';
 
 import {
     BaseElementState,

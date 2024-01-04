@@ -7,7 +7,7 @@ import {
     Context,
     ContextType,
     createContext,
-} from './context';
+} from '../context';
 
 import {
     Group,
