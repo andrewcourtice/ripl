@@ -12,10 +12,12 @@ import {
 import {
     arrayFilter,
     arrayFind,
+    arrayFlatMap,
     arrayForEach,
-    arrayReduce,
     OneOrMore,
     stringEquals,
+    typeIsNil,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 import {
@@ -26,86 +28,104 @@ export interface GroupOptions extends ElementOptions {
     children?: OneOrMore<Element>;
 }
 
-function getQueryTest(query: string) {
-    switch (query[0]) {
-        case '#':
-            return (element: Element) => element.id === query.substring(1, query.length);
-        case '.':
-            return (element: Element) => element.classList.has(query.substring(1, query.length));
-        default:
-            return (element: Element) => element.type === query;
+const ELEMENT_PATTERNS = {
+    id: /#/,
+    class: /\./,
+    name: /([a-zA-Z\d\-_]+)/,
+};
+
+const COMBINATOR_PATTERNS = {
+    child: />/,
+    nextSibling: /\+/,
+};
+
+const QUERY_PATTERNS = {
+    type: new RegExp(`^${ELEMENT_PATTERNS.name.source}`),
+    id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
+    class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
+    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
+    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
+};
+
+const COMBINATOR_PRODUCERS = [
+    {
+        pattern: /^\s$/,
+        produce: element => isGroup(element) ? element.graph(true) : [],
+    },
+    {
+        pattern: COMBINATOR_PATTERNS.child,
+        produce: element => isGroup(element) ? element.children : [],
+    },
+    {
+        pattern: COMBINATOR_PATTERNS.nextSibling,
+        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1),
+    },
+] as {
+    pattern: RegExp;
+    produce: (element: Element) => Element[];
+}[];
+
+function serialiseAttribute(value: unknown) {
+    try {
+        return JSON.stringify(value).replaceAll(/(^"|"$)/g, '');
+    } catch {
+        return String(value);
     }
 }
 
+function query(elements: Element[], segments: string[], segmentIndex: number = 0) {
+    const segment = segments[segmentIndex];
 
-function query(root: Group, value: string) {
-    const ID = /#/;
-    const CLASS = /\./;
-    const NAME = /([a-zA-Z\d\-_]+)/;
-    const SIBLINGS = /(\s[~|>|\+]\s|\s)/;
-    const TAG_NAME = new RegExp(`^${NAME.source}`);
-    const ID_NAME = new RegExp(`${ID.source}${NAME.source}`);
-    const CLASS_NAME = new RegExp(`${CLASS.source}${NAME.source}`, 'g');
-    const ATTR = new RegExp(`(\\[${NAME.source}="(.*)"\\])+`, 'g');
-    const QUERY = new RegExp(`^(((${ID.source}|${CLASS.source})?${NAME.source})+${SIBLINGS.source}?)+`, 'g');
+    if (!segment || !elements.length) {
+        return elements;
+    }
 
-    // if (!QUERY.test(value)) {
-    //     throw new Error('Invalid query selector');
-    // }
+    if (QUERY_PATTERNS.combinators.test(segment)) {
+        const producer = arrayFind(COMBINATOR_PRODUCERS, ({ pattern }) => pattern.test(segment));
 
-    const segments = value.split(SIBLINGS);
-
-    let refElements = [root] as Element[];
-    let refPool = root.graph(true);
-
-    arrayForEach(segments, segment => {
-        if (!refElements.length) {
-            return;
+        if (!producer) {
+            throw new Error('Failed to query!');
         }
 
-        arrayForEach(refElements, refEl => {
-            if (SIBLINGS.test(segment) && isGroup(refEl)) {
-                refPool = /^\s$/.test(segment)
-                    ? refEl.graph(true)
-                    : refEl.children;
+        return query(arrayFlatMap(elements, element => producer.produce(element)), segments, segmentIndex + 1);
+    }
 
-                return;
+    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
+    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
+    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
+    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
+
+    return query(arrayFilter(elements, element => {
+        const typeMatch = !type || stringEquals(element.type, type);
+        const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
+
+        const classMatch = !classes.length || classes.every(cls => {
+            return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
+        });
+
+        const attrsMatch = !attributes.length || attributes.every(attr => {
+            if (!attr) {
+                return false;
             }
 
-            const tag = segment.match(TAG_NAME)?.at(0);
-            const id = segment.match(ID_NAME)?.at(0);
-            const classes = Array.from(segment.matchAll(CLASS_NAME), match => match.at(0));
-            const attrs = Array.from(segment.matchAll(ATTR), match => match.at(0));
+            const [
+                _m,
+                _c,
+                key,
+                value,
+            ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
 
-            refElements = arrayFilter(refPool, element => {
-                const tagMatch = !tag || stringEquals(element.type, tag);
-                const idMatch = !id || stringEquals(element.id, id.replace(ID, ''));
-                const classMatch = !classes.length || classes.every(cls => !!cls && element.classList.has(cls.replace(CLASS, '')));
-
-                const attrsMatch = !attrs.length || attrs.every(attr => {
-                    if (!attr) {
-                        return false;
-                    }
-
-                    const [
-                        _m,
-                        _c,
-                        key,
-                        value,
-                    ] = Array.from(attr.matchAll(ATTR)).at(0) || [];
-
-                    return !!(key && value) && JSON.stringify(element[key]).replaceAll(/(^"|"$)/g, '') === value;
-                });
-
-                return tagMatch
-                    && idMatch
-                    && classMatch
-                    && attrsMatch;
-            });
+            return !typeIsNil(key)
+                && !typeIsNil(value)
+                && key in element
+                && serialiseAttribute(element[key]) === value;
         });
-    });
 
-    return refElements;
+        return typeMatch
+            && idMatch
+            && classMatch
+            && attrsMatch;
+    }), segments, segmentIndex + 1);
 }
 
 export function isGroup(value: unknown): value is Group {
@@ -139,18 +159,22 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public set(elements: Element[]) {
-        this.#elements = new Set(elements);
-        this.updateSceneGraph();
+        this.#elements.clear();
+        this.add(elements);
     }
 
     public add(element: OneOrMore<Element>) {
-        const elements = ([] as Element[]).concat(element);
+        const elements = valueOneOrMore(element);
 
         if (!elements.length) {
             return;
         }
 
         elements.forEach(item => {
+            if (item.parent) {
+                item.parent.remove(item);
+            }
+
             item.parent = this;
             this.#elements.add(item);
         });
@@ -159,7 +183,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public remove(element: OneOrMore<Element>) {
-        const elements = ([] as Element[]).concat(element);
+        const elements = valueOneOrMore(element);
 
         if (!elements.length) {
             return;
@@ -190,16 +214,26 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         });
     }
 
-    public find(query: string) {
-        return arrayFind(this.graph(true), getQueryTest(query));
+    public query(selector: string) {
+        return this.queryAll(selector).at(0);
     }
 
-    public findAll(query: string) {
-        return arrayFilter(this.graph(true), getQueryTest(query));
+    public queryAll(selector: string) {
+        return query(this.graph(true), selector.split(QUERY_PATTERNS.combinators));
     }
 
-    public query(value: string) {
-        return query(this, value);
+    public getElementByID(id: string) {
+        return arrayFind(this.graph(true), element => element.id === id);
+    }
+
+    public getElementsByType(types: OneOrMore<string>) {
+        const typeList = valueOneOrMore(types);
+        return arrayFilter(this.graph(true), element => typeList.includes(element.type));
+    }
+
+    public getElementsByClass(classes: OneOrMore<string>) {
+        const classList = valueOneOrMore(classes);
+        return arrayFilter(this.graph(true), element => classList.every(cls => element.classList.has(cls)));
     }
 
     public getBoundingBox() {

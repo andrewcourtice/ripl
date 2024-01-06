@@ -40,6 +40,7 @@ import {
     typeIsFunction,
     typeIsNil,
     typeIsObject,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 import type {
@@ -364,7 +365,7 @@ export class Element<
         this.data = data;
         this.state = state as TState;
         this.pointerEvents = pointerEvents;
-        this.classList = new Set(([] as string[]).concat(classes));
+        this.classList = new Set(valueOneOrMore(classes));
     }
 
     protected getStateValue<TKey extends keyof TState>(key: TKey) {

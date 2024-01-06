@@ -6,4 +6,5 @@ export * from './object';
 export * from './predicate';
 export * from './string';
 export * from './type';
+export * from './value';
 export * from './types';

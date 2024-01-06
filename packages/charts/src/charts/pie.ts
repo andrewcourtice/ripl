@@ -187,8 +187,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     endAngle,
                 } = item;
 
-                const arc = group.find('arc') as Arc;
-                const label = group.find('text') as Text;
+                const arc = group.query('arc') as Arc;
+                const label = group.query('text') as Text;
 
                 const arcData = {
                     cx,
@@ -216,8 +216,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             });
 
             const exits = arrayMap(right, group => {
-                const arc = group.find('arc') as Arc;
-                const label = group.find('text') as Text;
+                const arc = group.query('arc') as Arc;
+                const label = group.query('text') as Text;
 
                 const midAngle = (arc.startAngle + arc.endAngle) / 2;
 
@@ -274,7 +274,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     duration: 1000,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
-                    callback: element => element.destroy(),
+                    onComplete: element => element.destroy(),
                 }));
             }
 

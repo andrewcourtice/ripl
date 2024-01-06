@@ -34,6 +34,7 @@ import {
     arrayForEach,
     OneOrMore,
     typeIsFunction,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 export type RendererTransitionDirection = 'forward' | 'reverse';
@@ -227,7 +228,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             : () => options || {} as RendererTransitionOptions<TElement>;
 
         return new Promise<void>(resolve => {
-            const elements = ([] as TElement[]).concat(element).flatMap(element => {
+            const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.children : element;
             });
 
