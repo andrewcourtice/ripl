@@ -241,7 +241,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public render(context: Context): void {
+        context.markRenderStart();
         arrayForEach(this.children, element => element.render(context));
+        context.markRenderEnd();
     }
 
 }

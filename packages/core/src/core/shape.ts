@@ -70,7 +70,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
     public render(context: Context, callback?: (path: Path) => void) {
         return super.render(context, () => {
-            this.path = context.createPath();
+            this.path = context.createPath(this.id);
 
             callback?.(this.path);
 

@@ -129,6 +129,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         this.scene.context.clear();
+        this.scene.context.markRenderStart();
 
         this.currentTime = performance.now();
 
@@ -177,6 +178,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             // }
         });
 
+        this.scene.context.markRenderEnd();
         this.handle = requestAnimationFrame(() => this.tick());
     }
 

@@ -196,7 +196,9 @@ export class Scene extends Group<SceneEventMap> {
 
     public render(): void {
         this.context.clear();
+        this.context.markRenderStart();
         arrayForEach(this.buffer, element => element.render(this.context));
+        this.context.markRenderEnd();
     }
 
 }

@@ -1,4 +1,8 @@
 import {
+    TAU,
+} from '../math';
+
+import {
     EventBus,
 } from '../core/event-bus';
 
@@ -10,6 +14,7 @@ import {
 import {
     onDOMElementResize,
     OneOrMore,
+    stringUniqueId,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -28,9 +33,11 @@ import type {
 
 export class CanvasPath implements Path<Path2D> {
 
+    public readonly id: string;
     public readonly impl: Path2D;
 
-    constructor() {
+    constructor(id: string) {
+        this.id = id;
         this.impl = new Path2D();
     }
 
@@ -40,6 +47,10 @@ export class CanvasPath implements Path<Path2D> {
 
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
         return this.impl.arcTo(x1, y1, x2, y2, radius);
+    }
+
+    circle(x: number, y: number, radius: number): void {
+        this.arc(x, y, radius, 0, TAU);
     }
 
     bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
@@ -247,11 +258,11 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         this.#context.textBaseline = value;
     }
 
-    constructor(target: string | Element) {
+    constructor(target: string | HTMLElement) {
         super();
 
         const root = typeIsString(target)
-            ? document.querySelector(target) as Element
+            ? document.querySelector(target) as HTMLElement
             : target;
 
         const canvas = document.createElement('canvas');
@@ -266,6 +277,7 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
 
         root.appendChild(canvas);
 
+        canvas.style.display = 'block';
         canvas.style.width = '100%';
         canvas.style.height = '100%';
 
@@ -276,7 +288,7 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
 
         this.rescale(width, height);
 
-        onDOMElementResize(canvas, ({ width, height }) => this.rescale(width, height));
+        onDOMElementResize(root, ({ width, height }) => this.rescale(width, height));
     }
 
     private rescale(width: number, height: number) {
@@ -317,6 +329,14 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         return this.#context.reset();
     }
 
+    markRenderStart(): void {
+        // do nothing
+    }
+
+    markRenderEnd(): void {
+        // do nothing
+    }
+
     rotate(angle: number): void {
         return this.#context.rotate(angle);
     }
@@ -351,8 +371,8 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         return this.#context.strokeText(text, x, y, maxWidth);
     }
 
-    createPath(): CanvasPath {
-        return new CanvasPath();
+    createPath(id: string = `path-${stringUniqueId()}`): CanvasPath {
+        return new CanvasPath(id);
     }
 
     clip(path: CanvasPath, fillRule?: FillRule): void {

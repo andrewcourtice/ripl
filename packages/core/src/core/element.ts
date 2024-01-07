@@ -48,6 +48,7 @@ import type {
 } from './group';
 
 import type {
+    BaseState,
     Context,
 } from '../context';
 
@@ -57,26 +58,7 @@ export type ElementIntersectionOptions = {
     isPointer: boolean;
 }
 
-export interface BaseElementState {
-    direction?: Context['direction'];
-    fillStyle?: Context['fillStyle'];
-    filter?: Context['filter'];
-    font?: Context['font'];
-    globalAlpha?: Context['globalAlpha'];
-    globalCompositeOperation?: Context['globalCompositeOperation'];
-    lineCap?: Context['lineCap'];
-    lineDash?: Context['lineDash'];
-    lineDashOffset?: Context['lineDashOffset'];
-    lineJoin?: Context['lineJoin'];
-    lineWidth?: Context['lineWidth'];
-    miterLimit?: Context['miterLimit'];
-    shadowBlur?: Context['shadowBlur'];
-    shadowColor?: Context['shadowColor'];
-    shadowOffsetX?: Context['shadowOffsetX'];
-    shadowOffsetY?: Context['shadowOffsetY'];
-    strokeStyle?: Context['strokeStyle'];
-    textAlign?: Context['textAlign'];
-    textBaseline?: Context['textBaseline'];
+export interface BaseElementState extends Partial<BaseState> {
     zIndex?: number;
 }
 
@@ -436,6 +418,7 @@ export class Element<
     public render(context: Context, callback?: AnyFunction) {
         this.context = context;
 
+        context.markRenderStart();
         context.save();
 
         try {
@@ -450,6 +433,7 @@ export class Element<
             callback?.();
         } finally {
             context.restore();
+            context.markRenderEnd();
         }
     }
 

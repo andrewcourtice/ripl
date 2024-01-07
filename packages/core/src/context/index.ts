@@ -2,6 +2,10 @@ import {
     CanvasContext,
 } from './canvas';
 
+import {
+    SVGContext,
+} from './svg';
+
 import type {
     Context,
     ContextOptions,
@@ -10,10 +14,14 @@ import type {
 export * from './canvas';
 export * from './types';
 
-export function createContext(target: string | Element, options?: ContextOptions): Context {
+export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     const {
         type = 'canvas',
     } = options || {};
+
+    if (type === 'svg') {
+        return new SVGContext(target);
+    }
 
     return new CanvasContext(target);
 }

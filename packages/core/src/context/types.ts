@@ -29,9 +29,11 @@ export interface ContextOptions {
 }
 
 export interface Path<TImpl = unknown> {
+    readonly id: string;
     readonly impl: TImpl;
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void;
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
+    circle(x: number, y: number, radius: number): void;
     bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void;
     closePath(): void;
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void;
@@ -42,59 +44,43 @@ export interface Path<TImpl = unknown> {
     roundRect(x: number, y: number, width: number, height: number, radii?: OneOrMore<number>): void;
 }
 
-export interface Context extends EventBus<ContextEventMap> {
-    element: HTMLElement;
+export interface BaseState {
+    fillStyle: string;
+    filter: string;
+    direction: Direction;
+    font: string;
+    fontKerning: FontKerning;
+    globalAlpha: number;
+    globalCompositeOperation: unknown;
+    lineCap: LineCap;
+    lineDash: number[];
+    lineDashOffset: number;
+    lineJoin: LineJoin;
+    lineWidth: number;
+    miterLimit: number;
+    shadowBlur: number;
+    shadowColor: string;
+    shadowOffsetX: number;
+    shadowOffsetY: number;
+    strokeStyle: string;
+    textAlign: TextAlignment;
+    textBaseline: TextBaseline;
+}
+
+export interface Context extends EventBus<ContextEventMap>, BaseState {
+    element: Element;
     width: number;
     height: number;
 
     xScale: Scale;
     yScale: Scale;
 
-    get fillStyle(): string;
-    set fillStyle(value);
-    get filter(): string;
-    set filter(value);
-    get direction(): Direction;
-    set direction(value);
-    get font(): string;
-    set font(value);
-    get fontKerning(): FontKerning;
-    set fontKerning(value);
-    get globalAlpha(): number;
-    set globalAlpha(value);
-    get globalCompositeOperation(): unknown;
-    set globalCompositeOperation(value);
-    get lineCap(): LineCap;
-    set lineCap(value);
-    get lineDash(): number[];
-    set lineDash(value);
-    get lineDashOffset(): number;
-    set lineDashOffset(value);
-    get lineJoin(): LineJoin;
-    set lineJoin(value);
-    get lineWidth(): number;
-    set lineWidth(value);
-    get miterLimit(): number;
-    set miterLimit(value);
-    get shadowBlur(): number;
-    set shadowBlur(value);
-    get shadowColor(): string;
-    set shadowColor(value);
-    get shadowOffsetX(): number;
-    set shadowOffsetX(value);
-    get shadowOffsetY(): number;
-    set shadowOffsetY(value);
-    get strokeStyle(): string;
-    set strokeStyle(value);
-    get textAlign(): TextAlignment;
-    set textAlign(value);
-    get textBaseline(): TextBaseline;
-    set textBaseline(value);
-
     save(): void;
     restore(): void;
     clear(): void;
     reset(): void;
+    markRenderStart(): void;
+    markRenderEnd(): void;
 
     rotate(angle: number): void;
     scale(x: number, y: number): void;
@@ -106,7 +92,7 @@ export interface Context extends EventBus<ContextEventMap> {
     measureText(text: string): TextMetrics;
     strokeText(text: string, x: number, y: number, maxWidth?: number): void;
 
-    createPath(): Path;
+    createPath(id?: string): Path;
     clip(path: Path, fillRule?: FillRule): void;
     fill(path: Path, fillRule?: FillRule): void;
     isPointInPath(path: Path, x: number, y: number, fillRule?: FillRule): boolean;
