@@ -1,9 +1,11 @@
 import {
+    BaseState,
     Context,
     ContextElement,
     ContextOptions,
     Path,
     Text,
+    TextAlignment,
     TextOptions,
 } from './base';
 
@@ -26,6 +28,7 @@ import {
     arrayJoin,
     arrayMap,
     objectForEach,
+    objectMap,
     onDOMElementResize,
     typeIsString,
 } from '@ripl/utilities';
@@ -36,6 +39,14 @@ export interface SVGContextElement extends ContextElement {
     attributes: Record<string, string>;
     content?: string;
 }
+
+const SVG_STYLE_MAP = {
+    textAnchor: {
+        left: 'start',
+        right: 'end',
+        center: 'middle',
+    } as Record<TextAlignment, string>,
+} as Record<keyof CSSStyleDeclaration, Record<string, string>>;
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -56,6 +67,12 @@ function updateSVGElement(svgElement: SVGElement, contextElement: SVGContextElem
     if (content) {
         svgElement.innerHTML = content;
     }
+}
+
+function mapSVGStyles(styles: Partial<CSSStyleDeclaration>) {
+    return objectMap(styles, (key, value) => {
+        return SVG_STYLE_MAP[key]?.[value] ?? value;
+    });
 }
 
 export class SVGPath extends Path implements SVGContextElement {
@@ -221,12 +238,12 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     private setElementStyles(element: SVGContextElement, styles: Partial<CSSStyleDeclaration>) {
-        Object.assign(element.styles, {
+        Object.assign(element.styles, mapSVGStyles({
             filter: this.currentState.filter,
             direction: this.currentState.direction,
             font: this.currentState.font,
             fontKerning: this.currentState.fontKerning,
-            textAlign: this.currentState.textAlign,
+            textAnchor: this.currentState.textAlign,
             opacity: this.currentState.globalAlpha.toString(),
             // shadowBlur,
             // shadowColor,
@@ -234,7 +251,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             // shadowOffsetY,
             //textBaseline,
             ...styles,
-        });
+        }));
     }
 
     private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {

@@ -21,8 +21,8 @@ export function createContext(target: string | HTMLElement, options?: ContextOpt
     } = options || {};
 
     if (type === 'svg') {
-        return new SVGContext(target);
+        return new SVGContext(target, options);
     }
 
-    return new CanvasContext(target);
+    return new CanvasContext(target, options);
 }
