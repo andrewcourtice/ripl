@@ -1,16 +1,19 @@
 import {
-    EventBus,
-} from '../core/event-bus';
+    Context,
+    ContextElement,
+    ContextOptions,
+    Path,
+    Text,
+    TextOptions,
+} from './base';
 
 import {
-    Scale,
     scaleContinuous,
 } from '../scales';
 
 import {
     BorderRadius,
     getThetaPoint,
-    Point,
 } from '../math';
 
 import {
@@ -21,132 +24,62 @@ import {
     AnyFunction,
     arrayForEach,
     arrayJoin,
+    arrayMap,
     objectForEach,
     onDOMElementResize,
-    stringUniqueId,
     typeIsString,
 } from '@ripl/utilities';
 
-import type {
-    BaseState,
-    Context,
-    ContextEventMap,
-    ContextOptions,
-    Direction,
-    FillRule,
-    FontKerning,
-    LineCap,
-    LineJoin,
-    Path,
-    TextAlignment,
-    TextBaseline,
-} from './types';
-
-const REF_CANVAS = document.createElement('canvas');
-const REF_CONTEXT = REF_CANVAS.getContext('2d')!;
-
-function getDefaultState() {
-    return {
-        fillStyle: REF_CONTEXT.fillStyle,
-        filter: REF_CONTEXT.filter,
-        direction: REF_CONTEXT.direction,
-        font: REF_CONTEXT.font,
-        fontKerning: REF_CONTEXT.fontKerning,
-        globalAlpha: REF_CONTEXT.globalAlpha,
-        globalCompositeOperation: REF_CONTEXT.globalCompositeOperation,
-        lineCap: REF_CONTEXT.lineCap,
-        lineDash: REF_CONTEXT.getLineDash(),
-        lineDashOffset: REF_CONTEXT.lineDashOffset,
-        lineJoin: REF_CONTEXT.lineJoin,
-        lineWidth: REF_CONTEXT.lineWidth,
-        miterLimit: REF_CONTEXT.miterLimit,
-        shadowBlur: REF_CONTEXT.shadowBlur,
-        shadowColor: REF_CONTEXT.shadowColor,
-        shadowOffsetX: REF_CONTEXT.shadowOffsetX,
-        shadowOffsetY: REF_CONTEXT.shadowOffsetY,
-        strokeStyle: REF_CONTEXT.strokeStyle,
-        textAlign: REF_CONTEXT.textAlign,
-        textBaseline: REF_CONTEXT.textBaseline,
-    } as BaseState;
+export interface SVGContextElement extends ContextElement {
+    tag: keyof SVGElementTagNameMap;
+    styles: Partial<CSSStyleDeclaration>;
+    attributes: Record<string, string>;
+    content?: string;
 }
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
 }
 
-type SVGPathImplementation = {
-    styles: Partial<CSSStyleDeclaration>;
-    attributes: {
-        d: string;
-        [key: string]: string;
-    };
-}
-
-function updatePathElement(element: SVGElement, path: SVGPath) {
+function updateSVGElement(svgElement: SVGElement, contextElement: SVGContextElement) {
     const {
-        attributes,
+        id,
         styles,
-    } = path.impl;
+        attributes,
+        content,
+    } = contextElement;
 
-    element.setAttribute('id', path.id);
-    Object.assign(element.style, styles);
-    objectForEach(attributes, (key, value) => element.setAttribute(key.toString(), value));
+    svgElement.setAttribute('id', id);
+    Object.assign(svgElement.style, styles);
+    objectForEach(attributes, (key, value) => svgElement.setAttribute(key.toString(), value));
+
+    if (content) {
+        svgElement.innerHTML = content;
+    }
 }
 
-export class SVGPath implements Path<SVGPathImplementation> {
+export class SVGPath extends Path implements SVGContextElement {
 
-    public readonly id: string;
-    public readonly impl: SVGPathImplementation;
+    public tag: keyof SVGElementTagNameMap;
+    public styles: Partial<CSSStyleDeclaration>;
+    public attributes: Record<string, string>;
 
-    constructor(id: string) {
-        this.id = id;
-        this.impl = {
-            attributes: {
-                d: '',
-            },
-            styles: {
-                stroke: 'none',
-                fill: 'none',
-            },
+    constructor(id?: string) {
+        super(id);
+
+        this.tag = 'path';
+        this.attributes = {
+            d: '',
+        };
+
+        this.styles = {
+            stroke: 'none',
+            fill: 'none',
         };
     }
 
-    public setState(op: 'stroke' | 'fill', state: BaseState) {
-        Object.assign(this.impl.styles, {
-            filter: state.filter,
-            direction: state.direction,
-            font: state.font,
-            fontKerning: state.fontKerning,
-            textAlign: state.textAlign,
-            opacity: state.globalAlpha.toString(),
-            // shadowBlur,
-            // shadowColor,
-            // shadowOffsetX,
-            // shadowOffsetY,
-            //textBaseline,
-        });
-
-        if (op === 'stroke') {
-            Object.assign(this.impl.styles, {
-                stroke: state.strokeStyle,
-                strokeLinecap: state.lineCap,
-                strokeDasharray: state.lineDash.join(' '),
-                strokeDashoffset: state.lineDashOffset.toString(),
-                strokeLinejoin: state.lineJoin,
-                strokeWidth: state.lineWidth.toString(),
-                strokeMiterlimit: state.miterLimit.toString(),
-            });
-        }
-
-        if (op === 'fill') {
-            Object.assign(this.impl.styles, {
-                fill: state.fillStyle,
-            });
-        }
-    }
-
     private appendElementData(data: string) {
-        this.impl.attributes.d = `${this.impl.attributes.d} ${data}`.trim();
+        this.attributes.d = `${this.attributes.d} ${data}`.trim();
     }
 
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
@@ -219,211 +152,45 @@ export class SVGPath implements Path<SVGPathImplementation> {
         // this.arcTo()
     }
 
-    polyline(points: Point[]): void {
-        arrayForEach(points, ([x, y], index) => !index
-            ? this.moveTo(x,y)
-            : this.lineTo(x, y)
-        );
-    }
-
 }
 
+export class SVGText extends Text implements SVGContextElement {
 
+    public tag: keyof SVGElementTagNameMap;
+    public styles: Partial<CSSStyleDeclaration>;
+    public attributes: Record<string, string>;
 
-export class SVGContext extends EventBus<ContextEventMap> implements Context {
+    constructor(options: TextOptions) {
+        super(options);
 
-    readonly element: SVGSVGElement;
+        this.tag = 'text';
+        this.styles = {};
+        this.attributes = {
+            // change this
+            x: this.x.toString(),
+            y: this.y.toString(),
+        };
+    }
+}
 
-    private states: BaseState[];
-    private currentState: BaseState;
-    private renderDepth = 0;
-    private stack: Set<SVGPath>;
+export class SVGContext extends Context<SVGSVGElement> {
+
+    private stack: Set<SVGContextElement>;
     private requestFrame: (callback: AnyFunction) => void;
 
-    public buffer: boolean;
-    public width!: number;
-    public height!: number;
-    public xScale!: Scale<number, number>;
-    public yScale!: Scale<number, number>;
-
-    get fillStyle(): string {
-        return this.currentState.fillStyle;
-    }
-
-    set fillStyle(value) {
-        this.currentState.fillStyle = value;
-    }
-
-    get filter(): string {
-        return this.currentState.filter;
-    }
-
-    set filter(value) {
-        this.currentState.filter = value;
-    }
-
-    get direction(): Direction {
-        return this.currentState.direction;
-    }
-
-    set direction(value) {
-        this.currentState.direction = value;
-    }
-
-    get font(): string {
-        return this.currentState.font;
-    }
-
-    set font(value) {
-        this.currentState.font = value;
-    }
-
-    get fontKerning(): FontKerning {
-        return this.currentState.fontKerning;
-    }
-
-    set fontKerning(value) {
-        this.currentState.fontKerning = value;
-    }
-
-    get globalAlpha(): number {
-        return this.currentState.globalAlpha;
-    }
-
-    set globalAlpha(value) {
-        this.currentState.globalAlpha = value;
-    }
-
-    get globalCompositeOperation(): unknown {
-        return this.currentState.globalCompositeOperation;
-    }
-
-    set globalCompositeOperation(value) {
-        this.currentState.globalCompositeOperation = value;
-    }
-
-    get lineCap(): LineCap {
-        return this.currentState.lineCap;
-    }
-
-    set lineCap(value) {
-        this.currentState.lineCap = value;
-    }
-
-    get lineDash(): number[] {
-        return this.currentState.lineDash;
-    }
-
-    set lineDash(value) {
-        this.currentState.lineDash = value;
-    }
-
-    get lineDashOffset(): number {
-        return this.currentState.lineDashOffset;
-    }
-
-    set lineDashOffset(value) {
-        this.currentState.lineDashOffset = value;
-    }
-
-    get lineJoin(): LineJoin {
-        return this.currentState.lineJoin;
-    }
-
-    set lineJoin(value) {
-        this.currentState.lineJoin = value;
-    }
-
-    get lineWidth(): number {
-        return this.currentState.lineWidth;
-    }
-
-    set lineWidth(value) {
-        this.currentState.lineWidth = value;
-    }
-
-    get miterLimit(): number {
-        return this.currentState.miterLimit;
-    }
-
-    set miterLimit(value) {
-        this.currentState.miterLimit = value;
-    }
-
-    get shadowBlur(): number {
-        return this.currentState.shadowBlur;
-    }
-
-    set shadowBlur(value) {
-        this.currentState.shadowBlur = value;
-    }
-
-    get shadowColor(): string {
-        return this.currentState.shadowColor;
-    }
-
-    set shadowColor(value) {
-        this.currentState.shadowColor = value;
-    }
-
-    get shadowOffsetX(): number {
-        return this.currentState.shadowOffsetX;
-    }
-
-    set shadowOffsetX(value) {
-        this.currentState.shadowOffsetX = value;
-    }
-
-    get shadowOffsetY(): number {
-        return this.currentState.shadowOffsetY;
-    }
-
-    set shadowOffsetY(value) {
-        this.currentState.shadowOffsetY = value;
-    }
-
-    get strokeStyle(): string {
-        return this.currentState.strokeStyle;
-    }
-
-    set strokeStyle(value) {
-        this.currentState.strokeStyle = value;
-    }
-
-    get textAlign(): TextAlignment {
-        return this.currentState.textAlign;
-    }
-
-    set textAlign(value) {
-        this.currentState.textAlign = value;
-    }
-
-    get textBaseline(): TextBaseline {
-        return this.currentState.textBaseline;
-    }
-
-    set textBaseline(value) {
-        this.currentState.textBaseline = value;
-    }
-
     constructor(target: string | HTMLElement, options?: ContextOptions) {
-        super();
-
-        const {
-            buffer = true,
-        } = options || {};
-
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
             : target;
 
         const svg = createSVGElement('svg');
 
-        this.element = svg;
-        this.buffer = buffer;
+        super(svg, {
+            buffer: true,
+            ...options,
+        });
+
         this.stack = new Set();
-        this.states = [];
-        this.currentState = getDefaultState();
         this.requestFrame = createFrameBuffer();
 
         svg.style.display = 'block';
@@ -453,6 +220,23 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
         this.emit('context:resize', null);
     }
 
+    private setElementStyles(element: SVGContextElement, styles: Partial<CSSStyleDeclaration>) {
+        Object.assign(element.styles, {
+            filter: this.currentState.filter,
+            direction: this.currentState.direction,
+            font: this.currentState.font,
+            fontKerning: this.currentState.fontKerning,
+            textAlign: this.currentState.textAlign,
+            opacity: this.currentState.globalAlpha.toString(),
+            // shadowBlur,
+            // shadowColor,
+            // shadowOffsetX,
+            // shadowOffsetY,
+            //textBaseline,
+            ...styles,
+        });
+    }
+
     private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
         const element = this.element.getElementById(path.id);
         const point = this.element.createSVGPoint();
@@ -476,39 +260,26 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
             right: exits,
         } = arrayJoin(stack, elements, 'id');
 
-        arrayForEach(entries, path => {
-            const element = createSVGElement('path');
-            updatePathElement(element, path);
-            this.element.append(element);
+        const newElements = arrayMap(entries, contextElement => {
+            const svgElement = createSVGElement(contextElement.tag);
+            updateSVGElement(svgElement, contextElement);
+            //this.element.append(svgElement);
+            return svgElement;
         });
 
-        arrayForEach(updates, ([path, element]) => updatePathElement(element, path));
+        this.element.append(...newElements);
+
+        arrayForEach(updates, ([contextElement, svgElement]) => {
+            updateSVGElement(svgElement, contextElement);
+        });
+
         arrayForEach(exits, element => element.remove());
 
         this.stack.clear();
     }
 
-    save(): void {
-        this.states.push(this.currentState);
-        this.currentState = getDefaultState();
-    }
-
-    restore(): void {
-        this.currentState = this.states.pop() || getDefaultState();
-    }
-
-    clear(): void {
-    }
-
-    reset(): void {
-    }
-
-    markRenderStart(): void {
-        this.renderDepth += 1;
-    }
-
     markRenderEnd(): void {
-        this.renderDepth -= 1;
+        super.markRenderEnd();
 
         if (this.renderDepth !== 0) {
             return;
@@ -519,48 +290,39 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
             : this.render();
     }
 
-    rotate(angle: number): void {
-    }
-
-    scale(x: number, y: number): void {
-    }
-
-    translate(x: number, y: number): void {
-    }
-
-    // eslint-disable-next-line id-length
-    setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-    }
-
-    // eslint-disable-next-line id-length
-    transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-    }
-
-    measureText(text: string): TextMetrics {
-    }
-
-    fillText(text: string, x: number, y: number, maxWidth?: number): void {
-    }
-
-    strokeText(text: string, x: number, y: number, maxWidth?: number): void {
-    }
-
-    createPath(id: string = `path-${stringUniqueId()}`): SVGPath {
+    createPath(id?: string): SVGPath {
         const path = new SVGPath(id);
         this.stack.add(path);
 
         return path;
     }
 
+    createText(options: TextOptions): Text {
+        const text = new SVGText(options);
+        this.stack.add(text);
+
+        return text;
+    }
+
     clip(path: SVGPath, fillRule?: FillRule): void {
     }
 
-    fill(path: SVGPath, fillRule?: FillRule): void {
-        path.setState('fill', this.currentState);
+    fill(element: SVGContextElement, fillRule?: FillRule): void {
+        this.setElementStyles(element, {
+            fill: this.currentState.fillStyle,
+        });
     }
 
-    stroke(path: SVGPath): void {
-        path.setState('stroke', this.currentState);
+    stroke(element: SVGContextElement): void {
+        this.setElementStyles(element, {
+            stroke: this.currentState.strokeStyle,
+            strokeLinecap: this.currentState.lineCap,
+            strokeDasharray: this.currentState.lineDash.join(' '),
+            strokeDashoffset: this.currentState.lineDashOffset.toString(),
+            strokeLinejoin: this.currentState.lineJoin,
+            strokeWidth: this.currentState.lineWidth.toString(),
+            strokeMiterlimit: this.currentState.miterLimit.toString(),
+        });
     }
 
     isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
@@ -570,6 +332,5 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
     isPointInStroke(path: SVGPath, x: number, y: number): boolean {
         return this.isPointIn('stroke', path, x, y);
     }
-
 
 }

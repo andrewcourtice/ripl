@@ -1,54 +1,46 @@
 import {
-    BorderRadius,
-    Point,
-    TAU,
-} from '../math';
-
-import {
-    EventBus,
-} from '../core/event-bus';
-
-import {
-    Scale,
-    scaleContinuous,
-} from '../scales';
-
-import {
-    arrayForEach,
-    onDOMElementResize,
-    stringUniqueId,
-    typeIsString,
-} from '@ripl/utilities';
-
-import type {
     Context,
-    ContextEventMap,
+    ContextOptions,
     Direction,
     FillRule,
     FontKerning,
     LineCap,
     LineJoin,
     Path,
+    Text,
     TextAlignment,
     TextBaseline,
-} from './types';
+} from './base';
 
-export class CanvasPath implements Path<Path2D> {
+import {
+    BorderRadius,
+    TAU,
+} from '../math';
 
-    public readonly id: string;
-    public readonly impl: Path2D;
+import {
+    scaleContinuous,
+} from '../scales';
 
-    constructor(id: string) {
-        this.id = id;
-        this.impl = new Path2D();
+import {
+    onDOMElementResize,
+    typeIsString,
+} from '@ripl/utilities';
+
+export class CanvasPath extends Path {
+
+    public readonly ref: Path2D;
+
+    constructor(id?: string) {
+        super(id);
+        this.ref = new Path2D();
     }
 
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        return this.impl.arc(x, y, radius, startAngle, endAngle, counterclockwise);
+        return this.ref.arc(x, y, radius, startAngle, endAngle, counterclockwise);
     }
 
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
-        return this.impl.arcTo(x1, y1, x2, y2, radius);
+        return this.ref.arcTo(x1, y1, x2, y2, radius);
     }
 
     circle(x: number, y: number, radius: number): void {
@@ -56,57 +48,42 @@ export class CanvasPath implements Path<Path2D> {
     }
 
     bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
-        return this.impl.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+        return this.ref.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
     }
 
     closePath(): void {
-        return this.impl.closePath();
+        return this.ref.closePath();
     }
 
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        return this.impl.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise);
+        return this.ref.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise);
     }
 
     lineTo(x: number, y: number): void {
-        return this.impl.lineTo(x, y);
+        return this.ref.lineTo(x, y);
     }
 
     moveTo(x: number, y: number): void {
-        return this.impl.moveTo(x, y);
+        return this.ref.moveTo(x, y);
     }
 
     quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
-        return this.impl.quadraticCurveTo(cpx, cpy, x, y);
+        return this.ref.quadraticCurveTo(cpx, cpy, x, y);
     }
 
     rect(x: number, y: number, width: number, height: number): void {
-        return this.impl.rect(x, y, width, height);
+        return this.ref.rect(x, y, width, height);
     }
 
     roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
-        return this.impl.roundRect(x, y, width, height, radii);
-    }
-
-    polyline(points: Point[]): void {
-        arrayForEach(points, ([x, y], index) => !index
-            ? this.moveTo(x,y)
-            : this.lineTo(x, y)
-        );
+        return this.ref.roundRect(x, y, width, height, radii);
     }
 
 }
 
-export class CanvasContext extends EventBus<ContextEventMap> implements Context {
-
-    readonly element: HTMLCanvasElement;
+export class CanvasContext extends Context<HTMLCanvasElement> {
 
     #context: CanvasRenderingContext2D;
-
-    public buffer: boolean;
-    public width!: number;
-    public height!: number;
-    public xScale!: Scale<number, number>;
-    public yScale!: Scale<number, number>;
 
     get fillStyle(): string {
         return this.#context.fillStyle;
@@ -268,9 +245,7 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         this.#context.textBaseline = value;
     }
 
-    constructor(target: string | HTMLElement) {
-        super();
-
+    constructor(target: string | HTMLElement, options?: ContextOptions) {
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
             : target;
@@ -278,11 +253,12 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
 
+        super(canvas, options);
+
         if (!context) {
             throw new Error();
         }
 
-        this.element = canvas;
         this.#context = context;
 
         root.appendChild(canvas);
@@ -339,14 +315,6 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         return this.#context.reset();
     }
 
-    markRenderStart(): void {
-        // do nothing
-    }
-
-    markRenderEnd(): void {
-        // do nothing
-    }
-
     rotate(angle: number): void {
         return this.#context.rotate(angle);
     }
@@ -373,36 +341,36 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
         return this.#context.measureText(text);
     }
 
-    fillText(text: string, x: number, y: number, maxWidth?: number): void {
-        return this.#context.fillText(text, x, y, maxWidth);
-    }
-
-    strokeText(text: string, x: number, y: number, maxWidth?: number): void {
-        return this.#context.strokeText(text, x, y, maxWidth);
-    }
-
-    createPath(id: string = `path-${stringUniqueId()}`): CanvasPath {
+    createPath(id?: string): CanvasPath {
         return new CanvasPath(id);
     }
 
     clip(path: CanvasPath, fillRule?: FillRule): void {
-        return this.#context.clip(path.impl, fillRule);
+        return this.#context.clip(path.ref, fillRule);
     }
 
-    fill(path: CanvasPath, fillRule?: FillRule): void {
-        return this.#context.fill(path.impl, fillRule);
+    fill(element: CanvasPath | Text, fillRule?: FillRule): void {
+        if (element instanceof Text) {
+            return this.#context.fillText(element.content, element.x, element.y, element.maxWidth);
+        }
+
+        return this.#context.fill(element.ref, fillRule);
     }
 
-    stroke(path: CanvasPath): void {
-        return this.#context.stroke(path.impl);
+    stroke(element: CanvasPath | Text): void {
+        if (element instanceof Text) {
+            return this.#context.strokeText(element.content, element.x, element.y, element.maxWidth);
+        }
+
+        return this.#context.stroke(element.ref);
     }
 
     isPointInPath(path: CanvasPath, x: number, y: number, fillRule?: FillRule): boolean {
-        return this.#context.isPointInPath(path.impl, x, y, fillRule);
+        return this.#context.isPointInPath(path.ref, x, y, fillRule);
     }
 
     isPointInStroke(path: CanvasPath, x: number, y: number): boolean {
-        return this.#context.isPointInStroke(path.impl, x, y);
+        return this.#context.isPointInStroke(path.ref, x, y);
     }
 
 }

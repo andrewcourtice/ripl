@@ -9,10 +9,11 @@ import {
 import type {
     Context,
     ContextOptions,
-} from './types';
+} from './base';
 
+export * from './base';
 export * from './canvas';
-export * from './types';
+export * from './svg';
 
 export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     const {

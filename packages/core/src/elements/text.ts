@@ -67,20 +67,19 @@ export class Text extends Element<TextState> {
 
     public render(context: Context) {
         return super.render(context, () => {
-            const {
-                x,
-                y,
-                content,
-                fillStyle,
-                strokeStyle,
-            } = this;
+            const text = context.createText({
+                id: this.id,
+                x: this.x,
+                y: this.y,
+                content: this.content.toString(),
+            });
 
-            if (strokeStyle) {
-                return context.strokeText(content.toString(), x, y);
+            if (this.strokeStyle) {
+                return context.stroke(text);
             }
 
-            if (fillStyle) {
-                return context.fillText(content.toString(), x, y);
+            if (this.fillStyle) {
+                return context.fill(text);
             }
         });
     }
