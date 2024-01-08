@@ -1,4 +1,6 @@
 import {
+    BorderRadius,
+    Point,
     TAU,
 } from '../math';
 
@@ -12,8 +14,8 @@ import {
 } from '../scales';
 
 import {
+    arrayForEach,
     onDOMElementResize,
-    OneOrMore,
     stringUniqueId,
     typeIsString,
 } from '@ripl/utilities';
@@ -81,8 +83,15 @@ export class CanvasPath implements Path<Path2D> {
         return this.impl.rect(x, y, width, height);
     }
 
-    roundRect(x: number, y: number, width: number, height: number, radii?: OneOrMore<number>): void {
+    roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
         return this.impl.roundRect(x, y, width, height, radii);
+    }
+
+    polyline(points: Point[]): void {
+        arrayForEach(points, ([x, y], index) => !index
+            ? this.moveTo(x,y)
+            : this.lineTo(x, y)
+        );
     }
 
 }
@@ -93,10 +102,11 @@ export class CanvasContext extends EventBus<ContextEventMap> implements Context 
 
     #context: CanvasRenderingContext2D;
 
-    width!: number;
-    height!: number;
-    xScale!: Scale<number, number>;
-    yScale!: Scale<number, number>;
+    public buffer: boolean;
+    public width!: number;
+    public height!: number;
+    public xScale!: Scale<number, number>;
+    public yScale!: Scale<number, number>;
 
     get fillStyle(): string {
         return this.#context.fillStyle;

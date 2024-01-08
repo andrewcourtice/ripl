@@ -14,7 +14,6 @@ import {
 } from '../math';
 
 import {
-    arrayForEach,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -29,21 +28,8 @@ const RENDERERS = {
     linear: polylineLinearRenderer(),
 } as Record<PolylineRenderer, PolylineRenderFunc>;
 
-export function drawPoints(points: Point[], path: Path){
-    let moveOnly = true;
-
-    arrayForEach(points, ([x, y]) => {
-        if (moveOnly) {
-            path.moveTo(x, y);
-            moveOnly = false;
-        } else {
-            path.lineTo(x, y);
-        }
-    });
-}
-
 export function polylineLinearRenderer(): PolylineRenderFunc {
-    return (context, path, points) => drawPoints(points, path);
+    return (context, path, points) => path.polyline(points);
 }
 
 export function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc {

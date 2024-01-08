@@ -10,6 +10,10 @@ import {
 } from '../context';
 
 import {
+    createFrameBuffer,
+} from '../animation';
+
+import {
     Group,
     GroupOptions,
     isGroup,
@@ -68,6 +72,7 @@ export class Scene extends Group<SceneEventMap> {
 
         const context = createContext(target, {
             type,
+            buffer: false,
         });
 
         super({
@@ -78,10 +83,10 @@ export class Scene extends Group<SceneEventMap> {
         this.context = context;
         this.buffer = this.graph();
 
-        let graphHandle: number | undefined;
         let left = 0;
         let top = 0;
 
+        const requestFrame = createFrameBuffer();
         const activeElements = [] as Element[];
         const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
             const elements = arrayReduce(this.graph(true), (output, element) => {
@@ -169,17 +174,10 @@ export class Scene extends Group<SceneEventMap> {
             }
         });
 
-        this.on('scene:graph', () => {
-            if (graphHandle) {
-                cancelAnimationFrame(graphHandle);
-                graphHandle = undefined;
-            }
-
-            graphHandle = requestAnimationFrame(() => {
-                this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
-                getTrackedElements.cache.clear();
-            });
-        });
+        this.on('scene:graph', () => requestFrame(() => {
+            this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+            getTrackedElements.cache.clear();
+        }));
 
         this.on('scene:track', ({ data }) => getTrackedElements.cache.delete(data));
         this.on('scene:untrack', ({ data }) => getTrackedElements.cache.delete(data));

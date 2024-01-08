@@ -185,7 +185,6 @@ export class Arc extends Shape<ArcState> {
             path.lineTo(x2, y2);
             path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
             path.lineTo(x1, y1);
-            path.closePath();
         });
     }
 

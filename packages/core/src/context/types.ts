@@ -3,13 +3,13 @@ import type {
     EventMap,
 } from '../core/event-bus';
 
+import {
+    BorderRadius, Point,
+} from '../math';
+
 import type {
     Scale,
 } from '../scales';
-
-import type {
-    OneOrMore,
-} from '@ripl/utilities';
 
 export type ContextType = 'canvas' | 'svg';
 export type Direction = 'inherit' | 'ltr' | 'rtl';
@@ -26,6 +26,7 @@ export interface ContextEventMap extends EventMap {
 
 export interface ContextOptions {
     type?: ContextType;
+    buffer?: boolean;
 }
 
 export interface Path<TImpl = unknown> {
@@ -37,11 +38,12 @@ export interface Path<TImpl = unknown> {
     bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void;
     closePath(): void;
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void;
+    polyline(points: Point[]): void;
     lineTo(x: number, y: number): void;
     moveTo(x: number, y: number): void;
     quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void;
     rect(x: number, y: number, width: number, height: number): void;
-    roundRect(x: number, y: number, width: number, height: number, radii?: OneOrMore<number>): void;
+    roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void;
 }
 
 export interface BaseState {
@@ -71,6 +73,7 @@ export interface Context extends EventBus<ContextEventMap>, BaseState {
     element: Element;
     width: number;
     height: number;
+    buffer: boolean;
 
     xScale: Scale;
     yScale: Scale;

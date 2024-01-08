@@ -8,10 +8,21 @@ import {
 } from '../scales';
 
 import {
+    BorderRadius,
+    getThetaPoint,
+    Point,
+} from '../math';
+
+import {
+    createFrameBuffer,
+} from '../animation';
+
+import {
+    AnyFunction,
     arrayForEach,
     arrayJoin,
+    objectForEach,
     onDOMElementResize,
-    OneOrMore,
     stringUniqueId,
     typeIsString,
 } from '@ripl/utilities';
@@ -20,6 +31,7 @@ import type {
     BaseState,
     Context,
     ContextEventMap,
+    ContextOptions,
     Direction,
     FillRule,
     FontKerning,
@@ -29,10 +41,6 @@ import type {
     TextAlignment,
     TextBaseline,
 } from './types';
-
-import {
-    getThetaPoint,
-} from '../math';
 
 const REF_CANVAS = document.createElement('canvas');
 const REF_CONTEXT = REF_CANVAS.getContext('2d')!;
@@ -66,30 +74,89 @@ function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
 }
 
-export class SVGPath implements Path<SVGPathElement> {
+type SVGPathImplementation = {
+    styles: Partial<CSSStyleDeclaration>;
+    attributes: {
+        d: string;
+        [key: string]: string;
+    };
+}
+
+function updatePathElement(element: SVGElement, path: SVGPath) {
+    const {
+        attributes,
+        styles,
+    } = path.impl;
+
+    element.setAttribute('id', path.id);
+    Object.assign(element.style, styles);
+    objectForEach(attributes, (key, value) => element.setAttribute(key.toString(), value));
+}
+
+export class SVGPath implements Path<SVGPathImplementation> {
 
     public readonly id: string;
-    public readonly impl: SVGPathElement;
+    public readonly impl: SVGPathImplementation;
 
     constructor(id: string) {
         this.id = id;
-        this.impl = createSVGElement('path');
-        this.impl.setAttribute('id', id);
+        this.impl = {
+            attributes: {
+                d: '',
+            },
+            styles: {
+                stroke: 'none',
+                fill: 'none',
+            },
+        };
+    }
+
+    public setState(op: 'stroke' | 'fill', state: BaseState) {
+        Object.assign(this.impl.styles, {
+            filter: state.filter,
+            direction: state.direction,
+            font: state.font,
+            fontKerning: state.fontKerning,
+            textAlign: state.textAlign,
+            opacity: state.globalAlpha.toString(),
+            // shadowBlur,
+            // shadowColor,
+            // shadowOffsetX,
+            // shadowOffsetY,
+            //textBaseline,
+        });
+
+        if (op === 'stroke') {
+            Object.assign(this.impl.styles, {
+                stroke: state.strokeStyle,
+                strokeLinecap: state.lineCap,
+                strokeDasharray: state.lineDash.join(' '),
+                strokeDashoffset: state.lineDashOffset.toString(),
+                strokeLinejoin: state.lineJoin,
+                strokeWidth: state.lineWidth.toString(),
+                strokeMiterlimit: state.miterLimit.toString(),
+            });
+        }
+
+        if (op === 'fill') {
+            Object.assign(this.impl.styles, {
+                fill: state.fillStyle,
+            });
+        }
     }
 
     private appendElementData(data: string) {
-        this.impl.setAttribute('d', `${this.impl.getAttribute('d') || ''} ${data}`.trim());
+        this.impl.attributes.d = `${this.impl.attributes.d} ${data}`.trim();
     }
 
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
         const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
+        const largeArcFlag = +(Math.abs(endAngle - startAngle) > Math.PI);
+        const clockwiseFlag = +!counterclockwise;
 
-        if (counterclockwise) {
-            return this.arcTo(x2, y2, x1, y1, radius);
-        }
-
-        this.arcTo(x1, y1, x2, y2, radius);
+        this.moveTo(x1, y1);
+        this.appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
     }
 
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
@@ -136,7 +203,27 @@ export class SVGPath implements Path<SVGPathElement> {
         this.lineTo(x, y);
     }
 
-    roundRect(x: number, y: number, width: number, height: number, radii?: OneOrMore<number>): void {
+    roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
+        return this.rect(x, y, width, height);
+        // const [
+        //     borderTopLeft,
+        //     borderTopRight,
+        //     borderBottomRight,
+        //     borderBottomLeft,
+        // ] = normaliseBorderRadius(radii ?? 0);
+
+        // this.moveTo(x + borderTopLeft, y);
+        // this.lineTo(x - borderTopRight, y);
+        // this.arcTo(x + width - borderTopRight, y, x + width, y + borderTopRight, borderTopRight);
+        // this.lineTo(x + width, y + height - borderBottomRight);
+        // this.arcTo()
+    }
+
+    polyline(points: Point[]): void {
+        arrayForEach(points, ([x, y], index) => !index
+            ? this.moveTo(x,y)
+            : this.lineTo(x, y)
+        );
     }
 
 }
@@ -151,11 +238,13 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
     private currentState: BaseState;
     private renderDepth = 0;
     private stack: Set<SVGPath>;
+    private requestFrame: (callback: AnyFunction) => void;
 
-    width!: number;
-    height!: number;
-    xScale!: Scale<number, number>;
-    yScale!: Scale<number, number>;
+    public buffer: boolean;
+    public width!: number;
+    public height!: number;
+    public xScale!: Scale<number, number>;
+    public yScale!: Scale<number, number>;
 
     get fillStyle(): string {
         return this.currentState.fillStyle;
@@ -317,8 +406,12 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
         this.currentState.textBaseline = value;
     }
 
-    constructor(target: string | HTMLElement) {
+    constructor(target: string | HTMLElement, options?: ContextOptions) {
         super();
+
+        const {
+            buffer = true,
+        } = options || {};
 
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
@@ -327,9 +420,11 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
         const svg = createSVGElement('svg');
 
         this.element = svg;
+        this.buffer = buffer;
         this.stack = new Set();
         this.states = [];
         this.currentState = getDefaultState();
+        this.requestFrame = createFrameBuffer();
 
         svg.style.display = 'block';
         svg.style.width = '100%';
@@ -358,6 +453,41 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
         this.emit('context:resize', null);
     }
 
+    private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
+        const element = this.element.getElementById(path.id);
+        const point = this.element.createSVGPoint();
+
+        point.x = x;
+        point.y = y;
+
+        return element instanceof SVGGeometryElement && (method === 'stroke'
+            ? element.isPointInStroke(point)
+            : element.isPointInFill(point)
+        );
+    }
+
+    private render() {
+        const stack = Array.from(this.stack.values());
+        const elements = Array.from(this.element.children) as SVGElement[];
+
+        const {
+            left: entries,
+            inner: updates,
+            right: exits,
+        } = arrayJoin(stack, elements, 'id');
+
+        arrayForEach(entries, path => {
+            const element = createSVGElement('path');
+            updatePathElement(element, path);
+            this.element.append(element);
+        });
+
+        arrayForEach(updates, ([path, element]) => updatePathElement(element, path));
+        arrayForEach(exits, element => element.remove());
+
+        this.stack.clear();
+    }
+
     save(): void {
         this.states.push(this.currentState);
         this.currentState = getDefaultState();
@@ -384,24 +514,9 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
             return;
         }
 
-        const {
-            left: entries,
-            inner: updates,
-            right: exits,
-        } = arrayJoin(Array.from(this.stack.values()), Array.from(this.element.children), 'id');
-
-        arrayForEach(entries, path => this.element.append(path.impl));
-        arrayForEach(exits, element => element.remove());
-
-        arrayForEach(updates, ([path, element]) => {
-            const pathData = path.impl.getAttribute('d') ?? '';
-
-            if (element.getAttribute('d') !== pathData) {
-                element.setAttribute('d', pathData);
-            }
-        });
-
-        this.stack.clear();
+        this.buffer
+            ? this.requestFrame(() => this.render())
+            : this.render();
     }
 
     rotate(angle: number): void {
@@ -432,7 +547,6 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
 
     createPath(id: string = `path-${stringUniqueId()}`): SVGPath {
         const path = new SVGPath(id);
-
         this.stack.add(path);
 
         return path;
@@ -442,19 +556,19 @@ export class SVGContext extends EventBus<ContextEventMap> implements Context {
     }
 
     fill(path: SVGPath, fillRule?: FillRule): void {
-        path.impl.style.fill = this.currentState.fillStyle;
+        path.setState('fill', this.currentState);
     }
 
     stroke(path: SVGPath): void {
-        path.impl.style.stroke = this.currentState.strokeStyle;
+        path.setState('stroke', this.currentState);
     }
 
     isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
-        return false;
+        return this.isPointIn('fill', path, x, y);
     }
 
     isPointInStroke(path: SVGPath, x: number, y: number): boolean {
-        return false;
+        return this.isPointIn('stroke', path, x, y);
     }
 
 

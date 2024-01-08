@@ -11,10 +11,6 @@ import {
     max,
 } from '../math';
 
-import {
-    drawPoints,
-} from './polyline';
-
 export interface PolygonState extends BaseElementState {
     cx: number;
     cy: number;
@@ -78,7 +74,7 @@ export class Polygon extends Shape<PolygonState> {
                 this.radius
             );
 
-            drawPoints(points, path);
+            path.polyline(points);
             path.closePath();
         });
     }
