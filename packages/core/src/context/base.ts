@@ -69,6 +69,7 @@ export interface BaseState {
     strokeStyle: string;
     textAlign: TextAlignment;
     textBaseline: TextBaseline;
+    zIndex: number;
 }
 
 const getRefContext = functionCache(() => {
@@ -335,6 +336,14 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.textBaseline = value;
     }
 
+    get zIndex(): number {
+        return this.currentState.zIndex;
+    }
+
+    set zIndex(value) {
+        this.currentState.zIndex = value;
+    }
+
     constructor(element: TElement, options?: ContextOptions) {
         super();
 
@@ -376,6 +385,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
             strokeStyle: refContext.strokeStyle,
             textAlign: refContext.textAlign,
             textBaseline: refContext.textBaseline,
+            zIndex: 0,
         } as BaseState;
     }
 

@@ -245,6 +245,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
             opacity: this.currentState.globalAlpha.toString(),
+            zIndex: (this.currentState.zIndex || '').toString(),
             // shadowBlur,
             // shadowColor,
             // shadowOffsetX,
@@ -270,6 +271,7 @@ export class SVGContext extends Context<SVGSVGElement> {
     private render() {
         const stack = Array.from(this.stack.values());
         const elements = Array.from(this.element.children) as SVGElement[];
+        const order = arrayMap(stack, element => element.id);
 
         const {
             left: entries,
@@ -280,18 +282,21 @@ export class SVGContext extends Context<SVGSVGElement> {
         const newElements = arrayMap(entries, contextElement => {
             const svgElement = createSVGElement(contextElement.tag);
             updateSVGElement(svgElement, contextElement);
-            //this.element.append(svgElement);
             return svgElement;
         });
 
-        this.element.append(...newElements);
-
-        arrayForEach(updates, ([contextElement, svgElement]) => {
+        const updatedElements = arrayMap(updates, ([contextElement, svgElement]) => {
             updateSVGElement(svgElement, contextElement);
+            return svgElement;
         });
 
         arrayForEach(exits, element => element.remove());
 
+        const orderedElements = newElements
+            .concat(updatedElements)
+            .sort((ea, eb) => order.indexOf(ea.id) - order.indexOf(eb.id));
+
+        this.element.append(...orderedElements);
         this.stack.clear();
     }
 

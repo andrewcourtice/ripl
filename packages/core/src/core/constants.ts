@@ -18,28 +18,26 @@ function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
 }
 
 export const CONTEXT_OPERATIONS = {
-    strokeStyle: basicContextSetter('strokeStyle'),
-    fillStyle: basicContextSetter('fillStyle'),
-    lineWidth: basicContextSetter('lineWidth'),
-    lineCap: basicContextSetter('lineCap'),
-    lineJoin: basicContextSetter('lineJoin'),
-    lineDashOffset: basicContextSetter('lineDashOffset'),
-    miterLimit: basicContextSetter('miterLimit'),
-
-    font: basicContextSetter('font'),
     direction: basicContextSetter('direction'),
-    textAlign: basicContextSetter('textAlign'),
-    textBaseline: basicContextSetter('textBaseline'),
-
+    fillStyle: basicContextSetter('fillStyle'),
     filter: basicContextSetter('filter'),
+    font: basicContextSetter('font'),
     globalAlpha: basicContextSetter('globalAlpha'),
     globalCompositeOperation: basicContextSetter('globalCompositeOperation'),
-
+    lineCap: basicContextSetter('lineCap'),
+    lineDash: basicContextSetter('lineDash'),
+    lineDashOffset: basicContextSetter('lineDashOffset'),
+    lineJoin: basicContextSetter('lineJoin'),
+    lineWidth: basicContextSetter('lineWidth'),
+    miterLimit: basicContextSetter('miterLimit'),
     shadowBlur: basicContextSetter('shadowBlur'),
     shadowColor: basicContextSetter('shadowColor'),
     shadowOffsetX: basicContextSetter('shadowOffsetX'),
     shadowOffsetY: basicContextSetter('shadowOffsetY'),
-    lineDash: basicContextSetter('lineDash'),
+    strokeStyle: basicContextSetter('strokeStyle'),
+    textAlign: basicContextSetter('textAlign'),
+    textBaseline: basicContextSetter('textBaseline'),
+    zIndex: basicContextSetter('zIndex'),
 } as {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };

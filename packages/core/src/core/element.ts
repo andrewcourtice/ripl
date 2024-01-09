@@ -59,7 +59,6 @@ export type ElementIntersectionOptions = {
 }
 
 export interface BaseElementState extends Partial<BaseState> {
-    zIndex?: number;
 }
 
 export interface ElementEventMap extends EventMap {
