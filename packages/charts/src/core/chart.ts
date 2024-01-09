@@ -44,7 +44,7 @@ export class Chart<TOptions extends BaseChartOptions> {
     }
 
     protected init() {
-        this.scene.on('scene:resize', () => {
+        this.scene.on('resize', () => {
             if (this.hasRendered) {
                 this.render();
             }

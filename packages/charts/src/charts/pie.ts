@@ -11,6 +11,7 @@ import {
     createArc,
     createGroup,
     createText,
+    easeOutQuart,
     easeOutQuint,
     elementIsArc,
     elementIsText,
@@ -143,10 +144,22 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 });
 
                 segmentArc.on('mouseenter', () => {
-                    segmentArc.fillStyle = segmentArc.strokeStyle;
+                    renderer.transition(segmentArc, {
+                        duration: 500,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: color,
+                        },
+                    });
 
                     segmentArc.once('mouseleave', () => {
-                        segmentArc.fillStyle = setColorAlpha(segmentArc.strokeStyle, 0.5);
+                        renderer.transition(segmentArc, {
+                            duration: 500,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: setColorAlpha(color, 0.55),
+                            },
+                        });
                     });
                 });
 

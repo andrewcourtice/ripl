@@ -1,5 +1,6 @@
 import {
     getColorParser,
+    serialiseRGBA,
 } from '../color';
 
 import {
@@ -29,7 +30,7 @@ export const interpolateColor: InterpolatorFactory<string> = (colorA, colorB) =>
         return interpolateNumber(value, rgbaB[index]);
     });
 
-    return position => parserB.serialise(
+    return position => serialiseRGBA(
         interpolators[0](position),
         interpolators[1](position),
         interpolators[2](position),
