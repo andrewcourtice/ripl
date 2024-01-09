@@ -34,14 +34,7 @@ import {
 } from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
-    'scene:resize': null;
-    'scene:mouseenter': MouseEvent;
-    'scene:mouseleave': MouseEvent;
-    'scene:mousemove': {
-        x: number;
-        y: number;
-        event: MouseEvent;
-    };
+    resize: null;
 }
 
 export interface SceneOptions extends GroupOptions {
@@ -102,17 +95,17 @@ export class Scene extends Group<SceneEventMap> {
             return arrayDedupe(elements);
         });
 
-        this.attachDOMEvent('mouseenter', event => {
+        this.attachDOMEvent('mouseenter', () => {
             ({
                 left,
                 top,
             } = this.context.element.getBoundingClientRect());
 
-            this.emit('scene:mouseenter', event);
+            this.emit('mouseenter', null);
         });
 
-        this.attachDOMEvent('mouseleave', event => {
-            this.emit('scene:mouseleave', event);
+        this.attachDOMEvent('mouseleave', () => {
+            this.emit('mouseleave', null);
         });
 
         this.attachDOMEvent('mousemove', event => {
@@ -121,16 +114,15 @@ export class Scene extends Group<SceneEventMap> {
             const trueX = this.context.xScale(x);
             const trueY = this.context.yScale(y);
 
-            this.emit('scene:mousemove', {
+            this.emit('mousemove', {
                 x,
                 y,
-                event,
             });
 
             const trackedElements = [
-                ...getTrackedElements('element:mousemove'),
-                ...getTrackedElements('element:mouseenter'),
-                ...getTrackedElements('element:mouseleave'),
+                ...getTrackedElements('mousemove'),
+                ...getTrackedElements('mouseenter'),
+                ...getTrackedElements('mouseleave'),
             ];
 
             const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
@@ -144,15 +136,18 @@ export class Scene extends Group<SceneEventMap> {
             } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
 
             arrayForEach(entries, element => {
-                element.emit('element:mouseenter', event);
                 activeElements.push(element);
+                element.emit('mouseenter', null);
             });
 
-            arrayForEach(updates, ([element]) => element.emit('element:mousemove', event));
+            arrayForEach(updates, ([element]) => element.emit('mousemove', {
+                x,
+                y,
+            }));
 
             arrayForEach(exits, element => {
-                element.emit('element:mouseleave', event);
                 activeElements.splice(activeElements.indexOf(element), 1);
+                element.emit('mouseleave', null);
             });
         });
 
@@ -160,27 +155,30 @@ export class Scene extends Group<SceneEventMap> {
             const x = this.context.xScale(event.clientX - left);
             const y = this.context.yScale(event.clientY - top);
 
-            const element = arrayFind(getTrackedElements('element:click'), element => element.intersectsWith(x, y, {
+            const element = arrayFind(getTrackedElements('click'), element => element.intersectsWith(x, y, {
                 isPointer: true,
             }), -1);
 
-            element?.emit('element:click', event);
+            element?.emit('click', {
+                x,
+                y,
+            });
         });
 
-        context.on('context:resize', () => {
-            this.emit('scene:resize', null);
+        context.on('resize', () => {
+            this.emit('resize', null);
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }
         });
 
-        this.on('scene:graph', () => requestFrame(() => {
+        this.on('graph', () => requestFrame(() => {
             this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
             getTrackedElements.cache.clear();
         }));
 
-        this.on('scene:track', ({ data }) => getTrackedElements.cache.delete(data));
-        this.on('scene:untrack', ({ data }) => getTrackedElements.cache.delete(data));
+        this.on('track', ({ data }) => getTrackedElements.cache.delete(data));
+        this.on('untrack', ({ data }) => getTrackedElements.cache.delete(data));
     }
 
     private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {

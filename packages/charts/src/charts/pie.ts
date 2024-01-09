@@ -142,10 +142,10 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     } as Partial<ArcState>,
                 });
 
-                segmentArc.on('element:mouseenter', () => {
+                segmentArc.on('mouseenter', () => {
                     segmentArc.fillStyle = segmentArc.strokeStyle;
 
-                    segmentArc.once('element:mouseleave', () => {
+                    segmentArc.once('mouseleave', () => {
                         segmentArc.fillStyle = setColorAlpha(segmentArc.strokeStyle, 0.5);
                     });
                 });

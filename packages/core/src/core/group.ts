@@ -155,7 +155,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public updateSceneGraph() {
-        this.emit('scene:graph', undefined);
+        this.emit('graph', null);
     }
 
     public set(elements: Element[]) {

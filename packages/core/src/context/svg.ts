@@ -3,8 +3,8 @@ import {
     Context,
     ContextElement,
     ContextOptions,
-    Path,
-    Text,
+    ContextPath,
+    ContextText,
     TextAlignment,
     TextOptions,
 } from './base';
@@ -27,17 +27,26 @@ import {
     arrayForEach,
     arrayJoin,
     arrayMap,
+    GetMutableKeys,
     objectForEach,
     objectMap,
     onDOMElementResize,
     typeIsString,
 } from '@ripl/utilities';
 
-export interface SVGContextElement extends ContextElement {
+type Styles = {
+    [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
+}
+
+export interface SVGContextElementDefinition {
     tag: keyof SVGElementTagNameMap;
-    styles: Partial<CSSStyleDeclaration>;
+    styles: Partial<Styles>;
     attributes: Record<string, string>;
-    content?: string;
+    textContent?: string;
+}
+
+export interface SVGContextElement extends ContextElement {
+    definition: SVGContextElementDefinition;
 }
 
 const SVG_STYLE_MAP = {
@@ -46,57 +55,55 @@ const SVG_STYLE_MAP = {
         right: 'end',
         center: 'middle',
     } as Record<TextAlignment, string>,
-} as Record<keyof CSSStyleDeclaration, Record<string, string>>;
+} as Record<keyof Styles, Record<string, string>>;
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
 }
 
-function updateSVGElement(svgElement: SVGElement, contextElement: SVGContextElement) {
+function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContextElement) {
     const {
-        id,
         styles,
         attributes,
-        content,
-    } = contextElement;
+        textContent,
+    } = definition;
 
     svgElement.setAttribute('id', id);
     Object.assign(svgElement.style, styles);
     objectForEach(attributes, (key, value) => svgElement.setAttribute(key.toString(), value));
 
-    if (content) {
-        svgElement.innerHTML = content;
+    if (textContent) {
+        svgElement.textContent = textContent;
     }
 }
 
-function mapSVGStyles(styles: Partial<CSSStyleDeclaration>) {
+function mapSVGStyles(styles: Partial<Styles>) {
     return objectMap(styles, (key, value) => {
         return SVG_STYLE_MAP[key]?.[value] ?? value;
     });
 }
 
-export class SVGPath extends Path implements SVGContextElement {
+export class SVGPath extends ContextPath implements SVGContextElement {
 
-    public tag: keyof SVGElementTagNameMap;
-    public styles: Partial<CSSStyleDeclaration>;
-    public attributes: Record<string, string>;
+    public definition: SVGContextElementDefinition;
 
     constructor(id?: string) {
         super(id);
 
-        this.tag = 'path';
-        this.attributes = {
-            d: '',
-        };
-
-        this.styles = {
-            stroke: 'none',
-            fill: 'none',
+        this.definition = {
+            tag: 'path',
+            attributes: {
+                d: '',
+            },
+            styles: {
+                stroke: 'none',
+                fill: 'none',
+            },
         };
     }
 
     private appendElementData(data: string) {
-        this.attributes.d = `${this.attributes.d} ${data}`.trim();
+        this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
     }
 
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
@@ -171,21 +178,30 @@ export class SVGPath extends Path implements SVGContextElement {
 
 }
 
-export class SVGText extends Text implements SVGContextElement {
+export class SVGText extends ContextText implements SVGContextElement {
 
-    public tag: keyof SVGElementTagNameMap;
-    public styles: Partial<CSSStyleDeclaration>;
-    public attributes: Record<string, string>;
+    public definition: SVGContextElementDefinition;
 
     constructor(options: TextOptions) {
         super(options);
 
-        this.tag = 'text';
-        this.styles = {};
-        this.attributes = {
-            // change this
-            x: this.x.toString(),
-            y: this.y.toString(),
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
+
+        this.definition = {
+            tag: 'text',
+            styles: {},
+            attributes: {
+                get x() {
+                    return _this.x.toString();
+                },
+                get y() {
+                    return _this.y.toString();
+                },
+            },
+            get textContent() {
+                return _this.content;
+            },
         };
     }
 }
@@ -234,11 +250,11 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.height = height;
         this.element.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-        this.emit('context:resize', null);
+        this.emit('resize', null);
     }
 
-    private setElementStyles(element: SVGContextElement, styles: Partial<CSSStyleDeclaration>) {
-        Object.assign(element.styles, mapSVGStyles({
+    private setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
+        Object.assign(element.definition.styles, mapSVGStyles({
             filter: this.currentState.filter,
             direction: this.currentState.direction,
             font: this.currentState.font,
@@ -280,7 +296,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         } = arrayJoin(stack, elements, 'id');
 
         const newElements = arrayMap(entries, contextElement => {
-            const svgElement = createSVGElement(contextElement.tag);
+            const svgElement = createSVGElement(contextElement.definition.tag);
             updateSVGElement(svgElement, contextElement);
             return svgElement;
         });
@@ -319,7 +335,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         return path;
     }
 
-    createText(options: TextOptions): Text {
+    createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
         this.stack.add(text);
 

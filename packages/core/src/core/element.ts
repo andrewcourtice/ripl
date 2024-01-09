@@ -7,6 +7,7 @@ import {
     EventBus,
     EventHandler,
     EventMap,
+    EventSubscriptionOptions,
 } from './event-bus';
 
 import {
@@ -62,17 +63,23 @@ export interface BaseElementState extends Partial<BaseState> {
 }
 
 export interface ElementEventMap extends EventMap {
-    'scene:graph': undefined;
-    'scene:track': keyof ElementEventMap;
-    'scene:untrack': keyof ElementEventMap;
-    'element:attached': Group;
-    'element:detached': Group;
-    'element:updated': undefined;
-    'element:mouseenter': MouseEvent;
-    'element:mouseleave': MouseEvent;
-    'element:mousemove': MouseEvent;
-    'element:click': MouseEvent;
-    'element:destroyed': null;
+    graph: null;
+    track: keyof ElementEventMap;
+    untrack: keyof ElementEventMap;
+    attached: Group;
+    detached: Group;
+    updated: null;
+    mouseenter: null;
+    mouseleave: null;
+    mousemove: {
+        x: number;
+        y: number;
+    };
+    click: {
+        x: number;
+        y: number;
+    };
+    destroyed: null;
 }
 
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
@@ -355,20 +362,20 @@ export class Element<
 
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this.state[key] = value;
-        this.emit('element:updated', undefined);
+        this.emit('updated', null);
     }
 
-    public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>) {
-        const listener = super.on(event, handler);
+    public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions) {
+        const listener = super.on(event, handler, options);
 
         if (!TRACKED_EVENTS.includes(event)) {
             return listener;
         }
 
-        this.emit('scene:track', event);
+        this.emit('track', event);
 
         return {
-            dispose: () => (this.emit('scene:untrack', event), listener.dispose()),
+            dispose: () => (this.emit('untrack', event), listener.dispose()),
         };
     }
 

@@ -1,6 +1,6 @@
 import {
     Context,
-    Path,
+    ContextPath,
 } from '../context';
 
 import {
@@ -17,7 +17,7 @@ export type ShapeOptions<TState extends BaseElementState = BaseElementState> = E
 
 export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
-    protected path?: Path;
+    protected path?: ContextPath;
 
     public autoStroke: boolean;
     public autoFill: boolean;
@@ -68,7 +68,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
         return isAnyIntersecting();
     }
 
-    public render(context: Context, callback?: (path: Path) => void) {
+    public render(context: Context, callback?: (path: ContextPath) => void) {
         return super.render(context, () => {
             this.path = context.createPath(this.id);
 

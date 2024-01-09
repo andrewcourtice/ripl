@@ -1,7 +1,7 @@
 import {
     BaseElementState,
     Context,
-    Path,
+    ContextPath,
     Shape,
     ShapeOptions,
 } from '../core';
@@ -18,7 +18,7 @@ import {
 } from '@ripl/utilities';
 
 export type PolylineRenderer = 'linear' | 'spline';
-export type PolylineRenderFunc = (context: Context, path: Path, points: Point[]) => void;
+export type PolylineRenderFunc = (context: Context, path: ContextPath, points: Point[]) => void;
 export interface PolylineState extends BaseElementState {
     points: Point[];
     renderer?: PolylineRenderer | PolylineRenderFunc;

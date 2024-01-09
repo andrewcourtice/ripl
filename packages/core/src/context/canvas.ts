@@ -1,13 +1,13 @@
 import {
     Context,
     ContextOptions,
+    ContextPath,
+    ContextText,
     Direction,
     FillRule,
     FontKerning,
     LineCap,
     LineJoin,
-    Path,
-    Text,
     TextAlignment,
     TextBaseline,
 } from './base';
@@ -26,7 +26,7 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-export class CanvasPath extends Path {
+export class CanvasPath extends ContextPath {
 
     public readonly ref: Path2D;
 
@@ -296,7 +296,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
         this.#context.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        this.emit('context:resize', null);
+        this.emit('resize', null);
     }
 
     save(): void {
@@ -349,16 +349,16 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return this.#context.clip(path.ref, fillRule);
     }
 
-    fill(element: CanvasPath | Text, fillRule?: FillRule): void {
-        if (element instanceof Text) {
+    fill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
+        if (element instanceof ContextText) {
             return this.#context.fillText(element.content, element.x, element.y, element.maxWidth);
         }
 
         return this.#context.fill(element.ref, fillRule);
     }
 
-    stroke(element: CanvasPath | Text): void {
-        if (element instanceof Text) {
+    stroke(element: CanvasPath | ContextText): void {
+        if (element instanceof ContextText) {
             return this.#context.strokeText(element.content, element.x, element.y, element.maxWidth);
         }
 

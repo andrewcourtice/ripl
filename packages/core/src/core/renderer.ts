@@ -40,10 +40,10 @@ import {
 export type RendererTransitionDirection = 'forward' | 'reverse';
 
 export interface RendererEventMap extends EventMap {
-    'renderer:start': {
+    start: {
         startTime: number;
     };
-    'renderer:stop': {
+    stop: {
         startTime: number;
         endTime: number;
     };
@@ -118,8 +118,8 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (autoStop) {
-            scene.on('scene:mousemove', () => this.start());
-            scene.on('scene:mouseleave', () => this.stopOnIdle());
+            scene.on('mousemove', () => this.start(), { self: true });
+            scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
         }
     }
 

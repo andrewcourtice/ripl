@@ -28,7 +28,7 @@ export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' |
 export type FillRule = 'evenodd' | 'nonzero';
 
 export interface ContextEventMap extends EventMap {
-    'context:resize': null;
+    resize: null;
 }
 
 export interface ContextOptions {
@@ -76,7 +76,7 @@ const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
 });
 
-export class Path implements ContextElement {
+export class ContextPath implements ContextElement {
 
     public readonly id: string;
 
@@ -137,7 +137,7 @@ export class Path implements ContextElement {
 
 }
 
-export class Text implements ContextElement {
+export class ContextText implements ContextElement {
 
     public readonly id: string;
 
@@ -432,15 +432,15 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     measureText(text: string): TextMetrics {
     }
 
-    createPath(id?: string): Path {
-        return new Path(id);
+    createPath(id?: string): ContextPath {
+        return new ContextPath(id);
     }
 
-    createText(options: TextOptions): Text {
-        return new Text(options);
+    createText(options: TextOptions): ContextText {
+        return new ContextText(options);
     }
 
-    clip(path: Path, fillRule?: FillRule): void {
+    clip(path: ContextPath, fillRule?: FillRule): void {
     }
 
     fill(path: ContextElement, fillRule?: FillRule): void {
@@ -449,11 +449,11 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     stroke(path: ContextElement): void {
     }
 
-    isPointInPath(path: Path, x: number, y: number, fillRule?: FillRule): boolean {
+    isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         return false;
     }
 
-    isPointInStroke(path: Path, x: number, y: number): boolean {
+    isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         return false;
     }
 
