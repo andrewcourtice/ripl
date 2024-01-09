@@ -68,7 +68,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const total = getTotal(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], true);
             const offset = TAU / 4;
-            const padAngle = 0.1 / data.length;
+            const padAngle = data.length === 1 ? 0 : 0.1 / data.length;
 
             let startAngle = -offset;
 
@@ -199,6 +199,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     innerRadius,
                     startAngle,
                     endAngle,
+                    padAngle,
                 } = item;
 
                 const arc = group.query('arc') as Arc;
@@ -211,6 +212,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     innerRadius,
                     startAngle,
                     endAngle,
+                    padAngle,
                     strokeStyle: color,
                     fillStyle: setColorAlpha(color, 0.55),
                 } as Partial<ArcState>;
