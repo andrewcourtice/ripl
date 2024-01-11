@@ -11,14 +11,28 @@ import {
     ScaleMethod,
 } from '../types';
 
-export function bindScale<TDomain = number, TRange = number>(domain: TDomain[], range: TRange[], method: ScaleMethod<TDomain, TRange>): Scale<TDomain, TRange> {
-    const output = (value: TDomain) => method(value);
+export interface ScaleBindingOptions<TDomain, TRange> {
+    readonly domain: TDomain[];
+    readonly range: TRange[];
+    convert: ScaleMethod<TDomain, TRange>;
+    invert: ScaleMethod<TRange, TDomain>;
+}
 
-    output.domain = domain;
-    output.range = range;
-    output.inverse = (() => {}) as unknown as ScaleMethod<TRange, TDomain>;
+export function bindScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange> {
+    const {
+        domain,
+        range,
+        convert,
+        invert,
+    } = options;
 
-    return output;
+    const scale = (value: TDomain) => convert(value);
+
+    scale.domain = domain;
+    scale.range = range;
+    scale.inverse = invert;
+
+    return scale;
 }
 
 export function getLinearScaleMethod(domain: number[], range: number[], clampOutput?: boolean): ScaleMethod {

@@ -1,9 +1,14 @@
 import {
     BaseElementState,
     defineElement,
-    ElementInterpolator,
+    Element,
 } from '../core';
 
+import {
+    InterpolatorFactory,
+} from '../interpolators';
+
+export type Image = ReturnType<typeof createImage>;
 export interface ImageState extends BaseElementState {
     image: CanvasImageSource;
     x: number;
@@ -13,7 +18,7 @@ export interface ImageState extends BaseElementState {
 const refCanvas = document.createElement('canvas');
 const refContext = refCanvas.getContext('2d');
 
-const imageInterpolator: ElementInterpolator<ImageState['image']> = (valueA, valueB) => {
+const imageInterpolator: InterpolatorFactory<ImageState['image']> = (valueA, valueB) => {
     refCanvas.width = +valueA.width;
     refCanvas.height = +valueA.height;
 
@@ -32,6 +37,10 @@ const imageInterpolator: ElementInterpolator<ImageState['image']> = (valueA, val
         return refContext.getImageData(0, 0, refCanvas.width, refCanvas.height) as unknown as CanvasImageSource;
     };
 };
+
+export function elementIsImage(element: Element): element is Image {
+    return element.type === 'image';
+}
 
 export const createImage = defineElement<ImageState>('image', () => ({ context, state }) => {
     const {

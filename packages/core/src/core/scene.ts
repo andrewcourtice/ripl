@@ -1,216 +1,204 @@
 import {
-    createElementEvent,
+    Element,
+    ElementEventMap,
 } from './element';
 
 import {
-    createEvent,
-} from './event-bus';
-
-import {
+    Context,
+    ContextType,
     createContext,
-    rescaleCanvas,
-} from './context';
+} from '../context';
 
 import {
-    createGroup,
+    createFrameBuffer,
+} from '../animation';
+
+import {
+    Group,
+    GroupOptions,
+    isGroup,
 } from './group';
 
 import {
+    arrayDedupe,
+    arrayFilter,
     arrayFind,
+    arrayForEach,
+    arrayJoin,
+    arrayReduce,
     Disposable,
     DOMElementEventMap,
     DOMEventHandler,
-    onDOMElementResize,
+    functionMemoize,
     onDOMEvent,
 } from '@ripl/utilities';
 
-import {
-    Element,
-    ElementEventMap,
-    EventHandler,
-    Scene,
-    SceneEventMap,
-    SceneOptions,
-} from './types';
+export interface SceneEventMap extends ElementEventMap {
+    resize: null;
+}
 
-export function createScene(target: string | HTMLCanvasElement, options?: SceneOptions): Scene {
-    let {
-        canvas,
-        context,
-        clear,
-        width,
-        height,
-        xScale,
-        yScale,
-    } = createContext(target);
+export interface SceneOptions extends GroupOptions {
+    type?: ContextType;
+    renderOnResize?: boolean;
+}
 
-    const {
-        props,
-        renderOnResize = true,
-    } = options || {};
+export class Scene extends Group<SceneEventMap> {
 
-    const group = createGroup({ props });
-    const disposals = new Set<Disposable>();
+    readonly context: Context;
+    public buffer: Element[];
+    private disposals = new Set<Disposable>();
 
-    let graphHandle: number | undefined;
-    let elements = group.graph();
-
-    let left = 0;
-    let top = 0;
-    let activeElement: Element | undefined;
-
-    function updateScaling(_width: number, _height: number) {
-        width = _width;
-        height = _height;
-
-        ({
-            xScale,
-            yScale,
-        } = rescaleCanvas(canvas, width, height));
+    public get width() {
+        return this.context.width;
     }
 
-    function updateStyling() {
+    public get height() {
+        return this.context.height;
+    }
+
+    constructor(target: string | HTMLElement, options?: SceneOptions) {
         const {
-            font,
-        } = window.getComputedStyle(document.body);
+            type,
+            renderOnResize = true,
+            ...groupOptions
+        } = options || {};
 
-        context.font = font;
-    }
-
-    function attachDOMEvent<TEvent extends keyof DOMElementEventMap<typeof canvas>>(event: TEvent, handler: DOMEventHandler<typeof canvas, TEvent>) {
-        disposals.add(onDOMEvent(canvas, event, handler));
-    }
-
-    function on<TEvent extends keyof SceneEventMap>(event: TEvent, handler: EventHandler<SceneEventMap[TEvent]>) {
-        return group.on(event as keyof ElementEventMap, handler as EventHandler<ElementEventMap[keyof ElementEventMap]>);
-    }
-
-    function emit<TEvent extends keyof SceneEventMap>(event: TEvent, payload: SceneEventMap[TEvent]) {
-        group.emit(event as keyof ElementEventMap, payload as ElementEventMap[keyof ElementEventMap]);
-    }
-
-    function render(time?: number) {
-        clear();
-        group.render(context, time);
-    }
-
-    function dispose() {
-        disposals.forEach(({ dispose }) => dispose);
-    }
-
-    attachDOMEvent('mouseenter', event => {
-        ({
-            left,
-            top,
-        } = canvas.getBoundingClientRect());
-
-        emit('scene:mouseenter', createEvent(event));
-    });
-
-    attachDOMEvent('mouseleave', event => {
-        emit('scene:mouseleave', createEvent(event));
-    });
-
-    attachDOMEvent('mousemove', event => {
-        const x = event.clientX - left;
-        const y = event.clientY - top;
-
-        emit('scene:mousemove', createEvent({
-            x,
-            y,
-            event,
-        }));
-
-        const baseEvent = createEvent(event);
-        const matchedElement = arrayFind(elements, element => element.intersectsWith(xScale(x), yScale(y), {
-            isPointer: true,
-        }), -1);
-
-        if (matchedElement && matchedElement === activeElement) {
-            return matchedElement.emit('element:mousemove', {
-                element: matchedElement,
-                ...baseEvent,
-            });
-        }
-
-        if (matchedElement) {
-            matchedElement.emit('element:mouseenter', {
-                element: matchedElement,
-                ...baseEvent,
-            });
-        }
-
-        if (activeElement) {
-            activeElement.emit('element:mouseleave', {
-                element: activeElement,
-                ...baseEvent,
-            });
-        }
-
-        activeElement = matchedElement;
-    });
-
-    attachDOMEvent('click', event => {
-        const x = xScale(event.clientX - left);
-        const y = yScale(event.clientY - top);
-
-        const element = arrayFind(elements, element => element.intersectsWith(x, y, {
-            isPointer: true,
-        }), -1);
-
-        console.log(element);
-
-        element?.emit('element:click', createElementEvent(element, event));
-    });
-
-    updateStyling();
-
-    onDOMElementResize(canvas, ({ width, height }) => {
-        updateScaling(width, height);
-        emit('scene:resize', createEvent({
-            width,
-            height,
-        }));
-
-        if (renderOnResize && elements.length > 0) {
-            render();
-        }
-    });
-
-    group.on('scene:graph', () => {
-        if (graphHandle) {
-            cancelAnimationFrame(graphHandle);
-            graphHandle = undefined;
-        }
-
-        graphHandle = requestAnimationFrame(() => {
-            elements = group.graph();
+        const context = createContext(target, {
+            type,
+            buffer: false,
         });
-    });
 
-    return {
-        context,
-        canvas,
-        on,
-        emit,
-        render,
-        dispose,
-        add: group.add,
-        remove: group.remove,
-        clear: group.clear,
-        find: group.find,
-        findAll: group.findAll,
-        graph: group.graph,
+        super({
+            font: window.getComputedStyle(context.element).font,
+            ...groupOptions,
+        });
 
-        get width() {
-            return width;
-        },
-        get height() {
-            return height;
-        },
+        this.context = context;
+        this.buffer = this.graph();
 
-        get elements() {
-            return elements;
-        },
-    };
+        let left = 0;
+        let top = 0;
+
+        const requestFrame = createFrameBuffer();
+        const activeElements = [] as Element[];
+        const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
+            const elements = arrayReduce(this.graph(true), (output, element) => {
+                if (!element.has(event)) {
+                    return output;
+                }
+
+                return output.concat(isGroup(element)
+                    ? element.graph()
+                    : element);
+            }, [] as Element[]);
+
+            return arrayDedupe(elements);
+        });
+
+        this.attachDOMEvent('mouseenter', () => {
+            ({
+                left,
+                top,
+            } = this.context.element.getBoundingClientRect());
+
+            this.emit('mouseenter', null);
+        });
+
+        this.attachDOMEvent('mouseleave', () => {
+            this.emit('mouseleave', null);
+        });
+
+        this.attachDOMEvent('mousemove', event => {
+            const x = event.clientX - left;
+            const y = event.clientY - top;
+            const trueX = this.context.xScale(x);
+            const trueY = this.context.yScale(y);
+
+            this.emit('mousemove', {
+                x,
+                y,
+            });
+
+            const trackedElements = [
+                ...getTrackedElements('mousemove'),
+                ...getTrackedElements('mouseenter'),
+                ...getTrackedElements('mouseleave'),
+            ];
+
+            const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
+                isPointer: true,
+            }));
+
+            const {
+                left: entries,
+                inner: updates,
+                right: exits,
+            } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
+
+            arrayForEach(entries, element => {
+                activeElements.push(element);
+                element.emit('mouseenter', null);
+            });
+
+            arrayForEach(updates, ([element]) => element.emit('mousemove', {
+                x,
+                y,
+            }));
+
+            arrayForEach(exits, element => {
+                activeElements.splice(activeElements.indexOf(element), 1);
+                element.emit('mouseleave', null);
+            });
+        });
+
+        this.attachDOMEvent('click', event => {
+            const x = this.context.xScale(event.clientX - left);
+            const y = this.context.yScale(event.clientY - top);
+
+            const element = arrayFind(getTrackedElements('click'), element => element.intersectsWith(x, y, {
+                isPointer: true,
+            }), -1);
+
+            element?.emit('click', {
+                x,
+                y,
+            });
+        });
+
+        context.on('resize', () => {
+            this.emit('resize', null);
+            if (renderOnResize && !!this.buffer.length) {
+                this.render();
+            }
+        });
+
+        this.on('graph', () => requestFrame(() => {
+            this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+            getTrackedElements.cache.clear();
+        }));
+
+        this.on('track', ({ data }) => getTrackedElements.cache.delete(data));
+        this.on('untrack', ({ data }) => getTrackedElements.cache.delete(data));
+    }
+
+    private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+        this.disposals.add(onDOMEvent(this.context.element, event, handler));
+    }
+
+    public destroy(): void {
+        this.disposals.forEach(disposal => disposal.dispose());
+        super.destroy();
+    }
+
+    public render(): void {
+        this.context.clear();
+        this.context.markRenderStart();
+        arrayForEach(this.buffer, element => element.render(this.context));
+        this.context.markRenderEnd();
+    }
+
+}
+
+export function createScene(...options: ConstructorParameters<typeof Scene>) {
+    return new Scene(...options);
 }

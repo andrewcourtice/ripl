@@ -1,6 +1,6 @@
 <div class="example" layout="row stretch-justify">
     <div self="size-x1">
-        <canvas class="example__canvas"></canvas>
+        <div class="example__root"></div>
     </div>
     {#if $$slots.sidebar}
         <div class="example__sidebar">
@@ -17,7 +17,7 @@
         overflow: hidden;
     }
     
-    .example__canvas {
+    .example__root {
         width: 100%;
         height: 100%;
     }

@@ -1,108 +1,95 @@
 import {
-    defineElement,
+    Context,
+    ContextPath,
+} from '../context';
+
+import {
+    BaseElementState,
+    Element,
+    ElementIntersectionOptions,
+    ElementOptions,
 } from './element';
 
-import type {
-    BaseElementAttrs,
-    BaseElementState,
-    ElementConstructor,
-    ShapeDefinition,
-    ShapeDefinitionOptions,
-    ShapeInstance,
-} from './types';
+export type ShapeOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
+    autoStroke?: boolean;
+    autoFill?: boolean;
+}
 
-export function defineShape<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs>(
-    type: string,
-    definition: ShapeDefinition<TState, TAttrs>,
-    definitionOptions: ShapeDefinitionOptions<TState> = {}
-): ElementConstructor<TState, TAttrs> {
-    const {
-        autoFill = true,
-        autoStroke = true,
-        ...elDefinitionOptions
-    } = definitionOptions;
+export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
-    const elConstructor = defineElement<TState, TAttrs>(type, elInstance => {
-        let path: Path2D | undefined;
+    protected path?: ContextPath;
 
-        const shapeInstance = {
-            ...elInstance,
-            setBoundingBoxHandler: handler => {
-                elInstance.setBoundingBoxHandler(data => handler({
-                    ...data,
-                    path,
-                }));
-            },
-            setIntersectionHandler: handler => {
-                elInstance.setIntersectionHandler((point, data) => handler(point, {
-                    ...data,
-                    path,
-                }));
-            },
-        } as ShapeInstance<TState, TAttrs>;
+    public autoStroke: boolean;
+    public autoFill: boolean;
+
+    constructor(type: string, options: ShapeOptions<TState>) {
+        const {
+            autoFill = true,
+            autoStroke = true,
+            ...elementOptions
+        } = options;
+
+        super(type, elementOptions as ElementOptions<TState>);
+
+        this.autoFill = autoFill;
+        this.autoStroke = autoStroke;
+    }
+
+    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
+        if (!this.context) {
+            return super.intersectsWith(x, y, options);
+        }
 
         const {
-            getAttr,
-            setIntersectionHandler,
-        } = shapeInstance;
+            isPointer = false,
+        } = options || {};
 
-        // Set the default intersection handler
-        setIntersectionHandler(([x, y], { context, isPointer }) => {
-            const isAnyIntersecting = () => !!path && (context.isPointInStroke(path, x, y) || context.isPointInPath(path, x, y));
+        const isAnyIntersecting = () => !!(this.path && this.context) && (
+            this.context.isPointInStroke(this.path, x, y) ||
+            this.context.isPointInPath(this.path, x, y)
+        );
 
-            if (!isPointer) {
-                return isAnyIntersecting();
-            }
-
-            const pointerEvents = getAttr('pointerEvents');
-
-            if (!path || pointerEvents === 'none') {
-                return false;
-            }
-
-            if (pointerEvents === 'stroke') {
-                return context.isPointInStroke(path, x, y);
-            }
-
-            if (pointerEvents === 'fill') {
-                return context.isPointInPath(path, x, y);
-            }
-
+        if (!isPointer) {
             return isAnyIntersecting();
+        }
+
+        if (!this.path || this.pointerEvents === 'none') {
+            return false;
+        }
+
+        if (this.pointerEvents === 'stroke') {
+            return !!this.context.isPointInStroke(this.path, x, y);
+        }
+
+        if (this.pointerEvents === 'fill') {
+            return !!this.context.isPointInPath(this.path, x, y);
+        }
+
+        return isAnyIntersecting();
+    }
+
+    public render(context: Context, callback?: (path: ContextPath) => void) {
+        return super.render(context, () => {
+            this.path = context.createPath(this.id);
+
+            callback?.(this.path);
+
+            if (this.path && this.autoStroke && this.strokeStyle) {
+                context.stroke(this.path);
+            }
+
+            if (this.path && this.autoFill && this.fillStyle) {
+                context.fill(this.path);
+            }
         });
+    }
 
-        const onRender = definition(shapeInstance);
+}
 
-        return frame => {
-            const {
-                context,
-                state,
-            } = frame;
+export function createShape(...options: ConstructorParameters<typeof Shape>) {
+    return new Shape(...options);
+}
 
-            onRender({
-                ...frame,
-
-                // Only create a path if the shape requests it
-                get path() {
-                    return (path = new Path2D(), path);
-                },
-            });
-
-            if (path && autoStroke && state.strokeStyle) {
-                context.stroke(path);
-            }
-
-            if (path && autoFill && state.fillStyle) {
-                context.fill(path);
-            }
-        };
-    }, elDefinitionOptions);
-
-    return (options) => {
-        const el = elConstructor(options);
-
-        el.clone = () => elConstructor(options);
-
-        return el;
-    };
+export function elementIsShape(value: unknown): value is Shape {
+    return value instanceof Shape;
 }

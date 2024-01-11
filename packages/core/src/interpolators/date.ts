@@ -2,11 +2,15 @@ import {
     interpolateNumber,
 } from './number';
 
+import {
+    typeIsDate,
+} from '@ripl/utilities';
+
 import type {
-    Interpolator,
+    InterpolatorFactory,
 } from './types';
 
-export function interpolateDate(valueA: Date, valueB: Date): Interpolator<Date> {
+export const interpolateDate: InterpolatorFactory<Date> = (valueA, valueB) => {
     const date = new Date();
     const interpolator = interpolateNumber(valueA.getTime(), valueB.getTime());
 
@@ -14,4 +18,6 @@ export function interpolateDate(valueA: Date, valueB: Date): Interpolator<Date> 
         date.setTime(interpolator(position));
         return date;
     };
-}
+};
+
+interpolateDate.test = typeIsDate;

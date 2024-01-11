@@ -1,8 +1,14 @@
+import {
+    typeIsNumber,
+} from '@ripl/utilities';
+
 import type {
-    Interpolator,
+    InterpolatorFactory,
 } from './types';
 
-export function interpolateNumber(valueA: number, valueB: number): Interpolator {
+export const interpolateNumber: InterpolatorFactory<number> = (valueA, valueB) => {
     const valueDelta = valueB - valueA;
     return position => valueA + valueDelta * position;
-}
+};
+
+interpolateNumber.test = typeIsNumber;

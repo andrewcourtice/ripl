@@ -1,6 +1,8 @@
 import {
     BaseElementState,
-    defineShape,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
@@ -8,10 +10,6 @@ import {
     Box,
     normaliseBorderRadius,
 } from '../math';
-
-import {
-    interpolateBorderRadius,
-} from '../interpolators';
 
 export interface RectState extends BaseElementState {
     x: number;
@@ -21,61 +19,107 @@ export interface RectState extends BaseElementState {
     borderRadius?: number | BorderRadius;
 }
 
-export const createRect = defineShape<RectState>('rect', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state }) => new Box(
-        state.y,
-        state.x,
-        state.y + state.height,
-        state.x + state.width
-    ));
+export class Rect extends Shape<RectState> {
 
-    return ({ path, state }) => {
-        const {
-            x,
-            y,
-            width,
-            height,
-            borderRadius,
-        } = state;
+    public get x() {
+        return this.getStateValue('x');
+    }
 
-        if (!borderRadius) {
-            return path.rect(x, y, width, height);
-        }
+    public set x(value) {
+        this.setStateValue('x', value);
+    }
 
-        const borders = normaliseBorderRadius(borderRadius);
+    public get y() {
+        return this.getStateValue('y');
+    }
 
-        if (path.roundRect) {
-            return path.roundRect(x, y, width, height, borders);
-        }
+    public set y(value) {
+        this.setStateValue('y', value);
+    }
 
-        const [
-            borderTopLeft,
-            borderTopRight,
-            borderBottomRight,
-            borderBottomLeft,
-        ] = borders;
+    public get width() {
+        return this.getStateValue('width');
+    }
 
-        path.moveTo(x + borderTopLeft, y);
-        path.lineTo(x + width - borderTopRight, y);
-        path.arcTo(x + width, y, x + width, y + borderTopRight, borderTopRight);
-        path.lineTo(x + width, y + height - borderBottomRight);
-        path.arcTo(x + width, y + height, x + width - borderBottomRight, y + height, borderBottomRight);
-        path.lineTo(x + borderBottomLeft, y + height);
-        path.arcTo(x, y + height, x, y + height - borderBottomLeft, borderBottomLeft);
-        path.lineTo(x, y + borderTopLeft);
-        path.arcTo(x, y, x + borderTopLeft, y, borderTopLeft);
-        path.closePath();
-    };
-}, {
-    interpolators: {
-        borderRadius: (bRadiusA, bRadiusB) => {
-            if (bRadiusA && bRadiusB) {
-                return interpolateBorderRadius(bRadiusA, bRadiusB);
+    public set width(value) {
+        this.setStateValue('width', value);
+    }
+
+    public get height() {
+        return this.getStateValue('height');
+    }
+
+    public set height(value) {
+        this.setStateValue('height', value);
+    }
+
+    public get borderRadius() {
+        return this.getStateValue('borderRadius');
+    }
+
+    public set borderRadius(value) {
+        this.setStateValue('borderRadius', value);
+    }
+
+    constructor(options: ShapeOptions<RectState>) {
+        super('rect', options);
+    }
+
+    public getBoundingBox() {
+        return new Box(
+            this.y,
+            this.x,
+            this.y + this.height,
+            this.x + this.width
+        );
+    }
+
+    public render(context: Context) {
+        return super.render(context, path => {
+            const {
+                x,
+                y,
+                width,
+                height,
+                borderRadius,
+            } = this;
+
+            if (!borderRadius) {
+                return path.rect(x, y, width, height);
             }
 
-            return () => undefined;
-        },
-    },
-});
+            const borders = normaliseBorderRadius(borderRadius);
+
+            if (path.roundRect) {
+                return path.roundRect(x, y, width, height, borders);
+            }
+
+            const [
+                borderTopLeft,
+                borderTopRight,
+                borderBottomRight,
+                borderBottomLeft,
+            ] = borders;
+
+            path.moveTo(x + borderTopLeft, y);
+            path.lineTo(x + width - borderTopRight, y);
+            path.arcTo(x + width, y, x + width, y + borderTopRight, borderTopRight);
+            path.lineTo(x + width, y + height - borderBottomRight);
+            path.arcTo(x + width, y + height, x + width - borderBottomRight, y + height, borderBottomRight);
+            path.lineTo(x + borderBottomLeft, y + height);
+            path.arcTo(x, y + height, x, y + height - borderBottomLeft, borderBottomLeft);
+            path.lineTo(x, y + borderTopLeft);
+            path.arcTo(x, y, x + borderTopLeft, y, borderTopLeft);
+            path.closePath();
+        });
+    }
+
+}
+
+export function createRect(...options: ConstructorParameters<typeof Rect>) {
+    return new Rect(...options);
+}
+
+export function elementIsRect(value: unknown): value is Rect {
+    return value instanceof Rect;
+}

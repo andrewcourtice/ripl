@@ -1,21 +1,14 @@
 import {
     CONTEXT_OPERATIONS,
-    INTERPOLATORS,
+    TRACKED_EVENTS,
 } from './constants';
 
 import {
-    createEvent,
-    createEventBus,
+    EventBus,
+    EventHandler,
+    EventMap,
+    EventSubscriptionOptions,
 } from './event-bus';
-
-import {
-    scaleContinuous,
-} from '../scales';
-
-import {
-    interpolateNumber,
-    Interpolator,
-} from '../interpolators';
 
 import {
     Box,
@@ -23,351 +16,443 @@ import {
 } from '../math';
 
 import {
-    arrayFind,
-    isArray,
-    isFunction,
-    isNil,
-    isNumber,
-    isObject,
-    stringUniqueId,
-} from '@ripl/utilities';
+    scaleContinuous,
+} from '../scales';
 
 import {
+    interpolateAny,
+    interpolateBorderRadius,
+    interpolateColor,
+    interpolateDate,
+    interpolateNumber,
+    interpolatePoints,
+    Interpolator,
+    InterpolatorFactory,
+} from '../interpolators';
+
+import {
+    AnyFunction,
+    arrayFind,
     objectForEach,
-    objectMap,
+    objectReduce,
+    OneOrMore,
+    stringUniqueId,
+    typeIsArray,
+    typeIsFunction,
+    typeIsNil,
+    typeIsObject,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 import type {
-    BaseElementAttrs,
-    BaseElementState,
-    Element,
-    ElementBoundingBoxHandler,
-    ElementConstructor,
-    ElementDefinition,
-    ElementDefinitionOptions,
-    ElementEvent,
-    ElementEventMap,
-    ElementInstance,
-    ElementInterpolator,
-    ElementInterpolators,
-    ElementIntersectionHandler,
-    ElementIntersectionOptions,
-    ElementProducers,
-    ElementProperties,
-    ElementValidationHandler,
-    ElementValueBounds,
-    ElementValueKeyFrame,
-    FrameCallback,
     Group,
-} from './types';
+} from './group';
 
-function isElementValueBound(value: unknown): value is ElementValueBounds<any> {
-    return isArray(value) && value.length === 2;
+import type {
+    BaseState,
+    Context,
+} from '../context';
+
+export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
+export type ElementValidationType = 'info' | 'warning' | 'error';
+export type ElementIntersectionOptions = {
+    isPointer: boolean;
 }
 
-function isElementValueKeyFrame(value: unknown): value is ElementValueKeyFrame<any>[] {
-    return isArray(value) && value.every(keyframe => isObject(keyframe) && 'value' in keyframe);
+export interface BaseElementState extends Partial<BaseState> {
 }
 
-function getKeyframeInterpolator<TValue>(value: ElementValueKeyFrame<TValue>[], calculator: ElementInterpolator<TValue>): Interpolator<TValue | undefined> {
-    const lastIndex = value.length - 1;
-    const keyframes = value.map(({ offset, value }, index) => ({
+export interface ElementEventMap extends EventMap {
+    graph: null;
+    track: keyof ElementEventMap;
+    untrack: keyof ElementEventMap;
+    attached: Group;
+    detached: Group;
+    updated: null;
+    mouseenter: null;
+    mouseleave: null;
+    mousemove: {
+        x: number;
+        y: number;
+    };
+    click: {
+        x: number;
+        y: number;
+    };
+    destroyed: null;
+}
+
+export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
+    id?: string;
+    class?: OneOrMore<string>;
+    data?: unknown;
+    pointerEvents?: ElementPointerEvents;
+} & TState;
+
+export type ElementInterpolationKeyFrame<TValue = number> = {
+    offset?: number;
+    value: TValue;
+}
+
+export type ElementInterpolationStateValue<TValue = number> = TValue
+| ElementInterpolationKeyFrame<TValue>[]
+| Interpolator<TValue>;
+
+export type ElementInterpolators<TState extends BaseElementState> = {
+    [TKey in keyof TState]: InterpolatorFactory<TState[TKey]>;
+};
+
+export type ElementInterpolationState<TState extends BaseElementState> = {
+    [TKey in keyof TState]?: ElementInterpolationStateValue<TState[TKey]>;
+};
+
+export interface ElementValidationResult {
+    type: ElementValidationType;
+    message: string;
+}
+
+function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
+    return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
+}
+
+function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementInterpolationKeyFrame<TValue>[], interpolator: InterpolatorFactory<TValue>): Interpolator<TValue | undefined> {
+    let keyframes = [{
+        offset: 0,
+        value: currentValue,
+    }].concat(frames);
+
+    keyframes = frames.map(({ offset, value }, index) => ({
         value,
-        offset: isNil(offset) ? index / lastIndex : offset,
+        offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
     }));
 
-    if (keyframes[0].offset !== 0) {
-        keyframes.unshift({
-            offset: 0,
-            value: keyframes[0].value,
-        });
-    }
-
-    if (keyframes[lastIndex].offset !== 1) {
+    if (keyframes.at(-1)?.offset !== 1) {
         keyframes.push({
             offset: 1,
-            value: keyframes[lastIndex ].value,
+            value: keyframes.at(-1)?.value ?? currentValue,
         });
     }
 
     keyframes.sort(({ offset: oa }, { offset: ob }) => oa - ob);
 
-    const deltaFrames = Array.from({ length: keyframes.length - 1 }, (_, index) => {
+    const frameScale = scaleContinuous([0, 1], [0, keyframes.length - 1], true);
+    const interpolators = Array.from({ length: keyframes.length - 1 }, (_, index) => {
         const frameA = keyframes[index];
         const frameB = keyframes[index + 1];
         const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);
-        const calculate = calculator(frameA.value, frameB.value);
+        const interpolate = interpolator(frameA.value, frameB.value);
+
+        return (time: number) => interpolate(scale(time));
+    });
+
+    return time => interpolators[Math.floor(frameScale(time))](time);
+}
+
+function getInterpolator<TValue>(value: TValue) {
+    const interpolator = arrayFind([
+        interpolateNumber,
+        interpolateColor,
+        interpolateDate,
+        interpolatePoints,
+        interpolateBorderRadius,
+    ], ({ test }) => !!test?.(value));
+
+    return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
+}
+
+export class Element<
+    TState extends BaseElementState = BaseElementState,
+    TEventMap extends ElementEventMap = ElementEventMap
+> extends EventBus<TEventMap> {
+
+    protected state: TState;
+    protected context?: Context;
+
+    public id: string;
+    public readonly type: string;
+    public readonly classList: Set<string>;
+
+    public abstract: boolean = false;
+    public pointerEvents: ElementPointerEvents = 'all';
+    public parent?: Group<TEventMap>;
+    public data: unknown;
+
+    // Props
+
+    public get direction() {
+        return this.getStateValue('direction');
+    }
+
+    public set direction(value) {
+        this.setStateValue('direction', value);
+    }
+
+    public get fillStyle() {
+        return this.getStateValue('fillStyle');
+    }
+
+    public set fillStyle(value) {
+        this.setStateValue('fillStyle', value);
+    }
+
+    public get filter() {
+        return this.getStateValue('filter');
+    }
+
+    public set filter(value) {
+        this.setStateValue('filter', value);
+    }
+
+    public get font() {
+        return this.getStateValue('font');
+    }
+
+    public set font(value) {
+        this.setStateValue('font', value);
+    }
+
+    public get globalAlpha() {
+        return this.getStateValue('globalAlpha');
+    }
+
+    public set globalAlpha(value) {
+        this.setStateValue('globalAlpha', value);
+    }
+
+    public get globalCompositeOperation() {
+        return this.getStateValue('globalCompositeOperation');
+    }
+
+    public set globalCompositeOperation(value) {
+        this.setStateValue('globalCompositeOperation', value);
+    }
+
+    public get lineCap() {
+        return this.getStateValue('lineCap');
+    }
+
+    public set lineCap(value) {
+        this.setStateValue('lineCap', value);
+    }
+
+    public get lineDash() {
+        return this.getStateValue('lineDash');
+    }
+
+    public set lineDash(value) {
+        this.setStateValue('lineDash', value);
+    }
+
+    public get lineDashOffset() {
+        return this.getStateValue('lineDashOffset');
+    }
+
+    public set lineDashOffset(value) {
+        this.setStateValue('lineDashOffset', value);
+    }
+
+    public get lineJoin() {
+        return this.getStateValue('lineJoin');
+    }
+
+    public set lineJoin(value) {
+        this.setStateValue('lineJoin', value);
+    }
+
+    public get lineWidth() {
+        return this.getStateValue('lineWidth');
+    }
+
+    public set lineWidth(value) {
+        this.setStateValue('lineWidth', value);
+    }
+
+    public get miterLimit() {
+        return this.getStateValue('miterLimit');
+    }
+
+    public set miterLimit(value) {
+        this.setStateValue('miterLimit', value);
+    }
+
+    public get shadowBlur() {
+        return this.getStateValue('shadowBlur');
+    }
+
+    public set shadowBlur(value) {
+        this.setStateValue('shadowBlur', value);
+    }
+
+    public get shadowColor() {
+        return this.getStateValue('shadowColor');
+    }
+
+    public set shadowColor(value) {
+        this.setStateValue('shadowColor', value);
+    }
+
+    public get shadowOffsetX() {
+        return this.getStateValue('shadowOffsetX');
+    }
+
+    public set shadowOffsetX(value) {
+        this.setStateValue('shadowOffsetX', value);
+    }
+
+    public get shadowOffsetY() {
+        return this.getStateValue('shadowOffsetY');
+    }
+
+    public set shadowOffsetY(value) {
+        this.setStateValue('shadowOffsetY', value);
+    }
+
+    public get strokeStyle() {
+        return this.getStateValue('strokeStyle');
+    }
+
+    public set strokeStyle(value) {
+        this.setStateValue('strokeStyle', value);
+    }
+
+    public get textAlign() {
+        return this.getStateValue('textAlign');
+    }
+
+    public set textAlign(value) {
+        this.setStateValue('textAlign', value);
+    }
+
+    public get textBaseline() {
+        return this.getStateValue('textBaseline');
+    }
+
+    public set textBaseline(value) {
+        this.setStateValue('textBaseline', value);
+    }
+
+    public get zIndex(): number {
+        return (this.parent?.zIndex ?? 0) + (this.state.zIndex ?? 0);
+    }
+
+    public set zIndex(value) {
+        this.setStateValue('zIndex', value);
+    }
+
+    constructor(type: string, {
+        id = `${type}:${stringUniqueId()}`,
+        class: classes = [],
+        data,
+        pointerEvents = 'all',
+        ...state
+    }: ElementOptions<TState>) {
+        super();
+
+        this.type = type;
+        this.id = id;
+        this.data = data;
+        this.state = state as TState;
+        this.pointerEvents = pointerEvents;
+        this.classList = new Set(valueOneOrMore(classes));
+    }
+
+    protected getStateValue<TKey extends keyof TState>(key: TKey) {
+        return this.state[key] ?? (this.parent as unknown as TState)?.[key];
+    }
+
+    protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
+        this.state[key] = value;
+        this.emit('updated', null);
+    }
+
+    public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions) {
+        const listener = super.on(event, handler, options);
+
+        if (!TRACKED_EVENTS.includes(event)) {
+            return listener;
+        }
+
+        this.emit('track', event);
 
         return {
-            scale,
-            calculate,
-            ...frameA,
+            dispose: () => (this.emit('untrack', event), listener.dispose()),
         };
-    });
-
-    return time => {
-        const keyframe = arrayFind(deltaFrames, frame => time >= frame.offset, -1);
-
-        if (keyframe) {
-            return keyframe.calculate(keyframe.scale(time));
-        }
-    };
-}
-
-function defaultInterpolator<TState extends BaseElementState>(valueA: TState[keyof TState], valueB: TState[keyof TState]): Interpolator<TState[keyof TState]> {
-    if (valueA === valueB) {
-        return () => valueB;
     }
 
-    if (isNumber(valueA) && isNumber(valueB)) {
-        return interpolateNumber(valueA, valueB) as Interpolator<typeof valueA>;
+    public clone() {
+        return new Element(this.type, {
+            id: this.id,
+            class: Array.from(this.classList),
+            ...this.state,
+        });
     }
 
-    return time => time > 0.5 ? valueB : valueA;
-}
+    public getBoundingBox() {
+        return new Box(0, 0, 0, 0);
+    }
 
-function getProducers<TState extends BaseElementState>(
-    properties: Partial<ElementProperties<TState>>,
-    interpolators: ElementInterpolators<TState> = {}
-): ElementProducers<TState> {
-    return objectMap(properties, (key, value) => {
-        const interpolator = interpolators[key] || defaultInterpolator;
+    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
+        return isPointInBox([x, y], this.getBoundingBox());
+    }
 
-        if (isFunction(value)) {
-            return value;
-        }
+    public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
+        const mappedIntpls = objectReduce(newState, (output, key, value) => {
+            const currentValue = this.getStateValue(key);
 
-        if (isElementValueKeyFrame(value)) {
-            return getKeyframeInterpolator(value, interpolator);
-        }
-
-        if (isElementValueBound(value)) {
-            return interpolator!(value[0], value[1]);
-        }
-
-        return () => value;
-    });
-}
-
-export function createElementEvent<TElement extends Element, TData = unknown>(element: TElement, data: TData): ElementEvent<TData> {
-    return {
-        element,
-        ...createEvent(data),
-    };
-}
-
-export function defineElement<TState extends BaseElementState, TAttrs extends BaseElementAttrs = BaseElementAttrs>(
-    type: string,
-    definition: ElementDefinition<TState, TAttrs>,
-    definitionOptions: ElementDefinitionOptions<TState> = {}
-): ElementConstructor<TState, TAttrs> {
-    const {
-        abstract,
-        interpolators: definitionInterpolators,
-    } = definitionOptions;
-
-    return (instanceOptions = {}) => {
-        const eventBus = createEventBus<ElementEventMap>();
-
-        let {
-            id = `${type}:${stringUniqueId()}`,
-            props = {},
-            attrs = {
-                pointerEvents: 'all',
-            } as TAttrs,
-            data,
-            class: elClass,
-            interpolators: instanceInterpolators,
-        } = instanceOptions;
-
-        let getBoundingBoxHandler: ElementBoundingBoxHandler<TState> = () => new Box(0, 0, 0, 0);
-        let intersectsWithHandler: ElementIntersectionHandler<TState> = () => false;
-        let validationHandler: ElementValidationHandler<TState> = () => true;
-
-        const interpolators = {
-            ...INTERPOLATORS,
-            ...definitionInterpolators,
-            ...instanceInterpolators,
-        } as ElementInterpolators<TState>;
-
-        const instance = {
-            emit,
-            on: eventBus.on,
-            once: eventBus.once,
-
-            getAttrs: () => attrs,
-            getAttr: key => attrs[key],
-
-            setBoundingBoxHandler: handler => getBoundingBoxHandler = handler,
-            setIntersectionHandler: handler => intersectsWithHandler = handler,
-            setValidationHandler: handler => validationHandler = handler,
-        } as ElementInstance<TState, TAttrs>;
-
-        const onRender = definition(instance);
-
-        let producers = getProducers(props, interpolators);
-
-        let ctx: CanvasRenderingContext2D | undefined;
-        let parent: Group | undefined;
-        let currentState: TState;
-
-        const element: Element<TState, TAttrs> = {
-            id,
-            type,
-            data,
-            clone,
-            setProps,
-            setAttrs,
-            getState,
-            setEndState,
-            getBoundingBox,
-            intersectsWith,
-            render,
-            class: elClass,
-
-            emit,
-            on: eventBus.on,
-            once: eventBus.once,
-
-            destroy,
-
-            get attrs () {
-                return Object.freeze(attrs) as TAttrs;
-            },
-
-            get parent() {
-                return parent;
-            },
-
-            set parent(group: Group | undefined) {
-                parent = group;
-            },
-
-            get path() {
-                return [parent?.id || '', id].join('/');
-            },
-        };
-
-        function destroy() {
-            parent?.remove(element);
-            eventBus.destroy();
-        }
-
-        function emit<TEvent extends keyof ElementEventMap>(event: TEvent, payload: ElementEventMap[TEvent]) {
-            eventBus.emit(event, payload);
-
-            if (parent && payload.bubble) {
-                parent.emit(event, payload);
-            }
-        }
-
-        function clone() {
-            return defineElement(type, definition, definitionOptions)(instanceOptions);
-        }
-
-        function setProps(properties: Partial<ElementProperties<TState>>) {
-            producers = {
-                ...producers,
-                ...getProducers(properties, interpolators),
-            };
-
-            emit('element:updated', createElementEvent(element, properties));
-        }
-
-        function setAttrs(attributes: Partial<TAttrs>) {
-            attrs = {
-                ...attrs,
-                ...attributes,
-            };
-        }
-
-        function getState(time?: number, callback?: FrameCallback<TState>) {
-            if (isNil(time) && currentState) {
-                return currentState;
+            if (typeIsNil(currentValue)) {
+                return output;
             }
 
-            const _time = time ?? 0;
-            const parentState = parent?.getState(_time) || {};
-            const output = {} as TState;
+            if (typeIsFunction(value)) {
+                return (output[key] = value, output);
+            }
 
-            const updateOutput = (key: keyof TState, value: TState[keyof TState]) => {
-                output[key] = value;
+            const interpolator = interpolators[key] || getInterpolator(currentValue);
 
-                if (callback) {
-                    callback(key, value);
+            if (isElementValueKeyFrame(value)) {
+                return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);
+            }
+
+            return (output[key] = interpolator(currentValue, value), output);
+        }, {} as Record<keyof TState, Interpolator<any>>);
+
+        return time => objectForEach(mappedIntpls, (key, value) => {
+            this.state[key] = value(time);
+        });
+    }
+
+    public render(context: Context, callback?: AnyFunction) {
+        this.context = context;
+
+        context.markRenderStart();
+        context.save();
+
+        try {
+            objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
+                const value = this[key];
+
+                if (!this.abstract && !typeIsNil(value)) {
+                    operation(context, value);
                 }
-            };
-
-            objectForEach(parentState, updateOutput);
-            objectForEach(producers, (key, value) => updateOutput(key, value(_time)));
-
-            return output;
-        }
-
-        function setEndState(newState: Partial<TState>, time?: number) {
-            const currentState = getState();
-            const targetState = getState(time);
-
-            const properties = objectMap(currentState, (key, startValue) => {
-                const endValue = newState[key] ?? targetState[key] ?? startValue;
-
-                return startValue === endValue
-                    ? startValue
-                    : [startValue, endValue];
             });
 
-            setProps(properties);
+            callback?.();
+        } finally {
+            context.restore();
+            context.markRenderEnd();
         }
+    }
 
-        function getBoundingBox() {
-            if (!ctx) {
-                throw new Error('Failed operation - This operation requires the element to first be rendered to a context');
-            }
+    public destroy() {
+        this.parent?.remove(this);
+        super.destroy();
+    }
+}
 
-            return getBoundingBoxHandler({
-                context: ctx,
-                state: getState(),
-            });
-        }
+export function createElement(...options: ConstructorParameters<typeof Element>) {
+    return new Element(...options);
+}
 
-        function intersectsWith(x: number, y: number, options?: ElementIntersectionOptions) {
-            if (!ctx) {
-                throw new Error('Failed operation - This operation requires the element to first be rendered to a context');
-            }
-
-            const {
-                isPointer = false,
-            } = options || {};
-
-            return intersectsWithHandler([x, y], {
-                isPointer,
-                context: ctx,
-                state: getState(),
-            });
-        }
-
-        function render(context: CanvasRenderingContext2D, time: number = 0) {
-            ctx = context;
-
-            context.save();
-
-            try {
-                currentState = getState(time, (key, value) => {
-                    if (!abstract && key in CONTEXT_OPERATIONS) {
-                        CONTEXT_OPERATIONS[key]?.(context, value);
-                    }
-                });
-
-                onRender({
-                    context,
-                    time,
-                    state: currentState,
-                });
-            } finally {
-                context.restore();
-            }
-        }
-
-        return element;
-    };
+export function typeIsElement(value: unknown): value is Element {
+    return value instanceof Element;
 }

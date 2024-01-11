@@ -9,6 +9,7 @@
         "removeComments": false,
         "skipLibCheck": true,
         "declaration": true,
+        "stripInternal": true,
         "allowSyntheticDefaultImports": true,
         "forceConsistentCasingInFileNames": true,
         "lib": [

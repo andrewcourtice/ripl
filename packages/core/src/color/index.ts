@@ -21,6 +21,7 @@ import {
 
 export * from './parsers';
 export * from './serialisers';
+export * from './utilities';
 export * from './types';
 
 const PARSER_MAP = [

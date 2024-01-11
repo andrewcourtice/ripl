@@ -1,6 +1,8 @@
 import {
     BaseElementState,
-    defineShape,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
@@ -8,11 +10,10 @@ import {
     getThetaPoint,
     max,
     min,
-    Point,
 } from '../math';
 
 import {
-    isNil,
+    typeIsNil,
 } from '@ripl/utilities';
 
 export interface ArcState extends BaseElementState {
@@ -26,26 +27,101 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
-export function getArcCentroid(arc: ArcState): Point {
-    const {
-        cx,
-        cy,
-        radius,
-        startAngle,
-        endAngle,
-        innerRadius = 0,
-    } = arc;
+export class Arc extends Shape<ArcState> {
 
-    const angle = (startAngle + endAngle) / 2;
-    const distance = innerRadius + (radius - innerRadius) / 2;
+    public get cx() {
+        return this.getStateValue('cx');
+    }
 
-    return getThetaPoint(angle, distance, cx, cy);
-}
+    public set cx(value) {
+        this.setStateValue('cx', value);
+    }
 
-export const createArc = defineShape<ArcState>('arc', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state }) => {
+    public get cy() {
+        return this.getStateValue('cy');
+    }
+
+    public set cy(value) {
+        this.setStateValue('cy', value);
+    }
+
+    public get startAngle() {
+        return this.getStateValue('startAngle');
+    }
+
+    public set startAngle(value) {
+        this.setStateValue('startAngle', value);
+    }
+
+    public get endAngle() {
+        return this.getStateValue('endAngle');
+    }
+
+    public set endAngle(value) {
+        this.setStateValue('endAngle', value);
+    }
+
+    public get radius() {
+        return this.getStateValue('radius');
+    }
+
+    public set radius(value) {
+        this.setStateValue('radius', value);
+    }
+
+    public get innerRadius() {
+        return this.getStateValue('innerRadius');
+    }
+
+    public set innerRadius(value) {
+        this.setStateValue('innerRadius', value);
+    }
+
+    public get padAngle() {
+        return this.getStateValue('padAngle');
+    }
+
+    public set padAngle(value) {
+        this.setStateValue('padAngle', value);
+    }
+
+    public get borderRadius() {
+        return this.getStateValue('borderRadius');
+    }
+
+    public set borderRadius(value) {
+        this.setStateValue('borderRadius', value);
+    }
+
+    constructor(options: ShapeOptions<ArcState>) {
+        super('arc', options);
+    }
+
+    public getCentroid(alterations?: Partial<ArcState>) {
+        const {
+            cx,
+            cy,
+            radius,
+            startAngle,
+            endAngle,
+            innerRadius = 0,
+        } = {
+            cx: this.cx,
+            cy: this.cy,
+            radius: this.radius,
+            startAngle: this.startAngle,
+            endAngle: this.endAngle,
+            innerRadius: this.innerRadius,
+            ...alterations,
+        };
+
+        const angle = (startAngle + endAngle) / 2;
+        const distance = innerRadius + (radius - innerRadius) / 2;
+
+        return getThetaPoint(angle, distance, cx, cy);
+    }
+
+    public getBoundingBox() {
         const {
             cx,
             cy,
@@ -53,12 +129,12 @@ export const createArc = defineShape<ArcState>('arc', ({
             innerRadius,
             startAngle,
             endAngle,
-        } = state;
+        } = this;
 
         const [outerX1, outerY1] = getThetaPoint(startAngle, radius, cx, cy);
         const [outerX2, outerY2] = getThetaPoint(endAngle, radius, cx, cy);
 
-        if (isNil(innerRadius)) {
+        if (typeIsNil(innerRadius)) {
             return new Box(
                 min(cy, outerY1, outerY2),
                 min(cx, outerX1, outerX2),
@@ -76,9 +152,9 @@ export const createArc = defineShape<ArcState>('arc', ({
             max(innerY1, innerY2, outerY1, outerY2),
             max(innerX1, innerX2, outerX1, outerX2)
         );
-    });
+    }
 
-    return ({ path, state }) => {
+    public render(context: Context) {
         let {
             cx,
             cy,
@@ -87,28 +163,37 @@ export const createArc = defineShape<ArcState>('arc', ({
             startAngle,
             endAngle,
             padAngle,
-            borderRadius,
-        } = state;
+        } = this;
 
-        if (padAngle) {
-            const offset = padAngle / 2;
+        return super.render(context, path => {
+            if (padAngle) {
+                const offset = padAngle / 2;
 
-            startAngle = Math.min(startAngle + offset, endAngle);
-            endAngle = Math.max(endAngle - offset, startAngle);
-        }
+                startAngle = Math.min(startAngle + offset, endAngle);
+                endAngle = Math.max(endAngle - offset, startAngle);
+            }
 
-        if (isNil(innerRadius)) {
-            return path.arc(cx, cy, radius, startAngle, endAngle);
-        }
+            if (typeIsNil(innerRadius)) {
+                return path.arc(cx, cy, radius, startAngle, endAngle);
+            }
 
-        const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
-        const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
+            const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
 
-        path.moveTo(x1, y1);
-        path.arc(cx, cy, radius, startAngle, endAngle);
-        path.lineTo(x2, y2);
-        path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
-        path.lineTo(x1, y1);
-        path.closePath();
-    };
-});
+            path.moveTo(x1, y1);
+            path.arc(cx, cy, radius, startAngle, endAngle);
+            path.lineTo(x2, y2);
+            path.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+            path.lineTo(x1, y1);
+        });
+    }
+
+}
+
+export function createArc(...options: ConstructorParameters<typeof Arc>) {
+    return new Arc(...options);
+}
+
+export function elementIsArc(value: unknown): value is Arc {
+    return value instanceof Arc;
+}

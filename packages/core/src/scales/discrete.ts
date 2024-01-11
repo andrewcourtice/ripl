@@ -19,13 +19,10 @@ export function scaleDiscrete<TDomain>(
     const domainLength = domain.length - 1;
     const ratio = rangeLength / domainLength;
 
-    const scale = bindScale(domain, range, value => {
-        return rangeMin + (domain.indexOf(value) * ratio);
+    return bindScale({
+        domain,
+        range,
+        convert: value => rangeMin + (domain.indexOf(value) * ratio),
+        invert: value => domain[Math.floor(value / rangeLength)],
     });
-
-    scale.inverse = value => {
-        return domain[Math.floor(value / rangeLength)];
-    };
-
-    return scale;
 }

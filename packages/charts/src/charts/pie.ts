@@ -1,30 +1,37 @@
 import {
+    BaseChartOptions,
+    Chart,
     ChartOptions,
-    createChart,
 } from '../core/chart';
 
 import {
     Arc,
+    ArcState,
+    BaseElementState,
     createArc,
     createGroup,
     createText,
+    easeOutQuart,
     easeOutQuint,
-    Element,
-    getArcCentroid,
+    elementIsArc,
+    elementIsText,
     getTotal,
+    Group,
     scaleContinuous,
+    setColorAlpha,
     TAU,
     Text,
+    TextState,
 } from '@ripl/core';
 
 import {
     arrayFilter,
     arrayJoin,
     arrayMap,
-    isFunction,
+    typeIsFunction,
 } from '@ripl/utilities';
 
-export interface PieChartOptions<TData = unknown> extends ChartOptions {
+export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
     value: keyof TData | ((item: TData) => number);
@@ -32,234 +39,271 @@ export interface PieChartOptions<TData = unknown> extends ChartOptions {
     color: keyof TData | ((item: TData) => string);
 }
 
-export const createPieChart = createChart<PieChartOptions>(instance => {
-    const {
-        scene,
-        renderer,
-    } = instance;
+export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
-    let groups = [] as ReturnType<typeof createGroup>[]; //this is temporary
+    private groups: Group[] = [];
 
-    return async () => {
-        const {
-            data,
-            key,
-            value,
-            label,
-            color,
-        } = instance.options;
+    constructor(target: string | HTMLElement, options: ChartOptions<PieChartOptions<TData>>) {
+        super(target, options);
+        this.init();
+    }
 
-        const size = Math.min(scene.width, scene.height);
-
-        const getKey = isFunction(key) ? key : (item: unknown) => item[key] as string;
-        const getValue = isFunction(value) ? value : (item: unknown) => item[value] as number;
-        const getLabel = isFunction(label) ? label : (item: unknown) => item[label] as string;
-        const getColor = isFunction(color) ? color : (item: unknown) => item[color] as string;
-
-        const total = getTotal(data, getValue);
-        const scale = scaleContinuous([0, total], [0, TAU], true);
-        const offset = TAU / 4;
-        const padAngle = 0.05 / data.length;
-
-        let startAngle = -offset;
-
-        const calculations = arrayMap(data, item => {
-            const key = getKey(item);
-            const value = getValue(item);
-            const color = getColor(item);
-            const label = getLabel(item);
-            const cx = scene.width / 2;
-            const cy = scene.height / 2;
-            const endAngle = startAngle + scale(value);
-            const radius = size * 0.45;
-            const innerRadius = size * 0.25;
-
-            const output = {
-                key,
-                value,
-                color,
-                label,
-                cx,
-                cy,
-                startAngle,
-                endAngle,
-                padAngle,
-                radius,
-                innerRadius,
-                item,
-            };
-
-            startAngle = endAngle;
-
-            return output;
-        });
-
-        const {
-            left,
-            inner,
-            right,
-        } = arrayJoin(calculations, groups, (item, group) => item.key === group.id);
-
-        const entries = arrayMap(left, item => {
+    public async render() {
+        return super.render((scene, renderer) => {
             const {
+                data,
                 key,
                 value,
-                color,
                 label,
-                cx,
-                cy,
-                startAngle,
-                endAngle,
-                padAngle,
-                radius,
-                innerRadius,
-            } = item;
+                color,
+            } = this.options;
 
-            const group = createGroup({
-                id: key,
+            const size = Math.min(scene.width, scene.height);
+
+            const getKey = typeIsFunction(key) ? key : (item: unknown) => item[key] as string;
+            const getValue = typeIsFunction(value) ? value : (item: unknown) => item[value] as number;
+            const getLabel = typeIsFunction(label) ? label : (item: unknown) => item[label] as string;
+            const getColor = typeIsFunction(color) ? color : (item: unknown) => item[color] as string;
+
+            const total = getTotal(data, getValue);
+            const scale = scaleContinuous([0, total], [0, TAU], true);
+            const offset = TAU / 4;
+            const padAngle = data.length === 1 ? 0 : 0.1 / data.length;
+
+            let startAngle = -offset;
+
+            const calculations = arrayMap(data, item => {
+                const key = getKey(item);
+                const value = getValue(item);
+                const color = getColor(item);
+                const label = getLabel(item);
+                const cx = scene.width / 2;
+                const cy = scene.height / 2;
+                const endAngle = startAngle + scale(value);
+                const radius = size * 0.45;
+                const innerRadius = size * 0.25;
+
+                const output = {
+                    key,
+                    value,
+                    color,
+                    label,
+                    cx,
+                    cy,
+                    startAngle,
+                    endAngle,
+                    padAngle,
+                    radius,
+                    innerRadius,
+                    item,
+                };
+
+                startAngle = endAngle;
+
+                return output;
             });
 
-            const segmentArc = createArc({
-                props: {
+            const {
+                left,
+                inner,
+                right,
+            } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
+
+            const entries = arrayMap(left, item => {
+                const {
+                    key,
+                    value,
+                    color,
+                    label,
+                    cx,
+                    cy,
+                    startAngle,
+                    endAngle,
+                    padAngle,
+                    radius,
+                    innerRadius,
+                } = item;
+
+                const segmentArc = createArc({
+                    class: 'segment__arc',
                     cx,
                     cy,
                     startAngle,
                     padAngle,
-                    endAngle: [startAngle, endAngle],
-                    radius: [0, radius],
-                    innerRadius: [0, innerRadius],
-                    fillStyle: color || '#FF0000',
-                },
-            });
+                    strokeStyle: color,
+                    fillStyle: setColorAlpha(color, 0.55),
+                    lineWidth: 2,
+                    endAngle: startAngle,
+                    radius: 0,
+                    innerRadius: 0,
+                    data: {
+                        endAngle,
+                        radius,
+                        innerRadius,
+                    } as Partial<ArcState>,
+                });
 
-            const [
-                centroidx,
-                centroidY,
-            ] = getArcCentroid(segmentArc.state(1));
+                segmentArc.on('mouseenter', () => {
+                    renderer.transition(segmentArc, {
+                        duration: 500,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: color,
+                        },
+                    });
 
-            const segmentLabel = createText({
-                props: {
+                    segmentArc.once('mouseleave', () => {
+                        renderer.transition(segmentArc, {
+                            duration: 500,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: setColorAlpha(color, 0.55),
+                            },
+                        });
+                    });
+                });
+
+                const [
+                    centroidX,
+                    centroidY,
+                ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
+
+                const segmentLabel = createText({
+                    class: 'segment__label',
                     fillStyle: '#000000',
-                    x: centroidx,
+                    x: centroidX,
                     y: centroidY,
                     content: label,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: [0, 1],
-                },
+                    globalAlpha: 0,
+                    zIndex: 1,
+                });
+
+                return createGroup({
+                    id: key,
+                    class: 'segment',
+                    children: [
+                        segmentArc,
+                        segmentLabel,
+                    ],
+                });
             });
 
-            group.add([
-                segmentArc,
-                segmentLabel,
+            const updates = arrayMap(inner, ([item, group]) => {
+                const {
+                    color,
+                    cx,
+                    cy,
+                    radius,
+                    innerRadius,
+                    startAngle,
+                    endAngle,
+                    padAngle,
+                } = item;
+
+                const arc = group.query('arc') as Arc;
+                const label = group.query('text') as Text;
+
+                const arcData = {
+                    cx,
+                    cy,
+                    radius,
+                    innerRadius,
+                    startAngle,
+                    endAngle,
+                    padAngle,
+                    strokeStyle: color,
+                    fillStyle: setColorAlpha(color, 0.55),
+                } as Partial<ArcState>;
+
+                const [
+                    centroidx,
+                    centroidY,
+                ] = arc.getCentroid(arcData);
+
+                arc.data = arcData;
+                label.data = {
+                    x: centroidx,
+                    y: centroidY,
+                };
+
+                return group;
+            });
+
+            const exits = arrayMap(right, group => {
+                const arc = group.query('arc') as Arc;
+                const label = group.query('text') as Text;
+
+                const midAngle = (arc.startAngle + arc.endAngle) / 2;
+
+                arc.data = {
+                    startAngle: midAngle,
+                    endAngle: midAngle,
+                    radius: 0,
+                    innerRadius: 0,
+                } as Partial<ArcState>;
+
+                label.data = {
+                    globalAlpha: 0,
+                } as Partial<TextState>;
+
+                return group;
+            });
+
+            this.groups = [
+                ...entries,
+                ...updates,
+            ];
+
+            scene.add(entries);
+
+            async function transitionEntries() {
+                const elements = entries.flatMap(group => group.children);
+
+                await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
+                    duration: 1000,
+                    ease: easeOutQuint,
+                    delay: index * (1000 / length),
+                    state: element.data as Partial<ArcState>,
+                }));
+
+                return renderer.transition(arrayFilter(elements, elementIsText), {
+                    duration: 2000,
+                    ease: easeOutQuint,
+                    state: {
+                        globalAlpha: 1,
+                    },
+                });
+            }
+
+            async function transitionUpdates() {
+                return renderer.transition(updates, element => ({
+                    duration: 1000,
+                    ease: easeOutQuint,
+                    state: element.data as Partial<BaseElementState>,
+                }));
+            }
+
+            async function transitionExits() {
+                return renderer.transition(exits, element => ({
+                    duration: 1000,
+                    ease: easeOutQuint,
+                    state: element.data as Partial<BaseElementState>,
+                    onComplete: element => element.destroy(),
+                }));
+            }
+
+            return Promise.all([
+                transitionEntries(),
+                transitionUpdates(),
+                transitionExits(),
             ]);
-
-            return group;
         });
+    }
 
-        const updates = arrayMap(inner, ([item, group]) => {
-            const {
-                color,
-                cx,
-                cy,
-                radius,
-                innerRadius,
-                startAngle,
-                endAngle,
-            } = item;
+}
 
-            const arc = group.find('arc') as Element<Arc>;
-            const label = group.find('text') as Element<Text>;
-
-            arc.to({
-                cx,
-                cy,
-                radius,
-                innerRadius,
-                startAngle,
-                endAngle,
-                fillStyle: color,
-            }, 1);
-
-            const [
-                centroidx,
-                centroidY,
-            ] = getArcCentroid(arc.state(1));
-
-            label.to({
-                x: centroidx,
-                y: centroidY,
-            }, 1);
-
-            return group;
-        });
-
-        const exits = arrayMap(right, group => {
-            const arc = group.find('arc') as Element<Arc>;
-            const label = group.find('text') as Element<Text>;
-
-            const {
-                startAngle,
-                endAngle,
-            } = arc.state();
-
-            const midAngle = (startAngle + endAngle) / 2;
-
-            arc.to({
-                startAngle: midAngle,
-                endAngle: midAngle,
-                radius: 0,
-                innerRadius: 0,
-            }, 1);
-
-            label.to({
-                globalAlpha: 0,
-            });
-
-            return group;
-        });
-
-        groups = [
-            ...entries,
-            ...updates,
-        ];
-
-        scene.add(entries);
-
-        async function transitionEntries() {
-            const elements = entries.flatMap(group => group.elements);
-
-            await renderer.transition(arrayFilter(elements, el => el.type === 'arc'), {
-                duration: 1000,
-                ease: easeOutQuint,
-                delay: (index, length) => index * (1000 / length),
-            });
-
-            return renderer.transition(arrayFilter(elements, el => el.type === 'text'), {
-                duration: 2000,
-                ease: easeOutQuint,
-            });
-        }
-
-        async function transitionUpdates() {
-            return renderer.transition(updates, {
-                duration: 1000,
-                ease: easeOutQuint,
-            });
-        }
-
-        async function transitionExits() {
-            return renderer.transition(exits, {
-                duration: 1000,
-                ease: easeOutQuint,
-                callback: element => element.destroy(),
-            });
-        }
-
-        return Promise.all([
-            transitionEntries(),
-            transitionUpdates(),
-            transitionExits(),
-        ]);
-    };
-});
+export function createPieChart<TData = unknown>(target: string | HTMLElement, options: ChartOptions<PieChartOptions<TData>>) {
+    return new PieChart<TData>(target, options);
+}

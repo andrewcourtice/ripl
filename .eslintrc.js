@@ -1,6 +1,10 @@
+const {
+    defineConfig,
+} = require('eslint-define-config');
+
 const INDENT = 4;
 
-module.exports = {
+module.exports = defineConfig({
     root: true,
     parserOptions: {
         parser: '@typescript-eslint/parser',
@@ -130,4 +134,4 @@ module.exports = {
         '@typescript-eslint/member-delimiter-style': 'error',
 
     },
-};
+});

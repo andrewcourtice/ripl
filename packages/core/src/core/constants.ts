@@ -1,63 +1,50 @@
 import {
-    interpolateColor,
-    interpolateNumber,
-} from '../interpolators';
+    Context,
+} from '../context';
 
 import {
-    BaseElement,
-    ElementInterpolator,
-    ElementInterpolators,
+    BaseElementState,
+    ElementEventMap,
 } from './element';
 
 import {
-    isNil,
+    GetMutableKeys,
 } from '@ripl/utilities';
 
-export type ElementContextOps = {
-    [P in keyof BaseElement]?: (context: CanvasRenderingContext2D, value?: BaseElement[P]) => void;
+function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
+    return (context: Context, value: Context[TKey]) => {
+        context[key] = value;
+    };
 }
 
-const basicContextSetter = (key: keyof CanvasRenderingContext2D) => {
-    return (context: CanvasRenderingContext2D, value?: CanvasRenderingContext2D[typeof key]) => {
-        if (!isNil(value)) {
-            context[key] = value;
-        }
-    };
-};
-
-export const INTERPOLATORS: ElementInterpolators<BaseElement> = {
-    strokeStyle: interpolateColor as ElementInterpolator<BaseElement['strokeStyle']>,
-    fillStyle: interpolateColor as ElementInterpolator<BaseElement['fillStyle']>,
-    shadowColor: interpolateColor as ElementInterpolator<BaseElement['shadowColor']>,
-    lineDash: (valueA, valueB) => {
-        const interpolators = valueA?.map((segA, i) => interpolateNumber(segA, valueB[i]));
-        return time => interpolators?.map(interpolate => interpolate(time));
-    },
-};
-
 export const CONTEXT_OPERATIONS = {
-    strokeStyle: basicContextSetter('strokeStyle'),
-    fillStyle: basicContextSetter('fillStyle'),
-    lineWidth: basicContextSetter('lineWidth'),
-    lineCap: basicContextSetter('lineCap'),
-    lineJoin: basicContextSetter('lineJoin'),
-    lineDashOffset: basicContextSetter('lineDashOffset'),
-    miterLimit: basicContextSetter('miterLimit'),
-
-    font: basicContextSetter('font'),
     direction: basicContextSetter('direction'),
-    textAlign: basicContextSetter('textAlign'),
-    textBaseline: basicContextSetter('textBaseline'),
-
+    fillStyle: basicContextSetter('fillStyle'),
     filter: basicContextSetter('filter'),
+    font: basicContextSetter('font'),
     globalAlpha: basicContextSetter('globalAlpha'),
     globalCompositeOperation: basicContextSetter('globalCompositeOperation'),
-
+    lineCap: basicContextSetter('lineCap'),
+    lineDash: basicContextSetter('lineDash'),
+    lineDashOffset: basicContextSetter('lineDashOffset'),
+    lineJoin: basicContextSetter('lineJoin'),
+    lineWidth: basicContextSetter('lineWidth'),
+    miterLimit: basicContextSetter('miterLimit'),
     shadowBlur: basicContextSetter('shadowBlur'),
     shadowColor: basicContextSetter('shadowColor'),
     shadowOffsetX: basicContextSetter('shadowOffsetX'),
     shadowOffsetY: basicContextSetter('shadowOffsetY'),
-    lineDash: (context, value) => {
-        if (value) context.setLineDash(value);
-    },
-} as ElementContextOps;
+    strokeStyle: basicContextSetter('strokeStyle'),
+    textAlign: basicContextSetter('textAlign'),
+    textBaseline: basicContextSetter('textBaseline'),
+    zIndex: basicContextSetter('zIndex'),
+} as {
+    [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
+};
+
+export const TRACKED_EVENTS = [
+    'element:click',
+    'element:mousemove',
+    'element:mouseenter',
+    'element:mouseleave',
+] as (keyof ElementEventMap)[];

@@ -2,39 +2,77 @@ import {
     Disposable,
 } from '@ripl/utilities';
 
-import type {
-    Event,
-    EventBus,
-    EventHandler,
-    EventMap,
-} from './types';
+export type EventMap = Record<string, unknown>;
 
-export function createEvent<TData = unknown>(data?: TData): Event<TData> {
-    return {
-        data,
-        bubble: true,
-        stopPropagation() {
-            this.bubble = false;
-        },
-    };
+export type EventOptions<TData = undefined> = {
+    bubbles?: boolean;
+    data?: TData;
 }
 
-export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
-    const listeners = new Map<keyof TEventMap, Set<EventHandler<TEventMap[keyof TEventMap]>>>();
+export type EventSubscriptionOptions = {
+    self?: boolean;
+}
 
-    function on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {
-        const handlers = listeners.get(event) || new Set();
+export type EventHandler<TData = any> = {
+    (event: Event<TData>): void;
+} & EventSubscriptionOptions;
 
+export class Event<TData = undefined> {
+
+    #bubbles = true;
+
+    public readonly type: string;
+    public readonly data: TData;
+    public readonly timestamp: number;
+    public readonly target: EventBus;
+
+    public get bubbles() {
+        return this.#bubbles;
+    }
+
+    constructor(type: string, target: EventBus<any>, options?: EventOptions<TData>) {
+        const {
+            data,
+            bubbles = true,
+        } = options || {};
+
+        this.type = type;
+        this.target = target;
+        this.data = data as TData;
+        this.timestamp = performance.now();
+        this.#bubbles = bubbles;
+    }
+
+    public stopPropagation() {
+        this.#bubbles = false;
+    }
+
+}
+
+export class EventBus<TEventMap extends EventMap = EventMap> {
+
+    public parent?: EventBus<TEventMap>;
+
+    private listeners = new Map<keyof TEventMap, Set<EventHandler>>();
+
+    public has(type: keyof TEventMap) {
+        return !!this.listeners.get(type)?.size;
+    }
+
+    public on<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
+        const handlers = this.listeners.get(type) || new Set();
+
+        Object.assign(handler, options);
         handlers.add(handler);
-        listeners.set(event, handlers);
+        this.listeners.set(type, handlers);
 
         return {
-            dispose: () => off(event, handler),
+            dispose: () => this.off(type, handler),
         };
     }
 
-    function off<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): void {
-        const handlers = listeners.get(event);
+    public off<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>): void {
+        const handlers = this.listeners.get(type);
 
         if (!handlers) {
             return;
@@ -43,38 +81,47 @@ export function createEventBus<TEventMap = EventMap>(): EventBus<TEventMap> {
         handlers.delete(handler);
 
         if (!handlers.size) {
-            listeners.delete(event);
+            this.listeners.delete(type);
         }
     }
 
-    function once<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>): Disposable {
+    public once<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
         const callback = ((...args: Parameters<typeof handler>) => {
             handler(...args);
-            off(event, callback);
+            this.off(type, callback);
         });
 
-        return on(event, callback);
+        return this.on(type, callback, options);
     }
 
-    function emit<TEvent extends keyof TEventMap>(event: TEvent, payload: TEventMap[TEvent]): void {
-        const handlers = listeners.get(event);
+    public emit<TEvent extends Event = Event>(event: TEvent): TEvent;
+    public emit<TEvent extends keyof TEventMap>(type: TEvent, data: TEventMap[TEvent]): Event<TEventMap[TEvent]>;
+    public emit(...args: any[]): Event<any> {
+        const event = args.length === 1 && args[0] instanceof Event
+            ? args[0]
+            : new Event(args[0], this, {
+                data: args[1],
+            });
+
+        const handlers = this.listeners.get(event.type);
 
         if (handlers) {
-            handlers.forEach(handler => handler(payload));
+            handlers.forEach(handler => {
+                if (!handler.self || event.target === this) {
+                    handler(event);
+                }
+            });
         }
+
+        if (this.parent && event.bubbles) {
+            this.parent.emit(event);
+        }
+
+        return event;
     }
 
-    function destroy() {
-        listeners.clear();
+    public destroy() {
+        this.listeners.clear();
     }
 
-    return {
-        on,
-        off,
-        once,
-        emit,
-        destroy,
-    };
 }
-
-export default createEventBus();

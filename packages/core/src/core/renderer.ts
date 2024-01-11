@@ -1,159 +1,237 @@
 import {
-    createEventBus,
+    EventBus, EventMap,
 } from './event-bus';
 
 import {
+    Group,
     isGroup,
 } from './group';
 
 import {
+    Interpolator,
+} from '../interpolators';
+
+import {
+    BaseElementState,
+    Element,
+    ElementInterpolationState,
+} from './element';
+
+import {
+    Scene,
+} from './scene';
+
+import {
+    Ease,
     easeLinear,
 } from '../animation';
 
 import {
-    min,
+    clamp,
 } from '../math';
 
 import {
     arrayForEach,
-    isFunction,
     OneOrMore,
+    typeIsFunction,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
-import type {
-    Element,
-    Renderer,
-    RendererEventMap,
-    RendererOptions,
-    RendererTransition,
-    RendererTransitionOptions,
-    Scene,
-} from './types';
+export type RendererTransitionDirection = 'forward' | 'reverse';
 
-export function createRenderer(
-    scene: Scene,
-    options?: RendererOptions
-): Renderer {
-    let rendererOptions = {
-        autoStart: true,
-        autoStop: true,
-        ...options,
+export interface RendererEventMap extends EventMap {
+    start: {
+        startTime: number;
     };
+    stop: {
+        startTime: number;
+        endTime: number;
+    };
+}
 
-    const {
-        canvas,
-        context,
-    } = scene;
+export interface RendererTransition {
+    startTime: number;
+    duration: number;
+    ease: Ease;
+    loop: boolean;
+    direction: RendererTransitionDirection;
+    interpolator: Interpolator<void>;
+    callback(): void;
+}
 
-    const transitionMap = new Map<string, RendererTransition>();
+export interface RendererTransitionOptions<TElement extends Element> {
+    duration?: number;
+    ease?: Ease;
+    loop?: boolean;
+    delay?: number;
+    direction?: RendererTransitionDirection;
+    state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
+    onComplete?(element: Element): void;
+}
 
-    const {
-        on,
-        off,
-        emit,
-    } = createEventBus<RendererEventMap>();
+export interface RendererOptions {
+    autoStart?: boolean;
+    autoStop?: boolean;
+    immediate?: boolean;
+    debug?: {
+        boundingBoxes: boolean;
+    };
+}
 
-    let running = false;
-    let handle: number | undefined;
-    let startTime = performance.now();
-    let currentTime = performance.now();
+export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
+    element: TElement extends Group ? Element : TElement,
+    index: number,
+    length: number
+) => RendererTransitionOptions<TElement>);
 
-    function tick() {
-        if (!running) {
+export class Renderer extends EventBus<RendererEventMap> {
+
+    private scene: Scene;
+    private transitionMap = new Map<string, Map<symbol, RendererTransition>>();
+
+    private running = false;
+    private handle?: number;
+    private startTime = performance.now();
+    private currentTime = performance.now();
+
+    public autoStart = true;
+    public autoStop = true;
+
+    public get isBusy() {
+        return !!this.transitionMap.size;
+    }
+
+    constructor(scene: Scene, options?: RendererOptions) {
+        super();
+
+        const {
+            autoStart = true,
+            autoStop = true,
+        } = options || {};
+
+        this.scene = scene;
+        this.autoStart = autoStart;
+        this.autoStop = autoStop;
+
+        if (autoStart) {
+            this.start();
+        }
+
+        if (autoStop) {
+            scene.on('mousemove', () => this.start(), { self: true });
+            scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
+        }
+    }
+
+    private tick() {
+        if (!this.running) {
             return;
         }
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
+        this.scene.context.clear();
+        this.scene.context.markRenderStart();
 
-        currentTime = performance.now();
+        this.currentTime = performance.now();
 
-        arrayForEach(scene.elements, element => {
-            let time = 0;
+        arrayForEach(this.scene.buffer, element => {
+            if (this.transitionMap.has(element.id)) {
+                let time = 0;
 
-            if (transitionMap.has(element.id)) {
-                const {
-                    startTime = currentTime,
-                    duration = 0,
-                    ease = easeLinear,
-                    loop = false,
-                    callback = () => {},
-                } = transitionMap.get(element.id) || {};
+                this.transitionMap.get(element.id)?.forEach(({
+                    startTime,
+                    duration,
+                    ease,
+                    loop,
+                    direction,
+                    interpolator,
+                    callback,
+                }) => {
+                    const elapsed = this.currentTime - startTime;
 
-                const elapsed = currentTime - startTime;
+                    if (elapsed > 0) {
+                        time = clamp(elapsed / duration, 0, 1);
+                        time = ease(direction === 'reverse' ? 1 - time : time);
 
-                if (elapsed > 0) {
-                    time = ease(min(elapsed / duration, 1));
+                        interpolator(time);
 
-                    if (elapsed >= duration) {
-                        transitionMap.delete(element.id);
-                        callback();
+                        if (elapsed >= duration) {
+                            callback();
+                        }
                     }
-                }
+                });
             }
 
-            element.render(context, time);
+            element.render(this.scene.context);
 
-            if (rendererOptions.debug?.boundingBoxes) {
-                const {
-                    left,
-                    top,
-                    width,
-                    height,
-                } = element.getBoundingBox();
+            // if (rendererOptions.debug?.boundingBoxes) {
+            //     const {
+            //         left,
+            //         top,
+            //         width,
+            //         height,
+            //     } = element.getBoundingBox();
 
-                context.save();
-                context.strokeStyle = '#FF0000';
-                context.strokeRect(left, top, width, height);
-                context.restore();
-            }
+            //     context.save();
+            //     context.strokeStyle = '#FF0000';
+            //     context.strokeRect(left, top, width, height);
+            //     context.restore();
+            // }
         });
 
-        handle = requestAnimationFrame(tick);
+        this.scene.context.markRenderEnd();
+        this.handle = requestAnimationFrame(() => this.tick());
     }
 
-    function start() {
-        if (running) {
+    public start() {
+        if (this.running) {
             return;
         }
 
-        running = true;
-        startTime = performance.now();
-        transitionMap.clear();
+        this.running = true;
+        this.startTime = performance.now();
+        this.transitionMap.clear();
 
-        emit('renderer:start', { startTime });
-        requestAnimationFrame(tick);
+        this.emit('start', {
+            startTime: this.startTime,
+        });
+
+        requestAnimationFrame(() => this.tick());
     }
 
-    function stop() {
-        if (!running) {
+    public stop() {
+        if (!this.running) {
             return;
         }
 
-        if (handle) {
-            cancelAnimationFrame(handle);
+        if (this.handle) {
+            cancelAnimationFrame(this.handle);
         }
 
-        running = false;
-        transitionMap.clear();
+        this.running = false;
+        this.transitionMap.clear();
 
-        emit('renderer:stop', {
-            startTime,
-            endTime: currentTime,
+        this.emit('stop', {
+            startTime: this.startTime,
+            endTime: this.currentTime,
         });
     }
 
-    function stopOnIdle() {
-        if (rendererOptions.autoStop && transitionMap.size === 0) {
-            stop();
+    private stopOnIdle() {
+        if (this.autoStop && this.transitionMap.size === 0) {
+            this.stop();
         }
     }
 
-    function transition(element: OneOrMore<Element<any>>, options?: Partial<RendererTransitionOptions>) {
-        start();
+    public transition<TElement extends Element>(element: OneOrMore<TElement>, options?: RendererTransitionOptionsArg<TElement>) {
+        this.start();
+
+        const getOptions = typeIsFunction(options)
+            ? options
+            : () => options || {} as RendererTransitionOptions<TElement>;
 
         return new Promise<void>(resolve => {
-            const elements = ([] as Element[]).concat(element).flatMap(element => {
-                return isGroup(element) ? element.elements : element;
+            const elements = valueOneOrMore(element).flatMap(element => {
+                return isGroup(element) ? element.children : element;
             });
 
             if (!elements.length) {
@@ -165,38 +243,32 @@ export function createRenderer(
 
             elements.forEach((element, index) => {
                 const {
-                    duration,
-                    delay,
-                    loop,
-                    ease,
-                    callback,
-                    fillMode,
-                } = {
-                    duration: 0,
-                    delay: 0,
-                    loop: false,
-                    ease: easeLinear,
-                    fillMode: 'forwards',
-                    callback: () => {},
-                    ...options,
-                } as RendererTransitionOptions;
+                    duration = 0,
+                    delay = 0,
+                    loop = false,
+                    ease = easeLinear,
+                    onComplete = () => {},
+                    direction = 'forward',
+                    state,
+                } = getOptions(element, index, totalCount);
 
-                const startTime = performance.now() + (isFunction(delay)
-                    ? delay(index, elements.length)
-                    : delay
-                );
+                const transitionId = Symbol();
+                const startTime = performance.now() + delay;
 
-                const onComplete = () => {
+                const callback = () => {
+                    const elementTransitions = this.transitionMap.get(element.id);
+
                     completeCount += 1;
+                    elementTransitions?.delete(transitionId);
 
-                    if (fillMode === 'forwards') {
-                        element.setProps(element.getState());
+                    if (!elementTransitions?.size) {
+                        this.transitionMap.delete(element.id);
                     }
 
                     try {
-                        callback(element);
+                        onComplete(element);
                     } finally {
-                        stopOnIdle();
+                        this.stopOnIdle();
 
                         if (completeCount >= totalCount) {
                             resolve();
@@ -204,47 +276,25 @@ export function createRenderer(
                     }
                 };
 
-                transitionMap.set(element.id, {
+                const transitions = this.transitionMap.get(element.id) || new Map<symbol, RendererTransition>();
+
+                transitions.set(transitionId, {
                     loop,
                     ease,
                     startTime,
-                    duration: rendererOptions.immediate ? 1 : duration,
-                    callback: onComplete,
+                    direction,
+                    duration,
+                    callback,
+                    interpolator: element.interpolate(state),
                 });
+
+                this.transitionMap.set(element.id, transitions);
             });
         });
     }
 
-    function update(options: Partial<RendererOptions>) {
-        rendererOptions = {
-            ...rendererOptions,
-            ...options,
-        };
-    }
+}
 
-    if (rendererOptions.autoStart) {
-        start();
-    }
-
-    if (rendererOptions.autoStop) {
-        scene.on('scene:mouseenter', start);
-        scene.on('scene:mouseleave', stopOnIdle);
-    }
-
-    return {
-        start,
-        stop,
-        update,
-        transition,
-        on,
-        off,
-
-        get running() {
-            return running;
-        },
-
-        get busy() {
-            return transitionMap.size > 0;
-        },
-    };
+export function createRenderer(...options: ConstructorParameters<typeof Renderer>) {
+    return new Renderer(...options);
 }

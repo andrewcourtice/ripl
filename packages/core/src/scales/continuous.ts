@@ -12,10 +12,10 @@ export function scaleContinuous(
     range: number[],
     clampOutput?: boolean
 ): Scale<number> {
-    const method = getLinearScaleMethod(domain, range, clampOutput);
-    const scale = bindScale(domain, range, method);
-
-    scale.inverse = getLinearScaleMethod(range, domain, clampOutput);
-
-    return scale;
+    return bindScale({
+        domain,
+        range,
+        convert: getLinearScaleMethod(domain, range, clampOutput),
+        invert: getLinearScaleMethod(range, domain, clampOutput),
+    });
 }

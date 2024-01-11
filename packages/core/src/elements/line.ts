@@ -1,6 +1,8 @@
 import {
     BaseElementState,
-    defineShape,
+    Context,
+    Shape,
+    ShapeOptions,
 } from '../core';
 
 import {
@@ -16,25 +18,65 @@ export interface LineState extends BaseElementState {
     y2: number;
 }
 
-export const createLine = defineShape<LineState>('line', ({
-    setBoundingBoxHandler,
-}) => {
-    setBoundingBoxHandler(({ state }) => new Box(
-        min(state.y1, state.y2),
-        min(state.x1, state.x2),
-        max(state.y1, state.y2),
-        max(state.x1, state.x2)
-    ));
+export class Line extends Shape<LineState> {
 
-    return ({ path, state }) => {
-        const {
-            x1,
-            y1,
-            x2,
-            y2,
-        } = state;
+    public get x1() {
+        return this.getStateValue('x1');
+    }
 
-        path.moveTo(x1, y1);
-        path.lineTo(x2, y2);
-    };
-});
+    public set x1(value) {
+        this.setStateValue('x1', value);
+    }
+
+    public get y1() {
+        return this.getStateValue('y1');
+    }
+
+    public set y1(value) {
+        this.setStateValue('y1', value);
+    }
+
+    public get x2() {
+        return this.getStateValue('x2');
+    }
+
+    public set x2(value) {
+        this.setStateValue('x2', value);
+    }
+
+    public get y2() {
+        return this.getStateValue('y2');
+    }
+
+    public set y2(value) {
+        this.setStateValue('y2', value);
+    }
+
+    constructor(options: ShapeOptions<LineState>) {
+        super('line', options);
+    }
+
+    public getBoundingBox() {
+        return new Box(
+            min(this.y1, this.y2),
+            min(this.x1, this.x2),
+            max(this.y1, this.y2),
+            max(this.x1, this.x2)
+        );
+    }
+
+    public render(context: Context) {
+        return super.render(context, path => {
+            path.moveTo(this.x1, this.y1);
+            path.lineTo(this.x2, this.y2);
+        });
+    }
+}
+
+export function createLine(...options: ConstructorParameters<typeof Line>) {
+    return new Line(...options);
+}
+
+export function elementIsLine(value: unknown): value is Line {
+    return value instanceof Line;
+}
