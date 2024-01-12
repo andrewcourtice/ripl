@@ -1,5 +1,5 @@
 import {
-    bindScale,
+    createScale,
 } from './_base';
 
 import type {
@@ -19,7 +19,7 @@ export function scaleDiscrete<TDomain>(
     const domainLength = domain.length - 1;
     const ratio = rangeLength / domainLength;
 
-    return bindScale({
+    return createScale({
         domain,
         range,
         convert: value => rangeMin + (domain.indexOf(value) * ratio),

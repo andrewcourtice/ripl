@@ -18,6 +18,10 @@ export type MemoizedFunction<TValue extends AnyFunction, TKey> = {
 
 export type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;
 
+export function functionIdentity<TValue>(value: TValue) {
+    return value;
+}
+
 export function functionProduce<TValue>(value: TValue | (() => TValue)): () => TValue {
     return typeIsFunction(value) ? value : () => value;
 }

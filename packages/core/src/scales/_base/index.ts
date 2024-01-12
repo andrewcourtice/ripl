@@ -18,7 +18,7 @@ export interface ScaleBindingOptions<TDomain, TRange> {
     invert: ScaleMethod<TRange, TDomain>;
 }
 
-export function bindScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange> {
+export function createScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange> {
     const {
         domain,
         range,

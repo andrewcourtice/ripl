@@ -1,5 +1,5 @@
 import {
-    bindScale,
+    createScale,
 } from './_base';
 
 import {
@@ -45,7 +45,7 @@ export function scaleBand<TDomain>(
     const bandwidth = step * (1 - innerPadding);
     const adjustedMin = rangeMin + (rangeLength - step * domainLength) * alignment;
 
-    const scale = bindScale({
+    const scale = createScale({
         domain,
         range,
         convert: value => adjustedMin + (domain.indexOf(value) * step),

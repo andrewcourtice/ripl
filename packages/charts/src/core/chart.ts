@@ -15,10 +15,10 @@ export type ChartOptions<TOptions extends BaseChartOptions> = {
 
 export class Chart<TOptions extends BaseChartOptions> {
 
-    private scene: Scene;
-    private renderer: Renderer;
-    private autoRender: boolean;
-    private animated: boolean;
+    protected scene: Scene;
+    protected renderer: Renderer;
+    protected autoRender: boolean;
+    protected animated: boolean;
 
     private hasRendered: boolean = false;
 

@@ -73,7 +73,7 @@ function serialiseAttribute(value: unknown) {
     }
 }
 
-function query(elements: Element[], segments: string[], segmentIndex: number = 0) {
+function executeQuery(elements: Element[], segments: string[], segmentIndex: number = 0) {
     const segment = segments[segmentIndex];
 
     if (!segment || !elements.length) {
@@ -87,7 +87,7 @@ function query(elements: Element[], segments: string[], segmentIndex: number = 0
             throw new Error('Failed to query!');
         }
 
-        return query(arrayFlatMap(elements, element => producer.produce(element)), segments, segmentIndex + 1);
+        return executeQuery(arrayFlatMap(elements, element => producer.produce(element)), segments, segmentIndex + 1);
     }
 
     const type = segment.match(QUERY_PATTERNS.type)?.at(0);
@@ -95,7 +95,7 @@ function query(elements: Element[], segments: string[], segmentIndex: number = 0
     const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
     const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
 
-    return query(arrayFilter(elements, element => {
+    return executeQuery(arrayFilter(elements, element => {
         const typeMatch = !type || stringEquals(element.type, type);
         const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
 
@@ -126,6 +126,18 @@ function query(elements: Element[], segments: string[], segmentIndex: number = 0
             && classMatch
             && attrsMatch;
     }), segments, segmentIndex + 1);
+}
+
+export function queryAll(elements: OneOrMore<Element | Group>, selector: string) {
+    const els = arrayFlatMap(([] as Element[]).concat(elements), element => {
+        return isGroup(element) ? element.graph(true) : [element];
+    });
+
+    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators));
+}
+
+export function query(elements: OneOrMore<Element | Group>, selector: string) {
+    return queryAll(elements, selector).at(0);
 }
 
 export function isGroup(value: unknown): value is Group {
@@ -215,11 +227,11 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public query(selector: string) {
-        return this.queryAll(selector).at(0);
+        return query(this, selector);
     }
 
     public queryAll(selector: string) {
-        return query(this.graph(true), selector.split(QUERY_PATTERNS.combinators));
+        return queryAll(this, selector);
     }
 
     public getElementByID(id: string) {

@@ -1,5 +1,5 @@
 import {
-    bindScale,
+    createScale,
     getLinearScaleMethod,
 } from './_base';
 
@@ -12,7 +12,7 @@ export function scaleContinuous(
     range: number[],
     clampOutput?: boolean
 ): Scale<number> {
-    return bindScale({
+    return createScale({
         domain,
         range,
         convert: getLinearScaleMethod(domain, range, clampOutput),
