@@ -15,7 +15,8 @@ import {
 
 import {
     clamp,
-    serialiseRGB
+    serialiseRGB,
+    serialiseRGBA
 } from '@ripl/core';
 
 import {
@@ -29,10 +30,10 @@ import {
 
 let chart: PieChart<typeof data[number]>;
 
-const getColor = () => serialiseRGB(
-    clamp(Math.random() * 255, 80, 230),
-    clamp(Math.random() * 255, 80, 230),
-    clamp(Math.random() * 255, 80, 230),
+const getColor = () => serialiseRGBA(
+    clamp(Math.round(Math.random()) * 255, 80, 230),
+    clamp(Math.round(Math.random()) * 255, 80, 230),
+    clamp(Math.round(Math.random()) * 255, 80, 230),
     1
 );
 
@@ -109,7 +110,9 @@ function update() {
 
 onMount(() => {
     try {
+    
         chart = createPieChart<typeof data[number]>('.example__root', {
+            type: 'svg',
             data,
             key: 'id',
             value: 'value',

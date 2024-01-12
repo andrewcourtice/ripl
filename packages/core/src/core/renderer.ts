@@ -231,7 +231,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         return new Promise<void>(resolve => {
             const elements = valueOneOrMore(element).flatMap(element => {
-                return isGroup(element) ? element.children : element;
+                return isGroup(element) ? element.graph(false) : element;
             });
 
             if (!elements.length) {
