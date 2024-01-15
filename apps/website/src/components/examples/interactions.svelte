@@ -36,7 +36,9 @@ onMount(() => {
     let x = 0;
     let y = 0;
 
-    const scene = createScene('.example__root');
+    const scene = createScene('.example__root', {
+        type: 'svg'
+    });
     const renderer = createRenderer(scene, {
         autoStart: false
     });
@@ -94,14 +96,15 @@ onMount(() => {
         crosshairGroup
     ]);
 
-    scene.on('scene:mousemove', ({ data }) => {
+    scene.on('mousemove', ({ data }) => {
         crosshairHLine.y1 = data.y;
         crosshairHLine.y2 = data.y;
         crosshairVLine.x1 = data.x;
         crosshairVLine.x2 = data.x;
     });
 
-    circleGroup.on('element:click', ({ target }) => {
+    circleGroup.on('click', ({ target }) => {
+        console.log(target);
         if (typeIsElement(target)) {
             target.fillStyle = '#FF0000';
         }

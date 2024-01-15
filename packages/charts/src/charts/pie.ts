@@ -30,13 +30,16 @@ import {
     arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
+import {
+    getColorGenerator,
+} from '../constants/colors';
 
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
     value: keyof TData | ((item: TData) => number);
     label: keyof TData | ((item: TData) => string);
-    color: keyof TData | ((item: TData) => string);
+    color?: keyof TData | ((item: TData) => string);
 }
 
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
@@ -58,6 +61,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 color,
             } = this.options;
 
+            const colorGenerator = getColorGenerator();
             const size = Math.min(scene.width, scene.height);
 
             const getKey = typeIsFunction(key) ? key : (item: unknown) => item[key] as string;

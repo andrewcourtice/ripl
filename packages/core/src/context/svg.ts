@@ -212,45 +212,25 @@ export class SVGContext extends Context<SVGSVGElement> {
     private requestFrame: (callback: AnyFunction) => void;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
-        const root = typeIsString(target)
-            ? document.querySelector(target) as HTMLElement
-            : target;
-
         const svg = createSVGElement('svg');
 
-        super(svg, {
+        svg.style.display = 'block';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+
+        super(target, svg, {
             buffer: true,
             ...options,
         });
 
         this.stack = new Set();
         this.requestFrame = createFrameBuffer();
-
-        svg.style.display = 'block';
-        svg.style.width = '100%';
-        svg.style.height = '100%';
-
-        root.appendChild(svg);
-
-        const {
-            width,
-            height,
-        } = svg.getBoundingClientRect();
-
-        this.rescale(width, height);
-
-        onDOMElementResize(root, ({ width, height }) => this.rescale(width, height));
+        this.init();
     }
 
-    private rescale(width: number, height: number) {
-        this.xScale = scaleContinuous([0, width], [0, width]);
-        this.yScale = scaleContinuous([0, height], [0, height]);
-
-        this.width = width;
-        this.height = height;
+    protected rescale(width: number, height: number) {
         this.element.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-        this.emit('resize', null);
+        super.rescale(width, height);
     }
 
     private setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
@@ -371,4 +351,8 @@ export class SVGContext extends Context<SVGSVGElement> {
         return this.isPointIn('stroke', path, x, y);
     }
 
+}
+
+export function createSVGContext(target: string | HTMLElement, options?: ContextOptions): Context {
+    return new SVGContext(target, options);
 }

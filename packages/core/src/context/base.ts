@@ -15,7 +15,9 @@ import {
 import {
     arrayForEach,
     functionCache,
+    onDOMElementResize,
     stringUniqueId,
+    typeIsString,
 } from '@ripl/utilities';
 
 export type ContextType = 'canvas' | 'svg';
@@ -164,6 +166,7 @@ export class ContextText implements ContextElement {
 
 export abstract class Context<TElement extends Element = Element> extends EventBus<ContextEventMap> implements BaseState {
 
+    public readonly root: HTMLElement;
     public readonly element: TElement;
 
     public buffer: boolean;
@@ -344,13 +347,24 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.zIndex = value;
     }
 
-    constructor(element: TElement, options?: ContextOptions) {
+    constructor(target: string | HTMLElement, element: TElement, options?: ContextOptions) {
         super();
 
         const {
             buffer = false,
         } = options || {};
 
+        const root = typeIsString(target)
+            ? document.querySelector(target) as HTMLElement
+            : target;
+
+        if (root.childElementCount > 0) {
+            root.innerHTML = '';
+        }
+
+        root.appendChild(element);
+
+        this.root = root;
         this.element = element;
         this.buffer = buffer;
         this.states = [];
@@ -359,6 +373,27 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.height = 0;
         this.xScale = scaleContinuous([0, this.width], [0, this.width]);
         this.yScale = scaleContinuous([0, this.height], [0, this.height]);
+    }
+
+    protected init() {
+        const {
+            width,
+            height,
+        } = this.element.getBoundingClientRect();
+
+        this.rescale(width, height);
+
+        onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height));
+    }
+
+    protected rescale(width: number, height: number) {
+        this.xScale = scaleContinuous([0, width], [0, width]);
+        this.yScale = scaleContinuous([0, height], [0, height]);
+
+        this.width = width;
+        this.height = height;
+
+        this.emit('resize', null);
     }
 
     protected getDefaultState() {
@@ -457,4 +492,13 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         return false;
     }
 
+    public destroy(): void {
+        this.element.remove();
+        super.destroy();
+    }
+
+}
+
+export function typeIsContext(value: unknown): value is Context {
+    return value instanceof Context;
 }

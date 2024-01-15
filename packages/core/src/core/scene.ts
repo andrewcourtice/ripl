@@ -7,6 +7,7 @@ import {
     Context,
     ContextType,
     createContext,
+    typeIsContext,
 } from '../context';
 
 import {
@@ -44,7 +45,8 @@ export interface SceneOptions extends GroupOptions {
 
 export class Scene extends Group<SceneEventMap> {
 
-    readonly context: Context;
+    public context: Context;
+
     public buffer: Element[];
     private disposals = new Set<Disposable>();
 
@@ -56,17 +58,19 @@ export class Scene extends Group<SceneEventMap> {
         return this.context.height;
     }
 
-    constructor(target: string | HTMLElement, options?: SceneOptions) {
+    constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
             type,
             renderOnResize = true,
             ...groupOptions
         } = options || {};
 
-        const context = createContext(target, {
-            type,
-            buffer: false,
-        });
+        const context = typeIsContext(target)
+            ? target
+            : createContext(target, {
+                type,
+                buffer: false,
+            });
 
         super({
             font: window.getComputedStyle(context.element).font,
