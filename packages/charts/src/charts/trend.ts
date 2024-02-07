@@ -6,13 +6,21 @@ import {
 
 import {
     BandScale,
+    Circle,
+    CircleState,
+    createCircle,
     createGroup,
+    createPolyline,
     createRect,
     createScale,
     easeOutCubic,
     getExtent,
     Group,
+    interpolatePath,
     max,
+    Point,
+    Polyline,
+    PolylineState,
     queryAll,
     Rect,
     RectState,
@@ -30,6 +38,9 @@ import {
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
+import {
+    getColorGenerator,
+} from '../constants/colors';
 
 export type SeriesType = 'bar' | 'line' | 'area';
 export interface BaseTrendChartSeriesOptions<TData> {
@@ -51,7 +62,7 @@ export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeries
 
 export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'line';
-    lineType: 'linear' | 'spline';
+    lineType?: 'linear' | 'spline';
 }
 
 export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
@@ -68,13 +79,200 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
 
     private barGroups: Group[] = [];
+    private lineGroups: Group[] = [];
     private yScale!: Scale;
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
+    private colorGenerator = getColorGenerator();
 
     constructor(target: string | HTMLElement, options: ChartOptions<TrendChartOptions<TData>>) {
         super(target, options);
         this.init();
+    }
+
+    private async drawLines() {
+        const {
+            data,
+            series,
+            keyBy,
+        } = this.options;
+
+        const lineSeries = arrayFilter(series, srs => srs.type === 'line') as TrendChartLineSeriesOptions<TData>[];
+
+        const {
+            left: seriesEntries,
+            inner: seriesUpdates,
+            right: seriesExits,
+        } = arrayJoin(lineSeries, this.lineGroups, 'id');
+
+        const getKey = typeIsFunction(keyBy) ? keyBy : (item: unknown) => item[keyBy] as string;
+
+        arrayForEach(seriesExits, series => series.destroy());
+
+        const seriesLineValueProducer = ({ id, valueBy, labelBy, colorBy }: TrendChartLineSeriesOptions<TData>) => {
+            const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
+            const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
+            const getColor = typeIsFunction(colorBy) ? colorBy : () => colorBy;
+            const backupColor = this.colorGenerator.next().value;
+
+            return (item: TData) => {
+                const key = getKey(item);
+                const value = getValue(item);
+                const color = getColor(item) || backupColor;
+                const label = getLabel(item);
+
+                const x = this.xScalePoint(key);
+                const y = this.yScale(value);
+
+                return {
+                    id: `${id}-${key}`,
+                    point: [x, y] as Point,
+                    state: {
+                        fillStyle: '#FFFFFF',
+                        strokeStyle: color,
+                        lineWidth: 2,
+                        cx: x,
+                        cy: y,
+                        radius: 5,
+                    } as CircleState,
+                };
+            };
+        };
+
+        const seriesEntryGroups = arrayMap(seriesEntries, series => {
+            const getMarkerValues = seriesLineValueProducer(series);
+
+            const items = arrayMap(data, item => {
+                const { id, point, state } = getMarkerValues(item);
+
+                const marker = createCircle({
+                    id,
+                    ...state,
+                    radius: 0,
+                    data: state,
+                });
+
+                return {
+                    point,
+                    marker,
+                };
+            });
+
+            const line = createPolyline({
+                id: `${series.id}-line`,
+                lineWidth: 2,
+                strokeStyle: '#000000',
+                points: arrayMap(items, item => item.point),
+            });
+
+            return createGroup({
+                id: series.id,
+                children: [
+                    line,
+                    ...arrayMap(items, item => item.marker),
+                ],
+            });
+        });
+
+        const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
+            const getMarkerValues = seriesLineValueProducer(series);
+            const line = group.getElementsByType('polyline')[0] as Polyline;
+            const markers = group.getElementsByType('circle') as Circle[];
+
+            const points = arrayMap(data, item => getMarkerValues(item).point);
+
+            line.data = {
+                points,
+            } as PolylineState;
+
+            const {
+                left: markerEntries,
+                inner: markerUpdates,
+                right: markerExits,
+            } = arrayJoin(data, markers, (item, marker) => marker.id === `${series.id}-${getKey(item)}`);
+
+            arrayForEach(markerExits, marker => marker.destroy());
+
+            arrayMap(markerEntries, item => {
+                const { id, state } = getMarkerValues(item);
+
+                const marker = createCircle({
+                    id,
+                    ...state,
+                    radius: 0,
+                    data: state,
+                });
+
+                group.add(marker);
+            });
+
+            arrayForEach(markerUpdates, ([item, marker]) => {
+                const { state } = getMarkerValues(item);
+
+                marker.data = state;
+            });
+
+            return group;
+        });
+
+        this.scene.add(seriesEntryGroups);
+
+        this.lineGroups = [
+            ...seriesEntryGroups,
+            ...seriesUpdateGroups,
+        ];
+
+        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+            const markers = group.queryAll('circle') as Circle[];
+            const line = group.query('polyline') as Polyline;
+
+            const lineTransition = this.renderer.transition(line, {
+                duration: 1000,
+                ease: easeOutCubic,
+                state: {
+                    points: interpolatePath(line.points),
+                },
+            });
+
+            const markersTransition = this.renderer.transition(markers, (element, index, length) => ({
+                duration: 1000,
+                delay: index * (1000 / length),
+                ease: easeOutCubic,
+                state: element.data as CircleState,
+            }));
+
+            return [
+                lineTransition,
+                markersTransition,
+            ];
+        });
+
+        const updateTransitions = arrayMap(seriesUpdateGroups, group => {
+            const markers = group.queryAll('circle') as Circle[];
+            const line = group.query('polyline') as Polyline;
+
+            const lineTransition = this.renderer.transition(line, {
+                duration: 1000,
+                ease: easeOutCubic,
+                state: line.data as PolylineState,
+            });
+
+            const markersTransition = this.renderer.transition(markers, (element) => ({
+                duration: 1000,
+                ease: easeOutCubic,
+                state: element.data as CircleState,
+            }));
+
+            return [
+                lineTransition,
+                markersTransition,
+            ];
+        });
+
+        return Promise.all([
+            ...entryTransitions,
+            ...updateTransitions,
+        ].flat());
     }
 
     private async drawBars() {
@@ -105,11 +303,12 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
             const getColor = typeIsFunction(colorBy) ? colorBy : () => colorBy;
+            const backupColor = this.colorGenerator.next().value;
 
             return (item: TData) => {
                 const key = getKey(item);
                 const value = getValue(item);
-                const color = getColor(item);
+                const color = getColor(item) || backupColor;
                 const label = getLabel(item);
 
                 const x = this.xScaleBand(key) + xScaleSeries(id);
@@ -244,7 +443,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 invert: value => this.xScaleBand.inverse(value),
             });
 
-            return this.drawBars();
+            return Promise.all([
+                this.drawBars(),
+                this.drawLines(),
+            ]);
         });
     }
 

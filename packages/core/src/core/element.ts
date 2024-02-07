@@ -160,6 +160,15 @@ function getInterpolator<TValue>(value: TValue) {
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
+function propDefault<TThis, TValue, TDefault = TValue>(value: TDefault) {
+    return (target: () => TValue, { kind }: ClassGetterDecoratorContext<TThis, TValue>) => {
+        if (kind === 'getter') {
+            return () => target() ?? value;
+        }
+    };
+}
+
+
 export class Element<
     TState extends BaseElementState = BaseElementState,
     TEventMap extends ElementEventMap = ElementEventMap

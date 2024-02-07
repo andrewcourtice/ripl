@@ -4,6 +4,7 @@ export type OneOrMore<TValue> = TValue | TValue[];
 export type Predicate<TLeft, TRight = TLeft> = (left: TLeft, right: TRight) => boolean;
 export type Indexer<TValue> = (value: TValue) => PropertyKey;
 
+export type Merge<TA, TB> = Omit<TA, keyof TB> & TB;
 export type UnionToIntersection<U> = (U extends any ? (arg: U) => any : never) extends ((arg: infer I) => void) ? I : never;
 
 export type IfEquals<X, Y, A = X, B = never> =
