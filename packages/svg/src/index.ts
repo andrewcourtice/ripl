@@ -1,26 +1,15 @@
 import {
-    BaseState,
+    BorderRadius,
     Context,
     ContextElement,
     ContextOptions,
     ContextPath,
     ContextText,
+    createFrameBuffer,
+    getThetaPoint,
     TextAlignment,
     TextOptions,
-} from './base';
-
-import {
-    scaleContinuous,
-} from '../scales';
-
-import {
-    BorderRadius,
-    getThetaPoint,
-} from '../math';
-
-import {
-    createFrameBuffer,
-} from '../animation';
+} from '@ripl/core';
 
 import {
     AnyFunction,
@@ -30,8 +19,6 @@ import {
     GetMutableKeys,
     objectForEach,
     objectMap,
-    onDOMElementResize,
-    typeIsString,
 } from '@ripl/utilities';
 
 type Styles = {
@@ -353,6 +340,6 @@ export class SVGContext extends Context<SVGSVGElement> {
 
 }
 
-export function createSVGContext(target: string | HTMLElement, options?: ContextOptions): Context {
+export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     return new SVGContext(target, options);
 }

@@ -43,8 +43,8 @@ export const CONTEXT_OPERATIONS = {
 };
 
 export const TRACKED_EVENTS = [
-    'element:click',
-    'element:mousemove',
-    'element:mouseenter',
-    'element:mouseleave',
+    'click',
+    'mousemove',
+    'mouseenter',
+    'mouseleave',
 ] as (keyof ElementEventMap)[];

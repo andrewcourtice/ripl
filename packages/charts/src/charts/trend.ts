@@ -8,6 +8,7 @@ import {
     BandScale,
     Circle,
     CircleState,
+    Context,
     createCircle,
     createGroup,
     createPolyline,
@@ -46,9 +47,9 @@ export type SeriesType = 'bar' | 'line' | 'area';
 export interface BaseTrendChartSeriesOptions<TData> {
     id: string;
     type: SeriesType;
+    color?: string;
     valueBy: keyof TData | number | ((item: TData) => number);
     labelBy: string | ((item: TData) => string);
-    colorBy: string | ((item: TData) => string);
 }
 
 export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
@@ -85,7 +86,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xScalePoint!: Scale<string>;
     private colorGenerator = getColorGenerator();
 
-    constructor(target: string | HTMLElement, options: ChartOptions<TrendChartOptions<TData>>) {
+    constructor(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
         super(target, options);
         this.init();
     }
@@ -109,16 +110,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
         arrayForEach(seriesExits, series => series.destroy());
 
-        const seriesLineValueProducer = ({ id, valueBy, labelBy, colorBy }: TrendChartLineSeriesOptions<TData>) => {
+        const seriesLineValueProducer = ({ id, valueBy, labelBy, color }: TrendChartLineSeriesOptions<TData>) => {
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
-            const getColor = typeIsFunction(colorBy) ? colorBy : () => colorBy;
-            const backupColor = this.colorGenerator.next().value;
 
             return (item: TData) => {
                 const key = getKey(item);
                 const value = getValue(item);
-                const color = getColor(item) || backupColor;
                 const label = getLabel(item);
 
                 const x = this.xScalePoint(key);
@@ -133,13 +131,15 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         lineWidth: 2,
                         cx: x,
                         cy: y,
-                        radius: 5,
+                        radius: 3,
                     } as CircleState,
                 };
             };
         };
 
         const seriesEntryGroups = arrayMap(seriesEntries, series => {
+            series.color ??= this.colorGenerator.next().value;
+
             const getMarkerValues = seriesLineValueProducer(series);
 
             const items = arrayMap(data, item => {
@@ -161,7 +161,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = createPolyline({
                 id: `${series.id}-line`,
                 lineWidth: 2,
-                strokeStyle: '#000000',
+                strokeStyle: series.color,
                 points: arrayMap(items, item => item.point),
             });
 
@@ -299,16 +299,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
         arrayForEach(seriesExits, series => series.destroy());
 
-        const seriesBarValueProducer = ({ id, valueBy, labelBy, colorBy }: TrendChartBarSeriesOptions<TData>) => {
+        const seriesBarValueProducer = ({ id, color, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
-            const getColor = typeIsFunction(colorBy) ? colorBy : () => colorBy;
-            const backupColor = this.colorGenerator.next().value;
 
             return (item: TData) => {
                 const key = getKey(item);
                 const value = getValue(item);
-                const color = getColor(item) || backupColor;
                 const label = getLabel(item);
 
                 const x = this.xScaleBand(key) + xScaleSeries(id);
@@ -330,6 +327,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         };
 
         const seriesEntryGroups = arrayMap(seriesEntries, (series) => {
+            series.color ??= this.colorGenerator.next().value;
+
             const getBarValues = seriesBarValueProducer(series);
 
             const children = arrayMap(data, item => {
@@ -452,6 +451,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
 }
 
-export function createTrendChart<TData = unknown>(target: string | HTMLElement, options: ChartOptions<TrendChartOptions<TData>>) {
+export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
     return new TrendChart<TData>(target, options);
 }

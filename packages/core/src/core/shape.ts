@@ -74,12 +74,12 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
             callback?.(this.path);
 
-            if (this.path && this.autoStroke && this.strokeStyle) {
-                context.stroke(this.path);
-            }
-
             if (this.path && this.autoFill && this.fillStyle) {
                 context.fill(this.path);
+            }
+
+            if (this.path && this.autoStroke && this.strokeStyle) {
+                context.stroke(this.path);
             }
         });
     }

@@ -39,7 +39,6 @@ export interface SceneEventMap extends ElementEventMap {
 }
 
 export interface SceneOptions extends GroupOptions {
-    type?: ContextType;
     renderOnResize?: boolean;
 }
 
@@ -60,7 +59,6 @@ export class Scene extends Group<SceneEventMap> {
 
     constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
-            type,
             renderOnResize = true,
             ...groupOptions
         } = options || {};
@@ -68,7 +66,6 @@ export class Scene extends Group<SceneEventMap> {
         const context = typeIsContext(target)
             ? target
             : createContext(target, {
-                type,
                 buffer: false,
             });
 
@@ -191,6 +188,7 @@ export class Scene extends Group<SceneEventMap> {
 
     public destroy(): void {
         this.disposals.forEach(disposal => disposal.dispose());
+        this.context.destroy();
         super.destroy();
     }
 

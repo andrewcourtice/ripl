@@ -27,3 +27,5 @@ yarn-error.log*
 
 # macOS-specific files
 .DS_Store
+
+app/src/.vitepress/cache/

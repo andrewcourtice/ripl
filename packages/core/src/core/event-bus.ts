@@ -2,7 +2,10 @@ import {
     Disposable,
 } from '@ripl/utilities';
 
-export type EventMap = Record<string, unknown>;
+export type EventMap = {
+    [key: string]: unknown;
+    destroyed: null;
+};
 
 export type EventOptions<TData = undefined> = {
     bubbles?: boolean;
@@ -24,7 +27,7 @@ export class Event<TData = undefined> {
     public readonly type: string;
     public readonly data: TData;
     public readonly timestamp: number;
-    public readonly target: EventBus;
+    public readonly target: EventBus<any>;
 
     public get bubbles() {
         return this.#bubbles;
@@ -121,6 +124,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
     }
 
     public destroy() {
+        this.emit('destroyed', null);
         this.listeners.clear();
     }
 

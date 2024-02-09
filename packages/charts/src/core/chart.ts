@@ -1,7 +1,9 @@
 import {
-    ContextType,
+    Context,
     createRenderer,
     createScene,
+    EventBus,
+    EventMap,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -10,10 +12,12 @@ export type BaseChartOptions = Record<PropertyKey, any>;
 export type ChartOptions<TOptions extends BaseChartOptions> = {
     autoRender?: boolean;
     animated?: boolean;
-    type?: ContextType;
 } & TOptions;
 
-export class Chart<TOptions extends BaseChartOptions> {
+export class Chart<
+    TOptions extends BaseChartOptions,
+    TEventMap extends EventMap = EventMap
+> extends EventBus<TEventMap> {
 
     protected scene: Scene;
     protected renderer: Renderer;
@@ -24,22 +28,20 @@ export class Chart<TOptions extends BaseChartOptions> {
 
     protected options: TOptions;
 
-    constructor(target: string | HTMLElement, options?: ChartOptions<TOptions>) {
+    constructor(target: Context | string | HTMLElement, options?: ChartOptions<TOptions>) {
         const {
-            type,
             autoRender = true,
             animated = true,
             ...opts
         } = options || {};
 
+        super();
+
         this.autoRender = autoRender;
         this.animated = animated;
         this.options = opts as TOptions;
 
-        this.scene = createScene(target, {
-            type,
-        });
-
+        this.scene = createScene(target);
         this.renderer = createRenderer(this.scene);
     }
 
@@ -75,6 +77,11 @@ export class Chart<TOptions extends BaseChartOptions> {
         } finally {
             this.hasRendered = true;
         }
+    }
+
+    public destroy() {
+        this.scene.destroy();
+        super.destroy();
     }
 
 }

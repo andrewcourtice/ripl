@@ -21,11 +21,6 @@ import {
     scaleContinuous,
 } from '../scales';
 
-import {
-    onDOMElementResize,
-    typeIsString,
-} from '@ripl/utilities';
-
 export class CanvasPath extends ContextPath {
 
     public readonly ref: Path2D;
@@ -359,6 +354,6 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
 }
 
-export function createCanvasContext(target: string | HTMLElement, options?: ContextOptions): Context {
+export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     return new CanvasContext(target, options);
 }

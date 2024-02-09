@@ -1,6 +1,6 @@
 export * from './constants';
-export * from '../context';
 export * from './element';
+export * from './event-bus';
 export * from './group';
 export * from './renderer';
 export * from './scene';

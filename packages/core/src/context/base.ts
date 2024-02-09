@@ -1,10 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import {
     BorderRadius,
     Point,
 } from '../math';
 
 import {
-    EventBus, EventMap,
+    EventBus,
+    EventMap,
 } from '../core/event-bus';
 
 import {
@@ -20,7 +23,6 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-export type ContextType = 'canvas' | 'svg';
 export type Direction = 'inherit' | 'ltr' | 'rtl';
 export type FontKerning = 'auto' | 'none' | 'normal';
 export type LineCap = 'butt' | 'round' | 'square';
@@ -34,7 +36,6 @@ export interface ContextEventMap extends EventMap {
 }
 
 export interface ContextOptions {
-    type?: ContextType;
     buffer?: boolean;
 }
 

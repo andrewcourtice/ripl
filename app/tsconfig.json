@@ -1,0 +1,12 @@
+{
+    "extends": "../tsconfig.json",
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.vue",
+        "src/.vitepress/**/*.ts",
+        "src/.vitepress/**/*.vue"
+    ],
+    "files": [
+        "global.d.ts"
+    ]
+}

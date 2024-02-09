@@ -18,4 +18,6 @@ export function* getColorGenerator() {
         yield colors[index];
         index = (index + 1) % colors.length;
     }
+
+    return COLOURS.slate;
 }

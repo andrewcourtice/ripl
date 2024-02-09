@@ -3,6 +3,7 @@
         "strict": true,
         "target": "ES2020",
         "module": "ESNext",
+        "jsx": "preserve",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "isolatedModules": true,

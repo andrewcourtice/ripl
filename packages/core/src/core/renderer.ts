@@ -121,6 +121,8 @@ export class Renderer extends EventBus<RendererEventMap> {
             scene.on('mousemove', () => this.start(), { self: true });
             scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
         }
+
+        scene.once('destroyed', () => this.destroy());
     }
 
     private tick() {
@@ -291,6 +293,11 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this.transitionMap.set(element.id, transitions);
             });
         });
+    }
+
+    public destroy(): void {
+        this.stop();
+        super.destroy();
     }
 
 }

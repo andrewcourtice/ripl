@@ -5,9 +5,14 @@ import {
 } from '../core/chart';
 
 import {
+    getColorGenerator,
+} from '../constants/colors';
+
+import {
     Arc,
     ArcState,
     BaseElementState,
+    Context,
     createArc,
     createGroup,
     createText,
@@ -30,9 +35,6 @@ import {
     arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
-import {
-    getColorGenerator,
-} from '../constants/colors';
 
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
@@ -46,7 +48,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
 
-    constructor(target: string | HTMLElement, options: ChartOptions<PieChartOptions<TData>>) {
+    constructor(target: string | HTMLElement | Context, options: ChartOptions<PieChartOptions<TData>>) {
         super(target, options);
         this.init();
     }
@@ -308,6 +310,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
 }
 
-export function createPieChart<TData = unknown>(target: string | HTMLElement, options: ChartOptions<PieChartOptions<TData>>) {
+export function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: ChartOptions<PieChartOptions<TData>>) {
     return new PieChart<TData>(target, options);
 }
