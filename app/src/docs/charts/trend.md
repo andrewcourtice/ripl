@@ -21,7 +21,7 @@ import {
     stringUniqueId
 } from '@ripl/utilities';
 
-import useRiplChart from '../.vitepress/compositions/example';
+import useRiplChart from '../../.vitepress/compositions/example';
 
 const dataScale = scaleContinuous([0, 1], [-500, 1200]);
 

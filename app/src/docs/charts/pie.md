@@ -24,7 +24,7 @@ import {
     stringUniqueId
 } from '@ripl/utilities';
 
-import useRiplChart from '../.vitepress/compositions/example';
+import useRiplChart from '../../.vitepress/compositions/example';
 
 const getColor = () => serialiseRGBA(
     clamp(Math.round(Math.random()) * 255, 80, 230),

@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: "Ripl"
-  text: "Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API"
+  text: "High performance canvas and SVG drawing with a fimiliar API"
   tagline: My great project tagline
   actions:
     - theme: brand

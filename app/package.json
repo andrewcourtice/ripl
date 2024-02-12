@@ -10,6 +10,7 @@
         "@ripl/svg": "1.0.0",
         "@ripl/utilities": "1.0.0",
         "flex-layout-attribute": "^1.0.3",
+        "sass": "^1.70.0",
         "vue": "^3.4.18"
     },
     "devDependencies": {
