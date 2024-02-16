@@ -5,7 +5,16 @@ import {
 } from '../core/chart';
 
 import {
+    getColorGenerator,
+} from '../constants/colors';
+
+import {
+    ChartYAxis,
+} from '../components/axis';
+
+import {
     BandScale,
+    Box,
     Circle,
     CircleState,
     Context,
@@ -39,9 +48,6 @@ import {
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
-import {
-    getColorGenerator,
-} from '../constants/colors';
 
 export type SeriesType = 'bar' | 'line' | 'area';
 export interface BaseTrendChartSeriesOptions<TData> {
@@ -85,9 +91,18 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
     private colorGenerator = getColorGenerator();
+    private yAxis: ChartYAxis;
 
     constructor(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
         super(target, options);
+
+        this.yAxis = new ChartYAxis({
+            scene: this.scene,
+            renderer: this.renderer,
+            bounds: Box.empty(),
+            scale: this.yScale,
+        });
+
         this.init();
     }
 
@@ -423,15 +438,31 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: unknown) => item[keyBy] as string;
             const keys = arrayMap(data, getKey);
             const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
-                const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
+                const getValue = typeIsFunction(valueBy)
+                    ? valueBy
+                    : (item: unknown) => item[valueBy] as number;
 
                 return getExtent(data, getValue);
             }).concat(0);
 
-            this.yScale = scaleContinuous(getExtent(seriesExtents, functionIdentity), [scene.height - 20, 20]);
+            const dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            this.xScaleBand = scaleBand(keys, [0, this.scene.width], {
-                outerPadding: 0.5,
+            this.yScale = scaleContinuous(dataExtent, [scene.height - 20, 20], {
+                padToTicks: 10,
+            });
+
+            this.yAxis.scale = this.yScale;
+            this.yAxis.bounds = new Box(
+                20,
+                20,
+                this.scene.height - 20,
+                this.scene.width + 20
+            );
+
+            const axisBoundingBox = this.yAxis.getBoundingBox();
+
+            this.xScaleBand = scaleBand(keys, [axisBoundingBox.right, this.scene.width - 20], {
+                outerPadding: 0.25,
                 innerPadding: 0.25,
             });
 
@@ -442,7 +473,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 invert: value => this.xScaleBand.inverse(value),
             });
 
+
             return Promise.all([
+                this.yAxis.render(),
                 this.drawBars(),
                 this.drawLines(),
             ]);

@@ -128,16 +128,16 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     }), segments, segmentIndex + 1);
 }
 
-export function queryAll(elements: OneOrMore<Element | Group>, selector: string) {
+export function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     const els = arrayFlatMap(([] as Element[]).concat(elements), element => {
         return isGroup(element) ? element.graph(true) : [element];
     });
 
-    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators));
+    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
 }
 
-export function query(elements: OneOrMore<Element | Group>, selector: string) {
-    return queryAll(elements, selector).at(0);
+export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
+    return queryAll<TElement>(elements, selector).at(0);
 }
 
 export function isGroup(value: unknown): value is Group {
@@ -226,26 +226,26 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         });
     }
 
-    public query(selector: string) {
-        return query(this, selector);
+    public query<TElement extends Element = Element>(selector: string) {
+        return query<TElement>(this, selector);
     }
 
-    public queryAll(selector: string) {
-        return queryAll(this, selector);
+    public queryAll<TElement extends Element = Element>(selector: string) {
+        return queryAll<TElement>(this, selector);
     }
 
-    public getElementByID(id: string) {
-        return arrayFind(this.graph(true), element => element.id === id);
+    public getElementByID<TElement extends Element = Element>(id: string) {
+        return arrayFind(this.graph(true), element => element.id === id) as TElement;
     }
 
-    public getElementsByType(types: OneOrMore<string>) {
+    public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = valueOneOrMore(types);
-        return arrayFilter(this.graph(true), element => typeList.includes(element.type));
+        return arrayFilter(this.graph(true), element => typeList.includes(element.type)) as TElement[];
     }
 
-    public getElementsByClass(classes: OneOrMore<string>) {
+    public getElementsByClass<TElement extends Element = Element>(classes: OneOrMore<string>) {
         const classList = valueOneOrMore(classes);
-        return arrayFilter(this.graph(true), element => classList.every(cls => element.classList.has(cls)));
+        return arrayFilter(this.graph(true), element => classList.every(cls => element.classList.has(cls))) as TElement[];
     }
 
     public getBoundingBox() {

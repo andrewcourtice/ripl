@@ -6,6 +6,7 @@ import {
     ContextPath,
     ContextText,
     createFrameBuffer,
+    getRefContext,
     getThetaPoint,
     TextAlignment,
     TextOptions,
@@ -19,6 +20,7 @@ import {
     GetMutableKeys,
     objectForEach,
     objectMap,
+    typeIsNumber,
 } from '@ripl/utilities';
 
 type Styles = {
@@ -327,6 +329,27 @@ export class SVGContext extends Context<SVGSVGElement> {
             strokeLinejoin: this.currentState.lineJoin,
             strokeWidth: this.currentState.lineWidth.toString(),
             strokeMiterlimit: this.currentState.miterLimit.toString(),
+        });
+    }
+
+    measureText(text: string): TextMetrics {
+        const context = getRefContext();
+
+        context.save();
+        context.font = this.font;
+
+        const result = context.measureText(text);
+
+        context.restore();
+
+        return new Proxy(result, {
+            get: (target, prop) => {
+                const value = target[prop];
+
+                return typeIsNumber(value)
+                    ? this.scaleDPR(value)
+                    : value;
+            },
         });
     }
 

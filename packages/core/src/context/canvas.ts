@@ -20,6 +20,9 @@ import {
 import {
     scaleContinuous,
 } from '../scales';
+import {
+    typeIsNumber,
+} from '@ripl/utilities';
 
 export class CanvasPath extends ContextPath {
 
@@ -274,8 +277,8 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
         super.rescale(width, height);
 
-        this.xScale = scaleContinuous([0, width], [0, scaledWidth]);
-        this.yScale = scaleContinuous([0, height], [0, scaledHeight]);
+        this.scaleX = scaleContinuous([0, width], [0, scaledWidth]);
+        this.scaleY = scaleContinuous([0, height], [0, scaledHeight]);
     }
 
     save(): void {
@@ -317,7 +320,15 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
     }
 
     measureText(text: string): TextMetrics {
-        return this.context.measureText(text);
+        return new Proxy(this.context.measureText(text), {
+            get: (target, prop) => {
+                const value = target[prop];
+
+                return typeIsNumber(value)
+                    ? this.scaleDPR(value)
+                    : value;
+            },
+        });
     }
 
     createPath(id?: string): CanvasPath {

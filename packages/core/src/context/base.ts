@@ -75,7 +75,7 @@ export interface BaseState {
     zIndex: number;
 }
 
-const getRefContext = functionCache(() => {
+export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
 });
 
@@ -173,8 +173,9 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     public buffer: boolean;
     public width: number;
     public height: number;
-    public xScale: Scale<number, number>;
-    public yScale: Scale<number, number>;
+    public scaleX: Scale<number, number>;
+    public scaleY: Scale<number, number>;
+    public scaleDPR: Scale<number, number>;
 
     protected states: BaseState[];
     protected currentState: BaseState;
@@ -372,8 +373,9 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
-        this.xScale = scaleContinuous([0, this.width], [0, this.width]);
-        this.yScale = scaleContinuous([0, this.height], [0, this.height]);
+        this.scaleX = scaleContinuous([0, this.width], [0, this.width]);
+        this.scaleY = scaleContinuous([0, this.height], [0, this.height]);
+        this.scaleDPR = scaleContinuous([0, 1], [0, window.devicePixelRatio]);
     }
 
     protected init() {
@@ -388,8 +390,8 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     protected rescale(width: number, height: number) {
-        this.xScale = scaleContinuous([0, width], [0, width]);
-        this.yScale = scaleContinuous([0, height], [0, height]);
+        this.scaleX = scaleContinuous([0, width], [0, width]);
+        this.scaleY = scaleContinuous([0, height], [0, height]);
 
         this.width = width;
         this.height = height;
@@ -432,6 +434,16 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     restore(): void {
         this.currentState = this.states.pop() || this.getDefaultState();
+    }
+
+    batch<TResult = void>(body: () => TResult): TResult {
+        this.save();
+
+        try {
+            return body();
+        } finally {
+            this.restore();
+        }
     }
 
     clear(): void {

@@ -22,7 +22,9 @@ describe('Scale', () => {
         });
 
         test('Should clamp values outside the range', () => {
-            const scale = scaleContinuous(domain, range, true);
+            const scale = scaleContinuous(domain, range, {
+                clamp: true,
+            });
 
             expect(scale(-10)).toBe(range[0]);
             expect(scale(15)).toBe(range[1]);

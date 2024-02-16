@@ -112,8 +112,8 @@ export class Scene extends Group<SceneEventMap> {
         this.attachDOMEvent('mousemove', event => {
             const x = event.clientX - left;
             const y = event.clientY - top;
-            const trueX = this.context.xScale(x);
-            const trueY = this.context.yScale(y);
+            const trueX = this.context.scaleX(x);
+            const trueY = this.context.scaleY(y);
 
             this.emit('mousemove', {
                 x,
@@ -153,8 +153,8 @@ export class Scene extends Group<SceneEventMap> {
         });
 
         this.attachDOMEvent('click', event => {
-            const x = this.context.xScale(event.clientX - left);
-            const y = this.context.yScale(event.clientY - top);
+            const x = this.context.scaleX(event.clientX - left);
+            const y = this.context.scaleY(event.clientY - top);
 
             const element = arrayFind(getTrackedElements('click'), element => element.intersectsWith(x, y, {
                 isPointer: true,

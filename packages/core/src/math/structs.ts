@@ -7,6 +7,10 @@ export class Box {
         public readonly right: number
     ) {}
 
+    static empty() {
+        return new Box(0, 0, 0, 0);
+    }
+
     get width() {
         return this.right - this.left;
     }

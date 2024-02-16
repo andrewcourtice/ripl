@@ -72,7 +72,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const getColor = typeIsFunction(color) ? color : (item: unknown) => item[color] as string;
 
             const total = getTotal(data, getValue);
-            const scale = scaleContinuous([0, total], [0, TAU], true);
+            const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
             const offset = TAU / 4;
             const padAngle = data.length === 1 ? 0 : 0.1 / data.length;
 

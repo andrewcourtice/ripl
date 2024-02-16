@@ -5,4 +5,6 @@ export interface Scale<TDomain = number, TRange = number> {
     domain: TDomain[];
     range: TRange[];
     inverse: ScaleMethod<TRange, TDomain>;
+    ticks(): TDomain[];
+    includes(value: TDomain): boolean;
 }
