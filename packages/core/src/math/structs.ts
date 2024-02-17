@@ -1,10 +1,10 @@
 export class Box {
 
     constructor(
-        public readonly top: number,
-        public readonly left: number,
-        public readonly bottom: number,
-        public readonly right: number
+        public top: number,
+        public left: number,
+        public bottom: number,
+        public right: number
     ) {}
 
     static empty() {
