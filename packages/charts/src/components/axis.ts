@@ -92,7 +92,7 @@ export class ChartAxis extends ChartComponent {
             children: [
                 createLine({
                     class: 'chart-axis__line',
-                    strokeStyle: '#000000',
+                    strokeStyle: '#777777',
                     x1: 0,
                     y1: 0,
                     x2: 0,
@@ -190,7 +190,7 @@ export class ChartXAxis extends ChartAxis {
                         y: boundingBox.top + this.padding + this.tickSize + 1,
                         textAlign: 'center',
                         textBaseline: 'top',
-                        fillStyle: '#000000',
+                        fillStyle: '#777777',
                         font: '12px sans-serif',
                     }),
                     createLine({
@@ -198,7 +198,7 @@ export class ChartXAxis extends ChartAxis {
                         y1: boundingBox.top,
                         x2: x,
                         y2: boundingBox.top + this.tickSize,
-                        strokeStyle: '#000000',
+                        strokeStyle: '#777777',
                     }),
                 ],
             });
@@ -300,7 +300,7 @@ export class ChartYAxis extends ChartAxis {
                         y,
                         textAlign: 'right',
                         textBaseline: 'middle',
-                        fillStyle: '#000000',
+                        fillStyle: '#777777',
                         font: '12px sans-serif',
                     }),
                     createLine({
@@ -308,7 +308,7 @@ export class ChartYAxis extends ChartAxis {
                         y1: y,
                         x2: boundingBox.right - this.tickSize,
                         y2: y,
-                        strokeStyle: '#000000',
+                        strokeStyle: '#777777',
                     }),
                 ],
             });
