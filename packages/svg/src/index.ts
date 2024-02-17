@@ -9,6 +9,7 @@ import {
     getRefContext,
     getThetaPoint,
     TextAlignment,
+    TextBaseline,
     TextOptions,
 } from '@ripl/core';
 
@@ -44,6 +45,11 @@ const SVG_STYLE_MAP = {
         right: 'end',
         center: 'middle',
     } as Record<TextAlignment, string>,
+    alignmentBaseline: {
+        top: 'text-before-edge',
+        middle: 'middle',
+        bottom: 'text-after-edge',
+    } as Record<TextBaseline, string>,
 } as Record<keyof Styles, Record<string, string>>;
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
@@ -229,6 +235,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             font: this.currentState.font,
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
+            alignmentBaseline: this.currentState.textBaseline,
             opacity: this.currentState.globalAlpha.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
             // shadowBlur,
