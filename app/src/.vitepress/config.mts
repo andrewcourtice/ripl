@@ -8,6 +8,11 @@ export default defineConfig({
     title: "Ripl",
     description: "Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API",
     themeConfig: {
+
+        search: {
+            provider: 'local'
+        },
+        
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             {

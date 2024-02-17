@@ -89,10 +89,10 @@ watchEffect(() => {
 
     .ripl-example__context-type-option {
         display: block;
-        padding: 0.25rem 1rem;
+        padding: 0.3rem 1rem;
         border: 1px solid var(--vp-c-gray-1);
         border-radius: 0.25rem;
-        background-color: var(--vp-c-bg);
+        background-color: var(--vp-button-alt-bg);
         cursor: pointer;
         
         & input {
@@ -100,7 +100,7 @@ watchEffect(() => {
         }
 
         &:hover {
-            background-color: var(--vp-c-bg-alt);
+            background-color: var(--vp-button-alt-hover-bg);
         }
 
         &:has(:checked) {
@@ -120,7 +120,7 @@ watchEffect(() => {
     }
 
     .ripl-example__root {
-        aspect-ratio: 1 / 1;
+        aspect-ratio: 4 / 3;
     }
 
 </style>

@@ -61,10 +61,16 @@ const {
             valueBy: 'sweden',
         },
         {
-            type: 'line',
+            type: 'bar',
             id: 'united-states',
             labelBy: 'United States',
             valueBy: 'unitedStates',
+        },
+        {
+            type: 'line',
+            id: 'great-britain',
+            labelBy: 'Great Britain',
+            valueBy: 'greatBritain',
         }
     ]
 }));
@@ -75,7 +81,8 @@ function getDataItem() {
         australia: getValue(),
         newZealand: getValue(),
         sweden: getValue(),
-        unitedStates: getValue()
+        unitedStates: getValue(),
+        greatBritain: getValue(),
     }
 }
 

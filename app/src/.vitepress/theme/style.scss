@@ -135,15 +135,16 @@
 
 .ripl-button {
     display: inline-block;
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 1rem;
     margin: 0.25rem;
     font: inherit;
-    color: var(--vp-button-brand-text);
+    line-height: inherit;
+    color: var(--vp-button-alt-text);
     border-radius: 0.25rem;
-    background-color: var(--vp-button-brand-bg);
+    background-color: var(--vp-button-alt-bg);
     transition: background 150ms ease-out;
     
     &:hover {
-        background-color: var(--vp-button-brand-active-bg);
+        background-color: var(--vp-button-alt-hover-bg);
     }
 }
