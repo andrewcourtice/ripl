@@ -10,6 +10,9 @@
                     <input type="radio" name="context-type" value="svg" v-model="type"> SVG
                 </label>
             </div>
+            <div class="ripl-example__user-options" v-if="$slots.default">
+                <slot></slot>
+            </div>
         </div>
     </div>
 </template>
@@ -17,6 +20,7 @@
 <script lang="ts" setup>
 import {
     ref,
+    shallowRef,
     watchEffect
 } from 'vue';
 
@@ -42,7 +46,7 @@ const emit = defineEmits<{
 }>()
 
 const type = ref<ContextType>('canvas');
-const context = ref<Context>();
+const context = shallowRef<Context>();
 const root = ref<HTMLElement>();
 
 watchEffect(() => {
@@ -69,13 +73,18 @@ watchEffect(() => {
     }
 
     .ripl-example__sidebar {
-        padding: 1rem;
         border-left: 1px solid var(--vp-c-divider);
         background-color: var(--vp-sidebar-bg-color);
     }
 
+    .ripl-example__context-type-options,
+    .ripl-example__user-options {
+        padding: 1rem;
+    }
+
     .ripl-example__context-type-options {
         gap: 0.25rem;
+        border-bottom: 1px solid var(--vp-c-gray-1);
     }
 
     .ripl-example__context-type-option {
@@ -104,6 +113,10 @@ watchEffect(() => {
                 background-color: var(--vp-button-brand-active-bg);
             }
         }
+    }
+
+    .ripl-example__user-options {
+
     }
 
     .ripl-example__root {

@@ -1,7 +1,8 @@
-import './style.css';
-import 'flex-layout-attribute';
-
 import DefaultTheme from 'vitepress/theme';
+
+import 'flex-layout-attribute';
+import './style.scss';
+
 import Example from '../components/example.vue';
 
 import type {

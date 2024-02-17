@@ -1,6 +1,14 @@
-import { Chart } from '@ripl/charts';
-import { Context } from '@ripl/core';
-import { shallowRef } from 'vue';
+import { 
+    shallowRef 
+} from 'vue';
+
+import type {
+    Chart
+} from '@ripl/charts';
+
+import type {
+    Context 
+} from '@ripl/core';
 
 export default function useRiplChart<TChart extends Chart<any>>(onContextChanged: (context: Context) => TChart) {
     const chart = shallowRef<TChart>();

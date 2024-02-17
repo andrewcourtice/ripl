@@ -132,3 +132,18 @@
 .DocSearch {
     --docsearch-primary-color: var(--vp-c-brand-1) !important;
 }
+
+.ripl-button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    font: inherit;
+    color: var(--vp-button-brand-text);
+    border-radius: 0.25rem;
+    background-color: var(--vp-button-brand-bg);
+    transition: background 150ms ease-out;
+    
+    &:hover {
+        background-color: var(--vp-button-brand-active-bg);
+    }
+}
