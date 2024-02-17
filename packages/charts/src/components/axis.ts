@@ -25,13 +25,14 @@ export type ChartXAxisAlignment = 'top' | 'bottom';
 export type ChartYAxisAlignment = 'left' | 'right';
 
 export interface ChartAxisOptions extends ChartComponentOptions {
-    scale: Scale;
+    scale: Scale<any, number>;
     bounds: Box;
     padding?: number;
+    tickCount?: number;
     tickSize?: number;
     maxWidth?: number;
     maxHeight?: number;
-    grid?: boolean;
+    gridLines?: boolean;
 }
 
 export interface ChartXAxisOptions extends ChartAxisOptions {
@@ -44,12 +45,25 @@ export interface ChartYAxisOptions extends ChartAxisOptions {
 
 export class ChartAxis extends ChartComponent {
 
-    public scale: Scale;
+    public scale: Scale<any, number>;
     public bounds: Box;
     public padding: number;
     public tickSize: number;
+    public tickCount: number;
 
     protected group: Group;
+
+    protected get ticks() {
+        return this.scale.ticks(this.tickCount);
+    }
+
+    protected get maxLabelWidth() {
+        return this.measureLabels(metrics => metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight);
+    }
+
+    protected get maxLabelHeight() {
+        return this.measureLabels(metrics => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+    }
 
     constructor(options: ChartAxisOptions) {
         const {
@@ -59,6 +73,7 @@ export class ChartAxis extends ChartComponent {
             bounds,
             padding = 5,
             tickSize = 5,
+            tickCount = 10,
         } = options;
 
         super({
@@ -70,6 +85,7 @@ export class ChartAxis extends ChartComponent {
         this.scale = scale;
         this.padding = padding;
         this.tickSize = tickSize;
+        this.tickCount = tickCount;
 
         this.group = createGroup({
             class: 'chart-axis',
@@ -88,12 +104,129 @@ export class ChartAxis extends ChartComponent {
         scene.add(this.group);
     }
 
+    private measureLabels(producer: (metrics: TextMetrics) => number) {
+        return arrayReduce(this.ticks, (output, value) => {
+            const metrics = this.context.measureText(value.toString());
+            return Math.max(output, producer(metrics));
+        }, 0);
+    }
+
     public getBoundingBox(): Box {
         return this.bounds;
     }
 
     public render() {
 
+    }
+
+}
+
+export class ChartXAxis extends ChartAxis {
+
+    public alignment: ChartXAxisAlignment;
+
+    constructor(options: ChartXAxisOptions) {
+        const {
+            alignment = 'bottom',
+        } = options;
+
+        super(options);
+
+        this.alignment = alignment;
+    }
+
+    public getBoundingBox(): Box {
+        const isBottomAligned = this.alignment === 'bottom';
+        const clearance = this.maxLabelHeight
+            + this.padding
+            + this.tickSize
+            + 1; // 1 for line width
+
+        const {
+            top,
+            left,
+            bottom,
+            right,
+        } = this.bounds;
+
+        return new Box(
+            isBottomAligned ? bottom - clearance : top,
+            left,
+            isBottomAligned ? bottom : top + clearance,
+            right
+        );
+    }
+
+    public async render() {
+        const ticks = this.ticks;
+        const boundingBox = this.getBoundingBox();
+        const line = this.group.query<Line>('.chart-axis__line');
+
+        if (line) {
+            line.x1 = boundingBox.left;
+            line.y1 = boundingBox.top;
+            line.x2 = boundingBox.right;
+            line.y2 = boundingBox.top;
+        }
+
+        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
+
+        const {
+            left: groupEntries,
+            inner: groupUpdates,
+            right: groupExits,
+        } = arrayJoin(ticks, groups, (value, group) => ticks.indexOf(value) === groups.indexOf(group));
+
+        const labelEntryTexts = arrayMap(groupEntries, value => {
+            const x = this.scale(value);
+
+            return createGroup({
+                class: 'chart-axis__tick-group',
+                zIndex: 1000,
+                children: [
+                    createText({
+                        content: value,
+                        x,
+                        y: boundingBox.top + this.padding + this.tickSize + 1,
+                        textAlign: 'center',
+                        textBaseline: 'top',
+                        fillStyle: '#000000',
+                        font: '12px sans-serif',
+                    }),
+                    createLine({
+                        x1: x,
+                        y1: boundingBox.top,
+                        x2: x,
+                        y2: boundingBox.top + this.tickSize,
+                        strokeStyle: '#000000',
+                    }),
+                ],
+            });
+        });
+
+        this.group.add(labelEntryTexts);
+        this.group.remove(groupExits);
+
+        arrayForEach(groupUpdates, ([value, group]) => {
+            const line = group.query<Line>('line');
+            const label = group.query<Text>('text');
+            const x = this.scale(value);
+
+            if (line) {
+                line.x1 = x;
+                line.y1 = boundingBox.top;
+                line.x2 = x;
+                line.y2 = boundingBox.top + this.tickSize;
+            }
+
+            if (label) {
+                label.content = value.toString();
+                label.x = x;
+                label.y = boundingBox.top + this.padding + this.tickSize + 1;
+            }
+        });
+
+        return Promise.resolve();
     }
 
 }
@@ -112,30 +245,30 @@ export class ChartYAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
-    private get maxLabelWidth() {
-        const ticks = this.scale.ticks();
-
-        return arrayReduce(ticks, (output, value) => {
-            const metrics = this.context.measureText(value.toString());
-            const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
-
-            return Math.max(output, width);
-        }, 0);
-    }
-
     public getBoundingBox(): Box {
-        const clearance = this.maxLabelWidth + this.padding + this.tickSize + 1; // 1 for line width
+        const isLeftAligned = this.alignment === 'left';
+        const clearance = this.maxLabelWidth
+            + this.padding
+            + this.tickSize
+            + 1; // 1 for line width
+
+        const {
+            top,
+            left,
+            bottom,
+            right,
+        } = this.bounds;
 
         return new Box(
-            this.bounds.top,
-            this.alignment === 'left' ? this.bounds.left : this.bounds.right - clearance,
-            this.bounds.bottom,
-            this.alignment === 'left' ? this.bounds.left + clearance : this.bounds.right
+            top,
+            isLeftAligned ? left : right - clearance,
+            bottom,
+            isLeftAligned ? left + clearance : right
         );
     }
 
     public async render() {
-        const tickValues = this.scale.ticks();
+        const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
         const line = this.group.query<Line>('.chart-axis__line');
 
@@ -152,7 +285,7 @@ export class ChartYAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(tickValues, groups, (value, group) => tickValues.indexOf(value) === groups.indexOf(group));
+        } = arrayJoin(ticks, groups, (value, group) => ticks.indexOf(value) === groups.indexOf(group));
 
         const labelEntryTexts = arrayMap(groupEntries, value => {
             const y = this.scale(value);

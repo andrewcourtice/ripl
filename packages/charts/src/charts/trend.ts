@@ -9,6 +9,7 @@ import {
 } from '../constants/colors';
 
 import {
+    ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
 
@@ -91,10 +92,18 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
     private colorGenerator = getColorGenerator();
+    private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
 
     constructor(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
         super(target, options);
+
+        this.xAxis = new ChartXAxis({
+            scene: this.scene,
+            renderer: this.renderer,
+            bounds: Box.empty(),
+            scale: this.xScalePoint,
+        });
 
         this.yAxis = new ChartYAxis({
             scene: this.scene,
@@ -456,12 +465,12 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 20,
                 20,
                 this.scene.height - 20,
-                this.scene.width + 20
+                this.scene.width - 20
             );
 
-            const axisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
-            this.xScaleBand = scaleBand(keys, [axisBoundingBox.right, this.scene.width - 20], {
+            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, this.scene.width - 20], {
                 outerPadding: 0.25,
                 innerPadding: 0.25,
             });
@@ -473,8 +482,25 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 invert: value => this.xScaleBand.inverse(value),
             });
 
+            this.xAxis.scale = this.xScalePoint;
+            this.xAxis.bounds = new Box(
+                20,
+                yAxisBoundingBox.right,
+                this.scene.height - 20,
+                this.scene.width - 20
+            );
+
+            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+
+            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, 20], {
+                padToTicks: 10,
+            });
+
+            this.yAxis.scale = this.yScale;
+            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
 
             return Promise.all([
+                this.xAxis.render(),
                 this.yAxis.render(),
                 this.drawBars(),
                 this.drawLines(),
