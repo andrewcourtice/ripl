@@ -201,7 +201,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        this.#elements.forEach(item => {
+        elements.forEach(item => {
             item.parent = undefined;
             this.#elements.delete(item);
         });
