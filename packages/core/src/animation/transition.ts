@@ -6,10 +6,20 @@ import {
     min,
 } from '../math';
 
+import {
+    Task,
+} from '../task';
+
 import type {
     TransitionCallback,
     TransitionOptions,
 } from './types';
+
+export class Transition extends Task {
+
+
+
+}
 
 export function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Promise<void> {
     const {

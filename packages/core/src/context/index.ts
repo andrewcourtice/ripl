@@ -1,2 +1,2 @@
-export * from './base';
+export * from './_base';
 export * from './canvas';

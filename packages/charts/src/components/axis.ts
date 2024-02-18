@@ -23,6 +23,7 @@ import {
 
 export type ChartXAxisAlignment = 'top' | 'bottom';
 export type ChartYAxisAlignment = 'left' | 'right';
+export type LabelDimension = 'width' | 'height';
 
 export interface ChartAxisOptions extends ChartComponentOptions {
     scale: Scale<any, number>;
@@ -33,15 +34,21 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     maxWidth?: number;
     maxHeight?: number;
     gridLines?: boolean;
+    labelDimension: LabelDimension;
 }
 
-export interface ChartXAxisOptions extends ChartAxisOptions {
+export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartXAxisAlignment;
 }
 
-export interface ChartYAxisOptions extends ChartAxisOptions {
+export interface ChartYAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartYAxisAlignment;
 }
+
+const LABEL_DIMENSION_MAP = {
+    width: metrics => metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight,
+    height: metrics => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
+} as Record<LabelDimension, (metrics: TextMetrics) => number>;
 
 export class ChartAxis extends ChartComponent {
 
@@ -53,16 +60,31 @@ export class ChartAxis extends ChartComponent {
 
     protected group: Group;
 
+    private labelDimension: LabelDimension;
+
     protected get ticks() {
-        return this.scale.ticks(this.tickCount);
+        const ticks = this.scale.ticks(this.tickCount);
+
+        const [
+            rangeMin,
+            rangeMax,
+        ] = this.scale.range;
+
+        const rangeSize = Math.abs(rangeMax - rangeMin);
+        const maxSize = this.measureLabels(ticks, LABEL_DIMENSION_MAP[this.labelDimension]);
+        const tickRatio = rangeSize / (ticks.length * maxSize);
+        const dropCount = Math.ceil(1 / tickRatio);
+        const shouldDrop = tickRatio < 1;
+
+        return ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
     }
 
     protected get maxLabelWidth() {
-        return this.measureLabels(metrics => metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight);
+        return this.measureLabels(this.ticks, LABEL_DIMENSION_MAP.width);
     }
 
     protected get maxLabelHeight() {
-        return this.measureLabels(metrics => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent);
+        return this.measureLabels(this.ticks, LABEL_DIMENSION_MAP.height);
     }
 
     constructor(options: ChartAxisOptions) {
@@ -71,6 +93,7 @@ export class ChartAxis extends ChartComponent {
             renderer,
             scale,
             bounds,
+            labelDimension,
             padding = 5,
             tickSize = 5,
             tickCount = 10,
@@ -86,6 +109,7 @@ export class ChartAxis extends ChartComponent {
         this.padding = padding;
         this.tickSize = tickSize;
         this.tickCount = tickCount;
+        this.labelDimension = labelDimension;
 
         this.group = createGroup({
             class: 'chart-axis',
@@ -104,8 +128,8 @@ export class ChartAxis extends ChartComponent {
         scene.add(this.group);
     }
 
-    private measureLabels(producer: (metrics: TextMetrics) => number) {
-        return arrayReduce(this.ticks, (output, value) => {
+    protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
+        return arrayReduce(values, (output, value) => {
             const metrics = this.context.measureText(value.toString());
             return Math.max(output, producer(metrics));
         }, 0);
@@ -130,7 +154,10 @@ export class ChartXAxis extends ChartAxis {
             alignment = 'bottom',
         } = options;
 
-        super(options);
+        super({
+            ...options,
+            labelDimension: 'width',
+        });
 
         this.alignment = alignment;
     }
@@ -240,7 +267,10 @@ export class ChartYAxis extends ChartAxis {
             alignment = 'left',
         } = options;
 
-        super(options);
+        super({
+            ...options,
+            labelDimension: 'height',
+        });
 
         this.alignment = alignment;
     }

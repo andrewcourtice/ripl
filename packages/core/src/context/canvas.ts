@@ -10,7 +10,7 @@ import {
     LineJoin,
     TextAlignment,
     TextBaseline,
-} from './base';
+} from './_base';
 
 import {
     BorderRadius,

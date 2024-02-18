@@ -8,11 +8,10 @@ import {
     Scene,
 } from '@ripl/core';
 
-export type BaseChartOptions = Record<PropertyKey, any>;
-export type ChartOptions<TOptions extends BaseChartOptions> = {
+export interface BaseChartOptions {
     autoRender?: boolean;
     animated?: boolean;
-} & TOptions;
+}
 
 export class Chart<
     TOptions extends BaseChartOptions,
@@ -28,7 +27,7 @@ export class Chart<
 
     protected options: TOptions;
 
-    constructor(target: Context | string | HTMLElement, options?: ChartOptions<TOptions>) {
+    constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
             autoRender = true,
             animated = true,

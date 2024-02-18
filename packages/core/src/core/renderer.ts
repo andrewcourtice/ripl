@@ -1,5 +1,6 @@
 import {
-    EventBus, EventMap,
+    EventBus,
+    EventMap,
 } from './event-bus';
 
 import {
@@ -24,6 +25,7 @@ import {
 import {
     Ease,
     easeLinear,
+    Transition,
 } from '../animation';
 
 import {
@@ -231,7 +233,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? options
             : () => options || {} as RendererTransitionOptions<TElement>;
 
-        return new Promise<void>(resolve => {
+        return new Transition((resolve, reject, onAbort) => {
             const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.graph(false) : element;
             });

@@ -3,17 +3,17 @@
 import {
     BorderRadius,
     Point,
-} from '../math';
+} from '../../math';
 
 import {
     EventBus,
     EventMap,
-} from '../core/event-bus';
+} from '../../core/event-bus';
 
 import {
     Scale,
     scaleContinuous,
-} from '../scales';
+} from '../../scales';
 
 import {
     arrayForEach,

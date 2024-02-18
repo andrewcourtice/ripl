@@ -1,7 +1,6 @@
 import {
     BaseChartOptions,
     Chart,
-    ChartOptions,
 } from '../core/chart';
 
 import {
@@ -95,7 +94,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
 
-    constructor(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
+    constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 
         this.xAxis = new ChartXAxis({

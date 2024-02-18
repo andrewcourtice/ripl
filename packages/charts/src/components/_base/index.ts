@@ -1,4 +1,6 @@
 import {
+    EventBus,
+    EventMap,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -8,7 +10,7 @@ export interface ChartComponentOptions {
     renderer: Renderer;
 }
 
-export class ChartComponent {
+export class ChartComponent<TEventMap extends EventMap = EventMap> extends EventBus<TEventMap> {
 
     protected scene: Scene;
     protected renderer: Renderer;
@@ -21,6 +23,8 @@ export class ChartComponent {
         scene,
         renderer,
     }: ChartComponentOptions) {
+        super();
+
         this.scene = scene;
         this.renderer = renderer;
     }

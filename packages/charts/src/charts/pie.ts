@@ -1,7 +1,6 @@
 import {
     BaseChartOptions,
     Chart,
-    ChartOptions,
 } from '../core/chart';
 
 import {
@@ -48,7 +47,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
 
-    constructor(target: string | HTMLElement | Context, options: ChartOptions<PieChartOptions<TData>>) {
+    constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
         super(target, options);
         this.init();
     }
