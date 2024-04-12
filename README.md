@@ -2,7 +2,7 @@
 
 Ripl (pronounced ripple) is a library that provides a unified API for 2D graphics rendering (canvas & SVG) in the browser with a focus towards high performance and interactive data visualization.
 
-Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without it's flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue of choosing between these mediums by exposing a unified API and mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing 1 line of code.
+Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue of choosing between these mediums by exposing a unified API and mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing 1 line of code.
 
 Ripl also exposes a number of methods such as scales, geometry, interpolation, color and easing to assist with drawing (inspired by D3).
 
@@ -180,7 +180,7 @@ const rect = createRect({
 });
 
 const childGroup = createGroup({
-    id: 'child-group'
+    id: 'child-group',
     fillStyle: 'rgb(30, 105, 120)',
     lineWidth: 4,
     children: [
@@ -235,7 +235,7 @@ const rect = createRect({
 });
 
 const childGroup = createGroup({
-    id: 'child-group'
+    id: 'child-group',
     fillStyle: 'rgb(30, 105, 120)',
     lineWidth: 4,
     children: [
