@@ -1,285 +1,367 @@
 # Ripl
 
-Ripl (pronounced ripple) is a library for working with canvas in an intuitive and familiar way. Working with the canvas API can be quite difficult as it is designed to be very low-level. Ripl alleviates this issue by mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with canvas via high-level APIs.
+Ripl (pronounced ripple) is a library that provides a unified API for 2D graphics rendering (canvas & SVG) in the browser with a focus towards high performance and interactive data visualization.
 
-One of the main differences with Ripl compared to other canvas libraries is that every element in Ripl is expressed as a function of time where `0 <= time <= 1`. By expressing elements this way, it makes transforming between states extremely easy which in turn works well wth scene rendering and animations.
+Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without it's flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue of choosing between these mediums by exposing a unified API and mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing 1 line of code.
+
+## Example
+
+Here are a few PoC data-visualization examples created using Ripl:
+
+- [Multi-series bar/line chart](https://ripl-alpha.vercel.app/docs/charts/trend.html)
+- [Donut chart with hover effects](https://ripl-alpha.vercel.app/docs/charts/pie.html)
 
 ## Usage
 
-Let's look at the most basic example of using Ripl which is to draw a static shape to a canvas:
+The following is a tour of Ripl's features starting from the most basic and progressively building towards more advanced concepts.
+
+### Render a Basic Element
+
+Here's a basic example of rendering an element.
 
 ```typescript
 import {
-    getContext,
+    createContext,
     createCircle,
 } from '@ripl/core';
 
-function draw() {
-    const {
-        context,
-        width,
-        height
-    } = getContext('.example__canvas');
+const context = createContext('.mount-element');
+const circle = createCircle({
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
 
-    const circle = createCircle({
-        fillStyle: 'rgb(30, 105, 120)',
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: width / 3
-    });
+circle.render(context);
+```
 
+### Modify Element Properties
+
+To modify an element simply change any of it's properties and re-render it.
+
+```typescript
+import {
+    createContext,
+    createCircle,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+const circle = createCircle({
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
+
+function render() {
     circle.render(context);
 }
+
+function update() {
+    circle.fillStyle = '#FF0000';
+    circle.cx = context.width / 3;
+    circle.cy = context.height / 3;
+    render();
+}
 ```
 
-Now that we have a circle, let's see how we can use keyframe expressions to render the circle in different states over time:
+### Render to Different Contexts (eg. SVG)
+
+To render the same element to SVG (or any other context) simply replace the import of the `createContext` method from `@ripl/core` to the appropriate package, in this case `@ripl/svg`. Here's the same example above rendered to SVG:
 
 ```typescript
 import {
-    getContext,
+    createContext
+} from '@ripl/svg';
+
+import {
     createCircle,
 } from '@ripl/core';
 
-function draw() {
-    const {
-        context,
-        width,
-        height
-    } = getContext('.example__canvas');
+const context = createContext('.mount-element');
+const circle = createCircle({
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
 
-    const circle = createCircle({
-        fillStyle: ['rgb(30, 105, 120)', 'rgba(150, 105, 120, 0.2)'],
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: [width / 5, width / 3]
-    });
-
+function render() {
     circle.render(context);
 }
-```
 
-Now we've stated that the circle should change it's `fillStyle` and `radius` properties between their start and end states. For now this process is manual by changing the time parameter when calling render:
-
-```typescript
-circle.render(context); // time === 0
-circle.render(context, 0.5); // time === 0.5, radius would be width / 4 at this point, the fillStyle would be a color halfway between it's 2 defined states
-circle.render(context, 1); // time === 1, radius would be width / 3 at this point
-```
-
-Element properties can also be expressed as explicit keyframes or interpolation functions:
-
-```typescript
-import {
-    getContext,
-    createCircle,
-} from '@ripl/core';
-
-function draw() {
-    const {
-        context,
-        width,
-        height
-    } = getContext('.example__canvas');
-
-    const circle = createCircle({
-        fillStyle: [
-            {
-                offset: 0.3,
-                value: 'rgb(30, 105, 120)'
-            },
-            {
-                offset: 0.7,
-                value: 'rgba(150, 105, 120, 0.2)'
-            }
-        ],
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: time => Math.min(width, height) / time
-    });
-
-    circle.render(context, 0.5);
+function update() {
+    circle.fillStyle = '#FF0000';
+    circle.cx = context.width / 3;
+    circle.cy = context.height / 3;
+    render();
 }
 ```
 
-In the above example the `radius` of the circle will grow as time approaches 1. The `fillStyle` will also smoothly interpolate between states at it's specified keyframes.
+### Grouping and Inheritance
 
-Now let's animate the rendering process as opposed to changing time manually:
+Ripl can also render multiple elements in groups with inherited properties (like CSS) and events (DOM event bubbling):
 
 ```typescript
 import {
-    getContext,
+    createContext,
     createCircle,
-    transition,
-    easeOutQuint,
+    createRect,
+    createGroup
 } from '@ripl/core';
 
-function draw() {
-    const {
-        context,
-        clear,
-        width,
-        height
-    } = getContext('.example__canvas');
+const context = createContext('.mount-element');
 
-    const circle = createCircle({
-        fillStyle: [
-            {
-                offset: 0.3,
-                value: 'rgb(30, 105, 120)'
-            },
-            {
-                offset: 0.7,
-                value: 'rgba(150, 105, 120, 0.2)'
-            }
-        ],
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: time => Math.min(width, height) / time
-    });
+const circle = createCircle({
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
 
-    return transition(time => {
-        clear(); // clear the canvas on each frame
-        circle.render(context, time);
-    }, {
-        duration: 3000,
-        ease: easeOutQuint,
-    });
+const rect = createRect({
+    x: context.width / 2,
+    y: context.height / 2,
+    width: context.width / 5,
+    height: context.height / 5,
+});
+
+const group = createGroup({
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    children: [
+        circle,
+        rect
+    ]
+});
+
+group.render(context);
+```
+
+### Querying Elements
+
+Elements can be queried in groups using common DOM methods such as `getElementById`, `getElementsByType`, `getElementsByClass`. Elements can also be queried using a subset CSS selector syntax with `query` and `queryAll`.
+
+```typescript
+import {
+    createContext,
+    createCircle,
+    createRect,
+    createGroup
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    class: 'shape',
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
+
+const rect = createRect({
+    class: 'shape',
+    x: context.width / 2,
+    y: context.height / 2,
+    width: context.width / 5,
+    height: context.height / 5,
+});
+
+const childGroup = createGroup({
+    id: 'child-group'
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    children: [
+        circle,
+        rect
+    ]
+});
+
+const parentGroup = createGroup({
+    id: 'parent-group',
+    children: childGroup
+});
+
+parentGroup.render(context);
+
+function query() {
+    const qCircle = parentGroup.getElementsByType('circle');
+    const qRect = parentGroup.getElementsByType('rect');
+    const qChildren = parentGroup.queryAll('.shape');
+    const qChild = parentGroup.query('.child-group > .shape');
 }
 ```
 
-The transition engine will now smoothly animate the circle between states over 3 seconds. The transition function returns a promise that can be awaited.
+### Scene Management
 
-Let's take this a step further by using groups to render more than just one element and inherit properties:
+Ripl also provides complete scene management for rendering large group structures with events.
 
 ```typescript
 import {
-    getContext,
+    createContext,
     createCircle,
+    createRect,
     createGroup,
-    transition,
-    easeOutQuint,
+    createScene
 } from '@ripl/core';
 
-function draw() {
-    const {
-        context,
-        clear,
-        width,
-        height
-    } = getContext('.example__canvas');
+const context = createContext('.mount-element');
 
-    const group = createGroup({
-        fillStyle: ['#000000', '#FF0000']
-    });
+const circle = createCircle({
+    class: 'shape',
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
 
-    const circles = Array.from({ length: 1000 }, () => createCircle({
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: Math.random() * Math.min(width, height) 
-    }));
+const rect = createRect({
+    class: 'shape',
+    x: context.width / 2,
+    y: context.height / 2,
+    width: context.width / 5,
+    height: context.height / 5,
+});
 
-    group.add(circles);
+const childGroup = createGroup({
+    id: 'child-group'
+    fillStyle: 'rgb(30, 105, 120)',
+    lineWidth: 4,
+    children: [
+        circle,
+        rect
+    ]
+});
 
-    return transition(time => {
-        clear(); // clear the canvas on each frame
-        group.render(context, time);
-    }, {
-        duration: 3000,
-        ease: easeOutQuint,
-    });
-}
+const parentGroup = createGroup({
+    id: 'parent-group',
+    children: childGroup
+});
+
+const scene = createScene({
+    children: parentGroup
+})
+
+scene.render(context);
+circle.on('click', event => console.log(event));
 ```
 
-Notice we now call `render` on the group as opposed to each circle element. The circles now all inherit their `fillStyle` from the group.
+### Basic Animation and Interactivity
 
-Now let's add some interaction using a `scene` and `renderer` to create a continuous render cycle and handling mouse events: 
+Interactivity and animation can be added by using a renderer. The renderer provides an automatic render loop to re-render a scene at the ideal framerate.
 
 ```typescript
 import {
-    clamp,
-    scaleContinuous,
-    easeOutQuint,
+    createContext,
+    createCircle,
+    createRect,
+    createGroup,
     createScene,
-    createRenderer,
-    createCircle,
-    createGroup,
-    createLine,
+    easeOutCubic
 } from '@ripl/core';
 
+const context = createContext('.mount-element');
 
-function draw() {
-    let x = 0;
-    let y = 0;
+const circle = createCircle({
+    fillStyle: 'rgb(30, 105, 120)',
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: context.width / 3
+});
 
-    const scene = createScene('.example__canvas');
-    const renderer = createRenderer(scene, {
-        autoStart: false
-    });
+const rect = createRect({
+    fillStyle: 'rgb(30, 105, 120)',
+    x: context.width / 2,
+    y: context.height / 2,
+    width: context.width / 5,
+    height: context.height / 5,
+});
 
-    const circleGroup = createGroup({
-        fillStyle: ['#000000', '#FF0000']
-    });
+const scene = createScene({
+    children: [
+        circle,
+        rect
+    ]
+});
 
-    const rScale = scaleContinuous([0, 1], [5, 10]);
+const renderer = createRenderer(scene, {
+    autoStart: true,
+    autoStop: true
+});
 
-    const circles = Array.from({ length: 1000 }, () => createCircle({
-        lineWidth: 4,
-        cx: width / 2,
-        cy: height / 2,
-        radius: rScale(Math.random()) 
-    }));
-
-    const crosshairGroup = createGroup({
-        strokeStyle: '#CCCCCC'
-    });
-
-    const crosshairHLine = createLine({
-        x1: 0,
-        y1: () => y,
-        x2: scene.width,
-        y2: () => y
-    }, {
-        pointerEvents: 'none'
-    });
-
-    const crosshairVLine = createLine({
-        x1: () => x,
-        y1: 0,
-        x2: () => x,
-        y2: scene.height
-    }, {
-        pointerEvents: 'none'
-    });
-
-    circleGroup.add(circles);
-    crosshairGroup.add([
-        crosshairHLine,
-        crosshairVLine,
-    ]);
-
-    scene.add([
-        circleGroup,
-        crosshairGroup
-    ]);
-
-    scene.on('scenemousemove', ({ data }) => {
-        if (data) {
-            x = data.x;
-            y = data.y;
+async function animate() {
+    // Render one
+    await renderer.transition(circle, {
+        duration: 1000,
+        ease: easeOutCubic,
+        state: {
+            fillStyle: '#FF0000',
+            cx: context.width / 4,
+            cy: context.height / 4,
+            radius: context.width / 4
         }
     });
 
-    circleGroup.on('elementclick', ({ element }) => element.update({
-        fillStyle: '#FF0000'
-    }));
-
-    renderer.start();
+    // Render many with common properties
+    // Alternatively you could transition a whole group or scene
+    await renderer.transition([circle, rect], {
+        duration: 1000,
+        ease: easeOutCubic,
+        state: {
+            fillStyle: '#FF0000',
+        }
+    });
 }
 ```
 
-For a more in depth demo take a look at the pie chart example here: https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/pie.ts
+### Advanced Animation
+
+Ripl also supports CSS-like animation keyframes and custom interpolator functions
+
+```typescript
+// ...
+
+async function animate() {
+    // Implicit keyframe offsets
+    await renderer.transition([circle, rect], {
+        duration: 1000,
+        ease: easeOutCubic,
+        state: {
+            fillStyle: [
+                '#FF0000', // implied 0.33 offset
+                '#00FF00', // implied 0.66 offset
+                '#0000FF', // implied end state - offset 1
+            ],
+        }
+    });
+
+    // Explicit keyframe offsets
+    await renderer.transition([circle, rect], {
+        duration: 1000,
+        ease: easeOutCubic,
+        state: {
+            fillStyle: [
+                {
+                    value: '#FF0000',
+                    offset: 0.25
+                },
+                {
+                    value: '#0000FF',
+                    offset: 0.8
+                }
+            ],
+        }
+    });
+
+    // Custom interpolator
+    await renderer.transition(circle, {
+        duration: 1000,
+        ease: easeOutCubic,
+        state: {
+            radius: t => t * context.width / 2 // where 0 <= t <= 1 (depending on the ease function)
+        }
+    });
+}
+```
