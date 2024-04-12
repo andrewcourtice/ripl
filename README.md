@@ -374,3 +374,10 @@ async function animate() {
     });
 }
 ```
+
+## Performance
+
+Ripl is designed to be as performant as possible, however, here are a few tips for getting the best performance out of it:
+
+1. **Using a scene + renderer to render many elements/groups** - When elements are placed into a scene and rendered using a renderer the elements are "hoisted" into a flat list essentially converting the render time from an O(n^c) operation to O(n). The performance cost is instead shifted to adding/removing elements from groups within the scenegraph.
+2. **Using persistent keys when creating paths in custom elements** - When creating a new path/text within a custom element it is highly encouraged to specify a persistent key for the path. The persistent key ensures that custom contexts such as svg can efficiently diff created objects with the DOM in each frame. This effectively reduces the amount of DOM elements that are required to be created/destroyed each frame. See an example here of a persistent path key [here](https://github.com/andrewcourtice/ripl/blob/1a33451da6f1a3b5163b41189c00c0cce116accd/packages/core/src/core/shape.ts#L73).
