@@ -4,12 +4,21 @@ Ripl (pronounced ripple) is a library that provides a unified API for 2D graphic
 
 Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without it's flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue of choosing between these mediums by exposing a unified API and mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing 1 line of code.
 
+Ripl also exposes a number of methods such as scales, geometry, interpolation, color and easing to assist with drawing (inspired by D3).
+
 ## Example
 
-Here are a few PoC data-visualization examples created using Ripl:
+Here are a few proof-of-concept data-visualization examples created using Ripl:
 
-- [Multi-series bar/line chart](https://ripl-alpha.vercel.app/docs/charts/trend.html)
-- [Donut chart with hover effects](https://ripl-alpha.vercel.app/docs/charts/pie.html)
+### Multi-Series Trend Chart (Bar/Line)
+
+- [Demo](https://ripl-alpha.vercel.app/docs/charts/trend.html)
+- [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/trend.ts)
+  
+### Donut Chart with Hover Effects
+
+- [Demo](https://ripl-alpha.vercel.app/docs/charts/pie.html)
+- [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/pie.ts)
 
 ## Usage
 
@@ -143,7 +152,7 @@ group.render(context);
 
 ### Querying Elements
 
-Elements can be queried in groups using common DOM methods such as `getElementById`, `getElementsByType`, `getElementsByClass`. Elements can also be queried using a subset CSS selector syntax with `query` and `queryAll`.
+Elements can be queried in groups using common DOM methods such as `getElementById`, `getElementsByType`, and `getElementsByClass`. Elements can also be queried using a subset of the CSS selector syntax with `query` and `queryAll`.
 
 ```typescript
 import {
