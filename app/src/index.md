@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: "Ripl"
-  text: "High performance canvas and SVG drawing with a fimiliar API"
+  text: "High performance canvas and SVG drawing with a familiar API"
   tagline: My great project tagline
   actions:
     - theme: brand
