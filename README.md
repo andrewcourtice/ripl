@@ -32,13 +32,15 @@ Here are a few proof-of-concept data-visualization examples created using Ripl:
 
 - [Demo](https://ripl-alpha.vercel.app/docs/charts/trend.html)
 - [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/trend.ts)
-  ![localhost_5173_docs_charts_trend html](https://github.com/andrewcourtice/ripl/assets/11718453/81017bc2-9f30-4b1d-9746-dae8605bb475)
+  
+  ![trend 1](https://github.com/andrewcourtice/ripl/assets/11718453/797ed163-614d-4783-998c-383070c7edf5)
 
 ### Donut Chart with Hover Effects
 
 - [Demo](https://ripl-alpha.vercel.app/docs/charts/pie.html)
 - [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/pie.ts)
-![localhost_5173_docs_charts_pie html](https://github.com/andrewcourtice/ripl/assets/11718453/bfaecc5a-d630-4834-aeed-3eda49180fe8)
+  
+  ![donut](https://github.com/andrewcourtice/ripl/assets/11718453/15a38877-48cc-462c-9d57-8227afa5f7d0)
 
 ## Usage
 
