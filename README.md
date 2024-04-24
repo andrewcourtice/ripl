@@ -7,6 +7,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 Ripl also exposes a number of methods such as scales, geometry, interpolation, color, data joining and easing to assist with drawing (inspired by D3).
 
 ## Features
+
 - Unified API for drawing to different contexts
 - Grouping and property inheritance
 - Scene and renderer management
@@ -23,6 +24,9 @@ Ripl also exposes a number of methods such as scales, geometry, interpolation, c
 - Zero runtime dependencies
 
 Currently unsupported features are: gradients, transforms, clipping.
+
+> [!IMPORTANT]
+> Ripl is currently in the early stages of development and, as a result, not yet published to NPM.
 
 ## Example
 
@@ -56,7 +60,11 @@ import {
     createCircle,
 } from '@ripl/core';
 
+// Create a context to render the content to
+// Ripl uses a canvas context by default
 const context = createContext('.mount-element');
+
+// Create an element
 const circle = createCircle({
     fillStyle: 'rgb(30, 105, 120)',
     lineWidth: 4,
@@ -65,8 +73,11 @@ const circle = createCircle({
     radius: context.width / 3
 });
 
+// Render the element to the context
 circle.render(context);
 ```
+
+Ripl has a number of built-in elements such as arc, circle, rect, line, polyline, text, ellipse, and polygon. See [here](https://github.com/andrewcourtice/ripl/tree/5a60425a5f12fd34e8b4fe2864ebf9a66b03d212/packages/core/src/elements) for all available built-in elements.
 
 ### Modify Element Properties
 
@@ -95,6 +106,7 @@ function update() {
     circle.fillStyle = '#FF0000';
     circle.cx = context.width / 3;
     circle.cy = context.height / 3;
+
     render();
 }
 ```
@@ -129,6 +141,7 @@ function update() {
     circle.fillStyle = '#FF0000';
     circle.cx = context.width / 3;
     circle.cy = context.height / 3;
+
     render();
 }
 ```
@@ -417,6 +430,47 @@ async function animate() {
         }
     });
 }
+```
+
+## Utilities
+
+Ripl provides a number of utilities to enable rapid and straightforward developement of data visualizations.
+
+### Scales
+
+Ripl currently provides 3 scale types (with more coming in the future) for mapping data between a specified domain and range. These scales are heavily influnced by [D3](https://d3js.org/d3-scale).
+
+#### Continuous (aka linear)
+
+Map continuous linear data from a given domain to a specified range.
+
+```typescript
+const scale = scaleContinuous([0, 25], [-100, 100]);
+const value = scale(10); // -20
+```
+
+Linear scales can also be clamped and inverted.
+
+```typescript
+const scale = scaleContinuous([0, 25], [-100, 100], {
+    clamp: true
+});
+
+// With clamping
+scale(25) // 100
+scale(30) // 100 (clamped)
+
+// Invert
+scale.inverse(-20) // 10
+```
+
+#### Discrete
+
+Map discrete domain data to a continuous range.
+
+```typescript
+const scale = scaleDiscrete(['a', 'b', 'c'], [0, 50]);
+const value = scale('b'); // 25
 ```
 
 ## Performance

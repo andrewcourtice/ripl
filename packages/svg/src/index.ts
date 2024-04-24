@@ -213,7 +213,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         svg.style.width = '100%';
         svg.style.height = '100%';
 
-        super(target, svg, {
+        super('svg', target, svg, {
             buffer: true,
             ...options,
         });

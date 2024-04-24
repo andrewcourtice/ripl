@@ -167,6 +167,7 @@ export class ContextText implements ContextElement {
 
 export abstract class Context<TElement extends Element = Element> extends EventBus<ContextEventMap> implements BaseState {
 
+    public readonly type: string;
     public readonly root: HTMLElement;
     public readonly element: TElement;
 
@@ -349,7 +350,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.zIndex = value;
     }
 
-    constructor(target: string | HTMLElement, element: TElement, options?: ContextOptions) {
+    constructor(
+        type: string,
+        target: string | HTMLElement,
+        element: TElement,
+        options?: ContextOptions
+    ) {
         super();
 
         const {
@@ -366,6 +372,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         root.appendChild(element);
 
+        this.type = type;
         this.root = root;
         this.element = element;
         this.buffer = buffer;

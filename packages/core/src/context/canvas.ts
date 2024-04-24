@@ -255,7 +255,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         canvas.style.width = '100%';
         canvas.style.height = '100%';
 
-        super(target, canvas, options);
+        super('canvas', target, canvas, options);
 
         this.context = context;
         this.init();
