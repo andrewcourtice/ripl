@@ -6,7 +6,7 @@
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "license": "MIT",
     "private": true,
-    "packageManager": "yarn@4.0.2",
+    "packageManager": "yarn@4.1.1",
     "workspaces": [
         "app",
         "apps/*",
@@ -16,16 +16,16 @@
         "test": "vitest"
     },
     "devDependencies": {
-        "@typescript-eslint/eslint-plugin": "^6.21.0",
-        "@typescript-eslint/parser": "^6.21.0",
-        "@vitest/coverage-v8": "^1.2.2",
-        "eslint": "^8.56.0",
+        "@typescript-eslint/eslint-plugin": "^7.7.1",
+        "@typescript-eslint/parser": "^7.7.1",
+        "@vitest/coverage-v8": "^1.5.0",
+        "eslint": "^9.1.1",
         "eslint-define-config": "^2.1.0",
-        "happy-dom": "^13.3.8",
+        "happy-dom": "^14.7.1",
         "jsdom": "^24.0.0",
         "lerna": "^8.1.2",
-        "tsup": "^8.0.1",
-        "typescript": "^5.3.3",
-        "vitest": "^1.2.2"
+        "tsup": "^8.0.2",
+        "typescript": "^5.4.5",
+        "vitest": "^1.5.0"
     }
 }
