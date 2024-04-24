@@ -4,21 +4,21 @@ layout: home
 
 hero:
   name: "Ripl"
-  text: "High performance canvas and SVG drawing with a familiar API"
-  tagline: My great project tagline
+  text: "Write once. Render anywhere."
+  tagline: "A unified API for drawing abstract shapes to different contexts"
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Get Started
+      link: /docs/core/getting-started/installation
     - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Ripl Charts
+      link: /docs/charts/
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Simple
+    details: Ripl provides a simple API for drawing to multiple contexts. It also emulates DOM features that most devs will be familiar with such as heirarchy, events, styling and querying.
+  - title: Modular
+    details: Ripl is designed to be as modular as possible while still maintaining a sensible set of core functionality. Don't ship what you don't use.
   - title: Feature C
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
 ---

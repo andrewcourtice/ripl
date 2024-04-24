@@ -3,12 +3,12 @@
 A trend chart is any combination of x/y series such as bar, line or area.
 
 <ripl-example @context-changed="contextChanged">
-    <div>
-        <button class="ripl-button" @click="addData">Add Data</button>  
-    </div>
-    <div>
-        <button class="ripl-button" @click="randomise">Randomise</button>  
-    </div>
+    <template #footer>
+        <div layout="row">
+            <button class="ripl-button" @click="addData">Add Data</button>  
+            <button class="ripl-button" @click="randomise">Randomise</button>  
+        </div>
+    </template>    
 </ripl-example>
 
 <script lang="ts" setup>
@@ -28,11 +28,13 @@ import {
     stringUniqueId
 } from '@ripl/utilities';
 
-import useRiplChart from '../../.vitepress/compositions/example';
+import {
+    useRiplChart
+} from '../../.vitepress/compositions/example';
 
 const dataScale = scaleContinuous([0, 1], [-500, 1200]);
 
-let data = Array.from({ length: 10 }, getDataItem);
+let data = Array.from({ length: 15 }, getDataItem);
 
 const {
     chart,

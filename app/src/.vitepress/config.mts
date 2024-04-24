@@ -1,12 +1,23 @@
 import {
     defineConfig
-} from 'vitepress'
+} from 'vitepress';
+
+import {
+    tabsMarkdownPlugin
+} from 'vitepress-plugin-tabs';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../dist',
     title: "Ripl",
     description: "Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API",
+
+    markdown: {
+        config(md) {
+            md.use(tabsMarkdownPlugin);
+        },
+    },
+
     themeConfig: {
 
         search: {
@@ -37,11 +48,15 @@ export default defineConfig({
                     items: [
                         {
                             text: 'About',
-                            link: '/docs/charts/pie',
+                            link: '/docs/core/getting-started/about',
                         },
                         {
                             text: 'Installation',
-                            link: '/docs/charts/pie',
+                            link: '/docs/core/getting-started/installation',
+                        },
+                        {
+                            text: 'Tutorial',
+                            link: '/docs/core/getting-started/tutorial',
                         },
                     ]
                 },

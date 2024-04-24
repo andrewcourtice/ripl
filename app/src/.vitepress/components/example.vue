@@ -1,7 +1,6 @@
 <template>
-    <div class="ripl-example" layout="row stretch-stretch">
-        <div class="ripl-example__root" self="size-x1" ref="root" :key="type"></div>
-        <div class="ripl-example__sidebar" self="size-x0">
+    <div class="ripl-example">
+        <div class="ripl-example__header">
             <div class="ripl-example__context-type-options" layout="row">
                 <label class="ripl-example__context-type-option">
                     <input type="radio" name="context-type" value="canvas" v-model="type"> Canvas
@@ -10,9 +9,11 @@
                     <input type="radio" name="context-type" value="svg" v-model="type"> SVG
                 </label>
             </div>
-            <div class="ripl-example__user-options" v-if="$slots.default">
-                <slot></slot>
-            </div>
+            <slot name="header"></slot>
+        </div>
+        <div class="ripl-example__root" self="size-x1" ref="root" :key="type"></div>
+        <div class="ripl-example__footer" v-if="$slots.footer">
+            <slot name="footer"></slot>
         </div>
     </div>
 </template>
@@ -67,24 +68,28 @@ watchEffect(() => {
 <style lang="scss">
 
     .ripl-example {
+        margin: 1rem 0;
         border: 1px solid var(--vp-c-divider);
         border-radius: 0.5rem;
         overflow: hidden;
     }
 
-    .ripl-example__sidebar {
-        border-left: 1px solid var(--vp-c-divider);
-        background-color: var(--vp-sidebar-bg-color);
+    .ripl-example__header,
+    .ripl-example__footer {
+        padding: 1rem;
+        //background-color: var(--vp-sidebar-bg-color);
+    }
+    
+    .ripl-example__header {
+        border-bottom: 1px solid var(--vp-c-divider);
     }
 
-    .ripl-example__context-type-options,
-    .ripl-example__user-options {
-        padding: 1rem;
+    .ripl-example__footer {
+        border-top: 1px solid var(--vp-c-divider);
     }
 
     .ripl-example__context-type-options {
         gap: 0.25rem;
-        border-bottom: 1px solid var(--vp-c-gray-1);
     }
 
     .ripl-example__context-type-option {
@@ -115,12 +120,14 @@ watchEffect(() => {
         }
     }
 
-    .ripl-example__user-options {
-
+    .ripl-example__root {
+        aspect-ratio: 16 / 9;
     }
 
-    .ripl-example__root {
-        aspect-ratio: 4 / 3;
+    .plugin-tabs--content > .ripl-example {
+        margin: 0;
+        border: none;
+        background-color: var(--vp-c-bg);
     }
 
 </style>
