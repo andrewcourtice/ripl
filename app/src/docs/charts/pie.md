@@ -49,7 +49,11 @@ let data = Array.from([
     'South Africa',
     'New Zealand',
     'United States',
-    'Sweden'
+    'Sweden',
+    'Great Britain',
+    'Brazil',
+    'France',
+    'Switzerland'
 ], label => getDataItem(label));
 
 const {
