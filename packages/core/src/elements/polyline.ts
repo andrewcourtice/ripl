@@ -1,7 +1,10 @@
+import type {
+    Context,
+    ContextPath
+} from '../context';
+
 import {
     BaseElementState,
-    Context,
-    ContextPath,
     Shape,
     ShapeOptions,
 } from '../core';

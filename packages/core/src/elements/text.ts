@@ -1,6 +1,9 @@
+import type {
+    Context,
+} from '../context';
+
 import {
     BaseElementState,
-    Context,
     Element,
     ElementOptions,
 } from '../core';
