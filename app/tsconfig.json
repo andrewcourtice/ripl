@@ -10,5 +10,10 @@
     ],
     "files": [
         "global.d.ts"
-    ]
+    ],
+    "vueCompilerOptions": {
+        "vitePressExtensions": [
+            ".md"
+        ]
+    }
 }
