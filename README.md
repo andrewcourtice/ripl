@@ -34,14 +34,14 @@ Here are a few proof-of-concept data-visualization examples created using Ripl:
 
 ### Multi-Series Trend Chart (Bar/Line)
 
-- [Demo](https://ripl-alpha.vercel.app/docs/charts/trend.html)
+- [Demo](https://www.ripl.rocks/docs/charts/trend.html)
 - [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/trend.ts)
   
   ![trend 1](https://github.com/andrewcourtice/ripl/assets/11718453/797ed163-614d-4783-998c-383070c7edf5)
 
 ### Donut Chart with Hover Effects
 
-- [Demo](https://ripl-alpha.vercel.app/docs/charts/pie.html)
+- [Demo](https://www.ripl.rocks/docs/charts/pie.html)
 - [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/pie.ts)
   
   ![donut](https://github.com/andrewcourtice/ripl/assets/11718453/15a38877-48cc-462c-9d57-8227afa5f7d0)
