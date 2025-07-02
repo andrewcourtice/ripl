@@ -1,3 +1,4 @@
+export type AnyObject = { [key: PropertyKey]: unknown };
 export type AnyFunction = (...args: any[]) => any;
 export type AnyAsyncFunction = (...args: any[]) => any;
 export type OneOrMore<TValue> = TValue | TValue[];

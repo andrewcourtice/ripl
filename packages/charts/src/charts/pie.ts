@@ -118,7 +118,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const {
                     key,
                     value,
-                    color,
+                    color = colorGenerator.next().value,
                     label,
                     cx,
                     cy,
