@@ -8,10 +8,6 @@ import {
 } from '../constants/colors';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
-
-import {
     Arc,
     ArcState,
     BaseElementState,
@@ -19,11 +15,10 @@ import {
     createArc,
     createGroup,
     createText,
-    easeOutQuart,
     easeOutQuint,
     elementIsArc,
     elementIsText,
-    getTotal,
+    maxOf,
     Group,
     scaleContinuous,
     setColorAlpha,
@@ -39,27 +34,30 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
-export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
+export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
     value: keyof TData | ((item: TData) => number);
     label: keyof TData | ((item: TData) => string);
     color?: keyof TData | ((item: TData) => string);
+    /** Inner radius ratio (0 - 1). Defaults to 0.15 */
+    innerRadiusRatio?: number;
+    /** Maximum radius ratio (0 - 0.5). Defaults to 0.45 (similar to pie chart). */
+    maxRadiusRatio?: number;
+    /** Padding angle between segments in radians. Defaults to 0.02 */
+    padAngle?: number;
 }
 
-export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
+/**
+ * PolarAreaChart renders equal angle segments whose radius encodes the value.
+ * Transitions follow the same pattern as `PieChart` (enter/update/exit with staged animation).
+ */
+export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>> {
 
     private groups: Group[] = [];
-    private tooltip: Tooltip;
 
-    constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
+    constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
-
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
-
         this.init();
     }
 
@@ -71,7 +69,14 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 value,
                 label,
                 color,
+                innerRadiusRatio = 0.15,
+                maxRadiusRatio = 0.45,
+                padAngle = 0.02,
             } = this.options;
+
+            if (!data.length) {
+                return Promise.resolve();
+            }
 
             const colorGenerator = getColorGenerator();
             const size = Math.min(scene.width, scene.height);
@@ -81,27 +86,27 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
 
-            const total = getTotal(data, getValue);
-            const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
-            const offset = TAU / 4;
-            const padAngle = data.length === 1 ? 0 : 0.1 / data.length;
+            const maxValue = maxOf(data, getValue) ?? 0;
+            const valueScale = scaleContinuous([0, maxValue], [size * innerRadiusRatio, size * maxRadiusRatio], { clamp: true });
 
-            let startAngle = -offset;
+            const angleStep = TAU / data.length;
+            const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
-            const calculations = arrayMap(data, item => {
+            const calculations = arrayMap(data, (item, index) => {
                 const key = getKey(item);
-                const value = getValue(item);
+                const v = getValue(item);
                 const color = getColor(item);
                 const label = getLabel(item);
                 const cx = scene.width / 2;
                 const cy = scene.height / 2;
-                const endAngle = startAngle + scale(value);
-                const radius = size * 0.45;
-                const innerRadius = size * 0.25;
+                const startAngle = startOffset + index * angleStep;
+                const endAngle = startAngle + angleStep;
+                const innerRadius = size * innerRadiusRatio;
+                const radius = valueScale(v);
 
-                const output = {
+                return {
                     key,
-                    value,
+                    value: v,
                     color,
                     label,
                     cx,
@@ -113,10 +118,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     innerRadius,
                     item,
                 };
-
-                startAngle = endAngle;
-
-                return output;
             });
 
             const {
@@ -128,7 +129,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const entries = arrayMap(left, item => {
                 const {
                     key,
-                    value,
                     color = colorGenerator.next().value,
                     label,
                     cx,
@@ -145,53 +145,40 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     cx,
                     cy,
                     startAngle,
+                    endAngle: startAngle, // animate angle grow subtly
                     padAngle,
                     strokeStyle: color,
                     fillStyle: setColorAlpha(color, 0.55),
                     lineWidth: 2,
-                    endAngle: startAngle,
-                    radius: 0,
-                    innerRadius: 0,
+                    radius: innerRadius, // animate radial growth
+                    innerRadius,
                     data: {
                         endAngle,
                         radius,
-                        innerRadius,
                     } as Partial<ArcState>,
                 });
 
-segmentArc.on('mouseenter', () => {
-                    const [
-                        centroidX,
-                        centroidY,
-                    ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
-
-                    this.tooltip.show(centroidX, centroidY, value.toString());
-
+                segmentArc.on('mouseenter', () => {
                     renderer.transition(segmentArc, {
-                        duration: 500,
-                        ease: easeOutQuart,
+                        duration: 400,
+                        ease: easeOutQuint,
                         state: {
                             fillStyle: color,
                         },
                     });
-                });
 
-                segmentArc.once('mouseleave', () => {
-                    this.tooltip.hide();
-
-                    renderer.transition(segmentArc, {
-                        duration: 500,
-                        ease: easeOutQuart,
-                        state: {
-                            fillStyle: setColorAlpha(color, 0.55),
-                        },
+                    segmentArc.once('mouseleave', () => {
+                        renderer.transition(segmentArc, {
+                            duration: 400,
+                            ease: easeOutQuint,
+                            state: {
+                                fillStyle: setColorAlpha(color, 0.55),
+                            },
+                        });
                     });
                 });
 
-                const [
-                    centroidX,
-                    centroidY,
-                ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
+                const [centroidX, centroidY] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
 
                 const segmentLabel = createText({
                     class: 'segment__label',
@@ -242,10 +229,7 @@ segmentArc.on('mouseenter', () => {
                     fillStyle: setColorAlpha(color, 0.55),
                 } as Partial<ArcState>;
 
-                const [
-                    centroidx,
-                    centroidY,
-                ] = arc.getCentroid(arcData);
+                const [centroidx, centroidY] = arc.getCentroid(arcData);
 
                 arc.data = arcData;
                 label.data = {
@@ -265,8 +249,7 @@ segmentArc.on('mouseenter', () => {
                 arc.data = {
                     startAngle: midAngle,
                     endAngle: midAngle,
-                    radius: 0,
-                    innerRadius: 0,
+                    radius: arc.innerRadius,
                 } as Partial<ArcState>;
 
                 label.data = {
@@ -294,7 +277,7 @@ segmentArc.on('mouseenter', () => {
                 }));
 
                 return renderer.transition(arrayFilter(elements, elementIsText), {
-                    duration: 2000,
+                    duration: 1500,
                     ease: easeOutQuint,
                     state: {
                         globalAlpha: 1,
@@ -304,7 +287,7 @@ segmentArc.on('mouseenter', () => {
 
             async function transitionUpdates() {
                 return renderer.transition(updates, element => ({
-                    duration: 1000,
+                    duration: 800,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                 }));
@@ -312,7 +295,7 @@ segmentArc.on('mouseenter', () => {
 
             async function transitionExits() {
                 return renderer.transition(exits, element => ({
-                    duration: 1000,
+                    duration: 800,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                     onComplete: element => element.destroy(),
@@ -326,9 +309,8 @@ segmentArc.on('mouseenter', () => {
             ]);
         });
     }
-
 }
 
-export function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
-    return new PieChart<TData>(target, options);
+export function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
+    return new PolarAreaChart<TData>(target, options);
 }

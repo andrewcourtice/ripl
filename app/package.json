@@ -9,9 +9,10 @@
         "@ripl/core": "1.0.0",
         "@ripl/svg": "1.0.0",
         "@ripl/utilities": "1.0.0",
+        "@ripl/webgpu": "1.0.0",
         "flex-layout-attribute": "^1.0.3",
-        "sass": "^1.93.2",
-        "vue": "^3.5.22"
+        "sass": "^1.97.2",
+        "vue": "^3.5.26"
     },
     "devDependencies": {
         "vitepress": "^1.6.4",

@@ -134,6 +134,14 @@ export default defineConfig({
                             link: '/docs/charts/pie'
                         },
                         {
+                            text: 'Polar Area',
+                            link: '/docs/charts/polar-area'
+                        },
+                        {
+                            text: 'Scatter',
+                            link: '/docs/charts/scatter'
+                        },
+                        {
                             text: 'Trend',
                             link: '/docs/charts/trend'
                         },

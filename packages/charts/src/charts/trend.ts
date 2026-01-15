@@ -13,6 +13,10 @@ import {
 } from '../components/axis';
 
 import {
+    Tooltip,
+} from '../components/tooltip';
+
+import {
     BandScale,
     Box,
     Circle,
@@ -23,13 +27,16 @@ import {
     createPolyline,
     createRect,
     createScale,
+    createText,
     easeOutCubic,
+    easeOutQuart,
     getExtent,
     Group,
     interpolatePath,
     max,
     Point,
     Polyline,
+    PolylineRenderer,
     PolylineState,
     queryAll,
     Rect,
@@ -37,6 +44,8 @@ import {
     Scale,
     scaleBand,
     scaleContinuous,
+    setColorAlpha,
+    Text,
 } from '@ripl/core';
 
 import {
@@ -69,7 +78,7 @@ export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeries
 
 export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'line';
-    lineType?: 'linear' | 'spline';
+    lineType?: PolylineRenderer;
 }
 
 export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
@@ -93,6 +102,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private colorGenerator = getColorGenerator();
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
@@ -109,6 +119,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.yScale,
+        });
+
+        this.tooltip = new Tooltip({
+            scene: this.scene,
+            renderer: this.renderer,
         });
 
         this.init();
@@ -129,12 +144,12 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(lineSeries, this.lineGroups, 'id');
 
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: unknown) => item[keyBy] as string;
+        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
 
         arrayForEach(seriesExits, series => series.destroy());
 
         const seriesLineValueProducer = ({ id, valueBy, labelBy, color }: TrendChartLineSeriesOptions<TData>) => {
-            const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
+            const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
 
             return (item: TData) => {
@@ -167,12 +182,40 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const items = arrayMap(data, item => {
                 const { id, point, state } = getMarkerValues(item);
+                const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+                const value = getValue(item);
 
                 const marker = createCircle({
                     id,
                     ...state,
                     radius: 0,
                     data: state,
+                });
+
+                marker.on('mouseenter', () => {
+                    this.tooltip.show(state.cx, state.cy, value.toString());
+
+                    this.renderer.transition(marker, {
+                        duration: 300,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: state.strokeStyle,
+                            radius: 5,
+                        },
+                    });
+
+                    marker.once('mouseleave', () => {
+                        this.tooltip.hide();
+
+                        this.renderer.transition(marker, {
+                            duration: 300,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: '#FFFFFF',
+                                radius: 3,
+                            },
+                        });
+                    });
                 });
 
                 return {
@@ -186,6 +229,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 lineWidth: 2,
                 strokeStyle: series.color,
                 points: arrayMap(items, item => item.point),
+                renderer: series.lineType,
             });
 
             return createGroup({
@@ -206,6 +250,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             line.data = {
                 points,
+                renderer: series.lineType,
             } as PolylineState;
 
             const {
@@ -231,8 +276,37 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             arrayForEach(markerUpdates, ([item, marker]) => {
                 const { state } = getMarkerValues(item);
+                const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+                const value = getValue(item);
 
                 marker.data = state;
+
+                // Update hover listeners for new values
+                marker.on('mouseenter', () => {
+                    this.tooltip.show(state.cx, state.cy, value.toString());
+
+                    this.renderer.transition(marker, {
+                        duration: 300,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: state.strokeStyle,
+                            radius: 5,
+                        },
+                    });
+
+                    marker.once('mouseleave', () => {
+                        this.tooltip.hide();
+
+                        this.renderer.transition(marker, {
+                            duration: 300,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: '#FFFFFF',
+                                radius: 3,
+                            },
+                        });
+                    });
+                });
             });
 
             return group;
@@ -313,7 +387,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(barSeries, this.barGroups, 'id');
 
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: unknown) => item[keyBy] as string;
+    const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
         const baseline = this.yScale(0);
 
         const xScaleSeries = scaleBand(arrayMap(barSeries, srs => srs.id), [0, this.xScaleBand.bandwidth], {
@@ -323,7 +397,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         arrayForEach(seriesExits, series => series.destroy());
 
         const seriesBarValueProducer = ({ id, color, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
-            const getValue = typeIsFunction(valueBy) ? valueBy : (item: unknown) => item[valueBy] as number;
+            const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
 
             return (item: TData) => {
@@ -353,17 +427,49 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             series.color ??= this.colorGenerator.next().value;
 
             const getBarValues = seriesBarValueProducer(series);
+            const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
 
             const children = arrayMap(data, item => {
                 const { id, state } = getBarValues(item);
+                const value = getValue(item);
 
-                return createRect({
+                const bar = createRect({
                     id,
                     ...state,
+                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
                     y: baseline,
                     height: 0,
-                    data: state,
+                    data: {
+                        ...state,
+                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    },
                 });
+
+                bar.on('mouseenter', () => {
+                    this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
+
+                    this.renderer.transition(bar, {
+                        duration: 300,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: state.fillStyle,
+                        },
+                    });
+
+                    bar.once('mouseleave', () => {
+                        this.tooltip.hide();
+
+                        this.renderer.transition(bar, {
+                            duration: 300,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                            },
+                        });
+                    });
+                });
+
+                return bar;
             });
 
             return createGroup({
@@ -374,6 +480,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
         const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
             const getBarValues = seriesBarValueProducer(series);
+            const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
             const bars = group.getElementsByType('rect') as Rect[];
 
             const {
@@ -400,8 +507,37 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             arrayForEach(barUpdates, ([item, bar]) => {
                 const { state } = getBarValues(item);
+                const value = getValue(item);
 
-                bar.data = state;
+                bar.data = {
+                    ...state,
+                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                };
+
+                // Update hover listeners for new values
+                bar.on('mouseenter', () => {
+                    this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
+
+                    this.renderer.transition(bar, {
+                        duration: 300,
+                        ease: easeOutQuart,
+                        state: {
+                            fillStyle: state.fillStyle,
+                        },
+                    });
+
+                    bar.once('mouseleave', () => {
+                        this.tooltip.hide();
+
+                        this.renderer.transition(bar, {
+                            duration: 300,
+                            ease: easeOutQuart,
+                            state: {
+                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                            },
+                        });
+                    });
+                });
             });
 
             return group;
@@ -443,12 +579,12 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 keyBy,
             } = this.options;
 
-            const getKey = typeIsFunction(keyBy) ? keyBy : (item: unknown) => item[keyBy] as string;
+            const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
             const keys = arrayMap(data, getKey);
             const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
                 const getValue = typeIsFunction(valueBy)
                     ? valueBy
-                    : (item: unknown) => item[valueBy] as number;
+                    : (item: any) => item[valueBy] as number;
 
                 return getExtent(data, getValue);
             }).concat(0);
@@ -509,6 +645,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
 }
 
-export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: ChartOptions<TrendChartOptions<TData>>) {
+export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
     return new TrendChart<TData>(target, options);
 }
