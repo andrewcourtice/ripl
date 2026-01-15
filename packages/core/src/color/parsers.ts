@@ -10,6 +10,11 @@ import {
     scaleRGB,
 } from './scales';
 
+import {
+    hslToRGBA,
+    hsvToRGBA,
+} from './utilities';
+
 import type {
     ColorRGBA,
     ColorSpace,
@@ -41,6 +46,14 @@ function parseAlphaChannel(value: string): number {
     }
 
     return parsePercentage(value);
+}
+
+function parseHueChannel(value: string): number {
+    return clamp(parseInt(value, 10), 0, 360);
+}
+
+function parsePercentageChannel(value: string): number {
+    return clamp(parseInt(value.replace('%', ''), 10), 0, 100);
 }
 
 export function parseHEX(value: string): ColorRGBA {
@@ -88,4 +101,64 @@ export function parseRGBA(value: string): ColorRGBA {
         parseRGBChannel(components[3]),
         parseAlphaChannel(components[4]),
     ];
+}
+
+export function parseHSL(value: string): ColorRGBA {
+    const components = PATTERNS.hsl.exec(value);
+
+    if (!components) {
+        throw new ColorParseError(value, 'hsl');
+    }
+
+    return hslToRGBA(
+        parseHueChannel(components[1]),
+        parsePercentageChannel(components[2]),
+        parsePercentageChannel(components[3]),
+        1,
+    );
+}
+
+export function parseHSLA(value: string): ColorRGBA {
+    const components = PATTERNS.hsla.exec(value);
+
+    if (!components) {
+        throw new ColorParseError(value, 'hsla');
+    }
+
+    return hslToRGBA(
+        parseHueChannel(components[1]),
+        parsePercentageChannel(components[2]),
+        parsePercentageChannel(components[3]),
+        parseAlphaChannel(components[4]),
+    );
+}
+
+export function parseHSV(value: string): ColorRGBA {
+    const components = PATTERNS.hsv.exec(value);
+
+    if (!components) {
+        throw new ColorParseError(value, 'hsv');
+    }
+
+    return hsvToRGBA(
+        parseHueChannel(components[1]),
+        parsePercentageChannel(components[2]),
+        parsePercentageChannel(components[3]),
+        1,
+    );
+}
+
+export function parseHSVA(value: string): ColorRGBA {
+    const components = PATTERNS.hsva.exec(value);
+
+    if (!components) {
+        throw new ColorParseError(value, 'hsva');
+    }
+
+    return hsvToRGBA(
+        parseHueChannel(components[1]),
+        parsePercentageChannel(components[2]),
+        parsePercentageChannel(components[3]),
+        parseAlphaChannel(components[4]),
+    );
 }
