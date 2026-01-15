@@ -99,3 +99,28 @@ export function getLinearScaleMethod(domain: number[], range: number[], options?
             : result;
     };
 }
+
+export function createNumericIncludesMethod(domain: number[]) {
+    const [
+        min,
+        max,
+    ] = domain;
+
+    return (value: number) => value >= min && value <= max;
+}
+
+export function getLinearTicks(domain: number[], count: number = 10) {
+    const [
+        min,
+        max,
+        step,
+    ] = padDomain(domain, count);
+
+    const ticks = [];
+
+    for (let value = min; value <= max; value += step) {
+        ticks.push(value);
+    }
+
+    return ticks;
+}
