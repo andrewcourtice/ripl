@@ -5,6 +5,10 @@ import {
 } from './_base';
 
 import {
+    arrayMapRange,
+} from '@ripl/utilities';
+
+import {
     clamp as numberClamp,
 } from '../math';
 
@@ -104,7 +108,7 @@ export function scaleLogarithmic(
         convert,
         invert,
         includes: createNumericIncludesMethod(domain),
-        ticks(count: number = 10) {
+        ticks: (count: number = 10) => {
             const [
                 min,
                 max,
@@ -114,13 +118,10 @@ export function scaleLogarithmic(
             const logMin = Math.log(min) / logBase;
             const logMax = Math.log(max) / logBase;
             const step = (logMax - logMin) / (count - 1);
-            const ticks = [];
 
-            for (let i = 0; i < count; i++) {
-                ticks.push(Math.pow(base, logMin + (step * i)));
-            }
-
-            return ticks;
+            return arrayMapRange(count, i => {
+                return Math.pow(base, logMin + (step * i));
+            });
         },
     });
 }

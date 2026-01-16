@@ -64,6 +64,10 @@ export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIterat
     return output;
 }
 
+export function arrayMapRange<TResult>(length: number, iteratee: (index: number) => TResult): TResult[] {
+    return arrayMap(Array.from({ length }), (_, index) => iteratee(index));
+}
+
 export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult[]>, direction: IterationDirection = 1): TResult[] {
     let output = [] as TResult[];
 

@@ -4,6 +4,10 @@ import {
     LinearScaleOptions,
 } from './_base';
 
+import {
+    arrayMapRange,
+} from '@ripl/utilities';
+
 import type {
     Scale,
 } from './types';
@@ -22,24 +26,21 @@ export function scaleTime(
         range,
         convert: value => convert(value.getTime()),
         invert: value => new Date(invert(value)),
-        includes(value) {
+        includes: value => {
             const time = value.getTime();
             return time >= numericDomain[0] && time <= numericDomain[1];
         },
-        ticks(count: number = 10) {
+        ticks: (count: number = 10) => {
             const [
                 min,
                 max,
             ] = numericDomain;
 
             const step = (max - min) / (count - 1);
-            const ticks = [];
 
-            for (let i = 0; i < count; i++) {
-                ticks.push(new Date(min + (step * i)));
-            }
-
-            return ticks;
+            return arrayMapRange(count, i => {
+                return new Date(min + (step * i));
+            });
         },
     });
 }

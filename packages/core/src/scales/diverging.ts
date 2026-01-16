@@ -5,6 +5,10 @@ import {
     LinearScaleOptions,
 } from './_base';
 
+import {
+    arrayMapRange,
+} from '@ripl/utilities';
+
 import type {
     Scale,
 } from './types';
@@ -48,15 +52,12 @@ export function scaleDiverging(
         convert: value => value <= mid ? lowerScale(value) : upperScale(value),
         invert: value => value <= rangeMid ? lowerInverse(value) : upperInverse(value),
         includes: createNumericIncludesMethod(domain),
-        ticks(count: number = 10) {
+        ticks: (count: number = 10) => {
             const step = (domainMax - domainMin) / (count - 1);
-            const ticks = [];
 
-            for (let i = 0; i < count; i++) {
-                ticks.push(domainMin + (step * i));
-            }
-
-            return ticks;
+            return arrayMapRange(count, i => {
+                return domainMin + (step * i);
+            });
         },
     });
 }

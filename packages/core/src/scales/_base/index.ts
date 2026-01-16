@@ -7,6 +7,7 @@ import {
 } from '../../interpolators';
 
 import {
+    arrayMapRange,
     numberNice,
 } from '@ripl/utilities';
 
@@ -116,11 +117,9 @@ export function getLinearTicks(domain: number[], count: number = 10) {
         step,
     ] = padDomain(domain, count);
 
-    const ticks = [];
+    const length = Math.floor((max - min) / step) + 1;
 
-    for (let value = min; value <= max; value += step) {
-        ticks.push(value);
-    }
-
-    return ticks;
+    return arrayMapRange(length, i => {
+        return min + (step * i);
+    });
 }
