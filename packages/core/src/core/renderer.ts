@@ -256,7 +256,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     onComplete = () => {},
                     direction = 'forward',
                     state,
-                } = getOptions(element, index, totalCount);
+                } = getOptions(element as TElement extends Group ? Element : TElement, index, totalCount);
 
                 const transitionId = Symbol();
                 const startTime = performance.now() + delay;
