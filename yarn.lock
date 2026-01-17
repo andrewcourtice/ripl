@@ -2079,16 +2079,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/webgpu@npm:1.0.0, @ripl/webgpu@workspace:packages/webgpu":
-  version: 0.0.0-use.local
-  resolution: "@ripl/webgpu@workspace:packages/webgpu"
-  dependencies:
-    "@ripl/core": "npm:1.0.0"
-    "@ripl/utilities": "npm:1.0.0"
-    "@webgpu/types": "npm:^0.1.69"
-  languageName: unknown
-  linkType: soft
-
 "@rollup/rollup-android-arm-eabi@npm:4.52.4":
   version: 4.52.4
   resolution: "@rollup/rollup-android-arm-eabi@npm:4.52.4"
@@ -3128,13 +3118,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@webgpu/types@npm:^0.1.69":
-  version: 0.1.69
-  resolution: "@webgpu/types@npm:0.1.69"
-  checksum: 10/f6037e9586c20c0192cc9e82f0d4bcbeda4c22c7611dd1903a82ff4fd5b1564663511e9f4c9803641a028bc3eb43703da43b010d3ae2a859bff9ba858e44281d
-  languageName: node
-  linkType: hard
-
 "@yarnpkg/lockfile@npm:^1.1.0":
   version: 1.1.0
   resolution: "@yarnpkg/lockfile@npm:1.1.0"
@@ -3317,7 +3300,6 @@ __metadata:
     "@ripl/core": "npm:1.0.0"
     "@ripl/svg": "npm:1.0.0"
     "@ripl/utilities": "npm:1.0.0"
-    "@ripl/webgpu": "npm:1.0.0"
     flex-layout-attribute: "npm:^1.0.3"
     sass: "npm:^1.97.2"
     vitepress: "npm:^1.6.4"
