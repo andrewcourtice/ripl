@@ -26,6 +26,7 @@ import {
     createGroup,
     createPolyline,
     createRect,
+    createScale,
     easeOutCubic,
     easeOutQuart,
     getExtent,
