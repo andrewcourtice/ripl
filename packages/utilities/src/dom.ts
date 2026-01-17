@@ -20,11 +20,11 @@ export interface DOMElementResizeEvent {
     height: number;
 }
 
-export function onDOMEvent<TElement extends EventTarget, TEvent extends keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable {
-    element.addEventListener(event, handler);
+export function onDOMEvent<TElement extends EventTarget, TEvent extends keyof DOMElementEventMap<TElement> & string>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable {
+    element.addEventListener(event, handler as EventListener);
 
     return {
-        dispose: () => element.removeEventListener(event, handler),
+        dispose: () => element.removeEventListener(event, handler as EventListener),
     };
 }
 

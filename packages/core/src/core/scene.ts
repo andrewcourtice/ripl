@@ -181,8 +181,8 @@ export class Scene extends Group<SceneEventMap> {
         this.on('untrack', ({ data }) => getTrackedElements.cache.delete(data));
     }
 
-    private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
-        this.disposals.add(onDOMEvent(this.context.element, event, handler));
+    private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement> & string>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+        this.disposals.add(onDOMEvent(this.context.element as HTMLElement, event, handler));
     }
 
     public destroy(): void {

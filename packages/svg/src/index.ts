@@ -6,6 +6,7 @@ import {
     ContextPath,
     ContextText,
     createFrameBuffer,
+    FillRule,
     getRefContext,
     getThetaPoint,
     TextAlignment,
@@ -74,7 +75,8 @@ function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContext
 
 function mapSVGStyles(styles: Partial<Styles>) {
     return objectMap(styles, (key, value) => {
-        return SVG_STYLE_MAP[key]?.[value] ?? value;
+        const styleMap = SVG_STYLE_MAP[key as keyof typeof SVG_STYLE_MAP];
+        return styleMap?.[value as string] ?? value;
     });
 }
 
@@ -357,7 +359,7 @@ export class SVGContext extends Context<SVGSVGElement> {
 
         return new Proxy(result, {
             get: (target, prop) => {
-                const value = target[prop];
+                const value = target[prop as keyof TextMetrics];
 
                 return typeIsNumber(value)
                     ? this.scaleDPR(value)

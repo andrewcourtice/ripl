@@ -485,6 +485,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     measureText(text: string): TextMetrics {
+        return getRefContext().measureText(text);
     }
 
     createPath(id?: string): ContextPath {

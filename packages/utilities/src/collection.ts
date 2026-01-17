@@ -120,7 +120,7 @@ export function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[
 
     const compare = (typeIsFunction(predicate)
         ? predicate
-        : (left, right) => predicateKey(left, right, predicate)
+        : (left, right) => predicateKey(left as Record<PropertyKey, unknown>, right as Record<PropertyKey, unknown>, predicate as PropertyKey)
     ) as Predicate<TLeft, TRight>;
 
     iterateArray(leftInput, valLeft => {
@@ -158,14 +158,14 @@ export function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity
 
 function resolveArrayCompare<TLeft, TRight>(predicate?: ArrayJoinPredicate<TLeft, TRight>): Predicate<TLeft, TRight> {
     if (typeIsNil(predicate)) {
-        return (left, right) => left === right;
+        return (left, right) => (left as unknown) === (right as unknown);
     }
 
     if (typeIsFunction(predicate)) {
         return predicate;
     }
 
-    return (left, right) => predicateKey(left, right, predicate);
+    return (left, right) => predicateKey(left as Record<PropertyKey, unknown>, right as Record<PropertyKey, unknown>, predicate as PropertyKey);
 }
 
 function arrayFilterByMatch<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight> | undefined, includeMatches: boolean): TLeft[] {
@@ -202,7 +202,7 @@ export function objectMap<TSource extends IterableObject, TResult extends Record
     const output = {} as TResult;
 
     for (const key in input) {
-        output[key] = iteratee(key, input[key]);
+        (output as Record<string, unknown>)[key] = iteratee(key, input[key]);
     }
 
     return output;
