@@ -55,7 +55,7 @@ export function arrayForEach<TValue>(input: TValue[], iteratee: ArrayIteratee<TV
 }
 
 export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult>, direction: IterationDirection = 1): TResult[] {
-    const output = new Array<TResult>(length);
+    const output = new Array<TResult>(input.length);
 
     iterateArray(input, (value, index) => {
         output[index] = iteratee(value, index);
@@ -69,10 +69,10 @@ export function arrayMapRange<TResult>(length: number, iteratee: (index: number)
 }
 
 export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult[]>, direction: IterationDirection = 1): TResult[] {
-    let output = [] as TResult[];
+    const output = [] as TResult[];
 
     iterateArray(input, (value, index) => {
-        output = output.concat(iteratee(value, index));
+        output.push(...iteratee(value, index));
     }, direction);
 
     return output;
