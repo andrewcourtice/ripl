@@ -91,7 +91,7 @@ export class Tooltip extends ChartComponent {
 
         const bgWidth = textWidth + this.padding * 2;
         const bgHeight = textHeight + this.padding * 2;
-        
+
         // Calculate initial position (centered above the point)
         let bgX = x - bgWidth / 2;
         let bgY = y - bgHeight - 10;

@@ -2,7 +2,7 @@ import {
     AnyFunction,
 } from './types';
 
-export function typeIsArray(value: unknown): value is any[] {
+export function typeIsArray(value: unknown): value is unknown[] {
     return Array.isArray(value);
 }
 

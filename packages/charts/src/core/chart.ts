@@ -67,11 +67,12 @@ export class Chart<
         }
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async render(callback?: (scene: Scene, renderer: Renderer) => Promise<any>) {
         try {
             await callback?.(this.scene, this.renderer);
         } catch (error) {
-            console.log('failed', error);
+            console.error('failed', error);
             this.scene.context.clear();
         } finally {
             this.hasRendered = true;

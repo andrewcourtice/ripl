@@ -13,7 +13,7 @@ import {
 export type ShapeOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     autoStroke?: boolean;
     autoFill?: boolean;
-}
+};
 
 export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 

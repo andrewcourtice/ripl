@@ -18,8 +18,8 @@ import {
     easeOutQuint,
     elementIsArc,
     elementIsText,
-    maxOf,
     Group,
+    maxOf,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -81,9 +81,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const colorGenerator = getColorGenerator();
             const size = Math.min(scene.width, scene.height);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
 
             const maxValue = maxOf(data, getValue) ?? 0;

@@ -20,7 +20,7 @@ export type BandScaleOptions = {
     outerPadding?: number;
     alignment?: number;
     round?: boolean;
-}
+};
 
 export function scaleBand<TDomain>(
     domain: TDomain[],
@@ -31,6 +31,7 @@ export function scaleBand<TDomain>(
         innerPadding = 0,
         outerPadding = 0,
         alignment = 0.5,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         round,
     } = options || {};
 

@@ -8,9 +8,7 @@ import {
 } from '../math';
 
 import type {
-    ColorHSL,
     ColorHSLA,
-    ColorHSV,
     ColorHSVA,
     ColorRGBA,
 } from './types';
@@ -82,10 +80,14 @@ export function hslToRGBA(hue: number, saturation: number, lightness: number, al
         return p;
     };
 
-    let r, g, b;
+    let r: number;
+    let g: number;
+    let b: number;
 
     if (s === 0) {
-        r = g = b = l;
+        r = l;
+        g = l;
+        b = l;
     } else {
         const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         const p = 2 * l - q;

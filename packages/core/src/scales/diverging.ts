@@ -15,7 +15,7 @@ import type {
 
 export type DivergingScaleOptions = LinearScaleOptions & {
     midpoint?: number;
-}
+};
 
 export function scaleDiverging(
     domain: number[],

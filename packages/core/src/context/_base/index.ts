@@ -45,7 +45,7 @@ export type TextOptions = {
     y: number;
     content: string;
     maxWidth?: number;
-}
+};
 
 export interface ContextElement {
     readonly id: string;

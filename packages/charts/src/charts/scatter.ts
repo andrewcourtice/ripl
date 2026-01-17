@@ -23,7 +23,6 @@ import {
     Context,
     createCircle,
     createGroup,
-    createScale,
     easeOutCubic,
     easeOutQuart,
     getExtent,
@@ -34,7 +33,6 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -110,11 +108,13 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 return;
             }
 
+            /* eslint-disable @typescript-eslint/no-explicit-any, no-nested-ternary */
             const getSizeValue = typeIsFunction(sizeBy)
                 ? sizeBy
                 : typeof sizeBy === 'number'
                     ? () => sizeBy
                     : (item: any) => item[sizeBy] as number;
+            /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
 
             arrayForEach(data, item => {
                 allSizes.push(getSizeValue(item));
@@ -139,6 +139,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             right: seriesExits,
         } = arrayJoin(series, this.bubbleGroups, 'id');
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
 
         arrayForEach(seriesExits, series => series.destroy());
@@ -153,8 +154,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             minRadius = 3,
             maxRadius = 20,
         }: ScatterChartSeriesOptions<TData>) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getXValue = typeIsFunction(xBy) ? xBy : (item: any) => item[xBy] as number;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getYValue = typeIsFunction(yBy) ? yBy : (item: any) => item[yBy] as number;
+            /* eslint-disable @typescript-eslint/no-explicit-any, no-nested-ternary */
             const getSizeValue = sizeBy === undefined
                 ? () => minRadius
                 : typeIsFunction(sizeBy)
@@ -162,6 +166,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     : typeof sizeBy === 'number'
                         ? () => sizeBy
                         : (item: any) => item[sizeBy] as number;
+            /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
 
             return (item: TData) => {
@@ -425,6 +430,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
     }
 
     public async render() {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return super.render((scene, renderer) => {
             const {
                 data,
@@ -435,6 +441,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const xExtents = arrayMap(series, ({ xBy }) => {
                 const getXValue = typeIsFunction(xBy)
                     ? xBy
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[xBy] as number;
 
                 return getExtent(data, getXValue);
@@ -443,6 +450,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const yExtents = arrayMap(series, ({ yBy }) => {
                 const getYValue = typeIsFunction(yBy)
                     ? yBy
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[yBy] as number;
 
                 return getExtent(data, getYValue);

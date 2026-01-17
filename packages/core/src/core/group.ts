@@ -109,8 +109,8 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
             }
 
             const [
-                _m,
-                _c,
+                ,
+                ,
                 key,
                 value,
             ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];

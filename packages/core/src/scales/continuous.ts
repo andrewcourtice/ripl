@@ -1,8 +1,8 @@
 import {
-    getLinearTicks,
     createNumericIncludesMethod,
     createScale,
     getLinearScaleMethod,
+    getLinearTicks,
     LinearScaleOptions,
 } from './_base';
 

@@ -23,7 +23,7 @@ import type {
 
 export type LogarithmicScaleOptions = LinearScaleOptions & {
     base?: number;
-}
+};
 
 function getLogScaleMethod(domain: number[], range: number[], base: number, options?: LinearScaleOptions): ScaleMethod {
     const {
@@ -81,7 +81,7 @@ function getLogInverseMethod(domain: number[], range: number[], base: number, op
     return (value: number) => {
         const position = (value - rangeMin) / rangeDelta;
         const logValue = interpolator(position);
-        const result = Math.pow(base, logValue);
+        const result = base ** logValue;
 
         return clamp
             ? numberClamp(result, domainMin, domainMax)
@@ -120,7 +120,7 @@ export function scaleLogarithmic(
             const step = (logMax - logMin) / (count - 1);
 
             return arrayMapRange(count, i => {
-                return Math.pow(base, logMin + (step * i));
+                return base ** (logMin + (step * i));
             });
         },
     });

@@ -145,7 +145,8 @@ export class Renderer extends EventBus<RendererEventMap> {
                     startTime,
                     duration,
                     ease,
-                    loop,
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    loop: _loop,
                     direction,
                     interpolator,
                     callback,
@@ -233,7 +234,8 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? options
             : () => options || {} as RendererTransitionOptions<TElement>;
 
-        return new Transition((resolve, reject, onAbort) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        return new Transition((resolve, _reject, _onAbort) => {
             const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.graph(false) : element;
             });

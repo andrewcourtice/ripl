@@ -1,7 +1,7 @@
 import {
-    getLinearTicks,
     createNumericIncludesMethod,
     createScale,
+    getLinearTicks,
     LinearScaleOptions,
     padDomain,
 } from './_base';
@@ -21,7 +21,7 @@ import type {
 
 export type PowerScaleOptions = LinearScaleOptions & {
     exponent?: number;
-}
+};
 
 function getPowerScaleMethod(domain: number[], range: number[], exponent: number, options?: LinearScaleOptions): ScaleMethod {
     const {
@@ -46,7 +46,7 @@ function getPowerScaleMethod(domain: number[], range: number[], exponent: number
 
     return (value: number) => {
         const normalized = (value - domainMin) / domainDelta;
-        const position = Math.pow(normalized, exponent);
+        const position = normalized ** exponent;
         const result = interpolator(position);
 
         return clamp
@@ -78,7 +78,7 @@ function getPowerInverseMethod(domain: number[], range: number[], exponent: numb
 
     return (value: number) => {
         const normalized = (value - rangeMin) / rangeDelta;
-        const position = Math.pow(normalized, 1 / exponent);
+        const position = normalized ** (1 / exponent);
         const result = interpolator(position);
 
         return clamp

@@ -10,12 +10,13 @@ export type EventMap = {
 export type EventOptions<TData = undefined> = {
     bubbles?: boolean;
     data?: TData;
-}
+};
 
 export type EventSubscriptionOptions = {
     self?: boolean;
-}
+};
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventHandler<TData = any> = {
     (event: Event<TData>): void;
 } & EventSubscriptionOptions;
@@ -27,12 +28,14 @@ export class Event<TData = undefined> {
     public readonly type: string;
     public readonly data: TData;
     public readonly timestamp: number;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public readonly target: EventBus<any>;
 
     public get bubbles() {
         return this.#bubbles;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(type: string, target: EventBus<any>, options?: EventOptions<TData>) {
         const {
             data,
@@ -99,6 +102,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
 
     public emit<TEvent extends Event = Event>(event: TEvent): TEvent;
     public emit<TEvent extends keyof TEventMap>(type: TEvent, data: TEventMap[TEvent]): Event<TEventMap[TEvent]>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public emit(...args: any[]): Event<any> {
         const event = args.length === 1 && args[0] instanceof Event
             ? args[0]

@@ -10,7 +10,6 @@ import {
 
 import {
     Box,
-    TAU,
 } from '../math';
 
 export interface CircleState extends BaseElementState {

@@ -26,6 +26,7 @@ export type ChartYAxisAlignment = 'left' | 'right';
 export type LabelDimension = 'width' | 'height';
 
 export interface ChartAxisOptions extends ChartComponentOptions {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scale: Scale<any, number>;
     bounds: Box;
     padding?: number;
@@ -52,6 +53,7 @@ const LABEL_DIMENSION_MAP = {
 
 export class ChartAxis extends ChartComponent {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public scale: Scale<any, number>;
     public bounds: Box;
     public padding: number;
@@ -128,6 +130,7 @@ export class ChartAxis extends ChartComponent {
         scene.add(this.group);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
         return arrayReduce(values, (output, value) => {
             const metrics = this.context.measureText(value.toString());

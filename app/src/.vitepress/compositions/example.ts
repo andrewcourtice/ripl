@@ -1,27 +1,27 @@
-import { 
+import {
     shallowRef,
 } from 'vue';
 
 import {
+    enableTracking,
     pauseTracking,
-    enableTracking
 } from '@vue/reactivity';
 
 import type {
-    Chart
+    Chart,
 } from '@ripl/charts';
 
 import type {
-    Context 
+    Context,
 } from '@ripl/core';
 
 export function useRiplExample(onContextChanged?: (context: Context) => void) {
     const context = shallowRef<Context>();
 
     function contextChanged(ctx: Context) {
-        context.value?.destroy()
+        context.value?.destroy();
         context.value = ctx;
-        
+
         pauseTracking();
         onContextChanged?.(context.value);
         enableTracking();
@@ -29,19 +29,20 @@ export function useRiplExample(onContextChanged?: (context: Context) => void) {
 
     return {
         context,
-        contextChanged
-    }
+        contextChanged,
+    };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useRiplChart<TChart extends Chart<any>>(onContextChanged: (context: Context) => TChart) {
     const chart = shallowRef<TChart>();
-    
+
     function contextChanged(context: Context) {
-        chart.value = (chart.value?.destroy(), onContextChanged(context))
+        chart.value = (chart.value?.destroy(), onContextChanged(context));
     }
 
     return {
         chart,
-        contextChanged
-    }
+        contextChanged,
+    };
 }

@@ -26,7 +26,7 @@ import {
 
 type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
-}
+};
 
 export interface SVGContextElementDefinition {
     tag: keyof SVGElementTagNameMap;
@@ -130,6 +130,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.appendElementData('Z');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         this.moveTo(x, y);
         this.appendElementData(`A ${radiusX} ${radiusY} ${rotation}`);
@@ -155,6 +156,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.lineTo(x, y);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
         return this.rect(x, y, width, height);
         // const [
@@ -299,9 +301,11 @@ export class SVGContext extends Context<SVGSVGElement> {
             return;
         }
 
-        this.buffer
-            ? this.requestFrame(() => this.render())
-            : this.render();
+        if (this.buffer) {
+            this.requestFrame(() => this.render());
+        } else {
+            this.render();
+        }
     }
 
     createPath(id?: string): SVGPath {
@@ -318,9 +322,11 @@ export class SVGContext extends Context<SVGSVGElement> {
         return text;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
     clip(path: SVGPath, fillRule?: FillRule): void {
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fill(element: SVGContextElement, fillRule?: FillRule): void {
         this.setElementStyles(element, {
             fill: this.currentState.fillStyle,
@@ -360,6 +366,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
         return this.isPointIn('fill', path, x, y);
     }
