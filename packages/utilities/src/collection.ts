@@ -156,6 +156,42 @@ export function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity
     return output;
 }
 
+function resolveArrayCompare<TLeft, TRight>(predicate?: ArrayJoinPredicate<TLeft, TRight>): Predicate<TLeft, TRight> {
+    if (typeIsNil(predicate)) {
+        return (left, right) => left === right;
+    }
+
+    if (typeIsFunction(predicate)) {
+        return predicate;
+    }
+
+    return (left, right) => predicateKey(left, right, predicate);
+}
+
+function arrayFilterByMatch<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight> | undefined, includeMatches: boolean): TLeft[] {
+    const output = [] as TLeft[];
+    const compare = resolveArrayCompare(predicate);
+
+    iterateArray(leftInput, valLeft => {
+        const found = arrayFind(rightInput, valRight => compare(valLeft, valRight));
+        const shouldInclude = includeMatches ? !typeIsNil(found) : typeIsNil(found);
+
+        if (shouldInclude) {
+            output.push(valLeft);
+        }
+    });
+
+    return output;
+}
+
+export function arrayIntersection<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[] {
+    return arrayFilterByMatch(leftInput, rightInput, predicate, true);
+}
+
+export function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[] {
+    return arrayFilterByMatch(leftInput, rightInput, predicate, false);
+}
+
 export function objectForEach<TSource extends IterableObject>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource]>): void {
     for (const key in input) {
         iteratee(key, input[key]);
