@@ -6,18 +6,18 @@ import './style.scss';
 import Example from '../components/example.vue';
 
 import {
-    enhanceAppWithTabs
+    enhanceAppWithTabs,
 } from 'vitepress-plugin-tabs/client';
 
 import type {
-    Theme
+    Theme,
 } from 'vitepress';
 
 export default {
     extends: DefaultTheme,
-    enhanceApp({ app, router, siteData }) {
+    enhanceApp({ app }) {
         app.component('ripl-example', Example);
-        
+
         enhanceAppWithTabs(app);
-    }
-} satisfies Theme
+    },
+} satisfies Theme;

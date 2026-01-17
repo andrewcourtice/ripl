@@ -114,7 +114,7 @@ export function parseHSL(value: string): ColorRGBA {
         parseHueChannel(components[1]),
         parsePercentageChannel(components[2]),
         parsePercentageChannel(components[3]),
-        1,
+        1
     );
 }
 
@@ -129,7 +129,7 @@ export function parseHSLA(value: string): ColorRGBA {
         parseHueChannel(components[1]),
         parsePercentageChannel(components[2]),
         parsePercentageChannel(components[3]),
-        parseAlphaChannel(components[4]),
+        parseAlphaChannel(components[4])
     );
 }
 
@@ -144,7 +144,7 @@ export function parseHSV(value: string): ColorRGBA {
         parseHueChannel(components[1]),
         parsePercentageChannel(components[2]),
         parsePercentageChannel(components[3]),
-        1,
+        1
     );
 }
 
@@ -159,6 +159,6 @@ export function parseHSVA(value: string): ColorRGBA {
         parseHueChannel(components[1]),
         parsePercentageChannel(components[2]),
         parsePercentageChannel(components[3]),
-        parseAlphaChannel(components[4]),
+        parseAlphaChannel(components[4])
     );
 }

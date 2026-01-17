@@ -10,13 +10,15 @@ export type TaskExecutor<TResult> = (
     resolve: TaskResolve<TResult>,
     reject: TaskReject,
     onAbort: (callback: TaskAbortCallback) => void,
-    controller: AbortController,
+    controller: AbortController
 ) => void;
 
 export class TaskAbortError extends Error {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public reason: any;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(reason?: any) {
         super('Task aborted');
         this.reason = reason;
@@ -41,6 +43,7 @@ export class Task<TResult = void> extends Promise<TResult> {
 
         super((_resolve, _reject) => {
             const resolve = (value: TResult | PromiseLike<TResult>) => execResolution(() => _resolve(value));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const reject = (reason?: any) => execResolution(() => _reject(reason));
             const onAbort = (callback: TaskAbortCallback) => listeners.add(callback);
             const dispose = () => controller.signal.removeEventListener('abort', abort);

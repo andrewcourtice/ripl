@@ -9,12 +9,12 @@ import type {
 export type CachedFunction<TValue extends AnyFunction> = {
     (...args: Parameters<TValue>): ReturnType<TValue>;
     invalidate(): void;
-}
+};
 
 export type MemoizedFunction<TValue extends AnyFunction, TKey> = {
     (...args: Parameters<TValue>): ReturnType<TValue>;
     cache: Map<TKey, ReturnType<TValue>>;
-}
+};
 
 export type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;
 

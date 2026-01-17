@@ -57,10 +57,10 @@ export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 export type ElementValidationType = 'info' | 'warning' | 'error';
 export type ElementIntersectionOptions = {
     isPointer: boolean;
-}
+};
 
-export interface BaseElementState extends Partial<BaseState> {
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface BaseElementState extends Partial<BaseState> {}
 
 export interface ElementEventMap extends EventMap {
     graph: null;
@@ -92,7 +92,7 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
 export type ElementInterpolationKeyFrame<TValue = number> = {
     offset?: number;
     value: TValue;
-}
+};
 
 export type ElementInterpolationStateValue<TValue = number> = TValue
 | ElementInterpolationKeyFrame<TValue>[]
@@ -111,6 +111,7 @@ export interface ElementValidationResult {
     message: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
     return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
 }
@@ -160,6 +161,8 @@ function getInterpolator<TValue>(value: TValue) {
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
+// Unused decorator - keeping for future use
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function propDefault<TThis, TValue, TDefault = TValue>(value: TDefault) {
     return (target: () => TValue, { kind }: ClassGetterDecoratorContext<TThis, TValue>) => {
         if (kind === 'getter') {
@@ -400,6 +403,7 @@ export class Element<
         return new Box(0, 0, 0, 0);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
         return isPointInBox([x, y], this.getBoundingBox());
     }
@@ -423,6 +427,7 @@ export class Element<
             }
 
             return (output[key] = interpolator(currentValue, value), output);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }, {} as Record<keyof TState, Interpolator<any>>);
 
         return time => objectForEach(mappedIntpls, (key, value) => {

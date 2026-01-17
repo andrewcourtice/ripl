@@ -13,7 +13,7 @@ export type DOMElementEventMap<TElement> = TElement extends MediaQueryList ? Med
     : TElement extends HTMLElement ? HTMLElementEventMap
         : TElement extends Window ? WindowEventMap
             : TElement extends Document ? DocumentEventMap
-                : Record<string, Event>
+                : Record<string, Event>;
 
 export interface DOMElementResizeEvent {
     width: number;

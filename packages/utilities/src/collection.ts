@@ -12,7 +12,7 @@ import type {
     Predicate,
 } from './types';
 
-export type IterableObject = Record<PropertyKey, any>;
+export type IterableObject = Record<PropertyKey, unknown>;
 export type IterationDirection = 1 | -1;
 export type ArrayIteratee<TValue, TResult = void> = (value: TValue, index: number) => TResult;
 export type ArrayReducer<TValue, TResult = void> = (accumulator: TResult, value: TValue, index: number) => TResult;
@@ -162,7 +162,7 @@ export function objectForEach<TSource extends IterableObject>(input: TSource, it
     }
 }
 
-export function objectMap<TSource extends IterableObject, TResult extends Record<keyof TSource, any>>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource], any>): TResult {
+export function objectMap<TSource extends IterableObject, TResult extends Record<keyof TSource, unknown>>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource], unknown>): TResult {
     const output = {} as TResult;
 
     for (const key in input) {

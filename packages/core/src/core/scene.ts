@@ -5,7 +5,6 @@ import {
 
 import {
     Context,
-    ContextType,
     createContext,
     typeIsContext,
 } from '../context';

@@ -1,16 +1,16 @@
 import {
-    defineConfig
+    defineConfig,
 } from 'vitepress';
 
 import {
-    tabsMarkdownPlugin
+    tabsMarkdownPlugin,
 } from 'vitepress-plugin-tabs';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../dist',
-    title: "Ripl",
-    description: "Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API",
+    title: 'Ripl',
+    description: 'Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API',
 
     markdown: {
         config(md) {
@@ -21,9 +21,9 @@ export default defineConfig({
     themeConfig: {
 
         search: {
-            provider: 'local'
+            provider: 'local',
         },
-        
+
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             {
@@ -31,13 +31,13 @@ export default defineConfig({
                 items: [
                     {
                         text: 'Core',
-                        link: '/docs/core/'
+                        link: '/docs/core/',
                     },
                     {
                         text: 'Charts',
-                        link: '/docs/charts/'
-                    }
-                ]
+                        link: '/docs/charts/',
+                    },
+                ],
             },
         ],
 
@@ -58,7 +58,7 @@ export default defineConfig({
                             text: 'Tutorial',
                             link: '/docs/core/getting-started/tutorial',
                         },
-                    ]
+                    ],
                 },
                 {
                     text: 'Essentials',
@@ -69,7 +69,7 @@ export default defineConfig({
                         },
                         {
                             text: 'Element',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
                         {
                             text: 'Shape',
@@ -81,13 +81,13 @@ export default defineConfig({
                         },
                         {
                             text: 'Scene',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
                         {
                             text: 'Renderer',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
-                    ]
+                    ],
                 },
                 {
                     text: 'Contexts',
@@ -98,9 +98,9 @@ export default defineConfig({
                         },
                         {
                             text: 'SVG',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
-                    ]
+                    ],
                 },
                 {
                     text: 'Elements',
@@ -111,47 +111,50 @@ export default defineConfig({
                         },
                         {
                             text: 'Circle',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
                         {
                             text: 'Line',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
-                    ]
+                    ],
                 },
             ],
 
             '/docs/charts': [
                 {
                     text: 'Introduction',
-                    link: '/charts'
+                    link: '/charts',
                 },
                 {
                     text: 'Charts',
                     items: [
                         {
                             text: 'Pie',
-                            link: '/docs/charts/pie'
+                            link: '/docs/charts/pie',
                         },
                         {
                             text: 'Polar Area',
-                            link: '/docs/charts/polar-area'
+                            link: '/docs/charts/polar-area',
                         },
                         {
                             text: 'Scatter',
-                            link: '/docs/charts/scatter'
+                            link: '/docs/charts/scatter',
                         },
                         {
                             text: 'Trend',
-                            link: '/docs/charts/trend'
+                            link: '/docs/charts/trend',
                         },
-                    ]
+                    ],
                 },
-            ]
+            ],
         },
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/andrewcourtice/ripl' }
-        ]
-    }
-})
+            {
+                icon: 'github',
+                link: 'https://github.com/andrewcourtice/ripl',
+            },
+        ],
+    },
+});

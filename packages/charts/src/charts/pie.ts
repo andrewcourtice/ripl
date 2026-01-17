@@ -76,9 +76,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const colorGenerator = getColorGenerator();
             const size = Math.min(scene.width, scene.height);
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
 
             const total = getTotal(data, getValue);
@@ -159,7 +163,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     } as Partial<ArcState>,
                 });
 
-segmentArc.on('mouseenter', () => {
+                segmentArc.on('mouseenter', () => {
                     const [
                         centroidX,
                         centroidY,
