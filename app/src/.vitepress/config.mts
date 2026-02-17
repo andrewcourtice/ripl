@@ -65,27 +65,27 @@ export default defineConfig({
                     items: [
                         {
                             text: 'Context',
-                            link: '/docs/charts/pie',
+                            link: '/docs/core/essentials/context',
                         },
                         {
                             text: 'Element',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/essentials/element',
                         },
                         {
                             text: 'Shape',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/essentials/shape',
                         },
                         {
                             text: 'Group',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/essentials/group',
                         },
                         {
                             text: 'Scene',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/essentials/scene',
                         },
                         {
                             text: 'Renderer',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/essentials/renderer',
                         },
                     ],
                 },
@@ -94,11 +94,11 @@ export default defineConfig({
                     items: [
                         {
                             text: 'Canvas',
-                            link: '/docs/charts/pie',
+                            link: '/docs/core/contexts/canvas',
                         },
                         {
                             text: 'SVG',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/contexts/svg',
                         },
                     ],
                 },
@@ -107,15 +107,77 @@ export default defineConfig({
                     items: [
                         {
                             text: 'Arc',
-                            link: '/docs/charts/pie',
+                            link: '/docs/core/elements/arc',
                         },
                         {
                             text: 'Circle',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/elements/circle',
+                        },
+                        {
+                            text: 'Ellipse',
+                            link: '/docs/core/elements/ellipse',
                         },
                         {
                             text: 'Line',
-                            link: '/docs/charts/trend',
+                            link: '/docs/core/elements/line',
+                        },
+                        {
+                            text: 'Polygon',
+                            link: '/docs/core/elements/polygon',
+                        },
+                        {
+                            text: 'Polyline',
+                            link: '/docs/core/elements/polyline',
+                        },
+                        {
+                            text: 'Rect',
+                            link: '/docs/core/elements/rect',
+                        },
+                        {
+                            text: 'Text',
+                            link: '/docs/core/elements/text',
+                        },
+                    ],
+                },
+                {
+                    text: 'Advanced',
+                    items: [
+                        {
+                            text: 'Custom Elements',
+                            link: '/docs/core/advanced/custom-elements',
+                        },
+                        {
+                            text: 'Events',
+                            link: '/docs/core/advanced/events',
+                        },
+                        {
+                            text: 'Gradients',
+                            link: '/docs/core/advanced/gradients',
+                        },
+                        {
+                            text: 'Interpolators',
+                            link: '/docs/core/advanced/interpolators',
+                        },
+                        {
+                            text: 'Animations',
+                            link: '/docs/core/advanced/animations',
+                        },
+                        {
+                            text: 'Custom Contexts',
+                            link: '/docs/core/advanced/custom-contexts',
+                        },
+                    ],
+                },
+                {
+                    text: 'Troubleshooting',
+                    items: [
+                        {
+                            text: 'FAQ',
+                            link: '/docs/core/troubleshooting/faq',
+                        },
+                        {
+                            text: 'Performance',
+                            link: '/docs/core/troubleshooting/performance',
                         },
                     ],
                 },
