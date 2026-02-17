@@ -24,6 +24,7 @@ import {
     interpolateBorderRadius,
     interpolateColor,
     interpolateDate,
+    interpolateGradient,
     interpolateNumber,
     interpolatePoints,
     Interpolator,
@@ -158,6 +159,7 @@ function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementIn
 function getInterpolator<TValue>(value: TValue) {
     const interpolator = arrayFind([
         interpolateNumber,
+        interpolateGradient,
         interpolateColor,
         interpolateDate,
         interpolatePoints,

@@ -9,6 +9,10 @@ import {
     FillRule,
     getRefContext,
     getThetaPoint,
+    isGradientString,
+    parseColor,
+    parseGradient,
+    serialiseRGBA,
     TextAlignment,
     TextBaseline,
     TextOptions,
@@ -16,11 +20,18 @@ import {
 
 import {
     AnyFunction,
+    arrayForEach,
     GetMutableKeys,
     objectForEach,
     objectMap,
+    stringUniqueId,
     typeIsNumber,
 } from '@ripl/utilities';
+
+import type {
+    Gradient,
+    GradientColorStop,
+} from '@ripl/core';
 
 type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
@@ -52,6 +63,86 @@ const SVG_STYLE_MAP = {
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+function normaliseGradientColor(color: string): string {
+    const rgba = parseColor(color);
+    return rgba ? serialiseRGBA(...rgba) : color;
+}
+
+function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
+    gradientEl.replaceChildren();
+
+    arrayForEach(stops, (stop) => {
+        const stopEl = createSVGElement('stop');
+        stopEl.setAttribute('offset', `${(stop.offset ?? 0) * 100}%`);
+        stopEl.setAttribute('stop-color', normaliseGradientColor(stop.color));
+        gradientEl.appendChild(stopEl);
+    });
+}
+
+type GradientElementFactory = (gradient: Gradient) => SVGElement;
+type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
+
+function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient): void {
+    const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
+    const x1 = 0.5 - Math.cos(angleRad) * 0.5;
+    const y1 = 0.5 - Math.sin(angleRad) * 0.5;
+    const x2 = 0.5 + Math.cos(angleRad) * 0.5;
+    const y2 = 0.5 + Math.sin(angleRad) * 0.5;
+
+    element.setAttribute('x1', x1.toFixed(4));
+    element.setAttribute('y1', y1.toFixed(4));
+    element.setAttribute('x2', x2.toFixed(4));
+    element.setAttribute('y2', y2.toFixed(4));
+}
+
+function applyRadialGradientAttributes(element: SVGElement, gradient: Gradient): void {
+    const cx = (gradient as { position: [number, number] }).position[0] / 100;
+    const cy = (gradient as { position: [number, number] }).position[1] / 100;
+
+    element.setAttribute('cx', cx.toFixed(4));
+    element.setAttribute('cy', cy.toFixed(4));
+    element.setAttribute('r', '0.5');
+    element.setAttribute('fx', cx.toFixed(4));
+    element.setAttribute('fy', cy.toFixed(4));
+}
+
+const GRADIENT_ELEMENT_FACTORIES: Record<string, GradientElementFactory> = {
+    linear: () => createSVGElement('linearGradient'),
+    radial: () => createSVGElement('radialGradient'),
+};
+
+const GRADIENT_ELEMENT_UPDATERS: Record<string, GradientElementUpdater> = {
+    linear: applyLinearGradientAttributes,
+    radial: applyRadialGradientAttributes,
+};
+
+function createSVGGradientElement(gradient: Gradient, gradientId: string): SVGElement | undefined {
+    const factory = GRADIENT_ELEMENT_FACTORIES[gradient.type];
+
+    if (!factory) {
+        return undefined;
+    }
+
+    const element = factory(gradient);
+
+    element.setAttribute('id', gradientId);
+    element.setAttribute('gradientUnits', 'objectBoundingBox');
+
+    if (gradient.repeating) {
+        element.setAttribute('spreadMethod', 'repeat');
+    }
+
+    GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient);
+    applyGradientStops(element, gradient.stops);
+
+    return element;
+}
+
+function updateSVGGradientElement(element: SVGElement, gradient: Gradient): void {
+    GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient);
+    applyGradientStops(element, gradient.stops);
 }
 
 function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContextElement) {
@@ -253,6 +344,11 @@ function reconcileNode(domParent: SVGElement | SVGSVGElement, vnode: SVGVNode, d
 
     for (let i = domParent.children.length - 1; i >= 0; i--) {
         const child = domParent.children[i] as SVGElement;
+
+        if (child.tagName.toLowerCase() === 'defs') {
+            continue;
+        }
+
         const childId = child.getAttribute('id');
 
         if (childId && desiredIds.includes(childId)) {
@@ -301,6 +397,9 @@ export class SVGContext extends Context<SVGSVGElement> {
     private vtree: SVGVNode;
     private domCache: Map<string, SVGElement>;
     private requestFrame: (callback: AnyFunction) => void;
+    private defs: SVGDefsElement;
+    private gradientCache: Map<string, { gradientId: string;
+        element: SVGElement; }>;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -320,8 +419,58 @@ export class SVGContext extends Context<SVGSVGElement> {
             children: [],
         };
         this.domCache = new Map();
+        this.gradientCache = new Map();
+        this.defs = createSVGElement('defs');
+        this.element.appendChild(this.defs);
         this.requestFrame = createFrameBuffer();
         this.init();
+    }
+
+    private removeGradientDef(cacheKey: string): void {
+        const existing = this.gradientCache.get(cacheKey);
+
+        if (!existing) {
+            return;
+        }
+
+        this.defs.removeChild(existing.element);
+        this.gradientCache.delete(cacheKey);
+    }
+
+    private resolveGradientStyle(value: string, cacheKey: string): string {
+        if (!isGradientString(value)) {
+            this.removeGradientDef(cacheKey);
+            return value;
+        }
+
+        const gradient = parseGradient(value);
+
+        if (!gradient) {
+            return value;
+        }
+
+        const cached = this.gradientCache.get(cacheKey);
+
+        if (cached) {
+            updateSVGGradientElement(cached.element, gradient);
+            return `url(#${cached.gradientId})`;
+        }
+
+        const gradientId = `gradient-${stringUniqueId()}`;
+        const gradientEl = createSVGGradientElement(gradient, gradientId);
+
+        if (!gradientEl) {
+            // Conic gradients fall back to CSS string
+            return value;
+        }
+
+        this.defs.appendChild(gradientEl);
+        this.gradientCache.set(cacheKey, {
+            gradientId,
+            element: gradientEl,
+        });
+
+        return `url(#${gradientId})`;
     }
 
     protected rescale(width: number, height: number) {
@@ -418,13 +567,13 @@ export class SVGContext extends Context<SVGSVGElement> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fill(element: SVGContextElement, fillRule?: FillRule): void {
         this.setElementStyles(element, {
-            fill: this.currentState.fillStyle,
+            fill: this.resolveGradientStyle(this.currentState.fillStyle, `${element.id}:fill`),
         });
     }
 
     stroke(element: SVGContextElement): void {
         this.setElementStyles(element, {
-            stroke: this.currentState.strokeStyle,
+            stroke: this.resolveGradientStyle(this.currentState.strokeStyle, `${element.id}:stroke`),
             strokeLinecap: this.currentState.lineCap,
             strokeDasharray: this.currentState.lineDash.join(' '),
             strokeDashoffset: this.currentState.lineDashOffset.toString(),

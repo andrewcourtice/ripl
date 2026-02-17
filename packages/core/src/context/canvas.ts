@@ -13,6 +13,16 @@ import {
 } from './_base';
 
 import {
+    isGradientString,
+    parseGradient,
+} from '../gradient';
+
+import {
+    parseColor,
+    serialiseRGBA,
+} from '../color';
+
+import {
     BorderRadius,
     TAU,
 } from '../math';
@@ -20,9 +30,64 @@ import {
 import {
     scaleContinuous,
 } from '../scales';
+
 import {
+    arrayForEach,
     typeIsNumber,
 } from '@ripl/utilities';
+
+import type {
+    Gradient,
+} from '../gradient';
+
+type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, width: number, height: number) => CanvasGradient;
+
+const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
+    linear: (context, gradient, width, height) => {
+        const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
+        const cos = Math.cos(angleRad);
+        const sin = Math.sin(angleRad);
+        const halfW = width / 2;
+        const halfH = height / 2;
+        const length = Math.abs(halfW * cos) + Math.abs(halfH * sin);
+
+        return context.createLinearGradient(
+            halfW - cos * length,
+            halfH - sin * length,
+            halfW + cos * length,
+            halfH + sin * length
+        );
+    },
+    radial: (context, gradient, width, height) => {
+        const cx = ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = ((gradient as { position: [number, number] }).position[1] / 100) * height;
+        const radius = Math.max(width, height) / 2;
+
+        return context.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    },
+    conic: (context, gradient, width, height) => {
+        const cx = ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = ((gradient as { position: [number, number] }).position[1] / 100) * height;
+        const startAngle = (gradient as { angle: number }).angle * (Math.PI / 180);
+
+        return context.createConicGradient(startAngle, cx, cy);
+    },
+};
+
+function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, width: number, height: number): CanvasGradient {
+    const factory = CANVAS_GRADIENT_FACTORIES[gradient.type];
+    const canvasGradient = factory(context, gradient, width, height);
+
+    arrayForEach(gradient.stops, (stop) => {
+        const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
+        const rgba = parseColor(stop.color);
+        const color = rgba ? serialiseRGBA(...rgba) : stop.color;
+
+        canvasGradient.addColorStop(offset, color);
+    });
+
+    return canvasGradient;
+}
 
 export class CanvasPath extends ContextPath {
 
@@ -82,12 +147,25 @@ export class CanvasPath extends ContextPath {
 export class CanvasContext extends Context<HTMLCanvasElement> {
 
     private context: CanvasRenderingContext2D;
+    private _fillStyleCSS: string = '';
+    private _strokeStyleCSS: string = '';
 
     get fillStyle(): string {
-        return this.context.fillStyle as string;
+        return this._fillStyleCSS || this.context.fillStyle as string;
     }
 
     set fillStyle(value) {
+        this._fillStyleCSS = value;
+
+        if (isGradientString(value)) {
+            const gradient = parseGradient(value);
+
+            if (gradient) {
+                this.context.fillStyle = toCanvasGradient(this.context, gradient, this.width, this.height);
+                return;
+            }
+        }
+
         this.context.fillStyle = value;
     }
 
@@ -220,10 +298,21 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
     }
 
     get strokeStyle(): string {
-        return this.context.strokeStyle as string;
+        return this._strokeStyleCSS || this.context.strokeStyle as string;
     }
 
     set strokeStyle(value) {
+        this._strokeStyleCSS = value;
+
+        if (isGradientString(value)) {
+            const gradient = parseGradient(value);
+
+            if (gradient) {
+                this.context.strokeStyle = toCanvasGradient(this.context, gradient, this.width, this.height);
+                return;
+            }
+        }
+
         this.context.strokeStyle = value;
     }
 
