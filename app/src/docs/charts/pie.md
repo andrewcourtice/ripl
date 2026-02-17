@@ -7,65 +7,25 @@ A pie chart is useful for illustrating numerical proportions of statistical data
         <div layout="row">
             <button class="ripl-button" @click="addData">Add Data</button>  
             <button class="ripl-button" @click="removeData">Remove Data</button>  
-            <button class="ripl-button" @click="randomize">Randomize</button>  
+            <button class="ripl-button" @click="randomize">Randomize</button>
+            <button class="ripl-button" @click="toggleDonut">Toggle Donut</button>
         </div>
     </template>
 </ripl-example>
 
 <script lang="ts" setup>
-import {
-    ref,
-} from 'vue';
+import { ref } from 'vue';
+import { createPieChart } from '@ripl/charts';
+import { stringUniqueId } from '@ripl/utilities';
+import { useRiplChart } from '../../.vitepress/compositions/example';
 
-import {
-    Context,
-    serialiseRGBA,
-    clamp
-} from '@ripl/core';
+const COUNTRIES = [
+    'Australia', 'Poland', 'South Africa', 'New Zealand',
+    'United States', 'Sweden', 'Great Britain', 'Brazil',
+    'France', 'Switzerland',
+];
 
-import {
-    PieChart,
-    createPieChart
-} from '@ripl/charts';
-
-import {
-    stringUniqueId
-} from '@ripl/utilities';
-
-import {
-    useRiplChart
-} from '../../.vitepress/compositions/example';
-
-const getColor = () => serialiseRGBA(
-    clamp(Math.round(Math.random()) * 255, 80, 230),
-    clamp(Math.round(Math.random()) * 255, 80, 230),
-    clamp(Math.round(Math.random()) * 255, 80, 230),
-    1
-);
-
-let data = Array.from([
-    'Australia',
-    'Poland',
-    'South Africa',
-    'New Zealand',
-    'United States',
-    'Sweden',
-    'Great Britain',
-    'Brazil',
-    'France',
-    'Switzerland'
-], label => getDataItem(label));
-
-const {
-    contextChanged,
-    chart
-} = useRiplChart(context => createPieChart(context, {
-    key: 'id',
-    value: 'value',
-    color: 'color',
-    label: 'label',
-    data,
-}));
+const donut = ref(false);
 
 function getDataValue() {
     return Math.round(Math.random() * 500);
@@ -76,9 +36,20 @@ function getDataItem(label: string = stringUniqueId()) {
         label,
         id: stringUniqueId(),
         value: getDataValue(),
-        color: getColor()
-    }
+    };
 }
+
+let data = COUNTRIES.map(label => getDataItem(label));
+
+const {
+    contextChanged,
+    chart,
+} = useRiplChart(context => createPieChart(context, {
+    key: 'id',
+    value: 'value',
+    label: 'label',
+    data,
+}));
 
 function update() {
     chart.value?.update({ data });
@@ -86,7 +57,6 @@ function update() {
 
 function editData(body: (index: number) => void) {
     const index = Math.floor(Math.random() * data.length);
-
     body(index);
     update();
 }
@@ -102,10 +72,15 @@ function removeData() {
 function randomize() {
     data = data.map(item => ({
         ...item,
-        value: getDataValue()
+        value: getDataValue(),
     }));
 
     update();
+}
+
+function toggleDonut() {
+    donut.value = !donut.value;
+    chart.value?.update({ innerRadius: donut.value ? 0.25 : 0 });
 }
 </script>
 
@@ -113,45 +88,14 @@ function randomize() {
 const chart = createPieChart(context, {
     key: 'id',
     value: 'value',
-    color: 'color',
     label: 'label',
     data: [
-        {
-            id: stringUniqueId(),
-            label: 'Australia',
-            value: 55,
-            color: getColor()
-        },
-        {
-            id: stringUniqueId(),
-            label: 'Poland',
-            value: 21,
-            color: getColor()
-        },
-        {
-            id: stringUniqueId(),
-            label: 'South Africa',
-            value: 185,
-            color: getColor()
-        },
-        {
-            id: stringUniqueId(),
-            label: 'New Zealand',
-            value: 18,
-            color: getColor()
-        },
-        {
-            id: stringUniqueId(),
-            label: 'USA',
-            value: 129,
-            color: getColor()
-        },
-        {
-            id: stringUniqueId(),
-            label: 'Sweden',
-            value: 15,
-            color: getColor()
-        },
-    ]
-})
+        { id: '1', label: 'Australia', value: 55 },
+        { id: '2', label: 'Poland', value: 21 },
+        { id: '3', label: 'South Africa', value: 185 },
+        { id: '4', label: 'New Zealand', value: 18 },
+        { id: '5', label: 'USA', value: 129 },
+        { id: '6', label: 'Sweden', value: 15 },
+    ],
+});
 ```

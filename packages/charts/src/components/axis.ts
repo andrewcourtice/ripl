@@ -36,14 +36,23 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     maxHeight?: number;
     gridLines?: boolean;
     labelDimension: LabelDimension;
+    title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartXAxisAlignment;
+    title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 export interface ChartYAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartYAxisAlignment;
+    title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 const LABEL_DIMENSION_MAP = {
@@ -59,6 +68,9 @@ export class ChartAxis extends ChartComponent {
     public padding: number;
     public tickSize: number;
     public tickCount: number;
+    public title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public formatLabel?: (value: any) => string;
 
     protected group: Group;
 
@@ -112,6 +124,8 @@ export class ChartAxis extends ChartComponent {
         this.tickSize = tickSize;
         this.tickCount = tickCount;
         this.labelDimension = labelDimension;
+        this.title = options.title;
+        this.formatLabel = options.formatLabel;
 
         this.group = createGroup({
             class: 'chart-axis',
@@ -215,7 +229,7 @@ export class ChartXAxis extends ChartAxis {
                 zIndex: 1000,
                 children: [
                     createText({
-                        content: value,
+                        content: this.formatLabel ? this.formatLabel(value) : value,
                         x,
                         y: boundingBox.top + this.padding + this.tickSize + 1,
                         textAlign: 'center',
@@ -250,7 +264,7 @@ export class ChartXAxis extends ChartAxis {
             }
 
             if (label) {
-                label.content = value.toString();
+                label.content = this.formatLabel ? this.formatLabel(value) : value.toString();
                 label.x = x;
                 label.y = boundingBox.top + this.padding + this.tickSize + 1;
             }
@@ -328,7 +342,7 @@ export class ChartYAxis extends ChartAxis {
                 zIndex: 1000,
                 children: [
                     createText({
-                        content: value,
+                        content: this.formatLabel ? this.formatLabel(value) : value,
                         x: boundingBox.right - this.padding - this.tickSize - 1,
                         y,
                         textAlign: 'right',
@@ -361,7 +375,7 @@ export class ChartYAxis extends ChartAxis {
             }
 
             if (label) {
-                label.content = value.toString();
+                label.content = this.formatLabel ? this.formatLabel(value) : value.toString();
                 label.y = y;
             }
         });

@@ -7,6 +7,7 @@ A trend chart is any combination of x/y series such as bar, line or area.
         <div layout="row">
             <button class="ripl-button" @click="addData">Add Data</button>  
             <button class="ripl-button" @click="randomise">Randomise</button>
+            <button class="ripl-button" @click="toggleGrid">Toggle Grid</button>
             <select class="ripl-select" v-model="lineRenderer" @change="updateRenderer">
                 <option value="linear">Linear</option>
                 <option value="spline">Spline</option>
@@ -49,6 +50,7 @@ import {
 
 const dataScale = scaleContinuous([0, 1], [-500, 1200]);
 const lineRenderer = ref('linear');
+const showGrid = ref(true);
 
 let data = Array.from({ length: 15 }, getDataItem);
 
@@ -59,6 +61,8 @@ const {
     data,
     keyBy: 'id',
     labelBy: 'id',
+    showGrid: showGrid.value,
+    showLegend: true,
     series: [
         {
             type: 'bar',
@@ -121,6 +125,11 @@ function randomise() {
     }));
 
     chart.value?.update({ data });
+}
+
+function toggleGrid() {
+    showGrid.value = !showGrid.value;
+    chart.value?.update({ showGrid: showGrid.value });
 }
 
 function updateRenderer() {

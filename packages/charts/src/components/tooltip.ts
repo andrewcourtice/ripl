@@ -15,6 +15,7 @@ import {
 
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
+    formatContent?: (content: string) => string;
 }
 
 export class Tooltip extends ChartComponent {

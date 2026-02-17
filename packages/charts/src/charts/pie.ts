@@ -12,6 +12,11 @@ import {
 } from '../components/tooltip';
 
 import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
     Arc,
     ArcState,
     BaseElementState,
@@ -45,12 +50,15 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     value: keyof TData | ((item: TData) => number);
     label: keyof TData | ((item: TData) => string);
     color?: keyof TData | ((item: TData) => string);
+    innerRadius?: number;
+    showLegend?: boolean;
 }
 
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
+    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
         super(target, options);
@@ -101,7 +109,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const cy = scene.height / 2;
                 const endAngle = startAngle + scale(value);
                 const radius = size * 0.45;
-                const innerRadius = size * 0.25;
+                const innerRadiusOption = this.options.innerRadius;
+                let innerRadius = size * 0.25;
+
+                if (innerRadiusOption !== undefined) {
+                    innerRadius = innerRadiusOption <= 1 ? size * innerRadiusOption : innerRadiusOption;
+                }
 
                 const output = {
                     key,
@@ -172,7 +185,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     this.tooltip.show(centroidX, centroidY, value.toString());
 
                     renderer.transition(segmentArc, {
-                        duration: 500,
+                        duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: color,
@@ -184,7 +197,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     this.tooltip.hide();
 
                     renderer.transition(segmentArc, {
-                        duration: 500,
+                        duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: setColorAlpha(color, 0.55),
@@ -287,18 +300,45 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             scene.add(entries);
 
+            // Render legend
+            if (this.options.showLegend !== false && calculations.length > 0) {
+                const legendItems: LegendItem[] = arrayMap(calculations, calc => ({
+                    id: calc.key,
+                    label: calc.label,
+                    color: calc.color ?? colorGenerator.next().value,
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'bottom',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                const padding = this.getPadding();
+                this.legend.render(padding.left, scene.height - 20, scene.width - padding.left - padding.right);
+            }
+
+            const animDuration = this.getAnimationDuration(1000);
+
             async function transitionEntries() {
                 const elements = entries.flatMap(group => group.children);
 
                 await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
-                    duration: 1000,
+                    duration: animDuration,
                     ease: easeOutQuint,
-                    delay: index * (1000 / length),
+                    delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
                 return renderer.transition(arrayFilter(elements, elementIsText), {
-                    duration: 2000,
+                    duration: animDuration * 2,
                     ease: easeOutQuint,
                     state: {
                         globalAlpha: 1,
@@ -308,7 +348,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             async function transitionUpdates() {
                 return renderer.transition(updates, element => ({
-                    duration: 1000,
+                    duration: animDuration,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                 }));
@@ -316,7 +356,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             async function transitionExits() {
                 return renderer.transition(exits, element => ({
-                    duration: 1000,
+                    duration: animDuration,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                     onComplete: element => element.destroy(),

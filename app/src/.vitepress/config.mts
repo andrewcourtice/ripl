@@ -192,6 +192,22 @@ export default defineConfig({
                     text: 'Charts',
                     items: [
                         {
+                            text: 'Line',
+                            link: '/docs/charts/line',
+                        },
+                        {
+                            text: 'Bar',
+                            link: '/docs/charts/bar',
+                        },
+                        {
+                            text: 'Area',
+                            link: '/docs/charts/area',
+                        },
+                        {
+                            text: 'Trend',
+                            link: '/docs/charts/trend',
+                        },
+                        {
                             text: 'Pie',
                             link: '/docs/charts/pie',
                         },
@@ -204,8 +220,36 @@ export default defineConfig({
                             link: '/docs/charts/scatter',
                         },
                         {
-                            text: 'Trend',
-                            link: '/docs/charts/trend',
+                            text: 'Radar',
+                            link: '/docs/charts/radar',
+                        },
+                        {
+                            text: 'Heatmap',
+                            link: '/docs/charts/heatmap',
+                        },
+                        {
+                            text: 'Treemap',
+                            link: '/docs/charts/treemap',
+                        },
+                        {
+                            text: 'Funnel',
+                            link: '/docs/charts/funnel',
+                        },
+                        {
+                            text: 'Gauge',
+                            link: '/docs/charts/gauge',
+                        },
+                        {
+                            text: 'Sunburst',
+                            link: '/docs/charts/sunburst',
+                        },
+                        {
+                            text: 'Sankey',
+                            link: '/docs/charts/sankey',
+                        },
+                        {
+                            text: 'Chord',
+                            link: '/docs/charts/chord',
                         },
                     ],
                 },

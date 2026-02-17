@@ -164,7 +164,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                 segmentArc.on('mouseenter', () => {
                     renderer.transition(segmentArc, {
-                        duration: 400,
+                        duration: this.getAnimationDuration(400),
                         ease: easeOutQuint,
                         state: {
                             fillStyle: color,
@@ -173,7 +173,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                     segmentArc.once('mouseleave', () => {
                         renderer.transition(segmentArc, {
-                            duration: 400,
+                            duration: this.getAnimationDuration(400),
                             ease: easeOutQuint,
                             state: {
                                 fillStyle: setColorAlpha(color, 0.55),
@@ -270,18 +270,20 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             scene.add(entries);
 
+            const animDuration = this.getAnimationDuration(1000);
+
             async function transitionEntries() {
                 const elements = entries.flatMap(group => group.children);
 
                 await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
-                    duration: 1000,
+                    duration: animDuration,
                     ease: easeOutQuint,
-                    delay: index * (1000 / length),
+                    delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
                 return renderer.transition(arrayFilter(elements, elementIsText), {
-                    duration: 1500,
+                    duration: animDuration * 1.5,
                     ease: easeOutQuint,
                     state: {
                         globalAlpha: 1,
@@ -291,7 +293,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             async function transitionUpdates() {
                 return renderer.transition(updates, element => ({
-                    duration: 800,
+                    duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                 }));
@@ -299,7 +301,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             async function transitionExits() {
                 return renderer.transition(exits, element => ({
-                    duration: 800,
+                    duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                     onComplete: element => element.destroy(),

@@ -1,13 +1,16 @@
 export const COLOURS = {
-    blue: '#3b82f6',
-    emerald: '#10b981',
-    red: '#ef4444',
-    purple: '#a855f7',
-    amber: '#f59e0b',
-    pink: '#ec4899',
-    slate: '#64748b',
-    sky: '#0ea5e9',
-    fuscia: '#d946ef',
+    blue: '#7cacf8',
+    emerald: '#6dd5b1',
+    violet: '#b197fc',
+    amber: '#f7c97e',
+    rose: '#f4a0b9',
+    teal: '#6ec6d6',
+    orange: '#f5b07a',
+    indigo: '#9daaf2',
+    lime: '#b0d98a',
+    fuchsia: '#d9a0e8',
+    cyan: '#7dd3e8',
+    slate: '#a1afc4',
 };
 
 export function* getColorGenerator() {

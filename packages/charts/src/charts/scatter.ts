@@ -232,7 +232,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -244,7 +244,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -276,7 +276,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             // Exit transition - fade out and shrink
             const exitTransitions = arrayMap(bubbleExits, bubble => {
                 return this.renderer.transition(bubble, {
-                    duration: 500,
+                    duration: this.getAnimationDuration(500),
                     ease: easeOutCubic,
                     state: {
                         radius: 0,
@@ -314,7 +314,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -326,7 +326,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -360,7 +360,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -372,7 +372,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -401,8 +401,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
-                duration: 1000,
-                delay: index * (800 / length),
+                duration: this.getAnimationDuration(1000),
+                delay: index * (this.getAnimationDuration(800) / length),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
@@ -413,7 +413,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, element => ({
-                duration: 1000,
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
