@@ -182,7 +182,7 @@ export class Scene extends Group<SceneEventMap> {
     }
 
     private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
-        this.disposals.add(onDOMEvent(this.context.element, event, handler));
+        this.disposals.add(onDOMEvent(this.context.element as unknown as HTMLElement, event, handler));
     }
 
     public destroy(): void {

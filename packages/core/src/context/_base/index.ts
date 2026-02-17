@@ -31,6 +31,11 @@ export type TextAlignment = 'center' | 'end' | 'left' | 'right' | 'start';
 export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' | 'middle' | 'top';
 export type FillRule = 'evenodd' | 'nonzero';
 
+export interface RenderElement {
+    readonly id: string;
+    parent?: RenderElement;
+}
+
 export interface ContextEventMap extends EventMap {
     resize: null;
 }
@@ -181,6 +186,8 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected states: BaseState[];
     protected currentState: BaseState;
     protected renderDepth = 0;
+
+    public currentRenderElement?: RenderElement;
 
     get fillStyle(): string {
         return this.currentState.fillStyle;
@@ -485,6 +492,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     measureText(text: string): TextMetrics {
+        return new TextMetrics();
     }
 
     createPath(id?: string): ContextPath {

@@ -6,6 +6,7 @@ import {
     ContextPath,
     ContextText,
     createFrameBuffer,
+    FillRule,
     getRefContext,
     getThetaPoint,
     TextAlignment,
@@ -15,9 +16,6 @@ import {
 
 import {
     AnyFunction,
-    arrayForEach,
-    arrayJoin,
-    arrayMap,
     GetMutableKeys,
     objectForEach,
     objectMap,
@@ -74,7 +72,8 @@ function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContext
 
 function mapSVGStyles(styles: Partial<Styles>) {
     return objectMap(styles, (key, value) => {
-        return SVG_STYLE_MAP[key]?.[value] ?? value;
+        const mapped = SVG_STYLE_MAP[key];
+        return mapped?.[value as string] ?? value;
     });
 }
 
@@ -203,9 +202,104 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
+interface SVGVNode {
+    id: string;
+    tag: keyof SVGElementTagNameMap;
+    element?: SVGContextElement;
+    children: SVGVNode[];
+}
+
+interface ParentRef {
+    id: string;
+    parent?: ParentRef;
+}
+
+function getAncestorGroupIds(element: ParentRef): string[] {
+    const ids: string[] = [];
+    let current = element.parent;
+
+    while (current?.parent) {
+        ids.unshift(current.id);
+        current = current.parent;
+    }
+
+    return ids;
+}
+
+function ensureGroupPath(root: SVGVNode, groupIds: string[]): SVGVNode {
+    let parent = root;
+
+    for (const groupId of groupIds) {
+        let child = parent.children.find(c => c.id === groupId);
+
+        if (!child) {
+            child = {
+                id: groupId,
+                tag: 'g',
+                children: [],
+            };
+            parent.children.push(child);
+        }
+
+        parent = child;
+    }
+
+    return parent;
+}
+
+function reconcileNode(domParent: SVGElement | SVGSVGElement, vnode: SVGVNode, domCache: Map<string, SVGElement>): void {
+    const desiredIds = vnode.children.map(c => c.id);
+    const existingChildren = new Map<string, SVGElement>();
+
+    for (let i = domParent.children.length - 1; i >= 0; i--) {
+        const child = domParent.children[i] as SVGElement;
+        const childId = child.getAttribute('id');
+
+        if (childId && desiredIds.includes(childId)) {
+            existingChildren.set(childId, child);
+        } else {
+            child.remove();
+            if (childId) {
+                domCache.delete(childId);
+            }
+        }
+    }
+
+    for (let i = 0; i < vnode.children.length; i++) {
+        const childVNode = vnode.children[i];
+        let domChild = existingChildren.get(childVNode.id) || domCache.get(childVNode.id);
+
+        if (!domChild) {
+            const tag = childVNode.element?.definition.tag ?? childVNode.tag;
+            domChild = createSVGElement(tag);
+            domChild.setAttribute('id', childVNode.id);
+            domCache.set(childVNode.id, domChild);
+        }
+
+        if (childVNode.element) {
+            updateSVGElement(domChild, childVNode.element);
+        }
+
+        const currentAtIndex = domParent.children[i] as SVGElement | undefined;
+
+        if (currentAtIndex !== domChild) {
+            if (currentAtIndex) {
+                domParent.insertBefore(domChild, currentAtIndex);
+            } else {
+                domParent.appendChild(domChild);
+            }
+        }
+
+        if (childVNode.children.length > 0) {
+            reconcileNode(domChild, childVNode, domCache);
+        }
+    }
+}
+
 export class SVGContext extends Context<SVGSVGElement> {
 
-    private stack: Set<SVGContextElement>;
+    private vtree: SVGVNode;
+    private domCache: Map<string, SVGElement>;
     private requestFrame: (callback: AnyFunction) => void;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
@@ -220,7 +314,12 @@ export class SVGContext extends Context<SVGSVGElement> {
             ...options,
         });
 
-        this.stack = new Set();
+        this.vtree = {
+            id: '__root__',
+            tag: 'svg',
+            children: [],
+        };
+        this.domCache = new Map();
         this.requestFrame = createFrameBuffer();
         this.init();
     }
@@ -262,36 +361,26 @@ export class SVGContext extends Context<SVGSVGElement> {
         );
     }
 
+    private addToVTree(contextElement: SVGContextElement): void {
+        const renderElement = this.currentRenderElement;
+        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
+        const parent = ensureGroupPath(this.vtree, groupIds);
+
+        parent.children.push({
+            id: contextElement.id,
+            tag: contextElement.definition.tag,
+            element: contextElement,
+            children: [],
+        });
+    }
+
     private render() {
-        const stack = Array.from(this.stack.values());
-        const elements = Array.from(this.element.children) as SVGElement[];
-        const order = arrayMap(stack, element => element.id);
-
-        const {
-            left: entries,
-            inner: updates,
-            right: exits,
-        } = arrayJoin(stack, elements, 'id');
-
-        const newElements = arrayMap(entries, contextElement => {
-            const svgElement = createSVGElement(contextElement.definition.tag);
-            updateSVGElement(svgElement, contextElement);
-            return svgElement;
-        });
-
-        const updatedElements = arrayMap(updates, ([contextElement, svgElement]) => {
-            updateSVGElement(svgElement, contextElement);
-            return svgElement;
-        });
-
-        arrayForEach(exits, element => element.remove());
-
-        const orderedElements = newElements
-            .concat(updatedElements)
-            .sort((ea, eb) => order.indexOf(ea.id) - order.indexOf(eb.id));
-
-        this.element.append(...orderedElements);
-        this.stack.clear();
+        reconcileNode(this.element, this.vtree, this.domCache);
+        this.vtree = {
+            id: '__root__',
+            tag: 'svg',
+            children: [],
+        };
     }
 
     markRenderEnd(): void {
@@ -310,14 +399,14 @@ export class SVGContext extends Context<SVGSVGElement> {
 
     createPath(id?: string): SVGPath {
         const path = new SVGPath(id);
-        this.stack.add(path);
+        this.addToVTree(path);
 
         return path;
     }
 
     createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
-        this.stack.add(text);
+        this.addToVTree(text);
 
         return text;
     }
@@ -356,8 +445,8 @@ export class SVGContext extends Context<SVGSVGElement> {
         context.restore();
 
         return new Proxy(result, {
-            get: (target, prop) => {
-                const value = target[prop];
+            get: (target, prop: string) => {
+                const value = target[prop as keyof TextMetrics];
 
                 return typeIsNumber(value)
                     ? this.scaleDPR(value)

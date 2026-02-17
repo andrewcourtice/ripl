@@ -84,7 +84,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
     private context: CanvasRenderingContext2D;
 
     get fillStyle(): string {
-        return this.context.fillStyle;
+        return this.context.fillStyle as string;
     }
 
     set fillStyle(value) {
@@ -136,7 +136,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
     }
 
     set globalCompositeOperation(value) {
-        this.context.globalCompositeOperation = value;
+        this.context.globalCompositeOperation = value as GlobalCompositeOperation;
     }
 
     get lineCap(): LineCap {
@@ -220,7 +220,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
     }
 
     get strokeStyle(): string {
-        return this.context.strokeStyle;
+        return this.context.strokeStyle as string;
     }
 
     set strokeStyle(value) {
@@ -321,8 +321,8 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
     measureText(text: string): TextMetrics {
         return new Proxy(this.context.measureText(text), {
-            get: (target, prop) => {
-                const value = target[prop];
+            get: (target, prop: string) => {
+                const value = target[prop as keyof TextMetrics];
 
                 return typeIsNumber(value)
                     ? this.scaleDPR(value)

@@ -118,7 +118,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
             return !typeIsNil(key)
                 && !typeIsNil(value)
                 && key in element
-                && serialiseAttribute(element[key]) === value;
+                && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
         });
 
         return typeMatch
@@ -187,7 +187,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
                 item.parent.remove(item);
             }
 
-            item.parent = this;
+            item.parent = this as unknown as Group;
             this.#elements.add(item);
         });
 

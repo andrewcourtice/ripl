@@ -117,10 +117,16 @@ function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKe
 }
 
 function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementInterpolationKeyFrame<TValue>[], interpolator: InterpolatorFactory<TValue>): Interpolator<TValue | undefined> {
-    let keyframes = [{
+    let keyframes = ([{
         offset: 0,
         value: currentValue,
-    }].concat(frames);
+    }] as { offset: number;
+        value: TValue; }[]).concat(
+        frames.map(frame => ({
+            offset: frame.offset ?? 0,
+            value: frame.value,
+        }))
+    );
 
     keyframes = frames.map(({ offset, value }, index) => ({
         value,
@@ -380,14 +386,14 @@ export class Element<
     public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions) {
         const listener = super.on(event, handler, options);
 
-        if (!TRACKED_EVENTS.includes(event)) {
+        if (!TRACKED_EVENTS.includes(event as keyof ElementEventMap)) {
             return listener;
         }
 
-        this.emit('track', event);
+        this.emit('track' as keyof TEventMap, event as TEventMap[keyof TEventMap]);
 
         return {
-            dispose: () => (this.emit('untrack', event), listener.dispose()),
+            dispose: () => (this.emit('untrack' as keyof TEventMap, event as TEventMap[keyof TEventMap]), listener.dispose()),
         };
     }
 
@@ -426,27 +432,27 @@ export class Element<
                 return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);
             }
 
-            return (output[key] = interpolator(currentValue, value), output);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        }, {} as Record<keyof TState, Interpolator<any>>);
+            return (output[key] = interpolator(currentValue, value as TState[keyof TState]), output);
+        }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
         return time => objectForEach(mappedIntpls, (key, value) => {
-            this.state[key] = value(time);
+            this.state[key] = value(time) as TState[keyof TState];
         });
     }
 
     public render(context: Context, callback?: AnyFunction) {
         this.context = context;
+        context.currentRenderElement = this;
 
         context.markRenderStart();
         context.save();
 
         try {
             objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
-                const value = this[key];
+                const value = (this as unknown as Record<keyof BaseElementState, unknown>)[key];
 
                 if (!this.abstract && !typeIsNil(value)) {
-                    operation(context, value);
+                    (operation as (ctx: Context, val: unknown) => void)(context, value);
                 }
             });
 
@@ -458,7 +464,7 @@ export class Element<
     }
 
     public destroy() {
-        this.parent?.remove(this);
+        this.parent?.remove(this as unknown as Element);
         super.destroy();
     }
 }
