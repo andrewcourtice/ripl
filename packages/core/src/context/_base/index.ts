@@ -80,9 +80,32 @@ export interface BaseState {
     zIndex: number;
 }
 
+export type MeasureTextOptions = {
+    context?: CanvasRenderingContext2D;
+    font?: CanvasRenderingContext2D['font'];
+};
+
 export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
 });
+
+export const scaleDPR = scaleContinuous([0, 1], [0, window.devicePixelRatio]);
+
+export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
+    const {
+        context = getRefContext(),
+        font,
+    } = options ?? {};
+
+    context.save();
+    context.font = font ?? context.font;
+
+    const result = context.measureText(value);
+
+    context.restore();
+
+    return result;
+}
 
 export class ContextPath implements ContextElement {
 
@@ -387,9 +410,9 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
+        this.scaleDPR = scaleDPR;
         this.scaleX = scaleContinuous([0, this.width], [0, this.width]);
         this.scaleY = scaleContinuous([0, this.height], [0, this.height]);
-        this.scaleDPR = scaleContinuous([0, 1], [0, window.devicePixelRatio]);
     }
 
     protected init() {
@@ -491,7 +514,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
     }
 
-    measureText(text: string): TextMetrics {
+    measureText(text: string, font?: string): TextMetrics {
         return new TextMetrics();
     }
 

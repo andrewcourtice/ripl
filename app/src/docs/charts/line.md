@@ -36,7 +36,7 @@ function generateData(count = 8) {
     return MONTHS.slice(0, count).map(month => ({
         month,
         revenue: Math.round(Math.random() * 800 + 200),
-        profit: Math.round(Math.random() * 400 + 100),
+        profit: Math.round(Math.random() * 800 - 400),
         expenses: Math.round(Math.random() * 300 + 150),
     }));
 }

@@ -196,7 +196,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             if (this.isStacked) {
                 x = categoryScale(key);
                 width = categoryScale.bandwidth;
-                y = valueScale(max(0, value) + stackOffset);
+                y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
                 height = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
             } else {
                 x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
@@ -223,12 +223,19 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
         const getStackOffset = (srs: BarChartSeriesOptions<TData>, item: TData): number => {
             if (!this.isStacked) return 0;
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const getSrsValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
             return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(prev.valueBy) ? prev.valueBy : (i: any) => i[prev.valueBy] as number;
-                return sum + Math.abs(getValue(item));
+                const prevValue = getValue(item);
+
+                if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
+                if (currentValue < 0 && prevValue < 0) return sum + prevValue;
+                return sum;
             }, 0);
         };
 
@@ -421,13 +428,13 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             if (this.isStacked) {
                 y = categoryScale(key);
                 height = categoryScale.bandwidth;
-                x = valueScale(stackOffset);
+                x = valueScale(value >= 0 ? stackOffset : value + stackOffset);
                 width = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
             } else {
                 y = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
                 height = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
-                x = baseline;
-                width = valueScale(value) - baseline;
+                x = Math.min(baseline, valueScale(value));
+                width = Math.abs(valueScale(value) - baseline);
             }
 
             return {
@@ -437,7 +444,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     fillStyle: color,
                     x,
                     y,
-                    width: Math.abs(width),
+                    width,
                     height,
                     borderRadius,
                 } as RectState,
@@ -447,12 +454,19 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
         const getStackOffset = (srs: BarChartSeriesOptions<TData>, item: TData): number => {
             if (!this.isStacked) return 0;
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const getSrsValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
             return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(prev.valueBy) ? prev.valueBy : (i: any) => i[prev.valueBy] as number;
-                return sum + Math.abs(getValue(item));
+                const prevValue = getValue(item);
+
+                if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
+                if (currentValue < 0 && prevValue < 0) return sum + prevValue;
+                return sum;
             }, 0);
         };
 
@@ -627,23 +641,65 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
             // For stacked mode, compute stacked extents
             if (this.isStacked) {
-                const stackedMax = arrayReduce(data, (currentMax, item) => {
-                    const total = arrayReduce(series, (sum, srs) => {
+                let stackedMax = 0;
+                let stackedMin = 0;
+
+                arrayForEach(data, item => {
+                    let positiveTotal = 0;
+                    let negativeTotal = 0;
+
+                    arrayForEach(series, srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
-                        return sum + Math.abs(getValue(item));
-                    }, 0);
-                    return Math.max(currentMax, total);
-                }, 0);
+                        const value = getValue(item);
 
-                dataExtent = [0, stackedMax];
+                        if (value >= 0) {
+                            positiveTotal += value;
+                        } else {
+                            negativeTotal += value;
+                        }
+                    });
+
+                    stackedMax = Math.max(stackedMax, positiveTotal);
+                    stackedMin = Math.min(stackedMin, negativeTotal);
+                });
+
+                dataExtent = [stackedMin, stackedMax];
             }
 
             const padding = this.getPadding();
 
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && series.length > 1) {
+                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                    id: srs.id,
+                    label: srs.label,
+                    color: this.getSeriesColor(srs.id),
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const chartTop = padding.top + 20 + legendHeight;
+
             if (this.isHorizontal) {
                 // Horizontal: categories on Y, values on X
-                const categoryScale = scaleBand(keys, [padding.top + 20, scene.height - padding.bottom], {
+                const categoryScale = scaleBand(keys, [chartTop, scene.height - padding.bottom], {
                     outerPadding: 0.15,
                     innerPadding: 0.2,
                 });
@@ -667,7 +723,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 } as unknown as typeof this.yAxis.scale;
 
                 this.yAxis.bounds = new Box(
-                    padding.top + 20,
+                    chartTop,
                     padding.left,
                     scene.height - padding.bottom,
                     scene.width - padding.right
@@ -676,7 +732,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 // X axis shows values
                 this.xAxis.scale = valueScale;
                 this.xAxis.bounds = new Box(
-                    padding.top + 20,
+                    chartTop,
                     padding.left + 60,
                     scene.height - padding.bottom,
                     scene.width - padding.right
@@ -690,14 +746,14 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         xTickPositions,
                         [],
                         padding.left + 60,
-                        padding.top + 20,
+                        chartTop,
                         scene.width - padding.right - padding.left - 60,
-                        scene.height - padding.bottom - padding.top - 20
+                        scene.height - padding.bottom - chartTop
                     );
                 }
 
                 // Render legend
-                if (this.options.showLegend !== false && series.length > 1) {
+                if (this.legend && legendHeight > 0) {
                     this.renderLegend(padding.left + 60, 0, scene.width - padding.left - 60 - padding.right);
                 }
 
@@ -708,13 +764,13 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 ]);
             } else {
                 // Vertical: categories on X, values on Y
-                const valueScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, padding.top + 20], {
+                const valueScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
                     padToTicks: 10,
                 });
 
                 this.yAxis.scale = valueScale;
                 this.yAxis.bounds = new Box(
-                    padding.top + 20,
+                    chartTop,
                     padding.left,
                     scene.height - padding.bottom,
                     scene.width - padding.right
@@ -742,7 +798,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 } as unknown as typeof this.xAxis.scale;
 
                 this.xAxis.bounds = new Box(
-                    padding.top + 20,
+                    chartTop,
                     yAxisBoundingBox.right,
                     scene.height - padding.bottom,
                     scene.width - padding.right
@@ -751,7 +807,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
                 // Recalculate value scale with correct bounds
-                const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, padding.top + 20], {
+                const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
                     padToTicks: 10,
                 });
 
@@ -766,14 +822,14 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         [],
                         yTickPositions,
                         yAxisBoundingBox.right,
-                        padding.top + 20,
+                        chartTop,
                         scene.width - padding.right - yAxisBoundingBox.right,
-                        xAxisBoundingBox.top - padding.top - 20
+                        xAxisBoundingBox.top - chartTop
                     );
                 }
 
                 // Render legend
-                if (this.options.showLegend !== false && series.length > 1) {
+                if (this.legend && legendHeight > 0) {
                     this.renderLegend(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
                 }
 
@@ -787,26 +843,9 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
     }
 
     private renderLegend(x: number, y: number, width: number) {
-        const legendItems: LegendItem[] = arrayMap(this.options.series, srs => ({
-            id: srs.id,
-            label: srs.label,
-            color: this.getSeriesColor(srs.id),
-            active: true,
-        }));
-
-        if (!this.legend) {
-            this.legend = new Legend({
-                scene: this.scene,
-                renderer: this.renderer,
-                items: legendItems,
-                position: 'top',
-                onToggle: () => this.render(),
-            });
-        } else {
-            this.legend.update(legendItems);
+        if (this.legend) {
+            this.legend.render(x, y, width);
         }
-
-        this.legend.render(x, y, width);
     }
 
 }

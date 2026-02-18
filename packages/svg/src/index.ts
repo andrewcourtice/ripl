@@ -10,6 +10,8 @@ import {
     getRefContext,
     getThetaPoint,
     isGradientString,
+    measureText,
+    normaliseBorderRadius,
     parseColor,
     parseGradient,
     serialiseRGBA,
@@ -246,21 +248,28 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.lineTo(x, y);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
-        return this.rect(x, y, width, height);
-        // const [
-        //     borderTopLeft,
-        //     borderTopRight,
-        //     borderBottomRight,
-        //     borderBottomLeft,
-        // ] = normaliseBorderRadius(radii ?? 0);
+        if (!radii) {
+            return this.rect(x, y, width, height);
+        }
 
-        // this.moveTo(x + borderTopLeft, y);
-        // this.lineTo(x - borderTopRight, y);
-        // this.arcTo(x + width - borderTopRight, y, x + width, y + borderTopRight, borderTopRight);
-        // this.lineTo(x + width, y + height - borderBottomRight);
-        // this.arcTo()
+        const [
+            borderTopLeft,
+            borderTopRight,
+            borderBottomRight,
+            borderBottomLeft,
+        ] = normaliseBorderRadius(radii);
+
+        this.moveTo(x + borderTopLeft, y);
+        this.lineTo(x + width - borderTopRight, y);
+        this.appendElementData(`A ${borderTopRight} ${borderTopRight} 0 0 1 ${x + width},${y + borderTopRight}`);
+        this.lineTo(x + width, y + height - borderBottomRight);
+        this.appendElementData(`A ${borderBottomRight} ${borderBottomRight} 0 0 1 ${x + width - borderBottomRight},${y + height}`);
+        this.lineTo(x + borderBottomLeft, y + height);
+        this.appendElementData(`A ${borderBottomLeft} ${borderBottomLeft} 0 0 1 ${x},${y + height - borderBottomLeft}`);
+        this.lineTo(x, y + borderTopLeft);
+        this.appendElementData(`A ${borderTopLeft} ${borderTopLeft} 0 0 1 ${x + borderTopLeft},${y}`);
+        this.closePath();
     }
 
 }
@@ -583,24 +592,9 @@ export class SVGContext extends Context<SVGSVGElement> {
         });
     }
 
-    measureText(text: string): TextMetrics {
-        const context = getRefContext();
-
-        context.save();
-        context.font = this.font;
-
-        const result = context.measureText(text);
-
-        context.restore();
-
-        return new Proxy(result, {
-            get: (target, prop: string) => {
-                const value = target[prop as keyof TextMetrics];
-
-                return typeIsNumber(value)
-                    ? this.scaleDPR(value)
-                    : value;
-            },
+    measureText(text: string, font?: string): TextMetrics {
+        return measureText(text, {
+            font: font ?? this.currentState.font,
         });
     }
 

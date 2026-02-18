@@ -172,6 +172,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
     private arcGroups: Group[] = [];
     private ribbonGroups: Group[] = [];
+    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
@@ -194,7 +195,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 padAngle = 0.04,
             } = this.options;
 
-            const colorGenerator = getColorGenerator();
+            const colorGenerator = this.colorGenerator;
             const padding = this.getPadding();
             const cx = scene.width / 2;
             const cy = scene.height / 2;

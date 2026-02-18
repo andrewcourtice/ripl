@@ -1,4 +1,5 @@
 import {
+    Box,
     createGroup,
     createRect,
     createText,
@@ -36,7 +37,7 @@ const SWATCH_RADIUS = 2;
 const ITEM_GAP = 16;
 const LABEL_GAP = 6;
 const FONT_SIZE = 11;
-const PADDING = 8;
+const PADDING = 16;
 
 export class Legend extends ChartComponent {
 
@@ -53,20 +54,42 @@ export class Legend extends ChartComponent {
         this.onToggle = options.onToggle;
     }
 
-    public getHeight(): number {
-        if (this.position === 'left' || this.position === 'right') {
-            return this.items.length * (SWATCH_SIZE + ITEM_GAP) + PADDING * 2;
+    public getBoundingBox(availableWidth?: number): Box {
+        const isVertical = this.position === 'left' || this.position === 'right';
+
+        if (isVertical) {
+            const height = this.items.length * (SWATCH_SIZE + ITEM_GAP) - ITEM_GAP + PADDING * 2;
+            return new Box(0, 0, height, 120);
         }
 
-        return SWATCH_SIZE + PADDING * 2 + FONT_SIZE;
+        const rows = this.getRowCount(availableWidth);
+        const rowHeight = SWATCH_SIZE + ITEM_GAP;
+        const height = rows * rowHeight - ITEM_GAP + PADDING * 2;
+
+        return new Box(0, 0, height, 0);
     }
 
-    public getWidth(): number {
-        if (this.position === 'left' || this.position === 'right') {
-            return 120;
+    private getRowCount(width?: number): number {
+        if (!width) {
+            return 1;
         }
 
-        return 0;
+        let rows = 1;
+        let offsetX = 0;
+
+        arrayForEach(this.items, (item) => {
+            const labelWidth = this.context.measureText(item.label, `${FONT_SIZE}px sans-serif`).width;
+            const itemWidth = SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
+
+            if (offsetX + itemWidth > width && offsetX > 0) {
+                rows++;
+                offsetX = 0;
+            }
+
+            offsetX += itemWidth;
+        });
+
+        return rows;
     }
 
     public update(items: LegendItem[]) {
@@ -92,6 +115,16 @@ export class Legend extends ChartComponent {
 
         arrayForEach(this.items, (item) => {
             const isActive = item.active !== false;
+
+            if (isHorizontal) {
+                const labelWidth = this.context.measureText(item.label, `${FONT_SIZE}px sans-serif`).width;
+                const itemWidth = SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
+
+                if (offsetX + itemWidth > x + width && offsetX > x) {
+                    offsetX = x;
+                    offsetY += SWATCH_SIZE + ITEM_GAP;
+                }
+            }
 
             const swatch = createRect({
                 id: `legend-swatch-${item.id}`,
@@ -129,14 +162,8 @@ export class Legend extends ChartComponent {
             this.group!.add([swatch, label]);
 
             if (isHorizontal) {
-                this.context.font = `${FONT_SIZE}px sans-serif`;
-                const labelWidth = this.context.measureText(item.label).width;
+                const labelWidth = this.context.measureText(item.label, `${FONT_SIZE}px sans-serif`).width;
                 offsetX += SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
-
-                if (offsetX > x + width) {
-                    offsetX = x;
-                    offsetY += SWATCH_SIZE + ITEM_GAP;
-                }
             } else {
                 offsetY += SWATCH_SIZE + ITEM_GAP;
             }

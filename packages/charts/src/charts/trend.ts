@@ -651,13 +651,41 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const padding = this.getPadding();
 
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, padding.top], {
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && series.length > 1) {
+                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                    id: srs.id,
+                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    color: this.getSeriesColor(srs.id),
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const chartTop = padding.top + legendHeight;
+
+            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
-                padding.top,
+                chartTop,
                 padding.left,
                 this.scene.height - padding.bottom,
                 this.scene.width - padding.right
@@ -679,7 +707,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             this.xAxis.scale = this.xScalePoint;
             this.xAxis.bounds = new Box(
-                padding.top,
+                chartTop,
                 yAxisBoundingBox.right,
                 this.scene.height - padding.bottom,
                 this.scene.width - padding.right
@@ -687,7 +715,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, padding.top], {
+            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
@@ -703,33 +731,14 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     [],
                     yTickPositions,
                     yAxisBoundingBox.right,
-                    padding.top,
+                    chartTop,
                     scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - padding.top
+                    xAxisBoundingBox.top - chartTop
                 );
             }
 
             // Render legend
-            if (this.options.showLegend !== false && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
-                    id: srs.id,
-                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
-                    color: this.getSeriesColor(srs.id),
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
+            if (this.legend && legendHeight > 0) {
                 this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
             }
 

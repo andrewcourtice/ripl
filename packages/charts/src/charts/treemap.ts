@@ -121,6 +121,7 @@ function layoutTreemap(
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>> {
 
     private groups: Group[] = [];
+    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
@@ -146,7 +147,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 borderRadius = 4,
             } = this.options;
 
-            const colorGenerator = getColorGenerator();
+            const colorGenerator = this.colorGenerator;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;

@@ -374,30 +374,10 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             this.resolveSeriesColors();
 
             const padding = this.getPadding();
-            const cx = scene.width / 2;
-            const cy = scene.height / 2;
-            const radius = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
-            ) / 2 - 30;
 
-            // Compute max value from data if not provided
-            let computedMax = maxValue ?? 0;
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
 
-            if (!maxValue) {
-                arrayForEach(series, srs => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (item: any) => item[srs.valueBy] as number;
-
-                    arrayForEach(this.options.data, item => {
-                        computedMax = Math.max(computedMax, getValue(item));
-                    });
-                });
-            }
-
-            this.drawGrid(cx, cy, radius, axes, levels);
-
-            // Render legend
             if (this.options.showLegend !== false && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
@@ -418,6 +398,34 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                     this.legend.update(legendItems);
                 }
 
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const cx = scene.width / 2;
+            const cy = (scene.height + legendHeight) / 2;
+            const radius = Math.min(
+                scene.width - padding.left - padding.right,
+                scene.height - padding.top - padding.bottom - legendHeight
+            ) / 2 - 30;
+
+            // Compute max value from data if not provided
+            let computedMax = maxValue ?? 0;
+
+            if (!maxValue) {
+                arrayForEach(series, srs => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (item: any) => item[srs.valueBy] as number;
+
+                    arrayForEach(this.options.data, item => {
+                        computedMax = Math.max(computedMax, getValue(item));
+                    });
+                });
+            }
+
+            this.drawGrid(cx, cy, radius, axes, levels);
+
+            // Render legend
+            if (this.legend && legendHeight > 0) {
                 this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
             }
 

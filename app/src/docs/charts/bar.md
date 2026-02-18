@@ -32,7 +32,7 @@ function generateItem(month: string) {
         month,
         sales: Math.round(Math.random() * 500 + 100),
         costs: Math.round(Math.random() * 300 + 50),
-        profit: Math.round(Math.random() * 200 + 50),
+        profit: Math.round(Math.random() * 400 - 200),
         returns: Math.round(Math.random() * 100 + 10),
     };
 }

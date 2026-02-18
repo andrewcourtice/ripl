@@ -65,7 +65,8 @@ function flattenNodes(
     startAngle: number,
     endAngle: number,
     colorGenerator: ReturnType<typeof getColorGenerator>,
-    parentColor?: string
+    parentColor?: string,
+    resolvedColors?: Map<string, string>
 ): FlattenedArc[] {
     const total = nodes.reduce((sum, node) => sum + node.value, 0);
 
@@ -80,7 +81,7 @@ function flattenNodes(
 
     arrayForEach(nodes, node => {
         const nodeEndAngle = currentAngle + (scale(node.value) - scale(0));
-        const color = node.color ?? parentColor ?? colorGenerator.next().value!;
+        const color = resolvedColors?.get(node.id) ?? node.color ?? parentColor ?? colorGenerator.next().value!;
 
         result.push({
             id: node.id,
@@ -112,6 +113,7 @@ function flattenNodes(
 export class SunburstChart extends Chart<SunburstChartOptions> {
 
     private groups: Group[] = [];
+    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
     private legend?: Legend;
 
@@ -130,17 +132,52 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
         return super.render(async (scene, renderer) => {
             const { data } = this.options;
 
-            const colorGenerator = getColorGenerator();
+            const colorGenerator = this.colorGenerator;
             const padding = this.getPadding();
+
+            // Pre-resolve top-level node colors so legend and arcs stay in sync
+            const resolvedColors = new Map<string, string>();
+
+            arrayForEach(data, node => {
+                resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
+            });
+
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && data.length > 0) {
+                const legendItems: LegendItem[] = arrayMap(data, node => ({
+                    id: node.id,
+                    label: node.label,
+                    color: resolvedColors.get(node.id)!,
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'bottom',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                const legendWidth = scene.width - padding.left - padding.right;
+                legendHeight = this.legend.getBoundingBox(legendWidth).height;
+            }
+
             const cx = scene.width / 2;
-            const cy = scene.height / 2;
+            const cy = (scene.height - legendHeight) / 2;
             const size = Math.min(
                 scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
+                scene.height - padding.top - padding.bottom - legendHeight
             );
 
             const offset = TAU / 4;
-            const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator);
+            const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);
 
             // Find max depth
             let maxDepth = 0;
@@ -243,29 +280,10 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 ...updateGroups,
             ];
 
-            // Render legend for top-level nodes
-            if (this.options.showLegend !== false && data.length > 0) {
-                const topLevelArcs = arcs.filter(a => a.depth === 0);
-                const legendItems: LegendItem[] = arrayMap(topLevelArcs, arc => ({
-                    id: arc.id,
-                    label: arc.label,
-                    color: arc.color,
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'bottom',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
-                this.legend.render(padding.left, scene.height - 20, scene.width - padding.left - padding.right);
+            // Render legend
+            if (this.legend && legendHeight > 0) {
+                const legendWidth = scene.width - padding.left - padding.right;
+                this.legend.render(padding.left, scene.height - legendHeight, legendWidth);
             }
 
             // Animate entries

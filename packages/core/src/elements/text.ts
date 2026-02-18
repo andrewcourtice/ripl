@@ -1,5 +1,6 @@
-import type {
-    Context,
+import {
+    type Context,
+    measureText,
 } from '../context';
 
 import {
@@ -49,16 +50,18 @@ export class Text extends Element<TextState> {
     }
 
     public getBoundingBox() {
-        if (!this.context) {
-            return super.getBoundingBox();
-        }
+        const text = this.content.toString();
 
         const {
             actualBoundingBoxAscent,
             actualBoundingBoxLeft,
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
-        } = this.context.measureText(this.content.toString());
+        } = this.context
+            ? this.context.measureText(text, this.font)
+            : measureText(text, {
+                font: this.font,
+            });
 
         return new Box(
             this.y - actualBoundingBoxAscent,

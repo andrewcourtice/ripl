@@ -13,7 +13,7 @@ export const COLOURS = {
     slate: '#a1afc4',
 };
 
-export function* getColorGenerator() {
+export function* getColorGenerator(): Generator<string, string> {
     const colors = Object.values(COLOURS);
     let index = 0;
 
@@ -21,6 +21,4 @@ export function* getColorGenerator() {
         yield colors[index];
         index = (index + 1) % colors.length;
     }
-
-    return COLOURS.slate;
 }

@@ -57,6 +57,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
+    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
     private legend?: Legend;
 
@@ -81,8 +82,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 color,
             } = this.options;
 
-            const colorGenerator = getColorGenerator();
-            const size = Math.min(scene.width, scene.height);
+            const colorGenerator = this.colorGenerator;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -92,6 +92,36 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
+
+            // Compute legend bounds early to reserve space
+            const padding = this.getPadding();
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && data.length > 0) {
+                const legendItems: LegendItem[] = arrayMap(data, item => ({
+                    id: getKey(item),
+                    label: getLabel(item),
+                    color: getColor(item) ?? colorGenerator.next().value,
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'bottom',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                const legendWidth = scene.width - padding.left - padding.right;
+                legendHeight = this.legend.getBoundingBox(legendWidth).height;
+            }
+
+            const size = Math.min(scene.width, scene.height - legendHeight);
 
             const total = getTotal(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
@@ -106,7 +136,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const color = getColor(item);
                 const label = getLabel(item);
                 const cx = scene.width / 2;
-                const cy = scene.height / 2;
+                const cy = (scene.height - legendHeight) / 2;
                 const endAngle = startAngle + scale(value);
                 const radius = size * 0.45;
                 const innerRadiusOption = this.options.innerRadius;
@@ -234,7 +264,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             const updates = arrayMap(inner, ([item, group]) => {
                 const {
-                    color,
                     cx,
                     cy,
                     radius,
@@ -247,6 +276,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
+                const resolvedColor = item.color ?? arc.strokeStyle;
+
                 const arcData = {
                     cx,
                     cy,
@@ -255,8 +286,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     startAngle,
                     endAngle,
                     padAngle,
-                    strokeStyle: color,
-                    fillStyle: setColorAlpha(color, 0.55),
+                    strokeStyle: resolvedColor,
+                    fillStyle: setColorAlpha(resolvedColor, 0.55),
                 } as Partial<ArcState>;
 
                 const [
@@ -301,28 +332,9 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             scene.add(entries);
 
             // Render legend
-            if (this.options.showLegend !== false && calculations.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(calculations, calc => ({
-                    id: calc.key,
-                    label: calc.label,
-                    color: calc.color ?? colorGenerator.next().value,
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'bottom',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
-                const padding = this.getPadding();
-                this.legend.render(padding.left, scene.height - 20, scene.width - padding.left - padding.right);
+            if (this.legend && legendHeight > 0) {
+                const legendWidth = scene.width - padding.left - padding.right;
+                this.legend.render(padding.left, scene.height - legendHeight, legendWidth);
             }
 
             const animDuration = this.getAnimationDuration(1000);

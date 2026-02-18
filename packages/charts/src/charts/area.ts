@@ -484,22 +484,28 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             let dataExtent: number[];
 
             if (stacked) {
-                // For stacked, compute cumulative max
+                // For stacked, compute cumulative min and max
                 let stackedMax = 0;
+                let stackedMin = 0;
 
                 arrayForEach(data, item => {
-                    let total = 0;
+                    let cumulative = 0;
+                    let cumulativeMax = 0;
+                    let cumulativeMin = 0;
 
                     arrayForEach(series, srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
-                        total += getValue(item);
+                        cumulative += getValue(item);
+                        cumulativeMax = Math.max(cumulativeMax, cumulative);
+                        cumulativeMin = Math.min(cumulativeMin, cumulative);
                     });
 
-                    stackedMax = Math.max(stackedMax, total);
+                    stackedMax = Math.max(stackedMax, cumulativeMax);
+                    stackedMin = Math.min(stackedMin, cumulativeMin);
                 });
 
-                dataExtent = [0, stackedMax];
+                dataExtent = [stackedMin, stackedMax];
             } else {
                 const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
                     const getValue = typeIsFunction(valueBy)
@@ -515,13 +521,41 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
             const padding = this.getPadding();
 
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, padding.top], {
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && series.length > 1) {
+                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                    id: srs.id,
+                    label: srs.label,
+                    color: this.getSeriesColor(srs.id),
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const chartTop = padding.top + legendHeight;
+
+            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
-                padding.top,
+                chartTop,
                 padding.left,
                 scene.height - padding.bottom,
                 scene.width - padding.right
@@ -552,7 +586,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
             this.xAxis.scale = this.xScale;
             this.xAxis.bounds = new Box(
-                padding.top,
+                chartTop,
                 yAxisBoundingBox.right,
                 scene.height - padding.bottom,
                 scene.width - padding.right
@@ -560,7 +594,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, padding.top], {
+            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
@@ -578,9 +612,9 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                     [],
                     yTickPositions,
                     yAxisBoundingBox.right,
-                    padding.top,
+                    chartTop,
                     scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - padding.top
+                    xAxisBoundingBox.top - chartTop
                 );
             }
 
@@ -588,9 +622,9 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             if (this.crosshair) {
                 this.crosshair.setup(
                     yAxisBoundingBox.right,
-                    padding.top,
+                    chartTop,
                     scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - padding.top
+                    xAxisBoundingBox.top - chartTop
                 );
 
                 this.scene.on('mousemove', (event) => {
@@ -604,26 +638,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             }
 
             // Render legend
-            if (this.options.showLegend !== false && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
-                    id: srs.id,
-                    label: srs.label,
-                    color: this.getSeriesColor(srs.id),
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
+            if (this.legend && legendHeight > 0) {
                 this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
             }
 

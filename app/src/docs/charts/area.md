@@ -24,7 +24,7 @@ function generateData() {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(month => ({
         month,
         desktop: Math.round(Math.random() * 600 + 200),
-        mobile: Math.round(Math.random() * 400 + 100),
+        mobile: Math.round(Math.random() * 600 - 200),
     }));
 }
 
