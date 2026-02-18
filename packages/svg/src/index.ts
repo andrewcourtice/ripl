@@ -7,7 +7,6 @@ import {
     ContextText,
     createFrameBuffer,
     FillRule,
-    getRefContext,
     getThetaPoint,
     isGradientString,
     measureText,
@@ -27,7 +26,6 @@ import {
     objectForEach,
     objectMap,
     stringUniqueId,
-    typeIsNumber,
 } from '@ripl/utilities';
 
 import {

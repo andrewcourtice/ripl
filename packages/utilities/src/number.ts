@@ -14,7 +14,7 @@ export function numberNice(value: number, round: boolean = false) {
     const factor = 10 ** exponent;
     const fraction = value / factor;
 
-    let niceFraction = 10;
+    let niceFraction: number;
 
     if (round) {
         if (fraction < 1.5) niceFraction = 1;

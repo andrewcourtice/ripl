@@ -34,7 +34,6 @@ import {
 
 import {
     arrayForEach,
-    typeIsNumber,
 } from '@ripl/utilities';
 
 import type {

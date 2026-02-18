@@ -31,9 +31,7 @@ export function onDOMEvent<TElement extends EventTarget, TEvent extends string &
 }
 
 export function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable {
-    let disposer = {
-        dispose: () => {},
-    } as Disposable;
+    let disposer: Disposable;
 
     if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(entries => {
