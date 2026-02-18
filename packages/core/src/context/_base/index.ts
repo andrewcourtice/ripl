@@ -18,6 +18,7 @@ import {
 import {
     arrayForEach,
     functionCache,
+    hasWindow,
     onDOMElementResize,
     stringUniqueId,
     typeIsString,
@@ -89,7 +90,7 @@ export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
 });
 
-export const scaleDPR = scaleContinuous([0, 1], [0, window.devicePixelRatio]);
+export const scaleDPR = scaleContinuous([0, 1], [0, hasWindow ? window.devicePixelRatio : 1]);
 
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     const {
