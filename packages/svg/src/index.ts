@@ -30,6 +30,14 @@ import {
     typeIsNumber,
 } from '@ripl/utilities';
 
+import {
+    ensureGroupPath,
+    getAncestorGroupIds,
+    reconcileNode,
+    ReconcilerOptions,
+    VNode,
+} from '@ripl/vdom';
+
 import type {
     Gradient,
     GradientColorStop,
@@ -302,109 +310,13 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
-interface SVGVNode {
-    id: string;
-    tag: keyof SVGElementTagNameMap;
-    element?: SVGContextElement;
-    children: SVGVNode[];
-}
-
-interface ParentRef {
-    id: string;
-    parent?: ParentRef;
-}
-
-function getAncestorGroupIds(element: ParentRef): string[] {
-    const ids: string[] = [];
-    let current = element.parent;
-
-    while (current?.parent) {
-        ids.unshift(current.id);
-        current = current.parent;
-    }
-
-    return ids;
-}
-
-function ensureGroupPath(root: SVGVNode, groupIds: string[]): SVGVNode {
-    let parent = root;
-
-    for (const groupId of groupIds) {
-        let child = parent.children.find(c => c.id === groupId);
-
-        if (!child) {
-            child = {
-                id: groupId,
-                tag: 'g',
-                children: [],
-            };
-            parent.children.push(child);
-        }
-
-        parent = child;
-    }
-
-    return parent;
-}
-
-function reconcileNode(domParent: SVGElement | SVGSVGElement, vnode: SVGVNode, domCache: Map<string, SVGElement>): void {
-    const desiredIds = vnode.children.map(c => c.id);
-    const existingChildren = new Map<string, SVGElement>();
-
-    for (let i = domParent.children.length - 1; i >= 0; i--) {
-        const child = domParent.children[i] as SVGElement;
-
-        if (child.tagName.toLowerCase() === 'defs') {
-            continue;
-        }
-
-        const childId = child.getAttribute('id');
-
-        if (childId && desiredIds.includes(childId)) {
-            existingChildren.set(childId, child);
-        } else {
-            child.remove();
-            if (childId) {
-                domCache.delete(childId);
-            }
-        }
-    }
-
-    for (let i = 0; i < vnode.children.length; i++) {
-        const childVNode = vnode.children[i];
-        let domChild = existingChildren.get(childVNode.id) || domCache.get(childVNode.id);
-
-        if (!domChild) {
-            const tag = childVNode.element?.definition.tag ?? childVNode.tag;
-            domChild = createSVGElement(tag);
-            domChild.setAttribute('id', childVNode.id);
-            domCache.set(childVNode.id, domChild);
-        }
-
-        if (childVNode.element) {
-            updateSVGElement(domChild, childVNode.element);
-        }
-
-        const currentAtIndex = domParent.children[i] as SVGElement | undefined;
-
-        if (currentAtIndex !== domChild) {
-            if (currentAtIndex) {
-                domParent.insertBefore(domChild, currentAtIndex);
-            } else {
-                domParent.appendChild(domChild);
-            }
-        }
-
-        if (childVNode.children.length > 0) {
-            reconcileNode(domChild, childVNode, domCache);
-        }
-    }
-}
+type SVGVNode = VNode<SVGContextElement>;
 
 export class SVGContext extends Context<SVGSVGElement> {
 
     private vtree: SVGVNode;
-    private domCache: Map<string, SVGElement>;
+    private domCache: Map<string, Element>;
+    private reconcilerOptions: ReconcilerOptions<SVGContextElement>;
     private requestFrame: (callback: AnyFunction) => void;
     private defs: SVGDefsElement;
     private gradientCache: Map<string, { gradientId: string;
@@ -428,6 +340,18 @@ export class SVGContext extends Context<SVGSVGElement> {
             children: [],
         };
         this.domCache = new Map();
+        this.reconcilerOptions = {
+            createElement: (tag, id) => {
+                const el = createSVGElement(tag as keyof SVGElementTagNameMap);
+                el.setAttribute('id', id);
+                return el;
+            },
+            updateElement: (domNode, element) => {
+                updateSVGElement(domNode as SVGElement, element);
+            },
+            getElementTag: (element) => element.definition.tag,
+            excludeSelectors: ['defs'],
+        };
         this.gradientCache = new Map();
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
@@ -533,7 +457,7 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     private render() {
-        reconcileNode(this.element, this.vtree, this.domCache);
+        reconcileNode(this.element, this.vtree, this.domCache, this.reconcilerOptions);
         this.vtree = {
             id: '__root__',
             tag: 'svg',
