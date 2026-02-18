@@ -12,6 +12,16 @@ export default defineConfig({
     title: 'Ripl',
     description: 'Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API',
 
+    vite: {
+        css: {
+            preprocessorOptions: {
+                scss: {
+                    api: 'modern-compiler',
+                },
+            },
+        },
+    },
+
     markdown: {
         config(md) {
             md.use(tabsMarkdownPlugin);
