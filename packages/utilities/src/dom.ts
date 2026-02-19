@@ -20,6 +20,8 @@ export interface DOMElementResizeEvent {
     height: number;
 }
 
+export const hasWindow = typeof window !== 'undefined';
+
 export function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable {
     element.addEventListener(event, handler as EventListener);
 
@@ -29,9 +31,7 @@ export function onDOMEvent<TElement extends EventTarget, TEvent extends string &
 }
 
 export function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable {
-    let disposer = {
-        dispose: () => {},
-    } as Disposable;
+    let disposer: Disposable;
 
     if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(entries => {

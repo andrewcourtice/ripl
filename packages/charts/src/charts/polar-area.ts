@@ -4,16 +4,14 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Arc,
     ArcState,
     BaseElementState,
     Context,
     createArc,
+    createCircle,
     createGroup,
+    createLine,
     createText,
     easeOutQuint,
     elementIsArc,
@@ -46,6 +44,8 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     maxRadiusRatio?: number;
     /** Padding angle between segments in radians. Defaults to 0.02 */
     padAngle?: number;
+    /** Number of concentric grid rings. Defaults to 4 */
+    levels?: number;
 }
 
 /**
@@ -55,10 +55,109 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
 export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>> {
 
     private groups: Group[] = [];
-
+    private gridGroup?: Group;
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
         this.init();
+    }
+
+    private drawGrid(
+        cx: number,
+        cy: number,
+        innerRadius: number,
+        maxRadius: number,
+        maxValue: number,
+        levels: number,
+        angleStep: number,
+        startOffset: number,
+        segmentCount: number
+    ) {
+        if (this.gridGroup) {
+            this.gridGroup.clear();
+            this.scene.remove(this.gridGroup);
+        }
+
+        this.gridGroup = createGroup({
+            id: 'polar-grid',
+            class: 'polar-grid',
+            zIndex: 0,
+        });
+
+        const radiusStep = (maxRadius - innerRadius) / levels;
+        const animDuration = this.getAnimationDuration(800);
+
+        // Concentric ring circles + value labels
+        for (let level = 1; level <= levels; level++) {
+            const levelRadius = innerRadius + radiusStep * level;
+
+            const ring = createCircle({
+                id: `polar-ring-${level}`,
+                cx,
+                cy,
+                radius: innerRadius,
+                strokeStyle: '#e5e7eb',
+                lineWidth: 1,
+                data: {
+                    radius: levelRadius,
+                },
+            });
+
+            ring.autoFill = false;
+            this.gridGroup.add(ring);
+
+            // Value label at 12 o'clock
+            const levelValue = Math.round((maxValue / levels) * level);
+
+            this.gridGroup.add(createText({
+                id: `polar-ring-label-${level}`,
+                x: cx + 4,
+                y: cy - levelRadius - 2,
+                content: levelValue.toString(),
+                fillStyle: '#9ca3af',
+                font: '10px sans-serif',
+                textAlign: 'left',
+                textBaseline: 'bottom',
+                globalAlpha: 0,
+                data: {
+                    globalAlpha: 1,
+                },
+            }));
+        }
+
+        // Radial axis lines from center to outer edge at each segment boundary
+        for (let i = 0; i < segmentCount; i++) {
+            const angle = startOffset + i * angleStep;
+            const x2 = cx + maxRadius * Math.cos(angle);
+            const y2 = cy + maxRadius * Math.sin(angle);
+            const x1 = cx + innerRadius * Math.cos(angle);
+            const y1 = cy + innerRadius * Math.sin(angle);
+
+            this.gridGroup.add(createLine({
+                id: `polar-axis-${i}`,
+                x1,
+                y1,
+                x2: x1,
+                y2: y1,
+                strokeStyle: '#e5e7eb',
+                lineWidth: 1,
+                data: {
+                    x2,
+                    y2,
+                },
+            }));
+        }
+
+        this.scene.add(this.gridGroup);
+
+        // Animate grid elements
+        const gridElements = this.gridGroup.children;
+
+        return this.renderer.transition(gridElements, (element, index, length) => ({
+            duration: animDuration,
+            delay: index * (animDuration / length) * 0.3,
+            ease: easeOutQuint,
+            state: element.data as Partial<BaseElementState>,
+        }));
     }
 
     public async render() {
@@ -72,13 +171,14 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 innerRadiusRatio = 0.15,
                 maxRadiusRatio = 0.45,
                 padAngle = 0.02,
+                levels = 4,
             } = this.options;
 
             if (!data.length) {
                 return Promise.resolve();
             }
 
-            const colorGenerator = getColorGenerator();
+            const colorGenerator = this.colorGenerator;
             const size = Math.min(scene.width, scene.height);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,6 +195,18 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             const angleStep = TAU / data.length;
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
+
+            const gridTransition = this.drawGrid(
+                scene.width / 2,
+                scene.height / 2,
+                size * innerRadiusRatio,
+                size * maxRadiusRatio,
+                maxValue,
+                levels,
+                angleStep,
+                startOffset,
+                data.length
+            );
 
             const calculations = arrayMap(data, (item, index) => {
                 const key = getKey(item);
@@ -164,16 +276,16 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                 segmentArc.on('mouseenter', () => {
                     renderer.transition(segmentArc, {
-                        duration: 400,
+                        duration: this.getAnimationDuration(400),
                         ease: easeOutQuint,
                         state: {
                             fillStyle: color,
                         },
                     });
 
-                    segmentArc.once('mouseleave', () => {
+                    segmentArc.on('mouseleave', () => {
                         renderer.transition(segmentArc, {
-                            duration: 400,
+                            duration: this.getAnimationDuration(400),
                             ease: easeOutQuint,
                             state: {
                                 fillStyle: setColorAlpha(color, 0.55),
@@ -208,7 +320,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             const updates = arrayMap(inner, ([item, group]) => {
                 const {
-                    color,
                     cx,
                     cy,
                     radius,
@@ -221,6 +332,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
+                const resolvedColor = item.color ?? arc.strokeStyle;
+
                 const arcData = {
                     cx,
                     cy,
@@ -229,8 +342,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
-                    strokeStyle: color,
-                    fillStyle: setColorAlpha(color, 0.55),
+                    strokeStyle: resolvedColor,
+                    fillStyle: setColorAlpha(resolvedColor, 0.55),
                 } as Partial<ArcState>;
 
                 const [centroidx, centroidY] = arc.getCentroid(arcData);
@@ -270,18 +383,20 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             scene.add(entries);
 
+            const animDuration = this.getAnimationDuration(1000);
+
             async function transitionEntries() {
                 const elements = entries.flatMap(group => group.children);
 
                 await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
-                    duration: 1000,
+                    duration: animDuration,
                     ease: easeOutQuint,
-                    delay: index * (1000 / length),
+                    delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
                 return renderer.transition(arrayFilter(elements, elementIsText), {
-                    duration: 1500,
+                    duration: animDuration * 1.5,
                     ease: easeOutQuint,
                     state: {
                         globalAlpha: 1,
@@ -291,7 +406,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             async function transitionUpdates() {
                 return renderer.transition(updates, element => ({
-                    duration: 800,
+                    duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                 }));
@@ -299,7 +414,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             async function transitionExits() {
                 return renderer.transition(exits, element => ({
-                    duration: 800,
+                    duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
                     onComplete: element => element.destroy(),
@@ -307,6 +422,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             return Promise.all([
+                gridTransition,
                 transitionEntries(),
                 transitionUpdates(),
                 transitionExits(),

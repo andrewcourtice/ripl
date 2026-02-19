@@ -7,9 +7,10 @@ import {
     ContextText,
     createFrameBuffer,
     FillRule,
-    getRefContext,
     getThetaPoint,
     isGradientString,
+    measureText,
+    normaliseBorderRadius,
     parseColor,
     parseGradient,
     serialiseRGBA,
@@ -25,8 +26,15 @@ import {
     objectForEach,
     objectMap,
     stringUniqueId,
-    typeIsNumber,
 } from '@ripl/utilities';
+
+import {
+    ensureGroupPath,
+    getAncestorGroupIds,
+    reconcileNode,
+    ReconcilerOptions,
+    VNode,
+} from '@ripl/vdom';
 
 import type {
     Gradient,
@@ -246,21 +254,28 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.lineTo(x, y);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
-        return this.rect(x, y, width, height);
-        // const [
-        //     borderTopLeft,
-        //     borderTopRight,
-        //     borderBottomRight,
-        //     borderBottomLeft,
-        // ] = normaliseBorderRadius(radii ?? 0);
+        if (!radii) {
+            return this.rect(x, y, width, height);
+        }
 
-        // this.moveTo(x + borderTopLeft, y);
-        // this.lineTo(x - borderTopRight, y);
-        // this.arcTo(x + width - borderTopRight, y, x + width, y + borderTopRight, borderTopRight);
-        // this.lineTo(x + width, y + height - borderBottomRight);
-        // this.arcTo()
+        const [
+            borderTopLeft,
+            borderTopRight,
+            borderBottomRight,
+            borderBottomLeft,
+        ] = normaliseBorderRadius(radii);
+
+        this.moveTo(x + borderTopLeft, y);
+        this.lineTo(x + width - borderTopRight, y);
+        this.appendElementData(`A ${borderTopRight} ${borderTopRight} 0 0 1 ${x + width},${y + borderTopRight}`);
+        this.lineTo(x + width, y + height - borderBottomRight);
+        this.appendElementData(`A ${borderBottomRight} ${borderBottomRight} 0 0 1 ${x + width - borderBottomRight},${y + height}`);
+        this.lineTo(x + borderBottomLeft, y + height);
+        this.appendElementData(`A ${borderBottomLeft} ${borderBottomLeft} 0 0 1 ${x},${y + height - borderBottomLeft}`);
+        this.lineTo(x, y + borderTopLeft);
+        this.appendElementData(`A ${borderTopLeft} ${borderTopLeft} 0 0 1 ${x + borderTopLeft},${y}`);
+        this.closePath();
     }
 
 }
@@ -293,109 +308,13 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
-interface SVGVNode {
-    id: string;
-    tag: keyof SVGElementTagNameMap;
-    element?: SVGContextElement;
-    children: SVGVNode[];
-}
-
-interface ParentRef {
-    id: string;
-    parent?: ParentRef;
-}
-
-function getAncestorGroupIds(element: ParentRef): string[] {
-    const ids: string[] = [];
-    let current = element.parent;
-
-    while (current?.parent) {
-        ids.unshift(current.id);
-        current = current.parent;
-    }
-
-    return ids;
-}
-
-function ensureGroupPath(root: SVGVNode, groupIds: string[]): SVGVNode {
-    let parent = root;
-
-    for (const groupId of groupIds) {
-        let child = parent.children.find(c => c.id === groupId);
-
-        if (!child) {
-            child = {
-                id: groupId,
-                tag: 'g',
-                children: [],
-            };
-            parent.children.push(child);
-        }
-
-        parent = child;
-    }
-
-    return parent;
-}
-
-function reconcileNode(domParent: SVGElement | SVGSVGElement, vnode: SVGVNode, domCache: Map<string, SVGElement>): void {
-    const desiredIds = vnode.children.map(c => c.id);
-    const existingChildren = new Map<string, SVGElement>();
-
-    for (let i = domParent.children.length - 1; i >= 0; i--) {
-        const child = domParent.children[i] as SVGElement;
-
-        if (child.tagName.toLowerCase() === 'defs') {
-            continue;
-        }
-
-        const childId = child.getAttribute('id');
-
-        if (childId && desiredIds.includes(childId)) {
-            existingChildren.set(childId, child);
-        } else {
-            child.remove();
-            if (childId) {
-                domCache.delete(childId);
-            }
-        }
-    }
-
-    for (let i = 0; i < vnode.children.length; i++) {
-        const childVNode = vnode.children[i];
-        let domChild = existingChildren.get(childVNode.id) || domCache.get(childVNode.id);
-
-        if (!domChild) {
-            const tag = childVNode.element?.definition.tag ?? childVNode.tag;
-            domChild = createSVGElement(tag);
-            domChild.setAttribute('id', childVNode.id);
-            domCache.set(childVNode.id, domChild);
-        }
-
-        if (childVNode.element) {
-            updateSVGElement(domChild, childVNode.element);
-        }
-
-        const currentAtIndex = domParent.children[i] as SVGElement | undefined;
-
-        if (currentAtIndex !== domChild) {
-            if (currentAtIndex) {
-                domParent.insertBefore(domChild, currentAtIndex);
-            } else {
-                domParent.appendChild(domChild);
-            }
-        }
-
-        if (childVNode.children.length > 0) {
-            reconcileNode(domChild, childVNode, domCache);
-        }
-    }
-}
+type SVGVNode = VNode<SVGContextElement>;
 
 export class SVGContext extends Context<SVGSVGElement> {
 
     private vtree: SVGVNode;
-    private domCache: Map<string, SVGElement>;
+    private domCache: Map<string, Element>;
+    private reconcilerOptions: ReconcilerOptions<SVGContextElement>;
     private requestFrame: (callback: AnyFunction) => void;
     private defs: SVGDefsElement;
     private gradientCache: Map<string, { gradientId: string;
@@ -419,6 +338,18 @@ export class SVGContext extends Context<SVGSVGElement> {
             children: [],
         };
         this.domCache = new Map();
+        this.reconcilerOptions = {
+            createElement: (tag, id) => {
+                const el = createSVGElement(tag as keyof SVGElementTagNameMap);
+                el.setAttribute('id', id);
+                return el;
+            },
+            updateElement: (domNode, element) => {
+                updateSVGElement(domNode as SVGElement, element);
+            },
+            getElementTag: (element) => element.definition.tag,
+            excludeSelectors: ['defs'],
+        };
         this.gradientCache = new Map();
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
@@ -524,12 +455,19 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     private render() {
-        reconcileNode(this.element, this.vtree, this.domCache);
-        this.vtree = {
-            id: '__root__',
-            tag: 'svg',
-            children: [],
-        };
+        reconcileNode(this.element, this.vtree, this.domCache, this.reconcilerOptions);
+    }
+
+    markRenderStart(): void {
+        if (this.renderDepth === 0) {
+            this.vtree = {
+                id: '__root__',
+                tag: 'svg',
+                children: [],
+            };
+        }
+
+        super.markRenderStart();
     }
 
     markRenderEnd(): void {
@@ -583,24 +521,9 @@ export class SVGContext extends Context<SVGSVGElement> {
         });
     }
 
-    measureText(text: string): TextMetrics {
-        const context = getRefContext();
-
-        context.save();
-        context.font = this.font;
-
-        const result = context.measureText(text);
-
-        context.restore();
-
-        return new Proxy(result, {
-            get: (target, prop: string) => {
-                const value = target[prop as keyof TextMetrics];
-
-                return typeIsNumber(value)
-                    ? this.scaleDPR(value)
-                    : value;
-            },
+    measureText(text: string, font?: string): TextMetrics {
+        return measureText(text, {
+            font: font ?? this.currentState.font,
         });
     }
 

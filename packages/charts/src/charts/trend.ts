@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -15,6 +11,15 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
+    Grid,
+} from '../components/grid';
 
 import {
     BandScale,
@@ -88,6 +93,12 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     series: TrendChartSeriesOptions<TData>[];
     keyBy: keyof TData | ((item: TData) => string);
     labelBy: keyof TData | ((item: TData) => string);
+    showGrid?: boolean;
+    showLegend?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatXLabel?: (value: any) => string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatYLabel?: (value: any) => string;
 }
 
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
@@ -97,11 +108,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private yScale!: Scale;
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
-    private colorGenerator = getColorGenerator();
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
     private tooltip: Tooltip;
-
+    private legend?: Legend;
+    private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 
@@ -110,6 +121,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.xScalePoint,
+            formatLabel: options.formatXLabel,
         });
 
         this.yAxis = new ChartYAxis({
@@ -117,12 +129,22 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.yScale,
+            formatLabel: options.formatYLabel,
         });
 
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
+
+        if (options.showGrid !== false) {
+            this.grid = new Grid({
+                scene: this.scene,
+                renderer: this.renderer,
+                horizontal: true,
+                vertical: false,
+            });
+        }
 
         this.init();
     }
@@ -147,10 +169,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
         arrayForEach(seriesExits, series => series.destroy());
 
-        const seriesLineValueProducer = ({ id, valueBy, labelBy, color }: TrendChartLineSeriesOptions<TData>) => {
+        const seriesLineValueProducer = ({ id, valueBy, labelBy }: TrendChartLineSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
+            const color = this.getSeriesColor(id);
 
             return (item: TData) => {
                 const key = getKey(item);
@@ -177,7 +200,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         };
 
         const seriesEntryGroups = arrayMap(seriesEntries, series => {
-            series.color ??= this.colorGenerator.next().value;
 
             const getMarkerValues = seriesLineValueProducer(series);
 
@@ -198,7 +220,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     this.tooltip.show(state.cx, state.cy, value.toString());
 
                     this.renderer.transition(marker, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -206,11 +228,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: '#FFFFFF',
@@ -229,7 +251,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = createPolyline({
                 id: `${series.id}-line`,
                 lineWidth: 2,
-                strokeStyle: series.color,
+                strokeStyle: this.getSeriesColor(series.id),
                 points: arrayMap(items, item => item.point),
                 renderer: series.lineType,
             });
@@ -289,7 +311,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     this.tooltip.show(state.cx, state.cy, value.toString());
 
                     this.renderer.transition(marker, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -297,11 +319,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: '#FFFFFF',
@@ -327,7 +349,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = group.query('polyline') as Polyline;
 
             const lineTransition = this.renderer.transition(line, {
-                duration: 1000,
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: {
                     points: interpolatePath(line.points),
@@ -335,8 +357,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             });
 
             const markersTransition = this.renderer.transition(markers, (element, index, length) => ({
-                duration: 1000,
-                delay: index * (1000 / length),
+                duration: this.getAnimationDuration(1000),
+                delay: index * (this.getAnimationDuration(1000) / length),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
@@ -352,13 +374,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = group.query('polyline') as Polyline;
 
             const lineTransition = this.renderer.transition(line, {
-                duration: 1000,
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: line.data as PolylineState,
             });
 
             const markersTransition = this.renderer.transition(markers, (element) => ({
-                duration: 1000,
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
@@ -400,10 +422,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
         arrayForEach(seriesExits, series => series.destroy());
 
-        const seriesBarValueProducer = ({ id, color, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
+        const seriesBarValueProducer = ({ id, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
+            const color = this.getSeriesColor(id);
 
             return (item: TData) => {
                 const key = getKey(item);
@@ -430,7 +453,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         };
 
         const seriesEntryGroups = arrayMap(seriesEntries, (series) => {
-            series.color ??= this.colorGenerator.next().value;
 
             const getBarValues = seriesBarValueProducer(series);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -456,18 +478,18 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
 
                     this.renderer.transition(bar, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.fillStyle,
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
@@ -527,18 +549,18 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
 
                     this.renderer.transition(bar, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.fillStyle,
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
@@ -561,14 +583,14 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[]).sort((a, b) => a.x - b.x);
 
         const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => ({
-            duration: 1000,
-            delay: index * (1000 / length),
+            duration: this.getAnimationDuration(1000),
+            delay: index * (this.getAnimationDuration(1000) / length),
             ease: easeOutCubic,
             state: element.data as RectState,
         }));
 
         const updatesTransition = this.renderer.transition(queryAll(seriesUpdateGroups, 'rect') as Rect[], element => ({
-            duration: 1000,
+            duration: this.getAnimationDuration(1000),
             ease: easeOutCubic,
             state: element.data as RectState,
         }));
@@ -588,6 +610,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 keyBy,
             } = this.options;
 
+            this.resolveSeriesColors(series);
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
             const keys = arrayMap(data, getKey);
@@ -602,21 +626,51 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            this.yScale = scaleContinuous(dataExtent, [scene.height - 20, 20], {
+            const padding = this.getPadding();
+
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && series.length > 1) {
+                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                    id: srs.id,
+                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    color: this.getSeriesColor(srs.id),
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const chartTop = padding.top + legendHeight;
+
+            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
-                20,
-                20,
-                this.scene.height - 20,
-                this.scene.width - 20
+                chartTop,
+                padding.left,
+                this.scene.height - padding.bottom,
+                this.scene.width - padding.right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
-            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, this.scene.width - 20], {
+            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, this.scene.width - padding.right], {
                 outerPadding: 0.25,
                 innerPadding: 0.25,
             });
@@ -630,20 +684,40 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             this.xAxis.scale = this.xScalePoint;
             this.xAxis.bounds = new Box(
-                20,
+                chartTop,
                 yAxisBoundingBox.right,
-                this.scene.height - 20,
-                this.scene.width - 20
+                this.scene.height - padding.bottom,
+                this.scene.width - padding.right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, 20], {
+            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+
+            // Render grid
+            if (this.grid) {
+                const yTicks = this.yScale.ticks(10);
+                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+
+                this.grid.render(
+                    [],
+                    yTickPositions,
+                    yAxisBoundingBox.right,
+                    chartTop,
+                    scene.width - padding.right - yAxisBoundingBox.right,
+                    xAxisBoundingBox.top - chartTop
+                );
+            }
+
+            // Render legend
+            if (this.legend && legendHeight > 0) {
+                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
+            }
 
             return Promise.all([
                 this.xAxis.render(),

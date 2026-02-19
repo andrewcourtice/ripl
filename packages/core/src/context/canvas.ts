@@ -8,6 +8,7 @@ import {
     FontKerning,
     LineCap,
     LineJoin,
+    measureText,
     TextAlignment,
     TextBaseline,
 } from './_base';
@@ -33,7 +34,6 @@ import {
 
 import {
     arrayForEach,
-    typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
@@ -408,15 +408,10 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return this.context.transform(a, b, c, d, e, f);
     }
 
-    measureText(text: string): TextMetrics {
-        return new Proxy(this.context.measureText(text), {
-            get: (target, prop: string) => {
-                const value = target[prop as keyof TextMetrics];
-
-                return typeIsNumber(value)
-                    ? this.scaleDPR(value)
-                    : value;
-            },
+    measureText(text: string, font?: string): TextMetrics {
+        return measureText(text, {
+            context: this.context,
+            font: font ?? this.context.font,
         });
     }
 

@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -15,6 +11,19 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import {
+    Crosshair,
+} from '../components/crosshair';
+
+import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
+    Grid,
+} from '../components/grid';
 
 import {
     Box,
@@ -57,6 +66,13 @@ export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     keyBy: keyof TData | ((item: TData) => string);
     xAxisLabel?: string;
     yAxisLabel?: string;
+    showGrid?: boolean;
+    showCrosshair?: boolean;
+    showLegend?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatXLabel?: (value: any) => string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatYLabel?: (value: any) => string;
 }
 
 export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TData>> {
@@ -65,11 +81,12 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
     private xScale!: Scale;
     private yScale!: Scale;
     private sizeScale!: Scale;
-    private colorGenerator = getColorGenerator();
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
     private tooltip: Tooltip;
-
+    private crosshair?: Crosshair;
+    private legend?: Legend;
+    private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
         super(target, options);
 
@@ -78,6 +95,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.xScale,
+            formatLabel: options.formatXLabel,
         });
 
         this.yAxis = new ChartYAxis({
@@ -85,12 +103,31 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.yScale,
+            formatLabel: options.formatYLabel,
         });
 
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
+
+        if (options.showGrid !== false) {
+            this.grid = new Grid({
+                scene: this.scene,
+                renderer: this.renderer,
+                horizontal: true,
+                vertical: true,
+            });
+        }
+
+        if (options.showCrosshair !== false) {
+            this.crosshair = new Crosshair({
+                scene: this.scene,
+                renderer: this.renderer,
+                vertical: true,
+                horizontal: true,
+            });
+        }
 
         this.init();
     }
@@ -232,7 +269,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -240,11 +277,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         },
                     });
 
-                    bubble.once('mouseleave', () => {
+                    bubble.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -276,7 +313,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             // Exit transition - fade out and shrink
             const exitTransitions = arrayMap(bubbleExits, bubble => {
                 return this.renderer.transition(bubble, {
-                    duration: 500,
+                    duration: this.getAnimationDuration(500),
                     ease: easeOutCubic,
                     state: {
                         radius: 0,
@@ -314,7 +351,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -322,11 +359,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         },
                     });
 
-                    bubble.once('mouseleave', () => {
+                    bubble.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -360,7 +397,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
 
                     this.renderer.transition(bubble, {
-                        duration: 300,
+                        duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
                             fillStyle: state.strokeStyle,
@@ -368,11 +405,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         },
                     });
 
-                    bubble.once('mouseleave', () => {
+                    bubble.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bubble, {
-                            duration: 300,
+                            duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
                                 fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
@@ -401,8 +438,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
-                duration: 1000,
-                delay: index * (800 / length),
+                duration: this.getAnimationDuration(1000),
+                delay: index * (this.getAnimationDuration(800) / length),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
@@ -413,7 +450,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, element => ({
-                duration: 1000,
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             }));
@@ -429,13 +466,20 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         ]);
     }
 
+
     public async render() {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        return super.render((scene, renderer) => {
+        return super.render((scene) => {
             const {
                 data,
                 series,
             } = this.options;
+
+            this.resolveSeriesColors(series);
+
+            // Assign colors to series that don't have them
+            arrayForEach(series, srs => {
+                srs.color ??= this.getSeriesColor(srs.id);
+            });
 
             // Calculate extents for all series
             const xExtents = arrayMap(series, ({ xBy }) => {
@@ -463,43 +507,114 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             // Create size scale (normalized 0-1)
             this.sizeScale = scaleContinuous(sizeExtent, [0, 1]);
 
+            const padding = this.getPadding();
+
+            // Compute legend bounds early to reserve space
+            let legendHeight = 0;
+
+            if (this.options.showLegend !== false && series.length > 1) {
+                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                    id: srs.id,
+                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    color: this.getSeriesColor(srs.id),
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                        onToggle: () => this.render(),
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
+            }
+
+            const chartTop = padding.top + legendHeight;
+
             // Create initial Y scale for axis positioning
-            this.yScale = scaleContinuous(yExtent, [scene.height - 20, 20], {
+            this.yScale = scaleContinuous(yExtent, [scene.height - padding.bottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
-                20,
-                20,
-                this.scene.height - 20,
-                this.scene.width - 20
+                chartTop,
+                padding.left,
+                scene.height - padding.bottom,
+                scene.width - padding.right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
             // Create X scale
-            this.xScale = scaleContinuous(xExtent, [yAxisBoundingBox.right, this.scene.width - 20], {
+            this.xScale = scaleContinuous(xExtent, [yAxisBoundingBox.right, scene.width - padding.right], {
                 padToTicks: 10,
             });
 
             this.xAxis.scale = this.xScale;
             this.xAxis.bounds = new Box(
-                20,
+                chartTop,
                 yAxisBoundingBox.right,
-                this.scene.height - 20,
-                this.scene.width - 20
+                scene.height - padding.bottom,
+                scene.width - padding.right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
             // Update Y scale with correct range after X axis positioning
-            this.yScale = scaleContinuous(yExtent, [xAxisBoundingBox.top, 20], {
+            this.yScale = scaleContinuous(yExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+
+            // Render grid
+            if (this.grid) {
+                const xTicks = this.xScale.ticks(10);
+                const yTicks = this.yScale.ticks(10);
+                const xTickPositions = arrayMap(xTicks, tick => this.xScale(tick));
+                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+
+                this.grid.render(
+                    xTickPositions,
+                    yTickPositions,
+                    yAxisBoundingBox.right,
+                    chartTop,
+                    scene.width - padding.right - yAxisBoundingBox.right,
+                    xAxisBoundingBox.top - chartTop
+                );
+            }
+
+            // Setup crosshair
+            if (this.crosshair) {
+                this.crosshair.setup(
+                    yAxisBoundingBox.right,
+                    chartTop,
+                    scene.width - padding.right - yAxisBoundingBox.right,
+                    xAxisBoundingBox.top - chartTop
+                );
+
+                this.scene.on('mousemove', (event) => {
+                    const { x, y } = event.data;
+                    this.crosshair?.show(x, y);
+                });
+
+                this.scene.on('mouseleave', () => {
+                    this.crosshair?.hide();
+                });
+            }
+
+            // Render legend
+            if (this.legend && legendHeight > 0) {
+                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
+            }
 
             return Promise.all([
                 this.xAxis.render(),

@@ -8,6 +8,7 @@ import {
     createGroup,
     createLine,
     createText,
+    easeOutCubic,
     Group,
     Line,
     Scale,
@@ -36,14 +37,26 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     maxHeight?: number;
     gridLines?: boolean;
     labelDimension: LabelDimension;
+    title?: string;
+    strokeStyle?: string;
+    labelFont?: string;
+    labelColor?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartXAxisAlignment;
+    title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 export interface ChartYAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartYAxisAlignment;
+    title?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    formatLabel?: (value: any) => string;
 }
 
 const LABEL_DIMENSION_MAP = {
@@ -59,6 +72,12 @@ export class ChartAxis extends ChartComponent {
     public padding: number;
     public tickSize: number;
     public tickCount: number;
+    public title?: string;
+    public strokeStyle: string;
+    public labelFont: string;
+    public labelColor: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public formatLabel?: (value: any) => string;
 
     protected group: Group;
 
@@ -99,6 +118,9 @@ export class ChartAxis extends ChartComponent {
             padding = 5,
             tickSize = 5,
             tickCount = 10,
+            strokeStyle = '#777777',
+            labelFont = '12px sans-serif',
+            labelColor = '#777777',
         } = options;
 
         super({
@@ -112,13 +134,18 @@ export class ChartAxis extends ChartComponent {
         this.tickSize = tickSize;
         this.tickCount = tickCount;
         this.labelDimension = labelDimension;
+        this.title = options.title;
+        this.formatLabel = options.formatLabel;
+        this.strokeStyle = strokeStyle;
+        this.labelFont = labelFont;
+        this.labelColor = labelColor;
 
         this.group = createGroup({
             class: 'chart-axis',
             children: [
                 createLine({
                     class: 'chart-axis__line',
-                    strokeStyle: '#777777',
+                    strokeStyle: this.strokeStyle,
                     x1: 0,
                     y1: 0,
                     x2: 0,
@@ -133,9 +160,15 @@ export class ChartAxis extends ChartComponent {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
         return arrayReduce(values, (output, value) => {
-            const metrics = this.context.measureText(value.toString());
+            const label = this.formatLabel ? this.formatLabel(value) : value.toString();
+            const metrics = this.context.measureText(label, this.labelFont);
             return Math.max(output, producer(metrics));
         }, 0);
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected formatTickLabel(value: any): string {
+        return this.formatLabel ? this.formatLabel(value) : value.toString();
     }
 
     public getBoundingBox(): Box {
@@ -205,30 +238,36 @@ export class ChartXAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => ticks.indexOf(value) === groups.indexOf(group));
+        } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
 
         const labelEntryTexts = arrayMap(groupEntries, value => {
             const x = this.scale(value);
+            const label = this.formatTickLabel(value);
 
             return createGroup({
+                id: label,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [
                     createText({
-                        content: value,
+                        content: label,
                         x,
                         y: boundingBox.top + this.padding + this.tickSize + 1,
                         textAlign: 'center',
                         textBaseline: 'top',
-                        fillStyle: '#777777',
-                        font: '12px sans-serif',
+                        fillStyle: this.labelColor,
+                        font: this.labelFont,
+                        globalAlpha: 0,
+                        data: { globalAlpha: 1 },
                     }),
                     createLine({
                         x1: x,
                         y1: boundingBox.top,
                         x2: x,
                         y2: boundingBox.top + this.tickSize,
-                        strokeStyle: '#777777',
+                        strokeStyle: this.strokeStyle,
+                        globalAlpha: 0,
+                        data: { globalAlpha: 1 },
                     }),
                 ],
             });
@@ -236,6 +275,17 @@ export class ChartXAxis extends ChartAxis {
 
         this.group.add(labelEntryTexts);
         this.group.remove(groupExits);
+
+        // Animate entries
+        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+
+        if (entryElements.length > 0) {
+            this.renderer.transition(entryElements, element => ({
+                duration: 400,
+                ease: easeOutCubic,
+                state: (element.data ?? {}) as Record<string, unknown>,
+            }));
+        }
 
         arrayForEach(groupUpdates, ([value, group]) => {
             const line = group.query<Line>('line');
@@ -250,11 +300,36 @@ export class ChartXAxis extends ChartAxis {
             }
 
             if (label) {
-                label.content = value.toString();
+                label.content = this.formatTickLabel(value);
                 label.x = x;
                 label.y = boundingBox.top + this.padding + this.tickSize + 1;
             }
         });
+
+        // Render title
+        if (this.title) {
+            const titleId = 'chart-axis__x-title';
+            let titleText = this.group.query<Text>(`#${titleId}`);
+
+            if (!titleText) {
+                titleText = createText({
+                    id: titleId,
+                    content: this.title,
+                    x: (boundingBox.left + boundingBox.right) / 2,
+                    y: boundingBox.bottom - 2,
+                    textAlign: 'center',
+                    textBaseline: 'bottom',
+                    fillStyle: this.labelColor,
+                    font: `bold ${this.labelFont}`,
+                });
+
+                this.group.add(titleText);
+            } else {
+                titleText.content = this.title;
+                titleText.x = (boundingBox.left + boundingBox.right) / 2;
+                titleText.y = boundingBox.bottom - 2;
+            }
+        }
 
         return Promise.resolve();
     }
@@ -318,30 +393,36 @@ export class ChartYAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => ticks.indexOf(value) === groups.indexOf(group));
+        } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
 
         const labelEntryTexts = arrayMap(groupEntries, value => {
             const y = this.scale(value);
+            const label = this.formatTickLabel(value);
 
             return createGroup({
+                id: label,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [
                     createText({
-                        content: value,
+                        content: label,
                         x: boundingBox.right - this.padding - this.tickSize - 1,
                         y,
                         textAlign: 'right',
                         textBaseline: 'middle',
-                        fillStyle: '#777777',
-                        font: '12px sans-serif',
+                        fillStyle: this.labelColor,
+                        font: this.labelFont,
+                        globalAlpha: 0,
+                        data: { globalAlpha: 1 },
                     }),
                     createLine({
                         x1: boundingBox.right,
                         y1: y,
                         x2: boundingBox.right - this.tickSize,
                         y2: y,
-                        strokeStyle: '#777777',
+                        strokeStyle: this.strokeStyle,
+                        globalAlpha: 0,
+                        data: { globalAlpha: 1 },
                     }),
                 ],
             });
@@ -349,6 +430,17 @@ export class ChartYAxis extends ChartAxis {
 
         this.group.add(labelEntryTexts);
         this.group.remove(groupExits);
+
+        // Animate entries
+        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+
+        if (entryElements.length > 0) {
+            this.renderer.transition(entryElements, element => ({
+                duration: 400,
+                ease: easeOutCubic,
+                state: (element.data ?? {}) as Record<string, unknown>,
+            }));
+        }
 
         arrayForEach(groupUpdates, ([value, group]) => {
             const line = group.query<Line>('line');
@@ -361,10 +453,34 @@ export class ChartYAxis extends ChartAxis {
             }
 
             if (label) {
-                label.content = value.toString();
+                label.content = this.formatTickLabel(value);
                 label.y = y;
             }
         });
+
+        // Render title
+        if (this.title) {
+            const titleId = 'chart-axis__y-title';
+            let titleText = this.group.query<Text>(`#${titleId}`);
+
+            if (!titleText) {
+                titleText = createText({
+                    id: titleId,
+                    content: this.title,
+                    x: boundingBox.left + 2,
+                    y: (boundingBox.top + boundingBox.bottom) / 2,
+                    textAlign: 'center',
+                    textBaseline: 'middle',
+                    fillStyle: this.labelColor,
+                    font: `bold ${this.labelFont}`,
+                });
+
+                this.group.add(titleText);
+            } else {
+                titleText.content = this.title;
+                titleText.y = (boundingBox.top + boundingBox.bottom) / 2;
+            }
+        }
 
         return Promise.resolve();
     }

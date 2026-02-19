@@ -1,23 +1,25 @@
+import {
+    fileURLToPath,
+} from 'node:url';
+
+import {
+    includeIgnoreFile,
+} from '@eslint/compat';
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
 import globals from 'globals';
+
+const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
 const INDENT = 4;
 
 export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
+    includeIgnoreFile(gitignorePath),
     {
-        ignores: [
-            '**/dist/**',
-            '**/node_modules/**',
-            '**/.yarn/**',
-            '**/coverage/**',
-            '**/.reports/**',
-        ],
-    },
-    {
+        name: 'ripl/main',
         plugins: {
             '@stylistic': stylistic,
         },
@@ -37,7 +39,7 @@ export default tseslint.config(
             'no-alert': 'error',
             'no-multi-assign': 'error',
             'no-nested-ternary': 'error',
-            'no-return-await': 'error', // https://jakearchibald.com/2017/await-vs-return-vs-return-await/
+            'no-return-await': 'off', // Deprecated in ESLint v8.46+, replaced by @typescript-eslint/return-await
             'no-throw-literal': 'error',
             'no-unneeded-ternary': 'error',
             'no-useless-rename': 'error',

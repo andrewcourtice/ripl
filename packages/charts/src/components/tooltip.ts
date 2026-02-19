@@ -15,6 +15,7 @@ import {
 
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
+    formatContent?: (content: string) => string;
 }
 
 export class Tooltip extends ChartComponent {
@@ -85,9 +86,9 @@ export class Tooltip extends ChartComponent {
         textElement.content = content;
 
         // Measure text to calculate background size
-        const metrics = this.context.measureText(content);
-        const textWidth = metrics.width || 40;
-        const textHeight = 16; // Approximate text height
+        const textBox = textElement.getBoundingBox();
+        const textWidth = textBox.width || 40;
+        const textHeight = textBox.height || 16;
 
         const bgWidth = textWidth + this.padding * 2;
         const bgHeight = textHeight + this.padding * 2;
