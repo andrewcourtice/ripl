@@ -6,6 +6,10 @@ import {
     tabsMarkdownPlugin,
 } from 'vitepress-plugin-tabs';
 
+import {
+    charts,
+} from './data/charts';
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../dist',
@@ -196,72 +200,14 @@ export default defineConfig({
             '/docs/charts': [
                 {
                     text: 'Introduction',
-                    link: '/charts',
+                    link: '/docs/charts/',
                 },
                 {
                     text: 'Charts',
-                    items: [
-                        {
-                            text: 'Line',
-                            link: '/docs/charts/line',
-                        },
-                        {
-                            text: 'Bar',
-                            link: '/docs/charts/bar',
-                        },
-                        {
-                            text: 'Area',
-                            link: '/docs/charts/area',
-                        },
-                        {
-                            text: 'Trend',
-                            link: '/docs/charts/trend',
-                        },
-                        {
-                            text: 'Pie',
-                            link: '/docs/charts/pie',
-                        },
-                        {
-                            text: 'Polar Area',
-                            link: '/docs/charts/polar-area',
-                        },
-                        {
-                            text: 'Scatter',
-                            link: '/docs/charts/scatter',
-                        },
-                        {
-                            text: 'Radar',
-                            link: '/docs/charts/radar',
-                        },
-                        {
-                            text: 'Heatmap',
-                            link: '/docs/charts/heatmap',
-                        },
-                        {
-                            text: 'Treemap',
-                            link: '/docs/charts/treemap',
-                        },
-                        {
-                            text: 'Funnel',
-                            link: '/docs/charts/funnel',
-                        },
-                        {
-                            text: 'Gauge',
-                            link: '/docs/charts/gauge',
-                        },
-                        {
-                            text: 'Sunburst',
-                            link: '/docs/charts/sunburst',
-                        },
-                        {
-                            text: 'Sankey',
-                            link: '/docs/charts/sankey',
-                        },
-                        {
-                            text: 'Chord',
-                            link: '/docs/charts/chord',
-                        },
-                    ],
+                    items: charts.map(({ text, link }) => ({
+                        text,
+                        link,
+                    })),
                 },
             ],
         },
