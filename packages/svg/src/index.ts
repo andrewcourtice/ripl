@@ -456,11 +456,18 @@ export class SVGContext extends Context<SVGSVGElement> {
 
     private render() {
         reconcileNode(this.element, this.vtree, this.domCache, this.reconcilerOptions);
-        this.vtree = {
-            id: '__root__',
-            tag: 'svg',
-            children: [],
-        };
+    }
+
+    markRenderStart(): void {
+        if (this.renderDepth === 0) {
+            this.vtree = {
+                id: '__root__',
+                tag: 'svg',
+                children: [],
+            };
+        }
+
+        super.markRenderStart();
     }
 
     markRenderEnd(): void {

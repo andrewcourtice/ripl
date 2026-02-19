@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -57,7 +53,6 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
     private legend?: Legend;
 
@@ -223,7 +218,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     });
                 });
 
-                segmentArc.once('mouseleave', () => {
+                segmentArc.on('mouseleave', () => {
                     this.tooltip.hide();
 
                     renderer.transition(segmentArc, {

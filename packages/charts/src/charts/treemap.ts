@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -121,7 +117,6 @@ function layoutTreemap(
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>> {
 
     private groups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
@@ -224,7 +219,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         },
                     });
 
-                    rect.once('mouseleave', () => {
+                    rect.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(rect, {

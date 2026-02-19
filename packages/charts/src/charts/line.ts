@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -91,15 +87,12 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
     private lineGroups: Group[] = [];
     private yScale!: Scale;
     private xScale!: Scale<string>;
-    private colorGenerator = getColorGenerator();
     private xAxis!: ChartXAxis;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
     private legend?: Legend;
     private grid?: Grid;
     private crosshair?: Crosshair;
-    private seriesColors: Map<string, string> = new Map();
-
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
 
@@ -147,21 +140,6 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
         this.init();
     }
 
-    private resolveSeriesColors() {
-        arrayForEach(this.options.series, series => {
-            if (!this.seriesColors.has(series.id)) {
-                this.seriesColors.set(series.id, series.color ?? this.colorGenerator.next().value!);
-            }
-
-            if (series.color) {
-                this.seriesColors.set(series.id, series.color);
-            }
-        });
-    }
-
-    private getSeriesColor(seriesId: string): string {
-        return this.seriesColors.get(seriesId) ?? '#a1afc4';
-    }
 
     private async drawLines() {
         const {
@@ -237,7 +215,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                             },
                         });
 
-                        marker.once('mouseleave', () => {
+                        marker.on('mouseleave', () => {
                             this.tooltip.hide();
 
                             this.renderer.transition(marker, {
@@ -327,7 +305,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
@@ -413,7 +391,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 keyBy,
             } = this.options;
 
-            this.resolveSeriesColors();
+            this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;

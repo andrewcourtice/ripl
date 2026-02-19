@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Arc,
     ArcState,
     BaseElementState,
@@ -60,8 +56,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
     private groups: Group[] = [];
     private gridGroup?: Group;
-    private colorGenerator = getColorGenerator();
-
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
         this.init();
@@ -90,6 +84,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         });
 
         const radiusStep = (maxRadius - innerRadius) / levels;
+        const animDuration = this.getAnimationDuration(800);
 
         // Concentric ring circles + value labels
         for (let level = 1; level <= levels; level++) {
@@ -99,9 +94,12 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 id: `polar-ring-${level}`,
                 cx,
                 cy,
-                radius: levelRadius,
+                radius: innerRadius,
                 strokeStyle: '#e5e7eb',
                 lineWidth: 1,
+                data: {
+                    radius: levelRadius,
+                },
             });
 
             ring.autoFill = false;
@@ -119,27 +117,47 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 font: '10px sans-serif',
                 textAlign: 'left',
                 textBaseline: 'bottom',
+                globalAlpha: 0,
+                data: {
+                    globalAlpha: 1,
+                },
             }));
         }
 
         // Radial axis lines from center to outer edge at each segment boundary
         for (let i = 0; i < segmentCount; i++) {
             const angle = startOffset + i * angleStep;
-            const x = cx + maxRadius * Math.cos(angle);
-            const y = cy + maxRadius * Math.sin(angle);
+            const x2 = cx + maxRadius * Math.cos(angle);
+            const y2 = cy + maxRadius * Math.sin(angle);
+            const x1 = cx + innerRadius * Math.cos(angle);
+            const y1 = cy + innerRadius * Math.sin(angle);
 
             this.gridGroup.add(createLine({
                 id: `polar-axis-${i}`,
-                x1: cx + innerRadius * Math.cos(angle),
-                y1: cy + innerRadius * Math.sin(angle),
-                x2: x,
-                y2: y,
+                x1,
+                y1,
+                x2: x1,
+                y2: y1,
                 strokeStyle: '#e5e7eb',
                 lineWidth: 1,
+                data: {
+                    x2,
+                    y2,
+                },
             }));
         }
 
         this.scene.add(this.gridGroup);
+
+        // Animate grid elements
+        const gridElements = this.gridGroup.children;
+
+        return this.renderer.transition(gridElements, (element, index, length) => ({
+            duration: animDuration,
+            delay: index * (animDuration / length) * 0.3,
+            ease: easeOutQuint,
+            state: element.data as Partial<BaseElementState>,
+        }));
     }
 
     public async render() {
@@ -178,7 +196,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const angleStep = TAU / data.length;
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
-            this.drawGrid(
+            const gridTransition = this.drawGrid(
                 scene.width / 2,
                 scene.height / 2,
                 size * innerRadiusRatio,
@@ -265,7 +283,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                         },
                     });
 
-                    segmentArc.once('mouseleave', () => {
+                    segmentArc.on('mouseleave', () => {
                         renderer.transition(segmentArc, {
                             duration: this.getAnimationDuration(400),
                             ease: easeOutQuint,
@@ -404,6 +422,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             return Promise.all([
+                gridTransition,
                 transitionEntries(),
                 transitionUpdates(),
                 transitionExits(),

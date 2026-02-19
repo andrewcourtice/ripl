@@ -8,6 +8,7 @@ import {
     Context,
     createArc,
     createGroup,
+    createLine,
     createText,
     easeOutCubic,
     Group,
@@ -22,6 +23,12 @@ export interface GaugeChartOptions extends BaseChartOptions {
     color?: string;
     trackColor?: string;
     formatValue?: (value: number) => string;
+    /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide. */
+    tickCount?: number;
+    /** Whether to show value labels at each tick. Defaults to true. */
+    showTickLabels?: boolean;
+    /** Format function for tick labels */
+    formatTickLabel?: (value: number) => string;
 }
 
 const DEFAULT_COLOR = '#7cacf8';
@@ -148,30 +155,66 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 this.group.add(labelText);
             }
 
-            // Min/max labels
-            const minLabel = createText({
-                id: 'gauge-min',
-                x: cx - radius * 0.7,
-                y: cy + radius * 0.5,
-                content: min.toString(),
-                fillStyle: '#9ca3af',
-                font: '10px sans-serif',
-                textAlign: 'center',
-                textBaseline: 'middle',
-            });
+            // Tick marks and labels
+            const tickCount = this.options.tickCount ?? 5;
+            const showTickLabels = this.options.showTickLabels !== false;
+            const formatTickLabel = this.options.formatTickLabel;
 
-            const maxLabel = createText({
-                id: 'gauge-max',
-                x: cx + radius * 0.7,
-                y: cy + radius * 0.5,
-                content: max.toString(),
-                fillStyle: '#9ca3af',
-                font: '10px sans-serif',
-                textAlign: 'center',
-                textBaseline: 'middle',
-            });
+            if (tickCount > 0) {
+                const tickOuterRadius = radius + 4;
+                const tickInnerRadius = radius - 4;
+                const labelRadius = radius + 16;
 
-            this.group.add([minLabel, maxLabel]);
+                for (let i = 0; i <= tickCount; i++) {
+                    const t = i / tickCount;
+                    const tickAngle = startAngle + t * (endAngle - startAngle);
+                    const tickValue = min + t * range;
+
+                    const outerX = cx + tickOuterRadius * Math.cos(tickAngle);
+                    const outerY = cy + tickOuterRadius * Math.sin(tickAngle);
+                    const innerX = cx + tickInnerRadius * Math.cos(tickAngle);
+                    const innerY = cy + tickInnerRadius * Math.sin(tickAngle);
+
+                    this.group.add(createLine({
+                        id: `gauge-tick-${i}`,
+                        x1: innerX,
+                        y1: innerY,
+                        x2: outerX,
+                        y2: outerY,
+                        strokeStyle: '#9ca3af',
+                        lineWidth: 1.5,
+                    }));
+
+                    if (showTickLabels) {
+                        const labelX = cx + labelRadius * Math.cos(tickAngle);
+                        const labelY = cy + labelRadius * Math.sin(tickAngle);
+                        const cosAngle = Math.cos(tickAngle);
+
+                        let textAlign: CanvasTextAlign = 'center';
+
+                        if (cosAngle > 0.1) {
+                            textAlign = 'left';
+                        } else if (cosAngle < -0.1) {
+                            textAlign = 'right';
+                        }
+
+                        const tickLabel = formatTickLabel
+                            ? formatTickLabel(tickValue)
+                            : Math.round(tickValue).toString();
+
+                        this.group.add(createText({
+                            id: `gauge-tick-label-${i}`,
+                            x: labelX,
+                            y: labelY,
+                            content: tickLabel,
+                            fillStyle: '#9ca3af',
+                            font: '10px sans-serif',
+                            textAlign,
+                            textBaseline: 'middle',
+                        }));
+                    }
+                }
+            }
             scene.add(this.group);
 
             // Animate

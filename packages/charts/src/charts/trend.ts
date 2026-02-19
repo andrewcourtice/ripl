@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -112,14 +108,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private yScale!: Scale;
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
-    private colorGenerator = getColorGenerator();
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
     private tooltip: Tooltip;
     private legend?: Legend;
     private grid?: Grid;
-    private seriesColors: Map<string, string> = new Map();
-
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 
@@ -154,22 +147,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         }
 
         this.init();
-    }
-
-    private resolveSeriesColors() {
-        arrayForEach(this.options.series, srs => {
-            if (!this.seriesColors.has(srs.id)) {
-                this.seriesColors.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
-            }
-
-            if (srs.color) {
-                this.seriesColors.set(srs.id, srs.color);
-            }
-        });
-    }
-
-    private getSeriesColor(seriesId: string): string {
-        return this.seriesColors.get(seriesId) ?? '#a1afc4';
     }
 
     private async drawLines() {
@@ -251,7 +228,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
@@ -342,7 +319,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
@@ -508,7 +485,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -579,7 +556,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -633,7 +610,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 keyBy,
             } = this.options;
 
-            this.resolveSeriesColors();
+            this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;

@@ -26,6 +26,9 @@ const { contextChanged } = useRiplChart(context => {
         max: 100,
         label: 'Performance',
         formatValue: v => `${v}%`,
+        tickCount: 10,
+        showTickLabels: true,
+        formatTickLabel: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
     });
 });
@@ -61,3 +64,6 @@ chart.update({ value: 85 });
 - **`color`** — Gauge fill color (default pastel blue)
 - **`trackColor`** — Background track color (default `#e5e7eb`)
 - **`formatValue`** — Custom value formatter function
+- **`tickCount`** — Number of tick marks along the arc (default `5`, set to `0` to hide)
+- **`showTickLabels`** — Whether to show value labels at each tick (default `true`)
+- **`formatTickLabel`** — Custom formatter for tick labels

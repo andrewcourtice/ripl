@@ -134,16 +134,66 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             const valueRange = maxVal - minVal || 1;
             const padding = this.getPadding();
 
-            // Build scales
-            const xScale = scaleBand(xCategories, [padding.left + 60, scene.width - padding.right], {
+            // Initial y-axis setup to measure label width
+            const initialYScale = scaleBand(yCategories, [padding.top, scene.height - padding.bottom], {
                 innerPadding: 0.05,
             });
 
-            const yScale = scaleBand(yCategories, [padding.top + 20, scene.height - padding.bottom - 30], {
+            this.yAxis.scale = Object.assign(
+                (value: string) => initialYScale(value) + initialYScale.bandwidth / 2,
+                {
+                    domain: yCategories,
+                    range: initialYScale.range,
+                    inverse: initialYScale.inverse,
+                    ticks: () => yCategories,
+                    includes: (v: string) => yCategories.includes(v),
+                }
+            ) as unknown as typeof this.yAxis.scale;
+
+            this.yAxis.bounds = new Box(
+                padding.top,
+                padding.left,
+                scene.height - padding.bottom,
+                scene.width - padding.right
+            );
+
+            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+
+            // Initial x-axis setup to measure label height
+            const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
                 innerPadding: 0.05,
             });
 
-            // Set up axes
+            this.xAxis.scale = Object.assign(
+                (value: string) => initialXScale(value) + initialXScale.bandwidth / 2,
+                {
+                    domain: xCategories,
+                    range: initialXScale.range,
+                    inverse: initialXScale.inverse,
+                    ticks: () => xCategories,
+                    includes: (v: string) => xCategories.includes(v),
+                }
+            ) as unknown as typeof this.xAxis.scale;
+
+            this.xAxis.bounds = new Box(
+                padding.top,
+                yAxisBoundingBox.right,
+                scene.height - padding.bottom,
+                scene.width - padding.right
+            );
+
+            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+
+            // Rebuild scales with correct chart area bounds
+            const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
+                innerPadding: 0.05,
+            });
+
+            const yScale = scaleBand(yCategories, [padding.top, xAxisBoundingBox.top], {
+                innerPadding: 0.05,
+            });
+
+            // Update axes with final scales
             this.xAxis.scale = Object.assign(
                 (value: string) => xScale(value) + xScale.bandwidth / 2,
                 {
@@ -156,8 +206,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.xAxis.scale;
 
             this.xAxis.bounds = new Box(
-                padding.top + 20,
-                padding.left + 60,
+                padding.top,
+                yAxisBoundingBox.right,
                 scene.height - padding.bottom,
                 scene.width - padding.right
             );
@@ -174,9 +224,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.yAxis.scale;
 
             this.yAxis.bounds = new Box(
-                padding.top + 20,
+                padding.top,
                 padding.left,
-                scene.height - padding.bottom - 30,
+                xAxisBoundingBox.top,
                 scene.width - padding.right
             );
 
@@ -239,7 +289,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         },
                     });
 
-                    rect.once('mouseleave', () => {
+                    rect.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(rect, {

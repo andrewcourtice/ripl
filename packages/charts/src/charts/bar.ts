@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -83,14 +79,11 @@ export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
 export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
     private barGroups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private xAxis!: ChartXAxis;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
     private legend?: Legend;
     private grid?: Grid;
-    private seriesColors: Map<string, string> = new Map();
-
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 
@@ -135,21 +128,6 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
         return this.options.mode === 'stacked';
     }
 
-    private resolveSeriesColors() {
-        arrayForEach(this.options.series, srs => {
-            if (!this.seriesColors.has(srs.id)) {
-                this.seriesColors.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
-            }
-
-            if (srs.color) {
-                this.seriesColors.set(srs.id, srs.color);
-            }
-        });
-    }
-
-    private getSeriesColor(seriesId: string): string {
-        return this.seriesColors.get(seriesId) ?? '#a1afc4';
-    }
 
     private async drawBarsVertical(
         categoryScale: BandScale<string>,
@@ -267,7 +245,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -338,7 +316,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -498,7 +476,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -569,7 +547,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         },
                     });
 
-                    bar.once('mouseleave', () => {
+                    bar.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(bar, {
@@ -622,7 +600,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 keyBy,
             } = this.options;
 
-            this.resolveSeriesColors();
+            this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
@@ -709,18 +687,16 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 });
 
                 // Y axis shows categories
-                this.yAxis.scale = {
-                    ...Object.assign(
-                        (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
-                        {
-                            domain: keys,
-                            range: categoryScale.range,
-                            inverse: categoryScale.inverse,
-                            ticks: () => keys,
-                            includes: (v: string) => keys.includes(v),
-                        }
-                    ),
-                } as unknown as typeof this.yAxis.scale;
+                this.yAxis.scale = Object.assign(
+                    (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
+                    {
+                        domain: keys,
+                        range: categoryScale.range,
+                        inverse: categoryScale.inverse,
+                        ticks: () => keys,
+                        includes: (v: string) => keys.includes(v),
+                    }
+                ) as unknown as typeof this.yAxis.scale;
 
                 this.yAxis.bounds = new Box(
                     chartTop,
@@ -784,18 +760,16 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 });
 
                 // X axis shows categories
-                this.xAxis.scale = {
-                    ...Object.assign(
-                        (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
-                        {
-                            domain: keys,
-                            range: categoryScale.range,
-                            inverse: categoryScale.inverse,
-                            ticks: () => keys,
-                            includes: (v: string) => keys.includes(v),
-                        }
-                    ),
-                } as unknown as typeof this.xAxis.scale;
+                this.xAxis.scale = Object.assign(
+                    (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
+                    {
+                        domain: keys,
+                        range: categoryScale.range,
+                        inverse: categoryScale.inverse,
+                        ticks: () => keys,
+                        includes: (v: string) => keys.includes(v),
+                    }
+                ) as unknown as typeof this.xAxis.scale;
 
                 this.xAxis.bounds = new Box(
                     chartTop,

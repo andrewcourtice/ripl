@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -44,7 +40,6 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
 export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>> {
 
     private groups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
@@ -157,7 +152,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         },
                     });
 
-                    rect.once('mouseleave', () => {
+                    rect.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(rect, {

@@ -8,6 +8,10 @@ import {
     Scene,
 } from '@ripl/core';
 
+import {
+    getColorGenerator,
+} from '../constants/colors';
+
 export interface ChartPadding {
     top: number;
     right: number;
@@ -53,6 +57,8 @@ export class Chart<
 
     protected options: TOptions;
     private baseDuration: number;
+    protected colorGenerator = getColorGenerator();
+    private seriesColorMap: Map<string, string> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
@@ -137,6 +143,25 @@ export class Chart<
             width: width - padding.left - padding.right,
             height: height - padding.top - padding.bottom,
         };
+    }
+
+    protected resolveSeriesColors(series: {
+        id: string;
+        color?: string;
+    }[]) {
+        for (const srs of series) {
+            if (!this.seriesColorMap.has(srs.id)) {
+                this.seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
+            }
+
+            if (srs.color) {
+                this.seriesColorMap.set(srs.id, srs.color);
+            }
+        }
+    }
+
+    protected getSeriesColor(seriesId: string): string {
+        return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
     }
 
     public destroy() {

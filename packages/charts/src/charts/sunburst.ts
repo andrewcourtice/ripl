@@ -113,7 +113,6 @@ function flattenNodes(
 export class SunburstChart extends Chart<SunburstChartOptions> {
 
     private groups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
     private legend?: Legend;
 
@@ -233,7 +232,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         },
                     });
 
-                    segment.once('mouseleave', () => {
+                    segment.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(segment, {

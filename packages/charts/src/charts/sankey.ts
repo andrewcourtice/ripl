@@ -298,15 +298,18 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 const tx = padding.left + link.target.x;
                 const ty = padding.top + link.targetY;
                 const midX = (sx + tx) / 2;
+                const minY = Math.min(sy, ty) - link.width / 2;
+                const maxY = Math.max(sy, ty) + link.width / 2;
 
                 const path = createPath({
                     id: `${link.id}-path`,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
+                    x: sx,
+                    y: minY,
+                    width: tx - sx,
+                    height: maxY - minY,
                     strokeStyle: setColorAlpha(link.color, 0.3),
-                    lineWidth: Math.max(link.width, 1),
+                    lineWidth: Math.max(link.width, 4),
+                    pointerEvents: 'stroke',
                     globalAlpha: 0,
                     data: {
                         globalAlpha: 1,
@@ -330,7 +333,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         },
                     });
 
-                    path.once('mouseleave', () => {
+                    path.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(path, {
@@ -397,7 +400,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         },
                     });
 
-                    rect.once('mouseleave', () => {
+                    rect.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(rect, {

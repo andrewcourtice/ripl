@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -62,11 +58,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
     private seriesGroups: Group[] = [];
     private gridGroup?: Group;
-    private colorGenerator = getColorGenerator();
     private tooltip!: Tooltip;
     private legend?: Legend;
-    private seriesColors: Map<string, string> = new Map();
-
     constructor(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
         super(target, options);
 
@@ -76,22 +69,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
         });
 
         this.init();
-    }
-
-    private resolveSeriesColors() {
-        arrayForEach(this.options.series, srs => {
-            if (!this.seriesColors.has(srs.id)) {
-                this.seriesColors.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
-            }
-
-            if (srs.color) {
-                this.seriesColors.set(srs.id, srs.color);
-            }
-        });
-    }
-
-    private getSeriesColor(seriesId: string): string {
-        return this.seriesColors.get(seriesId) ?? '#a1afc4';
     }
 
     private drawGrid(cx: number, cy: number, radius: number, axes: string[], levels: number) {
@@ -258,7 +235,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                         },
                     });
 
-                    marker.once('mouseleave', () => {
+                    marker.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         this.renderer.transition(marker, {
@@ -326,9 +303,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 state: area.data as PolylineState,
             });
 
-            const markersTransition = this.renderer.transition(markers, (element, index, length) => ({
-                duration: this.getAnimationDuration(600),
-                delay: this.getAnimationDuration(200) + index * (this.getAnimationDuration(400) / length),
+            const markersTransition = this.renderer.transition(markers, (element) => ({
+                duration: this.getAnimationDuration(800),
                 ease: easeOutCubic,
                 state: element.data as Record<string, unknown>,
             }));
@@ -371,7 +347,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 levels = 5,
             } = this.options;
 
-            this.resolveSeriesColors();
+            this.resolveSeriesColors(series);
 
             const padding = this.getPadding();
 

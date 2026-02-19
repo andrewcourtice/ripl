@@ -4,10 +4,6 @@ import {
 } from '../core/chart';
 
 import {
-    getColorGenerator,
-} from '../constants/colors';
-
-import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -41,7 +37,6 @@ import {
     easeOutQuart,
     getExtent,
     Group,
-    interpolatePath,
     Point,
     Polyline,
     PolylineRenderer,
@@ -90,15 +85,12 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
     private areaGroups: Group[] = [];
     private yScale!: Scale;
     private xScale!: Scale<string>;
-    private colorGenerator = getColorGenerator();
     private xAxis!: ChartXAxis;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
     private grid?: Grid;
     private crosshair?: Crosshair;
     private legend?: Legend;
-    private seriesColors: Map<string, string> = new Map();
-
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
 
@@ -138,22 +130,6 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
         }
 
         this.init();
-    }
-
-    private resolveSeriesColors() {
-        arrayForEach(this.options.series, srs => {
-            if (!this.seriesColors.has(srs.id)) {
-                this.seriesColors.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
-            }
-
-            if (srs.color) {
-                this.seriesColors.set(srs.id, srs.color);
-            }
-        });
-    }
-
-    private getSeriesColor(seriesId: string): string {
-        return this.seriesColors.get(seriesId) ?? '#a1afc4';
     }
 
     private async drawAreas(baseline: number) {
@@ -288,7 +264,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                             },
                         });
 
-                        marker.once('mouseleave', () => {
+                        marker.on('mouseleave', () => {
                             this.tooltip.hide();
 
                             this.renderer.transition(marker, {
@@ -306,12 +282,19 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 }
             });
 
+            // Create baseline-flattened points for entry animation
+            const baselineLinePoints: Point[] = arrayMap(linePoints, ([x]) => [x, baseline]);
+            const baselineAreaPoints: Point[] = arrayMap(areaPoints, ([x]) => [x, baseline]);
+
             const areaFill = createPolyline({
                 id: `${srs.id}-area`,
                 fillStyle: setColorAlpha(color, opacity),
                 strokeStyle: undefined,
-                points: areaPoints,
+                points: baselineAreaPoints,
                 renderer: srs.lineType,
+                data: {
+                    points: areaPoints,
+                } as PolylineState,
             });
 
             areaFill.autoStroke = false;
@@ -320,8 +303,11 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 strokeStyle: color,
-                points: linePoints,
+                points: baselineLinePoints,
                 renderer: srs.lineType,
+                data: {
+                    points: linePoints,
+                } as PolylineState,
             });
 
             return createGroup({
@@ -414,24 +400,28 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
         const entryTransitions = arrayMap(seriesEntryGroups, group => {
             const markers = group.queryAll('circle') as Circle[];
             const polylines = group.getElementsByType('polyline') as Polyline[];
+            const areaFill = polylines[0];
             const line = polylines[1];
 
             const lineTransition = line ? this.renderer.transition(line, {
                 duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
-                state: {
-                    points: interpolatePath(line.points),
-                },
+                state: line.data as PolylineState,
             }) : Promise.resolve();
 
-            const markersTransition = markers.length > 0 ? this.renderer.transition(markers, (element, index, length) => ({
+            const areaTransition = areaFill ? this.renderer.transition(areaFill, {
                 duration: this.getAnimationDuration(1000),
-                delay: index * (this.getAnimationDuration(1000) / length),
+                ease: easeOutCubic,
+                state: areaFill.data as PolylineState,
+            }) : Promise.resolve();
+
+            const markersTransition = markers.length > 0 ? this.renderer.transition(markers, (element) => ({
+                duration: this.getAnimationDuration(1000),
                 ease: easeOutCubic,
                 state: element.data as CircleState,
             })) : Promise.resolve();
 
-            return [lineTransition, markersTransition];
+            return [lineTransition, areaTransition, markersTransition];
         });
 
         const updateTransitions = arrayMap(seriesUpdateGroups, group => {
@@ -475,7 +465,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 stacked,
             } = this.options;
 
-            this.resolveSeriesColors();
+            this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;

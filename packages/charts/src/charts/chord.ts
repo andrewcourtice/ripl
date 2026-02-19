@@ -12,6 +12,11 @@ import {
 } from '../components/tooltip';
 
 import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
     Arc,
     ArcState,
     Context,
@@ -37,6 +42,7 @@ export interface ChordChartOptions extends BaseChartOptions {
     matrix: number[][];
     colors?: string[];
     padAngle?: number;
+    showLegend?: boolean;
 }
 
 interface ChordArc {
@@ -172,8 +178,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
     private arcGroups: Group[] = [];
     private ribbonGroups: Group[] = [];
-    private colorGenerator = getColorGenerator();
     private tooltip: Tooltip;
+    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);
@@ -249,7 +255,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         },
                     });
 
-                    segment.once('mouseleave', () => {
+                    segment.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(segment, {
@@ -354,7 +360,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         },
                     });
 
-                    path.once('mouseleave', () => {
+                    path.on('mouseleave', () => {
                         this.tooltip.hide();
 
                         renderer.transition(path, {
@@ -382,7 +388,30 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 ...ribbonUpdateGroups,
             ];
 
-            // Animate arcs
+            // Legend
+            if (this.options.showLegend !== false && layout.arcs.length > 0) {
+                const legendItems: LegendItem[] = arrayMap(layout.arcs, arc => ({
+                    id: arc.id,
+                    label: arc.label,
+                    color: arc.color,
+                    active: true,
+                }));
+
+                if (!this.legend) {
+                    this.legend = new Legend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        items: legendItems,
+                        position: 'top',
+                    });
+                } else {
+                    this.legend.update(legendItems);
+                }
+
+                this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
+            }
+
+            // Sequential animation: arcs first, then ribbons
             const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const arcsTransition = renderer.transition(entryArcs, (element, index, length) => ({
@@ -392,12 +421,13 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 state: element.data as Partial<ArcState>,
             }));
 
-            // Animate ribbons
+            // Ribbons animate after arcs complete
             const entryPaths = ribbonEntryGroups.flatMap(g => g.getElementsByType('path')) as Path[];
+            const arcAnimDuration = this.getAnimationDuration(800) + this.getAnimationDuration(600);
 
             const ribbonsTransition = renderer.transition(entryPaths, (element, index, length) => ({
                 duration: this.getAnimationDuration(600),
-                delay: this.getAnimationDuration(400) + index * (this.getAnimationDuration(400) / length),
+                delay: arcAnimDuration + index * (this.getAnimationDuration(400) / length),
                 ease: easeOutCubic,
                 state: element.data as Record<string, unknown>,
             }));
