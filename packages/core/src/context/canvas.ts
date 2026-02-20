@@ -25,6 +25,8 @@ import {
 
 import {
     BorderRadius,
+    getPathLength,
+    samplePathPoint,
     TAU,
 } from '../math';
 
@@ -423,8 +425,42 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return this.context.clip(path.ref, fillRule);
     }
 
+    private renderTextAlongPath(element: ContextText, method: 'fill' | 'stroke'): void {
+        const pathData = element.pathData!;
+        const totalLength = getPathLength(pathData);
+        let distance = (element.startOffset ?? 0) * totalLength;
+
+        for (const char of element.content) {
+            const charWidth = this.context.measureText(char).width;
+            const midDistance = distance + charWidth / 2;
+
+            if (midDistance > totalLength) {
+                break;
+            }
+
+            const { x, y, angle } = samplePathPoint(pathData, midDistance);
+
+            this.context.save();
+            this.context.translate(x, y);
+            this.context.rotate(angle);
+
+            if (method === 'fill') {
+                this.context.fillText(char, 0, 0);
+            } else {
+                this.context.strokeText(char, 0, 0);
+            }
+
+            this.context.restore();
+            distance += charWidth;
+        }
+    }
+
     fill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
         if (element instanceof ContextText) {
+            if (element.pathData) {
+                return this.renderTextAlongPath(element, 'fill');
+            }
+
             return this.context.fillText(element.content, element.x, element.y, element.maxWidth);
         }
 
@@ -433,6 +469,10 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
     stroke(element: CanvasPath | ContextText): void {
         if (element instanceof ContextText) {
+            if (element.pathData) {
+                return this.renderTextAlongPath(element, 'stroke');
+            }
+
             return this.context.strokeText(element.content, element.x, element.y, element.maxWidth);
         }
 

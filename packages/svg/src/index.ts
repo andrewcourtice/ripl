@@ -164,7 +164,7 @@ function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContext
     Object.assign(svgElement.style, styles);
     objectForEach(attributes, (key, value) => svgElement.setAttribute(key.toString(), value));
 
-    if (textContent) {
+    if (textContent !== undefined) {
         svgElement.textContent = textContent;
     }
 }
@@ -292,7 +292,9 @@ export class SVGText extends ContextText implements SVGContextElement {
 
         this.definition = {
             tag: 'text',
-            styles: {},
+            styles: {
+                fill: 'none',
+            },
             attributes: {
                 get x() {
                     return _this.x.toString();
@@ -302,8 +304,28 @@ export class SVGText extends ContextText implements SVGContextElement {
                 },
             },
             get textContent() {
-                return _this.content;
+                return _this.pathData ? undefined : _this.content;
             },
+        };
+    }
+}
+
+export class SVGTextPath implements SVGContextElement {
+
+    public readonly id: string;
+    public definition: SVGContextElementDefinition;
+
+    constructor(textId: string, pathId: string, content: string, startOffset?: number) {
+        this.id = `${textId}:textpath`;
+
+        this.definition = {
+            tag: 'textPath',
+            styles: {},
+            attributes: {
+                href: `#${pathId}`,
+                ...(startOffset !== undefined ? { startOffset: `${startOffset * 100}%` } : {}),
+            },
+            textContent: content,
         };
     }
 }
@@ -318,6 +340,8 @@ export class SVGContext extends Context<SVGSVGElement> {
     private requestFrame: (callback: AnyFunction) => void;
     private defs: SVGDefsElement;
     private gradientCache: Map<string, { gradientId: string;
+        element: SVGElement; }>;
+    private textPathCache: Map<string, { pathId: string;
         element: SVGElement; }>;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
@@ -351,6 +375,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             excludeSelectors: ['defs'],
         };
         this.gradientCache = new Map();
+        this.textPathCache = new Map();
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
         this.requestFrame = createFrameBuffer();
@@ -493,7 +518,54 @@ export class SVGContext extends Context<SVGSVGElement> {
 
     createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
-        this.addToVTree(text);
+        const renderElement = this.currentRenderElement;
+        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
+        const parent = ensureGroupPath(this.vtree, groupIds);
+
+        const textNode: SVGVNode = {
+            id: text.id,
+            tag: text.definition.tag,
+            element: text,
+            children: [],
+        };
+
+        if (options.pathData) {
+            const cacheKey = text.id;
+            let cached = this.textPathCache.get(cacheKey);
+
+            if (!cached) {
+                const pathId = `textpath-${stringUniqueId()}`;
+                const pathEl = createSVGElement('path');
+                pathEl.setAttribute('id', pathId);
+                this.defs.appendChild(pathEl);
+                cached = {
+                    pathId,
+                    element: pathEl,
+                };
+                this.textPathCache.set(cacheKey, cached);
+            }
+
+            cached.element.setAttribute('d', options.pathData);
+
+            const textPathEl = new SVGTextPath(text.id, cached.pathId, options.content, options.startOffset);
+
+            textNode.children.push({
+                id: textPathEl.id,
+                tag: textPathEl.definition.tag,
+                element: textPathEl,
+                children: [],
+            });
+        } else {
+            const cacheKey = text.id;
+            const cached = this.textPathCache.get(cacheKey);
+
+            if (cached) {
+                this.defs.removeChild(cached.element);
+                this.textPathCache.delete(cacheKey);
+            }
+        }
+
+        parent.children.push(textNode);
 
         return text;
     }

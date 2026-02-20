@@ -17,6 +17,8 @@ export interface TextState extends BaseElementState {
     x: number;
     y: number;
     content: string | number;
+    pathData?: string;
+    startOffset?: number;
 }
 
 export class Text extends Element<TextState> {
@@ -43,6 +45,22 @@ export class Text extends Element<TextState> {
 
     public set content(value) {
         this.setStateValue('content', value);
+    }
+
+    public get pathData() {
+        return this.getStateValue('pathData');
+    }
+
+    public set pathData(value) {
+        this.setStateValue('pathData', value);
+    }
+
+    public get startOffset() {
+        return this.getStateValue('startOffset');
+    }
+
+    public set startOffset(value) {
+        this.setStateValue('startOffset', value);
     }
 
     constructor(options: ElementOptions<TextState>) {
@@ -78,6 +96,8 @@ export class Text extends Element<TextState> {
                 x: this.x,
                 y: this.y,
                 content: this.content.toString(),
+                pathData: this.pathData,
+                startOffset: this.startOffset,
             });
 
             if (this.strokeStyle) {

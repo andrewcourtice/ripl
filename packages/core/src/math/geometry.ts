@@ -8,6 +8,7 @@ import {
 
 import {
     arrayForEach,
+    functionCache,
     typeIsArray,
 } from '@ripl/utilities';
 
@@ -109,4 +110,42 @@ export function normaliseBorderRadius(borderRadius: number | BorderRadius): Bord
 
 export function typeIsPoint(value: unknown): value is Point {
     return typeIsArray(value) && value.length === 2;
+}
+
+export type PathPoint = {
+    x: number;
+    y: number;
+    angle: number;
+};
+
+const getRefPathElement = functionCache(() => {
+    return document.createElementNS('http://www.w3.org/2000/svg', 'path');
+});
+
+export function getPathLength(pathData: string): number {
+    const pathEl = getRefPathElement();
+    pathEl.setAttribute('d', pathData);
+
+    return pathEl.getTotalLength();
+}
+
+export function samplePathPoint(pathData: string, distance: number): PathPoint {
+    const pathEl = getRefPathElement();
+
+    pathEl.setAttribute('d', pathData);
+
+    const totalLength = pathEl.getTotalLength();
+    const clampedDistance = Math.max(0, Math.min(distance, totalLength));
+    const point = pathEl.getPointAtLength(clampedDistance);
+
+    const delta = 0.5;
+    const pointBefore = pathEl.getPointAtLength(Math.max(0, clampedDistance - delta));
+    const pointAfter = pathEl.getPointAtLength(Math.min(totalLength, clampedDistance + delta));
+    const angle = Math.atan2(pointAfter.y - pointBefore.y, pointAfter.x - pointBefore.x);
+
+    return {
+        x: point.x,
+        y: point.y,
+        angle,
+    };
 }

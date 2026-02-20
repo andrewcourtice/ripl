@@ -51,6 +51,8 @@ export type TextOptions = {
     y: number;
     content: string;
     maxWidth?: number;
+    pathData?: string;
+    startOffset?: number;
 };
 
 export interface ContextElement {
@@ -177,12 +179,16 @@ export class ContextText implements ContextElement {
     public y: number;
     public content: string;
     public maxWidth?: number;
+    public pathData?: string;
+    public startOffset?: number;
 
     constructor({
         x,
         y,
         content,
         maxWidth,
+        pathData,
+        startOffset,
         id = `text-${stringUniqueId()}`,
     }: TextOptions) {
         this.id = id;
@@ -190,6 +196,8 @@ export class ContextText implements ContextElement {
         this.y = y;
         this.content = content;
         this.maxWidth = maxWidth;
+        this.pathData = pathData;
+        this.startOffset = startOffset;
     }
 
 }
