@@ -5,11 +5,21 @@ import {
 } from 'vitest';
 
 import {
+    arrayDedupe,
     arrayDifference,
+    arrayFilter,
     arrayFind,
+    arrayFlatMap,
     arrayForEach,
+    arrayGroup,
     arrayIntersection,
+    arrayJoin,
     arrayMap,
+    arrayMapRange,
+    arrayReduce,
+    objectForEach,
+    objectMap,
+    objectReduce,
 } from '../src';
 
 describe('Utilities', () => {
@@ -127,6 +137,166 @@ describe('Utilities', () => {
             expect(diffBasic).toEqual(expect.arrayContaining([0, 8]));
             expect(diffKey).toEqual(expect.arrayContaining([leftKey[1]]));
             expect(diffPred).toEqual(expect.arrayContaining([leftKey[1]]));
+        });
+
+        describe('arrayDedupe', () => {
+            test('Should remove duplicates', () => {
+                expect(arrayDedupe([1, 2, 2, 3, 3, 3])).toEqual([1, 2, 3]);
+            });
+
+            test('Should handle empty array', () => {
+                expect(arrayDedupe([])).toEqual([]);
+            });
+        });
+
+        describe('arrayFilter', () => {
+            test('Should filter elements by predicate', () => {
+                const result = arrayFilter([1, 2, 3, 4, 5], value => value > 3);
+                expect(result).toEqual([4, 5]);
+            });
+
+            test('Should return empty for no matches', () => {
+                const result = arrayFilter([1, 2, 3], value => value > 10);
+                expect(result).toEqual([]);
+            });
+        });
+
+        describe('arrayReduce', () => {
+            test('Should reduce an array to a single value', () => {
+                const sum = arrayReduce([1, 2, 3, 4], (acc, val) => acc + val, 0);
+                expect(sum).toBe(10);
+            });
+
+            test('Should reduce in reverse', () => {
+                const result = arrayReduce([1, 2, 3], (acc, val) => acc + String(val), '', -1);
+                expect(result).toBe('321');
+            });
+        });
+
+        describe('arrayFlatMap', () => {
+            test('Should flat map an array', () => {
+                const result = arrayFlatMap([1, 2, 3], value => [value, value * 10]);
+                expect(result).toEqual([1, 10, 2, 20, 3, 30]);
+            });
+        });
+
+        describe('arrayMapRange', () => {
+            test('Should map over a range of indices', () => {
+                const result = arrayMapRange(3, i => i * 2);
+                expect(result).toEqual([0, 2, 4]);
+            });
+
+            test('Should handle zero length', () => {
+                const result = arrayMapRange(0, i => i);
+                expect(result).toEqual([]);
+            });
+        });
+
+        describe('arrayJoin', () => {
+            test('Should perform a full join', () => {
+                const left = [
+                    {
+                        id: 1,
+                        name: 'A',
+                    },
+                    {
+                        id: 2,
+                        name: 'B',
+                    },
+                ];
+                const right = [
+                    {
+                        id: 2,
+                        name: 'C',
+                    },
+                    {
+                        id: 3,
+                        name: 'D',
+                    },
+                ];
+
+                const result = arrayJoin(left, right, 'id');
+                expect(result.left).toHaveLength(1);
+                expect(result.inner).toHaveLength(1);
+                expect(result.right).toHaveLength(1);
+                expect(result.left[0].id).toBe(1);
+                expect(result.inner[0][0].id).toBe(2);
+                expect(result.right[0].id).toBe(3);
+            });
+        });
+
+        describe('arrayGroup', () => {
+            test('Should group by key', () => {
+                const items = [
+                    {
+                        type: 'a',
+                        value: 1,
+                    },
+                    {
+                        type: 'b',
+                        value: 2,
+                    },
+                    {
+                        type: 'a',
+                        value: 3,
+                    },
+                ];
+
+                const groups = arrayGroup(items, 'type');
+                expect(groups['a']).toHaveLength(2);
+                expect(groups['b']).toHaveLength(1);
+            });
+
+            test('Should group by function', () => {
+                const items = [1, 2, 3, 4, 5];
+                const groups = arrayGroup(items, v => v % 2 === 0 ? 'even' : 'odd');
+                expect(groups['even']).toEqual([2, 4]);
+                expect(groups['odd']).toEqual([1, 3, 5]);
+            });
+        });
+
+        describe('Object utilities', () => {
+            test('objectForEach should iterate over object entries', () => {
+                const obj = {
+                    a: 1,
+                    b: 2,
+                    c: 3,
+                };
+                const keys: string[] = [];
+                const values: number[] = [];
+
+                objectForEach(obj, (key, value) => {
+                    keys.push(key as string);
+                    values.push(value as number);
+                });
+
+                expect(keys).toEqual(['a', 'b', 'c']);
+                expect(values).toEqual([1, 2, 3]);
+            });
+
+            test('objectMap should map object values', () => {
+                const obj = {
+                    a: 1,
+                    b: 2,
+                };
+
+                const result = objectMap(obj, (_, value) => (value as number) * 2);
+                expect(result).toEqual({
+                    a: 2,
+                    b: 4,
+                });
+            });
+
+            test('objectReduce should reduce object entries', () => {
+                const obj = {
+                    a: 1,
+                    b: 2,
+                    c: 3,
+                };
+
+                const sum = objectReduce(obj, (acc, _, value) => acc + (value as number), 0);
+                expect(sum).toBe(6);
+            });
         });
 
     });

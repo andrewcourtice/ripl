@@ -82,8 +82,13 @@ export class ChartAxis extends ChartComponent {
     protected group: Group;
 
     private labelDimension: LabelDimension;
+    protected cachedTicks?: unknown[];
 
     protected get ticks() {
+        if (this.cachedTicks) {
+            return this.cachedTicks;
+        }
+
         const ticks = this.scale.ticks(this.tickCount);
 
         const [
@@ -97,7 +102,8 @@ export class ChartAxis extends ChartComponent {
         const dropCount = Math.ceil(1 / tickRatio);
         const shouldDrop = tickRatio < 1;
 
-        return ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
+        this.cachedTicks = ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
+        return this.cachedTicks;
     }
 
     protected get maxLabelWidth() {
@@ -221,6 +227,7 @@ export class ChartXAxis extends ChartAxis {
     }
 
     public async render() {
+        this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
         const line = this.group.query<Line>('.chart-axis__line');
@@ -376,6 +383,7 @@ export class ChartYAxis extends ChartAxis {
     }
 
     public async render() {
+        this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
         const line = this.group.query<Line>('.chart-axis__line');

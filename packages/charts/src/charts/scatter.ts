@@ -45,6 +45,7 @@ import {
     arrayForEach,
     arrayJoin,
     arrayMap,
+    Disposable,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -85,6 +86,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
     private yAxis: ChartYAxis;
     private tooltip: Tooltip;
     private crosshair?: Crosshair;
+    private crosshairDisposables: Disposable[] = [];
     private legend?: Legend;
     private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
@@ -601,14 +603,16 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     xAxisBoundingBox.top - chartTop
                 );
 
-                this.scene.on('mousemove', (event) => {
-                    const { x, y } = event.data;
-                    this.crosshair?.show(x, y);
-                });
-
-                this.scene.on('mouseleave', () => {
-                    this.crosshair?.hide();
-                });
+                this.crosshairDisposables.forEach(d => d.dispose());
+                this.crosshairDisposables = [
+                    this.scene.on('mousemove', (event) => {
+                        const { x, y } = event.data;
+                        this.crosshair?.show(x, y);
+                    }),
+                    this.scene.on('mouseleave', () => {
+                        this.crosshair?.hide();
+                    }),
+                ];
             }
 
             // Render legend

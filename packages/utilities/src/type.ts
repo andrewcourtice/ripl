@@ -11,7 +11,7 @@ export function typeIsDate(value: unknown): value is Date {
 }
 
 export function typeIsObject(value: unknown): value is object {
-    return typeof value === 'object';
+    return value !== null && typeof value === 'object';
 }
 
 export function typeIsFunction(value: unknown): value is AnyFunction {

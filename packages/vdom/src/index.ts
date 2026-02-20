@@ -79,7 +79,7 @@ export function reconcileNode<TElement = unknown>(
         getChildId = defaultGetChildId,
     } = options;
 
-    const desiredIds = vnode.children.map(c => c.id);
+    const desiredIds = new Set(vnode.children.map(c => c.id));
     const existingChildren = new Map<string, Element>();
 
     for (let i = domParent.children.length - 1; i >= 0; i--) {
@@ -91,7 +91,7 @@ export function reconcileNode<TElement = unknown>(
 
         const childId = getChildId(child);
 
-        if (childId && desiredIds.includes(childId)) {
+        if (childId && desiredIds.has(childId)) {
             existingChildren.set(childId, child);
         } else {
             child.remove();

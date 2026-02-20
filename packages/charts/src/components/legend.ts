@@ -96,6 +96,19 @@ export class Legend extends ChartComponent {
         this.items = items;
     }
 
+    private measureLabelWidths(): Map<string, number> {
+        const widths = new Map<string, number>();
+        const font = `${FONT_SIZE}px sans-serif`;
+
+        arrayForEach(this.items, (item) => {
+            if (!widths.has(item.label)) {
+                widths.set(item.label, this.context.measureText(item.label, font).width);
+            }
+        });
+
+        return widths;
+    }
+
     public async render(x: number, y: number, width: number) {
         if (this.group) {
             this.group.clear();
@@ -109,15 +122,16 @@ export class Legend extends ChartComponent {
         });
 
         const isHorizontal = this.position === 'top' || this.position === 'bottom';
+        const labelWidths = this.measureLabelWidths();
 
         let offsetX = x;
         let offsetY = y + PADDING;
 
         arrayForEach(this.items, (item) => {
             const isActive = item.active !== false;
+            const labelWidth = labelWidths.get(item.label) ?? 0;
 
             if (isHorizontal) {
-                const labelWidth = this.context.measureText(item.label, `${FONT_SIZE}px sans-serif`).width;
                 const itemWidth = SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
 
                 if (offsetX + itemWidth > x + width && offsetX > x) {
@@ -162,7 +176,6 @@ export class Legend extends ChartComponent {
             this.group!.add([swatch, label]);
 
             if (isHorizontal) {
-                const labelWidth = this.context.measureText(item.label, `${FONT_SIZE}px sans-serif`).width;
                 offsetX += SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
             } else {
                 offsetY += SWATCH_SIZE + ITEM_GAP;
