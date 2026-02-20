@@ -14,17 +14,20 @@ import {
 import {
     Context,
     createGroup,
-    createPath,
     createRect,
     createText,
     easeOutCubic,
     easeOutQuart,
     Group,
-    Path,
     Rect,
     RectState,
     setColorAlpha,
 } from '@ripl/core';
+
+import {
+    createSankeyLink,
+    SankeyLinkPath,
+} from '../elements';
 
 import {
     arrayForEach,
@@ -298,15 +301,13 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 const tx = padding.left + link.target.x;
                 const ty = padding.top + link.targetY;
                 const midX = (sx + tx) / 2;
-                const minY = Math.min(sy, ty) - link.width / 2;
-                const maxY = Math.max(sy, ty) + link.width / 2;
 
-                const path = createPath({
-                    id: `${link.id}-path`,
-                    x: sx,
-                    y: minY,
-                    width: tx - sx,
-                    height: maxY - minY,
+                const linkEl = createSankeyLink({
+                    id: `${link.id}-link`,
+                    sx,
+                    sy,
+                    tx,
+                    ty,
                     strokeStyle: setColorAlpha(link.color, 0.3),
                     lineWidth: Math.max(link.width, 4),
                     pointerEvents: 'stroke',
@@ -314,18 +315,12 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     data: {
                         globalAlpha: 1,
                     },
-                    pathRenderer: (ctx) => {
-                        ctx.moveTo(sx, sy);
-                        ctx.bezierCurveTo(midX, sy, midX, ty, tx, ty);
-                    },
                 });
 
-                path.autoFill = false;
-
-                path.on('mouseenter', () => {
+                linkEl.on('mouseenter', () => {
                     this.tooltip.show(midX, (sy + ty) / 2, `${link.source.label} → ${link.target.label}: ${link.value}`);
 
-                    renderer.transition(path, {
+                    renderer.transition(linkEl, {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
@@ -333,10 +328,10 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         },
                     });
 
-                    path.on('mouseleave', () => {
+                    linkEl.on('mouseleave', () => {
                         this.tooltip.hide();
 
-                        renderer.transition(path, {
+                        renderer.transition(linkEl, {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
@@ -348,7 +343,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
                 return createGroup({
                     id: link.id,
-                    children: [path],
+                    children: [linkEl],
                 });
             });
 
@@ -458,7 +453,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             ];
 
             // Animate
-            const linkPaths = linkEntryGroups.flatMap(g => g.getElementsByType('path')) as Path[];
+            const linkPaths = linkEntryGroups.flatMap(g => g.getElementsByType('sankey-link')) as SankeyLinkPath[];
 
             const linksTransition = renderer.transition(linkPaths, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),

@@ -22,14 +22,17 @@ import {
     Context,
     createArc,
     createGroup,
-    createPath,
     easeOutCubic,
     easeOutQuart,
     Group,
-    Path,
     setColorAlpha,
     TAU,
 } from '@ripl/core';
+
+import {
+    createRibbon,
+    Ribbon,
+} from '../elements';
 
 import {
     arrayForEach,
@@ -308,12 +311,15 @@ export class ChordChart extends Chart<ChordChartOptions> {
             arrayForEach(ribbonExits, group => group.destroy());
 
             const ribbonEntryGroups = arrayMap(ribbonEntries, ribbon => {
-                const path = createPath({
-                    id: `${ribbon.id}-path`,
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
+                const ribbonEl = createRibbon({
+                    id: `${ribbon.id}-ribbon`,
+                    cx,
+                    cy,
+                    radius: innerRadius - 2,
+                    sourceStart: ribbon.sourceStart,
+                    sourceEnd: ribbon.sourceEnd,
+                    targetStart: ribbon.targetStart,
+                    targetEnd: ribbon.targetEnd,
                     fillStyle: setColorAlpha(ribbon.color, 0.2),
                     strokeStyle: setColorAlpha(ribbon.color, 0.4),
                     lineWidth: 0.5,
@@ -321,38 +327,12 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     data: {
                         globalAlpha: 1,
                     },
-                    pathRenderer: (ctx) => {
-                        const r = innerRadius - 2;
-
-                        ctx.moveTo(
-                            cx + r * Math.cos(ribbon.sourceStart),
-                            cy + r * Math.sin(ribbon.sourceStart)
-                        );
-
-                        ctx.arc(cx, cy, r, ribbon.sourceStart, ribbon.sourceEnd);
-
-                        ctx.quadraticCurveTo(
-                            cx, cy,
-                            cx + r * Math.cos(ribbon.targetStart),
-                            cy + r * Math.sin(ribbon.targetStart)
-                        );
-
-                        ctx.arc(cx, cy, r, ribbon.targetStart, ribbon.targetEnd);
-
-                        ctx.quadraticCurveTo(
-                            cx, cy,
-                            cx + r * Math.cos(ribbon.sourceStart),
-                            cy + r * Math.sin(ribbon.sourceStart)
-                        );
-
-                        ctx.closePath();
-                    },
                 });
 
-                path.on('mouseenter', () => {
+                ribbonEl.on('mouseenter', () => {
                     this.tooltip.show(cx, cy, `${ribbon.sourceLabel} → ${ribbon.targetLabel}: ${ribbon.value}`);
 
-                    renderer.transition(path, {
+                    renderer.transition(ribbonEl, {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
@@ -360,10 +340,10 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         },
                     });
 
-                    path.on('mouseleave', () => {
+                    ribbonEl.on('mouseleave', () => {
                         this.tooltip.hide();
 
-                        renderer.transition(path, {
+                        renderer.transition(ribbonEl, {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
@@ -375,7 +355,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
                 return createGroup({
                     id: ribbon.id,
-                    children: [path],
+                    children: [ribbonEl],
                 });
             });
 
@@ -422,10 +402,10 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Ribbons animate after arcs complete
-            const entryPaths = ribbonEntryGroups.flatMap(g => g.getElementsByType('path')) as Path[];
+            const entryRibbons = ribbonEntryGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
             const arcAnimDuration = this.getAnimationDuration(800) + this.getAnimationDuration(600);
 
-            const ribbonsTransition = renderer.transition(entryPaths, (element, index, length) => ({
+            const ribbonsTransition = renderer.transition(entryRibbons, (element, index, length) => ({
                 duration: this.getAnimationDuration(600),
                 delay: arcAnimDuration + index * (this.getAnimationDuration(400) / length),
                 ease: easeOutCubic,
