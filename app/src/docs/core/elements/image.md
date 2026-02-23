@@ -81,7 +81,7 @@ await renderer.transition(imageEl, {
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="nextImage">Next Image</button>
         </div>
     </template>

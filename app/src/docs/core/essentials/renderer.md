@@ -212,7 +212,7 @@ await renderer.transition(scene, (el, i) => ({
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="animateAll">Animate</button>
             <button class="ripl-button" @click="stagger">Stagger</button>
             <button class="ripl-button" @click="reset">Reset</button>

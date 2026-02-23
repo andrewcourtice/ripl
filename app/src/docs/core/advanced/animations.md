@@ -242,7 +242,7 @@ await renderer.transition(circle, {
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="runSequence">Sequence</button>
             <button class="ripl-button" @click="runKeyframes">Keyframes</button>
             <button class="ripl-button" @click="runCustom">Custom</button>

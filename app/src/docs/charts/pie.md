@@ -4,11 +4,15 @@ A pie chart is useful for illustrating numerical proportions of statistical data
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
-            <button class="ripl-button" @click="addData">Add Data</button>  
-            <button class="ripl-button" @click="removeData">Remove Data</button>  
+        <div class="ripl-control-group">
+            <button class="ripl-button" @click="addData">Add Data</button>
+            <button class="ripl-button" @click="removeData">Remove Data</button>
             <button class="ripl-button" @click="randomize">Randomize</button>
-            <button class="ripl-button" @click="toggleDonut">Toggle Donut</button>
+            <label class="ripl-switch">
+                <input type="checkbox" v-model="donut" @change="toggleDonut">
+                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
+                Donut
+            </label>
         </div>
     </template>
 </ripl-example>
@@ -79,7 +83,6 @@ function randomize() {
 }
 
 function toggleDonut() {
-    donut.value = !donut.value;
     chart.value?.update({ innerRadius: donut.value ? 0.25 : 0 });
 }
 </script>

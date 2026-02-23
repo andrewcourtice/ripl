@@ -6,7 +6,7 @@ The `LineChart` renders one or more data series as smooth or straight lines with
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
             <button class="ripl-button" @click="addPoint">Add Point</button>
             <button class="ripl-button" @click="removePoint">Remove Point</button>

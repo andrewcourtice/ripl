@@ -95,8 +95,10 @@ createPolyline({
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
-            <button v-for="r in renderers" :key="r" class="ripl-button" @click="currentRenderer = r">{{ r }}</button>
+        <div class="ripl-control-group">
+            <select class="ripl-select" v-model="currentRenderer">
+                <option v-for="r in renderers" :key="r" :value="r">{{ r }}</option>
+            </select>
         </div>
     </template>
 </ripl-example>

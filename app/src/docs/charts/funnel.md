@@ -6,7 +6,7 @@ The `FunnelChart` displays data as progressively narrowing horizontal bars, idea
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
         </div>
     </template>

@@ -57,9 +57,9 @@ circle.render(context);
 == Demo
 <ripl-example @context-changed="changeContextChanged">
     <template #footer>
-        <div layout="row">
-            <div>Radius</div>
-            <input type="range" v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" self="size-x1"/>
+        <div class="ripl-control-group">
+            <span>Radius</span>
+            <input class="ripl-input-range" type="range" v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
         </div>
     </template>
 </ripl-example>
@@ -189,7 +189,7 @@ await renderer.transition(circle, {
 == Demo
 <ripl-example @context-changed="rendererContextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="animateRenderer">Animate</button>
             <button class="ripl-button" @click="resetRenderer">Reset</button>
         </div>
@@ -223,7 +223,7 @@ async function animate() {
 == Demo
 <ripl-example @context-changed="animationContextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="runAnimation">Run Sequence</button>
         </div>
     </template>

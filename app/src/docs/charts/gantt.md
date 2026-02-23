@@ -6,11 +6,15 @@ The `GanttChart` displays tasks as horizontal bars along a time axis, with task 
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
             <button class="ripl-button" @click="addTask">Add Task</button>
             <button class="ripl-button" @click="removeTask">Remove Task</button>
-            <button class="ripl-button" @click="toggleToday">Toggle Today Marker</button>
+            <label class="ripl-switch">
+                <input type="checkbox" v-model="showToday" @change="toggleToday">
+                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
+                Today
+            </label>
         </div>
     </template>
 </ripl-example>
@@ -96,7 +100,6 @@ function removeTask() {
 }
 
 function toggleToday() {
-    showToday.value = !showToday.value;
     chart.value?.update({ showToday: showToday.value });
 }
 </script>
