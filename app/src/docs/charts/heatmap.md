@@ -6,7 +6,7 @@ The `HeatmapChart` displays data as a matrix of colored cells, with color intens
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
         </div>
     </template>

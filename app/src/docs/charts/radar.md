@@ -6,7 +6,7 @@ The `RadarChart` displays multivariate data on a radial grid, ideal for comparin
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
         </div>
     </template>

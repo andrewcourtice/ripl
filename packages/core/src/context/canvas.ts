@@ -455,6 +455,14 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         }
     }
 
+    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+        if (width && height) {
+            return this.context.drawImage(image, x, y, width, height);
+        }
+
+        return this.context.drawImage(image, x, y);
+    }
+
     fill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
         if (element instanceof ContextText) {
             if (element.pathData) {

@@ -6,7 +6,7 @@ The `PolarAreaChart` renders equal-angle segments whose radius encodes the value
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="addData">Add Data</button>
             <button class="ripl-button" @click="removeData">Remove Data</button>
             <button class="ripl-button" @click="randomize">Randomize</button>

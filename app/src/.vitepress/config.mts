@@ -132,6 +132,10 @@ export default defineConfig({
                             link: '/docs/core/elements/ellipse',
                         },
                         {
+                            text: 'Image',
+                            link: '/docs/core/elements/image',
+                        },
+                        {
                             text: 'Line',
                             link: '/docs/core/elements/line',
                         },

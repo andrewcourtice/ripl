@@ -4,10 +4,14 @@ A trend chart is any combination of x/y series such as bar, line or area.
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
-            <button class="ripl-button" @click="addData">Add Data</button>  
+        <div class="ripl-control-group">
+            <button class="ripl-button" @click="addData">Add Data</button>
             <button class="ripl-button" @click="randomise">Randomise</button>
-            <button class="ripl-button" @click="toggleGrid">Toggle Grid</button>
+            <label class="ripl-switch">
+                <input type="checkbox" v-model="showGrid" @change="toggleGrid">
+                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
+                Grid
+            </label>
             <select class="ripl-select" v-model="lineRenderer" @change="updateRenderer">
                 <option value="linear">Linear</option>
                 <option value="spline">Spline</option>
@@ -128,7 +132,6 @@ function randomise() {
 }
 
 function toggleGrid() {
-    showGrid.value = !showGrid.value;
     chart.value?.update({ showGrid: showGrid.value });
 }
 

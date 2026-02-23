@@ -6,12 +6,20 @@ The `BarChart` supports grouped and stacked modes, vertical and horizontal orien
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
             <button class="ripl-button" @click="addData">Add Month</button>
             <button class="ripl-button" @click="removeData">Remove Month</button>
-            <button class="ripl-button" @click="toggleMode">Toggle Stacked/Grouped</button>
-            <button class="ripl-button" @click="toggleOrientation">Toggle Orientation</button>
+            <label class="ripl-switch">
+                <input type="checkbox" v-model="stacked" @change="toggleMode">
+                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
+                Stacked
+            </label>
+            <label class="ripl-switch">
+                <input type="checkbox" v-model="horizontal" @change="toggleOrientation">
+                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
+                Horizontal
+            </label>
         </div>
     </template>
 </ripl-example>
@@ -81,12 +89,10 @@ function removeData() {
 }
 
 function toggleMode() {
-    stacked.value = !stacked.value;
     chart.value?.update({ mode: stacked.value ? 'stacked' : 'grouped' });
 }
 
 function toggleOrientation() {
-    horizontal.value = !horizontal.value;
     chart.value?.update({ orientation: horizontal.value ? 'horizontal' : 'vertical' });
 }
 </script>

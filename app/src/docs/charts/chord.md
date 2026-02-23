@@ -6,7 +6,7 @@ The `ChordChart` visualizes relationships between groups using arcs and ribbons 
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div layout="row">
+        <div class="ripl-control-group">
             <button class="ripl-button" @click="randomize">Randomize</button>
         </div>
     </template>

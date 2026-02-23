@@ -542,6 +542,10 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         return new ContextText(options);
     }
 
+
+    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+    }
+
     clip(path: ContextPath, fillRule?: FillRule): void {
     }
 
