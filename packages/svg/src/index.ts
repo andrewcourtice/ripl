@@ -41,6 +41,10 @@ import type {
     GradientColorStop,
 } from '@ripl/core';
 
+type SVGVNode = VNode<SVGContextElement>;
+type GradientElementFactory = (gradient: Gradient) => SVGElement;
+type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
+
 type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
 };
@@ -88,9 +92,6 @@ function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) 
         gradientEl.appendChild(stopEl);
     });
 }
-
-type GradientElementFactory = (gradient: Gradient) => SVGElement;
-type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
 
 function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient): void {
     const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
@@ -174,6 +175,48 @@ function mapSVGStyles(styles: Partial<Styles>) {
         const mapped = SVG_STYLE_MAP[key];
         return mapped?.[value as string] ?? value;
     });
+}
+
+function getImageSourceSize(image: CanvasImageSource): [number, number] {
+    if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
+        return [image.width, image.height];
+    }
+
+    if (image instanceof SVGImageElement) {
+        return [image.width.baseVal.value, image.height.baseVal.value];
+    }
+
+    if (image instanceof HTMLVideoElement) {
+        return [image.videoWidth, image.videoHeight];
+    }
+
+    if (image instanceof ImageBitmap) {
+        return [image.width, image.height];
+    }
+
+    if (typeof OffscreenCanvas !== 'undefined' && image instanceof OffscreenCanvas) {
+        return [image.width, image.height];
+    }
+
+    return [0, 0];
+}
+
+function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, height?: number): string {
+    const [sourceWidth, sourceHeight] = getImageSourceSize(image);
+    const imgWidth = width ?? sourceWidth;
+    const imgHeight = height ?? sourceHeight;
+    const canvas = document.createElement('canvas');
+
+    canvas.width = imgWidth;
+    canvas.height = imgHeight;
+
+    const ctx = canvas.getContext('2d');
+
+    if (ctx) {
+        ctx.drawImage(image, 0, 0, imgWidth, imgHeight);
+    }
+
+    return canvas.toDataURL();
 }
 
 export class SVGPath extends ContextPath implements SVGContextElement {
@@ -310,6 +353,29 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
+export class SVGImage implements SVGContextElement {
+
+    public readonly id: string;
+    public definition: SVGContextElementDefinition;
+
+    constructor(id: string, href: string, x: number, y: number, width: number, height: number) {
+        this.id = id;
+
+        this.definition = {
+            tag: 'image',
+            styles: {},
+            attributes: {
+                href,
+                x: x.toString(),
+                y: y.toString(),
+                width: width.toString(),
+                height: height.toString(),
+                preserveAspectRatio: 'none',
+            },
+        };
+    }
+}
+
 export class SVGTextPath implements SVGContextElement {
 
     public readonly id: string;
@@ -329,8 +395,6 @@ export class SVGTextPath implements SVGContextElement {
         };
     }
 }
-
-type SVGVNode = VNode<SVGContextElement>;
 
 export class SVGContext extends Context<SVGSVGElement> {
 
@@ -361,7 +425,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             tag: 'svg',
             children: [],
         };
-        this.domCache = new Map();
+
         this.reconcilerOptions = {
             createElement: (tag, id) => {
                 const el = createSVGElement(tag as keyof SVGElementTagNameMap);
@@ -374,11 +438,14 @@ export class SVGContext extends Context<SVGSVGElement> {
             getElementTag: (element) => element.definition.tag,
             excludeSelectors: ['defs'],
         };
+
+        this.domCache = new Map();
         this.gradientCache = new Map();
         this.textPathCache = new Map();
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
         this.requestFrame = createFrameBuffer();
+
         this.init();
     }
 
@@ -568,6 +635,22 @@ export class SVGContext extends Context<SVGSVGElement> {
         parent.children.push(textNode);
 
         return text;
+    }
+
+    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+        const [sourceWidth, sourceHeight] = getImageSourceSize(image);
+        const imgWidth = width ?? sourceWidth;
+        const imgHeight = height ?? sourceHeight;
+        const renderElement = this.currentRenderElement;
+        const id = renderElement?.id ?? `image-${stringUniqueId()}`;
+        const href = canvasImageSourceToDataURL(image, imgWidth, imgHeight);
+        const svgImage = new SVGImage(id, href, x, y, imgWidth, imgHeight);
+
+        this.setElementStyles(svgImage, {
+            opacity: this.currentState.globalAlpha.toString(),
+        });
+
+        this.addToVTree(svgImage);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
