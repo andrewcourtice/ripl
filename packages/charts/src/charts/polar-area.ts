@@ -56,6 +56,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
     private groups: Group[] = [];
     private gridGroup?: Group;
+
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
         this.init();

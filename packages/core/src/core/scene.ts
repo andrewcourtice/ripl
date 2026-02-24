@@ -41,9 +41,9 @@ export interface SceneOptions extends GroupOptions {
     renderOnResize?: boolean;
 }
 
-export class Scene extends Group<SceneEventMap> {
+export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
-    public context: Context;
+    public context: TContext;
 
     public buffer: Element[];
     private disposals = new Set<Disposable>();
@@ -62,11 +62,11 @@ export class Scene extends Group<SceneEventMap> {
             ...groupOptions
         } = options || {};
 
-        const context = typeIsContext(target)
+        const context = (typeIsContext(target)
             ? target
             : createContext(target, {
                 buffer: false,
-            });
+            })) as TContext;
 
         super({
             font: window.getComputedStyle(context.element).font,

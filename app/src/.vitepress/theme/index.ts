@@ -4,6 +4,7 @@ import 'flex-layout-attribute';
 import './style.scss';
 
 import Example from '../components/example.vue';
+import Example3D from '../components/example-3d.vue';
 
 import {
     enhanceAppWithTabs,
@@ -17,6 +18,7 @@ export default {
     extends: DefaultTheme,
     enhanceApp({ app }) {
         app.component('ripl-example', Example);
+        app.component('ripl-3d-example', Example3D);
 
         enhanceAppWithTabs(app);
     },

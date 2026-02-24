@@ -1,0 +1,13 @@
+{
+    "name": "@ripl/3d",
+    "version": "1.0.0",
+    "description": "",
+    "repository": "https://github.com/andrewcourtice/ripl",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "license": "MIT",
+    "main": "src/index.ts",
+    "dependencies": {
+        "@ripl/core": "1.0.0",
+        "@ripl/utilities": "1.0.0"
+    }
+}
