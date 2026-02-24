@@ -76,6 +76,9 @@ export default tseslint.config(
                     'p',
                     'q',
                     't',
+                    'w',
+                    'h',
+                    'z',
                 ],
             }],
 

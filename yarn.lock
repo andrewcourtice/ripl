@@ -2086,6 +2086,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ripl/3d@npm:1.0.0, @ripl/3d@workspace:packages/3d":
+  version: 0.0.0-use.local
+  resolution: "@ripl/3d@workspace:packages/3d"
+  dependencies:
+    "@ripl/core": "npm:1.0.0"
+    "@ripl/utilities": "npm:1.0.0"
+  languageName: unknown
+  linkType: soft
+
 "@ripl/charts@npm:1.0.0, @ripl/charts@workspace:packages/charts":
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
@@ -3405,6 +3414,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app-f43f79@workspace:app"
   dependencies:
+    "@ripl/3d": "npm:1.0.0"
     "@ripl/charts": "npm:1.0.0"
     "@ripl/core": "npm:1.0.0"
     "@ripl/svg": "npm:1.0.0"

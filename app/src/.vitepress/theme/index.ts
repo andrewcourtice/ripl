@@ -10,6 +10,7 @@ import {
 
 import Example from '../components/example.vue';
 import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vue';
+import Example3D from '../components/example-3d.vue';
 
 import {
     enhanceAppWithTabs,
@@ -24,6 +25,7 @@ export default {
     enhanceApp({ app }) {
         app.use(createPinia());
         app.component('ripl-example', Example);
+        app.component('ripl-3d-example', Example3D);
         app.component('trading-dashboard', TradingDashboard);
 
         enhanceAppWithTabs(app);

@@ -56,6 +56,10 @@ export default defineConfig({
                         text: 'Charts',
                         link: '/docs/charts/',
                     },
+                    {
+                        text: '3D',
+                        link: '/docs/3d/',
+                    },
                 ],
             },
             {
@@ -205,6 +209,64 @@ export default defineConfig({
                         {
                             text: 'Performance',
                             link: '/docs/core/troubleshooting/performance',
+                        },
+                    ],
+                },
+            ],
+
+            '/docs/3d': [
+                {
+                    text: 'Getting Started',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/3d/',
+                        },
+                    ],
+                },
+                {
+                    text: 'Essentials',
+                    items: [
+                        {
+                            text: 'Context3D',
+                            link: '/docs/3d/essentials/context',
+                        },
+                        {
+                            text: 'Camera',
+                            link: '/docs/3d/essentials/camera',
+                        },
+                        {
+                            text: 'Shading',
+                            link: '/docs/3d/essentials/shading',
+                        },
+                    ],
+                },
+                {
+                    text: 'Shapes',
+                    items: [
+                        {
+                            text: 'Cube',
+                            link: '/docs/3d/shapes/cube',
+                        },
+                        {
+                            text: 'Sphere',
+                            link: '/docs/3d/shapes/sphere',
+                        },
+                        {
+                            text: 'Cylinder',
+                            link: '/docs/3d/shapes/cylinder',
+                        },
+                        {
+                            text: 'Cone',
+                            link: '/docs/3d/shapes/cone',
+                        },
+                        {
+                            text: 'Plane',
+                            link: '/docs/3d/shapes/plane',
+                        },
+                        {
+                            text: 'Torus',
+                            link: '/docs/3d/shapes/torus',
                         },
                     ],
                 },

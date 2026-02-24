@@ -5,6 +5,7 @@
         "preview": "vitepress preview ./src"
     },
     "dependencies": {
+        "@ripl/3d": "1.0.0",
         "@ripl/charts": "1.0.0",
         "@ripl/core": "1.0.0",
         "@ripl/svg": "1.0.0",
