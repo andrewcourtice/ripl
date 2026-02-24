@@ -47,27 +47,36 @@ createRect({ x: 0, y: 0, width: 200, height: 100, borderRadius: [12, 0, 12, 0] }
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createRect } from '@ripl/core';
+import {
+    createContext,
+    createRect,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
 // Sharp corners
 createRect({
     fillStyle: '#3a86ff',
-    x: 50, y: 50, width: 150, height: 100,
+    x: 50,
+    y: 50,
+    width: 150,
+    height: 100,
 }).render(context);
 
 // Rounded corners
 createRect({
     fillStyle: '#ff006e',
-    x: 250, y: 50, width: 150, height: 100,
+    x: 250,
+    y: 50,
+    width: 150,
+    height: 100,
     borderRadius: 16,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

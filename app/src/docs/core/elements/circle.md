@@ -32,9 +32,14 @@ Plus all [Element style properties](/docs/core/essentials/element#style-properti
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -45,8 +50,6 @@ createCircle({
     radius: Math.min(context.width, context.height) / 3,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

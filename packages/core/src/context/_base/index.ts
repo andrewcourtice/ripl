@@ -2,6 +2,7 @@
 
 import {
     BorderRadius,
+    Box,
     Point,
 } from '../../math';
 
@@ -36,6 +37,7 @@ export type FillRule = 'evenodd' | 'nonzero';
 export interface RenderElement {
     readonly id: string;
     parent?: RenderElement;
+    getBoundingBox?(): Box;
 }
 
 export interface ContextEventMap extends EventMap {
@@ -248,7 +250,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected currentState: BaseState;
     protected renderDepth = 0;
 
-    private resizeDisposable?: Disposable;
+    private disposables: Disposable[];
 
     public currentRenderElement?: RenderElement;
 
@@ -442,6 +444,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         root.appendChild(element);
 
+        this.disposables = [];
         this.type = type;
         this.root = root;
         this.element = element;
@@ -463,7 +466,9 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         this.rescale(width, height);
 
-        this.resizeDisposable = onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height));
+        this.disposables.push(
+            onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height))
+        );
     }
 
     protected rescale(width: number, height: number) {
@@ -482,7 +487,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     save(): void {
         this.states.push(this.currentState);
-        this.currentState = { ...this.currentState };
+        this.currentState = this.getDefaultState();
     }
 
     restore(): void {
@@ -564,7 +569,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     public destroy(): void {
-        this.resizeDisposable?.dispose();
+        this.disposables.forEach(({ dispose }) => dispose());
         this.element.remove();
         super.destroy();
     }

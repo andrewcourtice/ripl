@@ -85,9 +85,15 @@ Canvas is less ideal when:
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle, createRect } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+    createRect,
+} from '@ripl/core';
 
 // Creates a canvas context by default
 const context = createContext('.mount-element');
@@ -107,8 +113,6 @@ createRect({
     height: context.height / 2,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

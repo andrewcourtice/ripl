@@ -51,7 +51,6 @@ import {
     arrayForEach,
     arrayJoin,
     arrayMap,
-    Disposable,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -91,7 +90,6 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
     private tooltip!: Tooltip;
     private grid?: Grid;
     private crosshair?: Crosshair;
-    private crosshairDisposables: Disposable[] = [];
     private legend?: Legend;
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
@@ -611,25 +609,12 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             }
 
             // Setup crosshair
-            if (this.crosshair) {
-                this.crosshair.setup(
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-
-                this.crosshairDisposables.forEach(d => d.dispose());
-                this.crosshairDisposables = [
-                    this.scene.on('mousemove', (event) => {
-                        const { x, y } = event.data;
-                        this.crosshair?.show(x, y);
-                    }),
-                    this.scene.on('mouseleave', () => {
-                        this.crosshair?.hide();
-                    }),
-                ];
-            }
+            this.crosshair?.setup(
+                yAxisBoundingBox.right,
+                chartTop,
+                scene.width - padding.right - yAxisBoundingBox.right,
+                xAxisBoundingBox.top - chartTop
+            );
 
             // Render legend
             if (this.legend && legendHeight > 0) {

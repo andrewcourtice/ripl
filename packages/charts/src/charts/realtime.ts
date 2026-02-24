@@ -44,7 +44,6 @@ import {
 import {
     arrayForEach,
     arrayMap,
-    Disposable,
     functionIdentity,
 } from '@ripl/utilities';
 
@@ -82,7 +81,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     private legend?: Legend;
     private grid?: Grid;
     private crosshair?: Crosshair;
-    private crosshairDisposables: Disposable[] = [];
     private windowSize: number;
     private transitionDuration: number;
 
@@ -440,25 +438,12 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             }
 
             // Setup crosshair
-            if (this.crosshair) {
-                this.crosshair.setup(
-                    chartLeft,
-                    chartTop,
-                    chartRight - chartLeft,
-                    chartBottom - chartTop
-                );
-
-                this.crosshairDisposables.forEach(d => d.dispose());
-                this.crosshairDisposables = [
-                    this.scene.on('mousemove', (event) => {
-                        const { x, y } = event.data;
-                        this.crosshair?.show(x, y);
-                    }),
-                    this.scene.on('mouseleave', () => {
-                        this.crosshair?.hide();
-                    }),
-                ];
-            }
+            this.crosshair?.setup(
+                chartLeft,
+                chartTop,
+                chartRight - chartLeft,
+                chartBottom - chartTop
+            );
 
             // Render legend
             if (this.legend && legendHeight > 0) {

@@ -17,9 +17,14 @@ The most basic usage of Ripl involves 3 steps:
 3. **Render** — draw the element to the context
 
 :::tabs
+== Demo
+<ripl-example @context-changed="basicContextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -32,8 +37,6 @@ const circle = createCircle({
 
 circle.render(context);
 ```
-== Demo
-<ripl-example @context-changed="basicContextChanged"></ripl-example>
 :::
 
 > [!TIP]
@@ -44,6 +47,15 @@ circle.render(context);
 An element can be modified at any point by changing its properties and re-rendering. Use the slider below to change the circle's radius in real time.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="changeContextChanged">
+    <template #footer>
+        <div class="ripl-control-group">
+            <span>Radius</span>
+            <input class="ripl-input-range" type="range" v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
+        </div>
+    </template>
+</ripl-example>
 == Code
 ```ts
 // Change any property directly
@@ -54,15 +66,6 @@ circle.fillStyle = '#ff006e';
 context.clear();
 circle.render(context);
 ```
-== Demo
-<ripl-example @context-changed="changeContextChanged">
-    <template #footer>
-        <div class="ripl-control-group">
-            <span>Radius</span>
-            <input class="ripl-input-range" type="range" v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
-        </div>
-    </template>
-</ripl-example>
 :::
 
 ## Creating Structure
@@ -72,9 +75,16 @@ circle.render(context);
 Groups let you organize elements into a hierarchy — just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fillStyle` once on the group instead of on every element.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="groupContextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle, createRect, createGroup } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+    createRect,
+    createGroup,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -99,8 +109,6 @@ const group = createGroup({
 
 group.render(context);
 ```
-== Demo
-<ripl-example @context-changed="groupContextChanged"></ripl-example>
 :::
 
 Groups also support querying elements using familiar DOM-like methods:
@@ -118,29 +126,37 @@ group.queryAll('.shape');
 A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle — clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="sceneContextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle, createRect, createScene } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+    createRect,
+    createScene,
+} from '@ripl/core';
 
 const scene = createScene('.mount-element', {
     children: [
         createCircle({
             fillStyle: '#3a86ff',
-            cx: 200, cy: 150,
+            cx: 200,
+            cy: 150,
             radius: 60,
         }),
         createRect({
             fillStyle: '#ff006e',
-            x: 280, y: 100,
-            width: 120, height: 100,
+            x: 280,
+            y: 100,
+            width: 120,
+            height: 100,
         }),
     ],
 });
 
 scene.render();
 ```
-== Demo
-<ripl-example @context-changed="sceneContextChanged"></ripl-example>
 :::
 
 > [!TIP]
@@ -155,10 +171,22 @@ A **Renderer** provides an automatic render loop powered by `requestAnimationFra
 The renderer also provides a `transition()` method that smoothly animates element properties from their current values to new values.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="rendererContextChanged">
+    <template #footer>
+        <div class="ripl-control-group">
+            <button class="ripl-button" @click="animateRenderer">Animate</button>
+            <button class="ripl-button" @click="resetRenderer">Reset</button>
+        </div>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
-    createScene, createRenderer, createCircle, easeOutCubic
+    createScene,
+    createRenderer,
+    createCircle,
+    easeOutCubic,
 } from '@ripl/core';
 
 const scene = createScene('.mount-element', {
@@ -166,7 +194,8 @@ const scene = createScene('.mount-element', {
         createCircle({
             id: 'my-circle',
             fillStyle: '#3a86ff',
-            cx: 200, cy: 150,
+            cx: 200,
+            cy: 150,
             radius: 60,
         }),
     ],
@@ -186,15 +215,6 @@ await renderer.transition(circle, {
     },
 });
 ```
-== Demo
-<ripl-example @context-changed="rendererContextChanged">
-    <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="animateRenderer">Animate</button>
-            <button class="ripl-button" @click="resetRenderer">Reset</button>
-        </div>
-    </template>
-</ripl-example>
 :::
 
 ### Adding Animation
@@ -202,24 +222,6 @@ await renderer.transition(circle, {
 Transitions are **awaitable**, so you can chain animations sequentially. You can also animate multiple elements at once and use different easing functions.
 
 :::tabs
-== Code
-```ts
-async function animate() {
-    // Animate one element
-    await renderer.transition(circle, {
-        duration: 800,
-        ease: easeOutCubic,
-        state: { radius: 100, fillStyle: '#ff006e' },
-    });
-
-    // Then animate it back
-    await renderer.transition(circle, {
-        duration: 800,
-        ease: easeInOutQuad,
-        state: { radius: 60, fillStyle: '#3a86ff' },
-    });
-}
-```
 == Demo
 <ripl-example @context-changed="animationContextChanged">
     <template #footer>
@@ -228,6 +230,30 @@ async function animate() {
         </div>
     </template>
 </ripl-example>
+== Code
+```ts
+async function animate() {
+    // Animate one element
+    await renderer.transition(circle, {
+        duration: 800,
+        ease: easeOutCubic,
+        state: {
+            radius: 100,
+            fillStyle: '#ff006e',
+        },
+    });
+
+    // Then animate it back
+    await renderer.transition(circle, {
+        duration: 800,
+        ease: easeInOutQuad,
+        state: {
+            radius: 60,
+            fillStyle: '#3a86ff',
+        },
+    });
+}
+```
 :::
 
 ## Next Steps

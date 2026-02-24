@@ -153,7 +153,7 @@ function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementIn
         return (time: number) => interpolate(scale(time));
     });
 
-    return time => interpolators[Math.floor(frameScale(time))](time);
+    return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
 }
 
 function getInterpolator<TValue>(value: TValue) {

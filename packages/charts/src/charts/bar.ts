@@ -84,6 +84,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
     private tooltip!: Tooltip;
     private legend?: Legend;
     private grid?: Grid;
+
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 

@@ -56,28 +56,6 @@ renderer.transition(imageElement, {
 Click **Next Image** to crossfade between images using `interpolateImage`.
 
 :::tabs
-== Code
-```ts
-import {
-    createScene, createRenderer, createImage,
-    interpolateImage, easeInOutQuad,
-} from '@ripl/core';
-
-const scene = createScene('.container', {
-    children: [createImage({
-        image: img, x: 50, y: 50, width: 300, height: 200,
-    })],
-});
-
-const renderer = createRenderer(scene);
-const imageEl = scene.query('image');
-
-await renderer.transition(imageEl, {
-    duration: 800,
-    ease: easeInOutQuad,
-    state: { image: interpolateImage(currentImg, nextImg) },
-});
-```
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
@@ -86,6 +64,39 @@ await renderer.transition(imageEl, {
         </div>
     </template>
 </ripl-example>
+== Code
+```ts
+import {
+    createScene,
+    createRenderer,
+    createImage,
+    interpolateImage,
+    easeInOutQuad,
+} from '@ripl/core';
+
+const scene = createScene('.container', {
+    children: [
+        createImage({
+            image: img,
+            x: 50,
+            y: 50,
+            width: 300,
+            height: 200,
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene);
+const imageEl = scene.query('image');
+
+await renderer.transition(imageEl, {
+    duration: 800,
+    ease: easeInOutQuad,
+    state: {
+        image: interpolateImage(currentImg, nextImg),
+    },
+});
+```
 :::
 
 <script lang="ts" setup>

@@ -139,18 +139,29 @@ scene.destroy();
 Hover over the elements to see pointer events in action. Click an element to change its color.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createScene, createCircle, createRect } from '@ripl/core';
+import {
+    createScene,
+    createCircle,
+    createRect,
+} from '@ripl/core';
 
 const circle = createCircle({
     fillStyle: '#3a86ff',
-    cx: 150, cy: 150, radius: 60,
+    cx: 150,
+    cy: 150,
+    radius: 60,
 });
 
 const rect = createRect({
     fillStyle: '#ff006e',
-    x: 250, y: 90, width: 120, height: 120,
+    x: 250,
+    y: 90,
+    width: 120,
+    height: 120,
 });
 
 const scene = createScene('.container', {
@@ -169,8 +180,6 @@ circle.on('mouseleave', () => {
     scene.render();
 });
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

@@ -59,7 +59,7 @@ export class Circle extends Shape<CircleState> {
 
     public render(context: Context) {
         return super.render(context, path => {
-            path.circle(this.cx, this.cy, this.radius);
+            path.circle(this.cx, this.cy, Math.max(0, this.radius));
         });
     }
 

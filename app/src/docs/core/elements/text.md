@@ -48,9 +48,14 @@ The following inherited style properties are particularly relevant for text:
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createText } from '@ripl/core';
+import {
+    createContext,
+    createText,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -64,8 +69,6 @@ createText({
     textBaseline: 'middle',
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 ## Text on Path
@@ -75,9 +78,14 @@ Text can be rendered along an arbitrary path by providing a `pathData` string (a
 Use `startOffset` (0–1) to control where along the path the text begins.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="pathContextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createText } from '@ripl/core';
+import {
+    createContext,
+    createText,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 const w = context.width;
@@ -90,8 +98,6 @@ createText({
     pathData: `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="pathContextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

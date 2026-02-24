@@ -212,33 +212,6 @@ await renderer.transition(circle, {
 ## Demo
 
 :::tabs
-== Code
-```ts
-import {
-    createScene, createRenderer, createCircle,
-    easeOutCubic, easeInOutQuad
-} from '@ripl/core';
-
-const scene = createScene('.container', {
-    children: [createCircle({
-        fillStyle: '#3a86ff', cx: 200, cy: 150, radius: 50,
-    })],
-});
-
-const renderer = createRenderer(scene);
-const circle = scene.query('circle');
-
-// Sequential animation
-await renderer.transition(circle, {
-    duration: 800, ease: easeOutCubic,
-    state: { radius: 100, fillStyle: '#ff006e' },
-});
-
-await renderer.transition(circle, {
-    duration: 800, ease: easeInOutQuad,
-    state: { radius: 50, fillStyle: '#3a86ff' },
-});
-```
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
@@ -250,6 +223,49 @@ await renderer.transition(circle, {
         </div>
     </template>
 </ripl-example>
+== Code
+```ts
+import {
+    createScene,
+    createRenderer,
+    createCircle,
+    easeOutCubic,
+    easeInOutQuad,
+} from '@ripl/core';
+
+const scene = createScene('.container', {
+    children: [
+        createCircle({
+            fillStyle: '#3a86ff',
+            cx: 200,
+            cy: 150,
+            radius: 50,
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene);
+const circle = scene.query('circle');
+
+// Sequential animation
+await renderer.transition(circle, {
+    duration: 800,
+    ease: easeOutCubic,
+    state: {
+        radius: 100,
+        fillStyle: '#ff006e',
+    },
+});
+
+await renderer.transition(circle, {
+    duration: 800,
+    ease: easeInOutQuad,
+    state: {
+        radius: 50,
+        fillStyle: '#3a86ff',
+    },
+});
+```
 :::
 
 <script lang="ts" setup>
