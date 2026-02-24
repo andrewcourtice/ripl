@@ -42,10 +42,16 @@ import type {
     Gradient,
 } from '../gradient';
 
-type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, width: number, height: number) => CanvasGradient;
+type GradientBounds = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
 
 const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
-    linear: (context, gradient, width, height) => {
+    linear: (context, gradient, { x, y, width, height }) => {
         const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
         const cos = Math.cos(angleRad);
         const sin = Math.sin(angleRad);
@@ -54,31 +60,31 @@ const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
         const length = Math.abs(halfW * cos) + Math.abs(halfH * sin);
 
         return context.createLinearGradient(
-            halfW - cos * length,
-            halfH - sin * length,
-            halfW + cos * length,
-            halfH + sin * length
+            x + halfW - cos * length,
+            y + halfH - sin * length,
+            x + halfW + cos * length,
+            y + halfH + sin * length
         );
     },
-    radial: (context, gradient, width, height) => {
-        const cx = ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = ((gradient as { position: [number, number] }).position[1] / 100) * height;
+    radial: (context, gradient, { x, y, width, height }) => {
+        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
         const radius = Math.max(width, height) / 2;
 
         return context.createRadialGradient(cx, cy, 0, cx, cy, radius);
     },
-    conic: (context, gradient, width, height) => {
-        const cx = ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = ((gradient as { position: [number, number] }).position[1] / 100) * height;
+    conic: (context, gradient, { x, y, width, height }) => {
+        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
         const startAngle = (gradient as { angle: number }).angle * (Math.PI / 180);
 
         return context.createConicGradient(startAngle, cx, cy);
     },
 };
 
-function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, width: number, height: number): CanvasGradient {
+function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds): CanvasGradient {
     const factory = CANVAS_GRADIENT_FACTORIES[gradient.type];
-    const canvasGradient = factory(context, gradient, width, height);
+    const canvasGradient = factory(context, gradient, bounds);
 
     arrayForEach(gradient.stops, (stop) => {
         const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
@@ -163,7 +169,8 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
             const gradient = parseGradient(value);
 
             if (gradient) {
-                this.context.fillStyle = toCanvasGradient(this.context, gradient, this.width, this.height);
+                const bounds = this.getGradientBounds();
+                this.context.fillStyle = toCanvasGradient(this.context, gradient, bounds);
                 return;
             }
         }
@@ -310,7 +317,8 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
             const gradient = parseGradient(value);
 
             if (gradient) {
-                this.context.strokeStyle = toCanvasGradient(this.context, gradient, this.width, this.height);
+                const bounds = this.getGradientBounds();
+                this.context.strokeStyle = toCanvasGradient(this.context, gradient, bounds);
                 return;
             }
         }
@@ -332,6 +340,26 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
     set textBaseline(value) {
         this.context.textBaseline = value;
+    }
+
+    private getGradientBounds(): GradientBounds {
+        const box = this.currentRenderElement?.getBoundingBox?.();
+
+        if (box && box.width > 0 && box.height > 0) {
+            return {
+                x: box.left,
+                y: box.top,
+                width: box.width,
+                height: box.height,
+            };
+        }
+
+        return {
+            x: 0,
+            y: 0,
+            width: this.width,
+            height: this.height,
+        };
     }
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {

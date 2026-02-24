@@ -186,20 +186,22 @@ await renderer.transition(star, {
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
 // Custom star element
 const star = createStar({
     fillStyle: '#ff006e',
-    cx: 200, cy: 150,
-    outerRadius: 80, innerRadius: 35,
+    cx: 200,
+    cy: 150,
+    outerRadius: 80,
+    innerRadius: 35,
     points: 5,
 });
 
 star.render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

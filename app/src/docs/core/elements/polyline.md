@@ -80,18 +80,6 @@ const custom = createPolyline({
 The demo below shows the same set of points rendered with different renderer modes.
 
 :::tabs
-== Code
-```ts
-import { createContext, createPolyline } from '@ripl/core';
-
-const context = createContext('.mount-element');
-const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
-
-createPolyline({
-    strokeStyle: '#3a86ff', lineWidth: 2,
-    points, renderer: 'spline',
-}).render(context);
-```
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
@@ -102,6 +90,23 @@ createPolyline({
         </div>
     </template>
 </ripl-example>
+== Code
+```ts
+import {
+    createContext,
+    createPolyline,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
+
+createPolyline({
+    strokeStyle: '#3a86ff',
+    lineWidth: 2,
+    points,
+    renderer: 'spline',
+}).render(context);
+```
 :::
 
 <script lang="ts" setup>

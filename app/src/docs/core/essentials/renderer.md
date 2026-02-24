@@ -186,29 +186,6 @@ renderer.destroy(); // stops the loop and cleans up
 Click "Animate" to run a transition. Click "Stagger" to see per-element staggered animation.
 
 :::tabs
-== Code
-```ts
-import {
-    createScene, createRenderer, createCircle, easeOutCubic
-} from '@ripl/core';
-
-const scene = createScene('.mount-element', {
-    children: [
-        createCircle({ id: 'c1', fillStyle: '#3a86ff', cx: 100, cy: 150, radius: 40 }),
-        createCircle({ id: 'c2', fillStyle: '#3a86ff', cx: 200, cy: 150, radius: 40 }),
-        createCircle({ id: 'c3', fillStyle: '#3a86ff', cx: 300, cy: 150, radius: 40 }),
-    ],
-});
-
-const renderer = createRenderer(scene);
-
-await renderer.transition(scene, (el, i) => ({
-    duration: 600,
-    delay: i * 150,
-    ease: easeOutCubic,
-    state: { fillStyle: '#ff006e' },
-}));
-```
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
@@ -219,6 +196,52 @@ await renderer.transition(scene, (el, i) => ({
         </div>
     </template>
 </ripl-example>
+== Code
+```ts
+import {
+    createScene,
+    createRenderer,
+    createCircle,
+    easeOutCubic,
+} from '@ripl/core';
+
+const scene = createScene('.mount-element', {
+    children: [
+        createCircle({
+            id: 'c1',
+            fillStyle: '#3a86ff',
+            cx: 100,
+            cy: 150,
+            radius: 40,
+        }),
+        createCircle({
+            id: 'c2',
+            fillStyle: '#3a86ff',
+            cx: 200,
+            cy: 150,
+            radius: 40,
+        }),
+        createCircle({
+            id: 'c3',
+            fillStyle: '#3a86ff',
+            cx: 300,
+            cy: 150,
+            radius: 40,
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene);
+
+await renderer.transition(scene, (el, i) => ({
+    duration: 600,
+    delay: i * 150,
+    ease: easeOutCubic,
+    state: {
+        fillStyle: '#ff006e',
+    },
+}));
+```
 :::
 
 <script lang="ts" setup>

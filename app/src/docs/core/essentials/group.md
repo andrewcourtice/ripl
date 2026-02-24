@@ -187,26 +187,44 @@ Groups themselves are **abstract** — they don't draw anything directly. They s
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle, createRect, createGroup } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+    createRect,
+    createGroup,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
 const group = createGroup({
     fillStyle: '#3a86ff',
     children: [
-        createCircle({ cx: 120, cy: 150, radius: 50 }),
-        createCircle({ cx: 200, cy: 150, radius: 35,
-            fillStyle: '#ff006e' }),
-        createRect({ x: 260, y: 110, width: 100, height: 80 }),
+        createCircle({
+            cx: 120,
+            cy: 150,
+            radius: 50,
+        }),
+        createCircle({
+            cx: 200,
+            cy: 150,
+            radius: 35,
+            fillStyle: '#ff006e',
+        }),
+        createRect({
+            x: 260,
+            y: 110,
+            width: 100,
+            height: 80,
+        }),
     ],
 });
 
 group.render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

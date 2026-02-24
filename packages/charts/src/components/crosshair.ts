@@ -6,6 +6,10 @@ import {
 } from '@ripl/core';
 
 import {
+    Disposable,
+} from '@ripl/utilities';
+
+import {
     ChartComponent,
     ChartComponentOptions,
 } from './_base';
@@ -32,6 +36,8 @@ export class Crosshair extends ChartComponent {
     private strokeStyle: string;
     private lineWidth: number;
     private lineDash: number[];
+
+    private disposables: Disposable[] = [];
 
     private bounds = {
         x: 0,
@@ -102,6 +108,17 @@ export class Crosshair extends ChartComponent {
         }
 
         this.scene.add(this.group);
+
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [
+            this.scene.on('mousemove', (event) => {
+                const { x, y } = event.data;
+                this.show(x, y);
+            }),
+            this.scene.on('mouseleave', () => {
+                this.hide();
+            }),
+        ];
     }
 
     public show(mouseX: number, mouseY: number) {
@@ -136,6 +153,9 @@ export class Crosshair extends ChartComponent {
     }
 
     public destroy() {
+        this.disposables.forEach(d => d.dispose());
+        this.disposables = [];
+
         if (this.group) {
             this.scene.remove(this.group);
         }

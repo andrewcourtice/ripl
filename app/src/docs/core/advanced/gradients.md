@@ -122,24 +122,33 @@ await renderer.transition(rect, {
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createRect, createCircle } from '@ripl/core';
+import {
+    createContext,
+    createRect,
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
 createRect({
     fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
-    x: 50, y: 50, width: 200, height: 120,
+    x: 50,
+    y: 50,
+    width: 200,
+    height: 120,
 }).render(context);
 
 createCircle({
     fillStyle: 'radial-gradient(circle, #ff006e, #fb5607)',
-    cx: 400, cy: 110, radius: 70,
+    cx: 400,
+    cy: 110,
+    radius: 70,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

@@ -167,13 +167,20 @@ const overlay = createRect({
 Hover over and click the elements to see events in action. Events bubble from child elements to the parent group.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
 const circle = createCircle({
-    fillStyle: '#3a86ff', cx: 150, cy: 150, radius: 60,
+    fillStyle: '#3a86ff',
+    cx: 150,
+    cy: 150,
+    radius: 60,
 });
 
-const scene = createScene('.container', { children: [circle] });
+const scene = createScene('.container', {
+    children: [circle],
+});
 scene.render();
 
 circle.on('mouseenter', () => {
@@ -191,8 +198,6 @@ circle.on('click', () => {
     scene.render();
 });
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

@@ -643,23 +643,12 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             }
 
             // Setup crosshair
-            if (this.crosshair) {
-                this.crosshair.setup(
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-
-                this.scene.on('mousemove', (event) => {
-                    const { x, y } = event.data;
-                    this.crosshair?.show(x, y);
-                });
-
-                this.scene.on('mouseleave', () => {
-                    this.crosshair?.hide();
-                });
-            }
+            this.crosshair?.setup(
+                yAxisBoundingBox.right,
+                chartTop,
+                scene.width - padding.right - yAxisBoundingBox.right,
+                xAxisBoundingBox.top - chartTop
+            );
 
             // Volume area sits below the x axis
             const volumeTop = xAxisBoundingBox.bottom + 5;

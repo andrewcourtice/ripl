@@ -73,35 +73,50 @@ The `pointerEvents` property controls which parts of the shape respond to hits:
 The demo below shows the difference between `autoFill` and `autoStroke`. The left circle has both enabled, the middle has only fill, and the right has only stroke.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 const r = Math.min(context.width, context.height) / 6;
 
 // Both fill and stroke (default)
 createCircle({
-    fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
-    cx: context.width / 4, cy: context.height / 2, radius: r,
+    fillStyle: '#3a86ff',
+    strokeStyle: '#1a56db',
+    lineWidth: 4,
+    cx: context.width / 4,
+    cy: context.height / 2,
+    radius: r,
 }).render(context);
 
 // Fill only
 createCircle({
-    fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
+    fillStyle: '#3a86ff',
+    strokeStyle: '#1a56db',
+    lineWidth: 4,
     autoStroke: false,
-    cx: context.width / 2, cy: context.height / 2, radius: r,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: r,
 }).render(context);
 
 // Stroke only
 createCircle({
-    fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
+    fillStyle: '#3a86ff',
+    strokeStyle: '#1a56db',
+    lineWidth: 4,
     autoFill: false,
-    cx: context.width * 3 / 4, cy: context.height / 2, radius: r,
+    cx: context.width * 3 / 4,
+    cy: context.height / 2,
+    radius: r,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

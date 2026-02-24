@@ -2,6 +2,7 @@
 
 import {
     BorderRadius,
+    Box,
     Point,
 } from '../../math';
 
@@ -17,6 +18,7 @@ import {
 
 import {
     arrayForEach,
+    Disposable,
     functionCache,
     hasWindow,
     onDOMElementResize,
@@ -35,6 +37,7 @@ export type FillRule = 'evenodd' | 'nonzero';
 export interface RenderElement {
     readonly id: string;
     parent?: RenderElement;
+    getBoundingBox?(): Box;
 }
 
 export interface ContextEventMap extends EventMap {
@@ -90,6 +93,34 @@ export type MeasureTextOptions = {
 
 export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
+});
+
+const cachedDefaultState = functionCache((): BaseState => {
+    const refContext = getRefContext();
+
+    return {
+        fillStyle: refContext.fillStyle,
+        filter: refContext.filter,
+        direction: refContext.direction,
+        font: refContext.font,
+        fontKerning: refContext.fontKerning,
+        globalAlpha: refContext.globalAlpha,
+        globalCompositeOperation: refContext.globalCompositeOperation,
+        lineCap: refContext.lineCap,
+        lineDash: refContext.getLineDash(),
+        lineDashOffset: refContext.lineDashOffset,
+        lineJoin: refContext.lineJoin,
+        lineWidth: refContext.lineWidth,
+        miterLimit: refContext.miterLimit,
+        shadowBlur: refContext.shadowBlur,
+        shadowColor: refContext.shadowColor,
+        shadowOffsetX: refContext.shadowOffsetX,
+        shadowOffsetY: refContext.shadowOffsetY,
+        strokeStyle: refContext.strokeStyle,
+        textAlign: refContext.textAlign,
+        textBaseline: refContext.textBaseline,
+        zIndex: 0,
+    } as BaseState;
 });
 
 export const scaleDPR = scaleContinuous([0, 1], [0, hasWindow ? window.devicePixelRatio : 1]);
@@ -218,6 +249,8 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected states: BaseState[];
     protected currentState: BaseState;
     protected renderDepth = 0;
+
+    private disposables: Disposable[];
 
     public currentRenderElement?: RenderElement;
 
@@ -411,6 +444,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         root.appendChild(element);
 
+        this.disposables = [];
         this.type = type;
         this.root = root;
         this.element = element;
@@ -432,7 +466,9 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         this.rescale(width, height);
 
-        onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height));
+        this.disposables.push(
+            onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height))
+        );
     }
 
     protected rescale(width: number, height: number) {
@@ -446,31 +482,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     protected getDefaultState() {
-        const refContext = getRefContext();
-
-        return {
-            fillStyle: refContext.fillStyle,
-            filter: refContext.filter,
-            direction: refContext.direction,
-            font: refContext.font,
-            fontKerning: refContext.fontKerning,
-            globalAlpha: refContext.globalAlpha,
-            globalCompositeOperation: refContext.globalCompositeOperation,
-            lineCap: refContext.lineCap,
-            lineDash: refContext.getLineDash(),
-            lineDashOffset: refContext.lineDashOffset,
-            lineJoin: refContext.lineJoin,
-            lineWidth: refContext.lineWidth,
-            miterLimit: refContext.miterLimit,
-            shadowBlur: refContext.shadowBlur,
-            shadowColor: refContext.shadowColor,
-            shadowOffsetX: refContext.shadowOffsetX,
-            shadowOffsetY: refContext.shadowOffsetY,
-            strokeStyle: refContext.strokeStyle,
-            textAlign: refContext.textAlign,
-            textBaseline: refContext.textBaseline,
-            zIndex: 0,
-        } as BaseState;
+        return { ...cachedDefaultState() };
     }
 
     save(): void {
@@ -557,6 +569,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     public destroy(): void {
+        this.disposables.forEach(({ dispose }) => dispose());
         this.element.remove();
         super.destroy();
     }

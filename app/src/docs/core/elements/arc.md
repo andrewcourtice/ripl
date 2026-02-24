@@ -55,29 +55,37 @@ const [x, y] = arc.getCentroid({ radius: arc.radius * 1.2 });
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createArc } from '@ripl/core';
+import {
+    createArc,
+} from '@ripl/core';
 
 const TAU = Math.PI * 2;
 
 // Simple arc
 createArc({
     fillStyle: '#3a86ff',
-    cx: 150, cy: 150, radius: 80,
-    startAngle: 0, endAngle: TAU * 0.75,
+    cx: 150,
+    cy: 150,
+    radius: 80,
+    startAngle: 0,
+    endAngle: TAU * 0.75,
 }).render(context);
 
 // Donut arc
 createArc({
     fillStyle: '#ff006e',
-    cx: 400, cy: 150, radius: 80,
+    cx: 400,
+    cy: 150,
+    radius: 80,
     innerRadius: 40,
-    startAngle: 0, endAngle: TAU * 0.6,
+    startAngle: 0,
+    endAngle: TAU * 0.6,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

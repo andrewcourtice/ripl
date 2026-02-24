@@ -168,6 +168,9 @@ export class Arc extends Shape<ArcState> {
             padAngle,
         } = this;
 
+        radius = Math.max(0, radius);
+        innerRadius = typeIsNil(innerRadius) ? innerRadius : Math.max(0, innerRadius);
+
         return super.render(context, path => {
             if (padAngle) {
                 const offset = padAngle / 2;

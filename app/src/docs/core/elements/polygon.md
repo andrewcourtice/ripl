@@ -34,32 +34,44 @@ Plus all [Element style properties](/docs/core/essentials/element#style-properti
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createPolygon } from '@ripl/core';
+import {
+    createContext,
+    createPolygon,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
 // Triangle
 createPolygon({
-    fillStyle: '#3a86ff', cx: 100, cy: 150,
-    radius: 60, sides: 3,
+    fillStyle: '#3a86ff',
+    cx: 100,
+    cy: 150,
+    radius: 60,
+    sides: 3,
 }).render(context);
 
 // Pentagon
 createPolygon({
-    fillStyle: '#ff006e', cx: 250, cy: 150,
-    radius: 60, sides: 5,
+    fillStyle: '#ff006e',
+    cx: 250,
+    cy: 150,
+    radius: 60,
+    sides: 5,
 }).render(context);
 
 // Hexagon
 createPolygon({
-    fillStyle: '#8338ec', cx: 400, cy: 150,
-    radius: 60, sides: 6,
+    fillStyle: '#8338ec',
+    cx: 400,
+    cy: 150,
+    radius: 60,
+    sides: 6,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

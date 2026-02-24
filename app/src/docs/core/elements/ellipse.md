@@ -40,9 +40,14 @@ Plus all [Element style properties](/docs/core/essentials/element#style-properti
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createEllipse } from '@ripl/core';
+import {
+    createContext,
+    createEllipse,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 const TAU = Math.PI * 2;
@@ -58,8 +63,6 @@ createEllipse({
     endAngle: TAU,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

@@ -108,46 +108,51 @@ export class Scene extends Group<SceneEventMap> {
             this.emit('mouseleave', null);
         });
 
+        const scheduleHitTest = createFrameBuffer();
+
         this.attachDOMEvent('mousemove', event => {
             const x = event.clientX - left;
             const y = event.clientY - top;
-            const trueX = this.context.scaleX(x);
-            const trueY = this.context.scaleY(y);
 
             this.emit('mousemove', {
                 x,
                 y,
             });
 
-            const trackedElements = [
-                ...getTrackedElements('mousemove'),
-                ...getTrackedElements('mouseenter'),
-                ...getTrackedElements('mouseleave'),
-            ];
+            scheduleHitTest(() => {
+                const trueX = this.context.scaleX(x);
+                const trueY = this.context.scaleY(y);
 
-            const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
-                isPointer: true,
-            }));
+                const trackedElements = [
+                    ...getTrackedElements('mousemove'),
+                    ...getTrackedElements('mouseenter'),
+                    ...getTrackedElements('mouseleave'),
+                ];
 
-            const {
-                left: entries,
-                inner: updates,
-                right: exits,
-            } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
+                const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
+                    isPointer: true,
+                }));
 
-            arrayForEach(entries, element => {
-                activeElements.push(element);
-                element.emit('mouseenter', null);
-            });
+                const {
+                    left: entries,
+                    inner: updates,
+                    right: exits,
+                } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
 
-            arrayForEach(updates, ([element]) => element.emit('mousemove', {
-                x,
-                y,
-            }));
+                arrayForEach(entries, element => {
+                    activeElements.push(element);
+                    element.emit('mouseenter', null);
+                });
 
-            arrayForEach(exits, element => {
-                activeElements.splice(activeElements.indexOf(element), 1);
-                element.emit('mouseleave', null);
+                arrayForEach(updates, ([element]) => element.emit('mousemove', {
+                    x,
+                    y,
+                }));
+
+                arrayForEach(exits, element => {
+                    activeElements.splice(activeElements.indexOf(element), 1);
+                    element.emit('mouseleave', null);
+                });
             });
         });
 

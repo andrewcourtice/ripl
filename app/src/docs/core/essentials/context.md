@@ -127,9 +127,14 @@ context.on('resize', () => {
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createCircle } from '@ripl/core';
+import {
+    createContext,
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -148,8 +153,6 @@ context.on('resize', () => {
     circle.render(context);
 });
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

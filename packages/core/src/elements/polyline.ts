@@ -501,8 +501,8 @@ export class Polyline extends Shape<PolylineState> {
         const [top, bottom] = getExtent(this.points, point => point[1]);
 
         return new Box(
-            left,
             top,
+            left,
             bottom,
             right
         );

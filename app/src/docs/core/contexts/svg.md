@@ -98,10 +98,18 @@ SVG is less ideal when:
 Toggle between Canvas and SVG using the buttons above the demo. The same drawing code renders to both contexts.
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext } from '@ripl/svg';
-import { createCircle, createRect } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/svg';
+
+import {
+    createCircle,
+    createRect,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
@@ -124,8 +132,6 @@ createRect({
     height: context.height / 2,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>

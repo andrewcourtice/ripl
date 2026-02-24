@@ -194,7 +194,6 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this.running = true;
         this.startTime = performance.now();
-        this.transitionMap.clear();
 
         this.emit('start', {
             startTime: this.startTime,

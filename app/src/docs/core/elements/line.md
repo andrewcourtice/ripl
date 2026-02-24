@@ -38,21 +38,26 @@ Plus all [Element style properties](/docs/core/essentials/element#style-properti
 ## Demo
 
 :::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
 == Code
 ```ts
-import { createContext, createLine } from '@ripl/core';
+import {
+    createContext,
+    createLine,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 
 createLine({
     strokeStyle: '#3a86ff',
     lineWidth: 3,
-    x1: 50, y1: 50,
-    x2: context.width - 50, y2: context.height - 50,
+    x1: 50,
+    y1: 50,
+    x2: context.width - 50,
+    y2: context.height - 50,
 }).render(context);
 ```
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
 :::
 
 <script lang="ts" setup>
