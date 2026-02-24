@@ -7,3 +7,11 @@ declare module '*.vue' {
 
     export default component;
 }
+
+interface ImportMetaEnv {
+    readonly VITE_ALPHAVANTAGE_API_KEY: string;
+}
+
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}

@@ -10,6 +10,10 @@ import {
     charts,
 } from './data/charts';
 
+import {
+    demos,
+} from './data/demos';
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     outDir: '../dist',
@@ -17,6 +21,7 @@ export default defineConfig({
     description: 'Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API',
 
     vite: {
+        envDir: '../',
         css: {
             preprocessorOptions: {
                 scss: {
@@ -52,6 +57,10 @@ export default defineConfig({
                         link: '/docs/charts/',
                     },
                 ],
+            },
+            {
+                text: 'Demos',
+                link: '/demos/',
             },
         ],
 
@@ -209,6 +218,16 @@ export default defineConfig({
                 {
                     text: 'Charts',
                     items: charts.map(({ text, link }) => ({
+                        text,
+                        link,
+                    })),
+                },
+            ],
+
+            '/demos/': [
+                {
+                    text: 'Demos',
+                    items: demos.map(({ text, link }) => ({
                         text,
                         link,
                     })),
