@@ -66,11 +66,8 @@ loop();
 import { createCone } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const cone = createCone({ radius: 1, height: 2, fillStyle: '#cc4444' });
-
-    startRotation(camera, ctx, () => {
-        cone.render(ctx);
-    });
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createCone({ radius: 1, height: 2, fillStyle: '#cc4444' }));
+    startRotation(camera);
 });
 </script>

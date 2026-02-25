@@ -14,6 +14,10 @@ export function typeIsObject(value: unknown): value is object {
     return value !== null && typeof value === 'object';
 }
 
+export function typeIsBoolean(value: unknown): value is Boolean {
+    return typeof value === 'boolean'
+}
+
 export function typeIsFunction(value: unknown): value is AnyFunction {
     return typeof value === 'function';
 }

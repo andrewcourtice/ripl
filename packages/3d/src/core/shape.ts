@@ -1,4 +1,5 @@
 import {
+    Box,
     Shape,
 } from '@ripl/core';
 
@@ -9,7 +10,7 @@ import {
     mat4RotateZ,
     mat4TransformPoint,
     mat4Translate,
-} from '../math/matrix';
+} from '../math';
 
 import {
     computeFaceBrightness,
@@ -29,15 +30,20 @@ import type {
 
 import type {
     Vector3,
-} from '../math/vector';
-
-import {
-    Box,
-} from '@ripl/core';
+} from '../math';
 
 export interface Face3D {
     vertices: Vector3[];
     normal?: Vector3;
+}
+
+export interface ProjectedFace3D {
+    element: Shape3D;
+    points: [number, number][];
+    fillColor: string;
+    strokeStyle: string | undefined;
+    lineWidth: number | undefined;
+    depth: number;
 }
 
 export interface Shape3DState extends BaseElementState {
@@ -128,6 +134,10 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return vertices.map(vertex => mat4TransformPoint(matrix, vertex));
     }
 
+    public getDepth(context: Context3D): number {
+        return context.projectDepth([this.x, this.y, this.z]);
+    }
+
     public getBoundingBox(): Box {
         const context = this.context as Context3D | undefined;
 
@@ -185,6 +195,28 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             };
         });
 
+        // If the context has a face buffer, defer faces for global sorting
+        if (ctx.faceBuffer) {
+            this.context = context;
+
+            for (const face of projectedFaces) {
+                const brightness = computeFaceBrightness(face.normal, ctx.lightDirection ?? [0, 0, -1]);
+                const fillColor = shadeFaceColor(baseFillStyle, 0.3 + brightness * 0.7);
+                const points = face.transformed.map(vertex => ctx.project(vertex));
+
+                ctx.faceBuffer.push({
+                    element: this,
+                    points,
+                    fillColor,
+                    strokeStyle: this.strokeStyle,
+                    lineWidth: this.lineWidth,
+                    depth: face.depth,
+                });
+            }
+
+            return;
+        }
+
         // Painter's algorithm: sort back-to-front (larger depth = further away)
         projectedFaces.sort((fa, fb) => fb.depth - fa.depth);
 
@@ -211,4 +243,38 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.fillStyle = baseFillStyle;
     }
 
+    public renderFace(context: Context, face: ProjectedFace3D): void {
+        const baseFillStyle = this.fillStyle;
+
+        this.fillStyle = face.fillColor;
+
+        if (face.strokeStyle) {
+            this.strokeStyle = face.strokeStyle;
+        }
+
+        if (face.lineWidth !== undefined) {
+            this.lineWidth = face.lineWidth;
+        }
+
+        super.render(context, path => {
+            path.moveTo(face.points[0][0], face.points[0][1]);
+
+            for (let idx = 1; idx < face.points.length; idx++) {
+                path.lineTo(face.points[idx][0], face.points[idx][1]);
+            }
+
+            path.closePath();
+        });
+
+        this.fillStyle = baseFillStyle;
+    }
+
+}
+
+export function createShape3D(...options: ConstructorParameters<typeof Shape3D>) {
+    return new Shape3D(...options);
+}
+
+export function elementIsShape3D(value: unknown): value is Shape3D {
+    return value instanceof Shape3D;
 }

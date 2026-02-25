@@ -76,11 +76,8 @@ loop();
 import { createCube } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
-
-    startRotation(camera, ctx, () => {
-        cube.render(ctx);
-    });
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    startRotation(camera);
 });
 </script>

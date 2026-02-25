@@ -71,14 +71,11 @@ loop();
 import { createCylinder } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const cylinder = createCylinder({
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createCylinder({
         radiusTop: 0.8, radiusBottom: 0.8, height: 2,
         fillStyle: '#cc8844',
-    });
-
-    startRotation(camera, ctx, () => {
-        cylinder.render(ctx);
-    });
+    }));
+    startRotation(camera);
 });
 </script>

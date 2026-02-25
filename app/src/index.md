@@ -13,6 +13,9 @@ hero:
     - theme: alt
       text: Ripl Charts
       link: /docs/charts/
+    - theme: alt
+      text: Demos
+      link: /demos/
 
 features:
   - title: Simple

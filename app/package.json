@@ -11,6 +11,7 @@
         "@ripl/svg": "1.0.0",
         "@ripl/utilities": "1.0.0",
         "flex-layout-attribute": "^1.0.3",
+        "pinia": "^3.0.4",
         "sass": "^1.97.3",
         "vue": "^3.5.28"
     },

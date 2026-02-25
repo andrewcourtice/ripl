@@ -1,0 +1,94 @@
+<template>
+    <dashboard-card :title="store.commodityLabel()" :loading="store.commodityLoading">
+        <template #actions>
+            <select class="ripl-select" :value="store.commodity" @change="onCommodityChange">
+                <option value="GOLD">Gold</option>
+                <option value="SILVER">Silver</option>
+                <option value="WTI">Crude Oil (WTI)</option>
+                <option value="BRENT">Brent Crude</option>
+            </select>
+            <div class="ripl-control-group">
+                <button
+                    v-for="range in ranges"
+                    :key="range"
+                    class="ripl-button"
+                    :class="{ 'ripl-button--active': store.commodityTimeRange === range }"
+                    @click="onRangeChange(range)"
+                >{{ range }}</button>
+            </div>
+        </template>
+        <div ref="chartEl" class="dashboard-chart"></div>
+    </dashboard-card>
+</template>
+
+<script lang="ts" setup>
+import {
+    ref,
+    watch,
+} from 'vue';
+
+import {
+    createLineChart,
+} from '@ripl/charts';
+
+import DashboardCard from './dashboard-card.vue';
+import { useChartContext } from '../composables/use-chart-context';
+import { useDashboardStore } from '../store/dashboard';
+
+import type {
+    CommodityType,
+    TimeRange,
+} from '../store/dashboard';
+
+const ranges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
+const store = useDashboardStore();
+const chartEl = ref<HTMLElement>();
+const context = useChartContext(chartEl);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let chart: any;
+
+function buildChart() {
+    const data = store.commodityData();
+    if (!context.value || data.length === 0) return;
+
+    const series = [
+        {
+            id: 'value',
+            valueBy: 'value' as const,
+            labelBy: store.commodityLabel(),
+            lineType: 'monotoneX' as const,
+        },
+    ];
+
+    if (chart) {
+        chart.update({ data, series });
+        return;
+    }
+
+    chart = createLineChart(context.value, {
+        data,
+        keyBy: 'date',
+        padding: {
+            top: 20,
+            right: 20,
+            bottom: 30,
+            left: 20,
+        },
+        series,
+    });
+}
+
+function onCommodityChange(ev: Event) {
+    const target = ev.target as HTMLSelectElement;
+    store.commodity = target.value as CommodityType;
+    store.fetchCommodityData().then(() => buildChart());
+}
+
+function onRangeChange(range: TimeRange) {
+    store.commodityTimeRange = range;
+    buildChart();
+}
+
+watch(context, () => buildChart());
+watch(() => store.commodityDataRaw, () => buildChart());
+</script>

@@ -1,12 +1,12 @@
 import {
     Shape3D,
-} from '../core/shape3d';
+} from '../core/shape';
 
 import type {
     Face3D,
     Shape3DOptions,
     Shape3DState,
-} from '../core/shape3d';
+} from '../core/shape';
 
 export interface PlaneState extends Shape3DState {
     width: number;

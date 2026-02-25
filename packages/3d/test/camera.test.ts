@@ -8,8 +8,12 @@ import {
 } from 'vitest';
 
 import {
-    Context3D,
+    createContext,
     createCamera,
+} from '../src';
+
+import type {
+    Context3D,
 } from '../src';
 
 import type {
@@ -83,7 +87,7 @@ function mockCanvasContext() {
 }
 
 function createMockScene(): Scene {
-    const ctx = new Context3D(document.createElement('div'));
+    const ctx = createContext(document.createElement('div'));
 
     return {
         context: ctx,

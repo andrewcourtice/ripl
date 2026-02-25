@@ -13,6 +13,7 @@ import {
 
 import {
     onDOMEvent,
+    typeIsBoolean,
 } from '@ripl/utilities';
 
 import type {
@@ -69,7 +70,7 @@ function resolveInteraction(option: CameraInteractionOption | undefined, fallbac
         return { enabled: fallback, sensitivity: 1 };
     }
 
-    if (typeof option === 'boolean') {
+    if (typeIsBoolean(option)) {
         return { enabled: option, sensitivity: 1 };
     }
 
@@ -265,7 +266,7 @@ export class Camera {
     }
 
     private attachInteractions(interactions: boolean | CameraInteractions): void {
-        const isBoolean = typeof interactions === 'boolean';
+        const isBoolean = typeIsBoolean(interactions);
         const config = isBoolean ? {} as CameraInteractions : interactions;
         const fallback = isBoolean ? interactions : false;
 
