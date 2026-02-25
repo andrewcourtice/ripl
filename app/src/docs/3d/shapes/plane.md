@@ -68,15 +68,12 @@ loop();
 import { createPlane } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const plane = createPlane({
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createPlane({
         width: 3, height: 2,
         rotationX: 0.5,
         fillStyle: '#88cc44',
-    });
-
-    startRotation(camera, ctx, () => {
-        plane.render(ctx);
-    });
+    }));
+    startRotation(camera);
 });
 </script>

@@ -66,11 +66,8 @@ loop();
 import { createSphere } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const sphere = createSphere({ radius: 1.2, fillStyle: '#44cc88' });
-
-    startRotation(camera, ctx, () => {
-        sphere.render(ctx);
-    });
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createSphere({ radius: 1.2, fillStyle: '#44cc88' }));
+    startRotation(camera);
 });
 </script>

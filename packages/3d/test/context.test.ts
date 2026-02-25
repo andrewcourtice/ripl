@@ -7,7 +7,7 @@ import {
 } from 'vitest';
 
 import {
-    Context3D,
+    createContext,
     mat4Identity,
 } from '../src';
 
@@ -90,7 +90,7 @@ describe('Context3D', () => {
     });
 
     test('Construction stores identity matrices', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
 
         expect(ctx.viewMatrix).toEqual(mat4Identity());
         expect(ctx.viewProjectionMatrix).toBeDefined();
@@ -98,7 +98,7 @@ describe('Context3D', () => {
     });
 
     test('setCamera updates viewMatrix', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
         const prevView = new Float64Array(ctx.viewMatrix);
 
         ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
@@ -116,7 +116,7 @@ describe('Context3D', () => {
     });
 
     test('setPerspective stores fov/near/far values', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
 
         ctx.setPerspective(90, 0.5, 500);
 
@@ -128,7 +128,7 @@ describe('Context3D', () => {
     });
 
     test('setOrthographic updates projectionMatrix', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
 
         ctx.setOrthographic(-10, 10, -10, 10, 0.1, 100);
 
@@ -138,7 +138,7 @@ describe('Context3D', () => {
     });
 
     test('project returns a 2D point', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
         ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
         const point = ctx.project([0, 0, 0]);
@@ -149,7 +149,7 @@ describe('Context3D', () => {
     });
 
     test('projectDepth returns a number', () => {
-        const ctx = new Context3D(document.createElement('div'));
+        const ctx = createContext(document.createElement('div'));
         ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
         const depth = ctx.projectDepth([0, 0, 0]);

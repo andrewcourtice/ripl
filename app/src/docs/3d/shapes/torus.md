@@ -68,11 +68,8 @@ loop();
 import { createTorus } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const torus = createTorus({ radius: 1.5, tube: 0.4, fillStyle: '#8844cc' });
-
-    startRotation(camera, ctx, () => {
-        torus.render(ctx);
-    });
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createTorus({ radius: 1.5, tube: 0.4, fillStyle: '#8844cc' }));
+    startRotation(camera);
 });
 </script>

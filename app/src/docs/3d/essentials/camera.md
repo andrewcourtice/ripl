@@ -174,20 +174,13 @@ loop();
 import { createCube, createCamera } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged: autoRotateChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
-
-    startRotation(camera, ctx, () => {
-        cube.render(ctx);
-    });
+const { contextChanged: autoRotateChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    startRotation(camera);
 });
 
-const { contextChanged: interactiveChanged, startInteractive } = useRipl3DExample((ctx, camera) => {
-    const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
-
-    startInteractive(camera, ctx, () => {
-        cube.render(ctx);
-    });
+const { contextChanged: interactiveChanged } = useRipl3DExample((scene) => {
+    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
 }, {
     interactions: true,
 });

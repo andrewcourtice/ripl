@@ -9,15 +9,15 @@ title: Context3D
 ## Creation
 
 ```ts
-import { Context3D } from '@ripl/3d';
+import { createContext } from '@ripl/3d';
 
-const context = new Context3D('#app');
+const context = createContext('#app');
 ```
 
 Or with options:
 
 ```ts
-const context = new Context3D('#app', {
+const context = createContext('#app', {
     fov: 60,
     near: 0.1,
     far: 1000,
@@ -112,11 +112,8 @@ loop();
 import { createCube } from '@ripl/3d';
 import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
 
-const { contextChanged, startRotation } = useRipl3DExample((ctx, camera) => {
-    const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
-
-    startRotation(camera, ctx, () => {
-        cube.render(ctx);
-    });
+const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
+    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    startRotation(camera);
 });
 </script>

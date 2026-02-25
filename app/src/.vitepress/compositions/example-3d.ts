@@ -6,7 +6,13 @@ import {
 import {
     Context3D,
     createCamera,
+    depthSort,
 } from '@ripl/3d';
+
+import {
+    createScene,
+    createRenderer,
+} from '@ripl/core';
 
 import type {
     Camera,
@@ -15,22 +21,28 @@ import type {
 
 import type {
     Scene,
+    Renderer,
 } from '@ripl/core';
 
-export function useRipl3DExample(onReady?: (context: Context3D, camera: Camera) => void, cameraOptions?: CameraOptions) {
+export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Camera, renderer: Renderer) => void, cameraOptions?: CameraOptions) {
     const context = shallowRef<Context3D>();
     let animationId = 0;
+    let currentScene: Scene<Context3D> | undefined;
 
     function contextChanged(ctx: Context3D) {
         cancelAnimationFrame(animationId);
-        context.value?.destroy();
+        currentScene?.destroy();
         context.value = ctx;
 
-        const mockScene = {
-            context: ctx,
-        } as unknown as Scene;
+        const scene = createScene(ctx) as Scene<Context3D>;
+        currentScene = scene;
 
-        const camera = createCamera(mockScene, {
+        const renderer = createRenderer(scene, {
+            autoStop: false,
+            sortBuffer: depthSort(ctx),
+        });
+
+        const camera = createCamera(scene, {
             position: [0, 1.5, 5],
             target: [0, 0, 0],
             fov: 50,
@@ -38,18 +50,18 @@ export function useRipl3DExample(onReady?: (context: Context3D, camera: Camera) 
         });
 
         camera.flush();
-        onReady?.(ctx, camera);
+        onReady?.(scene, camera, renderer);
     }
 
     onUnmounted(() => {
         cancelAnimationFrame(animationId);
-        context.value?.destroy();
+        currentScene?.destroy();
     });
 
     return {
         context,
         contextChanged,
-        startRotation(camera: Camera, ctx: Context3D, renderFn: () => void, speed = 0.005) {
+        startRotation(camera: Camera, speed = 0.005) {
             let angle = 0;
             const radius = 5;
             const height = 1.5;
@@ -63,23 +75,6 @@ export function useRipl3DExample(onReady?: (context: Context3D, camera: Camera) 
                 ];
                 camera.flush();
 
-                ctx.clear();
-                ctx.markRenderStart();
-                renderFn();
-                ctx.markRenderEnd();
-
-                animationId = requestAnimationFrame(loop);
-            };
-
-            loop();
-        },
-        startInteractive(camera: Camera, ctx: Context3D, renderFn: () => void) {
-            const loop = () => {
-                camera.flush();
-                ctx.clear();
-                ctx.markRenderStart();
-                renderFn();
-                ctx.markRenderEnd();
                 animationId = requestAnimationFrame(loop);
             };
 

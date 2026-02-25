@@ -3,6 +3,7 @@ import DefaultTheme from 'vitepress/theme';
 import 'flex-layout-attribute';
 import './style.scss';
 import '../../demos/trading-dashboard/styles/dashboard.scss';
+import '../../demos/jet-engine/styles/jet-engine.scss';
 
 import {
     createPinia,

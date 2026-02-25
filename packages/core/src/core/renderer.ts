@@ -75,6 +75,7 @@ export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
     immediate?: boolean;
+    sortBuffer?: (buffer: Element[]) => Element[];
     debug?: {
         boundingBoxes: boolean;
     };
@@ -98,6 +99,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     public autoStart = true;
     public autoStop = true;
+    public sortBuffer?: (buffer: Element[]) => Element[];
 
     public get isBusy() {
         return !!this.transitionMap.size;
@@ -109,11 +111,13 @@ export class Renderer extends EventBus<RendererEventMap> {
         const {
             autoStart = true,
             autoStop = true,
+            sortBuffer,
         } = options || {};
 
         this.scene = scene;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
+        this.sortBuffer = sortBuffer;
 
         if (autoStart) {
             this.start();
@@ -137,7 +141,11 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this.currentTime = performance.now();
 
-        arrayForEach(this.scene.buffer, element => {
+        const buffer = this.sortBuffer
+            ? this.sortBuffer(this.scene.buffer)
+            : this.scene.buffer;
+
+        arrayForEach(buffer, element => {
             if (this.transitionMap.has(element.id)) {
                 let time = 0;
 

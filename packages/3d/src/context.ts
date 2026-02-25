@@ -2,6 +2,10 @@ import {
     CanvasContext,
 } from '@ripl/core';
 
+import type {
+    ProjectedFace3D,
+} from './core/shape';
+
 import {
     mat4Identity,
     mat4LookAt,
@@ -40,6 +44,7 @@ export class Context3D extends CanvasContext {
     public projectionMatrix: Matrix4;
     public viewProjectionMatrix: Matrix4;
     public lightDirection: Vector3;
+    public faceBuffer: ProjectedFace3D[] | null = null;
 
     private fov: number;
     private near: number;
@@ -124,6 +129,22 @@ export class Context3D extends CanvasContext {
 
     public projectDepth(point: Vector3): number {
         return mat4TransformPoint(this.viewProjectionMatrix, point)[2];
+    }
+
+    markRenderEnd(): void {
+        super.markRenderEnd();
+
+        if (this.renderDepth === 0 && this.faceBuffer && this.faceBuffer.length > 0) {
+            const faces = this.faceBuffer;
+            this.faceBuffer = null;
+
+            // Global painter's algorithm: sort back-to-front
+            faces.sort((a, b) => b.depth - a.depth);
+
+            for (const face of faces) {
+                face.element.renderFace(this, face);
+            }
+        }
     }
 
 }
