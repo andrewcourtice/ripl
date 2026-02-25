@@ -13,6 +13,7 @@ import {
     normaliseBorderRadius,
     parseColor,
     parseGradient,
+    radiansToDegrees,
     serialiseRGBA,
     TextAlignment,
     TextBaseline,
@@ -407,6 +408,8 @@ export class SVGContext extends Context<SVGSVGElement> {
         element: SVGElement; }>;
     private textPathCache: Map<string, { pathId: string;
         element: SVGElement; }>;
+    private transformStack: string[][];
+    private currentTransforms: string[];
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -442,6 +445,8 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.domCache = new Map();
         this.gradientCache = new Map();
         this.textPathCache = new Map();
+        this.transformStack = [];
+        this.currentTransforms = [];
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
         this.requestFrame = createFrameBuffer();
@@ -518,6 +523,12 @@ export class SVGContext extends Context<SVGSVGElement> {
             //textBaseline,
             ...styles,
         }));
+
+        const transformStr = this.currentTransforms.join(' ');
+
+        if (transformStr) {
+            element.definition.attributes.transform = transformStr;
+        }
     }
 
     private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
@@ -651,6 +662,38 @@ export class SVGContext extends Context<SVGSVGElement> {
         });
 
         this.addToVTree(svgImage);
+    }
+
+    save(): void {
+        this.transformStack.push([...this.currentTransforms]);
+        super.save();
+    }
+
+    restore(): void {
+        this.currentTransforms = this.transformStack.pop() || [];
+        super.restore();
+    }
+
+    rotate(angle: number): void {
+        this.currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
+    }
+
+    scale(x: number, y: number): void {
+        this.currentTransforms.push(`scale(${x},${y})`);
+    }
+
+    translate(x: number, y: number): void {
+        this.currentTransforms.push(`translate(${x},${y})`);
+    }
+
+    // eslint-disable-next-line id-length
+    setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        this.currentTransforms = [`matrix(${a},${b},${c},${d},${e},${f})`];
+    }
+
+    // eslint-disable-next-line id-length
+    transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function

@@ -114,6 +114,10 @@ export default defineConfig({
                             text: 'Renderer',
                             link: '/docs/core/essentials/renderer',
                         },
+                        {
+                            text: 'Transforms',
+                            link: '/docs/core/essentials/transforms',
+                        },
                     ],
                 },
                 {
