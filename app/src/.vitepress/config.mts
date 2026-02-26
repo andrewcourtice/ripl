@@ -114,10 +114,6 @@ export default defineConfig({
                             text: 'Renderer',
                             link: '/docs/core/essentials/renderer',
                         },
-                        {
-                            text: 'Transforms',
-                            link: '/docs/core/essentials/transforms',
-                        },
                     ],
                 },
                 {
@@ -188,6 +184,10 @@ export default defineConfig({
                         {
                             text: 'Gradients',
                             link: '/docs/core/advanced/gradients',
+                        },
+                        {
+                            text: 'Transforms',
+                            link: '/docs/core/essentials/transforms',
                         },
                         {
                             text: 'Interpolators',

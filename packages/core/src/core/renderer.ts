@@ -23,14 +23,12 @@ import {
 } from './scene';
 
 import {
+    computeTransitionTime,
     Ease,
     easeLinear,
     Transition,
+    TransitionDirection,
 } from '../animation';
-
-import {
-    clamp,
-} from '../math';
 
 import {
     arrayForEach,
@@ -39,7 +37,7 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
-export type RendererTransitionDirection = 'forward' | 'reverse';
+export type RendererTransitionDirection = TransitionDirection;
 
 export interface RendererEventMap extends EventMap {
     start: {
@@ -162,8 +160,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     const elapsed = this.currentTime - startTime;
 
                     if (elapsed > 0) {
-                        time = clamp(elapsed / duration, 0, 1);
-                        time = ease(direction === 'reverse' ? 1 - time : time);
+                        time = computeTransitionTime(elapsed, duration, ease, direction);
 
                         interpolator(time);
 
