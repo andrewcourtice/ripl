@@ -451,7 +451,7 @@ export class Element<
         this.type = type;
         this.id = id;
         this.data = data;
-        this.state = state as TState;
+        this.state = { ...TRANSFORM_DEFAULTS, ...state } as unknown as TState;
         this.pointerEvents = pointerEvents;
         this.classList = new Set(valueOneOrMore(classes));
     }
@@ -501,14 +501,7 @@ export class Element<
             let currentValue = this.getStateValue(key);
 
             if (typeIsNil(currentValue)) {
-                const defaultVal = TRANSFORM_DEFAULTS[key as string];
-
-                if (typeIsNil(defaultVal)) {
-                    return output;
-                }
-
-                currentValue = defaultVal as TState[keyof TState];
-                this.state[key] = currentValue;
+                return output;
             }
 
             if (typeIsFunction(value)) {
