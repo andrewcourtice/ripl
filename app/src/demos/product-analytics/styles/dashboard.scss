@@ -69,6 +69,10 @@
     aspect-ratio: 21 / 9;
 }
 
+.dashboard-chart--square {
+    aspect-ratio: 4 / 3;
+}
+
 .dashboard-card {
     border: 1px solid var(--vp-c-divider);
     border-radius: 0.75rem;
@@ -105,24 +109,28 @@
     position: relative;
 }
 
-.ripl-control-group {
-    display: flex;
-    gap: 0;
+.analytics-dashboard__period-selector {
+    display: inline-flex;
 }
 
-.ripl-button {
+.analytics-dashboard__period-option {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--vp-c-divider);
-    background-color: var(--vp-c-bg);
-    color: var(--vp-c-text-2);
+    padding: 0.35rem 0.875rem;
+    font: inherit;
     font-size: 0.8125rem;
-    font-weight: 500;
+    line-height: 1.5;
+    color: var(--vp-button-alt-text);
+    border: 1px solid var(--vp-c-divider);
+    background-color: var(--vp-button-alt-bg);
     cursor: pointer;
-    transition: all 0.2s ease;
-    line-height: 1.4;
+    user-select: none;
+    transition: color 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out;
+
+    & input {
+        display: none;
+    }
 
     &:first-child {
         border-radius: 0.375rem 0 0 0.375rem;
@@ -137,20 +145,20 @@
     }
 
     &:hover {
-        color: var(--vp-c-text-1);
-        border-color: var(--vp-c-brand-1);
-        z-index: 1;
+        border-color: var(--vp-c-gray-2);
+        background-color: var(--vp-button-alt-hover-bg);
     }
-}
 
-.ripl-button--active {
-    color: var(--vp-button-brand-text);
-    border-color: var(--vp-button-brand-border);
-    background-color: var(--vp-button-brand-bg);
-    z-index: 1;
+    &:has(:checked) {
+        color: var(--vp-button-brand-text);
+        border-color: var(--vp-button-brand-border);
+        background-color: var(--vp-button-brand-bg);
+        position: relative;
+        z-index: 1;
 
-    &:hover {
-        border-color: var(--vp-button-brand-hover-border);
-        background-color: var(--vp-button-brand-hover-bg);
+        &:hover {
+            border-color: var(--vp-button-brand-hover-border);
+            background-color: var(--vp-button-brand-hover-bg);
+        }
     }
 }

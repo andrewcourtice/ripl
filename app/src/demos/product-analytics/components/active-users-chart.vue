@@ -49,7 +49,7 @@ function buildChart() {
                 valueBy: 'users',
                 labelBy: 'Daily Active Users',
                 lineType: 'monotoneX',
-                showMarkers: false,
+                showMarkers: true,
             },
         ],
     });

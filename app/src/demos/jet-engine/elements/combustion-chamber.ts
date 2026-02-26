@@ -77,8 +77,8 @@ export class CombustionChamber extends Shape3D<CombustionChamberState> {
             radiusBack: 0.35,
             radiusBulge: 0.48,
             length: 0.45,
-            segments: 20,
-            rings: 6,
+            segments: 32,
+            rings: 12,
             ...options,
         });
     }
@@ -95,6 +95,10 @@ export class CombustionChamber extends Shape3D<CombustionChamberState> {
         const segs = this.segments;
         const rings = this.rings;
         const halfL = this.length / 2;
+        const injectorCount = 10;
+        const injectorRadius = 0.02;
+        const injectorHeight = 0.025;
+        const injectorSegs = 6;
 
         for (let r = 0; r < rings; r++) {
             const t1 = r / rings;
@@ -153,6 +157,49 @@ export class CombustionChamber extends Shape3D<CombustionChamberState> {
                 ],
                 normal: [0, 0, -1],
             });
+        }
+
+        // Fuel injector bosses around the front ring
+        const injZ = halfL - this.length * 0.15;
+        const injBaseR = this.radiusAt(0.15);
+
+        for (let n = 0; n < injectorCount; n++) {
+            const angle = (n / injectorCount) * Math.PI * 2;
+            const ca = Math.cos(angle);
+            const sa = Math.sin(angle);
+
+            // Each boss is a small hexagonal prism protruding radially
+            for (let s = 0; s < injectorSegs; s++) {
+                const la1 = (s / injectorSegs) * Math.PI * 2;
+                const la2 = ((s + 1) / injectorSegs) * Math.PI * 2;
+
+                // Local offsets perpendicular to radial direction
+                const perp1Y = Math.cos(la1) * injectorRadius;
+                const perp1Z = Math.sin(la1) * injectorRadius;
+                const perp2Y = Math.cos(la2) * injectorRadius;
+                const perp2Z = Math.sin(la2) * injectorRadius;
+
+                // Inner vertices (at surface)
+                const i1: Vector3 = [ca * injBaseR + (-sa) * perp1Y, sa * injBaseR + ca * perp1Y, injZ + perp1Z];
+                const i2: Vector3 = [ca * injBaseR + (-sa) * perp2Y, sa * injBaseR + ca * perp2Y, injZ + perp2Z];
+
+                // Outer vertices (protruding)
+                const o1: Vector3 = [ca * (injBaseR + injectorHeight) + (-sa) * perp1Y, sa * (injBaseR + injectorHeight) + ca * perp1Y, injZ + perp1Z];
+                const o2: Vector3 = [ca * (injBaseR + injectorHeight) + (-sa) * perp2Y, sa * (injBaseR + injectorHeight) + ca * perp2Y, injZ + perp2Z];
+
+                faces.push({ vertices: [i1, i2, o2, o1] });
+            }
+
+            // Boss cap
+            const capVerts: Vector3[] = [];
+            for (let s = 0; s < injectorSegs; s++) {
+                const la = (s / injectorSegs) * Math.PI * 2;
+                const py = Math.cos(la) * injectorRadius;
+                const pz = Math.sin(la) * injectorRadius;
+                capVerts.push([ca * (injBaseR + injectorHeight) + (-sa) * py, sa * (injBaseR + injectorHeight) + ca * py, injZ + pz]);
+            }
+
+            faces.push({ vertices: capVerts });
         }
 
         return faces;

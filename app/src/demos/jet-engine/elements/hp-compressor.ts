@@ -67,8 +67,8 @@ export class HPCompressor extends Shape3D<HPCompressorState> {
             radiusFront: 0.45,
             radiusBack: 0.35,
             length: 0.4,
-            stages: 5,
-            segments: 20,
+            stages: 8,
+            segments: 32,
             ...options,
         });
     }
@@ -78,6 +78,9 @@ export class HPCompressor extends Shape3D<HPCompressorState> {
         const segs = this.segments;
         const stages = this.stages;
         const halfL = this.length / 2;
+        const bladeHeight = 0.025;
+        const bladeDepth = 0.006;
+        const bladesPerStage = 28;
 
         for (let st = 0; st < stages; st++) {
             const t1 = st / stages;
@@ -103,6 +106,38 @@ export class HPCompressor extends Shape3D<HPCompressorState> {
                 const b2: Vector3 = [c2 * r2, s2 * r2, z2];
 
                 faces.push({ vertices: [f1, f2, b2, b1] });
+            }
+
+            // Blade row fins at each stage boundary
+            if (st < stages - 1) {
+                const bladeZ = z2;
+                const bladeR = r2;
+
+                for (let b = 0; b < bladesPerStage; b++) {
+                    const angle = (b / bladesPerStage) * Math.PI * 2;
+                    const nextAngle = ((b + 0.4) / bladesPerStage) * Math.PI * 2;
+
+                    const ca = Math.cos(angle);
+                    const sa = Math.sin(angle);
+                    const cn = Math.cos(nextAngle);
+                    const sn = Math.sin(nextAngle);
+
+                    const rOut = bladeR + bladeHeight;
+
+                    const bf1: Vector3 = [ca * bladeR, sa * bladeR, bladeZ + bladeDepth];
+                    const bf2: Vector3 = [ca * rOut, sa * rOut, bladeZ + bladeDepth];
+                    const bf3: Vector3 = [cn * rOut, sn * rOut, bladeZ + bladeDepth];
+                    const bf4: Vector3 = [cn * bladeR, sn * bladeR, bladeZ + bladeDepth];
+                    faces.push({ vertices: [bf1, bf2, bf3, bf4] });
+
+                    const bb1: Vector3 = [ca * bladeR, sa * bladeR, bladeZ - bladeDepth];
+                    const bb2: Vector3 = [ca * rOut, sa * rOut, bladeZ - bladeDepth];
+                    const bb3: Vector3 = [cn * rOut, sn * rOut, bladeZ - bladeDepth];
+                    const bb4: Vector3 = [cn * bladeR, sn * bladeR, bladeZ - bladeDepth];
+                    faces.push({ vertices: [bb4, bb3, bb2, bb1] });
+
+                    faces.push({ vertices: [bf2, bb2, bb3, bf3] });
+                }
             }
         }
 

@@ -58,7 +58,7 @@ export class ExhaustNozzle extends Shape3D<ExhaustNozzleState> {
             radiusFront: 0.4,
             radiusBack: 0.25,
             length: 0.4,
-            segments: 20,
+            segments: 32,
             ...options,
         });
     }
@@ -67,28 +67,39 @@ export class ExhaustNozzle extends Shape3D<ExhaustNozzleState> {
         const faces: Face3D[] = [];
         const segs = this.segments;
         const halfL = this.length / 2;
+        const axialRings = 4;
+        const chevronCount = 12;
+        const chevronDepth = 0.04;
 
-        for (let i = 0; i < segs; i++) {
-            const a1 = (i / segs) * Math.PI * 2;
-            const a2 = ((i + 1) / segs) * Math.PI * 2;
+        // Multi-ring cone surface
+        for (let ring = 0; ring < axialRings; ring++) {
+            const t1 = ring / axialRings;
+            const t2 = (ring + 1) / axialRings;
 
-            const c1 = Math.cos(a1);
-            const s1 = Math.sin(a1);
-            const c2 = Math.cos(a2);
-            const s2 = Math.sin(a2);
+            const r1 = this.radiusFront + (this.radiusBack - this.radiusFront) * t1;
+            const r2 = this.radiusFront + (this.radiusBack - this.radiusFront) * t2;
+            const z1 = halfL - t1 * this.length;
+            const z2 = halfL - t2 * this.length;
 
-            const rF = this.radiusFront;
-            const rB = this.radiusBack;
+            for (let i = 0; i < segs; i++) {
+                const a1 = (i / segs) * Math.PI * 2;
+                const a2 = ((i + 1) / segs) * Math.PI * 2;
 
-            const f1: Vector3 = [c1 * rF, s1 * rF, halfL];
-            const f2: Vector3 = [c2 * rF, s2 * rF, halfL];
-            const b1: Vector3 = [c1 * rB, s1 * rB, -halfL];
-            const b2: Vector3 = [c2 * rB, s2 * rB, -halfL];
+                const c1 = Math.cos(a1);
+                const s1 = Math.sin(a1);
+                const c2 = Math.cos(a2);
+                const s2 = Math.sin(a2);
 
-            faces.push({ vertices: [f1, f2, b2, b1] });
+                const f1: Vector3 = [c1 * r1, s1 * r1, z1];
+                const f2: Vector3 = [c2 * r1, s2 * r1, z1];
+                const b1: Vector3 = [c1 * r2, s1 * r2, z2];
+                const b2: Vector3 = [c2 * r2, s2 * r2, z2];
+
+                faces.push({ vertices: [f1, f2, b2, b1] });
+            }
         }
 
-        // Front cap (annular — open center would be realistic, but we cap it for hit-testing)
+        // Front cap
         const rF = this.radiusFront;
         for (let i = 0; i < segs; i++) {
             const a1 = (i / segs) * Math.PI * 2;
@@ -118,6 +129,34 @@ export class ExhaustNozzle extends Shape3D<ExhaustNozzleState> {
                 ],
                 normal: [0, 0, -1],
             });
+        }
+
+        // Chevron serrations at trailing edge
+        for (let ch = 0; ch < chevronCount; ch++) {
+            const aMid = ((ch + 0.5) / chevronCount) * Math.PI * 2;
+            const aLeft = (ch / chevronCount) * Math.PI * 2;
+            const aRight = ((ch + 1) / chevronCount) * Math.PI * 2;
+
+            const cM = Math.cos(aMid);
+            const sM = Math.sin(aMid);
+            const cL = Math.cos(aLeft);
+            const sL = Math.sin(aLeft);
+            const cR = Math.cos(aRight);
+            const sR = Math.sin(aRight);
+
+            // Tip of chevron extends further back
+            const tipZ = -halfL - chevronDepth;
+            const rTip = rB * 0.92;
+
+            const baseL: Vector3 = [cL * rB, sL * rB, -halfL];
+            const baseR: Vector3 = [cR * rB, sR * rB, -halfL];
+            const tip: Vector3 = [cM * rTip, sM * rTip, tipZ];
+
+            // Outer face of chevron
+            faces.push({ vertices: [baseL, baseR, tip] });
+
+            // Inner face of chevron
+            faces.push({ vertices: [tip, baseR, baseL] });
         }
 
         return faces;

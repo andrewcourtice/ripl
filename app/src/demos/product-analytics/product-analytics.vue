@@ -5,14 +5,15 @@
                 <h1 class="analytics-dashboard__title">Product Analytics</h1>
                 <p class="analytics-dashboard__subtitle">Mock data dashboard showcasing Ripl Charts</p>
             </div>
-            <div class="ripl-control-group">
-                <button
+            <div class="analytics-dashboard__period-selector">
+                <label
                     v-for="p in periods"
                     :key="p.value"
-                    class="ripl-button"
-                    :class="{ 'ripl-button--active': store.period === p.value }"
-                    @click="store.period = p.value"
-                >{{ p.label }}</button>
+                    class="analytics-dashboard__period-option"
+                >
+                    <input type="radio" name="period" :value="p.value" v-model="store.period">
+                    {{ p.label }}
+                </label>
             </div>
         </div>
 

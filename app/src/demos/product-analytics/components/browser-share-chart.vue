@@ -1,6 +1,6 @@
 <template>
     <dashboard-card title="Browser Share">
-        <div ref="chartEl" class="dashboard-chart"></div>
+        <div ref="chartEl" class="dashboard-chart dashboard-chart--square"></div>
     </dashboard-card>
 </template>
 
