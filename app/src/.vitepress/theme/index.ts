@@ -4,6 +4,7 @@ import 'flex-layout-attribute';
 import './style.scss';
 import '../../demos/trading-dashboard/styles/dashboard.scss';
 import '../../demos/jet-engine/styles/jet-engine.scss';
+import '../../demos/mermaid-diagram/styles/mermaid-diagram.scss';
 
 import {
     createPinia,

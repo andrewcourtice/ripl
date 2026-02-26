@@ -13,6 +13,7 @@ import {
 export type ShapeOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     autoStroke?: boolean;
     autoFill?: boolean;
+    clip?: boolean;
 };
 
 export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
@@ -21,11 +22,13 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
     public autoStroke: boolean;
     public autoFill: boolean;
+    public clip: boolean;
 
     constructor(type: string, options: ShapeOptions<TState>) {
         const {
             autoFill = true,
             autoStroke = true,
+            clip = false,
             ...elementOptions
         } = options;
 
@@ -33,6 +36,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
         this.autoFill = autoFill;
         this.autoStroke = autoStroke;
+        this.clip = clip;
     }
 
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
@@ -74,6 +78,11 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
             callback?.(this.path);
 
+            if (this.path && this.clip) {
+                context.clip(this.path);
+                return;
+            }
+
             if (this.path && this.autoFill && this.fillStyle) {
                 context.fill(this.path);
             }
@@ -81,7 +90,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
             if (this.path && this.autoStroke && this.strokeStyle) {
                 context.stroke(this.path);
             }
-        });
+        }, this.clip);
     }
 
 }

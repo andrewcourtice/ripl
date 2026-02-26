@@ -194,6 +194,10 @@ export default defineConfig({
                             link: '/docs/core/advanced/interpolators',
                         },
                         {
+                            text: 'Clip Paths',
+                            link: '/docs/core/advanced/clip-paths',
+                        },
+                        {
                             text: 'Animations',
                             link: '/docs/core/advanced/animations',
                         },

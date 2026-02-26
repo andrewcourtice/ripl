@@ -410,6 +410,9 @@ export class SVGContext extends Context<SVGSVGElement> {
         element: SVGElement; }>;
     private transformStack: string[][];
     private currentTransforms: string[];
+    private clipCache: Map<string, { clipId: string; element: SVGElement }>;
+    private clipStack: (string | undefined)[];
+    private currentClipId: string | undefined;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -447,6 +450,9 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.textPathCache = new Map();
         this.transformStack = [];
         this.currentTransforms = [];
+        this.clipCache = new Map();
+        this.clipStack = [];
+        this.currentClipId = undefined;
         this.defs = createSVGElement('defs');
         this.element.appendChild(this.defs);
         this.requestFrame = createFrameBuffer();
@@ -529,6 +535,10 @@ export class SVGContext extends Context<SVGSVGElement> {
         if (transformStr) {
             element.definition.attributes.transform = transformStr;
         }
+
+        if (this.currentClipId) {
+            element.definition.attributes['clip-path'] = `url(#${this.currentClipId})`;
+        }
     }
 
     private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
@@ -555,6 +565,17 @@ export class SVGContext extends Context<SVGSVGElement> {
             element: contextElement,
             children: [],
         });
+    }
+
+    private removeFromVTree(id: string): void {
+        const renderElement = this.currentRenderElement;
+        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
+        const parent = ensureGroupPath(this.vtree, groupIds);
+        const index = parent.children.findIndex(c => c.id === id);
+
+        if (index !== -1) {
+            parent.children.splice(index, 1);
+        }
     }
 
     private render() {
@@ -666,11 +687,13 @@ export class SVGContext extends Context<SVGSVGElement> {
 
     save(): void {
         this.transformStack.push([...this.currentTransforms]);
+        this.clipStack.push(this.currentClipId);
         super.save();
     }
 
     restore(): void {
         this.currentTransforms = this.transformStack.pop() || [];
+        this.currentClipId = this.clipStack.pop();
         super.restore();
     }
 
@@ -696,8 +719,37 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
     clip(path: SVGPath, fillRule?: FillRule): void {
+        const cacheKey = path.id;
+        let cached = this.clipCache.get(cacheKey);
+
+        if (!cached) {
+            const clipId = `clip-${stringUniqueId()}`;
+            const clipPathEl = createSVGElement('clipPath');
+            clipPathEl.setAttribute('id', clipId);
+
+            const useEl = createSVGElement('path');
+            clipPathEl.appendChild(useEl);
+            this.defs.appendChild(clipPathEl);
+
+            cached = { clipId, element: useEl };
+            this.clipCache.set(cacheKey, cached);
+        }
+
+        cached.element.setAttribute('d', path.definition.attributes.d);
+
+        if (this.currentTransforms.length > 0) {
+            cached.element.setAttribute('transform', this.currentTransforms.join(' '));
+        } else {
+            cached.element.removeAttribute('transform');
+        }
+
+        if (fillRule) {
+            cached.element.setAttribute('clip-rule', fillRule);
+        }
+
+        this.removeFromVTree(path.id);
+        this.currentClipId = cached.clipId;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

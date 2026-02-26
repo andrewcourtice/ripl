@@ -551,7 +551,7 @@ export class Element<
         });
     }
 
-    public render(context: Context, callback?: AnyFunction) {
+    public render(context: Context, callback?: AnyFunction, skipRestore?: boolean) {
         this.context = context;
         context.currentRenderElement = this;
 
@@ -573,7 +573,10 @@ export class Element<
 
             callback?.();
         } finally {
-            context.restore();
+            if (!skipRestore) {
+                context.restore();
+            }
+
             context.markRenderEnd();
         }
     }
