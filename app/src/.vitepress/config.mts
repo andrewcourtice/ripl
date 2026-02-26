@@ -186,6 +186,10 @@ export default defineConfig({
                             link: '/docs/core/advanced/gradients',
                         },
                         {
+                            text: 'Transforms',
+                            link: '/docs/core/essentials/transforms',
+                        },
+                        {
                             text: 'Interpolators',
                             link: '/docs/core/advanced/interpolators',
                         },

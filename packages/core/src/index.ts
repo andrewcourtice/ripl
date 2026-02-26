@@ -7,3 +7,4 @@ export * from './elements';
 export * from './interpolators';
 export * from './math';
 export * from './scales';
+export * from './task';

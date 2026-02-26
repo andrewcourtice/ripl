@@ -3,6 +3,7 @@
 import {
     BorderRadius,
     Box,
+    degreesToRadians,
     Point,
 } from '../../math';
 
@@ -23,6 +24,7 @@ import {
     hasWindow,
     onDOMElementResize,
     stringUniqueId,
+    typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -33,6 +35,8 @@ export type LineJoin = 'bevel' | 'miter' | 'round';
 export type TextAlignment = 'center' | 'end' | 'left' | 'right' | 'start';
 export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' | 'middle' | 'top';
 export type FillRule = 'evenodd' | 'nonzero';
+export type TransformOrigin = number | string;
+export type Rotation = number | string;
 
 export interface RenderElement {
     readonly id: string;
@@ -84,12 +88,51 @@ export interface BaseState {
     textAlign: TextAlignment;
     textBaseline: TextBaseline;
     zIndex: number;
+    translateX: number;
+    translateY: number;
+    transformScaleX: number;
+    transformScaleY: number;
+    rotation: Rotation;
+    transformOriginX: TransformOrigin;
+    transformOriginY: TransformOrigin;
 }
 
 export type MeasureTextOptions = {
     context?: CanvasRenderingContext2D;
     font?: CanvasRenderingContext2D['font'];
 };
+
+export function resolveRotation(value: Rotation): number {
+    if (typeIsNumber(value)) {
+        return value;
+    }
+
+    const trimmed = value.trim();
+
+    if (trimmed.endsWith('deg')) {
+        return degreesToRadians(parseFloat(trimmed));
+    }
+
+    if (trimmed.endsWith('rad')) {
+        return parseFloat(trimmed);
+    }
+
+    return parseFloat(trimmed) || 0;
+}
+
+export function resolveTransformOrigin(value: TransformOrigin, dimension: number): number {
+    if (typeIsNumber(value)) {
+        return value;
+    }
+
+    const trimmed = value.trim();
+
+    if (trimmed.endsWith('%')) {
+        return (parseFloat(trimmed) / 100) * dimension;
+    }
+
+    return parseFloat(trimmed) || 0;
+}
 
 export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
@@ -120,6 +163,13 @@ const cachedDefaultState = functionCache((): BaseState => {
         textAlign: refContext.textAlign,
         textBaseline: refContext.textBaseline,
         zIndex: 0,
+        translateX: 0,
+        translateY: 0,
+        transformScaleX: 1,
+        transformScaleY: 1,
+        rotation: 0,
+        transformOriginX: 0,
+        transformOriginY: 0,
     } as BaseState;
 });
 
@@ -420,6 +470,62 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     set zIndex(value) {
         this.currentState.zIndex = value;
+    }
+
+    get translateX(): number {
+        return this.currentState.translateX;
+    }
+
+    set translateX(value) {
+        this.currentState.translateX = value;
+    }
+
+    get translateY(): number {
+        return this.currentState.translateY;
+    }
+
+    set translateY(value) {
+        this.currentState.translateY = value;
+    }
+
+    get transformScaleX(): number {
+        return this.currentState.transformScaleX;
+    }
+
+    set transformScaleX(value) {
+        this.currentState.transformScaleX = value;
+    }
+
+    get transformScaleY(): number {
+        return this.currentState.transformScaleY;
+    }
+
+    set transformScaleY(value) {
+        this.currentState.transformScaleY = value;
+    }
+
+    get rotation(): Rotation {
+        return this.currentState.rotation;
+    }
+
+    set rotation(value) {
+        this.currentState.rotation = value;
+    }
+
+    get transformOriginX(): TransformOrigin {
+        return this.currentState.transformOriginX;
+    }
+
+    set transformOriginX(value) {
+        this.currentState.transformOriginX = value;
+    }
+
+    get transformOriginY(): TransformOrigin {
+        return this.currentState.transformOriginY;
+    }
+
+    set transformOriginY(value) {
+        this.currentState.transformOriginY = value;
     }
 
     constructor(

@@ -1,6 +1,8 @@
 import {
     CONTEXT_OPERATIONS,
+    TRANSFORM_INTERPOLATORS,
     TRACKED_EVENTS,
+    TRANSFORM_DEFAULTS,
 } from './constants';
 
 import {
@@ -42,6 +44,7 @@ import {
     typeIsFunction,
     typeIsNil,
     typeIsObject,
+    typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
 
@@ -49,9 +52,11 @@ import type {
     Group,
 } from './group';
 
-import type {
-    BaseState,
-    Context,
+import {
+    resolveRotation,
+    resolveTransformOrigin,
+    type BaseState,
+    type Context,
 } from '../context';
 
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
@@ -156,7 +161,11 @@ function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementIn
     return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
 }
 
-function getInterpolator<TValue>(value: TValue) {
+function getInterpolator<TValue>(value: TValue, key?: string) {
+    if (key && TRANSFORM_INTERPOLATORS[key]) {
+        return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
+    }
+
     const interpolator = arrayFind([
         interpolateNumber,
         interpolateGradient,
@@ -169,16 +178,56 @@ function getInterpolator<TValue>(value: TValue) {
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
-// Unused decorator - keeping for future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function propDefault<TThis, TValue, TDefault = TValue>(value: TDefault) {
-    return (target: () => TValue, { kind }: ClassGetterDecoratorContext<TThis, TValue>) => {
-        if (kind === 'getter') {
-            return () => target() ?? value;
-        }
-    };
-}
+function applyTransform(context: Context, _value: unknown, element: Element) {
+    const translateX = element.translateX ?? 0;
+    const translateY = element.translateY ?? 0;
+    const scaleX = element.transformScaleX ?? 1;
+    const scaleY = element.transformScaleY ?? 1;
+    const rawRotation = element.rotation ?? 0;
+    const rawOriginX = element.transformOriginX ?? 0;
+    const rawOriginY = element.transformOriginY ?? 0;
 
+    const rotation = resolveRotation(rawRotation);
+
+    const hasTranslate = translateX !== 0 || translateY !== 0;
+    const hasScale = scaleX !== 1 || scaleY !== 1;
+    const hasRotation = rotation !== 0;
+    const hasOrigin = rawOriginX !== 0 || rawOriginY !== 0;
+
+    if (!hasTranslate && !hasScale && !hasRotation) {
+        return;
+    }
+
+    let originX = 0;
+    let originY = 0;
+
+    if (hasOrigin) {
+        const needsBBox = typeIsString(rawOriginX) || typeIsString(rawOriginY);
+        const box = needsBBox ? element.getBoundingBox() : null;
+
+        originX = resolveTransformOrigin(rawOriginX, box?.width ?? 0);
+        originY = resolveTransformOrigin(rawOriginY, box?.height ?? 0);
+
+        if (needsBBox && box) {
+            originX += box.left;
+            originY += box.top;
+        }
+    }
+
+    context.translate(originX + translateX, originY + translateY);
+
+    if (hasRotation) {
+        context.rotate(rotation);
+    }
+
+    if (hasScale) {
+        context.scale(scaleX, scaleY);
+    }
+
+    if (hasOrigin) {
+        context.translate(-originX, -originY);
+    }
+}
 
 export class Element<
     TState extends BaseElementState = BaseElementState,
@@ -359,6 +408,62 @@ export class Element<
         this.setStateValue('zIndex', value);
     }
 
+    public get translateX() {
+        return this.getStateValue('translateX');
+    }
+
+    public set translateX(value) {
+        this.setStateValue('translateX', value);
+    }
+
+    public get translateY() {
+        return this.getStateValue('translateY');
+    }
+
+    public set translateY(value) {
+        this.setStateValue('translateY', value);
+    }
+
+    public get transformScaleX() {
+        return this.getStateValue('transformScaleX');
+    }
+
+    public set transformScaleX(value) {
+        this.setStateValue('transformScaleX', value);
+    }
+
+    public get transformScaleY() {
+        return this.getStateValue('transformScaleY');
+    }
+
+    public set transformScaleY(value) {
+        this.setStateValue('transformScaleY', value);
+    }
+
+    public get rotation() {
+        return this.getStateValue('rotation');
+    }
+
+    public set rotation(value) {
+        this.setStateValue('rotation', value);
+    }
+
+    public get transformOriginX() {
+        return this.getStateValue('transformOriginX');
+    }
+
+    public set transformOriginX(value) {
+        this.setStateValue('transformOriginX', value);
+    }
+
+    public get transformOriginY() {
+        return this.getStateValue('transformOriginY');
+    }
+
+    public set transformOriginY(value) {
+        this.setStateValue('transformOriginY', value);
+    }
+
     constructor(type: string, {
         id = `${type}:${stringUniqueId()}`,
         class: classes = [],
@@ -371,9 +476,13 @@ export class Element<
         this.type = type;
         this.id = id;
         this.data = data;
-        this.state = state as TState;
         this.pointerEvents = pointerEvents;
         this.classList = new Set(valueOneOrMore(classes));
+
+        this.state = {
+            ...TRANSFORM_DEFAULTS,
+            ...state
+        } as unknown as TState;
     }
 
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
@@ -418,7 +527,7 @@ export class Element<
 
     public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
-            const currentValue = this.getStateValue(key);
+            let currentValue = this.getStateValue(key);
 
             if (typeIsNil(currentValue)) {
                 return output;
@@ -428,7 +537,7 @@ export class Element<
                 return (output[key] = value, output);
             }
 
-            const interpolator = interpolators[key] || getInterpolator(currentValue);
+            const interpolator = interpolators[key] || getInterpolator(currentValue, key as string);
 
             if (isElementValueKeyFrame(value)) {
                 return (output[key] = getKeyframeInterpolator(currentValue, value, interpolator), output);
@@ -450,6 +559,10 @@ export class Element<
         context.save();
 
         try {
+            if (!this.abstract) {
+                applyTransform(context, null, this as unknown as Element);
+            }
+
             objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
                 const value = (this as unknown as Record<keyof BaseElementState, unknown>)[key];
 
