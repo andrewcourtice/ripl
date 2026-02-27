@@ -10,9 +10,18 @@ import {
     createPinia,
 } from 'pinia';
 
+import {
+    h,
+} from 'vue';
+
+import {
+    useData,
+} from 'vitepress';
+
 import Example from '../components/example.vue';
 import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vue';
 import Example3D from '../components/example-3d.vue';
+import RippleBackground from '../components/RippleBackground.vue';
 
 import {
     enhanceAppWithTabs,
@@ -24,6 +33,14 @@ import type {
 
 export default {
     extends: DefaultTheme,
+    Layout() {
+        const { frontmatter } = useData();
+        const isHome = frontmatter.value.layout === 'home';
+
+        return h(DefaultTheme.Layout, null, {
+            'layout-top': () => isHome ? h(RippleBackground) : null,
+        });
+    },
     enhanceApp({ app }) {
         app.use(createPinia());
         app.component('ripl-example', Example);

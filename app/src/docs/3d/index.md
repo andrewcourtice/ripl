@@ -2,7 +2,7 @@
 title: Introduction
 ---
 
-# @ripl/3d
+# 3D
 
 The `@ripl/3d` package extends Ripl with 3D shape rendering projected onto a 2D canvas. It provides a `Context3D` (extending `CanvasContext`), a reactive camera system, built-in 3D shapes, and flat shading utilities.
 

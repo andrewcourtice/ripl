@@ -19,6 +19,7 @@
     "sideEffects": false,
     "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "homepage": "https://www.ripl.rocks",
     "license": "MIT",
     "publishConfig": {
         "access": "public"
