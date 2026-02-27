@@ -9,6 +9,10 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayForEach,
+} from '@ripl/utilities';
+
+import {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -149,7 +153,7 @@ export class Chart<
         id: string;
         color?: string;
     }[]) {
-        for (const srs of series) {
+        arrayForEach(series, srs => {
             if (!this.seriesColorMap.has(srs.id)) {
                 this.seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
             }
@@ -157,7 +161,7 @@ export class Chart<
             if (srs.color) {
                 this.seriesColorMap.set(srs.id, srs.color);
             }
-        }
+        });
     }
 
     protected getSeriesColor(seriesId: string): string {

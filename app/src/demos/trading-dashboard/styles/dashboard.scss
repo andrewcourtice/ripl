@@ -124,16 +124,7 @@
     }
 }
 
-.ripl-button--active {
-    color: var(--vp-button-brand-text);
-    border-color: var(--vp-button-brand-border);
-    background-color: var(--vp-button-brand-bg);
 
-    &:hover {
-        border-color: var(--vp-button-brand-hover-border);
-        background-color: var(--vp-button-brand-hover-bg);
-    }
-}
 
 .summary-cards {
     display: grid;

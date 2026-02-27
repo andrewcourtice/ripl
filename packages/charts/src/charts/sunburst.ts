@@ -31,9 +31,11 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
+    arrayReduce,
 } from '@ripl/utilities';
 
 export interface SunburstNode {
@@ -68,7 +70,7 @@ function flattenNodes(
     parentColor?: string,
     resolvedColors?: Map<string, string>
 ): FlattenedArc[] {
-    const total = nodes.reduce((sum, node) => sum + node.value, 0);
+    const total = arrayReduce(nodes, (sum, node) => sum + node.value, 0);
 
     if (total === 0) return [];
 
@@ -194,7 +196,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 right: exits,
             } = arrayJoin(arcs, this.groups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(exits, group => group.destroy());
+            arrayForEach(exits, el => el.destroy());
 
             const entryGroups = arrayMap(entries, arc => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
@@ -286,7 +288,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }
 
             // Animate entries
-            const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = arrayFlatMap(entryGroups, g => g.getElementsByType('arc')) as Arc[];
 
             const entriesTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(1000),
@@ -296,7 +298,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = updateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = arrayFlatMap(updateGroups, g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(1000),

@@ -33,9 +33,24 @@ import {
     InterpolatorFactory,
 } from '../interpolators';
 
+import type {
+    Group,
+} from './group';
+
+import {
+    resolveRotation,
+    resolveTransformOrigin,
+} from '../context';
+
+import type {
+    BaseState,
+    Context,
+} from '../context';
+
 import {
     AnyFunction,
     arrayFind,
+    arrayMap,
     objectForEach,
     objectReduce,
     OneOrMore,
@@ -47,17 +62,6 @@ import {
     typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
-
-import type {
-    Group,
-} from './group';
-
-import {
-    resolveRotation,
-    resolveTransformOrigin,
-    type BaseState,
-    type Context,
-} from '../context';
 
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
 export type ElementValidationType = 'info' | 'warning' | 'error';
@@ -128,13 +132,13 @@ function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementIn
         value: currentValue,
     }] as { offset: number;
         value: TValue; }[]).concat(
-        frames.map(frame => ({
+        arrayMap(frames, frame => ({
             offset: frame.offset ?? 0,
             value: frame.value,
         }))
     );
 
-    keyframes = frames.map(({ offset, value }, index) => ({
+    keyframes = arrayMap(frames, ({ offset, value }, index) => ({
         value,
         offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
     }));

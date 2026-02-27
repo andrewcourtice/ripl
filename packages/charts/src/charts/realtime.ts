@@ -140,7 +140,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     public push(values: Record<string, number>): void {
         const maxLen = this.getWindowSize();
 
-        for (const [seriesId, value] of Object.entries(values)) {
+        arrayForEach(Object.entries(values), ([seriesId, value]) => {
             let buffer = this.buffers.get(seriesId);
 
             if (!buffer) {
@@ -153,14 +153,14 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             if (buffer.length > maxLen) {
                 buffer.splice(0, buffer.length - maxLen);
             }
-        }
+        });
 
         this.render();
     }
 
     public clear(): void {
         this.buffers.forEach(buffer => buffer.length = 0);
-        this.seriesGroups.forEach(group => group.destroy());
+        arrayForEach(this.seriesGroups, group => group.destroy());
         this.seriesGroups = [];
         this.render();
     }

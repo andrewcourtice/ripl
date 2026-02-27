@@ -31,6 +31,7 @@ import {
     DOMEventHandler,
     functionMemoize,
     onDOMEvent,
+    setForEach,
 } from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
@@ -191,7 +192,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     }
 
     public destroy(): void {
-        this.disposals.forEach(disposal => disposal.dispose());
+        setForEach(this.disposals, disposal => disposal.dispose());
         this.context.destroy();
         super.destroy();
     }

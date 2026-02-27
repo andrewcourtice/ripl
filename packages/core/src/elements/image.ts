@@ -139,7 +139,7 @@ export class ImageElement extends Element<ImageState> {
         super('image', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         const [sourceWidth, sourceHeight] = getSourceSize(this.image);
 
         return new Box(

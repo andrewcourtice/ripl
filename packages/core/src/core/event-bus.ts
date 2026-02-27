@@ -1,5 +1,6 @@
 import {
     Disposable,
+    setForEach,
 } from '@ripl/utilities';
 
 export type EventMap = {
@@ -113,7 +114,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
         const handlers = this.listeners.get(event.type);
 
         if (handlers) {
-            handlers.forEach(handler => {
+            setForEach(handlers, handler => {
                 if (!handler.self || event.target === this) {
                     handler(event);
                 }

@@ -1,4 +1,9 @@
 import {
+    ChartComponent,
+    ChartComponentOptions,
+} from './_base';
+
+import {
     createGroup,
     createLine,
     Group,
@@ -6,13 +11,9 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayForEach,
     Disposable,
 } from '@ripl/utilities';
-
-import {
-    ChartComponent,
-    ChartComponentOptions,
-} from './_base';
 
 export interface CrosshairOptions extends ChartComponentOptions {
     vertical?: boolean;
@@ -109,7 +110,7 @@ export class Crosshair extends ChartComponent {
 
         this.scene.add(this.group);
 
-        this.disposables.forEach(d => d.dispose());
+        arrayForEach(this.disposables, d => d.dispose());
         this.disposables = [
             this.scene.on('mousemove', (event) => {
                 const { x, y } = event.data;
@@ -153,7 +154,7 @@ export class Crosshair extends ChartComponent {
     }
 
     public destroy() {
-        this.disposables.forEach(d => d.dispose());
+        arrayForEach(this.disposables, d => d.dispose());
         this.disposables = [];
 
         if (this.group) {

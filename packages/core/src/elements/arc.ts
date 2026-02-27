@@ -124,7 +124,7 @@ export class Arc extends Shape<ArcState> {
         return getThetaPoint(angle, distance, cx, cy);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         const {
             cx,
             cy,

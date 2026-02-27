@@ -176,10 +176,10 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             right: seriesExits,
         } = arrayJoin(series, this.bubbleGroups, 'id');
 
+        arrayForEach(seriesExits, el => el.destroy());
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
-
-        arrayForEach(seriesExits, series => series.destroy());
 
         const seriesBubbleValueProducer = ({
             id,

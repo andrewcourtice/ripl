@@ -27,6 +27,11 @@
     color: var(--vp-c-text-2);
 }
 
+.jet-engine-demo__controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
 .jet-engine-demo__viewport {
     position: relative;
     width: 100%;

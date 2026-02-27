@@ -17,6 +17,10 @@ import type {
     GradientColorStop,
 } from '../gradient';
 
+import {
+    arrayMap,
+} from '@ripl/utilities';
+
 import type {
     InterpolatorFactory,
 } from './types';
@@ -44,7 +48,7 @@ function canInterpolateGradients(gradientA: Gradient, gradientB: Gradient): bool
 }
 
 function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop[]) {
-    const interpolators = stopsA.map((stopA, index) => {
+    const interpolators = arrayMap(stopsA, (stopA, index) => {
         const stopB = stopsB[index];
 
         return {
@@ -53,7 +57,7 @@ function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop
         };
     });
 
-    return (position: number): GradientColorStop[] => interpolators.map(({ color, offset }) => ({
+    return (position: number): GradientColorStop[] => arrayMap(interpolators, ({ color, offset }) => ({
         color: color(position),
         offset: offset(position),
     }));

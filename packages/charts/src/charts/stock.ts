@@ -40,6 +40,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFilter,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -197,7 +198,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             (item, group) => group.id === this.getCandlestickValues(item).key
         );
 
-        arrayForEach(exits, group => group.destroy());
+        arrayForEach(exits, el => el.destroy());
 
         const entryGroups = arrayMap(entries, (item) => {
             const values = this.getCandlestickValues(item);
@@ -444,7 +445,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 (item, bar) => bar.id === `vol-${this.getCandlestickValues(item).key}`
             );
 
-            arrayForEach(barExits, bar => bar.destroy());
+            arrayForEach(barExits, el => el.destroy());
 
             arrayForEach(barEntries, item => {
                 const values = this.getCandlestickValues(item);
@@ -600,7 +601,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         }
 
                         const step = Math.ceil(keys.length / count);
-                        return keys.filter((_, i) => i % step === 0);
+                        return arrayFilter(keys, (_, i) => i % step === 0);
                     },
                     includes: (value: string) => keys.includes(value),
                 }

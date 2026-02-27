@@ -35,6 +35,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -182,7 +183,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             (item, group) => group.id === getKey(item)
         );
 
-        arrayForEach(exits, group => group.destroy());
+        arrayForEach(exits, el => el.destroy());
 
         const entryGroups = arrayMap(entries, item => {
             const { id, label, start, end, color, progress, state } = getBarState(item);
@@ -331,7 +332,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         ];
 
         // Animate entry bars
-        const entryBars = entryGroups.flatMap(g => g.getElementsByType('rect') as Rect[]);
+        const entryBars = arrayFlatMap(entryGroups, g => g.getElementsByType('rect') as Rect[]);
         const sortedEntryBars = entryBars.sort((a, b) => a.y - b.y);
 
         const entriesTransition = this.renderer.transition(sortedEntryBars, (element, index, length) => ({
@@ -342,7 +343,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         }));
 
         // Animate update bars
-        const updateBars = updateGroups.flatMap(g => g.getElementsByType('rect') as Rect[]);
+        const updateBars = arrayFlatMap(updateGroups, g => g.getElementsByType('rect') as Rect[]);
 
         const updatesTransition = this.renderer.transition(updateBars, element => ({
             duration: this.getAnimationDuration(1000),

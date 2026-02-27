@@ -675,7 +675,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     public destroy(): void {
-        this.disposables.forEach(({ dispose }) => dispose());
+        arrayForEach(this.disposables, ({ dispose }) => dispose());
         this.element.remove();
         super.destroy();
     }

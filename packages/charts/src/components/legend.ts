@@ -1,4 +1,13 @@
 import {
+    ChartComponent,
+    ChartComponentOptions,
+} from './_base';
+
+import type {
+    LegendPosition,
+} from '../core/chart';
+
+import {
     Box,
     createGroup,
     createRect,
@@ -9,15 +18,6 @@ import {
 import {
     arrayForEach,
 } from '@ripl/utilities';
-
-import {
-    ChartComponent,
-    ChartComponentOptions,
-} from './_base';
-
-import type {
-    LegendPosition,
-} from '../core/chart';
 
 export interface LegendItem {
     id: string;

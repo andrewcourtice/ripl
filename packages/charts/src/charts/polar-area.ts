@@ -27,6 +27,7 @@ import {
 
 import {
     arrayFilter,
+    arrayFlatMap,
     arrayJoin,
     arrayMap,
     typeIsFunction,
@@ -238,12 +239,12 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             });
 
             const {
-                left,
-                inner,
-                right,
+                left: entryData,
+                inner: updateData,
+                right: exitData,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            const entries = arrayMap(left, item => {
+            const entries = arrayMap(entryData, item => {
                 const {
                     key,
                     color = colorGenerator.next().value,
@@ -319,7 +320,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 });
             });
 
-            const updates = arrayMap(inner, ([item, group]) => {
+            const updates = arrayMap(updateData, ([item, group]) => {
                 const {
                     cx,
                     cy,
@@ -358,7 +359,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 return group;
             });
 
-            const exits = arrayMap(right, group => {
+            const exits = arrayMap(exitData, group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
@@ -387,7 +388,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const animDuration = this.getAnimationDuration(1000);
 
             async function transitionEntries() {
-                const elements = entries.flatMap(group => group.children);
+                const elements = arrayFlatMap(entries, group => group.children);
 
                 await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
                     duration: animDuration,

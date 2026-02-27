@@ -164,10 +164,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(lineSeries, this.lineGroups, 'id');
 
+        arrayForEach(seriesExits, el => el.destroy());
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
-
-        arrayForEach(seriesExits, series => series.destroy());
 
         const seriesLineValueProducer = ({ id, valueBy, labelBy }: TrendChartLineSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -283,7 +283,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${series.id}-${getKey(item)}`);
 
-            arrayForEach(markerExits, marker => marker.destroy());
+            arrayForEach(markerExits, el => el.destroy());
 
             arrayMap(markerEntries, item => {
                 const { id, state } = getMarkerValues(item);
@@ -412,6 +412,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(barSeries, this.barGroups, 'id');
 
+        arrayForEach(seriesExits, el => el.destroy());
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
         const baseline = this.yScale(0);
@@ -419,8 +421,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         const xScaleSeries = scaleBand(arrayMap(barSeries, srs => srs.id), [0, this.xScaleBand.bandwidth], {
             innerPadding: 0.25,
         });
-
-        arrayForEach(seriesExits, series => series.destroy());
 
         const seriesBarValueProducer = ({ id, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -519,7 +519,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${series.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, bar => bar.destroy());
+            arrayForEach(barExits, el => el.destroy());
 
             arrayMap(barEntries, item => {
                 const { id, state } = getBarValues(item);

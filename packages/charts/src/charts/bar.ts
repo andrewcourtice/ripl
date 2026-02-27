@@ -150,7 +150,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.barGroups, 'id');
 
-        arrayForEach(seriesExits, group => group.destroy());
+        arrayForEach(seriesExits, el => el.destroy());
 
         let seriesScale: BandScale<string> | undefined;
 
@@ -277,7 +277,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, bar => bar.destroy());
+            arrayForEach(barExits, el => el.destroy());
 
             arrayMap(barEntries, item => {
                 const stackOffset = getStackOffset(srs, item);
@@ -382,7 +382,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.barGroups, 'id');
 
-        arrayForEach(seriesExits, group => group.destroy());
+        arrayForEach(seriesExits, el => el.destroy());
 
         let seriesScale: BandScale<string> | undefined;
 
@@ -508,7 +508,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, bar => bar.destroy());
+            arrayForEach(barExits, el => el.destroy());
 
             arrayMap(barEntries, item => {
                 const stackOffset = getStackOffset(srs, item);

@@ -12,6 +12,9 @@ Ripl (pronounced "ripple") is a library that provides a **unified API for 2D gra
 - **Tree-shakable** — Fully modular; consumers only ship what they use
 - **Strict TypeScript** — The entire codebase is strictly typed
 
+## Communication Style
+In all interactions and commit messages, be extremely concise and sacrifice grammar for the sake of concision.
+
 ## Repository Structure
 
 Yarn 4 monorepo with workspaces:
@@ -188,19 +191,21 @@ Charts compose reusable components from `@ripl/charts/components`:
 - **`Tooltip`** — hover tooltips
 - **`Crosshair`** — crosshair overlay for data exploration
 
-### Data Binding — Series Join
+### Data Binding — Array Join
 
-Use `seriesJoin()` to diff new data against existing elements:
+Use `arrayJoin()` from `@ripl/utilities` to diff new data against existing elements:
 
 ```typescript
-const { entries, updates, exits } = seriesJoin(
-    newData,
-    existingElements,
-    (datum, element) => datum.id === element.data
-);
+const {
+    left: entries,
+    inner: updates,
+    right: exits,
+} = arrayJoin(newData, existingElements, (datum, element) => datum.id === element.data);
+
+arrayForEach(exits, el => el.destroy());
 ```
 
-This returns new entries, matched updates, and removed exits (exits are auto-destroyed by default). for more complex charts, such as multi-series charts, there will be multiple levels of data joining necessary to accurately render and animate. For example:
+This returns new entries (`left`), matched updates (`inner`), and removed exits (`right`). Exits must be manually destroyed where appropriate. For more complex charts, such as multi-series charts, there will be multiple levels of data joining necessary to accurately render and animate. For example:
 
 - Series Entries: New series entering the chart
   - Data Point Entries: New data points for this series

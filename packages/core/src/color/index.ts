@@ -27,6 +27,10 @@ import {
     ColorRGBA,
 } from './types';
 
+import {
+    arrayFind,
+} from '@ripl/utilities';
+
 export * from './parsers';
 export * from './serialisers';
 export * from './utilities';
@@ -71,7 +75,7 @@ const PARSER_MAP = [
 ] as ColorParser[];
 
 export function getColorParser(value: string): ColorParser | undefined {
-    return PARSER_MAP.find(({ pattern }) => pattern.test(value));
+    return arrayFind(PARSER_MAP, ({ pattern }) => pattern.test(value));
 }
 
 export function parseColor(value: string): ColorRGBA | undefined {

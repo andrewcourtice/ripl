@@ -21,9 +21,11 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
+    arrayReduce,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -63,7 +65,7 @@ function layoutTreemap(
     height: number,
     gap: number
 ): TreemapNode[] {
-    const total = items.reduce((sum, item) => sum + item.value, 0);
+    const total = arrayReduce(items, (sum, item) => sum + item.value, 0);
 
     if (items.length === 0 || total === 0) return [];
 
@@ -182,7 +184,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 right: exits,
             } = arrayJoin(nodes, this.groups, (node, group) => node.key === group.id);
 
-            arrayForEach(exits, group => group.destroy());
+            arrayForEach(exits, el => el.destroy());
 
             const entryGroups = arrayMap(entries, node => {
                 const nodeColor = node.color ?? colorGenerator.next().value!;
@@ -285,7 +287,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             ];
 
             // Animate entries
-            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const rectsTransition = renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -294,7 +296,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));
+            const entryTexts = arrayFlatMap(entryGroups, g => g.getElementsByType('text'));
 
             const textsTransition = renderer.transition(entryTexts, (element, index, length) => ({
                 duration: this.getAnimationDuration(500),
@@ -304,7 +306,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             }));
 
             // Animate updates
-            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

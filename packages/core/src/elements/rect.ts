@@ -68,7 +68,7 @@ export class Rect extends Shape<RectState> {
         super('rect', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         return new Box(
             this.y,
             this.x,

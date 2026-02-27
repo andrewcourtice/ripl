@@ -1,5 +1,6 @@
 import {
     AnyFunction,
+    setForEach,
 } from '@ripl/utilities';
 
 export type TaskResolve<TResult> = (value: TResult | PromiseLike<TResult>) => void;
@@ -60,7 +61,7 @@ export class Task<TResult = void> extends Promise<TResult> {
             const abort = () => {
                 isAborting = true;
 
-                listeners.forEach(listener => {
+                setForEach(listeners, listener => {
                     try {
                         listener(this.abortReason);
                     } finally {

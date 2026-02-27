@@ -8,6 +8,7 @@ import {
 } from './number';
 
 import {
+    arrayMap,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -26,7 +27,7 @@ export const interpolateColor: InterpolatorFactory<string> = (colorA, colorB) =>
     const rgbaA = parserA.parse(colorA);
     const rgbaB = parserB.parse(colorB);
 
-    const interpolators = rgbaA.map((value, index) => {
+    const interpolators = arrayMap(rgbaA, (value, index) => {
         return interpolateNumber(value, rgbaB[index]);
     });
 

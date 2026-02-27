@@ -27,6 +27,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -257,7 +258,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 right: cellExits,
             } = arrayJoin(cellData, this.cellGroups, (item, group) => item.id === group.id);
 
-            arrayForEach(cellExits, group => group.destroy());
+            arrayForEach(cellExits, el => el.destroy());
 
             const entryGroups = arrayMap(cellEntries, cell => {
                 const rect = createRect({
@@ -333,7 +334,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ];
 
             // Animate
-            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const entriesTransition = this.renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -342,7 +343,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = this.renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

@@ -1,21 +1,20 @@
 <template>
     <dashboard-card :title="store.marketLabel() + ' Overview'" :loading="store.marketLoading">
         <template #actions>
-            <select class="ripl-select" :value="store.marketIndex" @change="onMarketChange">
+            <RiplSelect :modelValue="store.marketIndex" @update:modelValue="onMarketChange">
                 <option value="SPY">S&amp;P 500</option>
                 <option value="QQQ">NASDAQ</option>
                 <option value="DIA">Dow Jones</option>
                 <option value="STW.AX">ASX 200</option>
-            </select>
-            <div class="ripl-control-group">
-                <button
+            </RiplSelect>
+            <RiplButtonGroup>
+                <RiplButton
                     v-for="range in ranges"
                     :key="range"
-                    class="ripl-button"
-                    :class="{ 'ripl-button--active': store.marketTimeRange === range }"
+                    :active="store.marketTimeRange === range"
                     @click="onRangeChange(range)"
-                >{{ range }}</button>
-            </div>
+                >{{ range }}</RiplButton>
+            </RiplButtonGroup>
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
     </dashboard-card>
@@ -31,6 +30,9 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
+import RiplSelect from '../../../.vitepress/components/RiplSelect.vue';
+import RiplButton from '../../../.vitepress/components/RiplButton.vue';
+import RiplButtonGroup from '../../../.vitepress/components/RiplButtonGroup.vue';
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
@@ -75,9 +77,8 @@ function buildChart() {
     });
 }
 
-function onMarketChange(ev: Event) {
-    const target = ev.target as HTMLSelectElement;
-    store.marketIndex = target.value as typeof store.marketIndex;
+function onMarketChange(value: string) {
+    store.marketIndex = value as typeof store.marketIndex;
     store.fetchMarketData().then(() => buildChart());
 }
 

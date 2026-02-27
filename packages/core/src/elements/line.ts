@@ -59,7 +59,7 @@ export class Line extends Shape<LineState> {
         super('line', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         return new Box(
             min(this.y1, this.y2),
             min(this.x1, this.x2),
@@ -74,6 +74,7 @@ export class Line extends Shape<LineState> {
             path.lineTo(this.x2, this.y2);
         });
     }
+
 }
 
 export function createLine(...options: ConstructorParameters<typeof Line>) {

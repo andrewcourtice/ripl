@@ -35,6 +35,7 @@ import {
 
 import {
     arrayFilter,
+    arrayFlatMap,
     arrayJoin,
     arrayMap,
     typeIsFunction,
@@ -162,12 +163,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             });
 
             const {
-                left,
-                inner,
-                right,
+                left: entryData,
+                inner: updateData,
+                right: exitData,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            const entries = arrayMap(left, item => {
+            const entries = arrayMap(entryData, item => {
                 const {
                     key,
                     value,
@@ -257,7 +258,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 });
             });
 
-            const updates = arrayMap(inner, ([item, group]) => {
+            const updates = arrayMap(updateData, ([item, group]) => {
                 const {
                     cx,
                     cy,
@@ -299,7 +300,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 return group;
             });
 
-            const exits = arrayMap(right, group => {
+            const exits = arrayMap(exitData, group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
@@ -335,7 +336,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const animDuration = this.getAnimationDuration(1000);
 
             async function transitionEntries() {
-                const elements = entries.flatMap(group => group.children);
+                const elements = arrayFlatMap(entries, group => group.children);
 
                 await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
                     duration: animDuration,

@@ -166,7 +166,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(series, this.seriesGroups, 'id');
 
-        arrayForEach(seriesExits, group => group.destroy());
+        arrayForEach(seriesExits, el => el.destroy());
 
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

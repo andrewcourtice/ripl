@@ -2,6 +2,11 @@ import {
     interpolateNumber,
 } from './number';
 
+import {
+    arrayMap,
+    arrayReduce,
+} from '@ripl/utilities';
+
 import type {
     Interpolator,
 } from './types';
@@ -28,9 +33,9 @@ export function interpolateString(callback: (tag: typeof tagIntStr) => StringInt
     }
 
     const format = formatter || (value => value);
-    const interpolators = tagA.args.map((arg, index) => interpolateNumber(arg, tagB.args[index]));
+    const interpolators = arrayMap(tagA.args, (arg, index) => interpolateNumber(arg, tagB.args[index]));
 
-    return position => tagA.fragments.reduce((input, fragment, index) => {
+    return position => arrayReduce(Array.from(tagA.fragments), (input, fragment, index) => {
         const output = input + fragment;
         const interpolator = interpolators[index];
 

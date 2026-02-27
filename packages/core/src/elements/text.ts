@@ -1,5 +1,8 @@
+import type {
+    Context,
+} from '../context';
+
 import {
-    type Context,
     measureText,
 } from '../context';
 
@@ -67,7 +70,7 @@ export class Text extends Element<TextState> {
         super('text', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         const text = this.content.toString();
 
         const {

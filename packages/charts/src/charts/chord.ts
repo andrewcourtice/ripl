@@ -17,6 +17,11 @@ import {
 } from '../components/legend';
 
 import {
+    createRibbon,
+    Ribbon,
+} from '../elements';
+
+import {
     Arc,
     ArcState,
     Context,
@@ -30,11 +35,7 @@ import {
 } from '@ripl/core';
 
 import {
-    createRibbon,
-    Ribbon,
-} from '../elements';
-
-import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -136,7 +137,7 @@ function computeChordLayout(
 
     // Compute ribbon positions
     const ribbons: ChordRibbon[] = [];
-    const groupOffsets: number[] = arcStarts.map(start => start);
+    const groupOffsets: number[] = arrayMap(arcStarts, start => start);
 
     for (let i = 0; i < count; i++) {
         for (let col = 0; col < count; col++) {
@@ -224,7 +225,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: arcExits,
             } = arrayJoin(layout.arcs, this.arcGroups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(arcExits, group => group.destroy());
+            arrayForEach(arcExits, el => el.destroy());
 
             const arcEntryGroups = arrayMap(arcEntries, arc => {
                 const segment = createArc({
@@ -308,7 +309,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: ribbonExits,
             } = arrayJoin(layout.ribbons, this.ribbonGroups, (ribbon, group) => ribbon.id === group.id);
 
-            arrayForEach(ribbonExits, group => group.destroy());
+            arrayForEach(ribbonExits, el => el.destroy());
 
             const ribbonEntryGroups = arrayMap(ribbonEntries, ribbon => {
                 const ribbonEl = createRibbon({
@@ -392,7 +393,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }
 
             // Sequential animation: arcs first, then ribbons
-            const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = arrayFlatMap(arcEntryGroups, g => g.getElementsByType('arc')) as Arc[];
 
             const arcsTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -402,7 +403,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Ribbons animate after arcs complete
-            const entryRibbons = ribbonEntryGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
+            const entryRibbons = arrayFlatMap(ribbonEntryGroups, g => g.getElementsByType('ribbon')) as Ribbon[];
             const arcAnimDuration = this.getAnimationDuration(800) + this.getAnimationDuration(600);
 
             const ribbonsTransition = renderer.transition(entryRibbons, (element, index, length) => ({
@@ -413,7 +414,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = arcUpdateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = arrayFlatMap(arcUpdateGroups, g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(800),

@@ -59,7 +59,7 @@ export class Polygon extends Shape<PolygonState> {
         super('polygon', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
             this.cx - this.radius,

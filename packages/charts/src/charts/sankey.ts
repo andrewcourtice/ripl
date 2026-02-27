@@ -12,6 +12,11 @@ import {
 } from '../components/tooltip';
 
 import {
+    createSankeyLink,
+    SankeyLinkPath,
+} from '../elements';
+
+import {
     Context,
     createGroup,
     createRect,
@@ -25,14 +30,13 @@ import {
 } from '@ripl/core';
 
 import {
-    createSankeyLink,
-    SankeyLinkPath,
-} from '../elements';
-
-import {
+    arrayFilter,
+    arrayFind,
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
+    arrayReduce,
 } from '@ripl/utilities';
 
 export interface SankeyLink {
@@ -109,10 +113,10 @@ function computeSankeyLayout(
     });
 
     // Find source nodes (no incoming links)
-    const targetSet = new Set(links.map(l => l.target));
-    const sourceNodes = nodes.filter(n => !targetSet.has(n.id));
+    const targetSet = new Set(arrayMap(links, l => l.target));
+    const sourceNodes = arrayFilter(nodes, n => !targetSet.has(n.id));
 
-    const queue = sourceNodes.map(n => n.id);
+    const queue = arrayMap(sourceNodes, n => n.id);
     const visited = new Set<string>();
 
     arrayForEach(queue, id => {
@@ -153,8 +157,8 @@ function computeSankeyLayout(
     const nodeValueMap = new Map<string, number>();
 
     arrayForEach(nodes, node => {
-        const outgoing = links.filter(l => l.source === node.id).reduce((s, l) => s + l.value, 0);
-        const incoming = links.filter(l => l.target === node.id).reduce((s, l) => s + l.value, 0);
+        const outgoing = arrayReduce(arrayFilter(links, l => l.source === node.id), (s, l) => s + l.value, 0);
+        const incoming = arrayReduce(arrayFilter(links, l => l.target === node.id), (s, l) => s + l.value, 0);
         nodeValueMap.set(node.id, Math.max(outgoing, incoming));
     });
 
@@ -172,12 +176,12 @@ function computeSankeyLayout(
     const layoutNodeMap = new Map<string, LayoutNode>();
 
     depthGroups.forEach((nodeIds, depth) => {
-        const totalValue = nodeIds.reduce((sum, id) => sum + (nodeValueMap.get(id) ?? 0), 0);
+        const totalValue = arrayReduce(nodeIds, (sum, id) => sum + (nodeValueMap.get(id) ?? 0), 0);
         const availableHeight = height - nodePadding * (nodeIds.length - 1);
         let currentY = 0;
 
         arrayForEach(nodeIds, nodeId => {
-            const nodeConfig = nodes.find(n => n.id === nodeId);
+            const nodeConfig = arrayFind(nodes, n => n.id === nodeId);
             const value = nodeValueMap.get(nodeId) ?? 0;
             const nodeHeight = totalValue > 0 ? (value / totalValue) * availableHeight : availableHeight / nodeIds.length;
             const color = nodeConfig?.color ?? colorGenerator.next().value!;
@@ -237,11 +241,11 @@ function computeSankeyLayout(
             width: linkWidth,
             color: source.color,
         };
-    }).filter(Boolean);
+    }) as LayoutLink[];
 
     return {
         layoutNodes,
-        layoutLinks,
+        layoutLinks: arrayFilter(layoutLinks, Boolean),
     };
 }
 
@@ -293,7 +297,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 right: linkExits,
             } = arrayJoin(layoutLinks, this.linkGroups, (link, group) => link.id === group.id);
 
-            arrayForEach(linkExits, group => group.destroy());
+            arrayForEach(linkExits, el => el.destroy());
 
             const linkEntryGroups = arrayMap(linkEntries, link => {
                 const sx = padding.left + link.source.x + link.source.width;
@@ -363,7 +367,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 right: nodeExits,
             } = arrayJoin(layoutNodes, this.nodeGroups, (node, group) => node.id === group.id);
 
-            arrayForEach(nodeExits, group => group.destroy());
+            arrayForEach(nodeExits, el => el.destroy());
 
             const nodeEntryGroups = arrayMap(nodeEntries, node => {
                 const rect = createRect({
@@ -453,7 +457,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             ];
 
             // Animate
-            const linkPaths = linkEntryGroups.flatMap(g => g.getElementsByType('sankey-link')) as SankeyLinkPath[];
+            const linkPaths = arrayFlatMap(linkEntryGroups, g => g.getElementsByType('sankey-link')) as SankeyLinkPath[];
 
             const linksTransition = renderer.transition(linkPaths, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -462,7 +466,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 state: element.data as Record<string, unknown>,
             }));
 
-            const nodeRects = nodeEntryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const nodeRects = arrayFlatMap(nodeEntryGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const nodesTransition = renderer.transition(nodeRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -471,7 +475,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 state: element.data as RectState,
             }));
 
-            const nodeLabels = nodeEntryGroups.flatMap(g => g.getElementsByType('text'));
+            const nodeLabels = arrayFlatMap(nodeEntryGroups, g => g.getElementsByType('text'));
 
             const labelsTransition = renderer.transition(nodeLabels, (element, index, length) => ({
                 duration: this.getAnimationDuration(500),
@@ -480,7 +484,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 state: (element.data ?? {}) as Record<string, unknown>,
             }));
 
-            const updateRects = nodeUpdateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = arrayFlatMap(nodeUpdateGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

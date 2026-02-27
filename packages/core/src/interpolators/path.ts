@@ -70,7 +70,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         extSetB,
     ] = extrapolatePointSet(setA, setB);
 
-    const interpolators = extSetA.map((pointA, index) => {
+    const interpolators = arrayMap(extSetA, (pointA, index) => {
         const pointB = extSetB[index];
 
         return [
@@ -79,7 +79,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         ];
     });
 
-    return position => interpolators.map(([ix, iy]) => [
+    return position => arrayMap(interpolators, ([ix, iy]) => [
         ix(position),
         iy(position),
     ]);

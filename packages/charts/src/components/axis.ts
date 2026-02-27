@@ -16,6 +16,8 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFilter,
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -102,7 +104,7 @@ export class ChartAxis extends ChartComponent {
         const dropCount = Math.ceil(1 / tickRatio);
         const shouldDrop = tickRatio < 1;
 
-        this.cachedTicks = ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
+        this.cachedTicks = arrayFilter(ticks, (_, index) => !shouldDrop || index % dropCount === 0);
         return this.cachedTicks;
     }
 
@@ -284,7 +286,7 @@ export class ChartXAxis extends ChartAxis {
         this.group.remove(groupExits);
 
         // Animate entries
-        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+        const entryElements = arrayFlatMap(labelEntryTexts, g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
         if (entryElements.length > 0) {
             this.renderer.transition(entryElements, element => ({
@@ -440,7 +442,7 @@ export class ChartYAxis extends ChartAxis {
         this.group.remove(groupExits);
 
         // Animate entries
-        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+        const entryElements = arrayFlatMap(labelEntryTexts, g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
         if (entryElements.length > 0) {
             this.renderer.transition(entryElements, element => ({

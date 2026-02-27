@@ -21,6 +21,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     arrayJoin,
     arrayMap,
@@ -121,7 +122,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 right: exits,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            arrayForEach(exits, group => group.destroy());
+            arrayForEach(exits, el => el.destroy());
 
             const entryGroups = arrayMap(entries, item => {
                 const itemColor = item.color ?? colorGenerator.next().value!;
@@ -211,8 +212,8 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             ];
 
             // Animate entries
-            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
-            const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));
+            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
+            const entryTexts = arrayFlatMap(entryGroups, g => g.getElementsByType('text'));
 
             const rectsTransition = renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -229,7 +230,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             }));
 
             // Animate updates
-            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

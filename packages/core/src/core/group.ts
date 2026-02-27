@@ -14,6 +14,7 @@ import {
     arrayFind,
     arrayFlatMap,
     arrayForEach,
+    arrayMap,
     OneOrMore,
     stringEquals,
     typeIsNil,
@@ -44,7 +45,7 @@ const QUERY_PATTERNS = {
     id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
     class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
     attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
+    combinators: new RegExp(`(\\s[${arrayMap(Object.values(COMBINATOR_PATTERNS), pattern => pattern.source).join('|')}]\\s|\\s)`),
 };
 
 const COMBINATOR_PRODUCERS = [
@@ -182,7 +183,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        elements.forEach(item => {
+        arrayForEach(elements, item => {
             if (item.parent) {
                 item.parent.remove(item);
             }
@@ -201,7 +202,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        elements.forEach(item => {
+        arrayForEach(elements, item => {
             item.parent = undefined;
             this.#elements.delete(item);
         });
@@ -214,9 +215,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public graph(includeGroups?: boolean): Element[] {
-        return this.children.flatMap(item => {
+        return arrayFlatMap(this.children, item => {
             if (!isGroup(item)) {
-                return item;
+                return [item];
             }
 
             return (includeGroups

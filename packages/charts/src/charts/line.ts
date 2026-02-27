@@ -157,7 +157,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.lineGroups, 'id');
 
-        arrayForEach(seriesExits, group => group.destroy());
+        arrayForEach(seriesExits, el => el.destroy());
 
         const seriesLineValueProducer = (srs: LineChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -273,7 +273,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(markerExits, marker => marker.destroy());
+            arrayForEach(markerExits, el => el.destroy());
 
             arrayMap(markerEntries, item => {
                 const { id, state } = getValues(item);

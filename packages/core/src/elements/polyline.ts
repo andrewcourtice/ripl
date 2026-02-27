@@ -496,7 +496,7 @@ export class Polyline extends Shape<PolylineState> {
         super('polyline', options);
     }
 
-    public getBoundingBox() {
+    public getBoundingBox(): Box {
         const [left, right] = getExtent(this.points, point => point[0]);
         const [top, bottom] = getExtent(this.points, point => point[1]);
 

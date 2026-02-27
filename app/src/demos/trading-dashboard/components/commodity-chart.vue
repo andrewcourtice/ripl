@@ -1,21 +1,20 @@
 <template>
     <dashboard-card :title="store.commodityLabel()" :loading="store.commodityLoading">
         <template #actions>
-            <select class="ripl-select" :value="store.commodity" @change="onCommodityChange">
+            <RiplSelect :modelValue="store.commodity" @update:modelValue="onCommodityChange">
                 <option value="GOLD">Gold</option>
                 <option value="SILVER">Silver</option>
                 <option value="WTI">Crude Oil (WTI)</option>
                 <option value="BRENT">Brent Crude</option>
-            </select>
-            <div class="ripl-control-group">
-                <button
+            </RiplSelect>
+            <RiplButtonGroup>
+                <RiplButton
                     v-for="range in ranges"
                     :key="range"
-                    class="ripl-button"
-                    :class="{ 'ripl-button--active': store.commodityTimeRange === range }"
+                    :active="store.commodityTimeRange === range"
                     @click="onRangeChange(range)"
-                >{{ range }}</button>
-            </div>
+                >{{ range }}</RiplButton>
+            </RiplButtonGroup>
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
     </dashboard-card>
@@ -31,6 +30,9 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
+import RiplSelect from '../../../.vitepress/components/RiplSelect.vue';
+import RiplButton from '../../../.vitepress/components/RiplButton.vue';
+import RiplButtonGroup from '../../../.vitepress/components/RiplButtonGroup.vue';
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
@@ -78,9 +80,8 @@ function buildChart() {
     });
 }
 
-function onCommodityChange(ev: Event) {
-    const target = ev.target as HTMLSelectElement;
-    store.commodity = target.value as CommodityType;
+function onCommodityChange(value: string) {
+    store.commodity = value as CommodityType;
     store.fetchCommodityData().then(() => buildChart());
 }
 

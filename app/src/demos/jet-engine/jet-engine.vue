@@ -4,6 +4,10 @@
             <h1 class="jet-engine-demo__title">Jet Engine Exploded View</h1>
             <p class="jet-engine-demo__subtitle">Interactive 3D demo powered by @ripl/3d — orbit, zoom, and hover to explore</p>
         </div>
+        <div class="jet-engine-demo__controls">
+            <RiplSwitch v-model="rotating" label="Rotate" />
+            <RiplSwitch :modelValue="exploded" @update:modelValue="toggleExploded" label="Exploded View" />
+        </div>
         <div class="jet-engine-demo__viewport" ref="viewport">
             <div
                 class="jet-engine-demo__tooltip"
@@ -38,6 +42,8 @@ import {
     onUnmounted,
 } from 'vue';
 
+import RiplSwitch from '../../.vitepress/components/RiplSwitch.vue';
+
 import {
     createCamera,
     createContext,
@@ -47,6 +53,7 @@ import {
 import {
     createScene,
     createRenderer,
+    easeInOutCubic,
 } from '@ripl/core';
 
 import type {
@@ -98,7 +105,7 @@ const PASTEL_COLORS = [
 ];
 
 // Exploded offsets along z-axis (front to back)
-const PART_OFFSETS = [
+const EXPLODED_OFFSETS = [
     1.8,   // Fan
     1.8,   // Fan Case
     1.0,   // LP Compressor
@@ -110,8 +117,38 @@ const PART_OFFSETS = [
     -0.1,  // Central Shaft (centered)
 ];
 
+// Assembled offsets — parts packed together along shaft
+const ASSEMBLED_OFFSETS = [
+    0.55,  // Fan
+    0.55,  // Fan Case
+    0.30,  // LP Compressor
+    0.05,  // HP Compressor
+    -0.25, // Combustion Chamber
+    -0.55, // HP Turbine
+    -0.70, // LP Turbine
+    -0.95, // Exhaust Nozzle
+    -0.10, // Central Shaft (centered)
+];
+
+// Parts that rotate with the shaft (rotor parts)
+const ROTATING_PARTS = new Set([
+    'Fan',
+    'LP Compressor',
+    'HP Compressor',
+    'HP Turbine',
+    'LP Turbine',
+    'Central Shaft',
+]);
+
+const ROTATION_SPEED = 1.5; // radians per second
+
+const SHAFT_LENGTH_EXPLODED = 3.0;
+const SHAFT_LENGTH_ASSEMBLED = 1.8;
+
 const viewport = ref<HTMLElement>();
 const hoveredPart = ref<string | null>(null);
+const rotating = ref(true);
+const exploded = ref(true);
 const mousePos = reactive({ x: 0, y: 0 });
 
 const tooltipStyle = computed(() => ({
@@ -125,11 +162,12 @@ let renderer: Renderer | undefined;
 const partEntries = reactive<PartEntry[]>([]);
 
 function createParts(): PartEntry[] {
+    const offsets = exploded.value ? EXPLODED_OFFSETS : ASSEMBLED_OFFSETS;
     const parts: { name: string; element: Shape3D; hoverColor: string }[] = [
         {
             name: 'Fan',
             element: createFan({
-                z: PART_OFFSETS[0],
+                z: offsets[0],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -139,7 +177,7 @@ function createParts(): PartEntry[] {
         {
             name: 'Fan Case',
             element: createFanCase({
-                z: PART_OFFSETS[1],
+                z: offsets[1],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -149,7 +187,7 @@ function createParts(): PartEntry[] {
         {
             name: 'LP Compressor',
             element: createLPCompressor({
-                z: PART_OFFSETS[2],
+                z: offsets[2],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -159,7 +197,7 @@ function createParts(): PartEntry[] {
         {
             name: 'HP Compressor',
             element: createHPCompressor({
-                z: PART_OFFSETS[3],
+                z: offsets[3],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -169,7 +207,7 @@ function createParts(): PartEntry[] {
         {
             name: 'Combustion Chamber',
             element: createCombustionChamber({
-                z: PART_OFFSETS[4],
+                z: offsets[4],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -179,7 +217,7 @@ function createParts(): PartEntry[] {
         {
             name: 'HP Turbine',
             element: createHPTurbine({
-                z: PART_OFFSETS[5],
+                z: offsets[5],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -189,7 +227,7 @@ function createParts(): PartEntry[] {
         {
             name: 'LP Turbine',
             element: createLPTurbine({
-                z: PART_OFFSETS[6],
+                z: offsets[6],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -199,7 +237,7 @@ function createParts(): PartEntry[] {
         {
             name: 'Exhaust Nozzle',
             element: createExhaustNozzle({
-                z: PART_OFFSETS[7],
+                z: offsets[7],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -209,7 +247,7 @@ function createParts(): PartEntry[] {
         {
             name: 'Central Shaft',
             element: createCentralShaft({
-                z: PART_OFFSETS[8],
+                z: offsets[8],
                 fillStyle: DEFAULT_COLOR,
                 strokeStyle: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
@@ -229,6 +267,26 @@ function onMouseMove(event: MouseEvent) {
     const rect = viewport.value.getBoundingClientRect();
     mousePos.x = event.clientX - rect.left;
     mousePos.y = event.clientY - rect.top;
+}
+
+function toggleExploded() {
+    exploded.value = !exploded.value;
+
+    const targetOffsets = exploded.value ? EXPLODED_OFFSETS : ASSEMBLED_OFFSETS;
+    const targetShaftLength = exploded.value ? SHAFT_LENGTH_EXPLODED : SHAFT_LENGTH_ASSEMBLED;
+
+    for (let i = 0; i < partEntries.length; i++) {
+        const isShaft = partEntries[i].name === 'Central Shaft';
+
+        renderer?.transition(partEntries[i].element as any, {
+            duration: 800,
+            ease: easeInOutCubic,
+            state: {
+                z: targetOffsets[i],
+                ...(isShaft ? { length: targetShaftLength } : {}),
+            } as any,
+        });
+    }
 }
 
 onMounted(() => {
@@ -276,6 +334,18 @@ onMounted(() => {
         autoStart: true,
         autoStop: false,
         sortBuffer: depthSort(context),
+    });
+
+    renderer.on('tick', (event) => {
+        if (!rotating.value) return;
+
+        const dt = event.data.deltaTime / 1000;
+
+        for (const part of partEntries) {
+            if (ROTATING_PARTS.has(part.name)) {
+                part.element.rotationZ += ROTATION_SPEED * dt;
+            }
+        }
     });
 
     viewport.value.addEventListener('mousemove', onMouseMove);

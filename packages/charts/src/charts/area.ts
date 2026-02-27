@@ -149,7 +149,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.areaGroups, 'id');
 
-        arrayForEach(seriesExits, group => group.destroy());
+        arrayForEach(seriesExits, el => el.destroy());
 
         // Precompute cumulative stacked values per data point
         const stackedValues: number[][] = [];

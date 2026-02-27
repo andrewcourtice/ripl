@@ -31,6 +31,7 @@ import {
 } from '../animation';
 
 import {
+    arrayFlatMap,
     arrayForEach,
     OneOrMore,
     typeIsFunction,
@@ -46,6 +47,10 @@ export interface RendererEventMap extends EventMap {
     stop: {
         startTime: number;
         endTime: number;
+    };
+    tick: {
+        time: number;
+        deltaTime: number;
     };
 }
 
@@ -94,6 +99,7 @@ export class Renderer extends EventBus<RendererEventMap> {
     private handle?: number;
     private startTime = performance.now();
     private currentTime = performance.now();
+    private previousTime = performance.now();
 
     public autoStart = true;
     public autoStop = true;
@@ -142,6 +148,13 @@ export class Renderer extends EventBus<RendererEventMap> {
         const buffer = this.sortBuffer
             ? this.sortBuffer(this.scene.buffer)
             : this.scene.buffer;
+
+        this.emit('tick', {
+            time: this.currentTime,
+            deltaTime: this.currentTime - this.previousTime,
+        });
+
+        this.previousTime = this.currentTime;
 
         arrayForEach(buffer, element => {
             if (this.transitionMap.has(element.id)) {
@@ -199,6 +212,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this.running = true;
         this.startTime = performance.now();
+        this.previousTime = this.startTime;
 
         this.emit('start', {
             startTime: this.startTime,
@@ -240,8 +254,8 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return new Transition((resolve, _reject, _onAbort) => {
-            const elements = valueOneOrMore(element).flatMap(element => {
-                return isGroup(element) ? element.graph(false) : element;
+            const elements = arrayFlatMap(valueOneOrMore(element), element => {
+                return isGroup(element) ? element.graph(false) : [element];
             });
 
             if (!elements.length) {
@@ -251,7 +265,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             const totalCount = elements.length;
             let completeCount = 0;
 
-            elements.forEach((element, index) => {
+            arrayForEach(elements, (element, index) => {
                 const {
                     duration = 0,
                     delay = 0,

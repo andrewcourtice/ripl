@@ -5,6 +5,7 @@ import {
 } from './_base';
 
 import {
+    arrayMap,
     arrayMapRange,
 } from '@ripl/utilities';
 
@@ -17,7 +18,7 @@ export function scaleTime(
     range: number[],
     options?: LinearScaleOptions
 ): Scale<Date, number> {
-    const numericDomain = domain.map(date => date.getTime());
+    const numericDomain = arrayMap(domain, date => date.getTime());
     const convert = getLinearScaleMethod(numericDomain, range, options);
     const invert = getLinearScaleMethod(range, numericDomain, options);
 

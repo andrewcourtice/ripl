@@ -6,6 +6,10 @@ import type {
     RadialGradient,
 } from './types';
 
+import {
+    arrayMap,
+} from '@ripl/utilities';
+
 function serialiseStop(stop: GradientColorStop): string {
     if (stop.offset !== undefined) {
         return `${stop.color} ${(stop.offset * 100).toFixed(2)}%`;
@@ -15,7 +19,7 @@ function serialiseStop(stop: GradientColorStop): string {
 }
 
 function serialiseStops(stops: GradientColorStop[]): string {
-    return stops.map(serialiseStop).join(', ');
+    return arrayMap(stops, serialiseStop).join(', ');
 }
 
 function serialiseLinearGradient(gradient: LinearGradient): string {
