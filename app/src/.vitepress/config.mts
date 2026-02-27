@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import {
     defineConfig,
 } from 'vitepress';
@@ -22,6 +24,16 @@ export default defineConfig({
 
     vite: {
         envDir: '../',
+        resolve: {
+            alias: {
+                '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
+                '@ripl/vdom': path.resolve(__dirname, '../../../packages/vdom/src/index.ts'),
+                '@ripl/core': path.resolve(__dirname, '../../../packages/core/src/index.ts'),
+                '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
+                '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
+                '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
+            },
+        },
         css: {
             preprocessorOptions: {
                 scss: {
