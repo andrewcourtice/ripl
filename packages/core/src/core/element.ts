@@ -247,7 +247,7 @@ export class Element<
 
     public abstract: boolean = false;
     public pointerEvents: ElementPointerEvents = 'all';
-    public parent?: Group<TEventMap>;
+    public declare parent?: Group<TEventMap>;
     public data: unknown;
 
     // Props

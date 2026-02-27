@@ -2086,49 +2086,49 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/3d@npm:1.0.0, @ripl/3d@workspace:packages/3d":
+"@ripl/3d@npm:1.0.0-beta.0, @ripl/3d@workspace:packages/3d":
   version: 0.0.0-use.local
   resolution: "@ripl/3d@workspace:packages/3d"
   dependencies:
-    "@ripl/core": "npm:1.0.0"
-    "@ripl/utilities": "npm:1.0.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
-"@ripl/charts@npm:1.0.0, @ripl/charts@workspace:packages/charts":
+"@ripl/charts@npm:1.0.0-beta.0, @ripl/charts@workspace:packages/charts":
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
-    "@ripl/core": "npm:1.0.0"
-    "@ripl/utilities": "npm:1.0.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
-"@ripl/core@npm:1.0.0, @ripl/core@workspace:packages/core":
+"@ripl/core@npm:1.0.0-beta.0, @ripl/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@ripl/core@workspace:packages/core"
   dependencies:
-    "@ripl/utilities": "npm:1.0.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
-"@ripl/svg@npm:1.0.0, @ripl/svg@workspace:packages/svg":
+"@ripl/svg@npm:1.0.0-beta.0, @ripl/svg@workspace:packages/svg":
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
   dependencies:
-    "@ripl/core": "npm:1.0.0"
-    "@ripl/utilities": "npm:1.0.0"
-    "@ripl/vdom": "npm:1.0.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/vdom": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
-"@ripl/utilities@npm:1.0.0, @ripl/utilities@workspace:packages/utilities":
+"@ripl/utilities@npm:1.0.0-beta.0, @ripl/utilities@workspace:packages/utilities":
   version: 0.0.0-use.local
   resolution: "@ripl/utilities@workspace:packages/utilities"
   languageName: unknown
   linkType: soft
 
-"@ripl/vdom@npm:1.0.0, @ripl/vdom@workspace:packages/vdom":
+"@ripl/vdom@npm:1.0.0-beta.0, @ripl/vdom@workspace:packages/vdom":
   version: 0.0.0-use.local
   resolution: "@ripl/vdom@workspace:packages/vdom"
   languageName: unknown
@@ -3414,11 +3414,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "app-f43f79@workspace:app"
   dependencies:
-    "@ripl/3d": "npm:1.0.0"
-    "@ripl/charts": "npm:1.0.0"
-    "@ripl/core": "npm:1.0.0"
-    "@ripl/svg": "npm:1.0.0"
-    "@ripl/utilities": "npm:1.0.0"
+    "@ripl/3d": "npm:1.0.0-beta.0"
+    "@ripl/charts": "npm:1.0.0-beta.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/svg": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
     flex-layout-attribute: "npm:^1.0.3"
     pinia: "npm:^3.0.4"
     sass: "npm:^1.97.3"

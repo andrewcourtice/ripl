@@ -14,8 +14,10 @@
         "packages/*"
     ],
     "scripts": {
+        "build": "lerna run build",
         "test": "vitest",
-        "lint": "eslint ."
+        "lint": "eslint .",
+        "publish": "lerna run build && lerna publish from-package"
     },
     "devDependencies": {
         "@eslint/compat": "^2.0.2",

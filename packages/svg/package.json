@@ -1,14 +1,34 @@
 {
     "name": "@ripl/svg",
-    "version": "1.0.0",
-    "description": "",
+    "version": "1.0.0-beta.0",
+    "description": "SVG rendering context for Ripl",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
     "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "license": "MIT",
-    "main": "src/index.ts",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsup"
+    },
     "dependencies": {
-        "@ripl/core": "1.0.0",
-        "@ripl/utilities": "1.0.0",
-        "@ripl/vdom": "1.0.0"
+        "@ripl/core": "1.0.0-beta.0",
+        "@ripl/utilities": "1.0.0-beta.0",
+        "@ripl/vdom": "1.0.0-beta.0"
     }
 }
