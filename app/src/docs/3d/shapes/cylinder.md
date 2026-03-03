@@ -9,7 +9,9 @@ A 3D cylinder with configurable top and bottom radii (set different values for a
 ## Usage
 
 ```ts
-import { createCylinder } from '@ripl/3d';
+import {
+    createCylinder,
+} from '@ripl/3d';
 
 const cylinder = createCylinder({
     radiusTop: 1,
@@ -42,13 +44,20 @@ const cylinder = createCylinder({
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCylinder, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCylinder,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
 const cylinder = createCylinder({
-    radiusTop: 0.8, radiusBottom: 0.8, height: 2,
+    radiusTop: 0.8,
+    radiusBottom: 0.8,
+    height: 2,
     fillStyle: '#cc8844',
 });
 
@@ -68,8 +77,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCylinder } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCylinder,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCylinder({

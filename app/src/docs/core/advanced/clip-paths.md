@@ -11,15 +11,26 @@ A **clip path** turns a shape into a clipping mask — instead of being filled o
 Set `clip: true` on any shape to use it as a clip path:
 
 ```ts
-import { createCircle, createRect, createGroup } from '@ripl/core';
+import {
+    createCircle,
+    createGroup,
+    createRect,
+} from '@ripl/core';
 
 const group = createGroup({
     children: [
         // Clip shape — defines the visible region
-        createCircle({ clip: true, cx: 150, cy: 100, radius: 80 }),
+        createCircle({ clip: true,
+            cx: 150,
+            cy: 100,
+            radius: 80 }),
 
         // Clipped content — only visible inside the circle
-        createRect({ fillStyle: '#3a86ff', x: 0, y: 0, width: 300, height: 200 }),
+        createRect({ fillStyle: '#3a86ff',
+            x: 0,
+            y: 0,
+            width: 300,
+            height: 200 }),
     ],
 });
 ```
@@ -57,7 +68,7 @@ createCircle({
     cx: 150,
     cy: 100,
     radius: 80,
-    transformScaleX: 1.5,  // Elliptical clip
+    transformScaleX: 1.5, // Elliptical clip
 });
 ```
 
@@ -78,11 +89,11 @@ The demo below shows a circle clip path masking a gradient-filled rectangle and 
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
-    createRect,
-    createLine,
+    createContext,
     createGroup,
+    createLine,
+    createRect,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -93,13 +104,18 @@ const r = Math.min(context.width, context.height) / 3;
 const group = createGroup({
     children: [
         // Circle clip — defines the visible region
-        createCircle({ clip: true, cx, cy, radius: r }),
+        createCircle({ clip: true,
+            cx,
+            cy,
+            radius: r }),
 
         // Background rect — clipped to circle
         createRect({
             fillStyle: '#3a86ff',
-            x: cx - r, y: cy - r,
-            width: r * 2, height: r * 2,
+            x: cx - r,
+            y: cy - r,
+            width: r * 2,
+            height: r * 2,
         }),
 
         // Diagonal lines — also clipped
@@ -108,8 +124,10 @@ const group = createGroup({
             return createLine({
                 strokeStyle: '#ffffff44',
                 lineWidth: 2,
-                x1: cx - r + offset, y1: cy - r,
-                x2: cx + r + offset, y2: cy + r,
+                x1: cx - r + offset,
+                y1: cy - r,
+                x2: cx + r + offset,
+                y2: cy + r,
             });
         }),
     ],
@@ -120,8 +138,17 @@ group.render(context);
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect, createLine, createText, createGroup } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createGroup,
+    createLine,
+    createRect,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

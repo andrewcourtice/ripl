@@ -3,6 +3,25 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartCrosshairInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeCrosshair,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -58,28 +77,23 @@ import {
 export interface LineChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    valueBy: keyof TData | number | ((item: TData) => number);
-    labelBy: string | ((item: TData) => string);
+    value: keyof TData | number | ((item: TData) => number);
+    label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
-    showMarkers?: boolean;
+    markers?: boolean;
     markerRadius?: number;
 }
 
 export interface LineChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: LineChartSeriesOptions<TData>[];
-    keyBy: keyof TData | ((item: TData) => string);
-    labelBy?: keyof TData | ((item: TData) => string);
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    showGrid?: boolean;
-    showCrosshair?: boolean;
-    showLegend?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
+    key: keyof TData | ((item: TData) => string);
+    grid?: ChartGridInput;
+    crosshair?: ChartCrosshairInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput<TData>;
 }
 
 export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
@@ -96,18 +110,36 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const crosshairOpts = normalizeCrosshair(options.crosshair);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            title: options.xAxisLabel,
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -115,25 +147,32 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            title: options.yAxisLabel,
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
-        if (options.showCrosshair !== false) {
+        if (crosshairOpts.visible) {
             this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
-                vertical: true,
-                horizontal: false,
+                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+                strokeStyle: crosshairOpts.lineColor,
+                lineWidth: crosshairOpts.lineWidth,
             });
         }
 
@@ -145,11 +184,11 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
         const {
             data,
             series,
-            keyBy,
+            key,
         } = this.options;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
 
         const {
             left: seriesEntries,
@@ -161,7 +200,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
 
         const seriesLineValueProducer = (srs: LineChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (item: any) => item[srs.valueBy] as number;
+            const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
             const color = this.getSeriesColor(srs.id);
 
             return (item: TData) => {
@@ -189,7 +228,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
         const seriesEntryGroups = arrayMap(seriesEntries, srs => {
             const color = this.getSeriesColor(srs.id);
             const getValues = seriesLineValueProducer(srs);
-            const showMarkers = srs.showMarkers !== false;
+            const showMarkers = srs.markers !== false;
 
             const items = arrayMap(data, item => {
                 const { id, value, point, state } = getValues(item);
@@ -203,7 +242,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
 
                 if (showMarkers) {
                     marker.on('mouseenter', () => {
-                        const getLabel = typeIsFunction(srs.labelBy) ? srs.labelBy : () => srs.labelBy as string;
+                        const getLabel = typeIsFunction(srs.label) ? srs.label : () => srs.label as string;
                         this.tooltip.show(state.cx, state.cy, `${getLabel(item)}: ${value}`);
 
                         this.renderer.transition(marker, {
@@ -293,7 +332,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 marker.data = state;
 
                 marker.on('mouseenter', () => {
-                    const getLabel = typeIsFunction(srs.labelBy) ? srs.labelBy : () => srs.labelBy as string;
+                    const getLabel = typeIsFunction(srs.label) ? srs.label : () => srs.label as string;
                     this.tooltip.show(state.cx, state.cy, `${getLabel(item)}: ${value}`);
 
                     this.renderer.transition(marker, {
@@ -388,20 +427,20 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             const {
                 data,
                 series,
-                keyBy,
+                key,
             } = this.options;
 
             this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
             const keys = arrayMap(data, getKey);
 
-            const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
-                const getValue = typeIsFunction(valueBy)
-                    ? valueBy
+            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+                const getValue = typeIsFunction(valueAccessor)
+                    ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueBy] as number;
+                    : (item: any) => item[valueAccessor] as number;
 
                 return getExtent(data, getValue);
             }).concat(0);
@@ -413,10 +452,10 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
                     active: true,
                 }));

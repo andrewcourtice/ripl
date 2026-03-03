@@ -9,10 +9,19 @@ A **Group** is a container for organizing elements into a hierarchy — much lik
 ## Creating a Group
 
 ```ts
-import { createCircle, createRect, createGroup } from '@ripl/core';
+import {
+    createCircle,
+    createGroup,
+    createRect,
+} from '@ripl/core';
 
-const circle = createCircle({ cx: 100, cy: 100, radius: 40 });
-const rect = createRect({ x: 160, y: 60, width: 80, height: 80 });
+const circle = createCircle({ cx: 100,
+    cy: 100,
+    radius: 40 });
+const rect = createRect({ x: 160,
+    y: 60,
+    width: 80,
+    height: 80 });
 
 const group = createGroup({
     fillStyle: '#3a86ff',
@@ -35,12 +44,16 @@ Style properties set on a group are **inherited** by all child elements that don
 
 ```ts
 const group = createGroup({
-    fillStyle: '#3a86ff',   // inherited by all children
-    lineWidth: 2,           // inherited by all children
+    fillStyle: '#3a86ff', // inherited by all children
+    lineWidth: 2, // inherited by all children
     children: [
-        createCircle({ cx: 80, cy: 100, radius: 40 }),           // uses group's fillStyle
-        createCircle({ cx: 200, cy: 100, radius: 40,
-            fillStyle: '#ff006e' }),  // overrides fillStyle
+        createCircle({ cx: 80,
+            cy: 100,
+            radius: 40 }), // uses group's fillStyle
+        createCircle({ cx: 200,
+            cy: 100,
+            radius: 40,
+            fillStyle: '#ff006e' }), // overrides fillStyle
     ],
 });
 ```
@@ -96,8 +109,8 @@ const kids = group.children; // Element[]
 Flatten the entire element tree into a single array. This recursively collects all non-group elements. Pass `true` to include group elements in the result:
 
 ```ts
-const allElements = group.graph();           // only leaf elements
-const everything = group.graph(true);        // includes groups too
+const allElements = group.graph(); // only leaf elements
+const everything = group.graph(true); // includes groups too
 ```
 
 ## Querying Elements
@@ -192,10 +205,10 @@ Groups themselves are **abstract** — they don't draw anything directly. They s
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
-    createRect,
+    createContext,
     createGroup,
+    createRect,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -228,8 +241,16 @@ group.render(context);
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect, createGroup, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createGroup,
+    createRect,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

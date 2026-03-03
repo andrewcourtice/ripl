@@ -6,10 +6,126 @@ outline: "deep"
 
 A **Polyline** draws a series of connected line segments through a set of points. It supports multiple rendering modes including smooth curves, splines, step functions, and more.
 
+## Example
+
+The demo below shows the same set of points rendered with different renderer modes.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <div class="ripl-control-group">
+            <select class="ripl-select" v-model="currentRenderer">
+                <option v-for="r in renderers" :key="r" :value="r">{{ r }}</option>
+            </select>
+        </div>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createContext,
+    createPolyline,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
+
+createPolyline({
+    strokeStyle: '#3a86ff',
+    lineWidth: 2,
+    points,
+    renderer: 'spline',
+}).render(context);
+```
+:::
+
+<script lang="ts" setup>
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createPolyline,
+    createText,
+} from '@ripl/core';
+
+import type {
+    Context,
+    PolylineRenderer,
+} from '@ripl/core';
+
+import {
+    ref,
+    watch,
+} from 'vue';
+
+const renderers: PolylineRenderer[] = ['linear', 'spline', 'basis', 'bumpX', 'bumpY', 'cardinal', 'catmullRom', 'monotoneX', 'natural', 'step'];
+const currentRenderer = ref<PolylineRenderer>('spline');
+
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const pad = 40;
+
+    const points: [number, number][] = [
+        [pad, h * 0.6],
+        [w * 0.2, h * 0.2],
+        [w * 0.35, h * 0.7],
+        [w * 0.5, h * 0.3],
+        [w * 0.65, h * 0.8],
+        [w * 0.8, h * 0.25],
+        [w - pad, h * 0.5],
+    ];
+
+    context.clear();
+    context.markRenderStart();
+
+    createPolyline({
+        strokeStyle: '#3a86ff',
+        lineWidth: 3,
+        points,
+        renderer: currentRenderer.value,
+    }).render(context);
+
+    points.forEach(([x, y]) => {
+        createCircle({
+            fillStyle: '#ff006e',
+            cx: x, cy: y, radius: 4,
+        }).render(context);
+    });
+
+    createText({
+        x: w / 2, y: h - 12,
+        content: `renderer: '${currentRenderer.value}'`,
+        fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+    }).render(context);
+
+    context.markRenderEnd();
+}
+
+const {
+    contextChanged
+} = useRiplExample(context => {
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
+});
+
+watch(currentRenderer, () => {
+    if (currentContext) renderDemo(currentContext);
+});
+</script>
+
 ## Usage
 
 ```ts
-import { createPolyline } from '@ripl/core';
+import {
+    createPolyline,
+} from '@ripl/core';
 
 const polyline = createPolyline({
     strokeStyle: '#3a86ff',
@@ -74,102 +190,3 @@ const custom = createPolyline({
     },
 });
 ```
-
-## Demo
-
-The demo below shows the same set of points rendered with different renderer modes.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <div class="ripl-control-group">
-            <select class="ripl-select" v-model="currentRenderer">
-                <option v-for="r in renderers" :key="r" :value="r">{{ r }}</option>
-            </select>
-        </div>
-    </template>
-</ripl-example>
-== Code
-```ts
-import {
-    createContext,
-    createPolyline,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
-
-createPolyline({
-    strokeStyle: '#3a86ff',
-    lineWidth: 2,
-    points,
-    renderer: 'spline',
-}).render(context);
-```
-:::
-
-<script lang="ts" setup>
-import { ref, watch } from 'vue';
-import { createPolyline, createCircle, createText } from '@ripl/core';
-import type { Context, PolylineRenderer } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
-
-const renderers: PolylineRenderer[] = ['linear', 'spline', 'basis', 'bumpX', 'bumpY', 'cardinal', 'catmullRom', 'monotoneX', 'natural', 'step'];
-const currentRenderer = ref<PolylineRenderer>('spline');
-
-let currentContext: Context | undefined;
-
-function renderDemo(context: Context) {
-    const w = context.width;
-    const h = context.height;
-    const pad = 40;
-
-    const points: [number, number][] = [
-        [pad, h * 0.6],
-        [w * 0.2, h * 0.2],
-        [w * 0.35, h * 0.7],
-        [w * 0.5, h * 0.3],
-        [w * 0.65, h * 0.8],
-        [w * 0.8, h * 0.25],
-        [w - pad, h * 0.5],
-    ];
-
-    context.clear();
-    context.markRenderStart();
-
-    createPolyline({
-        strokeStyle: '#3a86ff',
-        lineWidth: 3,
-        points,
-        renderer: currentRenderer.value,
-    }).render(context);
-
-    points.forEach(([x, y]) => {
-        createCircle({
-            fillStyle: '#ff006e',
-            cx: x, cy: y, radius: 4,
-        }).render(context);
-    });
-
-    createText({
-        x: w / 2, y: h - 12,
-        content: `renderer: '${currentRenderer.value}'`,
-        fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
-}
-
-const {
-    contextChanged
-} = useRiplExample(context => {
-    currentContext = context;
-    renderDemo(context);
-    context.on('resize', () => renderDemo(context));
-});
-
-watch(currentRenderer, () => {
-    if (currentContext) renderDemo(currentContext);
-});
-</script>

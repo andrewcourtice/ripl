@@ -18,9 +18,18 @@ The `StockChart` renders OHLC (Open, High, Low, Close) candlestick data with opt
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createStockChart, StockChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createStockChart,
+    StockChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const showVolume = ref(true);
 
@@ -50,12 +59,12 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createStockChart(context, {
         data,
-        keyBy: 'date',
-        openBy: 'open',
-        highBy: 'high',
-        lowBy: 'low',
-        closeBy: 'close',
-        volumeBy: 'volume',
+        key: 'date',
+        open: 'open',
+        high: 'high',
+        low: 'low',
+        close: 'close',
+        volume: 'volume',
         showVolume: showVolume.value,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
     });
@@ -74,16 +83,18 @@ function toggleVolume() {
 ## Usage
 
 ```ts
-import { createStockChart } from '@ripl/charts';
+import {
+    createStockChart,
+} from '@ripl/charts';
 
 const chart = createStockChart('#container', {
     data: [...],
-    keyBy: 'date',
-    openBy: 'open',
-    highBy: 'high',
-    lowBy: 'low',
-    closeBy: 'close',
-    volumeBy: 'volume',
+    key: 'date',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
 });
 
 // Update data
@@ -95,17 +106,17 @@ chart.update({ data: newData });
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `data` | `TData[]` | — | The data array |
-| `keyBy` | `keyof TData \| Function` | — | Key accessor for each data point (e.g. date) |
-| `openBy` | `keyof TData \| Function` | — | Open price accessor |
-| `highBy` | `keyof TData \| Function` | — | High price accessor |
-| `lowBy` | `keyof TData \| Function` | — | Low price accessor |
-| `closeBy` | `keyof TData \| Function` | — | Close price accessor |
-| `volumeBy` | `keyof TData \| Function` | — | Volume accessor (optional) |
+| `key` | `keyof TData \| Function` | — | Key accessor for each data point (e.g. date) |
+| `open` | `keyof TData \| Function` | — | Open price accessor |
+| `high` | `keyof TData \| Function` | — | High price accessor |
+| `low` | `keyof TData \| Function` | — | Low price accessor |
+| `close` | `keyof TData \| Function` | — | Close price accessor |
+| `volume` | `keyof TData \| Function` | — | Volume accessor (optional) |
 | `showVolume` | `boolean` | `true` | Show volume bars below the chart |
-| `showGrid` | `boolean` | `true` | Show horizontal grid lines |
-| `showCrosshair` | `boolean` | `true` | Show crosshair on hover |
+| `grid` | `boolean \| ChartGridOptions` | — | Show/configure grid lines |
+| `crosshair` | `boolean \| ChartCrosshairOptions` | — | Show/configure crosshair |
+| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
+| `axis` | `boolean \| ChartAxisOptions` | — | Configure x/y axes |
 | `upColor` | `string` | `#6dd5b1` | Color for bullish (close ≥ open) candles |
 | `downColor` | `string` | `#f4a0b9` | Color for bearish (close < open) candles |
 | `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
-| `formatXLabel` | `Function` | — | Custom x-axis label formatter |
-| `formatYLabel` | `Function` | — | Custom y-axis label formatter |

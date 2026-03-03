@@ -70,12 +70,23 @@ This order ensures that rotation and scaling happen around the specified origin.
 When transforms are applied to a group, all children inherit the transformation. The context is saved before the group renders and restored afterward, so transforms compose naturally:
 
 ```ts
-import { createGroup, createRect, createCircle } from '@ripl/core';
+import {
+    createCircle,
+    createGroup,
+    createRect,
+} from '@ripl/core';
 
 const group = createGroup({
     children: [
-        createRect({ x: 0, y: 0, width: 80, height: 80, fillStyle: '#3a86ff' }),
-        createCircle({ cx: 120, cy: 40, radius: 30, fillStyle: '#ff006e' }),
+        createRect({ x: 0,
+            y: 0,
+            width: 80,
+            height: 80,
+            fillStyle: '#3a86ff' }),
+        createCircle({ cx: 120,
+            cy: 40,
+            radius: 30,
+            fillStyle: '#ff006e' }),
     ],
 });
 
@@ -140,16 +151,18 @@ Transforms work identically for both Canvas and SVG contexts. In the SVG context
 == Code
 ```ts
 import {
-    createScene,
-    createRenderer,
     createRect,
-    easeOutCubic,
+    createRenderer,
+    createScene,
     easeInOutQuad,
+    easeOutCubic,
 } from '@ripl/core';
 
 const rect = createRect({
-    x: 160, y: 100,
-    width: 80, height: 80,
+    x: 160,
+    y: 100,
+    width: 80,
+    height: 80,
     fillStyle: '#3a86ff',
     transformOriginX: '50%',
     transformOriginY: '50%',
@@ -160,25 +173,30 @@ const renderer = createRenderer(scene);
 
 // Translate
 await renderer.transition(rect, {
-    duration: 800, ease: easeOutCubic,
+    duration: 800,
+    ease: easeOutCubic,
     state: { translateX: 100 },
 });
 
 // Rotate
 await renderer.transition(rect, {
-    duration: 1000, ease: easeInOutQuad,
+    duration: 1000,
+    ease: easeInOutQuad,
     state: { rotation: '360deg' },
 });
 
 // Scale
 await renderer.transition(rect, {
-    duration: 600, ease: easeOutCubic,
-    state: { transformScaleX: 1.5, transformScaleY: 1.5 },
+    duration: 600,
+    ease: easeOutCubic,
+    state: { transformScaleX: 1.5,
+        transformScaleY: 1.5 },
 });
 
 // Combined
 await renderer.transition(rect, {
-    duration: 1200, ease: easeInOutQuad,
+    duration: 1200,
+    ease: easeInOutQuad,
     state: {
         translateX: 80,
         rotation: '180deg',
@@ -191,11 +209,19 @@ await renderer.transition(rect, {
 
 <script lang="ts" setup>
 import {
-    createRect, createScene, createRenderer,
-    Scene, Renderer, Rect,
-    easeOutCubic, easeInOutQuad,
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createRect,
+    createRenderer,
+    createScene,
+    easeInOutQuad,
+    easeOutCubic,
+    Rect,
+    Renderer,
+    Scene,
 } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
 
 let dScene: Scene;
 let dRenderer: Renderer;

@@ -16,18 +16,26 @@ import {
     getColorGenerator,
 } from '../constants/colors';
 
+import type {
+    ChartAnimationOptions,
+    ChartTitleOptions,
+} from './options';
+
+import {
+    normalizeAnimation,
+    normalizeTitle,
+} from './options';
+
+export type {
+    ChartAnimationOptions,
+    ChartTitleOptions,
+};
+
 export interface ChartPadding {
     top: number;
     right: number;
     bottom: number;
     left: number;
-}
-
-export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
-
-export interface ChartLegendOptions {
-    show?: boolean;
-    position?: LegendPosition;
 }
 
 export interface ChartArea {
@@ -39,12 +47,9 @@ export interface ChartArea {
 
 export interface BaseChartOptions {
     autoRender?: boolean;
-    animated?: boolean;
     padding?: Partial<ChartPadding>;
-    title?: string;
-    subtitle?: string;
-    legend?: ChartLegendOptions;
-    animationDuration?: number;
+    title?: string | Partial<ChartTitleOptions>;
+    animation?: boolean | Partial<ChartAnimationOptions>;
 }
 
 export class Chart<
@@ -55,28 +60,28 @@ export class Chart<
     protected scene: Scene;
     protected renderer: Renderer;
     protected autoRender: boolean;
-    protected animated: boolean;
+    protected animationOptions: ChartAnimationOptions;
+    protected titleOptions?: ChartTitleOptions;
 
     private hasRendered: boolean = false;
 
     protected options: TOptions;
-    private baseDuration: number;
     protected colorGenerator = getColorGenerator();
     private seriesColorMap: Map<string, string> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
             autoRender = true,
-            animated = true,
-            animationDuration = 1000,
+            animation,
+            title,
             ...opts
         } = options || {};
 
         super();
 
         this.autoRender = autoRender;
-        this.animated = animated;
-        this.baseDuration = animationDuration;
+        this.animationOptions = normalizeAnimation(animation);
+        this.titleOptions = normalizeTitle(title);
         this.options = opts as TOptions;
 
         this.scene = createScene(target);
@@ -96,8 +101,12 @@ export class Chart<
     }
 
     public update(options: Partial<TOptions>) {
-        if (options.animationDuration !== undefined) {
-            this.baseDuration = options.animationDuration;
+        if (options.animation !== undefined) {
+            this.animationOptions = normalizeAnimation(options.animation);
+        }
+
+        if (options.title !== undefined) {
+            this.titleOptions = normalizeTitle(options.title);
         }
 
         this.options = {
@@ -111,7 +120,11 @@ export class Chart<
     }
 
     protected getAnimationDuration(referenceDuration: number = 1000): number {
-        const scale = this.baseDuration / 1000;
+        if (!this.animationOptions.enabled) {
+            return 0;
+        }
+
+        const scale = this.animationOptions.duration / 1000;
         return referenceDuration * scale;
     }
 

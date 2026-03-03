@@ -27,7 +27,9 @@ Ripl ships with interpolators for common value types. They are tested in order â
 An interpolator factory takes two values (start and end) and returns a function that accepts a time value `t` (0 to 1) and returns the interpolated result:
 
 ```ts
-import { interpolateNumber } from '@ripl/core';
+import {
+    interpolateNumber,
+} from '@ripl/core';
 
 const interpolate = interpolateNumber(0, 100);
 
@@ -51,7 +53,9 @@ interpolate(0.75); // 40
 Interpolates between CSS color strings by parsing them to RGBA, interpolating each channel, and serializing back:
 
 ```ts
-import { interpolateColor } from '@ripl/core';
+import {
+    interpolateColor,
+} from '@ripl/core';
 
 const interpolate = interpolateColor('#3a86ff', '#ff006e');
 interpolate(0);    // 'rgba(58, 134, 255, 1)'
@@ -66,7 +70,9 @@ Color interpolation works across different color formats â€” you can interpolate
 The fallback interpolator for values that don't match any other type. It snaps to the target value at the halfway point:
 
 ```ts
-import { interpolateAny } from '@ripl/core';
+import {
+    interpolateAny,
+} from '@ripl/core';
 
 const interpolate = interpolateAny('hello', 'world');
 interpolate(0.3);  // 'hello'

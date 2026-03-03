@@ -13,9 +13,17 @@ The `SankeyChart` visualizes flow between nodes using weighted links. Ideal for 
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createSankeyChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createSankeyChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 function generateLinks() {
     return [
@@ -56,15 +64,21 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createSankeyChart } from '@ripl/charts';
+import {
+    createSankeyChart,
+} from '@ripl/charts';
 
 const chart = createSankeyChart('#container', {
     nodes: [
-        { id: 'a', label: 'Source A' },
-        { id: 'b', label: 'Target B' },
+        { id: 'a',
+            label: 'Source A' },
+        { id: 'b',
+            label: 'Target B' },
     ],
     links: [
-        { source: 'a', target: 'b', value: 100 },
+        { source: 'a',
+            target: 'b',
+            value: 100 },
     ],
 });
 ```

@@ -6,45 +6,7 @@ outline: "deep"
 
 A **Rect** draws a rectangle with optional rounded corners (border radius).
 
-## Usage
-
-```ts
-import { createRect } from '@ripl/core';
-
-const rect = createRect({
-    fillStyle: '#3a86ff',
-    x: 50,
-    y: 50,
-    width: 200,
-    height: 120,
-});
-```
-
-## Properties
-
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | Yes | Top-left X coordinate |
-| `y` | `number` | Yes | Top-left Y coordinate |
-| `width` | `number` | Yes | Width |
-| `height` | `number` | Yes | Height |
-| `borderRadius` | `number \| [number, number, number, number]` | No | Corner radius. A single number applies to all corners. An array sets `[topLeft, topRight, bottomRight, bottomLeft]`. |
-
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
-
-## Border Radius
-
-The `borderRadius` property supports both uniform and per-corner values:
-
-```ts
-// Uniform radius
-createRect({ x: 0, y: 0, width: 200, height: 100, borderRadius: 12 });
-
-// Per-corner: [topLeft, topRight, bottomRight, bottomLeft]
-createRect({ x: 0, y: 0, width: 200, height: 100, borderRadius: [12, 0, 12, 0] });
-```
-
-## Demo
+## Example
 
 :::tabs
 == Demo
@@ -80,8 +42,14 @@ createRect({
 :::
 
 <script lang="ts" setup>
-import { createRect, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createRect,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged
@@ -136,3 +104,51 @@ const {
     context.on('resize', () => { context.clear(); render(); });
 });
 </script>
+
+## Usage
+
+```ts
+import {
+    createRect,
+} from '@ripl/core';
+
+const rect = createRect({
+    fillStyle: '#3a86ff',
+    x: 50,
+    y: 50,
+    width: 200,
+    height: 120,
+});
+```
+
+## Properties
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `x` | `number` | Yes | Top-left X coordinate |
+| `y` | `number` | Yes | Top-left Y coordinate |
+| `width` | `number` | Yes | Width |
+| `height` | `number` | Yes | Height |
+| `borderRadius` | `number \| [number, number, number, number]` | No | Corner radius. A single number applies to all corners. An array sets `[topLeft, topRight, bottomRight, bottomLeft]`. |
+
+Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+
+## Border Radius
+
+The `borderRadius` property supports both uniform and per-corner values:
+
+```ts
+// Uniform radius
+createRect({ x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
+    borderRadius: 12 });
+
+// Per-corner: [topLeft, topRight, bottomRight, bottomLeft]
+createRect({ x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
+    borderRadius: [12, 0, 12, 0] });
+```

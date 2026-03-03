@@ -6,46 +6,7 @@ outline: "deep"
 
 A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path.
 
-## Usage
-
-```ts
-import { createText } from '@ripl/core';
-
-const text = createText({
-    fillStyle: '#333333',
-    x: 100,
-    y: 100,
-    content: 'Hello, Ripl!',
-    font: '24px sans-serif',
-    textAlign: 'center',
-    textBaseline: 'middle',
-});
-```
-
-## Properties
-
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | Yes | X coordinate |
-| `y` | `number` | Yes | Y coordinate |
-| `content` | `string \| number` | Yes | The text to render |
-| `pathData` | `string` | No | SVG path `d` string to render text along |
-| `startOffset` | `number` | No | Position along the path to start text (0–1) |
-
-The following inherited style properties are particularly relevant for text:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `font` | `string` | CSS font string (e.g. `'16px sans-serif'`) |
-| `textAlign` | `'start' \| 'end' \| 'left' \| 'right' \| 'center'` | Horizontal alignment relative to `x` |
-| `textBaseline` | `'top' \| 'hanging' \| 'middle' \| 'alphabetic' \| 'ideographic' \| 'bottom'` | Vertical alignment relative to `y` |
-| `fillStyle` | `string` | Text fill color (renders filled text) |
-| `strokeStyle` | `string` | Text stroke color (renders stroked/outlined text) |
-
-> [!NOTE]
-> If `strokeStyle` is set, the text is stroked (outlined). If `fillStyle` is set, the text is filled. If both are set, `strokeStyle` takes priority.
-
-## Demo
+## Example
 
 :::tabs
 == Demo
@@ -101,8 +62,13 @@ createText({
 :::
 
 <script lang="ts" setup>
-import { createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged
@@ -178,3 +144,44 @@ const {
     context.on('resize', () => { context.clear(); render(); });
 });
 </script>
+
+## Usage
+
+```ts
+import {
+    createText,
+} from '@ripl/core';
+
+const text = createText({
+    fillStyle: '#333333',
+    x: 100,
+    y: 100,
+    content: 'Hello, Ripl!',
+    font: '24px sans-serif',
+    textAlign: 'center',
+    textBaseline: 'middle',
+});
+```
+
+## Properties
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `x` | `number` | Yes | X coordinate |
+| `y` | `number` | Yes | Y coordinate |
+| `content` | `string \| number` | Yes | The text to render |
+| `pathData` | `string` | No | SVG path `d` string to render text along |
+| `startOffset` | `number` | No | Position along the path to start text (0–1) |
+
+The following inherited style properties are particularly relevant for text:
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `font` | `string` | CSS font string (e.g. `'16px sans-serif'`) |
+| `textAlign` | `'start' \| 'end' \| 'left' \| 'right' \| 'center'` | Horizontal alignment relative to `x` |
+| `textBaseline` | `'top' \| 'hanging' \| 'middle' \| 'alphabetic' \| 'ideographic' \| 'bottom'` | Vertical alignment relative to `y` |
+| `fillStyle` | `string` | Text fill color (renders filled text) |
+| `strokeStyle` | `string` | Text stroke color (renders stroked/outlined text) |
+
+> [!NOTE]
+> If `strokeStyle` is set, the text is stroked (outlined). If `fillStyle` is set, the text is filled. If both are set, `strokeStyle` takes priority.

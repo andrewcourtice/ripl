@@ -35,7 +35,7 @@ function buildChart() {
 
     chart = createBarChart(context.value, {
         data,
-        keyBy: 'date',
+        key: 'date',
         padding: {
             top: 20,
             right: 20,
@@ -45,7 +45,7 @@ function buildChart() {
         series: [
             {
                 id: 'volume',
-                valueBy: 'volume',
+                value: 'volume',
                 label: 'Volume',
             },
         ],

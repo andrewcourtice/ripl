@@ -11,7 +11,9 @@ The **Element** is the base class for everything that can be drawn in Ripl. All 
 You typically don't create raw `Element` instances directly — instead you use one of the built-in factory functions like `createCircle`, `createRect`, etc. However, understanding the `Element` class is key to understanding how Ripl works.
 
 ```ts
-import { createCircle } from '@ripl/core';
+import {
+    createCircle,
+} from '@ripl/core';
 
 const circle = createCircle({
     id: 'my-circle',
@@ -176,12 +178,16 @@ When an element is inside a [Group](/docs/core/essentials/group), any style prop
 
 ```ts
 const group = createGroup({
-    fillStyle: '#3a86ff',  // All children inherit this
+    fillStyle: '#3a86ff', // All children inherit this
     lineWidth: 2,
     children: [
-        createCircle({ cx: 50, cy: 50, radius: 30 }),         // inherits fillStyle
-        createCircle({ cx: 150, cy: 50, radius: 30,
-            fillStyle: '#ff006e' }),  // overrides fillStyle
+        createCircle({ cx: 50,
+            cy: 50,
+            radius: 30 }), // inherits fillStyle
+        createCircle({ cx: 150,
+            cy: 50,
+            radius: 30,
+            fillStyle: '#ff006e' }), // overrides fillStyle
     ],
 });
 ```
@@ -194,8 +200,8 @@ const group = createGroup({
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -214,8 +220,13 @@ circle.render(context);
 :::
 
 <script lang="ts" setup>
-import { createCircle } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+} from '@ripl/core';
 
 const {
     contextChanged

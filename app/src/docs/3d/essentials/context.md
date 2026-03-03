@@ -9,7 +9,9 @@ title: Context3D
 ## Creation
 
 ```ts
-import { createContext } from '@ripl/3d';
+import {
+    createContext,
+} from '@ripl/3d';
 
 const context = createContext('#app');
 ```
@@ -82,7 +84,11 @@ const depth = context.projectDepth([1, 2, 3]);
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCube, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
 const camera = createCamera(scene, {
@@ -90,7 +96,8 @@ const camera = createCamera(scene, {
     target: [0, 0, 0],
 });
 
-const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
+const cube = createCube({ size: 1.5,
+    fillStyle: '#4488ff' });
 
 // Render loop with auto-rotation
 let angle = 0;
@@ -109,8 +116,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCube } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCube,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));

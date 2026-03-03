@@ -35,12 +35,12 @@ function buildChart() {
 
     chart = createStockChart(context.value, {
         data,
-        keyBy: 'datetime',
-        openBy: 'open',
-        highBy: 'high',
-        lowBy: 'low',
-        closeBy: 'close',
-        volumeBy: 'volume',
+        key: 'datetime',
+        open: 'open',
+        high: 'high',
+        low: 'low',
+        close: 'close',
+        volume: 'volume',
         showVolume: true,
         padding: {
             top: 20,
@@ -48,9 +48,13 @@ function buildChart() {
             bottom: 20,
             left: 20,
         },
-        formatXLabel: (val: string) => {
-            const parts = val.split(' ');
-            return parts.length > 1 ? parts[1].slice(0, 5) : val;
+        axis: {
+            x: {
+                format: (val: string) => {
+                    const parts = val.split(' ');
+                    return parts.length > 1 ? parts[1].slice(0, 5) : val;
+                },
+            },
         },
     });
 }

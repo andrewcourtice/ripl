@@ -19,9 +19,19 @@ The `RealtimeChart` smoothly visualises data streaming in over time. It maintain
 </ripl-example>
 
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue';
-import { createRealtimeChart, RealtimeChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createRealtimeChart,
+    RealtimeChart,
+} from '@ripl/charts';
+
+import {
+    onUnmounted,
+    ref,
+} from 'vue';
 
 const streaming = ref(true);
 const speed = ref('300');
@@ -106,14 +116,20 @@ onUnmounted(() => stopStreaming());
 ## Usage
 
 ```ts
-import { createRealtimeChart } from '@ripl/charts';
+import {
+    createRealtimeChart,
+} from '@ripl/charts';
 
 const chart = createRealtimeChart('#container', {
     windowSize: 60,
     transitionDuration: 200,
     series: [
-        { id: 'cpu', label: 'CPU %', showArea: true },
-        { id: 'memory', label: 'Memory %', showArea: true },
+        { id: 'cpu',
+            label: 'CPU %',
+            showArea: true },
+        { id: 'memory',
+            label: 'Memory %',
+            showArea: true },
     ],
 });
 
@@ -136,13 +152,13 @@ chart.clear();
 | `series` | `RealtimeChartSeriesOptions[]` | — | Series configuration |
 | `windowSize` | `number` | `60` | Maximum visible data points |
 | `transitionDuration` | `number` | `300` | Transition duration per update (ms) |
-| `showGrid` | `boolean` | `true` | Show horizontal grid lines |
-| `showCrosshair` | `boolean` | `true` | Show crosshair on hover |
-| `showYAxis` | `boolean` | `true` | Show the Y axis |
-| `showLegend` | `boolean` | `true` | Show legend for multi-series |
+| `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure grid lines |
+| `crosshair` | `boolean \| ChartCrosshairOptions` | `true` | Show/configure crosshair |
+| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
+| `legend` | `boolean \| ChartLegendOptions` | `true` | Show/configure legend |
+| `axis` | `boolean \| ChartAxisOptions` | `true` | Configure axes |
 | `yMin` | `number` | auto | Fixed Y axis minimum |
 | `yMax` | `number` | auto | Fixed Y axis maximum |
-| `formatYLabel` | `Function` | — | Custom Y axis label formatter |
 | `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
 
 ### Series Options

@@ -30,13 +30,13 @@ function buildChart() {
 
     const options = {
         data,
-        keyBy: 'page' as const,
-        showGrid: true,
-        showCrosshair: true,
-        xAxisLabel: 'Load Time (ms)',
-        yAxisLabel: 'Page Views',
-        formatXLabel: (v: number) => `${Math.round(v)}ms`,
-        formatYLabel: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)),
+        key: 'page' as const,
+        grid: true,
+        crosshair: true,
+        axis: {
+            x: { title: 'Load Time (ms)', format: (v: number) => `${Math.round(v)}ms` },
+            y: { title: 'Page Views', format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)) },
+        },
         padding: {
             top: 20,
             right: 20,
@@ -48,7 +48,7 @@ function buildChart() {
                 id: 'pages',
                 xBy: 'loadTime' as const,
                 yBy: 'views' as const,
-                labelBy: 'Pages',
+                label: 'Pages',
                 minRadius: 5,
                 maxRadius: 12,
             },

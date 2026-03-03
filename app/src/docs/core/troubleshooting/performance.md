@@ -89,7 +89,10 @@ The SVG context uses **buffered rendering** by default. Instead of applying DOM 
 
 ```ts
 // SVG context buffers by default
-import { createContext } from '@ripl/svg';
+import {
+    createContext,
+} from '@ripl/svg';
+
 const context = createContext('.container'); // buffer: true
 ```
 

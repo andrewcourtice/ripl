@@ -6,52 +6,7 @@ outline: "deep"
 
 An **Image** renders a `CanvasImageSource` (such as an `HTMLImageElement`, `HTMLCanvasElement`, or `ImageBitmap`) to any context. When interpolated, the image crossfades from one source to another.
 
-## Usage
-
-```ts
-import { createImage } from '@ripl/core';
-
-const img = new Image();
-img.src = '/photo.jpg';
-
-img.onload = () => {
-    const image = createImage({
-        image: img,
-        x: 50,
-        y: 50,
-        width: 200,
-        height: 150,
-    });
-};
-```
-
-## Properties
-
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `image` | `CanvasImageSource` | Yes | The image source to render (e.g. `HTMLImageElement`, `HTMLCanvasElement`, `ImageBitmap`) |
-| `x` | `number` | Yes | X coordinate of the top-left corner |
-| `y` | `number` | Yes | Y coordinate of the top-left corner |
-| `width` | `number` | No | Render width. Defaults to the source's intrinsic width. |
-| `height` | `number` | No | Render height. Defaults to the source's intrinsic height. |
-
-Plus all [Element style properties](/docs/core/essentials/element#style-properties).
-
-## Interpolation
-
-The `interpolateImage` factory produces a crossfade between two image sources. It composites both images onto an offscreen canvas, blending from one to the other over the transition.
-
-```ts
-import { interpolateImage } from '@ripl/core';
-
-// Pass the interpolator directly as the state value
-renderer.transition(imageElement, {
-    duration: 800,
-    state: { image: interpolateImage(currentImage, nextImage) },
-});
-```
-
-## Demo
+## Example
 
 Click **Next Image** to crossfade between images using `interpolateImage`.
 
@@ -67,11 +22,11 @@ Click **Next Image** to crossfade between images using `interpolateImage`.
 == Code
 ```ts
 import {
-    createScene,
-    createRenderer,
     createImage,
-    interpolateImage,
+    createRenderer,
+    createScene,
     easeInOutQuad,
+    interpolateImage,
 } from '@ripl/core';
 
 const scene = createScene('.container', {
@@ -101,14 +56,19 @@ await renderer.transition(imageEl, {
 
 <script lang="ts" setup>
 import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
     createImage as createImageElement,
-    interpolateImage,
-    ImageElement,
-    createScene, createRenderer,
-    Scene, Renderer,
+    createRenderer,
+    createScene,
     easeInOutQuad,
+    ImageElement,
+    interpolateImage,
+    Renderer,
+    Scene,
 } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
@@ -175,3 +135,52 @@ async function nextImage() {
     });
 }
 </script>
+
+## Usage
+
+```ts
+import {
+    createImage,
+} from '@ripl/core';
+
+const img = new Image();
+img.src = '/photo.jpg';
+
+img.onload = () => {
+    const image = createImage({
+        image: img,
+        x: 50,
+        y: 50,
+        width: 200,
+        height: 150,
+    });
+};
+```
+
+## Properties
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `image` | `CanvasImageSource` | Yes | The image source to render (e.g. `HTMLImageElement`, `HTMLCanvasElement`, `ImageBitmap`) |
+| `x` | `number` | Yes | X coordinate of the top-left corner |
+| `y` | `number` | Yes | Y coordinate of the top-left corner |
+| `width` | `number` | No | Render width. Defaults to the source's intrinsic width. |
+| `height` | `number` | No | Render height. Defaults to the source's intrinsic height. |
+
+Plus all [Element style properties](/docs/core/essentials/element#style-properties).
+
+## Interpolation
+
+The `interpolateImage` factory produces a crossfade between two image sources. It composites both images onto an offscreen canvas, blending from one to the other over the transition.
+
+```ts
+import {
+    interpolateImage,
+} from '@ripl/core';
+
+// Pass the interpolator directly as the state value
+renderer.transition(imageElement, {
+    duration: 800,
+    state: { image: interpolateImage(currentImage, nextImage) },
+});
+```

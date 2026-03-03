@@ -9,7 +9,10 @@ A **Renderer** provides an automatic render loop for a [Scene](/docs/core/essent
 ## Creating a Renderer
 
 ```ts
-import { createScene, createRenderer } from '@ripl/core';
+import {
+    createRenderer,
+    createScene,
+} from '@ripl/core';
 
 const scene = createScene('.my-container', {
     children: [circle, rect],
@@ -85,11 +88,11 @@ Ripl provides a full set of easing functions:
 
 ```ts
 import {
-    easeLinear,
-    easeInQuad, easeOutQuad, easeInOutQuad,
-    easeInCubic, easeOutCubic, easeInOutCubic,
-    easeInQuart, easeOutQuart, easeInOutQuart,
-    easeInQuint, easeOutQuint, easeInOutQuint,
+    easeInCubic,
+    easeInOutCubic, easeInOutQuad, easeInOutQuart,
+    easeInOutQuint, easeInQuad, easeInQuart,
+    easeInQuint, easeLinear, easeOutCubic,
+    easeOutQuad, easeOutQuart, easeOutQuint,
 } from '@ripl/core';
 
 await renderer.transition(circle, {
@@ -136,7 +139,7 @@ Pass a function instead of an options object to customize the transition per ele
 ```ts
 await renderer.transition(group, (element, index, total) => ({
     duration: 500,
-    delay: index * 100,  // stagger by 100ms
+    delay: index * 100, // stagger by 100ms
     ease: easeOutCubic,
     state: { fillStyle: '#ff006e' },
 }));
@@ -199,9 +202,9 @@ Click "Animate" to run a transition. Click "Stagger" to see per-element staggere
 == Code
 ```ts
 import {
-    createScene,
-    createRenderer,
     createCircle,
+    createRenderer,
+    createScene,
     easeOutCubic,
 } from '@ripl/core';
 
@@ -246,11 +249,19 @@ await renderer.transition(scene, (el, i) => ({
 
 <script lang="ts" setup>
 import {
-    createCircle, createScene, createRenderer,
-    Scene, Renderer, Circle,
-    easeOutCubic, easeInOutQuad,
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    Circle,
+    createCircle,
+    createRenderer,
+    createScene,
+    easeInOutQuad,
+    easeOutCubic,
+    Renderer,
+    Scene,
 } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
 
 let rScene: Scene;
 let rRenderer: Renderer;

@@ -3,6 +3,14 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+} from '../core/options';
+
+import {
+    normalizeLegend,
+} from '../core/options';
+
 import {
     getColorGenerator,
 } from '../constants/colors';
@@ -46,7 +54,7 @@ export interface ChordChartOptions extends BaseChartOptions {
     matrix: number[][];
     colors?: string[];
     padAngle?: number;
-    showLegend?: boolean;
+    legend?: ChartLegendInput;
 }
 
 interface ChordArc {
@@ -370,7 +378,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             ];
 
             // Legend
-            if (this.options.showLegend !== false && layout.arcs.length > 0) {
+            if (normalizeLegend(this.options.legend).visible && layout.arcs.length > 0) {
                 const legendItems: LegendItem[] = arrayMap(layout.arcs, arc => ({
                     id: arc.id,
                     label: arc.label,

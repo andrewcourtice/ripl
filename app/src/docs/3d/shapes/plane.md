@@ -9,7 +9,9 @@ A flat rectangular 3D plane.
 ## Usage
 
 ```ts
-import { createPlane } from '@ripl/3d';
+import {
+    createPlane,
+} from '@ripl/3d';
 
 const plane = createPlane({
     width: 4,
@@ -38,13 +40,19 @@ const plane = createPlane({
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createPlane, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createPlane,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
 const plane = createPlane({
-    width: 3, height: 2,
+    width: 3,
+    height: 2,
     rotationX: 0.5,
     fillStyle: '#88cc44',
 });
@@ -65,8 +73,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createPlane } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createPlane,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createPlane({

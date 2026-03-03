@@ -13,7 +13,9 @@ The `@ripl/3d` package includes flat shading utilities that compute face brightn
 Computes the surface normal of a face from its vertices using the cross product of two edges.
 
 ```ts
-import { computeFaceNormal } from '@ripl/3d';
+import {
+    computeFaceNormal,
+} from '@ripl/3d';
 
 const normal = computeFaceNormal([
     [0, 0, 0],
@@ -28,11 +30,13 @@ const normal = computeFaceNormal([
 Returns a brightness value between 0 and 1 based on the angle between the face normal and the light direction.
 
 ```ts
-import { computeFaceBrightness } from '@ripl/3d';
+import {
+    computeFaceBrightness,
+} from '@ripl/3d';
 
 const brightness = computeFaceBrightness(
     [0, 0, -1], // face normal
-    [0, 0, 1],  // light direction
+    [0, 0, 1] // light direction
 );
 // 1.0 (face directly facing the light)
 ```
@@ -42,7 +46,9 @@ const brightness = computeFaceBrightness(
 Scales an RGB color string by a brightness factor.
 
 ```ts
-import { shadeFaceColor } from '@ripl/3d';
+import {
+    shadeFaceColor,
+} from '@ripl/3d';
 
 const color = shadeFaceColor('rgb(200, 100, 50)', 0.5);
 // 'rgb(100, 50, 25)'
@@ -65,13 +71,21 @@ Two cubes rendered with different light directions to illustrate how shading cha
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCube, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
 context.lightDirection = [-1, -1, -1];
 
-const cubeLeft = createCube({ x: -1.5, size: 1.5, fillStyle: '#4488ff' });
-const cubeRight = createCube({ x: 1.5, size: 1.5, fillStyle: '#ff6644' });
+const cubeLeft = createCube({ x: -1.5,
+    size: 1.5,
+    fillStyle: '#4488ff' });
+const cubeRight = createCube({ x: 1.5,
+    size: 1.5,
+    fillStyle: '#ff6644' });
 
 // Rotate camera around the scene
 let angle = 0;
@@ -95,8 +109,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCube } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCube,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.context.lightDirection = [-1, -1, -1];

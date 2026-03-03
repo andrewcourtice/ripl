@@ -3,6 +3,23 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -56,24 +73,21 @@ export type BarChartMode = 'grouped' | 'stacked';
 export interface BarChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    valueBy: keyof TData | number | ((item: TData) => number);
+    value: keyof TData | number | ((item: TData) => number);
     label: string;
 }
 
 export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: BarChartSeriesOptions<TData>[];
-    keyBy: keyof TData | ((item: TData) => string);
-    labelBy?: keyof TData | ((item: TData) => string);
+    key: keyof TData | ((item: TData) => string);
     orientation?: BarChartOrientation;
     mode?: BarChartMode;
-    showGrid?: boolean;
-    showLegend?: boolean;
+    grid?: ChartGridInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput<TData>;
     borderRadius?: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
 }
 
 export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
@@ -88,17 +102,35 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -106,15 +138,21 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
@@ -162,7 +200,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
         const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData, stackOffset = 0) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
             const value = getValue(item);
             const key = getKey(item);
             const color = this.getSeriesColor(srs.id);
@@ -203,13 +241,13 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             if (!this.isStacked) return 0;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getSrsValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const getSrsValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
             const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
             return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(prev.valueBy) ? prev.valueBy : (i: any) => i[prev.valueBy] as number;
+                const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
                 const prevValue = getValue(item);
 
                 if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
@@ -394,7 +432,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
         const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData, stackOffset = 0) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
             const value = getValue(item);
             const key = getKey(item);
             const color = this.getSeriesColor(srs.id);
@@ -434,13 +472,13 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             if (!this.isStacked) return 0;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getSrsValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const getSrsValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
             const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
             return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(prev.valueBy) ? prev.valueBy : (i: any) => i[prev.valueBy] as number;
+                const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
                 const prevValue = getValue(item);
 
                 if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
@@ -598,20 +636,20 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             const {
                 data,
                 series,
-                keyBy,
+                key,
             } = this.options;
 
             this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
             const keys = arrayMap(data, getKey);
 
-            const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
-                const getValue = typeIsFunction(valueBy)
-                    ? valueBy
+            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+                const getValue = typeIsFunction(valueAccessor)
+                    ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueBy] as number;
+                    : (item: any) => item[valueAccessor] as number;
 
                 return getExtent(data, getValue);
             }).concat(0);
@@ -629,7 +667,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
                     arrayForEach(series, srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+                        const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                         const value = getValue(item);
 
                         if (value >= 0) {
@@ -651,7 +689,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
                     label: srs.label,

@@ -14,24 +14,24 @@ A scatter chart (also known as a bubble chart when using variable sizes) display
 
 <script lang="ts" setup>
 import {
-    ref,
-} from 'vue';
-
-import {
-    scaleContinuous,
-} from '@ripl/core';
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
 
 import {
     createScatterChart,
 } from '@ripl/charts';
 
 import {
+    scaleContinuous,
+} from '@ripl/core';
+
+import {
     stringUniqueId,
 } from '@ripl/utilities';
 
 import {
-    useRiplChart,
-} from '../../.vitepress/compositions/example';
+    ref,
+} from 'vue';
 
 const xScale = scaleContinuous([0, 1], [0, 100]);
 const yScale = scaleContinuous([0, 1], [0, 100]);
@@ -44,13 +44,15 @@ const {
     contextChanged,
 } = useRiplChart(context => createScatterChart(context, {
     data,
-    keyBy: 'id',
-    xAxisLabel: 'X Value',
-    yAxisLabel: 'Y Value',
+    key: 'id',
+    axis: {
+        x: { title: 'X Value' },
+        y: { title: 'Y Value' },
+    },
     series: [
         {
             id: 'sales',
-            labelBy: 'Sales',
+            label: 'Sales',
             xBy: 'sales',
             yBy: 'profit',
             sizeBy: 'volume',
@@ -59,7 +61,7 @@ const {
         },
         {
             id: 'marketing',
-            labelBy: 'Marketing',
+            label: 'Marketing',
             xBy: 'marketing',
             yBy: 'engagement',
             sizeBy: 'reach',
@@ -68,7 +70,7 @@ const {
         },
         {
             id: 'support',
-            labelBy: 'Support',
+            label: 'Support',
             xBy: 'support',
             yBy: 'satisfaction',
             sizeBy: 'tickets',
@@ -122,13 +124,15 @@ function randomise() {
 ```typescript
 const chart = createScatterChart(context, {
     data,
-    keyBy: 'id',
-    xAxisLabel: 'X Value',
-    yAxisLabel: 'Y Value',
+    key: 'id',
+    axis: {
+        x: { title: 'X Value' },
+        y: { title: 'Y Value' },
+    },
     series: [
         {
             id: 'sales',
-            labelBy: 'Sales',
+            label: 'Sales',
             xBy: 'sales',
             yBy: 'profit',
             sizeBy: 'volume',
@@ -137,7 +141,7 @@ const chart = createScatterChart(context, {
         },
         {
             id: 'marketing',
-            labelBy: 'Marketing',
+            label: 'Marketing',
             xBy: 'marketing',
             yBy: 'engagement',
             sizeBy: 'reach',

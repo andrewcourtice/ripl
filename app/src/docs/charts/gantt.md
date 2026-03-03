@@ -20,9 +20,17 @@ The `GanttChart` displays tasks as horizontal bars along a time axis, with task 
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createGanttChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createGanttChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const TASKS = [
     'Research',
@@ -68,11 +76,11 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createGanttChart(context, {
         data,
-        keyBy: 'id',
-        labelBy: 'name',
-        startBy: 'start',
-        endBy: 'end',
-        progressBy: 'progress',
+        key: 'id',
+        label: 'name',
+        start: 'start',
+        end: 'end',
+        progress: 'progress',
         showToday: showToday.value,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
     });
@@ -107,15 +115,17 @@ function toggleToday() {
 ## Usage
 
 ```ts
-import { createGanttChart } from '@ripl/charts';
+import {
+    createGanttChart,
+} from '@ripl/charts';
 
 const chart = createGanttChart('#container', {
     data: [...],
-    keyBy: 'id',
-    labelBy: 'name',
-    startBy: 'start',
-    endBy: 'end',
-    progressBy: 'progress',  // optional, 0–1
+    key: 'id',
+    label: 'name',
+    start: 'start',
+    end: 'end',
+    progress: 'progress',  // optional, 0–1
     showToday: true,
 });
 
@@ -128,16 +138,16 @@ chart.update({ data: newData });
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `data` | `TData[]` | — | The data array (one item per task) |
-| `keyBy` | `keyof TData \| Function` | — | Unique key accessor per task |
-| `labelBy` | `keyof TData \| Function` | — | Label accessor for y-axis task names |
-| `startBy` | `keyof TData \| Function` | — | Start date accessor |
-| `endBy` | `keyof TData \| Function` | — | End date accessor |
-| `colorBy` | `keyof TData \| Function` | — | Optional color accessor per task |
-| `progressBy` | `keyof TData \| Function` | — | Optional progress accessor (0–1) |
-| `showGrid` | `boolean` | `true` | Show horizontal grid lines |
+| `key` | `keyof TData \| Function` | — | Unique key accessor per task |
+| `label` | `keyof TData \| Function` | — | Label accessor for y-axis task names |
+| `start` | `keyof TData \| Function` | — | Start date accessor |
+| `end` | `keyof TData \| Function` | — | End date accessor |
+| `color` | `keyof TData \| Function` | — | Optional color accessor per task |
+| `progress` | `keyof TData \| Function` | — | Optional progress accessor (0–1) |
+| `grid` | `boolean \| ChartGridOptions` | — | Show/configure grid lines |
+| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
+| `axis` | `boolean \| ChartAxisOptions` | — | Configure axes |
 | `showToday` | `boolean` | `true` | Show a vertical "today" marker line |
 | `todayColor` | `string` | `#ef4444` | Color for the today marker |
 | `borderRadius` | `number` | `3` | Bar corner radius |
 | `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
-| `formatXLabel` | `Function` | — | Custom x-axis (date) label formatter |
-| `formatYLabel` | `Function` | — | Custom y-axis (task) label formatter |

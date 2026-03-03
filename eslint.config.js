@@ -6,9 +6,12 @@ import {
     includeIgnoreFile,
 } from '@eslint/compat';
 import eslint from '@eslint/js';
+import markdown from '@eslint/markdown';
 import tseslint from 'typescript-eslint';
 import stylistic from '@stylistic/eslint-plugin';
+import vue from 'eslint-plugin-vue';
 import globals from 'globals';
+import vueParser from 'vue-eslint-parser';
 
 const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
@@ -77,7 +80,6 @@ export default tseslint.config(
                     'q',
                     't',
                     'w',
-                    'h',
                     'z',
                 ],
             }],
@@ -148,6 +150,86 @@ export default tseslint.config(
             '@typescript-eslint/no-inferrable-types': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-empty-function': 'warn',
+        },
+    },
+
+    // Lint fenced code blocks in markdown files
+    {
+        name: 'ripl/markdown',
+        files: ['**/*.md'],
+        plugins: {
+            markdown,
+        },
+        processor: 'markdown/markdown',
+    },
+    {
+        name: 'ripl/markdown-code-blocks',
+        files: ['**/*.md/*.ts', '**/*.md/*.js'],
+        plugins: {
+            '@stylistic': stylistic,
+        },
+        rules: {
+            'no-console': 'off',
+            'no-undef': 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
+            '@stylistic/indent': ['error', INDENT],
+            '@stylistic/semi': ['error', 'always'],
+            '@stylistic/quotes': ['error', 'single', { 'avoidEscape': true }],
+            '@stylistic/comma-dangle': ['error', {
+                'arrays': 'always-multiline',
+                'objects': 'always-multiline',
+                'imports': 'always-multiline',
+                'exports': 'always-multiline',
+                'functions': 'never',
+            }],
+            '@stylistic/object-curly-spacing': ['error', 'always'],
+            '@stylistic/object-curly-newline': ['error', {
+                'ImportDeclaration': 'always',
+            }],
+        },
+    },
+
+    // Lint <script> blocks in VitePress markdown files
+    {
+        name: 'ripl/vue-markdown',
+        files: ['app/**/*.md'],
+        plugins: {
+            vue,
+        },
+        languageOptions: {
+            parser: vueParser,
+            parserOptions: {
+                parser: tseslint.parser,
+                ecmaVersion: 2021,
+                sourceType: 'module',
+                extraFileExtensions: ['.md'],
+            },
+        },
+        rules: {
+            // Relax rules that don't apply in doc script blocks
+            'no-console': 'off',
+            'no-undef': 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+
+            // Enforce stylistic rules
+            '@stylistic/indent': ['error', INDENT],
+            '@stylistic/semi': ['error', 'always'],
+            '@stylistic/quotes': ['error', 'single', { 'avoidEscape': true }],
+            '@stylistic/comma-dangle': ['error', {
+                'arrays': 'always-multiline',
+                'objects': 'always-multiline',
+                'imports': 'always-multiline',
+                'exports': 'always-multiline',
+                'functions': 'never',
+            }],
+            '@stylistic/object-curly-spacing': ['error', 'always'],
+            '@stylistic/object-curly-newline': ['error', {
+                'ImportDeclaration': 'always',
+            }],
         },
     }
 );

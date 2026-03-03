@@ -3,6 +3,24 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartCrosshairInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeCrosshair,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartYAxis,
 } from '../components/axis';
@@ -60,14 +78,14 @@ export interface RealtimeChartSeriesOptions {
 export interface RealtimeChartOptions extends BaseChartOptions {
     series: RealtimeChartSeriesOptions[];
     windowSize?: number;
-    showGrid?: boolean;
-    showCrosshair?: boolean;
+    grid?: ChartGridInput;
+    crosshair?: ChartCrosshairInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput;
     showYAxis?: boolean;
-    showLegend?: boolean;
     yMin?: number;
     yMax?: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
     transitionDuration?: number;
 }
 
@@ -90,34 +108,55 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         this.windowSize = options.windowSize ?? 60;
         this.transitionDuration = options.transitionDuration ?? 300;
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const crosshairOpts = normalizeCrosshair(options.crosshair);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
         this.yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
-        if (options.showCrosshair !== false) {
+        if (crosshairOpts.visible) {
             this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
-                vertical: true,
-                horizontal: true,
+                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+                strokeStyle: crosshairOpts.lineColor,
+                lineWidth: crosshairOpts.lineWidth,
             });
         }
 
@@ -376,7 +415,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
                     label: srs.label ?? srs.id,

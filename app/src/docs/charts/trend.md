@@ -33,24 +33,24 @@ A trend chart is any combination of x/y series such as bar, line or area.
 
 <script lang="ts" setup>
 import {
-    ref,
-} from 'vue';
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
 
 import {
-    scaleContinuous
-} from '@ripl/core';
-
-import {
-    createTrendChart
+    createTrendChart,
 } from '@ripl/charts';
 
 import {
-    stringUniqueId
+    scaleContinuous,
+} from '@ripl/core';
+
+import {
+    stringUniqueId,
 } from '@ripl/utilities';
 
 import {
-    useRiplChart
-} from '../../.vitepress/compositions/example';
+    ref,
+} from 'vue';
 
 const dataScale = scaleContinuous([0, 1], [-500, 1200]);
 const lineRenderer = ref('linear');
@@ -63,40 +63,39 @@ const {
     contextChanged
 } = useRiplChart(context => createTrendChart(context, {
     data,
-    keyBy: 'id',
-    labelBy: 'id',
-    showGrid: showGrid.value,
-    showLegend: true,
+    key: 'id',
+    grid: showGrid.value,
+    legend: true,
     series: [
         {
             type: 'bar',
             id: 'australia',
-            labelBy: 'Australia',
-            valueBy: 'australia',
+            label: 'Australia',
+            value: 'australia',
         },
         {
             type: 'bar',
             id: 'new-zealand',
-            labelBy: 'New Zealand',
-            valueBy: 'newZealand',
+            label: 'New Zealand',
+            value: 'newZealand',
         },
         {
             type: 'bar',
             id: 'sweden',
-            labelBy: 'Sweden',
-            valueBy: 'sweden',
+            label: 'Sweden',
+            value: 'sweden',
         },
         {
             type: 'bar',
             id: 'united-states',
-            labelBy: 'United States',
-            valueBy: 'unitedStates',
+            label: 'United States',
+            value: 'unitedStates',
         },
         {
             type: 'line',
             id: 'great-britain',
-            labelBy: 'Great Britain',
-            valueBy: 'greatBritain',
+            label: 'Great Britain',
+            value: 'greatBritain',
             lineType: lineRenderer.value,
         }
     ]
@@ -132,7 +131,7 @@ function randomise() {
 }
 
 function toggleGrid() {
-    chart.value?.update({ showGrid: showGrid.value });
+    chart.value?.update({ grid: showGrid.value });
 }
 
 function updateRenderer() {
@@ -141,32 +140,32 @@ function updateRenderer() {
             {
                 type: 'bar',
                 id: 'australia',
-                labelBy: 'Australia',
-                valueBy: 'australia',
+                label: 'Australia',
+                value: 'australia',
             },
             {
                 type: 'bar',
                 id: 'new-zealand',
-                labelBy: 'New Zealand',
-                valueBy: 'newZealand',
+                label: 'New Zealand',
+                value: 'newZealand',
             },
             {
                 type: 'bar',
                 id: 'sweden',
-                labelBy: 'Sweden',
-                valueBy: 'sweden',
+                label: 'Sweden',
+                value: 'sweden',
             },
             {
                 type: 'bar',
                 id: 'united-states',
-                labelBy: 'United States',
-                valueBy: 'unitedStates',
+                label: 'United States',
+                value: 'unitedStates',
             },
             {
                 type: 'line',
                 id: 'great-britain',
-                labelBy: 'Great Britain',
-                valueBy: 'greatBritain',
+                label: 'Great Britain',
+                value: 'greatBritain',
                 lineType: lineRenderer.value,
             }
         ]
@@ -177,33 +176,32 @@ function updateRenderer() {
 ```typescript
 const chart = createTrendChart(context, {
     data,
-    keyBy: 'id',
-    labelBy: 'id',
+    key: 'id',
     series: [
         {
             type: 'bar',
             id: 'australia',
-            labelBy: 'Australia',
-            valueBy: 'australia',
+            label: 'Australia',
+            value: 'australia',
         },
         {
             type: 'bar',
             id: 'new-zealand',
-            labelBy: 'New Zealand',
-            valueBy: 'newZealand',
+            label: 'New Zealand',
+            value: 'newZealand',
         },
         {
             type: 'bar',
             id: 'sweden',
-            labelBy: 'Sweden',
-            valueBy: 'sweden',
+            label: 'Sweden',
+            value: 'sweden',
         },
         {
             type: 'line',
             id: 'united-states',
-            labelBy: 'United States',
-            valueBy: 'unitedStates',
-        }
-    ]
+            label: 'United States',
+            value: 'unitedStates',
+        },
+    ],
 });
 ```

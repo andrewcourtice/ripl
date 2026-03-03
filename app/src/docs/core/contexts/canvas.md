@@ -11,7 +11,9 @@ The **Canvas context** is the default rendering backend in Ripl. It renders elem
 The canvas context is created by importing `createContext` from `@ripl/core`:
 
 ```ts
-import { createContext } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/core';
 
 const context = createContext('.my-container');
 ```
@@ -30,8 +32,8 @@ The canvas context automatically scales the canvas to match the device pixel rat
 ```ts
 // These coordinates are in CSS pixels, not physical pixels
 const circle = createCircle({
-    cx: context.width / 2,   // CSS pixel width
-    cy: context.height / 2,  // CSS pixel height
+    cx: context.width / 2, // CSS pixel width
+    cy: context.height / 2, // CSS pixel height
     radius: 50,
 });
 ```
@@ -42,8 +44,10 @@ The canvas context supports CSS gradient strings directly in `fillStyle` and `st
 
 ```ts
 const rect = createRect({
-    x: 0, y: 0,
-    width: 200, height: 100,
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
     fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
 });
 ```
@@ -90,8 +94,8 @@ Canvas is less ideal when:
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
     createRect,
 } from '@ripl/core';
 
@@ -116,8 +120,14 @@ createRect({
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRect,
+} from '@ripl/core';
 
 const {
     contextChanged

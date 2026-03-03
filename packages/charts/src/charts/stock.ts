@@ -3,6 +3,23 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartCrosshairInput,
+    ChartGridInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeCrosshair,
+    normalizeGrid,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -50,23 +67,19 @@ import {
 
 export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
-    keyBy: keyof TData | ((item: TData) => string);
-    openBy: keyof TData | ((item: TData) => number);
-    highBy: keyof TData | ((item: TData) => number);
-    lowBy: keyof TData | ((item: TData) => number);
-    closeBy: keyof TData | ((item: TData) => number);
-    volumeBy?: keyof TData | ((item: TData) => number);
+    key: keyof TData | ((item: TData) => string);
+    open: keyof TData | ((item: TData) => number);
+    high: keyof TData | ((item: TData) => number);
+    low: keyof TData | ((item: TData) => number);
+    close: keyof TData | ((item: TData) => number);
+    volume?: keyof TData | ((item: TData) => number);
     showVolume?: boolean;
-    showGrid?: boolean;
-    showCrosshair?: boolean;
+    grid?: ChartGridInput;
+    crosshair?: ChartCrosshairInput;
+    tooltip?: ChartTooltipInput;
+    axis?: ChartAxisInput<TData>;
     upColor?: string;
     downColor?: string;
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
 }
 
 interface CandlestickValues {
@@ -99,18 +112,34 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
     constructor(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const crosshairOpts = normalizeCrosshair(options.crosshair, { axis: 'both' });
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            title: options.xAxisLabel,
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -118,25 +147,32 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            title: options.yAxisLabel,
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
-        if (options.showCrosshair !== false) {
+        if (crosshairOpts.visible) {
             this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
-                vertical: true,
-                horizontal: true,
+                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+                strokeStyle: crosshairOpts.lineColor,
+                lineWidth: crosshairOpts.lineWidth,
             });
         }
 
@@ -150,19 +186,19 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
     private getCandlestickValues(item: TData): CandlestickValues {
         const {
-            keyBy,
-            openBy,
-            highBy,
-            lowBy,
-            closeBy,
-            volumeBy,
+            key: keyAccessor,
+            open: openAccessor,
+            high: highAccessor,
+            low: lowAccessor,
+            close: closeAccessor,
+            volume: volumeAccessor,
         } = this.options;
 
-        const getKey = this.getAccessor<string>(keyBy);
-        const getOpen = this.getAccessor<number>(openBy);
-        const getHigh = this.getAccessor<number>(highBy);
-        const getLow = this.getAccessor<number>(lowBy);
-        const getClose = this.getAccessor<number>(closeBy);
+        const getKey = this.getAccessor<string>(keyAccessor);
+        const getOpen = this.getAccessor<number>(openAccessor);
+        const getHigh = this.getAccessor<number>(highAccessor);
+        const getLow = this.getAccessor<number>(lowAccessor);
+        const getClose = this.getAccessor<number>(closeAccessor);
 
         const open = getOpen(item);
         const close = getClose(item);
@@ -173,7 +209,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             high: getHigh(item),
             low: getLow(item),
             close,
-            volume: volumeBy ? this.getAccessor<number>(volumeBy)(item) : 0,
+            volume: volumeAccessor ? this.getAccessor<number>(volumeAccessor)(item) : 0,
             isUp: close >= open,
         };
     }
@@ -416,18 +452,18 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
     ) {
         const {
             data,
-            volumeBy,
+            volume: volumeAccessor,
             upColor = DEFAULT_UP_COLOR,
             downColor = DEFAULT_DOWN_COLOR,
         } = this.options;
 
-        if (!volumeBy) {
+        if (!volumeAccessor) {
             return;
         }
 
         const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
 
-        const volumes = arrayMap(data, item => this.getAccessor<number>(volumeBy)(item));
+        const volumes = arrayMap(data, item => this.getAccessor<number>(volumeAccessor)(item));
         const volumeExtent = getExtent(volumes.concat(0), functionIdentity);
 
         this.volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
@@ -541,7 +577,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             const {
                 data,
                 showVolume = true,
-                volumeBy,
+                volume: volumeAccessor,
             } = this.options;
 
             const allValues = arrayMap(data, item => this.getCandlestickValues(item));
@@ -555,7 +591,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             const padding = this.getPadding();
             const chartTop = padding.top;
 
-            const hasVolume = showVolume && !!volumeBy;
+            const hasVolume = showVolume && !!volumeAccessor;
             const volumeHeight = hasVolume
                 ? (scene.height - padding.top - padding.bottom) * VOLUME_HEIGHT_RATIO
                 : 0;

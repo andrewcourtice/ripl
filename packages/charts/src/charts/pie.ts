@@ -3,6 +3,14 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+} from '../core/options';
+
+import {
+    normalizeLegend,
+} from '../core/options';
+
 import {
     Tooltip,
 } from '../components/tooltip';
@@ -48,7 +56,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     label: keyof TData | ((item: TData) => string);
     color?: keyof TData | ((item: TData) => string);
     innerRadius?: number;
-    showLegend?: boolean;
+    legend?: ChartLegendInput;
 }
 
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
@@ -93,7 +101,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const padding = this.getPadding();
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && data.length > 0) {
+            if (normalizeLegend(this.options.legend).visible && data.length > 0) {
                 const legendItems: LegendItem[] = arrayMap(data, item => ({
                     id: getKey(item),
                     label: getLabel(item),

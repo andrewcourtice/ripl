@@ -24,10 +24,22 @@ The `LineChart` renders one or more data series as smooth or straight lines with
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { PolylineRenderer } from '@ripl/core';
-import { createLineChart, LineChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createLineChart,
+    LineChart,
+} from '@ripl/charts';
+
+import type {
+    PolylineRenderer,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const lineType = ref<PolylineRenderer>('monotoneX');
@@ -46,25 +58,25 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createLineChart(context, {
         data,
-        keyBy: 'month',
+        key: 'month',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: [
             {
                 id: 'revenue',
-                valueBy: 'revenue',
-                labelBy: 'Revenue',
+                value: 'revenue',
+                label: 'Revenue',
                 lineType: lineType.value,
             },
             {
                 id: 'profit',
-                valueBy: 'profit',
-                labelBy: 'Profit',
+                value: 'profit',
+                label: 'Profit',
                 lineType: lineType.value,
             },
             {
                 id: 'expenses',
-                valueBy: 'expenses',
-                labelBy: 'Expenses',
+                value: 'expenses',
+                label: 'Expenses',
                 lineType: lineType.value,
             },
         ],
@@ -73,9 +85,9 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function getSeries() {
     return [
-        { id: 'revenue', valueBy: 'revenue' as const, labelBy: 'Revenue', lineType: lineType.value },
-        { id: 'profit', valueBy: 'profit' as const, labelBy: 'Profit', lineType: lineType.value },
-        { id: 'expenses', valueBy: 'expenses' as const, labelBy: 'Expenses', lineType: lineType.value },
+        { id: 'revenue', value: 'revenue' as const, label: 'Revenue', lineType: lineType.value },
+        { id: 'profit', value: 'profit' as const, label: 'Profit', lineType: lineType.value },
+        { id: 'expenses', value: 'expenses' as const, label: 'Expenses', lineType: lineType.value },
     ];
 }
 
@@ -106,16 +118,18 @@ function updateLineType() {
 ## Usage
 
 ```ts
-import { createLineChart } from '@ripl/charts';
+import {
+    createLineChart,
+} from '@ripl/charts';
 
 const chart = createLineChart('#container', {
     data: [...],
-    keyBy: 'month',
+    key: 'month',
     series: [
         {
             id: 'revenue',
-            valueBy: 'revenue',
-            labelBy: 'Revenue',
+            value: 'revenue',
+            label: 'Revenue',
             lineType: 'monotone',
         },
     ],
@@ -131,10 +145,12 @@ chart.update({ data: newData });
 |--------|------|---------|-------------|
 | `data` | `TData[]` | — | The data array |
 | `series` | `LineChartSeriesOptions[]` | — | Series configuration |
-| `keyBy` | `keyof TData \| Function` | — | Key accessor for each data point |
-| `showGrid` | `boolean` | `true` | Show horizontal grid lines |
-| `showCrosshair` | `boolean` | `true` | Show vertical crosshair on hover |
-| `showLegend` | `boolean` | `true` | Show legend for multi-series |
+| `key` | `keyof TData \| Function` | — | Key accessor for each data point |
+| `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure grid lines |
+| `crosshair` | `boolean \| ChartCrosshairOptions` | `true` | Show/configure crosshair |
+| `legend` | `boolean \| ChartLegendOptions` | — | Show/configure legend |
+| `tooltip` | `boolean \| ChartTooltipOptions` | `true` | Show/configure tooltips |
+| `axis` | `boolean \| ChartAxisOptions` | `true` | Configure x/y axes |
 | `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
 
 ### Series Options
@@ -142,10 +158,10 @@ chart.update({ data: newData });
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `id` | `string` | — | Unique series identifier |
-| `valueBy` | `keyof TData \| Function` | — | Value accessor |
-| `labelBy` | `string \| Function` | — | Label for tooltips/legend |
+| `value` | `keyof TData \| Function` | — | Value accessor |
+| `label` | `string \| Function` | — | Label for tooltips/legend |
 | `color` | `string` | auto | Series color |
 | `lineType` | `PolylineRenderer` | `'linear'` | Line interpolation type |
 | `lineWidth` | `number` | `2` | Line width |
-| `showMarkers` | `boolean` | `true` | Show data point markers |
+| `markers` | `boolean` | `true` | Show data point markers |
 | `markerRadius` | `number` | `3` | Marker radius |

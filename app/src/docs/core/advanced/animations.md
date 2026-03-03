@@ -11,7 +11,10 @@ Ripl provides two approaches to animation: **manual transitions** using the stan
 The `transition` function runs a timed animation loop using `requestAnimationFrame`. It's useful when you don't have a scene/renderer setup — for example, animating a single element rendered directly to a context.
 
 ```ts
-import { transition, easeOutCubic } from '@ripl/core';
+import {
+    easeOutCubic,
+    transition,
+} from '@ripl/core';
 
 await transition({
     duration: 1000,
@@ -50,7 +53,11 @@ setTimeout(() => t.cancel(), 500);
 When working with a scene and renderer, use `renderer.transition()` for a higher-level API that handles interpolation, re-rendering, and multi-element animations automatically.
 
 ```ts
-import { createScene, createRenderer, easeOutCubic } from '@ripl/core';
+import {
+    createRenderer,
+    createScene,
+    easeOutCubic,
+} from '@ripl/core';
 
 const scene = createScene('.container', { children: [circle] });
 const renderer = createRenderer(scene);
@@ -91,7 +98,9 @@ Easing functions control the rate of change over time. Ripl provides 13 built-in
 | `easeInOutQuint` | Strongest ease in/out |
 
 ```ts
-import { easeOutCubic } from '@ripl/core';
+import {
+    easeOutCubic,
+} from '@ripl/core';
 
 await renderer.transition(circle, {
     duration: 800,
@@ -129,13 +138,17 @@ Transitions are awaitable, so you can chain them sequentially:
 ```ts
 async function animate() {
     await renderer.transition(circle, {
-        duration: 500, ease: easeOutCubic,
-        state: { radius: 100, fillStyle: '#ff006e' },
+        duration: 500,
+        ease: easeOutCubic,
+        state: { radius: 100,
+            fillStyle: '#ff006e' },
     });
 
     await renderer.transition(circle, {
-        duration: 500, ease: easeInOutQuad,
-        state: { radius: 50, fillStyle: '#3a86ff' },
+        duration: 500,
+        ease: easeInOutQuad,
+        state: { radius: 50,
+            fillStyle: '#3a86ff' },
     });
 }
 ```
@@ -147,11 +160,13 @@ Run multiple transitions simultaneously with `Promise.all`:
 ```ts
 await Promise.all([
     renderer.transition(circle, {
-        duration: 800, ease: easeOutCubic,
+        duration: 800,
+        ease: easeOutCubic,
         state: { cx: 300 },
     }),
     renderer.transition(rect, {
-        duration: 800, ease: easeOutCubic,
+        duration: 800,
+        ease: easeOutCubic,
         state: { x: 100 },
     }),
 ]);
@@ -170,9 +185,9 @@ await renderer.transition(circle, {
     duration: 2000,
     state: {
         fillStyle: [
-            '#3a86ff',  // offset 0.33
-            '#ff006e',  // offset 0.66
-            '#8338ec',  // offset 1.0
+            '#3a86ff', // offset 0.33
+            '#ff006e', // offset 0.66
+            '#8338ec', // offset 1.0
         ],
     },
 });
@@ -187,9 +202,12 @@ await renderer.transition(circle, {
     duration: 2000,
     state: {
         fillStyle: [
-            { value: '#ff006e', offset: 0.25 },
-            { value: '#8338ec', offset: 0.5 },
-            { value: '#3a86ff', offset: 1.0 },
+            { value: '#ff006e',
+                offset: 0.25 },
+            { value: '#8338ec',
+                offset: 0.5 },
+            { value: '#3a86ff',
+                offset: 1.0 },
         ],
     },
 });
@@ -226,11 +244,11 @@ await renderer.transition(circle, {
 == Code
 ```ts
 import {
-    createScene,
-    createRenderer,
     createCircle,
-    easeOutCubic,
+    createRenderer,
+    createScene,
     easeInOutQuad,
+    easeOutCubic,
 } from '@ripl/core';
 
 const scene = createScene('.container', {
@@ -270,11 +288,19 @@ await renderer.transition(circle, {
 
 <script lang="ts" setup>
 import {
-    createCircle, createScene, createRenderer,
-    Scene, Renderer, Circle,
-    easeOutCubic, easeInOutQuad,
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    Circle,
+    createCircle,
+    createRenderer,
+    createScene,
+    easeInOutQuad,
+    easeOutCubic,
+    Renderer,
+    Scene,
 } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
 
 let dScene: Scene;
 let dRenderer: Renderer;

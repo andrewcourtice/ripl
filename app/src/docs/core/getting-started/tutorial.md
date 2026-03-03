@@ -266,23 +266,22 @@ Now that you understand the basics, explore the rest of the documentation:
 
 <script lang="ts" setup>
 import {
-    ref,
-    watch
-} from 'vue';
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
 
 import {
-    createCircle,
-    createRect,
-    createText,
-    createGroup,
-    createScene,
-    createRenderer,
     Circle,
+    clamp,
+    createCircle,
+    createGroup,
+    createRect,
+    createRenderer,
+    createScene,
+    createText,
+    easeInOutQuad,
+    easeOutCubic,
     Renderer,
     Scene,
-    clamp,
-    easeOutCubic,
-    easeInOutQuad,
 } from '@ripl/core';
 
 import type {
@@ -290,8 +289,9 @@ import type {
 } from '@ripl/core';
 
 import {
-    useRiplExample
-} from '../../../.vitepress/compositions/example';
+    ref,
+    watch,
+} from 'vue';
 
 // Basic example
 

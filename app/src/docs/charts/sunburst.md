@@ -13,9 +13,17 @@ The `SunburstChart` displays hierarchical data as concentric rings, where each r
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createSunburstChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createSunburstChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 function generateData() {
     return [
@@ -63,7 +71,9 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createSunburstChart } from '@ripl/charts';
+import {
+    createSunburstChart,
+} from '@ripl/charts';
 
 const chart = createSunburstChart('#container', {
     data: [
@@ -72,8 +82,12 @@ const chart = createSunburstChart('#container', {
             label: 'Technology',
             value: 500,
             children: [
-                { id: 'web', label: 'Web', value: 200 },
-                { id: 'mobile', label: 'Mobile', value: 150 },
+                { id: 'web',
+                    label: 'Web',
+                    value: 200 },
+                { id: 'mobile',
+                    label: 'Mobile',
+                    value: 150 },
             ],
         },
     ],

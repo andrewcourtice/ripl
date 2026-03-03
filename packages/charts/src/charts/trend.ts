@@ -3,6 +3,23 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -66,8 +83,8 @@ export interface BaseTrendChartSeriesOptions<TData> {
     id: string;
     type: SeriesType;
     color?: string;
-    valueBy: keyof TData | number | ((item: TData) => number);
-    labelBy: string | ((item: TData) => string);
+    value: keyof TData | number | ((item: TData) => number);
+    label: string | ((item: TData) => string);
 }
 
 export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
@@ -91,14 +108,11 @@ export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
 export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: TrendChartSeriesOptions<TData>[];
-    keyBy: keyof TData | ((item: TData) => string);
-    labelBy: keyof TData | ((item: TData) => string);
-    showGrid?: boolean;
-    showLegend?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
+    key: keyof TData | ((item: TData) => string);
+    grid?: ChartGridInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput<TData>;
 }
 
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
@@ -110,18 +124,29 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xScalePoint!: Scale<string>;
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
-    private tooltip: Tooltip;
+    private tooltip!: Tooltip;
     private legend?: Legend;
     private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
+
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.xScalePoint,
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -129,20 +154,31 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.yScale,
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
@@ -153,7 +189,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         const {
             data,
             series,
-            keyBy,
+            key,
         } = this.options;
 
         const lineSeries = arrayFilter(series, srs => srs.type === 'line') as TrendChartLineSeriesOptions<TData>[];
@@ -167,9 +203,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         arrayForEach(seriesExits, el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
 
-        const seriesLineValueProducer = ({ id, valueBy, labelBy }: TrendChartLineSeriesOptions<TData>) => {
+        const seriesLineValueProducer = ({ id, value: valueBy, label: labelBy }: TrendChartLineSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
@@ -206,7 +242,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const items = arrayMap(data, item => {
                 const { id, point, state } = getMarkerValues(item);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
                 const value = getValue(item);
 
                 const marker = createCircle({
@@ -301,7 +337,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             arrayForEach(markerUpdates, ([item, marker]) => {
                 const { state } = getMarkerValues(item);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
                 const value = getValue(item);
 
                 marker.data = state;
@@ -401,7 +437,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         const {
             data,
             series,
-            keyBy,
+            key,
         } = this.options;
 
         const barSeries = arrayFilter(series, srs => srs.type === 'bar') as TrendChartBarSeriesOptions<TData>[];
@@ -415,14 +451,14 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         arrayForEach(seriesExits, el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
         const baseline = this.yScale(0);
 
         const xScaleSeries = scaleBand(arrayMap(barSeries, srs => srs.id), [0, this.xScaleBand.bandwidth], {
             innerPadding: 0.25,
         });
 
-        const seriesBarValueProducer = ({ id, valueBy, labelBy }: TrendChartBarSeriesOptions<TData>) => {
+        const seriesBarValueProducer = ({ id, value: valueBy, label: labelBy }: TrendChartBarSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
             const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
@@ -456,7 +492,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const getBarValues = seriesBarValueProducer(series);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+            const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
 
             const children = arrayMap(data, item => {
                 const { id, state } = getBarValues(item);
@@ -510,7 +546,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
             const getBarValues = seriesBarValueProducer(series);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(series.valueBy) ? series.valueBy : (item: any) => item[series.valueBy] as number;
+            const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
             const bars = group.getElementsByType('rect') as Rect[];
 
             const {
@@ -607,19 +643,19 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const {
                 data,
                 series,
-                keyBy,
+                key,
             } = this.options;
 
             this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
             const keys = arrayMap(data, getKey);
-            const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
-                const getValue = typeIsFunction(valueBy)
-                    ? valueBy
+            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+                const getValue = typeIsFunction(valueAccessor)
+                    ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueBy] as number;
+                    : (item: any) => item[valueAccessor] as number;
 
                 return getExtent(data, getValue);
             }).concat(0);
@@ -631,10 +667,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
                     active: true,
                 }));

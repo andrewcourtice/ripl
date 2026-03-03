@@ -56,8 +56,8 @@ function buildChart() {
     const series = [
         {
             id: 'value',
-            valueBy: 'value' as const,
-            labelBy: store.commodityLabel(),
+            value: 'value' as const,
+            label: store.commodityLabel(),
             lineType: 'monotoneX' as const,
         },
     ];
@@ -69,7 +69,7 @@ function buildChart() {
 
     chart = createLineChart(context.value, {
         data,
-        keyBy: 'date',
+        key: 'date',
         padding: {
             top: 20,
             right: 20,

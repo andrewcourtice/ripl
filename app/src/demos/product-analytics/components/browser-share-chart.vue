@@ -34,7 +34,7 @@ function buildChart() {
         value: 'share' as const,
         label: 'browser' as const,
         innerRadius: 0.55,
-        showLegend: true,
+        legend: true,
         padding: {
             top: 20,
             right: 20,

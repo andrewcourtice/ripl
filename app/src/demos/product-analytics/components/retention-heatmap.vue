@@ -32,7 +32,7 @@ function buildChart() {
         data,
         xBy: 'week' as const,
         yBy: 'cohort' as const,
-        valueBy: 'retention' as const,
+        value: 'retention' as const,
         xCategories: weeks,
         yCategories: cohorts,
         colorRange: ['#dbeafe', '#1d4ed8'] as [string, string],

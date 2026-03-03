@@ -13,9 +13,17 @@ The `FunnelChart` displays data as progressively narrowing horizontal bars, idea
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createFunnelChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createFunnelChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 function generateData() {
     let remaining = 10000;
@@ -46,7 +54,9 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createFunnelChart } from '@ripl/charts';
+import {
+    createFunnelChart,
+} from '@ripl/charts';
 
 const chart = createFunnelChart('#container', {
     data: [...],

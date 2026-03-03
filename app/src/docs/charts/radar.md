@@ -13,9 +13,17 @@ The `RadarChart` displays multivariate data on a radial grid, ideal for comparin
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createRadarChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createRadarChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const AXES = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'];
 
@@ -35,8 +43,8 @@ const { contextChanged } = useRiplChart(context => {
         axes: AXES,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
         series: [
-            { id: 'player1', valueBy: 'player1', label: 'Player 1' },
-            { id: 'player2', valueBy: 'player2', label: 'Player 2' },
+            { id: 'player1', value: 'player1', label: 'Player 1' },
+            { id: 'player2', value: 'player2', label: 'Player 2' },
         ],
     });
 });
@@ -49,13 +57,15 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createRadarChart } from '@ripl/charts';
+import {
+    createRadarChart,
+} from '@ripl/charts';
 
 const chart = createRadarChart('#container', {
     data: [...],
     axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
     series: [
-        { id: 'player1', valueBy: 'player1', label: 'Player 1' },
+        { id: 'player1', value: 'player1', label: 'Player 1' },
     ],
 });
 ```
@@ -64,7 +74,7 @@ const chart = createRadarChart('#container', {
 
 - **`data`** — The data array (one item per axis)
 - **`axes`** — Array of axis labels
-- **`series`** — Array of series with `id`, `valueBy`, `label`, optional `color` and `opacity`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `opacity`
 - **`maxValue`** — Maximum value for the scale (auto-computed if omitted)
 - **`levels`** — Number of concentric grid levels (default `5`)
-- **`showLegend`** — Show legend for multi-series (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

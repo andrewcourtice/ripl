@@ -11,7 +11,9 @@ A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to 
 A scene can be created from a CSS selector, an HTMLElement, or an existing Context:
 
 ```ts
-import { createScene } from '@ripl/core';
+import {
+    createScene,
+} from '@ripl/core';
 
 // From a CSS selector (creates a canvas context automatically)
 const scene = createScene('.my-container');
@@ -72,7 +74,9 @@ The scene extends the Group event system with DOM event delegation. It listens f
 ```ts
 const circle = createCircle({
     fillStyle: '#3a86ff',
-    cx: 100, cy: 100, radius: 50,
+    cx: 100,
+    cy: 100,
+    radius: 50,
 });
 
 const scene = createScene('.container', {
@@ -144,9 +148,9 @@ Hover over the elements to see pointer events in action. Click an element to cha
 == Code
 ```ts
 import {
-    createScene,
     createCircle,
     createRect,
+    createScene,
 } from '@ripl/core';
 
 const circle = createCircle({
@@ -183,8 +187,15 @@ circle.on('mouseleave', () => {
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect, createScene } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRect,
+    createScene,
+} from '@ripl/core';
 
 const {
     contextChanged

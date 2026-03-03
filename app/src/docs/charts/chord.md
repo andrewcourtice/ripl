@@ -13,9 +13,17 @@ The `ChordChart` visualizes relationships between groups using arcs and ribbons 
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createChordChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createChordChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 function generateMatrix() {
     const size = 4;
@@ -30,7 +38,7 @@ const { contextChanged } = useRiplChart(context => {
     return createChordChart(context, {
         labels: ['Engineering', 'Design', 'Marketing', 'Sales'],
         matrix: matrix.value,
-        showLegend: true,
+        legend: true,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
     });
 });
@@ -43,7 +51,9 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createChordChart } from '@ripl/charts';
+import {
+    createChordChart,
+} from '@ripl/charts';
 
 const chart = createChordChart('#container', {
     labels: ['A', 'B', 'C'],
@@ -61,4 +71,4 @@ const chart = createChordChart('#container', {
 - **`matrix`** — Square matrix of flow values between groups
 - **`colors`** — Optional array of colors for each group
 - **`padAngle`** — Gap angle between arcs in radians (default `0.04`)
-- **`showLegend`** — Show a legend for the groups (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

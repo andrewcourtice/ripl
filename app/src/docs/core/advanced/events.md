@@ -201,8 +201,16 @@ circle.on('click', () => {
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect, createScene, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRect,
+    createScene,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

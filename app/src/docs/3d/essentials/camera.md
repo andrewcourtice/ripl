@@ -9,7 +9,9 @@ The camera is created alongside the scene and renderer. It manages the view matr
 ## Creation
 
 ```ts
-import { createCamera } from '@ripl/3d';
+import {
+    createCamera,
+} from '@ripl/3d';
 
 const camera = createCamera(scene, {
     position: [0, 2, 5],
@@ -101,7 +103,8 @@ For granular control, pass an object:
 ```ts
 const camera = createCamera(scene, {
     interactions: {
-        zoom: { enabled: true, sensitivity: 5 },
+        zoom: { enabled: true,
+            sensitivity: 5 },
         pivot: true,
         pan: true,
     },
@@ -147,7 +150,11 @@ camera.dispose();
 <ripl-3d-example @context-changed="interactiveChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCube, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
 const camera = createCamera(scene, {
@@ -171,8 +178,14 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCube, createCamera } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCamera,
+    createCube,
+} from '@ripl/3d';
 
 const { contextChanged: autoRotateChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));

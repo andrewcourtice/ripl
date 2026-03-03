@@ -19,14 +19,21 @@ npm install @ripl/svg
 Import `createContext` from `@ripl/svg` instead of `@ripl/core`:
 
 ```ts
-import { createContext } from '@ripl/svg';
-import { createCircle } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/svg';
+
+import {
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.my-container');
 
 const circle = createCircle({
     fillStyle: '#3a86ff',
-    cx: 100, cy: 100, radius: 50,
+    cx: 100,
+    cy: 100,
+    radius: 50,
 });
 
 circle.render(context);
@@ -64,7 +71,10 @@ Like the Canvas context, the SVG context supports CSS gradient strings. Gradient
 ```ts
 const rect = createRect({
     fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
-    x: 0, y: 0, width: 200, height: 100,
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
 });
 ```
 
@@ -135,8 +145,15 @@ createRect({
 :::
 
 <script lang="ts" setup>
-import { createCircle, createRect, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRect,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

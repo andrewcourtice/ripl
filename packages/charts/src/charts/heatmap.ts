@@ -3,6 +3,19 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -38,11 +51,13 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     xBy: keyof TData | ((item: TData) => string);
     yBy: keyof TData | ((item: TData) => string);
-    valueBy: keyof TData | ((item: TData) => number);
+    value: keyof TData | ((item: TData) => number);
     xCategories: string[];
     yCategories: string[];
     colorRange?: [string, string];
     borderRadius?: number;
+    tooltip?: ChartTooltipInput;
+    axis?: ChartAxisInput<TData>;
 }
 
 const DEFAULT_LOW_COLOR = '#e0f2fe';
@@ -78,16 +93,32 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     constructor(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -95,6 +126,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
         this.init();
@@ -106,7 +141,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 data,
                 xBy,
                 yBy,
-                valueBy,
+                value: valueBy,
                 xCategories,
                 yCategories,
                 colorRange,
@@ -119,6 +154,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             const getY = typeIsFunction(yBy) ? yBy : (item: any) => item[yBy] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
+
 
             const [lowColor, highColor] = colorRange ?? [DEFAULT_LOW_COLOR, DEFAULT_HIGH_COLOR];
 

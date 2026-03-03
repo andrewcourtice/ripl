@@ -3,6 +3,21 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartGridInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeGrid,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -45,20 +60,18 @@ import {
 
 export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
-    keyBy: keyof TData | ((item: TData) => string);
-    labelBy: keyof TData | ((item: TData) => string);
-    startBy: keyof TData | ((item: TData) => Date);
-    endBy: keyof TData | ((item: TData) => Date);
-    colorBy?: keyof TData | ((item: TData) => string);
-    progressBy?: keyof TData | ((item: TData) => number);
-    showGrid?: boolean;
+    key: keyof TData | ((item: TData) => string);
+    label: keyof TData | ((item: TData) => string);
+    start: keyof TData | ((item: TData) => Date);
+    end: keyof TData | ((item: TData) => Date);
+    color?: keyof TData | ((item: TData) => string);
+    progress?: keyof TData | ((item: TData) => number);
+    grid?: ChartGridInput;
+    tooltip?: ChartTooltipInput;
+    axis?: ChartAxisInput<TData>;
     showToday?: boolean;
     todayColor?: string;
     borderRadius?: number;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
 }
 
 const DEFAULT_TODAY_COLOR = '#ef4444';
@@ -75,17 +88,33 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
     constructor(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -93,15 +122,21 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
@@ -126,16 +161,16 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
     ) {
         const {
             data,
-            startBy,
-            endBy,
-            colorBy,
-            progressBy,
+            start: startAccessor,
+            end: endAccessor,
+            color: colorAccessor,
+            progress: progressAccessor,
         } = this.options;
 
-        const getStart = this.getAccessor<Date>(startBy);
-        const getEnd = this.getAccessor<Date>(endBy);
-        const getColor = colorBy ? this.getAccessor<string>(colorBy) : undefined;
-        const getProgress = progressBy ? this.getAccessor<number>(progressBy) : undefined;
+        const getStart = this.getAccessor<Date>(startAccessor);
+        const getEnd = this.getAccessor<Date>(endAccessor);
+        const getColor = colorAccessor ? this.getAccessor<string>(colorAccessor) : undefined;
+        const getProgress = progressAccessor ? this.getAccessor<number>(progressAccessor) : undefined;
         const borderRadius = this.options.borderRadius ?? 3;
 
         const getBarState = (item: TData) => {
@@ -418,16 +453,16 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         return super.render(async (scene) => {
             const {
                 data,
-                keyBy,
-                labelBy,
-                startBy,
-                endBy,
+                key: keyAccessor,
+                label: labelAccessor,
+                start: startAccessor,
+                end: endAccessor,
             } = this.options;
 
-            const getKey = this.getAccessor<string>(keyBy);
-            const getLabel = this.getAccessor<string>(labelBy);
-            const getStart = this.getAccessor<Date>(startBy);
-            const getEnd = this.getAccessor<Date>(endBy);
+            const getKey = this.getAccessor<string>(keyAccessor);
+            const getLabel = this.getAccessor<string>(labelAccessor);
+            const getStart = this.getAccessor<Date>(startAccessor);
+            const getEnd = this.getAccessor<Date>(endAccessor);
 
             const labels = arrayMap(data, getLabel);
 
@@ -486,7 +521,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
             this.xAxis.scale = timeScale;
 
-            if (!this.options.formatXLabel) {
+            if (!this.xAxis.formatLabel) {
                 this.xAxis.formatLabel = (value: Date) => this.formatDate(value);
             }
 

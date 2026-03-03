@@ -9,7 +9,9 @@ A 3D sphere generated from configurable ring and segment counts.
 ## Usage
 
 ```ts
-import { createSphere } from '@ripl/3d';
+import {
+    createSphere,
+} from '@ripl/3d';
 
 const sphere = createSphere({
     radius: 1,
@@ -40,12 +42,18 @@ const sphere = createSphere({
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createSphere, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createSphere,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
-const sphere = createSphere({ radius: 1.2, fillStyle: '#44cc88' });
+const sphere = createSphere({ radius: 1.2,
+    fillStyle: '#44cc88' });
 
 let angle = 0;
 function loop() {
@@ -63,8 +71,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createSphere } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createSphere,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createSphere({ radius: 1.2, fillStyle: '#44cc88' }));

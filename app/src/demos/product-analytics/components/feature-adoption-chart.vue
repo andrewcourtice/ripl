@@ -30,26 +30,26 @@ function buildChart() {
 
     const options = {
         data,
-        keyBy: 'feature' as const,
+        key: 'feature' as const,
         padding: {
             top: 20,
             right: 20,
             bottom: 30,
             left: 50,
         },
-        showGrid: true,
-        showLegend: true,
+        grid: true,
+        legend: true,
         mode: 'grouped' as const,
         borderRadius: 4,
         series: [
             {
                 id: 'current',
-                valueBy: 'currentPeriod' as const,
+                value: 'currentPeriod' as const,
                 label: 'Current Period',
             },
             {
                 id: 'previous',
-                valueBy: 'previousPeriod' as const,
+                value: 'previousPeriod' as const,
                 label: 'Previous Period',
             },
         ],

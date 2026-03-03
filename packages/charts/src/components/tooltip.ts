@@ -15,6 +15,13 @@ import {
 
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
+    font?: string;
+    fontColor?: string;
+    backgroundColor?: string;
+    borderColor?: string;
+    borderRadius?: number;
+    maxWidth?: number;
+    wrap?: boolean;
     formatContent?: (content: string) => string;
 }
 
@@ -23,12 +30,22 @@ export class Tooltip extends ChartComponent {
     private group: Group | null = null;
     private hideTimeout: number | null = null;
     private padding: number;
+    private font: string;
+    private fontColor: string;
+    private backgroundColor: string;
+    private borderColor: string;
+    private borderRadiusValue: number;
 
     constructor(options: TooltipOptions) {
         const {
             scene,
             renderer,
             padding = 8,
+            font = '12px sans-serif',
+            fontColor = '#FFFFFF',
+            backgroundColor = '#1a1a1a',
+            borderColor = '#444444',
+            borderRadius = 6,
         } = options;
 
         super({
@@ -37,6 +54,11 @@ export class Tooltip extends ChartComponent {
         });
 
         this.padding = padding;
+        this.font = font;
+        this.fontColor = fontColor;
+        this.backgroundColor = backgroundColor;
+        this.borderColor = borderColor;
+        this.borderRadiusValue = borderRadius;
     }
 
     public show(x: number, y: number, content: string) {
@@ -49,7 +71,8 @@ export class Tooltip extends ChartComponent {
         if (!this.group) {
             const textElement = createText({
                 id: 'tooltip-text',
-                fillStyle: '#FFFFFF',
+                fillStyle: this.fontColor,
+                font: this.font,
                 textAlign: 'center',
                 textBaseline: 'middle',
                 content: '',
@@ -59,10 +82,10 @@ export class Tooltip extends ChartComponent {
 
             const background = createRect({
                 id: 'tooltip-bg',
-                fillStyle: '#1a1a1a',
-                strokeStyle: '#444444',
+                fillStyle: this.backgroundColor,
+                strokeStyle: this.borderColor,
                 lineWidth: 1,
-                borderRadius: 6,
+                borderRadius: this.borderRadiusValue,
                 x: 0,
                 y: 0,
                 width: 0,

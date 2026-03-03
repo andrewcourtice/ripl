@@ -15,10 +15,21 @@ The `PolarAreaChart` renders equal-angle segments whose radius encodes the value
 </ripl-example>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { createPolarAreaChart } from '@ripl/charts';
-import { stringUniqueId } from '@ripl/utilities';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createPolarAreaChart,
+} from '@ripl/charts';
+
+import {
+    stringUniqueId,
+} from '@ripl/utilities';
+
+import {
+    ref,
+} from 'vue';
 
 const LABELS = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Stamina', 'Wisdom'];
 

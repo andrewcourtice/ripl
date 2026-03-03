@@ -11,7 +11,9 @@ A **Context** is the rendering target for all Ripl elements. It abstracts away t
 Use `createContext` to create a context attached to a DOM element. By default, Ripl creates a **Canvas** context:
 
 ```ts
-import { createContext } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/core';
 
 // Pass a CSS selector or an HTMLElement
 const context = createContext('.my-container');
@@ -20,7 +22,9 @@ const context = createContext('.my-container');
 To create an SVG context instead, import from `@ripl/svg`:
 
 ```ts
-import { createContext } from '@ripl/svg';
+import {
+    createContext,
+} from '@ripl/svg';
 
 const context = createContext('.my-container');
 ```
@@ -132,8 +136,8 @@ context.on('resize', () => {
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -156,8 +160,14 @@ context.on('resize', () => {
 :::
 
 <script lang="ts" setup>
-import { createCircle, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

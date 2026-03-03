@@ -35,21 +35,21 @@ function buildChart() {
 
     chart = createLineChart(context.value, {
         data,
-        keyBy: 'date',
+        key: 'date',
         padding: {
             top: 20,
             right: 20,
             bottom: 30,
             left: 50,
         },
-        showGrid: true,
+        grid: true,
         series: [
             {
                 id: 'users',
-                valueBy: 'users',
-                labelBy: 'Daily Active Users',
+                value: 'users',
+                label: 'Daily Active Users',
                 lineType: 'monotoneX',
-                showMarkers: true,
+                markers: true,
             },
         ],
     });

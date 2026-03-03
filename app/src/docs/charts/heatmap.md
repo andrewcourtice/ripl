@@ -13,9 +13,17 @@ The `HeatmapChart` displays data as a matrix of colored cells, with color intens
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createHeatmapChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createHeatmapChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const HOURS = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
@@ -37,7 +45,7 @@ const { contextChanged } = useRiplChart(context => {
         data: data.value,
         xBy: 'hour',
         yBy: 'day',
-        valueBy: 'value',
+        value: 'value',
         xCategories: HOURS,
         yCategories: DAYS,
         padding: { top: 20, right: 20, bottom: 40, left: 20 },
@@ -52,13 +60,15 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createHeatmapChart } from '@ripl/charts';
+import {
+    createHeatmapChart,
+} from '@ripl/charts';
 
 const chart = createHeatmapChart('#container', {
     data: [...],
     xBy: 'hour',
     yBy: 'day',
-    valueBy: 'value',
+    value: 'value',
     xCategories: ['9am', '10am', '11am'],
     yCategories: ['Mon', 'Tue', 'Wed'],
 });
@@ -69,7 +79,7 @@ const chart = createHeatmapChart('#container', {
 - **`data`** — The data array (one item per cell)
 - **`xBy`** — Accessor for the x-axis category
 - **`yBy`** — Accessor for the y-axis category
-- **`valueBy`** — Accessor for the cell value
+- **`value`** — Accessor for the cell value
 - **`xCategories`** — Ordered list of x-axis categories
 - **`yCategories`** — Ordered list of y-axis categories
 - **`colorRange`** — Tuple of `[lowColor, highColor]` hex strings

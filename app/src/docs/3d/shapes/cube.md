@@ -9,7 +9,9 @@ A 3D cube (box) shape with equal-length sides.
 ## Usage
 
 ```ts
-import { createCube } from '@ripl/3d';
+import {
+    createCube,
+} from '@ripl/3d';
 
 const cube = createCube({
     x: 0,
@@ -36,7 +38,9 @@ const cube = createCube({
 ## Type Guard
 
 ```ts
-import { elementIsCube } from '@ripl/3d';
+import {
+    elementIsCube,
+} from '@ripl/3d';
 
 if (elementIsCube(element)) {
     console.log(element.size);
@@ -50,12 +54,18 @@ if (elementIsCube(element)) {
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCube, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
-const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
+const cube = createCube({ size: 1.5,
+    fillStyle: '#4488ff' });
 
 let angle = 0;
 function loop() {
@@ -73,8 +83,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCube } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCube,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));

@@ -13,9 +13,17 @@ The `TreemapChart` displays hierarchical data as nested rectangles, where each r
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createTreemapChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createTreemapChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const CATEGORIES = ['Electronics', 'Clothing', 'Food', 'Books', 'Sports', 'Home', 'Toys', 'Health'];
 
@@ -46,7 +54,9 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createTreemapChart } from '@ripl/charts';
+import {
+    createTreemapChart,
+} from '@ripl/charts';
 
 const chart = createTreemapChart('#container', {
     data: [...],

@@ -6,30 +6,7 @@ outline: "deep"
 
 A **Circle** draws a filled and/or stroked circle defined by a center point and radius.
 
-## Usage
-
-```ts
-import { createCircle } from '@ripl/core';
-
-const circle = createCircle({
-    fillStyle: '#3a86ff',
-    cx: 200,
-    cy: 150,
-    radius: 60,
-});
-```
-
-## Properties
-
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radius` | `number` | Yes | Circle radius |
-
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
-
-## Demo
+## Example
 
 :::tabs
 == Demo
@@ -37,8 +14,8 @@ Plus all [Element style properties](/docs/core/essentials/element#style-properti
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -53,8 +30,13 @@ createCircle({
 :::
 
 <script lang="ts" setup>
-import { createCircle } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+} from '@ripl/core';
 
 const {
     contextChanged
@@ -80,3 +62,28 @@ const {
     context.on('resize', () => { context.clear(); render(); });
 });
 </script>
+
+## Usage
+
+```ts
+import {
+    createCircle,
+} from '@ripl/core';
+
+const circle = createCircle({
+    fillStyle: '#3a86ff',
+    cx: 200,
+    cy: 150,
+    radius: 60,
+});
+```
+
+## Properties
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `cx` | `number` | Yes | Center X coordinate |
+| `cy` | `number` | Yes | Center Y coordinate |
+| `radius` | `number` | Yes | Circle radius |
+
+Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).

@@ -15,7 +15,13 @@ npm install @ripl/3d
 ## Quick Start
 
 ```ts
-import { createContext, createCamera, createCube, createScene, createRenderer } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createCube,
+    createRenderer,
+    createScene,
+} from '@ripl/3d';
 
 const context = createContext('#app');
 const scene = createScene(context);

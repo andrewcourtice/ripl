@@ -59,7 +59,7 @@ function buildChart() {
 
     chart = createLineChart(context.value, {
         data,
-        keyBy: 'date',
+        key: 'date',
         padding: {
             top: 20,
             right: 20,
@@ -69,8 +69,8 @@ function buildChart() {
         series: [
             {
                 id: 'close',
-                valueBy: 'close',
-                labelBy: 'Close',
+                value: 'close',
+                label: 'Close',
                 lineType: 'monotoneX',
             },
         ],

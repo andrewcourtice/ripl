@@ -152,8 +152,15 @@ createCircle({
 :::
 
 <script lang="ts" setup>
-import { createRect, createCircle, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRect,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

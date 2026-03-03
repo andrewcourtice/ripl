@@ -7,6 +7,8 @@ import {
     Arc,
     ArcState,
     BaseElementState,
+    Circle,
+    CircleState,
     Context,
     createArc,
     createCircle,
@@ -17,6 +19,8 @@ import {
     elementIsArc,
     elementIsText,
     Group,
+    Line,
+    LineState,
     maxOf,
     scaleContinuous,
     setColorAlpha,
@@ -28,6 +32,7 @@ import {
 import {
     arrayFilter,
     arrayFlatMap,
+    arrayForEach,
     arrayJoin,
     arrayMap,
     typeIsFunction,
@@ -57,6 +62,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
     private groups: Group[] = [];
     private gridGroup?: Group;
+    private gridRings: Circle[] = [];
+    private gridLabels: Text[] = [];
+    private gridLines: Line[] = [];
 
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
@@ -74,29 +82,39 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         startOffset: number,
         segmentCount: number
     ) {
-        if (this.gridGroup) {
-            this.gridGroup.clear();
-            this.scene.remove(this.gridGroup);
+        const isEntry = !this.gridGroup;
+        const animDuration = this.getAnimationDuration(800);
+        const radiusStep = (maxRadius - innerRadius) / levels;
+
+        if (isEntry) {
+            this.gridGroup = createGroup({
+                id: 'polar-grid',
+                class: 'polar-grid',
+                zIndex: 0,
+            });
+
+            this.scene.add(this.gridGroup);
         }
 
-        this.gridGroup = createGroup({
-            id: 'polar-grid',
-            class: 'polar-grid',
-            zIndex: 0,
-        });
+        // --- Concentric rings ---
+        const levelIndices = arrayMap(Array.from({ length: levels }), (_, i) => i + 1);
 
-        const radiusStep = (maxRadius - innerRadius) / levels;
-        const animDuration = this.getAnimationDuration(800);
+        const {
+            left: ringEntries,
+            inner: ringUpdates,
+            right: ringExits,
+        } = arrayJoin(levelIndices, this.gridRings, (level, ring) => ring.id === `polar-ring-${level}`);
 
-        // Concentric ring circles + value labels
-        for (let level = 1; level <= levels; level++) {
+        arrayForEach(ringExits, el => el.destroy());
+
+        const newRings = arrayMap(ringEntries, level => {
             const levelRadius = innerRadius + radiusStep * level;
 
             const ring = createCircle({
                 id: `polar-ring-${level}`,
                 cx,
                 cy,
-                radius: innerRadius,
+                radius: isEntry ? innerRadius : levelRadius,
                 strokeStyle: '#e5e7eb',
                 lineWidth: 1,
                 data: {
@@ -105,12 +123,40 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             });
 
             ring.autoFill = false;
-            this.gridGroup.add(ring);
+            this.gridGroup!.add(ring);
 
-            // Value label at 12 o'clock
+            return ring;
+        });
+
+        arrayForEach(ringUpdates, ([level, ring]) => {
+            const levelRadius = innerRadius + radiusStep * level;
+
+            ring.data = {
+                cx,
+                cy,
+                radius: levelRadius,
+            } as Partial<CircleState>;
+        });
+
+        this.gridRings = [
+            ...newRings,
+            ...arrayMap(ringUpdates, ([, ring]) => ring),
+        ];
+
+        // --- Ring value labels ---
+        const {
+            left: labelEntries,
+            inner: labelUpdates,
+            right: labelExits,
+        } = arrayJoin(levelIndices, this.gridLabels, (level, label) => label.id === `polar-ring-label-${level}`);
+
+        arrayForEach(labelExits, el => el.destroy());
+
+        const newLabels = arrayMap(labelEntries, level => {
+            const levelRadius = innerRadius + radiusStep * level;
             const levelValue = Math.round((maxValue / levels) * level);
 
-            this.gridGroup.add(createText({
+            const label = createText({
                 id: `polar-ring-label-${level}`,
                 x: cx + 4,
                 y: cy - levelRadius - 2,
@@ -119,44 +165,104 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 font: '10px sans-serif',
                 textAlign: 'left',
                 textBaseline: 'bottom',
-                globalAlpha: 0,
+                globalAlpha: isEntry ? 0 : 1,
                 data: {
                     globalAlpha: 1,
                 },
-            }));
-        }
+            });
 
-        // Radial axis lines from center to outer edge at each segment boundary
-        for (let i = 0; i < segmentCount; i++) {
-            const angle = startOffset + i * angleStep;
+            this.gridGroup!.add(label);
+
+            return label;
+        });
+
+        arrayForEach(labelUpdates, ([level, label]) => {
+            const levelRadius = innerRadius + radiusStep * level;
+            const levelValue = Math.round((maxValue / levels) * level);
+
+            label.content = levelValue.toString();
+            label.data = {
+                x: cx + 4,
+                y: cy - levelRadius - 2,
+            } as Partial<TextState>;
+        });
+
+        this.gridLabels = [
+            ...newLabels,
+            ...arrayMap(labelUpdates, ([, label]) => label),
+        ];
+
+        // --- Radial axis lines ---
+        const lineIndices = arrayMap(Array.from({ length: segmentCount }), (_, i) => i);
+
+        const {
+            left: lineEntries,
+            inner: lineUpdates,
+            right: lineExits,
+        } = arrayJoin(lineIndices, this.gridLines, (idx, line) => line.id === `polar-axis-${idx}`);
+
+        arrayForEach(lineExits, el => el.destroy());
+
+        const newLines = arrayMap(lineEntries, idx => {
+            const angle = startOffset + idx * angleStep;
             const x2 = cx + maxRadius * Math.cos(angle);
             const y2 = cy + maxRadius * Math.sin(angle);
             const x1 = cx + innerRadius * Math.cos(angle);
             const y1 = cy + innerRadius * Math.sin(angle);
 
-            this.gridGroup.add(createLine({
-                id: `polar-axis-${i}`,
+            const line = createLine({
+                id: `polar-axis-${idx}`,
                 x1,
                 y1,
-                x2: x1,
-                y2: y1,
+                x2: isEntry ? x1 : x2,
+                y2: isEntry ? y1 : y2,
                 strokeStyle: '#e5e7eb',
                 lineWidth: 1,
                 data: {
                     x2,
                     y2,
                 },
+            });
+
+            this.gridGroup!.add(line);
+
+            return line;
+        });
+
+        arrayForEach(lineUpdates, ([idx, line]) => {
+            const angle = startOffset + idx * angleStep;
+            const x2 = cx + maxRadius * Math.cos(angle);
+            const y2 = cy + maxRadius * Math.sin(angle);
+            const x1 = cx + innerRadius * Math.cos(angle);
+            const y1 = cy + innerRadius * Math.sin(angle);
+
+            line.data = {
+                x1,
+                y1,
+                x2,
+                y2,
+            } as Partial<LineState>;
+        });
+
+        this.gridLines = [
+            ...newLines,
+            ...arrayMap(lineUpdates, ([, line]) => line),
+        ];
+
+        // Animate: staggered entry for new elements, smooth transition for updates
+        const allElements = this.gridGroup.children;
+
+        if (isEntry) {
+            return this.renderer.transition(allElements, (element, index, length) => ({
+                duration: animDuration,
+                delay: index * (animDuration / length) * 0.3,
+                ease: easeOutQuint,
+                state: element.data as Partial<BaseElementState>,
             }));
         }
 
-        this.scene.add(this.gridGroup);
-
-        // Animate grid elements
-        const gridElements = this.gridGroup.children;
-
-        return this.renderer.transition(gridElements, (element, index, length) => ({
+        return this.renderer.transition(allElements, element => ({
             duration: animDuration,
-            delay: index * (animDuration / length) * 0.3,
             ease: easeOutQuint,
             state: element.data as Partial<BaseElementState>,
         }));

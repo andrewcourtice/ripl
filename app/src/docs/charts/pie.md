@@ -18,10 +18,21 @@ A pie chart is useful for illustrating numerical proportions of statistical data
 </ripl-example>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { createPieChart } from '@ripl/charts';
-import { stringUniqueId } from '@ripl/utilities';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createPieChart,
+} from '@ripl/charts';
+
+import {
+    stringUniqueId,
+} from '@ripl/utilities';
+
+import {
+    ref,
+} from 'vue';
 
 const COUNTRIES = [
     'Australia', 'Poland', 'South Africa', 'New Zealand',

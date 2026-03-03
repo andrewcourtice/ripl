@@ -13,9 +13,17 @@ The `GaugeChart` displays a single value on a semi-circular arc gauge, ideal for
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createGaugeChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    createGaugeChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const value = ref(72);
 
@@ -41,7 +49,9 @@ function randomize() {
 ## Usage
 
 ```ts
-import { createGaugeChart } from '@ripl/charts';
+import {
+    createGaugeChart,
+} from '@ripl/charts';
 
 const chart = createGaugeChart('#container', {
     value: 72,

@@ -120,8 +120,14 @@ createCircle({
 :::
 
 <script lang="ts" setup>
-import { createCircle, createText } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createText,
+} from '@ripl/core';
 
 const {
     contextChanged

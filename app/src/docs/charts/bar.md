@@ -25,9 +25,18 @@ The `BarChart` supports grouped and stacked modes, vertical and horizontal orien
 </ripl-example>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { createBarChart, BarChart } from '@ripl/charts';
-import { useRiplChart } from '../../.vitepress/compositions/example';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    BarChart,
+    createBarChart,
+} from '@ripl/charts';
+
+import {
+    ref,
+} from 'vue';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -54,15 +63,15 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createBarChart(context, {
         data,
-        keyBy: 'month',
+        key: 'month',
         mode: stacked.value ? 'stacked' : 'grouped',
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: [
-            { id: 'sales', valueBy: 'sales', label: 'Sales' },
-            { id: 'costs', valueBy: 'costs', label: 'Costs' },
-            { id: 'profit', valueBy: 'profit', label: 'Profit' },
-            { id: 'returns', valueBy: 'returns', label: 'Returns' },
+            { id: 'sales', value: 'sales', label: 'Sales' },
+            { id: 'costs', value: 'costs', label: 'Costs' },
+            { id: 'profit', value: 'profit', label: 'Profit' },
+            { id: 'returns', value: 'returns', label: 'Returns' },
         ],
     });
 });
@@ -100,16 +109,18 @@ function toggleOrientation() {
 ## Usage
 
 ```ts
-import { createBarChart } from '@ripl/charts';
+import {
+    createBarChart,
+} from '@ripl/charts';
 
 const chart = createBarChart('#container', {
     data: [...],
-    keyBy: 'quarter',
+    key: 'quarter',
     mode: 'grouped',        // 'grouped' | 'stacked'
     orientation: 'vertical', // 'vertical' | 'horizontal'
     series: [
-        { id: 'sales', valueBy: 'sales', label: 'Sales' },
-        { id: 'costs', valueBy: 'costs', label: 'Costs' },
+        { id: 'sales', value: 'sales', label: 'Sales' },
+        { id: 'costs', value: 'costs', label: 'Costs' },
     ],
 });
 ```
@@ -117,10 +128,12 @@ const chart = createBarChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `valueBy`, `label`, and optional `color`
-- **`keyBy`** — Key accessor for categories
+- **`series`** — Array of series with `id`, `value`, `label`, and optional `color`
+- **`key`** — Key accessor for categories
 - **`mode`** — `'grouped'` (default) or `'stacked'`
 - **`orientation`** — `'vertical'` (default) or `'horizontal'`
-- **`showGrid`** — Show grid lines (default `true`)
-- **`showLegend`** — Show legend for multi-series (default `true`)
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
 - **`borderRadius`** — Bar corner radius (default `2`)

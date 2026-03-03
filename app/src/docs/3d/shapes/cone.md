@@ -9,7 +9,9 @@ A 3D cone with a pointed apex and circular base.
 ## Usage
 
 ```ts
-import { createCone } from '@ripl/3d';
+import {
+    createCone,
+} from '@ripl/3d';
 
 const cone = createCone({
     radius: 1,
@@ -40,12 +42,19 @@ const cone = createCone({
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createCone, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createCone,
+    createContext,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
-const cone = createCone({ radius: 1, height: 2, fillStyle: '#cc4444' });
+const cone = createCone({ radius: 1,
+    height: 2,
+    fillStyle: '#cc4444' });
 
 let angle = 0;
 function loop() {
@@ -63,8 +72,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createCone } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createCone,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCone({ radius: 1, height: 2, fillStyle: '#cc4444' }));

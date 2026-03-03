@@ -3,6 +3,25 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartCrosshairInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeCrosshair,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -58,26 +77,24 @@ import {
 export interface AreaChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    valueBy: keyof TData | number | ((item: TData) => number);
+    value: keyof TData | number | ((item: TData) => number);
     label: string;
     lineType?: PolylineRenderer;
     lineWidth?: number;
     opacity?: number;
-    showMarkers?: boolean;
+    markers?: boolean;
 }
 
 export interface AreaChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: AreaChartSeriesOptions<TData>[];
-    keyBy: keyof TData | ((item: TData) => string);
-    showGrid?: boolean;
-    showCrosshair?: boolean;
-    showLegend?: boolean;
+    key: keyof TData | ((item: TData) => string);
     stacked?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
+    grid?: ChartGridInput;
+    crosshair?: ChartCrosshairInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput<TData>;
 }
 
 export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
@@ -94,17 +111,36 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const crosshairOpts = normalizeCrosshair(options.crosshair);
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
+            });
+        }
 
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -112,20 +148,30 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
-        if (options.showCrosshair !== false) {
+        if (crosshairOpts.visible) {
             this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
+                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+                strokeStyle: crosshairOpts.lineColor,
+                lineWidth: crosshairOpts.lineWidth,
             });
         }
 
@@ -136,12 +182,12 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
         const {
             data,
             series,
-            keyBy,
+            key,
             stacked,
         } = this.options;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
 
         const {
             left: seriesEntries,
@@ -161,7 +207,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                 arrayForEach(series, (srs, seriesIndex) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+                    const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                     cumulative += getValue(item);
                     stackedValues[dataIndex][seriesIndex] = cumulative;
                 });
@@ -170,7 +216,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
         const getSeriesValue = (srs: AreaChartSeriesOptions<TData>, item: TData, dataIndex: number) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
             const rawValue = getValue(item);
             const seriesIndex = series.indexOf(srs);
 
@@ -194,11 +240,11 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
         const seriesEntryGroups = arrayMap(seriesEntries, srs => {
             const color = this.getSeriesColor(srs.id);
             const opacity = srs.opacity ?? 0.3;
-            const showMarkers = srs.showMarkers !== false;
+            const showMarkers = srs.markers !== false;
 
             const linePoints: Point[] = [];
             const areaPoints: Point[] = [];
-            const markers: Circle[] = [];
+            const markerElements: Circle[] = [];
 
             arrayForEach(data, (item, dataIndex) => {
                 const key = getKey(item);
@@ -231,7 +277,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                 if (showMarkers) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const rawGetValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+                    const rawGetValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                     const rawValue = rawGetValue(item);
 
                     const marker = createCircle({
@@ -278,7 +324,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                         });
                     });
 
-                    markers.push(marker);
+                    markerElements.push(marker);
                 }
             });
 
@@ -315,7 +361,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 children: [
                     areaFill,
                     line,
-                    ...markers,
+                    ...markerElements,
                 ],
             });
         });
@@ -461,14 +507,14 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             const {
                 data,
                 series,
-                keyBy,
+                key,
                 stacked,
             } = this.options;
 
             this.resolveSeriesColors(series);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
             const keys = arrayMap(data, getKey);
 
             let dataExtent: number[];
@@ -485,7 +531,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                     arrayForEach(series, srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (i: any) => i[srs.valueBy] as number;
+                        const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                         cumulative += getValue(item);
                         cumulativeMax = Math.max(cumulativeMax, cumulative);
                         cumulativeMin = Math.min(cumulativeMin, cumulative);
@@ -497,11 +543,11 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                 dataExtent = [stackedMin, stackedMax];
             } else {
-                const seriesExtents = arrayFlatMap(series, ({ valueBy }) => {
-                    const getValue = typeIsFunction(valueBy)
-                        ? valueBy
+                const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+                    const getValue = typeIsFunction(valueAccessor)
+                        ? valueAccessor
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        : (item: any) => item[valueBy] as number;
+                        : (item: any) => item[valueAccessor] as number;
 
                     return getExtent(data, getValue);
                 }).concat(0);
@@ -514,7 +560,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible !== false && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
                     label: srs.label,

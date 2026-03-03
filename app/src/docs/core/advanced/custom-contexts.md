@@ -23,8 +23,15 @@ A context must implement these operations for its target medium. The Canvas cont
 To create a custom context, extend the base `Context` class and implement all abstract methods:
 
 ```ts
-import { Context, ContextPath, ContextText } from '@ripl/core';
-import type { BaseContextState } from '@ripl/core';
+import {
+    Context,
+    ContextPath,
+    ContextText,
+} from '@ripl/core';
+
+import type {
+    BaseContextState,
+} from '@ripl/core';
 
 class MyContext extends Context {
 

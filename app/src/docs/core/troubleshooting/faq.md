@@ -89,10 +89,14 @@ The beauty of Ripl is that switching is a one-line change:
 
 ```ts
 // Canvas (default)
-import { createContext } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/core';
 
 // SVG — just change the import
-import { createContext } from '@ripl/svg';
+import {
+    createContext,
+} from '@ripl/svg';
 ```
 
 ## Why aren't my pointer events working?

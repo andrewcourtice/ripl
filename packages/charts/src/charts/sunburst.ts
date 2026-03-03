@@ -3,6 +3,14 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+} from '../core/options';
+
+import {
+    normalizeLegend,
+} from '../core/options';
+
 import {
     getColorGenerator,
 } from '../constants/colors';
@@ -48,7 +56,7 @@ export interface SunburstNode {
 
 export interface SunburstChartOptions extends BaseChartOptions {
     data: SunburstNode[];
-    showLegend?: boolean;
+    legend?: ChartLegendInput;
 }
 
 interface FlattenedArc {
@@ -146,7 +154,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && data.length > 0) {
+            if (normalizeLegend(this.options.legend).visible && data.length > 0) {
                 const legendItems: LegendItem[] = arrayMap(data, node => ({
                     id: node.id,
                     label: node.label,

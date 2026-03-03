@@ -22,9 +22,11 @@
     "devDependencies": {
         "@eslint/compat": "^2.0.2",
         "@eslint/js": "^10.0.1",
+        "@eslint/markdown": "^7.5.1",
         "@stylistic/eslint-plugin": "^5.8.0",
         "@vitest/coverage-v8": "^4.0.18",
         "eslint": "^10.0.0",
+        "eslint-plugin-vue": "^10.8.0",
         "globals": "^17.3.0",
         "happy-dom": "^20.6.2",
         "jsdom": "^28.1.0",
@@ -32,6 +34,7 @@
         "tsup": "^8.5.1",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.56.0",
-        "vitest": "^4.0.18"
+        "vitest": "^4.0.18",
+        "vue-eslint-parser": "^10.4.0"
     }
 }

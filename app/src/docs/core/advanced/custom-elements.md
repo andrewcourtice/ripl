@@ -11,7 +11,12 @@ Ripl's built-in elements cover common shapes, but you can create your own custom
 Most custom elements should extend `Shape`, which provides path-based rendering with automatic fill/stroke and hit testing. Here's a complete example of a custom **Star** element:
 
 ```ts
-import { Shape, ShapeOptions, BaseElementState, Context } from '@ripl/core';
+import {
+    BaseElementState,
+    Context,
+    Shape,
+    ShapeOptions,
+} from '@ripl/core';
 
 // 1. Define your state interface
 interface StarState extends BaseElementState {
@@ -25,23 +30,43 @@ interface StarState extends BaseElementState {
 // 2. Extend Shape with your state
 class Star extends Shape<StarState> {
 
-    get cx() { return this.getStateValue('cx'); }
-    set cx(value) { this.setStateValue('cx', value); }
+    get cx() {
+        return this.getStateValue('cx');
+    }
+    set cx(value) {
+        this.setStateValue('cx', value);
+    }
 
-    get cy() { return this.getStateValue('cy'); }
-    set cy(value) { this.setStateValue('cy', value); }
+    get cy() {
+        return this.getStateValue('cy');
+    }
+    set cy(value) {
+        this.setStateValue('cy', value);
+    }
 
-    get outerRadius() { return this.getStateValue('outerRadius'); }
-    set outerRadius(value) { this.setStateValue('outerRadius', value); }
+    get outerRadius() {
+        return this.getStateValue('outerRadius');
+    }
+    set outerRadius(value) {
+        this.setStateValue('outerRadius', value);
+    }
 
-    get innerRadius() { return this.getStateValue('innerRadius'); }
-    set innerRadius(value) { this.setStateValue('innerRadius', value); }
+    get innerRadius() {
+        return this.getStateValue('innerRadius');
+    }
+    set innerRadius(value) {
+        this.setStateValue('innerRadius', value);
+    }
 
-    get points() { return this.getStateValue('points'); }
-    set points(value) { this.setStateValue('points', value); }
+    get points() {
+        return this.getStateValue('points');
+    }
+    set points(value) {
+        this.setStateValue('points', value);
+    }
 
     constructor(options: ShapeOptions<StarState>) {
-        super('star', options);  // 'star' is the element type name
+        super('star', options); // 'star' is the element type name
     }
 
     // 3. Implement the render method
@@ -94,7 +119,12 @@ The `this.id` passed to `createPath` is important — it acts as a persistent ke
 For non-path elements (like text or images), extend `Element` directly:
 
 ```ts
-import { Element, ElementOptions, BaseElementState, Context } from '@ripl/core';
+import {
+    BaseElementState,
+    Context,
+    Element,
+    ElementOptions,
+} from '@ripl/core';
 
 interface BadgeState extends BaseElementState {
     x: number;
@@ -105,17 +135,33 @@ interface BadgeState extends BaseElementState {
 
 class Badge extends Element<BadgeState> {
 
-    get x() { return this.getStateValue('x'); }
-    set x(value) { this.setStateValue('x', value); }
+    get x() {
+        return this.getStateValue('x');
+    }
+    set x(value) {
+        this.setStateValue('x', value);
+    }
 
-    get y() { return this.getStateValue('y'); }
-    set y(value) { this.setStateValue('y', value); }
+    get y() {
+        return this.getStateValue('y');
+    }
+    set y(value) {
+        this.setStateValue('y', value);
+    }
 
-    get label() { return this.getStateValue('label'); }
-    set label(value) { this.setStateValue('label', value); }
+    get label() {
+        return this.getStateValue('label');
+    }
+    set label(value) {
+        this.setStateValue('label', value);
+    }
 
-    get size() { return this.getStateValue('size'); }
-    set size(value) { this.setStateValue('size', value); }
+    get size() {
+        return this.getStateValue('size');
+    }
+    set size(value) {
+        this.setStateValue('size', value);
+    }
 
     constructor(options: ElementOptions<BadgeState>) {
         super('badge', options);
@@ -163,8 +209,10 @@ Custom elements work exactly like built-in elements — they can be added to gro
 ```ts
 const star = createStar({
     fillStyle: '#ff006e',
-    cx: 200, cy: 150,
-    outerRadius: 60, innerRadius: 30,
+    cx: 200,
+    cy: 150,
+    outerRadius: 60,
+    innerRadius: 30,
     points: 5,
 });
 
@@ -205,9 +253,19 @@ star.render(context);
 :::
 
 <script lang="ts" setup>
-import { Shape, Context } from '@ripl/core';
-import type { ShapeOptions, BaseElementState } from '@ripl/core';
-import { useRiplExample } from '../../../.vitepress/compositions/example';
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    Context,
+    Shape,
+} from '@ripl/core';
+
+import type {
+    BaseElementState,
+    ShapeOptions,
+} from '@ripl/core';
 
 interface StarState extends BaseElementState {
     cx: number;

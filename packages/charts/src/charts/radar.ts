@@ -3,6 +3,14 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+} from '../core/options';
+
+import {
+    normalizeLegend,
+} from '../core/options';
+
 import {
     Tooltip,
 } from '../components/tooltip';
@@ -39,7 +47,7 @@ export interface RadarChartSeriesOptions<TData> {
     id: string;
     color?: string;
     label: string;
-    valueBy: keyof TData | ((item: TData) => number);
+    value: keyof TData | ((item: TData) => number);
     opacity?: number;
 }
 
@@ -49,7 +57,7 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     axes: string[];
     maxValue?: number;
     levels?: number;
-    showLegend?: boolean;
+    legend?: ChartLegendInput;
 }
 
 const TAU = Math.PI * 2;
@@ -170,7 +178,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (item: any) => item[srs.valueBy] as number;
+            const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
             return arrayMap(data, (item, index) => {
                 const value = getValue(item);
@@ -354,7 +362,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
                     label: srs.label,
@@ -390,7 +398,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             if (!maxValue) {
                 arrayForEach(series, srs => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const getValue = typeIsFunction(srs.valueBy) ? srs.valueBy : (item: any) => item[srs.valueBy] as number;
+                    const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
                     arrayForEach(this.options.data, item => {
                         computedMax = Math.max(computedMax, getValue(item));

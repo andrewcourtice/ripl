@@ -9,7 +9,9 @@ A 3D torus (donut shape) with configurable major radius, tube radius, and segmen
 ## Usage
 
 ```ts
-import { createTorus } from '@ripl/3d';
+import {
+    createTorus,
+} from '@ripl/3d';
 
 const torus = createTorus({
     radius: 2,
@@ -42,12 +44,19 @@ const torus = createTorus({
 <ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
 == Code
 ```ts
-import { createContext, createTorus, createCamera } from '@ripl/3d';
+import {
+    createCamera,
+    createContext,
+    createTorus,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5], target: [0, 0, 0] });
+const camera = createCamera(scene, { position: [0, 1.5, 5],
+    target: [0, 0, 0] });
 
-const torus = createTorus({ radius: 1.5, tube: 0.4, fillStyle: '#8844cc' });
+const torus = createTorus({ radius: 1.5,
+    tube: 0.4,
+    fillStyle: '#8844cc' });
 
 let angle = 0;
 function loop() {
@@ -65,8 +74,13 @@ loop();
 :::
 
 <script lang="ts" setup>
-import { createTorus } from '@ripl/3d';
-import { useRipl3DExample } from '../../../.vitepress/compositions/example-3d';
+import {
+    useRipl3DExample,
+} from '../../../.vitepress/compositions/example-3d';
+
+import {
+    createTorus,
+} from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createTorus({ radius: 1.5, tube: 0.4, fillStyle: '#8844cc' }));

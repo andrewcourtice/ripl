@@ -16,8 +16,10 @@ Ripl provides a comprehensive set of chart types for data visualization. Each ch
     </a>
 </div>
 
-<script setup>
-import { charts } from '../../.vitepress/data/charts';
+<script setup lang="ts">
+import {
+    charts,
+} from '../../.vitepress/data/charts';
 </script>
 
 <style>

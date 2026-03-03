@@ -3,6 +3,25 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartAxisInput,
+    ChartCrosshairInput,
+    ChartGridInput,
+    ChartLegendInput,
+    ChartTooltipInput,
+} from '../core/options';
+
+import {
+    normalizeAxis,
+    normalizeAxisItem,
+    normalizeCrosshair,
+    normalizeGrid,
+    normalizeLegend,
+    normalizeTooltip,
+    normalizeYAxisItem,
+    resolveFormatLabel,
+} from '../core/options';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -55,7 +74,7 @@ export interface ScatterChartSeriesOptions<TData> {
     xBy: keyof TData | ((item: TData) => number);
     yBy: keyof TData | ((item: TData) => number);
     sizeBy?: keyof TData | number | ((item: TData) => number);
-    labelBy: string | ((item: TData) => string);
+    label: string | ((item: TData) => string);
     minRadius?: number;
     maxRadius?: number;
 }
@@ -63,16 +82,12 @@ export interface ScatterChartSeriesOptions<TData> {
 export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: ScatterChartSeriesOptions<TData>[];
-    keyBy: keyof TData | ((item: TData) => string);
-    xAxisLabel?: string;
-    yAxisLabel?: string;
-    showGrid?: boolean;
-    showCrosshair?: boolean;
-    showLegend?: boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatXLabel?: (value: any) => string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    formatYLabel?: (value: any) => string;
+    key: keyof TData | ((item: TData) => string);
+    grid?: ChartGridInput;
+    crosshair?: ChartCrosshairInput;
+    tooltip?: ChartTooltipInput;
+    legend?: ChartLegendInput;
+    axis?: ChartAxisInput<TData>;
 }
 
 export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TData>> {
@@ -83,19 +98,31 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
     private sizeScale!: Scale;
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
-    private tooltip: Tooltip;
+    private tooltip!: Tooltip;
     private crosshair?: Crosshair;
     private legend?: Legend;
     private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
         super(target, options);
 
+        const axisOpts = normalizeAxis(options.axis);
+        const xAxis = normalizeAxisItem(axisOpts.x);
+        const yAxis = normalizeYAxisItem(
+            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+        );
+        const gridOpts = normalizeGrid(options.grid);
+        const crosshairOpts = normalizeCrosshair(options.crosshair, { axis: 'both' });
+        const tooltipOpts = normalizeTooltip(options.tooltip);
+
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.xScale,
-            formatLabel: options.formatXLabel,
+            labelFont: xAxis.font,
+            labelColor: xAxis.fontColor,
+            formatLabel: resolveFormatLabel(xAxis.format),
+            title: xAxis.title,
         });
 
         this.yAxis = new ChartYAxis({
@@ -103,29 +130,42 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: this.yScale,
-            formatLabel: options.formatYLabel,
+            labelFont: yAxis.font,
+            labelColor: yAxis.fontColor,
+            formatLabel: resolveFormatLabel(yAxis.format),
+            title: yAxis.title,
         });
 
-        this.tooltip = new Tooltip({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
+        if (tooltipOpts.visible) {
+            this.tooltip = new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                font: tooltipOpts.font,
+                fontColor: tooltipOpts.fontColor,
+                backgroundColor: tooltipOpts.backgroundColor,
+            });
+        }
 
-        if (options.showGrid !== false) {
+        if (gridOpts.visible) {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: true,
+                strokeStyle: gridOpts.lineColor,
+                lineWidth: gridOpts.lineWidth,
+                lineDash: gridOpts.lineDash,
             });
         }
 
-        if (options.showCrosshair !== false) {
+        if (crosshairOpts.visible) {
             this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
-                vertical: true,
-                horizontal: true,
+                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+                strokeStyle: crosshairOpts.lineColor,
+                lineWidth: crosshairOpts.lineWidth,
             });
         }
 
@@ -167,7 +207,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         const {
             data,
             series,
-            keyBy,
+            key,
         } = this.options;
 
         const {
@@ -179,14 +219,14 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         arrayForEach(seriesExits, el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(keyBy) ? keyBy : (item: any) => item[keyBy] as string;
+        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
 
         const seriesBubbleValueProducer = ({
             id,
             xBy,
             yBy,
             sizeBy,
-            labelBy,
+            label,
             color,
             minRadius = 3,
             maxRadius = 20,
@@ -204,7 +244,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         ? () => sizeBy
                         : (item: any) => item[sizeBy] as number;
             /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
-            const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
+            const getLabel = typeIsFunction(label) ? label : () => label;
 
             return (item: TData) => {
                 const key = getKey(item);
@@ -512,10 +552,10 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             // Compute legend bounds early to reserve space
             let legendHeight = 0;
 
-            if (this.options.showLegend !== false && series.length > 1) {
+            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
                 const legendItems: LegendItem[] = arrayMap(series, srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.labelBy) ? srs.id : srs.labelBy as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
                     active: true,
                 }));
