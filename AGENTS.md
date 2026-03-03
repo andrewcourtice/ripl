@@ -309,36 +309,36 @@ The project provides and prefers its own typed utility wrappers. Use these inste
 
 ### Type Guards (`typeIs*`)
 ```typescript
-typeIsArray(value)    // value is unknown[]
-typeIsFunction(value) // value is AnyFunction
-typeIsNil(value)      // value is null | undefined
-typeIsNumber(value)   // value is number
-typeIsString(value)   // value is string
-typeIsObject(value)   // value is object
-typeIsDate(value)     // value is Date
-typeIsBoolean(value)  // value is Boolean
+typeIsArray(value); // value is unknown[]
+typeIsFunction(value); // value is AnyFunction
+typeIsNil(value); // value is null | undefined
+typeIsNumber(value); // value is number
+typeIsString(value); // value is string
+typeIsObject(value); // value is object
+typeIsDate(value); // value is Date
+typeIsBoolean(value); // value is Boolean
 ```
 
 ### Collection Helpers
 ```typescript
-arrayForEach, arrayMap, arrayFilter, arrayReduce, arrayFind, arrayFlatMap
-arrayJoin  // left/inner/right join for data diffing
+arrayForEach, arrayMap, arrayFilter, arrayReduce, arrayFind, arrayFlatMap;
+arrayJoin; // left/inner/right join for data diffing
 ```
 
 ### Common Types
 ```typescript
-OneOrMore<T>     // T | T[]
-AnyFunction      // (...args: any[]) => any
-AnyObject        // { [key: PropertyKey]: unknown }
-Disposable       // { dispose: () => void }
-Predicate<L, R>  // (left: L, right: R) => boolean
+OneOrMore<T>; // T | T[]
+AnyFunction; // (...args: any[]) => any
+AnyObject; // { [key: PropertyKey]: unknown }
+Disposable; // { dispose: () => void }
+Predicate<L, R>; // (left: L, right: R) => boolean
 ```
 
 ### Value Helpers
 ```typescript
-valueOneOrMore(value)  // normalizes OneOrMore<T> to T[]
-functionIdentity       // identity function
-stringUniqueId()       // generates unique IDs
+valueOneOrMore(value); // normalizes OneOrMore<T> to T[]
+functionIdentity; // identity function
+stringUniqueId(); // generates unique IDs
 ```
 
 ## Testing Standards

@@ -1,5 +1,5 @@
 import {
-    typeIsNumber
+    typeIsNumber,
 } from '@ripl/utilities';
 
 export type Vector3 = [x: number, y: number, z: number];

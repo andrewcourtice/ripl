@@ -13,7 +13,10 @@ Ripl supports CSS gradient strings directly in `fillStyle` and `strokeStyle` pro
 ```ts
 const rect = createRect({
     fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
-    x: 0, y: 0, width: 200, height: 100,
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
 });
 ```
 
@@ -31,7 +34,9 @@ The angle specifies the direction of the gradient. Common values:
 ```ts
 const circle = createCircle({
     fillStyle: 'radial-gradient(circle, #3a86ff, #ff006e)',
-    cx: 100, cy: 100, radius: 80,
+    cx: 100,
+    cy: 100,
+    radius: 80,
 });
 ```
 
@@ -40,7 +45,9 @@ const circle = createCircle({
 ```ts
 const circle = createCircle({
     fillStyle: 'conic-gradient(from 0deg, #3a86ff, #ff006e, #3a86ff)',
-    cx: 100, cy: 100, radius: 80,
+    cx: 100,
+    cy: 100,
+    radius: 80,
 });
 ```
 
@@ -50,16 +57,16 @@ Color stops define the colors and their positions along the gradient. You can us
 
 ```ts
 // Implicit positions (evenly distributed)
-'linear-gradient(90deg, red, green, blue)'
+'linear-gradient(90deg, red, green, blue)';
 
 // Explicit positions
-'linear-gradient(90deg, red 0%, green 30%, blue 100%)'
+'linear-gradient(90deg, red 0%, green 30%, blue 100%)';
 
 // Pixel positions
-'linear-gradient(90deg, red 0px, blue 200px)'
+'linear-gradient(90deg, red 0px, blue 200px)';
 
 // Multiple colors at the same position (hard stop)
-'linear-gradient(90deg, red 50%, blue 50%)'
+'linear-gradient(90deg, red 50%, blue 50%)';
 ```
 
 ## Supported Color Formats
@@ -78,7 +85,7 @@ Gradient color stops accept:
 Add the `repeating-` prefix to create repeating gradients:
 
 ```ts
-'repeating-linear-gradient(45deg, #3a86ff 0px, #3a86ff 10px, #ff006e 10px, #ff006e 20px)'
+'repeating-linear-gradient(45deg, #3a86ff 0px, #3a86ff 10px, #ff006e 10px, #ff006e 20px)';
 ```
 
 ## Using Gradients
@@ -90,7 +97,10 @@ const rect = createRect({
     fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
     strokeStyle: 'linear-gradient(135deg, #1a56db, #5b21b6)',
     lineWidth: 4,
-    x: 50, y: 50, width: 200, height: 120,
+    x: 50,
+    y: 50,
+    width: 200,
+    height: 120,
 });
 ```
 
@@ -127,9 +137,9 @@ await renderer.transition(rect, {
 == Code
 ```ts
 import {
+    createCircle,
     createContext,
     createRect,
-    createCircle,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');

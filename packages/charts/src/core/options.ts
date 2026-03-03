@@ -168,7 +168,10 @@ const ANIMATION_DEFAULTS: ChartAnimationOptions = {
 };
 
 export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Partial<ChartAnimationOptions>): ChartAnimationOptions {
-    const base = { ...ANIMATION_DEFAULTS, ...defaults };
+    const base = {
+        ...ANIMATION_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base };
@@ -208,7 +211,10 @@ const GRID_DEFAULTS: ChartGridOptions = {
 };
 
 export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions {
-    const base = { ...GRID_DEFAULTS, ...defaults };
+    const base = {
+        ...GRID_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base };
@@ -250,7 +256,10 @@ const CROSSHAIR_DEFAULTS: ChartCrosshairOptions = {
 };
 
 export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions {
-    const base = { ...CROSSHAIR_DEFAULTS, ...defaults };
+    const base = {
+        ...CROSSHAIR_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base };
@@ -300,7 +309,10 @@ const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
 };
 
 export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions {
-    const base = { ...TOOLTIP_DEFAULTS, ...defaults };
+    const base = {
+        ...TOOLTIP_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base };
@@ -346,7 +358,10 @@ const LEGEND_DEFAULTS: ChartLegendOptions = {
 };
 
 export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions {
-    const base = { ...LEGEND_DEFAULTS, ...defaults };
+    const base = {
+        ...LEGEND_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return {
@@ -418,7 +433,10 @@ export function normalizeAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartAxisItemOptions<TData>>,
     defaults?: Partial<ChartAxisItemOptions<TData>>
 ): ChartAxisItemOptions<TData> {
-    const base = { ...AXIS_ITEM_DEFAULTS, ...defaults };
+    const base = {
+        ...AXIS_ITEM_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base } as ChartAxisItemOptions<TData>;
@@ -441,7 +459,10 @@ export function normalizeYAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartYAxisItemOptions<TData>>,
     defaults?: Partial<ChartYAxisItemOptions<TData>>
 ): ChartYAxisItemOptions<TData> {
-    const base = { ...Y_AXIS_ITEM_DEFAULTS, ...defaults };
+    const base = {
+        ...Y_AXIS_ITEM_DEFAULTS,
+        ...defaults,
+    };
 
     if (input === undefined) {
         return { ...base } as ChartYAxisItemOptions<TData>;

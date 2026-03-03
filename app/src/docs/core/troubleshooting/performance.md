@@ -40,8 +40,8 @@ This means the render loop is idle when nothing is happening — no wasted CPU c
 
 ```ts
 const renderer = createRenderer(scene, {
-    autoStart: true,  // default
-    autoStop: true,   // default
+    autoStart: true, // default
+    autoStop: true, // default
 });
 ```
 

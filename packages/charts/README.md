@@ -21,13 +21,18 @@ npm install @ripl/charts
 ## Usage
 
 ```typescript
-import { BarChart } from '@ripl/charts';
+import {
+    BarChart,
+} from '@ripl/charts';
 
 const chart = new BarChart('#chart', {
     data: [
-        { label: 'A', value: 10 },
-        { label: 'B', value: 25 },
-        { label: 'C', value: 15 },
+        { label: 'A',
+            value: 10 },
+        { label: 'B',
+            value: 25 },
+        { label: 'C',
+            value: 15 },
     ],
     keyBy: 'label',
     series: [

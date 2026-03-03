@@ -31,7 +31,7 @@ In addition to all [Element options](/docs/core/essentials/element#common-option
 const circle = createCircle({
     fillStyle: '#3a86ff',
     strokeStyle: '#1a56db',
-    autoStroke: false,  // Don't stroke, only fill
+    autoStroke: false, // Don't stroke, only fill
     cx: 100,
     cy: 100,
     radius: 50,
@@ -78,8 +78,8 @@ The demo below shows the difference between `autoFill` and `autoStroke`. The lef
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');

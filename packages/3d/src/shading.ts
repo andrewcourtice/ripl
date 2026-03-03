@@ -24,7 +24,7 @@ export function computeFaceNormal(vertices: Vector3[]): Vector3 {
 export function computeFaceBrightness(normal: Vector3, lightDirection: Vector3): number {
     const normalizedLight = vec3Normalize(lightDirection);
     const dot = -vec3Dot(normal, normalizedLight);
-    
+
     return Math.max(0, Math.min(1, dot));
 }
 

@@ -122,14 +122,17 @@ A `ContextPath` represents a geometric path. Your custom implementation must tra
 
 ```ts
 class MyContextPath extends ContextPath {
-    private commands: Array<{ type: string; args: number[] }> = [];
+    private commands: Array<{ type: string;
+        args: number[]; }> = [];
 
     moveTo(x: number, y: number): void {
-        this.commands.push({ type: 'moveTo', args: [x, y] });
+        this.commands.push({ type: 'moveTo',
+            args: [x, y] });
     }
 
     lineTo(x: number, y: number): void {
-        this.commands.push({ type: 'lineTo', args: [x, y] });
+        this.commands.push({ type: 'lineTo',
+            args: [x, y] });
     }
 
     arc(x: number, y: number, radius: number,
@@ -138,31 +141,33 @@ class MyContextPath extends ContextPath {
         this.commands.push({
             type: 'arc',
             args: [x, y, radius, startAngle, endAngle,
-                   counterclockwise ? 1 : 0],
+                counterclockwise ? 1 : 0],
         });
     }
 
     ellipse(x: number, y: number, radiusX: number, radiusY: number,
-            rotation: number, startAngle: number, endAngle: number,
-            counterclockwise?: boolean): void {
+        rotation: number, startAngle: number, endAngle: number,
+        counterclockwise?: boolean): void {
         this.commands.push({
             type: 'ellipse',
             args: [x, y, radiusX, radiusY, rotation,
-                   startAngle, endAngle, counterclockwise ? 1 : 0],
+                startAngle, endAngle, counterclockwise ? 1 : 0],
         });
     }
 
     rect(x: number, y: number, width: number, height: number): void {
-        this.commands.push({ type: 'rect', args: [x, y, width, height] });
+        this.commands.push({ type: 'rect',
+            args: [x, y, width, height] });
     }
 
     circle(x: number, y: number, radius: number): void {
-        this.commands.push({ type: 'circle', args: [x, y, radius] });
+        this.commands.push({ type: 'circle',
+            args: [x, y, radius] });
     }
 
     bezierCurveTo(cp1x: number, cp1y: number,
-                  cp2x: number, cp2y: number,
-                  x: number, y: number): void {
+        cp2x: number, cp2y: number,
+        x: number, y: number): void {
         this.commands.push({
             type: 'bezierCurveTo',
             args: [cp1x, cp1y, cp2x, cp2y, x, y],
@@ -170,7 +175,7 @@ class MyContextPath extends ContextPath {
     }
 
     quadraticCurveTo(cpx: number, cpy: number,
-                     x: number, y: number): void {
+        x: number, y: number): void {
         this.commands.push({
             type: 'quadraticCurveTo',
             args: [cpx, cpy, x, y],
@@ -178,7 +183,8 @@ class MyContextPath extends ContextPath {
     }
 
     closePath(): void {
-        this.commands.push({ type: 'closePath', args: [] });
+        this.commands.push({ type: 'closePath',
+            args: [] });
     }
 }
 ```
@@ -193,7 +199,9 @@ class MyContextText extends ContextText {
     readonly y: number;
     readonly content: string;
 
-    constructor(options: { x: number; y: number; content: string }) {
+    constructor(options: { x: number;
+        y: number;
+        content: string; }) {
         super();
         this.x = options.x;
         this.y = options.y;
@@ -237,7 +245,10 @@ function createContext(target: string | HTMLElement) {
 
 // Use it with any Ripl element
 const context = createContext('.my-container');
-const circle = createCircle({ fillStyle: '#3a86ff', cx: 100, cy: 100, radius: 50 });
+const circle = createCircle({ fillStyle: '#3a86ff',
+    cx: 100,
+    cy: 100,
+    radius: 50 });
 circle.render(context);
 ```
 

@@ -56,8 +56,8 @@ Here's a basic example of rendering an element.
 
 ```typescript
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 // Create a context to render the content to
@@ -70,7 +70,7 @@ const circle = createCircle({
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 // Render the element to the context
@@ -85,8 +85,8 @@ To modify an element simply change any of it's properties and re-render it.
 
 ```typescript
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -95,7 +95,7 @@ const circle = createCircle({
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 function render() {
@@ -117,7 +117,7 @@ To render the same element to SVG (or any other context) simply replace the impo
 
 ```typescript
 import {
-    createContext
+    createContext,
 } from '@ripl/svg';
 
 import {
@@ -130,7 +130,7 @@ const circle = createCircle({
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 function render() {
@@ -152,10 +152,10 @@ Ripl can also render multiple elements in groups with inherited properties (like
 
 ```typescript
 import {
-    createContext,
     createCircle,
+    createContext,
+    createGroup,
     createRect,
-    createGroup
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -163,7 +163,7 @@ const context = createContext('.mount-element');
 const circle = createCircle({
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 const rect = createRect({
@@ -178,8 +178,8 @@ const group = createGroup({
     lineWidth: 4,
     children: [
         circle,
-        rect
-    ]
+        rect,
+    ],
 });
 
 group.render(context);
@@ -191,10 +191,10 @@ Elements can be queried in groups using common DOM methods such as `getElementBy
 
 ```typescript
 import {
-    createContext,
     createCircle,
+    createContext,
+    createGroup,
     createRect,
-    createGroup
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -203,7 +203,7 @@ const circle = createCircle({
     class: 'shape',
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 const rect = createRect({
@@ -220,13 +220,13 @@ const childGroup = createGroup({
     lineWidth: 4,
     children: [
         circle,
-        rect
-    ]
+        rect,
+    ],
 });
 
 const parentGroup = createGroup({
     id: 'parent-group',
-    children: childGroup
+    children: childGroup,
 });
 
 parentGroup.render(context);
@@ -267,11 +267,11 @@ Ripl also provides complete scene management for rendering large group structure
 
 ```typescript
 import {
-    createContext,
     createCircle,
-    createRect,
+    createContext,
     createGroup,
-    createScene
+    createRect,
+    createScene,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -280,7 +280,7 @@ const circle = createCircle({
     class: 'shape',
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 const rect = createRect({
@@ -297,18 +297,18 @@ const childGroup = createGroup({
     lineWidth: 4,
     children: [
         circle,
-        rect
-    ]
+        rect,
+    ],
 });
 
 const parentGroup = createGroup({
     id: 'parent-group',
-    children: childGroup
+    children: childGroup,
 });
 
 const scene = createScene({
-    children: parentGroup
-})
+    children: parentGroup,
+});
 
 scene.render(context);
 circle.on('click', event => console.log(event));
@@ -320,12 +320,12 @@ Interactivity and animation can be added by using a renderer. The renderer provi
 
 ```typescript
 import {
-    createContext,
     createCircle,
-    createRect,
+    createContext,
     createGroup,
+    createRect,
     createScene,
-    easeOutCubic
+    easeOutCubic,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -334,7 +334,7 @@ const circle = createCircle({
     fillStyle: 'rgb(30, 105, 120)',
     cx: context.width / 2,
     cy: context.height / 2,
-    radius: context.width / 3
+    radius: context.width / 3,
 });
 
 const rect = createRect({
@@ -348,13 +348,13 @@ const rect = createRect({
 const scene = createScene({
     children: [
         circle,
-        rect
-    ]
+        rect,
+    ],
 });
 
 const renderer = createRenderer(scene, {
     autoStart: true,
-    autoStop: true
+    autoStop: true,
 });
 
 async function animate() {
@@ -366,8 +366,8 @@ async function animate() {
             fillStyle: '#FF0000',
             cx: context.width / 4,
             cy: context.height / 4,
-            radius: context.width / 4
-        }
+            radius: context.width / 4,
+        },
     });
 
     // Render many with common properties
@@ -377,7 +377,7 @@ async function animate() {
         ease: easeOutCubic,
         state: {
             fillStyle: '#FF0000',
-        }
+        },
     });
 }
 ```
@@ -400,7 +400,7 @@ async function animate() {
                 '#00FF00', // implied 0.66 offset
                 '#0000FF', // implied end state - offset 1
             ],
-        }
+        },
     });
 
     // Explicit keyframe offsets
@@ -411,14 +411,14 @@ async function animate() {
             fillStyle: [
                 {
                     value: '#FF0000',
-                    offset: 0.25
+                    offset: 0.25,
                 },
                 {
                     value: '#0000FF',
-                    offset: 0.8
-                }
+                    offset: 0.8,
+                },
             ],
-        }
+        },
     });
 
     // Custom interpolator
@@ -426,8 +426,8 @@ async function animate() {
         duration: 1000,
         ease: easeOutCubic,
         state: {
-            radius: t => t * context.width / 2 // where 0 <= t <= 1 (depending on the ease function)
-        }
+            radius: t => t * context.width / 2, // where 0 <= t <= 1 (depending on the ease function)
+        },
     });
 }
 ```
@@ -453,15 +453,15 @@ Linear scales can also be clamped and inverted.
 
 ```typescript
 const scale = scaleContinuous([0, 25], [-100, 100], {
-    clamp: true
+    clamp: true,
 });
 
 // With clamping
-scale(25) // 100
-scale(30) // 100 (clamped)
+scale(25); // 100
+scale(30); // 100 (clamped)
 
 // Invert
-scale.inverse(-20) // 10
+scale.inverse(-20); // 10
 ```
 
 #### Discrete

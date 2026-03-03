@@ -25,10 +25,10 @@ npm install @ripl/core
 
 ```typescript
 import {
-    createContext,
     createCircle,
-    createScene,
+    createContext,
     createRenderer,
+    createScene,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -63,7 +63,9 @@ await renderer.transition(circle, {
 Replace the `createContext` import with `@ripl/svg` — everything else stays the same:
 
 ```typescript
-import { createContext } from '@ripl/svg';
+import {
+    createContext,
+} from '@ripl/svg';
 ```
 
 ## Documentation

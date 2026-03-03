@@ -410,7 +410,8 @@ export class SVGContext extends Context<SVGSVGElement> {
         element: SVGElement; }>;
     private transformStack: string[][];
     private currentTransforms: string[];
-    private clipCache: Map<string, { clipId: string; element: SVGElement }>;
+    private clipCache: Map<string, { clipId: string;
+        element: SVGElement; }>;
     private clipStack: (string | undefined)[];
     private currentClipId: string | undefined;
 
@@ -732,7 +733,10 @@ export class SVGContext extends Context<SVGSVGElement> {
             clipPathEl.appendChild(useEl);
             this.defs.appendChild(clipPathEl);
 
-            cached = { clipId, element: useEl };
+            cached = {
+                clipId,
+                element: useEl,
+            };
             this.clipCache.set(cacheKey, cached);
         }
 

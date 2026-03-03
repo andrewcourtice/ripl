@@ -90,7 +90,9 @@ describe('transition', () => {
         let resolved = false;
 
         const t = transition(() => {}, { duration: 200 });
-        t.then(() => { resolved = true; });
+        t.then(() => {
+            resolved = true;
+        });
 
         await vi.advanceTimersByTimeAsync(100);
         expect(resolved).toBe(false);
@@ -176,7 +178,9 @@ describe('transition', () => {
             loop: true,
         });
 
-        t.then(() => { resolved = true; }).catch(() => {});
+        t.then(() => {
+            resolved = true;
+        }).catch(() => {});
 
         await vi.advanceTimersByTimeAsync(500);
         expect(resolved).toBe(false);

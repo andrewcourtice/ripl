@@ -26,8 +26,12 @@ Extends Ripl's rendering pipeline with 3D capabilities. Projects 3D geometry ont
 ## Usage
 
 ```typescript
-import { createContext } from '@ripl/core';
-import { createCamera, createCube } from '@ripl/3d';
+import {
+    createContext,
+} from '@ripl/core';
+import {
+    createCamera, createCube,
+} from '@ripl/3d';
 
 const context = createContext('.mount-element');
 const camera = createCamera({ /* options */ });

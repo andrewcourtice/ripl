@@ -33,9 +33,9 @@ import {
 
 const interpolate = interpolateNumber(0, 100);
 
-interpolate(0);    // 0
-interpolate(0.5);  // 50
-interpolate(1);    // 100
+interpolate(0); // 0
+interpolate(0.5); // 50
+interpolate(1); // 100
 ```
 
 ### Number Interpolation
@@ -58,9 +58,9 @@ import {
 } from '@ripl/core';
 
 const interpolate = interpolateColor('#3a86ff', '#ff006e');
-interpolate(0);    // 'rgba(58, 134, 255, 1)'
-interpolate(0.5);  // 'rgba(157, 67, 162, 1)' (midpoint)
-interpolate(1);    // 'rgba(255, 0, 110, 1)'
+interpolate(0); // 'rgba(58, 134, 255, 1)'
+interpolate(0.5); // 'rgba(157, 67, 162, 1)' (midpoint)
+interpolate(1); // 'rgba(255, 0, 110, 1)'
 ```
 
 Color interpolation works across different color formats — you can interpolate from a hex color to an RGB color seamlessly.
@@ -75,8 +75,8 @@ import {
 } from '@ripl/core';
 
 const interpolate = interpolateAny('hello', 'world');
-interpolate(0.3);  // 'hello'
-interpolate(0.7);  // 'world'
+interpolate(0.3); // 'hello'
+interpolate(0.7); // 'world'
 ```
 
 ## Automatic Interpolation
@@ -87,8 +87,8 @@ When you use `element.interpolate()` or `renderer.transition()`, Ripl automatica
 await renderer.transition(circle, {
     duration: 1000,
     state: {
-        radius: 100,           // uses interpolateNumber
-        fillStyle: '#ff006e',  // uses interpolateColor
+        radius: 100, // uses interpolateNumber
+        fillStyle: '#ff006e', // uses interpolateColor
     },
 });
 ```
@@ -114,7 +114,9 @@ await renderer.transition(circle, {
 For reusable interpolators, create an `InterpolatorFactory` — a function that takes start and end values and returns an interpolator:
 
 ```ts
-import type { InterpolatorFactory } from '@ripl/core';
+import type {
+    InterpolatorFactory,
+} from '@ripl/core';
 
 const interpolateBoolean: InterpolatorFactory<boolean> = (a, b) => {
     return t => t > 0.5 ? b : a;
@@ -137,9 +139,12 @@ await renderer.transition(circle, {
 
         // Explicit offsets
         radius: [
-            { value: 80, offset: 0.3 },
-            { value: 40, offset: 0.7 },
-            { value: 100, offset: 1.0 },
+            { value: 80,
+                offset: 0.3 },
+            { value: 40,
+                offset: 0.7 },
+            { value: 100,
+                offset: 1.0 },
         ],
     },
 });

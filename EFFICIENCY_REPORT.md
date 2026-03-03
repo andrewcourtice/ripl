@@ -10,7 +10,7 @@ This report documents several places in the codebase where performance could be 
 
 ```typescript
 export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult>, direction: IterationDirection = 1): TResult[] {
-    const output = new Array<TResult>(length);  // BUG: 'length' is undefined, should be 'input.length'
+    const output = new Array<TResult>(length); // BUG: 'length' is undefined, should be 'input.length'
     // ...
 }
 ```
@@ -30,7 +30,7 @@ export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIt
     let output = [] as TResult[];
 
     iterateArray(input, (value, index) => {
-        output = output.concat(iteratee(value, index));  // Creates new array each iteration
+        output = output.concat(iteratee(value, index)); // Creates new array each iteration
     }, direction);
 
     return output;
@@ -50,7 +50,7 @@ export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIt
 ```typescript
 iterateArray(input, value => {
     const group = groupIdentity(value);
-    output[group] = (output[group] || []).concat(value);  // Creates new array each time
+    output[group] = (output[group] || []).concat(value); // Creates new array each time
 });
 ```
 
@@ -66,7 +66,7 @@ iterateArray(input, value => {
 
 ```typescript
 export function setForEach<TValue>(input: Set<TValue>, iteratee: ArrayIteratee<TValue>, direction: IterationDirection = 1): void {
-    arrayForEach(Array.from(input), iteratee, direction);  // Unnecessary Array.from()
+    arrayForEach(Array.from(input), iteratee, direction); // Unnecessary Array.from()
 }
 ```
 
@@ -86,7 +86,7 @@ export function stringUniqueId(length: number = 6): string {
     window.crypto.getRandomValues(container);
 
     return container.reduce((output, value) => {
-        return output + value.toString(16).padStart(2, '0');  // String concat in loop
+        return output + value.toString(16).padStart(2, '0'); // String concat in loop
     }, '');
 }
 ```
@@ -120,7 +120,7 @@ public get children() {
 ```typescript
 const orderedElements = newElements
     .concat(updatedElements)
-    .sort((ea, eb) => order.indexOf(ea.id) - order.indexOf(eb.id));  // O(n) indexOf in sort
+    .sort((ea, eb) => order.indexOf(ea.id) - order.indexOf(eb.id)); // O(n) indexOf in sort
 ```
 
 **Fix:** Create a Map from id to index for O(1) lookups.

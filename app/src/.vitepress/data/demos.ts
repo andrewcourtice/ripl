@@ -25,4 +25,9 @@ export const demos: DemoMeta[] = [
         link: '/demos/jet-engine/',
         description: 'An interactive 3D exploded view of a jet engine showcasing @ripl/3d with shaded wireframe rendering, orbit controls, and hover highlighting.',
     },
+    {
+        text: 'Combustion Engine 3D',
+        link: '/demos/combustion-engine/',
+        description: 'An animated inline 4-cylinder combustion engine with crankshaft, pistons, connecting rods, camshaft, valves, and full mechanical motion — built with @ripl/3d.',
+    },
 ];

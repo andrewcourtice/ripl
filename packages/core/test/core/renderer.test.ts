@@ -40,7 +40,10 @@ function createMockScene() {
         },
     } as unknown as Scene;
 
-    return { scene, mockContext };
+    return {
+        scene,
+        mockContext,
+    };
 }
 
 describe('Renderer', () => {
@@ -55,7 +58,10 @@ describe('Renderer', () => {
 
     test('Should create a renderer', () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         expect(renderer).toBeInstanceOf(Renderer);
 
@@ -64,7 +70,10 @@ describe('Renderer', () => {
 
     test('Should complete a basic transition', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -84,7 +93,10 @@ describe('Renderer', () => {
 
     test('Should handle transition with delay', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -97,7 +109,9 @@ describe('Renderer', () => {
             state: { globalAlpha: 1 },
         });
 
-        t.then(() => { completed = true; });
+        t.then(() => {
+            completed = true;
+        });
 
         // During delay, element should not have changed significantly
         await vi.advanceTimersByTimeAsync(100);
@@ -114,7 +128,10 @@ describe('Renderer', () => {
 
     test('Should handle transition with reverse direction', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -136,7 +153,10 @@ describe('Renderer', () => {
 
     test('Should handle transition with onComplete callback', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -160,7 +180,10 @@ describe('Renderer', () => {
 
     test('Should report isBusy during transition', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -186,7 +209,10 @@ describe('Renderer', () => {
 
     test('Should handle multiple elements in one transition', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el1 = createElement('rect', { globalAlpha: 0 });
         const el2 = createElement('rect', { globalAlpha: 0 });
@@ -209,7 +235,10 @@ describe('Renderer', () => {
 
     test('Should emit start and stop events', () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const startHandler = vi.fn();
         const stopHandler = vi.fn();
@@ -228,7 +257,10 @@ describe('Renderer', () => {
 
     test('Should handle abort on transition', async () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: false, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
 
         const el = createElement('rect', { globalAlpha: 0 });
         scene.add(el);
@@ -252,7 +284,10 @@ describe('Renderer', () => {
 
     test('Should stop renderer via destroy', () => {
         const { scene } = createMockScene();
-        const renderer = new Renderer(scene, { autoStart: true, autoStop: false });
+        const renderer = new Renderer(scene, {
+            autoStart: true,
+            autoStop: false,
+        });
 
         const stopHandler = vi.fn();
         renderer.on('stop', stopHandler);

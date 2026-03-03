@@ -10,8 +10,8 @@ import {
 } from '@ripl/3d';
 
 import {
-    createScene,
     createRenderer,
+    createScene,
 } from '@ripl/core';
 
 import type {
@@ -20,8 +20,8 @@ import type {
 } from '@ripl/3d';
 
 import type {
-    Scene,
     Renderer,
+    Scene,
 } from '@ripl/core';
 
 export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Camera, renderer: Renderer) => void, cameraOptions?: CameraOptions) {

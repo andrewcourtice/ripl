@@ -3,9 +3,9 @@ import {
 } from '../context';
 
 import {
-    InterpolatorFactory,
     interpolateRotation,
-    interpolateTransformOrigin
+    interpolateTransformOrigin,
+    InterpolatorFactory,
 } from '../interpolators';
 
 import {

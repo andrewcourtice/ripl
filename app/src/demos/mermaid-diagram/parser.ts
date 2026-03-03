@@ -31,45 +31,91 @@ export interface FlowchartIR {
 }
 
 // Edge patterns ordered from most specific to least specific
-const EDGE_PATTERNS: { pattern: RegExp; style: EdgeStyle }[] = [
-    { pattern: /==>\|([^|]*)\|/, style: 'thick' },
-    { pattern: /==>\s*/, style: 'thick' },
-    { pattern: /-\.->\|([^|]*)\|/, style: 'dotted' },
-    { pattern: /-\.->/, style: 'dotted' },
-    { pattern: /-->\|([^|]*)\|/, style: 'arrow' },
-    { pattern: /--\s+([^-|][^|]*?)\s*-->/, style: 'arrow' },
-    { pattern: /-->/, style: 'arrow' },
-    { pattern: /---\|([^|]*)\|/, style: 'plain' },
-    { pattern: /---/, style: 'plain' },
+const EDGE_PATTERNS: { pattern: RegExp;
+    style: EdgeStyle; }[] = [
+    {
+        pattern: /==>\|([^|]*)\|/,
+        style: 'thick',
+    },
+    {
+        pattern: /==>\s*/,
+        style: 'thick',
+    },
+    {
+        pattern: /-\.->\|([^|]*)\|/,
+        style: 'dotted',
+    },
+    {
+        pattern: /-\.->/,
+        style: 'dotted',
+    },
+    {
+        pattern: /-->\|([^|]*)\|/,
+        style: 'arrow',
+    },
+    {
+        pattern: /--\s+([^-|][^|]*?)\s*-->/,
+        style: 'arrow',
+    },
+    {
+        pattern: /-->/,
+        style: 'arrow',
+    },
+    {
+        pattern: /---\|([^|]*)\|/,
+        style: 'plain',
+    },
+    {
+        pattern: /---/,
+        style: 'plain',
+    },
 ];
 
-function parseNodeDef(raw: string): { id: string; label: string; shape: NodeShape } {
+function parseNodeDef(raw: string): { id: string;
+    label: string;
+    shape: NodeShape; } {
     let id = raw;
     let label = raw;
-    let shape: NodeShape = 'rect';
+    const shape: NodeShape = 'rect';
 
     // ((circle))
     let match = raw.match(/^(\w+)\(\((.+?)\)\)$/);
     if (match) {
-        return { id: match[1], label: match[2], shape: 'circle' };
+        return {
+            id: match[1],
+            label: match[2],
+            shape: 'circle',
+        };
     }
 
     // {diamond}
     match = raw.match(/^(\w+)\{(.+?)\}$/);
     if (match) {
-        return { id: match[1], label: match[2], shape: 'diamond' };
+        return {
+            id: match[1],
+            label: match[2],
+            shape: 'diamond',
+        };
     }
 
     // (rounded)
     match = raw.match(/^(\w+)\((.+?)\)$/);
     if (match) {
-        return { id: match[1], label: match[2], shape: 'rounded' };
+        return {
+            id: match[1],
+            label: match[2],
+            shape: 'rounded',
+        };
     }
 
     // [rect]
     match = raw.match(/^(\w+)\[(.+?)\]$/);
     if (match) {
-        return { id: match[1], label: match[2], shape: 'rect' };
+        return {
+            id: match[1],
+            label: match[2],
+            shape: 'rect',
+        };
     }
 
     // bare id
@@ -79,10 +125,17 @@ function parseNodeDef(raw: string): { id: string; label: string; shape: NodeShap
         label = match[1];
     }
 
-    return { id, label, shape };
+    return {
+        id,
+        label,
+        shape,
+    };
 }
 
-function splitEdgeLine(line: string): { leftRaw: string; rightRaw: string; edgeLabel?: string; style: EdgeStyle } | null {
+function splitEdgeLine(line: string): { leftRaw: string;
+    rightRaw: string;
+    edgeLabel?: string;
+    style: EdgeStyle; } | null {
     for (const { pattern, style } of EDGE_PATTERNS) {
         const idx = line.search(pattern);
         if (idx === -1) continue;
@@ -95,7 +148,12 @@ function splitEdgeLine(line: string): { leftRaw: string; rightRaw: string; edgeL
         const rightRaw = line.substring(idx + edgeStr.length).trim();
 
         if (leftRaw && rightRaw) {
-            return { leftRaw, rightRaw, edgeLabel, style };
+            return {
+                leftRaw,
+                rightRaw,
+                edgeLabel,
+                style,
+            };
         }
     }
 
@@ -116,7 +174,11 @@ export function parseMermaid(source: string): FlowchartIR {
         const { id, label, shape } = parseNodeDef(raw);
 
         if (!nodeMap.has(id)) {
-            nodeMap.set(id, { id, label, shape });
+            nodeMap.set(id, {
+                id,
+                label,
+                shape,
+            });
         } else {
             // Update label/shape if this definition has more info than a bare id
             const existing = nodeMap.get(id)!;

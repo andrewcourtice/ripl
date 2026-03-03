@@ -22,8 +22,8 @@ The most basic usage of Ripl involves 3 steps:
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -80,10 +80,10 @@ Groups let you organize elements into a hierarchy — just like the DOM. A group
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
-    createRect,
+    createContext,
     createGroup,
+    createRect,
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
@@ -131,8 +131,8 @@ A **Scene** is a special group that binds to a context. It manages the full rend
 == Code
 ```ts
 import {
-    createContext,
     createCircle,
+    createContext,
     createRect,
     createScene,
 } from '@ripl/core';
@@ -183,9 +183,9 @@ The renderer also provides a `transition()` method that smoothly animates elemen
 == Code
 ```ts
 import {
-    createScene,
-    createRenderer,
     createCircle,
+    createRenderer,
+    createScene,
     easeOutCubic,
 } from '@ripl/core';
 

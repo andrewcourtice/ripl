@@ -1,19 +1,19 @@
 import {
-    createRect,
     createCircle,
-    createPath,
-    createText,
-    createPolyline,
     createGroup,
+    createPath,
+    createPolyline,
+    createRect,
+    createText,
     easeOutCubic,
     easeOutQuart,
 } from '@ripl/core';
 
 import type {
-    Scene,
-    Renderer,
     Element,
     Group,
+    Renderer,
+    Scene,
 } from '@ripl/core';
 
 import type {
@@ -124,7 +124,7 @@ function createNodeLabel(node: PositionedNode): Element {
 
 function createArrowhead(
     points: [number, number][],
-    fillColor: string,
+    fillColor: string
 ): Element | null {
     if (points.length < 2) return null;
 
@@ -249,7 +249,7 @@ function createSubgraphElements(sg: PositionedSubgraph): Element[] {
 export function renderDiagram(
     scene: Scene,
     renderer: Renderer,
-    layout: DiagramLayout,
+    layout: DiagramLayout
 ): Promise<unknown> {
     // Clear previous elements
     scene.clear();

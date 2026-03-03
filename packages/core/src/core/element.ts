@@ -1,8 +1,8 @@
 import {
     CONTEXT_OPERATIONS,
-    TRANSFORM_INTERPOLATORS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
+    TRANSFORM_INTERPOLATORS,
 } from './constants';
 
 import {
@@ -485,7 +485,7 @@ export class Element<
 
         this.state = {
             ...TRANSFORM_DEFAULTS,
-            ...state
+            ...state,
         } as unknown as TState;
     }
 
@@ -531,7 +531,7 @@ export class Element<
 
     public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
-            let currentValue = this.getStateValue(key);
+            const currentValue = this.getStateValue(key);
 
             if (typeIsNil(currentValue)) {
                 return output;

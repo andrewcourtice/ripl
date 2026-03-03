@@ -15,8 +15,12 @@ This package provides an SVG implementation of Ripl's `Context` interface. Swap 
 ## Usage
 
 ```typescript
-import { createContext } from '@ripl/svg';
-import { createCircle } from '@ripl/core';
+import {
+    createContext,
+} from '@ripl/svg';
+import {
+    createCircle,
+} from '@ripl/core';
 
 const context = createContext('.mount-element');
 

@@ -111,7 +111,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         super(type, {
             x: 0,
             y: 0,
-            z: 0, // eslint-disable-line id-length
+            z: 0,
             rotationX: 0,
             rotationY: 0,
             rotationZ: 0,
@@ -146,7 +146,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         }
 
         const faces = this.computeFaces();
-        
+
         let minX = Infinity;
         let minY = Infinity;
         let maxX = -Infinity;

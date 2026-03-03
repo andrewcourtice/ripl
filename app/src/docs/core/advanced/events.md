@@ -38,9 +38,9 @@ circle.once('click', (event) => {
 Remove event handlers. With no arguments, removes all handlers. With just an event name, removes all handlers for that event:
 
 ```ts
-circle.off('click', myHandler);  // Remove specific handler
-circle.off('click');              // Remove all click handlers
-circle.off();                     // Remove all handlers
+circle.off('click', myHandler); // Remove specific handler
+circle.off('click'); // Remove all click handlers
+circle.off(); // Remove all handlers
 ```
 
 ### `emit(event, data?)`
@@ -112,7 +112,9 @@ circle.on('mouseleave', () => {
 Events bubble up through the element hierarchy, just like the DOM. If a circle inside a group emits a `click` event, the group will also receive it:
 
 ```ts
-const circle = createCircle({ cx: 100, cy: 100, radius: 50 });
+const circle = createCircle({ cx: 100,
+    cy: 100,
+    radius: 50 });
 const group = createGroup({ children: [circle] });
 
 // This fires when the circle (or any child) is clicked
@@ -156,9 +158,12 @@ The `pointerEvents` property on elements controls hit testing behavior:
 
 ```ts
 const overlay = createRect({
-    pointerEvents: 'none',  // Click passes through to elements below
+    pointerEvents: 'none', // Click passes through to elements below
     fillStyle: 'rgba(0, 0, 0, 0.3)',
-    x: 0, y: 0, width: 400, height: 300,
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 300,
 });
 ```
 

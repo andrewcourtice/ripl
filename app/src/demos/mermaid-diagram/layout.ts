@@ -1,8 +1,8 @@
 import type {
-    FlowchartIR,
-    GraphNode,
-    GraphEdge,
     Direction,
+    FlowchartIR,
+    GraphEdge,
+    GraphNode,
     Subgraph,
 } from './parser';
 
@@ -42,14 +42,24 @@ const V_GAP = 60;
 const SUBGRAPH_PADDING = 24;
 const SUBGRAPH_LABEL_HEIGHT = 24;
 
-function getNodeSize(node: GraphNode): { w: number; h: number } {
+function getNodeSize(node: GraphNode): { w: number;
+    h: number; } {
     switch (node.shape) {
         case 'circle':
-            return { w: CIRCLE_DIAMETER, h: CIRCLE_DIAMETER };
+            return {
+                w: CIRCLE_DIAMETER,
+                h: CIRCLE_DIAMETER,
+            };
         case 'diamond':
-            return { w: DIAMOND_SIZE, h: DIAMOND_SIZE };
+            return {
+                w: DIAMOND_SIZE,
+                h: DIAMOND_SIZE,
+            };
         default:
-            return { w: NODE_WIDTH, h: NODE_HEIGHT };
+            return {
+                w: NODE_WIDTH,
+                h: NODE_HEIGHT,
+            };
     }
 }
 
@@ -112,8 +122,9 @@ function getNodeCenter(node: PositionedNode): [number, number] {
 function getEdgeConnectionPoints(
     from: PositionedNode,
     to: PositionedNode,
-    direction: Direction,
-): { start: [number, number]; end: [number, number] } {
+    direction: Direction
+): { start: [number, number];
+    end: [number, number]; } {
     const [fromCx, fromCy] = getNodeCenter(from);
     const [toCx, toCy] = getNodeCenter(to);
 
@@ -234,7 +245,10 @@ export function computeLayout(ir: FlowchartIR): DiagramLayout {
         const to = positioned.get(edge.to);
 
         if (!from || !to) {
-            return { ...edge, points: [] as [number, number][] };
+            return {
+                ...edge,
+                points: [] as [number, number][],
+            };
         }
 
         const { start, end } = getEdgeConnectionPoints(from, to, direction);
@@ -258,7 +272,10 @@ export function computeLayout(ir: FlowchartIR): DiagramLayout {
 
         points.push(end);
 
-        return { ...edge, points };
+        return {
+            ...edge,
+            points,
+        };
     });
 
     // Compute subgraphs
@@ -268,7 +285,13 @@ export function computeLayout(ir: FlowchartIR): DiagramLayout {
             .filter((n): n is PositionedNode => !!n);
 
         if (childNodes.length === 0) {
-            return { ...sg, x: 0, y: 0, width: 0, height: 0 };
+            return {
+                ...sg,
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+            };
         }
 
         const minX = Math.min(...childNodes.map(n => n.x));
@@ -293,12 +316,12 @@ export function computeLayout(ir: FlowchartIR): DiagramLayout {
     if (finalNodes.length > 0) {
         totalWidth = Math.max(
             ...finalNodes.map(n => n.x + n.width),
-            ...positionedSubgraphs.map(s => s.x + s.width),
+            ...positionedSubgraphs.map(s => s.x + s.width)
         ) + SUBGRAPH_PADDING;
 
         totalHeight = Math.max(
             ...finalNodes.map(n => n.y + n.height),
-            ...positionedSubgraphs.map(s => s.y + s.height),
+            ...positionedSubgraphs.map(s => s.y + s.height)
         ) + SUBGRAPH_PADDING;
     }
 
