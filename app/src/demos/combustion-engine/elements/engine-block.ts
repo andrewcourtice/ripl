@@ -147,14 +147,14 @@ export class EngineBlock extends Shape3D<EngineBlockState> {
             wallThickness: 0.025,
             boreRadius: 0.13,
             boreSpacing: 0.28,
-            boreSegments: 32,
+            boreSegments: 24,
             ribCount: 3,
             ribHeight: 0.015,
             ribThickness: 0.008,
             flangeWidth: 0.04,
             flangeThickness: 0.015,
             bearingCapRadius: 0.09,
-            bearingCapSegments: 24,
+            bearingCapSegments: 18,
             ...options,
         });
     }

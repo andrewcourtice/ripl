@@ -128,7 +128,7 @@ export class ConnectingRod extends Shape3D<ConnectingRodState> {
             flangeThickness: 0.008,
             webThickness: 0.006,
             boltBossRadius: 0.01,
-            segments: 24,
+            segments: 18,
             ...options,
         });
     }

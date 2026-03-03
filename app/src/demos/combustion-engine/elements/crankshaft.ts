@@ -162,7 +162,7 @@ export class Crankshaft extends Shape3D<CrankshaftState> {
             snoutRadius: 0.05,
             flangeRadius: 0.18,
             flangeThickness: 0.04,
-            segments: 24,
+            segments: 18,
             ...options,
         });
     }

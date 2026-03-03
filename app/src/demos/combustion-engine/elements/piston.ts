@@ -138,7 +138,7 @@ export class Piston extends Shape3D<PistonState> {
             wristPinRadius: 0.015,
             wristPinLength: 0.2,
             bossRadius: 0.03,
-            segments: 32,
+            segments: 24,
             ...options,
         });
     }

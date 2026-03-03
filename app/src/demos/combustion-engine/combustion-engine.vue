@@ -92,7 +92,7 @@ const CON_ROD_LENGTH = 0.4;
 const CRANKSHAFT_SPEED = 1.5;
 
 const PART_COLORS: Record<string, { default: string; hover: string }> = {
-    'Engine Block': { default: '#B0BEC5', hover: '#90A4AE' },
+    'Engine Block': { default: 'rgba(176, 190, 197, 0.35)', hover: 'rgba(144, 164, 174, 0.5)' },
     'Cylinder Head': { default: '#A1887F', hover: '#8D6E63' },
     'Valve Cover': { default: '#78909C', hover: '#546E7A' },
     'Crankshaft': { default: '#EF9A9A', hover: '#E57373' },
@@ -247,7 +247,9 @@ onMounted(() => {
         const phase = CRANK_PHASES[cyl];
 
         // Piston
-        const pistonY = blockCenterY + STROKE / 2 * Math.cos(phase);
+        const initPinX = Math.cos(phase) * THROW_RADIUS;
+        const initPinY = crankY + Math.sin(phase) * THROW_RADIUS;
+        const pistonY = initPinY + Math.sqrt(CON_ROD_LENGTH * CON_ROD_LENGTH - initPinX * initPinX);
         pistonBaseY.push(blockCenterY);
 
         const piston = addPart(
@@ -329,8 +331,8 @@ onMounted(() => {
             const pinX = Math.cos(angle) * THROW_RADIUS;
             const pinY = crankY2 + Math.sin(angle) * THROW_RADIUS;
 
-            // Piston position (simple approximation)
-            const pistonNewY = pistonBaseY[cyl] + STROKE / 2 * Math.cos(angle);
+            // Piston position (slider-crank kinematics)
+            const pistonNewY = pinY + Math.sqrt(CON_ROD_LENGTH * CON_ROD_LENGTH - pinX * pinX);
             pistons[cyl].y = pistonNewY;
 
             // Connecting rod: center between piston and crank pin

@@ -130,10 +130,10 @@ export class ValveCover extends Shape3D<ValveCoverState> {
             archDivisions: 6,
             fillerCapRadius: 0.025,
             fillerCapHeight: 0.03,
-            fillerCapSegments: 16,
+            fillerCapSegments: 12,
             sparkWellRadius: 0.015,
             sparkWellHeight: 0.025,
-            sparkWellSegments: 12,
+            sparkWellSegments: 10,
             boreSpacing: 0.28,
             ...options,
         });

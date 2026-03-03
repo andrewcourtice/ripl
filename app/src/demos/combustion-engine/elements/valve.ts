@@ -140,11 +140,11 @@ export class Valve extends Shape3D<ValveState> {
             stemLength: 0.1,
             springRadius: 0.015,
             springWireRadius: 0.002,
-            springCoils: 6,
-            springSweepSteps: 12,
-            springCrossSteps: 8,
-            headSegments: 24,
-            stemSegments: 12,
+            springCoils: 5,
+            springSweepSteps: 10,
+            springCrossSteps: 6,
+            headSegments: 18,
+            stemSegments: 10,
             ...options,
         });
     }
