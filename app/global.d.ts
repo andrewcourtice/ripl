@@ -10,6 +10,7 @@ declare module '*.vue' {
 
 interface ImportMetaEnv {
     readonly VITE_ALPHAVANTAGE_API_KEY: string;
+    readonly BASE_URL: string;
 }
 
 interface ImportMeta {

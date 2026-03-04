@@ -30,9 +30,9 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
-import RiplSelect from '../../../.vitepress/components/RiplSelect.vue';
-import RiplButton from '../../../.vitepress/components/RiplButton.vue';
-import RiplButtonGroup from '../../../.vitepress/components/RiplButtonGroup.vue';
+import RiplSelect from '../../../.vitepress/components/ripl-select.vue';
+import RiplButton from '../../../.vitepress/components/ripl-button.vue';
+import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';

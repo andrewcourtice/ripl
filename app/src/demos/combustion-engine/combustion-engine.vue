@@ -41,7 +41,7 @@ import {
     onUnmounted,
 } from 'vue';
 
-import RiplSwitch from '../../.vitepress/components/RiplSwitch.vue';
+import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 
 import {
     createCamera,

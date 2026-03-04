@@ -24,6 +24,14 @@ export default defineConfig({
 
     vite: {
         envDir: '../',
+        plugins: [],
+        server: {
+            fs: {
+                allow: [
+                    path.resolve(__dirname, '../../../'),
+                ],
+            },
+        },
         resolve: {
             alias: {
                 '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
@@ -40,6 +48,9 @@ export default defineConfig({
                     api: 'modern-compiler',
                 },
             },
+        },
+        ssr: {
+            noExternal: ['monaco-editor'],
         },
     },
 
@@ -77,6 +88,10 @@ export default defineConfig({
             {
                 text: 'Demos',
                 link: '/demos/',
+            },
+            {
+                text: 'Playground',
+                link: '/playground',
             },
         ],
 

@@ -21,8 +21,8 @@ import {
     watchEffect
 } from 'vue';
 
-import RiplButton from './RiplButton.vue';
-import RiplButtonGroup from './RiplButtonGroup.vue';
+import RiplButton from './ripl-button.vue';
+import RiplButtonGroup from './ripl-button-group.vue';
 
 import {
     Context,

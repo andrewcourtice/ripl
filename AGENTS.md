@@ -285,6 +285,7 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 
 ### Naming Conventions
 
+- `kebab-case` — all file names (`.ts`, `.vue`, `.scss`, etc.)
 - `camelCase` — variables, functions, methods
 - `PascalCase` — classes, interfaces, types
 - `UPPER_SNAKE_CASE` — constants

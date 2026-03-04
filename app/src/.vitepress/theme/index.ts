@@ -21,7 +21,8 @@ import {
 import Example from '../components/example.vue';
 import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vue';
 import Example3D from '../components/example-3d.vue';
-import RippleBackground from '../components/RippleBackground.vue';
+import RippleBackground from '../components/ripple-background.vue';
+import RiplPlayground from '../components/playground/ripl-playground.vue';
 
 import {
     enhanceAppWithTabs,
@@ -45,6 +46,7 @@ export default {
         app.use(createPinia());
         app.component('ripl-example', Example);
         app.component('ripl-3d-example', Example3D);
+        app.component('ripl-playground', RiplPlayground);
         app.component('trading-dashboard', TradingDashboard);
 
         enhanceAppWithTabs(app);
