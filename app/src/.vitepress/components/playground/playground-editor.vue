@@ -88,6 +88,7 @@ const emit = defineEmits<{
     'update:mode': [value: PlaygroundMode];
     'update:importMap': [value: Record<string, string>];
     'reset': [];
+    'load-example': [example: { mode: PlaygroundMode; code: string }];
 }>();
 
 const activeTab = ref<EditorTab>('code');
@@ -103,8 +104,7 @@ const examples2d = EXAMPLES.filter(e => e.mode === '2d');
 const examples3d = EXAMPLES.filter(e => e.mode === '3d');
 
 function loadExample(example: PlaygroundExample) {
-    emit('update:mode', example.mode);
-    emit('update:modelValue', example.code);
+    emit('load-example', { mode: example.mode, code: example.code });
     examplesDropdown.value?.close();
 }
 

@@ -14,22 +14,19 @@
                 <template #trigger>
                     <RiplButton><Settings2 :size="14" /> Settings</RiplButton>
                 </template>
+                <RiplDropdownLabel>Renderer</RiplDropdownLabel>
+                <RiplSwitch
+                    :modelValue="settings.autoStop"
+                    @update:modelValue="updateSetting('autoStop', $event)"
+                    label="Auto-stop"
+                />
                 <template v-if="mode === '3d'">
-                    <RiplDropdownLabel>Renderer</RiplDropdownLabel>
-                    <RiplSwitch
-                        :modelValue="settings.autoStop"
-                        @update:modelValue="updateSetting('autoStop', $event)"
-                        label="Auto-stop"
-                    />
                     <RiplDropdownLabel>Camera</RiplDropdownLabel>
                     <RiplSwitch
                         :modelValue="settings.cameraInteractions"
                         @update:modelValue="updateSetting('cameraInteractions', $event)"
                         label="Interactions"
                     />
-                </template>
-                <template v-else>
-                    <div class="playground-preview__settings-empty">No settings for 2D mode</div>
                 </template>
             </RiplDropdown>
         </div>

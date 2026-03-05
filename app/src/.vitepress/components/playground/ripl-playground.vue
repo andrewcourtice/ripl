@@ -7,13 +7,14 @@
                     v-model:mode="mode"
                     v-model:import-map="riplImportMap"
                     @reset="resetCode"
+                    @load-example="onLoadExample"
                 />
             </div>
             <div
                 class="playground__divider"
                 @mousedown="onDividerMouseDown"
             ></div>
-            <div class="playground__right">
+            <div class="playground__right" :class="{ 'playground__right--dragging': isDragging }">
                 <PlaygroundPreview
                     :srcdoc="currentSrcdoc"
                     :mode="mode"
@@ -66,6 +67,7 @@ const settings = ref<PlaygroundSettings>({
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let renderTimer: ReturnType<typeof setTimeout> | undefined;
+let loadingExample = false;
 
 function getDefaultCode(m: PlaygroundMode): string {
     return m === '3d' ? DEFAULT_3D_CODE : DEFAULT_2D_CODE;
@@ -117,24 +119,37 @@ watch(code, () => {
     debounceTimer = setTimeout(() => saveToHash(code.value), 500);
 });
 
-watch([mode, contextType, settings, riplImportMap], () => {
+watch([contextType, settings, riplImportMap], () => {
     updateSrcdoc();
 }, { deep: true });
 
 watch(mode, (newMode) => {
+    if (loadingExample) {
+        loadingExample = false;
+        return;
+    }
+
     code.value = getDefaultCode(newMode);
+    updateSrcdoc();
 });
+
+function onLoadExample(example: { mode: string; code: string }) {
+    loadingExample = true;
+    mode.value = example.mode as PlaygroundMode;
+    code.value = example.code;
+    updateSrcdoc();
+}
 
 function resetCode() {
     code.value = getDefaultCode(mode.value);
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
 }
 
-let isDragging = false;
+const isDragging = ref(false);
 
 function onDividerMouseDown(event: MouseEvent) {
     event.preventDefault();
-    isDragging = true;
+    isDragging.value = true;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
     document.body.style.cursor = 'col-resize';
@@ -142,7 +157,7 @@ function onDividerMouseDown(event: MouseEvent) {
 }
 
 function onMouseMove(event: MouseEvent) {
-    if (!isDragging) {
+    if (!isDragging.value) {
         return;
     }
 
@@ -152,7 +167,7 @@ function onMouseMove(event: MouseEvent) {
 }
 
 function onMouseUp() {
-    isDragging = false;
+    isDragging.value = false;
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
     document.body.style.cursor = '';
@@ -226,5 +241,9 @@ onBeforeUnmount(() => {
     flex: 1;
     min-width: 0;
     overflow: hidden;
+
+    &--dragging {
+        pointer-events: none;
+    }
 }
 </style>

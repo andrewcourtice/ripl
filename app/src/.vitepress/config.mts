@@ -102,7 +102,7 @@ export default defineConfig({
                     items: [
                         {
                             text: 'About',
-                            link: '/docs/core/getting-started/about',
+                            link: '/docs/core/',
                         },
                         {
                             text: 'Installation',

@@ -49,7 +49,6 @@ export interface ContextEventMap extends EventMap {
 }
 
 export interface ContextOptions {
-    buffer?: boolean;
 }
 
 export type TextOptions = {
@@ -289,7 +288,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     public readonly root: HTMLElement;
     public readonly element: TElement;
 
-    public buffer: boolean;
+    public buffer = false;
     public width: number;
     public height: number;
     public scaleX: Scale<number, number>;
@@ -536,10 +535,6 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     ) {
         super();
 
-        const {
-            buffer = false,
-        } = options || {};
-
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
             : target;
@@ -554,7 +549,6 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.type = type;
         this.root = root;
         this.element = element;
-        this.buffer = buffer;
         this.states = [];
         this.currentState = this.getDefaultState();
         this.width = 0;

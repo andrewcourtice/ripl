@@ -19,7 +19,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 'import { createContext, createCamera, depthSort } from \'@ripl/3d\';',
             ].join('\n'),
             body: [
-                'const context = createContext(\'#root\', { buffer: false });',
+                'const context = createContext(\'#root\');',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,
@@ -43,9 +43,9 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 'import { createContext } from \'@ripl/svg\';',
             ].join('\n'),
             body: [
-                'const context = createContext(\'#root\', { buffer: false });',
+                'const context = createContext(\'#root\');',
                 'const scene = createScene(context);',
-                'const renderer = createRenderer(scene);',
+                `const renderer = createRenderer(scene, { autoStop: ${settings.autoStop} });`,
             ].join('\n'),
         };
     }
@@ -57,7 +57,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
         body: [
             'const context = createContext(\'#root\', { buffer: false });',
             'const scene = createScene(context);',
-            'const renderer = createRenderer(scene);',
+            `const renderer = createRenderer(scene, { autoStop: ${settings.autoStop} });`,
         ].join('\n'),
     };
 }

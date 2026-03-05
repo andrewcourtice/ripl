@@ -422,11 +422,9 @@ export class SVGContext extends Context<SVGSVGElement> {
         svg.style.width = '100%';
         svg.style.height = '100%';
 
-        super('svg', target, svg, {
-            buffer: true,
-            ...options,
-        });
+        super('svg', target, svg, options);
 
+        this.buffer = true;
         this.vtree = {
             id: '__root__',
             tag: 'svg',

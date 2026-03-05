@@ -23,6 +23,7 @@ import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vu
 import Example3D from '../components/example-3d.vue';
 import RippleBackground from '../components/ripple-background.vue';
 import RiplPlayground from '../components/playground/ripl-playground.vue';
+import PlaygroundLayout from '../components/playground/playground-layout.vue';
 import RiplButton from '../components/ripl-button.vue';
 import RiplButtonGroup from '../components/ripl-button-group.vue';
 import RiplControlGroup from '../components/ripl-control-group.vue';
@@ -56,6 +57,7 @@ export default {
         app.component('ripl-example', Example);
         app.component('ripl-3d-example', Example3D);
         app.component('ripl-playground', RiplPlayground);
+        app.component('playground', PlaygroundLayout);
         app.component('trading-dashboard', TradingDashboard);
         app.component('RiplButton', RiplButton);
         app.component('RiplButtonGroup', RiplButtonGroup);

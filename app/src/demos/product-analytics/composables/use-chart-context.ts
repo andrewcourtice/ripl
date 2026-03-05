@@ -27,9 +27,7 @@ export function useChartContext(elRef: Ref<HTMLElement | undefined>) {
         }
 
         if (elRef.value) {
-            context.value = createContext(elRef.value, {
-                buffer: false,
-            });
+            context.value = createContext(elRef.value);
         }
     }
 
