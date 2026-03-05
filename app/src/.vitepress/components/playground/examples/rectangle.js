@@ -1,5 +1,5 @@
 import {
-    createRect
+    createRect,
 } from '@ripl/core';
 
 const rect = createRect({

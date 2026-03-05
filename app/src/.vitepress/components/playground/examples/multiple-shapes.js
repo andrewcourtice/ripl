@@ -1,7 +1,7 @@
 import {
     createCircle,
+    createGroup,
     createRect,
-    createGroup
 } from '@ripl/core';
 
 const cx = scene.context.width / 2;

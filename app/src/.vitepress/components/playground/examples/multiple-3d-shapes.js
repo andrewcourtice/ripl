@@ -20,5 +20,3 @@ scene.add([
         fillStyle: '#10b981',
     }),
 ]);
-
-renderer.start();

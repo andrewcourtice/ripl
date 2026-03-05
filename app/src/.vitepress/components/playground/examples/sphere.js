@@ -1,5 +1,5 @@
 import {
-    createSphere
+    createSphere,
 } from '@ripl/3d';
 
 const sphere = createSphere({
@@ -9,4 +9,3 @@ const sphere = createSphere({
 });
 
 scene.add(sphere);
-renderer.start();

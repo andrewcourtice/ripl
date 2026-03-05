@@ -44,9 +44,8 @@ import {
 } from './sandbox';
 
 import {
-    DEFAULT_2D_CODE,
-    DEFAULT_3D_CODE,
-} from './defaults';
+    EXAMPLES,
+} from './examples';
 
 import type {
     PlaygroundMode,
@@ -70,7 +69,7 @@ let renderTimer: ReturnType<typeof setTimeout> | undefined;
 let loadingExample = false;
 
 function getDefaultCode(m: PlaygroundMode): string {
-    return m === '3d' ? DEFAULT_3D_CODE : DEFAULT_2D_CODE;
+    return EXAMPLES.find(e => e.mode === m)!.code;
 }
 
 function loadFromHash(): string {

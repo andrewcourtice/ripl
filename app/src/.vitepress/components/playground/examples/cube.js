@@ -1,5 +1,5 @@
 import {
-    createCube
+    createCube,
 } from '@ripl/3d';
 
 const cube = createCube({
@@ -8,4 +8,3 @@ const cube = createCube({
 });
 
 scene.add(cube);
-renderer.start();

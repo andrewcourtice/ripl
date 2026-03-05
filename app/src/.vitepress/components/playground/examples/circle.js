@@ -1,5 +1,5 @@
 import {
-    createCircle
+    createCircle,
 } from '@ripl/core';
 
 const circle = createCircle({
