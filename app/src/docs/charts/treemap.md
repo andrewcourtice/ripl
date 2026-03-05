@@ -6,9 +6,9 @@ The `TreemapChart` displays hierarchical data as nested rectangles, where each r
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

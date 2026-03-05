@@ -40,17 +40,6 @@ The context automatically fills its parent container and responds to resize even
 | `height` | `number` | Current height of the rendering area (in CSS pixels) |
 | `element` | `Element` | The underlying DOM element (e.g. `<canvas>` or `<svg>`) |
 | `root` | `HTMLElement` | The parent container element |
-| `buffer` | `boolean` | Whether rendering is buffered (batched) |
-
-## Options
-
-```ts
-interface ContextOptions {
-    buffer?: boolean; // Default: false for canvas, true for SVG
-}
-```
-
-The `buffer` option controls whether rendering operations are batched. The SVG context uses buffering by default to minimize DOM mutations.
 
 ## Drawing State
 

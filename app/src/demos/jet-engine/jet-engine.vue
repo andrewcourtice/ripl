@@ -42,7 +42,7 @@ import {
     onUnmounted,
 } from 'vue';
 
-import RiplSwitch from '../../.vitepress/components/RiplSwitch.vue';
+import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 
 import {
     createCamera,
@@ -292,9 +292,7 @@ function toggleExploded() {
 onMounted(() => {
     if (!viewport.value) return;
 
-    const context = createContext(viewport.value, {
-        buffer: false,
-    });
+    const context = createContext(viewport.value);
 
     scene = createScene(context) as Scene<Context3D>;
 

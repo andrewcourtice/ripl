@@ -14,9 +14,9 @@ Click **Next Image** to crossfade between images using `interpolateImage`.
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="nextImage">Next Image</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="nextImage">Next Image</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code

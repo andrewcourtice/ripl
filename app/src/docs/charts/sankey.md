@@ -6,9 +6,9 @@ The `SankeyChart` visualizes flow between nodes using weighted links. Ideal for 
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

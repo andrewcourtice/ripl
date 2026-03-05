@@ -54,15 +54,7 @@ This approach minimizes DOM mutations for better performance, similar to how vir
 
 ## Buffered Rendering
 
-The SVG context uses **buffered rendering** by default (`buffer: true`). This means DOM updates are batched and flushed once per animation frame via `requestAnimationFrame`, rather than applied synchronously after each element render.
-
-```ts
-// Buffer is true by default for SVG
-const context = createContext('.container');
-
-// Disable buffering for immediate DOM updates
-const context = createContext('.container', { buffer: false });
-```
+The SVG context automatically uses **buffered rendering**. DOM updates are batched and flushed once per animation frame via `requestAnimationFrame`, rather than applied synchronously after each element render. When used inside a Scene + Renderer, buffering is automatically disabled since the Renderer already drives the render loop.
 
 ## Gradient Support
 

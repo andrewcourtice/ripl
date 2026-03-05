@@ -6,9 +6,9 @@ The `SunburstChart` displays hierarchical data as concentric rings, where each r
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

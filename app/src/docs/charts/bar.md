@@ -6,21 +6,13 @@ The `BarChart` supports grouped and stacked modes, vertical and horizontal orien
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <button class="ripl-button" @click="addData">Add Month</button>
-            <button class="ripl-button" @click="removeData">Remove Month</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="stacked" @change="toggleMode">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Stacked
-            </label>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="horizontal" @change="toggleOrientation">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Horizontal
-            </label>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplButton @click="addData">Add Month</RiplButton>
+            <RiplButton @click="removeData">Remove Month</RiplButton>
+            <RiplSwitch v-model="stacked" @update:model-value="toggleMode" label="Stacked" />
+            <RiplSwitch v-model="horizontal" @update:model-value="toggleOrientation" label="Horizontal" />
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

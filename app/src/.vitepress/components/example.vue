@@ -1,10 +1,10 @@
 <template>
     <div class="ripl-example">
         <div class="ripl-example__header">
-            <RiplButtonGroup>
-                <RiplButton :active="type === 'canvas'" @click="type = 'canvas'">Canvas</RiplButton>
-                <RiplButton :active="type === 'svg'" @click="type = 'svg'">SVG</RiplButton>
-            </RiplButtonGroup>
+            <RiplButtonGroup v-model="type" :options="[
+                { label: 'Canvas', value: 'canvas' },
+                { label: 'SVG', value: 'svg' },
+            ]" />
             <slot name="header"></slot>
         </div>
         <div class="ripl-example__root" self="size-x1" ref="root" :key="type"></div>
@@ -21,8 +21,7 @@ import {
     watchEffect
 } from 'vue';
 
-import RiplButton from './RiplButton.vue';
-import RiplButtonGroup from './RiplButtonGroup.vue';
+import RiplButtonGroup from './ripl-button-group.vue';
 
 import {
     Context,

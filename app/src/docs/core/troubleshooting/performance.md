@@ -85,18 +85,7 @@ The built-in elements already use persistent keys. This tip applies when you cre
 
 ## Buffered Rendering (SVG)
 
-The SVG context uses **buffered rendering** by default. Instead of applying DOM changes synchronously after each element render, changes are batched and flushed once per animation frame:
-
-```ts
-// SVG context buffers by default
-import {
-    createContext,
-} from '@ripl/svg';
-
-const context = createContext('.container'); // buffer: true
-```
-
-This dramatically reduces DOM mutations when rendering many elements in a single frame.
+The SVG context automatically uses **buffered rendering**. Instead of applying DOM changes synchronously after each element render, changes are batched and flushed once per animation frame. When used inside a Scene + Renderer, buffering is automatically disabled since the Renderer already drives the render loop via `requestAnimationFrame`.
 
 ## Tips Summary
 

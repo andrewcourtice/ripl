@@ -1,14 +1,7 @@
 <template>
     <dashboard-card title="Historical Performance" :loading="store.stockLoading">
         <template #actions>
-            <RiplButtonGroup>
-                <RiplButton
-                    v-for="range in ranges"
-                    :key="range"
-                    :active="store.stockTimeRange === range"
-                    @click="onRangeChange(range)"
-                >{{ range }}</RiplButton>
-            </RiplButtonGroup>
+            <RiplButtonGroup :modelValue="store.stockTimeRange" @update:modelValue="onRangeChange($event as TimeRange)" :options="rangeOptions" />
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
     </dashboard-card>
@@ -24,8 +17,7 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
-import RiplButton from '../../../.vitepress/components/RiplButton.vue';
-import RiplButtonGroup from '../../../.vitepress/components/RiplButtonGroup.vue';
+import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
@@ -35,6 +27,7 @@ import type {
 } from '../store/dashboard';
 
 const ranges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
+const rangeOptions = ranges.map(r => ({ label: r, value: r }));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);

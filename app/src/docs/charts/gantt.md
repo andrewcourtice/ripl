@@ -6,16 +6,12 @@ The `GanttChart` displays tasks as horizontal bars along a time axis, with task 
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <button class="ripl-button" @click="addTask">Add Task</button>
-            <button class="ripl-button" @click="removeTask">Remove Task</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="showToday" @change="toggleToday">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Today
-            </label>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplButton @click="addTask">Add Task</RiplButton>
+            <RiplButton @click="removeTask">Remove Task</RiplButton>
+            <RiplSwitch v-model="showToday" @update:model-value="toggleToday" label="Today" />
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

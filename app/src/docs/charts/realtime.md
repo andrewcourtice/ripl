@@ -6,15 +6,15 @@ The `RealtimeChart` smoothly visualises data streaming in over time. It maintain
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="toggle">{{ streaming ? 'Stop' : 'Start' }}</button>
-            <button class="ripl-button" @click="reset">Reset</button>
-            <select class="ripl-select" v-model="speed" @change="restart">
+        <RiplControlGroup>
+            <RiplButton @click="toggle">{{ streaming ? 'Stop' : 'Start' }}</RiplButton>
+            <RiplButton @click="reset">Reset</RiplButton>
+            <RiplSelect v-model="speed" @change="restart">
                 <option value="100">Fast (100ms)</option>
                 <option value="300">Normal (300ms)</option>
                 <option value="1000">Slow (1s)</option>
-            </select>
-        </div>
+            </RiplSelect>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

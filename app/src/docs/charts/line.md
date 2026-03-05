@@ -6,11 +6,11 @@ The `LineChart` renders one or more data series as smooth or straight lines with
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <button class="ripl-button" @click="addPoint">Add Point</button>
-            <button class="ripl-button" @click="removePoint">Remove Point</button>
-            <select class="ripl-select" v-model="lineType" @change="updateLineType">
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplButton @click="addPoint">Add Point</RiplButton>
+            <RiplButton @click="removePoint">Remove Point</RiplButton>
+            <RiplSelect v-model="lineType" @change="updateLineType">
                 <option value="linear">Linear</option>
                 <option value="monotoneX">Monotone X</option>
                 <option value="natural">Natural</option>
@@ -18,8 +18,8 @@ The `LineChart` renders one or more data series as smooth or straight lines with
                 <option value="cardinal">Cardinal</option>
                 <option value="catmullRom">Catmull-Rom</option>
                 <option value="bumpX">Bump X</option>
-            </select>
-        </div>
+            </RiplSelect>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

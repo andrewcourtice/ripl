@@ -65,9 +65,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         const context = (typeIsContext(target)
             ? target
-            : createContext(target, {
-                buffer: false,
-            })) as TContext;
+            : createContext(target)) as TContext;
+
+        context.buffer = false;
 
         super({
             font: window.getComputedStyle(context.element).font,
@@ -173,6 +173,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         context.on('resize', () => {
             this.emit('resize', null);
+
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }

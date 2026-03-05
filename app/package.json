@@ -1,8 +1,9 @@
 {
     "private": true,
     "scripts": {
-        "start": "vitepress dev ./src",
-        "build": "vitepress build ./src",
+        "prepare-playground": "node scripts/prepare-playground.mjs",
+        "start": "yarn prepare-playground && vitepress dev ./src",
+        "build": "yarn prepare-playground && vitepress build ./src",
         "preview": "vitepress preview ./src"
     },
     "dependencies": {
@@ -12,6 +13,8 @@
         "@ripl/svg": "1.0.0-beta.0",
         "@ripl/utilities": "1.0.0-beta.0",
         "flex-layout-attribute": "^1.0.3",
+        "lucide-vue-next": "^0.577.0",
+        "monaco-editor": "^0.52.2",
         "pinia": "^3.0.4",
         "sass": "^1.97.3",
         "vue": "^3.5.28"

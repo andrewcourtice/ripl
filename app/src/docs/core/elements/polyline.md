@@ -14,11 +14,11 @@ The demo below shows the same set of points rendered with different renderer mod
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <select class="ripl-select" v-model="currentRenderer">
+        <RiplControlGroup>
+            <RiplSelect v-model="currentRenderer">
                 <option v-for="r in renderers" :key="r" :value="r">{{ r }}</option>
-            </select>
-        </div>
+            </RiplSelect>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code

@@ -4,16 +4,12 @@ A pie chart is useful for illustrating numerical proportions of statistical data
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="addData">Add Data</button>
-            <button class="ripl-button" @click="removeData">Remove Data</button>
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="donut" @change="toggleDonut">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Donut
-            </label>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="addData">Add Data</RiplButton>
+            <RiplButton @click="removeData">Remove Data</RiplButton>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplSwitch v-model="donut" @update:model-value="toggleDonut" label="Donut" />
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

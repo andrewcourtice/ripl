@@ -132,6 +132,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
         }
 
+        scene.on('graph', () => this.start());
         scene.once('destroyed', () => this.destroy());
     }
 

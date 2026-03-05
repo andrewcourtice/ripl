@@ -6,14 +6,10 @@ The `StockChart` renders OHLC (Open, High, Low, Close) candlestick data with opt
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="showVolume" @change="toggleVolume">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Volume
-            </label>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplSwitch v-model="showVolume" @update:model-value="toggleVolume" label="Volume" />
+        </RiplControlGroup>
     </template>
 </ripl-example>
 
