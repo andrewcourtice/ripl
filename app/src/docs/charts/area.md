@@ -6,14 +6,10 @@ The `AreaChart` renders filled areas beneath lines, supporting stacked mode, cro
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="randomize">Randomize</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="stacked" @change="toggleStacked">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Stacked
-            </label>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplSwitch v-model="stacked" @update:model-value="toggleStacked" label="Stacked" />
+        </RiplControlGroup>
     </template>
 </ripl-example>
 

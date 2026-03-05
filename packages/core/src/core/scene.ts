@@ -173,6 +173,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         context.on('resize', () => {
             this.emit('resize', null);
+
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }

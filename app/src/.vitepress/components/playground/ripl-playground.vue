@@ -5,6 +5,7 @@
                 <PlaygroundEditor
                     v-model="code"
                     v-model:mode="mode"
+                    v-model:import-map="riplImportMap"
                     @reset="resetCode"
                 />
             </div>
@@ -15,7 +16,9 @@
             <div class="playground__right">
                 <PlaygroundPreview
                     :srcdoc="currentSrcdoc"
+                    :mode="mode"
                     v-model:context-type="contextType"
+                    v-model:settings="settings"
                 />
             </div>
         </div>
@@ -47,6 +50,7 @@ import {
 import type {
     PlaygroundMode,
     ContextType,
+    PlaygroundSettings,
 } from './sandbox';
 
 const mode = ref<PlaygroundMode>('2d');
@@ -55,6 +59,10 @@ const code = ref('');
 const leftWidth = ref(0);
 const currentSrcdoc = ref('');
 const riplImportMap = ref<Record<string, string>>({});
+const settings = ref<PlaygroundSettings>({
+    autoStop: false,
+    cameraInteractions: true,
+});
 
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let renderTimer: ReturnType<typeof setTimeout> | undefined;
@@ -94,7 +102,7 @@ function updateSrcdoc() {
         return;
     }
 
-    currentSrcdoc.value = buildSrcdoc(code.value, mode.value, contextType.value, riplImportMap.value, window.location.origin);
+    currentSrcdoc.value = buildSrcdoc(code.value, mode.value, contextType.value, riplImportMap.value, window.location.origin, settings.value);
 }
 
 function debouncedUpdate() {
@@ -109,9 +117,9 @@ watch(code, () => {
     debounceTimer = setTimeout(() => saveToHash(code.value), 500);
 });
 
-watch([mode, contextType], () => {
+watch([mode, contextType, settings, riplImportMap], () => {
     updateSrcdoc();
-});
+}, { deep: true });
 
 watch(mode, (newMode) => {
     code.value = getDefaultCode(newMode);
@@ -191,18 +199,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style lang="scss">
-.VPDoc .container,
-.VPDoc .content,
-.VPDoc .content-container {
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-.VPContent.has-sidebar {
-    padding-left: 0 !important;
-}
-
 .playground {
     display: flex;
     height: calc(100vh - var(--vp-nav-height));

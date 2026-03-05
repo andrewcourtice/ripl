@@ -1,10 +1,37 @@
 <template>
     <div class="playground-preview">
         <div class="playground-preview__header">
-            <RiplButtonGroup>
-                <RiplButton :active="contextType === 'canvas'" @click="$emit('update:contextType', 'canvas')">Canvas</RiplButton>
-                <RiplButton :active="contextType === 'svg'" @click="$emit('update:contextType', 'svg')">SVG</RiplButton>
-            </RiplButtonGroup>
+            <RiplButtonGroup
+                v-if="mode === '2d'"
+                :modelValue="contextType"
+                @update:modelValue="$emit('update:contextType', $event as ContextType)"
+                :options="[
+                    { label: 'Canvas', value: 'canvas' },
+                    { label: 'SVG', value: 'svg' },
+                ]"
+            />
+            <RiplDropdown align="right" ref="settingsDropdown">
+                <template #trigger>
+                    <RiplButton><Settings2 :size="14" /> Settings</RiplButton>
+                </template>
+                <template v-if="mode === '3d'">
+                    <RiplDropdownLabel>Renderer</RiplDropdownLabel>
+                    <RiplSwitch
+                        :modelValue="settings.autoStop"
+                        @update:modelValue="updateSetting('autoStop', $event)"
+                        label="Auto-stop"
+                    />
+                    <RiplDropdownLabel>Camera</RiplDropdownLabel>
+                    <RiplSwitch
+                        :modelValue="settings.cameraInteractions"
+                        @update:modelValue="updateSetting('cameraInteractions', $event)"
+                        label="Interactions"
+                    />
+                </template>
+                <template v-else>
+                    <div class="playground-preview__settings-empty">No settings for 2D mode</div>
+                </template>
+            </RiplDropdown>
         </div>
         <div class="playground-preview__body">
             <iframe
@@ -28,24 +55,41 @@ import {
     onBeforeUnmount,
 } from 'vue';
 
+import {
+    Settings2,
+} from 'lucide-vue-next';
+
 import RiplButton from '../ripl-button.vue';
 import RiplButtonGroup from '../ripl-button-group.vue';
+import RiplDropdown from '../ripl-dropdown.vue';
+import RiplDropdownLabel from '../ripl-dropdown-label.vue';
+import RiplSwitch from '../ripl-switch.vue';
 
 import type {
     ContextType,
+    PlaygroundMode,
+    PlaygroundSettings,
 } from './sandbox';
 
 const props = defineProps<{
     srcdoc: string;
+    mode: PlaygroundMode;
     contextType: ContextType;
+    settings: PlaygroundSettings;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
     'update:contextType': [value: ContextType];
+    'update:settings': [value: PlaygroundSettings];
 }>();
 
 const iframeRef = ref<HTMLIFrameElement>();
 const error = ref('');
+const settingsDropdown = ref<InstanceType<typeof RiplDropdown>>();
+
+function updateSetting<K extends keyof PlaygroundSettings>(key: K, value: PlaygroundSettings[K]) {
+    emit('update:settings', { ...props.settings, [key]: value });
+}
 
 watch(() => props.srcdoc, () => {
     error.value = '';
@@ -78,10 +122,18 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid var(--vp-c-divider);
     background-color: var(--vp-c-bg);
     flex-shrink: 0;
+}
+
+.playground-preview__settings-empty {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8125rem;
+    color: var(--vp-c-text-3);
+    white-space: nowrap;
 }
 
 .playground-preview__body {

@@ -3481,6 +3481,7 @@ __metadata:
     "@ripl/svg": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
     flex-layout-attribute: "npm:^1.0.3"
+    lucide-vue-next: "npm:^0.577.0"
     monaco-editor: "npm:^0.52.2"
     pinia: "npm:^3.0.4"
     sass: "npm:^1.97.3"
@@ -6667,6 +6668,15 @@ __metadata:
   dependencies:
     yallist: "npm:^4.0.0"
   checksum: 10/fc1fe2ee205f7c8855fa0f34c1ab0bcf14b6229e35579ec1fd1079f31d6fc8ef8eb6fd17f2f4d99788d7e339f50e047555551ebd5e434dda503696e7c6591825
+  languageName: node
+  linkType: hard
+
+"lucide-vue-next@npm:^0.577.0":
+  version: 0.577.0
+  resolution: "lucide-vue-next@npm:0.577.0"
+  peerDependencies:
+    vue: ">=3.0.1"
+  checksum: 10/b95fc849593702a01af76dafe93457f7a81bfa78a54f8d1e32acad84cffd585659bf409af4f5aa5df25891a863accc383406e901c7044fffd3759bb1d44cf7d0
   languageName: node
   linkType: hard
 

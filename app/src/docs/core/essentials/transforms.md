@@ -139,13 +139,13 @@ Transforms work identically for both Canvas and SVG contexts. In the SVG context
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="runTranslate">Translate</button>
-            <button class="ripl-button" @click="runRotate">Rotate</button>
-            <button class="ripl-button" @click="runScale">Scale</button>
-            <button class="ripl-button" @click="runCombined">Combined</button>
-            <button class="ripl-button" @click="reset">Reset</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="runTranslate">Translate</RiplButton>
+            <RiplButton @click="runRotate">Rotate</RiplButton>
+            <RiplButton @click="runScale">Scale</RiplButton>
+            <RiplButton @click="runCombined">Combined</RiplButton>
+            <RiplButton @click="reset">Reset</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code

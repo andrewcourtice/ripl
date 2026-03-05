@@ -192,11 +192,11 @@ Click "Animate" to run a transition. Click "Stagger" to see per-element staggere
 == Demo
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="animateAll">Animate</button>
-            <button class="ripl-button" @click="stagger">Stagger</button>
-            <button class="ripl-button" @click="reset">Reset</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="animateAll">Animate</RiplButton>
+            <RiplButton @click="stagger">Stagger</RiplButton>
+            <RiplButton @click="reset">Reset</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code

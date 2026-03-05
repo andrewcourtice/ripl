@@ -7,14 +7,7 @@
                 <option value="WTI">Crude Oil (WTI)</option>
                 <option value="BRENT">Brent Crude</option>
             </RiplSelect>
-            <RiplButtonGroup>
-                <RiplButton
-                    v-for="range in ranges"
-                    :key="range"
-                    :active="store.commodityTimeRange === range"
-                    @click="onRangeChange(range)"
-                >{{ range }}</RiplButton>
-            </RiplButtonGroup>
+            <RiplButtonGroup :modelValue="store.commodityTimeRange" @update:modelValue="onRangeChange($event as TimeRange)" :options="rangeOptions" />
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
     </dashboard-card>
@@ -31,7 +24,6 @@ import {
 } from '@ripl/charts';
 
 import RiplSelect from '../../../.vitepress/components/ripl-select.vue';
-import RiplButton from '../../../.vitepress/components/ripl-button.vue';
 import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
@@ -43,6 +35,7 @@ import type {
 } from '../store/dashboard';
 
 const ranges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
+const rangeOptions = ranges.map(r => ({ label: r, value: r }));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);

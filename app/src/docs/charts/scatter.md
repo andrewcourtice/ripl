@@ -4,11 +4,11 @@ A scatter chart (also known as a bubble chart when using variable sizes) display
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="addData">Add Data</button>
-            <button class="ripl-button" @click="removeData">Remove Data</button>
-            <button class="ripl-button" @click="randomise">Randomise</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="addData">Add Data</RiplButton>
+            <RiplButton @click="removeData">Remove Data</RiplButton>
+            <RiplButton @click="randomise">Randomise</RiplButton>
+        </RiplControlGroup>
     </template>    
 </ripl-example>
 

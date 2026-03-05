@@ -415,6 +415,42 @@ describe('Scale', () => {
 - **Dev dependencies** are for build and test tooling only: TypeScript, tsup, Vitest, ESLint, happy-dom/jsdom
 - When external libraries are necessary, prefer tree-shakable options
 
+## Documentation Site (`app/`)
+
+The `app/` directory is a VitePress site for documentation and demos.
+
+### Component Library
+
+Reusable UI components live in `app/src/.vitepress/components/` and are globally registered in `app/src/.vitepress/theme/index.ts`. **Always use built-in components** before creating new ones:
+
+| Component | Usage |
+|-----------|-------|
+| `RiplButton` | Standard button, supports `active` and `icon` (boolean for icon-only padding) props |
+| `RiplButtonGroup` | Radio-toggle group: `v-model` + `:options="[{ label, value }]"` |
+| `RiplControlGroup` | Flex container with gap for grouping controls (toolbar-style) |
+| `RiplSwitch` | Toggle switch: `v-model` + `label` |
+| `RiplSelect` | Styled `<select>` wrapper with slot for `<option>` elements |
+| `RiplInputRange` | Styled range input: `v-model`, `min`, `max`, `step` |
+| `RiplDropdown` | Popover dropdown with `#trigger` slot and `align` prop (`left`/`right`) |
+| `RiplDropdownItem` | Button item inside dropdown, supports `active` prop |
+| `RiplDropdownLabel` | Section label inside dropdown |
+
+### Conventions
+
+- **Scoped CSS** — All component-specific styles must live in their Vue component's `<style scoped>` block, not in `theme/style.scss`
+- **Markdown files** — Use Vue component tags (e.g. `<RiplButton>`, `<RiplSwitch v-model="x" label="Y" />`) instead of raw HTML with CSS classes
+- **Icons** — Use `lucide-vue-next` for icons. Render as slot content: `<RiplButton><RotateCcw :size="14" /></RiplButton>`
+- **Global registration** — New reusable components should be registered in `theme/index.ts` so they're available in markdown
+
+### Playground
+
+The playground (`app/src/.vitepress/components/playground/`) provides a live code editor:
+- `sandbox.ts` — Builds iframe `srcdoc` with import maps, setup code, and user code
+- `defaults.ts` — Default 2D/3D code snippets
+- `examples.ts` — Example code snippets shown in the examples dropdown
+- `PlaygroundSettings` — Controls renderer `autoStop` and camera `interactions` (3D mode only)
+- Canvas/SVG toggle is hidden when in 3D mode
+
 ## Contribution Workflow
 
 1. Write tests for new features and bug fixes

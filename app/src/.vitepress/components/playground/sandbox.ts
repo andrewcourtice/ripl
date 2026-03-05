@@ -1,12 +1,17 @@
 export type PlaygroundMode = '2d' | '3d';
 export type ContextType = 'canvas' | 'svg';
 
+export interface PlaygroundSettings {
+    autoStop: boolean;
+    cameraInteractions: boolean;
+}
+
 interface SetupCode {
     imports: string;
     body: string;
 }
 
-function getSetupCode(mode: PlaygroundMode, contextType: ContextType): SetupCode {
+function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: PlaygroundSettings): SetupCode {
     if (mode === '3d') {
         return {
             imports: [
@@ -17,14 +22,14 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType): SetupCode
                 'const context = createContext(\'#root\', { buffer: false });',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
-                '    autoStop: false,',
+                `    autoStop: ${settings.autoStop},`,
                 '    sortBuffer: depthSort(context),',
                 '});',
                 'const camera = createCamera(scene, {',
                 '    position: [0, 1.5, 5],',
                 '    target: [0, 0, 0],',
                 '    fov: 50,',
-                '    interactions: true,',
+                `    interactions: ${settings.cameraInteractions},`,
                 '});',
                 'camera.flush();',
             ].join('\n'),
@@ -81,9 +86,10 @@ export function buildSrcdoc(
     mode: PlaygroundMode,
     contextType: ContextType,
     importMap: Record<string, string>,
-    origin: string
+    origin: string,
+    settings: PlaygroundSettings
 ): string {
-    const setup = getSetupCode(mode, contextType);
+    const setup = getSetupCode(mode, contextType, settings);
     const userParts = extractImports(userCode);
 
     const allImports = [setup.imports, ...userParts.imports].filter(Boolean).join('\n');
@@ -100,7 +106,7 @@ export function buildSrcdoc(
     const resolvedMap: Record<string, string> = {};
 
     for (const [pkg, urlPath] of Object.entries(importMap)) {
-        resolvedMap[pkg] = origin + urlPath;
+        resolvedMap[pkg] = urlPath.startsWith('http') ? urlPath : origin + urlPath;
     }
 
     const importMapJson = JSON.stringify({ imports: resolvedMap }, null, 2);

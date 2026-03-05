@@ -50,10 +50,10 @@ An element can be modified at any point by changing its properties and re-render
 == Demo
 <ripl-example @context-changed="changeContextChanged">
     <template #footer>
-        <div class="ripl-control-group">
+        <RiplControlGroup>
             <span>Radius</span>
-            <input class="ripl-input-range" type="range" v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
-        </div>
+            <RiplInputRange v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code
@@ -174,10 +174,10 @@ The renderer also provides a `transition()` method that smoothly animates elemen
 == Demo
 <ripl-example @context-changed="rendererContextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="animateRenderer">Animate</button>
-            <button class="ripl-button" @click="resetRenderer">Reset</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="animateRenderer">Animate</RiplButton>
+            <RiplButton @click="resetRenderer">Reset</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code
@@ -225,9 +225,9 @@ Transitions are **awaitable**, so you can chain animations sequentially. You can
 == Demo
 <ripl-example @context-changed="animationContextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="runAnimation">Run Sequence</button>
-        </div>
+        <RiplControlGroup>
+            <RiplButton @click="runAnimation">Run Sequence</RiplButton>
+        </RiplControlGroup>
     </template>
 </ripl-example>
 == Code

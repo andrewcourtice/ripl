@@ -4,15 +4,11 @@ A trend chart is any combination of x/y series such as bar, line or area.
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
-        <div class="ripl-control-group">
-            <button class="ripl-button" @click="addData">Add Data</button>
-            <button class="ripl-button" @click="randomise">Randomise</button>
-            <label class="ripl-switch">
-                <input type="checkbox" v-model="showGrid" @change="toggleGrid">
-                <span class="ripl-switch__track"><span class="ripl-switch__thumb"></span></span>
-                Grid
-            </label>
-            <select class="ripl-select" v-model="lineRenderer" @change="updateRenderer">
+        <RiplControlGroup>
+            <RiplButton @click="addData">Add Data</RiplButton>
+            <RiplButton @click="randomise">Randomise</RiplButton>
+            <RiplSwitch v-model="showGrid" @update:model-value="toggleGrid" label="Grid" />
+            <RiplSelect v-model="lineRenderer" @change="updateRenderer">
                 <option value="linear">Linear</option>
                 <option value="spline">Spline</option>
                 <option value="basis">Basis</option>
@@ -26,8 +22,8 @@ A trend chart is any combination of x/y series such as bar, line or area.
                 <option value="step">Step</option>
                 <option value="stepBefore">Step Before</option>
                 <option value="stepAfter">Step After</option>
-            </select>
-        </div>
+            </RiplSelect>
+        </RiplControlGroup>
     </template>    
 </ripl-example>
 
