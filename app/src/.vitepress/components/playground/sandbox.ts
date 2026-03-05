@@ -6,6 +6,13 @@ export interface PlaygroundSettings {
     cameraInteractions: boolean;
 }
 
+export interface PlaygroundState {
+    code: string;
+    mode: PlaygroundMode;
+    contextType: ContextType;
+    extraImports?: Record<string, string>;
+}
+
 interface SetupCode {
     imports: string;
     body: string;
@@ -87,7 +94,8 @@ export function buildSrcdoc(
     contextType: ContextType,
     importMap: Record<string, string>,
     origin: string,
-    settings: PlaygroundSettings
+    settings: PlaygroundSettings,
+    isDark = false
 ): string {
     const setup = getSetupCode(mode, contextType, settings);
     const userParts = extractImports(userCode);
@@ -126,7 +134,7 @@ export function buildSrcdoc(
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: #ffffff;
+            background: ${isDark ? '#1b1b1f' : '#ffffff'};
         }
 
         #root {
@@ -171,18 +179,38 @@ export function buildSrcdoc(
 </html>`;
 }
 
-export function encodeCode(code: string): string {
+export function encodeState(state: PlaygroundState): string {
     try {
-        return btoa(encodeURIComponent(code));
+        return btoa(encodeURIComponent(JSON.stringify(state)));
     } catch {
         return '';
     }
 }
 
-export function decodeCode(encoded: string): string {
+export function decodeState(encoded: string): PlaygroundState | null {
     try {
-        return decodeURIComponent(atob(encoded));
+        const decoded = decodeURIComponent(atob(encoded));
+
+        try {
+            const parsed = JSON.parse(decoded);
+
+            if (parsed && typeof parsed.code === 'string') {
+                return parsed as PlaygroundState;
+            }
+        } catch {
+            // legacy code-only hash
+        }
+
+        if (decoded) {
+            return {
+                code: decoded,
+                mode: '2d',
+                contextType: 'canvas',
+            };
+        }
+
+        return null;
     } catch {
-        return '';
+        return null;
     }
 }

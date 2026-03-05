@@ -51,6 +51,10 @@ import {
 } from 'vue';
 
 import {
+    useData,
+} from 'vitepress';
+
+import {
     BookOpen,
     Code,
     FileJson,
@@ -77,6 +81,13 @@ import type {
 
 type EditorTab = 'code' | 'importmap';
 
+const GLOBALS_DTS = `
+declare const context: import('@ripl/core').Context;
+declare const scene: import('@ripl/core').Scene;
+declare const renderer: import('@ripl/core').Renderer;
+declare const camera: import('@ripl/3d').Camera;
+`;
+
 const props = defineProps<{
     modelValue: string;
     mode: PlaygroundMode;
@@ -98,22 +109,19 @@ const editorContainer = ref<HTMLElement>();
 const importMapContainer = ref<HTMLElement>();
 const editorInstance = shallowRef<any>();
 const importMapEditorInstance = shallowRef<any>();
-let monacoModule: typeof import('monaco-editor') | null = null;
+const typeLibDisposables = new Map<string, { dispose: () => void }>();
 
 const examples2d = EXAMPLES.filter(e => e.mode === '2d');
 const examples3d = EXAMPLES.filter(e => e.mode === '3d');
+
+const { isDark } = useData();
+
+let monacoModule: typeof import('monaco-editor') | null = null;
 
 function loadExample(example: PlaygroundExample) {
     emit('load-example', { mode: example.mode, code: example.code });
     examplesDropdown.value?.close();
 }
-
-const GLOBALS_DTS = `
-declare const context: import('@ripl/core').Context;
-declare const scene: import('@ripl/core').Scene;
-declare const renderer: import('@ripl/core').Renderer;
-declare const camera: import('@ripl/3d').Camera;
-`;
 
 function formatImportMap(map: Record<string, string>): string {
     return JSON.stringify({ imports: map }, null, 4);
@@ -209,10 +217,12 @@ async function initMonaco() {
             const dts = await dtsResponse.text();
             const wrapped = `declare module '${pkg}' {\n${dts}\n}`;
 
-            monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            const disposable = monaco.languages.typescript.javascriptDefaults.addExtraLib(
                 wrapped,
                 `file:///node_modules/${pkg}/index.d.ts`
             );
+
+            typeLibDisposables.set(pkg, disposable);
         }
     } catch {
         // types not available
@@ -225,7 +235,7 @@ async function initMonaco() {
     const editor = monaco.editor.create(editorContainer.value, {
         value: props.modelValue,
         language: 'javascript',
-        theme: 'vs-light',
+        theme: isDark.value ? 'vs-dark' : 'vs-light',
         minimap: { enabled: false },
         fontSize: 13,
         lineNumbers: 'on',
@@ -245,6 +255,14 @@ async function initMonaco() {
     });
 
     initImportMapEditor(monaco);
+
+    for (const pkg of Object.keys(props.importMap)) {
+        fetchAndRegisterTypes(pkg);
+    }
+
+    watch(isDark, (dark) => {
+        monaco.editor.setTheme(dark ? 'vs-dark' : 'vs-light');
+    });
 }
 
 function initImportMapEditor(monaco: typeof import('monaco-editor')) {
@@ -255,7 +273,7 @@ function initImportMapEditor(monaco: typeof import('monaco-editor')) {
     const importMapEditor = monaco.editor.create(importMapContainer.value, {
         value: formatImportMap(props.importMap),
         language: 'json',
-        theme: 'vs-light',
+        theme: isDark.value ? 'vs-dark' : 'vs-light',
         minimap: { enabled: false },
         fontSize: 13,
         lineNumbers: 'on',
@@ -282,6 +300,62 @@ watch(() => props.modelValue, (value) => {
     }
 });
 
+async function fetchAndRegisterTypes(pkg: string) {
+    if (!monacoModule || typeLibDisposables.has(pkg)) {
+        return;
+    }
+
+    let dts: string | null = null;
+
+    try {
+        const pkgJsonResponse = await fetch(`https://unpkg.com/${pkg}/package.json`);
+
+        if (pkgJsonResponse.ok) {
+            const pkgJson = await pkgJsonResponse.json();
+            const typesField = pkgJson.types || pkgJson.typings;
+
+            if (typesField) {
+                const dtsResponse = await fetch(`https://unpkg.com/${pkg}/${typesField}`);
+
+                if (dtsResponse.ok) {
+                    dts = await dtsResponse.text();
+                }
+            }
+        }
+    } catch {
+        // package.json fetch failed
+    }
+
+    if (!dts) {
+        try {
+            const dtPkg = pkg.startsWith('@')
+                ? `@types/${pkg.slice(1).replace('/', '__')}`
+                : `@types/${pkg}`;
+
+            const dtResponse = await fetch(`https://unpkg.com/${dtPkg}/index.d.ts`);
+
+            if (dtResponse.ok) {
+                dts = await dtResponse.text();
+            }
+        } catch {
+            // @types fetch failed
+        }
+    }
+
+    if (!dts || !monacoModule) {
+        return;
+    }
+
+    const wrapped = `declare module '${pkg}' {\n${dts}\n}`;
+
+    const disposable = monacoModule.languages.typescript.javascriptDefaults.addExtraLib(
+        wrapped,
+        `file:///node_modules/${pkg}/index.d.ts`
+    );
+
+    typeLibDisposables.set(pkg, disposable);
+}
+
 watch(() => props.importMap, (value) => {
     if (!importMapEditorInstance.value) {
         return;
@@ -291,6 +365,21 @@ watch(() => props.importMap, (value) => {
 
     if (importMapEditorInstance.value.getValue() !== formatted) {
         importMapEditorInstance.value.setValue(formatted);
+    }
+
+    const currentKeys = new Set(Object.keys(value));
+
+    for (const [pkg, disposable] of typeLibDisposables) {
+        if (!currentKeys.has(pkg)) {
+            disposable.dispose();
+            typeLibDisposables.delete(pkg);
+        }
+    }
+
+    for (const pkg of currentKeys) {
+        if (!typeLibDisposables.has(pkg)) {
+            fetchAndRegisterTypes(pkg);
+        }
     }
 });
 

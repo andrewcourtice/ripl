@@ -137,7 +137,7 @@ onBeforeUnmount(() => {
     flex: 1;
     min-height: 0;
     overflow: hidden;
-    background: #1e1e2e;
+    background: var(--vp-c-bg);
 }
 
 .playground-preview__iframe {

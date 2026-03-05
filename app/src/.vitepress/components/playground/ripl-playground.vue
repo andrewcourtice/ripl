@@ -34,13 +34,17 @@ import {
     onBeforeUnmount,
 } from 'vue';
 
+import {
+    useData,
+} from 'vitepress';
+
 import PlaygroundEditor from './playground-editor.vue';
 import PlaygroundPreview from './playground-preview.vue';
 
 import {
     buildSrcdoc,
-    encodeCode,
-    decodeCode,
+    encodeState,
+    decodeState,
 } from './sandbox';
 
 import {
@@ -51,6 +55,7 @@ import type {
     PlaygroundMode,
     ContextType,
     PlaygroundSettings,
+    PlaygroundState,
 } from './sandbox';
 
 const mode = ref<PlaygroundMode>('2d');
@@ -64,34 +69,57 @@ const settings = ref<PlaygroundSettings>({
     cameraInteractions: true,
 });
 
+const { isDark } = useData();
+
 let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 let renderTimer: ReturnType<typeof setTimeout> | undefined;
 let loadingExample = false;
+let manifestKeys = new Set<string>();
+let pendingState: PlaygroundState | null = null;
 
 function getDefaultCode(m: PlaygroundMode): string {
     return EXAMPLES.find(e => e.mode === m)!.code;
 }
 
-function loadFromHash(): string {
+function loadStateFromHash(): PlaygroundState | null {
     if (typeof window === 'undefined') {
-        return '';
+        return null;
     }
 
     const hash = window.location.hash.slice(1);
 
     if (!hash) {
-        return '';
+        return null;
     }
 
-    return decodeCode(hash);
+    return decodeState(hash);
 }
 
-function saveToHash(value: string) {
+function getExtraImports(): Record<string, string> | undefined {
+    const extra: Record<string, string> = {};
+
+    for (const [pkg, url] of Object.entries(riplImportMap.value)) {
+        if (!manifestKeys.has(pkg)) {
+            extra[pkg] = url;
+        }
+    }
+
+    return Object.keys(extra).length ? extra : undefined;
+}
+
+function saveToHash() {
     if (typeof window === 'undefined') {
         return;
     }
 
-    const encoded = encodeCode(value);
+    const state: PlaygroundState = {
+        code: code.value,
+        mode: mode.value,
+        contextType: contextType.value,
+        extraImports: getExtraImports(),
+    };
+
+    const encoded = encodeState(state);
 
     if (encoded) {
         window.history.replaceState(null, '', '#' + encoded);
@@ -103,7 +131,7 @@ function updateSrcdoc() {
         return;
     }
 
-    currentSrcdoc.value = buildSrcdoc(code.value, mode.value, contextType.value, riplImportMap.value, window.location.origin, settings.value);
+    currentSrcdoc.value = buildSrcdoc(code.value, mode.value, contextType.value, riplImportMap.value, window.location.origin, settings.value, isDark.value);
 }
 
 function debouncedUpdate() {
@@ -111,14 +139,22 @@ function debouncedUpdate() {
     renderTimer = setTimeout(updateSrcdoc, 300);
 }
 
+function debouncedSave() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => saveToHash(), 500);
+}
+
 watch(code, () => {
     debouncedUpdate();
-
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => saveToHash(code.value), 500);
+    debouncedSave();
 });
 
-watch([contextType, settings, riplImportMap], () => {
+watch([contextType, riplImportMap], () => {
+    updateSrcdoc();
+    debouncedSave();
+}, { deep: true });
+
+watch([settings, isDark], () => {
     updateSrcdoc();
 }, { deep: true });
 
@@ -130,6 +166,7 @@ watch(mode, (newMode) => {
 
     code.value = getDefaultCode(newMode);
     updateSrcdoc();
+    debouncedSave();
 });
 
 function onLoadExample(example: { mode: string; code: string }) {
@@ -140,7 +177,19 @@ function onLoadExample(example: { mode: string; code: string }) {
 }
 
 function resetCode() {
-    code.value = getDefaultCode(mode.value);
+    mode.value = '2d';
+    contextType.value = 'canvas';
+    code.value = getDefaultCode('2d');
+
+    const baseMap: Record<string, string> = {};
+
+    for (const key of manifestKeys) {
+        if (riplImportMap.value[key]) {
+            baseMap[key] = riplImportMap.value[key];
+        }
+    }
+
+    riplImportMap.value = baseMap;
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
 }
 
@@ -188,6 +237,13 @@ async function loadImportMap() {
             }
         }
 
+        manifestKeys = new Set(Object.keys(importMap));
+
+        if (pendingState?.extraImports) {
+            Object.assign(importMap, pendingState.extraImports);
+            pendingState = null;
+        }
+
         riplImportMap.value = importMap;
         updateSrcdoc();
     } catch {
@@ -198,8 +254,16 @@ async function loadImportMap() {
 onMounted(() => {
     leftWidth.value = Math.round(window.innerWidth / 2);
 
-    const hashCode = loadFromHash();
-    code.value = hashCode || getDefaultCode(mode.value);
+    const savedState = loadStateFromHash();
+
+    if (savedState) {
+        mode.value = savedState.mode || '2d';
+        contextType.value = savedState.contextType || 'canvas';
+        code.value = savedState.code;
+        pendingState = savedState;
+    } else {
+        code.value = getDefaultCode(mode.value);
+    }
 
     loadImportMap();
 });
