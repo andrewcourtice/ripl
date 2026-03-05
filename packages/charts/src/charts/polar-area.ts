@@ -250,7 +250,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         ];
 
         // Animate: staggered entry for new elements, smooth transition for updates
-        const allElements = this.gridGroup.children;
+        const allElements = this.gridGroup!.children;
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({

@@ -19,7 +19,16 @@
         ],
         "types": [
             "vitest/importMeta"
-        ]
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@ripl/utilities": ["packages/utilities/src/index.ts"],
+            "@ripl/vdom": ["packages/vdom/src/index.ts"],
+            "@ripl/core": ["packages/core/src/index.ts"],
+            "@ripl/svg": ["packages/svg/src/index.ts"],
+            "@ripl/charts": ["packages/charts/src/index.ts"],
+            "@ripl/3d": ["packages/3d/src/index.ts"],
+        }
     },
     "files": [
         "global.d.ts"
