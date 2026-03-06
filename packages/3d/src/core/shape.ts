@@ -40,11 +40,11 @@ import type {
 
 import type {
     Context3D,
-    ProjectedPoint,
 } from '../context';
 
 import type {
     Matrix4,
+    ProjectedPoint,
     Vector3,
 } from '../math';
 
@@ -75,7 +75,6 @@ export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
     protected hitPath?: ContextPath;
-    public renderDepth: number = 0;
 
     private getCachedFaces: CachedFunction<() => Face3D[]>;
 
@@ -138,6 +137,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             ...options,
         } as unknown as ElementOptions<TState>);
 
+        this.renderDepth = 0;
         this.getCachedFaces = functionCache(() => this.computeFaces());
     }
 

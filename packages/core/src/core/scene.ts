@@ -167,8 +167,8 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
             if (hitElements.length > 0) {
                 hitElements.sort((ea, eb) => {
-                    const depthA = 'renderDepth' in ea ? (ea as Element & { renderDepth: number }).renderDepth : undefined;
-                    const depthB = 'renderDepth' in eb ? (eb as Element & { renderDepth: number }).renderDepth : undefined;
+                    const depthA = ea.renderDepth;
+                    const depthB = eb.renderDepth;
 
                     if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
                         return depthA - depthB;
