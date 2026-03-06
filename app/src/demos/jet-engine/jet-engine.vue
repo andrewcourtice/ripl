@@ -47,7 +47,6 @@ import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
 import {
     createCamera,
     createContext,
-    depthSort,
 } from '@ripl/3d';
 
 import {
@@ -331,7 +330,6 @@ onMounted(() => {
     renderer = createRenderer(scene!, {
         autoStart: true,
         autoStop: false,
-        sortBuffer: depthSort(context),
     });
 
     renderer.on('tick', (event) => {

@@ -5,8 +5,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -22,7 +22,7 @@ export interface PathState extends BaseElementState {
 
 export type PathRenderer = (path: ContextPath, state: PathState) => void;
 
-export class Path extends Shape<PathState> {
+export class Path extends Shape2D<PathState> {
 
     private pathRenderer?: PathRenderer;
 
@@ -58,7 +58,7 @@ export class Path extends Shape<PathState> {
         this.setStateValue('height', value);
     }
 
-    constructor(options: ShapeOptions<PathState> & { pathRenderer?: PathRenderer }) {
+    constructor(options: Shape2DOptions<PathState> & { pathRenderer?: PathRenderer }) {
         const {
             pathRenderer,
             ...shapeOptions

@@ -9,7 +9,6 @@ import {
     mat4LookAt,
     mat4Multiply,
     mat4Perspective,
-    projectDepth,
     projectPoint,
 } from '../../src';
 
@@ -45,9 +44,9 @@ describe('Projection', () => {
         expect(rightX).toBeGreaterThan(400);
     });
 
-    test('projectDepth: nearer points have smaller depth', () => {
-        const nearDepth = projectDepth([0, 0, 2], viewProj);
-        const farDepth = projectDepth([0, 0, -5], viewProj);
+    test('projectPoint: nearer points have smaller depth', () => {
+        const [,, nearDepth] = projectPoint([0, 0, 2], viewProj, viewport);
+        const [,, farDepth] = projectPoint([0, 0, -5], viewProj, viewport);
 
         expect(nearDepth).toBeLessThan(farDepth);
     });

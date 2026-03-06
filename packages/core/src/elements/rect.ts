@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -22,7 +22,7 @@ export interface RectState extends BaseElementState {
     borderRadius?: number | BorderRadius;
 }
 
-export class Rect extends Shape<RectState> {
+export class Rect extends Shape2D<RectState> {
 
     public get x() {
         return this.getStateValue('x');
@@ -64,7 +64,7 @@ export class Rect extends Shape<RectState> {
         this.setStateValue('borderRadius', value);
     }
 
-    constructor(options: ShapeOptions<RectState>) {
+    constructor(options: Shape2DOptions<RectState>) {
         super('rect', options);
     }
 

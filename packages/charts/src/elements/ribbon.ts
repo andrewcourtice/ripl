@@ -8,8 +8,8 @@ import {
     getThetaPoint,
     max,
     min,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '@ripl/core';
 
 export interface RibbonState extends BaseElementState {
@@ -22,7 +22,7 @@ export interface RibbonState extends BaseElementState {
     targetEnd: number;
 }
 
-export class Ribbon extends Shape<RibbonState> {
+export class Ribbon extends Shape2D<RibbonState> {
 
     public get cx() {
         return this.getStateValue('cx');
@@ -80,7 +80,7 @@ export class Ribbon extends Shape<RibbonState> {
         this.setStateValue('targetEnd', value);
     }
 
-    constructor(options: ShapeOptions<RibbonState>) {
+    constructor(options: Shape2DOptions<RibbonState>) {
         super('ribbon', options);
     }
 

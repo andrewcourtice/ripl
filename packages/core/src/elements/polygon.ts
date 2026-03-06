@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -21,7 +21,7 @@ export interface PolygonState extends BaseElementState {
     sides: number;
 }
 
-export class Polygon extends Shape<PolygonState> {
+export class Polygon extends Shape2D<PolygonState> {
 
     public get cx() {
         return this.getStateValue('cx');
@@ -55,7 +55,7 @@ export class Polygon extends Shape<PolygonState> {
         this.setStateValue('sides', max(value, 3));
     }
 
-    constructor(options: ShapeOptions<PolygonState>) {
+    constructor(options: Shape2DOptions<PolygonState>) {
         super('polygon', options);
     }
 

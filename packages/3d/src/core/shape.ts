@@ -1,15 +1,11 @@
 import {
-    Box,
-    Shape,
-} from '@ripl/core';
-
-import {
     mat4Identity,
     mat4RotateX,
     mat4RotateY,
     mat4RotateZ,
     mat4TransformPoint,
     mat4Translate,
+    vec3Normalize,
 } from '../math';
 
 import {
@@ -18,17 +14,35 @@ import {
     shadeFaceColor,
 } from '../shading';
 
+import {
+    Box,
+    parseColor,
+    Shape,
+} from '@ripl/core';
+
+import {
+    functionCache,
+    numberSum,
+} from '@ripl/utilities';
+
+import type {
+    CachedFunction,
+} from '@ripl/utilities';
+
 import type {
     BaseElementState,
+    ColorRGBA,
     Context,
-    ShapeOptions,
+    ElementOptions,
 } from '@ripl/core';
 
 import type {
     Context3D,
+    ProjectedPoint,
 } from '../context';
 
 import type {
+    Matrix4,
     Vector3,
 } from '../math';
 
@@ -38,8 +52,7 @@ export interface Face3D {
 }
 
 export interface ProjectedFace3D {
-    element: Shape3D;
-    points: [number, number][];
+    points: ProjectedPoint[];
     fillColor: string;
     strokeStyle: string | undefined;
     lineWidth: number | undefined;
@@ -55,9 +68,13 @@ export interface Shape3DState extends BaseElementState {
     rotationZ: number;
 }
 
-export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<ShapeOptions<TState>>;
+export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<ElementOptions<TState>>;
 
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
+
+    public renderDepth: number = 0;
+
+    private getCachedFaces: CachedFunction<() => Face3D[]>;
 
     public get x() {
         return this.getStateValue('x');
@@ -116,14 +133,21 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             rotationY: 0,
             rotationZ: 0,
             ...options,
-        } as unknown as ShapeOptions<TState>);
+        } as unknown as ElementOptions<TState>);
+
+        this.getCachedFaces = functionCache(() => this.computeFaces());
+    }
+
+    protected override setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
+        super.setStateValue(key, value);
+        this.getCachedFaces.invalidate();
     }
 
     protected computeFaces(): Face3D[] {
         return [];
     }
 
-    protected transformVertices(vertices: Vector3[]): Vector3[] {
+    protected getModelMatrix(): Matrix4 {
         let matrix = mat4Identity();
 
         matrix = mat4Translate(matrix, [this.x, this.y, this.z]);
@@ -131,11 +155,17 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         matrix = mat4RotateY(matrix, this.rotationY);
         matrix = mat4RotateZ(matrix, this.rotationZ);
 
-        return vertices.map(vertex => mat4TransformPoint(matrix, vertex));
+        return matrix;
+    }
+
+    protected transformVertices(vertices: Vector3[], matrix?: Matrix4): Vector3[] {
+        const mat = matrix ?? this.getModelMatrix();
+
+        return vertices.map(vertex => mat4TransformPoint(mat, vertex));
     }
 
     public getDepth(context: Context3D): number {
-        return context.projectDepth([this.x, this.y, this.z]);
+        return context.project([this.x, this.y, this.z])[2];
     }
 
     public getBoundingBox(): Box {
@@ -145,7 +175,8 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             return new Box(0, 0, 0, 0);
         }
 
-        const faces = this.computeFaces();
+        const faces = this.getCachedFaces();
+        const matrix = this.getModelMatrix();
 
         let minX = Infinity;
         let minY = Infinity;
@@ -153,7 +184,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         let maxY = -Infinity;
 
         for (const face of faces) {
-            const transformed = this.transformVertices(face.vertices);
+            const transformed = this.transformVertices(face.vertices, matrix);
 
             for (const vertex of transformed) {
                 const [px, py] = context.project(vertex);
@@ -174,99 +205,49 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
     public render(context: Context): void {
         const ctx = context as Context3D;
-        const faces = this.computeFaces();
+        const faces = this.getCachedFaces();
         const baseFillStyle = this.fillStyle || '#888888';
+        const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
+        const normalizedLight = vec3Normalize(ctx.lightDirection ?? [0, 0, -1]);
+        const matrix = this.getModelMatrix();
 
-        // Transform all faces and compute projected depth
-        const projectedFaces = faces.map(face => {
-            const transformed = this.transformVertices(face.vertices);
+        this.context = context;
+        this.resetHitPath();
+
+        let totalDepth = 0;
+        const hitPath = ctx.createPath(`${this.id}:hit`);
+
+        for (const face of faces) {
+            const transformed = this.transformVertices(face.vertices, matrix);
             const normal = face.normal ?? computeFaceNormal(transformed);
+            const brightness = computeFaceBrightness(normal, normalizedLight, true);
+            const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
+            const points = transformed.map(vertex => ctx.project(vertex));
+            const depth = numberSum(points, p => p[2]) / points.length;
 
-            let depthSum = 0;
+            totalDepth += depth;
 
-            for (const vertex of transformed) {
-                depthSum += ctx.projectDepth(vertex);
-            }
-
-            return {
-                transformed,
-                normal,
-                depth: depthSum / transformed.length,
-            };
-        });
-
-        // If the context has a face buffer, defer faces for global sorting
-        if (ctx.faceBuffer) {
-            this.context = context;
-
-            for (const face of projectedFaces) {
-                const brightness = computeFaceBrightness(face.normal, ctx.lightDirection ?? [0, 0, -1]);
-                const fillColor = shadeFaceColor(baseFillStyle, 0.3 + brightness * 0.7);
-                const points = face.transformed.map(vertex => ctx.project(vertex));
-
-                ctx.faceBuffer.push({
-                    element: this,
-                    points,
-                    fillColor,
-                    strokeStyle: this.strokeStyle,
-                    lineWidth: this.lineWidth,
-                    depth: face.depth,
-                });
-            }
-
-            return;
-        }
-
-        // Painter's algorithm: sort back-to-front (larger depth = further away)
-        projectedFaces.sort((fa, fb) => fb.depth - fa.depth);
-
-        for (const face of projectedFaces) {
-            const brightness = computeFaceBrightness(face.normal, ctx.lightDirection ?? [0, 0, -1]);
-            const faceColor = shadeFaceColor(baseFillStyle, 0.3 + brightness * 0.7);
-
-            const points = face.transformed.map(vertex => ctx.project(vertex));
-
-            this.fillStyle = faceColor;
-
-            super.render(context, path => {
-                path.moveTo(points[0][0], points[0][1]);
-
-                for (let idx = 1; idx < points.length; idx++) {
-                    path.lineTo(points[idx][0], points[idx][1]);
-                }
-
-                path.closePath();
+            ctx.faceBuffer.push({
+                points,
+                fillColor,
+                strokeStyle: this.strokeStyle,
+                lineWidth: this.lineWidth,
+                depth,
             });
-        }
 
-        // Restore original fill style
-        this.fillStyle = baseFillStyle;
-    }
+            hitPath.moveTo(points[0][0], points[0][1]);
 
-    public renderFace(context: Context, face: ProjectedFace3D): void {
-        const baseFillStyle = this.fillStyle;
-
-        this.fillStyle = face.fillColor;
-
-        if (face.strokeStyle) {
-            this.strokeStyle = face.strokeStyle;
-        }
-
-        if (face.lineWidth !== undefined) {
-            this.lineWidth = face.lineWidth;
-        }
-
-        super.render(context, path => {
-            path.moveTo(face.points[0][0], face.points[0][1]);
-
-            for (let idx = 1; idx < face.points.length; idx++) {
-                path.lineTo(face.points[idx][0], face.points[idx][1]);
+            for (let idx = 1; idx < points.length; idx++) {
+                hitPath.lineTo(points[idx][0], points[idx][1]);
             }
 
-            path.closePath();
-        });
+            hitPath.closePath();
+        }
 
-        this.fillStyle = baseFillStyle;
+        this.hitPath = hitPath;
+        this.renderDepth = faces.length > 0
+            ? totalDepth / faces.length
+            : 0;
     }
 
 }

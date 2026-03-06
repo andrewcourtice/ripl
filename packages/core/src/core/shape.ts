@@ -10,13 +10,66 @@ import {
     ElementOptions,
 } from './element';
 
-export type ShapeOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
+export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+
+    protected hitPath?: ContextPath;
+
+    constructor(type: string, options: ElementOptions<TState>) {
+        super(type, options);
+    }
+
+    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
+        if (!this.context) {
+            return super.intersectsWith(x, y, options);
+        }
+
+        const {
+            isPointer = false,
+        } = options || {};
+
+        const testPath = this.getTestPath();
+
+        const isAnyIntersecting = () => !!(testPath && this.context) && (
+            this.context.isPointInStroke(testPath, x, y) ||
+            this.context.isPointInPath(testPath, x, y)
+        );
+
+        if (!isPointer) {
+            return isAnyIntersecting();
+        }
+
+        if (!testPath || this.pointerEvents === 'none') {
+            return false;
+        }
+
+        if (this.pointerEvents === 'stroke') {
+            return !!this.context.isPointInStroke(testPath, x, y);
+        }
+
+        if (this.pointerEvents === 'fill') {
+            return !!this.context.isPointInPath(testPath, x, y);
+        }
+
+        return isAnyIntersecting();
+    }
+
+    public resetHitPath(): void {
+        this.hitPath = undefined;
+    }
+
+    protected getTestPath(): ContextPath | undefined {
+        return this.hitPath;
+    }
+
+}
+
+export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     autoStroke?: boolean;
     autoFill?: boolean;
     clip?: boolean;
 };
 
-export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
 
     protected path?: ContextPath;
 
@@ -24,7 +77,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
     public autoFill: boolean;
     public clip: boolean;
 
-    constructor(type: string, options: ShapeOptions<TState>) {
+    constructor(type: string, options: Shape2DOptions<TState>) {
         const {
             autoFill = true,
             autoStroke = true,
@@ -39,37 +92,8 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
         this.clip = clip;
     }
 
-    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        if (!this.context) {
-            return super.intersectsWith(x, y, options);
-        }
-
-        const {
-            isPointer = false,
-        } = options || {};
-
-        const isAnyIntersecting = () => !!(this.path && this.context) && (
-            this.context.isPointInStroke(this.path, x, y) ||
-            this.context.isPointInPath(this.path, x, y)
-        );
-
-        if (!isPointer) {
-            return isAnyIntersecting();
-        }
-
-        if (!this.path || this.pointerEvents === 'none') {
-            return false;
-        }
-
-        if (this.pointerEvents === 'stroke') {
-            return !!this.context.isPointInStroke(this.path, x, y);
-        }
-
-        if (this.pointerEvents === 'fill') {
-            return !!this.context.isPointInPath(this.path, x, y);
-        }
-
-        return isAnyIntersecting();
+    protected override getTestPath(): ContextPath | undefined {
+        return this.hitPath || this.path;
     }
 
     public render(context: Context, callback?: (path: ContextPath) => void) {
@@ -77,6 +101,14 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
             this.path = context.createPath(this.id);
 
             callback?.(this.path);
+
+            if (this.path) {
+                if (!this.hitPath) {
+                    this.hitPath = context.createPath(`${this.id}:hit`);
+                }
+
+                this.hitPath.addPath(this.path);
+            }
 
             if (this.path && this.clip) {
                 context.clip(this.path);
@@ -95,8 +127,8 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
 }
 
-export function createShape(...options: ConstructorParameters<typeof Shape>) {
-    return new Shape(...options);
+export function createShape(...options: ConstructorParameters<typeof Shape2D>) {
+    return new Shape2D(...options);
 }
 
 export function elementIsShape(value: unknown): value is Shape {

@@ -11,23 +11,20 @@ import type {
 } from './vector';
 
 import type {
-    Point,
-} from '@ripl/core';
+    ProjectedPoint,
+} from '../context';
 
 export interface Viewport {
     width: number;
     height: number;
 }
 
-export function projectPoint(point: Vector3, viewProjection: Matrix4, viewport: Viewport): Point {
+export function projectPoint(point: Vector3, viewProjection: Matrix4, viewport: Viewport): ProjectedPoint {
     const clip = mat4TransformPoint(viewProjection, point);
 
     return [
         (clip[0] * 0.5 + 0.5) * viewport.width,
         (-clip[1] * 0.5 + 0.5) * viewport.height,
+        clip[2],
     ];
-}
-
-export function projectDepth(point: Vector3, viewProjection: Matrix4): number {
-    return mat4TransformPoint(viewProjection, point)[2];
 }

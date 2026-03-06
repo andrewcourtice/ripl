@@ -150,11 +150,17 @@ export class CanvasPath extends ContextPath {
         return this.ref.roundRect(x, y, width, height, radii);
     }
 
+    addPath(path: ContextPath): void {
+        if (path instanceof CanvasPath) {
+            this.ref.addPath(path.ref);
+        }
+    }
+
 }
 
 export class CanvasContext extends Context<HTMLCanvasElement> {
 
-    private context: CanvasRenderingContext2D;
+    protected context: CanvasRenderingContext2D;
     private _fillStyleCSS: string = '';
     private _strokeStyleCSS: string = '';
 

@@ -249,6 +249,10 @@ export class ContextPath implements ContextElement {
         );
     }
 
+    addPath(path: ContextPath): void {
+        // do nothing
+    }
+
 }
 
 export class ContextText implements ContextElement {

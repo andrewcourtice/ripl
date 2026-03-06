@@ -1,3 +1,17 @@
+import {
+    typeIsNumber,
+} from './type';
+
+export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number) {
+    return values.reduce((total, value) => {
+        const output = typeIsNumber(value)
+            ? value
+            : iteratee?.(value);
+
+        return total + (output ?? 0);
+    }, 0);
+}
+
 export function numberGCD(valueA: number, valueB: number) {
     while (valueB !== 0) {
         const temp = valueB;

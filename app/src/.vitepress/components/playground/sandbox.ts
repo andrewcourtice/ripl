@@ -23,14 +23,13 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
         return {
             imports: [
                 'import { createScene, createRenderer } from \'@ripl/core\';',
-                'import { createContext, createCamera, depthSort } from \'@ripl/3d\';',
+                'import { createContext, createCamera } from \'@ripl/3d\';',
             ].join('\n'),
             body: [
                 'const context = createContext(\'#root\');',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,
-                '    sortBuffer: depthSort(context),',
                 '});',
                 'const camera = createCamera(scene, {',
                 '    position: [0, 1.5, 5],',

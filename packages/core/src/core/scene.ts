@@ -22,7 +22,6 @@ import {
 import {
     arrayDedupe,
     arrayFilter,
-    arrayFind,
     arrayForEach,
     arrayJoin,
     arrayReduce,
@@ -32,6 +31,7 @@ import {
     functionMemoize,
     onDOMEvent,
     setForEach,
+    typeIsNil,
 } from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
@@ -161,14 +161,27 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             const x = this.context.scaleX(event.clientX - left);
             const y = this.context.scaleY(event.clientY - top);
 
-            const element = arrayFind(getTrackedElements('click'), element => element.intersectsWith(x, y, {
+            const hitElements = arrayFilter(getTrackedElements('click'), element => element.intersectsWith(x, y, {
                 isPointer: true,
-            }), -1);
+            }));
 
-            element?.emit('click', {
-                x,
-                y,
-            });
+            if (hitElements.length > 0) {
+                hitElements.sort((ea, eb) => {
+                    const depthA = 'renderDepth' in ea ? (ea as Element & { renderDepth: number }).renderDepth : undefined;
+                    const depthB = 'renderDepth' in eb ? (eb as Element & { renderDepth: number }).renderDepth : undefined;
+
+                    if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
+                        return depthA - depthB;
+                    }
+
+                    return eb.zIndex - ea.zIndex;
+                });
+
+                hitElements[0].emit('click', {
+                    x,
+                    y,
+                });
+            }
         });
 
         context.on('resize', () => {
