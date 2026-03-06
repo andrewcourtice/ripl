@@ -33,6 +33,8 @@ import type {
     BaseElementState,
     ColorRGBA,
     Context,
+    ContextPath,
+    ElementIntersectionOptions,
     ElementOptions,
 } from '@ripl/core';
 
@@ -72,6 +74,7 @@ export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial
 
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
+    protected hitPath?: ContextPath;
     public renderDepth: number = 0;
 
     private getCachedFaces: CachedFunction<() => Face3D[]>;
@@ -212,7 +215,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const matrix = this.getModelMatrix();
 
         this.context = context;
-        this.resetHitPath();
+        this.hitPath = undefined;
 
         let totalDepth = 0;
         const hitPath = ctx.createPath(`${this.id}:hit`);
@@ -248,6 +251,39 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.renderDepth = faces.length > 0
             ? totalDepth / faces.length
             : 0;
+    }
+
+    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
+        if (!this.context || !this.hitPath) {
+            return super.intersectsWith(x, y, options);
+        }
+
+        const {
+            isPointer = false,
+        } = options || {};
+
+        const isAnyIntersecting = () => !!(this.hitPath && this.context) && (
+            this.context.isPointInStroke(this.hitPath, x, y) ||
+            this.context.isPointInPath(this.hitPath, x, y)
+        );
+
+        if (!isPointer) {
+            return isAnyIntersecting();
+        }
+
+        if (this.pointerEvents === 'none') {
+            return false;
+        }
+
+        if (this.pointerEvents === 'stroke') {
+            return !!this.context.isPointInStroke(this.hitPath, x, y);
+        }
+
+        if (this.pointerEvents === 'fill') {
+            return !!this.context.isPointInPath(this.hitPath, x, y);
+        }
+
+        return isAnyIntersecting();
     }
 
 }

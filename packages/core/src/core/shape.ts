@@ -12,53 +12,8 @@ import {
 
 export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
-    protected hitPath?: ContextPath;
-
     constructor(type: string, options: ElementOptions<TState>) {
         super(type, options);
-    }
-
-    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        if (!this.context) {
-            return super.intersectsWith(x, y, options);
-        }
-
-        const {
-            isPointer = false,
-        } = options || {};
-
-        const testPath = this.getTestPath();
-
-        const isAnyIntersecting = () => !!(testPath && this.context) && (
-            this.context.isPointInStroke(testPath, x, y) ||
-            this.context.isPointInPath(testPath, x, y)
-        );
-
-        if (!isPointer) {
-            return isAnyIntersecting();
-        }
-
-        if (!testPath || this.pointerEvents === 'none') {
-            return false;
-        }
-
-        if (this.pointerEvents === 'stroke') {
-            return !!this.context.isPointInStroke(testPath, x, y);
-        }
-
-        if (this.pointerEvents === 'fill') {
-            return !!this.context.isPointInPath(testPath, x, y);
-        }
-
-        return isAnyIntersecting();
-    }
-
-    public resetHitPath(): void {
-        this.hitPath = undefined;
-    }
-
-    protected getTestPath(): ContextPath | undefined {
-        return this.hitPath;
     }
 
 }
@@ -92,8 +47,37 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         this.clip = clip;
     }
 
-    protected override getTestPath(): ContextPath | undefined {
-        return this.hitPath || this.path;
+    public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
+        if (!this.context || !this.path) {
+            return super.intersectsWith(x, y, options);
+        }
+
+        const {
+            isPointer = false,
+        } = options || {};
+
+        const isAnyIntersecting = () => !!(this.path && this.context) && (
+            this.context.isPointInStroke(this.path, x, y) ||
+            this.context.isPointInPath(this.path, x, y)
+        );
+
+        if (!isPointer) {
+            return isAnyIntersecting();
+        }
+
+        if (this.pointerEvents === 'none') {
+            return false;
+        }
+
+        if (this.pointerEvents === 'stroke') {
+            return !!this.context.isPointInStroke(this.path, x, y);
+        }
+
+        if (this.pointerEvents === 'fill') {
+            return !!this.context.isPointInPath(this.path, x, y);
+        }
+
+        return isAnyIntersecting();
     }
 
     public render(context: Context, callback?: (path: ContextPath) => void) {
@@ -101,14 +85,6 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             this.path = context.createPath(this.id);
 
             callback?.(this.path);
-
-            if (this.path) {
-                if (!this.hitPath) {
-                    this.hitPath = context.createPath(`${this.id}:hit`);
-                }
-
-                this.hitPath.addPath(this.path);
-            }
 
             if (this.path && this.clip) {
                 context.clip(this.path);
