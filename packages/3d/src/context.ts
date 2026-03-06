@@ -25,13 +25,9 @@ import type {
 
 import type {
     Matrix4,
-} from './math/matrix';
-
-import type {
+    ProjectedPoint,
     Vector3,
-} from './math/vector';
-
-export type ProjectedPoint = [x: number, y: number, depth: number];
+} from './math';
 
 export interface Context3DOptions extends ContextOptions {
     fov?: number;

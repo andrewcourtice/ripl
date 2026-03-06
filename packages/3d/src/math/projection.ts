@@ -10,9 +10,7 @@ import type {
     Vector3,
 } from './vector';
 
-import type {
-    ProjectedPoint,
-} from '../context';
+export type ProjectedPoint = [x: number, y: number, depth: number];
 
 export interface Viewport {
     width: number;
