@@ -28,6 +28,7 @@
             "@ripl/svg": ["packages/svg/src/index.ts"],
             "@ripl/charts": ["packages/charts/src/index.ts"],
             "@ripl/3d": ["packages/3d/src/index.ts"],
+            "@ripl/vue": ["packages/vue/src/index.ts"],
         }
     },
     "files": [

@@ -40,6 +40,7 @@ export default defineConfig({
                 '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
                 '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
+                '@ripl/vue': path.resolve(__dirname, '../../../packages/vue/src/index.ts'),
             },
         },
         css: {
@@ -82,6 +83,10 @@ export default defineConfig({
                     {
                         text: '3D',
                         link: '/docs/3d/',
+                    },
+                    {
+                        text: 'Adapters',
+                        link: '/docs/adapters/vue/',
                     },
                 ],
             },
@@ -318,6 +323,38 @@ export default defineConfig({
                         text,
                         link,
                     })),
+                },
+            ],
+
+            '/docs/adapters': [
+                {
+                    text: 'Vue',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/adapters/vue/',
+                        },
+                        {
+                            text: 'Installation',
+                            link: '/docs/adapters/vue/installation',
+                        },
+                        {
+                            text: 'Getting Started',
+                            link: '/docs/adapters/vue/getting-started',
+                        },
+                        {
+                            text: 'Components',
+                            link: '/docs/adapters/vue/components',
+                        },
+                        {
+                            text: 'Composables',
+                            link: '/docs/adapters/vue/composables',
+                        },
+                        {
+                            text: 'Transitions',
+                            link: '/docs/adapters/vue/transitions',
+                        },
+                    ],
                 },
             ],
 

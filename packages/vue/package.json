@@ -1,0 +1,50 @@
+{
+    "name": "@ripl/vue",
+    "version": "1.0.0-beta.0",
+    "description": "Vue 3 adapter for Ripl",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
+    "repository": "https://github.com/andrewcourtice/ripl",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "homepage": "https://www.ripl.rocks",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsup"
+    },
+    "dependencies": {
+        "@ripl/core": "1.0.0-beta.0",
+        "@ripl/utilities": "1.0.0-beta.0"
+    },
+    "peerDependencies": {
+        "@ripl/3d": "1.0.0-beta.0",
+        "@ripl/svg": "1.0.0-beta.0",
+        "vue": "^3.3.0"
+    },
+    "peerDependenciesMeta": {
+        "@ripl/3d": {
+            "optional": true
+        },
+        "@ripl/svg": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "vue": "^3.5.29"
+    }
+}
