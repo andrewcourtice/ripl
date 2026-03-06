@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -30,7 +30,7 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
-export class Arc extends Shape<ArcState> {
+export class Arc extends Shape2D<ArcState> {
 
     public get cx() {
         return this.getStateValue('cx');
@@ -96,7 +96,7 @@ export class Arc extends Shape<ArcState> {
         this.setStateValue('borderRadius', value);
     }
 
-    constructor(options: ShapeOptions<ArcState>) {
+    constructor(options: Shape2DOptions<ArcState>) {
         super('arc', options);
     }
 

@@ -5,8 +5,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -474,7 +474,7 @@ export function polylineStepAfterRenderer(): PolylineRenderFunc {
     };
 }
 
-export class Polyline extends Shape<PolylineState> {
+export class Polyline extends Shape2D<PolylineState> {
 
     public get points() {
         return this.getStateValue('points');
@@ -492,7 +492,7 @@ export class Polyline extends Shape<PolylineState> {
         this.setStateValue('renderer', value);
     }
 
-    constructor(options: ShapeOptions<PolylineState>) {
+    constructor(options: Shape2DOptions<PolylineState>) {
         super('polyline', options);
     }
 

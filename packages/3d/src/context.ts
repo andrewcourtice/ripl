@@ -21,16 +21,13 @@ import {
 
 import type {
     ContextOptions,
-    Point,
 } from '@ripl/core';
 
 import type {
     Matrix4,
-} from './math/matrix';
-
-import type {
+    ProjectedPoint,
     Vector3,
-} from './math/vector';
+} from './math';
 
 export interface Context3DOptions extends ContextOptions {
     fov?: number;
@@ -44,7 +41,7 @@ export class Context3D extends CanvasContext {
     public projectionMatrix: Matrix4;
     public viewProjectionMatrix: Matrix4;
     public lightDirection: Vector3;
-    public faceBuffer: ProjectedFace3D[] | null = null;
+    public faceBuffer: ProjectedFace3D[] = [];
 
     private fov: number;
     private near: number;
@@ -118,33 +115,87 @@ export class Context3D extends CanvasContext {
         this.updateViewProjectionMatrix();
     }
 
-    public project(point: Vector3): Point {
+    public project(point: Vector3): ProjectedPoint {
         const clip = mat4TransformPoint(this.viewProjectionMatrix, point);
 
         return [
             (clip[0] * 0.5 + 0.5) * this.width,
             (-clip[1] * 0.5 + 0.5) * this.height,
+            clip[2],
         ];
     }
 
-    public projectDepth(point: Vector3): number {
-        return mat4TransformPoint(this.viewProjectionMatrix, point)[2];
+    markRenderStart(): void {
+        super.markRenderStart();
+
+        if (this.renderDepth === 1) {
+            this.faceBuffer.length = 0;
+        }
     }
 
     markRenderEnd(): void {
         super.markRenderEnd();
 
-        if (this.renderDepth === 0 && this.faceBuffer && this.faceBuffer.length > 0) {
-            const faces = this.faceBuffer;
-            this.faceBuffer = null;
-
-            // Global painter's algorithm: sort back-to-front
-            faces.sort((a, b) => b.depth - a.depth);
-
-            for (const face of faces) {
-                face.element.renderFace(this, face);
-            }
+        if (this.renderDepth > 0 || this.faceBuffer.length === 0) {
+            return;
         }
+
+        const faces = this.faceBuffer;
+        const ctx = this.context;
+
+        // Global painter's algorithm: sort back-to-front
+        faces.sort((a, b) => b.depth - a.depth);
+
+        let lastFill = '';
+        let lastStroke = '';
+        let lastLineWidth = -1;
+
+        for (const face of faces) {
+            this.drawFace(ctx, face, lastFill, lastStroke, lastLineWidth);
+
+            lastFill = face.fillColor;
+            lastStroke = face.strokeStyle ?? '';
+            lastLineWidth = face.lineWidth ?? -1;
+        }
+    }
+
+    private drawFace(
+        ctx: CanvasRenderingContext2D,
+        face: ProjectedFace3D,
+        lastFill: string,
+        lastStroke: string,
+        lastLineWidth: number
+    ): void {
+        const points = face.points;
+
+        ctx.beginPath();
+        ctx.moveTo(points[0][0], points[0][1]);
+
+        for (let idx = 1; idx < points.length; idx++) {
+            ctx.lineTo(points[idx][0], points[idx][1]);
+        }
+
+        ctx.closePath();
+
+        if (face.fillColor !== lastFill) {
+            ctx.fillStyle = face.fillColor;
+        }
+
+        ctx.fill();
+
+        if (!face.strokeStyle) {
+            return;
+        }
+
+        if (face.strokeStyle !== lastStroke) {
+            ctx.strokeStyle = face.strokeStyle;
+        }
+
+        if (face.lineWidth !== undefined && face.lineWidth !== lastLineWidth) {
+            ctx.lineWidth = face.lineWidth;
+        }
+
+        ctx.stroke();
     }
 
 }

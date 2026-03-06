@@ -7,8 +7,8 @@ import {
     Box,
     max,
     min,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '@ripl/core';
 
 export interface SankeyLinkState extends BaseElementState {
@@ -18,7 +18,7 @@ export interface SankeyLinkState extends BaseElementState {
     ty: number;
 }
 
-export class SankeyLinkPath extends Shape<SankeyLinkState> {
+export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
 
     public get sx() {
         return this.getStateValue('sx');
@@ -52,7 +52,7 @@ export class SankeyLinkPath extends Shape<SankeyLinkState> {
         this.setStateValue('ty', value);
     }
 
-    constructor(options: ShapeOptions<SankeyLinkState>) {
+    constructor(options: Shape2DOptions<SankeyLinkState>) {
         super('sankey-link', {
             autoFill: false,
             ...options,

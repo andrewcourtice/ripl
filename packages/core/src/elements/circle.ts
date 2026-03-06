@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -18,7 +18,7 @@ export interface CircleState extends BaseElementState {
     radius: number;
 }
 
-export class Circle extends Shape<CircleState> {
+export class Circle extends Shape2D<CircleState> {
 
     public get cx() {
         return this.getStateValue('cx');
@@ -44,7 +44,7 @@ export class Circle extends Shape<CircleState> {
         this.setStateValue('radius', value);
     }
 
-    constructor(options: ShapeOptions<CircleState>) {
+    constructor(options: Shape2DOptions<CircleState>) {
         super('circle', options);
     }
 

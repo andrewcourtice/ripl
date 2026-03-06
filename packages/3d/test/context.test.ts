@@ -137,24 +137,40 @@ describe('Context3D', () => {
         expect(ctx.projectionMatrix[15]).toBe(1);
     });
 
-    test('project returns a 2D point', () => {
+    test('project returns a projected point with x, y, and depth', () => {
         const ctx = createContext(document.createElement('div'));
         ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
         const point = ctx.project([0, 0, 0]);
 
-        expect(point).toHaveLength(2);
+        expect(point).toHaveLength(3);
         expect(typeof point[0]).toBe('number');
         expect(typeof point[1]).toBe('number');
+        expect(typeof point[2]).toBe('number');
     });
 
-    test('projectDepth returns a number', () => {
+    test('faceBuffer is initialized as empty array', () => {
         const ctx = createContext(document.createElement('div'));
-        ctx.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
-        const depth = ctx.projectDepth([0, 0, 0]);
+        expect(ctx.faceBuffer).toEqual([]);
+    });
 
-        expect(typeof depth).toBe('number');
+    test('markRenderStart resets faceBuffer at depth 1', () => {
+        const ctx = createContext(document.createElement('div'));
+
+        ctx.faceBuffer.push({
+            points: [[0, 0, 0]],
+            fillColor: '#ff0000',
+            strokeStyle: undefined,
+            lineWidth: undefined,
+            depth: 1,
+        });
+
+        expect(ctx.faceBuffer.length).toBe(1);
+
+        ctx.markRenderStart();
+
+        expect(ctx.faceBuffer.length).toBe(0);
     });
 
 });

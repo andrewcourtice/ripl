@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -21,7 +21,7 @@ export interface LineState extends BaseElementState {
     y2: number;
 }
 
-export class Line extends Shape<LineState> {
+export class Line extends Shape2D<LineState> {
 
     public get x1() {
         return this.getStateValue('x1');
@@ -55,7 +55,7 @@ export class Line extends Shape<LineState> {
         this.setStateValue('y2', value);
     }
 
-    constructor(options: ShapeOptions<LineState>) {
+    constructor(options: Shape2DOptions<LineState>) {
         super('line', options);
     }
 

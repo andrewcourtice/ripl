@@ -10,13 +10,21 @@ import {
     ElementOptions,
 } from './element';
 
-export type ShapeOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
+export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+
+    constructor(type: string, options: ElementOptions<TState>) {
+        super(type, options);
+    }
+
+}
+
+export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     autoStroke?: boolean;
     autoFill?: boolean;
     clip?: boolean;
 };
 
-export class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
+export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
 
     protected path?: ContextPath;
 
@@ -24,7 +32,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
     public autoFill: boolean;
     public clip: boolean;
 
-    constructor(type: string, options: ShapeOptions<TState>) {
+    constructor(type: string, options: Shape2DOptions<TState>) {
         const {
             autoFill = true,
             autoStroke = true,
@@ -40,7 +48,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
     }
 
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        if (!this.context) {
+        if (!this.context || !this.path) {
             return super.intersectsWith(x, y, options);
         }
 
@@ -57,7 +65,7 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
             return isAnyIntersecting();
         }
 
-        if (!this.path || this.pointerEvents === 'none') {
+        if (this.pointerEvents === 'none') {
             return false;
         }
 
@@ -95,8 +103,8 @@ export class Shape<TState extends BaseElementState = BaseElementState> extends E
 
 }
 
-export function createShape(...options: ConstructorParameters<typeof Shape>) {
-    return new Shape(...options);
+export function createShape(...options: ConstructorParameters<typeof Shape2D>) {
+    return new Shape2D(...options);
 }
 
 export function elementIsShape(value: unknown): value is Shape {

@@ -4,8 +4,8 @@ import type {
 
 import {
     BaseElementState,
-    Shape,
-    ShapeOptions,
+    Shape2D,
+    Shape2DOptions,
 } from '../core';
 
 import {
@@ -22,7 +22,7 @@ export interface EllipseState extends BaseElementState {
     endAngle: number;
 }
 
-export class Ellipse extends Shape<EllipseState> {
+export class Ellipse extends Shape2D<EllipseState> {
 
     public get cx() {
         return this.getStateValue('cx');
@@ -80,7 +80,7 @@ export class Ellipse extends Shape<EllipseState> {
         this.setStateValue('endAngle', value);
     }
 
-    constructor(options: ShapeOptions<EllipseState>) {
+    constructor(options: Shape2DOptions<EllipseState>) {
         super('ellipse', options);
     }
 

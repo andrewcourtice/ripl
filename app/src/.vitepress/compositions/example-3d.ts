@@ -6,7 +6,6 @@ import {
 import {
     Context3D,
     createCamera,
-    depthSort,
 } from '@ripl/3d';
 
 import {
@@ -39,7 +38,6 @@ export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Cam
 
         const renderer = createRenderer(scene, {
             autoStop: false,
-            sortBuffer: depthSort(ctx),
         });
 
         const camera = createCamera(scene, {
