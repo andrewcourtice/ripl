@@ -4,6 +4,7 @@ import {
     onBeforeUnmount,
     onMounted,
     ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -26,7 +27,7 @@ function defineContextComponent(name: string, factory: ContextFactory) {
 
         setup(_, { slots }) {
             const container = ref<HTMLElement>();
-            const context = ref<Context>();
+            const context = shallowRef<Context>();
 
             provideContext(context);
 

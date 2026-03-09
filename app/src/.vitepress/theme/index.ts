@@ -38,6 +38,10 @@ import {
     enhanceAppWithTabs,
 } from 'vitepress-plugin-tabs/client';
 
+import {
+    createRiplPlugin,
+} from '@ripl/vue';
+
 import type {
     Theme,
 } from 'vitepress';
@@ -70,5 +74,7 @@ export default {
         app.component('RiplDropdownLabel', RiplDropdownLabel);
 
         enhanceAppWithTabs(app);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        app.use(createRiplPlugin() as any);
     },
 } satisfies Theme;

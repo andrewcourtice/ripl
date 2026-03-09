@@ -4,7 +4,7 @@ import {
     onBeforeUnmount,
     onMounted,
     ref,
-    useAttrs,
+    shallowRef,
     watch,
 } from 'vue';
 
@@ -74,6 +74,7 @@ export function defineShapeComponent(
 ): Component {
     return defineComponent({
         name,
+        inheritAttrs: false,
 
         props: shapePropDefs as Record<string, {
             type: PropType<unknown> | null;
@@ -92,7 +93,7 @@ export function defineShapeComponent(
             const renderer = useRenderer();
             const scene = useScene();
             const transitionCtx = inject(TRANSITION_KEY, ref(undefined));
-            const element = ref<Element>();
+            const element = shallowRef<Element>();
 
             const listeners = Object.keys(attrs).filter(key => key.startsWith('on'));
 

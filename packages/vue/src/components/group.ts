@@ -2,7 +2,7 @@ import {
     defineComponent,
     onBeforeUnmount,
     onMounted,
-    ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -31,7 +31,7 @@ export const RiplGroup = defineComponent({
 
     setup(props, { slots }) {
         const parent = useParent();
-        const group = ref<Group>();
+        const group = shallowRef<Group>();
 
         provideParent(group);
 

@@ -1,7 +1,7 @@
 import {
     inject,
     provide,
-    ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -22,5 +22,5 @@ export function provideParent(parent: Ref<Group | Scene | undefined>) {
 }
 
 export function useParent(): Ref<Group | Scene | undefined> {
-    return inject(PARENT_KEY, ref(undefined));
+    return inject(PARENT_KEY, shallowRef(undefined));
 }

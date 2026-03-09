@@ -1,7 +1,7 @@
 import {
     defineComponent,
     onBeforeUnmount,
-    ref,
+    shallowRef,
     watch,
 } from 'vue';
 
@@ -33,7 +33,7 @@ export const RiplScene = defineComponent({
 
     setup(props, { slots }) {
         const context = useContext();
-        const scene = ref<Scene>();
+        const scene = shallowRef<Scene>();
 
         provideScene(scene);
         provideParent(scene);

@@ -1,7 +1,7 @@
 import {
     inject,
     provide,
-    ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -21,5 +21,5 @@ export function provideRenderer(renderer: Ref<Renderer | undefined>) {
 }
 
 export function useRenderer(): Ref<Renderer | undefined> {
-    return inject(RENDERER_KEY, ref(undefined));
+    return inject(RENDERER_KEY, shallowRef(undefined));
 }

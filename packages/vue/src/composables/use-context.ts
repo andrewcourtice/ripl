@@ -1,7 +1,7 @@
 import {
     inject,
     provide,
-    ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -21,5 +21,5 @@ export function provideContext(context: Ref<Context | undefined>) {
 }
 
 export function useContext(): Ref<Context | undefined> {
-    return inject(CONTEXT_KEY, ref(undefined));
+    return inject(CONTEXT_KEY, shallowRef(undefined));
 }

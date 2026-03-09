@@ -335,6 +335,10 @@ export default defineConfig({
                             link: '/docs/adapters/vue/',
                         },
                         {
+                            text: 'Demo',
+                            link: '/docs/adapters/vue/demo',
+                        },
+                        {
                             text: 'Installation',
                             link: '/docs/adapters/vue/installation',
                         },

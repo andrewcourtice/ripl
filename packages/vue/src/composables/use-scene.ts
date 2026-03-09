@@ -1,7 +1,7 @@
 import {
     inject,
     provide,
-    ref,
+    shallowRef,
 } from 'vue';
 
 import {
@@ -21,5 +21,5 @@ export function provideScene(scene: Ref<Scene | undefined>) {
 }
 
 export function useScene(): Ref<Scene | undefined> {
-    return inject(SCENE_KEY, ref(undefined));
+    return inject(SCENE_KEY, shallowRef(undefined));
 }

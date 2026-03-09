@@ -2,6 +2,18 @@
 
 `@ripl/vue` provides a set of renderless Vue 3 components and composables that integrate Ripl's 2D graphics rendering directly into your Vue application's component tree.
 
+## Demo
+
+An interactive solar system built entirely with `@ripl/vue` components. Hover planets to highlight, click to select, and use the controls to animate transitions.
+
+<ClientOnly>
+    <VueAdapterDemo />
+</ClientOnly>
+
+<script setup>
+import VueAdapterDemo from './demo.vue';
+</script>
+
 ## Why?
 
 While Ripl's imperative API is powerful and flexible, Vue developers often prefer a declarative, template-driven approach. `@ripl/vue` bridges this gap by:
