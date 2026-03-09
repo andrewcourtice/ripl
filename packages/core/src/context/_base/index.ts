@@ -18,15 +18,25 @@ import {
 } from '../../scales';
 
 import {
+    arrayFilter,
     arrayForEach,
-    Disposable,
+    arrayJoin,
+    DOMElementEventMap,
+    DOMEventHandler,
     functionCache,
+    functionMemoize,
     hasWindow,
     onDOMElementResize,
+    onDOMEvent,
     stringUniqueId,
+    typeIsNil,
     typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
+
+import {
+    createFrameBuffer,
+} from '../../animation';
 
 export type Direction = 'inherit' | 'ltr' | 'rtl';
 export type FontKerning = 'auto' | 'none' | 'normal';
@@ -38,17 +48,42 @@ export type FillRule = 'evenodd' | 'nonzero';
 export type TransformOrigin = number | string;
 export type Rotation = number | string;
 
+export type RenderElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
+
+export interface RenderElementIntersectionOptions {
+    isPointer: boolean;
+}
+
 export interface RenderElement {
     readonly id: string;
     parent?: RenderElement;
+    abstract: boolean;
+    pointerEvents: RenderElementPointerEvents;
+    renderDepth?: number;
+    zIndex: number;
     getBoundingBox?(): Box;
+    has(event: string): boolean;
+    intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    emit(type: string, data: any): void;
 }
 
 export interface ContextEventMap extends EventMap {
     resize: null;
+    mouseenter: null;
+    mouseleave: null;
+    mousemove: {
+        x: number;
+        y: number;
+    };
+    click: {
+        x: number;
+        y: number;
+    };
 }
 
 export interface ContextOptions {
+    interactive?: boolean;
 }
 
 export type TextOptions = {
@@ -303,9 +338,24 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected currentState: BaseState;
     protected renderDepth = 0;
 
-    private disposables: Disposable[];
+    private interactive: boolean;
+    private interactionEnabled = false;
+    private activeElements = new Set<RenderElement>();
 
-    public currentRenderElement?: RenderElement;
+    public renderElement?: RenderElement;
+    public renderedElements: RenderElement[];
+
+    get currentRenderElement() {
+        return this.renderElement;
+    }
+
+    set currentRenderElement(element: RenderElement | undefined) {
+        this.renderElement = element;
+
+        if (element && !element.abstract) {
+            this.renderedElements.push(element);
+        }
+    }
 
     get fillStyle(): string {
         return this.currentState.fillStyle;
@@ -539,6 +589,10 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     ) {
         super();
 
+        const {
+            interactive = true,
+        } = options || {};
+
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
             : target;
@@ -549,11 +603,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         root.appendChild(element);
 
-        this.disposables = [];
+        this.interactive = interactive;
         this.type = type;
         this.root = root;
         this.element = element;
         this.states = [];
+        this.renderedElements = [];
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
@@ -570,9 +625,11 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         this.rescale(width, height);
 
-        this.disposables.push(
-            onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height))
-        );
+        this.retain(onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height)));
+
+        if (this.interactive) {
+            this.enableInteraction();
+        }
     }
 
     protected rescale(width: number, height: number) {
@@ -614,7 +671,15 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     reset(): void {
     }
 
+    invalidateTrackedElements(event: string): void {
+        this.getTrackedElements.cache.clear();
+    }
+
     markRenderStart(): void {
+        if (this.renderDepth === 0) {
+            this.renderedElements = [];
+        }
+
         this.renderDepth += 1;
     }
 
@@ -672,9 +737,128 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         return false;
     }
 
+    private getTrackedElements = functionMemoize((event: string) => {
+        return arrayFilter(this.renderedElements, element => element.has(event));
+    });
+
+    private attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+        this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), 'interaction');
+    }
+
+    public enableInteraction(): void {
+        if (this.interactionEnabled) {
+            return;
+        }
+
+        this.interactionEnabled = true;
+
+        let left = 0;
+        let top = 0;
+
+        const scheduleHitTest = createFrameBuffer();
+
+        this.attachInteractionEvent('mouseenter', () => {
+            ({
+                left,
+                top,
+            } = this.element.getBoundingClientRect());
+
+            this.emit('mouseenter', null);
+        });
+
+        this.attachInteractionEvent('mouseleave', () => {
+            this.emit('mouseleave', null);
+        });
+
+        this.attachInteractionEvent('mousemove', event => {
+            const x = event.clientX - left;
+            const y = event.clientY - top;
+
+            this.emit('mousemove', {
+                x,
+                y,
+            });
+
+            scheduleHitTest(() => {
+                const trueX = this.scaleX(x);
+                const trueY = this.scaleY(y);
+
+                const trackedElements = [
+                    ...this.getTrackedElements('mousemove'),
+                    ...this.getTrackedElements('mouseenter'),
+                    ...this.getTrackedElements('mouseleave'),
+                ];
+
+                const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
+                    isPointer: true,
+                }));
+
+                const {
+                    left: entries,
+                    inner: updates,
+                    right: exits,
+                } = arrayJoin(hitElements, [...this.activeElements], (hitElement, activeElement) => hitElement === activeElement);
+
+                arrayForEach(entries, element => {
+                    this.activeElements.add(element);
+                    element.emit('mouseenter', null);
+                });
+
+                arrayForEach(updates, ([element]) => element.emit('mousemove', {
+                    x,
+                    y,
+                }));
+
+                arrayForEach(exits, element => {
+                    this.activeElements.delete(element);
+                    element.emit('mouseleave', null);
+                });
+            });
+        });
+
+        this.attachInteractionEvent('click', event => {
+            const x = this.scaleX(event.clientX - left);
+            const y = this.scaleY(event.clientY - top);
+
+            const clickElements = this.getTrackedElements('click');
+            const hitElements = arrayFilter(clickElements, element => element.intersectsWith(x, y, {
+                isPointer: true,
+            }));
+
+            if (hitElements.length > 0) {
+                hitElements.sort((ea, eb) => {
+                    const depthA = ea.renderDepth;
+                    const depthB = eb.renderDepth;
+
+                    if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
+                        return depthA - depthB;
+                    }
+
+                    return eb.zIndex - ea.zIndex;
+                });
+
+                hitElements[0].emit('click', {
+                    x,
+                    y,
+                });
+            }
+        });
+    }
+
+    public disableInteraction(): void {
+        if (!this.interactionEnabled) {
+            return;
+        }
+
+        this.interactionEnabled = false;
+        this.dispose('interaction');
+        this.activeElements.clear();
+    }
+
     public destroy(): void {
-        arrayForEach(this.disposables, ({ dispose }) => dispose());
+        this.disableInteraction();
         this.element.remove();
+        this.dispose();
         super.destroy();
     }
 

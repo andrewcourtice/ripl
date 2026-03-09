@@ -112,11 +112,11 @@ export class Crosshair extends ChartComponent {
 
         arrayForEach(this.disposables, d => d.dispose());
         this.disposables = [
-            this.scene.on('mousemove', (event) => {
+            this.context.on('mousemove', (event) => {
                 const { x, y } = event.data;
                 this.show(x, y);
             }),
-            this.scene.on('mouseleave', () => {
+            this.context.on('mouseleave', () => {
                 this.hide();
             }),
         ];

@@ -16,22 +16,10 @@ import {
 import {
     Group,
     GroupOptions,
-    isGroup,
 } from './group';
 
 import {
-    arrayDedupe,
-    arrayFilter,
     arrayForEach,
-    arrayJoin,
-    arrayReduce,
-    Disposable,
-    DOMElementEventMap,
-    DOMEventHandler,
-    functionMemoize,
-    onDOMEvent,
-    setForEach,
-    typeIsNil,
 } from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
@@ -47,7 +35,6 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     public context: TContext;
 
     public buffer: Element[];
-    private disposals = new Set<Disposable>();
 
     public get width() {
         return this.context.width;
@@ -77,112 +64,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this.context = context;
         this.buffer = this.graph();
 
-        let left = 0;
-        let top = 0;
-
         const requestFrame = createFrameBuffer();
-        const activeElements = [] as Element[];
-        const getTrackedElements = functionMemoize((event: keyof ElementEventMap) => {
-            const elements = arrayReduce(this.graph(true), (output, element) => {
-                if (!element.has(event)) {
-                    return output;
-                }
-
-                return output.concat(isGroup(element)
-                    ? element.graph()
-                    : element);
-            }, [] as Element[]);
-
-            return arrayDedupe(elements);
-        });
-
-        this.attachDOMEvent('mouseenter', () => {
-            ({
-                left,
-                top,
-            } = this.context.element.getBoundingClientRect());
-
-            this.emit('mouseenter', null);
-        });
-
-        this.attachDOMEvent('mouseleave', () => {
-            this.emit('mouseleave', null);
-        });
-
-        const scheduleHitTest = createFrameBuffer();
-
-        this.attachDOMEvent('mousemove', event => {
-            const x = event.clientX - left;
-            const y = event.clientY - top;
-
-            this.emit('mousemove', {
-                x,
-                y,
-            });
-
-            scheduleHitTest(() => {
-                const trueX = this.context.scaleX(x);
-                const trueY = this.context.scaleY(y);
-
-                const trackedElements = [
-                    ...getTrackedElements('mousemove'),
-                    ...getTrackedElements('mouseenter'),
-                    ...getTrackedElements('mouseleave'),
-                ];
-
-                const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
-                    isPointer: true,
-                }));
-
-                const {
-                    left: entries,
-                    inner: updates,
-                    right: exits,
-                } = arrayJoin(hitElements, activeElements, (hitElement, activeElement) => hitElement === activeElement);
-
-                arrayForEach(entries, element => {
-                    activeElements.push(element);
-                    element.emit('mouseenter', null);
-                });
-
-                arrayForEach(updates, ([element]) => element.emit('mousemove', {
-                    x,
-                    y,
-                }));
-
-                arrayForEach(exits, element => {
-                    activeElements.splice(activeElements.indexOf(element), 1);
-                    element.emit('mouseleave', null);
-                });
-            });
-        });
-
-        this.attachDOMEvent('click', event => {
-            const x = this.context.scaleX(event.clientX - left);
-            const y = this.context.scaleY(event.clientY - top);
-
-            const hitElements = arrayFilter(getTrackedElements('click'), element => element.intersectsWith(x, y, {
-                isPointer: true,
-            }));
-
-            if (hitElements.length > 0) {
-                hitElements.sort((ea, eb) => {
-                    const depthA = ea.renderDepth;
-                    const depthB = eb.renderDepth;
-
-                    if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
-                        return depthA - depthB;
-                    }
-
-                    return eb.zIndex - ea.zIndex;
-                });
-
-                hitElements[0].emit('click', {
-                    x,
-                    y,
-                });
-            }
-        });
 
         context.on('resize', () => {
             this.emit('resize', null);
@@ -194,19 +76,11 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         this.on('graph', () => requestFrame(() => {
             this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
-            getTrackedElements.cache.clear();
+            context.invalidateTrackedElements('');
         }));
-
-        this.on('track', ({ data }) => getTrackedElements.cache.delete(data));
-        this.on('untrack', ({ data }) => getTrackedElements.cache.delete(data));
-    }
-
-    private attachDOMEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
-        this.disposals.add(onDOMEvent(this.context.element as unknown as HTMLElement, event, handler));
     }
 
     public destroy(): void {
-        setForEach(this.disposals, disposal => disposal.dispose());
         this.context.destroy();
         super.destroy();
     }

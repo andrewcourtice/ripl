@@ -1,4 +1,8 @@
 import {
+    Disposer,
+} from './disposer';
+
+import {
     Disposable,
     setForEach,
 } from '@ripl/utilities';
@@ -56,7 +60,7 @@ export class Event<TData = undefined> {
 
 }
 
-export class EventBus<TEventMap extends EventMap = EventMap> {
+export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     public parent?: EventBus<TEventMap>;
 

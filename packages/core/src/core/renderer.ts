@@ -128,8 +128,8 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (autoStop) {
-            scene.on('mousemove', () => this.start(), { self: true });
-            scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
+            scene.context.on('mousemove', () => this.start());
+            scene.context.on('mouseleave', () => this.stopOnIdle());
         }
 
         scene.on('graph', () => this.start());

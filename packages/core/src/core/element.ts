@@ -508,9 +508,14 @@ export class Element<
         }
 
         this.emit('track' as keyof TEventMap, event as TEventMap[keyof TEventMap]);
+        this.context?.invalidateTrackedElements(event as string);
 
         return {
-            dispose: () => (this.emit('untrack' as keyof TEventMap, event as TEventMap[keyof TEventMap]), listener.dispose()),
+            dispose: () => {
+                this.emit('untrack' as keyof TEventMap, event as TEventMap[keyof TEventMap]);
+                this.context?.invalidateTrackedElements(event as string);
+                listener.dispose();
+            },
         };
     }
 

@@ -14,7 +14,7 @@ import type {
 
 export type IterableObject = Record<PropertyKey, unknown>;
 export type IterationDirection = 1 | -1;
-export type ArrayIteratee<TValue, TResult = void> = (value: TValue, index: number) => TResult;
+export type CollectionIteratee<TValue, TResult = void> = (value: TValue, index: number) => TResult;
 export type ArrayReducer<TValue, TResult = void> = (accumulator: TResult, value: TValue, index: number) => TResult;
 export type ObjectIteratee<TKey, TValue, TResult = void> = (key: TKey, value: TValue) => TResult;
 export type ObjectReducer<TKey, TValue, TResult = void> = (accumulator: TResult, key: TKey, value: TValue) => TResult;
@@ -31,18 +31,17 @@ export interface ArrayJoin<TLeft, TRight> {
 
 const BREAK = Symbol('break');
 
-function iterateArray<TValue>(input: TValue[], iteratee: ArrayIteratee<TValue, typeof BREAK | void>, direction: IterationDirection = 1): void {
-    const maxIndex = input.length - 1;
-    const endIndex = direction === 1 ? maxIndex : 0;
+function iterateCollection<TValue>(input: Iterable<TValue>, iteratee: CollectionIteratee<TValue, typeof BREAK | void>): void {
+    let index = 0;
 
-    let index = direction === 1 ? 0 : maxIndex;
-
-    for (index; index * direction <= endIndex; index += direction) {
-        const result = iteratee(input[index], index);
+    for (const entry of input) {
+        const result = iteratee(entry, index);
 
         if (result === BREAK) {
             break;
         }
+
+        index += 1;
     }
 }
 
@@ -50,16 +49,16 @@ export function arrayDedupe<TValue>(input: TValue[]) {
     return Array.from(new Set(input));
 }
 
-export function arrayForEach<TValue>(input: TValue[], iteratee: ArrayIteratee<TValue>, direction: IterationDirection = 1): void {
-    iterateArray(input, iteratee, direction);
+export function arrayForEach<TValue>(input: TValue[], iteratee: CollectionIteratee<TValue>): void {
+    iterateCollection(input, iteratee);
 }
 
-export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult>, direction: IterationDirection = 1): TResult[] {
+export function arrayMap<TValue, TResult>(input: TValue[], iteratee: CollectionIteratee<TValue, TResult>): TResult[] {
     const output = new Array<TResult>(input.length);
 
-    iterateArray(input, (value, index) => {
+    iterateCollection(input, (value, index) => {
         output[index] = iteratee(value, index);
-    }, direction);
+    });
 
     return output;
 }
@@ -68,20 +67,20 @@ export function arrayMapRange<TResult>(length: number, iteratee: (index: number)
     return arrayMap(Array.from({ length }), (_, index) => iteratee(index));
 }
 
-export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult[]>, direction: IterationDirection = 1): TResult[] {
+export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: CollectionIteratee<TValue, TResult[]>): TResult[] {
     const output = [] as TResult[];
 
-    iterateArray(input, (value, index) => {
+    iterateCollection(input, (value, index) => {
         output.push(...iteratee(value, index));
-    }, direction);
+    });
 
     return output;
 }
 
-export function arrayFilter<TValue>(input: TValue[], predicate: ArrayIteratee<TValue, boolean>): TValue[] {
+export function arrayFilter<TValue>(input: TValue[], predicate: CollectionIteratee<TValue, boolean>): TValue[] {
     const output = [] as TValue[];
 
-    iterateArray(input, (value, index) => {
+    iterateCollection(input, (value, index) => {
         if (predicate(value, index)) {
             output.push(value);
         }
@@ -90,25 +89,25 @@ export function arrayFilter<TValue>(input: TValue[], predicate: ArrayIteratee<TV
     return output;
 }
 
-export function arrayReduce<TValue, TResult>(input: TValue[], reducer: ArrayReducer<TValue, TResult>, initial: TResult, direction: IterationDirection = 1): TResult {
+export function arrayReduce<TValue, TResult>(input: TValue[], reducer: ArrayReducer<TValue, TResult>, initial: TResult): TResult {
     let output = initial;
 
-    iterateArray(input, (value, index) => {
+    iterateCollection(input, (value, index) => {
         output = reducer(output, value, index);
-    }, direction);
+    });
 
     return output;
 }
 
-export function arrayFind<TValue>(input: TValue[], predicate: ArrayIteratee<TValue, boolean>, direction: IterationDirection = 1): TValue | undefined {
+export function arrayFind<TValue>(input: TValue[], predicate: CollectionIteratee<TValue, boolean>): TValue | undefined {
     let output: TValue | undefined;
 
-    iterateArray(input, (value, index) => {
+    iterateCollection(input, (value, index) => {
         if (predicate(value, index)) {
             output = value;
             return BREAK;
         }
-    }, direction);
+    });
 
     return output;
 }
@@ -123,7 +122,7 @@ export function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[
         : (left: TLeft, right: TRight) => predicateKey(left as Record<PropertyKey, unknown>, right as Record<PropertyKey, unknown>, predicate as PropertyKey)
     ) as Predicate<TLeft, TRight>;
 
-    iterateArray(leftInput, valLeft => {
+    iterateCollection(leftInput, valLeft => {
         const valRight = arrayFind(rightInput, valRight => compare(valLeft, valRight));
 
         if (!typeIsNil(valRight)) {
@@ -148,7 +147,7 @@ export function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity
         : value => value[identity]
     ) as Indexer<TValue>;
 
-    iterateArray(input, value => {
+    iterateCollection(input, value => {
         const group = groupIdentity(value);
         output[group] = (output[group] || []).concat(value);
     });
@@ -172,7 +171,7 @@ function arrayFilterByMatch<TLeft, TRight>(leftInput: TLeft[], rightInput: TRigh
     const output = [] as TLeft[];
     const compare = resolveArrayCompare(predicate);
 
-    iterateArray(leftInput, valLeft => {
+    iterateCollection(leftInput, valLeft => {
         const found = arrayFind(rightInput, valRight => compare(valLeft, valRight));
         const shouldInclude = includeMatches ? !typeIsNil(found) : typeIsNil(found);
 
@@ -218,18 +217,51 @@ export function objectReduce<TSource extends IterableObject, TResult>(input: TSo
     return output;
 }
 
-export function setForEach<TValue>(input: Set<TValue>, iteratee: ArrayIteratee<TValue>, direction: IterationDirection = 1): void {
-    arrayForEach(Array.from(input), iteratee, direction);
+export function setForEach<TValue>(input: Set<TValue>, iteratee: CollectionIteratee<TValue>): void {
+    iterateCollection(input, iteratee);
 }
 
-export function setMap<TValue, TResult>(input: Set<TValue>, iteratee: ArrayIteratee<TValue, TResult>, direction: IterationDirection = 1): Set<TResult> {
-    return new Set(arrayMap(Array.from(input), iteratee, direction));
+export function setMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult>): Set<TResult> {
+    const output = new Set<TResult>();
+
+    iterateCollection(input, (value, index) => {
+        output.add(iteratee(value, index));
+    });
+
+    return output;
 }
 
-export function setFind<TValue>(input: Set<TValue>, predicate: ArrayIteratee<TValue, boolean>, direction: IterationDirection = 1): TValue | undefined {
-    return arrayFind(Array.from(input), predicate, direction);
+export function setFilter<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): Set<TValue> {
+    const output = new Set<TValue>();
+
+    iterateCollection(input, (value, index) => {
+        if (predicate(value, index)) {
+            output.add(value);
+        }
+    });
+
+    return output;
 }
 
-export function setFlatMap<TValue, TResult>(input: Set<TValue>, iteratee: ArrayIteratee<TValue, TResult[]>, direction: IterationDirection = 1): Set<TResult> {
-    return new Set(arrayFlatMap(Array.from(input), iteratee, direction));
+export function setFind<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): TValue | undefined {
+    let output: TValue | undefined;
+
+    iterateCollection(input, (value, index) => {
+        if (predicate(value, index)) {
+            output = value;
+            return BREAK;
+        }
+    });
+
+    return output;
+}
+
+export function setFlatMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult[]>): Set<TResult> {
+    const output = [] as TResult[];
+
+    iterateCollection(input, (value, index) => {
+        output.push(...iteratee(value, index));
+    });
+
+    return new Set(output);
 }
