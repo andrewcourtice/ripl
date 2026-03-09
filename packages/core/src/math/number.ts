@@ -1,7 +1,3 @@
-import {
-    arrayForEach,
-    arrayMap,
-} from '@ripl/utilities';
 
 export function min(...values: number[]): number {
     return Math.min(...values);
@@ -12,11 +8,11 @@ export function max(...values: number[]): number {
 }
 
 export function minOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return min(...arrayMap(values, accessor));
+    return min(...values.map(accessor));
 }
 
 export function maxOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
-    return max(...arrayMap(values, accessor));
+    return max(...values.map(accessor));
 }
 
 export function clamp(value: number, lower: number, upper: number): number {
@@ -34,7 +30,7 @@ export function getExtent<TValue>(values: TValue[], accessor: (value: TValue) =>
     let min = accessor(values[0]);
     let max = accessor(values[0]);
 
-    arrayForEach(values, item => {
+    values.forEach(item => {
         const value = accessor(item);
 
         min = Math.min(min, value);
@@ -50,7 +46,7 @@ export function getExtent<TValue>(values: TValue[], accessor: (value: TValue) =>
 export function getTotal<TValue>(values: TValue[], accessor: (value: TValue) => number): number {
     let total = 0;
 
-    arrayForEach(values, item => {
+    values.forEach(item => {
         total += accessor(item);
     });
 

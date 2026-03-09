@@ -8,9 +8,6 @@ import {
     Scene,
 } from '@ripl/core';
 
-import {
-    arrayForEach,
-} from '@ripl/utilities';
 
 import {
     getColorGenerator,
@@ -166,7 +163,7 @@ export class Chart<
         id: string;
         color?: string;
     }[]) {
-        arrayForEach(series, srs => {
+        series.forEach(srs => {
             if (!this.seriesColorMap.has(srs.id)) {
                 this.seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
             }

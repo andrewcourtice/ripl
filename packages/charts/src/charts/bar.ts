@@ -58,11 +58,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -188,12 +184,12 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.barGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         let seriesScale: BandScale<string> | undefined;
 
         if (!this.isStacked) {
-            seriesScale = scaleBand(arrayMap(series, s => s.id), [0, categoryScale.bandwidth], {
+            seriesScale = scaleBand(series.map(s => s.id), [0, categoryScale.bandwidth], {
                 innerPadding: 0.1,
             });
         }
@@ -245,7 +241,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
-            return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
+            return series.slice(0, seriesIndex).reduce((sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
                 const prevValue = getValue(item);
@@ -256,8 +252,8 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             }, 0);
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, srs => {
-            const children = arrayMap(data, item => {
+        const seriesEntryGroups = seriesEntries.map(srs => {
+            const children = data.map(item => {
                 const stackOffset = getStackOffset(srs, item);
                 const { id, value, state } = getBarState(srs, item, stackOffset);
 
@@ -306,7 +302,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([srs, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const bars = group.getElementsByType('rect') as Rect[];
 
             const {
@@ -315,9 +311,9 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, el => el.destroy());
+            barExits.forEach(el => el.destroy());
 
-            arrayMap(barEntries, item => {
+            barEntries.map(item => {
                 const stackOffset = getStackOffset(srs, item);
                 const { id, state } = getBarState(srs, item, stackOffset);
 
@@ -335,7 +331,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 group.add(rect);
             });
 
-            arrayForEach(barUpdates, ([item, bar]) => {
+            barUpdates.forEach(([item, bar]) => {
                 const stackOffset = getStackOffset(srs, item);
                 const { value, state } = getBarState(srs, item, stackOffset);
 
@@ -420,12 +416,12 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.barGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         let seriesScale: BandScale<string> | undefined;
 
         if (!this.isStacked) {
-            seriesScale = scaleBand(arrayMap(series, s => s.id), [0, categoryScale.bandwidth], {
+            seriesScale = scaleBand(series.map(s => s.id), [0, categoryScale.bandwidth], {
                 innerPadding: 0.1,
             });
         }
@@ -476,7 +472,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             const currentValue = getSrsValue(item);
             const seriesIndex = series.indexOf(srs);
 
-            return arrayReduce(series.slice(0, seriesIndex), (sum, prev) => {
+            return series.slice(0, seriesIndex).reduce((sum, prev) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
                 const prevValue = getValue(item);
@@ -487,8 +483,8 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             }, 0);
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, srs => {
-            const children = arrayMap(data, item => {
+        const seriesEntryGroups = seriesEntries.map(srs => {
+            const children = data.map(item => {
                 const stackOffset = getStackOffset(srs, item);
                 const { id, value, state } = getBarState(srs, item, stackOffset);
 
@@ -537,7 +533,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([srs, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const bars = group.getElementsByType('rect') as Rect[];
 
             const {
@@ -546,9 +542,9 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, el => el.destroy());
+            barExits.forEach(el => el.destroy());
 
-            arrayMap(barEntries, item => {
+            barEntries.map(item => {
                 const stackOffset = getStackOffset(srs, item);
                 const { id, state } = getBarState(srs, item, stackOffset);
 
@@ -566,7 +562,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 group.add(rect);
             });
 
-            arrayForEach(barUpdates, ([item, bar]) => {
+            barUpdates.forEach(([item, bar]) => {
                 const stackOffset = getStackOffset(srs, item);
                 const { value, state } = getBarState(srs, item, stackOffset);
 
@@ -643,9 +639,9 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            const keys = arrayMap(data, getKey);
+            const keys = data.map(getKey);
 
-            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
                 const getValue = typeIsFunction(valueAccessor)
                     ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -661,11 +657,11 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 let stackedMax = 0;
                 let stackedMin = 0;
 
-                arrayForEach(data, item => {
+                data.forEach(item => {
                     let positiveTotal = 0;
                     let negativeTotal = 0;
 
-                    arrayForEach(series, srs => {
+                    series.forEach(srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                         const value = getValue(item);
@@ -690,7 +686,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
@@ -755,7 +751,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
                 if (this.grid) {
                     const xTicks = valueScale.ticks(10);
-                    const xTickPositions = arrayMap(xTicks, tick => valueScale(tick));
+                    const xTickPositions = xTicks.map(tick => valueScale(tick));
 
                     this.grid.render(
                         xTickPositions,
@@ -829,7 +825,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
                 if (this.grid) {
                     const yTicks = adjustedValueScale.ticks(10);
-                    const yTickPositions = arrayMap(yTicks, tick => adjustedValueScale(tick));
+                    const yTickPositions = yTicks.map(tick => adjustedValueScale(tick));
 
                     this.grid.render(
                         [],

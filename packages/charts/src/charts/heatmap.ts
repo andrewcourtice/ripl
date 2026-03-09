@@ -40,10 +40,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -162,7 +159,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             let minVal = Infinity;
             let maxVal = -Infinity;
 
-            arrayForEach(data, item => {
+            data.forEach(item => {
                 const v = getValue(item);
                 minVal = Math.min(minVal, v);
                 maxVal = Math.max(maxVal, v);
@@ -268,7 +265,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             );
 
             // Draw cells
-            const cellData = arrayMap(data, item => {
+            const cellData = data.map(item => {
                 const xVal = getX(item);
                 const yVal = getY(item);
                 const value = getValue(item);
@@ -294,9 +291,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 right: cellExits,
             } = arrayJoin(cellData, this.cellGroups, (item, group) => item.id === group.id);
 
-            arrayForEach(cellExits, el => el.destroy());
+            cellExits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(cellEntries, cell => {
+            const entryGroups = cellEntries.map(cell => {
                 const rect = createRect({
                     id: `${cell.id}-rect`,
                     x: cell.x,
@@ -345,7 +342,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 });
             });
 
-            const updateGroups = arrayMap(cellUpdates, ([cell, group]) => {
+            const updateGroups = cellUpdates.map(([cell, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
 
                 if (rect) {
@@ -370,7 +367,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ];
 
             // Animate
-            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
+            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const entriesTransition = this.renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -379,7 +376,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = this.renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

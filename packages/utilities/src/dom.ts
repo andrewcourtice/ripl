@@ -1,7 +1,3 @@
-import {
-    arrayFind,
-} from './collection';
-
 import type {
     Disposable,
 } from './types';
@@ -35,7 +31,7 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
 
     if ('ResizeObserver' in window) {
         const observer = new ResizeObserver(entries => {
-            const entry = arrayFind(entries, ({ target }) => target === element);
+            const entry = entries.find(({ target }) => target === element);
 
             if (entry) {
                 handler({

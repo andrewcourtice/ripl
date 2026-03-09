@@ -18,8 +18,6 @@ import {
 } from '../../scales';
 
 import {
-    arrayFilter,
-    arrayForEach,
     arrayJoin,
     DOMElementEventMap,
     DOMEventHandler,
@@ -278,7 +276,7 @@ export class ContextPath implements ContextElement {
     }
 
     polyline(points: Point[]): void {
-        arrayForEach(points, ([x, y], index) => !index
+        points.forEach(([x, y], index) => !index
             ? this.moveTo(x,y)
             : this.lineTo(x, y)
         );
@@ -738,7 +736,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     private getTrackedElements = functionMemoize((event: string) => {
-        return arrayFilter(this.renderedElements, element => element.has(event));
+        return this.renderedElements.filter(element => element.has(event));
     });
 
     private attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
@@ -789,7 +787,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
                     ...this.getTrackedElements('mouseleave'),
                 ];
 
-                const hitElements = arrayFilter(trackedElements, element => element.intersectsWith(trueX, trueY, {
+                const hitElements = trackedElements.filter(element => element.intersectsWith(trueX, trueY, {
                     isPointer: true,
                 }));
 
@@ -799,17 +797,17 @@ export abstract class Context<TElement extends Element = Element> extends EventB
                     right: exits,
                 } = arrayJoin(hitElements, [...this.activeElements], (hitElement, activeElement) => hitElement === activeElement);
 
-                arrayForEach(entries, element => {
+                entries.forEach(element => {
                     this.activeElements.add(element);
                     element.emit('mouseenter', null);
                 });
 
-                arrayForEach(updates, ([element]) => element.emit('mousemove', {
+                updates.forEach(([element]) => element.emit('mousemove', {
                     x,
                     y,
                 }));
 
-                arrayForEach(exits, element => {
+                exits.forEach(element => {
                     this.activeElements.delete(element);
                     element.emit('mouseleave', null);
                 });
@@ -821,7 +819,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
             const y = this.scaleY(event.clientY - top);
 
             const clickElements = this.getTrackedElements('click');
-            const hitElements = arrayFilter(clickElements, element => element.intersectsWith(x, y, {
+            const hitElements = clickElements.filter(element => element.intersectsWith(x, y, {
                 isPointer: true,
             }));
 

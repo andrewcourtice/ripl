@@ -31,8 +31,6 @@ import {
 } from '../animation';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     OneOrMore,
     typeIsFunction,
     valueOneOrMore,
@@ -157,7 +155,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this.previousTime = this.currentTime;
 
-        arrayForEach(buffer, element => {
+        buffer.forEach(element => {
             if (this.transitionMap.has(element.id)) {
                 let time = 0;
 
@@ -255,7 +253,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return new Transition((resolve, _reject, _onAbort) => {
-            const elements = arrayFlatMap(valueOneOrMore(element), element => {
+            const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.graph(false) : [element];
             });
 
@@ -266,7 +264,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             const totalCount = elements.length;
             let completeCount = 0;
 
-            arrayForEach(elements, (element, index) => {
+            elements.forEach((element, index) => {
                 const {
                     duration = 0,
                     delay = 0,

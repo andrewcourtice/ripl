@@ -66,10 +66,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -195,17 +192,17 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.areaGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         // Precompute cumulative stacked values per data point
         const stackedValues: number[][] = [];
 
         if (stacked) {
-            arrayForEach(data, (item, dataIndex) => {
+            data.forEach((item, dataIndex) => {
                 stackedValues[dataIndex] = [];
                 let cumulative = 0;
 
-                arrayForEach(series, (srs, seriesIndex) => {
+                series.forEach((srs, seriesIndex) => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                     cumulative += getValue(item);
@@ -237,7 +234,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             return 0;
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, srs => {
+        const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
             const opacity = srs.opacity ?? 0.3;
             const showMarkers = srs.markers !== false;
@@ -246,7 +243,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             const areaPoints: Point[] = [];
             const markerElements: Circle[] = [];
 
-            arrayForEach(data, (item, dataIndex) => {
+            data.forEach((item, dataIndex) => {
                 const key = getKey(item);
                 const value = getSeriesValue(srs, item, dataIndex);
                 const x = this.xScale(key);
@@ -329,8 +326,8 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             });
 
             // Create baseline-flattened points for entry animation
-            const baselineLinePoints: Point[] = arrayMap(linePoints, ([x]) => [x, baseline]);
-            const baselineAreaPoints: Point[] = arrayMap(areaPoints, ([x]) => [x, baseline]);
+            const baselineLinePoints: Point[] = linePoints.map(([x]) => [x, baseline]);
+            const baselineAreaPoints: Point[] = areaPoints.map(([x]) => [x, baseline]);
 
             const areaFill = createPolyline({
                 id: `${srs.id}-area`,
@@ -366,7 +363,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([srs, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const color = this.getSeriesColor(srs.id);
             const line = group.getElementsByType('polyline')[1] as Polyline;
             const areaFill = group.getElementsByType('polyline')[0] as Polyline;
@@ -375,7 +372,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             const linePoints: Point[] = [];
             const areaPoints: Point[] = [];
 
-            arrayForEach(data, (item, dataIndex) => {
+            data.forEach((item, dataIndex) => {
                 const key = getKey(item);
                 const value = getSeriesValue(srs, item, dataIndex);
                 const x = this.xScale(key);
@@ -414,7 +411,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             } as PolylineState;
 
             // Update markers
-            arrayForEach(existingMarkers, (marker, index) => {
+            existingMarkers.forEach((marker, index) => {
                 if (index < data.length) {
                     const item = data[index];
                     const value = getSeriesValue(srs, item, index);
@@ -443,7 +440,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             ...seriesUpdateGroups,
         ];
 
-        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+        const entryTransitions = seriesEntryGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const polylines = group.getElementsByType('polyline') as Polyline[];
             const areaFill = polylines[0];
@@ -470,7 +467,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             return [lineTransition, areaTransition, markersTransition];
         });
 
-        const updateTransitions = arrayMap(seriesUpdateGroups, group => {
+        const updateTransitions = seriesUpdateGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const polylines = group.getElementsByType('polyline') as Polyline[];
             const line = polylines[1];
@@ -515,7 +512,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            const keys = arrayMap(data, getKey);
+            const keys = data.map(getKey);
 
             let dataExtent: number[];
 
@@ -524,12 +521,12 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 let stackedMax = 0;
                 let stackedMin = 0;
 
-                arrayForEach(data, item => {
+                data.forEach(item => {
                     let cumulative = 0;
                     let cumulativeMax = 0;
                     let cumulativeMin = 0;
 
-                    arrayForEach(series, srs => {
+                    series.forEach(srs => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
                         cumulative += getValue(item);
@@ -543,7 +540,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                 dataExtent = [stackedMin, stackedMax];
             } else {
-                const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+                const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
                     const getValue = typeIsFunction(valueAccessor)
                         ? valueAccessor
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -561,7 +558,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible !== false && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
@@ -642,7 +639,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             // Render grid
             if (this.grid) {
                 const yTicks = this.yScale.ticks(10);
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     [],

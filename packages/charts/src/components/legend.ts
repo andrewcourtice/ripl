@@ -15,9 +15,6 @@ import {
     Group,
 } from '@ripl/core';
 
-import {
-    arrayForEach,
-} from '@ripl/utilities';
 
 export interface LegendItem {
     id: string;
@@ -89,7 +86,7 @@ export class Legend extends ChartComponent {
         let rows = 1;
         let offsetX = 0;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             const labelWidth = this.context.measureText(item.label, this.font).width;
             const itemWidth = SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
 
@@ -112,7 +109,7 @@ export class Legend extends ChartComponent {
         const widths = new Map<string, number>();
         const font = this.font;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             if (!widths.has(item.label)) {
                 widths.set(item.label, this.context.measureText(item.label, font).width);
             }
@@ -139,7 +136,7 @@ export class Legend extends ChartComponent {
         let offsetX = x;
         let offsetY = y + this.itemPadding;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             const isActive = item.active !== false;
             const labelWidth = labelWidths.get(item.label) ?? 0;
 

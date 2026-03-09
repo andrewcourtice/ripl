@@ -42,10 +42,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayFlatMap,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -102,7 +99,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(data, item => ({
+                const legendItems: LegendItem[] = data.map(item => ({
                     id: getKey(item),
                     label: getLabel(item),
                     color: getColor(item) ?? colorGenerator.next().value,
@@ -134,7 +131,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             let startAngle = -offset;
 
-            const calculations = arrayMap(data, item => {
+            const calculations = data.map(item => {
                 const key = getKey(item);
                 const value = getValue(item);
                 const color = getColor(item);
@@ -176,7 +173,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 right: exitData,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            const entries = arrayMap(entryData, item => {
+            const entries = entryData.map(item => {
                 const {
                     key,
                     value,
@@ -266,7 +263,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 });
             });
 
-            const updates = arrayMap(updateData, ([item, group]) => {
+            const updates = updateData.map(([item, group]) => {
                 const {
                     cx,
                     cy,
@@ -308,7 +305,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 return group;
             });
 
-            const exits = arrayMap(exitData, group => {
+            const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
@@ -344,16 +341,16 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const animDuration = this.getAnimationDuration(1000);
 
             async function transitionEntries() {
-                const elements = arrayFlatMap(entries, group => group.children);
+                const elements = entries.flatMap(group => group.children);
 
-                await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
+                await renderer.transition(elements.filter(elementIsArc), (element, index, length) => ({
                     duration: animDuration,
                     ease: easeOutQuint,
                     delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(arrayFilter(elements, elementIsText), {
+                return renderer.transition(elements.filter(elementIsText), {
                     duration: animDuration * 2,
                     ease: easeOutQuint,
                     state: {

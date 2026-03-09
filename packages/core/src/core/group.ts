@@ -10,11 +10,6 @@ import {
 } from '../math';
 
 import {
-    arrayFilter,
-    arrayFind,
-    arrayFlatMap,
-    arrayForEach,
-    arrayMap,
     OneOrMore,
     stringEquals,
     typeIsNil,
@@ -45,7 +40,7 @@ const QUERY_PATTERNS = {
     id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
     class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
     attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${arrayMap(Object.values(COMBINATOR_PATTERNS), pattern => pattern.source).join('|')}]\\s|\\s)`),
+    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
 };
 
 const COMBINATOR_PRODUCERS = [
@@ -82,13 +77,13 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     }
 
     if (QUERY_PATTERNS.combinators.test(segment)) {
-        const producer = arrayFind(COMBINATOR_PRODUCERS, ({ pattern }) => pattern.test(segment));
+        const producer = COMBINATOR_PRODUCERS.find(({ pattern }) => pattern.test(segment));
 
         if (!producer) {
             throw new Error('Failed to query!');
         }
 
-        return executeQuery(arrayFlatMap(elements, element => producer.produce(element)), segments, segmentIndex + 1);
+        return executeQuery(elements.flatMap(element => producer.produce(element)), segments, segmentIndex + 1);
     }
 
     const type = segment.match(QUERY_PATTERNS.type)?.at(0);
@@ -96,7 +91,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
     const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
 
-    return executeQuery(arrayFilter(elements, element => {
+    return executeQuery(elements.filter(element => {
         const typeMatch = !type || stringEquals(element.type, type);
         const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
 
@@ -130,7 +125,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
 }
 
 export function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
-    const els = arrayFlatMap(([] as Element[]).concat(elements), element => {
+    const els = ([] as Element[]).concat(elements).flatMap(element => {
         return isGroup(element) ? element.graph(true) : [element];
     });
 
@@ -183,7 +178,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        arrayForEach(elements, item => {
+        elements.forEach(item => {
             if (item.parent) {
                 item.parent.remove(item);
             }
@@ -202,7 +197,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        arrayForEach(elements, item => {
+        elements.forEach(item => {
             item.parent = undefined;
             this.#elements.delete(item);
         });
@@ -215,7 +210,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public graph(includeGroups?: boolean): Element[] {
-        return arrayFlatMap(this.children, item => {
+        return this.children.flatMap(item => {
             if (!isGroup(item)) {
                 return [item];
             }
@@ -236,17 +231,17 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     }
 
     public getElementByID<TElement extends Element = Element>(id: string) {
-        return arrayFind(this.graph(true), element => element.id === id) as TElement;
+        return this.graph(true).find(element => element.id === id) as TElement;
     }
 
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = valueOneOrMore(types);
-        return arrayFilter(this.graph(true), element => typeList.includes(element.type)) as TElement[];
+        return this.graph(true).filter(element => typeList.includes(element.type)) as TElement[];
     }
 
     public getElementsByClass<TElement extends Element = Element>(classes: OneOrMore<string>) {
         const classList = valueOneOrMore(classes);
-        return arrayFilter(this.graph(true), element => classList.every(cls => element.classList.has(cls))) as TElement[];
+        return this.graph(true).filter(element => classList.every(cls => element.classList.has(cls))) as TElement[];
     }
 
     public getBoundingBox() {
@@ -256,7 +251,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     public render(context: Context): void {
         context.save();
         context.markRenderStart();
-        arrayForEach(this.children, element => element.render(context));
+
+        this.children.forEach(element => element.render(context));
+
         context.markRenderEnd();
         context.restore();
     }

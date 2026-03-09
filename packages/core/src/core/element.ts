@@ -49,8 +49,6 @@ import type {
 
 import {
     AnyFunction,
-    arrayFind,
-    arrayMap,
     objectForEach,
     objectReduce,
     OneOrMore,
@@ -132,13 +130,13 @@ function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementIn
         value: currentValue,
     }] as { offset: number;
         value: TValue; }[]).concat(
-        arrayMap(frames, frame => ({
+        frames.map(frame => ({
             offset: frame.offset ?? 0,
             value: frame.value,
         }))
     );
 
-    keyframes = arrayMap(frames, ({ offset, value }, index) => ({
+    keyframes = frames.map(({ offset, value }, index) => ({
         value,
         offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
     }));
@@ -170,14 +168,14 @@ function getInterpolator<TValue>(value: TValue, key?: string) {
         return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
     }
 
-    const interpolator = arrayFind([
+    const interpolator = [
         interpolateNumber,
         interpolateGradient,
         interpolateColor,
         interpolateDate,
         interpolatePoints,
         interpolateBorderRadius,
-    ], ({ test }) => !!test?.(value));
+    ].find(({ test }) => !!test?.(value));
 
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }

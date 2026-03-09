@@ -16,12 +16,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
 } from '@ripl/utilities';
 
 export type ChartXAxisAlignment = 'top' | 'bottom';
@@ -104,7 +99,7 @@ export class ChartAxis extends ChartComponent {
         const dropCount = Math.ceil(1 / tickRatio);
         const shouldDrop = tickRatio < 1;
 
-        this.cachedTicks = arrayFilter(ticks, (_, index) => !shouldDrop || index % dropCount === 0);
+        this.cachedTicks = ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
         return this.cachedTicks;
     }
 
@@ -167,7 +162,7 @@ export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
-        return arrayReduce(values, (output, value) => {
+        return values.reduce((output, value) => {
             const label = this.formatLabel ? this.formatLabel(value) : value.toString();
             const metrics = this.context.measureText(label, this.labelFont);
             return Math.max(output, producer(metrics));
@@ -249,7 +244,7 @@ export class ChartXAxis extends ChartAxis {
             right: groupExits,
         } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
 
-        const labelEntryTexts = arrayMap(groupEntries, value => {
+        const labelEntryTexts = groupEntries.map(value => {
             const x = this.scale(value);
             const label = this.formatTickLabel(value);
 
@@ -286,7 +281,7 @@ export class ChartXAxis extends ChartAxis {
         this.group.remove(groupExits);
 
         // Animate entries
-        const entryElements = arrayFlatMap(labelEntryTexts, g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
         if (entryElements.length > 0) {
             this.renderer.transition(entryElements, element => ({
@@ -296,7 +291,7 @@ export class ChartXAxis extends ChartAxis {
             }));
         }
 
-        arrayForEach(groupUpdates, ([value, group]) => {
+        groupUpdates.forEach(([value, group]) => {
             const line = group.query<Line>('line');
             const label = group.query<Text>('text');
             const x = this.scale(value);
@@ -405,7 +400,7 @@ export class ChartYAxis extends ChartAxis {
             right: groupExits,
         } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
 
-        const labelEntryTexts = arrayMap(groupEntries, value => {
+        const labelEntryTexts = groupEntries.map(value => {
             const y = this.scale(value);
             const label = this.formatTickLabel(value);
 
@@ -442,7 +437,7 @@ export class ChartYAxis extends ChartAxis {
         this.group.remove(groupExits);
 
         // Animate entries
-        const entryElements = arrayFlatMap(labelEntryTexts, g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
+        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
         if (entryElements.length > 0) {
             this.renderer.transition(entryElements, element => ({
@@ -452,7 +447,7 @@ export class ChartYAxis extends ChartAxis {
             }));
         }
 
-        arrayForEach(groupUpdates, ([value, group]) => {
+        groupUpdates.forEach(([value, group]) => {
             const line = group.query<Line>('line');
             const label = group.query<Text>('text');
             const y = this.scale(value);

@@ -34,9 +34,6 @@ import {
     scaleContinuous,
 } from '../scales';
 
-import {
-    arrayForEach,
-} from '@ripl/utilities';
 
 import type {
     Gradient,
@@ -86,7 +83,7 @@ function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient,
     const factory = CANVAS_GRADIENT_FACTORIES[gradient.type];
     const canvasGradient = factory(context, gradient, bounds);
 
-    arrayForEach(gradient.stops, (stop) => {
+    gradient.stops.forEach((stop) => {
         const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
         const rgba = parseColor(stop.color);
         const color = rgba ? serialiseRGBA(...rgba) : stop.color;

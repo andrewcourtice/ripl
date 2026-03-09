@@ -60,8 +60,6 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
-    arrayMap,
     functionIdentity,
 } from '@ripl/utilities';
 
@@ -161,7 +159,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         }
 
         // Initialise buffers for each series
-        arrayForEach(options.series, srs => {
+        options.series.forEach(srs => {
             this.buffers.set(srs.id, []);
         });
 
@@ -179,7 +177,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     public push(values: Record<string, number>): void {
         const maxLen = this.getWindowSize();
 
-        arrayForEach(Object.entries(values), ([seriesId, value]) => {
+        Object.entries(values).forEach(([seriesId, value]) => {
             let buffer = this.buffers.get(seriesId);
 
             if (!buffer) {
@@ -199,7 +197,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
     public clear(): void {
         this.buffers.forEach(buffer => buffer.length = 0);
-        arrayForEach(this.seriesGroups, group => group.destroy());
+        this.seriesGroups.forEach(group => group.destroy());
         this.seriesGroups = [];
         this.render();
     }
@@ -227,12 +225,12 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         const duration = this.getTransitionDuration();
 
         const existingGroupMap = new Map<string, Group>();
-        arrayForEach(this.seriesGroups, group => existingGroupMap.set(group.id, group));
+        this.seriesGroups.forEach(group => existingGroupMap.set(group.id, group));
 
         const newGroups: Group[] = [];
         const updatedGroups: Group[] = [];
 
-        arrayForEach(series, srs => {
+        series.forEach(srs => {
             const buffer = this.buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
@@ -253,7 +251,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             }
 
             // Compute points from buffer
-            const linePoints: Point[] = arrayMap(buffer, (value, index) => {
+            const linePoints: Point[] = buffer.map((value, index) => {
                 const x = chartLeft + (index / Math.max(1, maxLen - 1)) * (chartRight - chartLeft);
                 const y = this.yScale(value);
                 return [x, y];
@@ -267,7 +265,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
                 areaPoints.push([linePoints[0][0], baseline]);
 
-                arrayForEach(linePoints, point => {
+                linePoints.forEach(point => {
                     areaPoints.push(point);
                 });
 
@@ -351,10 +349,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         ];
 
         // Transition all groups (only polylines with ≥2 points)
-        const transitions = arrayMap(this.seriesGroups, group => {
+        const transitions = this.seriesGroups.map(group => {
             const polylines = group.getElementsByType('polyline') as Polyline[];
 
-            return arrayMap(polylines, polyline => {
+            return polylines.map(polyline => {
                 const targetState = polyline.data as PolylineState | undefined;
 
                 if (targetState?.points && targetState.points.length >= 2) {
@@ -385,7 +383,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const allValues: number[] = [];
 
             this.buffers.forEach(buffer => {
-                arrayForEach(buffer, value => allValues.push(value));
+                buffer.forEach(value => allValues.push(value));
             });
 
             // If no data yet, use a default range
@@ -416,7 +414,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: srs.label ?? srs.id,
                     color: this.getSeriesColor(srs.id),
@@ -464,7 +462,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Render grid
             if (this.grid) {
                 const yTicks = this.yScale.ticks(10);
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     [],

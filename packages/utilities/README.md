@@ -30,14 +30,14 @@ typeIsBoolean(value); // value is boolean
 ### Collection Helpers
 
 ```typescript
-arrayForEach(array, callback);
-arrayMap(array, callback);
-arrayFilter(array, callback);
-arrayReduce(array, callback, initial);
-arrayFind(array, predicate);
-arrayFlatMap(array, callback);
-arrayJoin(left, right, predicate); // left/inner/right join for data diffing
+arrayJoin(left, right, predicate); // left/inner/right join for data diffing (Map-optimized for key predicates)
+arrayMapRange(length, callback); // map over a numeric range
+arrayGroup(array, key); // group array items by key or function
+arrayIntersection(left, right, predicate); // intersection of two arrays
+arrayDifference(left, right, predicate); // difference of two arrays
 ```
+
+> **Note:** Generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`) have been removed in favour of native array methods for better performance.
 
 ### Object Helpers
 

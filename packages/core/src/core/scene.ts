@@ -18,9 +18,6 @@ import {
     GroupOptions,
 } from './group';
 
-import {
-    arrayForEach,
-} from '@ripl/utilities';
 
 export interface SceneEventMap extends ElementEventMap {
     resize: null;
@@ -88,7 +85,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     public render(): void {
         this.context.clear();
         this.context.markRenderStart();
-        arrayForEach(this.buffer, element => element.render(this.context));
+        this.buffer.forEach(element => element.render(this.context));
         this.context.markRenderEnd();
     }
 

@@ -21,10 +21,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -85,7 +82,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             // Find max value for width scaling
             let maxValue = 0;
 
-            arrayForEach(data, item => {
+            data.forEach(item => {
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
@@ -94,7 +91,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             const availableHeight = scene.height - padding.top - padding.bottom;
             const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
 
-            const calculations = arrayMap(data, (item, index) => {
+            const calculations = data.map((item, index) => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
                 const itemLabel = getLabel(item);
@@ -122,9 +119,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 right: exits,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            arrayForEach(exits, el => el.destroy());
+            exits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(entries, item => {
+            const entryGroups = entries.map(item => {
                 const itemColor = item.color ?? colorGenerator.next().value!;
 
                 const rect = createRect({
@@ -187,7 +184,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 });
             });
 
-            const updateGroups = arrayMap(updates, ([item, group]) => {
+            const updateGroups = updates.map(([item, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
                 const itemColor = item.color ?? (rect.fillStyle as string);
 
@@ -212,8 +209,8 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             ];
 
             // Animate entries
-            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
-            const entryTexts = arrayFlatMap(entryGroups, g => g.getElementsByType('text'));
+            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));
 
             const rectsTransition = renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -230,7 +227,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             }));
 
             // Animate updates
-            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),

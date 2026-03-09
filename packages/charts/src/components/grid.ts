@@ -12,9 +12,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
     arrayJoin,
-    arrayMap,
 } from '@ripl/utilities';
 
 export interface GridOptions extends ChartComponentOptions {
@@ -75,9 +73,9 @@ export class Grid extends ChartComponent {
                 right: hExits,
             } = arrayJoin(yTicks, this.horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
 
-            arrayForEach(hExits, el => el.destroy());
+            hExits.forEach(el => el.destroy());
 
-            const newLines = arrayMap(hEntries, tickY => {
+            const newLines = hEntries.map(tickY => {
                 const line = createLine({
                     id: `grid-h-${tickY}`,
                     x1: x,
@@ -94,7 +92,7 @@ export class Grid extends ChartComponent {
                 return line;
             });
 
-            arrayForEach(hUpdates, ([tickY, line]) => {
+            hUpdates.forEach(([tickY, line]) => {
                 line.data = {
                     x1: x,
                     y1: tickY,
@@ -105,7 +103,7 @@ export class Grid extends ChartComponent {
 
             this.horizontalLines = [
                 ...newLines,
-                ...arrayMap(hUpdates, ([, line]) => line),
+                ...hUpdates.map(([, line]) => line),
             ];
         }
 
@@ -116,9 +114,9 @@ export class Grid extends ChartComponent {
                 right: vExits,
             } = arrayJoin(xTicks, this.verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
 
-            arrayForEach(vExits, el => el.destroy());
+            vExits.forEach(el => el.destroy());
 
-            const newLines = arrayMap(vEntries, tickX => {
+            const newLines = vEntries.map(tickX => {
                 const line = createLine({
                     id: `grid-v-${tickX}`,
                     x1: tickX,
@@ -135,7 +133,7 @@ export class Grid extends ChartComponent {
                 return line;
             });
 
-            arrayForEach(vUpdates, ([tickX, line]) => {
+            vUpdates.forEach(([tickX, line]) => {
                 line.data = {
                     x1: tickX,
                     y1: y,
@@ -146,7 +144,7 @@ export class Grid extends ChartComponent {
 
             this.verticalLines = [
                 ...newLines,
-                ...arrayMap(vUpdates, ([, line]) => line),
+                ...vUpdates.map(([, line]) => line),
             ];
         }
     }

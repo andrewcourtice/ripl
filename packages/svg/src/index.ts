@@ -22,7 +22,6 @@ import {
 
 import {
     AnyFunction,
-    arrayForEach,
     GetMutableKeys,
     objectForEach,
     objectMap,
@@ -86,7 +85,7 @@ function normaliseGradientColor(color: string): string {
 function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
     gradientEl.replaceChildren();
 
-    arrayForEach(stops, (stop) => {
+    stops.forEach((stop) => {
         const stopEl = createSVGElement('stop');
         stopEl.setAttribute('offset', `${(stop.offset ?? 0) * 100}%`);
         stopEl.setAttribute('stop-color', normaliseGradientColor(stop.color));

@@ -202,7 +202,7 @@ const {
     right: exits,
 } = arrayJoin(newData, existingElements, (datum, element) => datum.id === element.data);
 
-arrayForEach(exits, el => el.destroy());
+exits.forEach(el => el.destroy());
 ```
 
 This returns new entries (`left`), matched updates (`inner`), and removed exits (`right`). Exits must be manually destroyed where appropriate. For more complex charts, such as multi-series charts, there will be multiple levels of data joining necessary to accurately render and animate. For example:
@@ -306,7 +306,7 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 
 ## Utility Conventions (`@ripl/utilities`)
 
-The project provides and prefers its own typed utility wrappers. Use these instead of native methods where the project has established the pattern:
+The project provides typed utility wrappers where they add value beyond native methods. Use native array methods (`forEach`, `map`, `filter`, `reduce`, `find`, `flatMap`) directly — the generic array wrappers have been removed in favour of native methods for better performance.
 
 ### Type Guards (`typeIs*`)
 ```typescript
@@ -322,8 +322,11 @@ typeIsBoolean(value); // value is Boolean
 
 ### Collection Helpers
 ```typescript
-arrayForEach, arrayMap, arrayFilter, arrayReduce, arrayFind, arrayFlatMap;
-arrayJoin; // left/inner/right join for data diffing
+arrayJoin; // left/inner/right join for data diffing (Map-optimized for key predicates)
+arrayMapRange; // map over a numeric range
+arrayGroup; // group array items by key or function
+arrayIntersection; // intersection of two arrays
+arrayDifference; // difference of two arrays
 ```
 
 ### Common Types

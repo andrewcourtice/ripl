@@ -66,10 +66,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -196,7 +193,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.lineGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         const seriesLineValueProducer = (srs: LineChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,12 +222,12 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             };
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, srs => {
+        const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
             const getValues = seriesLineValueProducer(srs);
             const showMarkers = srs.markers !== false;
 
-            const items = arrayMap(data, item => {
+            const items = data.map(item => {
                 const { id, value, point, state } = getValues(item);
 
                 const marker = createCircle({
@@ -281,7 +278,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 strokeStyle: color,
-                points: arrayMap(items, item => item.point),
+                points: items.map(item => item.point),
                 renderer: srs.lineType,
             });
 
@@ -289,17 +286,17 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 id: srs.id,
                 children: [
                     line,
-                    ...arrayMap(items, item => item.marker),
+                    ...items.map(item => item.marker),
                 ],
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([srs, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const getValues = seriesLineValueProducer(srs);
             const line = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle') as Circle[];
 
-            const points = arrayMap(data, item => getValues(item).point);
+            const points = data.map(item => getValues(item).point);
 
             line.data = {
                 points,
@@ -312,9 +309,9 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${getKey(item)}`);
 
-            arrayForEach(markerExits, el => el.destroy());
+            markerExits.forEach(el => el.destroy());
 
-            arrayMap(markerEntries, item => {
+            markerEntries.map(item => {
                 const { id, state } = getValues(item);
 
                 const marker = createCircle({
@@ -327,7 +324,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 group.add(marker);
             });
 
-            arrayForEach(markerUpdates, ([item, marker]) => {
+            markerUpdates.forEach(([item, marker]) => {
                 const { state, value } = getValues(item);
                 marker.data = state;
 
@@ -369,7 +366,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             ...seriesUpdateGroups,
         ];
 
-        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+        const entryTransitions = seriesEntryGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const line = group.query('polyline') as Polyline;
 
@@ -394,7 +391,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             ];
         });
 
-        const updateTransitions = arrayMap(seriesUpdateGroups, group => {
+        const updateTransitions = seriesUpdateGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const line = group.query('polyline') as Polyline;
 
@@ -434,9 +431,9 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            const keys = arrayMap(data, getKey);
+            const keys = data.map(getKey);
 
-            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
                 const getValue = typeIsFunction(valueAccessor)
                     ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -453,7 +450,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
@@ -551,7 +548,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             // Render grid
             if (this.grid) {
                 const yTicks = this.yScale.ticks(10);
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     [],

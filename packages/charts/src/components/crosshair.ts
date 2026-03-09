@@ -11,7 +11,6 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
     Disposable,
 } from '@ripl/utilities';
 
@@ -110,7 +109,7 @@ export class Crosshair extends ChartComponent {
 
         this.scene.add(this.group);
 
-        arrayForEach(this.disposables, d => d.dispose());
+        this.disposables.forEach(d => d.dispose());
         this.disposables = [
             this.context.on('mousemove', (event) => {
                 const { x, y } = event.data;
@@ -154,7 +153,7 @@ export class Crosshair extends ChartComponent {
     }
 
     public destroy() {
-        arrayForEach(this.disposables, d => d.dispose());
+        this.disposables.forEach(d => d.dispose());
         this.disposables = [];
 
         if (this.group) {

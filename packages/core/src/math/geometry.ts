@@ -7,7 +7,6 @@ import {
 } from './structs';
 
 import {
-    arrayForEach,
     functionCache,
     typeIsArray,
 } from '@ripl/utilities';
@@ -78,7 +77,7 @@ export function getContainingBox<TValue>(value: TValue[], identity: (value: TVal
         bottom = 0,
         right = 0;
 
-    arrayForEach(value, item => {
+    value.forEach(item => {
         const box = identity(item);
 
         top = Math.min(top, box.top);

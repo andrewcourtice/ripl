@@ -43,10 +43,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
 } from '@ripl/utilities';
 
 export interface ChordChartOptions extends BaseChartOptions {
@@ -145,7 +142,7 @@ function computeChordLayout(
 
     // Compute ribbon positions
     const ribbons: ChordRibbon[] = [];
-    const groupOffsets: number[] = arrayMap(arcStarts, start => start);
+    const groupOffsets: number[] = arcStarts.map(start => start);
 
     for (let i = 0; i < count; i++) {
         for (let col = 0; col < count; col++) {
@@ -233,9 +230,9 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: arcExits,
             } = arrayJoin(layout.arcs, this.arcGroups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(arcExits, el => el.destroy());
+            arcExits.forEach(el => el.destroy());
 
-            const arcEntryGroups = arrayMap(arcEntries, arc => {
+            const arcEntryGroups = arcEntries.map(arc => {
                 const segment = createArc({
                     id: `${arc.id}-segment`,
                     cx,
@@ -286,7 +283,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const arcUpdateGroups = arrayMap(arcUpdates, ([arc, group]) => {
+            const arcUpdateGroups = arcUpdates.map(([arc, group]) => {
                 const segment = group.query('arc') as Arc;
 
                 if (segment) {
@@ -317,9 +314,9 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: ribbonExits,
             } = arrayJoin(layout.ribbons, this.ribbonGroups, (ribbon, group) => ribbon.id === group.id);
 
-            arrayForEach(ribbonExits, el => el.destroy());
+            ribbonExits.forEach(el => el.destroy());
 
-            const ribbonEntryGroups = arrayMap(ribbonEntries, ribbon => {
+            const ribbonEntryGroups = ribbonEntries.map(ribbon => {
                 const ribbonEl = createRibbon({
                     id: `${ribbon.id}-ribbon`,
                     cx,
@@ -368,7 +365,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const ribbonUpdateGroups = arrayMap(ribbonUpdates, ([, group]) => group);
+            const ribbonUpdateGroups = ribbonUpdates.map(([, group]) => group);
 
             scene.add(ribbonEntryGroups);
 
@@ -379,7 +376,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
             // Legend
             if (normalizeLegend(this.options.legend).visible && layout.arcs.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(layout.arcs, arc => ({
+                const legendItems: LegendItem[] = layout.arcs.map(arc => ({
                     id: arc.id,
                     label: arc.label,
                     color: arc.color,
@@ -401,7 +398,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }
 
             // Sequential animation: arcs first, then ribbons
-            const entryArcs = arrayFlatMap(arcEntryGroups, g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const arcsTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -411,7 +408,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Ribbons animate after arcs complete
-            const entryRibbons = arrayFlatMap(ribbonEntryGroups, g => g.getElementsByType('ribbon')) as Ribbon[];
+            const entryRibbons = ribbonEntryGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
             const arcAnimDuration = this.getAnimationDuration(800) + this.getAnimationDuration(600);
 
             const ribbonsTransition = renderer.transition(entryRibbons, (element, index, length) => ({
@@ -422,7 +419,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = arrayFlatMap(arcUpdateGroups, g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = arcUpdateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(800),

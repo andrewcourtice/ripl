@@ -14,7 +14,8 @@ import {
 } from './number';
 
 import {
-    arrayMap, typeIsArray, typeIsNumber,
+    typeIsArray,
+    typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
@@ -70,7 +71,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         extSetB,
     ] = extrapolatePointSet(setA, setB);
 
-    const interpolators = arrayMap(extSetA, (pointA, index) => {
+    const interpolators = extSetA.map((pointA, index) => {
         const pointB = extSetB[index];
 
         return [
@@ -79,7 +80,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         ];
     });
 
-    return position => arrayMap(interpolators, ([ix, iy]) => [
+    return position => interpolators.map(([ix, iy]) => [
         ix(position),
         iy(position),
     ]);
@@ -145,9 +146,9 @@ export function interpolateCirclePoint(
 export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius> = (radiusA, radiusB) => {
     const nRadiusA = normaliseBorderRadius(radiusA);
     const nRadiusB = normaliseBorderRadius(radiusB);
-    const interpolators = arrayMap(nRadiusA, (value, index) => interpolateNumber(value, nRadiusB[index]));
+    const interpolators = nRadiusA.map((value, index) => interpolateNumber(value, nRadiusB[index]));
 
-    return position => arrayMap(interpolators, ib => ib(position)) as BorderRadius;
+    return position => interpolators.map(ib => ib(position)) as BorderRadius;
 };
 
 interpolateBorderRadius.test = value => typeIsNumber(value) || (

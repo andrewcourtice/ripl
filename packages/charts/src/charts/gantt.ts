@@ -50,11 +50,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -218,9 +214,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             (item, group) => group.id === getKey(item)
         );
 
-        arrayForEach(exits, el => el.destroy());
+        exits.forEach(el => el.destroy());
 
-        const entryGroups = arrayMap(entries, item => {
+        const entryGroups = entries.map(item => {
             const { id, label, start, end, color, progress, state } = getBarState(item);
 
             const bar = createRect({
@@ -297,7 +293,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             return group;
         });
 
-        const updateGroups = arrayMap(updates, ([item, group]) => {
+        const updateGroups = updates.map(([item, group]) => {
             const { label, start, end, color, progress, state } = getBarState(item);
 
             const bar = group.getElementsByType('rect')[0] as Rect;
@@ -367,7 +363,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         ];
 
         // Animate entry bars
-        const entryBars = arrayFlatMap(entryGroups, g => g.getElementsByType('rect') as Rect[]);
+        const entryBars = entryGroups.flatMap(g => g.getElementsByType('rect') as Rect[]);
         const sortedEntryBars = entryBars.sort((a, b) => a.y - b.y);
 
         const entriesTransition = this.renderer.transition(sortedEntryBars, (element, index, length) => ({
@@ -378,7 +374,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         }));
 
         // Animate update bars
-        const updateBars = arrayFlatMap(updateGroups, g => g.getElementsByType('rect') as Rect[]);
+        const updateBars = updateGroups.flatMap(g => g.getElementsByType('rect') as Rect[]);
 
         const updatesTransition = this.renderer.transition(updateBars, element => ({
             duration: this.getAnimationDuration(1000),
@@ -464,19 +460,19 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             const getStart = this.getAccessor<Date>(startAccessor);
             const getEnd = this.getAccessor<Date>(endAccessor);
 
-            const labels = arrayMap(data, getLabel);
+            const labels = data.map(getLabel);
 
             // Resolve series colors for each task
-            this.resolveSeriesColors(arrayMap(data, item => ({
+            this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
             })));
 
             // Compute time extent
-            const allStarts = arrayMap(data, getStart);
-            const allEnds = arrayMap(data, getEnd);
+            const allStarts = data.map(getStart);
+            const allEnds = data.map(getEnd);
 
-            const minDate = arrayReduce(allStarts, (min, d) => d < min ? d : min, allStarts[0]);
-            const maxDate = arrayReduce(allEnds, (max, d) => d > max ? d : max, allEnds[0]);
+            const minDate = allStarts.reduce((min, d) => d < min ? d : min, allStarts[0]);
+            const maxDate = allEnds.reduce((max, d) => d > max ? d : max, allEnds[0]);
 
             // Add some padding to the time range
             const timeRange = maxDate.getTime() - minDate.getTime();
@@ -556,7 +552,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
             // Render grid
             if (this.grid) {
-                const yTickPositions = arrayMap(labels, label =>
+                const yTickPositions = labels.map(label =>
                     adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2
                 );
 

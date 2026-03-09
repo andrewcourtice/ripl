@@ -37,9 +37,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -118,7 +116,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
         }
 
         // Draw axis lines and labels
-        arrayForEach(axes, (axis, index) => {
+        axes.forEach((axis, index) => {
             const angle = index * angleStep - TAU / 4;
             const x = cx + radius * Math.cos(angle);
             const y = cy + radius * Math.sin(angle);
@@ -174,13 +172,13 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(series, this.seriesGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
-            return arrayMap(data, (item, index) => {
+            return data.map((item, index) => {
                 const value = getValue(item);
                 const normalizedValue = Math.min(value / maxValue, 1);
                 const angle = index * angleStep - TAU / 4;
@@ -195,13 +193,13 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             });
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, srs => {
+        const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
             const opacity = srs.opacity ?? 0.25;
             const pointsData = getSeriesPoints(srs);
 
             const closedPoints = [
-                ...arrayMap(pointsData, p => p.point),
+                ...pointsData.map(p => p.point),
                 pointsData[0]?.point ?? [cx, cy],
             ] as Point[];
 
@@ -210,13 +208,13 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 fillStyle: setColorAlpha(color, opacity),
                 strokeStyle: color,
                 lineWidth: 2,
-                points: arrayMap(closedPoints, () => [cx, cy] as Point),
+                points: closedPoints.map(() => [cx, cy] as Point),
                 data: {
                     points: closedPoints,
                 } as PolylineState,
             });
 
-            const markers = arrayMap(pointsData, (pd, index) => {
+            const markers = pointsData.map((pd, index) => {
                 const marker = createCircle({
                     id: `${srs.id}-marker-${index}`,
                     cx: cx,
@@ -265,12 +263,12 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([srs, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const pointsData = getSeriesPoints(srs);
             const area = group.getElementsByType('polyline')[0] as Polyline;
 
             const closedPoints = [
-                ...arrayMap(pointsData, p => p.point),
+                ...pointsData.map(p => p.point),
                 pointsData[0]?.point ?? [cx, cy],
             ] as Point[];
 
@@ -280,7 +278,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
             const markers = group.getElementsByType('circle');
 
-            arrayForEach(markers, (marker, index) => {
+            markers.forEach((marker, index) => {
                 if (index < pointsData.length) {
                     marker.data = {
                         cx: pointsData[index].point[0],
@@ -301,7 +299,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
         ];
 
         // Animate entries
-        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+        const entryTransitions = seriesEntryGroups.map(group => {
             const area = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle');
 
@@ -321,7 +319,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
         });
 
         // Animate updates
-        const updateTransitions = arrayMap(seriesUpdateGroups, group => {
+        const updateTransitions = seriesUpdateGroups.map(group => {
             const area = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle');
 
@@ -363,7 +361,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
@@ -396,11 +394,11 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             let computedMax = maxValue ?? 0;
 
             if (!maxValue) {
-                arrayForEach(series, srs => {
+                series.forEach(srs => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
-                    arrayForEach(this.options.data, item => {
+                    this.options.data.forEach(item => {
                         computedMax = Math.max(computedMax, getValue(item));
                     });
                 });

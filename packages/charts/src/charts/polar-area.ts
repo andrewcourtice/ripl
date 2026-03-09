@@ -30,11 +30,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -97,7 +93,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         }
 
         // --- Concentric rings ---
-        const levelIndices = arrayMap(Array.from({ length: levels }), (_, i) => i + 1);
+        const levelIndices = Array.from({ length: levels }).map((_, i) => i + 1);
 
         const {
             left: ringEntries,
@@ -105,9 +101,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             right: ringExits,
         } = arrayJoin(levelIndices, this.gridRings, (level, ring) => ring.id === `polar-ring-${level}`);
 
-        arrayForEach(ringExits, el => el.destroy());
+        ringExits.forEach(el => el.destroy());
 
-        const newRings = arrayMap(ringEntries, level => {
+        const newRings = ringEntries.map(level => {
             const levelRadius = innerRadius + radiusStep * level;
 
             const ring = createCircle({
@@ -128,7 +124,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             return ring;
         });
 
-        arrayForEach(ringUpdates, ([level, ring]) => {
+        ringUpdates.forEach(([level, ring]) => {
             const levelRadius = innerRadius + radiusStep * level;
 
             ring.data = {
@@ -140,7 +136,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         this.gridRings = [
             ...newRings,
-            ...arrayMap(ringUpdates, ([, ring]) => ring),
+            ...ringUpdates.map(([, ring]) => ring),
         ];
 
         // --- Ring value labels ---
@@ -150,9 +146,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             right: labelExits,
         } = arrayJoin(levelIndices, this.gridLabels, (level, label) => label.id === `polar-ring-label-${level}`);
 
-        arrayForEach(labelExits, el => el.destroy());
+        labelExits.forEach(el => el.destroy());
 
-        const newLabels = arrayMap(labelEntries, level => {
+        const newLabels = labelEntries.map(level => {
             const levelRadius = innerRadius + radiusStep * level;
             const levelValue = Math.round((maxValue / levels) * level);
 
@@ -176,7 +172,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             return label;
         });
 
-        arrayForEach(labelUpdates, ([level, label]) => {
+        labelUpdates.forEach(([level, label]) => {
             const levelRadius = innerRadius + radiusStep * level;
             const levelValue = Math.round((maxValue / levels) * level);
 
@@ -189,11 +185,11 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         this.gridLabels = [
             ...newLabels,
-            ...arrayMap(labelUpdates, ([, label]) => label),
+            ...labelUpdates.map(([, label]) => label),
         ];
 
         // --- Radial axis lines ---
-        const lineIndices = arrayMap(Array.from({ length: segmentCount }), (_, i) => i);
+        const lineIndices = Array.from({ length: segmentCount }).map((_, i) => i);
 
         const {
             left: lineEntries,
@@ -201,9 +197,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             right: lineExits,
         } = arrayJoin(lineIndices, this.gridLines, (idx, line) => line.id === `polar-axis-${idx}`);
 
-        arrayForEach(lineExits, el => el.destroy());
+        lineExits.forEach(el => el.destroy());
 
-        const newLines = arrayMap(lineEntries, idx => {
+        const newLines = lineEntries.map(idx => {
             const angle = startOffset + idx * angleStep;
             const x2 = cx + maxRadius * Math.cos(angle);
             const y2 = cy + maxRadius * Math.sin(angle);
@@ -229,7 +225,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             return line;
         });
 
-        arrayForEach(lineUpdates, ([idx, line]) => {
+        lineUpdates.forEach(([idx, line]) => {
             const angle = startOffset + idx * angleStep;
             const x2 = cx + maxRadius * Math.cos(angle);
             const y2 = cy + maxRadius * Math.sin(angle);
@@ -246,7 +242,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         this.gridLines = [
             ...newLines,
-            ...arrayMap(lineUpdates, ([, line]) => line),
+            ...lineUpdates.map(([, line]) => line),
         ];
 
         // Animate: staggered entry for new elements, smooth transition for updates
@@ -316,7 +312,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 data.length
             );
 
-            const calculations = arrayMap(data, (item, index) => {
+            const calculations = data.map((item, index) => {
                 const key = getKey(item);
                 const v = getValue(item);
                 const color = getColor(item);
@@ -350,7 +346,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 right: exitData,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            const entries = arrayMap(entryData, item => {
+            const entries = entryData.map(item => {
                 const {
                     key,
                     color = colorGenerator.next().value,
@@ -426,7 +422,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 });
             });
 
-            const updates = arrayMap(updateData, ([item, group]) => {
+            const updates = updateData.map(([item, group]) => {
                 const {
                     cx,
                     cy,
@@ -465,7 +461,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 return group;
             });
 
-            const exits = arrayMap(exitData, group => {
+            const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
@@ -494,16 +490,16 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const animDuration = this.getAnimationDuration(1000);
 
             async function transitionEntries() {
-                const elements = arrayFlatMap(entries, group => group.children);
+                const elements = entries.flatMap(group => group.children);
 
-                await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
+                await renderer.transition(elements.filter(elementIsArc), (element, index, length) => ({
                     duration: animDuration,
                     ease: easeOutQuint,
                     delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(arrayFilter(elements, elementIsText), {
+                return renderer.transition(elements.filter(elementIsText), {
                     duration: animDuration * 1.5,
                     ease: easeOutQuint,
                     state: {

@@ -39,11 +39,7 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
 } from '@ripl/utilities';
 
 export interface SunburstNode {
@@ -78,7 +74,7 @@ function flattenNodes(
     parentColor?: string,
     resolvedColors?: Map<string, string>
 ): FlattenedArc[] {
-    const total = arrayReduce(nodes, (sum, node) => sum + node.value, 0);
+    const total = nodes.reduce((sum, node) => sum + node.value, 0);
 
     if (total === 0) return [];
 
@@ -89,7 +85,7 @@ function flattenNodes(
     let currentAngle = startAngle;
     const result: FlattenedArc[] = [];
 
-    arrayForEach(nodes, node => {
+    nodes.forEach(node => {
         const nodeEndAngle = currentAngle + (scale(node.value) - scale(0));
         const color = resolvedColors?.get(node.id) ?? node.color ?? parentColor ?? colorGenerator.next().value!;
 
@@ -147,7 +143,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             // Pre-resolve top-level node colors so legend and arcs stay in sync
             const resolvedColors = new Map<string, string>();
 
-            arrayForEach(data, node => {
+            data.forEach(node => {
                 resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
             });
 
@@ -155,7 +151,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(data, node => ({
+                const legendItems: LegendItem[] = data.map(node => ({
                     id: node.id,
                     label: node.label,
                     color: resolvedColors.get(node.id)!,
@@ -191,7 +187,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             // Find max depth
             let maxDepth = 0;
 
-            arrayForEach(arcs, arc => {
+            arcs.forEach(arc => {
                 maxDepth = Math.max(maxDepth, arc.depth);
             });
 
@@ -204,9 +200,9 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 right: exits,
             } = arrayJoin(arcs, this.groups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(exits, el => el.destroy());
+            exits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(entries, arc => {
+            const entryGroups = entries.map(arc => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
                 const outerRadius = innerRadius + ringWidth - 2;
                 const padAngle = 0.02;
@@ -261,7 +257,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 });
             });
 
-            const updateGroups = arrayMap(updates, ([arc, group]) => {
+            const updateGroups = updates.map(([arc, group]) => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
                 const outerRadius = innerRadius + ringWidth - 2;
                 const segment = group.query('arc') as Arc;
@@ -296,7 +292,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }
 
             // Animate entries
-            const entryArcs = arrayFlatMap(entryGroups, g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const entriesTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(1000),
@@ -306,7 +302,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = arrayFlatMap(updateGroups, g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = updateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(1000),

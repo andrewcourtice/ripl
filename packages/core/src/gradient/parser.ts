@@ -6,9 +6,6 @@ import type {
     RadialGradient,
 } from './types';
 
-import {
-    arrayMap,
-} from '@ripl/utilities';
 
 const GRADIENT_PATTERN = /^(repeating-)?(linear|radial|conic)-gradient\((.+)\)$/is;
 
@@ -92,7 +89,7 @@ function parseColorStop(value: string): GradientColorStop {
 }
 
 function parseColorStops(args: string[]): GradientColorStop[] {
-    return arrayMap(args, parseColorStop);
+    return args.map(parseColorStop);
 }
 
 function normaliseStopOffsets(stops: GradientColorStop[]): GradientColorStop[] {

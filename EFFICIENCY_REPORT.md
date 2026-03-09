@@ -2,75 +2,27 @@
 
 This report documents several places in the codebase where performance could be improved.
 
-## 1. arrayMap uses undefined length (Bug + Efficiency Issue)
+## 1. ~~arrayMap uses undefined length~~ ✅ FIXED
 
-**File:** `packages/utilities/src/collection.ts` (lines 57-65)
-
-**Issue:** The `arrayMap` function creates a new array with `new Array<TResult>(length)`, but `length` is undefined in this scope. It should be `input.length`. This creates an array with undefined length which is inefficient and may cause unexpected behavior.
-
-```typescript
-export function arrayMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult>, direction: IterationDirection = 1): TResult[] {
-    const output = new Array<TResult>(length); // BUG: 'length' is undefined, should be 'input.length'
-    // ...
-}
-```
-
-**Fix:** Change `length` to `input.length`.
+**Status:** Resolved. `arrayMap` and all generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`, `arrayDedupe`) have been removed in favour of native array methods. All consumers refactored.
 
 ---
 
-## 2. arrayFlatMap uses inefficient concat in loop (O(n^2) complexity)
+## 2. ~~arrayFlatMap uses inefficient concat in loop~~ ✅ FIXED
 
-**File:** `packages/utilities/src/collection.ts` (lines 71-79)
-
-**Issue:** The `arrayFlatMap` function uses `output.concat()` inside a loop, which creates a new array on each iteration. This results in O(n^2) time complexity instead of O(n).
-
-```typescript
-export function arrayFlatMap<TValue, TResult>(input: TValue[], iteratee: ArrayIteratee<TValue, TResult[]>, direction: IterationDirection = 1): TResult[] {
-    let output = [] as TResult[];
-
-    iterateArray(input, (value, index) => {
-        output = output.concat(iteratee(value, index)); // Creates new array each iteration
-    }, direction);
-
-    return output;
-}
-```
-
-**Fix:** Use `push(...items)` instead of `concat()` to mutate the array in place.
+**Status:** Resolved. `arrayFlatMap` removed; all consumers now use native `.flatMap()`.
 
 ---
 
-## 3. arrayGroup uses inefficient concat for single items
+## 3. ~~arrayGroup uses inefficient concat for single items~~ ✅ FIXED
 
-**File:** `packages/utilities/src/collection.ts` (lines 143-157)
-
-**Issue:** The `arrayGroup` function uses `(output[group] || []).concat(value)` which creates a new array on each iteration when adding a single item. This is inefficient compared to using `push()`.
-
-```typescript
-iterateArray(input, value => {
-    const group = groupIdentity(value);
-    output[group] = (output[group] || []).concat(value); // Creates new array each time
-});
-```
-
-**Fix:** Initialize the array if needed and use `push()` instead.
+**Status:** Resolved. `arrayGroup` now uses `(output[group] ??= []).push(value)` pattern — no intermediate array creation.
 
 ---
 
-## 4. Set utility functions unnecessarily convert to Array
+## 4. ~~Set utility functions unnecessarily convert to Array~~ ✅ FIXED
 
-**File:** `packages/utilities/src/collection.ts` (lines 185-199)
-
-**Issue:** The `setForEach`, `setMap`, `setFind`, and `setFlatMap` functions all convert the Set to an Array using `Array.from()` before iterating. Sets can be iterated directly, avoiding the overhead of creating an intermediate array.
-
-```typescript
-export function setForEach<TValue>(input: Set<TValue>, iteratee: ArrayIteratee<TValue>, direction: IterationDirection = 1): void {
-    arrayForEach(Array.from(input), iteratee, direction); // Unnecessary Array.from()
-}
-```
-
-**Fix:** Iterate over the Set directly when direction is forward (the common case).
+**Status:** Resolved. `setForEach`, `setMap`, `setFilter`, `setFind`, `setFlatMap` now use direct `for...of` loops over the Set instead of converting to Array first.
 
 ---
 
@@ -129,9 +81,9 @@ const orderedElements = newElements
 
 ## Summary
 
-The most impactful fixes would be:
-1. **arrayMap bug fix** - This is actually a bug that could cause incorrect behavior
-2. **arrayFlatMap optimization** - O(n^2) to O(n) improvement in a utility function used throughout the codebase
-3. **Group.children caching** - Frequently accessed during rendering
+**Fixed (items 1-4):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimised. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`.
 
-This PR will fix issue #2 (arrayFlatMap) as it provides a clear performance improvement with minimal risk.
+**Remaining:**
+1. **stringUniqueId** (#5) — string concat in reduce
+2. **Group.children caching** (#6) — new array on every access
+3. **SVGContext sort** (#7) — O(n) indexOf in comparator

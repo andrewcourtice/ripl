@@ -1,5 +1,4 @@
 import {
-    arrayForEach,
     Disposable,
     objectForEach,
 } from '@ripl/utilities';
@@ -15,7 +14,7 @@ export abstract class Disposer {
     protected dispose(key?: string) {
         if (!key) {
             objectForEach(this.disposables, (key, value) => {
-                arrayForEach(value, entry => entry.dispose());
+                value.forEach(entry => entry.dispose());
             });
 
             this.disposables = {};
@@ -24,7 +23,7 @@ export abstract class Disposer {
         }
 
         if (key in this.disposables) {
-            arrayForEach(this.disposables[key], entry => entry.dispose());
+            this.disposables[key].forEach(entry => entry.dispose());
             delete this.disposables[key];
         }
     }
