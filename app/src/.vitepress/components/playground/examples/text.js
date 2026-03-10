@@ -7,7 +7,7 @@ const text = createText({
     y: scene.context.height / 2,
     content: 'Hello Ripl!',
     font: 'bold 48px system-ui, sans-serif',
-    fillStyle: '#6366f1',
+    fill: '#6366f1',
     textAlign: 'center',
     textBaseline: 'middle',
 });
