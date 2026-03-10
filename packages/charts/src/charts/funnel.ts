@@ -25,6 +25,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -35,6 +36,16 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
 }
 
+/**
+ * Funnel chart rendering horizontally centered bars of decreasing width.
+ *
+ * Each data item is rendered as a centered rectangle whose width is
+ * proportional to its value relative to the maximum. Segments are stacked
+ * vertically with configurable gaps. Supports tooltips, labels, and
+ * animated expand-from-center entry transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -245,6 +256,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
 }
 
+/** Factory function that creates a new {@link FunnelChart} instance. */
 export function createFunnelChart<TData = unknown>(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
     return new FunnelChart<TData>(target, options);
 }

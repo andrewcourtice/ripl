@@ -71,6 +71,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Configuration for an individual area chart series. */
 export interface AreaChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -82,6 +83,7 @@ export interface AreaChartSeriesOptions<TData> {
     markers?: boolean;
 }
 
+/** Options for configuring an {@link AreaChart}. */
 export interface AreaChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: AreaChartSeriesOptions<TData>[];
@@ -94,6 +96,15 @@ export interface AreaChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Area chart rendering filled regions beneath series lines.
+ *
+ * Supports stacked and unstacked modes with optional markers, crosshair,
+ * tooltips, legend, and grid. Areas animate upward from the baseline on
+ * entry and smoothly transition on update.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
     private areaGroups: Group[] = [];
@@ -674,6 +685,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
 }
 
+/** Factory function that creates a new {@link AreaChart} instance. */
 export function createAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
     return new AreaChart<TData>(target, options);
 }

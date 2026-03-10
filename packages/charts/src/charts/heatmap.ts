@@ -44,6 +44,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link HeatmapChart}. */
 export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     xBy: keyof TData | ((item: TData) => string);
@@ -80,6 +81,15 @@ function interpolateHexColor(colorA: string, colorB: string, t: number): string 
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+/**
+ * Heatmap chart rendering a grid of colored cells on two categorical axes.
+ *
+ * Cell color is interpolated between a configurable low/high color range
+ * based on each data point's value. Supports x/y axes, tooltips, and
+ * animated fade-in entry transitions with smooth color updates.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>> {
 
     private cellGroups: Group[] = [];
@@ -395,6 +405,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link HeatmapChart} instance. */
 export function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
     return new HeatmapChart<TData>(target, options);
 }

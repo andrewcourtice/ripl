@@ -94,6 +94,7 @@ function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient,
     return canvasGradient;
 }
 
+/** Canvas-specific path implementation backed by a native `Path2D` object. */
 export class CanvasPath extends ContextPath {
 
     public readonly ref: Path2D;
@@ -155,6 +156,7 @@ export class CanvasPath extends ContextPath {
 
 }
 
+/** Canvas 2D rendering context implementation, mapping the unified API to `CanvasRenderingContext2D`. */
 export class CanvasContext extends Context<HTMLCanvasElement> {
 
     protected context: CanvasRenderingContext2D;
@@ -528,6 +530,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
 
 }
 
+/** Creates a Canvas 2D rendering context attached to the given DOM target. */
 export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     return new CanvasContext(target, options);
 }

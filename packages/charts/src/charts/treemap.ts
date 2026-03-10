@@ -25,6 +25,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link TreemapChart}. */
 export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -112,6 +113,15 @@ function layoutTreemap(
     ];
 }
 
+/**
+ * Treemap chart rendering hierarchical data as nested, space-filling rectangles.
+ *
+ * Uses a recursive binary split layout to partition the available area
+ * proportionally by value. Supports tooltips, auto-sized labels for
+ * sufficiently large cells, and animated entry/update transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -320,6 +330,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link TreemapChart} instance. */
 export function createTreemapChart<TData = unknown>(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
     return new TreemapChart<TData>(target, options);
 }

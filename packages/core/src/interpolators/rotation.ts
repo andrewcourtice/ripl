@@ -36,6 +36,7 @@ function toRadians(value: number | string): number {
     return parseFloat(trimmed) || 0;
 }
 
+/** Interpolator factory that transitions between two rotation values (numbers in radians or strings like `"90deg"`). */
 export const interpolateRotation: InterpolatorFactory<number | string> = (valueA, valueB) => {
     const radA = toRadians(valueA);
     const radB = toRadians(valueB);

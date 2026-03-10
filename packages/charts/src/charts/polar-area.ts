@@ -34,6 +34,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link PolarAreaChart}. */
 export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -51,8 +52,13 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
 }
 
 /**
- * PolarAreaChart renders equal angle segments whose radius encodes the value.
- * Transitions follow the same pattern as `PieChart` (enter/update/exit with staged animation).
+ * Polar area chart rendering equal-angle segments whose radius encodes value.
+ *
+ * Each data point occupies an equal angular slice; the radial extent of each
+ * segment is proportional to its value. Includes a concentric grid with
+ * value labels, radial axis lines, and animated entry/update/exit transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
  */
 export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>> {
 
@@ -535,6 +541,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
     }
 }
 
+/** Factory function that creates a new {@link PolarAreaChart} instance. */
 export function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
     return new PolarAreaChart<TData>(target, options);
 }

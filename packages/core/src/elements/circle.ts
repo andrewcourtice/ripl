@@ -12,12 +12,14 @@ import {
     Box,
 } from '../math';
 
+/** State interface for a circle element, defining center coordinates and radius. */
 export interface CircleState extends BaseElementState {
     cx: number;
     cy: number;
     radius: number;
 }
 
+/** A circle shape rendered at a center point with a given radius. */
 export class Circle extends Shape2D<CircleState> {
 
     public get cx() {
@@ -65,10 +67,12 @@ export class Circle extends Shape2D<CircleState> {
 
 }
 
+/** Factory function that creates a new `Circle` instance. */
 export function createCircle(...options: ConstructorParameters<typeof Circle>) {
     return new Circle(...options);
 }
 
+/** Type guard that checks whether a value is a `Circle` instance. */
 export function elementIsCircle(value: unknown): value is Circle {
     return value instanceof Circle;
 }

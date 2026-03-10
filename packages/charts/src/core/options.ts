@@ -27,6 +27,7 @@ import {
 // Ease
 // ---------------------------------------------------------------------------
 
+/** Named easing function identifiers. */
 export type EaseName =
     | 'easeLinear'
     | 'easeInQuad'
@@ -58,6 +59,7 @@ const EASE_MAP: Record<EaseName, Ease> = {
     easeInOutQuint,
 };
 
+/** Resolves an ease name or function to an `Ease` function, defaulting to `easeOutCubic`. */
 export function resolveEase(value?: EaseName | Ease): Ease {
     if (!value) {
         return easeOutCubic;
@@ -74,8 +76,10 @@ export function resolveEase(value?: EaseName | Ease): Ease {
 // Padding helper
 // ---------------------------------------------------------------------------
 
+/** Padding expressed as a uniform number or a [top, right, bottom, left] tuple. */
 export type PaddingInput = number | [number, number, number, number];
 
+/** Resolved padding with explicit top, right, bottom, and left values. */
 export interface Padding {
     top: number;
     right: number;
@@ -83,6 +87,7 @@ export interface Padding {
     left: number;
 }
 
+/** Normalizes a padding input into a `Padding` object, or returns `undefined` if no input. */
 export function normalizePadding(value?: PaddingInput): Padding | undefined {
     if (value === undefined) {
         return undefined;
@@ -109,8 +114,10 @@ export function normalizePadding(value?: PaddingInput): Padding | undefined {
 // Title
 // ---------------------------------------------------------------------------
 
+/** Position of the chart title relative to the chart area. */
 export type TitlePosition = 'top' | 'bottom' | 'left' | 'right';
 
+/** Fully resolved chart title options. */
 export interface ChartTitleOptions {
     visible: boolean;
     text: string;
@@ -120,6 +127,7 @@ export interface ChartTitleOptions {
     position: TitlePosition;
 }
 
+/** Title input accepting a plain string or partial options object. */
 export type ChartTitleInput = string | Partial<ChartTitleOptions>;
 
 const TITLE_DEFAULTS: ChartTitleOptions = {
@@ -131,6 +139,7 @@ const TITLE_DEFAULTS: ChartTitleOptions = {
     position: 'top',
 };
 
+/** Normalizes a title input into fully resolved `ChartTitleOptions`. */
 export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | undefined {
     if (input === undefined) {
         return undefined;
@@ -153,12 +162,14 @@ export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | und
 // Animation
 // ---------------------------------------------------------------------------
 
+/** Fully resolved chart animation options. */
 export interface ChartAnimationOptions {
     enabled: boolean;
     duration: number;
     ease: EaseName | Ease;
 }
 
+/** Animation input accepting a boolean toggle or partial options object. */
 export type ChartAnimationInput = boolean | Partial<ChartAnimationOptions>;
 
 const ANIMATION_DEFAULTS: ChartAnimationOptions = {
@@ -167,6 +178,7 @@ const ANIMATION_DEFAULTS: ChartAnimationOptions = {
     ease: 'easeOutCubic',
 };
 
+/** Normalizes animation input into fully resolved `ChartAnimationOptions`. */
 export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Partial<ChartAnimationOptions>): ChartAnimationOptions {
     const base = {
         ...ANIMATION_DEFAULTS,
@@ -194,6 +206,7 @@ export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Parti
 // Grid
 // ---------------------------------------------------------------------------
 
+/** Fully resolved chart grid options. */
 export interface ChartGridOptions {
     visible: boolean;
     lineColor: string;
@@ -201,6 +214,7 @@ export interface ChartGridOptions {
     lineDash: number[];
 }
 
+/** Grid input accepting a boolean toggle or partial options object. */
 export type ChartGridInput = boolean | Partial<ChartGridOptions>;
 
 const GRID_DEFAULTS: ChartGridOptions = {
@@ -210,6 +224,7 @@ const GRID_DEFAULTS: ChartGridOptions = {
     lineDash: [4, 4],
 };
 
+/** Normalizes grid input into fully resolved `ChartGridOptions`. */
 export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions {
     const base = {
         ...GRID_DEFAULTS,
@@ -237,8 +252,10 @@ export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGr
 // Crosshair
 // ---------------------------------------------------------------------------
 
+/** Which axis the crosshair tracks. */
 export type CrosshairAxis = 'x' | 'y' | 'both';
 
+/** Fully resolved chart crosshair options. */
 export interface ChartCrosshairOptions {
     visible: boolean;
     axis: CrosshairAxis;
@@ -246,6 +263,7 @@ export interface ChartCrosshairOptions {
     lineWidth: number;
 }
 
+/** Crosshair input accepting a boolean toggle or partial options object. */
 export type ChartCrosshairInput = boolean | Partial<ChartCrosshairOptions>;
 
 const CROSSHAIR_DEFAULTS: ChartCrosshairOptions = {
@@ -255,6 +273,7 @@ const CROSSHAIR_DEFAULTS: ChartCrosshairOptions = {
     lineWidth: 1,
 };
 
+/** Normalizes crosshair input into fully resolved `ChartCrosshairOptions`. */
 export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions {
     const base = {
         ...CROSSHAIR_DEFAULTS,
@@ -282,8 +301,10 @@ export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Parti
 // Tooltip
 // ---------------------------------------------------------------------------
 
+/** Border radius expressed as a uniform number or a per-corner tuple. */
 export type BorderRadiusInput = number | [number, number, number, number];
 
+/** Fully resolved chart tooltip options. */
 export interface ChartTooltipOptions {
     visible: boolean;
     padding: PaddingInput;
@@ -295,6 +316,7 @@ export interface ChartTooltipOptions {
     wrap: boolean;
 }
 
+/** Tooltip input accepting a boolean toggle or partial options object. */
 export type ChartTooltipInput = boolean | Partial<ChartTooltipOptions>;
 
 const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
@@ -308,6 +330,7 @@ const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
     wrap: false,
 };
 
+/** Normalizes tooltip input into fully resolved `ChartTooltipOptions`. */
 export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions {
     const base = {
         ...TOOLTIP_DEFAULTS,
@@ -335,8 +358,10 @@ export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<C
 // Legend
 // ---------------------------------------------------------------------------
 
+/** Position of the chart legend relative to the chart area. */
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
 
+/** Fully resolved chart legend options. */
 export interface ChartLegendOptions {
     visible: boolean;
     position: LegendPosition;
@@ -346,6 +371,7 @@ export interface ChartLegendOptions {
     highlight: boolean;
 }
 
+/** Legend input accepting a boolean, position string, or partial options object. */
 export type ChartLegendInput = boolean | LegendPosition | Partial<ChartLegendOptions>;
 
 const LEGEND_DEFAULTS: ChartLegendOptions = {
@@ -357,6 +383,7 @@ const LEGEND_DEFAULTS: ChartLegendOptions = {
     highlight: true,
 };
 
+/** Normalizes legend input into fully resolved `ChartLegendOptions`. */
 export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions {
     const base = {
         ...LEGEND_DEFAULTS,
@@ -394,8 +421,10 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
 // Axis
 // ---------------------------------------------------------------------------
 
+/** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
+/** Options for a single axis (x or y). */
 export interface ChartAxisItemOptions<TData = unknown> {
     visible: boolean;
     font: string;
@@ -407,15 +436,18 @@ export interface ChartAxisItemOptions<TData = unknown> {
     format?: AxisFormatType | ((value: any) => string);
 }
 
+/** Y-axis specific options extending the base axis item with a left/right position. */
 export interface ChartYAxisItemOptions<TData = unknown> extends ChartAxisItemOptions<TData> {
     position: 'left' | 'right';
 }
 
+/** Combined x and y axis configuration. */
 export interface ChartAxisOptions<TData = unknown> {
     x?: boolean | Partial<ChartAxisItemOptions<TData>>;
     y?: boolean | Partial<ChartYAxisItemOptions<TData>> | Partial<ChartYAxisItemOptions<TData>>[];
 }
 
+/** Axis input accepting a boolean toggle or a full axis options object. */
 export type ChartAxisInput<TData = unknown> = boolean | ChartAxisOptions<TData>;
 
 const AXIS_ITEM_DEFAULTS: ChartAxisItemOptions = {
@@ -429,6 +461,7 @@ const Y_AXIS_ITEM_DEFAULTS: ChartYAxisItemOptions = {
     position: 'left',
 };
 
+/** Normalizes a single axis item input into fully resolved options. */
 export function normalizeAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartAxisItemOptions<TData>>,
     defaults?: Partial<ChartAxisItemOptions<TData>>
@@ -455,6 +488,7 @@ export function normalizeAxisItem<TData = unknown>(
     } as ChartAxisItemOptions<TData>;
 }
 
+/** Normalizes a Y-axis item input into fully resolved options with position. */
 export function normalizeYAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartYAxisItemOptions<TData>>,
     defaults?: Partial<ChartYAxisItemOptions<TData>>
@@ -481,6 +515,7 @@ export function normalizeYAxisItem<TData = unknown>(
     } as ChartYAxisItemOptions<TData>;
 }
 
+/** Normalizes axis input into a full `ChartAxisOptions` object with both x and y. */
 export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData> {
     if (input === undefined) {
         return {
@@ -510,6 +545,7 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 // ---------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+/** Resolves an axis format type or custom formatter into a label formatting function. */
 export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
     if (!format) {
         return undefined;

@@ -12,6 +12,7 @@ import {
     Box,
 } from '../math';
 
+/** State interface for an ellipse element, defining center, radii, rotation, and angle range. */
 export interface EllipseState extends BaseElementState {
     cx: number;
     cy: number;
@@ -22,6 +23,7 @@ export interface EllipseState extends BaseElementState {
     endAngle: number;
 }
 
+/** An ellipse shape rendered at a center point with separate x/y radii, rotation, and angle range. */
 export class Ellipse extends Shape2D<EllipseState> {
 
     public get cx() {
@@ -109,10 +111,12 @@ export class Ellipse extends Shape2D<EllipseState> {
 
 }
 
+/** Factory function that creates a new `Ellipse` instance. */
 export function createEllipse(...options: ConstructorParameters<typeof Ellipse>) {
     return new Ellipse(...options);
 }
 
+/** Type guard that checks whether a value is an `Ellipse` instance. */
 export function elementIsEllipse(value: unknown): value is Ellipse {
     return value instanceof Ellipse;
 }

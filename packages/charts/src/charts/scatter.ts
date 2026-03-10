@@ -66,6 +66,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Configuration for an individual scatter chart series. */
 export interface ScatterChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -77,6 +78,7 @@ export interface ScatterChartSeriesOptions<TData> {
     maxRadius?: number;
 }
 
+/** Options for configuring a {@link ScatterChart}. */
 export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: ScatterChartSeriesOptions<TData>[];
@@ -88,6 +90,15 @@ export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Scatter chart (bubble chart) plotting data points as circles on two continuous axes.
+ *
+ * Supports optional bubble sizing via a third value dimension, multi-series
+ * rendering, crosshair, tooltips, legend, and grid. Points animate in with
+ * staggered scale transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TData>> {
 
     private bubbleGroups: Group[] = [];
@@ -653,6 +664,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link ScatterChart} instance. */
 export function createScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
     return new ScatterChart<TData>(target, options);
 }

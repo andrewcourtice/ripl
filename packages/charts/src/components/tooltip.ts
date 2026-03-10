@@ -13,6 +13,7 @@ import {
     Text,
 } from '@ripl/core';
 
+/** Options for constructing a tooltip component. */
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
     font?: string;
@@ -25,6 +26,7 @@ export interface TooltipOptions extends ChartComponentOptions {
     formatContent?: (content: string) => string;
 }
 
+/** A boundary-aware tooltip component that shows text content near the mouse pointer with animated transitions. */
 export class Tooltip extends ChartComponent {
 
     private group: Group | null = null;
@@ -61,6 +63,7 @@ export class Tooltip extends ChartComponent {
         this.borderRadiusValue = borderRadius;
     }
 
+    /** Shows the tooltip at the given position with the specified text content. */
     public show(x: number, y: number, content: string) {
         // Clear any pending hide timeout
         if (this.hideTimeout !== null) {
@@ -190,6 +193,7 @@ export class Tooltip extends ChartComponent {
         }
     }
 
+    /** Hides the tooltip with a short delay and fade-out animation. */
     public hide() {
         if (!this.group) {
             return;
@@ -217,6 +221,7 @@ export class Tooltip extends ChartComponent {
 
 }
 
+/** Factory function that creates a new `Tooltip` instance. */
 export function createTooltip(...options: ConstructorParameters<typeof Tooltip>) {
     return new Tooltip(...options);
 }

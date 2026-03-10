@@ -71,6 +71,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Configuration for an individual line chart series. */
 export interface LineChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -82,6 +83,7 @@ export interface LineChartSeriesOptions<TData> {
     markerRadius?: number;
 }
 
+/** Options for configuring a {@link LineChart}. */
 export interface LineChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: LineChartSeriesOptions<TData>[];
@@ -93,6 +95,15 @@ export interface LineChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Line chart rendering one or more series as polylines with optional markers.
+ *
+ * Supports customisable line renderers (e.g. curved, stepped), interactive
+ * crosshair, tooltips, legend, and grid. Entry animations draw lines
+ * progressively while markers appear with staggered delays.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
 
     private lineGroups: Group[] = [];
@@ -583,6 +594,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
 
 }
 
+/** Factory function that creates a new {@link LineChart} instance. */
 export function createLineChart<TData = unknown>(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
     return new LineChart<TData>(target, options);
 }

@@ -80,6 +80,7 @@ function serialiseConicGradient(gradient: ConicGradient): string {
     return `${prefix}conic-gradient(${parts.join(', ')})`;
 }
 
+/** Serialises a structured `Gradient` object back into a CSS gradient string. */
 export function serialiseGradient(gradient: Gradient): string {
     switch (gradient.type) {
         case 'linear': return serialiseLinearGradient(gradient);

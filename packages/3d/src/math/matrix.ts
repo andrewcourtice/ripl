@@ -10,12 +10,15 @@ import type {
 } from './vector';
 
 // Column-major 4x4 matrix stored as a 16-element array
+/** A column-major 4×4 matrix stored as a 16-element `Float64Array`. */
 export type Matrix4 = Float64Array;
 
+/** Creates a zeroed 4×4 matrix. */
 export function mat4Create(): Matrix4 {
     return new Float64Array(16);
 }
 
+/** Creates a 4×4 identity matrix. */
 export function mat4Identity(): Matrix4 {
     const out = mat4Create();
     out[0] = 1;
@@ -26,10 +29,12 @@ export function mat4Identity(): Matrix4 {
     return out;
 }
 
+/** Returns a copy of the given matrix. */
 export function mat4Clone(m: Matrix4): Matrix4 {
     return new Float64Array(m);
 }
 
+/** Multiplies two 4×4 matrices. */
 export function mat4Multiply(a: Matrix4, b: Matrix4): Matrix4 {
     const out = mat4Create();
 
@@ -46,6 +51,7 @@ export function mat4Multiply(a: Matrix4, b: Matrix4): Matrix4 {
     return out;
 }
 
+/** Applies a translation to a matrix. */
 export function mat4Translate(m: Matrix4, v: Vector3): Matrix4 {
     const t = mat4Identity();
     t[12] = v[0];
@@ -55,6 +61,7 @@ export function mat4Translate(m: Matrix4, v: Vector3): Matrix4 {
     return mat4Multiply(m, t);
 }
 
+/** Applies a scale transform to a matrix. */
 export function mat4Scale(m: Matrix4, v: Vector3): Matrix4 {
     const s = mat4Identity();
     s[0] = v[0];
@@ -64,6 +71,7 @@ export function mat4Scale(m: Matrix4, v: Vector3): Matrix4 {
     return mat4Multiply(m, s);
 }
 
+/** Applies a rotation around the X axis to a matrix. */
 export function mat4RotateX(m: Matrix4, angle: number): Matrix4 {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
@@ -77,6 +85,7 @@ export function mat4RotateX(m: Matrix4, angle: number): Matrix4 {
     return mat4Multiply(m, r);
 }
 
+/** Applies a rotation around the Y axis to a matrix. */
 export function mat4RotateY(m: Matrix4, angle: number): Matrix4 {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
@@ -90,6 +99,7 @@ export function mat4RotateY(m: Matrix4, angle: number): Matrix4 {
     return mat4Multiply(m, r);
 }
 
+/** Applies a rotation around the Z axis to a matrix. */
 export function mat4RotateZ(m: Matrix4, angle: number): Matrix4 {
     const c = Math.cos(angle);
     const s = Math.sin(angle);
@@ -103,6 +113,7 @@ export function mat4RotateZ(m: Matrix4, angle: number): Matrix4 {
     return mat4Multiply(m, r);
 }
 
+/** Constructs a view matrix looking from `eye` toward `target` with the given `up` direction. */
 export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 {
     const zAxis = vec3Normalize(vec3Sub(eye, target));
     const xAxis = vec3Normalize(vec3Cross(up, zAxis));
@@ -133,6 +144,7 @@ export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 
     return out;
 }
 
+/** Constructs a perspective projection matrix. */
 export function mat4Perspective(fovRadians: number, aspect: number, near: number, far: number): Matrix4 {
     // eslint-disable-next-line id-length
     const f = 1.0 / Math.tan(fovRadians / 2);
@@ -149,6 +161,7 @@ export function mat4Perspective(fovRadians: number, aspect: number, near: number
     return out;
 }
 
+/** Constructs an orthographic projection matrix. */
 export function mat4Orthographic(
     left: number,
     right: number,
@@ -174,6 +187,7 @@ export function mat4Orthographic(
     return out;
 }
 
+/** Transforms a 3D point by a 4×4 matrix, performing the perspective divide. */
 export function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3 {
     const x = v[0];
     const y = v[1];

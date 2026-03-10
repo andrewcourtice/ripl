@@ -15,6 +15,7 @@ import {
     setColorAlpha,
 } from '@ripl/core';
 
+/** Options for configuring a {@link GaugeChart}. */
 export interface GaugeChartOptions extends BaseChartOptions {
     value: number;
     min?: number;
@@ -34,6 +35,13 @@ export interface GaugeChartOptions extends BaseChartOptions {
 const DEFAULT_COLOR = '#7cacf8';
 const DEFAULT_TRACK_COLOR = '#e5e7eb';
 
+/**
+ * Gauge chart displaying a single value on a 270-degree arc.
+ *
+ * Renders a background track arc and an animated value arc spanning from
+ * the minimum to the current value. Supports configurable tick marks
+ * with labels, a central value display, and an optional descriptive label.
+ */
 export class GaugeChart extends Chart<GaugeChartOptions> {
 
     private group?: Group;
@@ -239,6 +247,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link GaugeChart} instance. */
 export function createGaugeChart(target: string | HTMLElement | Context, options: GaugeChartOptions) {
     return new GaugeChart(target, options);
 }

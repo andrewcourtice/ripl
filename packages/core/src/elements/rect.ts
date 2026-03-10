@@ -14,6 +14,7 @@ import {
     normaliseBorderRadius,
 } from '../math';
 
+/** State interface for a rectangle element, defining position, dimensions, and optional border radius. */
 export interface RectState extends BaseElementState {
     x: number;
     y: number;
@@ -22,6 +23,7 @@ export interface RectState extends BaseElementState {
     borderRadius?: number | BorderRadius;
 }
 
+/** A rectangle shape with optional rounded corners via border radius. */
 export class Rect extends Shape2D<RectState> {
 
     public get x() {
@@ -119,10 +121,12 @@ export class Rect extends Shape2D<RectState> {
 
 }
 
+/** Factory function that creates a new `Rect` instance. */
 export function createRect(...options: ConstructorParameters<typeof Rect>) {
     return new Rect(...options);
 }
 
+/** Type guard that checks whether a value is a `Rect` instance. */
 export function elementIsRect(value: unknown): value is Rect {
     return value instanceof Rect;
 }

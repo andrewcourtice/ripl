@@ -19,10 +19,16 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** Horizontal axis alignment within the chart area. */
 export type ChartXAxisAlignment = 'top' | 'bottom';
+
+/** Vertical axis alignment within the chart area. */
 export type ChartYAxisAlignment = 'left' | 'right';
+
+/** Dimension used for measuring tick label overflow. */
 export type LabelDimension = 'width' | 'height';
 
+/** Options for constructing a chart axis component. */
 export interface ChartAxisOptions extends ChartComponentOptions {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scale: Scale<any, number>;
@@ -42,6 +48,7 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     formatLabel?: (value: any) => string;
 }
 
+/** Options for an x-axis, omitting label dimension (always width). */
 export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartXAxisAlignment;
     title?: string;
@@ -49,6 +56,7 @@ export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimensio
     formatLabel?: (value: any) => string;
 }
 
+/** Options for a y-axis, omitting label dimension (always height). */
 export interface ChartYAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
     alignment?: ChartYAxisAlignment;
     title?: string;
@@ -61,6 +69,7 @@ const LABEL_DIMENSION_MAP = {
     height: metrics => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
 } as Record<LabelDimension, (metrics: TextMetrics) => number>;
 
+/** Base axis component managing scale, ticks, labels, and an axis line. */
 export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -184,6 +193,7 @@ export class ChartAxis extends ChartComponent {
 
 }
 
+/** Horizontal (x) axis component with top/bottom alignment. */
 export class ChartXAxis extends ChartAxis {
 
     public alignment: ChartXAxisAlignment;
@@ -340,6 +350,7 @@ export class ChartXAxis extends ChartAxis {
 
 }
 
+/** Vertical (y) axis component with left/right alignment. */
 export class ChartYAxis extends ChartAxis {
 
     public alignment: ChartYAxisAlignment;

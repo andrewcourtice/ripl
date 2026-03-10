@@ -42,6 +42,7 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** A node in a sunburst hierarchy with optional nested children. */
 export interface SunburstNode {
     id: string;
     label: string;
@@ -50,6 +51,7 @@ export interface SunburstNode {
     children?: SunburstNode[];
 }
 
+/** Options for configuring a {@link SunburstChart}. */
 export interface SunburstChartOptions extends BaseChartOptions {
     data: SunburstNode[];
     legend?: ChartLegendInput;
@@ -116,6 +118,14 @@ function flattenNodes(
     return result;
 }
 
+/**
+ * Sunburst chart rendering hierarchical data as concentric arc rings.
+ *
+ * Each depth level is rendered as a ring of arc segments whose angular
+ * extent is proportional to the node's value. Child nodes inherit parent
+ * colors and are positioned within the parent's angular range. Supports
+ * legend, tooltips, and staggered radial entry animations.
+ */
 export class SunburstChart extends Chart<SunburstChartOptions> {
 
     private groups: Group[] = [];
@@ -316,6 +326,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link SunburstChart} instance. */
 export function createSunburstChart(target: string | HTMLElement | Context, options: SunburstChartOptions) {
     return new SunburstChart(target, options);
 }

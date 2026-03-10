@@ -13,6 +13,7 @@ import type {
     ColorRGBA,
 } from './types';
 
+/** Returns a new color string with the alpha channel replaced by the given value. */
 export function setColorAlpha(color: string, alpha: number) {
     const rgba = parseColor(color);
 
@@ -29,6 +30,7 @@ export function setColorAlpha(color: string, alpha: number) {
     return serialiseRGBA(red, green, blue, alpha);
 }
 
+/** Converts RGBA channel values to an HSLA tuple. */
 export function rgbaToHSL(red: number, green: number, blue: number, alpha: number = 1): ColorHSLA {
     const r = red / 255;
     const g = green / 255;
@@ -66,6 +68,7 @@ export function rgbaToHSL(red: number, green: number, blue: number, alpha: numbe
     ];
 }
 
+/** Converts HSLA values to an RGBA tuple. */
 export function hslToRGBA(hue: number, saturation: number, lightness: number, alpha: number = 1): ColorRGBA {
     const h = clamp(hue, 0, 360) / 360;
     const s = clamp(saturation, 0, 100) / 100;
@@ -104,6 +107,7 @@ export function hslToRGBA(hue: number, saturation: number, lightness: number, al
     ];
 }
 
+/** Converts RGBA channel values to an HSVA tuple. */
 export function rgbaToHSV(red: number, green: number, blue: number, alpha: number = 1): ColorHSVA {
     const r = red / 255;
     const g = green / 255;
@@ -139,6 +143,7 @@ export function rgbaToHSV(red: number, green: number, blue: number, alpha: numbe
     ];
 }
 
+/** Converts HSVA values to an RGBA tuple. */
 export function hsvToRGBA(hue: number, saturation: number, value: number, alpha: number = 1): ColorRGBA {
     const h = clamp(hue, 0, 360) / 60;
     const s = clamp(saturation, 0, 100) / 100;

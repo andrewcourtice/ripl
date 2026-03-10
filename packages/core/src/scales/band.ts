@@ -10,7 +10,8 @@ import type {
     Scale,
 } from './types';
 
-export interface BandScale<TDomain> extends Scale<TDomain> {
+/** A band scale that divides a continuous range into uniform bands for categorical data, exposing bandwidth and step. */
+export interface BandScale<TDomain = string> extends Scale<TDomain, number> {
     bandwidth: number;
     step: number;
 }
@@ -22,7 +23,8 @@ export type BandScaleOptions = {
     round?: boolean;
 };
 
-export function scaleBand<TDomain>(
+/** Creates a band scale that maps discrete domain values to evenly spaced bands within the range. */
+export function scaleBand<TDomain = string>(
     domain: TDomain[],
     range: number[],
     options?: BandScaleOptions

@@ -20,6 +20,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Built-in polyline curve interpolation algorithm names. */
 export type PolylineRenderer = 'linear'
 | 'spline'
 | 'basis'
@@ -34,7 +35,10 @@ export type PolylineRenderer = 'linear'
 | 'stepBefore'
 | 'stepAfter';
 
+/** A function that renders a polyline curve onto a path from an array of points. */
 export type PolylineRenderFunc = (context: Context, path: ContextPath, points: Point[]) => void;
+
+/** State interface for a polyline element, defining points and an optional curve renderer. */
 export interface PolylineState extends BaseElementState {
     points: Point[];
     renderer?: PolylineRenderer | PolylineRenderFunc;
@@ -117,10 +121,12 @@ function adjustMonotonicTangents(tangents: number[], slopes: number[], pointCoun
     }
 }
 
+/** Creates a linear (straight segment) polyline renderer. */
 export function polylineLinearRenderer(): PolylineRenderFunc {
     return (context, path, points) => path.polyline(points);
 }
 
+/** Creates a spline polyline renderer with configurable tension. */
 export function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc {
     const getControlPoint = ([x0, y0]: Point, [x1, y1]: Point, [x2, y2]: Point, tension: number = 0.5) => {
         const distance1 = getHypLength(x1 - x0, y1 - y0);
@@ -166,6 +172,7 @@ export function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFun
     };
 }
 
+/** Creates a cubic B-spline polyline renderer. */
 export function polylineBasisRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -201,6 +208,7 @@ export function polylineBasisRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a bump-X polyline renderer using horizontal midpoint bezier curves. */
 export function polylineBumpXRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (points.length < 1) {
@@ -219,6 +227,7 @@ export function polylineBumpXRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a bump-Y polyline renderer using vertical midpoint bezier curves. */
 export function polylineBumpYRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (points.length < 1) {
@@ -237,6 +246,7 @@ export function polylineBumpYRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a cardinal spline polyline renderer with configurable tension. */
 export function polylineCardinalRenderer(tension: number = 0): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -283,6 +293,7 @@ export function polylineCardinalRenderer(tension: number = 0): PolylineRenderFun
     };
 }
 
+/** Creates a Catmull-Rom spline polyline renderer with configurable alpha. */
 export function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -311,6 +322,7 @@ export function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderF
     };
 }
 
+/** Creates a monotone-X polyline renderer preserving monotonicity along the x-axis. */
 export function polylineMonotoneXRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -340,6 +352,7 @@ export function polylineMonotoneXRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a monotone-Y polyline renderer preserving monotonicity along the y-axis. */
 export function polylineMonotoneYRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -369,6 +382,7 @@ export function polylineMonotoneYRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a natural cubic spline polyline renderer with second-derivative continuity. */
 export function polylineNaturalRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (handleSimplePolyline(path, points)) {
@@ -419,6 +433,7 @@ export function polylineNaturalRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a step polyline renderer with midpoint horizontal transitions. */
 export function polylineStepRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (points.length < 1) {
@@ -439,6 +454,7 @@ export function polylineStepRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a step-before polyline renderer where the vertical transition occurs at the start of each segment. */
 export function polylineStepBeforeRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (points.length < 1) {
@@ -457,6 +473,7 @@ export function polylineStepBeforeRenderer(): PolylineRenderFunc {
     };
 }
 
+/** Creates a step-after polyline renderer where the vertical transition occurs at the end of each segment. */
 export function polylineStepAfterRenderer(): PolylineRenderFunc {
     return (context, path, points) => {
         if (points.length < 1) {
@@ -474,6 +491,7 @@ export function polylineStepAfterRenderer(): PolylineRenderFunc {
     };
 }
 
+/** A multi-point line shape supporting various curve interpolation algorithms. */
 export class Polyline extends Shape2D<PolylineState> {
 
     public get points() {
@@ -518,10 +536,12 @@ export class Polyline extends Shape2D<PolylineState> {
 
 }
 
+/** Factory function that creates a new `Polyline` instance. */
 export function createPolyline(...options: ConstructorParameters<typeof Polyline>) {
     return new Polyline(...options);
 }
 
+/** Type guard that checks whether a value is a `Polyline` instance. */
 export function elementIsPolyline(value: unknown): value is Polyline {
     return value instanceof Polyline;
 }

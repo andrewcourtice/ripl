@@ -16,6 +16,7 @@ import type {
     ScaleMethod,
 } from '../types';
 
+/** Low-level options for constructing a scale, providing conversion, inversion, inclusion, and tick generation callbacks. */
 export interface ScaleBindingOptions<TDomain, TRange> {
     readonly domain: TDomain[];
     readonly range: TRange[];
@@ -25,11 +26,13 @@ export interface ScaleBindingOptions<TDomain, TRange> {
     ticks?(count?: number): TDomain[];
 }
 
+/** Options shared by linear-based scales (continuous, logarithmic, power, etc.). */
 export interface LinearScaleOptions {
     clamp?: boolean;
     padToTicks?: boolean | number;
 }
 
+/** Expands a numeric domain to "nice" tick-aligned boundaries and returns `[min, max, step]`. */
 export function padDomain(domain: number[], count: number = 10) {
     let [
         min,
@@ -49,6 +52,7 @@ export function padDomain(domain: number[], count: number = 10) {
     ];
 }
 
+/** Assembles a `Scale` object from explicit conversion, inversion, and tick functions. */
 export function createScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange> {
     const {
         domain,
@@ -70,6 +74,7 @@ export function createScale<TDomain = number, TRange = number>(options: ScaleBin
     return scale;
 }
 
+/** Creates a linear mapping function from a numeric domain to a numeric range, with optional clamping and tick-padding. */
 export function getLinearScaleMethod(domain: number[], range: number[], options?: LinearScaleOptions): ScaleMethod {
     const {
         clamp,
@@ -101,6 +106,7 @@ export function getLinearScaleMethod(domain: number[], range: number[], options?
     };
 }
 
+/** Creates an `includes` predicate that tests whether a value falls within the numeric domain. */
 export function createNumericIncludesMethod(domain: number[]) {
     const [
         min,
@@ -110,6 +116,7 @@ export function createNumericIncludesMethod(domain: number[]) {
     return (value: number) => value >= min && value <= max;
 }
 
+/** Generates an array of evenly spaced, "nice" tick values across the domain. */
 export function getLinearTicks(domain: number[], count: number = 10) {
     const [
         min,

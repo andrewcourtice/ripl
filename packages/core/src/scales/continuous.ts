@@ -10,6 +10,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a continuous linear scale that maps a numeric domain to a numeric range. */
 export function scaleContinuous(
     domain: number[],
     range: number[],

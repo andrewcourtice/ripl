@@ -11,6 +11,7 @@ import {
     Shape2DOptions,
 } from '@ripl/core';
 
+/** State interface for a Sankey link, defining source and target endpoint coordinates. */
 export interface SankeyLinkState extends BaseElementState {
     sx: number;
     sy: number;
@@ -18,6 +19,7 @@ export interface SankeyLinkState extends BaseElementState {
     ty: number;
 }
 
+/** A curved Sankey link shape rendered as a cubic Bézier curve between source and target points. */
 export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
 
     public get sx() {
@@ -95,10 +97,12 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
 
 }
 
+/** Factory function that creates a new `SankeyLinkPath` instance. */
 export function createSankeyLink(...options: ConstructorParameters<typeof SankeyLinkPath>) {
     return new SankeyLinkPath(...options);
 }
 
+/** Type guard that checks whether a value is a `SankeyLinkPath` instance. */
 export function elementIsSankeyLink(value: unknown): value is SankeyLinkPath {
     return value instanceof SankeyLinkPath;
 }

@@ -105,6 +105,7 @@ function interpolateMatchingGradients(gradientA: Gradient, gradientB: Gradient) 
     return (position: number) => position > 0.5 ? gradientB : gradientA;
 }
 
+/** Interpolator factory that transitions between two CSS gradient strings by interpolating their stops, angles, and positions. */
 export const interpolateGradient: InterpolatorFactory<string> = (valueA, valueB) => {
     const gradientA = parseGradient(valueA);
     const gradientB = parseGradient(valueB);

@@ -1,3 +1,4 @@
+/** A virtual DOM node representing an element in the reconciled tree. */
 export interface VNode<TElement = unknown> {
     id: string;
     tag: string;
@@ -5,11 +6,13 @@ export interface VNode<TElement = unknown> {
     children: VNode<TElement>[];
 }
 
+/** A linked-list reference to an element's parent chain, used to resolve ancestor group paths. */
 export interface ParentRef {
     id: string;
     parent?: ParentRef;
 }
 
+/** Configuration for the DOM reconciler, providing element lifecycle callbacks and filtering. */
 export interface ReconcilerOptions<TElement = unknown> {
     createElement: (tag: string, id: string) => Element;
     updateElement: (domNode: Element, element: TElement) => void;
@@ -22,6 +25,7 @@ function defaultGetChildId(domNode: Element): string | null {
     return domNode.getAttribute('id');
 }
 
+/** Walks the parent chain of an element and collects group IDs from root to leaf (excluding the scene root). */
 export function getAncestorGroupIds(element: ParentRef): string[] {
     const ids: string[] = [];
     let current = element.parent;
@@ -34,6 +38,7 @@ export function getAncestorGroupIds(element: ParentRef): string[] {
     return ids;
 }
 
+/** Ensures that a nested group path exists in the virtual tree, creating missing intermediate nodes as needed. */
 export function ensureGroupPath<TElement = unknown>(root: VNode<TElement>, groupIds: string[], defaultTag: string = 'g'): VNode<TElement> {
     let parent = root;
 
@@ -65,6 +70,7 @@ function isExcluded(element: Element, selectors: string[]): boolean {
     return false;
 }
 
+/** Reconciles a virtual node tree against the live DOM, creating, updating, reordering, and removing child elements as needed. */
 export function reconcileNode<TElement = unknown>(
     domParent: Element,
     vnode: VNode<TElement>,
@@ -133,6 +139,7 @@ export function reconcileNode<TElement = unknown>(
     }
 }
 
+/** Creates a new virtual node with the given id, tag, optional children, and optional backing element. */
 export function createVNode<TElement = unknown>(id: string, tag: string, children: VNode<TElement>[] = [], element?: TElement): VNode<TElement> {
     return {
         id,

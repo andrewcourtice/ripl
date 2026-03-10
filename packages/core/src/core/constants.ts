@@ -26,6 +26,7 @@ function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {};
 
+/** Maps element state properties to their corresponding context setter functions. */
 export const CONTEXT_OPERATIONS = {
     direction: basicContextSetter('direction'),
     fillStyle: basicContextSetter('fillStyle'),
@@ -59,6 +60,7 @@ export const CONTEXT_OPERATIONS = {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };
 
+/** Interpolator factories for transform-related properties that require special interpolation (rotation, transform-origin). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>> = {
     rotation: interpolateRotation,
@@ -66,6 +68,7 @@ export const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>> =
     transformOriginY: interpolateTransformOrigin,
 };
 
+/** Default numeric values for transform properties (translate, scale, rotation, transform-origin). */
 export const TRANSFORM_DEFAULTS: Record<string, number> = {
     translateX: 0,
     translateY: 0,
@@ -76,6 +79,7 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
     transformOriginY: 0,
 };
 
+/** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
 export const TRACKED_EVENTS = [
     'click',
     'mousemove',

@@ -1,3 +1,4 @@
+/** Default chart color palette keyed by color name. */
 export const COLOURS = {
     blue: '#7cacf8',
     emerald: '#6dd5b1',
@@ -13,6 +14,7 @@ export const COLOURS = {
     slate: '#a1afc4',
 };
 
+/** Creates an infinite generator that cycles through the default chart color palette. */
 export function* getColorGenerator(): Generator<string, string> {
     const colors = Object.values(COLOURS);
     let index = 0;

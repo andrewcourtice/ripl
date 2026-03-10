@@ -28,6 +28,7 @@ export type {
     ChartTitleOptions,
 };
 
+/** Chart padding with explicit top, right, bottom, and left values. */
 export interface ChartPadding {
     top: number;
     right: number;
@@ -35,6 +36,7 @@ export interface ChartPadding {
     left: number;
 }
 
+/** The computed drawing area of a chart after padding is applied. */
 export interface ChartArea {
     x: number;
     y: number;
@@ -42,6 +44,7 @@ export interface ChartArea {
     height: number;
 }
 
+/** Base options shared by all chart types. */
 export interface BaseChartOptions {
     autoRender?: boolean;
     padding?: Partial<ChartPadding>;
@@ -49,6 +52,7 @@ export interface BaseChartOptions {
     animation?: boolean | Partial<ChartAnimationOptions>;
 }
 
+/** Abstract base class for all chart types, providing scene, renderer, animation, color management, and lifecycle. */
 export class Chart<
     TOptions extends BaseChartOptions,
     TEventMap extends EventMap = EventMap
@@ -97,6 +101,7 @@ export class Chart<
         }
     }
 
+    /** Merges partial options into the current options and re-renders if `autoRender` is enabled. */
     public update(options: Partial<TOptions>) {
         if (options.animation !== undefined) {
             this.animationOptions = normalizeAnimation(options.animation);
@@ -178,6 +183,7 @@ export class Chart<
         return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
     }
 
+    /** Destroys the chart, its scene, and cleans up all event subscriptions. */
     public destroy() {
         this.scene.destroy();
         super.destroy();

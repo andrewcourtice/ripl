@@ -46,6 +46,7 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
     labels: string[];
     matrix: number[][];
@@ -183,6 +184,14 @@ function computeChordLayout(
     };
 }
 
+/**
+ * Chord diagram visualizing inter-relationships in a square matrix.
+ *
+ * Outer arcs represent groups (labels) with angular extent proportional
+ * to their total flow. Inner ribbons connect pairs of groups with width
+ * proportional to the flow value. Supports legend, tooltips, and
+ * sequential animation (arcs first, then ribbons).
+ */
 export class ChordChart extends Chart<ChordChartOptions> {
 
     private arcGroups: Group[] = [];
@@ -433,6 +442,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link ChordChart} instance. */
 export function createChordChart(target: string | HTMLElement | Context, options: ChordChartOptions) {
     return new ChordChart(target, options);
 }

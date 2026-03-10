@@ -13,10 +13,12 @@ import type {
     Scale,
 } from './types';
 
-export type DivergingScaleOptions = LinearScaleOptions & {
+/** Options for a diverging scale, adding a midpoint to the base linear scale options. */
+export interface DivergingScaleOptions extends LinearScaleOptions {
     midpoint?: number;
 };
 
+/** Creates a diverging scale that maps values below and above a midpoint to separate sub-ranges. */
 export function scaleDiverging(
     domain: number[],
     range: number[],

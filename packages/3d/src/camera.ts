@@ -9,6 +9,7 @@ import {
 
 import {
     degreesToRadians,
+    Disposer,
 } from '@ripl/core';
 
 import {
@@ -21,10 +22,6 @@ import type {
 } from '@ripl/core';
 
 import type {
-    Disposable,
-} from '@ripl/utilities';
-
-import type {
     Context3D,
 } from './context';
 
@@ -32,19 +29,23 @@ import type {
     Vector3,
 } from './math/vector';
 
+/** A camera interaction can be enabled/disabled with a boolean or configured with sensitivity. */
 export type CameraInteractionOption = boolean | CameraInteractionConfig;
 
+/** Fine-grained configuration for a single camera interaction. */
 export interface CameraInteractionConfig {
     enabled?: boolean;
     sensitivity?: number;
 }
 
+/** Configures which camera interactions (zoom, pivot, pan) are enabled. */
 export interface CameraInteractions {
     zoom?: CameraInteractionOption;
     pivot?: CameraInteractionOption;
     pan?: CameraInteractionOption;
 }
 
+/** Options for constructing a camera, including position, projection type, and interaction config. */
 export interface CameraOptions {
     position?: Vector3;
     target?: Vector3;
@@ -61,6 +62,7 @@ interface ResolvedInteraction {
     sensitivity: number;
 }
 
+const INTERACTION_KEY = Symbol('interaction');
 const ORBIT_SENSITIVITY = 0.005;
 const PAN_SENSITIVITY = 0.005;
 const ZOOM_SENSITIVITY = 0.005;
@@ -87,12 +89,12 @@ function resolveInteraction(option: CameraInteractionOption | undefined, fallbac
     };
 }
 
-export class Camera {
+/** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
+export class Camera extends Disposer {
 
     private context: Context3D;
     private dirty = false;
     private scheduled = false;
-    private disposables = new Set<Disposable>();
     private previousTouchAction = '';
 
     private _position: Vector3;
@@ -167,6 +169,7 @@ export class Camera {
     }
 
     constructor(scene: Scene<Context3D>, options?: CameraOptions) {
+        super();
         this.context = scene.context;
 
         this._position = options?.position ?? [0, 0, 5] as Vector3;
@@ -195,6 +198,7 @@ export class Camera {
         }
     }
 
+    /** Flushes pending camera changes to the 3D context's view and projection matrices. */
     public flush(): void {
         if (!this.dirty) {
             this.scheduled = false;
@@ -293,60 +297,58 @@ export class Camera {
         let lastY = 0;
 
         if (zoomConfig.enabled) {
-            this.disposables.add(
-                onDOMEvent(element, 'wheel', (event) => {
-                    event.preventDefault();
-                    const dist = vec3Distance(this._position, this._target);
-                    const delta = event.deltaY * ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist;
-                    this.zoom(delta);
-                })
-            );
+            const wheelListener = onDOMEvent(element, 'wheel', (event) => {
+                event.preventDefault();
+                const dist = vec3Distance(this._position, this._target);
+                const delta = event.deltaY * ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist;
+                this.zoom(delta);
+            });
+
+            this.retain(wheelListener, INTERACTION_KEY);
         }
 
         if (pivotConfig.enabled || panConfig.enabled) {
-            this.disposables.add(
-                onDOMEvent(element, 'pointerdown', (event) => {
-                    dragging = true;
-                    lastX = event.clientX;
-                    lastY = event.clientY;
-                    isPanning = (panConfig.enabled && (event.button === 1 || (event.button === 0 && event.shiftKey)));
-                    element.setPointerCapture(event.pointerId);
-                })
-            );
+            const pointerDownListener = onDOMEvent(element, 'pointerdown', (event) => {
+                dragging = true;
+                lastX = event.clientX;
+                lastY = event.clientY;
+                isPanning = (panConfig.enabled && (event.button === 1 || (event.button === 0 && event.shiftKey)));
+                element.setPointerCapture(event.pointerId);
+            });
 
-            this.disposables.add(
-                onDOMEvent(window, 'pointermove', (event) => {
-                    if (!dragging) {
-                        return;
-                    }
+            const pointerMovelistener = onDOMEvent(window, 'pointermove', (event) => {
+                if (!dragging) {
+                    return;
+                }
 
-                    const dx = event.clientX - lastX;
-                    const dy = event.clientY - lastY;
+                const dx = event.clientX - lastX;
+                const dy = event.clientY - lastY;
 
-                    lastX = event.clientX;
-                    lastY = event.clientY;
+                lastX = event.clientX;
+                lastY = event.clientY;
 
-                    if (isPanning && panConfig.enabled) {
-                        const dist = vec3Distance(this._position, this._target);
-                        this.pan(
-                            dx * PAN_SENSITIVITY * panConfig.sensitivity * dist,
-                            dy * PAN_SENSITIVITY * panConfig.sensitivity * dist
-                        );
-                    } else if (pivotConfig.enabled) {
-                        this.orbit(
-                            -dx * ORBIT_SENSITIVITY * pivotConfig.sensitivity,
-                            -dy * ORBIT_SENSITIVITY * pivotConfig.sensitivity
-                        );
-                    }
-                })
-            );
+                if (isPanning && panConfig.enabled) {
+                    const dist = vec3Distance(this._position, this._target);
+                    this.pan(
+                        dx * PAN_SENSITIVITY * panConfig.sensitivity * dist,
+                        dy * PAN_SENSITIVITY * panConfig.sensitivity * dist
+                    );
+                } else if (pivotConfig.enabled) {
+                    this.orbit(
+                        -dx * ORBIT_SENSITIVITY * pivotConfig.sensitivity,
+                        -dy * ORBIT_SENSITIVITY * pivotConfig.sensitivity
+                    );
+                }
+            });
 
-            this.disposables.add(
-                onDOMEvent(window, 'pointerup', () => {
-                    dragging = false;
-                    isPanning = false;
-                })
-            );
+            const pointerUpListener = onDOMEvent(window, 'pointerup', () => {
+                dragging = false;
+                isPanning = false;
+            });
+
+            this.retain(pointerDownListener, INTERACTION_KEY);
+            this.retain(pointerMovelistener, INTERACTION_KEY);
+            this.retain(pointerUpListener, INTERACTION_KEY);
         }
 
         // Touch gestures: 1-finger orbit, 2-finger pan + pinch-to-zoom
@@ -370,93 +372,95 @@ export class Camera {
         const getPinchDistance = (touches: TouchList) => {
             const dx = touches[1].clientX - touches[0].clientX;
             const dy = touches[1].clientY - touches[0].clientY;
+
             return Math.sqrt(dx * dx + dy * dy);
         };
 
-        this.disposables.add(
-            onDOMEvent(element, 'touchstart', (event) => {
-                event.preventDefault();
-                touchCount = event.touches.length;
+        const touchStartListener = onDOMEvent(element, 'touchstart', (event) => {
+            event.preventDefault();
+            touchCount = event.touches.length;
 
+            const [cx, cy] = getTouchCenter(event.touches);
+            lastTouchCenterX = cx;
+            lastTouchCenterY = cy;
+
+            if (touchCount >= 2) {
+                lastPinchDist = getPinchDistance(event.touches);
+                dragging = false;
+            }
+        });
+
+        const touchMoveListener = onDOMEvent(element, 'touchmove', (event) => {
+            event.preventDefault();
+
+            const [cx, cy] = getTouchCenter(event.touches);
+            const dx = cx - lastTouchCenterX;
+            const dy = cy - lastTouchCenterY;
+
+            lastTouchCenterX = cx;
+            lastTouchCenterY = cy;
+
+            if (event.touches.length >= 2) {
+                // Two-finger pan
+                if (panConfig.enabled) {
+                    const dist = vec3Distance(this._position, this._target);
+
+                    this.pan(
+                        dx * PAN_SENSITIVITY * panConfig.sensitivity * dist,
+                        dy * PAN_SENSITIVITY * panConfig.sensitivity * dist
+                    );
+                }
+
+                // Pinch-to-zoom
+                if (zoomConfig.enabled) {
+                    const pinchDist = getPinchDistance(event.touches);
+                    const pinchDelta = lastPinchDist - pinchDist;
+                    const dist = vec3Distance(this._position, this._target);
+
+                    lastPinchDist = pinchDist;
+
+                    this.zoom(pinchDelta * PINCH_ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist);
+                }
+            } else if (event.touches.length === 1 && pivotConfig.enabled) {
+                // Single-finger orbit
+                this.orbit(
+                    -dx * ORBIT_SENSITIVITY * pivotConfig.sensitivity,
+                    -dy * ORBIT_SENSITIVITY * pivotConfig.sensitivity
+                );
+            }
+        });
+
+        const touchEndListener = onDOMEvent(element, 'touchend', (event) => {
+            event.preventDefault();
+            touchCount = event.touches.length;
+
+            if (touchCount > 0) {
                 const [cx, cy] = getTouchCenter(event.touches);
+
                 lastTouchCenterX = cx;
                 lastTouchCenterY = cy;
 
                 if (touchCount >= 2) {
                     lastPinchDist = getPinchDistance(event.touches);
-                    dragging = false;
                 }
-            })
-        );
+            }
+        });
 
-        this.disposables.add(
-            onDOMEvent(element, 'touchmove', (event) => {
-                event.preventDefault();
-
-                const [cx, cy] = getTouchCenter(event.touches);
-                const dx = cx - lastTouchCenterX;
-                const dy = cy - lastTouchCenterY;
-
-                lastTouchCenterX = cx;
-                lastTouchCenterY = cy;
-
-                if (event.touches.length >= 2) {
-                    // Two-finger pan
-                    if (panConfig.enabled) {
-                        const dist = vec3Distance(this._position, this._target);
-                        this.pan(
-                            dx * PAN_SENSITIVITY * panConfig.sensitivity * dist,
-                            dy * PAN_SENSITIVITY * panConfig.sensitivity * dist
-                        );
-                    }
-
-                    // Pinch-to-zoom
-                    if (zoomConfig.enabled) {
-                        const pinchDist = getPinchDistance(event.touches);
-                        const pinchDelta = lastPinchDist - pinchDist;
-                        lastPinchDist = pinchDist;
-
-                        const dist = vec3Distance(this._position, this._target);
-                        this.zoom(pinchDelta * PINCH_ZOOM_SENSITIVITY * zoomConfig.sensitivity * dist);
-                    }
-                } else if (event.touches.length === 1 && pivotConfig.enabled) {
-                    // Single-finger orbit
-                    this.orbit(
-                        -dx * ORBIT_SENSITIVITY * pivotConfig.sensitivity,
-                        -dy * ORBIT_SENSITIVITY * pivotConfig.sensitivity
-                    );
-                }
-            })
-        );
-
-        this.disposables.add(
-            onDOMEvent(element, 'touchend', (event) => {
-                event.preventDefault();
-                touchCount = event.touches.length;
-
-                if (touchCount > 0) {
-                    const [cx, cy] = getTouchCenter(event.touches);
-                    lastTouchCenterX = cx;
-                    lastTouchCenterY = cy;
-
-                    if (touchCount >= 2) {
-                        lastPinchDist = getPinchDistance(event.touches);
-                    }
-                }
-            })
-        );
+        this.retain(touchStartListener, INTERACTION_KEY);
+        this.retain(touchMoveListener, INTERACTION_KEY);
+        this.retain(touchEndListener, INTERACTION_KEY);
     }
 
-    public dispose(): void {
+    public override dispose(): void {
         const element = this.context.element as unknown as HTMLElement;
         element.style.touchAction = this.previousTouchAction;
 
-        this.disposables.forEach(disposable => disposable.dispose());
-        this.disposables.clear();
+        super.dispose();
     }
 
 }
 
+/** Factory function that creates a new `Camera` bound to a 3D scene. */
 export function createCamera(scene: Scene<Context3D>, options?: CameraOptions): Camera {
     return new Camera(scene, options);
 }

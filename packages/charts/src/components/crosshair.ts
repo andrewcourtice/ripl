@@ -10,10 +10,7 @@ import {
     Line,
 } from '@ripl/core';
 
-import {
-    Disposable,
-} from '@ripl/utilities';
-
+/** Options for constructing a crosshair component. */
 export interface CrosshairOptions extends ChartComponentOptions {
     vertical?: boolean;
     horizontal?: boolean;
@@ -22,10 +19,12 @@ export interface CrosshairOptions extends ChartComponentOptions {
     lineDash?: number[];
 }
 
+const EVENTS_KEY = Symbol('events');
 const DEFAULT_STROKE = '#94a3b8';
 const DEFAULT_LINE_WIDTH = 1;
 const DEFAULT_LINE_DASH = [4, 4];
 
+/** A crosshair overlay that follows mouse position within the chart area. */
 export class Crosshair extends ChartComponent {
 
     private group?: Group;
@@ -36,8 +35,6 @@ export class Crosshair extends ChartComponent {
     private strokeStyle: string;
     private lineWidth: number;
     private lineDash: number[];
-
-    private disposables: Disposable[] = [];
 
     private bounds = {
         x: 0,
@@ -56,6 +53,7 @@ export class Crosshair extends ChartComponent {
         this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
 
+    /** Initializes the crosshair lines and attaches mouse event listeners within the given bounds. */
     public setup(x: number, y: number, width: number, height: number) {
         this.bounds = {
             x,
@@ -109,18 +107,19 @@ export class Crosshair extends ChartComponent {
 
         this.scene.add(this.group);
 
-        this.disposables.forEach(d => d.dispose());
-        this.disposables = [
-            this.context.on('mousemove', (event) => {
-                const { x, y } = event.data;
-                this.show(x, y);
-            }),
-            this.context.on('mouseleave', () => {
-                this.hide();
-            }),
-        ];
+        this.dispose(EVENTS_KEY);
+
+        this.retain(this.context.on('mousemove', (event) => {
+            const { x, y } = event.data;
+            this.show(x, y);
+        }), EVENTS_KEY);
+
+        this.retain(this.context.on('mouseleave', () => {
+            this.hide();
+        }), EVENTS_KEY);
     }
 
+    /** Shows the crosshair lines at the given mouse coordinates, hiding if outside bounds. */
     public show(mouseX: number, mouseY: number) {
         const { x, y, width, height } = this.bounds;
 
@@ -142,6 +141,7 @@ export class Crosshair extends ChartComponent {
         }
     }
 
+    /** Hides the crosshair lines. */
     public hide() {
         if (this.verticalLine) {
             this.verticalLine.globalAlpha = 0;
@@ -152,9 +152,9 @@ export class Crosshair extends ChartComponent {
         }
     }
 
+    /** Destroys the crosshair, removing event listeners and scene elements. */
     public destroy() {
-        this.disposables.forEach(d => d.dispose());
-        this.disposables = [];
+        this.dispose();
 
         if (this.group) {
             this.scene.remove(this.group);

@@ -74,7 +74,10 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Supported series visualization types within a trend chart. */
 export type SeriesType = 'bar' | 'line' | 'area';
+
+/** Base configuration shared by all trend chart series types. */
 export interface BaseTrendChartSeriesOptions<TData> {
     id: string;
     type: SeriesType;
@@ -83,24 +86,29 @@ export interface BaseTrendChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
 }
 
+/** Series options for bar-type series within a trend chart. */
 export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'bar';
 }
 
+/** Series options for area-type series within a trend chart. */
 export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'area';
     filled: boolean;
 }
 
+/** Series options for line-type series within a trend chart. */
 export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'line';
     lineType?: PolylineRenderer;
 }
 
+/** Discriminated union of all trend chart series option types. */
 export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
 | TrendChartAreaSeriesOptions<TData>
 | TrendChartLineSeriesOptions<TData>;
 
+/** Options for configuring a {@link TrendChart}. */
 export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: TrendChartSeriesOptions<TData>[];
@@ -111,6 +119,15 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Trend chart combining bar and line series on shared categorical/value axes.
+ *
+ * Renders bar series as grouped rectangles and line series as polylines with
+ * markers on the same chart area. Supports tooltips, legend, grid, and
+ * animated entry/update/exit transitions for both series types.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
 
     private barGroups: Group[] = [];
@@ -762,6 +779,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link TrendChart} instance. */
 export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
     return new TrendChart<TData>(target, options);
 }

@@ -12,6 +12,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a time scale that maps a `Date` domain to a numeric range using linear interpolation of timestamps. */
 export function scaleTime(
     domain: Date[],
     range: number[],

@@ -16,6 +16,7 @@ import {
 } from '@ripl/core';
 
 
+/** A single legend entry with id, label, color, and active state. */
 export interface LegendItem {
     id: string;
     label: string;
@@ -23,6 +24,7 @@ export interface LegendItem {
     active?: boolean;
 }
 
+/** Options for constructing a legend component. */
 export interface LegendOptions extends ChartComponentOptions {
     items: LegendItem[];
     position?: LegendPosition;
@@ -40,6 +42,7 @@ const LABEL_GAP = 6;
 const DEFAULT_FONT_SIZE = 11;
 const DEFAULT_PADDING = 16;
 
+/** A chart legend component rendering color swatches and labels with optional toggle interaction. */
 export class Legend extends ChartComponent {
 
     private group?: Group;

@@ -19,24 +19,29 @@ import {
 } from './group';
 
 
+/** Event map for the scene, adding a `resize` event to the standard element events. */
 export interface SceneEventMap extends ElementEventMap {
     resize: null;
 }
 
+/** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
     renderOnResize?: boolean;
 }
 
+/** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
     public context: TContext;
 
     public buffer: Element[];
 
+    /** The pixel width of the scene's rendering context. */
     public get width() {
         return this.context.width;
     }
 
+    /** The pixel height of the scene's rendering context. */
     public get height() {
         return this.context.height;
     }
@@ -77,11 +82,13 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
     }
 
+    /** Destroys the scene and its underlying rendering context. */
     public destroy(): void {
         this.context.destroy();
         super.destroy();
     }
 
+    /** Clears the context and renders the entire element buffer in z-index order. */
     public render(): void {
         this.context.clear();
         this.context.markRenderStart();
@@ -91,6 +98,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
 }
 
+/** Factory function that creates a new `Scene` instance from a context, selector, or element. */
 export function createScene(...options: ConstructorParameters<typeof Scene>) {
     return new Scene(...options);
 }

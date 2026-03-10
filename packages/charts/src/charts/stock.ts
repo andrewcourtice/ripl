@@ -62,6 +62,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link StockChart}. */
 export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -93,6 +94,16 @@ const DEFAULT_UP_COLOR = '#6dd5b1';
 const DEFAULT_DOWN_COLOR = '#f4a0b9';
 const VOLUME_HEIGHT_RATIO = 0.2;
 
+/**
+ * Candlestick (stock) chart rendering OHLC data with optional volume bars.
+ *
+ * Each data point is rendered as a candlestick with a body (open-close range)
+ * and wick (high-low range), colored by direction. Supports an optional
+ * volume sub-chart, crosshair, tooltips, grid, and animated entry/update
+ * transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>> {
 
     private candlestickGroups: Group[] = [];
@@ -704,6 +715,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link StockChart} instance. */
 export function createStockChart<TData = unknown>(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
     return new StockChart<TData>(target, options);
 }

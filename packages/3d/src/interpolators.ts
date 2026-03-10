@@ -11,6 +11,7 @@ import type {
     Vector3,
 } from './math/vector';
 
+/** Interpolator factory for `Vector3` values, using component-wise linear interpolation. */
 export const interpolateVector3: InterpolatorFactory<Vector3> = Object.assign(
     (from: Vector3, to: Vector3) => {
         return (time: number): Vector3 => vec3Lerp(from, to, time);

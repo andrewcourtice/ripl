@@ -61,15 +61,22 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
+/** Controls which pointer events an element responds to during hit testing. */
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
+
+/** Severity level of an element validation result. */
 export type ElementValidationType = 'info' | 'warning' | 'error';
+
+/** Options for element intersection (hit) testing. */
 export type ElementIntersectionOptions = {
     isPointer: boolean;
 };
 
+/** Base state interface for all elements, inheriting optional context properties (fill, stroke, font, transforms, etc.). */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BaseElementState extends Partial<BaseState> {}
 
+/** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
     graph: null;
     track: keyof ElementEventMap;
@@ -90,6 +97,7 @@ export interface ElementEventMap extends EventMap {
     destroyed: null;
 }
 
+/** Options for constructing an element, combining an optional id, CSS classes, data, pointer events, and initial state. */
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
     id?: string;
     class?: OneOrMore<string>;
@@ -97,23 +105,28 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     pointerEvents?: ElementPointerEvents;
 } & TState;
 
+/** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
 export type ElementInterpolationKeyFrame<TValue = number> = {
     offset?: number;
     value: TValue;
 };
 
+/** An interpolation target: a direct value, an array of keyframes, or a custom interpolator function. */
 export type ElementInterpolationStateValue<TValue = number> = TValue
 | ElementInterpolationKeyFrame<TValue>[]
 | Interpolator<TValue>;
 
+/** A map of interpolator factories keyed by state property, used to override default interpolation behaviour. */
 export type ElementInterpolators<TState extends BaseElementState> = {
     [TKey in keyof TState]: InterpolatorFactory<TState[TKey]>;
 };
 
+/** Partial state where each property can be a target value, keyframe array, or interpolator function. */
 export type ElementInterpolationState<TState extends BaseElementState> = {
     [TKey in keyof TState]?: ElementInterpolationStateValue<TState[TKey]>;
 };
 
+/** The result of validating an element, with a severity type and descriptive message. */
 export interface ElementValidationResult {
     type: ElementValidationType;
     message: string;
@@ -231,6 +244,7 @@ function applyTransform(context: Context, _value: unknown, element: Element) {
     }
 }
 
+/** The base renderable element with state management, event handling, interpolation, transform support, and context rendering. */
 export class Element<
     TState extends BaseElementState = BaseElementState,
     TEventMap extends ElementEventMap = ElementEventMap
@@ -489,10 +503,12 @@ export class Element<
         } as unknown as TState;
     }
 
+    /** Reads a state value, falling back to the parent’s value if the local value is nil (property inheritance). */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
         return this.state[key] ?? (this.parent as unknown as TState)?.[key];
     }
 
+    /** Sets a state value and emits an `updated` event. */
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this.state[key] = value;
         this.emit('updated', null);
@@ -517,6 +533,7 @@ export class Element<
         };
     }
 
+    /** Creates a shallow clone of this element with the same id, classes, and state. */
     public clone() {
         return new Element(this.type, {
             id: this.id,
@@ -525,15 +542,18 @@ export class Element<
         });
     }
 
+    /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */
     public getBoundingBox() {
         return new Box(0, 0, 0, 0);
     }
 
+    /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
         return isPointInBox([x, y], this.getBoundingBox());
     }
 
+    /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */
     public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
             const currentValue = this.getStateValue(key);
@@ -560,6 +580,7 @@ export class Element<
         });
     }
 
+    /** Renders this element by applying transforms and context state, then invoking the optional callback. */
     public render(context: Context, callback?: AnyFunction, skipRestore?: boolean) {
         this.context = context;
         context.currentRenderElement = this;
@@ -596,10 +617,12 @@ export class Element<
     }
 }
 
+/** Factory function that creates a new `Element` instance. */
 export function createElement(...options: ConstructorParameters<typeof Element>) {
     return new Element(...options);
 }
 
+/** Type guard that checks whether a value is an `Element` instance. */
 export function typeIsElement(value: unknown): value is Element {
     return value instanceof Element;
 }

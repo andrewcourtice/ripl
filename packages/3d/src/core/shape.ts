@@ -48,11 +48,13 @@ import type {
     Vector3,
 } from '../math';
 
+/** A single face of a 3D mesh, defined by its vertices and an optional precomputed normal. */
 export interface Face3D {
     vertices: Vector3[];
     normal?: Vector3;
 }
 
+/** A projected face ready for 2D rendering with screen-space points, fill/stroke styles, and depth. */
 export interface ProjectedFace3D {
     points: ProjectedPoint[];
     fillColor: string;
@@ -61,6 +63,7 @@ export interface ProjectedFace3D {
     depth: number;
 }
 
+/** State interface for a 3D shape, defining position and rotation around each axis. */
 export interface Shape3DState extends BaseElementState {
     x: number;
     y: number;
@@ -70,8 +73,10 @@ export interface Shape3DState extends BaseElementState {
     rotationZ: number;
 }
 
+/** Options for constructing a 3D shape, with all state properties optional. */
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<ElementOptions<TState>>;
 
+/** Base class for 3D shapes, handling model transforms, face projection, shading, and hit testing. */
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
     protected hitPath?: ContextPath;
@@ -167,6 +172,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return vertices.map(vertex => mat4TransformPoint(mat, vertex));
     }
 
+    /** Returns the projected depth of this shape's origin in the given 3D context. */
     public getDepth(context: Context3D): number {
         return context.project([this.x, this.y, this.z])[2];
     }
@@ -288,10 +294,12 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
 }
 
+/** Factory function that creates a new `Shape3D` instance. */
 export function createShape3D(...options: ConstructorParameters<typeof Shape3D>) {
     return new Shape3D(...options);
 }
 
+/** Type guard that checks whether a value is a `Shape3D` instance. */
 export function elementIsShape3D(value: unknown): value is Shape3D {
     return value instanceof Shape3D;
 }

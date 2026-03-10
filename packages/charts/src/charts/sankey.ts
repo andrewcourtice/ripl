@@ -33,18 +33,21 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** A directional flow between two nodes in a Sankey diagram. */
 export interface SankeyLink {
     source: string;
     target: string;
     value: number;
 }
 
+/** A node in a Sankey diagram. */
 export interface SankeyNode {
     id: string;
     label: string;
     color?: string;
 }
 
+/** Options for configuring a {@link SankeyChart}. */
 export interface SankeyChartOptions extends BaseChartOptions {
     nodes: SankeyNode[];
     links: SankeyLink[];
@@ -243,6 +246,14 @@ function computeSankeyLayout(
     };
 }
 
+/**
+ * Sankey diagram visualizing directional flow between nodes.
+ *
+ * Nodes are positioned in depth columns computed via BFS, with heights
+ * proportional to their total flow value. Links are rendered as curved
+ * paths connecting source and target nodes. Supports tooltips and
+ * staggered entry animations for nodes, labels, and links.
+ */
 export class SankeyChart extends Chart<SankeyChartOptions> {
 
     private nodeGroups: Group[] = [];
@@ -497,6 +508,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link SankeyChart} instance. */
 export function createSankeyChart(target: string | HTMLElement | Context, options: SankeyChartOptions) {
     return new SankeyChart(target, options);
 }

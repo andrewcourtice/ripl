@@ -66,6 +66,7 @@ import {
 export type BarChartOrientation = 'vertical' | 'horizontal';
 export type BarChartMode = 'grouped' | 'stacked';
 
+/** Configuration for an individual bar chart series. */
 export interface BarChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -73,6 +74,7 @@ export interface BarChartSeriesOptions<TData> {
     label: string;
 }
 
+/** Options for configuring a {@link BarChart}. */
 export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: BarChartSeriesOptions<TData>[];
@@ -86,6 +88,15 @@ export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
 }
 
+/**
+ * Bar chart supporting vertical/horizontal orientation and grouped/stacked modes.
+ *
+ * Uses band scales for categorical axes and continuous scales for value axes.
+ * Supports multiple series with grouped or stacked bar rendering, interactive
+ * tooltips, legend, grid, and animated entry/update/exit transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
     private barGroups: Group[] = [];
@@ -859,6 +870,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
 }
 
+/** Factory function that creates a new {@link BarChart} instance. */
 export function createBarChart<TData = unknown>(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
     return new BarChart<TData>(target, options);
 }

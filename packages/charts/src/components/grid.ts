@@ -15,6 +15,7 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** Options for constructing a grid component. */
 export interface GridOptions extends ChartComponentOptions {
     horizontal?: boolean;
     vertical?: boolean;
@@ -27,6 +28,7 @@ const DEFAULT_STROKE = '#e5e7eb';
 const DEFAULT_LINE_WIDTH = 1;
 const DEFAULT_LINE_DASH = [4, 4];
 
+/** A background grid component rendering horizontal and/or vertical dashed lines at tick positions. */
 export class Grid extends ChartComponent {
 
     private group?: Group;

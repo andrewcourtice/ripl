@@ -223,7 +223,7 @@ Charts should handle these complex animation paths between initial render and up
 ### General Rules
 
 - **Strict mode** (`"strict": true`) — no implicit any, strict null checks, etc.
-- **Target** ES2020, **module** ESNext
+- **Target** ES2023, **module** ESNext
 - Prefer **interfaces** over type aliases for object definitions
 - Use **generics** for reusable, type-safe code
 - Use meaningful, descriptive type names

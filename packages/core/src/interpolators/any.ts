@@ -2,8 +2,8 @@ import type {
     InterpolatorFactory,
 } from './types';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const interpolateAny: InterpolatorFactory<any> = (valueA, valueB) => {
+/** Fallback interpolator factory that snaps from the first value to the second at the halfway point. */
+export const interpolateAny: InterpolatorFactory<unknown> = (valueA, valueB) => {
     if (valueA === valueB) {
         return () => valueB;
     }

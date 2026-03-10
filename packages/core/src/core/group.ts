@@ -20,6 +20,7 @@ import {
     Context,
 } from '../context';
 
+/** Options for constructing a group, extending element options with an optional initial set of children. */
 export interface GroupOptions extends ElementOptions {
     children?: OneOrMore<Element>;
 }
@@ -124,6 +125,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     }), segments, segmentIndex + 1);
 }
 
+/** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
 export function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     const els = ([] as Element[]).concat(elements).flatMap(element => {
         return isGroup(element) ? element.graph(true) : [element];
@@ -132,22 +134,27 @@ export function queryAll<TElement extends Element = Element>(elements: OneOrMore
     return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
 }
 
+/** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
 export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     return queryAll<TElement>(elements, selector).at(0);
 }
 
+/** Type guard that checks whether a value is a `Group` instance. */
 export function isGroup(value: unknown): value is Group {
     return value instanceof Group;
 }
 
+/** Factory function that creates a new `Group` instance. */
 export function createGroup(...options: ConstructorParameters<typeof Group>) {
     return new Group(...options);
 }
 
+/** A container element that manages child elements, providing scenegraph traversal, CSS-like querying, and composite bounding boxes. */
 export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> {
 
     #elements = new Set<Element>();
 
+    /** Returns a snapshot array of this group's direct child elements. */
     public get children() {
         return Array.from(this.#elements);
     }
@@ -162,15 +169,18 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.add(children);
     }
 
+    /** Emits a `graph` event to notify the scene that the element tree has changed. */
     public updateSceneGraph() {
         this.emit('graph', null);
     }
 
+    /** Replaces all children with the given elements. */
     public set(elements: Element[]) {
         this.#elements.clear();
         this.add(elements);
     }
 
+    /** Adds one or more elements as children, re-parenting them if necessary. */
     public add(element: OneOrMore<Element>) {
         const elements = valueOneOrMore(element);
 
@@ -190,6 +200,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.updateSceneGraph();
     }
 
+    /** Removes one or more child elements from this group. */
     public remove(element: OneOrMore<Element>) {
         const elements = valueOneOrMore(element);
 
@@ -205,10 +216,12 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.updateSceneGraph();
     }
 
+    /** Removes all children from this group. */
     public clear() {
         this.remove(this.children);
     }
 
+    /** Returns a flattened array of all descendant elements, optionally including intermediate groups. */
     public graph(includeGroups?: boolean): Element[] {
         return this.children.flatMap(item => {
             if (!isGroup(item)) {
@@ -222,32 +235,39 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         });
     }
 
+    /** Returns the first descendant matching the CSS-like selector, or `undefined`. */
     public query<TElement extends Element = Element>(selector: string) {
         return query<TElement>(this, selector);
     }
 
+    /** Returns all descendants matching the CSS-like selector. */
     public queryAll<TElement extends Element = Element>(selector: string) {
         return queryAll<TElement>(this, selector);
     }
 
+    /** Finds a descendant element by its unique id. */
     public getElementByID<TElement extends Element = Element>(id: string) {
         return this.graph(true).find(element => element.id === id) as TElement;
     }
 
+    /** Returns all descendant elements whose type matches one of the given type names. */
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = valueOneOrMore(types);
         return this.graph(true).filter(element => typeList.includes(element.type)) as TElement[];
     }
 
+    /** Returns all descendant elements that have all of the given CSS class names. */
     public getElementsByClass<TElement extends Element = Element>(classes: OneOrMore<string>) {
         const classList = valueOneOrMore(classes);
         return this.graph(true).filter(element => classList.every(cls => element.classList.has(cls))) as TElement[];
     }
 
+    /** Returns the composite bounding box enclosing all children. */
     public getBoundingBox() {
         return getContainingBox(this.children, element => element.getBoundingBox());
     }
 
+    /** Renders all child elements in order within a save/restore context. */
     public render(context: Context): void {
         context.save();
         context.markRenderStart();

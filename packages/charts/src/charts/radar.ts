@@ -41,6 +41,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Configuration for an individual radar chart series. */
 export interface RadarChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -49,6 +50,7 @@ export interface RadarChartSeriesOptions<TData> {
     opacity?: number;
 }
 
+/** Options for configuring a {@link RadarChart}. */
 export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: RadarChartSeriesOptions<TData>[];
@@ -60,6 +62,15 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
 
 const TAU = Math.PI * 2;
 
+/**
+ * Radar (spider) chart plotting multi-axis data as filled polygonal areas.
+ *
+ * Renders a circular grid with concentric rings and radial axis lines,
+ * then overlays one or more series as filled polyline areas with markers.
+ * Supports interactive tooltips, legend, and animated transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>> {
 
     private seriesGroups: Group[] = [];
@@ -417,6 +428,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link RadarChart} instance. */
 export function createRadarChart<TData = unknown>(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
     return new RadarChart<TData>(target, options);
 }

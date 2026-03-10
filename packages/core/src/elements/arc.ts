@@ -19,6 +19,7 @@ import {
     typeIsNil,
 } from '@ripl/utilities';
 
+/** State interface for an arc element, defining center, angles, radii, pad angle, and border radius. */
 export interface ArcState extends BaseElementState {
     cx: number;
     cy: number;
@@ -30,6 +31,7 @@ export interface ArcState extends BaseElementState {
     borderRadius?: number;
 }
 
+/** An arc or annular sector shape supporting inner radius and pad angle. */
 export class Arc extends Shape2D<ArcState> {
 
     public get cx() {
@@ -100,6 +102,7 @@ export class Arc extends Shape2D<ArcState> {
         super('arc', options);
     }
 
+    /** Computes the centroid point of this arc, optionally with state overrides. */
     public getCentroid(alterations?: Partial<ArcState>) {
         const {
             cx,
@@ -196,10 +199,12 @@ export class Arc extends Shape2D<ArcState> {
 
 }
 
+/** Factory function that creates a new `Arc` instance. */
 export function createArc(...options: ConstructorParameters<typeof Arc>) {
     return new Arc(...options);
 }
 
+/** Type guard that checks whether a value is an `Arc` instance. */
 export function elementIsArc(value: unknown): value is Arc {
     return value instanceof Arc;
 }

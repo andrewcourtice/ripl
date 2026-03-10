@@ -63,6 +63,7 @@ import {
     functionIdentity,
 } from '@ripl/utilities';
 
+/** Configuration for an individual realtime chart series. */
 export interface RealtimeChartSeriesOptions {
     id: string;
     color?: string;
@@ -73,6 +74,7 @@ export interface RealtimeChartSeriesOptions {
     areaOpacity?: number;
 }
 
+/** Options for configuring a {@link RealtimeChart}. */
 export interface RealtimeChartOptions extends BaseChartOptions {
     series: RealtimeChartSeriesOptions[];
     windowSize?: number;
@@ -87,6 +89,14 @@ export interface RealtimeChartOptions extends BaseChartOptions {
     transitionDuration?: number;
 }
 
+/**
+ * Realtime streaming chart rendering continuously updating line/area series.
+ *
+ * Data is pushed incrementally via {@link RealtimeChart.push} and maintained
+ * in a fixed-size sliding window buffer. Each render cycle smoothly transitions
+ * polylines to reflect the latest data. Supports y-axis, grid, crosshair,
+ * legend, and configurable transition duration.
+ */
 export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
     private buffers: Map<string, number[]> = new Map();
@@ -501,6 +511,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link RealtimeChart} instance. */
 export function createRealtimeChart(target: string | HTMLElement | Context, options: RealtimeChartOptions) {
     return new RealtimeChart(target, options);
 }

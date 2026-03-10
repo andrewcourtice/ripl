@@ -49,6 +49,7 @@ type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
 };
 
+/** Definition for an SVG context element, describing its tag, inline styles, and attributes. */
 export interface SVGContextElementDefinition {
     tag: keyof SVGElementTagNameMap;
     styles: Partial<Styles>;
@@ -56,6 +57,7 @@ export interface SVGContextElementDefinition {
     textContent?: string;
 }
 
+/** An SVG-specific context element carrying its rendering definition. */
 export interface SVGContextElement extends ContextElement {
     definition: SVGContextElementDefinition;
 }
@@ -219,6 +221,7 @@ function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, he
     return canvas.toDataURL();
 }
 
+/** SVG-specific path implementation that builds an SVG `d` attribute string from drawing commands. */
 export class SVGPath extends ContextPath implements SVGContextElement {
 
     public definition: SVGContextElementDefinition;
@@ -323,6 +326,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
 
 }
 
+/** SVG-specific text element mapping position and content to SVG `<text>` attributes. */
 export class SVGText extends ContextText implements SVGContextElement {
 
     public definition: SVGContextElementDefinition;
@@ -353,6 +357,7 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
+/** SVG-specific image element wrapping a `CanvasImageSource` as an SVG `<image>` tag. */
 export class SVGImage implements SVGContextElement {
 
     public readonly id: string;
@@ -376,6 +381,7 @@ export class SVGImage implements SVGContextElement {
     }
 }
 
+/** SVG `<textPath>` element for rendering text along a path defined in `<defs>`. */
 export class SVGTextPath implements SVGContextElement {
 
     public readonly id: string;
@@ -396,6 +402,7 @@ export class SVGTextPath implements SVGContextElement {
     }
 }
 
+/** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
 export class SVGContext extends Context<SVGSVGElement> {
 
     private vtree: SVGVNode;
@@ -789,6 +796,7 @@ export class SVGContext extends Context<SVGSVGElement> {
 
 }
 
+/** Creates an SVG rendering context attached to the given DOM target. */
 export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     return new SVGContext(target, options);
 }

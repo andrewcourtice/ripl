@@ -71,10 +71,12 @@ const PARSER_MAP = [
     },
 ] as ColorParser[];
 
+/** Finds the first color parser whose pattern matches the given color string. */
 export function getColorParser(value: string): ColorParser | undefined {
     return PARSER_MAP.find(({ pattern }) => pattern.test(value));
 }
 
+/** Parses any supported color string into an RGBA tuple, or returns `undefined` if no parser matches. */
 export function parseColor(value: string): ColorRGBA | undefined {
     const parser = getColorParser(value);
 

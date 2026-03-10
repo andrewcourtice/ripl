@@ -16,6 +16,7 @@ import type {
     InterpolatorFactory,
 } from '../interpolators';
 
+/** State interface for an image element, defining position, optional size, and image source. */
 export interface ImageState extends BaseElementState {
     image: CanvasImageSource;
     x: number;
@@ -70,6 +71,7 @@ function getSourceSize(image: CanvasImageSource): [number, number] {
     return [0, 0];
 }
 
+/** Interpolator factory that cross-fades between two image sources using an offscreen canvas. */
 export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA, valueB) => {
     const [sourceWidth, sourceHeight] = getSourceSize(valueA);
 
@@ -93,6 +95,7 @@ export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA,
     };
 };
 
+/** An image element that draws a `CanvasImageSource` at a given position and optional size. */
 export class ImageElement extends Element<ImageState> {
 
     public get image() {
@@ -158,10 +161,12 @@ export class ImageElement extends Element<ImageState> {
 
 }
 
+/** Factory function that creates a new `ImageElement` instance. */
 export function createImage(...options: ConstructorParameters<typeof ImageElement>) {
     return new ImageElement(...options);
 }
 
+/** Type guard that checks whether a value is an `ImageElement` instance. */
 export function elementIsImage(value: unknown): value is ImageElement {
     return value instanceof ImageElement;
 }

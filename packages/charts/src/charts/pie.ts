@@ -46,6 +46,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -56,6 +57,15 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     legend?: ChartLegendInput;
 }
 
+/**
+ * Pie chart rendering proportional arc segments with optional inner radius (donut).
+ *
+ * Supports interactive tooltips, legend, and animated entry/update/exit
+ * transitions. Segments grow outward from the center with staggered delays,
+ * and labels fade in after the arcs have settled.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -386,6 +396,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
 }
 
+/** Factory function that creates a new {@link PieChart} instance. */
 export function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
     return new PieChart<TData>(target, options);
 }

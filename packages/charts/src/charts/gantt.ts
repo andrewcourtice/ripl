@@ -54,6 +54,7 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link GanttChart}. */
 export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -72,6 +73,15 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
 
 const DEFAULT_TODAY_COLOR = '#ef4444';
 
+/**
+ * Gantt chart rendering time-based task bars on a categorical y-axis and time x-axis.
+ *
+ * Each data item is rendered as a horizontal bar spanning its start-to-end date range.
+ * Supports optional progress overlays, a "today" marker line, tooltips, grid, and
+ * staggered entry animations.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>> {
 
     private barGroups: Group[] = [];
@@ -579,6 +589,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link GanttChart} instance. */
 export function createGanttChart<TData = unknown>(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
     return new GanttChart<TData>(target, options);
 }
