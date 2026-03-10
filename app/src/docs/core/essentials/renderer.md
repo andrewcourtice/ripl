@@ -65,7 +65,7 @@ await renderer.transition(circle, {
     duration: 1000,
     state: {
         radius: 100,
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
     },
 });
 ```
@@ -128,7 +128,7 @@ Pass an array of elements or a group to animate them all with the same options:
 await renderer.transition([circle, rect], {
     duration: 800,
     ease: easeOutCubic,
-    state: { fillStyle: '#ff006e' },
+    state: { fill: '#ff006e' },
 });
 ```
 
@@ -141,7 +141,7 @@ await renderer.transition(group, (element, index, total) => ({
     duration: 500,
     delay: index * 100, // stagger by 100ms
     ease: easeOutCubic,
-    state: { fillStyle: '#ff006e' },
+    state: { fill: '#ff006e' },
 }));
 ```
 
@@ -212,21 +212,21 @@ const scene = createScene('.mount-element', {
     children: [
         createCircle({
             id: 'c1',
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 100,
             cy: 150,
             radius: 40,
         }),
         createCircle({
             id: 'c2',
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 200,
             cy: 150,
             radius: 40,
         }),
         createCircle({
             id: 'c3',
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 300,
             cy: 150,
             radius: 40,
@@ -241,7 +241,7 @@ await renderer.transition(scene, (el, i) => ({
     delay: i * 150,
     ease: easeOutCubic,
     state: {
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
     },
 }));
 ```
@@ -275,9 +275,9 @@ const {
     const r = Math.min(w, h) / 8;
 
     circles = [
-        createCircle({ id: 'c1', fillStyle: '#3a86ff', cx: w * 0.25, cy: h / 2, radius: r }),
-        createCircle({ id: 'c2', fillStyle: '#3a86ff', cx: w * 0.5, cy: h / 2, radius: r }),
-        createCircle({ id: 'c3', fillStyle: '#3a86ff', cx: w * 0.75, cy: h / 2, radius: r }),
+        createCircle({ id: 'c1', fill: '#3a86ff', cx: w * 0.25, cy: h / 2, radius: r }),
+        createCircle({ id: 'c2', fill: '#3a86ff', cx: w * 0.5, cy: h / 2, radius: r }),
+        createCircle({ id: 'c3', fill: '#3a86ff', cx: w * 0.75, cy: h / 2, radius: r }),
     ];
 
     rScene = createScene(context, { children: circles });
@@ -290,7 +290,7 @@ function animateAll() {
     rRenderer.transition(circles, {
         duration: 800,
         ease: easeOutCubic,
-        state: { fillStyle: '#ff006e' },
+        state: { fill: '#ff006e' },
     });
 }
 
@@ -300,7 +300,7 @@ function stagger() {
         duration: 600,
         delay: index * 150,
         ease: easeOutCubic,
-        state: { fillStyle: '#8338ec' },
+        state: { fill: '#8338ec' },
     }));
 }
 
@@ -310,7 +310,7 @@ function reset() {
         duration: 400,
         delay: index * 80,
         ease: easeInOutQuad,
-        state: { fillStyle: '#3a86ff' },
+        state: { fill: '#3a86ff' },
     }));
 }
 </script>

@@ -163,7 +163,7 @@ const camera = createCamera(scene, {
     interactions: true,
 });
 
-const cube = createCube({ size: 1.5, fillStyle: '#4488ff' });
+const cube = createCube({ size: 1.5, fill: '#4488ff' });
 
 function loop() {
     camera.flush();
@@ -188,12 +188,12 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged: autoRotateChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    scene.add(createCube({ size: 1.5, fill: '#4488ff' }));
     startRotation(camera);
 });
 
 const { contextChanged: interactiveChanged } = useRipl3DExample((scene) => {
-    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    scene.add(createCube({ size: 1.5, fill: '#4488ff' }));
 }, {
     interactions: true,
 });

@@ -14,7 +14,7 @@ import {
 export interface CrosshairOptions extends ChartComponentOptions {
     vertical?: boolean;
     horizontal?: boolean;
-    strokeStyle?: string;
+    stroke?: string;
     lineWidth?: number;
     lineDash?: number[];
 }
@@ -32,7 +32,7 @@ export class Crosshair extends ChartComponent {
     private horizontalLine?: Line;
     private showVertical: boolean;
     private showHorizontal: boolean;
-    private strokeStyle: string;
+    private stroke: string;
     private lineWidth: number;
     private lineDash: number[];
 
@@ -48,7 +48,7 @@ export class Crosshair extends ChartComponent {
 
         this.showVertical = options.vertical ?? true;
         this.showHorizontal = options.horizontal ?? false;
-        this.strokeStyle = options.strokeStyle ?? DEFAULT_STROKE;
+        this.stroke = options.stroke ?? DEFAULT_STROKE;
         this.lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
         this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
@@ -80,10 +80,10 @@ export class Crosshair extends ChartComponent {
                 y1: y,
                 x2: 0,
                 y2: y + height,
-                strokeStyle: this.strokeStyle,
+                stroke: this.stroke,
                 lineWidth: this.lineWidth,
                 lineDash: this.lineDash,
-                globalAlpha: 0,
+                opacity: 0,
             });
 
             this.group.add(this.verticalLine);
@@ -96,10 +96,10 @@ export class Crosshair extends ChartComponent {
                 y1: 0,
                 x2: x + width,
                 y2: 0,
-                strokeStyle: this.strokeStyle,
+                stroke: this.stroke,
                 lineWidth: this.lineWidth,
                 lineDash: this.lineDash,
-                globalAlpha: 0,
+                opacity: 0,
             });
 
             this.group.add(this.horizontalLine);
@@ -131,24 +131,24 @@ export class Crosshair extends ChartComponent {
         if (this.verticalLine) {
             this.verticalLine.x1 = mouseX;
             this.verticalLine.x2 = mouseX;
-            this.verticalLine.globalAlpha = 1;
+            this.verticalLine.opacity = 1;
         }
 
         if (this.horizontalLine) {
             this.horizontalLine.y1 = mouseY;
             this.horizontalLine.y2 = mouseY;
-            this.horizontalLine.globalAlpha = 1;
+            this.horizontalLine.opacity = 1;
         }
     }
 
     /** Hides the crosshair lines. */
     public hide() {
         if (this.verticalLine) {
-            this.verticalLine.globalAlpha = 0;
+            this.verticalLine.opacity = 0;
         }
 
         if (this.horizontalLine) {
-            this.horizontalLine.globalAlpha = 0;
+            this.horizontalLine.opacity = 0;
         }
     }
 

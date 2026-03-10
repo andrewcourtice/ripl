@@ -167,8 +167,8 @@ function createParts(): PartEntry[] {
             name: 'Fan',
             element: createFan({
                 z: offsets[0],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[0],
@@ -177,8 +177,8 @@ function createParts(): PartEntry[] {
             name: 'Fan Case',
             element: createFanCase({
                 z: offsets[1],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[1],
@@ -187,8 +187,8 @@ function createParts(): PartEntry[] {
             name: 'LP Compressor',
             element: createLPCompressor({
                 z: offsets[2],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[2],
@@ -197,8 +197,8 @@ function createParts(): PartEntry[] {
             name: 'HP Compressor',
             element: createHPCompressor({
                 z: offsets[3],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[3],
@@ -207,8 +207,8 @@ function createParts(): PartEntry[] {
             name: 'Combustion Chamber',
             element: createCombustionChamber({
                 z: offsets[4],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[4],
@@ -217,8 +217,8 @@ function createParts(): PartEntry[] {
             name: 'HP Turbine',
             element: createHPTurbine({
                 z: offsets[5],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[5],
@@ -227,8 +227,8 @@ function createParts(): PartEntry[] {
             name: 'LP Turbine',
             element: createLPTurbine({
                 z: offsets[6],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[6],
@@ -237,8 +237,8 @@ function createParts(): PartEntry[] {
             name: 'Exhaust Nozzle',
             element: createExhaustNozzle({
                 z: offsets[7],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[7],
@@ -247,8 +247,8 @@ function createParts(): PartEntry[] {
             name: 'Central Shaft',
             element: createCentralShaft({
                 z: offsets[8],
-                fillStyle: DEFAULT_COLOR,
-                strokeStyle: EDGE_COLOR,
+                fill: DEFAULT_COLOR,
+                stroke: EDGE_COLOR,
                 lineWidth: EDGE_WIDTH,
             }),
             hoverColor: PASTEL_COLORS[8],
@@ -315,12 +315,12 @@ onMounted(() => {
         const el = part.element;
 
         el.on('mouseenter', () => {
-            el.fillStyle = part.hoverColor;
+            el.fill = part.hoverColor;
             hoveredPart.value = part.name;
         });
 
         el.on('mouseleave', () => {
-            el.fillStyle = part.defaultColor;
+            el.fill = part.defaultColor;
             hoveredPart.value = null;
         });
 

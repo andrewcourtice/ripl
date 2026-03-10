@@ -32,7 +32,7 @@ const context = createContext('.mount-element');
 const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
 
 createPolyline({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 2,
     points,
     renderer: 'spline',
@@ -85,7 +85,7 @@ function renderDemo(context: Context) {
     context.markRenderStart();
 
     createPolyline({
-        strokeStyle: '#3a86ff',
+        stroke: '#3a86ff',
         lineWidth: 3,
         points,
         renderer: currentRenderer.value,
@@ -93,7 +93,7 @@ function renderDemo(context: Context) {
 
     points.forEach(([x, y]) => {
         createCircle({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             cx: x, cy: y, radius: 4,
         }).render(context);
     });
@@ -101,7 +101,7 @@ function renderDemo(context: Context) {
     createText({
         x: w / 2, y: h - 12,
         content: `renderer: '${currentRenderer.value}'`,
-        fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+        fill: '#666', textAlign: 'center', font: '13px sans-serif',
     }).render(context);
 
     context.markRenderEnd();
@@ -128,7 +128,7 @@ import {
 } from '@ripl/core';
 
 const polyline = createPolyline({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 2,
     points: [[50, 150], [100, 50], [200, 180], [300, 80], [400, 120]],
 });
@@ -165,7 +165,7 @@ The `renderer` property controls how points are connected. Ripl provides 13 buil
 
 ```ts
 const smoothLine = createPolyline({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 2,
     points: [[50, 150], [100, 50], [200, 180], [300, 80]],
     renderer: 'spline',
@@ -178,7 +178,7 @@ You can also pass a custom render function:
 
 ```ts
 const custom = createPolyline({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 2,
     points: myPoints,
     renderer: (context, path, points) => {

@@ -226,8 +226,8 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle,
-                    fillStyle: setColorAlpha(arc.color, 0.65),
-                    strokeStyle: arc.color,
+                    fill: setColorAlpha(arc.color, 0.65),
+                    stroke: arc.color,
                     lineWidth: 1,
                     data: {
                         endAngle: arc.endAngle,
@@ -244,7 +244,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: arc.color,
+                            fill: arc.color,
                         },
                     });
 
@@ -255,7 +255,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(arc.color, 0.65),
+                                fill: setColorAlpha(arc.color, 0.65),
                             },
                         });
                     });
@@ -280,8 +280,8 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fillStyle: setColorAlpha(arc.color, 0.65),
-                        strokeStyle: arc.color,
+                        fill: setColorAlpha(arc.color, 0.65),
+                        stroke: arc.color,
                     } as Partial<ArcState>;
                 }
 

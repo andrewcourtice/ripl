@@ -151,7 +151,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -163,7 +163,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -310,8 +310,8 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 if (showArea) {
                     const areaFill = createPolyline({
                         id: `${srs.id}-area`,
-                        fillStyle: setColorAlpha(color, areaOpacity),
-                        strokeStyle: undefined,
+                        fill: setColorAlpha(color, areaOpacity),
+                        stroke: undefined,
                         points: areaPoints,
                         renderer: srs.lineType,
                         data: {
@@ -326,7 +326,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 const line = createPolyline({
                     id: `${srs.id}-line`,
                     lineWidth: srs.lineWidth ?? 2,
-                    strokeStyle: color,
+                    stroke: color,
                     points: linePoints,
                     renderer: srs.lineType,
                     data: {

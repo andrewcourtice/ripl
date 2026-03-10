@@ -34,7 +34,7 @@ import {
 const context = createContext('.mount-element');
 
 const circle = createCircle({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     cx: context.width / 2,
     cy: context.height / 2,
     radius: 50,
@@ -53,7 +53,7 @@ await renderer.transition(circle, {
     duration: 1000,
     state: {
         radius: 100,
-        fillStyle: '#FF0000',
+        fill: '#FF0000',
     },
 });
 ```

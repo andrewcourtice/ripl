@@ -105,12 +105,12 @@ export class Text extends Element<TextState> {
                 startOffset: this.startOffset,
             });
 
-            if (this.strokeStyle) {
-                return context.stroke(text);
+            if (this.stroke) {
+                return context.applyStroke(text);
             }
 
-            if (this.fillStyle) {
-                return context.fill(text);
+            if (this.fill) {
+                return context.applyFill(text);
             }
         });
     }

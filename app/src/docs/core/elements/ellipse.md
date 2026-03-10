@@ -22,7 +22,7 @@ const context = createContext('.mount-element');
 const TAU = Math.PI * 2;
 
 createEllipse({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: context.width / 2,
     cy: context.height / 2,
     radiusX: context.width / 4,
@@ -58,7 +58,7 @@ const {
         context.markRenderStart();
 
         createEllipse({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: w * 0.3, cy: h / 2,
             radiusX: rx, radiusY: ry,
             rotation: 0, startAngle: 0, endAngle: TAU,
@@ -66,12 +66,12 @@ const {
 
         createText({
             x: w * 0.3, y: h / 2 + ry + 24,
-            content: 'No Rotation', fillStyle: '#666',
+            content: 'No Rotation', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createEllipse({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             cx: w * 0.7, cy: h / 2,
             radiusX: rx, radiusY: ry,
             rotation: Math.PI / 6, startAngle: 0, endAngle: TAU,
@@ -79,7 +79,7 @@ const {
 
         createText({
             x: w * 0.7, y: h / 2 + ry + 24,
-            content: 'Rotated 30°', fillStyle: '#666',
+            content: 'Rotated 30°', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
@@ -99,7 +99,7 @@ import {
 } from '@ripl/core';
 
 const ellipse = createEllipse({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 200,
     cy: 150,
     radiusX: 100,

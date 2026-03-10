@@ -48,9 +48,9 @@ function spawnRipple() {
             cy,
             radius: 0,
             autoFill: false,
-            strokeStyle: 'rgba(40, 120, 220, 0.2)',
+            stroke: 'rgba(40, 120, 220, 0.2)',
             lineWidth: 1.5,
-            globalAlpha: 1,
+            opacity: 1,
         });
 
         scene.add(circle);
@@ -60,7 +60,7 @@ function spawnRipple() {
             delay: i * RING_DELAY,
             state: {
                 radius: baseMaxRadius + i * 30,
-                globalAlpha: 0,
+                opacity: 0,
             },
             onComplete() {
                 scene?.remove(circle);

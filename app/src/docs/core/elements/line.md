@@ -21,7 +21,7 @@ import {
 const context = createContext('.mount-element');
 
 createLine({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 3,
     x1: 50,
     y1: 50,
@@ -51,17 +51,17 @@ const {
         context.markRenderStart();
 
         createLine({
-            strokeStyle: '#3a86ff', lineWidth: 3,
+            stroke: '#3a86ff', lineWidth: 3,
             x1: pad, y1: pad, x2: w - pad, y2: h - pad,
         }).render(context);
 
         createLine({
-            strokeStyle: '#ff006e', lineWidth: 3,
+            stroke: '#ff006e', lineWidth: 3,
             x1: w - pad, y1: pad, x2: pad, y2: h - pad,
         }).render(context);
 
         createLine({
-            strokeStyle: '#8338ec', lineWidth: 2,
+            stroke: '#8338ec', lineWidth: 2,
             lineDash: [8, 4],
             x1: w / 2, y1: pad, x2: w / 2, y2: h - pad,
         }).render(context);
@@ -82,7 +82,7 @@ import {
 } from '@ripl/core';
 
 const line = createLine({
-    strokeStyle: '#3a86ff',
+    stroke: '#3a86ff',
     lineWidth: 2,
     x1: 50,
     y1: 50,
@@ -103,4 +103,4 @@ const line = createLine({
 Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
 
 > [!TIP]
-> Lines are stroked by default. Set `strokeStyle` to see the line — `fillStyle` alone won't produce a visible result.
+> Lines are stroked by default. Set `stroke` to see the line — `fill` alone won't produce a visible result.

@@ -124,12 +124,12 @@ export interface ContextElement {
 
 /** The full set of visual state properties inherited by every renderable element. */
 export interface BaseState {
-    fillStyle: string;
+    fill: string;
     filter: string;
     direction: Direction;
     font: string;
     fontKerning: FontKerning;
-    globalAlpha: number;
+    opacity: number;
     globalCompositeOperation: unknown;
     lineCap: LineCap;
     lineDash: number[];
@@ -141,7 +141,7 @@ export interface BaseState {
     shadowColor: string;
     shadowOffsetX: number;
     shadowOffsetY: number;
-    strokeStyle: string;
+    stroke: string;
     textAlign: TextAlignment;
     textBaseline: TextBaseline;
     zIndex: number;
@@ -203,12 +203,12 @@ const cachedDefaultState = functionCache((): BaseState => {
     const refContext = getRefContext();
 
     return {
-        fillStyle: refContext.fillStyle,
+        fill: refContext.fillStyle,
         filter: refContext.filter,
         direction: refContext.direction,
         font: refContext.font,
         fontKerning: refContext.fontKerning,
-        globalAlpha: refContext.globalAlpha,
+        opacity: refContext.globalAlpha,
         globalCompositeOperation: refContext.globalCompositeOperation,
         lineCap: refContext.lineCap,
         lineDash: refContext.getLineDash(),
@@ -220,7 +220,7 @@ const cachedDefaultState = functionCache((): BaseState => {
         shadowColor: refContext.shadowColor,
         shadowOffsetX: refContext.shadowOffsetX,
         shadowOffsetY: refContext.shadowOffsetY,
-        strokeStyle: refContext.strokeStyle,
+        stroke: refContext.strokeStyle,
         textAlign: refContext.textAlign,
         textBaseline: refContext.textBaseline,
         zIndex: 0,
@@ -391,12 +391,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         }
     }
 
-    get fillStyle(): string {
-        return this.currentState.fillStyle;
+    get fill(): string {
+        return this.currentState.fill;
     }
 
-    set fillStyle(value) {
-        this.currentState.fillStyle = value;
+    set fill(value) {
+        this.currentState.fill = value;
     }
 
     get filter(): string {
@@ -431,12 +431,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.fontKerning = value;
     }
 
-    get globalAlpha(): number {
-        return this.currentState.globalAlpha;
+    get opacity(): number {
+        return this.currentState.opacity;
     }
 
-    set globalAlpha(value) {
-        this.currentState.globalAlpha = value;
+    set opacity(value) {
+        this.currentState.opacity = value;
     }
 
     get globalCompositeOperation(): unknown {
@@ -527,12 +527,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.shadowOffsetY = value;
     }
 
-    get strokeStyle(): string {
-        return this.currentState.strokeStyle;
+    get stroke(): string {
+        return this.currentState.stroke;
     }
 
-    set strokeStyle(value) {
-        this.currentState.strokeStyle = value;
+    set stroke(value) {
+        this.currentState.stroke = value;
     }
 
     get textAlign(): TextAlignment {
@@ -770,15 +770,15 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     /** Clips subsequent drawing operations to the given path. */
-    clip(path: ContextPath, fillRule?: FillRule): void {
+    applyClip(path: ContextPath, fillRule?: FillRule): void {
     }
 
     /** Fills the given path or text element using the current fill style. */
-    fill(path: ContextElement, fillRule?: FillRule): void {
+    applyFill(path: ContextElement, fillRule?: FillRule): void {
     }
 
     /** Strokes the given path or text element using the current stroke style. */
-    stroke(path: ContextElement): void {
+    applyStroke(path: ContextElement): void {
     }
 
     /** Tests whether a point is inside the filled region of a path. */

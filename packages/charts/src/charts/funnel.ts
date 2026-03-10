@@ -141,12 +141,12 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     y: item.y,
                     width: 0,
                     height: item.height,
-                    fillStyle: setColorAlpha(itemColor, 0.7),
+                    fill: setColorAlpha(itemColor, 0.7),
                     borderRadius,
                     data: {
                         x: item.x,
                         width: item.width,
-                        fillStyle: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, 0.7),
                     } as RectState,
                 });
 
@@ -157,7 +157,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: itemColor,
+                            fill: itemColor,
                         },
                     });
 
@@ -168,7 +168,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(itemColor, 0.7),
+                                fill: setColorAlpha(itemColor, 0.7),
                             },
                         });
                     });
@@ -179,13 +179,13 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     x: scene.width / 2,
                     y: item.y + item.height / 2,
                     content: item.label,
-                    fillStyle: '#333',
+                    fill: '#333',
                     font: '12px sans-serif',
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -197,7 +197,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             const updateGroups = updates.map(([item, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const itemColor = item.color ?? (rect.fillStyle as string);
+                const itemColor = item.color ?? (rect.fill as string);
 
                 if (rect) {
                     rect.data = {
@@ -205,7 +205,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         y: item.y,
                         width: item.width,
                         height: item.height,
-                        fillStyle: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, 0.7),
                     } as RectState;
                 }
 

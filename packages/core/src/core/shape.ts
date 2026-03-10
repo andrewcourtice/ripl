@@ -92,16 +92,16 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             callback?.(this.path);
 
             if (this.path && this.clip) {
-                context.clip(this.path);
+                context.applyClip(this.path);
                 return;
             }
 
-            if (this.path && this.autoFill && this.fillStyle) {
-                context.fill(this.path);
+            if (this.path && this.autoFill && this.fill) {
+                context.applyFill(this.path);
             }
 
-            if (this.path && this.autoStroke && this.strokeStyle) {
-                context.stroke(this.path);
+            if (this.path && this.autoStroke && this.stroke) {
+                context.applyStroke(this.path);
             }
         }, this.clip);
     }

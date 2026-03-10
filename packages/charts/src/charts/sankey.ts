@@ -317,12 +317,12 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     sy,
                     tx,
                     ty,
-                    strokeStyle: setColorAlpha(link.color, 0.3),
+                    stroke: setColorAlpha(link.color, 0.3),
                     lineWidth: Math.max(link.width, 4),
                     pointerEvents: 'stroke',
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -333,7 +333,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            strokeStyle: setColorAlpha(link.color, 0.6),
+                            stroke: setColorAlpha(link.color, 0.6),
                         },
                     });
 
@@ -344,7 +344,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                strokeStyle: setColorAlpha(link.color, 0.3),
+                                stroke: setColorAlpha(link.color, 0.3),
                             },
                         });
                     });
@@ -381,11 +381,11 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     y: padding.top + node.y,
                     width: node.width,
                     height: 0,
-                    fillStyle: setColorAlpha(node.color, 0.8),
+                    fill: setColorAlpha(node.color, 0.8),
                     borderRadius: 2,
                     data: {
                         height: node.height,
-                        fillStyle: setColorAlpha(node.color, 0.8),
+                        fill: setColorAlpha(node.color, 0.8),
                     } as RectState,
                 });
 
@@ -400,7 +400,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: node.color,
+                            fill: node.color,
                         },
                     });
 
@@ -411,7 +411,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(node.color, 0.8),
+                                fill: setColorAlpha(node.color, 0.8),
                             },
                         });
                     });
@@ -422,13 +422,13 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     x: padding.left + node.x + node.width + 5,
                     y: padding.top + node.y + node.height / 2,
                     content: node.label,
-                    fillStyle: '#333',
+                    fill: '#333',
                     font: '11px sans-serif',
                     textAlign: 'left',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -447,7 +447,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                         y: padding.top + node.y,
                         width: node.width,
                         height: node.height,
-                        fillStyle: setColorAlpha(node.color, 0.8),
+                        fill: setColorAlpha(node.color, 0.8),
                     } as RectState;
                 }
 

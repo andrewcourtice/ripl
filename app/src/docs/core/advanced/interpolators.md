@@ -88,7 +88,7 @@ await renderer.transition(circle, {
     duration: 1000,
     state: {
         radius: 100, // uses interpolateNumber
-        fillStyle: '#ff006e', // uses interpolateColor
+        fill: '#ff006e', // uses interpolateColor
     },
 });
 ```
@@ -135,7 +135,7 @@ await renderer.transition(circle, {
     duration: 1000,
     state: {
         // Implicit offsets (evenly spaced)
-        fillStyle: ['#3a86ff', '#ff006e', '#8338ec'],
+        fill: ['#3a86ff', '#ff006e', '#8338ec'],
 
         // Explicit offsets
         radius: [

@@ -72,9 +72,8 @@ export type ElementIntersectionOptions = {
     isPointer: boolean;
 };
 
-/** Base state interface for all elements, inheriting optional context properties (fill, stroke, font, transforms, etc.). */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface BaseElementState extends Partial<BaseState> {}
+/** Base state interface for all elements. All visual properties are optional at the element level. */
+export type BaseElementState = Partial<BaseState>;
 
 /** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
@@ -274,12 +273,12 @@ export class Element<
         this.setStateValue('direction', value);
     }
 
-    public get fillStyle() {
-        return this.getStateValue('fillStyle');
+    public get fill() {
+        return this.getStateValue('fill');
     }
 
-    public set fillStyle(value) {
-        this.setStateValue('fillStyle', value);
+    public set fill(value) {
+        this.setStateValue('fill', value);
     }
 
     public get filter() {
@@ -298,12 +297,12 @@ export class Element<
         this.setStateValue('font', value);
     }
 
-    public get globalAlpha() {
-        return this.getStateValue('globalAlpha');
+    public get opacity() {
+        return this.getStateValue('opacity');
     }
 
-    public set globalAlpha(value) {
-        this.setStateValue('globalAlpha', value);
+    public set opacity(value) {
+        this.setStateValue('opacity', value);
     }
 
     public get globalCompositeOperation() {
@@ -394,12 +393,12 @@ export class Element<
         this.setStateValue('shadowOffsetY', value);
     }
 
-    public get strokeStyle() {
-        return this.getStateValue('strokeStyle');
+    public get stroke() {
+        return this.getStateValue('stroke');
     }
 
-    public set strokeStyle(value) {
-        this.setStateValue('strokeStyle', value);
+    public set stroke(value) {
+        this.setStateValue('stroke', value);
     }
 
     public get textAlign() {

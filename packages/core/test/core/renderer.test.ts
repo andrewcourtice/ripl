@@ -75,18 +75,18 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         const t = renderer.transition(el, {
             duration: 100,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         await vi.advanceTimersByTimeAsync(200);
         await t;
 
-        expect(el.globalAlpha).toBeCloseTo(1, 1);
+        expect(el.opacity).toBeCloseTo(1, 1);
 
         renderer.destroy();
     });
@@ -98,7 +98,7 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         let completed = false;
@@ -106,7 +106,7 @@ describe('Renderer', () => {
         const t = renderer.transition(el, {
             duration: 100,
             delay: 200,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         t.then(() => {
@@ -133,20 +133,20 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         const t = renderer.transition(el, {
             duration: 100,
             direction: 'reverse',
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         await vi.advanceTimersByTimeAsync(200);
         await t;
 
         // With reverse direction, final time=0, so element should stay near initial value
-        expect(el.globalAlpha).toBeCloseTo(0, 1);
+        expect(el.opacity).toBeCloseTo(0, 1);
 
         renderer.destroy();
     });
@@ -158,14 +158,14 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         const onComplete = vi.fn();
 
         const t = renderer.transition(el, {
             duration: 100,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
             onComplete,
         });
 
@@ -185,14 +185,14 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         expect(renderer.isBusy).toBe(false);
 
         const t = renderer.transition(el, {
             duration: 200,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         // Start the render loop
@@ -214,21 +214,21 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el1 = createElement('rect', { globalAlpha: 0 });
-        const el2 = createElement('rect', { globalAlpha: 0 });
+        const el1 = createElement('rect', { opacity: 0 });
+        const el2 = createElement('rect', { opacity: 0 });
         scene.add(el1);
         scene.add(el2);
 
         const t = renderer.transition([el1, el2], {
             duration: 100,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         await vi.advanceTimersByTimeAsync(200);
         await t;
 
-        expect(el1.globalAlpha).toBeCloseTo(1, 1);
-        expect(el2.globalAlpha).toBeCloseTo(1, 1);
+        expect(el1.opacity).toBeCloseTo(1, 1);
+        expect(el2.opacity).toBeCloseTo(1, 1);
 
         renderer.destroy();
     });
@@ -262,12 +262,12 @@ describe('Renderer', () => {
             autoStop: false,
         });
 
-        const el = createElement('rect', { globalAlpha: 0 });
+        const el = createElement('rect', { opacity: 0 });
         scene.add(el);
 
         const t = renderer.transition(el, {
             duration: 1000,
-            state: { globalAlpha: 1 },
+            state: { opacity: 1 },
         });
 
         await vi.advanceTimersByTimeAsync(100);

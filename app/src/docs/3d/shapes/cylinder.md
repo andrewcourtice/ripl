@@ -18,7 +18,7 @@ const cylinder = createCylinder({
     radiusBottom: 1,
     height: 2,
     segments: 16,
-    fillStyle: '#cc8844',
+    fill: '#cc8844',
 });
 ```
 
@@ -58,7 +58,7 @@ const cylinder = createCylinder({
     radiusTop: 0.8,
     radiusBottom: 0.8,
     height: 2,
-    fillStyle: '#cc8844',
+    fill: '#cc8844',
 });
 
 let angle = 0;
@@ -88,7 +88,7 @@ import {
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createCylinder({
         radiusTop: 0.8, radiusBottom: 0.8, height: 2,
-        fillStyle: '#cc8844',
+        fill: '#cc8844',
     }));
     startRotation(camera);
 });

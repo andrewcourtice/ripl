@@ -74,7 +74,7 @@ export class Tooltip extends ChartComponent {
         if (!this.group) {
             const textElement = createText({
                 id: 'tooltip-text',
-                fillStyle: this.fontColor,
+                fill: this.fontColor,
                 font: this.font,
                 textAlign: 'center',
                 textBaseline: 'middle',
@@ -85,8 +85,8 @@ export class Tooltip extends ChartComponent {
 
             const background = createRect({
                 id: 'tooltip-bg',
-                fillStyle: this.backgroundColor,
-                strokeStyle: this.borderColor,
+                fill: this.backgroundColor,
+                stroke: this.borderColor,
                 lineWidth: 1,
                 borderRadius: this.borderRadiusValue,
                 x: 0,
@@ -97,7 +97,7 @@ export class Tooltip extends ChartComponent {
 
             this.group = createGroup({
                 id: 'tooltip',
-                globalAlpha: 0,
+                opacity: 0,
                 zIndex: 1000,
                 pointerEvents: 'none',
                 children: [background, textElement],
@@ -154,11 +154,11 @@ export class Tooltip extends ChartComponent {
         const textY = bgY + bgHeight / 2;
 
         // If tooltip is already visible, smoothly transition position
-        const isVisible = (this.group.globalAlpha || 0) > 0.1;
+        const isVisible = (this.group.opacity || 0) > 0.1;
 
         if (isVisible) {
             // Ensure tooltip stays visible while repositioning
-            this.group.globalAlpha = 1;
+            this.group.opacity = 1;
 
             this.renderer.transition(background, {
                 duration: 150,
@@ -187,7 +187,7 @@ export class Tooltip extends ChartComponent {
                 duration: 200,
                 ease: easeOutQuart,
                 state: {
-                    globalAlpha: 1,
+                    opacity: 1,
                 },
             });
         }
@@ -211,7 +211,7 @@ export class Tooltip extends ChartComponent {
                     duration: 200,
                     ease: easeOutQuart,
                     state: {
-                        globalAlpha: 0,
+                        opacity: 0,
                     },
                 });
             }

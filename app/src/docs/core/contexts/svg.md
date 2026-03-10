@@ -30,7 +30,7 @@ import {
 const context = createContext('.my-container');
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 100,
     cy: 100,
     radius: 50,
@@ -62,7 +62,7 @@ Like the Canvas context, the SVG context supports CSS gradient strings. Gradient
 
 ```ts
 const rect = createRect({
-    fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
+    fill: 'linear-gradient(90deg, #3a86ff, #ff006e)',
     x: 0,
     y: 0,
     width: 200,
@@ -116,8 +116,8 @@ import {
 const context = createContext('.mount-element');
 
 createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     lineWidth: 2,
     cx: context.width / 3,
     cy: context.height / 2,
@@ -125,8 +125,8 @@ createCircle({
 }).render(context);
 
 createRect({
-    fillStyle: '#ff006e',
-    strokeStyle: '#c9184a',
+    fill: '#ff006e',
+    stroke: '#c9184a',
     lineWidth: 2,
     x: context.width / 2,
     y: context.height / 4,
@@ -158,15 +158,15 @@ const {
         context.markRenderStart();
 
         createCircle({
-            fillStyle: '#3a86ff',
-            strokeStyle: '#1a56db',
+            fill: '#3a86ff',
+            stroke: '#1a56db',
             lineWidth: 2,
             cx: w / 3, cy: h / 2, radius: r,
         }).render(context);
 
         createRect({
-            fillStyle: '#ff006e',
-            strokeStyle: '#c9184a',
+            fill: '#ff006e',
+            stroke: '#c9184a',
             lineWidth: 2,
             x: w / 2, y: h / 4,
             width: w / 3, height: h / 2,
@@ -175,7 +175,7 @@ const {
         createText({
             x: w / 2, y: h - 20,
             content: `Rendering to: ${context.type.toUpperCase()}`,
-            fillStyle: '#666',
+            fill: '#666',
             textAlign: 'center',
             font: '14px sans-serif',
         }).render(context);

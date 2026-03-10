@@ -19,7 +19,7 @@ import {
 export interface GridOptions extends ChartComponentOptions {
     horizontal?: boolean;
     vertical?: boolean;
-    strokeStyle?: string;
+    stroke?: string;
     lineWidth?: number;
     lineDash?: number[];
 }
@@ -36,7 +36,7 @@ export class Grid extends ChartComponent {
     private verticalLines: Line[] = [];
     private horizontal: boolean;
     private vertical: boolean;
-    private strokeStyle: string;
+    private stroke: string;
     private lineWidth: number;
     private lineDash: number[];
 
@@ -45,7 +45,7 @@ export class Grid extends ChartComponent {
 
         this.horizontal = options.horizontal ?? true;
         this.vertical = options.vertical ?? false;
-        this.strokeStyle = options.strokeStyle ?? DEFAULT_STROKE;
+        this.stroke = options.stroke ?? DEFAULT_STROKE;
         this.lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
         this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
@@ -84,7 +84,7 @@ export class Grid extends ChartComponent {
                     y1: tickY,
                     x2: x + width,
                     y2: tickY,
-                    strokeStyle: this.strokeStyle,
+                    stroke: this.stroke,
                     lineWidth: this.lineWidth,
                     lineDash: this.lineDash,
                 });
@@ -125,7 +125,7 @@ export class Grid extends ChartComponent {
                     y1: y,
                     x2: tickX,
                     y2: y + height,
-                    strokeStyle: this.strokeStyle,
+                    stroke: this.stroke,
                     lineWidth: this.lineWidth,
                     lineDash: this.lineDash,
                 });

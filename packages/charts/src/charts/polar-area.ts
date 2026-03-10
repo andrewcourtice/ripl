@@ -117,7 +117,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 cx,
                 cy,
                 radius: isEntry ? innerRadius : levelRadius,
-                strokeStyle: '#e5e7eb',
+                stroke: '#e5e7eb',
                 lineWidth: 1,
                 data: {
                     radius: levelRadius,
@@ -163,13 +163,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 x: cx + 4,
                 y: cy - levelRadius - 2,
                 content: levelValue.toString(),
-                fillStyle: '#9ca3af',
+                fill: '#9ca3af',
                 font: '10px sans-serif',
                 textAlign: 'left',
                 textBaseline: 'bottom',
-                globalAlpha: isEntry ? 0 : 1,
+                opacity: isEntry ? 0 : 1,
                 data: {
-                    globalAlpha: 1,
+                    opacity: 1,
                 },
             });
 
@@ -218,7 +218,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 y1,
                 x2: isEntry ? x1 : x2,
                 y2: isEntry ? y1 : y2,
-                strokeStyle: '#e5e7eb',
+                stroke: '#e5e7eb',
                 lineWidth: 1,
                 data: {
                     x2,
@@ -373,8 +373,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle: startAngle, // animate angle grow subtly
                     padAngle,
-                    strokeStyle: color,
-                    fillStyle: setColorAlpha(color, 0.55),
+                    stroke: color,
+                    fill: setColorAlpha(color, 0.55),
                     lineWidth: 2,
                     radius: innerRadius, // animate radial growth
                     innerRadius,
@@ -389,7 +389,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                         duration: this.getAnimationDuration(400),
                         ease: easeOutQuint,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
 
@@ -398,7 +398,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                             duration: this.getAnimationDuration(400),
                             ease: easeOutQuint,
                             state: {
-                                fillStyle: setColorAlpha(color, 0.55),
+                                fill: setColorAlpha(color, 0.55),
                             },
                         });
                     });
@@ -408,13 +408,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                 const segmentLabel = createText({
                     class: 'segment__label',
-                    fillStyle: '#000000',
+                    fill: '#000000',
                     x: centroidX,
                     y: centroidY,
                     content: label,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     zIndex: 1,
                 });
 
@@ -442,7 +442,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
-                const resolvedColor = item.color ?? arc.strokeStyle;
+                const resolvedColor = item.color ?? arc.stroke;
 
                 const arcData = {
                     cx,
@@ -452,8 +452,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     startAngle,
                     endAngle,
                     padAngle,
-                    strokeStyle: resolvedColor,
-                    fillStyle: setColorAlpha(resolvedColor, 0.55),
+                    stroke: resolvedColor,
+                    fill: setColorAlpha(resolvedColor, 0.55),
                 } as Partial<ArcState>;
 
                 const [centroidx, centroidY] = arc.getCentroid(arcData);
@@ -480,7 +480,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 } as Partial<ArcState>;
 
                 label.data = {
-                    globalAlpha: 0,
+                    opacity: 0,
                 } as Partial<TextState>;
 
                 return group;
@@ -509,7 +509,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     duration: animDuration * 1.5,
                     ease: easeOutQuint,
                     state: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
             }

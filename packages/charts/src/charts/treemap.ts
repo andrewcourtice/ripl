@@ -201,14 +201,14 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     y: node.y + node.height / 2,
                     width: 0,
                     height: 0,
-                    fillStyle: setColorAlpha(nodeColor, 0.65),
+                    fill: setColorAlpha(nodeColor, 0.65),
                     borderRadius,
                     data: {
                         x: node.x,
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fillStyle: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, 0.65),
                     } as RectState,
                 });
 
@@ -223,7 +223,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: nodeColor,
+                            fill: nodeColor,
                         },
                     });
 
@@ -234,7 +234,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(nodeColor, 0.65),
+                                fill: setColorAlpha(nodeColor, 0.65),
                             },
                         });
                     });
@@ -249,13 +249,13 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         x: node.x + node.width / 2,
                         y: node.y + node.height / 2,
                         content: node.label,
-                        fillStyle: '#333',
+                        fill: '#333',
                         font: `${Math.min(12, Math.max(9, node.width / 8))}px sans-serif`,
                         textAlign: 'center',
                         textBaseline: 'middle',
-                        globalAlpha: 0,
+                        opacity: 0,
                         data: {
-                            globalAlpha: 1,
+                            opacity: 1,
                         },
                     });
 
@@ -270,7 +270,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const updateGroups = updates.map(([node, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const nodeColor = node.color ?? (rect.fillStyle as string);
+                const nodeColor = node.color ?? (rect.fill as string);
 
                 if (rect) {
                     rect.data = {
@@ -278,7 +278,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fillStyle: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, 0.65),
                     } as RectState;
                 }
 

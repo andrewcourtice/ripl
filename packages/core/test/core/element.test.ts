@@ -50,11 +50,11 @@ describe('Element', () => {
     });
 
     test('Should set and get state values via property accessors', () => {
-        const el = createElement('rect', { fillStyle: '#ff0000' });
-        expect(el.fillStyle).toBe('#ff0000');
+        const el = createElement('rect', { fill: '#ff0000' });
+        expect(el.fill).toBe('#ff0000');
 
-        el.fillStyle = '#00ff00';
-        expect(el.fillStyle).toBe('#00ff00');
+        el.fill = '#00ff00';
+        expect(el.fill).toBe('#00ff00');
     });
 
     test('Should emit updated event on state change', () => {
@@ -62,7 +62,7 @@ describe('Element', () => {
         const handler = vi.fn();
         el.on('updated', handler);
 
-        el.fillStyle = '#ff0000';
+        el.fill = '#ff0000';
         expect(handler).toHaveBeenCalledTimes(1);
     });
 
@@ -70,14 +70,14 @@ describe('Element', () => {
         const el = createElement('rect', {
             id: 'original',
             class: ['test'],
-            fillStyle: '#ff0000',
+            fill: '#ff0000',
         });
 
         const clone = el.clone();
         expect(clone.id).toBe('original');
         expect(clone.type).toBe('rect');
         expect(clone.classList.has('test')).toBe(true);
-        expect(clone.fillStyle).toBe('#ff0000');
+        expect(clone.fill).toBe('#ff0000');
         expect(clone).not.toBe(el);
     });
 

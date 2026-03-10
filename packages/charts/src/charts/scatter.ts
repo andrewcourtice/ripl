@@ -161,7 +161,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: true,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -173,7 +173,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -275,8 +275,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     sizeValue,
                     label,
                     state: {
-                        fillStyle: setColorAlpha(color as string, 0.7),
-                        strokeStyle: color,
+                        fill: setColorAlpha(color as string, 0.7),
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
@@ -305,8 +305,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     id,
                     ...state,
                     radius: 0,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0),
-                    strokeStyle: setColorAlpha(state.strokeStyle as string, 0),
+                    fill: setColorAlpha(state.fill as string, 0),
+                    stroke: setColorAlpha(state.stroke as string, 0),
                     data: state,
                 });
 
@@ -321,7 +321,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -333,7 +333,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });
@@ -366,8 +366,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     ease: easeOutCubic,
                     state: {
                         radius: 0,
-                        fillStyle: setColorAlpha(bubble.fillStyle as string, 0),
-                        strokeStyle: setColorAlpha(bubble.strokeStyle as string, 0),
+                        fill: setColorAlpha(bubble.fill as string, 0),
+                        stroke: setColorAlpha(bubble.stroke as string, 0),
                     },
                 }).then(() => bubble.destroy());
             });
@@ -387,8 +387,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     id,
                     ...state,
                     radius: 0,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0),
-                    strokeStyle: setColorAlpha(state.strokeStyle as string, 0),
+                    fill: setColorAlpha(state.fill as string, 0),
+                    stroke: setColorAlpha(state.stroke as string, 0),
                     data: state,
                 });
 
@@ -403,7 +403,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -415,7 +415,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });
@@ -449,7 +449,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -461,7 +461,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });

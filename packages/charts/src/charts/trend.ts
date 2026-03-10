@@ -189,7 +189,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -237,8 +237,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     id: `${id}-${key}`,
                     point: [x, y] as Point,
                     state: {
-                        fillStyle: '#FFFFFF',
-                        strokeStyle: color,
+                        fill: '#FFFFFF',
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
@@ -272,7 +272,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: 5,
                         },
                     });
@@ -284,7 +284,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: '#FFFFFF',
+                                fill: '#FFFFFF',
                                 radius: 3,
                             },
                         });
@@ -300,7 +300,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = createPolyline({
                 id: `${series.id}-line`,
                 lineWidth: 2,
-                strokeStyle: this.getSeriesColor(series.id),
+                stroke: this.getSeriesColor(series.id),
                 points: items.map(item => item.point),
                 renderer: series.lineType,
             });
@@ -363,7 +363,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: 5,
                         },
                     });
@@ -375,7 +375,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: '#FFFFFF',
+                                fill: '#FFFFFF',
                                 radius: 3,
                             },
                         });
@@ -491,7 +491,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 return {
                     id: `${id}-${key}`,
                     state: {
-                        fillStyle: color,
+                        fill: color,
                         x,
                         y,
                         width,
@@ -514,12 +514,12 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 const bar = createRect({
                     id,
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                     y: baseline,
                     height: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -530,7 +530,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -541,7 +541,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -590,7 +590,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
                 bar.data = {
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
                 // Update hover listeners for new values
@@ -601,7 +601,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -612,7 +612,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });

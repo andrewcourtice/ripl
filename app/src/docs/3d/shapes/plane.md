@@ -16,7 +16,7 @@ import {
 const plane = createPlane({
     width: 4,
     height: 3,
-    fillStyle: '#88cc44',
+    fill: '#88cc44',
 });
 ```
 
@@ -54,7 +54,7 @@ const plane = createPlane({
     width: 3,
     height: 2,
     rotationX: 0.5,
-    fillStyle: '#88cc44',
+    fill: '#88cc44',
 });
 
 let angle = 0;
@@ -85,7 +85,7 @@ const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.add(createPlane({
         width: 3, height: 2,
         rotationX: 0.5,
-        fillStyle: '#88cc44',
+        fill: '#88cc44',
     }));
     startRotation(camera);
 });

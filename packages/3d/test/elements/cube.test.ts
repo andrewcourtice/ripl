@@ -19,7 +19,7 @@ describe('Cube', () => {
             y: 2,
             z: 3,
             size: 2,
-            fillStyle: '#ff0000',
+            fill: '#ff0000',
         });
 
         expect(cube.type).toBe('cube');

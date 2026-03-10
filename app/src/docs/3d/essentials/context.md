@@ -97,7 +97,7 @@ const camera = createCamera(scene, {
 });
 
 const cube = createCube({ size: 1.5,
-    fillStyle: '#4488ff' });
+    fill: '#4488ff' });
 
 // Render loop with auto-rotation
 let angle = 0;
@@ -125,7 +125,7 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    scene.add(createCube({ size: 1.5, fill: '#4488ff' }));
     startRotation(camera);
 });
 </script>

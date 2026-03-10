@@ -215,7 +215,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     public render(context: Context): void {
         const ctx = context as Context3D;
         const faces = this.getCachedFaces();
-        const baseFillStyle = this.fillStyle || '#888888';
+        const baseFillStyle = this.fill || '#888888';
         const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
         const normalizedLight = vec3Normalize(ctx.lightDirection ?? [0, 0, -1]);
         const matrix = this.getModelMatrix();
@@ -239,7 +239,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             ctx.faceBuffer.push({
                 points,
                 fillColor,
-                strokeStyle: this.strokeStyle,
+                strokeStyle: this.stroke,
                 lineWidth: this.lineWidth,
                 depth,
             });

@@ -251,8 +251,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle: 0,
-                    fillStyle: setColorAlpha(arc.color, 0.8),
-                    strokeStyle: arc.color,
+                    fill: setColorAlpha(arc.color, 0.8),
+                    stroke: arc.color,
                     lineWidth: 1,
                     data: {
                         endAngle: arc.endAngle,
@@ -269,7 +269,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: arc.color,
+                            fill: arc.color,
                         },
                     });
 
@@ -280,7 +280,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(arc.color, 0.8),
+                                fill: setColorAlpha(arc.color, 0.8),
                             },
                         });
                     });
@@ -301,8 +301,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fillStyle: setColorAlpha(arc.color, 0.8),
-                        strokeStyle: arc.color,
+                        fill: setColorAlpha(arc.color, 0.8),
+                        stroke: arc.color,
                     } as Partial<ArcState>;
                 }
 
@@ -335,12 +335,12 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     sourceEnd: ribbon.sourceEnd,
                     targetStart: ribbon.targetStart,
                     targetEnd: ribbon.targetEnd,
-                    fillStyle: setColorAlpha(ribbon.color, 0.2),
-                    strokeStyle: setColorAlpha(ribbon.color, 0.4),
+                    fill: setColorAlpha(ribbon.color, 0.2),
+                    stroke: setColorAlpha(ribbon.color, 0.4),
                     lineWidth: 0.5,
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -351,7 +351,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(ribbon.color, 0.5),
+                            fill: setColorAlpha(ribbon.color, 0.5),
                         },
                     });
 
@@ -362,7 +362,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(ribbon.color, 0.2),
+                                fill: setColorAlpha(ribbon.color, 0.2),
                             },
                         });
                     });

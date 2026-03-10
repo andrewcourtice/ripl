@@ -26,7 +26,7 @@ const group = createGroup({
             radius: 80 }),
 
         // Clipped content — only visible inside the circle
-        createRect({ fillStyle: '#3a86ff',
+        createRect({ fill: '#3a86ff',
             x: 0,
             y: 0,
             width: 300,
@@ -56,7 +56,7 @@ The `clip` option is available on all [Shape](/docs/core/essentials/shape) types
 | --- | --- | --- | --- |
 | `clip` | `boolean` | `false` | When `true`, the shape acts as a clip path instead of rendering visually |
 
-When `clip` is `true`, the `autoFill`, `autoStroke`, `fillStyle`, and `strokeStyle` properties have no effect — the shape is never drawn, only used as a clipping mask.
+When `clip` is `true`, the `autoFill`, `autoStroke`, `fill`, and `stroke` properties have no effect — the shape is never drawn, only used as a clipping mask.
 
 ## Combining with Transforms
 
@@ -111,7 +111,7 @@ const group = createGroup({
 
         // Background rect — clipped to circle
         createRect({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             x: cx - r,
             y: cy - r,
             width: r * 2,
@@ -122,7 +122,7 @@ const group = createGroup({
         ...Array.from({ length: 12 }, (_, i) => {
             const offset = (i - 6) * 20;
             return createLine({
-                strokeStyle: '#ffffff44',
+                stroke: '#ffffff44',
                 lineWidth: 2,
                 x1: cx - r + offset,
                 y1: cy - r,
@@ -169,14 +169,14 @@ const {
             children: [
                 createCircle({ clip: true, cx, cy, radius: r }),
                 createRect({
-                    fillStyle: '#3a86ff',
+                    fill: '#3a86ff',
                     x: cx - r, y: cy - r,
                     width: r * 2, height: r * 2,
                 }),
                 ...Array.from({ length: 20 }, (_, i) => {
                     const offset = (i - 10) * (r / 5);
                     return createLine({
-                        strokeStyle: '#ffffff44',
+                        stroke: '#ffffff44',
                         lineWidth: 2,
                         x1: cx - r + offset, y1: cy - r,
                         x2: cx + r + offset, y2: cy + r,
@@ -189,7 +189,7 @@ const {
 
         // --- Unclipped ring to show boundary ---
         createCircle({
-            strokeStyle: '#1a56db',
+            stroke: '#1a56db',
             lineWidth: 3,
             cx, cy, radius: r,
             autoFill: false,
@@ -198,7 +198,7 @@ const {
         createText({
             x: cx, y: cy + r + 24,
             content: 'Circle Clip Path',
-            fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         context.markRenderEnd();

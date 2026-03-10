@@ -65,9 +65,9 @@ describe('Element.interpolate', () => {
             height: 50,
         });
 
-        // fillStyle is undefined by default on state (inherits from parent)
+        // fill is undefined by default on state (inherits from parent)
         const interpolator = rect.interpolate({
-            fillStyle: '#ff0000',
+            fill: '#ff0000',
             x: 50,
         });
 
@@ -75,44 +75,44 @@ describe('Element.interpolate', () => {
         expect(rect.x).toBeCloseTo(25, 5);
     });
 
-    test('Should interpolate color props (fillStyle)', () => {
+    test('Should interpolate color props (fill)', () => {
         const rect = createRect({
             x: 0,
             y: 0,
             width: 100,
             height: 50,
-            fillStyle: '#000000',
+            fill: '#000000',
         });
 
         const interpolator = rect.interpolate({
-            fillStyle: '#ffffff',
+            fill: '#ffffff',
         });
 
         interpolator(0);
-        expect(rect.fillStyle).toBe('rgba(0, 0, 0, 1)');
+        expect(rect.fill).toBe('rgba(0, 0, 0, 1)');
 
         interpolator(1);
-        expect(rect.fillStyle).toBe('rgba(255, 255, 255, 1)');
+        expect(rect.fill).toBe('rgba(255, 255, 255, 1)');
     });
 
-    test('Should interpolate globalAlpha (numeric)', () => {
+    test('Should interpolate opacity (numeric)', () => {
         const rect = createRect({
             x: 0,
             y: 0,
             width: 10,
             height: 10,
-            globalAlpha: 0,
+            opacity: 0,
         });
 
         const interpolator = rect.interpolate({
-            globalAlpha: 1,
+            opacity: 1,
         });
 
         interpolator(0.5);
-        expect(rect.globalAlpha).toBeCloseTo(0.5, 5);
+        expect(rect.opacity).toBeCloseTo(0.5, 5);
 
         interpolator(1);
-        expect(rect.globalAlpha).toBe(1);
+        expect(rect.opacity).toBe(1);
     });
 
     test('Should accept custom interpolator function as value', () => {

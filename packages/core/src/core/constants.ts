@@ -29,11 +29,11 @@ const noop = () => {};
 /** Maps element state properties to their corresponding context setter functions. */
 export const CONTEXT_OPERATIONS = {
     direction: basicContextSetter('direction'),
-    fillStyle: basicContextSetter('fillStyle'),
+    fill: basicContextSetter('fill'),
     filter: basicContextSetter('filter'),
     font: basicContextSetter('font'),
     fontKerning: basicContextSetter('fontKerning'),
-    globalAlpha: basicContextSetter('globalAlpha'),
+    opacity: basicContextSetter('opacity'),
     globalCompositeOperation: basicContextSetter('globalCompositeOperation'),
     lineCap: basicContextSetter('lineCap'),
     lineDash: basicContextSetter('lineDash'),
@@ -45,7 +45,7 @@ export const CONTEXT_OPERATIONS = {
     shadowColor: basicContextSetter('shadowColor'),
     shadowOffsetX: basicContextSetter('shadowOffsetX'),
     shadowOffsetY: basicContextSetter('shadowOffsetY'),
-    strokeStyle: basicContextSetter('strokeStyle'),
+    stroke: basicContextSetter('stroke'),
     textAlign: basicContextSetter('textAlign'),
     textBaseline: basicContextSetter('textBaseline'),
     zIndex: basicContextSetter('zIndex'),

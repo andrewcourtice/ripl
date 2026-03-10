@@ -24,7 +24,7 @@ const rect = createRect({ x: 160,
     height: 80 });
 
 const group = createGroup({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     children: [circle, rect],
 });
 ```
@@ -36,7 +36,7 @@ const group = createGroup({
 | `children` | `Element \| Element[]` | Initial child elements |
 | `id` | `string` | Unique identifier |
 | `class` | `string \| string[]` | Class names for querying |
-| `fillStyle`, `strokeStyle`, etc. | `string` | Style properties inherited by children |
+| `fill`, `stroke`, etc. | `string` | Style properties inherited by children |
 
 ## Property Inheritance
 
@@ -44,16 +44,16 @@ Style properties set on a group are **inherited** by all child elements that don
 
 ```ts
 const group = createGroup({
-    fillStyle: '#3a86ff', // inherited by all children
+    fill: '#3a86ff', // inherited by all children
     lineWidth: 2, // inherited by all children
     children: [
         createCircle({ cx: 80,
             cy: 100,
-            radius: 40 }), // uses group's fillStyle
+            radius: 40 }), // uses group's fill
         createCircle({ cx: 200,
             cy: 100,
             radius: 40,
-            fillStyle: '#ff006e' }), // overrides fillStyle
+            fill: '#ff006e' }), // overrides fill
     ],
 });
 ```
@@ -175,7 +175,7 @@ Groups can contain other groups, creating a tree structure:
 
 ```ts
 const innerGroup = createGroup({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     children: [circle1, circle2],
 });
 
@@ -185,7 +185,7 @@ const outerGroup = createGroup({
 });
 ```
 
-Child elements inherit properties through the full chain — `circle1` inherits `lineWidth` from `outerGroup` and `fillStyle` from `innerGroup`.
+Child elements inherit properties through the full chain — `circle1` inherits `lineWidth` from `outerGroup` and `fill` from `innerGroup`.
 
 ## Rendering
 
@@ -214,7 +214,7 @@ import {
 const context = createContext('.mount-element');
 
 const group = createGroup({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     children: [
         createCircle({
             cx: 120,
@@ -225,7 +225,7 @@ const group = createGroup({
             cx: 200,
             cy: 150,
             radius: 35,
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
         }),
         createRect({
             x: 260,
@@ -260,10 +260,10 @@ const {
     const r = Math.min(w, h) / 7;
 
     const group = createGroup({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         children: [
             createCircle({ cx: w * 0.25, cy: h / 2, radius: r }),
-            createCircle({ cx: w * 0.5, cy: h / 2, radius: r * 0.7, fillStyle: '#ff006e' }),
+            createCircle({ cx: w * 0.5, cy: h / 2, radius: r * 0.7, fill: '#ff006e' }),
             createRect({ x: w * 0.65, y: h / 2 - r * 0.7, width: r * 1.6, height: r * 1.4 }),
         ],
     });

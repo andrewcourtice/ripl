@@ -163,17 +163,17 @@ function addPart(name: string, element: Shape3D, colors: { default: string; hove
         defaultColor: colors.default,
     };
 
-    element.fillStyle = colors.default;
-    element.strokeStyle = EDGE_COLOR;
+    element.fill = colors.default;
+    element.stroke = EDGE_COLOR;
     element.lineWidth = EDGE_WIDTH;
 
     element.on('mouseenter', () => {
-        element.fillStyle = entry.hoverColor;
+        element.fill = entry.hoverColor;
         hoveredPart.value = entry.name;
     });
 
     element.on('mouseleave', () => {
-        element.fillStyle = entry.defaultColor;
+        element.fill = entry.defaultColor;
         hoveredPart.value = null;
     });
 

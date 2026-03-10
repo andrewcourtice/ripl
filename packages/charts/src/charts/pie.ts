@@ -204,8 +204,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     cy,
                     startAngle,
                     padAngle,
-                    strokeStyle: color,
-                    fillStyle: setColorAlpha(color, 0.55),
+                    stroke: color,
+                    fill: setColorAlpha(color, 0.55),
                     lineWidth: 2,
                     endAngle: startAngle,
                     radius: 0,
@@ -229,7 +229,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                         duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
                 });
@@ -241,7 +241,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                         duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(color, 0.55),
+                            fill: setColorAlpha(color, 0.55),
                         },
                     });
                 });
@@ -253,13 +253,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
                 const segmentLabel = createText({
                     class: 'segment__label',
-                    fillStyle: '#000000',
+                    fill: '#000000',
                     x: centroidX,
                     y: centroidY,
                     content: label,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     zIndex: 1,
                 });
 
@@ -287,7 +287,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
-                const resolvedColor = item.color ?? arc.strokeStyle;
+                const resolvedColor = item.color ?? arc.stroke;
 
                 const arcData = {
                     cx,
@@ -297,8 +297,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     startAngle,
                     endAngle,
                     padAngle,
-                    strokeStyle: resolvedColor,
-                    fillStyle: setColorAlpha(resolvedColor, 0.55),
+                    stroke: resolvedColor,
+                    fill: setColorAlpha(resolvedColor, 0.55),
                 } as Partial<ArcState>;
 
                 const [
@@ -329,7 +329,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 } as Partial<ArcState>;
 
                 label.data = {
-                    globalAlpha: 0,
+                    opacity: 0,
                 } as Partial<TextState>;
 
                 return group;
@@ -364,7 +364,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     duration: animDuration * 2,
                     ease: easeOutQuint,
                     state: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
             }

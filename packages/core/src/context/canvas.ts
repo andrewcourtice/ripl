@@ -160,15 +160,15 @@ export class CanvasPath extends ContextPath {
 export class CanvasContext extends Context<HTMLCanvasElement> {
 
     protected context: CanvasRenderingContext2D;
-    private _fillStyleCSS: string = '';
-    private _strokeStyleCSS: string = '';
+    private _fillCSS: string = '';
+    private _strokeCSS: string = '';
 
-    get fillStyle(): string {
-        return this._fillStyleCSS || this.context.fillStyle as string;
+    get fill(): string {
+        return this._fillCSS || this.context.fillStyle as string;
     }
 
-    set fillStyle(value) {
-        this._fillStyleCSS = value;
+    set fill(value) {
+        this._fillCSS = value;
 
         if (isGradientString(value)) {
             const gradient = parseGradient(value);
@@ -215,11 +215,11 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         this.context.fontKerning = value;
     }
 
-    get globalAlpha(): number {
+    get opacity(): number {
         return this.context.globalAlpha;
     }
 
-    set globalAlpha(value) {
+    set opacity(value) {
         this.context.globalAlpha = value;
     }
 
@@ -311,12 +311,12 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         this.context.shadowOffsetY = value;
     }
 
-    get strokeStyle(): string {
-        return this._strokeStyleCSS || this.context.strokeStyle as string;
+    get stroke(): string {
+        return this._strokeCSS || this.context.strokeStyle as string;
     }
 
-    set strokeStyle(value) {
-        this._strokeStyleCSS = value;
+    set stroke(value) {
+        this._strokeCSS = value;
 
         if (isGradientString(value)) {
             const gradient = parseGradient(value);
@@ -454,7 +454,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return new CanvasPath(id);
     }
 
-    clip(path: CanvasPath, fillRule?: FillRule): void {
+    applyClip(path: CanvasPath, fillRule?: FillRule): void {
         return this.context.clip(path.ref, fillRule);
     }
 
@@ -496,7 +496,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return this.context.drawImage(image, x, y);
     }
 
-    fill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
+    applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
         if (element instanceof ContextText) {
             if (element.pathData) {
                 return this.renderTextAlongPath(element, 'fill');
@@ -508,7 +508,7 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         return this.context.fill(element.ref, fillRule);
     }
 
-    stroke(element: CanvasPath | ContextText): void {
+    applyStroke(element: CanvasPath | ContextText): void {
         if (element instanceof ContextText) {
             if (element.pathData) {
                 return this.renderTextAlongPath(element, 'stroke');

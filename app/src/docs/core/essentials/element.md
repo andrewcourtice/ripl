@@ -18,7 +18,7 @@ import {
 const circle = createCircle({
     id: 'my-circle',
     class: 'highlighted',
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 100,
     cy: 100,
     radius: 50,
@@ -42,14 +42,14 @@ Elements inherit all Canvas 2D drawing state properties. These can be set direct
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `fillStyle` | `string` | Fill color or gradient string |
-| `strokeStyle` | `string` | Stroke color or gradient string |
+| `fill` | `string` | Fill color or gradient string |
+| `stroke` | `string` | Stroke color or gradient string |
 | `lineWidth` | `number` | Stroke width |
 | `lineCap` | `'butt' \| 'round' \| 'square'` | Line end style |
 | `lineJoin` | `'bevel' \| 'miter' \| 'round'` | Line join style |
 | `lineDash` | `number[]` | Dash pattern |
 | `lineDashOffset` | `number` | Dash offset |
-| `globalAlpha` | `number` | Opacity (0–1) |
+| `opacity` | `number` | Opacity (0–1) |
 | `font` | `string` | Font string (e.g. `'16px sans-serif'`) |
 | `textAlign` | `string` | Text alignment |
 | `textBaseline` | `string` | Text baseline |
@@ -126,7 +126,7 @@ Create an interpolation function that smoothly transitions the element's propert
 ```ts
 const interpolator = circle.interpolate({
     radius: 100,
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
 });
 
 // Apply at 50% progress
@@ -161,11 +161,11 @@ circle.on('click', (event) => {
 });
 
 circle.on('mouseenter', () => {
-    circle.fillStyle = '#ff006e';
+    circle.fill = '#ff006e';
 });
 
 circle.on('mouseleave', () => {
-    circle.fillStyle = '#3a86ff';
+    circle.fill = '#3a86ff';
 });
 ```
 
@@ -178,16 +178,16 @@ When an element is inside a [Group](/docs/core/essentials/group), any style prop
 
 ```ts
 const group = createGroup({
-    fillStyle: '#3a86ff', // All children inherit this
+    fill: '#3a86ff', // All children inherit this
     lineWidth: 2,
     children: [
         createCircle({ cx: 50,
             cy: 50,
-            radius: 30 }), // inherits fillStyle
+            radius: 30 }), // inherits fill
         createCircle({ cx: 150,
             cy: 50,
             radius: 30,
-            fillStyle: '#ff006e' }), // overrides fillStyle
+            fill: '#ff006e' }), // overrides fill
     ],
 });
 ```
@@ -207,8 +207,8 @@ import {
 const context = createContext('.mount-element');
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     lineWidth: 3,
     cx: context.width / 2,
     cy: context.height / 2,
@@ -232,8 +232,8 @@ const {
     contextChanged
 } = useRiplExample(context => {
     const circle = createCircle({
-        fillStyle: '#3a86ff',
-        strokeStyle: '#1a56db',
+        fill: '#3a86ff',
+        stroke: '#1a56db',
         lineWidth: 3,
         cx: context.width / 2,
         cy: context.height / 2,

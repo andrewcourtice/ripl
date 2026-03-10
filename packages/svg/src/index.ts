@@ -525,7 +525,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
             alignmentBaseline: this.currentState.textBaseline,
-            opacity: this.currentState.globalAlpha.toString(),
+            opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
             // shadowBlur,
             // shadowColor,
@@ -684,7 +684,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         const svgImage = new SVGImage(id, href, x, y, imgWidth, imgHeight);
 
         this.setElementStyles(svgImage, {
-            opacity: this.currentState.globalAlpha.toString(),
+            opacity: this.currentState.opacity.toString(),
         });
 
         this.addToVTree(svgImage);
@@ -724,7 +724,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    clip(path: SVGPath, fillRule?: FillRule): void {
+    applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
         let cached = this.clipCache.get(cacheKey);
 
@@ -761,15 +761,15 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fill(element: SVGContextElement, fillRule?: FillRule): void {
+    applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this.setElementStyles(element, {
-            fill: this.resolveGradientStyle(this.currentState.fillStyle, `${element.id}:fill`),
+            fill: this.resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
         });
     }
 
-    stroke(element: SVGContextElement): void {
+    applyStroke(element: SVGContextElement): void {
         this.setElementStyles(element, {
-            stroke: this.resolveGradientStyle(this.currentState.strokeStyle, `${element.id}:stroke`),
+            stroke: this.resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
             strokeLinecap: this.currentState.lineCap,
             strokeDasharray: this.currentState.lineDash.join(' '),
             strokeDashoffset: this.currentState.lineDashOffset.toString(),

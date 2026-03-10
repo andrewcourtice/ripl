@@ -140,7 +140,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -204,7 +204,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                 color,
                 progress,
                 state: {
-                    fillStyle: setColorAlpha(color, 0.7),
+                    fill: setColorAlpha(color, 0.7),
                     x,
                     y,
                     width,
@@ -245,14 +245,14 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             if (progress !== undefined) {
                 const progressBar = createRect({
                     id: `${id}-progress`,
-                    fillStyle: setColorAlpha(color, 0.95),
+                    fill: setColorAlpha(color, 0.95),
                     x: state.x,
                     y: state.y,
                     width: 0,
                     height: state.height,
                     borderRadius,
                     data: {
-                        fillStyle: setColorAlpha(color, 0.95),
+                        fill: setColorAlpha(color, 0.95),
                         x: state.x,
                         y: state.y,
                         width: (state.width as number) * progress,
@@ -283,7 +283,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                     duration: this.getAnimationDuration(300),
                     ease: easeOutQuart,
                     state: {
-                        fillStyle: color,
+                        fill: color,
                     },
                 });
 
@@ -294,7 +294,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(color, 0.7),
+                            fill: setColorAlpha(color, 0.7),
                         },
                     });
                 });
@@ -327,7 +327,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
 
@@ -338,7 +338,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(color, 0.7),
+                                fill: setColorAlpha(color, 0.7),
                             },
                         });
                     });
@@ -352,7 +352,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
                 if (progressBar) {
                     progressBar.data = {
-                        fillStyle: setColorAlpha(color, 0.95),
+                        fill: setColorAlpha(color, 0.95),
                         x: state.x,
                         y: state.y,
                         width: (state.width as number) * progress,
@@ -445,7 +445,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                     y1: chartTop,
                     x2: x,
                     y2: chartBottom,
-                    strokeStyle: todayColor,
+                    stroke: todayColor,
                     lineWidth: 1.5,
                     lineDash: [6, 4],
                 }),

@@ -157,7 +157,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -233,7 +233,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 id: `${srs.id}-${key}`,
                 value,
                 state: {
-                    fillStyle: color,
+                    fill: color,
                     x,
                     y,
                     width,
@@ -271,12 +271,12 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 const bar = createRect({
                     id,
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                     y: baseline,
                     height: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -287,7 +287,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -298,7 +298,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -335,7 +335,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     height: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -348,7 +348,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
                 bar.data = {
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
                 bar.on('mouseenter', () => {
@@ -358,7 +358,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -369,7 +369,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -465,7 +465,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 id: `${srs.id}-${key}`,
                 value,
                 state: {
-                    fillStyle: color,
+                    fill: color,
                     x,
                     y,
                     width,
@@ -502,12 +502,12 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 const bar = createRect({
                     id,
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                     x: baseline,
                     width: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -518,7 +518,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -529,7 +529,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -566,7 +566,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     width: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -579,7 +579,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
 
                 bar.data = {
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
                 bar.on('mouseenter', () => {
@@ -589,7 +589,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -600,7 +600,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });

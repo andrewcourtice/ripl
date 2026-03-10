@@ -21,7 +21,7 @@ import {
 const context = createContext('.mount-element');
 
 createText({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     x: context.width / 2,
     y: context.height / 2,
     content: 'Hello, Ripl!',
@@ -53,7 +53,7 @@ const w = context.width;
 const h = context.height;
 
 createText({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     content: 'Text along a curved path!',
     font: 'bold 20px sans-serif',
     pathData: `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`,
@@ -80,7 +80,7 @@ const {
         context.markRenderStart();
 
         createText({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             x: w / 2, y: h * 0.3,
             content: 'Filled Text',
             font: 'bold 28px sans-serif',
@@ -88,7 +88,7 @@ const {
         }).render(context);
 
         createText({
-            strokeStyle: '#ff006e',
+            stroke: '#ff006e',
             lineWidth: 1,
             x: w / 2, y: h * 0.55,
             content: 'Stroked Text',
@@ -97,7 +97,7 @@ const {
         }).render(context);
 
         createText({
-            fillStyle: '#666',
+            fill: '#666',
             x: w / 2, y: h * 0.8,
             content: `Context: ${context.type} | Size: ${Math.round(w)}×${Math.round(h)}`,
             font: '14px sans-serif',
@@ -121,7 +121,7 @@ const {
         context.markRenderStart();
 
         createText({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             x: 0, y: 0,
             content: 'Text along a curved path!',
             font: 'bold 20px sans-serif',
@@ -129,7 +129,7 @@ const {
         }).render(context);
 
         createText({
-            strokeStyle: '#ff006e',
+            stroke: '#ff006e',
             lineWidth: 1,
             x: 0, y: 0,
             content: 'Stroked text on an arc',
@@ -153,7 +153,7 @@ import {
 } from '@ripl/core';
 
 const text = createText({
-    fillStyle: '#333333',
+    fill: '#333333',
     x: 100,
     y: 100,
     content: 'Hello, Ripl!',
@@ -180,8 +180,8 @@ The following inherited style properties are particularly relevant for text:
 | `font` | `string` | CSS font string (e.g. `'16px sans-serif'`) |
 | `textAlign` | `'start' \| 'end' \| 'left' \| 'right' \| 'center'` | Horizontal alignment relative to `x` |
 | `textBaseline` | `'top' \| 'hanging' \| 'middle' \| 'alphabetic' \| 'ideographic' \| 'bottom'` | Vertical alignment relative to `y` |
-| `fillStyle` | `string` | Text fill color (renders filled text) |
-| `strokeStyle` | `string` | Text stroke color (renders stroked/outlined text) |
+| `fill` | `string` | Text fill color (renders filled text) |
+| `stroke` | `string` | Text stroke color (renders stroked/outlined text) |
 
 > [!NOTE]
-> If `strokeStyle` is set, the text is stroked (outlined). If `fillStyle` is set, the text is filled. If both are set, `strokeStyle` takes priority.
+> If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.

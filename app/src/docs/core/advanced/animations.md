@@ -67,7 +67,7 @@ await renderer.transition(circle, {
     ease: easeOutCubic,
     state: {
         radius: 100,
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
     },
 });
 ```
@@ -141,14 +141,14 @@ async function animate() {
         duration: 500,
         ease: easeOutCubic,
         state: { radius: 100,
-            fillStyle: '#ff006e' },
+            fill: '#ff006e' },
     });
 
     await renderer.transition(circle, {
         duration: 500,
         ease: easeInOutQuad,
         state: { radius: 50,
-            fillStyle: '#3a86ff' },
+            fill: '#3a86ff' },
     });
 }
 ```
@@ -184,7 +184,7 @@ Values are evenly distributed across the duration:
 await renderer.transition(circle, {
     duration: 2000,
     state: {
-        fillStyle: [
+        fill: [
             '#3a86ff', // offset 0.33
             '#ff006e', // offset 0.66
             '#8338ec', // offset 1.0
@@ -201,7 +201,7 @@ Specify exact positions for each keyframe:
 await renderer.transition(circle, {
     duration: 2000,
     state: {
-        fillStyle: [
+        fill: [
             { value: '#ff006e',
                 offset: 0.25 },
             { value: '#8338ec',
@@ -254,7 +254,7 @@ import {
 const scene = createScene('.container', {
     children: [
         createCircle({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 200,
             cy: 150,
             radius: 50,
@@ -271,7 +271,7 @@ await renderer.transition(circle, {
     ease: easeOutCubic,
     state: {
         radius: 100,
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
     },
 });
 
@@ -280,7 +280,7 @@ await renderer.transition(circle, {
     ease: easeInOutQuad,
     state: {
         radius: 50,
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
     },
 });
 ```
@@ -313,7 +313,7 @@ const {
     const h = context.height;
 
     dCircle = createCircle({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: w / 2, cy: h / 2,
         radius: Math.min(w, h) / 5,
     });
@@ -329,11 +329,11 @@ async function runSequence() {
 
     await dRenderer.transition(dCircle, {
         duration: 600, ease: easeOutCubic,
-        state: { radius: s / 3, fillStyle: '#ff006e' },
+        state: { radius: s / 3, fill: '#ff006e' },
     });
     await dRenderer.transition(dCircle, {
         duration: 600, ease: easeInOutQuad,
-        state: { radius: s / 5, fillStyle: '#3a86ff' },
+        state: { radius: s / 5, fill: '#3a86ff' },
     });
 }
 
@@ -343,7 +343,7 @@ async function runKeyframes() {
     await dRenderer.transition(dCircle, {
         duration: 2000, ease: easeInOutQuad,
         state: {
-            fillStyle: [
+            fill: [
                 { value: '#3a86ff', offset: 0 },
                 { value: '#ff006e', offset: 0.25 },
                 { value: '#8338ec', offset: 0.5 },
@@ -373,7 +373,7 @@ async function reset() {
         duration: 400, ease: easeOutCubic,
         state: {
             radius: Math.min(dScene.width, dScene.height) / 5,
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: dScene.width / 2,
         },
     });

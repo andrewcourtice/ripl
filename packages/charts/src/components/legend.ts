@@ -159,8 +159,8 @@ export class Legend extends ChartComponent {
                 width: SWATCH_SIZE,
                 height: SWATCH_SIZE,
                 borderRadius: SWATCH_RADIUS,
-                fillStyle: isActive ? item.color : '#ccc',
-                globalAlpha: isActive ? 1 : 0.4,
+                fill: isActive ? item.color : '#ccc',
+                opacity: isActive ? 1 : 0.4,
             });
 
             const label = createText({
@@ -168,7 +168,7 @@ export class Legend extends ChartComponent {
                 x: offsetX + SWATCH_SIZE + LABEL_GAP,
                 y: offsetY + SWATCH_SIZE / 2,
                 content: item.label,
-                fillStyle: isActive ? this.fontColor : '#999',
+                fill: isActive ? this.fontColor : '#999',
                 font: this.font,
                 textBaseline: 'middle',
             });

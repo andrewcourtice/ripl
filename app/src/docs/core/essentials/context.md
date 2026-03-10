@@ -47,23 +47,23 @@ The context maintains a drawing state stack, similar to the Canvas 2D API. You c
 
 ```ts
 context.save();
-context.fillStyle = '#ff0000';
+context.fill = '#ff0000';
 // ... draw red elements ...
-context.restore(); // fillStyle reverts to previous value
+context.restore(); // fill reverts to previous value
 ```
 
 The full set of state properties mirrors the Canvas 2D API:
 
 | Property | Type | Default |
 | --- | --- | --- |
-| `fillStyle` | `string` | `'#000000'` |
-| `strokeStyle` | `string` | `'#000000'` |
+| `fill` | `string` | `'#000000'` |
+| `stroke` | `string` | `'#000000'` |
 | `lineWidth` | `number` | `1` |
 | `lineCap` | `'butt' \| 'round' \| 'square'` | `'butt'` |
 | `lineJoin` | `'bevel' \| 'miter' \| 'round'` | `'miter'` |
 | `lineDash` | `number[]` | `[]` |
 | `lineDashOffset` | `number` | `0` |
-| `globalAlpha` | `number` | `1` |
+| `opacity` | `number` | `1` |
 | `font` | `string` | `'10px sans-serif'` |
 | `textAlign` | `string` | `'start'` |
 | `textBaseline` | `string` | `'alphabetic'` |
@@ -97,10 +97,10 @@ A convenience method that wraps a callback in `save()`/`restore()`:
 
 ```ts
 context.batch(() => {
-    context.fillStyle = '#ff0000';
+    context.fill = '#ff0000';
     circle.render(context);
 });
-// fillStyle is automatically restored here
+// fill is automatically restored here
 ```
 
 ### `destroy()`
@@ -132,7 +132,7 @@ import {
 const context = createContext('.mount-element');
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: context.width / 2,
     cy: context.height / 2,
     radius: Math.min(context.width, context.height) / 4,
@@ -162,7 +162,7 @@ const {
     contextChanged
 } = useRiplExample(context => {
     const circle = createCircle({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: context.width / 2,
         cy: context.height / 2,
         radius: Math.min(context.width, context.height) / 4,
@@ -172,7 +172,7 @@ const {
         x: context.width / 2,
         y: context.height / 2,
         content: `${context.type} context`,
-        fillStyle: '#FFFFFF',
+        fill: '#FFFFFF',
         textAlign: 'center',
         textBaseline: 'middle',
         font: '18px sans-serif',

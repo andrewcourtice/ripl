@@ -167,7 +167,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -179,7 +179,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -222,8 +222,8 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                     value,
                     point: [x, y] as Point,
                     state: {
-                        fillStyle: '#FFFFFF',
-                        strokeStyle: color,
+                        fill: '#FFFFFF',
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
@@ -257,7 +257,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: state.strokeStyle,
+                                fill: state.stroke,
                                 radius: (srs.markerRadius ?? 3) + 2,
                             },
                         });
@@ -269,7 +269,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                                 duration: this.getAnimationDuration(300),
                                 ease: easeOutQuart,
                                 state: {
-                                    fillStyle: '#FFFFFF',
+                                    fill: '#FFFFFF',
                                     radius: srs.markerRadius ?? 3,
                                 },
                             });
@@ -288,7 +288,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             const line = createPolyline({
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
-                strokeStyle: color,
+                stroke: color,
                 points: items.map(item => item.point),
                 renderer: srs.lineType,
             });
@@ -347,7 +347,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: (srs.markerRadius ?? 3) + 2,
                         },
                     });
@@ -359,7 +359,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: '#FFFFFF',
+                                fill: '#FFFFFF',
                                 radius: srs.markerRadius ?? 3,
                             },
                         });

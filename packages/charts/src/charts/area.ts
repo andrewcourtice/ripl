@@ -166,7 +166,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -178,7 +178,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -290,15 +290,15 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                     const marker = createCircle({
                         id: `${srs.id}-marker-${key}`,
-                        fillStyle: '#FFFFFF',
-                        strokeStyle: color,
+                        fill: '#FFFFFF',
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
                         radius: 0,
                         data: {
-                            fillStyle: '#FFFFFF',
-                            strokeStyle: color,
+                            fill: '#FFFFFF',
+                            stroke: color,
                             lineWidth: 2,
                             cx: x,
                             cy: y,
@@ -313,7 +313,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: color,
+                                fill: color,
                                 radius: 5,
                             },
                         });
@@ -325,7 +325,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                                 duration: this.getAnimationDuration(300),
                                 ease: easeOutQuart,
                                 state: {
-                                    fillStyle: '#FFFFFF',
+                                    fill: '#FFFFFF',
                                     radius: 3,
                                 },
                             });
@@ -342,8 +342,8 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
             const areaFill = createPolyline({
                 id: `${srs.id}-area`,
-                fillStyle: setColorAlpha(color, opacity),
-                strokeStyle: undefined,
+                fill: setColorAlpha(color, opacity),
+                stroke: undefined,
                 points: baselineAreaPoints,
                 renderer: srs.lineType,
                 data: {
@@ -356,7 +356,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             const line = createPolyline({
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
-                strokeStyle: color,
+                stroke: color,
                 points: baselineLinePoints,
                 renderer: srs.lineType,
                 data: {
@@ -431,8 +431,8 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                     const y = this.yScale(value);
 
                     marker.data = {
-                        fillStyle: '#FFFFFF',
-                        strokeStyle: color,
+                        fill: '#FFFFFF',
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,

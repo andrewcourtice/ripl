@@ -167,7 +167,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -179,7 +179,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -260,14 +260,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const body = createRect({
                 id: `${values.key}-body`,
-                fillStyle: color,
+                fill: color,
                 x: x - candleWidth / 2,
                 y: midY,
                 width: candleWidth,
                 height: 0,
                 borderRadius: 1,
                 data: {
-                    fillStyle: color,
+                    fill: color,
                     x: x - candleWidth / 2,
                     y: bodyTop,
                     width: candleWidth,
@@ -278,14 +278,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const wick = createLine({
                 id: `${values.key}-wick`,
-                strokeStyle: color,
+                stroke: color,
                 lineWidth: wickWidth,
                 x1: x,
                 y1: midY,
                 x2: x,
                 y2: midY,
                 data: {
-                    strokeStyle: color,
+                    stroke: color,
                     lineWidth: wickWidth,
                     x1: x,
                     y1: yHigh,
@@ -310,7 +310,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     duration: this.getAnimationDuration(200),
                     ease: easeOutQuart,
                     state: {
-                        fillStyle: setColorAlpha(color, 0.8),
+                        fill: setColorAlpha(color, 0.8),
                     },
                 });
 
@@ -321,7 +321,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
                 });
@@ -348,7 +348,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             if (body) {
                 body.data = {
-                    fillStyle: color,
+                    fill: color,
                     x: x - candleWidth / 2,
                     y: bodyTop,
                     width: candleWidth,
@@ -367,7 +367,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(color, 0.8),
+                            fill: setColorAlpha(color, 0.8),
                         },
                     });
 
@@ -378,7 +378,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: color,
+                                fill: color,
                             },
                         });
                     });
@@ -387,7 +387,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             if (wick) {
                 wick.data = {
-                    strokeStyle: color,
+                    stroke: color,
                     lineWidth: wickWidth,
                     x1: x,
                     y1: yHigh,
@@ -499,13 +499,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
                 const bar = createRect({
                     id: `vol-${values.key}`,
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom,
                     width: barWidth,
                     height: 0,
                     data: {
-                        fillStyle: setColorAlpha(color, 0.3),
+                        fill: setColorAlpha(color, 0.3),
                         x: x - barWidth / 2,
                         y: volumeBottom - barHeight,
                         width: barWidth,
@@ -523,7 +523,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 const barHeight = Math.abs(volumeBottom - this.volumeScale(values.volume));
 
                 bar.data = {
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom - barHeight,
                     width: barWidth,
@@ -554,13 +554,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             return createRect({
                 id: `vol-${values.key}`,
-                fillStyle: setColorAlpha(color, 0.3),
+                fill: setColorAlpha(color, 0.3),
                 x: x - barWidth / 2,
                 y: volumeBottom,
                 width: barWidth,
                 height: 0,
                 data: {
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom - barHeight,
                     width: barWidth,

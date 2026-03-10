@@ -34,7 +34,7 @@ const camera = createCamera(scene, {
 
 const cube = createCube({
     size: 1,
-    fillStyle: '#4488ff',
+    fill: '#4488ff',
 });
 
 scene.add(cube);

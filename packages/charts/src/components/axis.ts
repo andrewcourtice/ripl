@@ -41,7 +41,7 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     gridLines?: boolean;
     labelDimension: LabelDimension;
     title?: string;
-    strokeStyle?: string;
+    stroke?: string;
     labelFont?: string;
     labelColor?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +79,7 @@ export class ChartAxis extends ChartComponent {
     public tickSize: number;
     public tickCount: number;
     public title?: string;
-    public strokeStyle: string;
+    public stroke: string;
     public labelFont: string;
     public labelColor: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,7 +130,7 @@ export class ChartAxis extends ChartComponent {
             padding = 5,
             tickSize = 5,
             tickCount = 10,
-            strokeStyle = '#777777',
+            stroke = '#777777',
             labelFont = '12px sans-serif',
             labelColor = '#777777',
         } = options;
@@ -148,7 +148,7 @@ export class ChartAxis extends ChartComponent {
         this.labelDimension = labelDimension;
         this.title = options.title;
         this.formatLabel = options.formatLabel;
-        this.strokeStyle = strokeStyle;
+        this.stroke = stroke;
         this.labelFont = labelFont;
         this.labelColor = labelColor;
 
@@ -157,7 +157,7 @@ export class ChartAxis extends ChartComponent {
             children: [
                 createLine({
                     class: 'chart-axis__line',
-                    strokeStyle: this.strokeStyle,
+                    stroke: this.stroke,
                     x1: 0,
                     y1: 0,
                     x2: 0,
@@ -269,19 +269,19 @@ export class ChartXAxis extends ChartAxis {
                         y: boundingBox.top + this.padding + this.tickSize + 1,
                         textAlign: 'center',
                         textBaseline: 'top',
-                        fillStyle: this.labelColor,
+                        fill: this.labelColor,
                         font: this.labelFont,
-                        globalAlpha: 0,
-                        data: { globalAlpha: 1 },
+                        opacity: 0,
+                        data: { opacity: 1 },
                     }),
                     createLine({
                         x1: x,
                         y1: boundingBox.top,
                         x2: x,
                         y2: boundingBox.top + this.tickSize,
-                        strokeStyle: this.strokeStyle,
-                        globalAlpha: 0,
-                        data: { globalAlpha: 1 },
+                        stroke: this.stroke,
+                        opacity: 0,
+                        data: { opacity: 1 },
                     }),
                 ],
             });
@@ -333,7 +333,7 @@ export class ChartXAxis extends ChartAxis {
                     y: boundingBox.bottom - 2,
                     textAlign: 'center',
                     textBaseline: 'bottom',
-                    fillStyle: this.labelColor,
+                    fill: this.labelColor,
                     font: `bold ${this.labelFont}`,
                 });
 
@@ -426,19 +426,19 @@ export class ChartYAxis extends ChartAxis {
                         y,
                         textAlign: 'right',
                         textBaseline: 'middle',
-                        fillStyle: this.labelColor,
+                        fill: this.labelColor,
                         font: this.labelFont,
-                        globalAlpha: 0,
-                        data: { globalAlpha: 1 },
+                        opacity: 0,
+                        data: { opacity: 1 },
                     }),
                     createLine({
                         x1: boundingBox.right,
                         y1: y,
                         x2: boundingBox.right - this.tickSize,
                         y2: y,
-                        strokeStyle: this.strokeStyle,
-                        globalAlpha: 0,
-                        data: { globalAlpha: 1 },
+                        stroke: this.stroke,
+                        opacity: 0,
+                        data: { opacity: 1 },
                     }),
                 ],
             });
@@ -487,7 +487,7 @@ export class ChartYAxis extends ChartAxis {
                     y: (boundingBox.top + boundingBox.bottom) / 2,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    fillStyle: this.labelColor,
+                    fill: this.labelColor,
                     font: `bold ${this.labelFont}`,
                 });
 

@@ -40,7 +40,7 @@ const circle = createCircle({
 
 ## Gradient Support
 
-The canvas context supports CSS gradient strings directly in `fillStyle` and `strokeStyle`. Ripl parses the CSS gradient syntax and converts it to native `CanvasGradient` objects:
+The canvas context supports CSS gradient strings directly in `fill` and `stroke`. Ripl parses the CSS gradient syntax and converts it to native `CanvasGradient` objects:
 
 ```ts
 const rect = createRect({
@@ -48,7 +48,7 @@ const rect = createRect({
     y: 0,
     width: 200,
     height: 100,
-    fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
+    fill: 'linear-gradient(90deg, #3a86ff, #ff006e)',
 });
 ```
 
@@ -68,7 +68,7 @@ The canvas context provides all the standard [Context](/docs/core/essentials/con
 | `setTransform(a, b, c, d, e, f)` | Sets the transform matrix directly |
 | `transform(a, b, c, d, e, f)` | Multiplies the current transform |
 | `measureText(text)` | Returns `TextMetrics` (DPR-adjusted) |
-| `clip(path, fillRule?)` | Clips to a path |
+| `applyClip(path, fillRule?)` | Clips to a path |
 | `isPointInPath(path, x, y)` | Hit tests against a path fill |
 | `isPointInStroke(path, x, y)` | Hit tests against a path stroke |
 
@@ -103,14 +103,14 @@ import {
 const context = createContext('.mount-element');
 
 createCircle({
-    fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
     cx: context.width / 3,
     cy: context.height / 2,
     radius: Math.min(context.width, context.height) / 4,
 }).render(context);
 
 createRect({
-    fillStyle: 'linear-gradient(45deg, #ff006e, #fb5607)',
+    fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
     x: context.width / 2,
     y: context.height / 4,
     width: context.width / 3,
@@ -140,12 +140,12 @@ const {
         context.markRenderStart();
 
         createCircle({
-            fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+            fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
             cx: w / 3, cy: h / 2, radius: r,
         }).render(context);
 
         createRect({
-            fillStyle: 'linear-gradient(45deg, #ff006e, #fb5607)',
+            fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
             x: w / 2, y: h / 4,
             width: w / 3, height: h / 2,
         }).render(context);

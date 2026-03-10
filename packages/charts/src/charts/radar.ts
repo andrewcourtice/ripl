@@ -117,7 +117,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
             const polygon = createPolyline({
                 id: `radar-level-${level}`,
-                strokeStyle: '#e5e7eb',
+                stroke: '#e5e7eb',
                 lineWidth: 1,
                 points,
             });
@@ -138,7 +138,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 y1: cy,
                 x2: x,
                 y2: y,
-                strokeStyle: '#d1d5db',
+                stroke: '#d1d5db',
                 lineWidth: 1,
             }));
 
@@ -158,7 +158,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 x: labelX,
                 y: labelY,
                 content: axis,
-                fillStyle: '#6b7280',
+                fill: '#6b7280',
                 font: '11px sans-serif',
                 textAlign,
                 textBaseline: 'middle',
@@ -216,8 +216,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
             const area = createPolyline({
                 id: `${srs.id}-area`,
-                fillStyle: setColorAlpha(color, opacity),
-                strokeStyle: color,
+                fill: setColorAlpha(color, opacity),
+                stroke: color,
                 lineWidth: 2,
                 points: closedPoints.map(() => [cx, cy] as Point),
                 data: {
@@ -231,8 +231,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                     cx: cx,
                     cy: cy,
                     radius: 0,
-                    fillStyle: color,
-                    strokeStyle: '#FFFFFF',
+                    fill: color,
+                    stroke: '#FFFFFF',
                     lineWidth: 1.5,
                     data: {
                         cx: pd.point[0],

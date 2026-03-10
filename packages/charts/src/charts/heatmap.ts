@@ -310,11 +310,11 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     y: cell.y,
                     width: cell.width,
                     height: cell.height,
-                    fillStyle: cell.color,
-                    globalAlpha: 0,
+                    fill: cell.color,
+                    opacity: 0,
                     borderRadius,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -329,7 +329,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            globalAlpha: 0.8,
+                            opacity: 0.8,
                         },
                     });
 
@@ -340,7 +340,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                globalAlpha: 1,
+                                opacity: 1,
                             },
                         });
                     });
@@ -361,8 +361,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         y: cell.y,
                         width: cell.width,
                         height: cell.height,
-                        fillStyle: cell.color,
-                        globalAlpha: 1,
+                        fill: cell.color,
+                        opacity: 1,
                     } as RectState;
                 }
 
