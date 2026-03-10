@@ -22,7 +22,6 @@ import {
 
 import {
     AnyFunction,
-    arrayForEach,
     GetMutableKeys,
     objectForEach,
     objectMap,
@@ -50,6 +49,7 @@ type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
 };
 
+/** Definition for an SVG context element, describing its tag, inline styles, and attributes. */
 export interface SVGContextElementDefinition {
     tag: keyof SVGElementTagNameMap;
     styles: Partial<Styles>;
@@ -57,6 +57,7 @@ export interface SVGContextElementDefinition {
     textContent?: string;
 }
 
+/** An SVG-specific context element carrying its rendering definition. */
 export interface SVGContextElement extends ContextElement {
     definition: SVGContextElementDefinition;
 }
@@ -86,7 +87,7 @@ function normaliseGradientColor(color: string): string {
 function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
     gradientEl.replaceChildren();
 
-    arrayForEach(stops, (stop) => {
+    stops.forEach((stop) => {
         const stopEl = createSVGElement('stop');
         stopEl.setAttribute('offset', `${(stop.offset ?? 0) * 100}%`);
         stopEl.setAttribute('stop-color', normaliseGradientColor(stop.color));
@@ -220,6 +221,7 @@ function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, he
     return canvas.toDataURL();
 }
 
+/** SVG-specific path implementation that builds an SVG `d` attribute string from drawing commands. */
 export class SVGPath extends ContextPath implements SVGContextElement {
 
     public definition: SVGContextElementDefinition;
@@ -324,6 +326,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
 
 }
 
+/** SVG-specific text element mapping position and content to SVG `<text>` attributes. */
 export class SVGText extends ContextText implements SVGContextElement {
 
     public definition: SVGContextElementDefinition;
@@ -354,6 +357,7 @@ export class SVGText extends ContextText implements SVGContextElement {
     }
 }
 
+/** SVG-specific image element wrapping a `CanvasImageSource` as an SVG `<image>` tag. */
 export class SVGImage implements SVGContextElement {
 
     public readonly id: string;
@@ -377,6 +381,7 @@ export class SVGImage implements SVGContextElement {
     }
 }
 
+/** SVG `<textPath>` element for rendering text along a path defined in `<defs>`. */
 export class SVGTextPath implements SVGContextElement {
 
     public readonly id: string;
@@ -397,6 +402,7 @@ export class SVGTextPath implements SVGContextElement {
     }
 }
 
+/** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
 export class SVGContext extends Context<SVGSVGElement> {
 
     private vtree: SVGVNode;
@@ -519,7 +525,7 @@ export class SVGContext extends Context<SVGSVGElement> {
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
             alignmentBaseline: this.currentState.textBaseline,
-            opacity: this.currentState.globalAlpha.toString(),
+            opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
             // shadowBlur,
             // shadowColor,
@@ -678,7 +684,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         const svgImage = new SVGImage(id, href, x, y, imgWidth, imgHeight);
 
         this.setElementStyles(svgImage, {
-            opacity: this.currentState.globalAlpha.toString(),
+            opacity: this.currentState.opacity.toString(),
         });
 
         this.addToVTree(svgImage);
@@ -718,7 +724,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    clip(path: SVGPath, fillRule?: FillRule): void {
+    applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
         let cached = this.clipCache.get(cacheKey);
 
@@ -755,15 +761,15 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    fill(element: SVGContextElement, fillRule?: FillRule): void {
+    applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this.setElementStyles(element, {
-            fill: this.resolveGradientStyle(this.currentState.fillStyle, `${element.id}:fill`),
+            fill: this.resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
         });
     }
 
-    stroke(element: SVGContextElement): void {
+    applyStroke(element: SVGContextElement): void {
         this.setElementStyles(element, {
-            stroke: this.resolveGradientStyle(this.currentState.strokeStyle, `${element.id}:stroke`),
+            stroke: this.resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
             strokeLinecap: this.currentState.lineCap,
             strokeDasharray: this.currentState.lineDash.join(' '),
             strokeDashoffset: this.currentState.lineDashOffset.toString(),
@@ -790,6 +796,7 @@ export class SVGContext extends Context<SVGSVGElement> {
 
 }
 
+/** Creates an SVG rendering context attached to the given DOM target. */
 export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
     return new SVGContext(target, options);
 }

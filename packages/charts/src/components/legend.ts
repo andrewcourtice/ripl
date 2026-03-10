@@ -15,10 +15,8 @@ import {
     Group,
 } from '@ripl/core';
 
-import {
-    arrayForEach,
-} from '@ripl/utilities';
 
+/** A single legend entry with id, label, color, and active state. */
 export interface LegendItem {
     id: string;
     label: string;
@@ -26,6 +24,7 @@ export interface LegendItem {
     active?: boolean;
 }
 
+/** Options for constructing a legend component. */
 export interface LegendOptions extends ChartComponentOptions {
     items: LegendItem[];
     position?: LegendPosition;
@@ -43,6 +42,7 @@ const LABEL_GAP = 6;
 const DEFAULT_FONT_SIZE = 11;
 const DEFAULT_PADDING = 16;
 
+/** A chart legend component rendering color swatches and labels with optional toggle interaction. */
 export class Legend extends ChartComponent {
 
     private group?: Group;
@@ -89,7 +89,7 @@ export class Legend extends ChartComponent {
         let rows = 1;
         let offsetX = 0;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             const labelWidth = this.context.measureText(item.label, this.font).width;
             const itemWidth = SWATCH_SIZE + LABEL_GAP + labelWidth + ITEM_GAP;
 
@@ -112,7 +112,7 @@ export class Legend extends ChartComponent {
         const widths = new Map<string, number>();
         const font = this.font;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             if (!widths.has(item.label)) {
                 widths.set(item.label, this.context.measureText(item.label, font).width);
             }
@@ -139,7 +139,7 @@ export class Legend extends ChartComponent {
         let offsetX = x;
         let offsetY = y + this.itemPadding;
 
-        arrayForEach(this.items, (item) => {
+        this.items.forEach((item) => {
             const isActive = item.active !== false;
             const labelWidth = labelWidths.get(item.label) ?? 0;
 
@@ -159,8 +159,8 @@ export class Legend extends ChartComponent {
                 width: SWATCH_SIZE,
                 height: SWATCH_SIZE,
                 borderRadius: SWATCH_RADIUS,
-                fillStyle: isActive ? item.color : '#ccc',
-                globalAlpha: isActive ? 1 : 0.4,
+                fill: isActive ? item.color : '#ccc',
+                opacity: isActive ? 1 : 0.4,
             });
 
             const label = createText({
@@ -168,7 +168,7 @@ export class Legend extends ChartComponent {
                 x: offsetX + SWATCH_SIZE + LABEL_GAP,
                 y: offsetY + SWATCH_SIZE / 2,
                 content: item.label,
-                fillStyle: isActive ? this.fontColor : '#999',
+                fill: isActive ? this.fontColor : '#999',
                 font: this.font,
                 textBaseline: 'middle',
             });

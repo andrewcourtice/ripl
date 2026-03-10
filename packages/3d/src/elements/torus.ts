@@ -12,6 +12,7 @@ import type {
     Vector3,
 } from '../math/vector';
 
+/** State interface for a torus, defining major radius, tube radius, and segment counts. */
 export interface TorusState extends Shape3DState {
     radius: number;
     tube: number;
@@ -19,6 +20,7 @@ export interface TorusState extends Shape3DState {
     tubularSegments: number;
 }
 
+/** A 3D torus (donut) shape with configurable major radius, tube radius, and tessellation. */
 export class Torus extends Shape3D<TorusState> {
 
     public get radius() {
@@ -101,10 +103,12 @@ function torusVertex(radius: number, tube: number, u: number, v: number): Vector
     ];
 }
 
+/** Factory function that creates a new `Torus` instance. */
 export function createTorus(...options: ConstructorParameters<typeof Torus>) {
     return new Torus(...options);
 }
 
+/** Type guard that checks whether a value is a `Torus` instance. */
 export function elementIsTorus(value: unknown): value is Torus {
     return value instanceof Torus;
 }

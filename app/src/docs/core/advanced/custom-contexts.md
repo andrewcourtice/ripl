@@ -12,7 +12,7 @@ The rendering pipeline flows like this:
 
 ```text
 Element → render(context) → context.createPath() / context.createText()
-                          → context.fill() / context.stroke()
+                          → context.applyFill() / context.applyStroke()
                           → context.save() / context.restore()
 ```
 
@@ -77,12 +77,12 @@ class MyContext extends Context {
     }
 
     // Fill a path or text
-    fill(target: ContextPath | ContextText, fillRule?: string): void {
+    applyFill(target: ContextPath | ContextText, fillRule?: string): void {
         // Implement fill rendering
     }
 
     // Stroke a path
-    stroke(target: ContextPath): void {
+    applyStroke(target: ContextPath): void {
         // Implement stroke rendering
     }
 
@@ -111,7 +111,7 @@ class MyContext extends Context {
     translate(x: number, y: number): void {}
     setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {}
     transform(a: number, b: number, c: number, d: number, e: number, f: number): void {}
-    clip(path: ContextPath, fillRule?: string): void {}
+    applyClip(path: ContextPath, fillRule?: string): void {}
     reset(): void {}
 }
 ```
@@ -218,12 +218,12 @@ Key state properties to handle:
 
 | Property | Description |
 | --- | --- |
-| `fillStyle` | Fill color or gradient string |
-| `strokeStyle` | Stroke color or gradient string |
+| `fill` | Fill color or gradient string |
+| `stroke` | Stroke color or gradient string |
 | `lineWidth` | Stroke width |
 | `lineCap` | Line end style |
 | `lineJoin` | Line join style |
-| `globalAlpha` | Opacity |
+| `opacity` | Opacity |
 | `font` | Font string |
 | `textAlign` | Text alignment |
 | `textBaseline` | Text baseline |
@@ -245,7 +245,7 @@ function createContext(target: string | HTMLElement) {
 
 // Use it with any Ripl element
 const context = createContext('.my-container');
-const circle = createCircle({ fillStyle: '#3a86ff',
+const circle = createCircle({ fill: '#3a86ff',
     cx: 100,
     cy: 100,
     radius: 50 });

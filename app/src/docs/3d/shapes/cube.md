@@ -18,7 +18,7 @@ const cube = createCube({
     y: 0,
     z: 0,
     size: 2,
-    fillStyle: '#4488ff',
+    fill: '#4488ff',
 });
 ```
 
@@ -33,7 +33,7 @@ const cube = createCube({
 | `rotationX` | `number` | `0` | Rotation around the X axis (radians) |
 | `rotationY` | `number` | `0` | Rotation around the Y axis (radians) |
 | `rotationZ` | `number` | `0` | Rotation around the Z axis (radians) |
-| `fillStyle` | `string` | — | Base fill color (shading is applied per-face) |
+| `fill` | `string` | — | Base fill color (shading is applied per-face) |
 
 ## Type Guard
 
@@ -65,7 +65,7 @@ const camera = createCamera(scene, { position: [0, 1.5, 5],
     target: [0, 0, 0] });
 
 const cube = createCube({ size: 1.5,
-    fillStyle: '#4488ff' });
+    fill: '#4488ff' });
 
 let angle = 0;
 function loop() {
@@ -92,7 +92,7 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createCube({ size: 1.5, fillStyle: '#4488ff' }));
+    scene.add(createCube({ size: 1.5, fill: '#4488ff' }));
     startRotation(camera);
 });
 </script>

@@ -105,11 +105,11 @@ function createStar(options: ShapeOptions<StarState>) {
 When `super.render(context, callback)` is called on a Shape:
 
 1. The context state is **saved**
-2. All style properties (`fillStyle`, `strokeStyle`, `lineWidth`, etc.) are applied to the context
+2. All style properties (`fill`, `stroke`, `lineWidth`, etc.) are applied to the context
 3. A new **path** is created via `context.createPath(this.id)`
 4. Your **callback** receives the path and builds the geometry
-5. If `autoFill` is true and `fillStyle` is set, the path is **filled**
-6. If `autoStroke` is true and `strokeStyle` is set, the path is **stroked**
+5. If `autoFill` is true and `fill` is set, the path is **filled**
+6. If `autoStroke` is true and `stroke` is set, the path is **stroked**
 7. The context state is **restored**
 
 The `this.id` passed to `createPath` is important — it acts as a persistent key that allows the SVG context to efficiently reconcile elements across renders without recreating DOM nodes.
@@ -172,7 +172,7 @@ class Badge extends Element<BadgeState> {
             // Create a path for the circle background
             const path = context.createPath(this.id);
             path.circle(this.x, this.y, this.size);
-            context.fill(path);
+            context.applyFill(path);
 
             // Create text for the label
             const text = context.createText({
@@ -181,7 +181,7 @@ class Badge extends Element<BadgeState> {
                 y: this.y,
                 content: this.label,
             });
-            context.fill(text);
+            context.applyFill(text);
         });
     }
 }
@@ -208,7 +208,7 @@ Custom elements work exactly like built-in elements — they can be added to gro
 
 ```ts
 const star = createStar({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     cx: 200,
     cy: 150,
     outerRadius: 60,
@@ -240,7 +240,7 @@ await renderer.transition(star, {
 ```ts
 // Custom star element
 const star = createStar({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     cx: 200,
     cy: 150,
     outerRadius: 80,
@@ -259,12 +259,12 @@ import {
 
 import {
     Context,
-    Shape,
+    Shape2D,
 } from '@ripl/core';
 
 import type {
     BaseElementState,
-    ShapeOptions,
+    Shape2DOptions,
 } from '@ripl/core';
 
 interface StarState extends BaseElementState {
@@ -275,7 +275,7 @@ interface StarState extends BaseElementState {
     points: number;
 }
 
-class Star extends Shape<StarState> {
+class Star extends Shape2D<StarState> {
     get cx() { return this.getStateValue('cx'); }
     set cx(v) { this.setStateValue('cx', v); }
     get cy() { return this.getStateValue('cy'); }
@@ -287,7 +287,7 @@ class Star extends Shape<StarState> {
     get points() { return this.getStateValue('points'); }
     set points(v) { this.setStateValue('points', v); }
 
-    constructor(options: ShapeOptions<StarState>) {
+    constructor(options: Shape2DOptions<StarState>) {
         super('star', options);
     }
 
@@ -317,14 +317,14 @@ const {
         context.markRenderStart();
 
         new Star({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             cx: w * 0.3, cy: h / 2,
             outerRadius: r, innerRadius: r * 0.4, points: 5,
         }).render(context);
 
         new Star({
-            fillStyle: '#3a86ff',
-            strokeStyle: '#1a56db', lineWidth: 2,
+            fill: '#3a86ff',
+            stroke: '#1a56db', lineWidth: 2,
             cx: w * 0.7, cy: h / 2,
             outerRadius: r, innerRadius: r * 0.5, points: 8,
         }).render(context);

@@ -20,6 +20,7 @@ import type {
     ColorSpace,
 } from './types';
 
+/** Error thrown when a color string cannot be parsed in the expected format. */
 export class ColorParseError extends Error {
 
     constructor(value: string, type: ColorSpace) {
@@ -56,6 +57,7 @@ function parsePercentageChannel(value: string): number {
     return clamp(parseInt(value.replace('%', ''), 10), 0, 100);
 }
 
+/** Parses a hexadecimal color string (e.g. `#ff0000` or `#ff000080`) into an RGBA tuple. */
 export function parseHEX(value: string): ColorRGBA {
     const components = PATTERNS.hex.exec(value);
 
@@ -73,6 +75,7 @@ export function parseHEX(value: string): ColorRGBA {
     ];
 }
 
+/** Parses an `rgb()` color string into an RGBA tuple with alpha set to 1. */
 export function parseRGB(value: string): ColorRGBA {
     const components = PATTERNS.rgb.exec(value);
 
@@ -88,6 +91,7 @@ export function parseRGB(value: string): ColorRGBA {
     ];
 }
 
+/** Parses an `rgba()` color string into an RGBA tuple. */
 export function parseRGBA(value: string): ColorRGBA {
     const components = PATTERNS.rgba.exec(value);
 
@@ -103,6 +107,7 @@ export function parseRGBA(value: string): ColorRGBA {
     ];
 }
 
+/** Parses an `hsl()` color string into an RGBA tuple. */
 export function parseHSL(value: string): ColorRGBA {
     const components = PATTERNS.hsl.exec(value);
 
@@ -118,6 +123,7 @@ export function parseHSL(value: string): ColorRGBA {
     );
 }
 
+/** Parses an `hsla()` color string into an RGBA tuple. */
 export function parseHSLA(value: string): ColorRGBA {
     const components = PATTERNS.hsla.exec(value);
 
@@ -133,6 +139,7 @@ export function parseHSLA(value: string): ColorRGBA {
     );
 }
 
+/** Parses an `hsv()` color string into an RGBA tuple. */
 export function parseHSV(value: string): ColorRGBA {
     const components = PATTERNS.hsv.exec(value);
 
@@ -148,6 +155,7 @@ export function parseHSV(value: string): ColorRGBA {
     );
 }
 
+/** Parses an `hsva()` color string into an RGBA tuple. */
 export function parseHSVA(value: string): ColorRGBA {
     const components = PATTERNS.hsva.exec(value);
 

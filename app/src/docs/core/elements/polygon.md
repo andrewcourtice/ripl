@@ -22,7 +22,7 @@ const context = createContext('.mount-element');
 
 // Triangle
 createPolygon({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 100,
     cy: 150,
     radius: 60,
@@ -31,7 +31,7 @@ createPolygon({
 
 // Pentagon
 createPolygon({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     cx: 250,
     cy: 150,
     radius: 60,
@@ -40,7 +40,7 @@ createPolygon({
 
 // Hexagon
 createPolygon({
-    fillStyle: '#8338ec',
+    fill: '#8338ec',
     cx: 400,
     cy: 150,
     radius: 60,
@@ -80,13 +80,13 @@ const {
             const cx = w * (i + 1) / (shapes.length + 1);
 
             createPolygon({
-                fillStyle: shape.color,
+                fill: shape.color,
                 cx, cy: h / 2, radius: r, sides: shape.sides,
             }).render(context);
 
             createText({
                 x: cx, y: h / 2 + r + 20,
-                content: shape.label, fillStyle: '#666',
+                content: shape.label, fill: '#666',
                 textAlign: 'center', font: '13px sans-serif',
             }).render(context);
         });
@@ -107,7 +107,7 @@ import {
 } from '@ripl/core';
 
 const hexagon = createPolygon({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 200,
     cy: 150,
     radius: 80,

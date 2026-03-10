@@ -12,12 +12,14 @@ import type {
     Vector3,
 } from '../math/vector';
 
+/** State interface for a cone, defining radius, height, and segment count. */
 export interface ConeState extends Shape3DState {
     radius: number;
     height: number;
     segments: number;
 }
 
+/** A 3D cone shape with configurable radius, height, and segment resolution. */
 export class Cone extends Shape3D<ConeState> {
 
     public get radius() {
@@ -84,10 +86,12 @@ export class Cone extends Shape3D<ConeState> {
 
 }
 
+/** Factory function that creates a new `Cone` instance. */
 export function createCone(...options: ConstructorParameters<typeof Cone>) {
     return new Cone(...options);
 }
 
+/** Type guard that checks whether a value is a `Cone` instance. */
 export function elementIsCone(value: unknown): value is Cone {
     return value instanceof Cone;
 }

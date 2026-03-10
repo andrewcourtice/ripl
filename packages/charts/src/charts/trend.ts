@@ -69,16 +69,15 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Supported series visualization types within a trend chart. */
 export type SeriesType = 'bar' | 'line' | 'area';
+
+/** Base configuration shared by all trend chart series types. */
 export interface BaseTrendChartSeriesOptions<TData> {
     id: string;
     type: SeriesType;
@@ -87,24 +86,29 @@ export interface BaseTrendChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
 }
 
+/** Series options for bar-type series within a trend chart. */
 export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'bar';
 }
 
+/** Series options for area-type series within a trend chart. */
 export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'area';
     filled: boolean;
 }
 
+/** Series options for line-type series within a trend chart. */
 export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
     type: 'line';
     lineType?: PolylineRenderer;
 }
 
+/** Discriminated union of all trend chart series option types. */
 export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
 | TrendChartAreaSeriesOptions<TData>
 | TrendChartLineSeriesOptions<TData>;
 
+/** Options for configuring a {@link TrendChart}. */
 export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: TrendChartSeriesOptions<TData>[];
@@ -115,6 +119,15 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Trend chart combining bar and line series on shared categorical/value axes.
+ *
+ * Renders bar series as grouped rectangles and line series as polylines with
+ * markers on the same chart area. Supports tooltips, legend, grid, and
+ * animated entry/update/exit transitions for both series types.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
 
     private barGroups: Group[] = [];
@@ -176,7 +189,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -192,7 +205,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             key,
         } = this.options;
 
-        const lineSeries = arrayFilter(series, srs => srs.type === 'line') as TrendChartLineSeriesOptions<TData>[];
+        const lineSeries = series.filter(srs => srs.type === 'line') as TrendChartLineSeriesOptions<TData>[];
 
         const {
             left: seriesEntries,
@@ -200,7 +213,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(lineSeries, this.lineGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -224,8 +237,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     id: `${id}-${key}`,
                     point: [x, y] as Point,
                     state: {
-                        fillStyle: '#FFFFFF',
-                        strokeStyle: color,
+                        fill: '#FFFFFF',
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
@@ -235,11 +248,11 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             };
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, series => {
+        const seriesEntryGroups = seriesEntries.map(series => {
 
             const getMarkerValues = seriesLineValueProducer(series);
 
-            const items = arrayMap(data, item => {
+            const items = data.map(item => {
                 const { id, point, state } = getMarkerValues(item);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
@@ -259,7 +272,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: 5,
                         },
                     });
@@ -271,7 +284,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: '#FFFFFF',
+                                fill: '#FFFFFF',
                                 radius: 3,
                             },
                         });
@@ -287,8 +300,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             const line = createPolyline({
                 id: `${series.id}-line`,
                 lineWidth: 2,
-                strokeStyle: this.getSeriesColor(series.id),
-                points: arrayMap(items, item => item.point),
+                stroke: this.getSeriesColor(series.id),
+                points: items.map(item => item.point),
                 renderer: series.lineType,
             });
 
@@ -296,17 +309,17 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 id: series.id,
                 children: [
                     line,
-                    ...arrayMap(items, item => item.marker),
+                    ...items.map(item => item.marker),
                 ],
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
             const getMarkerValues = seriesLineValueProducer(series);
             const line = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle') as Circle[];
 
-            const points = arrayMap(data, item => getMarkerValues(item).point);
+            const points = data.map(item => getMarkerValues(item).point);
 
             line.data = {
                 points,
@@ -319,9 +332,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${series.id}-${getKey(item)}`);
 
-            arrayForEach(markerExits, el => el.destroy());
+            markerExits.forEach(el => el.destroy());
 
-            arrayMap(markerEntries, item => {
+            markerEntries.map(item => {
                 const { id, state } = getMarkerValues(item);
 
                 const marker = createCircle({
@@ -334,7 +347,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 group.add(marker);
             });
 
-            arrayForEach(markerUpdates, ([item, marker]) => {
+            markerUpdates.forEach(([item, marker]) => {
                 const { state } = getMarkerValues(item);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
@@ -350,7 +363,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: 5,
                         },
                     });
@@ -362,7 +375,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: '#FFFFFF',
+                                fill: '#FFFFFF',
                                 radius: 3,
                             },
                         });
@@ -380,7 +393,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             ...seriesUpdateGroups,
         ];
 
-        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+        const entryTransitions = seriesEntryGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const line = group.query('polyline') as Polyline;
 
@@ -405,7 +418,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             ];
         });
 
-        const updateTransitions = arrayMap(seriesUpdateGroups, group => {
+        const updateTransitions = seriesUpdateGroups.map(group => {
             const markers = group.queryAll('circle') as Circle[];
             const line = group.query('polyline') as Polyline;
 
@@ -440,7 +453,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             key,
         } = this.options;
 
-        const barSeries = arrayFilter(series, srs => srs.type === 'bar') as TrendChartBarSeriesOptions<TData>[];
+        const barSeries = series.filter(srs => srs.type === 'bar') as TrendChartBarSeriesOptions<TData>[];
 
         const {
             left: seriesEntries,
@@ -448,13 +461,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             right: seriesExits,
         } = arrayJoin(barSeries, this.barGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
         const baseline = this.yScale(0);
 
-        const xScaleSeries = scaleBand(arrayMap(barSeries, srs => srs.id), [0, this.xScaleBand.bandwidth], {
+        const xScaleSeries = scaleBand(barSeries.map(srs => srs.id), [0, this.xScaleBand.bandwidth], {
             innerPadding: 0.25,
         });
 
@@ -478,7 +491,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 return {
                     id: `${id}-${key}`,
                     state: {
-                        fillStyle: color,
+                        fill: color,
                         x,
                         y,
                         width,
@@ -488,25 +501,25 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             };
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, (series) => {
+        const seriesEntryGroups = seriesEntries.map((series) => {
 
             const getBarValues = seriesBarValueProducer(series);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
 
-            const children = arrayMap(data, item => {
+            const children = data.map(item => {
                 const { id, state } = getBarValues(item);
                 const value = getValue(item);
 
                 const bar = createRect({
                     id,
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                     y: baseline,
                     height: 0,
                     data: {
                         ...state,
-                        fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                        fill: setColorAlpha(state.fill as string, 0.7),
                     },
                 });
 
@@ -517,7 +530,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -528,7 +541,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -543,7 +556,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
             const getBarValues = seriesBarValueProducer(series);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
@@ -555,9 +568,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${series.id}-${getKey(item)}`);
 
-            arrayForEach(barExits, el => el.destroy());
+            barExits.forEach(el => el.destroy());
 
-            arrayMap(barEntries, item => {
+            barEntries.map(item => {
                 const { id, state } = getBarValues(item);
 
                 const rect = createRect({
@@ -571,13 +584,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 group.add(rect);
             });
 
-            arrayForEach(barUpdates, ([item, bar]) => {
+            barUpdates.forEach(([item, bar]) => {
                 const { state } = getBarValues(item);
                 const value = getValue(item);
 
                 bar.data = {
                     ...state,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                    fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
                 // Update hover listeners for new values
@@ -588,7 +601,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.fillStyle,
+                            fill: state.fill,
                         },
                     });
 
@@ -599,7 +612,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.fillStyle as string, 0.7),
+                                fill: setColorAlpha(state.fill as string, 0.7),
                             },
                         });
                     });
@@ -650,8 +663,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            const keys = arrayMap(data, getKey);
-            const seriesExtents = arrayFlatMap(series, ({ value: valueAccessor }) => {
+            const keys = data.map(getKey);
+            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
                 const getValue = typeIsFunction(valueAccessor)
                     ? valueAccessor
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -668,7 +681,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
@@ -738,7 +751,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             // Render grid
             if (this.grid) {
                 const yTicks = this.yScale.ticks(10);
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     [],
@@ -766,6 +779,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link TrendChart} instance. */
 export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
     return new TrendChart<TData>(target, options);
 }

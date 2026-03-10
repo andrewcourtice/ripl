@@ -12,10 +12,12 @@ import type {
     Vector3,
 } from '../math/vector';
 
+/** State interface for a cube, defining uniform edge size. */
 export interface CubeState extends Shape3DState {
     size: number;
 }
 
+/** A 3D cube shape with uniform edge size. */
 export class Cube extends Shape3D<CubeState> {
 
     public get size() {
@@ -76,10 +78,12 @@ export class Cube extends Shape3D<CubeState> {
 
 }
 
+/** Factory function that creates a new `Cube` instance. */
 export function createCube(...options: ConstructorParameters<typeof Cube>) {
     return new Cube(...options);
 }
 
+/** Type guard that checks whether a value is a `Cube` instance. */
 export function elementIsCube(value: unknown): value is Cube {
     return value instanceof Cube;
 }

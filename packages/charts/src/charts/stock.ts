@@ -57,14 +57,12 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link StockChart}. */
 export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -96,6 +94,16 @@ const DEFAULT_UP_COLOR = '#6dd5b1';
 const DEFAULT_DOWN_COLOR = '#f4a0b9';
 const VOLUME_HEIGHT_RATIO = 0.2;
 
+/**
+ * Candlestick (stock) chart rendering OHLC data with optional volume bars.
+ *
+ * Each data point is rendered as a candlestick with a body (open-close range)
+ * and wick (high-low range), colored by direction. Supports an optional
+ * volume sub-chart, crosshair, tooltips, grid, and animated entry/update
+ * transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>> {
 
     private candlestickGroups: Group[] = [];
@@ -159,7 +167,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: false,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -171,7 +179,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -234,9 +242,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             (item, group) => group.id === this.getCandlestickValues(item).key
         );
 
-        arrayForEach(exits, el => el.destroy());
+        exits.forEach(el => el.destroy());
 
-        const entryGroups = arrayMap(entries, (item) => {
+        const entryGroups = entries.map((item) => {
             const values = this.getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
 
@@ -252,14 +260,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const body = createRect({
                 id: `${values.key}-body`,
-                fillStyle: color,
+                fill: color,
                 x: x - candleWidth / 2,
                 y: midY,
                 width: candleWidth,
                 height: 0,
                 borderRadius: 1,
                 data: {
-                    fillStyle: color,
+                    fill: color,
                     x: x - candleWidth / 2,
                     y: bodyTop,
                     width: candleWidth,
@@ -270,14 +278,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const wick = createLine({
                 id: `${values.key}-wick`,
-                strokeStyle: color,
+                stroke: color,
                 lineWidth: wickWidth,
                 x1: x,
                 y1: midY,
                 x2: x,
                 y2: midY,
                 data: {
-                    strokeStyle: color,
+                    stroke: color,
                     lineWidth: wickWidth,
                     x1: x,
                     y1: yHigh,
@@ -302,7 +310,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     duration: this.getAnimationDuration(200),
                     ease: easeOutQuart,
                     state: {
-                        fillStyle: setColorAlpha(color, 0.8),
+                        fill: setColorAlpha(color, 0.8),
                     },
                 });
 
@@ -313,7 +321,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
                 });
@@ -322,7 +330,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             return group;
         });
 
-        const updateGroups = arrayMap(updates, ([item, group]) => {
+        const updateGroups = updates.map(([item, group]) => {
             const values = this.getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
 
@@ -340,7 +348,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             if (body) {
                 body.data = {
-                    fillStyle: color,
+                    fill: color,
                     x: x - candleWidth / 2,
                     y: bodyTop,
                     width: candleWidth,
@@ -359,7 +367,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(color, 0.8),
+                            fill: setColorAlpha(color, 0.8),
                         },
                     });
 
@@ -370,7 +378,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: color,
+                                fill: color,
                             },
                         });
                     });
@@ -379,7 +387,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             if (wick) {
                 wick.data = {
-                    strokeStyle: color,
+                    stroke: color,
                     lineWidth: wickWidth,
                     x1: x,
                     y1: yHigh,
@@ -398,7 +406,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             ...updateGroups,
         ];
 
-        const entryTransitions = arrayMap(entryGroups, (group, index) => {
+        const entryTransitions = entryGroups.map((group, index) => {
             const body = group.getElementsByType('rect')[0] as Rect;
             const wick = group.getElementsByType('line')[0] as Line;
 
@@ -419,7 +427,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             return [bodyTransition, wickTransition];
         });
 
-        const updateTransitions = arrayMap(updateGroups, group => {
+        const updateTransitions = updateGroups.map(group => {
             const body = group.getElementsByType('rect')[0] as Rect;
             const wick = group.getElementsByType('line')[0] as Line;
 
@@ -463,7 +471,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
         const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
 
-        const volumes = arrayMap(data, item => this.getAccessor<number>(volumeAccessor)(item));
+        const volumes = data.map(item => this.getAccessor<number>(volumeAccessor)(item));
         const volumeExtent = getExtent(volumes.concat(0), functionIdentity);
 
         this.volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
@@ -481,9 +489,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 (item, bar) => bar.id === `vol-${this.getCandlestickValues(item).key}`
             );
 
-            arrayForEach(barExits, el => el.destroy());
+            barExits.forEach(el => el.destroy());
 
-            arrayForEach(barEntries, item => {
+            barEntries.forEach(item => {
                 const values = this.getCandlestickValues(item);
                 const color = values.isUp ? upColor : downColor;
                 const x = this.xScale(values.key);
@@ -491,13 +499,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
                 const bar = createRect({
                     id: `vol-${values.key}`,
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom,
                     width: barWidth,
                     height: 0,
                     data: {
-                        fillStyle: setColorAlpha(color, 0.3),
+                        fill: setColorAlpha(color, 0.3),
                         x: x - barWidth / 2,
                         y: volumeBottom - barHeight,
                         width: barWidth,
@@ -508,14 +516,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 this.volumeGroup!.add(bar);
             });
 
-            arrayForEach(barUpdates, ([item, bar]) => {
+            barUpdates.forEach(([item, bar]) => {
                 const values = this.getCandlestickValues(item);
                 const color = values.isUp ? upColor : downColor;
                 const x = this.xScale(values.key);
                 const barHeight = Math.abs(volumeBottom - this.volumeScale(values.volume));
 
                 bar.data = {
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom - barHeight,
                     width: barWidth,
@@ -538,7 +546,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             zIndex: -1,
         });
 
-        const bars = arrayMap(data, item => {
+        const bars = data.map(item => {
             const values = this.getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
             const x = this.xScale(values.key);
@@ -546,13 +554,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             return createRect({
                 id: `vol-${values.key}`,
-                fillStyle: setColorAlpha(color, 0.3),
+                fill: setColorAlpha(color, 0.3),
                 x: x - barWidth / 2,
                 y: volumeBottom,
                 width: barWidth,
                 height: 0,
                 data: {
-                    fillStyle: setColorAlpha(color, 0.3),
+                    fill: setColorAlpha(color, 0.3),
                     x: x - barWidth / 2,
                     y: volumeBottom - barHeight,
                     width: barWidth,
@@ -561,7 +569,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             });
         });
 
-        arrayForEach(bars, bar => this.volumeGroup!.add(bar));
+        bars.forEach(bar => this.volumeGroup!.add(bar));
         this.scene.add(this.volumeGroup);
 
         return this.renderer.transition(bars, (element, index, length) => ({
@@ -580,13 +588,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 volume: volumeAccessor,
             } = this.options;
 
-            const allValues = arrayMap(data, item => this.getCandlestickValues(item));
+            const allValues = data.map(item => this.getCandlestickValues(item));
 
-            const highs = arrayMap(allValues, v => v.high);
-            const lows = arrayMap(allValues, v => v.low);
+            const highs = allValues.map(v => v.high);
+            const lows = allValues.map(v => v.low);
             const priceExtent = getExtent(highs.concat(lows), functionIdentity);
 
-            const keys = arrayMap(allValues, v => v.key);
+            const keys = allValues.map(v => v.key);
 
             const padding = this.getPadding();
             const chartTop = padding.top;
@@ -637,7 +645,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                         }
 
                         const step = Math.ceil(keys.length / count);
-                        return arrayFilter(keys, (_, i) => i % step === 0);
+                        return keys.filter((_, i) => i % step === 0);
                     },
                     includes: (value: string) => keys.includes(value),
                 }
@@ -667,7 +675,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             // Render grid
             if (this.grid) {
                 const yTicks = this.yScale.ticks(10);
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     [],
@@ -707,6 +715,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
 }
 
+/** Factory function that creates a new {@link StockChart} instance. */
 export function createStockChart<TData = unknown>(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
     return new StockChart<TData>(target, options);
 }

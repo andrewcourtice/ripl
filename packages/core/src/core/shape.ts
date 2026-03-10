@@ -10,6 +10,7 @@ import {
     ElementOptions,
 } from './element';
 
+/** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
 export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
     constructor(type: string, options: ElementOptions<TState>) {
@@ -18,12 +19,14 @@ export abstract class Shape<TState extends BaseElementState = BaseElementState> 
 
 }
 
+/** Options for a 2D shape, adding automatic fill/stroke and clipping controls. */
 export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     autoStroke?: boolean;
     autoFill?: boolean;
     clip?: boolean;
 };
 
+/** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
 
     protected path?: ContextPath;
@@ -47,6 +50,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         this.clip = clip;
     }
 
+    /** Tests whether a point intersects this shape using path-based fill and stroke hit testing. */
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
         if (!this.context || !this.path) {
             return super.intersectsWith(x, y, options);
@@ -80,6 +84,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         return isAnyIntersecting();
     }
 
+    /** Renders this shape by creating a path, invoking the callback, and automatically applying fill/stroke or clipping. */
     public render(context: Context, callback?: (path: ContextPath) => void) {
         return super.render(context, () => {
             this.path = context.createPath(this.id);
@@ -87,26 +92,28 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             callback?.(this.path);
 
             if (this.path && this.clip) {
-                context.clip(this.path);
+                context.applyClip(this.path);
                 return;
             }
 
-            if (this.path && this.autoFill && this.fillStyle) {
-                context.fill(this.path);
+            if (this.path && this.autoFill && this.fill) {
+                context.applyFill(this.path);
             }
 
-            if (this.path && this.autoStroke && this.strokeStyle) {
-                context.stroke(this.path);
+            if (this.path && this.autoStroke && this.stroke) {
+                context.applyStroke(this.path);
             }
         }, this.clip);
     }
 
 }
 
+/** Factory function that creates a new `Shape2D` instance. */
 export function createShape(...options: ConstructorParameters<typeof Shape2D>) {
     return new Shape2D(...options);
 }
 
+/** Type guard that checks whether a value is a `Shape` instance. */
 export function elementIsShape(value: unknown): value is Shape {
     return value instanceof Shape;
 }

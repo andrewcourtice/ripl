@@ -12,6 +12,7 @@ import type {
     Vector3,
 } from '../math/vector';
 
+/** State interface for a cylinder, defining top/bottom radii, height, and segment count. */
 export interface CylinderState extends Shape3DState {
     radiusTop: number;
     radiusBottom: number;
@@ -19,6 +20,7 @@ export interface CylinderState extends Shape3DState {
     segments: number;
 }
 
+/** A 3D cylinder shape with independent top and bottom radii for truncated cones. */
 export class Cylinder extends Shape3D<CylinderState> {
 
     public get radiusTop() {
@@ -106,10 +108,12 @@ export class Cylinder extends Shape3D<CylinderState> {
 
 }
 
+/** Factory function that creates a new `Cylinder` instance. */
 export function createCylinder(...options: ConstructorParameters<typeof Cylinder>) {
     return new Cylinder(...options);
 }
 
+/** Type guard that checks whether a value is a `Cylinder` instance. */
 export function elementIsCylinder(value: unknown): value is Cylinder {
     return value instanceof Cylinder;
 }

@@ -82,11 +82,11 @@ const group = createGroup({
             y: 0,
             width: 80,
             height: 80,
-            fillStyle: '#3a86ff' }),
+            fill: '#3a86ff' }),
         createCircle({ cx: 120,
             cy: 40,
             radius: 30,
-            fillStyle: '#ff006e' }),
+            fill: '#ff006e' }),
     ],
 });
 
@@ -163,7 +163,7 @@ const rect = createRect({
     y: 100,
     width: 80,
     height: 80,
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     transformOriginX: '50%',
     transformOriginY: '50%',
 });
@@ -238,7 +238,7 @@ const {
         y: h / 2 - 40,
         width: 80,
         height: 80,
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         transformOriginX: '50%',
         transformOriginY: '50%',
     });

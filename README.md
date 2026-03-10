@@ -66,7 +66,7 @@ const context = createContext('.mount-element');
 
 // Create an element
 const circle = createCircle({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
@@ -91,7 +91,7 @@ import {
 
 const context = createContext('.mount-element');
 const circle = createCircle({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
@@ -103,7 +103,7 @@ function render() {
 }
 
 function update() {
-    circle.fillStyle = '#FF0000';
+    circle.fill = '#FF0000';
     circle.cx = context.width / 3;
     circle.cy = context.height / 3;
 
@@ -126,7 +126,7 @@ import {
 
 const context = createContext('.mount-element');
 const circle = createCircle({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     cx: context.width / 2,
     cy: context.height / 2,
@@ -138,7 +138,7 @@ function render() {
 }
 
 function update() {
-    circle.fillStyle = '#FF0000';
+    circle.fill = '#FF0000';
     circle.cx = context.width / 3;
     circle.cy = context.height / 3;
 
@@ -174,7 +174,7 @@ const rect = createRect({
 });
 
 const group = createGroup({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     children: [
         circle,
@@ -216,7 +216,7 @@ const rect = createRect({
 
 const childGroup = createGroup({
     id: 'child-group',
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     children: [
         circle,
@@ -293,7 +293,7 @@ const rect = createRect({
 
 const childGroup = createGroup({
     id: 'child-group',
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
     children: [
         circle,
@@ -331,14 +331,14 @@ import {
 const context = createContext('.mount-element');
 
 const circle = createCircle({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     cx: context.width / 2,
     cy: context.height / 2,
     radius: context.width / 3,
 });
 
 const rect = createRect({
-    fillStyle: 'rgb(30, 105, 120)',
+    fill: 'rgb(30, 105, 120)',
     x: context.width / 2,
     y: context.height / 2,
     width: context.width / 5,
@@ -363,7 +363,7 @@ async function animate() {
         duration: 1000,
         ease: easeOutCubic,
         state: {
-            fillStyle: '#FF0000',
+            fill: '#FF0000',
             cx: context.width / 4,
             cy: context.height / 4,
             radius: context.width / 4,
@@ -376,7 +376,7 @@ async function animate() {
         duration: 1000,
         ease: easeOutCubic,
         state: {
-            fillStyle: '#FF0000',
+            fill: '#FF0000',
         },
     });
 }
@@ -395,7 +395,7 @@ async function animate() {
         duration: 1000,
         ease: easeOutCubic,
         state: {
-            fillStyle: [
+            fill: [
                 '#FF0000', // implied 0.33 offset
                 '#00FF00', // implied 0.66 offset
                 '#0000FF', // implied end state - offset 1
@@ -408,7 +408,7 @@ async function animate() {
         duration: 1000,
         ease: easeOutCubic,
         state: {
-            fillStyle: [
+            fill: [
                 {
                     value: '#FF0000',
                     offset: 0.25,

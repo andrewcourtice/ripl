@@ -11,6 +11,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a quantile scale that divides a sorted numeric domain into quantiles mapped to discrete range values. */
 export function scaleQuantile<TRange>(
     domain: number[],
     range: TRange[]

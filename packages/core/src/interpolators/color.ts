@@ -8,7 +8,6 @@ import {
 } from './number';
 
 import {
-    arrayMap,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -16,18 +15,19 @@ import type {
     InterpolatorFactory,
 } from './types';
 
-export const interpolateColor: InterpolatorFactory<string> = (colorA, colorB) => {
-    const parserA = getColorParser(colorA);
-    const parserB = getColorParser(colorB);
+/** Interpolator factory that smoothly transitions between two CSS color strings by interpolating their RGBA channels. */
+export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) => {
+    const parserA = getColorParser(valueA);
+    const parserB = getColorParser(valueB);
 
     if (!(parserA && parserB)) {
-        return position => position > 0.5 ? colorB : colorA;
+        return position => position > 0.5 ? valueB : valueA;
     }
 
-    const rgbaA = parserA.parse(colorA);
-    const rgbaB = parserB.parse(colorB);
+    const rgbaA = parserA.parse(valueA);
+    const rgbaB = parserB.parse(valueB);
 
-    const interpolators = arrayMap(rgbaA, (value, index) => {
+    const interpolators = rgbaA.map((value, index) => {
         return interpolateNumber(value, rgbaB[index]);
     });
 

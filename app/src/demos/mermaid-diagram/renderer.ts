@@ -46,8 +46,8 @@ function createNodeShape(node: PositionedNode): Element {
                 cx: node.x + node.width / 2,
                 cy: node.y + node.height / 2,
                 radius: node.width / 2,
-                fillStyle: NODE_FILL,
-                strokeStyle: NODE_STROKE,
+                fill: NODE_FILL,
+                stroke: NODE_STROKE,
                 lineWidth: 1.5,
                 pointerEvents: 'fill',
             });
@@ -59,8 +59,8 @@ function createNodeShape(node: PositionedNode): Element {
                 y: node.y,
                 width: node.width,
                 height: node.height,
-                fillStyle: NODE_FILL,
-                strokeStyle: NODE_STROKE,
+                fill: NODE_FILL,
+                stroke: NODE_STROKE,
                 lineWidth: 1.5,
                 pointerEvents: 'fill',
                 pathRenderer: (path, state) => {
@@ -85,8 +85,8 @@ function createNodeShape(node: PositionedNode): Element {
                 width: node.width,
                 height: node.height,
                 borderRadius: 12,
-                fillStyle: NODE_FILL,
-                strokeStyle: NODE_STROKE,
+                fill: NODE_FILL,
+                stroke: NODE_STROKE,
                 lineWidth: 1.5,
                 pointerEvents: 'fill',
             });
@@ -100,8 +100,8 @@ function createNodeShape(node: PositionedNode): Element {
                 width: node.width,
                 height: node.height,
                 borderRadius: 4,
-                fillStyle: NODE_FILL,
-                strokeStyle: NODE_STROKE,
+                fill: NODE_FILL,
+                stroke: NODE_STROKE,
                 lineWidth: 1.5,
                 pointerEvents: 'fill',
             });
@@ -114,7 +114,7 @@ function createNodeLabel(node: PositionedNode): Element {
         x: node.x + node.width / 2,
         y: node.y + node.height / 2,
         content: node.label,
-        fillStyle: NODE_TEXT_FILL,
+        fill: NODE_TEXT_FILL,
         textAlign: 'center',
         textBaseline: 'middle',
         font: '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -152,7 +152,7 @@ function createArrowhead(
         y: Math.min(tipY, baseY - py * ARROW_SIZE / 2) - 1,
         width: ARROW_SIZE + 2,
         height: ARROW_SIZE + 2,
-        fillStyle: fillColor,
+        fill: fillColor,
         pointerEvents: 'none',
         pathRenderer: (path) => {
             path.moveTo(tipX, tipY);
@@ -178,7 +178,7 @@ function createEdgeElements(edge: RoutedEdge): Element[] {
         id: `edge-${edge.from}-${edge.to}`,
         points: edge.points,
         renderer: 'linear',
-        strokeStyle: lineColor,
+        stroke: lineColor,
         lineWidth: isThick ? 3 : 1.5,
         lineDash: isDotted ? [6, 4] : undefined,
         autoFill: false,
@@ -206,7 +206,7 @@ function createEdgeElements(edge: RoutedEdge): Element[] {
             x: lx,
             y: ly - 8,
             content: edge.label,
-            fillStyle: EDGE_LABEL_FILL,
+            fill: EDGE_LABEL_FILL,
             textAlign: 'center',
             textBaseline: 'middle',
             font: '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -225,8 +225,8 @@ function createSubgraphElements(sg: PositionedSubgraph): Element[] {
         width: sg.width,
         height: sg.height,
         borderRadius: 8,
-        fillStyle: SUBGRAPH_FILL,
-        strokeStyle: SUBGRAPH_STROKE,
+        fill: SUBGRAPH_FILL,
+        stroke: SUBGRAPH_STROKE,
         lineWidth: 1,
         pointerEvents: 'none',
     });
@@ -236,7 +236,7 @@ function createSubgraphElements(sg: PositionedSubgraph): Element[] {
         x: sg.x + 12,
         y: sg.y + 16,
         content: sg.label,
-        fillStyle: SUBGRAPH_TEXT_FILL,
+        fill: SUBGRAPH_TEXT_FILL,
         textAlign: 'left',
         textBaseline: 'middle',
         font: '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
@@ -337,12 +337,12 @@ export function renderDiagram(
 
         // Store target fill for transition animations
         shape.data = {
-            fillStyle: NODE_FILL,
+            fill: NODE_FILL,
         };
 
         // Start with zero opacity for entry animation
-        shape.globalAlpha = 0;
-        label.globalAlpha = 0;
+        shape.opacity = 0;
+        label.opacity = 0;
 
         // Hover interactions
         shape.on('mouseenter', () => {
@@ -350,7 +350,7 @@ export function renderDiagram(
                 duration: 200,
                 ease: easeOutQuart,
                 state: {
-                    fillStyle: NODE_FILL_HOVER,
+                    fill: NODE_FILL_HOVER,
                 },
             });
         });
@@ -360,7 +360,7 @@ export function renderDiagram(
                 duration: 200,
                 ease: easeOutQuart,
                 state: {
-                    fillStyle: NODE_FILL,
+                    fill: NODE_FILL,
                 },
             });
         });
@@ -385,11 +385,11 @@ export function renderDiagram(
 
     // Start edge elements hidden
     for (const el of edgeElements) {
-        el.globalAlpha = 0;
+        el.opacity = 0;
     }
 
     for (const el of subgraphElements) {
-        el.globalAlpha = 0;
+        el.opacity = 0;
     }
 
     // Animate subgraphs in
@@ -399,7 +399,7 @@ export function renderDiagram(
             delay: index * (200 / Math.max(length, 1)),
             ease: easeOutCubic,
             state: {
-                globalAlpha: 1,
+                opacity: 1,
             },
         }))
         : Promise.resolve();
@@ -413,7 +413,7 @@ export function renderDiagram(
             delay: 100 + index * (400 / Math.max(length, 1)),
             ease: easeOutCubic,
             state: {
-                globalAlpha: 1,
+                opacity: 1,
             },
         }))
         : Promise.resolve();
@@ -427,7 +427,7 @@ export function renderDiagram(
             delay: nodeAnimDuration + index * (300 / Math.max(length, 1)),
             ease: easeOutCubic,
             state: {
-                globalAlpha: 1,
+                opacity: 1,
             },
         }))
         : Promise.resolve();

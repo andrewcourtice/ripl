@@ -10,11 +10,6 @@ import {
 } from '../math';
 
 import {
-    arrayFilter,
-    arrayFind,
-    arrayFlatMap,
-    arrayForEach,
-    arrayMap,
     OneOrMore,
     stringEquals,
     typeIsNil,
@@ -25,6 +20,7 @@ import {
     Context,
 } from '../context';
 
+/** Options for constructing a group, extending element options with an optional initial set of children. */
 export interface GroupOptions extends ElementOptions {
     children?: OneOrMore<Element>;
 }
@@ -45,7 +41,7 @@ const QUERY_PATTERNS = {
     id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
     class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
     attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${arrayMap(Object.values(COMBINATOR_PATTERNS), pattern => pattern.source).join('|')}]\\s|\\s)`),
+    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
 };
 
 const COMBINATOR_PRODUCERS = [
@@ -82,13 +78,13 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     }
 
     if (QUERY_PATTERNS.combinators.test(segment)) {
-        const producer = arrayFind(COMBINATOR_PRODUCERS, ({ pattern }) => pattern.test(segment));
+        const producer = COMBINATOR_PRODUCERS.find(({ pattern }) => pattern.test(segment));
 
         if (!producer) {
             throw new Error('Failed to query!');
         }
 
-        return executeQuery(arrayFlatMap(elements, element => producer.produce(element)), segments, segmentIndex + 1);
+        return executeQuery(elements.flatMap(element => producer.produce(element)), segments, segmentIndex + 1);
     }
 
     const type = segment.match(QUERY_PATTERNS.type)?.at(0);
@@ -96,7 +92,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
     const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
 
-    return executeQuery(arrayFilter(elements, element => {
+    return executeQuery(elements.filter(element => {
         const typeMatch = !type || stringEquals(element.type, type);
         const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
 
@@ -129,30 +125,36 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     }), segments, segmentIndex + 1);
 }
 
+/** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
 export function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
-    const els = arrayFlatMap(([] as Element[]).concat(elements), element => {
+    const els = ([] as Element[]).concat(elements).flatMap(element => {
         return isGroup(element) ? element.graph(true) : [element];
     });
 
     return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
 }
 
+/** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
 export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     return queryAll<TElement>(elements, selector).at(0);
 }
 
+/** Type guard that checks whether a value is a `Group` instance. */
 export function isGroup(value: unknown): value is Group {
     return value instanceof Group;
 }
 
+/** Factory function that creates a new `Group` instance. */
 export function createGroup(...options: ConstructorParameters<typeof Group>) {
     return new Group(...options);
 }
 
+/** A container element that manages child elements, providing scenegraph traversal, CSS-like querying, and composite bounding boxes. */
 export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> {
 
     #elements = new Set<Element>();
 
+    /** Returns a snapshot array of this group's direct child elements. */
     public get children() {
         return Array.from(this.#elements);
     }
@@ -167,15 +169,18 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.add(children);
     }
 
+    /** Emits a `graph` event to notify the scene that the element tree has changed. */
     public updateSceneGraph() {
         this.emit('graph', null);
     }
 
+    /** Replaces all children with the given elements. */
     public set(elements: Element[]) {
         this.#elements.clear();
         this.add(elements);
     }
 
+    /** Adds one or more elements as children, re-parenting them if necessary. */
     public add(element: OneOrMore<Element>) {
         const elements = valueOneOrMore(element);
 
@@ -183,7 +188,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        arrayForEach(elements, item => {
+        elements.forEach(item => {
             if (item.parent) {
                 item.parent.remove(item);
             }
@@ -195,6 +200,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.updateSceneGraph();
     }
 
+    /** Removes one or more child elements from this group. */
     public remove(element: OneOrMore<Element>) {
         const elements = valueOneOrMore(element);
 
@@ -202,7 +208,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             return;
         }
 
-        arrayForEach(elements, item => {
+        elements.forEach(item => {
             item.parent = undefined;
             this.#elements.delete(item);
         });
@@ -210,12 +216,14 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.updateSceneGraph();
     }
 
+    /** Removes all children from this group. */
     public clear() {
         this.remove(this.children);
     }
 
+    /** Returns a flattened array of all descendant elements, optionally including intermediate groups. */
     public graph(includeGroups?: boolean): Element[] {
-        return arrayFlatMap(this.children, item => {
+        return this.children.flatMap(item => {
             if (!isGroup(item)) {
                 return [item];
             }
@@ -227,36 +235,45 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         });
     }
 
+    /** Returns the first descendant matching the CSS-like selector, or `undefined`. */
     public query<TElement extends Element = Element>(selector: string) {
         return query<TElement>(this, selector);
     }
 
+    /** Returns all descendants matching the CSS-like selector. */
     public queryAll<TElement extends Element = Element>(selector: string) {
         return queryAll<TElement>(this, selector);
     }
 
+    /** Finds a descendant element by its unique id. */
     public getElementByID<TElement extends Element = Element>(id: string) {
-        return arrayFind(this.graph(true), element => element.id === id) as TElement;
+        return this.graph(true).find(element => element.id === id) as TElement;
     }
 
+    /** Returns all descendant elements whose type matches one of the given type names. */
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = valueOneOrMore(types);
-        return arrayFilter(this.graph(true), element => typeList.includes(element.type)) as TElement[];
+        return this.graph(true).filter(element => typeList.includes(element.type)) as TElement[];
     }
 
+    /** Returns all descendant elements that have all of the given CSS class names. */
     public getElementsByClass<TElement extends Element = Element>(classes: OneOrMore<string>) {
         const classList = valueOneOrMore(classes);
-        return arrayFilter(this.graph(true), element => classList.every(cls => element.classList.has(cls))) as TElement[];
+        return this.graph(true).filter(element => classList.every(cls => element.classList.has(cls))) as TElement[];
     }
 
+    /** Returns the composite bounding box enclosing all children. */
     public getBoundingBox() {
         return getContainingBox(this.children, element => element.getBoundingBox());
     }
 
+    /** Renders all child elements in order within a save/restore context. */
     public render(context: Context): void {
         context.save();
         context.markRenderStart();
-        arrayForEach(this.children, element => element.render(context));
+
+        this.children.forEach(element => element.render(context));
+
         context.markRenderEnd();
         context.restore();
     }

@@ -2,17 +2,18 @@ import {
     interpolateNumber,
 } from './number';
 
-import {
-    arrayMap,
-    arrayReduce,
-} from '@ripl/utilities';
 
 import type {
     Interpolator,
 } from './types';
 
+/** A pair of tagged template results representing the start and end states for string interpolation. */
 export type StringInterpolationSet = [valueA: StringInterpolatorTag, valueB: StringInterpolatorTag];
+
+/** Optional formatter applied to each interpolated numeric value before insertion into the output string. */
 export type StringInterpolationFormatter = (value: number) => number;
+
+/** A tagged template result capturing the static fragments and dynamic numeric arguments. */
 export interface StringInterpolatorTag {
     fragments: TemplateStringsArray;
     args: number[];
@@ -25,6 +26,7 @@ function tagIntStr(fragments: TemplateStringsArray, ...args: number[]): StringIn
     };
 }
 
+/** Creates a string interpolator by interpolating between numeric values embedded in tagged template literals. */
 export function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolationSet, formatter?: StringInterpolationFormatter): Interpolator<string> {
     const [tagA, tagB] = callback(tagIntStr);
 
@@ -33,12 +35,14 @@ export function interpolateString(callback: (tag: typeof tagIntStr) => StringInt
     }
 
     const format = formatter || (value => value);
-    const interpolators = arrayMap(tagA.args, (arg, index) => interpolateNumber(arg, tagB.args[index]));
+    const interpolators = tagA.args.map((arg, index) => interpolateNumber(arg, tagB.args[index]));
 
-    return position => arrayReduce(Array.from(tagA.fragments), (input, fragment, index) => {
+    return position => Array.from(tagA.fragments).reduce((input, fragment, index) => {
         const output = input + fragment;
         const interpolator = interpolators[index];
 
-        return output + format(interpolator(position));
+        return interpolator
+            ? output + format(interpolator(position))
+            : output;
     }, '');
 }

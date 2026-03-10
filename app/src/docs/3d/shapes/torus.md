@@ -18,7 +18,7 @@ const torus = createTorus({
     tube: 0.5,
     radialSegments: 12,
     tubularSegments: 24,
-    fillStyle: '#8844cc',
+    fill: '#8844cc',
 });
 ```
 
@@ -56,7 +56,7 @@ const camera = createCamera(scene, { position: [0, 1.5, 5],
 
 const torus = createTorus({ radius: 1.5,
     tube: 0.4,
-    fillStyle: '#8844cc' });
+    fill: '#8844cc' });
 
 let angle = 0;
 function loop() {
@@ -83,7 +83,7 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createTorus({ radius: 1.5, tube: 0.4, fillStyle: '#8844cc' }));
+    scene.add(createTorus({ radius: 1.5, tube: 0.4, fill: '#8844cc' }));
     startRotation(camera);
 });
 </script>

@@ -7,6 +7,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a threshold scale that maps numeric values to range values based on a set of threshold breakpoints. */
 export function scaleThreshold<TRange>(
     domain: number[],
     range: TRange[]

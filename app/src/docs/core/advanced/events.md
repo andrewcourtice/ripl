@@ -94,12 +94,12 @@ const scene = createScene('.container', {
 scene.render();
 
 circle.on('mouseenter', () => {
-    circle.fillStyle = '#ff006e';
+    circle.fill = '#ff006e';
     scene.render();
 });
 
 circle.on('mouseleave', () => {
-    circle.fillStyle = '#3a86ff';
+    circle.fill = '#3a86ff';
     scene.render();
 });
 ```
@@ -139,7 +139,7 @@ You can emit and listen for any custom event name:
 
 ```ts
 circle.on('highlight', (event) => {
-    circle.fillStyle = event.data.color;
+    circle.fill = event.data.color;
 });
 
 circle.emit('highlight', { color: '#ff006e' });
@@ -159,7 +159,7 @@ The `pointerEvents` property on elements controls hit testing behavior:
 ```ts
 const overlay = createRect({
     pointerEvents: 'none', // Click passes through to elements below
-    fillStyle: 'rgba(0, 0, 0, 0.3)',
+    fill: 'rgba(0, 0, 0, 0.3)',
     x: 0,
     y: 0,
     width: 400,
@@ -177,7 +177,7 @@ Hover over and click the elements to see events in action. Events bubble from ch
 == Code
 ```ts
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 150,
     cy: 150,
     radius: 60,
@@ -189,17 +189,17 @@ const scene = createScene('.container', {
 scene.render();
 
 circle.on('mouseenter', () => {
-    circle.fillStyle = '#ff006e';
+    circle.fill = '#ff006e';
     scene.render();
 });
 
 circle.on('mouseleave', () => {
-    circle.fillStyle = '#3a86ff';
+    circle.fill = '#3a86ff';
     scene.render();
 });
 
 circle.on('click', () => {
-    circle.fillStyle = '#8338ec';
+    circle.fill = '#8338ec';
     scene.render();
 });
 ```
@@ -225,18 +225,18 @@ const {
     const r = Math.min(w, h) / 6;
 
     const circle = createCircle({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: w * 0.35, cy: h / 2, radius: r,
     });
 
     const rect = createRect({
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
         x: w * 0.55, y: h / 2 - r, width: r * 2, height: r * 2,
         borderRadius: 8,
     });
 
     const label = createText({
-        fillStyle: '#666',
+        fill: '#666',
         x: w / 2, y: h - 16,
         content: 'Hover or click an element',
         textAlign: 'center', font: '13px sans-serif',
@@ -250,12 +250,12 @@ const {
 
     const colors = { circle: '#3a86ff', rect: '#ff006e' };
 
-    circle.on('mouseenter', () => { circle.fillStyle = '#8338ec'; label.content = 'mouseenter: circle'; scene.render(); });
-    circle.on('mouseleave', () => { circle.fillStyle = colors.circle; label.content = 'mouseleave: circle'; scene.render(); });
-    circle.on('click', () => { colors.circle = colors.circle === '#3a86ff' ? '#fb5607' : '#3a86ff'; circle.fillStyle = colors.circle; label.content = 'click: circle'; scene.render(); });
+    circle.on('mouseenter', () => { circle.fill = '#8338ec'; label.content = 'mouseenter: circle'; scene.render(); });
+    circle.on('mouseleave', () => { circle.fill = colors.circle; label.content = 'mouseleave: circle'; scene.render(); });
+    circle.on('click', () => { colors.circle = colors.circle === '#3a86ff' ? '#fb5607' : '#3a86ff'; circle.fill = colors.circle; label.content = 'click: circle'; scene.render(); });
 
-    rect.on('mouseenter', () => { rect.fillStyle = '#8338ec'; label.content = 'mouseenter: rect'; scene.render(); });
-    rect.on('mouseleave', () => { rect.fillStyle = colors.rect; label.content = 'mouseleave: rect'; scene.render(); });
-    rect.on('click', () => { colors.rect = colors.rect === '#ff006e' ? '#fb5607' : '#ff006e'; rect.fillStyle = colors.rect; label.content = 'click: rect'; scene.render(); });
+    rect.on('mouseenter', () => { rect.fill = '#8338ec'; label.content = 'mouseenter: rect'; scene.render(); });
+    rect.on('mouseleave', () => { rect.fill = colors.rect; label.content = 'mouseleave: rect'; scene.render(); });
+    rect.on('click', () => { colors.rect = colors.rect === '#ff006e' ? '#fb5607' : '#ff006e'; rect.fill = colors.rect; label.content = 'click: rect'; scene.render(); });
 });
 </script>

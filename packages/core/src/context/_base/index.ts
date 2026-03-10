@@ -18,39 +18,95 @@ import {
 } from '../../scales';
 
 import {
-    arrayForEach,
-    Disposable,
+    arrayJoin,
+    DOMElementEventMap,
+    DOMEventHandler,
     functionCache,
+    functionMemoize,
     hasWindow,
     onDOMElementResize,
+    onDOMEvent,
     stringUniqueId,
+    typeIsNil,
     typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
 
+import {
+    createFrameBuffer,
+} from '../../animation';
+
+/** Text direction for the rendering context. */
 export type Direction = 'inherit' | 'ltr' | 'rtl';
+
+/** Font kerning mode for the rendering context. */
 export type FontKerning = 'auto' | 'none' | 'normal';
+
+/** Line cap style for stroke endpoints. */
 export type LineCap = 'butt' | 'round' | 'square';
+
+/** Line join style for stroke corners. */
 export type LineJoin = 'bevel' | 'miter' | 'round';
+
+/** Horizontal text alignment relative to the drawing position. */
 export type TextAlignment = 'center' | 'end' | 'left' | 'right' | 'start';
+
+/** Vertical text baseline used when rendering text. */
 export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' | 'middle' | 'top';
+
+/** Fill rule algorithm used to determine if a point is inside a path. */
 export type FillRule = 'evenodd' | 'nonzero';
+
+/** Transform origin value — a numeric pixel offset or a percentage string. */
 export type TransformOrigin = number | string;
+
+/** Rotation value — a numeric radian value or a string with `deg`/`rad` suffix. */
 export type Rotation = number | string;
 
+/** Controls which pointer events a render element responds to during hit testing. */
+export type RenderElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
+
+/** Options for render element intersection testing. */
+export interface RenderElementIntersectionOptions {
+    isPointer: boolean;
+}
+
+/** Minimal interface for any element that can be rendered and hit-tested by a context. */
 export interface RenderElement {
     readonly id: string;
     parent?: RenderElement;
+    abstract: boolean;
+    pointerEvents: RenderElementPointerEvents;
+    renderDepth?: number;
+    zIndex: number;
     getBoundingBox?(): Box;
+    has(event: string): boolean;
+    intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    emit(type: string, data: any): void;
 }
 
+/** Event map for a rendering context, including resize and pointer events. */
 export interface ContextEventMap extends EventMap {
     resize: null;
+    mouseenter: null;
+    mouseleave: null;
+    mousemove: {
+        x: number;
+        y: number;
+    };
+    click: {
+        x: number;
+        y: number;
+    };
 }
 
+/** Options for constructing a rendering context. */
 export interface ContextOptions {
+    interactive?: boolean;
 }
 
+/** Options for creating a text element within the context. */
 export type TextOptions = {
     id?: string;
     x: number;
@@ -61,17 +117,19 @@ export type TextOptions = {
     startOffset?: number;
 };
 
+/** Minimal interface for context-level elements (paths, text) identified by a unique id. */
 export interface ContextElement {
     readonly id: string;
 }
 
+/** The full set of visual state properties inherited by every renderable element. */
 export interface BaseState {
-    fillStyle: string;
+    fill: string;
     filter: string;
     direction: Direction;
     font: string;
     fontKerning: FontKerning;
-    globalAlpha: number;
+    opacity: number;
     globalCompositeOperation: unknown;
     lineCap: LineCap;
     lineDash: number[];
@@ -83,7 +141,7 @@ export interface BaseState {
     shadowColor: string;
     shadowOffsetX: number;
     shadowOffsetY: number;
-    strokeStyle: string;
+    stroke: string;
     textAlign: TextAlignment;
     textBaseline: TextBaseline;
     zIndex: number;
@@ -96,11 +154,13 @@ export interface BaseState {
     transformOriginY: TransformOrigin;
 }
 
+/** Options for measuring text dimensions. */
 export type MeasureTextOptions = {
     context?: CanvasRenderingContext2D;
     font?: CanvasRenderingContext2D['font'];
 };
 
+/** Resolves a rotation value (number, degrees string, or radians string) to radians. */
 export function resolveRotation(value: Rotation): number {
     if (typeIsNumber(value)) {
         return value;
@@ -119,6 +179,7 @@ export function resolveRotation(value: Rotation): number {
     return parseFloat(trimmed) || 0;
 }
 
+/** Resolves a transform-origin value (number or percentage string) to a pixel offset relative to the given dimension. */
 export function resolveTransformOrigin(value: TransformOrigin, dimension: number): number {
     if (typeIsNumber(value)) {
         return value;
@@ -133,6 +194,7 @@ export function resolveTransformOrigin(value: TransformOrigin, dimension: number
     return parseFloat(trimmed) || 0;
 }
 
+/** Returns a shared offscreen `CanvasRenderingContext2D` used for text measurement and default state retrieval. */
 export const getRefContext = functionCache(() => {
     return document.createElement('canvas').getContext('2d')!;
 });
@@ -141,12 +203,12 @@ const cachedDefaultState = functionCache((): BaseState => {
     const refContext = getRefContext();
 
     return {
-        fillStyle: refContext.fillStyle,
+        fill: refContext.fillStyle,
         filter: refContext.filter,
         direction: refContext.direction,
         font: refContext.font,
         fontKerning: refContext.fontKerning,
-        globalAlpha: refContext.globalAlpha,
+        opacity: refContext.globalAlpha,
         globalCompositeOperation: refContext.globalCompositeOperation,
         lineCap: refContext.lineCap,
         lineDash: refContext.getLineDash(),
@@ -158,7 +220,7 @@ const cachedDefaultState = functionCache((): BaseState => {
         shadowColor: refContext.shadowColor,
         shadowOffsetX: refContext.shadowOffsetX,
         shadowOffsetY: refContext.shadowOffsetY,
-        strokeStyle: refContext.strokeStyle,
+        stroke: refContext.strokeStyle,
         textAlign: refContext.textAlign,
         textBaseline: refContext.textBaseline,
         zIndex: 0,
@@ -172,8 +234,10 @@ const cachedDefaultState = functionCache((): BaseState => {
     } as BaseState;
 });
 
+/** A scale that maps logical pixels to physical device pixels using `devicePixelRatio`. */
 export const scaleDPR = scaleContinuous([0, 1], [0, hasWindow ? window.devicePixelRatio : 1]);
 
+/** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     const {
         context = getRefContext(),
@@ -190,6 +254,7 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
     return result;
 }
 
+/** A virtual path element used to record drawing commands; subclassed by Canvas and SVG implementations. */
 export class ContextPath implements ContextElement {
 
     public readonly id: string;
@@ -243,7 +308,7 @@ export class ContextPath implements ContextElement {
     }
 
     polyline(points: Point[]): void {
-        arrayForEach(points, ([x, y], index) => !index
+        points.forEach(([x, y], index) => !index
             ? this.moveTo(x,y)
             : this.lineTo(x, y)
         );
@@ -255,6 +320,7 @@ export class ContextPath implements ContextElement {
 
 }
 
+/** A virtual text element capturing position, content, and optional path-based text layout. */
 export class ContextText implements ContextElement {
 
     public readonly id: string;
@@ -286,6 +352,9 @@ export class ContextText implements ContextElement {
 
 }
 
+const INTERACTION_KEY = Symbol('interaction');
+
+/** Abstract rendering context providing a unified API for Canvas and SVG, with state management, coordinate scaling, and interaction handling. */
 export abstract class Context<TElement extends Element = Element> extends EventBus<ContextEventMap> implements BaseState {
 
     public readonly type: string;
@@ -303,16 +372,31 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected currentState: BaseState;
     protected renderDepth = 0;
 
-    private disposables: Disposable[];
+    private interactive: boolean;
+    private interactionEnabled = false;
+    private activeElements = new Set<RenderElement>();
 
-    public currentRenderElement?: RenderElement;
+    public renderElement?: RenderElement;
+    public renderedElements: RenderElement[];
 
-    get fillStyle(): string {
-        return this.currentState.fillStyle;
+    get currentRenderElement() {
+        return this.renderElement;
     }
 
-    set fillStyle(value) {
-        this.currentState.fillStyle = value;
+    set currentRenderElement(element: RenderElement | undefined) {
+        this.renderElement = element;
+
+        if (element && !element.abstract) {
+            this.renderedElements.push(element);
+        }
+    }
+
+    get fill(): string {
+        return this.currentState.fill;
+    }
+
+    set fill(value) {
+        this.currentState.fill = value;
     }
 
     get filter(): string {
@@ -347,12 +431,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.fontKerning = value;
     }
 
-    get globalAlpha(): number {
-        return this.currentState.globalAlpha;
+    get opacity(): number {
+        return this.currentState.opacity;
     }
 
-    set globalAlpha(value) {
-        this.currentState.globalAlpha = value;
+    set opacity(value) {
+        this.currentState.opacity = value;
     }
 
     get globalCompositeOperation(): unknown {
@@ -443,12 +527,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.currentState.shadowOffsetY = value;
     }
 
-    get strokeStyle(): string {
-        return this.currentState.strokeStyle;
+    get stroke(): string {
+        return this.currentState.stroke;
     }
 
-    set strokeStyle(value) {
-        this.currentState.strokeStyle = value;
+    set stroke(value) {
+        this.currentState.stroke = value;
     }
 
     get textAlign(): TextAlignment {
@@ -539,6 +623,10 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     ) {
         super();
 
+        const {
+            interactive = true,
+        } = options || {};
+
         const root = typeIsString(target)
             ? document.querySelector(target) as HTMLElement
             : target;
@@ -549,11 +637,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         root.appendChild(element);
 
-        this.disposables = [];
+        this.interactive = interactive;
         this.type = type;
         this.root = root;
         this.element = element;
         this.states = [];
+        this.renderedElements = [];
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
@@ -570,9 +659,11 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
         this.rescale(width, height);
 
-        this.disposables.push(
-            onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height))
-        );
+        this.retain(onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height)));
+
+        if (this.interactive) {
+            this.enableInteraction();
+        }
     }
 
     protected rescale(width: number, height: number) {
@@ -589,15 +680,18 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         return { ...cachedDefaultState() };
     }
 
+    /** Pushes the current state onto the stack and resets to defaults. */
     save(): void {
         this.states.push(this.currentState);
         this.currentState = this.getDefaultState();
     }
 
+    /** Restores the most recently saved state from the stack. */
     restore(): void {
         this.currentState = this.states.pop() || this.getDefaultState();
     }
 
+    /** Executes a callback within a save/restore pair, returning the callback's result. */
     batch<TResult = void>(body: () => TResult): TResult {
         this.save();
 
@@ -608,26 +702,42 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         }
     }
 
+    /** Clears the entire rendering surface. */
     clear(): void {
     }
 
+    /** Resets the context to its initial state. */
     reset(): void {
     }
 
+    /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
+    invalidateTrackedElements(event: string): void {
+        this.getTrackedElements.cache.clear();
+    }
+
+    /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */
     markRenderStart(): void {
+        if (this.renderDepth === 0) {
+            this.renderedElements = [];
+        }
+
         this.renderDepth += 1;
     }
 
+    /** Signals the end of a render pass. */
     markRenderEnd(): void {
         this.renderDepth -= 1;
     }
 
+    /** Applies a rotation transformation. */
     rotate(angle: number): void {
     }
 
+    /** Applies a scale transformation. */
     scale(x: number, y: number): void {
     }
 
+    /** Applies a translation transformation. */
     translate(x: number, y: number): void {
     }
 
@@ -639,47 +749,179 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
     }
 
+    /** Measures text dimensions using the context's current font or an optional override. */
     measureText(text: string, font?: string): TextMetrics {
         return new TextMetrics();
     }
 
+    /** Creates a new path element, optionally reusing an id for SVG diffing efficiency. */
     createPath(id?: string): ContextPath {
         return new ContextPath(id);
     }
 
+    /** Creates a new text element from the given options. */
     createText(options: TextOptions): ContextText {
         return new ContextText(options);
     }
 
 
+    /** Draws an image onto the rendering surface at the given position and optional size. */
     drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
     }
 
-    clip(path: ContextPath, fillRule?: FillRule): void {
+    /** Clips subsequent drawing operations to the given path. */
+    applyClip(path: ContextPath, fillRule?: FillRule): void {
     }
 
-    fill(path: ContextElement, fillRule?: FillRule): void {
+    /** Fills the given path or text element using the current fill style. */
+    applyFill(path: ContextElement, fillRule?: FillRule): void {
     }
 
-    stroke(path: ContextElement): void {
+    /** Strokes the given path or text element using the current stroke style. */
+    applyStroke(path: ContextElement): void {
     }
 
+    /** Tests whether a point is inside the filled region of a path. */
     isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         return false;
     }
 
+    /** Tests whether a point is on the stroked outline of a path. */
     isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         return false;
     }
 
+    private getTrackedElements = functionMemoize((event: string) => {
+        return this.renderedElements.filter(element => element.has(event));
+    });
+
+    private attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+        this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), INTERACTION_KEY);
+    }
+
+    /** Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing. */
+    public enableInteraction(): void {
+        if (this.interactionEnabled) {
+            return;
+        }
+
+        this.interactionEnabled = true;
+
+        let left = 0;
+        let top = 0;
+
+        const scheduleHitTest = createFrameBuffer();
+
+        this.attachInteractionEvent('mouseenter', () => {
+            ({
+                left,
+                top,
+            } = this.element.getBoundingClientRect());
+
+            this.emit('mouseenter', null);
+        });
+
+        this.attachInteractionEvent('mouseleave', () => {
+            this.emit('mouseleave', null);
+        });
+
+        this.attachInteractionEvent('mousemove', event => {
+            const x = event.clientX - left;
+            const y = event.clientY - top;
+
+            this.emit('mousemove', {
+                x,
+                y,
+            });
+
+            scheduleHitTest(() => {
+                const trueX = this.scaleX(x);
+                const trueY = this.scaleY(y);
+
+                const trackedElements = [
+                    ...this.getTrackedElements('mousemove'),
+                    ...this.getTrackedElements('mouseenter'),
+                    ...this.getTrackedElements('mouseleave'),
+                ];
+
+                const hitElements = trackedElements.filter(element => element.intersectsWith(trueX, trueY, {
+                    isPointer: true,
+                }));
+
+                const {
+                    left: entries,
+                    inner: updates,
+                    right: exits,
+                } = arrayJoin(hitElements, [...this.activeElements], (hitElement, activeElement) => hitElement === activeElement);
+
+                entries.forEach(element => {
+                    this.activeElements.add(element);
+                    element.emit('mouseenter', null);
+                });
+
+                updates.forEach(([element]) => element.emit('mousemove', {
+                    x,
+                    y,
+                }));
+
+                exits.forEach(element => {
+                    this.activeElements.delete(element);
+                    element.emit('mouseleave', null);
+                });
+            });
+        });
+
+        this.attachInteractionEvent('click', event => {
+            const x = this.scaleX(event.clientX - left);
+            const y = this.scaleY(event.clientY - top);
+
+            const clickElements = this.getTrackedElements('click');
+            const hitElements = clickElements.filter(element => element.intersectsWith(x, y, {
+                isPointer: true,
+            }));
+
+            if (hitElements.length > 0) {
+                hitElements.sort((ea, eb) => {
+                    const depthA = ea.renderDepth;
+                    const depthB = eb.renderDepth;
+
+                    if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
+                        return depthA - depthB;
+                    }
+
+                    return eb.zIndex - ea.zIndex;
+                });
+
+                hitElements[0].emit('click', {
+                    x,
+                    y,
+                });
+            }
+        });
+    }
+
+    /** Disables DOM interaction events and clears the active element set. */
+    public disableInteraction(): void {
+        if (!this.interactionEnabled) {
+            return;
+        }
+
+        this.interactionEnabled = false;
+        this.dispose(INTERACTION_KEY);
+        this.activeElements.clear();
+    }
+
+    /** Destroys the context, removing the DOM element and disposing all resources. */
     public destroy(): void {
-        arrayForEach(this.disposables, ({ dispose }) => dispose());
+        this.disableInteraction();
         this.element.remove();
+        this.dispose();
         super.destroy();
     }
 
 }
 
+/** Type guard that checks whether a value is a `Context` instance. */
 export function typeIsContext(value: unknown): value is Context {
     return value instanceof Context;
 }

@@ -31,15 +31,15 @@ import {
 } from '../animation';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     OneOrMore,
     typeIsFunction,
     valueOneOrMore,
 } from '@ripl/utilities';
 
+/** Alias for the transition playback direction within the renderer. */
 export type RendererTransitionDirection = TransitionDirection;
 
+/** Event map for the renderer, with start, stop, and per-frame tick events. */
 export interface RendererEventMap extends EventMap {
     start: {
         startTime: number;
@@ -54,6 +54,7 @@ export interface RendererEventMap extends EventMap {
     };
 }
 
+/** Internal representation of an active transition managed by the renderer. */
 export interface RendererTransition {
     startTime: number;
     duration: number;
@@ -64,6 +65,7 @@ export interface RendererTransition {
     callback(): void;
 }
 
+/** Options for scheduling a transition on one or more elements via the renderer. */
 export interface RendererTransitionOptions<TElement extends Element> {
     duration?: number;
     ease?: Ease;
@@ -74,6 +76,7 @@ export interface RendererTransitionOptions<TElement extends Element> {
     onComplete?(element: Element): void;
 }
 
+/** Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays. */
 export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
@@ -84,12 +87,14 @@ export interface RendererOptions {
     };
 }
 
+/** Transition options can be a static object or a per-element factory function. */
 export type RendererTransitionOptionsArg<TElement extends Element> = RendererTransitionOptions<TElement> | ((
     element: TElement extends Group ? Element : TElement,
     index: number,
     length: number
 ) => RendererTransitionOptions<TElement>);
 
+/** Drives the animation loop via `requestAnimationFrame`, managing per-element transitions and rendering the scene each frame. */
 export class Renderer extends EventBus<RendererEventMap> {
 
     private scene: Scene;
@@ -105,6 +110,7 @@ export class Renderer extends EventBus<RendererEventMap> {
     public autoStop = true;
     public sortBuffer?: (buffer: Element[]) => Element[];
 
+    /** Whether there are any active transitions in progress. */
     public get isBusy() {
         return !!this.transitionMap.size;
     }
@@ -128,8 +134,8 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (autoStop) {
-            scene.on('mousemove', () => this.start(), { self: true });
-            scene.on('mouseleave', () => this.stopOnIdle(), { self: true });
+            scene.context.on('mousemove', () => this.start());
+            scene.context.on('mouseleave', () => this.stopOnIdle());
         }
 
         scene.on('graph', () => this.start());
@@ -157,7 +163,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this.previousTime = this.currentTime;
 
-        arrayForEach(buffer, element => {
+        buffer.forEach(element => {
             if (this.transitionMap.has(element.id)) {
                 let time = 0;
 
@@ -206,6 +212,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         this.handle = requestAnimationFrame(() => this.tick());
     }
 
+    /** Starts the animation loop if it is not already running. */
     public start() {
         if (this.running) {
             return;
@@ -222,6 +229,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         requestAnimationFrame(() => this.tick());
     }
 
+    /** Stops the animation loop, cancels pending frames, and clears all transitions. */
     public stop() {
         if (!this.running) {
             return;
@@ -246,6 +254,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
     }
 
+    /** Schedules an animated transition for one or more elements, returning a `Transition` that resolves when all complete. */
     public transition<TElement extends Element>(element: OneOrMore<TElement>, options?: RendererTransitionOptionsArg<TElement>) {
         this.start();
 
@@ -255,7 +264,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         return new Transition((resolve, _reject, _onAbort) => {
-            const elements = arrayFlatMap(valueOneOrMore(element), element => {
+            const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.graph(false) : [element];
             });
 
@@ -266,7 +275,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             const totalCount = elements.length;
             let completeCount = 0;
 
-            arrayForEach(elements, (element, index) => {
+            elements.forEach((element, index) => {
                 const {
                     duration = 0,
                     delay = 0,
@@ -318,6 +327,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         });
     }
 
+    /** Stops the renderer and destroys all event subscriptions. */
     public destroy(): void {
         this.stop();
         super.destroy();
@@ -325,6 +335,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
 }
 
+/** Factory function that creates a new `Renderer` bound to the given scene. */
 export function createRenderer(...options: ConstructorParameters<typeof Renderer>) {
     return new Renderer(...options);
 }

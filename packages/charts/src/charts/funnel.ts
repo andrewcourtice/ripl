@@ -21,13 +21,11 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -38,6 +36,16 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
 }
 
+/**
+ * Funnel chart rendering horizontally centered bars of decreasing width.
+ *
+ * Each data item is rendered as a centered rectangle whose width is
+ * proportional to its value relative to the maximum. Segments are stacked
+ * vertically with configurable gaps. Supports tooltips, labels, and
+ * animated expand-from-center entry transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -85,7 +93,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             // Find max value for width scaling
             let maxValue = 0;
 
-            arrayForEach(data, item => {
+            data.forEach(item => {
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
@@ -94,7 +102,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             const availableHeight = scene.height - padding.top - padding.bottom;
             const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
 
-            const calculations = arrayMap(data, (item, index) => {
+            const calculations = data.map((item, index) => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
                 const itemLabel = getLabel(item);
@@ -122,9 +130,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 right: exits,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            arrayForEach(exits, el => el.destroy());
+            exits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(entries, item => {
+            const entryGroups = entries.map(item => {
                 const itemColor = item.color ?? colorGenerator.next().value!;
 
                 const rect = createRect({
@@ -133,12 +141,12 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     y: item.y,
                     width: 0,
                     height: item.height,
-                    fillStyle: setColorAlpha(itemColor, 0.7),
+                    fill: setColorAlpha(itemColor, 0.7),
                     borderRadius,
                     data: {
                         x: item.x,
                         width: item.width,
-                        fillStyle: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, 0.7),
                     } as RectState,
                 });
 
@@ -149,7 +157,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: itemColor,
+                            fill: itemColor,
                         },
                     });
 
@@ -160,7 +168,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(itemColor, 0.7),
+                                fill: setColorAlpha(itemColor, 0.7),
                             },
                         });
                     });
@@ -171,13 +179,13 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     x: scene.width / 2,
                     y: item.y + item.height / 2,
                     content: item.label,
-                    fillStyle: '#333',
+                    fill: '#333',
                     font: '12px sans-serif',
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -187,9 +195,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 });
             });
 
-            const updateGroups = arrayMap(updates, ([item, group]) => {
+            const updateGroups = updates.map(([item, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const itemColor = item.color ?? (rect.fillStyle as string);
+                const itemColor = item.color ?? (rect.fill as string);
 
                 if (rect) {
                     rect.data = {
@@ -197,7 +205,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         y: item.y,
                         width: item.width,
                         height: item.height,
-                        fillStyle: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, 0.7),
                     } as RectState;
                 }
 
@@ -212,8 +220,8 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             ];
 
             // Animate entries
-            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
-            const entryTexts = arrayFlatMap(entryGroups, g => g.getElementsByType('text'));
+            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));
 
             const rectsTransition = renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -230,7 +238,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             }));
 
             // Animate updates
-            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),
@@ -248,6 +256,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
 }
 
+/** Factory function that creates a new {@link FunnelChart} instance. */
 export function createFunnelChart<TData = unknown>(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
     return new FunnelChart<TData>(target, options);
 }

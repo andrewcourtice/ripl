@@ -12,12 +12,14 @@ import type {
     Vector3,
 } from '../math/vector';
 
+/** State interface for a sphere, defining radius, longitudinal segments, and latitudinal rings. */
 export interface SphereState extends Shape3DState {
     radius: number;
     segments: number;
     rings: number;
 }
 
+/** A 3D sphere shape tessellated with configurable segments and rings. */
 export class Sphere extends Shape3D<SphereState> {
 
     public get radius() {
@@ -100,10 +102,12 @@ function sphereVertex(radius: number, phi: number, theta: number): Vector3 {
     ];
 }
 
+/** Factory function that creates a new `Sphere` instance. */
 export function createSphere(...options: ConstructorParameters<typeof Sphere>) {
     return new Sphere(...options);
 }
 
+/** Type guard that checks whether a value is a `Sphere` instance. */
 export function elementIsSphere(value: unknown): value is Sphere {
     return value instanceof Sphere;
 }

@@ -14,6 +14,7 @@ import {
     max,
 } from '../math';
 
+/** State interface for a regular polygon element, defining center, radius, and number of sides. */
 export interface PolygonState extends BaseElementState {
     cx: number;
     cy: number;
@@ -21,6 +22,7 @@ export interface PolygonState extends BaseElementState {
     sides: number;
 }
 
+/** A regular polygon shape with a configurable number of sides. */
 export class Polygon extends Shape2D<PolygonState> {
 
     public get cx() {
@@ -84,10 +86,12 @@ export class Polygon extends Shape2D<PolygonState> {
 
 }
 
+/** Factory function that creates a new `Polygon` instance. */
 export function createPolygon(...options: ConstructorParameters<typeof Polygon>) {
     return new Polygon(...options);
 }
 
+/** Type guard that checks whether a value is a `Polygon` instance. */
 export function elementIsPolygon(value: unknown): value is Polygon {
     return value instanceof Polygon;
 }

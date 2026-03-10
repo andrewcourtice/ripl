@@ -17,7 +17,7 @@ const cone = createCone({
     radius: 1,
     height: 2,
     segments: 16,
-    fillStyle: '#cc4444',
+    fill: '#cc4444',
 });
 ```
 
@@ -54,7 +54,7 @@ const camera = createCamera(scene, { position: [0, 1.5, 5],
 
 const cone = createCone({ radius: 1,
     height: 2,
-    fillStyle: '#cc4444' });
+    fill: '#cc4444' });
 
 let angle = 0;
 function loop() {
@@ -81,7 +81,7 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createCone({ radius: 1, height: 2, fillStyle: '#cc4444' }));
+    scene.add(createCone({ radius: 1, height: 2, fill: '#cc4444' }));
     startRotation(camera);
 });
 </script>

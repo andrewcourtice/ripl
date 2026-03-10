@@ -15,6 +15,7 @@ import {
     setColorAlpha,
 } from '@ripl/core';
 
+/** Options for configuring a {@link GaugeChart}. */
 export interface GaugeChartOptions extends BaseChartOptions {
     value: number;
     min?: number;
@@ -34,6 +35,13 @@ export interface GaugeChartOptions extends BaseChartOptions {
 const DEFAULT_COLOR = '#7cacf8';
 const DEFAULT_TRACK_COLOR = '#e5e7eb';
 
+/**
+ * Gauge chart displaying a single value on a 270-degree arc.
+ *
+ * Renders a background track arc and an animated value arc spanning from
+ * the minimum to the current value. Supports configurable tick marks
+ * with labels, a central value display, and an optional descriptive label.
+ */
 export class GaugeChart extends Chart<GaugeChartOptions> {
 
     private group?: Group;
@@ -91,7 +99,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 innerRadius,
                 startAngle,
                 endAngle,
-                fillStyle: trackColor,
+                fill: trackColor,
                 padAngle: 0,
             });
 
@@ -106,7 +114,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 innerRadius,
                 startAngle,
                 endAngle: startAngle,
-                fillStyle: setColorAlpha(color, 0.8),
+                fill: setColorAlpha(color, 0.8),
                 padAngle: 0,
                 data: {
                     endAngle: valueAngle,
@@ -123,13 +131,13 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 x: cx,
                 y: cy - 10,
                 content: displayValue,
-                fillStyle: '#333',
+                fill: '#333',
                 font: `bold ${Math.round(size * 0.08)}px sans-serif`,
                 textAlign: 'center',
                 textBaseline: 'middle',
-                globalAlpha: 0,
+                opacity: 0,
                 data: {
-                    globalAlpha: 1,
+                    opacity: 1,
                 },
             });
 
@@ -142,13 +150,13 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                     x: cx,
                     y: cy + 15,
                     content: label,
-                    fillStyle: '#6b7280',
+                    fill: '#6b7280',
                     font: `${Math.round(size * 0.04)}px sans-serif`,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -181,7 +189,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                         y1: innerY,
                         x2: outerX,
                         y2: outerY,
-                        strokeStyle: '#9ca3af',
+                        stroke: '#9ca3af',
                         lineWidth: 1.5,
                     }));
 
@@ -207,7 +215,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                             x: labelX,
                             y: labelY,
                             content: tickLabel,
-                            fillStyle: '#9ca3af',
+                            fill: '#9ca3af',
                             font: '10px sans-serif',
                             textAlign,
                             textBaseline: 'middle',
@@ -239,6 +247,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link GaugeChart} instance. */
 export function createGaugeChart(target: string | HTMLElement | Context, options: GaugeChartOptions) {
     return new GaugeChart(target, options);
 }

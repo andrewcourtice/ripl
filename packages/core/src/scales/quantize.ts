@@ -11,6 +11,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a quantize scale that divides a continuous numeric domain into uniform segments mapped to discrete range values. */
 export function scaleQuantize<TRange>(
     domain: number[],
     range: TRange[]

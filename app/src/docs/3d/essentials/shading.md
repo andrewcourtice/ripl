@@ -82,10 +82,10 @@ context.lightDirection = [-1, -1, -1];
 
 const cubeLeft = createCube({ x: -1.5,
     size: 1.5,
-    fillStyle: '#4488ff' });
+    fill: '#4488ff' });
 const cubeRight = createCube({ x: 1.5,
     size: 1.5,
-    fillStyle: '#ff6644' });
+    fill: '#ff6644' });
 
 // Rotate camera around the scene
 let angle = 0;
@@ -119,8 +119,8 @@ import {
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
     scene.context.lightDirection = [-1, -1, -1];
-    scene.add(createCube({ x: -1.5, size: 1.5, fillStyle: '#4488ff' }));
-    scene.add(createCube({ x: 1.5, size: 1.5, fillStyle: '#ff6644' }));
+    scene.add(createCube({ x: -1.5, size: 1.5, fill: '#4488ff' }));
+    scene.add(createCube({ x: 1.5, size: 1.5, fill: '#ff6644' }));
     startRotation(camera);
 });
 </script>

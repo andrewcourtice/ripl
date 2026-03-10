@@ -6,6 +6,7 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a discrete (ordinal) scale that maps domain values to corresponding range values by index. */
 export function scaleDiscrete<TDomain>(
     domain: TDomain[],
     range: number[]

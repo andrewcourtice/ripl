@@ -29,12 +29,14 @@ import type {
     Vector3,
 } from './math';
 
+/** Options for the 3D rendering context, extending the base context options with camera parameters. */
 export interface Context3DOptions extends ContextOptions {
     fov?: number;
     near?: number;
     far?: number;
 }
 
+/** 3D rendering context extending the Canvas context with view/projection matrices and a face buffer for painter's algorithm sorting. */
 export class Context3D extends CanvasContext {
 
     public viewMatrix: Matrix4;
@@ -91,11 +93,13 @@ export class Context3D extends CanvasContext {
         }
     }
 
+    /** Sets the view matrix from an eye position, look-at target, and up direction. */
     public setCamera(eye: Vector3, target: Vector3, up: Vector3): void {
         this.viewMatrix = mat4LookAt(eye, target, up);
         this.updateViewProjectionMatrix();
     }
 
+    /** Updates the perspective projection with the given field of view, near, and far planes. */
     public setPerspective(fov: number, near: number, far: number): void {
         this.fov = fov;
         this.near = near;
@@ -103,6 +107,7 @@ export class Context3D extends CanvasContext {
         this.updateProjectionMatrix();
     }
 
+    /** Sets an orthographic projection with explicit frustum bounds. */
     public setOrthographic(
         left: number,
         right: number,
@@ -115,6 +120,7 @@ export class Context3D extends CanvasContext {
         this.updateViewProjectionMatrix();
     }
 
+    /** Projects a 3D world-space point to 2D screen coordinates. */
     public project(point: Vector3): ProjectedPoint {
         const clip = mat4TransformPoint(this.viewProjectionMatrix, point);
 
@@ -200,6 +206,7 @@ export class Context3D extends CanvasContext {
 
 }
 
+/** Creates a 3D rendering context attached to the given DOM target. */
 export function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D {
     return new Context3D(target, options);
 }

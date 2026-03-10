@@ -40,13 +40,11 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link HeatmapChart}. */
 export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     xBy: keyof TData | ((item: TData) => string);
@@ -83,6 +81,15 @@ function interpolateHexColor(colorA: string, colorB: string, t: number): string 
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+/**
+ * Heatmap chart rendering a grid of colored cells on two categorical axes.
+ *
+ * Cell color is interpolated between a configurable low/high color range
+ * based on each data point's value. Supports x/y axes, tooltips, and
+ * animated fade-in entry transitions with smooth color updates.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>> {
 
     private cellGroups: Group[] = [];
@@ -162,7 +169,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             let minVal = Infinity;
             let maxVal = -Infinity;
 
-            arrayForEach(data, item => {
+            data.forEach(item => {
                 const v = getValue(item);
                 minVal = Math.min(minVal, v);
                 maxVal = Math.max(maxVal, v);
@@ -268,7 +275,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             );
 
             // Draw cells
-            const cellData = arrayMap(data, item => {
+            const cellData = data.map(item => {
                 const xVal = getX(item);
                 const yVal = getY(item);
                 const value = getValue(item);
@@ -294,20 +301,20 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 right: cellExits,
             } = arrayJoin(cellData, this.cellGroups, (item, group) => item.id === group.id);
 
-            arrayForEach(cellExits, el => el.destroy());
+            cellExits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(cellEntries, cell => {
+            const entryGroups = cellEntries.map(cell => {
                 const rect = createRect({
                     id: `${cell.id}-rect`,
                     x: cell.x,
                     y: cell.y,
                     width: cell.width,
                     height: cell.height,
-                    fillStyle: cell.color,
-                    globalAlpha: 0,
+                    fill: cell.color,
+                    opacity: 0,
                     borderRadius,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -322,7 +329,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            globalAlpha: 0.8,
+                            opacity: 0.8,
                         },
                     });
 
@@ -333,7 +340,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                globalAlpha: 1,
+                                opacity: 1,
                             },
                         });
                     });
@@ -345,7 +352,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 });
             });
 
-            const updateGroups = arrayMap(cellUpdates, ([cell, group]) => {
+            const updateGroups = cellUpdates.map(([cell, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
 
                 if (rect) {
@@ -354,8 +361,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         y: cell.y,
                         width: cell.width,
                         height: cell.height,
-                        fillStyle: cell.color,
-                        globalAlpha: 1,
+                        fill: cell.color,
+                        opacity: 1,
                     } as RectState;
                 }
 
@@ -370,7 +377,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ];
 
             // Animate
-            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
+            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const entriesTransition = this.renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -379,7 +386,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = this.renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),
@@ -398,6 +405,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link HeatmapChart} instance. */
 export function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
     return new HeatmapChart<TData>(target, options);
 }

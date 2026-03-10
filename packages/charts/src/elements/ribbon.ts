@@ -12,6 +12,7 @@ import {
     Shape2DOptions,
 } from '@ripl/core';
 
+/** State interface for a ribbon shape connecting two arc segments via quadratic curves. */
 export interface RibbonState extends BaseElementState {
     cx: number;
     cy: number;
@@ -22,6 +23,7 @@ export interface RibbonState extends BaseElementState {
     targetEnd: number;
 }
 
+/** A chord diagram ribbon connecting two arc segments with quadratic Bézier curves through the center. */
 export class Ribbon extends Shape2D<RibbonState> {
 
     public get cx() {
@@ -147,10 +149,12 @@ export class Ribbon extends Shape2D<RibbonState> {
 
 }
 
+/** Factory function that creates a new `Ribbon` instance. */
 export function createRibbon(...options: ConstructorParameters<typeof Ribbon>) {
     return new Ribbon(...options);
 }
 
+/** Type guard that checks whether a value is a `Ribbon` instance. */
 export function elementIsRibbon(value: unknown): value is Ribbon {
     return value instanceof Ribbon;
 }

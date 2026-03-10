@@ -19,7 +19,8 @@ import type {
     ScaleMethod,
 } from './types';
 
-export type PowerScaleOptions = LinearScaleOptions & {
+/** Options for a power scale, adding a configurable exponent to the base linear scale options. */
+export interface PowerScaleOptions extends LinearScaleOptions {
     exponent?: number;
 };
 
@@ -87,6 +88,7 @@ function getPowerInverseMethod(domain: number[], range: number[], exponent: numb
     };
 }
 
+/** Creates a power scale that maps a numeric domain to a range using an exponential transformation. */
 export function scalePower(
     domain: number[],
     range: number[],
@@ -110,13 +112,14 @@ export function scalePower(
     });
 }
 
-export function scaleSqrt(
+/** Shortcut for a power scale with exponent 0.5 (square root). */
+export const scaleSqrt = (
     domain: number[],
     range: number[],
     options?: LinearScaleOptions
-): Scale<number> {
+): Scale<number> => {
     return scalePower(domain, range, {
         ...options,
         exponent: 0.5,
     });
-}
+};

@@ -22,7 +22,7 @@ const context = createContext('.mount-element');
 
 // Sharp corners
 createRect({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     x: 50,
     y: 50,
     width: 150,
@@ -31,7 +31,7 @@ createRect({
 
 // Rounded corners
 createRect({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     x: 250,
     y: 50,
     width: 150,
@@ -63,37 +63,37 @@ const {
         context.markRenderStart();
 
         createRect({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             x: w * 0.15, y: h / 2 - rh / 2, width: rw, height: rh,
         }).render(context);
 
         createText({
             x: w * 0.15 + rw / 2, y: h / 2 + rh / 2 + 20,
-            content: 'Sharp', fillStyle: '#666',
+            content: 'Sharp', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createRect({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             x: w * 0.5 - rw / 2, y: h / 2 - rh / 2, width: rw, height: rh,
             borderRadius: 16,
         }).render(context);
 
         createText({
             x: w * 0.5, y: h / 2 + rh / 2 + 20,
-            content: 'Rounded', fillStyle: '#666',
+            content: 'Rounded', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createRect({
-            fillStyle: '#8338ec',
+            fill: '#8338ec',
             x: w * 0.85 - rw, y: h / 2 - rh / 2, width: rw, height: rh,
             borderRadius: [24, 0, 24, 0],
         }).render(context);
 
         createText({
             x: w * 0.85 - rw / 2, y: h / 2 + rh / 2 + 20,
-            content: 'Per-Corner', fillStyle: '#666',
+            content: 'Per-Corner', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
@@ -113,7 +113,7 @@ import {
 } from '@ripl/core';
 
 const rect = createRect({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     x: 50,
     y: 50,
     width: 200,

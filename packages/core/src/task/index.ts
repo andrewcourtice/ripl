@@ -3,10 +3,16 @@ import {
     setForEach,
 } from '@ripl/utilities';
 
+/** Callback to resolve a task with a value or promise. */
 export type TaskResolve<TResult> = (value: TResult | PromiseLike<TResult>) => void;
+
+/** Callback to reject a task with an optional reason. */
 export type TaskReject = (reason?: unknown) => unknown;
+
+/** Callback invoked when a task is aborted, receiving the abort reason. */
 export type TaskAbortCallback = (reason?: unknown) => void;
 
+/** Executor function for a task, providing resolve, reject, abort registration, and the underlying `AbortController`. */
 export type TaskExecutor<TResult> = (
     resolve: TaskResolve<TResult>,
     reject: TaskReject,
@@ -14,6 +20,7 @@ export type TaskExecutor<TResult> = (
     controller: AbortController
 ) => void;
 
+/** Error thrown when a task is aborted, carrying the abort reason. */
 export class TaskAbortError extends Error {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +34,7 @@ export class TaskAbortError extends Error {
 
 }
 
+/** A cancellable promise with `AbortController` integration, supporting abort callbacks and chaining. */
 export class Task<TResult = void> extends Promise<TResult> {
 
     private controller: AbortController;
@@ -85,14 +93,17 @@ export class Task<TResult = void> extends Promise<TResult> {
         this.controller = controller;
     }
 
+    /** The `AbortSignal` associated with this task's controller. */
     public get signal(): AbortSignal {
         return this.controller.signal;
     }
 
+    /** Whether this task has already been aborted. */
     public get hasAborted(): boolean {
         return this.signal.aborted;
     }
 
+    /** Aborts the task with an optional reason, triggering all registered abort callbacks. */
     public abort(reason?: unknown): this {
         this.abortReason = reason;
         this.controller.abort();

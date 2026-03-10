@@ -14,6 +14,7 @@ import {
     min,
 } from '../math';
 
+/** State interface for a line element, defining start and end coordinates. */
 export interface LineState extends BaseElementState {
     x1: number;
     y1: number;
@@ -21,6 +22,7 @@ export interface LineState extends BaseElementState {
     y2: number;
 }
 
+/** A straight line segment between two points. */
 export class Line extends Shape2D<LineState> {
 
     public get x1() {
@@ -77,10 +79,12 @@ export class Line extends Shape2D<LineState> {
 
 }
 
+/** Factory function that creates a new `Line` instance. */
 export function createLine(...options: ConstructorParameters<typeof Line>) {
     return new Line(...options);
 }
 
+/** Type guard that checks whether a value is a `Line` instance. */
 export function elementIsLine(value: unknown): value is Line {
     return value instanceof Line;
 }

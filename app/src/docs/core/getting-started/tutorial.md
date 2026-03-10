@@ -29,7 +29,7 @@ import {
 const context = createContext('.mount-element');
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: context.width / 2,
     cy: context.height / 2,
     radius: Math.min(context.width, context.height) / 3,
@@ -60,7 +60,7 @@ An element can be modified at any point by changing its properties and re-render
 ```ts
 // Change any property directly
 circle.radius = 80;
-circle.fillStyle = '#ff006e';
+circle.fill = '#ff006e';
 
 // Then re-render
 context.clear();
@@ -72,7 +72,7 @@ circle.render(context);
 
 ### Using Groups
 
-Groups let you organize elements into a hierarchy — just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fillStyle` once on the group instead of on every element.
+Groups let you organize elements into a hierarchy — just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fill` once on the group instead of on every element.
 
 :::tabs
 == Demo
@@ -101,9 +101,9 @@ const rect = createRect({
     height: context.height / 3,
 });
 
-// Both children inherit fillStyle from the group
+// Both children inherit fill from the group
 const group = createGroup({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     children: [circle, rect],
 });
 
@@ -140,13 +140,13 @@ import {
 const scene = createScene('.mount-element', {
     children: [
         createCircle({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 200,
             cy: 150,
             radius: 60,
         }),
         createRect({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             x: 280,
             y: 100,
             width: 120,
@@ -193,7 +193,7 @@ const scene = createScene('.mount-element', {
     children: [
         createCircle({
             id: 'my-circle',
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: 200,
             cy: 150,
             radius: 60,
@@ -211,7 +211,7 @@ await renderer.transition(circle, {
     ease: easeOutCubic,
     state: {
         radius: 100,
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
     },
 });
 ```
@@ -239,7 +239,7 @@ async function animate() {
         ease: easeOutCubic,
         state: {
             radius: 100,
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
         },
     });
 
@@ -249,7 +249,7 @@ async function animate() {
         ease: easeInOutQuad,
         state: {
             radius: 60,
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
         },
     });
 }
@@ -305,14 +305,14 @@ const {
         cx: width / 2,
         cy: height / 2,
         radius: Math.min(width, height) / 3,
-        fillStyle: '#3a86ff'
+        fill: '#3a86ff'
     });
 
     const label = createText({
         x: circle.cx,
         y: circle.cy,
         content: context.type,
-        fillStyle: '#FFFFFF',
+        fill: '#FFFFFF',
         textAlign: 'center',
         textBaseline: 'middle',
         font: '24px sans-serif'
@@ -358,7 +358,7 @@ const {
         cx: width / 2,
         cy: height / 2,
         radius: shortSize / 3,
-        fillStyle: '#3a86ff'
+        fill: '#3a86ff'
     });
 
     changeCircle.render(context);
@@ -403,7 +403,7 @@ const {
     });
 
     const group = createGroup({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         children: [circle, rect],
     });
 
@@ -427,13 +427,13 @@ const {
     const scene = createScene(context, {
         children: [
             createCircle({
-                fillStyle: '#3a86ff',
+                fill: '#3a86ff',
                 cx: width / 3,
                 cy: height / 2,
                 radius: Math.min(width, height) / 5,
             }),
             createRect({
-                fillStyle: '#ff006e',
+                fill: '#ff006e',
                 x: width / 2,
                 y: height / 3,
                 width: width / 4,
@@ -460,7 +460,7 @@ const {
 
     rendererCircle = createCircle({
         id: 'renderer-circle',
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: width / 2,
         cy: height / 2,
         radius: Math.min(width, height) / 5,
@@ -482,7 +482,7 @@ function animateRenderer() {
         ease: easeOutCubic,
         state: {
             radius: Math.min(rendererScene.width, rendererScene.height) / 3,
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
         },
     });
 }
@@ -495,7 +495,7 @@ function resetRenderer() {
         ease: easeOutCubic,
         state: {
             radius: Math.min(rendererScene.width, rendererScene.height) / 5,
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
         },
     });
 }
@@ -514,7 +514,7 @@ const {
     const height = context.height;
 
     animCircle = createCircle({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: width / 2,
         cy: height / 2,
         radius: Math.min(width, height) / 5,
@@ -538,7 +538,7 @@ async function runAnimation() {
         ease: easeOutCubic,
         state: {
             radius: shortSize / 3,
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
         },
     });
 
@@ -547,7 +547,7 @@ async function runAnimation() {
         ease: easeInOutQuad,
         state: {
             radius: shortSize / 5,
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
         },
     });
 
@@ -556,7 +556,7 @@ async function runAnimation() {
         ease: easeOutCubic,
         state: {
             cx: animScene.width / 4,
-            fillStyle: '#8338ec',
+            fill: '#8338ec',
         },
     });
 
@@ -565,7 +565,7 @@ async function runAnimation() {
         ease: easeOutCubic,
         state: {
             cx: animScene.width / 2,
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
         },
     });
 }

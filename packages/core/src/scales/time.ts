@@ -5,7 +5,6 @@ import {
 } from './_base';
 
 import {
-    arrayMap,
     arrayMapRange,
 } from '@ripl/utilities';
 
@@ -13,12 +12,13 @@ import type {
     Scale,
 } from './types';
 
+/** Creates a time scale that maps a `Date` domain to a numeric range using linear interpolation of timestamps. */
 export function scaleTime(
     domain: Date[],
     range: number[],
     options?: LinearScaleOptions
 ): Scale<Date, number> {
-    const numericDomain = arrayMap(domain, date => date.getTime());
+    const numericDomain = domain.map(date => date.getTime());
     const convert = getLinearScaleMethod(numericDomain, range, options);
     const invert = getLinearScaleMethod(range, numericDomain, options);
 

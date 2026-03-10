@@ -39,13 +39,10 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
 } from '@ripl/utilities';
 
+/** A node in a sunburst hierarchy with optional nested children. */
 export interface SunburstNode {
     id: string;
     label: string;
@@ -54,6 +51,7 @@ export interface SunburstNode {
     children?: SunburstNode[];
 }
 
+/** Options for configuring a {@link SunburstChart}. */
 export interface SunburstChartOptions extends BaseChartOptions {
     data: SunburstNode[];
     legend?: ChartLegendInput;
@@ -78,7 +76,7 @@ function flattenNodes(
     parentColor?: string,
     resolvedColors?: Map<string, string>
 ): FlattenedArc[] {
-    const total = arrayReduce(nodes, (sum, node) => sum + node.value, 0);
+    const total = nodes.reduce((sum, node) => sum + node.value, 0);
 
     if (total === 0) return [];
 
@@ -89,7 +87,7 @@ function flattenNodes(
     let currentAngle = startAngle;
     const result: FlattenedArc[] = [];
 
-    arrayForEach(nodes, node => {
+    nodes.forEach(node => {
         const nodeEndAngle = currentAngle + (scale(node.value) - scale(0));
         const color = resolvedColors?.get(node.id) ?? node.color ?? parentColor ?? colorGenerator.next().value!;
 
@@ -120,6 +118,14 @@ function flattenNodes(
     return result;
 }
 
+/**
+ * Sunburst chart rendering hierarchical data as concentric arc rings.
+ *
+ * Each depth level is rendered as a ring of arc segments whose angular
+ * extent is proportional to the node's value. Child nodes inherit parent
+ * colors and are positioned within the parent's angular range. Supports
+ * legend, tooltips, and staggered radial entry animations.
+ */
 export class SunburstChart extends Chart<SunburstChartOptions> {
 
     private groups: Group[] = [];
@@ -147,7 +153,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             // Pre-resolve top-level node colors so legend and arcs stay in sync
             const resolvedColors = new Map<string, string>();
 
-            arrayForEach(data, node => {
+            data.forEach(node => {
                 resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
             });
 
@@ -155,7 +161,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(data, node => ({
+                const legendItems: LegendItem[] = data.map(node => ({
                     id: node.id,
                     label: node.label,
                     color: resolvedColors.get(node.id)!,
@@ -191,7 +197,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             // Find max depth
             let maxDepth = 0;
 
-            arrayForEach(arcs, arc => {
+            arcs.forEach(arc => {
                 maxDepth = Math.max(maxDepth, arc.depth);
             });
 
@@ -204,9 +210,9 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 right: exits,
             } = arrayJoin(arcs, this.groups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(exits, el => el.destroy());
+            exits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(entries, arc => {
+            const entryGroups = entries.map(arc => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
                 const outerRadius = innerRadius + ringWidth - 2;
                 const padAngle = 0.02;
@@ -220,8 +226,8 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle,
-                    fillStyle: setColorAlpha(arc.color, 0.65),
-                    strokeStyle: arc.color,
+                    fill: setColorAlpha(arc.color, 0.65),
+                    stroke: arc.color,
                     lineWidth: 1,
                     data: {
                         endAngle: arc.endAngle,
@@ -238,7 +244,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: arc.color,
+                            fill: arc.color,
                         },
                     });
 
@@ -249,7 +255,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(arc.color, 0.65),
+                                fill: setColorAlpha(arc.color, 0.65),
                             },
                         });
                     });
@@ -261,7 +267,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 });
             });
 
-            const updateGroups = arrayMap(updates, ([arc, group]) => {
+            const updateGroups = updates.map(([arc, group]) => {
                 const innerRadius = innerBaseRadius + arc.depth * ringWidth;
                 const outerRadius = innerRadius + ringWidth - 2;
                 const segment = group.query('arc') as Arc;
@@ -274,8 +280,8 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fillStyle: setColorAlpha(arc.color, 0.65),
-                        strokeStyle: arc.color,
+                        fill: setColorAlpha(arc.color, 0.65),
+                        stroke: arc.color,
                     } as Partial<ArcState>;
                 }
 
@@ -296,7 +302,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }
 
             // Animate entries
-            const entryArcs = arrayFlatMap(entryGroups, g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const entriesTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(1000),
@@ -306,7 +312,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = arrayFlatMap(updateGroups, g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = updateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(1000),
@@ -320,6 +326,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link SunburstChart} instance. */
 export function createSunburstChart(target: string | HTMLElement | Context, options: SunburstChartOptions) {
     return new SunburstChart(target, options);
 }

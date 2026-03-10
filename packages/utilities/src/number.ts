@@ -2,6 +2,7 @@ import {
     typeIsNumber,
 } from './type';
 
+/** Computes the sum of an array of numbers, or of values mapped through an optional iteratee. */
 export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number) {
     return values.reduce((total, value) => {
         const output = typeIsNumber(value)
@@ -12,6 +13,7 @@ export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: 
     }, 0);
 }
 
+/** Computes the greatest common divisor of two integers using the Euclidean algorithm. */
 export function numberGCD(valueA: number, valueB: number) {
     while (valueB !== 0) {
         const temp = valueB;
@@ -23,6 +25,7 @@ export function numberGCD(valueA: number, valueB: number) {
     return valueA;
 }
 
+/** Rounds a value to a "nice" human-readable number (1, 2, 5, or 10 scaled by the appropriate power of ten). */
 export function numberNice(value: number, round: boolean = false) {
     const exponent = Math.floor(Math.log10(value));
     const factor = 10 ** exponent;

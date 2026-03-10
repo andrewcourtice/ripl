@@ -21,14 +21,11 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
-    arrayReduce,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link TreemapChart}. */
 export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -65,7 +62,7 @@ function layoutTreemap(
     height: number,
     gap: number
 ): TreemapNode[] {
-    const total = arrayReduce(items, (sum, item) => sum + item.value, 0);
+    const total = items.reduce((sum, item) => sum + item.value, 0);
 
     if (items.length === 0 || total === 0) return [];
 
@@ -116,6 +113,15 @@ function layoutTreemap(
     ];
 }
 
+/**
+ * Treemap chart rendering hierarchical data as nested, space-filling rectangles.
+ *
+ * Uses a recursive binary split layout to partition the available area
+ * proportionally by value. Supports tooltips, auto-sized labels for
+ * sufficiently large cells, and animated entry/update transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -162,7 +168,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const padding = this.getPadding();
 
-            const items = arrayMap(data, item => ({
+            const items = data.map(item => ({
                 key: getKey(item),
                 value: getValue(item),
                 label: getLabel(item),
@@ -184,9 +190,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 right: exits,
             } = arrayJoin(nodes, this.groups, (node, group) => node.key === group.id);
 
-            arrayForEach(exits, el => el.destroy());
+            exits.forEach(el => el.destroy());
 
-            const entryGroups = arrayMap(entries, node => {
+            const entryGroups = entries.map(node => {
                 const nodeColor = node.color ?? colorGenerator.next().value!;
 
                 const rect = createRect({
@@ -195,14 +201,14 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     y: node.y + node.height / 2,
                     width: 0,
                     height: 0,
-                    fillStyle: setColorAlpha(nodeColor, 0.65),
+                    fill: setColorAlpha(nodeColor, 0.65),
                     borderRadius,
                     data: {
                         x: node.x,
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fillStyle: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, 0.65),
                     } as RectState,
                 });
 
@@ -217,7 +223,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: nodeColor,
+                            fill: nodeColor,
                         },
                     });
 
@@ -228,7 +234,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(nodeColor, 0.65),
+                                fill: setColorAlpha(nodeColor, 0.65),
                             },
                         });
                     });
@@ -243,13 +249,13 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         x: node.x + node.width / 2,
                         y: node.y + node.height / 2,
                         content: node.label,
-                        fillStyle: '#333',
+                        fill: '#333',
                         font: `${Math.min(12, Math.max(9, node.width / 8))}px sans-serif`,
                         textAlign: 'center',
                         textBaseline: 'middle',
-                        globalAlpha: 0,
+                        opacity: 0,
                         data: {
-                            globalAlpha: 1,
+                            opacity: 1,
                         },
                     });
 
@@ -262,9 +268,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 });
             });
 
-            const updateGroups = arrayMap(updates, ([node, group]) => {
+            const updateGroups = updates.map(([node, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const nodeColor = node.color ?? (rect.fillStyle as string);
+                const nodeColor = node.color ?? (rect.fill as string);
 
                 if (rect) {
                     rect.data = {
@@ -272,7 +278,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fillStyle: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, 0.65),
                     } as RectState;
                 }
 
@@ -287,7 +293,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             ];
 
             // Animate entries
-            const entryRects = arrayFlatMap(entryGroups, g => g.getElementsByType('rect')) as Rect[];
+            const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const rectsTransition = renderer.transition(entryRects, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -296,7 +302,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            const entryTexts = arrayFlatMap(entryGroups, g => g.getElementsByType('text'));
+            const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));
 
             const textsTransition = renderer.transition(entryTexts, (element, index, length) => ({
                 duration: this.getAnimationDuration(500),
@@ -306,7 +312,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             }));
 
             // Animate updates
-            const updateRects = arrayFlatMap(updateGroups, g => g.getElementsByType('rect')) as Rect[];
+            const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),
@@ -324,6 +330,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link TreemapChart} instance. */
 export function createTreemapChart<TData = unknown>(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
     return new TreemapChart<TData>(target, options);
 }

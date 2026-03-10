@@ -14,7 +14,8 @@ import {
 } from './number';
 
 import {
-    arrayMap, typeIsArray, typeIsNumber,
+    typeIsArray,
+    typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
@@ -64,13 +65,14 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
 }
 
+/** Interpolator factory that transitions between two point arrays, extrapolating additional points where set lengths differ. */
 export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
     const [
         extSetA,
         extSetB,
     ] = extrapolatePointSet(setA, setB);
 
-    const interpolators = arrayMap(extSetA, (pointA, index) => {
+    const interpolators = extSetA.map((pointA, index) => {
         const pointB = extSetB[index];
 
         return [
@@ -79,7 +81,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         ];
     });
 
-    return position => arrayMap(interpolators, ([ix, iy]) => [
+    return position => interpolators.map(([ix, iy]) => [
         ix(position),
         iy(position),
     ]);
@@ -87,6 +89,7 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
 
 interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));
 
+/** Creates an interpolator that returns the point along a polyline at the given normalised position. */
 export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
     const lastIndex = points.length - 1;
 
@@ -103,6 +106,7 @@ export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
     };
 }
 
+/** Creates an interpolator that progressively reveals a path from start to end as position advances from 0 to 1. */
 export function interpolatePath(points: Point[]): Interpolator<Point[]> {
     const lastIndex = points.length - 1;
     const getWaypoint = interpolateWaypoint(points);
@@ -118,6 +122,7 @@ export function interpolatePath(points: Point[]): Interpolator<Point[]> {
     };
 }
 
+/** Creates an interpolator that traces a point around the vertices of a regular polygon. */
 export function interpolatePolygonPoint(
     sides: number,
     cx: number,
@@ -129,6 +134,7 @@ export function interpolatePolygonPoint(
     return interpolateWaypoint(points);
 }
 
+/** Creates an interpolator that traces a point around a circle of the given centre and radius. */
 export function interpolateCirclePoint(
     cx: number,
     cy: number,
@@ -142,12 +148,13 @@ export function interpolateCirclePoint(
     ];
 }
 
+/** Interpolator factory that transitions between two border-radius values (single number or four-corner tuple). */
 export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius> = (radiusA, radiusB) => {
     const nRadiusA = normaliseBorderRadius(radiusA);
     const nRadiusB = normaliseBorderRadius(radiusB);
-    const interpolators = arrayMap(nRadiusA, (value, index) => interpolateNumber(value, nRadiusB[index]));
+    const interpolators = nRadiusA.map((value, index) => interpolateNumber(value, nRadiusB[index]));
 
-    return position => arrayMap(interpolators, ib => ib(position)) as BorderRadius;
+    return position => interpolators.map(ib => ib(position)) as BorderRadius;
 };
 
 interpolateBorderRadius.test = value => typeIsNumber(value) || (

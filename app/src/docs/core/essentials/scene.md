@@ -73,7 +73,7 @@ The scene extends the Group event system with DOM event delegation. It listens f
 
 ```ts
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 100,
     cy: 100,
     radius: 50,
@@ -91,12 +91,12 @@ circle.on('click', (event) => {
 });
 
 circle.on('mouseenter', () => {
-    circle.fillStyle = '#ff006e';
+    circle.fill = '#ff006e';
     scene.render();
 });
 
 circle.on('mouseleave', () => {
-    circle.fillStyle = '#3a86ff';
+    circle.fill = '#3a86ff';
     scene.render();
 });
 ```
@@ -154,14 +154,14 @@ import {
 } from '@ripl/core';
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 150,
     cy: 150,
     radius: 60,
 });
 
 const rect = createRect({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     x: 250,
     y: 90,
     width: 120,
@@ -175,12 +175,12 @@ const scene = createScene('.container', {
 scene.render();
 
 circle.on('mouseenter', () => {
-    circle.fillStyle = '#8338ec';
+    circle.fill = '#8338ec';
     scene.render();
 });
 
 circle.on('mouseleave', () => {
-    circle.fillStyle = '#3a86ff';
+    circle.fill = '#3a86ff';
     scene.render();
 });
 ```
@@ -205,12 +205,12 @@ const {
     const r = Math.min(w, h) / 6;
 
     const circle = createCircle({
-        fillStyle: '#3a86ff',
+        fill: '#3a86ff',
         cx: w * 0.35, cy: h / 2, radius: r,
     });
 
     const rect = createRect({
-        fillStyle: '#ff006e',
+        fill: '#ff006e',
         x: w * 0.55, y: h / 2 - r, width: r * 2, height: r * 2,
     });
 
@@ -220,12 +220,12 @@ const {
 
     scene.render();
 
-    circle.on('mouseenter', () => { circle.fillStyle = '#8338ec'; scene.render(); });
-    circle.on('mouseleave', () => { circle.fillStyle = '#3a86ff'; scene.render(); });
-    circle.on('click', () => { circle.fillStyle = '#fb5607'; scene.render(); });
+    circle.on('mouseenter', () => { circle.fill = '#8338ec'; scene.render(); });
+    circle.on('mouseleave', () => { circle.fill = '#3a86ff'; scene.render(); });
+    circle.on('click', () => { circle.fill = '#fb5607'; scene.render(); });
 
-    rect.on('mouseenter', () => { rect.fillStyle = '#8338ec'; scene.render(); });
-    rect.on('mouseleave', () => { rect.fillStyle = '#ff006e'; scene.render(); });
-    rect.on('click', () => { rect.fillStyle = '#fb5607'; scene.render(); });
+    rect.on('mouseenter', () => { rect.fill = '#8338ec'; scene.render(); });
+    rect.on('mouseleave', () => { rect.fill = '#ff006e'; scene.render(); });
+    rect.on('click', () => { rect.fill = '#fb5607'; scene.render(); });
 });
 </script>

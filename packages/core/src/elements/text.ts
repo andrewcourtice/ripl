@@ -16,6 +16,7 @@ import {
     Box,
 } from '../math';
 
+/** State interface for a text element, defining position, content, and optional path-based text layout. */
 export interface TextState extends BaseElementState {
     x: number;
     y: number;
@@ -24,6 +25,7 @@ export interface TextState extends BaseElementState {
     startOffset?: number;
 }
 
+/** A text element that renders string or numeric content, with optional path-based text layout. */
 export class Text extends Element<TextState> {
 
     public get x() {
@@ -103,22 +105,24 @@ export class Text extends Element<TextState> {
                 startOffset: this.startOffset,
             });
 
-            if (this.strokeStyle) {
-                return context.stroke(text);
+            if (this.stroke) {
+                return context.applyStroke(text);
             }
 
-            if (this.fillStyle) {
-                return context.fill(text);
+            if (this.fill) {
+                return context.applyFill(text);
             }
         });
     }
 
 }
 
+/** Factory function that creates a new `Text` instance. */
 export function createText(...options: ConstructorParameters<typeof Text>) {
     return new Text(...options);
 }
 
+/** Type guard that checks whether a value is a `Text` instance. */
 export function elementIsText(value: unknown): value is Text {
     return value instanceof Text;
 }

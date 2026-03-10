@@ -12,15 +12,14 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
     arrayJoin,
-    arrayMap,
 } from '@ripl/utilities';
 
+/** Options for constructing a grid component. */
 export interface GridOptions extends ChartComponentOptions {
     horizontal?: boolean;
     vertical?: boolean;
-    strokeStyle?: string;
+    stroke?: string;
     lineWidth?: number;
     lineDash?: number[];
 }
@@ -29,6 +28,7 @@ const DEFAULT_STROKE = '#e5e7eb';
 const DEFAULT_LINE_WIDTH = 1;
 const DEFAULT_LINE_DASH = [4, 4];
 
+/** A background grid component rendering horizontal and/or vertical dashed lines at tick positions. */
 export class Grid extends ChartComponent {
 
     private group?: Group;
@@ -36,7 +36,7 @@ export class Grid extends ChartComponent {
     private verticalLines: Line[] = [];
     private horizontal: boolean;
     private vertical: boolean;
-    private strokeStyle: string;
+    private stroke: string;
     private lineWidth: number;
     private lineDash: number[];
 
@@ -45,7 +45,7 @@ export class Grid extends ChartComponent {
 
         this.horizontal = options.horizontal ?? true;
         this.vertical = options.vertical ?? false;
-        this.strokeStyle = options.strokeStyle ?? DEFAULT_STROKE;
+        this.stroke = options.stroke ?? DEFAULT_STROKE;
         this.lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
         this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
@@ -75,16 +75,16 @@ export class Grid extends ChartComponent {
                 right: hExits,
             } = arrayJoin(yTicks, this.horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
 
-            arrayForEach(hExits, el => el.destroy());
+            hExits.forEach(el => el.destroy());
 
-            const newLines = arrayMap(hEntries, tickY => {
+            const newLines = hEntries.map(tickY => {
                 const line = createLine({
                     id: `grid-h-${tickY}`,
                     x1: x,
                     y1: tickY,
                     x2: x + width,
                     y2: tickY,
-                    strokeStyle: this.strokeStyle,
+                    stroke: this.stroke,
                     lineWidth: this.lineWidth,
                     lineDash: this.lineDash,
                 });
@@ -94,7 +94,7 @@ export class Grid extends ChartComponent {
                 return line;
             });
 
-            arrayForEach(hUpdates, ([tickY, line]) => {
+            hUpdates.forEach(([tickY, line]) => {
                 line.data = {
                     x1: x,
                     y1: tickY,
@@ -105,7 +105,7 @@ export class Grid extends ChartComponent {
 
             this.horizontalLines = [
                 ...newLines,
-                ...arrayMap(hUpdates, ([, line]) => line),
+                ...hUpdates.map(([, line]) => line),
             ];
         }
 
@@ -116,16 +116,16 @@ export class Grid extends ChartComponent {
                 right: vExits,
             } = arrayJoin(xTicks, this.verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
 
-            arrayForEach(vExits, el => el.destroy());
+            vExits.forEach(el => el.destroy());
 
-            const newLines = arrayMap(vEntries, tickX => {
+            const newLines = vEntries.map(tickX => {
                 const line = createLine({
                     id: `grid-v-${tickX}`,
                     x1: tickX,
                     y1: y,
                     x2: tickX,
                     y2: y + height,
-                    strokeStyle: this.strokeStyle,
+                    stroke: this.stroke,
                     lineWidth: this.lineWidth,
                     lineDash: this.lineDash,
                 });
@@ -135,7 +135,7 @@ export class Grid extends ChartComponent {
                 return line;
             });
 
-            arrayForEach(vUpdates, ([tickX, line]) => {
+            vUpdates.forEach(([tickX, line]) => {
                 line.data = {
                     x1: tickX,
                     y1: y,
@@ -146,7 +146,7 @@ export class Grid extends ChartComponent {
 
             this.verticalLines = [
                 ...newLines,
-                ...arrayMap(vUpdates, ([, line]) => line),
+                ...vUpdates.map(([, line]) => line),
             ];
         }
     }

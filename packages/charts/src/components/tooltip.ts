@@ -13,6 +13,7 @@ import {
     Text,
 } from '@ripl/core';
 
+/** Options for constructing a tooltip component. */
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
     font?: string;
@@ -25,6 +26,7 @@ export interface TooltipOptions extends ChartComponentOptions {
     formatContent?: (content: string) => string;
 }
 
+/** A boundary-aware tooltip component that shows text content near the mouse pointer with animated transitions. */
 export class Tooltip extends ChartComponent {
 
     private group: Group | null = null;
@@ -61,6 +63,7 @@ export class Tooltip extends ChartComponent {
         this.borderRadiusValue = borderRadius;
     }
 
+    /** Shows the tooltip at the given position with the specified text content. */
     public show(x: number, y: number, content: string) {
         // Clear any pending hide timeout
         if (this.hideTimeout !== null) {
@@ -71,7 +74,7 @@ export class Tooltip extends ChartComponent {
         if (!this.group) {
             const textElement = createText({
                 id: 'tooltip-text',
-                fillStyle: this.fontColor,
+                fill: this.fontColor,
                 font: this.font,
                 textAlign: 'center',
                 textBaseline: 'middle',
@@ -82,8 +85,8 @@ export class Tooltip extends ChartComponent {
 
             const background = createRect({
                 id: 'tooltip-bg',
-                fillStyle: this.backgroundColor,
-                strokeStyle: this.borderColor,
+                fill: this.backgroundColor,
+                stroke: this.borderColor,
                 lineWidth: 1,
                 borderRadius: this.borderRadiusValue,
                 x: 0,
@@ -94,7 +97,7 @@ export class Tooltip extends ChartComponent {
 
             this.group = createGroup({
                 id: 'tooltip',
-                globalAlpha: 0,
+                opacity: 0,
                 zIndex: 1000,
                 pointerEvents: 'none',
                 children: [background, textElement],
@@ -151,11 +154,11 @@ export class Tooltip extends ChartComponent {
         const textY = bgY + bgHeight / 2;
 
         // If tooltip is already visible, smoothly transition position
-        const isVisible = (this.group.globalAlpha || 0) > 0.1;
+        const isVisible = (this.group.opacity || 0) > 0.1;
 
         if (isVisible) {
             // Ensure tooltip stays visible while repositioning
-            this.group.globalAlpha = 1;
+            this.group.opacity = 1;
 
             this.renderer.transition(background, {
                 duration: 150,
@@ -184,12 +187,13 @@ export class Tooltip extends ChartComponent {
                 duration: 200,
                 ease: easeOutQuart,
                 state: {
-                    globalAlpha: 1,
+                    opacity: 1,
                 },
             });
         }
     }
 
+    /** Hides the tooltip with a short delay and fade-out animation. */
     public hide() {
         if (!this.group) {
             return;
@@ -207,7 +211,7 @@ export class Tooltip extends ChartComponent {
                     duration: 200,
                     ease: easeOutQuart,
                     state: {
-                        globalAlpha: 0,
+                        opacity: 0,
                     },
                 });
             }
@@ -217,6 +221,7 @@ export class Tooltip extends ChartComponent {
 
 }
 
+/** Factory function that creates a new `Tooltip` instance. */
 export function createTooltip(...options: ConstructorParameters<typeof Tooltip>) {
     return new Tooltip(...options);
 }

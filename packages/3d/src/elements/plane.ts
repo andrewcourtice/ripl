@@ -8,11 +8,13 @@ import type {
     Shape3DState,
 } from '../core/shape';
 
+/** State interface for a plane, defining width and height. */
 export interface PlaneState extends Shape3DState {
     width: number;
     height: number;
 }
 
+/** A flat rectangular 3D plane oriented along the XY plane. */
 export class Plane extends Shape3D<PlaneState> {
 
     public get width() {
@@ -54,10 +56,12 @@ export class Plane extends Shape3D<PlaneState> {
 
 }
 
+/** Factory function that creates a new `Plane` instance. */
 export function createPlane(...options: ConstructorParameters<typeof Plane>) {
     return new Plane(...options);
 }
 
+/** Type guard that checks whether a value is a `Plane` instance. */
 export function elementIsPlane(value: unknown): value is Plane {
     return value instanceof Plane;
 }

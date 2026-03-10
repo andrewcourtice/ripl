@@ -24,13 +24,13 @@ In addition to all [Element options](/docs/core/essentials/element#common-option
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `autoFill` | `boolean` | `true` | Automatically fill the path if `fillStyle` is set |
-| `autoStroke` | `boolean` | `true` | Automatically stroke the path if `strokeStyle` is set |
+| `autoFill` | `boolean` | `true` | Automatically fill the path if `fill` is set |
+| `autoStroke` | `boolean` | `true` | Automatically stroke the path if `stroke` is set |
 
 ```ts
 const circle = createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     autoStroke: false, // Don't stroke, only fill
     cx: 100,
     cy: 100,
@@ -43,14 +43,14 @@ const circle = createCircle({
 When you call `shape.render(context)`, the following happens:
 
 1. The element's `render` method saves the context state
-2. All style properties (fillStyle, lineWidth, etc.) are applied to the context
+2. All style properties (fill, lineWidth, etc.) are applied to the context
 3. A new **path** is created via `context.createPath()`
 4. The shape's drawing callback builds the path geometry (e.g. `path.circle(x, y, r)`)
-5. If `autoFill` is `true` and `fillStyle` is set, the path is filled
-6. If `autoStroke` is `true` and `strokeStyle` is set, the path is stroked
+5. If `autoFill` is `true` and `fill` is set, the path is filled
+6. If `autoStroke` is `true` and `stroke` is set, the path is stroked
 7. The context state is restored
 
-This is why shapes "just work" — you set `fillStyle` and/or `strokeStyle` and the shape handles the rest.
+This is why shapes "just work" — you set `fill` and/or `stroke` and the shape handles the rest.
 
 ## Hit Testing
 
@@ -87,8 +87,8 @@ const r = Math.min(context.width, context.height) / 6;
 
 // Both fill and stroke (default)
 createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     lineWidth: 4,
     cx: context.width / 4,
     cy: context.height / 2,
@@ -97,8 +97,8 @@ createCircle({
 
 // Fill only
 createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     lineWidth: 4,
     autoStroke: false,
     cx: context.width / 2,
@@ -108,8 +108,8 @@ createCircle({
 
 // Stroke only
 createCircle({
-    fillStyle: '#3a86ff',
-    strokeStyle: '#1a56db',
+    fill: '#3a86ff',
+    stroke: '#1a56db',
     lineWidth: 4,
     autoFill: false,
     cx: context.width * 3 / 4,
@@ -140,18 +140,18 @@ const {
         context.markRenderStart();
 
         createCircle({
-            fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
+            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
             cx: w / 4, cy: h / 2, radius: r,
         }).render(context);
 
         createText({
             x: w / 4, y: h / 2 + r + 20,
             content: 'Fill + Stroke',
-            fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createCircle({
-            fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
+            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
             autoStroke: false,
             cx: w / 2, cy: h / 2, radius: r,
         }).render(context);
@@ -159,11 +159,11 @@ const {
         createText({
             x: w / 2, y: h / 2 + r + 20,
             content: 'Fill Only',
-            fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createCircle({
-            fillStyle: '#3a86ff', strokeStyle: '#1a56db', lineWidth: 4,
+            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
             autoFill: false,
             cx: w * 3 / 4, cy: h / 2, radius: r,
         }).render(context);
@@ -171,7 +171,7 @@ const {
         createText({
             x: w * 3 / 4, y: h / 2 + r + 20,
             content: 'Stroke Only',
-            fillStyle: '#666', textAlign: 'center', font: '13px sans-serif',
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         context.markRenderEnd();

@@ -4,7 +4,7 @@ outline: "deep"
 
 # Gradients
 
-Ripl supports CSS gradient strings directly in `fillStyle` and `strokeStyle` properties. The gradient syntax is parsed at render time and converted to the appropriate native gradient for the current context (Canvas or SVG).
+Ripl supports CSS gradient strings directly in `fill` and `stroke` properties. The gradient syntax is parsed at render time and converted to the appropriate native gradient for the current context (Canvas or SVG).
 
 ## Supported Gradient Types
 
@@ -12,7 +12,7 @@ Ripl supports CSS gradient strings directly in `fillStyle` and `strokeStyle` pro
 
 ```ts
 const rect = createRect({
-    fillStyle: 'linear-gradient(90deg, #3a86ff, #ff006e)',
+    fill: 'linear-gradient(90deg, #3a86ff, #ff006e)',
     x: 0,
     y: 0,
     width: 200,
@@ -33,7 +33,7 @@ The angle specifies the direction of the gradient. Common values:
 
 ```ts
 const circle = createCircle({
-    fillStyle: 'radial-gradient(circle, #3a86ff, #ff006e)',
+    fill: 'radial-gradient(circle, #3a86ff, #ff006e)',
     cx: 100,
     cy: 100,
     radius: 80,
@@ -44,7 +44,7 @@ const circle = createCircle({
 
 ```ts
 const circle = createCircle({
-    fillStyle: 'conic-gradient(from 0deg, #3a86ff, #ff006e, #3a86ff)',
+    fill: 'conic-gradient(from 0deg, #3a86ff, #ff006e, #3a86ff)',
     cx: 100,
     cy: 100,
     radius: 80,
@@ -90,12 +90,12 @@ Add the `repeating-` prefix to create repeating gradients:
 
 ## Using Gradients
 
-Gradients work in both `fillStyle` and `strokeStyle`:
+Gradients work in both `fill` and `stroke`:
 
 ```ts
 const rect = createRect({
-    fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
-    strokeStyle: 'linear-gradient(135deg, #1a56db, #5b21b6)',
+    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+    stroke: 'linear-gradient(135deg, #1a56db, #5b21b6)',
     lineWidth: 4,
     x: 50,
     y: 50,
@@ -124,7 +124,7 @@ When animating between two gradient values using `renderer.transition()`, Ripl a
 await renderer.transition(rect, {
     duration: 1000,
     state: {
-        fillStyle: 'linear-gradient(90deg, #ff006e, #fb5607)',
+        fill: 'linear-gradient(90deg, #ff006e, #fb5607)',
     },
 });
 ```
@@ -145,7 +145,7 @@ import {
 const context = createContext('.mount-element');
 
 createRect({
-    fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
     x: 50,
     y: 50,
     width: 200,
@@ -153,7 +153,7 @@ createRect({
 }).render(context);
 
 createCircle({
-    fillStyle: 'radial-gradient(circle, #ff006e, #fb5607)',
+    fill: 'radial-gradient(circle, #ff006e, #fb5607)',
     cx: 400,
     cy: 110,
     radius: 70,
@@ -183,7 +183,7 @@ const {
         context.markRenderStart();
 
         createRect({
-            fillStyle: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+            fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
             x: w * 0.08, y: h / 2 - size / 2,
             width: size * 1.2, height: size,
             borderRadius: 8,
@@ -191,23 +191,23 @@ const {
 
         createText({
             x: w * 0.08 + size * 0.6, y: h / 2 + size / 2 + 20,
-            content: 'Linear', fillStyle: '#666',
+            content: 'Linear', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createCircle({
-            fillStyle: 'radial-gradient(circle, #ff006e, #fb5607)',
+            fill: 'radial-gradient(circle, #ff006e, #fb5607)',
             cx: w * 0.55, cy: h / 2, radius: size / 2,
         }).render(context);
 
         createText({
             x: w * 0.55, y: h / 2 + size / 2 + 20,
-            content: 'Radial', fillStyle: '#666',
+            content: 'Radial', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createRect({
-            fillStyle: 'linear-gradient(90deg, #3a86ff 0%, #3a86ff 33%, #ff006e 33%, #ff006e 66%, #8338ec 66%, #8338ec 100%)',
+            fill: 'linear-gradient(90deg, #3a86ff 0%, #3a86ff 33%, #ff006e 33%, #ff006e 66%, #8338ec 66%, #8338ec 100%)',
             x: w * 0.72, y: h / 2 - size / 2,
             width: size * 1.2, height: size,
             borderRadius: 8,
@@ -215,7 +215,7 @@ const {
 
         createText({
             x: w * 0.72 + size * 0.6, y: h / 2 + size / 2 + 20,
-            content: 'Hard Stops', fillStyle: '#666',
+            content: 'Hard Stops', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 

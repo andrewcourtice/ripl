@@ -42,13 +42,11 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFilter,
-    arrayFlatMap,
     arrayJoin,
-    arrayMap,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
@@ -59,6 +57,15 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     legend?: ChartLegendInput;
 }
 
+/**
+ * Pie chart rendering proportional arc segments with optional inner radius (donut).
+ *
+ * Supports interactive tooltips, legend, and animated entry/update/exit
+ * transitions. Segments grow outward from the center with staggered delays,
+ * and labels fade in after the arcs have settled.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     private groups: Group[] = [];
@@ -102,7 +109,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(data, item => ({
+                const legendItems: LegendItem[] = data.map(item => ({
                     id: getKey(item),
                     label: getLabel(item),
                     color: getColor(item) ?? colorGenerator.next().value,
@@ -134,7 +141,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             let startAngle = -offset;
 
-            const calculations = arrayMap(data, item => {
+            const calculations = data.map(item => {
                 const key = getKey(item);
                 const value = getValue(item);
                 const color = getColor(item);
@@ -176,7 +183,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 right: exitData,
             } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
-            const entries = arrayMap(entryData, item => {
+            const entries = entryData.map(item => {
                 const {
                     key,
                     value,
@@ -197,8 +204,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     cy,
                     startAngle,
                     padAngle,
-                    strokeStyle: color,
-                    fillStyle: setColorAlpha(color, 0.55),
+                    stroke: color,
+                    fill: setColorAlpha(color, 0.55),
                     lineWidth: 2,
                     endAngle: startAngle,
                     radius: 0,
@@ -222,7 +229,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                         duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: color,
+                            fill: color,
                         },
                     });
                 });
@@ -234,7 +241,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                         duration: this.getAnimationDuration(500),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(color, 0.55),
+                            fill: setColorAlpha(color, 0.55),
                         },
                     });
                 });
@@ -246,13 +253,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
                 const segmentLabel = createText({
                     class: 'segment__label',
-                    fillStyle: '#000000',
+                    fill: '#000000',
                     x: centroidX,
                     y: centroidY,
                     content: label,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    globalAlpha: 0,
+                    opacity: 0,
                     zIndex: 1,
                 });
 
@@ -266,7 +273,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 });
             });
 
-            const updates = arrayMap(updateData, ([item, group]) => {
+            const updates = updateData.map(([item, group]) => {
                 const {
                     cx,
                     cy,
@@ -280,7 +287,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
-                const resolvedColor = item.color ?? arc.strokeStyle;
+                const resolvedColor = item.color ?? arc.stroke;
 
                 const arcData = {
                     cx,
@@ -290,8 +297,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     startAngle,
                     endAngle,
                     padAngle,
-                    strokeStyle: resolvedColor,
-                    fillStyle: setColorAlpha(resolvedColor, 0.55),
+                    stroke: resolvedColor,
+                    fill: setColorAlpha(resolvedColor, 0.55),
                 } as Partial<ArcState>;
 
                 const [
@@ -308,7 +315,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 return group;
             });
 
-            const exits = arrayMap(exitData, group => {
+            const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
 
@@ -322,7 +329,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 } as Partial<ArcState>;
 
                 label.data = {
-                    globalAlpha: 0,
+                    opacity: 0,
                 } as Partial<TextState>;
 
                 return group;
@@ -344,20 +351,20 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const animDuration = this.getAnimationDuration(1000);
 
             async function transitionEntries() {
-                const elements = arrayFlatMap(entries, group => group.children);
+                const elements = entries.flatMap(group => group.children);
 
-                await renderer.transition(arrayFilter(elements, elementIsArc), (element, index, length) => ({
+                await renderer.transition(elements.filter(elementIsArc), (element, index, length) => ({
                     duration: animDuration,
                     ease: easeOutQuint,
                     delay: index * (animDuration / length),
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(arrayFilter(elements, elementIsText), {
+                return renderer.transition(elements.filter(elementIsText), {
                     duration: animDuration * 2,
                     ease: easeOutQuint,
                     state: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
             }
@@ -389,6 +396,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
 }
 
+/** Factory function that creates a new {@link PieChart} instance. */
 export function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
     return new PieChart<TData>(target, options);
 }

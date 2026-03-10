@@ -6,9 +6,6 @@ import type {
     RadialGradient,
 } from './types';
 
-import {
-    arrayMap,
-} from '@ripl/utilities';
 
 function serialiseStop(stop: GradientColorStop): string {
     if (stop.offset !== undefined) {
@@ -19,7 +16,7 @@ function serialiseStop(stop: GradientColorStop): string {
 }
 
 function serialiseStops(stops: GradientColorStop[]): string {
-    return arrayMap(stops, serialiseStop).join(', ');
+    return stops.map(serialiseStop).join(', ');
 }
 
 function serialiseLinearGradient(gradient: LinearGradient): string {
@@ -83,6 +80,7 @@ function serialiseConicGradient(gradient: ConicGradient): string {
     return `${prefix}conic-gradient(${parts.join(', ')})`;
 }
 
+/** Serialises a structured `Gradient` object back into a CSS gradient string. */
 export function serialiseGradient(gradient: Gradient): string {
     switch (gradient.type) {
         case 'linear': return serialiseLinearGradient(gradient);

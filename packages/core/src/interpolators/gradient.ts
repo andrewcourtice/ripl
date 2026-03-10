@@ -17,9 +17,6 @@ import type {
     GradientColorStop,
 } from '../gradient';
 
-import {
-    arrayMap,
-} from '@ripl/utilities';
 
 import type {
     InterpolatorFactory,
@@ -48,7 +45,7 @@ function canInterpolateGradients(gradientA: Gradient, gradientB: Gradient): bool
 }
 
 function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop[]) {
-    const interpolators = arrayMap(stopsA, (stopA, index) => {
+    const interpolators = stopsA.map((stopA, index) => {
         const stopB = stopsB[index];
 
         return {
@@ -57,7 +54,7 @@ function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop
         };
     });
 
-    return (position: number): GradientColorStop[] => arrayMap(interpolators, ({ color, offset }) => ({
+    return (position: number): GradientColorStop[] => interpolators.map(({ color, offset }) => ({
         color: color(position),
         offset: offset(position),
     }));
@@ -108,6 +105,7 @@ function interpolateMatchingGradients(gradientA: Gradient, gradientB: Gradient) 
     return (position: number) => position > 0.5 ? gradientB : gradientA;
 }
 
+/** Interpolator factory that transitions between two CSS gradient strings by interpolating their stops, angles, and positions. */
 export const interpolateGradient: InterpolatorFactory<string> = (valueA, valueB) => {
     const gradientA = parseGradient(valueA);
     const gradientB = parseGradient(valueB);

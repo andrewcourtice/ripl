@@ -21,7 +21,8 @@ import type {
     ScaleMethod,
 } from './types';
 
-export type LogarithmicScaleOptions = LinearScaleOptions & {
+/** Options for a logarithmic scale, adding a configurable base to the base linear scale options. */
+export interface LogarithmicScaleOptions extends LinearScaleOptions {
     base?: number;
 };
 
@@ -89,6 +90,7 @@ function getLogInverseMethod(domain: number[], range: number[], base: number, op
     };
 }
 
+/** Creates a logarithmic scale that maps a numeric domain to a range using a log transformation. */
 export function scaleLogarithmic(
     domain: number[],
     range: number[],

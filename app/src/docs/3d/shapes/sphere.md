@@ -17,7 +17,7 @@ const sphere = createSphere({
     radius: 1,
     segments: 16,
     rings: 12,
-    fillStyle: '#44cc88',
+    fill: '#44cc88',
 });
 ```
 
@@ -53,7 +53,7 @@ const camera = createCamera(scene, { position: [0, 1.5, 5],
     target: [0, 0, 0] });
 
 const sphere = createSphere({ radius: 1.2,
-    fillStyle: '#44cc88' });
+    fill: '#44cc88' });
 
 let angle = 0;
 function loop() {
@@ -80,7 +80,7 @@ import {
 } from '@ripl/3d';
 
 const { contextChanged, startRotation } = useRipl3DExample((scene, camera) => {
-    scene.add(createSphere({ radius: 1.2, fillStyle: '#44cc88' }));
+    scene.add(createSphere({ radius: 1.2, fill: '#44cc88' }));
     startRotation(camera);
 });
 </script>

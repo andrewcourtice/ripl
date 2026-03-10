@@ -13,6 +13,7 @@ import type {
 
 const ORIGIN_PATTERN = /^-?\d+(\.\d+)?%?$/;
 
+/** Interpolator factory that transitions between two transform-origin values (numbers or percentage strings). */
 export const interpolateTransformOrigin: InterpolatorFactory<number | string> = (valueA, valueB) => {
     const aIsPercent = typeIsString(valueA) && (valueA as string).trim().endsWith('%');
     const bIsPercent = typeIsString(valueB) && (valueB as string).trim().endsWith('%');

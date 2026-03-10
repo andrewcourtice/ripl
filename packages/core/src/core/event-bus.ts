@@ -1,27 +1,36 @@
 import {
+    Disposer,
+} from './disposer';
+
+import {
     Disposable,
     setForEach,
 } from '@ripl/utilities';
 
+/** Base event map interface; all custom event maps should extend this. */
 export type EventMap = {
     [key: string]: unknown;
     destroyed: null;
 };
 
+/** Options for emitting an event, controlling bubbling and attached data. */
 export type EventOptions<TData = undefined> = {
     bubbles?: boolean;
     data?: TData;
 };
 
+/** Options for subscribing to an event, such as filtering to self-targeted events only. */
 export type EventSubscriptionOptions = {
     self?: boolean;
 };
 
+/** A callable event handler function with optional subscription options. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type EventHandler<TData = any> = {
     (event: Event<TData>): void;
 } & EventSubscriptionOptions;
 
+/** An event object carrying type, data, target reference, and propagation control. */
 export class Event<TData = undefined> {
 
     #bubbles = true;
@@ -50,22 +59,26 @@ export class Event<TData = undefined> {
         this.#bubbles = bubbles;
     }
 
+    /** Prevents this event from bubbling further up the parent chain. */
     public stopPropagation() {
         this.#bubbles = false;
     }
 
 }
 
-export class EventBus<TEventMap extends EventMap = EventMap> {
+/** A typed pub/sub event system with parent-chain bubbling, disposable subscriptions, and self-filtering. */
+export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     public parent?: EventBus<TEventMap>;
 
     private listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
+    /** Returns whether there are any listeners registered for the given event type. */
     public has(type: keyof TEventMap) {
         return !!this.listeners.get(type)?.size;
     }
 
+    /** Subscribes a handler to the given event type and returns a disposable for cleanup. */
     public on<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
         const handlers = this.listeners.get(type) || new Set();
 
@@ -78,6 +91,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
         };
     }
 
+    /** Removes a previously registered handler for the given event type. */
     public off<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>): void {
         const handlers = this.listeners.get(type);
 
@@ -92,6 +106,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
         }
     }
 
+    /** Subscribes a handler that is automatically removed after it fires once. */
     public once<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
         const callback = ((...args: Parameters<typeof handler>) => {
             handler(...args);
@@ -101,6 +116,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
         return this.on(type, callback, options);
     }
 
+    /** Emits an event, invoking all matching handlers and bubbling to the parent if applicable. */
     public emit<TEvent extends Event = Event>(event: TEvent): TEvent;
     public emit<TEvent extends keyof TEventMap>(type: TEvent, data: TEventMap[TEvent]): Event<TEventMap[TEvent]>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -128,9 +144,11 @@ export class EventBus<TEventMap extends EventMap = EventMap> {
         return event;
     }
 
+    /** Emits a `destroyed` event, clears all listeners, and disposes retained resources. */
     public destroy() {
         this.emit('destroyed', null);
         this.listeners.clear();
+        this.dispose();
     }
 
 }

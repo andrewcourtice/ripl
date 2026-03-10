@@ -5,11 +5,13 @@ import {
     Scene,
 } from '@ripl/core';
 
+/** Base options for chart components, providing scene and renderer references. */
 export interface ChartComponentOptions {
     scene: Scene;
     renderer: Renderer;
 }
 
+/** Base class for reusable chart components (axes, grids, legends, etc.) with scene and renderer access. */
 export class ChartComponent<TEventMap extends EventMap = EventMap> extends EventBus<TEventMap> {
 
     protected scene: Scene;

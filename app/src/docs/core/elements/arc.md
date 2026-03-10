@@ -21,7 +21,7 @@ const TAU = Math.PI * 2;
 
 // Simple arc
 createArc({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 150,
     cy: 150,
     radius: 80,
@@ -31,7 +31,7 @@ createArc({
 
 // Donut arc
 createArc({
-    fillStyle: '#ff006e',
+    fill: '#ff006e',
     cx: 400,
     cy: 150,
     radius: 80,
@@ -70,19 +70,19 @@ const {
         context.markRenderStart();
 
         createArc({
-            fillStyle: '#3a86ff',
+            fill: '#3a86ff',
             cx: w * 0.3, cy: h / 2, radius: r,
             startAngle: 0, endAngle: TAU * 0.75,
         }).render(context);
 
         createText({
             x: w * 0.3, y: h / 2 + r + 24,
-            content: 'Simple Arc', fillStyle: '#666',
+            content: 'Simple Arc', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
         createArc({
-            fillStyle: '#ff006e',
+            fill: '#ff006e',
             cx: w * 0.7, cy: h / 2, radius: r,
             innerRadius: r * 0.5,
             startAngle: 0, endAngle: TAU * 0.6,
@@ -90,7 +90,7 @@ const {
 
         createText({
             x: w * 0.7, y: h / 2 + r + 24,
-            content: 'Donut Arc', fillStyle: '#666',
+            content: 'Donut Arc', fill: '#666',
             textAlign: 'center', font: '13px sans-serif',
         }).render(context);
 
@@ -110,7 +110,7 @@ import {
 } from '@ripl/core';
 
 const arc = createArc({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 200,
     cy: 200,
     radius: 100,

@@ -43,12 +43,10 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayFlatMap,
-    arrayForEach,
     arrayJoin,
-    arrayMap,
 } from '@ripl/utilities';
 
+/** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
     labels: string[];
     matrix: number[][];
@@ -145,7 +143,7 @@ function computeChordLayout(
 
     // Compute ribbon positions
     const ribbons: ChordRibbon[] = [];
-    const groupOffsets: number[] = arrayMap(arcStarts, start => start);
+    const groupOffsets: number[] = arcStarts.map(start => start);
 
     for (let i = 0; i < count; i++) {
         for (let col = 0; col < count; col++) {
@@ -186,6 +184,14 @@ function computeChordLayout(
     };
 }
 
+/**
+ * Chord diagram visualizing inter-relationships in a square matrix.
+ *
+ * Outer arcs represent groups (labels) with angular extent proportional
+ * to their total flow. Inner ribbons connect pairs of groups with width
+ * proportional to the flow value. Supports legend, tooltips, and
+ * sequential animation (arcs first, then ribbons).
+ */
 export class ChordChart extends Chart<ChordChartOptions> {
 
     private arcGroups: Group[] = [];
@@ -233,9 +239,9 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: arcExits,
             } = arrayJoin(layout.arcs, this.arcGroups, (arc, group) => arc.id === group.id);
 
-            arrayForEach(arcExits, el => el.destroy());
+            arcExits.forEach(el => el.destroy());
 
-            const arcEntryGroups = arrayMap(arcEntries, arc => {
+            const arcEntryGroups = arcEntries.map(arc => {
                 const segment = createArc({
                     id: `${arc.id}-segment`,
                     cx,
@@ -245,8 +251,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle: 0,
-                    fillStyle: setColorAlpha(arc.color, 0.8),
-                    strokeStyle: arc.color,
+                    fill: setColorAlpha(arc.color, 0.8),
+                    stroke: arc.color,
                     lineWidth: 1,
                     data: {
                         endAngle: arc.endAngle,
@@ -263,7 +269,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: arc.color,
+                            fill: arc.color,
                         },
                     });
 
@@ -274,7 +280,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(arc.color, 0.8),
+                                fill: setColorAlpha(arc.color, 0.8),
                             },
                         });
                     });
@@ -286,7 +292,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const arcUpdateGroups = arrayMap(arcUpdates, ([arc, group]) => {
+            const arcUpdateGroups = arcUpdates.map(([arc, group]) => {
                 const segment = group.query('arc') as Arc;
 
                 if (segment) {
@@ -295,8 +301,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fillStyle: setColorAlpha(arc.color, 0.8),
-                        strokeStyle: arc.color,
+                        fill: setColorAlpha(arc.color, 0.8),
+                        stroke: arc.color,
                     } as Partial<ArcState>;
                 }
 
@@ -317,9 +323,9 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 right: ribbonExits,
             } = arrayJoin(layout.ribbons, this.ribbonGroups, (ribbon, group) => ribbon.id === group.id);
 
-            arrayForEach(ribbonExits, el => el.destroy());
+            ribbonExits.forEach(el => el.destroy());
 
-            const ribbonEntryGroups = arrayMap(ribbonEntries, ribbon => {
+            const ribbonEntryGroups = ribbonEntries.map(ribbon => {
                 const ribbonEl = createRibbon({
                     id: `${ribbon.id}-ribbon`,
                     cx,
@@ -329,12 +335,12 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     sourceEnd: ribbon.sourceEnd,
                     targetStart: ribbon.targetStart,
                     targetEnd: ribbon.targetEnd,
-                    fillStyle: setColorAlpha(ribbon.color, 0.2),
-                    strokeStyle: setColorAlpha(ribbon.color, 0.4),
+                    fill: setColorAlpha(ribbon.color, 0.2),
+                    stroke: setColorAlpha(ribbon.color, 0.4),
                     lineWidth: 0.5,
-                    globalAlpha: 0,
+                    opacity: 0,
                     data: {
-                        globalAlpha: 1,
+                        opacity: 1,
                     },
                 });
 
@@ -345,7 +351,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         duration: this.getAnimationDuration(200),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: setColorAlpha(ribbon.color, 0.5),
+                            fill: setColorAlpha(ribbon.color, 0.5),
                         },
                     });
 
@@ -356,7 +362,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                             duration: this.getAnimationDuration(200),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(ribbon.color, 0.2),
+                                fill: setColorAlpha(ribbon.color, 0.2),
                             },
                         });
                     });
@@ -368,7 +374,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const ribbonUpdateGroups = arrayMap(ribbonUpdates, ([, group]) => group);
+            const ribbonUpdateGroups = ribbonUpdates.map(([, group]) => group);
 
             scene.add(ribbonEntryGroups);
 
@@ -379,7 +385,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
             // Legend
             if (normalizeLegend(this.options.legend).visible && layout.arcs.length > 0) {
-                const legendItems: LegendItem[] = arrayMap(layout.arcs, arc => ({
+                const legendItems: LegendItem[] = layout.arcs.map(arc => ({
                     id: arc.id,
                     label: arc.label,
                     color: arc.color,
@@ -401,7 +407,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }
 
             // Sequential animation: arcs first, then ribbons
-            const entryArcs = arrayFlatMap(arcEntryGroups, g => g.getElementsByType('arc')) as Arc[];
+            const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const arcsTransition = renderer.transition(entryArcs, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -411,7 +417,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Ribbons animate after arcs complete
-            const entryRibbons = arrayFlatMap(ribbonEntryGroups, g => g.getElementsByType('ribbon')) as Ribbon[];
+            const entryRibbons = ribbonEntryGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
             const arcAnimDuration = this.getAnimationDuration(800) + this.getAnimationDuration(600);
 
             const ribbonsTransition = renderer.transition(entryRibbons, (element, index, length) => ({
@@ -422,7 +428,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
             }));
 
             // Animate updates
-            const updateArcs = arrayFlatMap(arcUpdateGroups, g => g.getElementsByType('arc')) as Arc[];
+            const updateArcs = arcUpdateGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 
             const updatesTransition = renderer.transition(updateArcs, element => ({
                 duration: this.getAnimationDuration(800),
@@ -436,6 +442,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
 }
 
+/** Factory function that creates a new {@link ChordChart} instance. */
 export function createChordChart(target: string | HTMLElement | Context, options: ChordChartOptions) {
     return new ChordChart(target, options);
 }

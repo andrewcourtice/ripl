@@ -21,7 +21,7 @@ import {
 const context = createContext('.mount-element');
 
 createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: context.width / 2,
     cy: context.height / 2,
     radius: Math.min(context.width, context.height) / 3,
@@ -48,8 +48,8 @@ const {
         context.markRenderStart();
 
         createCircle({
-            fillStyle: '#3a86ff',
-            strokeStyle: '#1a56db',
+            fill: '#3a86ff',
+            stroke: '#1a56db',
             lineWidth: 3,
             cx: w / 2, cy: h / 2,
             radius: Math.min(w, h) / 3,
@@ -71,7 +71,7 @@ import {
 } from '@ripl/core';
 
 const circle = createCircle({
-    fillStyle: '#3a86ff',
+    fill: '#3a86ff',
     cx: 200,
     cy: 150,
     radius: 60,

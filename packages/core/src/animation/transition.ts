@@ -17,6 +17,7 @@ import type {
     TransitionOptions,
 } from './types';
 
+/** Computes the eased time value for a transition given elapsed time, duration, easing function, and direction. */
 export function computeTransitionTime(elapsed: number, duration: number, ease: Ease, direction: TransitionDirection): number {
     const position = clamp(elapsed / duration, 0, 1);
     const time = ease(direction === 'reverse' ? 1 - position : position);
@@ -24,12 +25,14 @@ export function computeTransitionTime(elapsed: number, duration: number, ease: E
     return time;
 }
 
+/** A `Task`-based animation that drives a callback over time with easing, looping, and abort support. */
 export class Transition extends Task {
 
 
 
 }
 
+/** Creates and starts a frame-driven transition that invokes the callback with the eased time on each animation frame. */
 export function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Transition {
     const {
         duration,

@@ -13,6 +13,7 @@ import {
     Box,
 } from '../math';
 
+/** State interface for a path element, defining bounding position and dimensions. */
 export interface PathState extends BaseElementState {
     x: number;
     y: number;
@@ -20,8 +21,10 @@ export interface PathState extends BaseElementState {
     height: number;
 }
 
+/** A callback that draws custom geometry onto a `ContextPath` using the element's state. */
 export type PathRenderer = (path: ContextPath, state: PathState) => void;
 
+/** A general-purpose shape rendered by a user-supplied path renderer callback. */
 export class Path extends Shape2D<PathState> {
 
     private pathRenderer?: PathRenderer;
@@ -69,6 +72,7 @@ export class Path extends Shape2D<PathState> {
         this.pathRenderer = pathRenderer;
     }
 
+    /** Replaces the current path renderer callback. */
     public setPathRenderer(renderer: PathRenderer) {
         this.pathRenderer = renderer;
     }
@@ -95,10 +99,12 @@ export class Path extends Shape2D<PathState> {
 
 }
 
+/** Factory function that creates a new `Path` instance. */
 export function createPath(...options: ConstructorParameters<typeof Path>) {
     return new Path(...options);
 }
 
+/** Type guard that checks whether a value is a `Path` instance. */
 export function elementIsPath(value: unknown): value is Path {
     return value instanceof Path;
 }

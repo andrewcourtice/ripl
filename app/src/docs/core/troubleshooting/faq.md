@@ -25,7 +25,7 @@ Common questions and clarifications about Ripl's concepts and usage.
 
 Use a Group when you want to:
 
-- **Share styles** — Set `fillStyle` once on the group instead of on every child
+- **Share styles** — Set `fill` once on the group instead of on every child
 - **Organize elements** — Create a logical hierarchy (like a DOM tree)
 - **Query elements** — Use `getElementById`, `getElementsByType`, `query`, etc.
 - **Batch operations** — Render, add, or remove multiple elements at once
@@ -119,7 +119,7 @@ circle.on('click', () => {}); // Fires correctly
 
 Common causes:
 
-1. **No fill or stroke** — Elements need `fillStyle` and/or `strokeStyle` to be visible
+1. **No fill or stroke** — Elements need `fill` and/or `stroke` to be visible
 2. **Zero dimensions** — Check that `radius`, `width`, `height`, etc. are non-zero
 3. **Off-screen** — Check that coordinates are within the context bounds
 4. **Wrong context** — Make sure you're rendering to the right context

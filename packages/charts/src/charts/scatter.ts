@@ -61,13 +61,12 @@ import {
 } from '@ripl/core';
 
 import {
-    arrayForEach,
     arrayJoin,
-    arrayMap,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** Configuration for an individual scatter chart series. */
 export interface ScatterChartSeriesOptions<TData> {
     id: string;
     color?: string;
@@ -79,6 +78,7 @@ export interface ScatterChartSeriesOptions<TData> {
     maxRadius?: number;
 }
 
+/** Options for configuring a {@link ScatterChart}. */
 export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     series: ScatterChartSeriesOptions<TData>[];
@@ -90,6 +90,15 @@ export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/**
+ * Scatter chart (bubble chart) plotting data points as circles on two continuous axes.
+ *
+ * Supports optional bubble sizing via a third value dimension, multi-series
+ * rendering, crosshair, tooltips, legend, and grid. Points animate in with
+ * staggered scale transitions.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
 export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TData>> {
 
     private bubbleGroups: Group[] = [];
@@ -152,7 +161,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 renderer: this.renderer,
                 horizontal: true,
                 vertical: true,
-                strokeStyle: gridOpts.lineColor,
+                stroke: gridOpts.lineColor,
                 lineWidth: gridOpts.lineWidth,
                 lineDash: gridOpts.lineDash,
             });
@@ -164,7 +173,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
                 horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                strokeStyle: crosshairOpts.lineColor,
+                stroke: crosshairOpts.lineColor,
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
@@ -180,7 +189,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
 
         const allSizes: number[] = [];
 
-        arrayForEach(series, ({ sizeBy }) => {
+        series.forEach(({ sizeBy }) => {
             if (sizeBy === undefined) {
                 return;
             }
@@ -193,7 +202,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     : (item: any) => item[sizeBy] as number;
             /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
 
-            arrayForEach(data, item => {
+            data.forEach(item => {
                 allSizes.push(getSizeValue(item));
             });
         });
@@ -216,7 +225,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             right: seriesExits,
         } = arrayJoin(series, this.bubbleGroups, 'id');
 
-        arrayForEach(seriesExits, el => el.destroy());
+        seriesExits.forEach(el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -266,8 +275,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     sizeValue,
                     label,
                     state: {
-                        fillStyle: setColorAlpha(color as string, 0.7),
-                        strokeStyle: color,
+                        fill: setColorAlpha(color as string, 0.7),
+                        stroke: color,
                         lineWidth: 2,
                         cx: x,
                         cy: y,
@@ -277,12 +286,12 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             };
         };
 
-        const seriesEntryGroups = arrayMap(seriesEntries, series => {
+        const seriesEntryGroups = seriesEntries.map(series => {
             series.color ??= this.colorGenerator.next().value;
 
             const getBubbleValues = seriesBubbleValueProducer(series);
 
-            const children = arrayMap(data, item => {
+            const children = data.map(item => {
                 const {
                     id,
                     xValue,
@@ -296,8 +305,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     id,
                     ...state,
                     radius: 0,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0),
-                    strokeStyle: setColorAlpha(state.strokeStyle as string, 0),
+                    fill: setColorAlpha(state.fill as string, 0),
+                    stroke: setColorAlpha(state.stroke as string, 0),
                     data: state,
                 });
 
@@ -312,7 +321,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -324,7 +333,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });
@@ -340,7 +349,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             });
         });
 
-        const seriesUpdateGroups = arrayMap(seriesUpdates, ([series, group]) => {
+        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
             const getBubbleValues = seriesBubbleValueProducer(series);
             const bubbles = group.getElementsByType('circle') as Circle[];
 
@@ -351,20 +360,20 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             } = arrayJoin(data, bubbles, (item, bubble) => bubble.id === `${series.id}-${getKey(item)}`);
 
             // Exit transition - fade out and shrink
-            const exitTransitions = arrayMap(bubbleExits, bubble => {
+            const exitTransitions = bubbleExits.map(bubble => {
                 return this.renderer.transition(bubble, {
                     duration: this.getAnimationDuration(500),
                     ease: easeOutCubic,
                     state: {
                         radius: 0,
-                        fillStyle: setColorAlpha(bubble.fillStyle as string, 0),
-                        strokeStyle: setColorAlpha(bubble.strokeStyle as string, 0),
+                        fill: setColorAlpha(bubble.fill as string, 0),
+                        stroke: setColorAlpha(bubble.stroke as string, 0),
                     },
                 }).then(() => bubble.destroy());
             });
 
             // Entry transitions - add new bubbles
-            arrayMap(bubbleEntries, item => {
+            bubbleEntries.map(item => {
                 const {
                     id,
                     xValue,
@@ -378,8 +387,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     id,
                     ...state,
                     radius: 0,
-                    fillStyle: setColorAlpha(state.fillStyle as string, 0),
-                    strokeStyle: setColorAlpha(state.strokeStyle as string, 0),
+                    fill: setColorAlpha(state.fill as string, 0),
+                    stroke: setColorAlpha(state.stroke as string, 0),
                     data: state,
                 });
 
@@ -394,7 +403,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -406,7 +415,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });
@@ -417,7 +426,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             });
 
             // Update existing bubbles
-            arrayForEach(bubbleUpdates, ([item, bubble]) => {
+            bubbleUpdates.forEach(([item, bubble]) => {
                 const {
                     xValue,
                     yValue,
@@ -440,7 +449,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                         duration: this.getAnimationDuration(300),
                         ease: easeOutQuart,
                         state: {
-                            fillStyle: state.strokeStyle,
+                            fill: state.stroke,
                             radius: state.radius * 1.2,
                         },
                     });
@@ -452,7 +461,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                             duration: this.getAnimationDuration(300),
                             ease: easeOutQuart,
                             state: {
-                                fillStyle: setColorAlpha(state.strokeStyle as string, 0.7),
+                                fill: setColorAlpha(state.stroke as string, 0.7),
                                 radius: state.radius,
                             },
                         });
@@ -470,11 +479,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
 
         this.bubbleGroups = [
             ...seriesEntryGroups,
-            ...arrayMap(seriesUpdateGroups, ({ group }) => group),
+            ...seriesUpdateGroups.map(({ group }) => group),
         ];
 
         // Entry animations - fade in and grow
-        const entryTransitions = arrayMap(seriesEntryGroups, group => {
+        const entryTransitions = seriesEntryGroups.map(group => {
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
@@ -486,7 +495,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         });
 
         // Update animations - move and resize
-        const updateTransitions = arrayMap(seriesUpdateGroups, ({ group }) => {
+        const updateTransitions = seriesUpdateGroups.map(({ group }) => {
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, element => ({
@@ -497,7 +506,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         });
 
         // Collect all exit transitions
-        const exitTransitions = arrayMap(seriesUpdateGroups, ({ exitTransitions }) => exitTransitions).flat();
+        const exitTransitions = seriesUpdateGroups.map(({ exitTransitions }) => exitTransitions).flat();
 
         return Promise.all([
             ...entryTransitions,
@@ -517,12 +526,12 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             this.resolveSeriesColors(series);
 
             // Assign colors to series that don't have them
-            arrayForEach(series, srs => {
+            series.forEach(srs => {
                 srs.color ??= this.getSeriesColor(srs.id);
             });
 
             // Calculate extents for all series
-            const xExtents = arrayMap(series, ({ xBy }) => {
+            const xExtents = series.map(({ xBy }) => {
                 const getXValue = typeIsFunction(xBy)
                     ? xBy
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -531,7 +540,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                 return getExtent(data, getXValue);
             }).flat();
 
-            const yExtents = arrayMap(series, ({ yBy }) => {
+            const yExtents = series.map(({ yBy }) => {
                 const getYValue = typeIsFunction(yBy)
                     ? yBy
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -553,7 +562,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             let legendHeight = 0;
 
             if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = arrayMap(series, srs => ({
+                const legendItems: LegendItem[] = series.map(srs => ({
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
@@ -619,8 +628,8 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             if (this.grid) {
                 const xTicks = this.xScale.ticks(10);
                 const yTicks = this.yScale.ticks(10);
-                const xTickPositions = arrayMap(xTicks, tick => this.xScale(tick));
-                const yTickPositions = arrayMap(yTicks, tick => this.yScale(tick));
+                const xTickPositions = xTicks.map(tick => this.xScale(tick));
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
                 this.grid.render(
                     xTickPositions,
@@ -655,6 +664,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
 
 }
 
+/** Factory function that creates a new {@link ScatterChart} instance. */
 export function createScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
     return new ScatterChart<TData>(target, options);
 }
