@@ -41,6 +41,8 @@ export function interpolateString(callback: (tag: typeof tagIntStr) => StringInt
         const output = input + fragment;
         const interpolator = interpolators[index];
 
-        return output + format(interpolator(position));
+        return interpolator
+            ? output + format(interpolator(position))
+            : output;
     }, '');
 }

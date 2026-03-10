@@ -5,43 +5,9 @@ import {
 } from 'vitest';
 
 import {
-    degreesToRadians,
-} from '../../src/math';
-
-type Rotation = number | string;
-type TransformOrigin = number | string;
-
-function resolveRotation(value: Rotation): number {
-    if (typeof value === 'number') {
-        return value;
-    }
-
-    const trimmed = value.trim();
-
-    if (trimmed.endsWith('deg')) {
-        return degreesToRadians(parseFloat(trimmed));
-    }
-
-    if (trimmed.endsWith('rad')) {
-        return parseFloat(trimmed);
-    }
-
-    return parseFloat(trimmed) || 0;
-}
-
-function resolveTransformOrigin(value: TransformOrigin, dimension: number): number {
-    if (typeof value === 'number') {
-        return value;
-    }
-
-    const trimmed = value.trim();
-
-    if (trimmed.endsWith('%')) {
-        return (parseFloat(trimmed) / 100) * dimension;
-    }
-
-    return parseFloat(trimmed) || 0;
-}
+    resolveRotation,
+    resolveTransformOrigin,
+} from '../../src';
 
 describe('Transform Helpers', () => {
 
