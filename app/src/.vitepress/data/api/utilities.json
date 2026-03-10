@@ -1,0 +1,1059 @@
+{
+  "collection": [
+    {
+      "name": "arrayMapRange",
+      "kind": "function",
+      "description": "Creates an array of the given length by mapping each index through the iteratee.",
+      "typeSignature": "function arrayMapRange<TResult>(length: number, iteratee: (index: number) => TResult): TResult[]",
+      "tags": {},
+      "params": [
+        {
+          "name": "length",
+          "type": "number",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "(index: number) => TResult",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TResult[]"
+    },
+    {
+      "name": "arrayJoin",
+      "kind": "function",
+      "description": "Performs a full join between two arrays, returning entries (left-only), updates (matched), and exits (right-only).",
+      "typeSignature": "function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight>): ArrayJoin<TLeft, TRight>",
+      "tags": {},
+      "params": [
+        {
+          "name": "leftInput",
+          "type": "TLeft[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "rightInput",
+          "type": "TRight[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "predicate",
+          "type": "ArrayJoinPredicate<TLeft, TRight>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "ArrayJoin<TLeft, TRight>"
+    },
+    {
+      "name": "arrayGroup",
+      "kind": "function",
+      "description": "Groups array items by a property key or indexer function into a keyed record.",
+      "typeSignature": "function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity<TValue>): Record<PropertyKey, TValue[]>",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "TValue[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "identity",
+          "type": "ArrayGroupIdentity<TValue>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Record<PropertyKey, TValue[]>"
+    },
+    {
+      "name": "arrayIntersection",
+      "kind": "function",
+      "description": "Returns items from the left array that have a matching counterpart in the right array.",
+      "typeSignature": "function arrayIntersection<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[]",
+      "tags": {},
+      "params": [
+        {
+          "name": "leftInput",
+          "type": "TLeft[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "rightInput",
+          "type": "TRight[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "predicate",
+          "type": "ArrayJoinPredicate<TLeft, TRight> | undefined",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TLeft[]"
+    },
+    {
+      "name": "arrayDifference",
+      "kind": "function",
+      "description": "Returns items from the left array that have no matching counterpart in the right array.",
+      "typeSignature": "function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[]",
+      "tags": {},
+      "params": [
+        {
+          "name": "leftInput",
+          "type": "TLeft[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "rightInput",
+          "type": "TRight[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "predicate",
+          "type": "ArrayJoinPredicate<TLeft, TRight> | undefined",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TLeft[]"
+    },
+    {
+      "name": "objectForEach",
+      "kind": "function",
+      "description": "Iterates over the enumerable properties of an object, invoking the iteratee for each key-value pair.",
+      "typeSignature": "function objectForEach<TSource extends IterableObject>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource]>): void",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "TSource",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "ObjectIteratee<keyof TSource, TSource[keyof TSource], void>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "void"
+    },
+    {
+      "name": "objectMap",
+      "kind": "function",
+      "description": "Maps over the enumerable properties of an object, producing a new object with transformed values.",
+      "typeSignature": "function objectMap<TSource extends IterableObject, TResult extends Record<keyof TSource, unknown> = Record<keyof TSource, unknown>>(input: TSource, iteratee: ObjectIteratee<Extract<keyof TSource, string>, TSource[keyof TSource], unknown>): TResult",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "TSource",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "ObjectIteratee<Extract<keyof TSource, string>, TSource[keyof TSource], unknown>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TResult"
+    },
+    {
+      "name": "objectReduce",
+      "kind": "function",
+      "description": "Reduces the enumerable properties of an object into a single accumulated value.",
+      "typeSignature": "function objectReduce<TSource extends IterableObject, TResult>(input: TSource, reducer: ObjectReducer<keyof TSource, TSource[keyof TSource], TResult>, initial: TResult): TResult",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "TSource",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "reducer",
+          "type": "ObjectReducer<keyof TSource, TSource[keyof TSource], TResult>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "initial",
+          "type": "TResult",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TResult"
+    },
+    {
+      "name": "setForEach",
+      "kind": "function",
+      "description": "Iterates over each value in a `Set`, invoking the iteratee with the value and a running index.",
+      "typeSignature": "function setForEach<TValue>(input: Set<TValue>, iteratee: CollectionIteratee<TValue>): void",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "Set<TValue>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "CollectionIteratee<TValue, void>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "void"
+    },
+    {
+      "name": "setMap",
+      "kind": "function",
+      "description": "Maps over a `Set`, producing a new `Set` with each value transformed by the iteratee.",
+      "typeSignature": "function setMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult>): Set<TResult>",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "Set<TValue>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "CollectionIteratee<TValue, TResult>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Set<TResult>"
+    },
+    {
+      "name": "setFilter",
+      "kind": "function",
+      "description": "Filters a `Set`, returning a new `Set` containing only values that satisfy the predicate.",
+      "typeSignature": "function setFilter<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): Set<TValue>",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "Set<TValue>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "predicate",
+          "type": "CollectionIteratee<TValue, boolean>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Set<TValue>"
+    },
+    {
+      "name": "setFind",
+      "kind": "function",
+      "description": "Searches a `Set` for the first value that satisfies the predicate.",
+      "typeSignature": "function setFind<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): TValue | undefined",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "Set<TValue>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "predicate",
+          "type": "CollectionIteratee<TValue, boolean>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TValue | undefined"
+    },
+    {
+      "name": "setFlatMap",
+      "kind": "function",
+      "description": "Flat-maps over a `Set`, concatenating the arrays returned by the iteratee into a new `Set`.",
+      "typeSignature": "function setFlatMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult[]>): Set<TResult>",
+      "tags": {},
+      "params": [
+        {
+          "name": "input",
+          "type": "Set<TValue>",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "CollectionIteratee<TValue, TResult[]>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Set<TResult>"
+    },
+    {
+      "name": "IterableObject",
+      "kind": "type",
+      "description": "An object whose values are unknown, suitable for generic iteration.",
+      "typeSignature": "type IterableObject = Record<PropertyKey, unknown>;",
+      "tags": {}
+    },
+    {
+      "name": "CollectionIteratee",
+      "kind": "type",
+      "description": "Callback invoked for each item in a collection, receiving the value and its index.",
+      "typeSignature": "type CollectionIteratee<TValue, TResult = void> = (value: TValue, index: number) => TResult;",
+      "tags": {}
+    },
+    {
+      "name": "ObjectIteratee",
+      "kind": "type",
+      "description": "Callback invoked for each entry in an object, receiving the key and value.",
+      "typeSignature": "type ObjectIteratee<TKey, TValue, TResult = void> = (key: TKey, value: TValue) => TResult;",
+      "tags": {}
+    },
+    {
+      "name": "ObjectReducer",
+      "kind": "type",
+      "description": "Reducer callback for folding over object entries into an accumulated result.",
+      "typeSignature": "type ObjectReducer<TKey, TValue, TResult = void> = (accumulator: TResult, key: TKey, value: TValue) => TResult;",
+      "tags": {}
+    },
+    {
+      "name": "ArrayGroupIdentity",
+      "kind": "type",
+      "description": "A property key or indexer function used to derive group identity from array items.",
+      "typeSignature": "type ArrayGroupIdentity<TValue> = keyof TValue | Indexer<TValue>;",
+      "tags": {}
+    },
+    {
+      "name": "ArrayJoinPredicate",
+      "kind": "type",
+      "description": "A shared key or predicate function used to match items between two arrays in a join.",
+      "typeSignature": "type ArrayJoinPredicate<TLeft, TRight> = keyof (TLeft & TRight) | Predicate<TLeft, TRight>;",
+      "tags": {}
+    },
+    {
+      "name": "ArrayJoin",
+      "kind": "interface",
+      "description": "Result of an array join containing unmatched left items, matched pairs, and unmatched right items.",
+      "typeSignature": "interface ArrayJoin<TLeft, TRight> {\n    left: TLeft[];\n    inner: [left: TLeft, right: TRight][];\n    right: TRight[];\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "left",
+          "type": "TLeft[]",
+          "description": ""
+        },
+        {
+          "name": "inner",
+          "type": "[left: TLeft, right: TRight][]",
+          "description": ""
+        },
+        {
+          "name": "right",
+          "type": "TRight[]",
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "comparitors": [
+    {
+      "name": "comparitorNumeric",
+      "kind": "function",
+      "description": "Numeric comparator suitable for sorting numbers in ascending order.",
+      "typeSignature": "function comparitorNumeric(valueA: number, valueB: number): number",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "number",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "number",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    },
+    {
+      "name": "comparitorDate",
+      "kind": "function",
+      "description": "Date comparator suitable for sorting dates in ascending chronological order.",
+      "typeSignature": "function comparitorDate(valueA: Date, valueB: Date): number",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "Date",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "Date",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    },
+    {
+      "name": "comparitorString",
+      "kind": "function",
+      "description": "Locale-aware string comparator suitable for alphabetical sorting.",
+      "typeSignature": "function comparitorString(valueA: string, valueB: string): number",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "string",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "string",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    }
+  ],
+  "dom": [
+    {
+      "name": "onDOMEvent",
+      "kind": "function",
+      "description": "Attaches a strongly-typed event listener to a DOM element and returns a disposable for cleanup.",
+      "typeSignature": "function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable",
+      "tags": {},
+      "params": [
+        {
+          "name": "element",
+          "type": "TElement",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "event",
+          "type": "TEvent",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "handler",
+          "type": "DOMEventHandler<TElement, TEvent>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Disposable"
+    },
+    {
+      "name": "onDOMElementResize",
+      "kind": "function",
+      "description": "Observes an element for size changes using `ResizeObserver` (with a `window.resize` fallback) and returns a disposable.",
+      "typeSignature": "function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable",
+      "tags": {},
+      "params": [
+        {
+          "name": "element",
+          "type": "HTMLElement",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "handler",
+          "type": "DOMElementResizeHandler",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Disposable"
+    },
+    {
+      "name": "DOMEventHandler",
+      "kind": "type",
+      "description": "A strongly-typed DOM event handler bound to a specific element and event type.",
+      "typeSignature": "type DOMEventHandler<TElement, TEvent extends keyof DOMElementEventMap<TElement>> = (this: TElement, event: DOMElementEventMap<TElement>[TEvent]) => void;",
+      "tags": {}
+    },
+    {
+      "name": "DOMElementResizeHandler",
+      "kind": "type",
+      "description": "Callback invoked when an observed element is resized.",
+      "typeSignature": "type DOMElementResizeHandler = (event: DOMElementResizeEvent) => void;",
+      "tags": {}
+    },
+    {
+      "name": "DOMElementEventMap",
+      "kind": "type",
+      "description": "Resolves the correct event map for a given DOM element type.",
+      "typeSignature": "type DOMElementEventMap<TElement> = TElement extends MediaQueryList ? MediaQueryListEventMap\n    : TElement extends HTMLElement ? HTMLElementEventMap\n        : TElement extends Window ? WindowEventMap\n            : TElement extends Document ? DocumentEventMap\n                : Record<string, Event>;",
+      "tags": {}
+    },
+    {
+      "name": "DOMElementResizeEvent",
+      "kind": "interface",
+      "description": "Simplified resize event containing the new dimensions of the observed element.",
+      "typeSignature": "interface DOMElementResizeEvent {\n    width: number;\n    height: number;\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "width",
+          "type": "number",
+          "description": ""
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "hasWindow",
+      "kind": "variable",
+      "description": "Whether the current environment has a `window` object (i.e. is a browser context).",
+      "typeSignature": "const hasWindow: boolean",
+      "tags": {}
+    }
+  ],
+  "function": [
+    {
+      "name": "functionIdentity",
+      "kind": "function",
+      "description": "Returns the value it receives unchanged — useful as a default transform or placeholder.",
+      "typeSignature": "function functionIdentity<TValue>(value: TValue)",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TValue"
+    },
+    {
+      "name": "functionProduce",
+      "kind": "function",
+      "description": "Wraps a value or factory function into a consistent factory that always returns the value.",
+      "typeSignature": "function functionProduce<TValue>(value: TValue | (() => TValue)): () => TValue",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "TValue | (() => TValue)",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "() => TValue"
+    },
+    {
+      "name": "functionCache",
+      "kind": "function",
+      "description": "Wraps a function so its result is computed once and then returned from cache on subsequent calls until `invalidate()` is called.",
+      "typeSignature": "function functionCache<TValue extends AnyFunction>(value: TValue): CachedFunction<TValue>",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "CachedFunction<TValue>"
+    },
+    {
+      "name": "functionMemoize",
+      "kind": "function",
+      "description": "Memoizes a function by caching results keyed by the resolver (defaults to the first argument).",
+      "typeSignature": "function functionMemoize<TValue extends AnyFunction, TKey = Parameters<TValue>[0]>(value: TValue, resolver: MemoizeResolver<TValue, TKey> = (...args) => args[0])",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "resolver",
+          "type": "MemoizeResolver<TValue, TKey>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "MemoizedFunction<TValue, TKey>"
+    },
+    {
+      "name": "CachedFunction",
+      "kind": "type",
+      "description": "A function wrapper that caches its result after the first invocation until explicitly invalidated.",
+      "typeSignature": "type CachedFunction<TValue extends AnyFunction> = {\n    (...args: Parameters<TValue>): ReturnType<TValue>;\n    invalidate(): void;\n};",
+      "tags": {}
+    },
+    {
+      "name": "MemoizedFunction",
+      "kind": "type",
+      "description": "A function wrapper that caches results per unique key, exposing the underlying cache `Map`.",
+      "typeSignature": "type MemoizedFunction<TValue extends AnyFunction, TKey> = {\n    (...args: Parameters<TValue>): ReturnType<TValue>;\n    cache: Map<TKey, ReturnType<TValue>>;\n};",
+      "tags": {}
+    },
+    {
+      "name": "MemoizeResolver",
+      "kind": "type",
+      "description": "Derives a cache key from the arguments of a memoized function.",
+      "typeSignature": "type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;",
+      "tags": {}
+    }
+  ],
+  "number": [
+    {
+      "name": "numberSum",
+      "kind": "function",
+      "description": "Computes the sum of an array of numbers, or of values mapped through an optional iteratee.",
+      "typeSignature": "function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number)",
+      "tags": {},
+      "params": [
+        {
+          "name": "values",
+          "type": "TValue[]",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "iteratee",
+          "type": "((value: TValue) => number) | undefined",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    },
+    {
+      "name": "numberGCD",
+      "kind": "function",
+      "description": "Computes the greatest common divisor of two integers using the Euclidean algorithm.",
+      "typeSignature": "function numberGCD(valueA: number, valueB: number)",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "number",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "number",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    },
+    {
+      "name": "numberNice",
+      "kind": "function",
+      "description": "Rounds a value to a \"nice\" human-readable number (1, 2, 5, or 10 scaled by the appropriate power of ten).",
+      "typeSignature": "function numberNice(value: number, round: boolean = false)",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "number",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "round",
+          "type": "boolean",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "number"
+    }
+  ],
+  "object": [
+    {
+      "name": "objectFreeze",
+      "kind": "function",
+      "description": "Creates a shallow frozen copy of the given object.",
+      "typeSignature": "function objectFreeze<TValue extends object>(value: TValue)",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Readonly<TValue>"
+    }
+  ],
+  "predicate": [
+    {
+      "name": "predicateIdentity",
+      "kind": "function",
+      "description": "Tests strict reference equality between two values.",
+      "typeSignature": "function predicateIdentity(valueA: unknown, valueB: unknown): boolean",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "predicateKey",
+      "kind": "function",
+      "description": "Tests whether two objects share the same value at a given key.",
+      "typeSignature": "function predicateKey<TValue extends Record<PropertyKey, unknown>>(valueA: TValue, valueB: TValue, key: PropertyKey): boolean",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "TValue",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "key",
+          "type": "PropertyKey",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    }
+  ],
+  "string": [
+    {
+      "name": "stringUniqueId",
+      "kind": "function",
+      "description": "Generates a cryptographically random hexadecimal string of the specified length.",
+      "typeSignature": "function stringUniqueId(length: number = 6): string",
+      "tags": {},
+      "params": [
+        {
+          "name": "length",
+          "type": "number",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "string"
+    },
+    {
+      "name": "stringEquals",
+      "kind": "function",
+      "description": "Case-insensitive string equality check.",
+      "typeSignature": "function stringEquals(valueA: string, valueB: string)",
+      "tags": {},
+      "params": [
+        {
+          "name": "valueA",
+          "type": "string",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "valueB",
+          "type": "string",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    }
+  ],
+  "type": [
+    {
+      "name": "typeIsArray",
+      "kind": "function",
+      "description": "Checks whether a value is an array.",
+      "typeSignature": "function typeIsArray(value: unknown): value is unknown[]",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsDate",
+      "kind": "function",
+      "description": "Checks whether a value is a `Date` instance.",
+      "typeSignature": "function typeIsDate(value: unknown): value is Date",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsObject",
+      "kind": "function",
+      "description": "Checks whether a value is a non-null object.",
+      "typeSignature": "function typeIsObject(value: unknown): value is object",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsBoolean",
+      "kind": "function",
+      "description": "Checks whether a value is a boolean.",
+      "typeSignature": "function typeIsBoolean(value: unknown): value is boolean",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsFunction",
+      "kind": "function",
+      "description": "Checks whether a value is a function.",
+      "typeSignature": "function typeIsFunction(value: unknown): value is AnyFunction",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsNumber",
+      "kind": "function",
+      "description": "Checks whether a value is a number.",
+      "typeSignature": "function typeIsNumber(value: unknown): value is number",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsString",
+      "kind": "function",
+      "description": "Checks whether a value is a string.",
+      "typeSignature": "function typeIsString(value: unknown): value is string",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    },
+    {
+      "name": "typeIsNil",
+      "kind": "function",
+      "description": "Checks whether a value is `null` or `undefined`.",
+      "typeSignature": "function typeIsNil(value: unknown): value is null | undefined",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "unknown",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "boolean"
+    }
+  ],
+  "value": [
+    {
+      "name": "valueOneOrMore",
+      "kind": "function",
+      "description": "Normalises a single value or array into a guaranteed array.",
+      "typeSignature": "function valueOneOrMore<TValue>(value: OneOrMore<TValue>): TValue[]",
+      "tags": {},
+      "params": [
+        {
+          "name": "value",
+          "type": "OneOrMore<TValue>",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "TValue[]"
+    }
+  ],
+  "types": [
+    {
+      "name": "AnyObject",
+      "kind": "type",
+      "description": "A loosely-typed object with string, number, or symbol keys.",
+      "typeSignature": "type AnyObject = { [key: PropertyKey]: unknown };",
+      "tags": {}
+    },
+    {
+      "name": "AnyFunction",
+      "kind": "type",
+      "description": "A loosely-typed function signature that accepts and returns anything.",
+      "typeSignature": "type AnyFunction = (...args: any[]) => any;",
+      "tags": {}
+    },
+    {
+      "name": "AnyAsyncFunction",
+      "kind": "type",
+      "description": "A loosely-typed async function signature.",
+      "typeSignature": "type AnyAsyncFunction = (...args: any[]) => any;",
+      "tags": {}
+    },
+    {
+      "name": "OneOrMore",
+      "kind": "type",
+      "description": "Represents a single value or an array of values.",
+      "typeSignature": "type OneOrMore<TValue> = TValue | TValue[];",
+      "tags": {}
+    },
+    {
+      "name": "Predicate",
+      "kind": "type",
+      "description": "A comparison function that tests whether two values match.",
+      "typeSignature": "type Predicate<TLeft, TRight = TLeft> = (left: TLeft, right: TRight) => boolean;",
+      "tags": {}
+    },
+    {
+      "name": "Indexer",
+      "kind": "type",
+      "description": "Derives a grouping key from a value.",
+      "typeSignature": "type Indexer<TValue> = (value: TValue) => PropertyKey;",
+      "tags": {}
+    },
+    {
+      "name": "Merge",
+      "kind": "type",
+      "description": "Merges two types, with properties in `TB` overriding those in `TA`.",
+      "typeSignature": "type Merge<TA, TB> = Omit<TA, keyof TB> & TB;",
+      "tags": {}
+    },
+    {
+      "name": "UnionToIntersection",
+      "kind": "type",
+      "description": "Converts a union type to an intersection type.",
+      "typeSignature": "type UnionToIntersection<U> = (U extends any ? (arg: U) => any : never) extends ((arg: infer I) => void) ? I : never;",
+      "tags": {}
+    },
+    {
+      "name": "IfEquals",
+      "kind": "type",
+      "description": "Conditional type that resolves to `A` if `X` and `Y` are identical, otherwise `B`.",
+      "typeSignature": "type IfEquals<X, Y, A = X, B = never> =\n    (<TValue>() => TValue extends X ? 1 : 2) extends\n    (<TValue>() => TValue extends Y ? 1 : 2) ? A : B;",
+      "tags": {}
+    },
+    {
+      "name": "GetReadonlyKeys",
+      "kind": "type",
+      "description": "Extracts the readonly property keys from an object type.",
+      "typeSignature": "type GetReadonlyKeys<TValue extends object> = {\n    [TKey in keyof TValue]-?: IfEquals<{ [Q in TKey]: TValue[TKey] }, { -readonly [Q in TKey]: TValue[TKey] }, never, TKey>\n}[keyof TValue];",
+      "tags": {}
+    },
+    {
+      "name": "GetMutableKeys",
+      "kind": "type",
+      "description": "Extracts the mutable (non-readonly) property keys from an object type.",
+      "typeSignature": "type GetMutableKeys<TValue extends object> = {\n    [TKey in keyof TValue]-?: IfEquals<{ [Q in TKey]: TValue[TKey] }, { -readonly [Q in TKey]: TValue[TKey] }, TKey>;\n}[keyof TValue];",
+      "tags": {}
+    },
+    {
+      "name": "Disposable",
+      "kind": "interface",
+      "description": "A resource that can be disposed to release underlying subscriptions or handles.",
+      "typeSignature": "interface Disposable {\n    dispose: () => void;\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "dispose",
+          "type": "() => void",
+          "description": ""
+        }
+      ]
+    }
+  ]
+}

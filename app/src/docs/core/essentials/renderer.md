@@ -6,6 +6,8 @@ outline: "deep"
 
 A **Renderer** provides an automatic render loop for a [Scene](/docs/core/essentials/scene), powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, enabling smooth animations and interactive effects. The renderer also provides a `transition()` method for animating element properties.
 
+The Renderer is what brings your scene to life. Without it, you'd need to manually call `scene.render()` every time something changes. With a Renderer, you describe *what* should change (via transitions) and the renderer handles *when* and *how* — including easing, chaining, staggering, and automatic start/stop to conserve resources when idle.
+
 ## Creating a Renderer
 
 ```ts
@@ -23,10 +25,7 @@ const renderer = createRenderer(scene);
 
 ## Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `autoStart` | `boolean` | `true` | Start the render loop immediately |
-| `autoStop` | `boolean` | `true` | Stop the render loop when idle (no transitions, mouse leaves) |
+The renderer accepts `autoStart` (default `true`) and `autoStop` (default `true`). With `autoStop`, the renderer pauses when idle and restarts when needed:
 
 ```ts
 const renderer = createRenderer(scene, {
@@ -34,14 +33,6 @@ const renderer = createRenderer(scene, {
     autoStop: false,
 });
 ```
-
-## Properties
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `isBusy` | `boolean` | Whether any transitions are currently running |
-| `autoStart` | `boolean` | Whether the renderer auto-starts |
-| `autoStop` | `boolean` | Whether the renderer auto-stops when idle |
 
 ## Render Loop
 
@@ -69,18 +60,6 @@ await renderer.transition(circle, {
     },
 });
 ```
-
-### Transition Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `duration` | `number` | `0` | Duration in milliseconds |
-| `ease` | `Ease` | `easeLinear` | Easing function |
-| `delay` | `number` | `0` | Delay before starting (ms) |
-| `loop` | `boolean` | `false` | Loop the transition |
-| `direction` | `'forward' \| 'reverse'` | `'forward'` | Playback direction |
-| `state` | `object` | — | Target property values |
-| `onComplete` | `(element) => void` | — | Callback when each element completes |
 
 ### Easing Functions
 
@@ -165,10 +144,7 @@ renderer.stop();
 
 ## Events
 
-| Event | Payload | Description |
-| --- | --- | --- |
-| `start` | `{ startTime }` | Render loop started |
-| `stop` | `{ startTime, endTime }` | Render loop stopped |
+The renderer emits `start` and `stop` events to track the render loop lifecycle:
 
 ```ts
 renderer.on('start', (event) => {
@@ -183,6 +159,9 @@ The renderer automatically destroys itself when the scene is destroyed. You can 
 ```ts
 renderer.destroy(); // stops the loop and cleans up
 ```
+
+> [!NOTE]
+> For the full list of Renderer properties, methods, and events, see the [Renderer API Reference](/docs/api/core/core).
 
 ## Demo
 

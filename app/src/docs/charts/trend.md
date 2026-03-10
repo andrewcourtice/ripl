@@ -1,6 +1,9 @@
 # Trend Chart
 
-A trend chart is any combination of x/y series such as bar, line or area.
+The **Trend Chart** is a composite chart that lets you mix bar, line, and area series on the same axes. This makes it ideal for dashboards where you want to overlay a trend line on top of bar data, or combine multiple visualization types in a single view. Each series specifies its `type` (`'bar'`, `'line'`, or `'area'`), and all share common features like grid, legend, and animated transitions.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>

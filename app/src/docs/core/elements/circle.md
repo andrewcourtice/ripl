@@ -4,7 +4,7 @@ outline: "deep"
 
 # Circle
 
-A **Circle** draws a filled and/or stroked circle defined by a center point and radius.
+A **Circle** draws a filled and/or stroked circle defined by a center point (`cx`, `cy`) and `radius`. It's the simplest shape in Ripl and a great starting point for learning the element API. Circles are commonly used as data point markers, avatar placeholders, decorative elements, and building blocks for more complex visualizations.
 
 ## Example
 
@@ -80,10 +80,7 @@ const circle = createCircle({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radius` | `number` | Yes | Circle radius |
+The circle's geometry is defined by `cx`, `cy`, and `radius`. All properties are animatable and support style inheritance from parent groups.
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Circle API Reference](/docs/api/core/elements).

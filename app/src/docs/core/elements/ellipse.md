@@ -4,7 +4,7 @@ outline: "deep"
 
 # Ellipse
 
-An **Ellipse** draws an elliptical shape with independent X and Y radii, rotation, and optional start/end angles for partial ellipses.
+An **Ellipse** draws an elliptical shape with independent X and Y radii (`radiusX`, `radiusY`), intrinsic `rotation`, and optional `startAngle`/`endAngle` for partial ellipses. Use ellipses when you need non-uniform curvature — for example, orbit paths, oval indicators, or stylized backgrounds.
 
 ## Example
 
@@ -112,14 +112,7 @@ const ellipse = createEllipse({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radiusX` | `number` | Yes | Horizontal radius |
-| `radiusY` | `number` | Yes | Vertical radius |
-| `rotation` | `number` | Yes | Rotation angle in radians |
-| `startAngle` | `number` | Yes | Start angle in radians |
-| `endAngle` | `number` | Yes | End angle in radians |
+The ellipse's geometry is defined by `cx`, `cy`, `radiusX`, `radiusY`, `rotation`, `startAngle`, and `endAngle`.
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Ellipse API Reference](/docs/api/core/elements).

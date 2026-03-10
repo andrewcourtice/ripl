@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import {
@@ -15,6 +16,8 @@ import {
 import {
     demos,
 } from './data/demos';
+
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../packages/core/package.json'), 'utf-8'));
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -69,6 +72,10 @@ export default defineConfig({
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             {
+                text: `v${pkg.version}`,
+                link: 'https://github.com/andrewcourtice/ripl/releases',
+            },
+            {
                 text: 'Docs',
                 items: [
                     {
@@ -84,6 +91,10 @@ export default defineConfig({
                         link: '/docs/3d/',
                     },
                 ],
+            },
+            {
+                text: 'API',
+                link: '/docs/api/',
             },
             {
                 text: 'Demos',
@@ -318,6 +329,143 @@ export default defineConfig({
                         text,
                         link,
                     })),
+                },
+            ],
+
+            '/docs/api/': [
+                {
+                    text: 'API Reference',
+                    link: '/docs/api/',
+                },
+                {
+                    text: '@ripl/core',
+                    collapsed: false,
+                    items: [
+                        {
+                            text: 'Elements',
+                            link: '/docs/api/core/elements',
+                        },
+                        {
+                            text: 'Core',
+                            link: '/docs/api/core/core',
+                        },
+                        {
+                            text: 'Context',
+                            link: '/docs/api/core/context',
+                        },
+                        {
+                            text: 'Animation & Easing',
+                            link: '/docs/api/core/animation',
+                        },
+                        {
+                            text: 'Interpolators',
+                            link: '/docs/api/core/interpolators',
+                        },
+                        {
+                            text: 'Scales',
+                            link: '/docs/api/core/scales',
+                        },
+                        {
+                            text: 'Color',
+                            link: '/docs/api/core/color',
+                        },
+                        {
+                            text: 'Math & Geometry',
+                            link: '/docs/api/core/math',
+                        },
+                        {
+                            text: 'Gradients',
+                            link: '/docs/api/core/gradient',
+                        },
+                        {
+                            text: 'Task',
+                            link: '/docs/api/core/task',
+                        },
+                    ],
+                },
+                {
+                    text: '@ripl/charts',
+                    collapsed: true,
+                    items: [
+                        {
+                            text: 'Chart Base & Options',
+                            link: '/docs/api/charts/core',
+                        },
+                        {
+                            text: 'Charts',
+                            link: '/docs/api/charts/charts',
+                        },
+                        {
+                            text: 'Chart Elements',
+                            link: '/docs/api/charts/elements',
+                        },
+                    ],
+                },
+                {
+                    text: '@ripl/svg',
+                    collapsed: true,
+                    items: [
+                        {
+                            text: 'SVG Context',
+                            link: '/docs/api/svg/context',
+                        },
+                    ],
+                },
+                {
+                    text: '@ripl/3d',
+                    collapsed: true,
+                    items: [
+                        {
+                            text: 'Context3D',
+                            link: '/docs/api/3d/context',
+                        },
+                        {
+                            text: 'Camera',
+                            link: '/docs/api/3d/camera',
+                        },
+                        {
+                            text: 'Shapes',
+                            link: '/docs/api/3d/shapes',
+                        },
+                        {
+                            text: 'Shading',
+                            link: '/docs/api/3d/shading',
+                        },
+                        {
+                            text: 'Math',
+                            link: '/docs/api/3d/math',
+                        },
+                        {
+                            text: 'Interpolators',
+                            link: '/docs/api/3d/interpolators',
+                        },
+                    ],
+                },
+                {
+                    text: '@ripl/utilities',
+                    collapsed: true,
+                    items: [
+                        {
+                            text: 'Collections',
+                            link: '/docs/api/utilities/collections',
+                        },
+                        {
+                            text: 'Type Guards',
+                            link: '/docs/api/utilities/type-guards',
+                        },
+                        {
+                            text: 'DOM',
+                            link: '/docs/api/utilities/dom',
+                        },
+                        {
+                            text: 'Helpers',
+                            link: '/docs/api/utilities/helpers',
+                        },
+                        {
+                            text: 'Types',
+                            link: '/docs/api/utilities/types',
+                        },
+                    ],
                 },
             ],
 

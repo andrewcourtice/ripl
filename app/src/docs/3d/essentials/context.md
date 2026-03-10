@@ -4,7 +4,10 @@ title: Context3D
 
 # Context3D
 
-`Context3D` extends `CanvasContext` with 3D projection capabilities. It manages view, projection, and combined view-projection matrices, and provides methods to project 3D points onto the 2D canvas.
+`Context3D` extends `CanvasContext` with 3D projection capabilities. It manages view, projection, and combined view-projection matrices, and provides methods to project 3D world-space points onto 2D canvas coordinates. It also exposes a `lightDirection` vector used by the flat-shading system. Because it inherits from the canvas context, all core drawing state, events, and gradient support are available.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/context).
 
 ## Creation
 
@@ -28,12 +31,10 @@ const context = createContext('#app', {
 
 ## Properties
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `viewMatrix` | `Matrix4` | The current view (camera) matrix |
-| `projectionMatrix` | `Matrix4` | The current projection matrix |
-| `viewProjectionMatrix` | `Matrix4` | Combined view × projection matrix |
-| `lightDirection` | `Vector3` | Direction of the light source for shading |
+- **`viewMatrix`** — `Matrix4` — The current view (camera) matrix
+- **`projectionMatrix`** — `Matrix4` — The current projection matrix
+- **`viewProjectionMatrix`** — `Matrix4` — Combined view × projection matrix
+- **`lightDirection`** — `Vector3` — Direction of the light source for shading
 
 ## Methods
 
@@ -96,8 +97,10 @@ const camera = createCamera(scene, {
     target: [0, 0, 0],
 });
 
-const cube = createCube({ size: 1.5,
-    fill: '#4488ff' });
+const cube = createCube({
+    size: 1.5,
+    fill: '#4488ff',
+});
 
 // Render loop with auto-rotation
 let angle = 0;

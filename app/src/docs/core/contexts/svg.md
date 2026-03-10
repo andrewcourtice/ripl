@@ -4,7 +4,7 @@ outline: "deep"
 
 # SVG Context
 
-The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically — just change the import.
+The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically — just change the import. Under the hood, it maintains a virtual tree and reconciles it against the real SVG DOM on each render pass, minimizing mutations for better performance.
 
 ## Installation
 
@@ -94,6 +94,9 @@ SVG is less ideal when:
 - Rendering thousands of elements per frame (Canvas is faster for large counts)
 - You need pixel-level manipulation
 - Frame-by-frame animation performance is critical
+
+> [!NOTE]
+> For the full API, see the [SVG Context API Reference](/docs/api/svg/context).
 
 ## Demo
 

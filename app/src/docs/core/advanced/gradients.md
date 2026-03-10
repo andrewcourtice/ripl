@@ -6,6 +6,9 @@ outline: "deep"
 
 Ripl supports CSS gradient strings directly in `fill` and `stroke` properties. The gradient syntax is parsed at render time and converted to the appropriate native gradient for the current context (Canvas or SVG).
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/gradient).
+
 ## Supported Gradient Types
 
 ### Linear Gradient

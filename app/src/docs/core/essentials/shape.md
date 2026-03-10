@@ -68,6 +68,9 @@ The `pointerEvents` property controls which parts of the shape respond to hits:
 - `'stroke'` — only the stroke area
 - `'none'` — no hit testing
 
+> [!NOTE]
+> For the full list of Shape properties and methods, see the [Shape API Reference](/docs/api/core/core).
+
 ## Demo
 
 The demo below shows the difference between `autoFill` and `autoStroke`. The left circle has both enabled, the middle has only fill, and the right has only stroke.

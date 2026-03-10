@@ -1,6 +1,9 @@
 # Bar Chart
 
-The `BarChart` supports grouped and stacked modes, vertical and horizontal orientations, with animated transitions, tooltips, and legend.
+The **Bar Chart** is one of the most versatile chart types in Ripl. It supports grouped and stacked modes, vertical and horizontal orientations, and handles animated entry, exit, and update transitions automatically when data changes. Built-in features include tooltips on hover, a configurable legend, grid lines, and axis labels — all enabled by default so you get a polished result with minimal configuration.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 

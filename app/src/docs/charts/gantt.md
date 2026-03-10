@@ -1,6 +1,9 @@
 # Gantt Chart
 
-The `GanttChart` displays tasks as horizontal bars along a time axis, with task names on the y-axis. It supports progress overlays, a today marker, animated transitions, tooltips, and grid lines.
+The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -131,19 +134,17 @@ chart.update({ data: newData });
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `data` | `TData[]` | — | The data array (one item per task) |
-| `key` | `keyof TData \| Function` | — | Unique key accessor per task |
-| `label` | `keyof TData \| Function` | — | Label accessor for y-axis task names |
-| `start` | `keyof TData \| Function` | — | Start date accessor |
-| `end` | `keyof TData \| Function` | — | End date accessor |
-| `color` | `keyof TData \| Function` | — | Optional color accessor per task |
-| `progress` | `keyof TData \| Function` | — | Optional progress accessor (0–1) |
-| `grid` | `boolean \| ChartGridOptions` | — | Show/configure grid lines |
-| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
-| `axis` | `boolean \| ChartAxisOptions` | — | Configure axes |
-| `showToday` | `boolean` | `true` | Show a vertical "today" marker line |
-| `todayColor` | `string` | `#ef4444` | Color for the today marker |
-| `borderRadius` | `number` | `3` | Bar corner radius |
-| `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
+- **`data`** — The data array (one item per task)
+- **`key`** — Unique key accessor per task
+- **`label`** — Label accessor for y-axis task names
+- **`start`** — Start date accessor
+- **`end`** — End date accessor
+- **`color`** — Optional color accessor per task
+- **`progress`** — Optional progress accessor (0–1)
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
+- **`axis`** — `boolean | ChartAxisOptions` — Configure axes
+- **`showToday`** — Show a vertical "today" marker line (default `true`)
+- **`todayColor`** — Color for the today marker (default `#ef4444`)
+- **`borderRadius`** — Bar corner radius (default `3`)
+- **`padding`** — Chart padding

@@ -4,7 +4,7 @@ outline: "deep"
 
 # Text
 
-A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path.
+A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path. Text supports both filled and stroked rendering, and can follow arbitrary SVG paths via the `pathData` property — perfect for curved labels, circular badges, and decorative typography.
 
 ## Example
 
@@ -165,23 +165,10 @@ const text = createText({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | Yes | X coordinate |
-| `y` | `number` | Yes | Y coordinate |
-| `content` | `string \| number` | Yes | The text to render |
-| `pathData` | `string` | No | SVG path `d` string to render text along |
-| `startOffset` | `number` | No | Position along the path to start text (0–1) |
+The text element is defined by `x`, `y`, and `content`. Optional properties include `pathData` (SVG path string for text-on-path) and `startOffset` (0–1 position along the path). Style properties like `font`, `textAlign`, `textBaseline`, `fill`, and `stroke` control appearance.
 
-The following inherited style properties are particularly relevant for text:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `font` | `string` | CSS font string (e.g. `'16px sans-serif'`) |
-| `textAlign` | `'start' \| 'end' \| 'left' \| 'right' \| 'center'` | Horizontal alignment relative to `x` |
-| `textBaseline` | `'top' \| 'hanging' \| 'middle' \| 'alphabetic' \| 'ideographic' \| 'bottom'` | Vertical alignment relative to `y` |
-| `fill` | `string` | Text fill color (renders filled text) |
-| `stroke` | `string` | Text stroke color (renders stroked/outlined text) |
+> [!TIP]
+> If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
 
 > [!NOTE]
-> If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
+> For the full property list, see the [Text API Reference](/docs/api/core/elements).

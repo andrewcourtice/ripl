@@ -4,7 +4,7 @@ outline: "deep"
 
 # Rect
 
-A **Rect** draws a rectangle with optional rounded corners (border radius).
+A **Rect** draws a rectangle defined by position (`x`, `y`) and dimensions (`width`, `height`), with optional rounded corners via `borderRadius`. Rects are one of the most versatile shapes in Ripl — used for backgrounds, cards, bar chart segments, progress indicators, and layout scaffolding. The `borderRadius` property accepts a single number for uniform rounding or a `[topLeft, topRight, bottomRight, bottomLeft]` array for per-corner control.
 
 ## Example
 
@@ -123,32 +123,7 @@ const rect = createRect({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | Yes | Top-left X coordinate |
-| `y` | `number` | Yes | Top-left Y coordinate |
-| `width` | `number` | Yes | Width |
-| `height` | `number` | Yes | Height |
-| `borderRadius` | `number \| [number, number, number, number]` | No | Corner radius. A single number applies to all corners. An array sets `[topLeft, topRight, bottomRight, bottomLeft]`. |
+The rect's geometry is defined by `x`, `y`, `width`, `height`, and optional `borderRadius`.
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
-
-## Border Radius
-
-The `borderRadius` property supports both uniform and per-corner values:
-
-```ts
-// Uniform radius
-createRect({ x: 0,
-    y: 0,
-    width: 200,
-    height: 100,
-    borderRadius: 12 });
-
-// Per-corner: [topLeft, topRight, bottomRight, bottomLeft]
-createRect({ x: 0,
-    y: 0,
-    width: 200,
-    height: 100,
-    borderRadius: [12, 0, 12, 0] });
-```
+> [!NOTE]
+> For the full property list, see the [Rect API Reference](/docs/api/core/elements).

@@ -1,6 +1,9 @@
 # Pie Chart
 
-A pie chart is useful for illustrating numerical proportions of statistical data.
+The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Hover any slice to see a tooltip, and toggle the donut mode in the demo below.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>

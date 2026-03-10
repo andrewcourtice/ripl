@@ -1,6 +1,9 @@
 # Sunburst Chart
 
-The `SunburstChart` displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value.
+The **Sunburst Chart** displays hierarchical data as concentric rings, where each ring represents a level in the hierarchy and arc size represents value. It's excellent for visualizing tree structures like org charts, file systems, or category breakdowns. Nodes can have nested `children`, and arcs animate on entry and update.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 

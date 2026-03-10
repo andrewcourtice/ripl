@@ -6,6 +6,9 @@ outline: "deep"
 
 A **clip path** turns a shape into a clipping mask — instead of being filled or stroked, the shape defines a visible region. Any sibling elements rendered after the clip shape (within the same group) are only visible where they overlap with the clip region.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/core).
+
 ## Usage
 
 Set `clip: true` on any shape to use it as a clip path:
@@ -20,17 +23,21 @@ import {
 const group = createGroup({
     children: [
         // Clip shape — defines the visible region
-        createCircle({ clip: true,
+        createCircle({
+            clip: true,
             cx: 150,
             cy: 100,
-            radius: 80 }),
+            radius: 80,
+        }),
 
         // Clipped content — only visible inside the circle
-        createRect({ fill: '#3a86ff',
+        createRect({
+            fill: '#3a86ff',
             x: 0,
             y: 0,
             width: 300,
-            height: 200 }),
+            height: 200,
+        }),
     ],
 });
 ```
@@ -48,15 +55,9 @@ When a shape has `clip: true`:
 
 This means clips are **scoped to their group** — they don't leak to elements outside the group.
 
-## Properties
+## The `clip` Property
 
-The `clip` option is available on all [Shape](/docs/core/essentials/shape) types:
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `clip` | `boolean` | `false` | When `true`, the shape acts as a clip path instead of rendering visually |
-
-When `clip` is `true`, the `autoFill`, `autoStroke`, `fill`, and `stroke` properties have no effect — the shape is never drawn, only used as a clipping mask.
+The `clip` option is available on all [Shape](/docs/core/essentials/shape) types. Set `clip: true` to use the shape as a clipping mask instead of rendering it visually. When active, `autoFill`, `autoStroke`, `fill`, and `stroke` have no effect — the shape is never drawn, only used to define the visible region.
 
 ## Combining with Transforms
 
@@ -104,10 +105,12 @@ const r = Math.min(context.width, context.height) / 3;
 const group = createGroup({
     children: [
         // Circle clip — defines the visible region
-        createCircle({ clip: true,
+        createCircle({
+            clip: true,
             cx,
             cy,
-            radius: r }),
+            radius: r,
+        }),
 
         // Background rect — clipped to circle
         createRect({

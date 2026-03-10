@@ -4,7 +4,10 @@ title: Camera
 
 # Camera
 
-The camera is created alongside the scene and renderer. It manages the view matrix on the `Context3D` and supports orbit, pan, zoom, and lookAt operations. Property changes are batched via microtasks for efficient updates.
+The camera manages the view matrix on the `Context3D` and supports orbit, pan, zoom, and lookAt operations. Property changes like `position`, `target`, and `fov` are batched via microtasks so multiple changes in the same synchronous block result in a single matrix update. Built-in mouse interactions (scroll to zoom, drag to orbit, Shift+drag to pan) can be enabled with a single flag or fine-tuned per interaction.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/camera).
 
 ## Creation
 
@@ -25,15 +28,13 @@ const camera = createCamera(scene, {
 
 ## Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `position` | `Vector3` | `[0, 0, 5]` | Camera position in world space |
-| `target` | `Vector3` | `[0, 0, 0]` | Point the camera looks at |
-| `up` | `Vector3` | `[0, 1, 0]` | Up direction |
-| `fov` | `number` | `60` | Field of view in degrees |
-| `near` | `number` | `0.1` | Near clipping plane |
-| `far` | `number` | `1000` | Far clipping plane |
-| `projection` | `string` | `'perspective'` | `'perspective'` or `'orthographic'` |
+- **`position`** — `Vector3` — Camera position in world space (default `[0, 0, 5]`)
+- **`target`** — `Vector3` — Point the camera looks at (default `[0, 0, 0]`)
+- **`up`** — `Vector3` — Up direction (default `[0, 1, 0]`)
+- **`fov`** — Field of view in degrees (default `60`)
+- **`near`** — Near clipping plane (default `0.1`)
+- **`far`** — Far clipping plane (default `1000`)
+- **`projection`** — `'perspective'` or `'orthographic'` (default `'perspective'`)
 
 ## Methods
 
@@ -103,8 +104,10 @@ For granular control, pass an object:
 ```ts
 const camera = createCamera(scene, {
     interactions: {
-        zoom: { enabled: true,
-            sensitivity: 5 },
+        zoom: {
+            enabled: true,
+            sensitivity: 5,
+        },
         pivot: true,
         pan: true,
     },
@@ -113,24 +116,13 @@ const camera = createCamera(scene, {
 
 ### Interaction Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `interactions` | `boolean \| CameraInteractions` | `undefined` | Enable/disable all interactions or configure individually |
-
-Each interaction (`zoom`, `pivot`, `pan`) accepts `boolean` or `CameraInteractionConfig`:
-
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `enabled` | `boolean` | `true` | Whether the interaction is active |
-| `sensitivity` | `number` | `1` | Multiplier for the interaction speed |
+Pass `interactions: true` to enable all interactions with default sensitivity, or pass an object to configure each individually. Each interaction (`zoom`, `pivot`, `pan`) accepts `boolean` or `{ enabled, sensitivity }`.
 
 ### Controls
 
-| Action | Input |
-| --- | --- |
-| Orbit / Pivot | Left-click + drag |
-| Pan | Middle-click + drag, or Shift + left-click + drag |
-| Zoom | Scroll wheel |
+- **Orbit / Pivot** — Left-click + drag
+- **Pan** — Middle-click + drag, or Shift + left-click + drag
+- **Zoom** — Scroll wheel
 
 ### dispose()
 

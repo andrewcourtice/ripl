@@ -4,7 +4,7 @@ outline: "deep"
 
 # Polygon
 
-A **Polygon** draws a regular polygon (triangle, pentagon, hexagon, etc.) defined by a center point, radius, and number of sides.
+A **Polygon** draws a regular polygon (triangle, pentagon, hexagon, etc.) defined by a center point (`cx`, `cy`), `radius` (distance from center to vertex), and `sides` count. Polygons are useful for badges, icons, radar chart backgrounds, and decorative shapes. Increase `sides` to approximate a circle, or use 3 for triangles, 5 for pentagons, 6 for hexagons, and so on.
 
 ## Example
 
@@ -117,11 +117,7 @@ const hexagon = createPolygon({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radius` | `number` | Yes | Distance from center to vertex |
-| `sides` | `number` | Yes | Number of sides (minimum 3) |
+The polygon's geometry is defined by `cx`, `cy`, `radius`, and `sides`.
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Polygon API Reference](/docs/api/core/elements).

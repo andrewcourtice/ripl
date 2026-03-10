@@ -4,7 +4,10 @@ title: Cone
 
 # Cone
 
-A 3D cone with a pointed apex and circular base.
+The **Cone** is a 3D primitive with a pointed apex and circular base. Segment count controls the smoothness of the base circle. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
 
 ## Usage
 
@@ -23,17 +26,11 @@ const cone = createCone({
 
 ## Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `radius` | `number` | — | Base radius |
-| `height` | `number` | — | Height from base to apex |
-| `segments` | `number` | `16` | Number of radial segments |
-| `x` | `number` | `0` | X position |
-| `y` | `number` | `0` | Y position |
-| `z` | `number` | `0` | Z position |
-| `rotationX` | `number` | `0` | Rotation around X axis (radians) |
-| `rotationY` | `number` | `0` | Rotation around Y axis (radians) |
-| `rotationZ` | `number` | `0` | Rotation around Z axis (radians) |
+- **`radius`** — Base radius
+- **`height`** — Height from base to apex
+- **`segments`** — Number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 ## Demo
 
@@ -49,12 +46,16 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5],
-    target: [0, 0, 0] });
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
 
-const cone = createCone({ radius: 1,
+const cone = createCone({
+    radius: 1,
     height: 2,
-    fill: '#cc4444' });
+    fill: '#cc4444',
+});
 
 let angle = 0;
 function loop() {

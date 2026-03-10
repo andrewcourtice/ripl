@@ -8,19 +8,12 @@ Interpolators are functions that compute intermediate values between two endpoin
 
 Ripl automatically selects the right interpolator based on the value type, but you can also provide custom interpolators for specialized behavior.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/interpolators).
+
 ## Built-in Interpolators
 
-Ripl ships with interpolators for common value types. They are tested in order — the first one whose `test` function returns `true` is used.
-
-| Interpolator | Type | Description |
-| --- | --- | --- |
-| `interpolateNumber` | `number` | Linear interpolation between two numbers |
-| `interpolateColor` | `string` | Interpolates between CSS color strings (hex, rgb, rgba, hsl) |
-| `interpolateGradient` | `string` | Interpolates between CSS gradient strings |
-| `interpolateDate` | `Date` | Interpolates between two Date objects |
-| `interpolatePath` | `string` | Interpolates between SVG path strings |
-| `interpolateString` | `string` | Extracts and interpolates numeric values within strings |
-| `interpolateAny` | `any` | Fallback — snaps to the target value at t > 0.5 |
+Ripl ships with interpolators for common value types. They are tested in order — the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (fallback — snaps at t > 0.5).
 
 ## How Interpolators Work
 
@@ -139,12 +132,18 @@ await renderer.transition(circle, {
 
         // Explicit offsets
         radius: [
-            { value: 80,
-                offset: 0.3 },
-            { value: 40,
-                offset: 0.7 },
-            { value: 100,
-                offset: 1.0 },
+            {
+                value: 80,
+                offset: 0.3,
+            },
+            {
+                value: 40,
+                offset: 0.7,
+            },
+            {
+                value: 100,
+                offset: 1.0,
+            },
         ],
     },
 });

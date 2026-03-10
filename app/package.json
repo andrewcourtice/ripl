@@ -1,9 +1,10 @@
 {
     "private": true,
     "scripts": {
+        "generate-api": "node scripts/generate-api.mjs && node scripts/generate-api-pages.mjs",
         "prepare-playground": "node scripts/prepare-playground.mjs",
-        "start": "yarn prepare-playground && vitepress dev ./src",
-        "build": "yarn prepare-playground && vitepress build ./src",
+        "start": "yarn generate-api && yarn prepare-playground && vitepress dev ./src",
+        "build": "yarn generate-api && yarn prepare-playground && vitepress build ./src",
         "preview": "vitepress preview ./src"
     },
     "dependencies": {

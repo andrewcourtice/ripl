@@ -1,6 +1,9 @@
 # Scatter Chart
 
-A scatter chart (also known as a bubble chart when using variable sizes) displays data points on a two-dimensional plane, with optional size variation to represent a third dimension.
+The **Scatter Chart** (also known as a bubble chart when using variable sizes) plots data points on a two-dimensional plane, with optional size variation via `sizeBy` to represent a third dimension. It supports multiple series, crosshair tracking on both axes, a legend, grid lines, and configurable axis titles. Data points animate smoothly on entry, exit, and update.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>

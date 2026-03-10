@@ -6,6 +6,9 @@ outline: "deep"
 
 Ripl provides two approaches to animation: **manual transitions** using the standalone `transition` function, and **renderer-based transitions** using `renderer.transition()`. Both are promise-based and support easing, keyframes, and custom interpolators.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/animation).
+
 ## Manual Transitions
 
 The `transition` function runs a timed animation loop using `requestAnimationFrame`. It's useful when you don't have a scene/renderer setup — for example, animating a single element rendered directly to a context.
@@ -27,13 +30,7 @@ await transition({
 });
 ```
 
-### Transition Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `duration` | `number` | `0` | Duration in milliseconds |
-| `ease` | `Ease` | `easeLinear` | Easing function |
-| `loop` | `boolean` | `false` | Loop the transition indefinitely |
+The transition accepts `duration` (milliseconds), `ease` (easing function, defaults to `easeLinear`), and `loop` (repeat indefinitely).
 
 ### Cancelling a Transition
 
@@ -79,23 +76,7 @@ The renderer automatically:
 
 ## Easing Functions
 
-Easing functions control the rate of change over time. Ripl provides 13 built-in easing functions:
-
-| Function | Description |
-| --- | --- |
-| `easeLinear` | Constant speed (no easing) |
-| `easeInQuad` | Accelerate from zero |
-| `easeOutQuad` | Decelerate to zero |
-| `easeInOutQuad` | Accelerate then decelerate |
-| `easeInCubic` | Stronger acceleration |
-| `easeOutCubic` | Stronger deceleration |
-| `easeInOutCubic` | Stronger ease in/out |
-| `easeInQuart` | Even stronger acceleration |
-| `easeOutQuart` | Even stronger deceleration |
-| `easeInOutQuart` | Even stronger ease in/out |
-| `easeInQuint` | Strongest acceleration |
-| `easeOutQuint` | Strongest deceleration |
-| `easeInOutQuint` | Strongest ease in/out |
+Easing functions control the rate of change over time. Ripl ships with 13 built-in easing functions covering `Quad`, `Cubic`, `Quart`, and `Quint` curves, each available in `In`, `Out`, and `InOut` variants, plus `easeLinear` for constant speed.
 
 ```ts
 import {
@@ -140,15 +121,19 @@ async function animate() {
     await renderer.transition(circle, {
         duration: 500,
         ease: easeOutCubic,
-        state: { radius: 100,
-            fill: '#ff006e' },
+        state: {
+            radius: 100,
+            fill: '#ff006e',
+        },
     });
 
     await renderer.transition(circle, {
         duration: 500,
         ease: easeInOutQuad,
-        state: { radius: 50,
-            fill: '#3a86ff' },
+        state: {
+            radius: 50,
+            fill: '#3a86ff',
+        },
     });
 }
 ```
@@ -202,12 +187,18 @@ await renderer.transition(circle, {
     duration: 2000,
     state: {
         fill: [
-            { value: '#ff006e',
-                offset: 0.25 },
-            { value: '#8338ec',
-                offset: 0.5 },
-            { value: '#3a86ff',
-                offset: 1.0 },
+            {
+                value: '#ff006e',
+                offset: 0.25,
+            },
+            {
+                value: '#8338ec',
+                offset: 0.5,
+            },
+            {
+                value: '#3a86ff',
+                offset: 1.0,
+            },
         ],
     },
 });

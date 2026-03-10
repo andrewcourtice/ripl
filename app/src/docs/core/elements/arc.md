@@ -4,7 +4,7 @@ outline: "deep"
 
 # Arc
 
-An **Arc** draws a circular or annular (donut) arc segment. It supports inner radius for donut shapes, pad angles for spacing between segments, and provides a `getCentroid()` method useful for positioning labels.
+An **Arc** draws a circular or annular (donut) arc segment defined by a center point, radius, and angular range. It supports `innerRadius` for donut shapes, `padAngle` for spacing between segments, and `borderRadius` for rounded corners. The `getCentroid()` method returns the visual center of the arc, making it easy to position labels on pie or donut slices.
 
 ## Example
 
@@ -121,18 +121,10 @@ const arc = createArc({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radius` | `number` | Yes | Outer radius |
-| `startAngle` | `number` | Yes | Start angle in radians |
-| `endAngle` | `number` | Yes | End angle in radians |
-| `innerRadius` | `number` | No | Inner radius (creates a donut/annular arc) |
-| `padAngle` | `number` | No | Padding angle in radians between segments |
-| `borderRadius` | `number` | No | Corner rounding radius |
+The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (spacing between segments), and `borderRadius` (corner rounding).
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Arc API Reference](/docs/api/core/elements).
 
 ## Methods
 

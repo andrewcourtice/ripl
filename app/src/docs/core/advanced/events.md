@@ -6,6 +6,9 @@ outline: "deep"
 
 Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped — all familiar patterns for web developers.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/core).
+
 ## EventBus
 
 Every element in Ripl extends `EventBus`, which provides the core event subscription and emission API.
@@ -53,14 +56,7 @@ circle.emit('custom-event', { value: 42 });
 
 ## Event Object
 
-Event handlers receive an `Event` object with:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `type` | `string` | The event name |
-| `data` | `any` | Event payload data |
-| `source` | `EventBus` | The element that originally emitted the event |
-| `currentTarget` | `EventBus` | The element currently handling the event |
+Event handlers receive an `Event` object containing `type`, `data` (the payload), `source` (the originating element), and `currentTarget` (the element handling the event).
 
 ### `stopPropagation()`
 
@@ -79,12 +75,7 @@ When elements are inside a [Scene](/docs/core/essentials/scene), the scene autom
 
 ### Tracked Events
 
-| Event | Description |
-| --- | --- |
-| `click` | Element was clicked |
-| `mouseenter` | Pointer entered the element's bounds |
-| `mouseleave` | Pointer left the element's bounds |
-| `mousemove` | Pointer moved within the element's bounds |
+The scene tracks `click`, `mouseenter`, `mouseleave`, and `mousemove` events automatically.
 
 ```ts
 const scene = createScene('.container', {
@@ -112,9 +103,11 @@ circle.on('mouseleave', () => {
 Events bubble up through the element hierarchy, just like the DOM. If a circle inside a group emits a `click` event, the group will also receive it:
 
 ```ts
-const circle = createCircle({ cx: 100,
+const circle = createCircle({
+    cx: 100,
     cy: 100,
-    radius: 50 });
+    radius: 50,
+});
 const group = createGroup({ children: [circle] });
 
 // This fires when the circle (or any child) is clicked
@@ -147,14 +140,7 @@ circle.emit('highlight', { color: '#ff006e' });
 
 ## The `pointerEvents` Property
 
-The `pointerEvents` property on elements controls hit testing behavior:
-
-| Value | Description |
-| --- | --- |
-| `'all'` | Responds to hits on fill and stroke (default) |
-| `'fill'` | Only responds to hits on the fill area |
-| `'stroke'` | Only responds to hits on the stroke area |
-| `'none'` | Element is invisible to pointer events |
+The `pointerEvents` property on elements controls hit testing behavior. Set it to `'all'` (default, responds to fill and stroke), `'fill'`, `'stroke'`, or `'none'` (click-through).
 
 ```ts
 const overlay = createRect({
