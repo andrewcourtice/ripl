@@ -274,10 +274,41 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.appendElementData('Z');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        this.moveTo(x, y);
-        this.appendElementData(`A ${radiusX} ${radiusY} ${rotation}`);
+        const rotDeg = rotation * 180 / Math.PI;
+        const cos = Math.cos(rotation);
+        const sin = Math.sin(rotation);
+
+        const pointOnEllipse = (angle: number): [number, number] => {
+            const ex = radiusX * Math.cos(angle);
+            const ey = radiusY * Math.sin(angle);
+            return [
+                x + ex * cos - ey * sin,
+                y + ex * sin + ey * cos,
+            ];
+        };
+
+        const isFull = Math.abs(endAngle - startAngle) >= Math.PI * 2;
+
+        if (isFull) {
+            const [mx, my] = pointOnEllipse(startAngle);
+            const [ox, oy] = pointOnEllipse(startAngle + Math.PI);
+            this.moveTo(mx, my);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${ox},${oy}`);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${mx},${my}`);
+        } else {
+            const [x1, y1] = pointOnEllipse(startAngle);
+            const [x2, y2] = pointOnEllipse(endAngle);
+            let sweep = counterclockwise
+                ? startAngle - endAngle
+                : endAngle - startAngle;
+
+            if (sweep < 0) sweep += Math.PI * 2;
+            const largeArc = +(sweep > Math.PI);
+
+            this.moveTo(x1, y1);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} ${largeArc} ${+!counterclockwise} ${x2},${y2}`);
+        }
     }
 
     lineTo(x: number, y: number): void {

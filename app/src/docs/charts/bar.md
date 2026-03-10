@@ -120,6 +120,69 @@ const chart = createBarChart('#container', {
 });
 ```
 
+## Data Format
+
+Each item in the `data` array should contain a category key and one or more numeric fields for series values:
+
+```ts
+const data = [
+    { month: 'Jan', sales: 420, costs: 280 },
+    { month: 'Feb', sales: 380, costs: 310 },
+    { month: 'Mar', sales: 510, costs: 250 },
+];
+```
+
+The `key` option identifies the category field (`'month'`), and each series maps to a numeric field via its `value` property.
+
+## Variants
+
+### Grouped (default)
+
+Bars for each series sit side-by-side within each category:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    mode: 'grouped',
+    series: [
+        { id: 'sales', value: 'sales', label: 'Sales' },
+        { id: 'costs', value: 'costs', label: 'Costs' },
+    ],
+});
+```
+
+### Stacked
+
+Bars stack on top of each other, showing cumulative totals:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    mode: 'stacked',
+    series: [
+        { id: 'sales', value: 'sales', label: 'Sales' },
+        { id: 'costs', value: 'costs', label: 'Costs' },
+    ],
+});
+```
+
+### Horizontal
+
+Swap axes so bars extend horizontally:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    orientation: 'horizontal',
+    series: [
+        { id: 'sales', value: 'sales', label: 'Sales' },
+    ],
+});
+```
+
 ## Options
 
 - **`data`** — The data array

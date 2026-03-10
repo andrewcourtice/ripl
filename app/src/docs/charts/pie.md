@@ -97,30 +97,76 @@ function toggleDonut() {
 }
 </script>
 
-```typescript
-const chart = createPieChart(context, {
+## Usage
+
+```ts
+import {
+    createPieChart,
+} from '@ripl/charts';
+
+const chart = createPieChart('#container', {
     key: 'id',
     value: 'value',
     label: 'label',
     data: [
-        { id: '1',
-            label: 'Australia',
-            value: 55 },
-        { id: '2',
-            label: 'Poland',
-            value: 21 },
-        { id: '3',
-            label: 'South Africa',
-            value: 185 },
-        { id: '4',
-            label: 'New Zealand',
-            value: 18 },
-        { id: '5',
-            label: 'USA',
-            value: 129 },
-        { id: '6',
-            label: 'Sweden',
-            value: 15 },
+        { id: '1', label: 'Australia', value: 55 },
+        { id: '2', label: 'Poland', value: 21 },
+        { id: '3', label: 'South Africa', value: 185 },
     ],
 });
 ```
+
+## Data Format
+
+Each item needs a unique `key`, a numeric `value`, and a display `label`:
+
+```ts
+const data = [
+    { id: 'au', label: 'Australia', value: 55 },
+    { id: 'pl', label: 'Poland', value: 21 },
+    { id: 'za', label: 'South Africa', value: 185 },
+];
+```
+
+The `key`, `value`, and `label` options map to fields in each data item.
+
+## Variants
+
+### Donut
+
+Set `innerRadius` (0–1, as a fraction of the outer radius) to create a donut chart:
+
+```ts
+createPieChart('#container', {
+    data,
+    key: 'id',
+    value: 'value',
+    label: 'label',
+    innerRadius: 0.5,
+});
+```
+
+### Custom start angle
+
+Rotate the starting position of the first slice:
+
+```ts
+createPieChart('#container', {
+    data,
+    key: 'id',
+    value: 'value',
+    label: 'label',
+    startAngle: Math.PI,
+});
+```
+
+## Options
+
+- **`data`** — The data array
+- **`key`** — Unique identifier field for each slice
+- **`value`** — Numeric value field
+- **`label`** — Display label field
+- **`innerRadius`** — Inner radius ratio for donut mode (0–1, default `0`)
+- **`startAngle`** — Starting angle in radians (default `0`)
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

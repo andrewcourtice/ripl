@@ -81,6 +81,49 @@ const chart = createAreaChart('#container', {
 });
 ```
 
+## Data Format
+
+Each item should contain a key field and one or more numeric value fields:
+
+```ts
+const data = [
+    { month: 'Jan', desktop: 620, mobile: 340 },
+    { month: 'Feb', desktop: 780, mobile: 290 },
+    { month: 'Mar', desktop: 550, mobile: 410 },
+];
+```
+
+## Variants
+
+### Stacked
+
+Stack series to show cumulative totals:
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    stacked: true,
+    series: [
+        { id: 'desktop', value: 'desktop', label: 'Desktop', opacity: 0.4 },
+        { id: 'mobile', value: 'mobile', label: 'Mobile', opacity: 0.4 },
+    ],
+});
+```
+
+### Custom opacity and line type
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'desktop', value: 'desktop', label: 'Desktop', opacity: 0.2, lineType: 'monotoneX' },
+        { id: 'mobile', value: 'mobile', label: 'Mobile', opacity: 0.6, lineType: 'step' },
+    ],
+});
+```
+
 ## Options
 
 - **`data`** — The data array

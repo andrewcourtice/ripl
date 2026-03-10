@@ -10,7 +10,16 @@ A **Polygon** draws a regular polygon (triangle, pentagon, hexagon, etc.) define
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Sides</span>
+            <RiplInputRange v-model="sides" :min="3" :max="12" :step="1" @update:model-value="redraw" />
+            <span>Radius</span>
+            <RiplInputRange v-model="radiusPct" :min="20" :max="100" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
@@ -20,30 +29,11 @@ import {
 
 const context = createContext('.mount-element');
 
-// Triangle
 createPolygon({
     fill: '#3a86ff',
-    cx: 100,
+    cx: 200,
     cy: 150,
-    radius: 60,
-    sides: 3,
-}).render(context);
-
-// Pentagon
-createPolygon({
-    fill: '#ff006e',
-    cx: 250,
-    cy: 150,
-    radius: 60,
-    sides: 5,
-}).render(context);
-
-// Hexagon
-createPolygon({
-    fill: '#8338ec',
-    cx: 400,
-    cy: 150,
-    radius: 60,
+    radius: 80,
     sides: 6,
 }).render(context);
 ```
@@ -59,44 +49,56 @@ import {
     createText,
 } from '@ripl/core';
 
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
+const NAMES: Record<number, string> = { 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon', 7: 'Heptagon', 8: 'Octagon', 9: 'Nonagon', 10: 'Decagon', 11: 'Hendecagon', 12: 'Dodecagon' };
+
+const sides = ref(6);
+const radiusPct = ref(70);
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const r = Math.min(w, h) / 3 * (radiusPct.value / 100);
+
+    context.clear();
+    context.markRenderStart();
+
+    createPolygon({
+        fill: '#3a86ff',
+        stroke: '#1a56db',
+        lineWidth: 2,
+        cx: w / 2, cy: h / 2,
+        radius: r, sides: sides.value,
+    }).render(context);
+
+    createText({
+        x: w / 2, y: h / 2 + r + 24,
+        content: `${NAMES[sides.value] || sides.value + '-gon'}  (${sides.value} sides, r=${Math.round(r)})`,
+        fill: '#666', textAlign: 'center', font: '12px sans-serif',
+    }).render(context);
+
+    context.markRenderEnd();
+}
+
 const {
     contextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-    const r = Math.min(w, h) / 5;
-
-    const shapes = [
-        { sides: 3, color: '#3a86ff', label: 'Triangle' },
-        { sides: 5, color: '#ff006e', label: 'Pentagon' },
-        { sides: 6, color: '#8338ec', label: 'Hexagon' },
-        { sides: 8, color: '#fb5607', label: 'Octagon' },
-    ];
-
-    const render = () => {
-        context.markRenderStart();
-
-        shapes.forEach((shape, i) => {
-            const cx = w * (i + 1) / (shapes.length + 1);
-
-            createPolygon({
-                fill: shape.color,
-                cx, cy: h / 2, radius: r, sides: shape.sides,
-            }).render(context);
-
-            createText({
-                x: cx, y: h / 2 + r + 20,
-                content: shape.label, fill: '#666',
-                textAlign: 'center', font: '13px sans-serif',
-            }).render(context);
-        });
-
-        context.markRenderEnd();
-    };
-
-    render();
-    context.on('resize', () => { context.clear(); render(); });
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 </script>
 
 ## Usage

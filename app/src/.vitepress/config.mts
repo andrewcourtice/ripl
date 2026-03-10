@@ -195,6 +195,10 @@ export default defineConfig({
                             link: '/docs/core/elements/polygon',
                         },
                         {
+                            text: 'Path',
+                            link: '/docs/core/elements/path',
+                        },
+                        {
                             text: 'Polyline',
                             link: '/docs/core/elements/polyline',
                         },
@@ -234,6 +238,18 @@ export default defineConfig({
                         {
                             text: 'Clip Paths',
                             link: '/docs/core/advanced/clip-paths',
+                        },
+                        {
+                            text: 'Scales',
+                            link: '/docs/core/advanced/scales',
+                        },
+                        {
+                            text: 'Color',
+                            link: '/docs/core/advanced/color',
+                        },
+                        {
+                            text: 'Math & Geometry',
+                            link: '/docs/core/advanced/math',
                         },
                         {
                             text: 'Animations',
@@ -322,6 +338,14 @@ export default defineConfig({
                 {
                     text: 'Introduction',
                     link: '/docs/charts/',
+                },
+                {
+                    text: 'Getting Started',
+                    link: '/docs/charts/getting-started',
+                },
+                {
+                    text: 'Shared Options',
+                    link: '/docs/charts/shared-options',
                 },
                 {
                     text: 'Charts',

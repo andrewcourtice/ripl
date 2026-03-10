@@ -124,14 +124,51 @@ function randomise() {
 }
 </script>
 
-```typescript
-const chart = createScatterChart(context, {
+## Usage
+
+```ts
+import {
+    createScatterChart,
+} from '@ripl/charts';
+
+const chart = createScatterChart('#container', {
     data,
     key: 'id',
-    axis: {
-        x: { title: 'X Value' },
-        y: { title: 'Y Value' },
-    },
+    series: [
+        {
+            id: 'sales',
+            label: 'Sales',
+            xBy: 'sales',
+            yBy: 'profit',
+        },
+    ],
+});
+```
+
+## Data Format
+
+Each item needs a unique `key` and numeric fields for x/y position (and optionally size):
+
+```ts
+const data = [
+    { id: 'a', sales: 42, profit: 78, volume: 15 },
+    { id: 'b', sales: 68, profit: 35, volume: 30 },
+    { id: 'c', sales: 91, profit: 52, volume: 8 },
+];
+```
+
+Each series maps `xBy` and `yBy` to numeric fields, and optionally `sizeBy` for bubble sizing.
+
+## Variants
+
+### Bubble chart
+
+Add `sizeBy`, `minRadius`, and `maxRadius` to enable bubble sizing:
+
+```ts
+createScatterChart('#container', {
+    data,
+    key: 'id',
     series: [
         {
             id: 'sales',
@@ -142,15 +179,32 @@ const chart = createScatterChart(context, {
             minRadius: 5,
             maxRadius: 25,
         },
-        {
-            id: 'marketing',
-            label: 'Marketing',
-            xBy: 'marketing',
-            yBy: 'engagement',
-            sizeBy: 'reach',
-            minRadius: 5,
-            maxRadius: 25,
-        },
     ],
 });
 ```
+
+### Multi-series
+
+Plot multiple series on the same axes for comparison:
+
+```ts
+createScatterChart('#container', {
+    data,
+    key: 'id',
+    series: [
+        { id: 'sales', label: 'Sales', xBy: 'sales', yBy: 'profit' },
+        { id: 'marketing', label: 'Marketing', xBy: 'marketing', yBy: 'engagement' },
+    ],
+});
+```
+
+## Options
+
+- **`data`** — The data array
+- **`key`** — Unique identifier field for each point
+- **`series`** — Array of series with `id`, `label`, `xBy`, `yBy`, optional `sizeBy`, `minRadius`, `maxRadius`, `color`
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes with optional titles

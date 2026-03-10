@@ -74,6 +74,33 @@ pnpm add @ripl/3d
 > [!TIP]
 > All packages depend on `@ripl/core`, so the core library is always shared automatically — no need to install it separately when using charts or SVG.
 
+## CDN
+
+You can also load Ripl directly from a CDN for quick prototyping or non-bundled environments:
+
+```html
+<!-- Core -->
+<script type="module">
+import { createContext, createCircle } from 'https://esm.sh/@ripl/core';
+
+const context = createContext('#canvas');
+createCircle({ fill: '#3a86ff', cx: 100, cy: 100, radius: 40 }).render(context);
+</script>
+
+<!-- Charts -->
+<script type="module">
+import { createBarChart } from 'https://esm.sh/@ripl/charts';
+</script>
+
+<!-- SVG -->
+<script type="module">
+import { createContext } from 'https://esm.sh/@ripl/svg';
+</script>
+```
+
+> [!TIP]
+> CDN imports work best for prototyping. For production apps, use a bundler to benefit from tree-shaking and smaller bundle sizes.
+
 ## TypeScript
 
 Ripl is written in TypeScript and ships with full type definitions out of the box. No additional `@types` packages are needed. The library targets ES2023 and uses strict mode throughout.

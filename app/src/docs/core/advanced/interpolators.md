@@ -160,3 +160,125 @@ When a transition runs, here's what happens for each property:
 5. The renderer re-renders the scene
 
 This pipeline runs for every animated property simultaneously, producing smooth multi-property transitions.
+
+## Demo
+
+Drag the slider to scrub through interpolation time `t` (0→1). The demo shows number interpolation (radius), color interpolation (fill), and a custom sine interpolator (vertical offset) all evaluated at the same `t`.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>t</span>
+            <RiplInputRange v-model="tValue" :min="0" :max="100" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    interpolateColor,
+    interpolateNumber,
+} from '@ripl/core';
+
+const interpRadius = interpolateNumber(30, 100);
+const interpColor = interpolateColor('#3a86ff', '#ff006e');
+const interpY = (t) => cy + Math.sin(t * Math.PI * 2) * 40;
+
+const t = 0.5;
+circle.radius = interpRadius(t);
+circle.fill = interpColor(t);
+circle.cy = interpY(t);
+```
+:::
+
+<script lang="ts" setup>
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createLine,
+    createRect,
+    createText,
+    interpolateColor,
+    interpolateNumber,
+} from '@ripl/core';
+
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
+const tValue = ref(0);
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const t = tValue.value / 100;
+
+    const minR = Math.min(w, h) * 0.1;
+    const maxR = Math.min(w, h) * 0.3;
+    const interpRadius = interpolateNumber(minR, maxR);
+    const interpColor = interpolateColor('#3a86ff', '#ff006e');
+    const cy = h / 2 + Math.sin(t * Math.PI * 2) * h * 0.15;
+
+    context.clear();
+    context.markRenderStart();
+
+    createLine({
+        stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
+        x1: 0, y1: h / 2, x2: w, y2: h / 2,
+    }).render(context);
+
+    createCircle({
+        fill: interpColor(t),
+        cx: w / 2,
+        cy,
+        radius: interpRadius(t),
+    }).render(context);
+
+    const barW = w * 0.6;
+    const barH = 6;
+    const barX = w * 0.2;
+    const barY = h - 30;
+
+    createRect({
+        fill: '#e9ecef',
+        x: barX, y: barY, width: barW, height: barH,
+        borderRadius: 3,
+    }).render(context);
+
+    createRect({
+        fill: interpColor(t),
+        x: barX, y: barY, width: barW * t, height: barH,
+        borderRadius: 3,
+    }).render(context);
+
+    createText({
+        x: w / 2, y: barY - 10,
+        content: `t = ${t.toFixed(2)}  radius: ${Math.round(interpRadius(t))}  color: ${interpColor(t)}`,
+        fill: '#666', textAlign: 'center', font: '11px sans-serif',
+    }).render(context);
+
+    context.markRenderEnd();
+}
+
+const {
+    contextChanged
+} = useRiplExample(context => {
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
+});
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
+</script>

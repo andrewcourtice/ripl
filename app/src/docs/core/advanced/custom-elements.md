@@ -238,7 +238,16 @@ await renderer.transition(star, {
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Points</span>
+            <RiplInputRange v-model="starPoints" :min="3" :max="12" :step="1" @update:model-value="redraw" />
+            <span>Inner Radius %</span>
+            <RiplInputRange v-model="innerPct" :min="10" :max="90" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 // Custom star element
@@ -265,10 +274,18 @@ import {
     Shape2D,
 } from '@ripl/core';
 
+import {
+    createText,
+} from '@ripl/core';
+
 import type {
     BaseElementState,
     Shape2DOptions,
 } from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
 
 interface StarState extends BaseElementState {
     cx: number;
@@ -309,33 +326,44 @@ class Star extends Shape2D<StarState> {
     }
 }
 
-const {
-    contextChanged
-} = useRiplExample(context => {
+const starPoints = ref(5);
+const innerPct = ref(40);
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 4;
 
-    const render = () => {
-        context.markRenderStart();
+    context.clear();
+    context.markRenderStart();
 
-        new Star({
-            fill: '#ff006e',
-            cx: w * 0.3, cy: h / 2,
-            outerRadius: r, innerRadius: r * 0.4, points: 5,
-        }).render(context);
+    new Star({
+        fill: '#ff006e',
+        cx: w / 2, cy: h / 2,
+        outerRadius: r,
+        innerRadius: r * (innerPct.value / 100),
+        points: starPoints.value,
+    }).render(context);
 
-        new Star({
-            fill: '#3a86ff',
-            stroke: '#1a56db', lineWidth: 2,
-            cx: w * 0.7, cy: h / 2,
-            outerRadius: r, innerRadius: r * 0.5, points: 8,
-        }).render(context);
+    createText({
+        x: w / 2, y: h / 2 + r + 24,
+        content: `${starPoints.value} points  inner: ${innerPct.value}%`,
+        fill: '#666', textAlign: 'center', font: '12px sans-serif',
+    }).render(context);
 
-        context.markRenderEnd();
-    };
+    context.markRenderEnd();
+}
 
-    render();
-    context.on('resize', () => { context.clear(); render(); });
+const {
+    contextChanged
+} = useRiplExample(context => {
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 </script>

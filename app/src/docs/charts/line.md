@@ -142,6 +142,50 @@ const chart = createLineChart('#container', {
 chart.update({ data: newData });
 ```
 
+## Data Format
+
+Each item should contain a key field and one or more numeric value fields:
+
+```ts
+const data = [
+    { month: 'Jan', revenue: 620, expenses: 340 },
+    { month: 'Feb', revenue: 780, expenses: 290 },
+    { month: 'Mar', revenue: 550, expenses: 410 },
+];
+```
+
+The `key` option identifies the x-axis category (`'month'`), and each series references a numeric field via `value`.
+
+## Variants
+
+### Multi-series with markers
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue', value: 'revenue', label: 'Revenue', markers: true },
+        { id: 'expenses', value: 'expenses', label: 'Expenses', markers: true },
+    ],
+});
+```
+
+### Custom line interpolation
+
+Each series can use a different polyline renderer:
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue', value: 'revenue', label: 'Revenue', lineType: 'monotoneX' },
+        { id: 'expenses', value: 'expenses', label: 'Expenses', lineType: 'step' },
+    ],
+});
+```
+
 ## Options
 
 - **`data`** — The data array

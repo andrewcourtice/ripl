@@ -82,11 +82,18 @@ Clip paths work identically with both the **Canvas** and **SVG** contexts:
 
 ## Demo
 
-The demo below shows a circle clip path masking a gradient-filled rectangle and a pattern of lines. Only the portions inside the circle are visible.
+The demo below shows a circle clip path masking a gradient-filled rectangle and a pattern of lines. Only the portions inside the circle are visible. Use the slider to adjust the clip radius.
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Clip Radius</span>
+            <RiplInputRange v-model="clipRadiusPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
@@ -104,34 +111,16 @@ const r = Math.min(context.width, context.height) / 3;
 
 const group = createGroup({
     children: [
-        // Circle clip — defines the visible region
-        createCircle({
-            clip: true,
+        createCircle({ clip: true,
             cx,
             cy,
-            radius: r,
-        }),
-
-        // Background rect — clipped to circle
+            radius: r }),
         createRect({
             fill: '#3a86ff',
             x: cx - r,
             y: cy - r,
             width: r * 2,
             height: r * 2,
-        }),
-
-        // Diagonal lines — also clipped
-        ...Array.from({ length: 12 }, (_, i) => {
-            const offset = (i - 6) * 20;
-            return createLine({
-                stroke: '#ffffff44',
-                lineWidth: 2,
-                x1: cx - r + offset,
-                y1: cy - r,
-                x2: cx + r + offset,
-                y2: cy + r,
-            });
         }),
     ],
 });
@@ -153,61 +142,75 @@ import {
     createText,
 } from '@ripl/core';
 
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
+const clipRadiusPct = ref(100);
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxR = Math.min(w, h) / 3;
+    const r = maxR * (clipRadiusPct.value / 100);
+
+    context.clear();
+    context.markRenderStart();
+
+    const clippedGroup = createGroup({
+        children: [
+            createCircle({ clip: true, cx, cy, radius: r }),
+            createRect({
+                fill: '#3a86ff',
+                x: cx - maxR, y: cy - maxR,
+                width: maxR * 2, height: maxR * 2,
+            }),
+            ...Array.from({ length: 20 }, (_, i) => {
+                const offset = (i - 10) * (maxR / 5);
+                return createLine({
+                    stroke: '#ffffff44',
+                    lineWidth: 2,
+                    x1: cx - maxR + offset, y1: cy - maxR,
+                    x2: cx + maxR + offset, y2: cy + maxR,
+                });
+            }),
+        ],
+    });
+
+    clippedGroup.render(context);
+
+    createCircle({
+        stroke: '#1a56db',
+        lineWidth: 3,
+        cx, cy, radius: r,
+        autoFill: false,
+    }).render(context);
+
+    createText({
+        x: cx, y: cy + maxR + 24,
+        content: `Clip radius: ${Math.round(r)}px`,
+        fill: '#666', textAlign: 'center', font: '13px sans-serif',
+    }).render(context);
+
+    context.markRenderEnd();
+}
+
 const {
     contextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-
-    const render = () => {
-        context.clear();
-        context.markRenderStart();
-
-        const cx = w / 2;
-        const cy = h / 2;
-        const r = Math.min(w, h) / 3;
-
-        // --- Clipped group ---
-        const clippedGroup = createGroup({
-            children: [
-                createCircle({ clip: true, cx, cy, radius: r }),
-                createRect({
-                    fill: '#3a86ff',
-                    x: cx - r, y: cy - r,
-                    width: r * 2, height: r * 2,
-                }),
-                ...Array.from({ length: 20 }, (_, i) => {
-                    const offset = (i - 10) * (r / 5);
-                    return createLine({
-                        stroke: '#ffffff44',
-                        lineWidth: 2,
-                        x1: cx - r + offset, y1: cy - r,
-                        x2: cx + r + offset, y2: cy + r,
-                    });
-                }),
-            ],
-        });
-
-        clippedGroup.render(context);
-
-        // --- Unclipped ring to show boundary ---
-        createCircle({
-            stroke: '#1a56db',
-            lineWidth: 3,
-            cx, cy, radius: r,
-            autoFill: false,
-        }).render(context);
-
-        createText({
-            x: cx, y: cy + r + 24,
-            content: 'Circle Clip Path',
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
-
-        context.markRenderEnd();
-    };
-
-    render();
-    context.on('resize', () => render());
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 </script>

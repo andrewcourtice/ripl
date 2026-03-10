@@ -10,7 +10,19 @@ A **Text** element renders a text string at a given position. Unlike other built
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Font Size</span>
+            <RiplInputRange v-model="fontSize" :min="12" :max="48" :step="1" @update:model-value="redraw" />
+            <RiplSelect v-model="textAlign" @change="redraw">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+            </RiplSelect>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
@@ -67,49 +79,79 @@ import {
 } from '../../../.vitepress/compositions/example';
 
 import {
+    createLine,
     createText,
 } from '@ripl/core';
+
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
+const fontSize = ref(28);
+const textAlign = ref('center');
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+
+    context.clear();
+    context.markRenderStart();
+
+    const anchorX = textAlign.value === 'left' ? w * 0.1
+        : textAlign.value === 'right' ? w * 0.9
+            : w / 2;
+
+    createLine({
+        stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
+        x1: anchorX, y1: 0, x2: anchorX, y2: h,
+    }).render(context);
+
+    createText({
+        fill: '#3a86ff',
+        x: anchorX, y: h * 0.3,
+        content: 'Filled Text',
+        font: `bold ${fontSize.value}px sans-serif`,
+        textAlign: textAlign.value as CanvasTextAlign,
+        textBaseline: 'middle',
+    }).render(context);
+
+    createText({
+        stroke: '#ff006e',
+        lineWidth: 1,
+        x: anchorX, y: h * 0.55,
+        content: 'Stroked Text',
+        font: `bold ${fontSize.value}px sans-serif`,
+        textAlign: textAlign.value as CanvasTextAlign,
+        textBaseline: 'middle',
+    }).render(context);
+
+    createText({
+        fill: '#666',
+        x: w / 2, y: h * 0.8,
+        content: `font: ${fontSize.value}px  align: ${textAlign.value}`,
+        font: '13px sans-serif',
+        textAlign: 'center', textBaseline: 'middle',
+    }).render(context);
+
+    context.markRenderEnd();
+}
 
 const {
     contextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-
-    const render = () => {
-        context.markRenderStart();
-
-        createText({
-            fill: '#3a86ff',
-            x: w / 2, y: h * 0.3,
-            content: 'Filled Text',
-            font: 'bold 28px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            stroke: '#ff006e',
-            lineWidth: 1,
-            x: w / 2, y: h * 0.55,
-            content: 'Stroked Text',
-            font: 'bold 28px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            fill: '#666',
-            x: w / 2, y: h * 0.8,
-            content: `Context: ${context.type} | Size: ${Math.round(w)}×${Math.round(h)}`,
-            font: '14px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        context.markRenderEnd();
-    };
-
-    render();
-    context.on('resize', () => { context.clear(); render(); });
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 
 const {
     contextChanged: pathContextChanged
