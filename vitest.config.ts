@@ -32,6 +32,7 @@ export default defineConfig({
             reporter: [
                 'text-summary',
                 'json-summary',
+                'json',
             ],
         },
     },

@@ -46,3 +46,5 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2
         with:
           vite-config-path: vitest.config.ts
+          json-summary-path: .reports/coverage/coverage-summary.json
+          json-final-path: .reports/coverage/coverage-final.json
