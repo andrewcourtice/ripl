@@ -9,7 +9,7 @@ Interpolators are functions that compute intermediate values between two endpoin
 Ripl automatically selects the right interpolator based on the value type, but you can also provide custom interpolators for specialized behavior.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/interpolators).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Built-in Interpolators
 

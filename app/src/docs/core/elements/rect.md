@@ -123,4 +123,4 @@ const rect = createRect({
 The rect's geometry is defined by `x`, `y`, `width`, `height`, and optional `borderRadius`.
 
 > [!NOTE]
-> For the full property list, see the [Rect API Reference](/docs/api/core/elements).
+> For the full property list, see the [Rect API Reference](/docs/api/@ripl/core/).

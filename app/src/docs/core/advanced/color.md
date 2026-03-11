@@ -7,7 +7,7 @@ outline: "deep"
 Ripl includes a complete color toolkit for parsing, converting, and serializing colors across multiple color spaces. Any CSS color string you pass to `fill` or `stroke` is automatically parsed — but you can also use the color utilities directly for programmatic color manipulation, palette generation, and animation.
 
 > [!NOTE]
-> For the full API, see the [Color API Reference](/docs/api/core/color).
+> For the full API, see the [Color API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

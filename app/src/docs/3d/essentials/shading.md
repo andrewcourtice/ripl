@@ -7,7 +7,7 @@ title: Shading
 The `@ripl/3d` package includes flat shading utilities that compute face brightness based on surface normals and a light direction vector. Built-in 3D shapes apply shading automatically during rendering — you just set `context.lightDirection` and each face is colored based on its angle to the light. For custom geometry, three helper functions let you compute normals, brightness, and shaded colors directly.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/shading).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Functions
 

@@ -7,7 +7,7 @@ outline: "deep"
 Ripl's built-in elements cover common shapes, but you can create your own custom elements by extending the `Shape` or `Element` class. This gives you full control over rendering while still benefiting from Ripl's style inheritance, events, interpolation, and scene management.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/core).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Extending Shape
 

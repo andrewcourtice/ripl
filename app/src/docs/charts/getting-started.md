@@ -7,7 +7,7 @@ outline: "deep"
 The `@ripl/charts` package provides pre-built, interactive chart components on top of the Ripl core rendering engine. Every chart inherits animated transitions, pointer events, responsive sizing, and context-agnostic rendering (Canvas or SVG) out of the box.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Installation
 
@@ -176,4 +176,4 @@ chart.destroy();
 
 - **[Shared Options](/docs/charts/shared-options)** — Deep dive into axis, legend, tooltip, grid, and crosshair configuration
 - **[Bar Chart](/docs/charts/bar)** — Start with the most versatile chart type
-- **[Charts API Reference](/docs/api/charts/charts)** — Full TypeScript API documentation
+- **[Charts API Reference](/docs/api/@ripl/charts/)** — Full TypeScript API documentation

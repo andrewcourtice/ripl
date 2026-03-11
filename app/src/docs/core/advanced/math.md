@@ -7,7 +7,7 @@ outline: "deep"
 Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, SVG path sampling, and common numeric helpers like `clamp`, `min`/`max`, and extent calculation.
 
 > [!NOTE]
-> For the full API, see the [Math & Geometry API Reference](/docs/api/core/math).
+> For the full API, see the [Math & Geometry API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

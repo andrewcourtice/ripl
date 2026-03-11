@@ -119,4 +119,4 @@ const circle = createCircle({
 The circle's geometry is defined by `cx`, `cy`, and `radius`. All properties are animatable and support style inheritance from parent groups.
 
 > [!NOTE]
-> For the full property list, see the [Circle API Reference](/docs/api/core/elements).
+> For the full property list, see the [Circle API Reference](/docs/api/@ripl/core/).

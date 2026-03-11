@@ -119,4 +119,4 @@ const hexagon = createPolygon({
 The polygon's geometry is defined by `cx`, `cy`, `radius`, and `sides`.
 
 > [!NOTE]
-> For the full property list, see the [Polygon API Reference](/docs/api/core/elements).
+> For the full property list, see the [Polygon API Reference](/docs/api/@ripl/core/).

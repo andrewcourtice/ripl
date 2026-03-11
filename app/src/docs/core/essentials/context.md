@@ -106,7 +106,7 @@ useEffect(() => () => context.destroy(), []);
 ```
 
 > [!NOTE]
-> For the full list of properties, methods, and state options, see the [Context API Reference](/docs/api/core/context).
+> For the full list of properties, methods, and state options, see the [Context API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

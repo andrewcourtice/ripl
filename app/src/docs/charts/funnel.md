@@ -3,7 +3,7 @@
 The **Funnel Chart** displays data as progressively narrowing horizontal bars, ideal for visualizing conversion pipelines, sales funnels, and drop-off rates. Each stage is labeled and colored automatically, with configurable gaps and rounded corners. Values animate smoothly when data changes.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

@@ -7,7 +7,7 @@ outline: "deep"
 A **clip path** turns a shape into a clipping mask — instead of being filled or stroked, the shape defines a visible region. Any sibling elements rendered after the clip shape (within the same group) are only visible where they overlap with the clip region.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/core).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Usage
 

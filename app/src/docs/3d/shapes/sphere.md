@@ -7,7 +7,7 @@ title: Sphere
 The **Sphere** is a 3D primitive generated from configurable ring and segment counts. Higher values produce smoother surfaces at the cost of more faces. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Usage
 

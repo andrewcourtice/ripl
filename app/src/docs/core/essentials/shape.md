@@ -69,7 +69,7 @@ The `pointerEvents` property controls which parts of the shape respond to hits:
 - `'none'` — no hit testing
 
 > [!NOTE]
-> For the full list of Shape properties and methods, see the [Shape API Reference](/docs/api/core/core).
+> For the full list of Shape properties and methods, see the [Shape API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

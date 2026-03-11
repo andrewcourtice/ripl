@@ -131,4 +131,4 @@ The line's geometry is defined by `x1`, `y1`, `x2`, and `y2`.
 > Lines are stroked by default. Set `stroke` to see the line — `fill` alone won't produce a visible result.
 
 > [!NOTE]
-> For the full property list, see the [Line API Reference](/docs/api/core/elements).
+> For the full property list, see the [Line API Reference](/docs/api/@ripl/core/).

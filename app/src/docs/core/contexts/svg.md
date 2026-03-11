@@ -96,7 +96,7 @@ SVG is less ideal when:
 - Frame-by-frame animation performance is critical
 
 > [!NOTE]
-> For the full API, see the [SVG Context API Reference](/docs/api/svg/context).
+> For the full API, see the [SVG Context API Reference](/docs/api/@ripl/svg/).
 
 ## Demo
 

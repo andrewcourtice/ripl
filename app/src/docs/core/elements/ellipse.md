@@ -129,4 +129,4 @@ const ellipse = createEllipse({
 The ellipse's geometry is defined by `cx`, `cy`, `radiusX`, `radiusY`, `rotation`, `startAngle`, and `endAngle`.
 
 > [!NOTE]
-> For the full property list, see the [Ellipse API Reference](/docs/api/core/elements).
+> For the full property list, see the [Ellipse API Reference](/docs/api/@ripl/core/).

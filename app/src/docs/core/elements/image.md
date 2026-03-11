@@ -162,7 +162,7 @@ img.onload = () => {
 The image element is defined by `image` (a `CanvasImageSource`), `x`, `y`, and optional `width`/`height` (defaults to the source's intrinsic dimensions).
 
 > [!NOTE]
-> For the full property list, see the [Image API Reference](/docs/api/core/elements).
+> For the full property list, see the [Image API Reference](/docs/api/@ripl/core/).
 
 ## Interpolation
 

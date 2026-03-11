@@ -24,6 +24,8 @@ function createMockScene() {
         markRenderEnd: vi.fn(),
         save: vi.fn(),
         restore: vi.fn(),
+        batch: vi.fn((fn: () => unknown) => fn()),
+        layer: vi.fn((fn: () => unknown) => fn()),
         element: document.createElement('div'),
     };
 

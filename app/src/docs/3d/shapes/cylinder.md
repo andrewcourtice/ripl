@@ -7,7 +7,7 @@ title: Cylinder
 The **Cylinder** is a 3D primitive with configurable top and bottom radii — set different values to create a truncated cone. Segment count controls the smoothness of the circular cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Usage
 

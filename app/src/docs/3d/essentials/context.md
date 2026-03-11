@@ -7,7 +7,7 @@ title: Context3D
 `Context3D` extends `CanvasContext` with 3D projection capabilities. It manages view, projection, and combined view-projection matrices, and provides methods to project 3D world-space points onto 2D canvas coordinates. It also exposes a `lightDirection` vector used by the flat-shading system. Because it inherits from the canvas context, all core drawing state, events, and gradient support are available.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/context).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Creation
 

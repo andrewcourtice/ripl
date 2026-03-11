@@ -9,7 +9,7 @@ outline: "deep"
 Every scale is a callable function: pass a domain value in, get a range value out. Scales also expose `inverse` (reverse mapping), `ticks` (nice axis values), `includes` (domain membership), and the original `domain`/`range` arrays.
 
 > [!NOTE]
-> For the full API, see the [Scales API Reference](/docs/api/core/scales).
+> For the full API, see the [Scales API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

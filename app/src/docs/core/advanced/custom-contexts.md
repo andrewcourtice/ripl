@@ -7,7 +7,7 @@ outline: "deep"
 Ripl's context-agnostic architecture means you can create your own rendering context to target any medium — WebGL, PDF, terminal output, or anything else. A custom context implements the abstract methods defined by the base `Context` class, and all existing elements will render to it automatically.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/context).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Architecture Overview
 

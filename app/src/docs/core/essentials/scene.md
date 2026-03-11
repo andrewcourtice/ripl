@@ -112,7 +112,7 @@ scene.destroy();
 ```
 
 > [!NOTE]
-> For the full list of Scene properties and methods, see the [Scene API Reference](/docs/api/core/core).
+> For the full list of Scene properties and methods, see the [Scene API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

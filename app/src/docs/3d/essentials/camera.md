@@ -7,7 +7,7 @@ title: Camera
 The camera manages the view matrix on the `Context3D` and supports orbit, pan, zoom, and lookAt operations. Property changes like `position`, `target`, and `fov` are batched via microtasks so multiple changes in the same synchronous block result in a single matrix update. Built-in mouse interactions (scroll to zoom, drag to orbit, Shift+drag to pan) can be enabled with a single flag or fine-tuned per interaction.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/camera).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Creation
 

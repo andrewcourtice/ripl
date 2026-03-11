@@ -137,7 +137,7 @@ circle.destroy();
 ```
 
 > [!NOTE]
-> For the full list of properties, methods, and events, see the [Element API Reference](/docs/api/core/core).
+> For the full list of properties, methods, and events, see the [Element API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

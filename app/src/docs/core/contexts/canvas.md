@@ -59,7 +59,7 @@ See [Gradients](/docs/core/advanced/gradients) for the full gradient syntax refe
 The canvas context provides all the standard [Context](/docs/core/essentials/context) methods, plus canvas-specific behaviors like `rotate`, `scale`, `translate`, `setTransform`, `measureText`, `applyClip`, and path-based hit testing (`isPointInPath`, `isPointInStroke`).
 
 > [!NOTE]
-> For the full API, see the [Canvas Context API Reference](/docs/api/core/context).
+> For the full API, see the [Canvas Context API Reference](/docs/api/@ripl/core/).
 
 ## When to Use Canvas
 

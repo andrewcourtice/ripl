@@ -134,7 +134,7 @@ const arc = createArc({
 The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (spacing between segments), and `borderRadius` (corner rounding).
 
 > [!NOTE]
-> For the full property list, see the [Arc API Reference](/docs/api/core/elements).
+> For the full property list, see the [Arc API Reference](/docs/api/@ripl/core/).
 
 ## Methods
 

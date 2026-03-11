@@ -200,7 +200,7 @@ group.render(context);
 Groups themselves are **abstract** — they don't draw anything directly. They simply iterate over their children and render each one.
 
 > [!NOTE]
-> For the full list of Group properties and methods, see the [Group API Reference](/docs/api/core/core).
+> For the full list of Group properties and methods, see the [Group API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

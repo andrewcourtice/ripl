@@ -7,7 +7,7 @@ outline: "deep"
 The **Path** element is a general-purpose shape that delegates its geometry to a user-supplied callback function. Instead of having fixed geometry like a circle or rect, you provide a `pathRenderer` function that draws arbitrary commands onto a `ContextPath`. This makes it ideal for custom icons, complex outlines, or any shape that doesn't fit the built-in elements.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/elements).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

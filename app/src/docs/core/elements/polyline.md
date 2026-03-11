@@ -136,7 +136,7 @@ const polyline = createPolyline({
 The polyline is defined by `points` (an array of `[x, y]` tuples) and an optional `renderer` mode (default: `'linear'`).
 
 > [!NOTE]
-> For the full property list, see the [Polyline API Reference](/docs/api/core/elements).
+> For the full property list, see the [Polyline API Reference](/docs/api/@ripl/core/).
 
 ## Renderer Modes
 

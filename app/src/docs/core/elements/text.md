@@ -208,4 +208,4 @@ The text element is defined by `x`, `y`, and `content`. Optional properties incl
 > If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
 
 > [!NOTE]
-> For the full property list, see the [Text API Reference](/docs/api/core/elements).
+> For the full property list, see the [Text API Reference](/docs/api/@ripl/core/).

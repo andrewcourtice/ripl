@@ -3,7 +3,7 @@
 The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with optional volume bars beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes crosshair tracking, grid lines, and tooltips. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 
