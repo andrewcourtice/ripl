@@ -44,9 +44,9 @@ export function getWaypoint([x1, y1]: Point, [x2, y2]: Point, position: number):
     ];
 }
 
-/** Computes the hypotenuse length from two right-triangle sides. */
-export function getHypLength(sideA: number, sideB: number): number {
-    return Math.sqrt(sideA ** 2 + sideB ** 2);
+/** Computes the Euclidean distance from two points. */
+export function getEuclideanDistance(dp: number, dq: number): number {
+    return Math.sqrt(dp ** 2 + dq ** 2);
 }
 
 /** Returns the point at a given angle and distance from an optional centre. */

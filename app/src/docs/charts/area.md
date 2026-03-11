@@ -1,6 +1,9 @@
 # Area Chart
 
-The `AreaChart` renders filled areas beneath lines, supporting stacked mode, crosshair, grid, and smooth animations.
+The **Area Chart** renders filled areas beneath lines, making it easy to compare cumulative totals or show how individual series contribute to a whole. It supports stacked mode (areas stacked on top of each other), per-series opacity and line interpolation, and includes crosshair, grid, tooltips, and a legend. Area and line elements animate smoothly from the baseline on entry and transition between data states on update.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -74,6 +77,69 @@ const chart = createAreaChart('#container', {
     series: [
         { id: 'desktop', value: 'desktop', label: 'Desktop' },
         { id: 'mobile', value: 'mobile', label: 'Mobile' },
+    ],
+});
+```
+
+## Data Format
+
+Each item should contain a key field and one or more numeric value fields:
+
+```ts
+const data = [
+    { month: 'Jan',
+        desktop: 620,
+        mobile: 340 },
+    { month: 'Feb',
+        desktop: 780,
+        mobile: 290 },
+    { month: 'Mar',
+        desktop: 550,
+        mobile: 410 },
+];
+```
+
+## Variants
+
+### Stacked
+
+Stack series to show cumulative totals:
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    stacked: true,
+    series: [
+        { id: 'desktop',
+            value: 'desktop',
+            label: 'Desktop',
+            opacity: 0.4 },
+        { id: 'mobile',
+            value: 'mobile',
+            label: 'Mobile',
+            opacity: 0.4 },
+    ],
+});
+```
+
+### Custom opacity and line type
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'desktop',
+            value: 'desktop',
+            label: 'Desktop',
+            opacity: 0.2,
+            lineType: 'monotoneX' },
+        { id: 'mobile',
+            value: 'mobile',
+            label: 'Mobile',
+            opacity: 0.6,
+            lineType: 'step' },
     ],
 });
 ```

@@ -6,6 +6,9 @@ outline: "deep"
 
 Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped — all familiar patterns for web developers.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/core).
+
 ## EventBus
 
 Every element in Ripl extends `EventBus`, which provides the core event subscription and emission API.
@@ -53,14 +56,7 @@ circle.emit('custom-event', { value: 42 });
 
 ## Event Object
 
-Event handlers receive an `Event` object with:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `type` | `string` | The event name |
-| `data` | `any` | Event payload data |
-| `source` | `EventBus` | The element that originally emitted the event |
-| `currentTarget` | `EventBus` | The element currently handling the event |
+Event handlers receive an `Event` object containing `type`, `data` (the payload), `source` (the originating element), and `currentTarget` (the element handling the event).
 
 ### `stopPropagation()`
 
@@ -79,12 +75,7 @@ When elements are inside a [Scene](/docs/core/essentials/scene), the scene autom
 
 ### Tracked Events
 
-| Event | Description |
-| --- | --- |
-| `click` | Element was clicked |
-| `mouseenter` | Pointer entered the element's bounds |
-| `mouseleave` | Pointer left the element's bounds |
-| `mousemove` | Pointer moved within the element's bounds |
+The scene tracks `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
 
 ```ts
 const scene = createScene('.container', {
@@ -107,14 +98,49 @@ circle.on('mouseleave', () => {
 > [!IMPORTANT]
 > Pointer events only work when elements are inside a Scene. The scene handles DOM event listening and hit testing.
 
+### Drag Events
+
+Ripl supports drag interactions on elements via `dragstart`, `drag`, and `dragend` events. A drag begins when the pointer is pressed on an element and moved beyond a configurable threshold (default 3px). Once the threshold is exceeded, `dragstart` fires, followed by `drag` on each subsequent move, and `dragend` on pointer release.
+
+```ts
+circle.on('dragstart', (event) => {
+    console.log('Drag started at', event.data.x, event.data.y);
+});
+
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
+    scene.render();
+});
+
+circle.on('dragend', (event) => {
+    console.log('Drag ended at', event.data.x, event.data.y);
+});
+```
+
+The `drag` and `dragend` events include `startX`/`startY` (where the drag originated) and `deltaX`/`deltaY` (movement since the last event). Use `deltaX`/`deltaY` for repositioning elements to preserve the offset between the cursor and the element's origin.
+
+The drag threshold can be configured via context options:
+
+```ts
+const context = createContext('.container', {
+    dragThreshold: 5, // pixels before dragstart fires
+});
+```
+
+> [!NOTE]
+> Drag events continue to fire even when the pointer moves outside the element, until the pointer is released.
+
 ## Event Bubbling
 
 Events bubble up through the element hierarchy, just like the DOM. If a circle inside a group emits a `click` event, the group will also receive it:
 
 ```ts
-const circle = createCircle({ cx: 100,
+const circle = createCircle({
+    cx: 100,
     cy: 100,
-    radius: 50 });
+    radius: 50,
+});
 const group = createGroup({ children: [circle] });
 
 // This fires when the circle (or any child) is clicked
@@ -147,14 +173,7 @@ circle.emit('highlight', { color: '#ff006e' });
 
 ## The `pointerEvents` Property
 
-The `pointerEvents` property on elements controls hit testing behavior:
-
-| Value | Description |
-| --- | --- |
-| `'all'` | Responds to hits on fill and stroke (default) |
-| `'fill'` | Only responds to hits on the fill area |
-| `'stroke'` | Only responds to hits on the stroke area |
-| `'none'` | Element is invisible to pointer events |
+The `pointerEvents` property on elements controls hit testing behavior. Set it to `'all'` (default, responds to fill and stroke), `'fill'`, `'stroke'`, or `'none'` (click-through).
 
 ```ts
 const overlay = createRect({
@@ -169,7 +188,7 @@ const overlay = createRect({
 
 ## Demo
 
-Hover over and click the elements to see events in action. Events bubble from child elements to the parent group.
+Hover over, click, and drag the elements to see events in action.
 
 :::tabs
 == Demo
@@ -200,6 +219,13 @@ circle.on('mouseleave', () => {
 
 circle.on('click', () => {
     circle.fill = '#8338ec';
+    scene.render();
+});
+
+// Drag the circle to reposition it
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
     scene.render();
 });
 ```
@@ -253,9 +279,15 @@ const {
     circle.on('mouseenter', () => { circle.fill = '#8338ec'; label.content = 'mouseenter: circle'; scene.render(); });
     circle.on('mouseleave', () => { circle.fill = colors.circle; label.content = 'mouseleave: circle'; scene.render(); });
     circle.on('click', () => { colors.circle = colors.circle === '#3a86ff' ? '#fb5607' : '#3a86ff'; circle.fill = colors.circle; label.content = 'click: circle'; scene.render(); });
+    circle.on('dragstart', () => { label.content = 'dragstart: circle'; scene.render(); });
+    circle.on('drag', (event) => { circle.cx += event.data.deltaX; circle.cy += event.data.deltaY; label.content = 'drag: circle'; scene.render(); });
+    circle.on('dragend', () => { label.content = 'dragend: circle'; scene.render(); });
 
     rect.on('mouseenter', () => { rect.fill = '#8338ec'; label.content = 'mouseenter: rect'; scene.render(); });
     rect.on('mouseleave', () => { rect.fill = colors.rect; label.content = 'mouseleave: rect'; scene.render(); });
     rect.on('click', () => { colors.rect = colors.rect === '#ff006e' ? '#fb5607' : '#ff006e'; rect.fill = colors.rect; label.content = 'click: rect'; scene.render(); });
+    rect.on('dragstart', () => { label.content = 'dragstart: rect'; scene.render(); });
+    rect.on('drag', (event) => { rect.x += event.data.deltaX; rect.y += event.data.deltaY; label.content = 'drag: rect'; scene.render(); });
+    rect.on('dragend', () => { label.content = 'dragend: rect'; scene.render(); });
 });
 </script>

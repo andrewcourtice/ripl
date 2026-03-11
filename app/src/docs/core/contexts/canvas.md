@@ -4,7 +4,7 @@ outline: "deep"
 
 # Canvas Context
 
-The **Canvas context** is the default rendering backend in Ripl. It renders elements to an HTML `<canvas>` element using the Canvas 2D API. It handles DPR (device pixel ratio) scaling automatically and supports CSS gradient strings for fill and stroke styles.
+The **Canvas context** is the default rendering backend in Ripl. It renders elements to an HTML `<canvas>` element using the Canvas 2D API, handling DPR (device pixel ratio) scaling automatically so your content looks crisp on Retina displays. It also parses CSS gradient strings directly in `fill` and `stroke` properties, converting them to native `CanvasGradient` objects behind the scenes.
 
 ## Usage
 
@@ -56,21 +56,10 @@ See [Gradients](/docs/core/advanced/gradients) for the full gradient syntax refe
 
 ## Canvas-Specific Methods
 
-The canvas context provides all the standard [Context](/docs/core/essentials/context) methods, plus these canvas-specific behaviors:
+The canvas context provides all the standard [Context](/docs/core/essentials/context) methods, plus canvas-specific behaviors like `rotate`, `scale`, `translate`, `setTransform`, `measureText`, `applyClip`, and path-based hit testing (`isPointInPath`, `isPointInStroke`).
 
-| Method | Description |
-| --- | --- |
-| `clear()` | Calls `clearRect(0, 0, width, height)` |
-| `reset()` | Calls `context.reset()` on the underlying 2D context |
-| `rotate(angle)` | Rotates the canvas transform |
-| `scale(x, y)` | Scales the canvas transform |
-| `translate(x, y)` | Translates the canvas transform |
-| `setTransform(a, b, c, d, e, f)` | Sets the transform matrix directly |
-| `transform(a, b, c, d, e, f)` | Multiplies the current transform |
-| `measureText(text)` | Returns `TextMetrics` (DPR-adjusted) |
-| `applyClip(path, fillRule?)` | Clips to a path |
-| `isPointInPath(path, x, y)` | Hit tests against a path fill |
-| `isPointInStroke(path, x, y)` | Hit tests against a path stroke |
+> [!NOTE]
+> For the full API, see the [Canvas Context API Reference](/docs/api/core/context).
 
 ## When to Use Canvas
 

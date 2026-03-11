@@ -6,6 +6,8 @@ outline: "deep"
 
 A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to a [Context](/docs/core/essentials/context) and manages the full rendering lifecycle. It handles clearing, rendering in z-index order, automatic resize re-rendering, and DOM event delegation for pointer interactivity.
 
+Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear, render, and handle events, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering and delegates pointer events from the DOM to individual elements through hit testing.
+
 ## Creating a Scene
 
 A scene can be created from a CSS selector, an HTMLElement, or an existing Context:
@@ -27,23 +29,6 @@ const scene = createScene('.my-container', {
 });
 ```
 
-## Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `children` | `Element \| Element[]` | `[]` | Initial child elements |
-| `renderOnResize` | `boolean` | `true` | Automatically re-render when the context resizes |
-| All [Group options](/docs/core/essentials/group) | | | Inherited from Group |
-
-## Properties
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `context` | `Context` | The bound rendering context |
-| `width` | `number` | Shortcut for `context.width` |
-| `height` | `number` | Shortcut for `context.height` |
-| `buffer` | `Element[]` | The flattened, z-sorted render buffer |
-
 ## Rendering
 
 Call `render()` with no arguments — the scene uses its bound context:
@@ -64,12 +49,7 @@ The scene extends the Group event system with DOM event delegation. It listens f
 
 ### Supported Pointer Events
 
-| Event | Description |
-| --- | --- |
-| `click` | Element was clicked |
-| `mouseenter` | Pointer entered the element |
-| `mouseleave` | Pointer left the element |
-| `mousemove` | Pointer moved within the element |
+The scene delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to individual elements based on hit testing.
 
 ```ts
 const circle = createCircle({
@@ -103,14 +83,7 @@ circle.on('mouseleave', () => {
 
 ### Scene-Level Events
 
-The scene also emits its own events:
-
-| Event | Description |
-| --- | --- |
-| `resize` | The context was resized |
-| `mouseenter` | Pointer entered the scene area |
-| `mouseleave` | Pointer left the scene area |
-| `mousemove` | Pointer moved within the scene area |
+The scene also emits `resize`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events at the scene level.
 
 > [!NOTE]
 > Pointer events on individual elements only work when those elements are inside a Scene. The scene is responsible for DOM event delegation and hit testing.
@@ -138,9 +111,12 @@ Call `destroy()` to remove all DOM event listeners, destroy the context, and cle
 scene.destroy();
 ```
 
+> [!NOTE]
+> For the full list of Scene properties and methods, see the [Scene API Reference](/docs/api/core/core).
+
 ## Demo
 
-Hover over the elements to see pointer events in action. Click an element to change its color.
+Hover over, click, or drag the elements to see pointer events in action.
 
 :::tabs
 == Demo
@@ -183,6 +159,13 @@ circle.on('mouseleave', () => {
     circle.fill = '#3a86ff';
     scene.render();
 });
+
+// Drag elements to reposition them
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
+    scene.render();
+});
 ```
 :::
 
@@ -223,9 +206,11 @@ const {
     circle.on('mouseenter', () => { circle.fill = '#8338ec'; scene.render(); });
     circle.on('mouseleave', () => { circle.fill = '#3a86ff'; scene.render(); });
     circle.on('click', () => { circle.fill = '#fb5607'; scene.render(); });
+    circle.on('drag', (event) => { circle.cx += event.data.deltaX; circle.cy += event.data.deltaY; scene.render(); });
 
     rect.on('mouseenter', () => { rect.fill = '#8338ec'; scene.render(); });
     rect.on('mouseleave', () => { rect.fill = '#ff006e'; scene.render(); });
     rect.on('click', () => { rect.fill = '#fb5607'; scene.render(); });
+    rect.on('drag', (event) => { rect.x += event.data.deltaX; rect.y += event.data.deltaY; scene.render(); });
 });
 </script>

@@ -54,9 +54,7 @@ watchEffect(() => {
     context.value?.destroy();
 
     if (root.value) {
-        context.value = contextInitialiser(root.value, {
-            buffer: false
-        });
+        context.value = contextInitialiser(root.value);
 
         emit('context-changed', context.value);
     }

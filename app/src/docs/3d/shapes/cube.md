@@ -4,7 +4,10 @@ title: Cube
 
 # Cube
 
-A 3D cube (box) shape with equal-length sides.
+The **Cube** is a 3D box primitive with equal-length sides. It supports positioning via `x`, `y`, `z`, independent rotation around each axis, and automatic flat shading based on the context's light direction.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
 
 ## Usage
 
@@ -24,16 +27,10 @@ const cube = createCube({
 
 ## Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | `0` | X position in world space |
-| `y` | `number` | `0` | Y position in world space |
-| `z` | `number` | `0` | Z position in world space |
-| `size` | `number` | — | Side length of the cube |
-| `rotationX` | `number` | `0` | Rotation around the X axis (radians) |
-| `rotationY` | `number` | `0` | Rotation around the Y axis (radians) |
-| `rotationZ` | `number` | `0` | Rotation around the Z axis (radians) |
-| `fill` | `string` | — | Base fill color (shading is applied per-face) |
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`size`** — Side length of the cube
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`fill`** — Base fill color (shading is applied per-face)
 
 ## Type Guard
 
@@ -61,11 +58,15 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5],
-    target: [0, 0, 0] });
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
 
-const cube = createCube({ size: 1.5,
-    fill: '#4488ff' });
+const cube = createCube({
+    size: 1.5,
+    fill: '#4488ff',
+});
 
 let angle = 0;
 function loop() {

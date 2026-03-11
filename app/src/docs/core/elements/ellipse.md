@@ -4,13 +4,24 @@ outline: "deep"
 
 # Ellipse
 
-An **Ellipse** draws an elliptical shape with independent X and Y radii, rotation, and optional start/end angles for partial ellipses.
+An **Ellipse** draws an elliptical shape with independent X and Y radii (`radiusX`, `radiusY`), intrinsic `rotation`, and optional `startAngle`/`endAngle` for partial ellipses. Use ellipses when you need non-uniform curvature — for example, orbit paths, oval indicators, or stylized backgrounds.
 
 ## Example
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Radius X</span>
+            <RiplInputRange v-model="rxPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
+            <span>Radius Y</span>
+            <RiplInputRange v-model="ryPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
+            <span>Rotation</span>
+            <RiplInputRange v-model="rotationDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
@@ -19,17 +30,16 @@ import {
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
-const TAU = Math.PI * 2;
 
 createEllipse({
     fill: '#3a86ff',
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radiusX: context.width / 4,
-    radiusY: context.height / 4,
-    rotation: 0,
+    cx: 200,
+    cy: 150,
+    radiusX: 100,
+    radiusY: 60,
+    rotation: Math.PI / 6,
     startAngle: 0,
-    endAngle: TAU,
+    endAngle: Math.PI * 2,
 }).render(context);
 ```
 :::
@@ -44,51 +54,58 @@ import {
     createText,
 } from '@ripl/core';
 
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
 const TAU = Math.PI * 2;
+const rxPct = ref(70);
+const ryPct = ref(45);
+const rotationDeg = ref(0);
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+    const maxR = Math.min(w, h) / 3;
+    const rx = maxR * (rxPct.value / 100);
+    const ry = maxR * (ryPct.value / 100);
+
+    context.clear();
+    context.markRenderStart();
+
+    createEllipse({
+        fill: '#3a86ff',
+        cx: w / 2, cy: h / 2,
+        radiusX: rx, radiusY: ry,
+        rotation: rotationDeg.value * Math.PI / 180,
+        startAngle: 0, endAngle: TAU,
+    }).render(context);
+
+    createText({
+        x: w / 2, y: h / 2 + maxR + 24,
+        content: `rx: ${Math.round(rx)}  ry: ${Math.round(ry)}  rotation: ${rotationDeg.value}°`,
+        fill: '#666', textAlign: 'center', font: '12px sans-serif',
+    }).render(context);
+
+    context.markRenderEnd();
+}
 
 const {
     contextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-    const rx = Math.min(w / 6, 80);
-    const ry = Math.min(h / 5, 60);
-
-    const render = () => {
-        context.markRenderStart();
-
-        createEllipse({
-            fill: '#3a86ff',
-            cx: w * 0.3, cy: h / 2,
-            radiusX: rx, radiusY: ry,
-            rotation: 0, startAngle: 0, endAngle: TAU,
-        }).render(context);
-
-        createText({
-            x: w * 0.3, y: h / 2 + ry + 24,
-            content: 'No Rotation', fill: '#666',
-            textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
-
-        createEllipse({
-            fill: '#ff006e',
-            cx: w * 0.7, cy: h / 2,
-            radiusX: rx, radiusY: ry,
-            rotation: Math.PI / 6, startAngle: 0, endAngle: TAU,
-        }).render(context);
-
-        createText({
-            x: w * 0.7, y: h / 2 + ry + 24,
-            content: 'Rotated 30°', fill: '#666',
-            textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
-
-        context.markRenderEnd();
-    };
-
-    render();
-    context.on('resize', () => { context.clear(); render(); });
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 </script>
 
 ## Usage
@@ -112,14 +129,7 @@ const ellipse = createEllipse({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `cx` | `number` | Yes | Center X coordinate |
-| `cy` | `number` | Yes | Center Y coordinate |
-| `radiusX` | `number` | Yes | Horizontal radius |
-| `radiusY` | `number` | Yes | Vertical radius |
-| `rotation` | `number` | Yes | Rotation angle in radians |
-| `startAngle` | `number` | Yes | Start angle in radians |
-| `endAngle` | `number` | Yes | End angle in radians |
+The ellipse's geometry is defined by `cx`, `cy`, `radiusX`, `radiusY`, `rotation`, `startAngle`, and `endAngle`.
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Ellipse API Reference](/docs/api/core/elements).

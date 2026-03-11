@@ -112,6 +112,8 @@ defineExpose({ close });
 }
 
 .ripl-dropdown__panel {
+    display: flex;
+    flex-direction: column;
     min-width: 10rem;
     padding: 0.375rem;
     border: 1px solid var(--vp-c-divider);

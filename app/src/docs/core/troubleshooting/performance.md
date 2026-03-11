@@ -97,6 +97,126 @@ The SVG context automatically uses **buffered rendering**. Instead of applying D
 6. **Batch property changes** — change multiple properties before triggering a render, rather than rendering after each change
 7. **Use `zIndex`** instead of render order when possible — the scene buffer sorts by zIndex automatically
 
+## Stress Test
+
+Use the demo below to benchmark Ripl's rendering performance. Adjust the element count and watch the frame time. Canvas context is used here for maximum throughput.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Elements</span>
+            <RiplInputRange v-model="elementCount" :min="100" :max="5000" :step="100" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createRenderer,
+    createScene,
+    transition,
+} from '@ripl/core';
+
+const circles = Array.from({ length: 1000 }, () =>
+    createCircle({
+        fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+        cx: Math.random() * width,
+        cy: Math.random() * height,
+        radius: 3 + Math.random() * 5,
+    })
+);
+
+const scene = createScene(context, { children: circles });
+const renderer = createRenderer(scene);
+```
+:::
+
+<script lang="ts" setup>
+import {
+    useRiplExample,
+} from '../../../.vitepress/compositions/example';
+
+import {
+    createCircle,
+    createRenderer,
+    createScene,
+} from '@ripl/core';
+
+import type {
+    Circle,
+    Renderer,
+    Scene,
+} from '@ripl/core';
+
+import {
+    ref,
+    watch
+} from 'vue';
+
+const elementCount = ref(1000);
+
+let scene: Scene | undefined;
+let renderer: Renderer | undefined;
+let circles: Circle[] = [];
+
+function makeCircle(w: number, h: number) {
+    return createCircle({
+        fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+        cx: Math.random() * w,
+        cy: Math.random() * h,
+        radius: 2 + Math.random() * 4,
+    });
+}
+
+watch(elementCount, (newCount, oldCount) => {
+    if (!scene) return;
+
+    const w = scene.width;
+    const h = scene.height;
+
+    if (newCount > oldCount) {
+        const added = Array.from({ length: newCount - oldCount }, () => makeCircle(w, h));
+        circles.push(...added);
+        scene.add(added);
+    } else if (newCount < oldCount) {
+        const removed = circles.splice(newCount);
+        scene.remove(removed);
+        removed.forEach(c => c.destroy());
+    }
+});
+
+const {
+    contextChanged,
+} = useRiplExample(context => {
+    const w = context.width;
+    const h = context.height;
+    const count = elementCount.value;
+
+    circles = Array.from({ length: count }, () => makeCircle(w, h));
+
+    scene = createScene(context, { children: circles });
+    renderer = createRenderer(scene, {
+        autoStop: false,
+        debug: {
+            fps: true,
+            elementCount: true,
+        },
+    });
+
+    console.log(context);
+
+    renderer.on('tick', () => {
+        circles.forEach(c => {
+            c.cx += (Math.random() - 0.5) * 2;
+            c.cy += (Math.random() - 0.5) * 2;
+        });
+    });
+});
+</script>
+
 ## Measuring Performance
 
 You can measure render performance by listening to renderer events:

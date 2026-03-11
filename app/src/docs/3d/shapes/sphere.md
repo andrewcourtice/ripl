@@ -4,7 +4,10 @@ title: Sphere
 
 # Sphere
 
-A 3D sphere generated from configurable ring and segment counts.
+The **Sphere** is a 3D primitive generated from configurable ring and segment counts. Higher values produce smoother surfaces at the cost of more faces. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
 
 ## Usage
 
@@ -23,17 +26,11 @@ const sphere = createSphere({
 
 ## Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `radius` | `number` | — | Radius of the sphere |
-| `segments` | `number` | `16` | Number of horizontal segments |
-| `rings` | `number` | `12` | Number of vertical rings |
-| `x` | `number` | `0` | X position |
-| `y` | `number` | `0` | Y position |
-| `z` | `number` | `0` | Z position |
-| `rotationX` | `number` | `0` | Rotation around X axis (radians) |
-| `rotationY` | `number` | `0` | Rotation around Y axis (radians) |
-| `rotationZ` | `number` | `0` | Rotation around Z axis (radians) |
+- **`radius`** — Radius of the sphere
+- **`segments`** — Number of horizontal segments (default `16`)
+- **`rings`** — Number of vertical rings (default `12`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 ## Demo
 
@@ -49,11 +46,15 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5],
-    target: [0, 0, 0] });
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
 
-const sphere = createSphere({ radius: 1.2,
-    fill: '#44cc88' });
+const sphere = createSphere({
+    radius: 1.2,
+    fill: '#44cc88',
+});
 
 let angle = 0;
 function loop() {

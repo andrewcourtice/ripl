@@ -1,0 +1,1574 @@
+{
+  "index": [
+    {
+      "name": "createContext",
+      "kind": "function",
+      "description": "Creates an SVG rendering context attached to the given DOM target.",
+      "typeSignature": "function createContext(target: string | HTMLElement, options?: ContextOptions): Context",
+      "tags": {},
+      "params": [
+        {
+          "name": "target",
+          "type": "string | HTMLElement",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "options",
+          "type": "ContextOptions | undefined",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Context<Element>"
+    },
+    {
+      "name": "SVGContextElementDefinition",
+      "kind": "interface",
+      "description": "Definition for an SVG context element, describing its tag, inline styles, and attributes.",
+      "typeSignature": "interface SVGContextElementDefinition {\n    tag: keyof SVGElementTagNameMap;\n    styles: Partial<Styles>;\n    attributes: Record<string, string>;\n    textContent?: string;\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "tag",
+          "type": "keyof SVGElementTagNameMap",
+          "description": ""
+        },
+        {
+          "name": "styles",
+          "type": "Partial<Styles>",
+          "description": ""
+        },
+        {
+          "name": "attributes",
+          "type": "Record<string, string>",
+          "description": ""
+        },
+        {
+          "name": "textContent",
+          "type": "string | undefined",
+          "description": "",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "name": "SVGContextElement",
+      "kind": "interface",
+      "description": "An SVG-specific context element carrying its rendering definition.",
+      "typeSignature": "interface SVGContextElement extends ContextElement {\n    definition: SVGContextElementDefinition;\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "definition",
+          "type": "SVGContextElementDefinition",
+          "description": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "SVGPath",
+      "kind": "class",
+      "description": "SVG-specific path implementation that builds an SVG `d` attribute string from drawing commands.",
+      "typeSignature": "class SVGPath extends ContextPath implements SVGContextElement",
+      "tags": {},
+      "members": [
+        {
+          "name": "constructor",
+          "kind": "constructor",
+          "description": "",
+          "params": [
+            {
+              "name": "id",
+              "type": "string | undefined",
+              "description": "",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "definition",
+          "kind": "property",
+          "description": "",
+          "type": "SVGContextElementDefinition"
+        },
+        {
+          "name": "arc",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radius",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "startAngle",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "endAngle",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "counterclockwise",
+              "type": "boolean | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "arcTo",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x1",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y1",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x2",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y2",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radius",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "circle",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radius",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "bezierCurveTo",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "cp1x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "cp1y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "cp2x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "cp2y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "closePath",
+          "kind": "method",
+          "description": "",
+          "type": "void"
+        },
+        {
+          "name": "ellipse",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radiusX",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radiusY",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "rotation",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "startAngle",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "endAngle",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "counterclockwise",
+              "type": "boolean | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "lineTo",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "moveTo",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "quadraticCurveTo",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "cpx",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "cpy",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "rect",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "width",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "height",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "roundRect",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "width",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "height",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "radii",
+              "type": "BorderRadius | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "description": "",
+          "type": "string",
+          "readonly": true
+        },
+        {
+          "name": "polyline",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "points",
+              "type": "Point[]",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "addPath",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "path",
+              "type": "ContextPath",
+              "description": "",
+              "optional": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SVGText",
+      "kind": "class",
+      "description": "SVG-specific text element mapping position and content to SVG `<text>` attributes.",
+      "typeSignature": "class SVGText extends ContextText implements SVGContextElement",
+      "tags": {},
+      "members": [
+        {
+          "name": "constructor",
+          "kind": "constructor",
+          "description": "",
+          "params": [
+            {
+              "name": "options",
+              "type": "TextOptions",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "definition",
+          "kind": "property",
+          "description": "",
+          "type": "SVGContextElementDefinition"
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "description": "",
+          "type": "string",
+          "readonly": true
+        },
+        {
+          "name": "x",
+          "kind": "property",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "y",
+          "kind": "property",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "content",
+          "kind": "property",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "maxWidth",
+          "kind": "property",
+          "description": "",
+          "type": "number | undefined"
+        },
+        {
+          "name": "pathData",
+          "kind": "property",
+          "description": "",
+          "type": "string | undefined"
+        },
+        {
+          "name": "startOffset",
+          "kind": "property",
+          "description": "",
+          "type": "number | undefined"
+        }
+      ]
+    },
+    {
+      "name": "SVGImage",
+      "kind": "class",
+      "description": "SVG-specific image element wrapping a `CanvasImageSource` as an SVG `<image>` tag.",
+      "typeSignature": "class SVGImage implements SVGContextElement",
+      "tags": {},
+      "members": [
+        {
+          "name": "constructor",
+          "kind": "constructor",
+          "description": "",
+          "params": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "href",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "width",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "height",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "description": "",
+          "type": "string",
+          "readonly": true
+        },
+        {
+          "name": "definition",
+          "kind": "property",
+          "description": "",
+          "type": "SVGContextElementDefinition"
+        }
+      ]
+    },
+    {
+      "name": "SVGTextPath",
+      "kind": "class",
+      "description": "SVG `<textPath>` element for rendering text along a path defined in `<defs>`.",
+      "typeSignature": "class SVGTextPath implements SVGContextElement",
+      "tags": {},
+      "members": [
+        {
+          "name": "constructor",
+          "kind": "constructor",
+          "description": "",
+          "params": [
+            {
+              "name": "textId",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "pathId",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "content",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "startOffset",
+              "type": "number | undefined",
+              "description": "",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "id",
+          "kind": "property",
+          "description": "",
+          "type": "string",
+          "readonly": true
+        },
+        {
+          "name": "definition",
+          "kind": "property",
+          "description": "",
+          "type": "SVGContextElementDefinition"
+        }
+      ]
+    },
+    {
+      "name": "SVGContext",
+      "kind": "class",
+      "description": "SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation.",
+      "typeSignature": "class SVGContext extends Context<SVGSVGElement>",
+      "tags": {},
+      "members": [
+        {
+          "name": "constructor",
+          "kind": "constructor",
+          "description": "",
+          "params": [
+            {
+              "name": "target",
+              "type": "string | HTMLElement",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "options",
+              "type": "ContextOptions | undefined",
+              "description": "",
+              "optional": true
+            }
+          ]
+        },
+        {
+          "name": "rescale",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "width",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "height",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ],
+          "protected": true
+        },
+        {
+          "name": "markRenderStart",
+          "kind": "method",
+          "description": "Signals the start of a render pass; resets the rendered-elements list at depth 0.",
+          "type": "void"
+        },
+        {
+          "name": "markRenderEnd",
+          "kind": "method",
+          "description": "Signals the end of a render pass.",
+          "type": "void"
+        },
+        {
+          "name": "createPath",
+          "kind": "method",
+          "description": "Creates a new path element, optionally reusing an id for SVG diffing efficiency.",
+          "type": "SVGPath",
+          "params": [
+            {
+              "name": "id",
+              "type": "string | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "createText",
+          "kind": "method",
+          "description": "Creates a new text element from the given options.",
+          "type": "ContextText",
+          "params": [
+            {
+              "name": "options",
+              "type": "TextOptions",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "drawImage",
+          "kind": "method",
+          "description": "Draws an image onto the rendering surface at the given position and optional size.",
+          "type": "void",
+          "params": [
+            {
+              "name": "image",
+              "type": "CanvasImageSource",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "width",
+              "type": "number | undefined",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "height",
+              "type": "number | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "save",
+          "kind": "method",
+          "description": "Pushes the current state onto the stack and resets to defaults.",
+          "type": "void"
+        },
+        {
+          "name": "restore",
+          "kind": "method",
+          "description": "Restores the most recently saved state from the stack.",
+          "type": "void"
+        },
+        {
+          "name": "rotate",
+          "kind": "method",
+          "description": "Applies a rotation transformation.",
+          "type": "void",
+          "params": [
+            {
+              "name": "angle",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "scale",
+          "kind": "method",
+          "description": "Applies a scale transformation.",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "translate",
+          "kind": "method",
+          "description": "Applies a translation transformation.",
+          "type": "void",
+          "params": [
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "setTransform",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "a",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "b",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "c",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "d",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "e",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "f",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "transform",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "params": [
+            {
+              "name": "a",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "b",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "c",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "d",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "e",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "f",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "applyClip",
+          "kind": "method",
+          "description": "Clips subsequent drawing operations to the given path.",
+          "type": "void",
+          "params": [
+            {
+              "name": "path",
+              "type": "SVGPath",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "fillRule",
+              "type": "FillRule | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "applyFill",
+          "kind": "method",
+          "description": "Fills the given path or text element using the current fill style.",
+          "type": "void",
+          "params": [
+            {
+              "name": "element",
+              "type": "SVGContextElement",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "fillRule",
+              "type": "FillRule | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "applyStroke",
+          "kind": "method",
+          "description": "Strokes the given path or text element using the current stroke style.",
+          "type": "void",
+          "params": [
+            {
+              "name": "element",
+              "type": "SVGContextElement",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "measureText",
+          "kind": "method",
+          "description": "Measures text dimensions using the context's current font or an optional override.",
+          "type": "TextMetrics",
+          "params": [
+            {
+              "name": "text",
+              "type": "string",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "font",
+              "type": "string | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "isPointInPath",
+          "kind": "method",
+          "description": "Tests whether a point is inside the filled region of a path.",
+          "type": "boolean",
+          "params": [
+            {
+              "name": "path",
+              "type": "SVGPath",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "fillRule",
+              "type": "FillRule | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "isPointInStroke",
+          "kind": "method",
+          "description": "Tests whether a point is on the stroked outline of a path.",
+          "type": "boolean",
+          "params": [
+            {
+              "name": "path",
+              "type": "SVGPath",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "x",
+              "type": "number",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "y",
+              "type": "number",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "kind": "property",
+          "description": "",
+          "type": "string",
+          "readonly": true
+        },
+        {
+          "name": "root",
+          "kind": "property",
+          "description": "",
+          "type": "HTMLElement",
+          "readonly": true
+        },
+        {
+          "name": "element",
+          "kind": "property",
+          "description": "",
+          "type": "SVGSVGElement",
+          "readonly": true
+        },
+        {
+          "name": "buffer",
+          "kind": "property",
+          "description": "",
+          "type": "boolean"
+        },
+        {
+          "name": "width",
+          "kind": "property",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "height",
+          "kind": "property",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "scaleX",
+          "kind": "property",
+          "description": "",
+          "type": "Scale<number, number>"
+        },
+        {
+          "name": "scaleY",
+          "kind": "property",
+          "description": "",
+          "type": "Scale<number, number>"
+        },
+        {
+          "name": "scaleDPR",
+          "kind": "property",
+          "description": "",
+          "type": "Scale<number, number>"
+        },
+        {
+          "name": "states",
+          "kind": "property",
+          "description": "",
+          "type": "BaseState[]",
+          "protected": true
+        },
+        {
+          "name": "currentState",
+          "kind": "property",
+          "description": "",
+          "type": "BaseState",
+          "protected": true
+        },
+        {
+          "name": "renderDepth",
+          "kind": "property",
+          "description": "",
+          "type": "number",
+          "protected": true
+        },
+        {
+          "name": "renderElement",
+          "kind": "property",
+          "description": "",
+          "type": "RenderElement | undefined"
+        },
+        {
+          "name": "renderedElements",
+          "kind": "property",
+          "description": "",
+          "type": "RenderElement[]"
+        },
+        {
+          "name": "currentRenderElement",
+          "kind": "getter",
+          "description": "",
+          "type": "RenderElement | undefined"
+        },
+        {
+          "name": "fill",
+          "kind": "getter",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "filter",
+          "kind": "getter",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "direction",
+          "kind": "getter",
+          "description": "",
+          "type": "Direction"
+        },
+        {
+          "name": "font",
+          "kind": "getter",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "fontKerning",
+          "kind": "getter",
+          "description": "",
+          "type": "FontKerning"
+        },
+        {
+          "name": "opacity",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "globalCompositeOperation",
+          "kind": "getter",
+          "description": "",
+          "type": "unknown"
+        },
+        {
+          "name": "lineCap",
+          "kind": "getter",
+          "description": "",
+          "type": "LineCap"
+        },
+        {
+          "name": "lineDash",
+          "kind": "getter",
+          "description": "",
+          "type": "number[]"
+        },
+        {
+          "name": "lineDashOffset",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "lineJoin",
+          "kind": "getter",
+          "description": "",
+          "type": "LineJoin"
+        },
+        {
+          "name": "lineWidth",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "miterLimit",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "shadowBlur",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "shadowColor",
+          "kind": "getter",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "shadowOffsetX",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "shadowOffsetY",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "stroke",
+          "kind": "getter",
+          "description": "",
+          "type": "string"
+        },
+        {
+          "name": "textAlign",
+          "kind": "getter",
+          "description": "",
+          "type": "TextAlignment"
+        },
+        {
+          "name": "textBaseline",
+          "kind": "getter",
+          "description": "",
+          "type": "TextBaseline"
+        },
+        {
+          "name": "zIndex",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "translateX",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "translateY",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "transformScaleX",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "transformScaleY",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "rotation",
+          "kind": "getter",
+          "description": "",
+          "type": "Rotation"
+        },
+        {
+          "name": "transformOriginX",
+          "kind": "getter",
+          "description": "",
+          "type": "TransformOrigin"
+        },
+        {
+          "name": "transformOriginY",
+          "kind": "getter",
+          "description": "",
+          "type": "TransformOrigin"
+        },
+        {
+          "name": "init",
+          "kind": "method",
+          "description": "",
+          "type": "void",
+          "protected": true
+        },
+        {
+          "name": "getDefaultState",
+          "kind": "method",
+          "description": "",
+          "type": "{ fill: string; filter: string; direction: Direction; font: string; fontKerning: FontKerning; opacity: number; globalCompositeOperation: unknown; lineCap: LineCap; lineDash: number[]; lineDashOffset: number; lineJoin: LineJoin; lineWidth: number; miterLimit: number; shadowBlur: number; shadowColor: string; shadowOffsetX: number; shadowOffsetY: number; stroke: string; textAlign: TextAlignment; textBaseline: TextBaseline; zIndex: number; translateX: number; translateY: number; transformScaleX: number; transformScaleY: number; rotation: Rotation; transformOriginX: TransformOrigin; transformOriginY: TransformOrigin; }",
+          "protected": true
+        },
+        {
+          "name": "batch",
+          "kind": "method",
+          "description": "Executes a callback within a save/restore pair, returning the callback's result.",
+          "type": "TResult",
+          "params": [
+            {
+              "name": "body",
+              "type": "() => TResult",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "clear",
+          "kind": "method",
+          "description": "Clears the entire rendering surface.",
+          "type": "void"
+        },
+        {
+          "name": "reset",
+          "kind": "method",
+          "description": "Resets the context to its initial state.",
+          "type": "void"
+        },
+        {
+          "name": "invalidateTrackedElements",
+          "kind": "method",
+          "description": "Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test.",
+          "type": "void",
+          "params": [
+            {
+              "name": "event",
+              "type": "string",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "enableInteraction",
+          "kind": "method",
+          "description": "Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.",
+          "type": "void"
+        },
+        {
+          "name": "disableInteraction",
+          "kind": "method",
+          "description": "Disables DOM interaction events and clears the active element set.",
+          "type": "void"
+        },
+        {
+          "name": "destroy",
+          "kind": "method",
+          "description": "Destroys the context, removing the DOM element and disposing all resources.",
+          "type": "void"
+        },
+        {
+          "name": "parent",
+          "kind": "property",
+          "description": "",
+          "type": "EventBus<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ContextEventMap> | undefined"
+        },
+        {
+          "name": "has",
+          "kind": "method",
+          "description": "Returns whether there are any listeners registered for the given event type.",
+          "type": "boolean",
+          "params": [
+            {
+              "name": "type",
+              "type": "keyof import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ContextEventMap",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "on",
+          "kind": "method",
+          "description": "Subscribes a handler to the given event type and returns a disposable for cleanup.",
+          "type": "Disposable",
+          "params": [
+            {
+              "name": "type",
+              "type": "TEvent",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "handler",
+              "type": "EventHandler<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ContextEventMap[TEvent]>",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "options",
+              "type": "EventSubscriptionOptions | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "off",
+          "kind": "method",
+          "description": "Removes a previously registered handler for the given event type.",
+          "type": "void",
+          "params": [
+            {
+              "name": "type",
+              "type": "TEvent",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "handler",
+              "type": "EventHandler<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ContextEventMap[TEvent]>",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "once",
+          "kind": "method",
+          "description": "Subscribes a handler that is automatically removed after it fires once.",
+          "type": "Disposable",
+          "params": [
+            {
+              "name": "type",
+              "type": "TEvent",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "handler",
+              "type": "EventHandler<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ContextEventMap[TEvent]>",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "options",
+              "type": "EventSubscriptionOptions | undefined",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "emit",
+          "kind": "method",
+          "description": "Emits an event, invoking all matching handlers and bubbling to the parent if applicable.",
+          "type": "TEvent",
+          "params": [
+            {
+              "name": "event",
+              "type": "TEvent",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "retain",
+          "kind": "method",
+          "description": "Registers a disposable resource under an optional key for later cleanup.",
+          "type": "void",
+          "params": [
+            {
+              "name": "value",
+              "type": "Disposable",
+              "description": "",
+              "optional": false
+            },
+            {
+              "name": "key",
+              "type": "PropertyKey",
+              "description": "",
+              "optional": false
+            }
+          ],
+          "protected": true
+        },
+        {
+          "name": "dispose",
+          "kind": "method",
+          "description": "Disposes all resources under the given key, or all resources if no key is provided.",
+          "type": "void",
+          "params": [
+            {
+              "name": "key",
+              "type": "PropertyKey | undefined",
+              "description": "",
+              "optional": false
+            }
+          ],
+          "protected": true
+        }
+      ]
+    }
+  ]
+}

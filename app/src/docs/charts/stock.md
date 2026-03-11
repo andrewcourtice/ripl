@@ -1,6 +1,9 @@
 # Stock Chart
 
-The `StockChart` renders OHLC (Open, High, Low, Close) candlestick data with optional volume bars. It supports animated transitions, crosshair, grid lines, and tooltips.
+The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with optional volume bars beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes crosshair tracking, grid lines, and tooltips. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -99,20 +102,15 @@ chart.update({ data: newData });
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `data` | `TData[]` | — | The data array |
-| `key` | `keyof TData \| Function` | — | Key accessor for each data point (e.g. date) |
-| `open` | `keyof TData \| Function` | — | Open price accessor |
-| `high` | `keyof TData \| Function` | — | High price accessor |
-| `low` | `keyof TData \| Function` | — | Low price accessor |
-| `close` | `keyof TData \| Function` | — | Close price accessor |
-| `volume` | `keyof TData \| Function` | — | Volume accessor (optional) |
-| `showVolume` | `boolean` | `true` | Show volume bars below the chart |
-| `grid` | `boolean \| ChartGridOptions` | — | Show/configure grid lines |
-| `crosshair` | `boolean \| ChartCrosshairOptions` | — | Show/configure crosshair |
-| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
-| `axis` | `boolean \| ChartAxisOptions` | — | Configure x/y axes |
-| `upColor` | `string` | `#6dd5b1` | Color for bullish (close ≥ open) candles |
-| `downColor` | `string` | `#f4a0b9` | Color for bearish (close < open) candles |
-| `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
+- **`data`** — The data array
+- **`key`** — Key accessor for each data point (e.g. date)
+- **`open`** / **`high`** / **`low`** / **`close`** — Price accessors
+- **`volume`** — Volume accessor (optional)
+- **`showVolume`** — Show volume bars below the chart (default `true`)
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`upColor`** — Color for bullish candles (default `#6dd5b1`)
+- **`downColor`** — Color for bearish candles (default `#f4a0b9`)
+- **`padding`** — Chart padding

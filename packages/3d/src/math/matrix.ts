@@ -187,6 +187,15 @@ export function mat4Orthographic(
     return out;
 }
 
+/** Transforms a direction vector by the upper-3×3 of a 4×4 matrix, ignoring translation. */
+export function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3 {
+    return [
+        m[0] * v[0] + m[4] * v[1] + m[8] * v[2],
+        m[1] * v[0] + m[5] * v[1] + m[9] * v[2],
+        m[2] * v[0] + m[6] * v[1] + m[10] * v[2],
+    ];
+}
+
 /** Transforms a 3D point by a 4×4 matrix, performing the perspective divide. */
 export function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3 {
     const x = v[0];

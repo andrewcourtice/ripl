@@ -6,19 +6,7 @@ outline: "deep"
 
 Ripl supports element-level transformations — translate, scale, and rotate — that apply to any element or group. Transforms are set as properties on the element and are automatically applied to the rendering context before the element draws.
 
-## Transform Properties
-
-Every element exposes these transform properties:
-
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `translateX` | `number` | `0` | Horizontal translation in pixels |
-| `translateY` | `number` | `0` | Vertical translation in pixels |
-| `transformScaleX` | `number` | `1` | Horizontal scale factor |
-| `transformScaleY` | `number` | `1` | Vertical scale factor |
-| `rotation` | `number \| string` | `0` | Rotation angle (see below) |
-| `transformOriginX` | `number \| string` | `0` | Horizontal origin for rotation/scale |
-| `transformOriginY` | `number \| string` | `0` | Vertical origin for rotation/scale |
+Every element exposes `translateX`, `translateY`, `transformScaleX`, `transformScaleY`, `rotation`, `transformOriginX`, and `transformOriginY` properties. These work identically across Canvas and SVG contexts and are fully animatable with smooth interpolation.
 
 ## Rotation
 
@@ -78,15 +66,19 @@ import {
 
 const group = createGroup({
     children: [
-        createRect({ x: 0,
+        createRect({
+            x: 0,
             y: 0,
             width: 80,
             height: 80,
-            fill: '#3a86ff' }),
-        createCircle({ cx: 120,
+            fill: '#3a86ff',
+        }),
+        createCircle({
+            cx: 120,
             cy: 40,
             radius: 30,
-            fill: '#ff006e' }),
+            fill: '#ff006e',
+        }),
     ],
 });
 
@@ -132,6 +124,9 @@ await renderer.transition(rect, {
 ## SVG Support
 
 Transforms work identically for both Canvas and SVG contexts. In the SVG context, transforms are serialised as SVG `transform` attribute values (e.g., `translate(10,20) rotate(45) scale(2,2)`), and the transform state is saved and restored alongside the context state stack.
+
+> [!NOTE]
+> For the full list of transform properties, see the [Element API Reference](/docs/api/core/core).
 
 ## Demo
 
@@ -189,8 +184,10 @@ await renderer.transition(rect, {
 await renderer.transition(rect, {
     duration: 600,
     ease: easeOutCubic,
-    state: { transformScaleX: 1.5,
-        transformScaleY: 1.5 },
+    state: {
+        transformScaleX: 1.5,
+        transformScaleY: 1.5,
+    },
 });
 
 // Combined
@@ -281,11 +278,17 @@ async function runScale() {
 
     await dRenderer.transition(dRect, {
         duration: 500, ease: easeOutCubic,
-        state: { transformScaleX: 1.8, transformScaleY: 1.8 },
+        state: {
+            transformScaleX: 1.8,
+            transformScaleY: 1.8,
+        },
     });
     await dRenderer.transition(dRect, {
         duration: 500, ease: easeInOutQuad,
-        state: { transformScaleX: 1, transformScaleY: 1 },
+        state: {
+            transformScaleX: 1,
+            transformScaleY: 1,
+        },
     });
 }
 

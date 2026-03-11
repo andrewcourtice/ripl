@@ -1,6 +1,9 @@
 # Gauge Chart
 
-The `GaugeChart` displays a single value on a semi-circular arc gauge, ideal for KPIs, progress indicators, and dashboard metrics.
+The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KPIs, progress indicators, and dashboard metrics. It supports configurable tick marks along the arc with optional labels, a custom value formatter, and smooth animated transitions when the value changes. The track and fill colors are fully customizable.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 

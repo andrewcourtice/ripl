@@ -1,6 +1,9 @@
 # Line Chart
 
-The `LineChart` renders one or more data series as smooth or straight lines with optional markers. It supports multiple series, grid lines, crosshair, legend, and tooltips out of the box.
+The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly — points enter, exit, and reposition with configurable transitions.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -139,29 +142,76 @@ const chart = createLineChart('#container', {
 chart.update({ data: newData });
 ```
 
+## Data Format
+
+Each item should contain a key field and one or more numeric value fields:
+
+```ts
+const data = [
+    { month: 'Jan',
+        revenue: 620,
+        expenses: 340 },
+    { month: 'Feb',
+        revenue: 780,
+        expenses: 290 },
+    { month: 'Mar',
+        revenue: 550,
+        expenses: 410 },
+];
+```
+
+The `key` option identifies the x-axis category (`'month'`), and each series references a numeric field via `value`.
+
+## Variants
+
+### Multi-series with markers
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            markers: true },
+        { id: 'expenses',
+            value: 'expenses',
+            label: 'Expenses',
+            markers: true },
+    ],
+});
+```
+
+### Custom line interpolation
+
+Each series can use a different polyline renderer:
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            lineType: 'monotoneX' },
+        { id: 'expenses',
+            value: 'expenses',
+            label: 'Expenses',
+            lineType: 'step' },
+    ],
+});
+```
+
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `data` | `TData[]` | — | The data array |
-| `series` | `LineChartSeriesOptions[]` | — | Series configuration |
-| `key` | `keyof TData \| Function` | — | Key accessor for each data point |
-| `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure grid lines |
-| `crosshair` | `boolean \| ChartCrosshairOptions` | `true` | Show/configure crosshair |
-| `legend` | `boolean \| ChartLegendOptions` | — | Show/configure legend |
-| `tooltip` | `boolean \| ChartTooltipOptions` | `true` | Show/configure tooltips |
-| `axis` | `boolean \| ChartAxisOptions` | `true` | Configure x/y axes |
-| `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
-
-### Series Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `id` | `string` | — | Unique series identifier |
-| `value` | `keyof TData \| Function` | — | Value accessor |
-| `label` | `string \| Function` | — | Label for tooltips/legend |
-| `color` | `string` | auto | Series color |
-| `lineType` | `PolylineRenderer` | `'linear'` | Line interpolation type |
-| `lineWidth` | `number` | `2` | Line width |
-| `markers` | `boolean` | `true` | Show data point markers |
-| `markerRadius` | `number` | `3` | Marker radius |
+- **`data`** — The data array
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `markers`, `markerRadius`
+- **`key`** — Key accessor for each data point
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`padding`** — Chart padding

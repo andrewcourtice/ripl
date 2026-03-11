@@ -4,7 +4,10 @@ title: Torus
 
 # Torus
 
-A 3D torus (donut shape) with configurable major radius, tube radius, and segment counts.
+The **Torus** is a donut-shaped 3D primitive with configurable major radius, tube radius, and segment counts for both the ring and cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
 
 ## Usage
 
@@ -24,18 +27,12 @@ const torus = createTorus({
 
 ## Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `radius` | `number` | — | Distance from center of torus to center of tube |
-| `tube` | `number` | — | Radius of the tube |
-| `radialSegments` | `number` | `12` | Number of segments around the tube cross-section |
-| `tubularSegments` | `number` | `24` | Number of segments around the torus ring |
-| `x` | `number` | `0` | X position |
-| `y` | `number` | `0` | Y position |
-| `z` | `number` | `0` | Z position |
-| `rotationX` | `number` | `0` | Rotation around X axis (radians) |
-| `rotationY` | `number` | `0` | Rotation around Y axis (radians) |
-| `rotationZ` | `number` | `0` | Rotation around Z axis (radians) |
+- **`radius`** — Distance from center of torus to center of tube
+- **`tube`** — Radius of the tube
+- **`radialSegments`** — Number of segments around the tube cross-section (default `12`)
+- **`tubularSegments`** — Number of segments around the torus ring (default `24`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 ## Demo
 
@@ -51,12 +48,16 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5],
-    target: [0, 0, 0] });
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
 
-const torus = createTorus({ radius: 1.5,
+const torus = createTorus({
+    radius: 1.5,
     tube: 0.4,
-    fill: '#8844cc' });
+    fill: '#8844cc',
+});
 
 let angle = 0;
 function loop() {

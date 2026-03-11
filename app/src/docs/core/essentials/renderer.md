@@ -6,6 +6,8 @@ outline: "deep"
 
 A **Renderer** provides an automatic render loop for a [Scene](/docs/core/essentials/scene), powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, enabling smooth animations and interactive effects. The renderer also provides a `transition()` method for animating element properties.
 
+The Renderer is what brings your scene to life. Without it, you'd need to manually call `scene.render()` every time something changes. With a Renderer, you describe *what* should change (via transitions) and the renderer handles *when* and *how* — including easing, chaining, staggering, and automatic start/stop to conserve resources when idle.
+
 ## Creating a Renderer
 
 ```ts
@@ -23,10 +25,7 @@ const renderer = createRenderer(scene);
 
 ## Options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `autoStart` | `boolean` | `true` | Start the render loop immediately |
-| `autoStop` | `boolean` | `true` | Stop the render loop when idle (no transitions, mouse leaves) |
+The renderer accepts `autoStart` (default `true`) and `autoStop` (default `true`). With `autoStop`, the renderer pauses when idle and restarts when needed:
 
 ```ts
 const renderer = createRenderer(scene, {
@@ -35,13 +34,96 @@ const renderer = createRenderer(scene, {
 });
 ```
 
-## Properties
+## Debug Mode
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `isBusy` | `boolean` | Whether any transitions are currently running |
-| `autoStart` | `boolean` | Whether the renderer auto-starts |
-| `autoStop` | `boolean` | Whether the renderer auto-stops when idle |
+The renderer includes built-in debug overlays to help you inspect and profile your scene. Pass the `debug` option to `createRenderer` to enable them.
+
+Setting `debug: true` enables all overlays at once:
+
+```ts
+const renderer = createRenderer(scene, {
+    debug: true,
+});
+```
+
+For granular control, pass an object with the specific overlays you want:
+
+```ts
+const renderer = createRenderer(scene, {
+    debug: {
+        fps: true, // frames-per-second counter
+        elementCount: true, // number of elements in the scene buffer
+        boundingBoxes: true, // red outline around every element's bounding box
+    },
+});
+```
+
+| Option | Description |
+|--------|-------------|
+| `fps` | Displays a smoothed frames-per-second counter in an overlay badge |
+| `elementCount` | Shows the total number of elements rendered each frame |
+| `boundingBoxes` | Draws a red stroke rectangle around every element's bounding box |
+
+When `fps` or `elementCount` is enabled, a semi-transparent overlay badge appears in the top-left corner of the scene. `boundingBoxes` renders directly onto the canvas after each element, making it easy to verify hit areas and layout.
+
+### Demo
+
+Toggle the debug overlays below to see them in action.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="debugContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton :active="debugFps" @click="toggleDebug('fps')">FPS</RiplButton>
+            <RiplButton :active="debugElementCount" @click="toggleDebug('elementCount')">Element Count</RiplButton>
+            <RiplButton :active="debugBoundingBoxes" @click="toggleDebug('boundingBoxes')">Bounding Boxes</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createRect,
+    createRenderer,
+    createScene,
+} from '@ripl/core';
+
+const scene = createScene('.mount-element', {
+    children: [
+        createRect({
+            x: 60,
+            y: 80,
+            width: 120,
+            height: 80,
+            fill: '#3a86ff',
+            borderRadius: 6,
+        }),
+        createCircle({
+            cx: 300,
+            cy: 120,
+            radius: 40,
+            fill: '#ff006e',
+        }),
+        createCircle({
+            cx: 200,
+            cy: 200,
+            radius: 25,
+            fill: '#8338ec',
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene, {
+    debug: {
+        fps: true,
+        elementCount: true,
+        boundingBoxes: true,
+    },
+});
+```
+:::
 
 ## Render Loop
 
@@ -69,18 +151,6 @@ await renderer.transition(circle, {
     },
 });
 ```
-
-### Transition Options
-
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `duration` | `number` | `0` | Duration in milliseconds |
-| `ease` | `Ease` | `easeLinear` | Easing function |
-| `delay` | `number` | `0` | Delay before starting (ms) |
-| `loop` | `boolean` | `false` | Loop the transition |
-| `direction` | `'forward' \| 'reverse'` | `'forward'` | Playback direction |
-| `state` | `object` | — | Target property values |
-| `onComplete` | `(element) => void` | — | Callback when each element completes |
 
 ### Easing Functions
 
@@ -165,10 +235,7 @@ renderer.stop();
 
 ## Events
 
-| Event | Payload | Description |
-| --- | --- | --- |
-| `start` | `{ startTime }` | Render loop started |
-| `stop` | `{ startTime, endTime }` | Render loop stopped |
+The renderer emits `start` and `stop` events to track the render loop lifecycle:
 
 ```ts
 renderer.on('start', (event) => {
@@ -183,6 +250,9 @@ The renderer automatically destroys itself when the scene is destroyed. You can 
 ```ts
 renderer.destroy(); // stops the loop and cleans up
 ```
+
+> [!NOTE]
+> For the full list of Renderer properties, methods, and events, see the [Renderer API Reference](/docs/api/core/core).
 
 ## Demo
 
@@ -249,18 +319,28 @@ await renderer.transition(scene, (el, i) => ({
 
 <script lang="ts" setup>
 import {
+    ref,
+} from 'vue';
+
+import {
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
 import {
     Circle,
+    Context,
     createCircle,
+    createRect,
     createRenderer,
     createScene,
     easeInOutQuad,
     easeOutCubic,
     Renderer,
     Scene,
+} from '@ripl/core';
+
+import type {
+    RendererDebugOptions,
 } from '@ripl/core';
 
 let rScene: Scene;
@@ -312,5 +392,78 @@ function reset() {
         ease: easeInOutQuad,
         state: { fill: '#3a86ff' },
     }));
+}
+
+// --- Debug demo ---
+
+const debugFps = ref(true);
+const debugElementCount = ref(true);
+const debugBoundingBoxes = ref(true);
+
+let debugContext: Context;
+let debugScene: Scene;
+let debugRenderer: Renderer;
+
+function buildDebugScene() {
+    debugRenderer?.destroy();
+    debugScene?.destroy();
+
+    const w = debugContext.width;
+    const h = debugContext.height;
+
+    debugScene = createScene(debugContext, {
+        children: [
+            createRect({
+                id: 'dr1',
+                x: w * 0.08,
+                y: h * 0.25,
+                width: w * 0.25,
+                height: h * 0.4,
+                fill: '#3a86ff',
+                borderRadius: 6,
+            }),
+            createCircle({
+                id: 'dc1',
+                cx: w * 0.55,
+                cy: h * 0.4,
+                radius: Math.min(w, h) * 0.15,
+                fill: '#ff006e',
+            }),
+            createCircle({
+                id: 'dc2',
+                cx: w * 0.8,
+                cy: h * 0.6,
+                radius: Math.min(w, h) * 0.1,
+                fill: '#8338ec',
+            }),
+        ],
+    });
+
+    debugRenderer = createRenderer(debugScene, {
+        debug: {
+            fps: debugFps.value,
+            elementCount: debugElementCount.value,
+            boundingBoxes: debugBoundingBoxes.value,
+        },
+    });
+
+    debugScene.render();
+}
+
+const {
+    contextChanged: debugContextChanged,
+} = useRiplExample(context => {
+    debugContext = context;
+    buildDebugScene();
+});
+
+function toggleDebug(key: keyof RendererDebugOptions) {
+    if (key === 'fps') debugFps.value = !debugFps.value;
+    if (key === 'elementCount') debugElementCount.value = !debugElementCount.value;
+    if (key === 'boundingBoxes') debugBoundingBoxes.value = !debugBoundingBoxes.value;
+
+    if (debugContext) {
+        buildDebugScene();
+    }
 }
 </script>

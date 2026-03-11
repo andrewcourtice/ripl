@@ -1,6 +1,9 @@
 # Chord Chart
 
-The `ChordChart` visualizes relationships between groups using arcs and ribbons arranged in a circle. Ideal for showing inter-group flows and connections.
+The **Chord Chart** visualizes relationships between groups using arcs and ribbons arranged in a circle. Each group is represented by an arc segment, and ribbons connect groups to show the magnitude of flow between them. The chart features a sequential entry animation (arcs first, then ribbons), an optional legend, and configurable colors and pad angles.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 

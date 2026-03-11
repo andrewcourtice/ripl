@@ -4,7 +4,7 @@ outline: "deep"
 
 # Image
 
-An **Image** renders a `CanvasImageSource` (such as an `HTMLImageElement`, `HTMLCanvasElement`, or `ImageBitmap`) to any context. When interpolated, the image crossfades from one source to another.
+An **Image** renders a `CanvasImageSource` (such as an `HTMLImageElement`, `HTMLCanvasElement`, or `ImageBitmap`) to any context. The standout feature is crossfade interpolation — when you transition between two image sources using `interpolateImage`, Ripl composites both images onto an offscreen canvas and smoothly blends between them. This makes image carousels, thumbnail previews, and data-driven image swaps trivially easy to animate.
 
 ## Example
 
@@ -159,15 +159,10 @@ img.onload = () => {
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `image` | `CanvasImageSource` | Yes | The image source to render (e.g. `HTMLImageElement`, `HTMLCanvasElement`, `ImageBitmap`) |
-| `x` | `number` | Yes | X coordinate of the top-left corner |
-| `y` | `number` | Yes | Y coordinate of the top-left corner |
-| `width` | `number` | No | Render width. Defaults to the source's intrinsic width. |
-| `height` | `number` | No | Render height. Defaults to the source's intrinsic height. |
+The image element is defined by `image` (a `CanvasImageSource`), `x`, `y`, and optional `width`/`height` (defaults to the source's intrinsic dimensions).
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties).
+> [!NOTE]
+> For the full property list, see the [Image API Reference](/docs/api/core/elements).
 
 ## Interpolation
 

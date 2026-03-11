@@ -1,6 +1,9 @@
 # Bar Chart
 
-The `BarChart` supports grouped and stacked modes, vertical and horizontal orientations, with animated transitions, tooltips, and legend.
+The **Bar Chart** is one of the most versatile chart types in Ripl. It supports grouped and stacked modes, vertical and horizontal orientations, and handles animated entry, exit, and update transitions automatically when data changes. Built-in features include tooltips on hover, a configurable legend, grid lines, and axis labels — all enabled by default so you get a polished result with minimal configuration.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -113,6 +116,85 @@ const chart = createBarChart('#container', {
     series: [
         { id: 'sales', value: 'sales', label: 'Sales' },
         { id: 'costs', value: 'costs', label: 'Costs' },
+    ],
+});
+```
+
+## Data Format
+
+Each item in the `data` array should contain a category key and one or more numeric fields for series values:
+
+```ts
+const data = [
+    { month: 'Jan',
+        sales: 420,
+        costs: 280 },
+    { month: 'Feb',
+        sales: 380,
+        costs: 310 },
+    { month: 'Mar',
+        sales: 510,
+        costs: 250 },
+];
+```
+
+The `key` option identifies the category field (`'month'`), and each series maps to a numeric field via its `value` property.
+
+## Variants
+
+### Grouped (default)
+
+Bars for each series sit side-by-side within each category:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    mode: 'grouped',
+    series: [
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
+    ],
+});
+```
+
+### Stacked
+
+Bars stack on top of each other, showing cumulative totals:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    mode: 'stacked',
+    series: [
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
+    ],
+});
+```
+
+### Horizontal
+
+Swap axes so bars extend horizontally:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    orientation: 'horizontal',
+    series: [
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
     ],
 });
 ```

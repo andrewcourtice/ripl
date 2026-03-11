@@ -4,7 +4,9 @@ outline: "deep"
 
 # Context
 
-A **Context** is the rendering target for all Ripl elements. It abstracts away the differences between rendering backends (Canvas, SVG, etc.) behind a unified API. You create a context, draw elements to it, and Ripl handles the rest.
+A **Context** is the rendering abstraction at the heart of Ripl. It sits between your elements and the underlying rendering technology — whether that's an HTML Canvas or an SVG element. By programming against the Context API, your drawing code becomes completely backend-agnostic: switch from Canvas to SVG (or any future context) by changing a single import.
+
+The context manages the drawing state stack, coordinate transforms, path creation, and fill/stroke operations. It automatically sizes itself to fit its parent container and emits events when it resizes, making responsive rendering straightforward.
 
 ## Creating a Context
 
@@ -31,16 +33,6 @@ const context = createContext('.my-container');
 
 The context automatically fills its parent container and responds to resize events.
 
-## Properties
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `type` | `string` | The context type (`'canvas'` or `'svg'`) |
-| `width` | `number` | Current width of the rendering area (in CSS pixels) |
-| `height` | `number` | Current height of the rendering area (in CSS pixels) |
-| `element` | `Element` | The underlying DOM element (e.g. `<canvas>` or `<svg>`) |
-| `root` | `HTMLElement` | The parent container element |
-
 ## Drawing State
 
 The context maintains a drawing state stack, similar to the Canvas 2D API. You can save and restore state to isolate style changes:
@@ -52,48 +44,9 @@ context.fill = '#ff0000';
 context.restore(); // fill reverts to previous value
 ```
 
-The full set of state properties mirrors the Canvas 2D API:
+### Using `batch()`
 
-| Property | Type | Default |
-| --- | --- | --- |
-| `fill` | `string` | `'#000000'` |
-| `stroke` | `string` | `'#000000'` |
-| `lineWidth` | `number` | `1` |
-| `lineCap` | `'butt' \| 'round' \| 'square'` | `'butt'` |
-| `lineJoin` | `'bevel' \| 'miter' \| 'round'` | `'miter'` |
-| `lineDash` | `number[]` | `[]` |
-| `lineDashOffset` | `number` | `0` |
-| `opacity` | `number` | `1` |
-| `font` | `string` | `'10px sans-serif'` |
-| `textAlign` | `string` | `'start'` |
-| `textBaseline` | `string` | `'alphabetic'` |
-| `shadowBlur` | `number` | `0` |
-| `shadowColor` | `string` | `'rgba(0, 0, 0, 0)'` |
-| `shadowOffsetX` | `number` | `0` |
-| `shadowOffsetY` | `number` | `0` |
-| `filter` | `string` | `'none'` |
-| `direction` | `'inherit' \| 'ltr' \| 'rtl'` | `'inherit'` |
-
-## Key Methods
-
-### `save()` / `restore()`
-
-Push and pop the drawing state stack. Always pair these calls to avoid state leaks.
-
-### `clear()`
-
-Clear the entire rendering area.
-
-### `markRenderStart()` / `markRenderEnd()`
-
-Bracket a render pass. These are used internally by elements and scenes to track render depth. The SVG context uses these markers to know when to flush its virtual DOM.
-
-> [!TIP]
-> You typically don't need to call `markRenderStart`/`markRenderEnd` yourself — elements and scenes handle this automatically.
-
-### `batch(callback)`
-
-A convenience method that wraps a callback in `save()`/`restore()`:
+The `batch()` convenience method wraps a callback in `save()`/`restore()` automatically:
 
 ```ts
 context.batch(() => {
@@ -103,19 +56,40 @@ context.batch(() => {
 // fill is automatically restored here
 ```
 
-### `destroy()`
+## Render Markers
 
-Remove the context's DOM element and clean up all event listeners.
+The `markRenderStart()` and `markRenderEnd()` methods bracket a render pass. The SVG context uses these markers to know when to flush its virtual DOM.
 
-## Events
+> [!TIP]
+> You typically don't need to call these yourself — elements and scenes handle this automatically.
 
-The context emits a `resize` event whenever its container changes size:
+## Resizing
+
+The context emits a `resize` event whenever its container changes size. Use this to re-render your content responsively:
 
 ```ts
 context.on('resize', () => {
-    console.log(`New size: ${context.width} x ${context.height}`);
+    context.clear();
+    circle.cx = context.width / 2;
+    circle.cy = context.height / 2;
+    circle.render(context);
 });
 ```
+
+## Cleanup
+
+Call `destroy()` to remove the context's DOM element and clean up all event listeners. This is important when using Ripl inside framework components to prevent memory leaks:
+
+```ts
+// Vue 3
+onUnmounted(() => context.destroy());
+
+// React
+useEffect(() => () => context.destroy(), []);
+```
+
+> [!NOTE]
+> For the full list of properties, methods, and state options, see the [Context API Reference](/docs/api/core/context).
 
 ## Demo
 

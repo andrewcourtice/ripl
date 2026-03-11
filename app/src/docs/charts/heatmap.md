@@ -1,6 +1,9 @@
 # Heatmap Chart
 
-The `HeatmapChart` displays data as a matrix of colored cells, with color intensity representing values.
+The **Heatmap Chart** displays data as a matrix of colored cells, where color intensity encodes each cell's value. It's ideal for spotting patterns across two categorical dimensions — time-of-day vs day-of-week, for example. Cells animate smoothly between values on update, and the color range is configurable via a `[low, high]` color tuple.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 

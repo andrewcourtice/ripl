@@ -1,6 +1,9 @@
 # Radar Chart
 
-The `RadarChart` displays multivariate data on a radial grid, ideal for comparing multiple dimensions across series.
+The **Radar Chart** displays multivariate data on a radial grid, ideal for comparing strengths and weaknesses across multiple dimensions. Each axis radiates from a shared center, and data series form filled polygons whose shape reveals the profile at a glance. It supports multiple overlapping series, configurable grid levels, markers that animate in sync with the area polygon, and an optional legend.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -66,6 +69,63 @@ const chart = createRadarChart('#container', {
     axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
     series: [
         { id: 'player1', value: 'player1', label: 'Player 1' },
+    ],
+});
+```
+
+## Data Format
+
+Each item represents one axis and contains the axis label plus one or more numeric series values:
+
+```ts
+const data = [
+    { axis: 'Speed',
+        player1: 80,
+        player2: 65 },
+    { axis: 'Strength',
+        player1: 55,
+        player2: 90 },
+    { axis: 'Defense',
+        player1: 70,
+        player2: 45 },
+];
+```
+
+The `axes` option lists axis labels, and each series references a numeric field via `value`.
+
+## Variants
+
+### Single series
+
+```ts
+createRadarChart('#container', {
+    data,
+    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    series: [
+        { id: 'player1',
+            value: 'player1',
+            label: 'Player 1' },
+    ],
+});
+```
+
+### Custom levels and max value
+
+```ts
+createRadarChart('#container', {
+    data,
+    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    levels: 10,
+    maxValue: 100,
+    series: [
+        { id: 'player1',
+            value: 'player1',
+            label: 'Player 1',
+            opacity: 0.3 },
+        { id: 'player2',
+            value: 'player2',
+            label: 'Player 2',
+            opacity: 0.3 },
     ],
 });
 ```

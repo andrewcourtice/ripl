@@ -199,7 +199,7 @@ describe('Scene', () => {
         const scene = createScene(el);
         const destroySpy = vi.spyOn(scene.context, 'destroy');
 
-        scene.destroy();
+        scene.destroy(true);
 
         expect(destroySpy).toHaveBeenCalledOnce();
     });

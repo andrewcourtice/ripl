@@ -94,7 +94,7 @@ describe('Context3D', () => {
 
         expect(ctx.viewMatrix).toEqual(mat4Identity());
         expect(ctx.viewProjectionMatrix).toBeDefined();
-        expect(ctx.lightDirection).toEqual([0, 0, -1]);
+        expect(ctx.lightDirection).toEqual([-0.577, -0.577, -0.577]);
     });
 
     test('setCamera updates viewMatrix', () => {

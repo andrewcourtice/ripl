@@ -16,7 +16,7 @@ const circle = createCircle({
 scene.add(circle);
 
 renderer.transition(circle, {
-    state: { radius: 80 },
     duration: 1200,
     ease: easeInOutCubic,
+    state: { radius: 80 },
 });

@@ -6,6 +6,8 @@ outline: "deep"
 
 A **Group** is a container for organizing elements into a hierarchy — much like a `<div>` in HTML. Groups support property inheritance, child management, and powerful querying capabilities inspired by the DOM.
 
+Groups are the backbone of Ripl's scene graph. By nesting elements inside groups, you can apply shared styles (which cascade to children like CSS), manage collections of elements as a unit, and use CSS-like selectors to find elements deep in the tree. Groups themselves don't draw anything — they orchestrate their children.
+
 ## Creating a Group
 
 ```ts
@@ -15,28 +17,24 @@ import {
     createRect,
 } from '@ripl/core';
 
-const circle = createCircle({ cx: 100,
+const circle = createCircle({
+    cx: 100,
     cy: 100,
-    radius: 40 });
-const rect = createRect({ x: 160,
+    radius: 40,
+});
+
+const rect = createRect({
+    x: 160,
     y: 60,
     width: 80,
-    height: 80 });
+    height: 80,
+});
 
 const group = createGroup({
     fill: '#3a86ff',
     children: [circle, rect],
 });
 ```
-
-## Options
-
-| Option | Type | Description |
-| --- | --- | --- |
-| `children` | `Element \| Element[]` | Initial child elements |
-| `id` | `string` | Unique identifier |
-| `class` | `string \| string[]` | Class names for querying |
-| `fill`, `stroke`, etc. | `string` | Style properties inherited by children |
 
 ## Property Inheritance
 
@@ -47,13 +45,17 @@ const group = createGroup({
     fill: '#3a86ff', // inherited by all children
     lineWidth: 2, // inherited by all children
     children: [
-        createCircle({ cx: 80,
-            cy: 100,
-            radius: 40 }), // uses group's fill
-        createCircle({ cx: 200,
+        createCircle({
+            cx: 80,
             cy: 100,
             radius: 40,
-            fill: '#ff006e' }), // overrides fill
+        }), // uses group's fill
+        createCircle({
+            cx: 200,
+            cy: 100,
+            radius: 40,
+            fill: '#ff006e',
+        }), // overrides fill
     ],
 });
 ```
@@ -196,6 +198,9 @@ group.render(context);
 ```
 
 Groups themselves are **abstract** — they don't draw anything directly. They simply iterate over their children and render each one.
+
+> [!NOTE]
+> For the full list of Group properties and methods, see the [Group API Reference](/docs/api/core/core).
 
 ## Demo
 

@@ -4,7 +4,10 @@ title: Cylinder
 
 # Cylinder
 
-A 3D cylinder with configurable top and bottom radii (set different values for a truncated cone).
+The **Cylinder** is a 3D primitive with configurable top and bottom radii — set different values to create a truncated cone. Segment count controls the smoothness of the circular cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+
+> [!NOTE]
+> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
 
 ## Usage
 
@@ -24,18 +27,12 @@ const cylinder = createCylinder({
 
 ## Properties
 
-| Property | Type | Default | Description |
-| --- | --- | --- | --- |
-| `radiusTop` | `number` | — | Radius of the top cap |
-| `radiusBottom` | `number` | — | Radius of the bottom cap |
-| `height` | `number` | — | Height of the cylinder |
-| `segments` | `number` | `16` | Number of radial segments |
-| `x` | `number` | `0` | X position |
-| `y` | `number` | `0` | Y position |
-| `z` | `number` | `0` | Z position |
-| `rotationX` | `number` | `0` | Rotation around X axis (radians) |
-| `rotationY` | `number` | `0` | Rotation around Y axis (radians) |
-| `rotationZ` | `number` | `0` | Rotation around Z axis (radians) |
+- **`radiusTop`** — Radius of the top cap
+- **`radiusBottom`** — Radius of the bottom cap
+- **`height`** — Height of the cylinder
+- **`segments`** — Number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 ## Demo
 
@@ -51,8 +48,10 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, { position: [0, 1.5, 5],
-    target: [0, 0, 0] });
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
 
 const cylinder = createCylinder({
     radiusTop: 0.8,

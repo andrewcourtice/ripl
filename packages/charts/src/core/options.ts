@@ -544,7 +544,7 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 // Format helper
 // ---------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 /** Resolves an axis format type or custom formatter into a label formatting function. */
 export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
     if (!format) {

@@ -4,7 +4,7 @@ outline: "deep"
 
 # Polyline
 
-A **Polyline** draws a series of connected line segments through a set of points. It supports multiple rendering modes including smooth curves, splines, step functions, and more.
+A **Polyline** draws a series of connected line segments through a set of `[x, y]` points. What makes Ripl's polyline powerful is its `renderer` property — choose from 13 built-in curve algorithms (spline, cardinal, catmull-rom, monotone, step, and more) or supply a custom render function. This makes it the go-to element for line charts, sparklines, data paths, and any visualization involving connected data points.
 
 ## Example
 
@@ -136,32 +136,14 @@ const polyline = createPolyline({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `points` | `[number, number][]` | Yes | Array of `[x, y]` coordinate pairs |
-| `renderer` | `string \| function` | No | Rendering mode (default: `'linear'`) |
+The polyline is defined by `points` (an array of `[x, y]` tuples) and an optional `renderer` mode (default: `'linear'`).
 
-Plus all [Element style properties](/docs/core/essentials/element#style-properties) and [Shape options](/docs/core/essentials/shape#shape-options).
+> [!NOTE]
+> For the full property list, see the [Polyline API Reference](/docs/api/core/elements).
 
 ## Renderer Modes
 
-The `renderer` property controls how points are connected. Ripl provides 13 built-in renderers:
-
-| Renderer | Description |
-| --- | --- |
-| `'linear'` | Straight line segments (default) |
-| `'spline'` | Smooth spline curve with configurable tension |
-| `'basis'` | Cubic B-spline interpolation |
-| `'bumpX'` | Smooth bump curve along the X axis |
-| `'bumpY'` | Smooth bump curve along the Y axis |
-| `'cardinal'` | Cardinal spline with configurable tension |
-| `'catmullRom'` | Catmull-Rom spline |
-| `'monotoneX'` | Monotone cubic interpolation (preserves monotonicity in X) |
-| `'monotoneY'` | Monotone cubic interpolation (preserves monotonicity in Y) |
-| `'natural'` | Natural cubic spline |
-| `'step'` | Step function (midpoint) |
-| `'stepBefore'` | Step function (step before point) |
-| `'stepAfter'` | Step function (step after point) |
+The `renderer` property controls how points are connected. Built-in options include `'linear'`, `'spline'`, `'basis'`, `'bumpX'`, `'bumpY'`, `'cardinal'`, `'catmullRom'`, `'monotoneX'`, `'monotoneY'`, `'natural'`, `'step'`, `'stepBefore'`, and `'stepAfter'`. Use the interactive demo above to preview each mode.
 
 ```ts
 const smoothLine = createPolyline({

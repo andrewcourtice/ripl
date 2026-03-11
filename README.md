@@ -1,50 +1,60 @@
 # Ripl
 
-Ripl (pronounced ripple) is a library that provides a unified API for 2D graphics rendering (canvas & SVG) in the browser with a focus towards high performance and interactive data visualization.
+Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes an experimental 3D rendering package.
 
-Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue of choosing between these mediums by exposing a unified API and mimicking the DOM/CSSOM in as many ways possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing 1 line of code.
+Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
 
-Ripl also exposes a number of methods such as scales, geometry, interpolation, color, data joining and easing to assist with drawing (inspired by D3).
+> [!IMPORTANT]
+> Ripl is currently in beta `1.0.0-beta.0`.
 
 ## Features
 
-- Unified API for drawing to different contexts
-- Grouping and property inheritance
-- Scene and renderer management
-- Event bubbling, delegation and stop propagation (mimics the DOM as much as possible. Capture phase only)
-- Powerful element querying (`getElementById`, `getElementsByType`, `getElementsByClass`) including CSS selector style querying via `query` and `queryAll`
-- Element bounds detection with `getBoundingBox`
-- Automatic interpolation for known property types (ie. can interpolate numbers, points, colors between RGB and Hex etc.)
-- Point extrapolation for shape morphing (currently only supports regular polygons)
-- High performance async animation including CSS-like keyframe animation support and custom interpolators
-- Several built-in shape primitives such as arc, circle, rect, line, polyline, text, ellipse, and polygon
-- Hoisted scenegraph to optimize render performance when using scenes. See [performance](#performance)
-- Completely modular and tree-shakable. Only ship the features that you use.
-- Strictly typed in TypeScript
-- Zero runtime dependencies
+- **Unified rendering API** across Canvas, SVG, and experimental 3D contexts
+- **Grouping and property inheritance** — CSS-like cascading of visual properties through the element tree
+- **Scene and renderer management** — hoisted scenegraph with O(n) rendering and an automatic `requestAnimationFrame` loop
+- **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
+- **CSS-like element querying** — `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll` with selector syntax
+- **Bounding box detection** via `getBoundingBox` on all shape elements
+- **Transforms** — translate, scale, rotation, and transform-origin on every element
+- **Clipping** — path-based clipping via `Shape2D`
+- **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
+- **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
+- **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
+- **11 scale types** — continuous, discrete, band, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3)
+- **18 pre-built chart types** via `@ripl/charts`
+- **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
+- **3D primitives** (experimental) — cube, sphere, cylinder, cone, plane, torus
+- **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
+- **Color utilities** — parsing, serialisation, and color scales
+- **Math & geometry** — degree/radian conversion, point operations, border radius normalisation, polygon extrapolation
+- **Renderer debug overlay** — FPS counter, element count, bounding box visualisation
+- **Completely modular and tree-shakable** — only ship the features you use
+- **Strictly typed** in TypeScript
+- **Zero runtime dependencies**
 
-Currently unsupported features are: gradients, transforms, clipping.
+## Packages
 
-> [!IMPORTANT]
-> Ripl is currently in the early stages of development and, as a result, not yet published to NPM.
+| Package | Description |
+|---------|-------------|
+| [`@ripl/core`](packages/core) | Core rendering — elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
+| [`@ripl/svg`](packages/svg) | SVG rendering context |
+| [`@ripl/charts`](packages/charts) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
+| [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
+| [`@ripl/utilities`](packages/utilities) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
+| [`@ripl/vdom`](packages/vdom) | Virtual DOM utilities used internally by the SVG context |
 
-## Example
+The project is structured as a Yarn 4 monorepo:
 
-Here are a few proof-of-concept data-visualization examples created using Ripl:
-
-### Multi-Series Trend Chart (Bar/Line)
-
-- [Demo](https://www.ripl.rocks/docs/charts/trend.html)
-- [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/trend.ts)
-  
-  ![trend 1](https://github.com/andrewcourtice/ripl/assets/11718453/797ed163-614d-4783-998c-383070c7edf5)
-
-### Donut Chart with Hover Effects
-
-- [Demo](https://www.ripl.rocks/docs/charts/pie.html)
-- [Source](https://github.com/andrewcourtice/ripl/blob/main/packages/charts/src/charts/pie.ts)
-  
-  ![donut](https://github.com/andrewcourtice/ripl/assets/11718453/15a38877-48cc-462c-9d57-8227afa5f7d0)
+```
+packages/
+├── core/         # Core rendering library
+├── charts/       # Pre-built chart components
+├── svg/          # SVG context implementation
+├── 3d/           # 3D rendering (experimental)
+├── utilities/    # Shared typed utility functions
+└── vdom/         # Virtual DOM utilities
+app/              # Documentation site (VitePress) with live demos
+```
 
 ## Usage
 
@@ -52,16 +62,13 @@ The following is a tour of Ripl's features starting from the most basic and prog
 
 ### Render a Basic Element
 
-Here's a basic example of rendering an element.
-
 ```typescript
 import {
     createCircle,
     createContext,
 } from '@ripl/core';
 
-// Create a context to render the content to
-// Ripl uses a canvas context by default
+// Create a canvas context bound to a DOM element
 const context = createContext('.mount-element');
 
 // Create an element
@@ -77,43 +84,22 @@ const circle = createCircle({
 circle.render(context);
 ```
 
-Ripl has a number of built-in elements such as arc, circle, rect, line, polyline, text, ellipse, and polygon. See [here](https://github.com/andrewcourtice/ripl/tree/5a60425a5f12fd34e8b4fe2864ebf9a66b03d212/packages/core/src/elements) for all available built-in elements.
+Built-in 2D shape primitives: `arc`, `circle`, `rect`, `line`, `polyline`, `polygon`, `ellipse`, `text`, `path`, `image`.
 
 ### Modify Element Properties
 
-To modify an element simply change any of it's properties and re-render it.
+To modify an element simply change any of its properties and re-render it.
 
 ```typescript
-import {
-    createCircle,
-    createContext,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-const circle = createCircle({
-    fill: 'rgb(30, 105, 120)',
-    lineWidth: 4,
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: context.width / 3,
-});
-
-function render() {
-    circle.render(context);
-}
-
-function update() {
-    circle.fill = '#FF0000';
-    circle.cx = context.width / 3;
-    circle.cy = context.height / 3;
-
-    render();
-}
+circle.fill = '#FF0000';
+circle.cx = context.width / 3;
+circle.cy = context.height / 3;
+circle.render(context);
 ```
 
-### Render to Different Contexts (eg. SVG)
+### Switch Contexts (Canvas / SVG)
 
-To render the same element to SVG (or any other context) simply replace the import of the `createContext` method from `@ripl/core` to the appropriate package, in this case `@ripl/svg`. Here's the same example above rendered to SVG:
+To render the same element to SVG, replace the `createContext` import from `@ripl/core` with `@ripl/svg`:
 
 ```typescript
 import {
@@ -125,30 +111,13 @@ import {
 } from '@ripl/core';
 
 const context = createContext('.mount-element');
-const circle = createCircle({
-    fill: 'rgb(30, 105, 120)',
-    lineWidth: 4,
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: context.width / 3,
-});
-
-function render() {
-    circle.render(context);
-}
-
-function update() {
-    circle.fill = '#FF0000';
-    circle.cx = context.width / 3;
-    circle.cy = context.height / 3;
-
-    render();
-}
+const circle = createCircle({ /* same options */ });
+circle.render(context);
 ```
 
 ### Grouping and Inheritance
 
-Ripl can also render multiple elements in groups with inherited properties (like CSS) and events (DOM event bubbling):
+Render multiple elements in groups with inherited properties (like CSS) and event bubbling (like the DOM):
 
 ```typescript
 import {
@@ -173,13 +142,11 @@ const rect = createRect({
     height: context.height / 5,
 });
 
+// Both children inherit fill and lineWidth from the group
 const group = createGroup({
     fill: 'rgb(30, 105, 120)',
     lineWidth: 4,
-    children: [
-        circle,
-        rect,
-    ],
+    children: [circle, rect],
 });
 
 group.render(context);
@@ -187,169 +154,57 @@ group.render(context);
 
 ### Querying Elements
 
-Elements can be queried in groups using common DOM methods such as `getElementById`, `getElementsByType`, and `getElementsByClass`. Elements can also be queried using a subset of the CSS selector syntax with `query` and `queryAll`.
+Elements can be queried using common DOM methods or CSS-like selectors:
 
 ```typescript
-import {
-    createCircle,
-    createContext,
-    createGroup,
-    createRect,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-
-const circle = createCircle({
-    class: 'shape',
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: context.width / 3,
-});
-
-const rect = createRect({
-    class: 'shape',
-    x: context.width / 2,
-    y: context.height / 2,
-    width: context.width / 5,
-    height: context.height / 5,
-});
-
-const childGroup = createGroup({
-    id: 'child-group',
-    fill: 'rgb(30, 105, 120)',
-    lineWidth: 4,
-    children: [
-        circle,
-        rect,
-    ],
-});
-
-const parentGroup = createGroup({
-    id: 'parent-group',
-    children: childGroup,
-});
-
-parentGroup.render(context);
-
-function query() {
-    const qCircle = parentGroup.getElementsByType('circle');
-    const qRect = parentGroup.getElementsByType('rect');
-    const qChildren = parentGroup.queryAll('.shape');
-    const qChild = parentGroup.query('.child-group > .shape');
-}
+const circles = parentGroup.getElementsByType('circle');
+const shapes = parentGroup.queryAll('.shape');
+const first = parentGroup.query('#child-group > .shape');
 ```
 
-The query selector currently only supports a limited subset of features compared to the DOM. Here are some examples of supported queries:
+Supported selector features:
+
 ```css
-// type
-circle
-
-// id
-#element-id
-
-// class
-.element-class
-
-// element properties (attributes)
-circle[radius="5"]
-
-// descendents
-.group-class circle
-.group-class > circle
-.parent-class .child-class rect
-.group-class rect + circle.circle-class
-.group-class > rect[x="50"]
+circle                                   /* type */
+#element-id                              /* id */
+.element-class                           /* class */
+circle[radius="5"]                       /* attribute */
+.group-class circle                      /* descendant */
+.group-class > circle                    /* direct child */
+.group-class rect + circle.circle-class  /* adjacent sibling */
 ```
 
-### Scene Management
+### Scene and Renderer
 
-Ripl also provides complete scene management for rendering large group structures with events.
+A `Scene` is the top-level group bound to a rendering context. A `Renderer` drives the animation loop via `requestAnimationFrame`.
 
 ```typescript
 import {
     createCircle,
-    createContext,
     createGroup,
     createRect,
+    createRenderer,
     createScene,
 } from '@ripl/core';
 
-const context = createContext('.mount-element');
-
-const circle = createCircle({
-    class: 'shape',
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: context.width / 3,
-});
-
-const rect = createRect({
-    class: 'shape',
-    x: context.width / 2,
-    y: context.height / 2,
-    width: context.width / 5,
-    height: context.height / 5,
-});
-
-const childGroup = createGroup({
-    id: 'child-group',
-    fill: 'rgb(30, 105, 120)',
-    lineWidth: 4,
-    children: [
-        circle,
-        rect,
-    ],
-});
-
-const parentGroup = createGroup({
-    id: 'parent-group',
-    children: childGroup,
-});
-
-const scene = createScene({
-    children: parentGroup,
-});
-
-scene.render(context);
-circle.on('click', event => console.log(event));
-```
-
-### Basic Animation and Interactivity
-
-Interactivity and animation can be added by using a renderer. The renderer provides an automatic render loop to re-render a scene at the ideal framerate.
-
-```typescript
-import {
-    createCircle,
-    createContext,
-    createGroup,
-    createRect,
-    createScene,
-    easeOutCubic,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-
 const circle = createCircle({
     fill: 'rgb(30, 105, 120)',
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: context.width / 3,
+    cx: 100,
+    cy: 100,
+    radius: 40,
 });
 
 const rect = createRect({
     fill: 'rgb(30, 105, 120)',
-    x: context.width / 2,
-    y: context.height / 2,
-    width: context.width / 5,
-    height: context.height / 5,
+    x: 200,
+    y: 80,
+    width: 60,
+    height: 60,
 });
 
-const scene = createScene({
-    children: [
-        circle,
-        rect,
-    ],
+// Scene takes a target (selector, element, or context) and options
+const scene = createScene('.mount-element', {
+    children: [circle, rect],
 });
 
 const renderer = createRenderer(scene, {
@@ -357,125 +212,266 @@ const renderer = createRenderer(scene, {
     autoStop: true,
 });
 
-async function animate() {
-    // Render one
-    await renderer.transition(circle, {
-        duration: 1000,
-        ease: easeOutCubic,
-        state: {
-            fill: '#FF0000',
-            cx: context.width / 4,
-            cy: context.height / 4,
-            radius: context.width / 4,
-        },
-    });
-
-    // Render many with common properties
-    // Alternatively you could transition a whole group or scene
-    await renderer.transition([circle, rect], {
-        duration: 1000,
-        ease: easeOutCubic,
-        state: {
-            fill: '#FF0000',
-        },
-    });
-}
+// Listen for events
+circle.on('click', event => console.log(event));
 ```
 
-### Advanced Animation
+### Animation
 
-Ripl also supports CSS-like animation keyframes and custom interpolator functions
+The renderer provides transition-based animation. Transitions are cancellable `Task` instances (extending `Promise` with `AbortController` integration).
 
 ```typescript
-// ...
+import {
+    easeOutCubic,
+} from '@ripl/core';
 
-async function animate() {
-    // Implicit keyframe offsets
-    await renderer.transition([circle, rect], {
-        duration: 1000,
-        ease: easeOutCubic,
-        state: {
-            fill: [
-                '#FF0000', // implied 0.33 offset
-                '#00FF00', // implied 0.66 offset
-                '#0000FF', // implied end state - offset 1
-            ],
-        },
-    });
+// Animate a single element
+await renderer.transition(circle, {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        fill: '#FF0000',
+        cx: 200,
+        cy: 200,
+        radius: 60,
+    },
+});
 
-    // Explicit keyframe offsets
-    await renderer.transition([circle, rect], {
-        duration: 1000,
-        ease: easeOutCubic,
-        state: {
-            fill: [
-                {
-                    value: '#FF0000',
-                    offset: 0.25,
-                },
-                {
-                    value: '#0000FF',
-                    offset: 0.8,
-                },
-            ],
-        },
-    });
-
-    // Custom interpolator
-    await renderer.transition(circle, {
-        duration: 1000,
-        ease: easeOutCubic,
-        state: {
-            radius: t => t * context.width / 2, // where 0 <= t <= 1 (depending on the ease function)
-        },
-    });
-}
+// Animate multiple elements (or a whole group/scene)
+await renderer.transition([circle, rect], {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        fill: '#FF0000',
+    },
+});
 ```
 
-## Utilities
+#### Keyframes
 
-Ripl provides a number of utilities to enable rapid and straightforward developement of data visualizations.
+```typescript
+// Implicit keyframe offsets
+await renderer.transition(circle, {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        fill: [
+            '#FF0000', // offset ~0.33
+            '#00FF00', // offset ~0.66
+            '#0000FF', // offset 1
+        ],
+    },
+});
 
-### Scales
+// Explicit keyframe offsets
+await renderer.transition(circle, {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        fill: [
+            { value: '#FF0000',
+                offset: 0.25 },
+            { value: '#0000FF',
+                offset: 0.8 },
+        ],
+    },
+});
 
-Ripl currently provides 3 scale types (with more coming in the future) for mapping data between a specified domain and range. These scales are heavily influnced by [D3](https://d3js.org/d3-scale).
+// Custom interpolator function
+await renderer.transition(circle, {
+    duration: 1000,
+    ease: easeOutCubic,
+    state: {
+        radius: t => t * 100, // 0 <= t <= 1
+    },
+});
+```
 
-#### Continuous (aka linear)
+### Transforms
 
-Map continuous linear data from a given domain to a specified range.
+Every element supports CSS-like transforms:
+
+```typescript
+const rect = createRect({
+    x: 100,
+    y: 100,
+    width: 80,
+    height: 80,
+    rotation: '45deg', // or radians as a number
+    transformOriginX: '50%', // or pixels as a number
+    transformOriginY: '50%',
+    translateX: 20,
+    translateY: 10,
+    transformScaleX: 1.5,
+    transformScaleY: 1.5,
+});
+```
+
+Transforms can also be animated via `renderer.transition`.
+
+## Charts
+
+`@ripl/charts` provides 18 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+
+| Chart | Factory |
+|-------|---------|
+| Area | `createAreaChart` |
+| Bar | `createBarChart` |
+| Chord | `createChordChart` |
+| Funnel | `createFunnelChart` |
+| Gantt | `createGanttChart` |
+| Gauge | `createGaugeChart` |
+| Heatmap | `createHeatmapChart` |
+| Line | `createLineChart` |
+| Pie / Donut | `createPieChart` |
+| Polar Area | `createPolarAreaChart` |
+| Radar | `createRadarChart` |
+| Realtime | `createRealtimeChart` |
+| Sankey | `createSankeyChart` |
+| Scatter | `createScatterChart` |
+| Stock (OHLC) | `createStockChart` |
+| Sunburst | `createSunburstChart` |
+| Treemap | `createTreemapChart` |
+| Trend (Bar + Line) | `createTrendChart` |
+
+Charts are constructed by passing a target element and an options object:
+
+```typescript
+import {
+    createBarChart,
+} from '@ripl/charts';
+
+const chart = createBarChart('.mount-element', {
+    data: [
+        { category: 'A',
+            value: 30 },
+        { category: 'B',
+            value: 70 },
+        { category: 'C',
+            value: 45 },
+    ],
+    keyBy: 'category',
+    series: [
+        { label: 'Values',
+            valueBy: item => item.value },
+    ],
+});
+
+// Update with new data
+chart.update({
+    data: [
+        { category: 'A',
+            value: 50 },
+        { category: 'B',
+            value: 20 },
+        { category: 'C',
+            value: 80 },
+    ],
+});
+```
+
+Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Tooltip`, `Crosshair`.
+
+## Scales
+
+Ripl provides 11 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). All scales expose `inverse`, `ticks`, and `includes` methods.
+
+```typescript
+import {
+    scaleBand,
+    scaleContinuous,
+    scaleDiscrete,
+    scaleDiverging,
+    scaleLogarithmic,
+    scalePower,
+    scaleQuantile,
+    scaleQuantize,
+    scaleThreshold,
+    scaleTime,
+} from '@ripl/core';
+```
+
+### Continuous (Linear)
 
 ```typescript
 const scale = scaleContinuous([0, 25], [-100, 100]);
-const value = scale(10); // -20
-```
-
-Linear scales can also be clamped and inverted.
-
-```typescript
-const scale = scaleContinuous([0, 25], [-100, 100], {
-    clamp: true,
-});
+scale(10); // -20
+scale.inverse(-20); // 10
 
 // With clamping
-scale(25); // 100
-scale(30); // 100 (clamped)
-
-// Invert
-scale.inverse(-20); // 10
+const clamped = scaleContinuous([0, 25], [-100, 100], { clamp: true });
+clamped(30); // 100
 ```
 
-#### Discrete
-
-Map discrete domain data to a continuous range.
+### Discrete
 
 ```typescript
 const scale = scaleDiscrete(['a', 'b', 'c'], [0, 50]);
-const value = scale('b'); // 25
+scale('b'); // 25
 ```
+
+### Band
+
+```typescript
+const scale = scaleBand(['A', 'B', 'C'], [0, 300], {
+    innerPadding: 0.1,
+    outerPadding: 0.05,
+});
+scale('B'); // position of band B
+scale.bandwidth; // width of each band
+```
+
+### Additional Scales
+
+- **`scaleDiverging`** — maps values below and above a midpoint to separate sub-ranges
+- **`scaleLogarithmic`** — logarithmic mapping with configurable base
+- **`scalePower`** — polynomial mapping with configurable exponent
+- **`scaleQuantile`** — maps continuous data to discrete quantile bins
+- **`scaleQuantize`** — maps a continuous domain to discrete range values
+- **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries
+- **`scaleTime`** — maps `Date` domains to numeric ranges
+
+## 3D Rendering (Experimental)
+
+`@ripl/3d` extends the Canvas context with perspective/orthographic projection, camera controls, and flat shading.
+
+```typescript
+import {
+    Camera,
+    Context3D,
+    createCube,
+    createSphere,
+} from '@ripl/3d';
+```
+
+Available 3D primitives: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`.
+
+Camera supports interactive zoom, pivot, and pan with configurable sensitivity.
 
 ## Performance
 
-Ripl is designed to be as performant as possible, however, here are a few tips for getting the best performance out of it:
+1. **Scene + Renderer** — elements in a scene are hoisted into a flat buffer, converting render traversal from O(n^c) to O(n). The cost shifts to adding/removing elements from groups.
+2. **Persistent path keys** — always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames.
+3. **Memory lifecycle** — call `destroy()` on elements, scenes, and renderers when done to clean up subscriptions and DOM references.
+4. **Auto-stop** — the renderer stops ticking when idle (no active transitions and mouse has left the canvas) to avoid unnecessary CPU usage.
+5. **Debug overlay** — enable `{ debug: true }` on the renderer to visualise FPS, element count, and bounding boxes during development.
 
-1. **Using a scene + renderer to render many elements/groups** - When elements are placed into a scene and rendered using a renderer the elements are "hoisted" into a flat list essentially converting the render time from an O(n^c) operation to O(n). The performance cost is instead shifted to adding/removing elements from groups within the scenegraph.
-2. **Using persistent keys when creating paths in custom elements** - When creating a new path/text within a custom element it is highly encouraged to specify a persistent key for the path. The persistent key ensures that custom contexts such as svg can efficiently diff created objects with the DOM in each frame. This effectively reduces the amount of DOM elements that are required to be created/destroyed each frame. See an example of a persistent path key [here](https://github.com/andrewcourtice/ripl/blob/1a33451da6f1a3b5163b41189c00c0cce116accd/packages/core/src/core/shape.ts#L73).
+## Development
+
+```bash
+# Install dependencies
+yarn install
+
+# Build all packages
+yarn build
+
+# Run tests
+yarn test
+
+# Lint
+yarn lint
+```
+
+## License
+
+[MIT](LICENSE)

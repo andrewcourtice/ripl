@@ -6,6 +6,9 @@ outline: "deep"
 
 Ripl's context-agnostic architecture means you can create your own rendering context to target any medium — WebGL, PDF, terminal output, or anything else. A custom context implements the abstract methods defined by the base `Context` class, and all existing elements will render to it automatically.
 
+> [!NOTE]
+> For the full API, see the [Core API Reference](/docs/api/core/context).
+
 ## Architecture Overview
 
 The rendering pipeline flows like this:
@@ -214,19 +217,7 @@ class MyContextText extends ContextText {
 
 The base `Context` class manages a state stack via `save()` and `restore()`. Your context inherits this automatically. The `setStateValue` method is called whenever a state property changes — this is where you map Ripl's unified state properties to your target's API.
 
-Key state properties to handle:
-
-| Property | Description |
-| --- | --- |
-| `fill` | Fill color or gradient string |
-| `stroke` | Stroke color or gradient string |
-| `lineWidth` | Stroke width |
-| `lineCap` | Line end style |
-| `lineJoin` | Line join style |
-| `opacity` | Opacity |
-| `font` | Font string |
-| `textAlign` | Text alignment |
-| `textBaseline` | Text baseline |
+Key state properties to handle include `fill`, `stroke`, `lineWidth`, `lineCap`, `lineJoin`, `opacity`, `font`, `textAlign`, and `textBaseline`.
 
 ## Persistent Path Keys
 
@@ -245,10 +236,12 @@ function createContext(target: string | HTMLElement) {
 
 // Use it with any Ripl element
 const context = createContext('.my-container');
-const circle = createCircle({ fill: '#3a86ff',
+const circle = createCircle({
+    fill: '#3a86ff',
     cx: 100,
     cy: 100,
-    radius: 50 });
+    radius: 50,
+});
 circle.render(context);
 ```
 

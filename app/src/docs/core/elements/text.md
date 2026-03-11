@@ -4,13 +4,25 @@ outline: "deep"
 
 # Text
 
-A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path.
+A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path. Text supports both filled and stroked rendering, and can follow arbitrary SVG paths via the `pathData` property — perfect for curved labels, circular badges, and decorative typography.
 
 ## Example
 
 :::tabs
 == Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Font Size</span>
+            <RiplInputRange v-model="fontSize" :min="12" :max="48" :step="1" @update:model-value="redraw" />
+            <RiplSelect v-model="textAlign" @change="redraw">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+            </RiplSelect>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 == Code
 ```ts
 import {
@@ -67,49 +79,79 @@ import {
 } from '../../../.vitepress/compositions/example';
 
 import {
+    createLine,
     createText,
 } from '@ripl/core';
+
+import type {
+    Context,
+} from '@ripl/core';
+
+import {
+    ref,
+} from 'vue';
+
+const fontSize = ref(28);
+const textAlign = ref('center');
+let currentContext: Context | undefined;
+
+function renderDemo(context: Context) {
+    const w = context.width;
+    const h = context.height;
+
+    context.clear();
+    context.markRenderStart();
+
+    const anchorX = textAlign.value === 'left' ? w * 0.1
+        : textAlign.value === 'right' ? w * 0.9
+            : w / 2;
+
+    createLine({
+        stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
+        x1: anchorX, y1: 0, x2: anchorX, y2: h,
+    }).render(context);
+
+    createText({
+        fill: '#3a86ff',
+        x: anchorX, y: h * 0.3,
+        content: 'Filled Text',
+        font: `bold ${fontSize.value}px sans-serif`,
+        textAlign: textAlign.value as CanvasTextAlign,
+        textBaseline: 'middle',
+    }).render(context);
+
+    createText({
+        stroke: '#ff006e',
+        lineWidth: 1,
+        x: anchorX, y: h * 0.55,
+        content: 'Stroked Text',
+        font: `bold ${fontSize.value}px sans-serif`,
+        textAlign: textAlign.value as CanvasTextAlign,
+        textBaseline: 'middle',
+    }).render(context);
+
+    createText({
+        fill: '#666',
+        x: w / 2, y: h * 0.8,
+        content: `font: ${fontSize.value}px  align: ${textAlign.value}`,
+        font: '13px sans-serif',
+        textAlign: 'center', textBaseline: 'middle',
+    }).render(context);
+
+    context.markRenderEnd();
+}
 
 const {
     contextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-
-    const render = () => {
-        context.markRenderStart();
-
-        createText({
-            fill: '#3a86ff',
-            x: w / 2, y: h * 0.3,
-            content: 'Filled Text',
-            font: 'bold 28px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            stroke: '#ff006e',
-            lineWidth: 1,
-            x: w / 2, y: h * 0.55,
-            content: 'Stroked Text',
-            font: 'bold 28px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            fill: '#666',
-            x: w / 2, y: h * 0.8,
-            content: `Context: ${context.type} | Size: ${Math.round(w)}×${Math.round(h)}`,
-            font: '14px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
-
-        context.markRenderEnd();
-    };
-
-    render();
-    context.on('resize', () => { context.clear(); render(); });
+    currentContext = context;
+    renderDemo(context);
+    context.on('resize', () => renderDemo(context));
 });
+
+function redraw() {
+    if (currentContext) renderDemo(currentContext);
+}
 
 const {
     contextChanged: pathContextChanged
@@ -165,23 +207,10 @@ const text = createText({
 
 ## Properties
 
-| Property | Type | Required | Description |
-| --- | --- | --- | --- |
-| `x` | `number` | Yes | X coordinate |
-| `y` | `number` | Yes | Y coordinate |
-| `content` | `string \| number` | Yes | The text to render |
-| `pathData` | `string` | No | SVG path `d` string to render text along |
-| `startOffset` | `number` | No | Position along the path to start text (0–1) |
+The text element is defined by `x`, `y`, and `content`. Optional properties include `pathData` (SVG path string for text-on-path) and `startOffset` (0–1 position along the path). Style properties like `font`, `textAlign`, `textBaseline`, `fill`, and `stroke` control appearance.
 
-The following inherited style properties are particularly relevant for text:
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `font` | `string` | CSS font string (e.g. `'16px sans-serif'`) |
-| `textAlign` | `'start' \| 'end' \| 'left' \| 'right' \| 'center'` | Horizontal alignment relative to `x` |
-| `textBaseline` | `'top' \| 'hanging' \| 'middle' \| 'alphabetic' \| 'ideographic' \| 'bottom'` | Vertical alignment relative to `y` |
-| `fill` | `string` | Text fill color (renders filled text) |
-| `stroke` | `string` | Text stroke color (renders stroked/outlined text) |
+> [!TIP]
+> If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
 
 > [!NOTE]
-> If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
+> For the full property list, see the [Text API Reference](/docs/api/core/elements).

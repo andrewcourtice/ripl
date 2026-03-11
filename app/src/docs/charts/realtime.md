@@ -1,6 +1,9 @@
 # Realtime Chart
 
-The `RealtimeChart` smoothly visualises data streaming in over time. It maintains a sliding window of data points and animates the line (and optional area fill) as new values arrive via the `push()` method. Ideal for live dashboards, monitoring, and any scenario where data arrives continuously.
+The **Realtime Chart** smoothly visualizes data streaming in over time. It maintains a sliding window of data points and animates the line (and optional area fill) as new values arrive via the `push()` method. Ideal for live dashboards, server monitoring, and any scenario where data arrives continuously. Each series can show an area fill with configurable opacity, and the chart includes crosshair, grid, legend, and tooltips.
+
+> [!NOTE]
+> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
 
 ## Example
 
@@ -147,37 +150,20 @@ chart.clear();
 
 ## Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `series` | `RealtimeChartSeriesOptions[]` | — | Series configuration |
-| `windowSize` | `number` | `60` | Maximum visible data points |
-| `transitionDuration` | `number` | `300` | Transition duration per update (ms) |
-| `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure grid lines |
-| `crosshair` | `boolean \| ChartCrosshairOptions` | `true` | Show/configure crosshair |
-| `tooltip` | `boolean \| ChartTooltipOptions` | — | Show/configure tooltips |
-| `legend` | `boolean \| ChartLegendOptions` | `true` | Show/configure legend |
-| `axis` | `boolean \| ChartAxisOptions` | `true` | Configure axes |
-| `yMin` | `number` | auto | Fixed Y axis minimum |
-| `yMax` | `number` | auto | Fixed Y axis maximum |
-| `padding` | `Partial<ChartPadding>` | `10` all | Chart padding |
-
-### Series Options
-
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `id` | `string` | — | Unique series identifier (matches keys in `push()`) |
-| `label` | `string` | `id` | Display label for legend |
-| `color` | `string` | auto | Series color |
-| `lineType` | `PolylineRenderer` | `'linear'` | Line interpolation type |
-| `lineWidth` | `number` | `2` | Line width |
-| `showArea` | `boolean` | `true` | Show filled area beneath line |
-| `areaOpacity` | `number` | `0.2` | Area fill opacity |
+- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `areaOpacity`
+- **`windowSize`** — Maximum visible data points (default `60`)
+- **`transitionDuration`** — Transition duration per update in ms (default `300`)
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (default `true`)
+- **`axis`** — `boolean | ChartAxisOptions` — Configure axes (default `true`)
+- **`yMin`** / **`yMax`** — Fixed Y axis bounds (auto-computed if omitted)
+- **`padding`** — Chart padding
 
 ### Methods
 
-| Method | Description |
-|--------|-------------|
-| `push(values: Record<string, number>)` | Append a data point for each series. Keys must match series `id` values. |
-| `clear()` | Reset all buffers and clear the chart. |
-| `update(options)` | Update chart options (inherited from `Chart`). |
-| `destroy()` | Destroy the chart and release resources. |
+- **`push(values)`** — Append a data point for each series. Keys must match series `id` values.
+- **`clear()`** — Reset all buffers and clear the chart.
+- **`update(options)`** — Update chart options (inherited from `Chart`).
+- **`destroy()`** — Destroy the chart and release resources.

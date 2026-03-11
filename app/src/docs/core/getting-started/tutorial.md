@@ -17,8 +17,6 @@ The most basic usage of Ripl involves 3 steps:
 3. **Render** — draw the element to the context
 
 :::tabs
-== Demo
-<ripl-example @context-changed="basicContextChanged"></ripl-example>
 == Code
 ```ts
 import {
@@ -37,6 +35,8 @@ const circle = createCircle({
 
 circle.render(context);
 ```
+== Demo
+<ripl-example @context-changed="basicContextChanged"></ripl-example>
 :::
 
 > [!TIP]
@@ -47,15 +47,6 @@ circle.render(context);
 An element can be modified at any point by changing its properties and re-rendering. Use the slider below to change the circle's radius in real time.
 
 :::tabs
-== Demo
-<ripl-example @context-changed="changeContextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <span>Radius</span>
-            <RiplInputRange v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
-        </RiplControlGroup>
-    </template>
-</ripl-example>
 == Code
 ```ts
 // Change any property directly
@@ -66,6 +57,15 @@ circle.fill = '#ff006e';
 context.clear();
 circle.render(context);
 ```
+== Demo
+<ripl-example @context-changed="changeContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Radius</span>
+            <RiplInputRange v-model.number="changePropsRadius" :min="changePropsMin" :max="changePropsMax" step="1" style="flex: 1;"/>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 :::
 
 ## Creating Structure
@@ -75,8 +75,6 @@ circle.render(context);
 Groups let you organize elements into a hierarchy — just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fill` once on the group instead of on every element.
 
 :::tabs
-== Demo
-<ripl-example @context-changed="groupContextChanged"></ripl-example>
 == Code
 ```ts
 import {
@@ -109,30 +107,200 @@ const group = createGroup({
 
 group.render(context);
 ```
+== Demo
+<ripl-example @context-changed="groupContextChanged"></ripl-example>
 :::
 
-Groups also support querying elements using familiar DOM-like methods:
+### Querying Elements
 
-```ts
-group.getElementById('my-circle');
-group.getElementsByType('circle');
-group.getElementsByClass('highlighted');
-group.query('circle.highlighted');
-group.queryAll('.shape');
-```
-
-### Using Scenes
-
-A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle — clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
+Groups and scenes support DOM-like querying methods — `getElementById`, `getElementsByType`, `query`, and `queryAll`. This makes it easy to find elements deep in the tree without keeping references to every element.
 
 :::tabs
-== Demo
-<ripl-example @context-changed="sceneContextChanged"></ripl-example>
 == Code
 ```ts
 import {
     createCircle,
     createContext,
+    createGroup,
+    createRect,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const group = createGroup({
+    fill: '#3a86ff',
+    children: [
+        createCircle({ id: 'c1',
+            class: 'shape',
+            cx: 80,
+            cy: 100,
+            radius: 40 }),
+        createCircle({ id: 'c2',
+            class: 'shape',
+            cx: 200,
+            cy: 100,
+            radius: 30 }),
+        createRect({ id: 'r1',
+            class: 'shape',
+            x: 260,
+            y: 70,
+            width: 80,
+            height: 60 }),
+    ],
+});
+
+group.render(context);
+
+// Find by ID
+group.getElementById('c1');
+
+// Find by type
+group.getElementsByType('circle');
+
+// CSS-like selectors
+group.query('#c1');
+group.queryAll('.shape');
+```
+== Demo
+<ripl-example @context-changed="queryContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runQuery('circle')">circles</RiplButton>
+            <RiplButton @click="runQuery('rect')">rects</RiplButton>
+            <RiplButton @click="runQuery('#c1')">id: c1</RiplButton>
+            <RiplButton @click="runQuery('.highlight')">class: highlight</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+:::
+
+## Interaction
+
+Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, `click`, `dragstart`, `drag`, and `dragend` directly on any element — no scene or renderer required.
+
+:::tabs
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 200,
+    cy: 150,
+    radius: 60,
+});
+
+function render() {
+    context.clear();
+    context.markRenderStart();
+    circle.render(context);
+    context.markRenderEnd();
+}
+
+render();
+
+circle.on('mouseenter', () => {
+    circle.fill = '#ff006e';
+    render();
+});
+
+circle.on('mouseleave', () => {
+    circle.fill = '#3a86ff';
+    render();
+});
+
+circle.on('click', () => {
+    circle.radius = circle.radius === 60 ? 90 : 60;
+    render();
+});
+```
+== Demo
+<ripl-example @context-changed="interactionContextChanged"></ripl-example>
+:::
+
+> [!TIP]
+> Hover over and click the circle to see the events in action.
+
+> [!TIP]
+> After changing element properties, re-render to see the updates. The `markRenderStart()`/`markRenderEnd()` calls tell the context which elements are on screen for hit testing.
+
+## Animation
+
+Ripl provides a standalone `transition()` function for animating values over time. Combined with an element's `interpolate()` method, you can smoothly animate element properties without a renderer.
+
+The `transition()` function calls your callback on each animation frame with an eased time value (0–1). The element's `interpolate()` method creates an interpolator that maps that time value to intermediate property states.
+
+:::tabs
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    easeOutCubic,
+    transition,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 200,
+    cy: 150,
+    radius: 60,
+});
+
+function render() {
+    context.clear();
+    context.markRenderStart();
+    circle.render(context);
+    context.markRenderEnd();
+}
+
+render();
+
+const interpolator = circle.interpolate({
+    radius: 100,
+    fill: '#ff006e',
+});
+
+await transition(time => {
+    interpolator(time);
+    render();
+}, {
+    duration: 1000,
+    ease: easeOutCubic,
+});
+```
+== Demo
+<ripl-example @context-changed="transitionContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runTransition">Animate</RiplButton>
+            <RiplButton @click="resetTransition">Reset</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+:::
+
+> [!NOTE]
+> The `transition()` function returns a `Transition` (which extends `Task`) — it is both **awaitable** and **cancellable** via `transition.abort()`.
+
+The standalone `transition()` gives you full control, but for most use-cases a **Scene** and **Renderer** provide a more convenient approach.
+
+## Using Scenes
+
+A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle — clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
+
+:::tabs
+== Code
+```ts
+import {
+    createCircle,
     createRect,
     createScene,
 } from '@ripl/core';
@@ -157,29 +325,18 @@ const scene = createScene('.mount-element', {
 
 scene.render();
 ```
+== Demo
+<ripl-example @context-changed="sceneContextChanged"></ripl-example>
 :::
 
 > [!TIP]
 > When you use a Scene, you don't need to manage `context.clear()` or `context.markRenderStart()`/`markRenderEnd()` yourself — the scene handles all of that.
 
-## Interactivity and Animation
+## Using a Renderer
 
-### Using Renderers
-
-A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene, which is essential for animations and interactive hover/click effects.
-
-The renderer also provides a `transition()` method that smoothly animates element properties from their current values to new values.
+A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, and its `transition()` method handles interpolation and re-rendering for you — no manual `scene.render()` calls needed.
 
 :::tabs
-== Demo
-<ripl-example @context-changed="rendererContextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <RiplButton @click="animateRenderer">Animate</RiplButton>
-            <RiplButton @click="resetRenderer">Reset</RiplButton>
-        </RiplControlGroup>
-    </template>
-</ripl-example>
 == Code
 ```ts
 import {
@@ -203,7 +360,6 @@ const scene = createScene('.mount-element', {
 
 const renderer = createRenderer(scene);
 
-// Animate the circle
 const circle = scene.query('#my-circle');
 
 await renderer.transition(circle, {
@@ -215,25 +371,25 @@ await renderer.transition(circle, {
     },
 });
 ```
-:::
-
-### Adding Animation
-
-Transitions are **awaitable**, so you can chain animations sequentially. You can also animate multiple elements at once and use different easing functions.
-
-:::tabs
 == Demo
-<ripl-example @context-changed="animationContextChanged">
+<ripl-example @context-changed="rendererContextChanged">
     <template #footer>
         <RiplControlGroup>
-            <RiplButton @click="runAnimation">Run Sequence</RiplButton>
+            <RiplButton @click="animateRenderer">Animate</RiplButton>
+            <RiplButton @click="resetRenderer">Reset</RiplButton>
         </RiplControlGroup>
     </template>
 </ripl-example>
+:::
+
+### Chaining Transitions
+
+Because `renderer.transition()` returns a promise, you can chain animations sequentially. You can also animate multiple elements at once and use different easing functions.
+
+:::tabs
 == Code
 ```ts
 async function animate() {
-    // Animate one element
     await renderer.transition(circle, {
         duration: 800,
         ease: easeOutCubic,
@@ -243,7 +399,6 @@ async function animate() {
         },
     });
 
-    // Then animate it back
     await renderer.transition(circle, {
         duration: 800,
         ease: easeInOutQuad,
@@ -254,6 +409,14 @@ async function animate() {
     });
 }
 ```
+== Demo
+<ripl-example @context-changed="animationContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runAnimation">Run Sequence</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
 :::
 
 ## Next Steps
@@ -280,12 +443,15 @@ import {
     createText,
     easeInOutQuad,
     easeOutCubic,
+    Group,
     Renderer,
     Scene,
+    transition,
 } from '@ripl/core';
 
 import type {
     Context,
+    Element,
 } from '@ripl/core';
 
 import {
@@ -414,6 +580,168 @@ const {
         group.render(context);
     });
 });
+
+
+// Query example
+
+let queryGroup: Group;
+let queryContext: Context | undefined;
+const queryColors = { default: '#3a86ff', highlight: '#ff006e' };
+
+const {
+    contextChanged: queryContextChanged
+} = useRiplExample(context => {
+    queryContext = context;
+    const w = context.width;
+    const h = context.height;
+    const r = Math.min(w, h) / 7;
+
+    queryGroup = createGroup({
+        fill: queryColors.default,
+        children: [
+            createCircle({ id: 'c1', class: 'highlight', cx: w * 0.2, cy: h / 2, radius: r }),
+            createCircle({ id: 'c2', class: 'shape', cx: w * 0.45, cy: h / 2, radius: r * 0.7 }),
+            createRect({ id: 'r1', class: 'highlight', x: w * 0.6, y: h / 2 - r * 0.7, width: r * 1.4, height: r * 1.4 }),
+            createRect({ id: 'r2', class: 'shape', x: w * 0.8, y: h / 2 - r * 0.5, width: r, height: r }),
+        ],
+    });
+
+    queryGroup.render(context);
+    context.on('resize', () => { context.clear(); queryGroup.render(context); });
+});
+
+function runQuery(selector: string) {
+    if (!queryGroup || !queryContext) return;
+
+    queryGroup.queryAll('*').forEach((el: Element) => { el.fill = queryColors.default; });
+
+    const matches = queryGroup.queryAll(selector);
+    matches.forEach((el: Element) => { el.fill = queryColors.highlight; });
+
+    queryContext.clear();
+    queryGroup.render(queryContext);
+}
+
+
+// Interaction example
+
+const {
+    contextChanged: interactionContextChanged
+} = useRiplExample(context => {
+    const width = context.width;
+    const height = context.height;
+
+    const circle = createCircle({
+        fill: '#3a86ff',
+        cx: width / 2,
+        cy: height / 2,
+        radius: Math.min(width, height) / 5,
+    });
+
+    const render = () => {
+        context.clear();
+        context.markRenderStart();
+        circle.render(context);
+        context.markRenderEnd();
+    };
+
+    render();
+
+    circle.on('mouseenter', () => {
+        circle.fill = '#ff006e';
+        render();
+    });
+
+    circle.on('mouseleave', () => {
+        circle.fill = '#3a86ff';
+        render();
+    });
+
+    const baseRadius = Math.min(width, height) / 5;
+    const expandedRadius = Math.min(width, height) / 3;
+
+    circle.on('click', () => {
+        circle.radius = circle.radius === baseRadius ? expandedRadius : baseRadius;
+        render();
+    });
+});
+
+
+// Transition example
+
+let transitionContext: Context | undefined;
+let transitionCircle: Circle;
+
+const {
+    contextChanged: transitionContextChanged
+} = useRiplExample(context => {
+    const width = context.width;
+    const height = context.height;
+
+    transitionContext = context;
+
+    transitionCircle = createCircle({
+        fill: '#3a86ff',
+        cx: width / 2,
+        cy: height / 2,
+        radius: Math.min(width, height) / 5,
+    });
+
+    const render = () => {
+        context.clear();
+        context.markRenderStart();
+        transitionCircle.render(context);
+        context.markRenderEnd();
+    };
+
+    render();
+});
+
+function transitionRender() {
+    if (!transitionContext || !transitionCircle) return;
+    transitionContext.clear();
+    transitionContext.markRenderStart();
+    transitionCircle.render(transitionContext);
+    transitionContext.markRenderEnd();
+}
+
+function runTransition() {
+    if (!transitionContext || !transitionCircle) return;
+
+    const shortSize = Math.min(transitionContext.width, transitionContext.height);
+
+    const interpolator = transitionCircle.interpolate({
+        radius: shortSize / 3,
+        fill: '#ff006e',
+    });
+
+    transition(time => {
+        interpolator(time);
+        transitionRender();
+    }, {
+        duration: 1000,
+        ease: easeOutCubic,
+    });
+}
+
+function resetTransition() {
+    if (!transitionContext || !transitionCircle) return;
+
+    const shortSize = Math.min(transitionContext.width, transitionContext.height);
+
+    const interpolator = transitionCircle.interpolate({
+        radius: shortSize / 5,
+        fill: '#3a86ff',
+    });
+
+    transition(time => {
+        interpolator(time);
+        transitionRender();
+    }, {
+        duration: 600,
+        ease: easeOutCubic,
+    });
+}
 
 
 // Scene example
