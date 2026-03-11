@@ -6334,10 +6334,37 @@
       ]
     },
     {
+      "name": "RendererDebugOptions",
+      "kind": "interface",
+      "description": "Options for enabling debug overlays on the renderer.",
+      "typeSignature": "interface RendererDebugOptions {\n    fps?: boolean;\n    elementCount?: boolean;\n    boundingBoxes?: boolean;\n}",
+      "tags": {},
+      "properties": [
+        {
+          "name": "fps",
+          "type": "boolean | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
+          "name": "elementCount",
+          "type": "boolean | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
+          "name": "boundingBoxes",
+          "type": "boolean | undefined",
+          "description": "",
+          "optional": true
+        }
+      ]
+    },
+    {
       "name": "RendererOptions",
       "kind": "interface",
       "description": "Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays.",
-      "typeSignature": "interface RendererOptions {\n    autoStart?: boolean;\n    autoStop?: boolean;\n    immediate?: boolean;\n    sortBuffer?: (buffer: Element[]) => Element[];\n    debug?: {\n        boundingBoxes: boolean;\n    };\n}",
+      "typeSignature": "interface RendererOptions {\n    autoStart?: boolean;\n    autoStop?: boolean;\n    immediate?: boolean;\n    sortBuffer?: (buffer: Element[]) => Element[];\n    debug?: boolean | RendererDebugOptions;\n}",
       "tags": {},
       "properties": [
         {
@@ -6366,7 +6393,7 @@
         },
         {
           "name": "debug",
-          "type": "{ boundingBoxes: boolean; } | undefined",
+          "type": "boolean | RendererDebugOptions | undefined",
           "description": "",
           "optional": true
         }
@@ -6962,7 +6989,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the scene and its underlying rendering context.",
+          "description": "Destroys the scene, removing all children and cleaning up event subscriptions.",
           "type": "void"
         },
         {

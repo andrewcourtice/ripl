@@ -66,7 +66,7 @@ Merges partial options into the current options and re-renders if `autoRender` i
 
 #### `destroy(): void`
 
-Destroys the chart, its scene, and cleans up all event subscriptions.
+Destroys the chart, its scene, context, and cleans up all event subscriptions.
 
 #### `has(type: keyof TEventMap): boolean`
 

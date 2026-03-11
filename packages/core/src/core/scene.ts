@@ -68,13 +68,13 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         const requestFrame = createFrameBuffer();
 
-        context.on('resize', () => {
+        this.retain(context.on('resize', () => {
             this.emit('resize', null);
 
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }
-        });
+        }));
 
         this.on('graph', () => requestFrame(() => {
             this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
@@ -82,9 +82,14 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
     }
 
-    /** Destroys the scene and its underlying rendering context. */
-    public destroy(): void {
-        this.context.destroy();
+    /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */
+    public destroy(includeContext: boolean = false): void {
+        this.clear();
+
+        if (includeContext) {
+            this.context.destroy();
+        }
+
         super.destroy();
     }
 

@@ -333,7 +333,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -1427,7 +1427,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -1898,7 +1898,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -2292,7 +2292,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -2700,7 +2700,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -3143,7 +3143,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -3568,7 +3568,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -3992,7 +3992,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -4461,7 +4461,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -4869,7 +4869,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -5289,7 +5289,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -5728,7 +5728,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -6171,7 +6171,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -6639,7 +6639,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -7087,7 +7087,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -7500,7 +7500,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -7908,7 +7908,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -8409,7 +8409,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {
@@ -8983,7 +8983,7 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the chart, its scene, and cleans up all event subscriptions.",
+          "description": "Destroys the chart, its scene, context, and cleans up all event subscriptions.",
           "type": "void"
         },
         {

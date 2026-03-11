@@ -76,14 +76,44 @@ export interface RendererTransitionOptions<TElement extends Element> {
     onComplete?(element: Element): void;
 }
 
+/** Options for enabling debug overlays on the renderer. */
+export interface RendererDebugOptions {
+    fps?: boolean;
+    elementCount?: boolean;
+    boundingBoxes?: boolean;
+}
+
 /** Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays. */
 export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
     immediate?: boolean;
     sortBuffer?: (buffer: Element[]) => Element[];
-    debug?: {
-        boundingBoxes: boolean;
+    debug?: boolean | RendererDebugOptions;
+}
+
+const DEBUG_DEFAULTS: Required<RendererDebugOptions> = {
+    fps: false,
+    elementCount: false,
+    boundingBoxes: false,
+};
+
+function resolveDebugOptions(debug: boolean | RendererDebugOptions): Required<RendererDebugOptions> {
+    if (debug === true) {
+        return {
+            fps: true,
+            elementCount: true,
+            boundingBoxes: true,
+        };
+    }
+
+    if (debug === false) {
+        return { ...DEBUG_DEFAULTS };
+    }
+
+    return {
+        ...DEBUG_DEFAULTS,
+        ...debug,
     };
 }
 
@@ -106,6 +136,10 @@ export class Renderer extends EventBus<RendererEventMap> {
     private currentTime = performance.now();
     private previousTime = performance.now();
 
+    private debugOptions: Required<RendererDebugOptions>;
+    private debugOverlay?: HTMLDivElement;
+    private smoothedFps = 0;
+
     public autoStart = true;
     public autoStop = true;
     public sortBuffer?: (buffer: Element[]) => Element[];
@@ -122,23 +156,29 @@ export class Renderer extends EventBus<RendererEventMap> {
             autoStart = true,
             autoStop = true,
             sortBuffer,
+            debug = false,
         } = options || {};
 
         this.scene = scene;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
         this.sortBuffer = sortBuffer;
+        this.debugOptions = resolveDebugOptions(debug);
+
+        if (this.debugOptions.fps || this.debugOptions.elementCount) {
+            this.debugOverlay = this.createDebugOverlay();
+        }
 
         if (autoStart) {
             this.start();
         }
 
         if (autoStop) {
-            scene.context.on('mousemove', () => this.start());
-            scene.context.on('mouseleave', () => this.stopOnIdle());
+            this.retain(scene.context.on('mousemove', () => this.start()));
+            this.retain(scene.context.on('mouseleave', () => this.stopOnIdle()));
         }
 
-        scene.on('graph', () => this.start());
+        this.retain(scene.on('graph', () => this.start()));
         scene.once('destroyed', () => this.destroy());
     }
 
@@ -156,9 +196,11 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? this.sortBuffer(this.scene.buffer)
             : this.scene.buffer;
 
+        const deltaTime = this.currentTime - this.previousTime;
+
         this.emit('tick', {
             time: this.currentTime,
-            deltaTime: this.currentTime - this.previousTime,
+            deltaTime,
         });
 
         this.previousTime = this.currentTime;
@@ -193,22 +235,23 @@ export class Renderer extends EventBus<RendererEventMap> {
 
             element.render(this.scene.context);
 
-            // if (rendererOptions.debug?.boundingBoxes) {
-            //     const {
-            //         left,
-            //         top,
-            //         width,
-            //         height,
-            //     } = element.getBoundingBox();
+            if (this.debugOptions.boundingBoxes) {
+                const box = element.getBoundingBox();
+                const context = this.scene.context;
+                const path = context.createPath();
 
-            //     context.save();
-            //     context.strokeStyle = '#FF0000';
-            //     context.strokeRect(left, top, width, height);
-            //     context.restore();
-            // }
+                context.batch(() => {
+                    context.stroke = '#FF0000';
+                    context.lineWidth = 1;
+
+                    path.rect(box.left, box.top, box.width, box.height);
+                    context.applyStroke(path);
+                });
+            }
         });
 
         this.scene.context.markRenderEnd();
+        this.updateDebugOverlay(buffer.length, deltaTime);
         this.handle = requestAnimationFrame(() => this.tick());
     }
 
@@ -327,9 +370,62 @@ export class Renderer extends EventBus<RendererEventMap> {
         });
     }
 
+    private createDebugOverlay(): HTMLDivElement {
+        const overlay = document.createElement('div');
+
+        overlay.style.position = 'absolute';
+        overlay.style.top = '5px';
+        overlay.style.left = '5px';
+        overlay.style.padding = '4px 8px';
+        overlay.style.fontFamily = 'monospace';
+        overlay.style.fontSize = '12px';
+        overlay.style.lineHeight = '1.4';
+        overlay.style.color = '#FFFFFF';
+        overlay.style.background = 'rgba(0, 0, 0, 0.6)';
+        overlay.style.borderRadius = '3px';
+        overlay.style.pointerEvents = 'none';
+        overlay.style.zIndex = '9999';
+
+        const root = this.scene.context.root;
+        const position = getComputedStyle(root).position;
+
+        if (position === 'static' || !position) {
+            root.style.position = 'relative';
+        }
+
+        root.appendChild(overlay);
+
+        return overlay;
+    }
+
+    private updateDebugOverlay(elementCount: number, deltaTime: number): void {
+        if (!this.debugOverlay) {
+            return;
+        }
+
+        const instantFps = deltaTime > 0 ? 1000 / deltaTime : 0;
+
+        this.smoothedFps += (instantFps - this.smoothedFps) * 0.1;
+
+        const fps = Math.round(this.smoothedFps);
+        const parts: string[] = [];
+
+        if (this.debugOptions.elementCount) {
+            parts.push(`${elementCount} elements`);
+        }
+
+        if (this.debugOptions.fps) {
+            parts.push(`${fps} fps`);
+        }
+
+        this.debugOverlay.textContent = parts.join(' at ');
+    }
+
     /** Stops the renderer and destroys all event subscriptions. */
     public destroy(): void {
         this.stop();
+        this.debugOverlay?.remove();
+
         super.destroy();
     }
 

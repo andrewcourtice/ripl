@@ -107,7 +107,7 @@ Use the demo below to benchmark Ripl's rendering performance. Adjust the element
     <template #footer>
         <RiplControlGroup>
             <span>Elements</span>
-            <RiplInputRange v-model="elementCount" :min="100" :max="5000" :step="100" @update:model-value="restart" />
+            <RiplInputRange v-model="elementCount" :min="100" :max="5000" :step="100" />
         </RiplControlGroup>
     </template>
 </ripl-example>
@@ -143,87 +143,78 @@ import {
     createCircle,
     createRenderer,
     createScene,
-    createText,
-    transition,
 } from '@ripl/core';
 
 import type {
     Circle,
-    Context,
     Renderer,
     Scene,
 } from '@ripl/core';
 
 import {
     ref,
+    watch
 } from 'vue';
 
 const elementCount = ref(1000);
 
-let currentContext: Context | undefined;
-let dScene: Scene | undefined;
-let dRenderer: Renderer | undefined;
+let scene: Scene | undefined;
+let renderer: Renderer | undefined;
 let circles: Circle[] = [];
-let animLoop: { abort(): void } | undefined;
 
-function buildScene(context: Context) {
-    animLoop?.abort();
-    dRenderer = undefined;
-    dScene = undefined;
+function makeCircle(w: number, h: number) {
+    return createCircle({
+        fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
+        cx: Math.random() * w,
+        cy: Math.random() * h,
+        radius: 2 + Math.random() * 4,
+    });
+}
 
+watch(elementCount, (newCount, oldCount) => {
+    if (!scene) return;
+
+    const w = scene.width;
+    const h = scene.height;
+
+    if (newCount > oldCount) {
+        const added = Array.from({ length: newCount - oldCount }, () => makeCircle(w, h));
+        circles.push(...added);
+        scene.add(added);
+    } else if (newCount < oldCount) {
+        const removed = circles.splice(newCount);
+        scene.remove(removed);
+        removed.forEach(c => c.destroy());
+    }
+});
+
+const {
+    contextChanged,
+} = useRiplExample(context => {
     const w = context.width;
     const h = context.height;
     const count = elementCount.value;
 
-    circles = Array.from({ length: count }, () =>
-        createCircle({
-            fill: `hsl(${Math.random() * 360}, 70%, 60%)`,
-            cx: Math.random() * w,
-            cy: Math.random() * h,
-            radius: 2 + Math.random() * 4,
-        })
-    );
+    circles = Array.from({ length: count }, () => makeCircle(w, h));
 
-    const fpsLabel = createText({
-        x: 8, y: 16,
-        content: `${count} elements`,
-        fill: '#666', font: '12px monospace',
-        textAlign: 'left', textBaseline: 'top',
+    scene = createScene(context, { children: circles });
+    renderer = createRenderer(scene, {
+        autoStop: false,
+        debug: {
+            fps: true,
+            elementCount: true,
+        },
     });
 
-    dScene = createScene(context, { children: [...circles, fpsLabel] });
-    dRenderer = createRenderer(dScene, { autoStop: false });
+    console.log(context);
 
-    let lastTime = performance.now();
-    let frames = 0;
-
-    animLoop = transition(() => {
+    renderer.on('tick', () => {
         circles.forEach(c => {
             c.cx += (Math.random() - 0.5) * 2;
             c.cy += (Math.random() - 0.5) * 2;
         });
-
-        frames++;
-        const now = performance.now();
-        if (now - lastTime >= 500) {
-            const fps = Math.round(frames / ((now - lastTime) / 1000));
-            fpsLabel.content = `${count} elements  ${fps} fps`;
-            frames = 0;
-            lastTime = now;
-        }
-    }, { duration: Infinity, loop: true });
-}
-
-const {
-    contextChanged
-} = useRiplExample(context => {
-    currentContext = context;
-    buildScene(context);
+    });
 });
-
-function restart() {
-    if (currentContext) buildScene(currentContext);
-}
 </script>
 
 ## Measuring Performance

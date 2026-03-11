@@ -12,7 +12,7 @@ Element, Shape, Group, Scene, Renderer, and EventBus — the foundational classe
 
 **Classes:** [`Disposer`](#disposer) · [`Element`](#element) · [`Event`](#event) · [`EventBus`](#eventbus) · [`Group`](#group) · [`Renderer`](#renderer) · [`Scene`](#scene) · [`Shape`](#shape) · [`Shape2D`](#shape2d)
 
-**Interfaces:** [`ElementEventMap`](#elementeventmap) · [`ElementValidationResult`](#elementvalidationresult) · [`GroupOptions`](#groupoptions) · [`RendererEventMap`](#renderereventmap) · [`RendererTransition`](#renderertransition) · [`RendererTransitionOptions`](#renderertransitionoptions) · [`RendererOptions`](#rendereroptions) · [`SceneEventMap`](#sceneeventmap) · [`SceneOptions`](#sceneoptions)
+**Interfaces:** [`ElementEventMap`](#elementeventmap) · [`ElementValidationResult`](#elementvalidationresult) · [`GroupOptions`](#groupoptions) · [`RendererEventMap`](#renderereventmap) · [`RendererTransition`](#renderertransition) · [`RendererTransitionOptions`](#renderertransitionoptions) · [`RendererDebugOptions`](#rendererdebugoptions) · [`RendererOptions`](#rendereroptions) · [`SceneEventMap`](#sceneeventmap) · [`SceneOptions`](#sceneoptions)
 
 **Type Aliases:** [`ElementPointerEvents`](#elementpointerevents) · [`ElementValidationType`](#elementvalidationtype) · [`ElementIntersectionOptions`](#elementintersectionoptions) · [`BaseElementState`](#baseelementstate) · [`ElementOptions`](#elementoptions) · [`ElementInterpolationKeyFrame`](#elementinterpolationkeyframe) · [`ElementInterpolationStateValue`](#elementinterpolationstatevalue) · [`ElementInterpolators`](#elementinterpolators) · [`ElementInterpolationState`](#elementinterpolationstate) · [`EventMap`](#eventmap) · [`EventOptions`](#eventoptions) · [`EventSubscriptionOptions`](#eventsubscriptionoptions) · [`EventHandler`](#eventhandler) · [`RendererTransitionDirection`](#renderertransitiondirection) · [`RendererTransitionOptionsArg`](#renderertransitionoptionsarg) · [`Shape2DOptions`](#shape2doptions)
 
@@ -794,7 +794,7 @@ class Scene<TContext extends Context = Context> extends Group<SceneEventMap>
 
 #### `destroy(): void`
 
-Destroys the scene and its underlying rendering context.
+Destroys the scene, removing all children and cleaning up event subscriptions.
 
 #### `render(): void`
 
@@ -1553,6 +1553,28 @@ interface RendererTransitionOptions<TElement extends Element> {
 | `onComplete?` | `((element: Element) =&gt; void) \| undefined` |  |
 ---
 
+### RendererDebugOptions `interface`
+
+Options for enabling debug overlays on the renderer.
+
+```ts
+interface RendererDebugOptions {
+    fps?: boolean;
+    elementCount?: boolean;
+    boundingBoxes?: boolean;
+}
+```
+
+
+**Properties:**
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `fps?` | `boolean \| undefined` |  |
+| `elementCount?` | `boolean \| undefined` |  |
+| `boundingBoxes?` | `boolean \| undefined` |  |
+---
+
 ### RendererOptions `interface`
 
 Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays.
@@ -1563,9 +1585,7 @@ interface RendererOptions {
     autoStop?: boolean;
     immediate?: boolean;
     sortBuffer?: (buffer: Element[]) => Element[];
-    debug?: {
-        boundingBoxes: boolean;
-    };
+    debug?: boolean | RendererDebugOptions;
 }
 ```
 
@@ -1578,7 +1598,7 @@ interface RendererOptions {
 | `autoStop?` | `boolean \| undefined` |  |
 | `immediate?` | `boolean \| undefined` |  |
 | `sortBuffer?` | `((buffer: Element[]) =&gt; Element[]) \| undefined` |  |
-| `debug?` | `{ boundingBoxes: boolean; } \| undefined` |  |
+| `debug?` | `boolean \| RendererDebugOptions \| undefined` |  |
 ---
 
 ### SceneEventMap `interface`

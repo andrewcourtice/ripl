@@ -9,7 +9,7 @@ Complete API documentation for all Ripl packages, auto-generated from TypeScript
 ## @ripl/core
 
 - [**Elements**](/docs/api/core/elements) — Built-in shape elements for 2D rendering. *(57 exports)*
-- [**Core**](/docs/api/core/core) — Element, Shape, Group, Scene, Renderer, and EventBus — the foundational classes. *(48 exports)*
+- [**Core**](/docs/api/core/core) — Element, Shape, Group, Scene, Renderer, and EventBus — the foundational classes. *(49 exports)*
 - [**Context**](/docs/api/core/context) — Canvas rendering context and low-level drawing API. *(30 exports)*
 - [**Animation & Easing**](/docs/api/core/animation) — Transition utilities and easing functions for smooth animations. *(21 exports)*
 - [**Interpolators**](/docs/api/core/interpolators) — Value interpolation factories for animating between states. *(20 exports)*

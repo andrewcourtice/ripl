@@ -183,9 +183,9 @@ export class Chart<
         return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
     }
 
-    /** Destroys the chart, its scene, and cleans up all event subscriptions. */
+    /** Destroys the chart, its scene, context, and cleans up all event subscriptions. */
     public destroy() {
-        this.scene.destroy();
+        this.scene.destroy(true);
         super.destroy();
     }
 
