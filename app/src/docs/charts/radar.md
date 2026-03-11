@@ -3,7 +3,7 @@
 The **Radar Chart** displays multivariate data on a radial grid, ideal for comparing strengths and weaknesses across multiple dimensions. Each axis radiates from a shared center, and data series form filled polygons whose shape reveals the profile at a glance. It supports multiple overlapping series, configurable grid levels, markers that animate in sync with the area polygon, and an optional legend.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

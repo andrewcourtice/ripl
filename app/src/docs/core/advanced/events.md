@@ -7,7 +7,7 @@ outline: "deep"
 Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped — all familiar patterns for web developers.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/core).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## EventBus
 

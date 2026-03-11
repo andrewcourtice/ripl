@@ -240,7 +240,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                 const context = this.scene.context;
                 const path = context.createPath();
 
-                context.batch(() => {
+                context.layer(() => {
                     context.stroke = '#FF0000';
                     context.lineWidth = 1;
 

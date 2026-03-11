@@ -96,7 +96,7 @@ SVG is less ideal when:
 - Frame-by-frame animation performance is critical
 
 > [!NOTE]
-> For the full API, see the [SVG Context API Reference](/docs/api/svg/context).
+> For the full API, see the [SVG Context API Reference](/docs/api/@ripl/svg/).
 
 ## Demo
 
@@ -158,35 +158,33 @@ const {
     const r = Math.min(w, h) / 4;
 
     const render = () => {
-        context.markRenderStart();
+        context.batch(() => {
+            createCircle({
+                fill: '#3a86ff',
+                stroke: '#1a56db',
+                lineWidth: 2,
+                cx: w / 3, cy: h / 2, radius: r,
+            }).render(context);
 
-        createCircle({
-            fill: '#3a86ff',
-            stroke: '#1a56db',
-            lineWidth: 2,
-            cx: w / 3, cy: h / 2, radius: r,
-        }).render(context);
+            createRect({
+                fill: '#ff006e',
+                stroke: '#c9184a',
+                lineWidth: 2,
+                x: w / 2, y: h / 4,
+                width: w / 3, height: h / 2,
+            }).render(context);
 
-        createRect({
-            fill: '#ff006e',
-            stroke: '#c9184a',
-            lineWidth: 2,
-            x: w / 2, y: h / 4,
-            width: w / 3, height: h / 2,
-        }).render(context);
-
-        createText({
-            x: w / 2, y: h - 20,
-            content: `Rendering to: ${context.type.toUpperCase()}`,
-            fill: '#666',
-            textAlign: 'center',
-            font: '14px sans-serif',
-        }).render(context);
-
-        context.markRenderEnd();
+            createText({
+                x: w / 2, y: h - 20,
+                content: `Rendering to: ${context.type.toUpperCase()}`,
+                fill: '#666',
+                textAlign: 'center',
+                font: '14px sans-serif',
+            }).render(context);
+        });
     };
 
     render();
-    context.on('resize', () => { context.clear(); render(); });
+    context.on('resize', render);
 });
 </script>

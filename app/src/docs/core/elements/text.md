@@ -99,46 +99,43 @@ function renderDemo(context: Context) {
     const w = context.width;
     const h = context.height;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        const anchorX = textAlign.value === 'left' ? w * 0.1
+            : textAlign.value === 'right' ? w * 0.9
+                : w / 2;
 
-    const anchorX = textAlign.value === 'left' ? w * 0.1
-        : textAlign.value === 'right' ? w * 0.9
-            : w / 2;
+        createLine({
+            stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
+            x1: anchorX, y1: 0, x2: anchorX, y2: h,
+        }).render(context);
 
-    createLine({
-        stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
-        x1: anchorX, y1: 0, x2: anchorX, y2: h,
-    }).render(context);
+        createText({
+            fill: '#3a86ff',
+            x: anchorX, y: h * 0.3,
+            content: 'Filled Text',
+            font: `bold ${fontSize.value}px sans-serif`,
+            textAlign: textAlign.value as CanvasTextAlign,
+            textBaseline: 'middle',
+        }).render(context);
 
-    createText({
-        fill: '#3a86ff',
-        x: anchorX, y: h * 0.3,
-        content: 'Filled Text',
-        font: `bold ${fontSize.value}px sans-serif`,
-        textAlign: textAlign.value as CanvasTextAlign,
-        textBaseline: 'middle',
-    }).render(context);
+        createText({
+            stroke: '#ff006e',
+            lineWidth: 1,
+            x: anchorX, y: h * 0.55,
+            content: 'Stroked Text',
+            font: `bold ${fontSize.value}px sans-serif`,
+            textAlign: textAlign.value as CanvasTextAlign,
+            textBaseline: 'middle',
+        }).render(context);
 
-    createText({
-        stroke: '#ff006e',
-        lineWidth: 1,
-        x: anchorX, y: h * 0.55,
-        content: 'Stroked Text',
-        font: `bold ${fontSize.value}px sans-serif`,
-        textAlign: textAlign.value as CanvasTextAlign,
-        textBaseline: 'middle',
-    }).render(context);
-
-    createText({
-        fill: '#666',
-        x: w / 2, y: h * 0.8,
-        content: `font: ${fontSize.value}px  align: ${textAlign.value}`,
-        font: '13px sans-serif',
-        textAlign: 'center', textBaseline: 'middle',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            fill: '#666',
+            x: w / 2, y: h * 0.8,
+            content: `font: ${fontSize.value}px  align: ${textAlign.value}`,
+            font: '13px sans-serif',
+            textAlign: 'center', textBaseline: 'middle',
+        }).render(context);
+    });
 }
 
 const {
@@ -160,30 +157,28 @@ const {
     const h = context.height;
 
     const render = () => {
-        context.markRenderStart();
+        context.batch(() => {
+            createText({
+                fill: '#3a86ff',
+                x: 0, y: 0,
+                content: 'Text along a curved path!',
+                font: 'bold 20px sans-serif',
+                pathData: `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`,
+            }).render(context);
 
-        createText({
-            fill: '#3a86ff',
-            x: 0, y: 0,
-            content: 'Text along a curved path!',
-            font: 'bold 20px sans-serif',
-            pathData: `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`,
-        }).render(context);
-
-        createText({
-            stroke: '#ff006e',
-            lineWidth: 1,
-            x: 0, y: 0,
-            content: 'Stroked text on an arc',
-            font: 'bold 18px sans-serif',
-            pathData: `M ${w * 0.1},${h * 0.85} A ${w * 0.4},${w * 0.4} 0 0 1 ${w * 0.9},${h * 0.85}`,
-        }).render(context);
-
-        context.markRenderEnd();
+            createText({
+                stroke: '#ff006e',
+                lineWidth: 1,
+                x: 0, y: 0,
+                content: 'Stroked text on an arc',
+                font: 'bold 18px sans-serif',
+                pathData: `M ${w * 0.1},${h * 0.85} A ${w * 0.4},${w * 0.4} 0 0 1 ${w * 0.9},${h * 0.85}`,
+            }).render(context);
+        });
     };
 
     render();
-    context.on('resize', () => { context.clear(); render(); });
+    context.on('resize', render);
 });
 </script>
 
@@ -213,4 +208,4 @@ The text element is defined by `x`, `y`, and `content`. Optional properties incl
 > If `stroke` is set, the text is stroked (outlined). If `fill` is set, the text is filled. If both are set, `stroke` takes priority.
 
 > [!NOTE]
-> For the full property list, see the [Text API Reference](/docs/api/core/elements).
+> For the full property list, see the [Text API Reference](/docs/api/@ripl/core/).

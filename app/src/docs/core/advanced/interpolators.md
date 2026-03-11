@@ -9,7 +9,7 @@ Interpolators are functions that compute intermediate values between two endpoin
 Ripl automatically selects the right interpolator based on the value type, but you can also provide custom interpolators for specialized behavior.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/interpolators).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Built-in Interpolators
 
@@ -380,17 +380,14 @@ function renderNumber(ctx: Context) {
     const interp = interpolateNumber(minR, maxR);
     const r = interp(t);
 
-    ctx.clear();
-    ctx.markRenderStart();
-
-    createCircle({ fill: '#3a86ff', cx: w / 2, cy: h / 2, radius: r }).render(ctx);
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}  radius = ${Math.round(r)}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
+    ctx.batch(() => {
+        createCircle({ fill: '#3a86ff', cx: w / 2, cy: h / 2, radius: r }).render(ctx);
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}  radius = ${Math.round(r)}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
 }
 
 const { contextChanged: numberCtxChanged } = useRiplExample(ctx => {
@@ -415,17 +412,14 @@ function renderColor(ctx: Context) {
     const color = interp(t);
     const pad = 20;
 
-    ctx.clear();
-    ctx.markRenderStart();
-
-    createRect({ fill: color, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}  color = ${color}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
+    ctx.batch(() => {
+        createRect({ fill: color, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}  color = ${color}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
 }
 
 const { contextChanged: colorCtxChanged } = useRiplExample(ctx => {
@@ -453,17 +447,14 @@ function renderGradient(ctx: Context) {
     const grad = interp(t);
     const pad = 20;
 
-    ctx.clear();
-    ctx.markRenderStart();
-
-    createRect({ fill: grad, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
+    ctx.batch(() => {
+        createRect({ fill: grad, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
 }
 
 const { contextChanged: gradientCtxChanged } = useRiplExample(ctx => {
@@ -488,28 +479,25 @@ function renderRotation(ctx: Context) {
     const angle = interp(t) as number;
     const size = Math.min(w, h) * 0.3;
 
-    ctx.clear();
-    ctx.markRenderStart();
+    ctx.batch(() => {
+        createRect({
+            fill: '#3a86ff',
+            x: w / 2 - size / 2,
+            y: h / 2 - size / 2,
+            width: size,
+            height: size,
+            borderRadius: 4,
+            rotation: angle,
+            transformOriginX: '50%',
+            transformOriginY: '50%',
+        }).render(ctx);
 
-    createRect({
-        fill: '#3a86ff',
-        x: w / 2 - size / 2,
-        y: h / 2 - size / 2,
-        width: size,
-        height: size,
-        borderRadius: 4,
-        rotation: angle,
-        transformOriginX: '50%',
-        transformOriginY: '50%',
-    }).render(ctx);
-
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}  angle = ${Math.round(angle * 180 / Math.PI)}°`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}  angle = ${Math.round(angle * 180 / Math.PI)}°`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
 }
 
 const { contextChanged: rotationCtxChanged } = useRiplExample(ctx => {
@@ -535,32 +523,29 @@ function renderPath(ctx: Context) {
     const interp = interpolatePath(points);
     const revealed = interp(t);
 
-    ctx.clear();
-    ctx.markRenderStart();
+    ctx.batch(() => {
+        createPolyline({
+            points,
+            stroke: '#e9ecef',
+            lineWidth: 2,
+            lineDash: [4, 4],
+        }).render(ctx);
 
-    createPolyline({
-        points,
-        stroke: '#e9ecef',
-        lineWidth: 2,
-        lineDash: [4, 4],
-    }).render(ctx);
+        createPolyline({
+            points: revealed,
+            stroke: '#3a86ff',
+            lineWidth: 3,
+        }).render(ctx);
 
-    createPolyline({
-        points: revealed,
-        stroke: '#3a86ff',
-        lineWidth: 3,
-    }).render(ctx);
+        const tip = revealed[revealed.length - 1];
+        createCircle({ fill: '#3a86ff', cx: tip[0], cy: tip[1], radius: 4 }).render(ctx);
 
-    const tip = revealed[revealed.length - 1];
-    createCircle({ fill: '#3a86ff', cx: tip[0], cy: tip[1], radius: 4 }).render(ctx);
-
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}  points revealed = ${revealed.length}/${points.length}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}  points revealed = ${revealed.length}/${points.length}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
 }
 
 const { contextChanged: pathCtxChanged } = useRiplExample(ctx => {
@@ -592,27 +577,24 @@ function renderMorph(ctx: Context) {
     const interp = interpolatePoints(fromPts, toPts);
     const morphed = interp(t) as Point[];
 
-    ctx.clear();
-    ctx.markRenderStart();
+    ctx.batch(() => {
+        const closePts = (pts: Point[]) => pts.length > 0 ? [...pts, pts[0]] : pts;
 
-    const closePts = (pts: Point[]) => pts.length > 0 ? [...pts, pts[0]] : pts;
+        createPolyline({ points: closePts(fromPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
+        createPolyline({ points: closePts(toPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
 
-    createPolyline({ points: closePts(fromPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
-    createPolyline({ points: closePts(toPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
+        createPolyline({ points: closePts(morphed), stroke: '#3a86ff', lineWidth: 2, fill: 'rgba(58, 134, 255, 0.15)' }).render(ctx);
 
-    createPolyline({ points: closePts(morphed), stroke: '#3a86ff', lineWidth: 2, fill: 'rgba(58, 134, 255, 0.15)' }).render(ctx);
+        morphed.forEach(pt => {
+            createCircle({ fill: '#3a86ff', cx: pt[0], cy: pt[1], radius: 3 }).render(ctx);
+        });
 
-    morphed.forEach(pt => {
-        createCircle({ fill: '#3a86ff', cx: pt[0], cy: pt[1], radius: 3 }).render(ctx);
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}  points = ${morphed.length} (${morphFrom.value}-gon → ${morphTo.value}-gon)`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
     });
-
-    createText({
-        x: w / 2, y: h - 16,
-        content: `t = ${t.toFixed(2)}  points = ${morphed.length} (${morphFrom.value}-gon → ${morphTo.value}-gon)`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(ctx);
-
-    ctx.markRenderEnd();
 }
 
 const { contextChanged: morphCtxChanged } = useRiplExample(ctx => {

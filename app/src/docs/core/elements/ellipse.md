@@ -75,24 +75,21 @@ function renderDemo(context: Context) {
     const rx = maxR * (rxPct.value / 100);
     const ry = maxR * (ryPct.value / 100);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createEllipse({
+            fill: '#3a86ff',
+            cx: w / 2, cy: h / 2,
+            radiusX: rx, radiusY: ry,
+            rotation: rotationDeg.value * Math.PI / 180,
+            startAngle: 0, endAngle: TAU,
+        }).render(context);
 
-    createEllipse({
-        fill: '#3a86ff',
-        cx: w / 2, cy: h / 2,
-        radiusX: rx, radiusY: ry,
-        rotation: rotationDeg.value * Math.PI / 180,
-        startAngle: 0, endAngle: TAU,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + maxR + 24,
-        content: `rx: ${Math.round(rx)}  ry: ${Math.round(ry)}  rotation: ${rotationDeg.value}°`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + maxR + 24,
+            content: `rx: ${Math.round(rx)}  ry: ${Math.round(ry)}  rotation: ${rotationDeg.value}°`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {
@@ -132,4 +129,4 @@ const ellipse = createEllipse({
 The ellipse's geometry is defined by `cx`, `cy`, `radiusX`, `radiusY`, `rotation`, `startAngle`, and `endAngle`.
 
 > [!NOTE]
-> For the full property list, see the [Ellipse API Reference](/docs/api/core/elements).
+> For the full property list, see the [Ellipse API Reference](/docs/api/@ripl/core/).

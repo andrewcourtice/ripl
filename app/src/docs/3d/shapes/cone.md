@@ -7,7 +7,7 @@ title: Cone
 The **Cone** is a 3D primitive with a pointed apex and circular base. Segment count controls the smoothness of the base circle. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Usage
 
@@ -62,10 +62,9 @@ function loop() {
     angle += 0.005;
     camera.position = [Math.sin(angle) * 5, 1.5, Math.cos(angle) * 5];
     camera.flush();
-    context.clear();
-    context.markRenderStart();
-    cone.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        cone.render(context);
+    });
     requestAnimationFrame(loop);
 }
 loop();

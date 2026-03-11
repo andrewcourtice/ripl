@@ -7,7 +7,7 @@ outline: "deep"
 Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, SVG path sampling, and common numeric helpers like `clamp`, `min`/`max`, and extent calculation.
 
 > [!NOTE]
-> For the full API, see the [Math & Geometry API Reference](/docs/api/core/math).
+> For the full API, see the [Math & Geometry API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 
@@ -79,79 +79,76 @@ function renderDemo(context: Context) {
     const cy = h / 2;
     const r = Math.min(w * 0.25, h * 0.35);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        const points = getPolygonPoints(sides.value, cx, cy, r, false);
 
-    const points = getPolygonPoints(sides.value, cx, cy, r, false);
-
-    createPolygon({
-        fill: 'rgba(58, 134, 255, 0.15)',
-        stroke: '#3a86ff',
-        lineWidth: 2,
-        cx, cy, radius: r, sides: sides.value,
-    }).render(context);
-
-    points.forEach(([px, py], i) => {
-        createCircle({ fill: '#3a86ff', cx: px, cy: py, radius: 4 }).render(context);
-        createText({
-            fill: '#666', x: px, y: py - 10,
-            content: `P${i}`, font: '11px sans-serif', textAlign: 'center',
+        createPolygon({
+            fill: 'rgba(58, 134, 255, 0.15)',
+            stroke: '#3a86ff',
+            lineWidth: 2,
+            cx, cy, radius: r, sides: sides.value,
         }).render(context);
+
+        points.forEach(([px, py], i) => {
+            createCircle({ fill: '#3a86ff', cx: px, cy: py, radius: 4 }).render(context);
+            createText({
+                fill: '#666', x: px, y: py - 10,
+                content: `P${i}`, font: '11px sans-serif', textAlign: 'center',
+            }).render(context);
+        });
+
+        if (points.length >= 2) {
+            const p0 = points[0];
+            const pLast = points[Math.floor(points.length / 2)];
+
+            createLine({
+                stroke: '#999', lineWidth: 1, lineDash: [4, 4],
+                x1: p0[0], y1: p0[1], x2: pLast[0], y2: pLast[1],
+            }).render(context);
+
+            const mid = getMidpoint(p0, pLast);
+            createCircle({ fill: '#ff006e', cx: mid[0], cy: mid[1], radius: 5 }).render(context);
+            createText({
+                fill: '#ff006e', x: mid[0] + 10, y: mid[1] - 8,
+                content: 'midpoint', font: '11px sans-serif',
+            }).render(context);
+
+            const wp = getWaypoint(p0, pLast, waypoint.value / 100);
+            createCircle({ fill: '#8338ec', cx: wp[0], cy: wp[1], radius: 5 }).render(context);
+            createText({
+                fill: '#8338ec', x: wp[0] + 10, y: wp[1] + 14,
+                content: `waypoint(${waypoint.value}%)`, font: '11px sans-serif',
+            }).render(context);
+        }
+
+        const bbox = getContainingBox(points, ([x, y]) => new Box(y, x, y, x));
+        createRect({
+            stroke: '#fb5607', lineWidth: 1, lineDash: [4, 4],
+            autoFill: false,
+            x: bbox.left, y: bbox.top,
+            width: bbox.width, height: bbox.height,
+        }).render(context);
+
+        createText({
+            fill: '#fb5607', x: bbox.left, y: bbox.top - 6,
+            content: 'bounding box', font: '11px sans-serif',
+        }).render(context);
+
+        const infoX = w * 0.68;
+        const infoY = h * 0.2;
+        const info = [
+            `Sides: ${sides.value}`,
+            `Vertices: ${points.length}`,
+            `Box: ${Math.round(bbox.width)}×${Math.round(bbox.height)}`,
+        ];
+
+        info.forEach((line, i) => {
+            createText({
+                fill: '#333', x: infoX, y: infoY + i * 22,
+                content: line, font: '13px sans-serif',
+            }).render(context);
+        });
     });
-
-    if (points.length >= 2) {
-        const p0 = points[0];
-        const pLast = points[Math.floor(points.length / 2)];
-
-        createLine({
-            stroke: '#999', lineWidth: 1, lineDash: [4, 4],
-            x1: p0[0], y1: p0[1], x2: pLast[0], y2: pLast[1],
-        }).render(context);
-
-        const mid = getMidpoint(p0, pLast);
-        createCircle({ fill: '#ff006e', cx: mid[0], cy: mid[1], radius: 5 }).render(context);
-        createText({
-            fill: '#ff006e', x: mid[0] + 10, y: mid[1] - 8,
-            content: 'midpoint', font: '11px sans-serif',
-        }).render(context);
-
-        const wp = getWaypoint(p0, pLast, waypoint.value / 100);
-        createCircle({ fill: '#8338ec', cx: wp[0], cy: wp[1], radius: 5 }).render(context);
-        createText({
-            fill: '#8338ec', x: wp[0] + 10, y: wp[1] + 14,
-            content: `waypoint(${waypoint.value}%)`, font: '11px sans-serif',
-        }).render(context);
-    }
-
-    const bbox = getContainingBox(points, ([x, y]) => new Box(y, x, y, x));
-    createRect({
-        stroke: '#fb5607', lineWidth: 1, lineDash: [4, 4],
-        autoFill: false,
-        x: bbox.left, y: bbox.top,
-        width: bbox.width, height: bbox.height,
-    }).render(context);
-
-    createText({
-        fill: '#fb5607', x: bbox.left, y: bbox.top - 6,
-        content: 'bounding box', font: '11px sans-serif',
-    }).render(context);
-
-    const infoX = w * 0.68;
-    const infoY = h * 0.2;
-    const info = [
-        `Sides: ${sides.value}`,
-        `Vertices: ${points.length}`,
-        `Box: ${Math.round(bbox.width)}×${Math.round(bbox.height)}`,
-    ];
-
-    info.forEach((line, i) => {
-        createText({
-            fill: '#333', x: infoX, y: infoY + i * 22,
-            content: line, font: '13px sans-serif',
-        }).render(context);
-    });
-
-    context.markRenderEnd();
 }
 
 const {

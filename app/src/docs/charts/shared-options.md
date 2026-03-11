@@ -7,7 +7,7 @@ outline: "deep"
 All Ripl charts extend `BaseChartOptions` and support a common set of feature options for axes, grids, legends, tooltips, crosshairs, and animation. Each option follows the same pattern: pass `true`/`false` to toggle with defaults, or pass a partial options object to customise.
 
 > [!NOTE]
-> For the full API, see the [Chart Base & Options API Reference](/docs/api/charts/core).
+> For the full API, see the [Chart Base & Options API Reference](/docs/api/@ripl/charts/).
 
 ## Padding
 

@@ -3,7 +3,7 @@
 The **Area Chart** renders filled areas beneath lines, making it easy to compare cumulative totals or show how individual series contribute to a whole. It supports stacked mode (areas stacked on top of each other), per-series opacity and line interpolation, and includes crosshair, grid, tooltips, and a legend. Area and line elements animate smoothly from the baseline on entry and transition between data states on update.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

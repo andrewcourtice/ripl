@@ -3,7 +3,7 @@
 The `@ripl/charts` package provides a comprehensive set of chart types for data visualization. Every chart is built on the Ripl core rendering engine, so they inherit animated transitions, pointer-event interactivity, responsive sizing, and context-agnostic rendering (Canvas or SVG) out of the box. Charts are created with a simple `createXxxChart(target, options)` factory and updated reactively via `chart.update(options)`.
 
 > [!NOTE]
-> For the full Charts API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full Charts API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Available Charts
 

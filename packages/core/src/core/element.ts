@@ -281,8 +281,6 @@ export class Element<
     public declare parent?: Group<TEventMap>;
     public data: unknown;
 
-    public renderDepth?: number;
-
     // Props
 
     public get direction() {

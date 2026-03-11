@@ -126,7 +126,7 @@ await renderer.transition(rect, {
 Transforms work identically for both Canvas and SVG contexts. In the SVG context, transforms are serialised as SVG `transform` attribute values (e.g., `translate(10,20) rotate(45) scale(2,2)`), and the transform state is saved and restored alongside the context state stack.
 
 > [!NOTE]
-> For the full list of transform properties, see the [Element API Reference](/docs/api/core/core).
+> For the full list of transform properties, see the [Element API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

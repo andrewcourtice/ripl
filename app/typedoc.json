@@ -1,0 +1,29 @@
+{
+    "entryPointStrategy": "packages",
+    "entryPoints": [
+        "../packages/core",
+        "../packages/charts",
+        "../packages/svg",
+        "../packages/3d",
+        "../packages/utilities"
+    ],
+    "out": "./src/docs/api",
+    "plugin": [
+        "typedoc-plugin-markdown",
+        "typedoc-vitepress-theme"
+    ],
+    "docsRoot": "./src",
+    "parametersFormat": "table",
+    "interfacePropertiesFormat": "table",
+    "classPropertiesFormat": "table",
+    "enumMembersFormat": "table",
+    "indexFormat": "table",
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeInternal": true,
+    "sidebar": {
+        "autoConfiguration": true,
+        "pretty": true,
+        "collapsed": true
+    }
+}

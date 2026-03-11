@@ -7,7 +7,7 @@ title: Cube
 The **Cube** is a 3D box primitive with equal-length sides. It supports positioning via `x`, `y`, `z`, independent rotation around each axis, and automatic flat shading based on the context's light direction.
 
 > [!NOTE]
-> For the full API, see the [3D API Reference](/docs/api/3d/shapes).
+> For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
 ## Usage
 
@@ -73,10 +73,9 @@ function loop() {
     angle += 0.005;
     camera.position = [Math.sin(angle) * 5, 1.5, Math.cos(angle) * 5];
     camera.flush();
-    context.clear();
-    context.markRenderStart();
-    cube.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        cube.render(context);
+    });
     requestAnimationFrame(loop);
 }
 loop();

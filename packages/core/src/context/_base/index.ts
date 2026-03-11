@@ -28,7 +28,6 @@ import {
     onDOMElementResize,
     onDOMEvent,
     stringUniqueId,
-    typeIsNil,
     typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
@@ -78,7 +77,6 @@ export interface RenderElement {
     parent?: RenderElement;
     abstract: boolean;
     pointerEvents: RenderElementPointerEvents;
-    renderDepth?: number;
     zIndex: number;
     getBoundingBox?(): Box;
     has(event: string): boolean;
@@ -730,7 +728,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     /** Executes a callback within a save/restore pair, returning the callback's result. */
-    batch<TResult = void>(body: () => TResult): TResult {
+    layer<TResult = void>(body: () => TResult): TResult {
         this.save();
 
         try {
@@ -765,6 +763,18 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     /** Signals the end of a render pass. */
     markRenderEnd(): void {
         this.renderDepth -= 1;
+    }
+
+    /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */
+    batch<TResult = void>(body: () => TResult): TResult {
+        this.clear();
+        this.markRenderStart();
+
+        try {
+            return body();
+        } finally {
+            this.markRenderEnd();
+        }
     }
 
     /** Applies a rotation transformation. */
@@ -802,7 +812,6 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         return new ContextText(options);
     }
 
-
     /** Draws an image onto the rendering surface at the given position and optional size. */
     drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
     }
@@ -837,17 +846,8 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), INTERACTION_KEY);
     }
 
-    private sortByRenderDepth(elements: RenderElement[]): RenderElement[] {
-        return elements.sort((ea, eb) => {
-            const depthA = ea.renderDepth;
-            const depthB = eb.renderDepth;
-
-            if (!typeIsNil(depthA) && !typeIsNil(depthB)) {
-                return depthA - depthB;
-            }
-
-            return eb.zIndex - ea.zIndex;
-        });
+    private sortByZIndex(elements: RenderElement[]): RenderElement[] {
+        return elements.sort((ea, eb) => eb.zIndex - ea.zIndex);
     }
 
     private hitTest(events: string[], x: number, y: number): RenderElement[] {
@@ -883,7 +883,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         const hitElements = this.hitTest(['dragstart', 'drag', 'dragend'], x, y);
 
         if (hitElements.length > 0) {
-            this.sortByRenderDepth(hitElements);
+            this.sortByZIndex(hitElements);
 
             state.dragElement = hitElements[0];
             state.dragStartX = rx;
@@ -1013,7 +1013,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         const hitElements = this.hitTest(['click'], x, y);
 
         if (hitElements.length > 0) {
-            this.sortByRenderDepth(hitElements);
+            this.sortByZIndex(hitElements);
 
             hitElements[0].emit('click', {
                 x,

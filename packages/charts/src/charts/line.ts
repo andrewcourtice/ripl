@@ -115,6 +115,7 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
     private legend?: Legend;
     private grid?: Grid;
     private crosshair?: Crosshair;
+
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
 

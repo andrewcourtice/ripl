@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "generate-api": "node scripts/generate-api.mjs && node scripts/generate-api-pages.mjs",
+        "generate-api": "typedoc",
         "prepare-playground": "node scripts/prepare-playground.mjs",
         "start": "yarn generate-api && yarn prepare-playground && vitepress dev ./src",
         "build": "yarn generate-api && yarn prepare-playground && vitepress build ./src",
@@ -21,6 +21,9 @@
         "vue": "^3.5.30"
     },
     "devDependencies": {
+        "typedoc": "^0.28.17",
+        "typedoc-plugin-markdown": "^4.10.0",
+        "typedoc-vitepress-theme": "^1.1.2",
         "vitepress": "^1.6.4",
         "vitepress-plugin-tabs": "^0.8.0"
     }

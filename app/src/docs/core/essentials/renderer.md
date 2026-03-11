@@ -252,7 +252,7 @@ renderer.destroy(); // stops the loop and cleans up
 ```
 
 > [!NOTE]
-> For the full list of Renderer properties, methods, and events, see the [Renderer API Reference](/docs/api/core/core).
+> For the full list of Renderer properties, methods, and events, see the [Renderer API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 

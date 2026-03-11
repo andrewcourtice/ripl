@@ -20,6 +20,11 @@ export default defineConfig({
     test: {
         watch: false,
         environment: 'jsdom',
+        exclude: [
+            '**/node_modules/**',
+            '**/dist/**',
+            '**/_media/**',
+        ],
         outputFile: './.reports/test-results.xml',
         reporters: [
             'verbose',

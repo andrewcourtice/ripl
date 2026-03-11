@@ -3,7 +3,7 @@
 The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly — points enter, exit, and reposition with configurable transitions.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

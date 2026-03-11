@@ -74,13 +74,14 @@ export interface Shape3DState extends BaseElementState {
 }
 
 /** Options for constructing a 3D shape, with all state properties optional. */
-export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<ElementOptions<TState>>;
+export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
 
 /** Base class for 3D shapes, handling model transforms, face projection, shading, and hit testing. */
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
     protected hitPath?: ContextPath;
 
+    private _depth = 0;
     private getCachedFaces: CachedFunction<() => Face3D[]>;
 
     public get x() {
@@ -131,6 +132,14 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationZ', value);
     }
 
+    public override get zIndex(): number {
+        return -this._depth;
+    }
+
+    public override set zIndex(_value: number) {
+        console.warn('Setting zIndex will have no impact this element. 3D shapes derive zIndex from projected depth.');
+    }
+
     constructor(type: string, options: Shape3DOptions<TState>) {
         super(type, {
             x: 0,
@@ -142,7 +151,6 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             ...options,
         } as unknown as ElementOptions<TState>);
 
-        this.renderDepth = 0;
         this.getCachedFaces = functionCache(() => this.computeFaces());
     }
 
@@ -254,7 +262,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         }
 
         this.hitPath = hitPath;
-        this.renderDepth = faces.length > 0
+        this._depth = faces.length > 0
             ? totalDepth / faces.length
             : 0;
     }

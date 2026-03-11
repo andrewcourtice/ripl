@@ -76,30 +76,27 @@ function renderDemo(context: Context) {
     const h = context.height;
     const r = Math.min(w, h) / 3;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        const endAngle = TAU * (endAnglePct.value / 100);
+        const innerRadius = r * (innerRadiusPct.value / 100);
+        const padAngle = padAngleVal.value * 0.01;
 
-    const endAngle = TAU * (endAnglePct.value / 100);
-    const innerRadius = r * (innerRadiusPct.value / 100);
-    const padAngle = padAngleVal.value * 0.01;
+        createArc({
+            fill: '#3a86ff',
+            cx: w / 2, cy: h / 2, radius: r,
+            innerRadius,
+            startAngle: 0,
+            endAngle,
+            padAngle,
+            borderRadius: borderRadiusVal.value,
+        }).render(context);
 
-    createArc({
-        fill: '#3a86ff',
-        cx: w / 2, cy: h / 2, radius: r,
-        innerRadius,
-        startAngle: 0,
-        endAngle,
-        padAngle,
-        borderRadius: borderRadiusVal.value,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + r + 24,
-        content: `endAngle: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  pad: ${padAngleVal.value}  radius: ${borderRadiusVal.value}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `endAngle: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  pad: ${padAngleVal.value}  radius: ${borderRadiusVal.value}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {
@@ -137,7 +134,7 @@ const arc = createArc({
 The arc's geometry is defined by `cx`, `cy`, `radius`, `startAngle`, and `endAngle`. Optional properties include `innerRadius` (for donut arcs), `padAngle` (spacing between segments), and `borderRadius` (corner rounding).
 
 > [!NOTE]
-> For the full property list, see the [Arc API Reference](/docs/api/core/elements).
+> For the full property list, see the [Arc API Reference](/docs/api/@ripl/core/).
 
 ## Methods
 

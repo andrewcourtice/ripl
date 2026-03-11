@@ -1,4 +1,5 @@
 import {
+    afterEach,
     describe,
     expect,
     test,
@@ -7,6 +8,7 @@ import {
 
 import {
     hasWindow,
+    onDOMElementResize,
     onDOMEvent,
 } from '../src/dom';
 
@@ -54,6 +56,57 @@ describe('onDOMEvent', () => {
         el.dispatchEvent(event);
 
         expect(handler).toHaveBeenCalledWith(event);
+    });
+
+});
+
+describe('onDOMElementResize', () => {
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should use ResizeObserver when available', () => {
+        const el = document.createElement('div');
+        const handler = vi.fn();
+        const observeSpy = vi.fn();
+        const disconnectSpy = vi.fn();
+
+        vi.stubGlobal('ResizeObserver', class {
+            observe = observeSpy;
+            unobserve = vi.fn();
+            disconnect = disconnectSpy;
+        });
+
+        const disposable = onDOMElementResize(el, handler);
+
+        expect(observeSpy).toHaveBeenCalledWith(el, {
+            box: 'border-box',
+        });
+
+        disposable.dispose();
+        expect(disconnectSpy).toHaveBeenCalled();
+
+        vi.unstubAllGlobals();
+    });
+
+    test('Should return a disposable that disconnects the observer', () => {
+        const el = document.createElement('div');
+        const handler = vi.fn();
+        const disconnectSpy = vi.fn();
+
+        vi.stubGlobal('ResizeObserver', class {
+            observe = vi.fn();
+            unobserve = vi.fn();
+            disconnect = disconnectSpy;
+        });
+
+        const disposable = onDOMElementResize(el, handler);
+        disposable.dispose();
+
+        expect(disconnectSpy).toHaveBeenCalledTimes(1);
+
+        vi.unstubAllGlobals();
     });
 
 });

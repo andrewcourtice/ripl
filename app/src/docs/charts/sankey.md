@@ -3,7 +3,7 @@
 The **Sankey Chart** visualizes flow between nodes using weighted links. It's ideal for showing energy flows, budget allocations, process pipelines, or user journeys. Nodes are positioned automatically using a layout algorithm, and link widths are proportional to flow values. Hover any link to highlight it, and data transitions animate smoothly.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

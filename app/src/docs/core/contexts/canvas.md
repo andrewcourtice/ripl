@@ -59,7 +59,7 @@ See [Gradients](/docs/core/advanced/gradients) for the full gradient syntax refe
 The canvas context provides all the standard [Context](/docs/core/essentials/context) methods, plus canvas-specific behaviors like `rotate`, `scale`, `translate`, `setTransform`, `measureText`, `applyClip`, and path-based hit testing (`isPointInPath`, `isPointInStroke`).
 
 > [!NOTE]
-> For the full API, see the [Canvas Context API Reference](/docs/api/core/context).
+> For the full API, see the [Canvas Context API Reference](/docs/api/@ripl/core/).
 
 ## When to Use Canvas
 
@@ -126,23 +126,21 @@ const {
     const r = Math.min(w, h) / 4;
 
     const render = () => {
-        context.markRenderStart();
+        context.batch(() => {
+            createCircle({
+                fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+                cx: w / 3, cy: h / 2, radius: r,
+            }).render(context);
 
-        createCircle({
-            fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
-            cx: w / 3, cy: h / 2, radius: r,
-        }).render(context);
-
-        createRect({
-            fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
-            x: w / 2, y: h / 4,
-            width: w / 3, height: h / 2,
-        }).render(context);
-
-        context.markRenderEnd();
+            createRect({
+                fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
+                x: w / 2, y: h / 4,
+                width: w / 3, height: h / 2,
+            }).render(context);
+        });
     };
 
     render();
-    context.on('resize', () => { context.clear(); render(); });
+    context.on('resize', render);
 });
 </script>

@@ -68,25 +68,22 @@ function renderDemo(context: Context) {
     const h = context.height;
     const r = Math.min(w, h) / 3 * (radius.value / 100 + 0.4);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createCircle({
+            fill: '#3a86ff',
+            stroke: '#1a56db',
+            lineWidth: lineWidth.value,
+            opacity: opacity.value / 100,
+            cx: w / 2, cy: h / 2,
+            radius: r,
+        }).render(context);
 
-    createCircle({
-        fill: '#3a86ff',
-        stroke: '#1a56db',
-        lineWidth: lineWidth.value,
-        opacity: opacity.value / 100,
-        cx: w / 2, cy: h / 2,
-        radius: r,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + r + 24,
-        content: `radius: ${Math.round(r)}  stroke: ${lineWidth.value}  opacity: ${opacity.value}%`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `radius: ${Math.round(r)}  stroke: ${lineWidth.value}  opacity: ${opacity.value}%`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {
@@ -122,4 +119,4 @@ const circle = createCircle({
 The circle's geometry is defined by `cx`, `cy`, and `radius`. All properties are animatable and support style inheritance from parent groups.
 
 > [!NOTE]
-> For the full property list, see the [Circle API Reference](/docs/api/core/elements).
+> For the full property list, see the [Circle API Reference](/docs/api/@ripl/core/).

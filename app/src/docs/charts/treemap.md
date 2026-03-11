@@ -3,7 +3,7 @@
 The **Treemap Chart** displays hierarchical data as nested rectangles, where each rectangle's area is proportional to its value. It's great for visualizing how a total breaks down into parts — market share, disk usage, budget allocation, etc. Cells are labeled, automatically colored, and animate smoothly on data changes. Configurable gaps and rounded corners keep the layout clean.
 
 > [!NOTE]
-> For the full API, see the [Charts API Reference](/docs/api/charts/charts).
+> For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 

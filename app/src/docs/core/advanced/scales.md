@@ -9,7 +9,7 @@ outline: "deep"
 Every scale is a callable function: pass a domain value in, get a range value out. Scales also expose `inverse` (reverse mapping), `ticks` (nice axis values), `includes` (domain membership), and the original `domain`/`range` arrays.
 
 > [!NOTE]
-> For the full API, see the [Scales API Reference](/docs/api/core/scales).
+> For the full API, see the [Scales API Reference](/docs/api/@ripl/core/).
 
 ## Demo
 
@@ -102,47 +102,44 @@ function renderDemo(context: Context) {
     const scale = getScale(currentScale.value, [0, chartW]);
     const yScale = scaleContinuous([0, chartW], [chartH, 0]);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createRect({
+            fill: '#f8f9fa', x: pad, y: pad, width: chartW, height: chartH,
+        }).render(context);
 
-    createRect({
-        fill: '#f8f9fa', x: pad, y: pad, width: chartW, height: chartH,
-    }).render(context);
+        for (let i = 0; i <= 100; i += 20) {
+            const x = pad + scaleContinuous([0, 100], [0, chartW])(i);
+            createLine({ stroke: '#e9ecef', lineWidth: 1, x1: x, y1: pad, x2: x, y2: pad + chartH }).render(context);
+            createText({ fill: '#999', x, y: pad + chartH + 16, content: String(i), textAlign: 'center', font: '11px sans-serif' }).render(context);
+        }
 
-    for (let i = 0; i <= 100; i += 20) {
-        const x = pad + scaleContinuous([0, 100], [0, chartW])(i);
-        createLine({ stroke: '#e9ecef', lineWidth: 1, x1: x, y1: pad, x2: x, y2: pad + chartH }).render(context);
-        createText({ fill: '#999', x, y: pad + chartH + 16, content: String(i), textAlign: 'center', font: '11px sans-serif' }).render(context);
-    }
+        const points: [number, number][] = [];
+        const domainMin = currentScale.value === 'logarithmic' ? 1 : 0;
+        for (let i = domainMin; i <= 100; i += 1) {
+            const sx = scale(i);
+            points.push([pad + scaleContinuous([0, 100], [0, chartW])(i), pad + yScale(sx)]);
+        }
 
-    const points: [number, number][] = [];
-    const domainMin = currentScale.value === 'logarithmic' ? 1 : 0;
-    for (let i = domainMin; i <= 100; i += 1) {
-        const sx = scale(i);
-        points.push([pad + scaleContinuous([0, 100], [0, chartW])(i), pad + yScale(sx)]);
-    }
+        createPolyline({ stroke: '#3a86ff', lineWidth: 2, points, renderer: 'linear' }).render(context);
 
-    createPolyline({ stroke: '#3a86ff', lineWidth: 2, points, renderer: 'linear' }).render(context);
+        const val = Math.max(domainMin, inputValue.value);
+        const mapped = scale(val);
+        const px = pad + scaleContinuous([0, 100], [0, chartW])(val);
+        const py = pad + yScale(mapped);
 
-    const val = Math.max(domainMin, inputValue.value);
-    const mapped = scale(val);
-    const px = pad + scaleContinuous([0, 100], [0, chartW])(val);
-    const py = pad + yScale(mapped);
+        createCircle({ fill: '#ff006e', cx: px, cy: py, radius: 6 }).render(context);
+        createText({
+            fill: '#333', x: px, y: py - 14,
+            content: `${val} → ${Math.round(mapped)}`,
+            textAlign: 'center', font: 'bold 12px sans-serif',
+        }).render(context);
 
-    createCircle({ fill: '#ff006e', cx: px, cy: py, radius: 6 }).render(context);
-    createText({
-        fill: '#333', x: px, y: py - 14,
-        content: `${val} → ${Math.round(mapped)}`,
-        textAlign: 'center', font: 'bold 12px sans-serif',
-    }).render(context);
-
-    createText({
-        fill: '#666', x: w / 2, y: h - 6,
-        content: `Scale: ${currentScale.value}`,
-        textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            fill: '#666', x: w / 2, y: h - 6,
+            content: `Scale: ${currentScale.value}`,
+            textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

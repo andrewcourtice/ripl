@@ -7,7 +7,7 @@ outline: "deep"
 Ripl supports CSS gradient strings directly in `fill` and `stroke` properties. The gradient syntax is parsed at render time and converted to the appropriate native gradient for the current context (Canvas or SVG).
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/gradient).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Supported Gradient Types
 
@@ -198,47 +198,44 @@ function renderDemo(context: Context) {
     const h = context.height;
     const size = Math.min(w, h) / 3;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createRect({
+            fill: `linear-gradient(${angleDeg.value}deg, #3a86ff, #8338ec)`,
+            x: w * 0.08, y: h / 2 - size / 2,
+            width: size * 1.2, height: size,
+            borderRadius: 8,
+        }).render(context);
 
-    createRect({
-        fill: `linear-gradient(${angleDeg.value}deg, #3a86ff, #8338ec)`,
-        x: w * 0.08, y: h / 2 - size / 2,
-        width: size * 1.2, height: size,
-        borderRadius: 8,
-    }).render(context);
+        createText({
+            x: w * 0.08 + size * 0.6, y: h / 2 + size / 2 + 20,
+            content: `Linear ${angleDeg.value}°`, fill: '#666',
+            textAlign: 'center', font: '13px sans-serif',
+        }).render(context);
 
-    createText({
-        x: w * 0.08 + size * 0.6, y: h / 2 + size / 2 + 20,
-        content: `Linear ${angleDeg.value}°`, fill: '#666',
-        textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
+        createCircle({
+            fill: 'radial-gradient(circle, #ff006e, #fb5607)',
+            cx: w * 0.55, cy: h / 2, radius: size / 2,
+        }).render(context);
 
-    createCircle({
-        fill: 'radial-gradient(circle, #ff006e, #fb5607)',
-        cx: w * 0.55, cy: h / 2, radius: size / 2,
-    }).render(context);
+        createText({
+            x: w * 0.55, y: h / 2 + size / 2 + 20,
+            content: 'Radial', fill: '#666',
+            textAlign: 'center', font: '13px sans-serif',
+        }).render(context);
 
-    createText({
-        x: w * 0.55, y: h / 2 + size / 2 + 20,
-        content: 'Radial', fill: '#666',
-        textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
+        createRect({
+            fill: `linear-gradient(${angleDeg.value}deg, #3a86ff 0%, #3a86ff 33%, #ff006e 33%, #ff006e 66%, #8338ec 66%, #8338ec 100%)`,
+            x: w * 0.72, y: h / 2 - size / 2,
+            width: size * 1.2, height: size,
+            borderRadius: 8,
+        }).render(context);
 
-    createRect({
-        fill: `linear-gradient(${angleDeg.value}deg, #3a86ff 0%, #3a86ff 33%, #ff006e 33%, #ff006e 66%, #8338ec 66%, #8338ec 100%)`,
-        x: w * 0.72, y: h / 2 - size / 2,
-        width: size * 1.2, height: size,
-        borderRadius: 8,
-    }).render(context);
-
-    createText({
-        x: w * 0.72 + size * 0.6, y: h / 2 + size / 2 + 20,
-        content: 'Hard Stops', fill: '#666',
-        textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w * 0.72 + size * 0.6, y: h / 2 + size / 2 + 20,
+            content: 'Hard Stops', fill: '#666',
+            textAlign: 'center', font: '13px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

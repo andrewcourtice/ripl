@@ -1,9 +1,10 @@
 import {
-    afterAll,
-    beforeAll,
+    afterEach,
+    beforeEach,
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
@@ -11,82 +12,18 @@ import {
     mat4Identity,
 } from '../src';
 
-function mockCanvasContext() {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    const noop = () => {};
-    const original = HTMLCanvasElement.prototype.getContext;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (HTMLCanvasElement.prototype as any).getContext = function () {
-        return {
-            save: noop,
-            restore: noop,
-            clearRect: noop,
-            fillRect: noop,
-            beginPath: noop,
-            closePath: noop,
-            moveTo: noop,
-            lineTo: noop,
-            fill: noop,
-            stroke: noop,
-            arc: noop,
-            rect: noop,
-            setLineDash: noop,
-            getLineDash: () => [],
-            setTransform: noop,
-            resetTransform: noop,
-            scale: noop,
-            translate: noop,
-            rotate: noop,
-            transform: noop,
-            clip: noop,
-            createLinearGradient: () => ({
-                addColorStop: noop,
-            }),
-            createRadialGradient: () => ({
-                addColorStop: noop,
-            }),
-            measureText: () => ({
-                width: 0,
-            }),
-            fillStyle: '#000000',
-            strokeStyle: '#000000',
-            filter: 'none',
-            direction: 'ltr',
-            font: '10px sans-serif',
-            fontKerning: 'auto',
-            globalAlpha: 1,
-            globalCompositeOperation: 'source-over',
-            lineCap: 'butt',
-            lineDashOffset: 0,
-            lineJoin: 'miter',
-            lineWidth: 1,
-            miterLimit: 10,
-            shadowBlur: 0,
-            shadowColor: 'rgba(0, 0, 0, 0)',
-            shadowOffsetX: 0,
-            shadowOffsetY: 0,
-            textAlign: 'start',
-            textBaseline: 'alphabetic',
-            canvas: this,
-        };
-    };
-
-    return () => {
-        HTMLCanvasElement.prototype.getContext = original;
-    };
-}
+import {
+    mockCanvasContext,
+} from '@ripl/test-utils';
 
 describe('Context3D', () => {
 
-    let restoreMock: () => void;
-
-    beforeAll(() => {
-        restoreMock = mockCanvasContext();
+    beforeEach(() => {
+        mockCanvasContext();
     });
 
-    afterAll(() => {
-        restoreMock();
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     test('Construction stores identity matrices', () => {

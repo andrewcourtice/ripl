@@ -7,7 +7,7 @@ outline: "deep"
 Ripl's built-in elements cover common shapes, but you can create your own custom elements by extending the `Shape` or `Element` class. This gives you full control over rendering while still benefiting from Ripl's style inheritance, events, interpolation, and scene management.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/core).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Extending Shape
 
@@ -335,24 +335,21 @@ function renderDemo(context: Context) {
     const h = context.height;
     const r = Math.min(w, h) / 4;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        new Star({
+            fill: '#ff006e',
+            cx: w / 2, cy: h / 2,
+            outerRadius: r,
+            innerRadius: r * (innerPct.value / 100),
+            points: starPoints.value,
+        }).render(context);
 
-    new Star({
-        fill: '#ff006e',
-        cx: w / 2, cy: h / 2,
-        outerRadius: r,
-        innerRadius: r * (innerPct.value / 100),
-        points: starPoints.value,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + r + 24,
-        content: `${starPoints.value} points  inner: ${innerPct.value}%`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `${starPoints.value} points  inner: ${innerPct.value}%`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

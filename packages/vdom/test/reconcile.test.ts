@@ -594,4 +594,44 @@ describe('VDOM', () => {
 
     });
 
+    // ── createVNode ──────────────────────────────────────────────
+
+    describe('createVNode', () => {
+
+        test('should create a node with id and tag', () => {
+            const node = createVNode('my-id', 'div');
+            expect(node.id).toBe('my-id');
+            expect(node.tag).toBe('div');
+        });
+
+        test('should default children to empty array', () => {
+            const node = createVNode('n1', 'span');
+            expect(node.children).toEqual([]);
+        });
+
+        test('should accept children', () => {
+            const child = createVNode('c1', 'p');
+            const node = createVNode('n1', 'div', [child]);
+            expect(node.children).toHaveLength(1);
+            expect(node.children[0]).toBe(child);
+        });
+
+        test('should accept an element', () => {
+            const element: TestElement = {
+                tag: 'rect',
+                attributes: {
+                    x: '10',
+                },
+            };
+            const node = createVNode('n1', 'rect', [], element);
+            expect(node.element).toBe(element);
+        });
+
+        test('should leave element undefined when not provided', () => {
+            const node = createVNode('n1', 'div');
+            expect(node.element).toBeUndefined();
+        });
+
+    });
+
 });

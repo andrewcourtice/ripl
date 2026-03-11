@@ -7,7 +7,7 @@ outline: "deep"
 Ripl provides two approaches to animation: **manual transitions** using the standalone `transition` function, and **renderer-based transitions** using `renderer.transition()`. Both are promise-based and support easing, keyframes, and custom interpolators.
 
 > [!NOTE]
-> For the full API, see the [Core API Reference](/docs/api/core/animation).
+> For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
 ## Manual Transitions
 
