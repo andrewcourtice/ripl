@@ -6989,8 +6989,16 @@
         {
           "name": "destroy",
           "kind": "method",
-          "description": "Destroys the scene, removing all children and cleaning up event subscriptions.",
-          "type": "void"
+          "description": "Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions.",
+          "type": "void",
+          "params": [
+            {
+              "name": "includeContext",
+              "type": "boolean",
+              "description": "",
+              "optional": false
+            }
+          ]
         },
         {
           "name": "render",

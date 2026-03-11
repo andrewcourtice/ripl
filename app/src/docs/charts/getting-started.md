@@ -153,9 +153,6 @@ chart.destroy();
 | [Chord](/docs/charts/chord) | `createChordChart` | Relationship matrices |
 | [Sunburst](/docs/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
 | [Trend](/docs/charts/trend) | `createTrendChart` | Sparkline-style |
-| [Waterfall](/docs/charts/waterfall) | `createWaterfallChart` | Running totals |
-| [Bubble](/docs/charts/bubble) | `createBubbleChart` | Packed circles |
-| [Candlestick](/docs/charts/candlestick) | `createCandlestickChart` | OHLC financial |
 
 ## Next Steps
 

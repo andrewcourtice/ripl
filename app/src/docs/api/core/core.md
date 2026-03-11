@@ -792,9 +792,16 @@ class Scene<TContext extends Context = Context> extends Group<SceneEventMap>
 
 **Methods:**
 
-#### `destroy(): void`
+#### `destroy(includeContext: boolean): void`
 
-Destroys the scene, removing all children and cleaning up event subscriptions.
+Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions.
+
+
+**Parameters:**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `includeContext` | `boolean` |  |
 
 #### `render(): void`
 
