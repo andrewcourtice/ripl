@@ -93,6 +93,26 @@ export interface ElementEventMap extends EventMap {
         x: number;
         y: number;
     };
+    dragstart: {
+        x: number;
+        y: number;
+    };
+    drag: {
+        x: number;
+        y: number;
+        startX: number;
+        startY: number;
+        deltaX: number;
+        deltaY: number;
+    };
+    dragend: {
+        x: number;
+        y: number;
+        startX: number;
+        startY: number;
+        deltaX: number;
+        deltaY: number;
+    };
     destroyed: null;
 }
 

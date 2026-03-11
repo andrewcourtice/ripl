@@ -103,7 +103,7 @@ type ArrayJoinPredicate<TLeft, TRight> = keyof (TLeft & TRight) | Predicate<TLef
 Creates an array of the given length by mapping each index through the iteratee.
 
 ```ts
-function arrayMapRange<TResult>(length: number, iteratee: (index: number) => TResult): TResult[]
+function arrayMapRange<TResult>(length: number, iteratee: (index: number) => TResult): TResult[];
 ```
 
 
@@ -123,7 +123,7 @@ function arrayMapRange<TResult>(length: number, iteratee: (index: number) => TRe
 Performs a full join between two arrays, returning entries (left-only), updates (matched), and exits (right-only).
 
 ```ts
-function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight>): ArrayJoin<TLeft, TRight>
+function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], predicate: ArrayJoinPredicate<TLeft, TRight>): ArrayJoin<TLeft, TRight>;
 ```
 
 
@@ -144,7 +144,7 @@ function arrayJoin<TLeft, TRight>(leftInput: TLeft[], rightInput: TRight[], pred
 Groups array items by a property key or indexer function into a keyed record.
 
 ```ts
-function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity<TValue>): Record<PropertyKey, TValue[]>
+function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity<TValue>): Record<PropertyKey, TValue[]>;
 ```
 
 
@@ -164,7 +164,7 @@ function arrayGroup<TValue>(input: TValue[], identity: ArrayGroupIdentity<TValue
 Returns items from the left array that have a matching counterpart in the right array.
 
 ```ts
-function arrayIntersection<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[]
+function arrayIntersection<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[];
 ```
 
 
@@ -185,7 +185,7 @@ function arrayIntersection<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput
 Returns items from the left array that have no matching counterpart in the right array.
 
 ```ts
-function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[]
+function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: TRight[], predicate?: ArrayJoinPredicate<TLeft, TRight>): TLeft[];
 ```
 
 
@@ -206,7 +206,7 @@ function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], rightInput: 
 Iterates over the enumerable properties of an object, invoking the iteratee for each key-value pair.
 
 ```ts
-function objectForEach<TSource extends IterableObject>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource]>): void
+function objectForEach<TSource extends IterableObject>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource]>): void;
 ```
 
 
@@ -226,7 +226,7 @@ function objectForEach<TSource extends IterableObject>(input: TSource, iteratee:
 Maps over the enumerable properties of an object, producing a new object with transformed values.
 
 ```ts
-function objectMap<TSource extends IterableObject, TResult extends Record<keyof TSource, unknown> = Record<keyof TSource, unknown>>(input: TSource, iteratee: ObjectIteratee<Extract<keyof TSource, string>, TSource[keyof TSource], unknown>): TResult
+function objectMap<TSource extends IterableObject, TResult extends Record<keyof TSource, unknown> = Record<keyof TSource, unknown>>(input: TSource, iteratee: ObjectIteratee<Extract<keyof TSource, string>, TSource[keyof TSource], unknown>): TResult;
 ```
 
 
@@ -246,7 +246,7 @@ function objectMap<TSource extends IterableObject, TResult extends Record<keyof 
 Reduces the enumerable properties of an object into a single accumulated value.
 
 ```ts
-function objectReduce<TSource extends IterableObject, TResult>(input: TSource, reducer: ObjectReducer<keyof TSource, TSource[keyof TSource], TResult>, initial: TResult): TResult
+function objectReduce<TSource extends IterableObject, TResult>(input: TSource, reducer: ObjectReducer<keyof TSource, TSource[keyof TSource], TResult>, initial: TResult): TResult;
 ```
 
 
@@ -267,7 +267,7 @@ function objectReduce<TSource extends IterableObject, TResult>(input: TSource, r
 Iterates over each value in a `Set`, invoking the iteratee with the value and a running index.
 
 ```ts
-function setForEach<TValue>(input: Set<TValue>, iteratee: CollectionIteratee<TValue>): void
+function setForEach<TValue>(input: Set<TValue>, iteratee: CollectionIteratee<TValue>): void;
 ```
 
 
@@ -287,7 +287,7 @@ function setForEach<TValue>(input: Set<TValue>, iteratee: CollectionIteratee<TVa
 Maps over a `Set`, producing a new `Set` with each value transformed by the iteratee.
 
 ```ts
-function setMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult>): Set<TResult>
+function setMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult>): Set<TResult>;
 ```
 
 
@@ -307,7 +307,7 @@ function setMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIterate
 Filters a `Set`, returning a new `Set` containing only values that satisfy the predicate.
 
 ```ts
-function setFilter<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): Set<TValue>
+function setFilter<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): Set<TValue>;
 ```
 
 
@@ -327,7 +327,7 @@ function setFilter<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TVa
 Searches a `Set` for the first value that satisfies the predicate.
 
 ```ts
-function setFind<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): TValue | undefined
+function setFind<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValue, boolean>): TValue | undefined;
 ```
 
 
@@ -347,7 +347,7 @@ function setFind<TValue>(input: Set<TValue>, predicate: CollectionIteratee<TValu
 Flat-maps over a `Set`, concatenating the arrays returned by the iteratee into a new `Set`.
 
 ```ts
-function setFlatMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult[]>): Set<TResult>
+function setFlatMap<TValue, TResult>(input: Set<TValue>, iteratee: CollectionIteratee<TValue, TResult[]>): Set<TResult>;
 ```
 
 

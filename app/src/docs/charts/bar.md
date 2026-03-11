@@ -126,9 +126,15 @@ Each item in the `data` array should contain a category key and one or more nume
 
 ```ts
 const data = [
-    { month: 'Jan', sales: 420, costs: 280 },
-    { month: 'Feb', sales: 380, costs: 310 },
-    { month: 'Mar', sales: 510, costs: 250 },
+    { month: 'Jan',
+        sales: 420,
+        costs: 280 },
+    { month: 'Feb',
+        sales: 380,
+        costs: 310 },
+    { month: 'Mar',
+        sales: 510,
+        costs: 250 },
 ];
 ```
 
@@ -146,8 +152,12 @@ createBarChart('#container', {
     key: 'month',
     mode: 'grouped',
     series: [
-        { id: 'sales', value: 'sales', label: 'Sales' },
-        { id: 'costs', value: 'costs', label: 'Costs' },
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
     ],
 });
 ```
@@ -162,8 +172,12 @@ createBarChart('#container', {
     key: 'month',
     mode: 'stacked',
     series: [
-        { id: 'sales', value: 'sales', label: 'Sales' },
-        { id: 'costs', value: 'costs', label: 'Costs' },
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
     ],
 });
 ```
@@ -178,7 +192,9 @@ createBarChart('#container', {
     key: 'month',
     orientation: 'horizontal',
     series: [
-        { id: 'sales', value: 'sales', label: 'Sales' },
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
     ],
 });
 ```

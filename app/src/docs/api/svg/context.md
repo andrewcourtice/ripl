@@ -566,7 +566,7 @@ Clears the cached list of tracked elements for interaction, forcing a rebuild on
 
 #### `enableInteraction(): void`
 
-Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.
+Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.
 
 #### `disableInteraction(): void`
 
@@ -686,7 +686,7 @@ interface SVGContextElement extends ContextElement {
 Creates an SVG rendering context attached to the given DOM target.
 
 ```ts
-function createContext(target: string | HTMLElement, options?: ContextOptions): Context
+function createContext(target: string | HTMLElement, options?: ContextOptions): Context;
 ```
 
 

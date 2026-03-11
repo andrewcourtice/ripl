@@ -17,7 +17,7 @@ Vector3 and 3D-specific interpolation.
 Interpolator factory for `Vector3` values, using component-wise linear interpolation.
 
 ```ts
-const interpolateVector3: InterpolatorFactory<Vector3>
+const interpolateVector3: InterpolatorFactory<Vector3>;
 ```
 
 ---

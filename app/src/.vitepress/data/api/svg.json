@@ -1411,7 +1411,7 @@
         {
           "name": "enableInteraction",
           "kind": "method",
-          "description": "Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.",
+          "description": "Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.",
           "type": "void"
         },
         {

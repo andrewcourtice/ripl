@@ -151,9 +151,18 @@ Each item needs a unique `key` and numeric fields for x/y position (and optional
 
 ```ts
 const data = [
-    { id: 'a', sales: 42, profit: 78, volume: 15 },
-    { id: 'b', sales: 68, profit: 35, volume: 30 },
-    { id: 'c', sales: 91, profit: 52, volume: 8 },
+    { id: 'a',
+        sales: 42,
+        profit: 78,
+        volume: 15 },
+    { id: 'b',
+        sales: 68,
+        profit: 35,
+        volume: 30 },
+    { id: 'c',
+        sales: 91,
+        profit: 52,
+        volume: 8 },
 ];
 ```
 
@@ -192,8 +201,14 @@ createScatterChart('#container', {
     data,
     key: 'id',
     series: [
-        { id: 'sales', label: 'Sales', xBy: 'sales', yBy: 'profit' },
-        { id: 'marketing', label: 'Marketing', xBy: 'marketing', yBy: 'engagement' },
+        { id: 'sales',
+            label: 'Sales',
+            xBy: 'sales',
+            yBy: 'profit' },
+        { id: 'marketing',
+            label: 'Marketing',
+            xBy: 'marketing',
+            yBy: 'engagement' },
     ],
 });
 ```

@@ -49,7 +49,7 @@ The scene extends the Group event system with DOM event delegation. It listens f
 
 ### Supported Pointer Events
 
-The scene delegates `click`, `mouseenter`, `mouseleave`, and `mousemove` events to individual elements based on hit testing.
+The scene delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to individual elements based on hit testing.
 
 ```ts
 const circle = createCircle({
@@ -83,7 +83,7 @@ circle.on('mouseleave', () => {
 
 ### Scene-Level Events
 
-The scene also emits `resize`, `mouseenter`, `mouseleave`, and `mousemove` events at the scene level.
+The scene also emits `resize`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events at the scene level.
 
 > [!NOTE]
 > Pointer events on individual elements only work when those elements are inside a Scene. The scene is responsible for DOM event delegation and hit testing.
@@ -116,7 +116,7 @@ scene.destroy();
 
 ## Demo
 
-Hover over the elements to see pointer events in action. Click an element to change its color.
+Hover over, click, or drag the elements to see pointer events in action.
 
 :::tabs
 == Demo
@@ -159,6 +159,13 @@ circle.on('mouseleave', () => {
     circle.fill = '#3a86ff';
     scene.render();
 });
+
+// Drag elements to reposition them
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
+    scene.render();
+});
 ```
 :::
 
@@ -199,9 +206,11 @@ const {
     circle.on('mouseenter', () => { circle.fill = '#8338ec'; scene.render(); });
     circle.on('mouseleave', () => { circle.fill = '#3a86ff'; scene.render(); });
     circle.on('click', () => { circle.fill = '#fb5607'; scene.render(); });
+    circle.on('drag', (event) => { circle.cx += event.data.deltaX; circle.cy += event.data.deltaY; scene.render(); });
 
     rect.on('mouseenter', () => { rect.fill = '#8338ec'; scene.render(); });
     rect.on('mouseleave', () => { rect.fill = '#ff006e'; scene.render(); });
     rect.on('click', () => { rect.fill = '#fb5607'; scene.render(); });
+    rect.on('drag', (event) => { rect.x += event.data.deltaX; rect.y += event.data.deltaY; scene.render(); });
 });
 </script>

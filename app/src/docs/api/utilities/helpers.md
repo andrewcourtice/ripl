@@ -55,7 +55,7 @@ type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TV
 Returns the value it receives unchanged — useful as a default transform or placeholder.
 
 ```ts
-function functionIdentity<TValue>(value: TValue)
+function functionIdentity<TValue>(value: TValue);
 ```
 
 
@@ -74,7 +74,7 @@ function functionIdentity<TValue>(value: TValue)
 Wraps a value or factory function into a consistent factory that always returns the value.
 
 ```ts
-function functionProduce<TValue>(value: TValue | (() => TValue)): () => TValue
+function functionProduce<TValue>(value: TValue | (() => TValue)): () => TValue;
 ```
 
 
@@ -93,7 +93,7 @@ function functionProduce<TValue>(value: TValue | (() => TValue)): () => TValue
 Wraps a function so its result is computed once and then returned from cache on subsequent calls until `invalidate()` is called.
 
 ```ts
-function functionCache<TValue extends AnyFunction>(value: TValue): CachedFunction<TValue>
+function functionCache<TValue extends AnyFunction>(value: TValue): CachedFunction<TValue>;
 ```
 
 
@@ -112,7 +112,7 @@ function functionCache<TValue extends AnyFunction>(value: TValue): CachedFunctio
 Memoizes a function by caching results keyed by the resolver (defaults to the first argument).
 
 ```ts
-function functionMemoize<TValue extends AnyFunction, TKey = Parameters<TValue>[0]>(value: TValue, resolver: MemoizeResolver<TValue, TKey> = (...args) => args[0])
+function functionMemoize<TValue extends AnyFunction, TKey = Parameters<TValue>[0]>(value: TValue, resolver: MemoizeResolver<TValue, TKey> = (...args) => args[0]);
 ```
 
 
@@ -132,7 +132,7 @@ function functionMemoize<TValue extends AnyFunction, TKey = Parameters<TValue>[0
 Generates a cryptographically random hexadecimal string of the specified length.
 
 ```ts
-function stringUniqueId(length: number = 6): string
+function stringUniqueId(length: number = 6): string;
 ```
 
 
@@ -151,7 +151,7 @@ function stringUniqueId(length: number = 6): string
 Case-insensitive string equality check.
 
 ```ts
-function stringEquals(valueA: string, valueB: string)
+function stringEquals(valueA: string, valueB: string);
 ```
 
 
@@ -171,7 +171,7 @@ function stringEquals(valueA: string, valueB: string)
 Computes the sum of an array of numbers, or of values mapped through an optional iteratee.
 
 ```ts
-function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number)
+function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue) => number);
 ```
 
 
@@ -191,7 +191,7 @@ function numberSum<TValue = number>(values: TValue[], iteratee?: (value: TValue)
 Computes the greatest common divisor of two integers using the Euclidean algorithm.
 
 ```ts
-function numberGCD(valueA: number, valueB: number)
+function numberGCD(valueA: number, valueB: number);
 ```
 
 
@@ -211,7 +211,7 @@ function numberGCD(valueA: number, valueB: number)
 Rounds a value to a "nice" human-readable number (1, 2, 5, or 10 scaled by the appropriate power of ten).
 
 ```ts
-function numberNice(value: number, round: boolean = false)
+function numberNice(value: number, round: boolean = false);
 ```
 
 
@@ -231,7 +231,7 @@ function numberNice(value: number, round: boolean = false)
 Creates a shallow frozen copy of the given object.
 
 ```ts
-function objectFreeze<TValue extends object>(value: TValue)
+function objectFreeze<TValue extends object>(value: TValue);
 ```
 
 
@@ -250,7 +250,7 @@ function objectFreeze<TValue extends object>(value: TValue)
 Normalises a single value or array into a guaranteed array.
 
 ```ts
-function valueOneOrMore<TValue>(value: OneOrMore<TValue>): TValue[]
+function valueOneOrMore<TValue>(value: OneOrMore<TValue>): TValue[];
 ```
 
 
@@ -269,7 +269,7 @@ function valueOneOrMore<TValue>(value: OneOrMore<TValue>): TValue[]
 Numeric comparator suitable for sorting numbers in ascending order.
 
 ```ts
-function comparitorNumeric(valueA: number, valueB: number): number
+function comparitorNumeric(valueA: number, valueB: number): number;
 ```
 
 
@@ -289,7 +289,7 @@ function comparitorNumeric(valueA: number, valueB: number): number
 Date comparator suitable for sorting dates in ascending chronological order.
 
 ```ts
-function comparitorDate(valueA: Date, valueB: Date): number
+function comparitorDate(valueA: Date, valueB: Date): number;
 ```
 
 
@@ -309,7 +309,7 @@ function comparitorDate(valueA: Date, valueB: Date): number
 Locale-aware string comparator suitable for alphabetical sorting.
 
 ```ts
-function comparitorString(valueA: string, valueB: string): number
+function comparitorString(valueA: string, valueB: string): number;
 ```
 
 

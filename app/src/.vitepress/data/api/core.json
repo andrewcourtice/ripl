@@ -1079,7 +1079,7 @@
       "name": "ContextEventMap",
       "kind": "interface",
       "description": "Event map for a rendering context, including resize and pointer events.",
-      "typeSignature": "interface ContextEventMap extends EventMap {\n    resize: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n}",
+      "typeSignature": "interface ContextEventMap extends EventMap {\n    resize: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n}",
       "tags": {},
       "properties": [
         {
@@ -1108,6 +1108,21 @@
           "description": ""
         },
         {
+          "name": "dragstart",
+          "type": "{ x: number; y: number; }",
+          "description": ""
+        },
+        {
+          "name": "drag",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "description": ""
+        },
+        {
+          "name": "dragend",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "description": ""
+        },
+        {
           "name": "destroyed",
           "type": "null",
           "description": ""
@@ -1118,12 +1133,18 @@
       "name": "ContextOptions",
       "kind": "interface",
       "description": "Options for constructing a rendering context.",
-      "typeSignature": "interface ContextOptions {\n    interactive?: boolean;\n}",
+      "typeSignature": "interface ContextOptions {\n    interactive?: boolean;\n    dragThreshold?: number;\n}",
       "tags": {},
       "properties": [
         {
           "name": "interactive",
           "type": "boolean | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
+          "name": "dragThreshold",
+          "type": "number | undefined",
           "description": "",
           "optional": true
         }
@@ -2542,7 +2563,7 @@
         {
           "name": "enableInteraction",
           "kind": "method",
-          "description": "Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.",
+          "description": "Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.",
           "type": "void"
         },
         {
@@ -3882,7 +3903,7 @@
         {
           "name": "enableInteraction",
           "kind": "method",
-          "description": "Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.",
+          "description": "Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.",
           "type": "void"
         },
         {
@@ -4361,7 +4382,7 @@
       "name": "ElementEventMap",
       "kind": "interface",
       "description": "Event map for elements, extending the base event map with lifecycle and interaction events.",
-      "typeSignature": "interface ElementEventMap extends EventMap {\n    graph: null;\n    track: keyof ElementEventMap;\n    untrack: keyof ElementEventMap;\n    attached: Group;\n    detached: Group;\n    updated: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    destroyed: null;\n}",
+      "typeSignature": "interface ElementEventMap extends EventMap {\n    graph: null;\n    track: keyof ElementEventMap;\n    untrack: keyof ElementEventMap;\n    attached: Group;\n    detached: Group;\n    updated: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    destroyed: null;\n}",
       "tags": {},
       "properties": [
         {
@@ -4412,6 +4433,21 @@
         {
           "name": "click",
           "type": "{ x: number; y: number; }",
+          "description": ""
+        },
+        {
+          "name": "dragstart",
+          "type": "{ x: number; y: number; }",
+          "description": ""
+        },
+        {
+          "name": "drag",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "description": ""
+        },
+        {
+          "name": "dragend",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
           "description": ""
         },
         {
@@ -6714,6 +6750,21 @@
         {
           "name": "click",
           "type": "{ x: number; y: number; }",
+          "description": ""
+        },
+        {
+          "name": "dragstart",
+          "type": "{ x: number; y: number; }",
+          "description": ""
+        },
+        {
+          "name": "drag",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "description": ""
+        },
+        {
+          "name": "dragend",
+          "type": "{ x: number; y: number; startX: number; startY: number; }",
           "description": ""
         },
         {

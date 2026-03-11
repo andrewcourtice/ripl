@@ -85,4 +85,7 @@ export const TRACKED_EVENTS = [
     'mousemove',
     'mouseenter',
     'mouseleave',
+    'dragstart',
+    'drag',
+    'dragend',
 ] as (keyof ElementEventMap)[];

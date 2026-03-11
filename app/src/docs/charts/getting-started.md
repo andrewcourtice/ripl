@@ -44,14 +44,24 @@ import {
 
 const chart = createBarChart('#chart-container', {
     data: [
-        { month: 'Jan', sales: 120, costs: 80 },
-        { month: 'Feb', sales: 200, costs: 110 },
-        { month: 'Mar', sales: 150, costs: 90 },
+        { month: 'Jan',
+            sales: 120,
+            costs: 80 },
+        { month: 'Feb',
+            sales: 200,
+            costs: 110 },
+        { month: 'Mar',
+            sales: 150,
+            costs: 90 },
     ],
     key: 'month',
     series: [
-        { id: 'sales', value: 'sales', label: 'Sales' },
-        { id: 'costs', value: 'costs', label: 'Costs' },
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
     ],
 });
 ```
@@ -65,10 +75,18 @@ Call `chart.update()` with partial options to reactively update the chart. Chang
 ```ts
 chart.update({
     data: [
-        { month: 'Jan', sales: 180, costs: 100 },
-        { month: 'Feb', sales: 220, costs: 130 },
-        { month: 'Mar', sales: 170, costs: 95 },
-        { month: 'Apr', sales: 300, costs: 150 },
+        { month: 'Jan',
+            sales: 180,
+            costs: 100 },
+        { month: 'Feb',
+            sales: 220,
+            costs: 130 },
+        { month: 'Mar',
+            sales: 170,
+            costs: 95 },
+        { month: 'Apr',
+            sales: 300,
+            costs: 150 },
     ],
 });
 ```

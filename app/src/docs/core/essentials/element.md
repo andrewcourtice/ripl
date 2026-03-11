@@ -101,7 +101,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!NOTE]
-> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`) only work when the element is inside a [Scene](/docs/core/essentials/scene), because the scene manages DOM event delegation.
+> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element is inside a [Scene](/docs/core/essentials/scene), because the scene manages DOM event delegation.
 
 ## Style Inheritance
 

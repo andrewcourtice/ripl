@@ -506,6 +506,28 @@
       "returnType": "Matrix4"
     },
     {
+      "name": "mat4TransformDirection",
+      "kind": "function",
+      "description": "Transforms a direction vector by the upper-3×3 of a 4×4 matrix, ignoring translation.",
+      "typeSignature": "function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3",
+      "tags": {},
+      "params": [
+        {
+          "name": "m",
+          "type": "Matrix4",
+          "description": "",
+          "optional": false
+        },
+        {
+          "name": "v",
+          "type": "Vector3",
+          "description": "",
+          "optional": false
+        }
+      ],
+      "returnType": "Vector3"
+    },
+    {
       "name": "mat4TransformPoint",
       "kind": "function",
       "description": "Transforms a 3D point by a 4×4 matrix, performing the perspective divide.",
@@ -589,6 +611,15 @@
       ]
     }
   ],
+  "constants": [
+    {
+      "name": "LIGHT_DIRECTION",
+      "kind": "variable",
+      "description": "Pre-normalised light direction vectors for common light positions.",
+      "typeSignature": "const LIGHT_DIRECTION: { readonly top: [0, -1, 0]; readonly bottom: [0, 1, 0]; readonly left: [-1, 0, 0]; readonly right: [1, 0, 0]; readonly front: [0, 0, -1]; readonly back: [0, 0, 1]; readonly topLeft: [-0.707, -0.707, 0]; readonly topRight: [0.707, -0.707, 0]; readonly topFront: [0, -0.707, -0.707]; readonly topBack: [0, -0.707, 0.707]; readonly topLeftFront: [-0.577, -0.577, -0.577]; readonly topRightFront: [0.577, -0.577, -0.577]; readonly topLeftBehind: [-0.577, -0.577, 0.577]; readonly topRightBehind: [0.577, -0.577, 0.577]; readonly bottomLeft: [-0.707, 0.707, 0]; readonly bottomRight: [0.707, 0.707, 0]; }",
+      "tags": {}
+    }
+  ],
   "context": [
     {
       "name": "createContext",
@@ -613,10 +644,17 @@
       "returnType": "Context3D"
     },
     {
+      "name": "LightMode",
+      "kind": "type",
+      "description": "Determines whether the light direction is fixed in world space or follows the camera.",
+      "typeSignature": "type LightMode = 'world' | 'camera';",
+      "tags": {}
+    },
+    {
       "name": "Context3DOptions",
       "kind": "interface",
       "description": "Options for the 3D rendering context, extending the base context options with camera parameters.",
-      "typeSignature": "interface Context3DOptions extends ContextOptions {\n    fov?: number;\n    near?: number;\n    far?: number;\n}",
+      "typeSignature": "interface Context3DOptions extends ContextOptions {\n    fov?: number;\n    near?: number;\n    far?: number;\n    lightDirection?: Vector3;\n    lightMode?: LightMode;\n}",
       "tags": {},
       "properties": [
         {
@@ -638,8 +676,26 @@
           "optional": true
         },
         {
+          "name": "lightDirection",
+          "type": "Vector3 | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
+          "name": "lightMode",
+          "type": "LightMode | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
           "name": "interactive",
           "type": "boolean | undefined",
+          "description": "",
+          "optional": true
+        },
+        {
+          "name": "dragThreshold",
+          "type": "number | undefined",
           "description": "",
           "optional": true
         }
@@ -694,6 +750,12 @@
           "kind": "property",
           "description": "",
           "type": "Vector3"
+        },
+        {
+          "name": "lightMode",
+          "kind": "property",
+          "description": "",
+          "type": "LightMode"
         },
         {
           "name": "faceBuffer",
@@ -817,6 +879,12 @@
               "optional": false
             }
           ]
+        },
+        {
+          "name": "getLightDirectionForRender",
+          "kind": "method",
+          "description": "Returns the effective light direction for the current render, accounting for the light mode.",
+          "type": "Vector3"
         },
         {
           "name": "project",
@@ -1524,7 +1592,7 @@
         {
           "name": "enableInteraction",
           "kind": "method",
-          "description": "Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.",
+          "description": "Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.",
           "type": "void"
         },
         {

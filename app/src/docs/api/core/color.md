@@ -139,7 +139,7 @@ type ColorSpace = 'hex'
 Finds the first color parser whose pattern matches the given color string.
 
 ```ts
-function getColorParser(value: string): ColorParser | undefined
+function getColorParser(value: string): ColorParser | undefined;
 ```
 
 
@@ -158,7 +158,7 @@ function getColorParser(value: string): ColorParser | undefined
 Parses any supported color string into an RGBA tuple, or returns `undefined` if no parser matches.
 
 ```ts
-function parseColor(value: string): ColorRGBA | undefined
+function parseColor(value: string): ColorRGBA | undefined;
 ```
 
 
@@ -177,7 +177,7 @@ function parseColor(value: string): ColorRGBA | undefined
 Parses a hexadecimal color string (e.g. `#ff0000` or `#ff000080`) into an RGBA tuple.
 
 ```ts
-function parseHEX(value: string): ColorRGBA
+function parseHEX(value: string): ColorRGBA;
 ```
 
 
@@ -196,7 +196,7 @@ function parseHEX(value: string): ColorRGBA
 Parses an `rgb()` color string into an RGBA tuple with alpha set to 1.
 
 ```ts
-function parseRGB(value: string): ColorRGBA
+function parseRGB(value: string): ColorRGBA;
 ```
 
 
@@ -215,7 +215,7 @@ function parseRGB(value: string): ColorRGBA
 Parses an `rgba()` color string into an RGBA tuple.
 
 ```ts
-function parseRGBA(value: string): ColorRGBA
+function parseRGBA(value: string): ColorRGBA;
 ```
 
 
@@ -234,7 +234,7 @@ function parseRGBA(value: string): ColorRGBA
 Parses an `hsl()` color string into an RGBA tuple.
 
 ```ts
-function parseHSL(value: string): ColorRGBA
+function parseHSL(value: string): ColorRGBA;
 ```
 
 
@@ -253,7 +253,7 @@ function parseHSL(value: string): ColorRGBA
 Parses an `hsla()` color string into an RGBA tuple.
 
 ```ts
-function parseHSLA(value: string): ColorRGBA
+function parseHSLA(value: string): ColorRGBA;
 ```
 
 
@@ -272,7 +272,7 @@ function parseHSLA(value: string): ColorRGBA
 Parses an `hsv()` color string into an RGBA tuple.
 
 ```ts
-function parseHSV(value: string): ColorRGBA
+function parseHSV(value: string): ColorRGBA;
 ```
 
 
@@ -291,7 +291,7 @@ function parseHSV(value: string): ColorRGBA
 Parses an `hsva()` color string into an RGBA tuple.
 
 ```ts
-function parseHSVA(value: string): ColorRGBA
+function parseHSVA(value: string): ColorRGBA;
 ```
 
 
@@ -310,7 +310,7 @@ function parseHSVA(value: string): ColorRGBA
 Converts a single RGB channel value (0–255) to a two-character hexadecimal string.
 
 ```ts
-function rgbChannelToHEX(channel: number): string
+function rgbChannelToHEX(channel: number): string;
 ```
 
 
@@ -329,7 +329,7 @@ function rgbChannelToHEX(channel: number): string
 Serialises RGBA channel values into a hexadecimal color string (e.g. `#ff0000`).
 
 ```ts
-function serialiseHEX(...args: ColorRGBA): string
+function serialiseHEX(...args: ColorRGBA): string;
 ```
 
 
@@ -348,7 +348,7 @@ function serialiseHEX(...args: ColorRGBA): string
 Serialises RGBA channel values into an `rgb()` color string.
 
 ```ts
-function serialiseRGB(...args: ColorRGBA): string
+function serialiseRGB(...args: ColorRGBA): string;
 ```
 
 
@@ -367,7 +367,7 @@ function serialiseRGB(...args: ColorRGBA): string
 Serialises RGBA channel values into an `rgba()` color string.
 
 ```ts
-function serialiseRGBA(...args: ColorRGBA): string
+function serialiseRGBA(...args: ColorRGBA): string;
 ```
 
 
@@ -386,7 +386,7 @@ function serialiseRGBA(...args: ColorRGBA): string
 Serialises RGBA channel values into an `hsl()` color string.
 
 ```ts
-function serialiseHSL(...args: ColorRGBA): string
+function serialiseHSL(...args: ColorRGBA): string;
 ```
 
 
@@ -405,7 +405,7 @@ function serialiseHSL(...args: ColorRGBA): string
 Serialises RGBA channel values into an `hsla()` color string.
 
 ```ts
-function serialiseHSLA(...args: ColorRGBA): string
+function serialiseHSLA(...args: ColorRGBA): string;
 ```
 
 
@@ -424,7 +424,7 @@ function serialiseHSLA(...args: ColorRGBA): string
 Serialises RGBA channel values into an `hsv()` color string.
 
 ```ts
-function serialiseHSV(...args: ColorRGBA): string
+function serialiseHSV(...args: ColorRGBA): string;
 ```
 
 
@@ -443,7 +443,7 @@ function serialiseHSV(...args: ColorRGBA): string
 Serialises RGBA channel values into an `hsva()` color string.
 
 ```ts
-function serialiseHSVA(...args: ColorRGBA): string
+function serialiseHSVA(...args: ColorRGBA): string;
 ```
 
 
@@ -462,7 +462,7 @@ function serialiseHSVA(...args: ColorRGBA): string
 Returns a new color string with the alpha channel replaced by the given value.
 
 ```ts
-function setColorAlpha(color: string, alpha: number)
+function setColorAlpha(color: string, alpha: number);
 ```
 
 
@@ -482,7 +482,7 @@ function setColorAlpha(color: string, alpha: number)
 Converts RGBA channel values to an HSLA tuple.
 
 ```ts
-function rgbaToHSL(red: number, green: number, blue: number, alpha: number = 1): ColorHSLA
+function rgbaToHSL(red: number, green: number, blue: number, alpha: number = 1): ColorHSLA;
 ```
 
 
@@ -504,7 +504,7 @@ function rgbaToHSL(red: number, green: number, blue: number, alpha: number = 1):
 Converts HSLA values to an RGBA tuple.
 
 ```ts
-function hslToRGBA(hue: number, saturation: number, lightness: number, alpha: number = 1): ColorRGBA
+function hslToRGBA(hue: number, saturation: number, lightness: number, alpha: number = 1): ColorRGBA;
 ```
 
 
@@ -526,7 +526,7 @@ function hslToRGBA(hue: number, saturation: number, lightness: number, alpha: nu
 Converts RGBA channel values to an HSVA tuple.
 
 ```ts
-function rgbaToHSV(red: number, green: number, blue: number, alpha: number = 1): ColorHSVA
+function rgbaToHSV(red: number, green: number, blue: number, alpha: number = 1): ColorHSVA;
 ```
 
 
@@ -548,7 +548,7 @@ function rgbaToHSV(red: number, green: number, blue: number, alpha: number = 1):
 Converts HSVA values to an RGBA tuple.
 
 ```ts
-function hsvToRGBA(hue: number, saturation: number, value: number, alpha: number = 1): ColorRGBA
+function hsvToRGBA(hue: number, saturation: number, value: number, alpha: number = 1): ColorRGBA;
 ```
 
 

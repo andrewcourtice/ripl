@@ -79,9 +79,15 @@ Each item represents one axis and contains the axis label plus one or more numer
 
 ```ts
 const data = [
-    { axis: 'Speed', player1: 80, player2: 65 },
-    { axis: 'Strength', player1: 55, player2: 90 },
-    { axis: 'Defense', player1: 70, player2: 45 },
+    { axis: 'Speed',
+        player1: 80,
+        player2: 65 },
+    { axis: 'Strength',
+        player1: 55,
+        player2: 90 },
+    { axis: 'Defense',
+        player1: 70,
+        player2: 45 },
 ];
 ```
 
@@ -96,7 +102,9 @@ createRadarChart('#container', {
     data,
     axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     series: [
-        { id: 'player1', value: 'player1', label: 'Player 1' },
+        { id: 'player1',
+            value: 'player1',
+            label: 'Player 1' },
     ],
 });
 ```
@@ -110,8 +118,14 @@ createRadarChart('#container', {
     levels: 10,
     maxValue: 100,
     series: [
-        { id: 'player1', value: 'player1', label: 'Player 1', opacity: 0.3 },
-        { id: 'player2', value: 'player2', label: 'Player 2', opacity: 0.3 },
+        { id: 'player1',
+            value: 'player1',
+            label: 'Player 1',
+            opacity: 0.3 },
+        { id: 'player2',
+            value: 'player2',
+            label: 'Player 2',
+            opacity: 0.3 },
     ],
 });
 ```

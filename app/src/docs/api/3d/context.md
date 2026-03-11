@@ -14,6 +14,8 @@ outline: "deep"
 
 **Interfaces:** [`Context3DOptions`](#context3doptions)
 
+**Type Aliases:** [`LightMode`](#lightmode)
+
 **Functions:** [`createContext`](#createcontext)
 
 ### Context3D `class`
@@ -42,6 +44,7 @@ class Context3D extends CanvasContext
 | `projectionMatrix` | `Matrix4` |  |
 | `viewProjectionMatrix` | `Matrix4` |  |
 | `lightDirection` | `Vector3` |  |
+| `lightMode` | `LightMode` |  |
 | `faceBuffer` | `ProjectedFace3D[]` |  |
 | `fill` | `string` |  |
 | `filter` | `string` |  |
@@ -128,6 +131,10 @@ Sets an orthographic projection with explicit frustum bounds.
 | `top` | `number` |  |
 | `near` | `number` |  |
 | `far` | `number` |  |
+
+#### `getLightDirectionForRender(): Vector3`
+
+Returns the effective light direction for the current render, accounting for the light mode.
 
 #### `project(point: Vector3): ProjectedPoint`
 
@@ -362,7 +369,7 @@ Creates a new text element from the given options.
 
 #### `enableInteraction(): void`
 
-Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.
+Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.
 
 #### `disableInteraction(): void`
 
@@ -443,6 +450,8 @@ interface Context3DOptions extends ContextOptions {
     fov?: number;
     near?: number;
     far?: number;
+    lightDirection?: Vector3;
+    lightMode?: LightMode;
 }
 ```
 
@@ -454,7 +463,20 @@ interface Context3DOptions extends ContextOptions {
 | `fov?` | `number \| undefined` |  |
 | `near?` | `number \| undefined` |  |
 | `far?` | `number \| undefined` |  |
+| `lightDirection?` | `Vector3 \| undefined` |  |
+| `lightMode?` | `LightMode \| undefined` |  |
 | `interactive?` | `boolean \| undefined` |  |
+| `dragThreshold?` | `number \| undefined` |  |
+---
+
+### LightMode `type`
+
+Determines whether the light direction is fixed in world space or follows the camera.
+
+```ts
+type LightMode = 'world' | 'camera';
+```
+
 ---
 
 ### createContext `function`
@@ -462,7 +484,7 @@ interface Context3DOptions extends ContextOptions {
 Creates a 3D rendering context attached to the given DOM target.
 
 ```ts
-function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D
+function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D;
 ```
 
 

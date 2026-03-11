@@ -31,11 +31,11 @@ Complete API documentation for all Ripl packages, auto-generated from TypeScript
 
 ## @ripl/3d
 
-- [**Context3D**](/docs/api/3d/context) — 3D rendering context extending CanvasContext with projection. *(3 exports)*
+- [**Context3D**](/docs/api/3d/context) — 3D rendering context extending CanvasContext with projection. *(4 exports)*
 - [**Camera**](/docs/api/3d/camera) — Reactive camera system with orbit, pan, and zoom. *(6 exports)*
 - [**Shapes**](/docs/api/3d/shapes) — Built-in 3D shapes: Cube, Sphere, Cylinder, Cone, Plane, Torus. *(24 exports)*
 - [**Shading**](/docs/api/3d/shading) — Flat shading utilities based on face normals and light direction. *(3 exports)*
-- [**Math**](/docs/api/3d/math) — 3D math utilities: vectors, matrices, and projections. *(29 exports)*
+- [**Math**](/docs/api/3d/math) — 3D math utilities: vectors, matrices, and projections. *(30 exports)*
 - [**Interpolators**](/docs/api/3d/interpolators) — Vector3 and 3D-specific interpolation. *(1 exports)*
 
 ## @ripl/utilities

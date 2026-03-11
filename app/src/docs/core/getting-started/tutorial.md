@@ -176,7 +176,7 @@ group.queryAll('.shape');
 
 ## Interaction
 
-Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, and `click` directly on any element — no scene or renderer required.
+Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, `click`, `dragstart`, `drag`, and `dragend` directly on any element — no scene or renderer required.
 
 :::tabs
 == Code

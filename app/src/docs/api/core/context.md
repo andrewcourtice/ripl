@@ -520,7 +520,7 @@ Tests whether a point is on the stroked outline of a path.
 
 #### `enableInteraction(): void`
 
-Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.
+Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.
 
 #### `disableInteraction(): void`
 
@@ -1053,7 +1053,7 @@ Creates a new text element from the given options.
 
 #### `enableInteraction(): void`
 
-Enables DOM interaction events (mouse enter, leave, move, click) with element hit testing.
+Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing.
 
 #### `disableInteraction(): void`
 
@@ -1197,6 +1197,26 @@ interface ContextEventMap extends EventMap {
         x: number;
         y: number;
     };
+    dragstart: {
+        x: number;
+        y: number;
+    };
+    drag: {
+        x: number;
+        y: number;
+        startX: number;
+        startY: number;
+        deltaX: number;
+        deltaY: number;
+    };
+    dragend: {
+        x: number;
+        y: number;
+        startX: number;
+        startY: number;
+        deltaX: number;
+        deltaY: number;
+    };
 }
 ```
 
@@ -1210,6 +1230,9 @@ interface ContextEventMap extends EventMap {
 | `mouseleave` | `null` |  |
 | `mousemove` | `{ x: number; y: number; }` |  |
 | `click` | `{ x: number; y: number; }` |  |
+| `dragstart` | `{ x: number; y: number; }` |  |
+| `drag` | `{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }` |  |
+| `dragend` | `{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }` |  |
 | `destroyed` | `null` |  |
 ---
 
@@ -1220,6 +1243,7 @@ Options for constructing a rendering context.
 ```ts
 interface ContextOptions {
     interactive?: boolean;
+    dragThreshold?: number;
 }
 ```
 
@@ -1229,6 +1253,7 @@ interface ContextOptions {
 | Property | Type | Description |
 | --- | --- | --- |
 | `interactive?` | `boolean \| undefined` |  |
+| `dragThreshold?` | `number \| undefined` |  |
 ---
 
 ### ContextElement `interface`
@@ -1457,7 +1482,7 @@ type MeasureTextOptions = {
 Resolves a rotation value (number, degrees string, or radians string) to radians.
 
 ```ts
-function resolveRotation(value: Rotation): number
+function resolveRotation(value: Rotation): number;
 ```
 
 
@@ -1476,7 +1501,7 @@ function resolveRotation(value: Rotation): number
 Resolves a transform-origin value (number or percentage string) to a pixel offset relative to the given dimension.
 
 ```ts
-function resolveTransformOrigin(value: TransformOrigin, dimension: number): number
+function resolveTransformOrigin(value: TransformOrigin, dimension: number): number;
 ```
 
 
@@ -1496,7 +1521,7 @@ function resolveTransformOrigin(value: TransformOrigin, dimension: number): numb
 Measures the dimensions of a text string using an optional font and context override.
 
 ```ts
-function measureText(value: string, options?: MeasureTextOptions): TextMetrics
+function measureText(value: string, options?: MeasureTextOptions): TextMetrics;
 ```
 
 
@@ -1516,7 +1541,7 @@ function measureText(value: string, options?: MeasureTextOptions): TextMetrics
 Type guard that checks whether a value is a `Context` instance.
 
 ```ts
-function typeIsContext(value: unknown): value is Context
+function typeIsContext(value: unknown): value is Context;
 ```
 
 
@@ -1535,7 +1560,7 @@ function typeIsContext(value: unknown): value is Context
 Creates a Canvas 2D rendering context attached to the given DOM target.
 
 ```ts
-function createContext(target: string | HTMLElement, options?: ContextOptions): Context
+function createContext(target: string | HTMLElement, options?: ContextOptions): Context;
 ```
 
 
@@ -1555,7 +1580,7 @@ function createContext(target: string | HTMLElement, options?: ContextOptions): 
 Returns a shared offscreen `CanvasRenderingContext2D` used for text measurement and default state retrieval.
 
 ```ts
-const getRefContext: CachedFunction<() => CanvasRenderingContext2D>
+const getRefContext: CachedFunction<() => CanvasRenderingContext2D>;
 ```
 
 ---
@@ -1565,7 +1590,7 @@ const getRefContext: CachedFunction<() => CanvasRenderingContext2D>
 A scale that maps logical pixels to physical device pixels using `devicePixelRatio`.
 
 ```ts
-const scaleDPR: Scale<number, number>
+const scaleDPR: Scale<number, number>;
 ```
 
 ---

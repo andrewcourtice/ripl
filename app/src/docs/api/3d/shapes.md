@@ -1488,7 +1488,7 @@ interface TorusState extends Shape3DState {
 Factory function that creates a new `Cube` instance.
 
 ```ts
-function createCube(...options: ConstructorParameters<typeof Cube>)
+function createCube(...options: ConstructorParameters<typeof Cube>);
 ```
 
 
@@ -1507,7 +1507,7 @@ function createCube(...options: ConstructorParameters<typeof Cube>)
 Type guard that checks whether a value is a `Cube` instance.
 
 ```ts
-function elementIsCube(value: unknown): value is Cube
+function elementIsCube(value: unknown): value is Cube;
 ```
 
 
@@ -1526,7 +1526,7 @@ function elementIsCube(value: unknown): value is Cube
 Factory function that creates a new `Sphere` instance.
 
 ```ts
-function createSphere(...options: ConstructorParameters<typeof Sphere>)
+function createSphere(...options: ConstructorParameters<typeof Sphere>);
 ```
 
 
@@ -1545,7 +1545,7 @@ function createSphere(...options: ConstructorParameters<typeof Sphere>)
 Type guard that checks whether a value is a `Sphere` instance.
 
 ```ts
-function elementIsSphere(value: unknown): value is Sphere
+function elementIsSphere(value: unknown): value is Sphere;
 ```
 
 
@@ -1564,7 +1564,7 @@ function elementIsSphere(value: unknown): value is Sphere
 Factory function that creates a new `Cylinder` instance.
 
 ```ts
-function createCylinder(...options: ConstructorParameters<typeof Cylinder>)
+function createCylinder(...options: ConstructorParameters<typeof Cylinder>);
 ```
 
 
@@ -1583,7 +1583,7 @@ function createCylinder(...options: ConstructorParameters<typeof Cylinder>)
 Type guard that checks whether a value is a `Cylinder` instance.
 
 ```ts
-function elementIsCylinder(value: unknown): value is Cylinder
+function elementIsCylinder(value: unknown): value is Cylinder;
 ```
 
 
@@ -1602,7 +1602,7 @@ function elementIsCylinder(value: unknown): value is Cylinder
 Factory function that creates a new `Cone` instance.
 
 ```ts
-function createCone(...options: ConstructorParameters<typeof Cone>)
+function createCone(...options: ConstructorParameters<typeof Cone>);
 ```
 
 
@@ -1621,7 +1621,7 @@ function createCone(...options: ConstructorParameters<typeof Cone>)
 Type guard that checks whether a value is a `Cone` instance.
 
 ```ts
-function elementIsCone(value: unknown): value is Cone
+function elementIsCone(value: unknown): value is Cone;
 ```
 
 
@@ -1640,7 +1640,7 @@ function elementIsCone(value: unknown): value is Cone
 Factory function that creates a new `Plane` instance.
 
 ```ts
-function createPlane(...options: ConstructorParameters<typeof Plane>)
+function createPlane(...options: ConstructorParameters<typeof Plane>);
 ```
 
 
@@ -1659,7 +1659,7 @@ function createPlane(...options: ConstructorParameters<typeof Plane>)
 Type guard that checks whether a value is a `Plane` instance.
 
 ```ts
-function elementIsPlane(value: unknown): value is Plane
+function elementIsPlane(value: unknown): value is Plane;
 ```
 
 
@@ -1678,7 +1678,7 @@ function elementIsPlane(value: unknown): value is Plane
 Factory function that creates a new `Torus` instance.
 
 ```ts
-function createTorus(...options: ConstructorParameters<typeof Torus>)
+function createTorus(...options: ConstructorParameters<typeof Torus>);
 ```
 
 
@@ -1697,7 +1697,7 @@ function createTorus(...options: ConstructorParameters<typeof Torus>)
 Type guard that checks whether a value is a `Torus` instance.
 
 ```ts
-function elementIsTorus(value: unknown): value is Torus
+function elementIsTorus(value: unknown): value is Torus;
 ```
 
 

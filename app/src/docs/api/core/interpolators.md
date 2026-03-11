@@ -97,7 +97,7 @@ type InterpolatorFactory<TOut = number, TIn = TOut> = {
 Creates an interpolator that returns the point along a polyline at the given normalised position.
 
 ```ts
-function interpolateWaypoint(points: Point[]): Interpolator<Point>
+function interpolateWaypoint(points: Point[]): Interpolator<Point>;
 ```
 
 
@@ -116,7 +116,7 @@ function interpolateWaypoint(points: Point[]): Interpolator<Point>
 Creates an interpolator that progressively reveals a path from start to end as position advances from 0 to 1.
 
 ```ts
-function interpolatePath(points: Point[]): Interpolator<Point[]>
+function interpolatePath(points: Point[]): Interpolator<Point[]>;
 ```
 
 
@@ -141,7 +141,7 @@ function interpolatePolygonPoint(
     cy: number,
     radius: number,
     closePath: boolean = true
-): Interpolator<Point>
+): Interpolator<Point>;
 ```
 
 
@@ -168,7 +168,7 @@ function interpolateCirclePoint(
     cx: number,
     cy: number,
     radius: number
-): Interpolator<Point>
+): Interpolator<Point>;
 ```
 
 
@@ -189,7 +189,7 @@ function interpolateCirclePoint(
 Creates a string interpolator by interpolating between numeric values embedded in tagged template literals.
 
 ```ts
-function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolationSet, formatter?: StringInterpolationFormatter): Interpolator<string>
+function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolationSet, formatter?: StringInterpolationFormatter): Interpolator<string>;
 ```
 
 
@@ -209,7 +209,7 @@ function interpolateString(callback: (tag: typeof tagIntStr) => StringInterpolat
 Fallback interpolator factory that snaps from the first value to the second at the halfway point.
 
 ```ts
-const interpolateAny: InterpolatorFactory<unknown>
+const interpolateAny: InterpolatorFactory<unknown>;
 ```
 
 ---
@@ -219,7 +219,7 @@ const interpolateAny: InterpolatorFactory<unknown>
 Interpolator factory that smoothly transitions between two CSS color strings by interpolating their RGBA channels.
 
 ```ts
-const interpolateColor: InterpolatorFactory<string>
+const interpolateColor: InterpolatorFactory<string>;
 ```
 
 ---
@@ -229,7 +229,7 @@ const interpolateColor: InterpolatorFactory<string>
 Interpolator factory that interpolates between two `Date` instances by lerping their timestamps.
 
 ```ts
-const interpolateDate: InterpolatorFactory<Date>
+const interpolateDate: InterpolatorFactory<Date>;
 ```
 
 ---
@@ -239,7 +239,7 @@ const interpolateDate: InterpolatorFactory<Date>
 Interpolator factory that transitions between two CSS gradient strings by interpolating their stops, angles, and positions.
 
 ```ts
-const interpolateGradient: InterpolatorFactory<string>
+const interpolateGradient: InterpolatorFactory<string>;
 ```
 
 ---
@@ -249,7 +249,7 @@ const interpolateGradient: InterpolatorFactory<string>
 Interpolator factory that linearly interpolates between two numbers.
 
 ```ts
-const interpolateNumber: InterpolatorFactory<number>
+const interpolateNumber: InterpolatorFactory<number>;
 ```
 
 ---
@@ -259,7 +259,7 @@ const interpolateNumber: InterpolatorFactory<number>
 Interpolator factory that transitions between two point arrays, extrapolating additional points where set lengths differ.
 
 ```ts
-const interpolatePoints: InterpolatorFactory<Point[]>
+const interpolatePoints: InterpolatorFactory<Point[]>;
 ```
 
 ---
@@ -269,7 +269,7 @@ const interpolatePoints: InterpolatorFactory<Point[]>
 Interpolator factory that transitions between two border-radius values (single number or four-corner tuple).
 
 ```ts
-const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius>
+const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius>;
 ```
 
 ---
@@ -279,7 +279,7 @@ const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | Border
 Interpolator factory that transitions between two rotation values (numbers in radians or strings like `"90deg"`).
 
 ```ts
-const interpolateRotation: InterpolatorFactory<string | number>
+const interpolateRotation: InterpolatorFactory<string | number>;
 ```
 
 ---
@@ -289,7 +289,7 @@ const interpolateRotation: InterpolatorFactory<string | number>
 Interpolator factory that transitions between two transform-origin values (numbers or percentage strings).
 
 ```ts
-const interpolateTransformOrigin: InterpolatorFactory<string | number>
+const interpolateTransformOrigin: InterpolatorFactory<string | number>;
 ```
 
 ---

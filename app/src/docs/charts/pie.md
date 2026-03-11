@@ -109,9 +109,15 @@ const chart = createPieChart('#container', {
     value: 'value',
     label: 'label',
     data: [
-        { id: '1', label: 'Australia', value: 55 },
-        { id: '2', label: 'Poland', value: 21 },
-        { id: '3', label: 'South Africa', value: 185 },
+        { id: '1',
+            label: 'Australia',
+            value: 55 },
+        { id: '2',
+            label: 'Poland',
+            value: 21 },
+        { id: '3',
+            label: 'South Africa',
+            value: 185 },
     ],
 });
 ```
@@ -122,9 +128,15 @@ Each item needs a unique `key`, a numeric `value`, and a display `label`:
 
 ```ts
 const data = [
-    { id: 'au', label: 'Australia', value: 55 },
-    { id: 'pl', label: 'Poland', value: 21 },
-    { id: 'za', label: 'South Africa', value: 185 },
+    { id: 'au',
+        label: 'Australia',
+        value: 55 },
+    { id: 'pl',
+        label: 'Poland',
+        value: 21 },
+    { id: 'za',
+        label: 'South Africa',
+        value: 185 },
 ];
 ```
 

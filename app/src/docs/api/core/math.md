@@ -94,7 +94,7 @@ type BorderRadius = [
 Converts degrees to radians.
 
 ```ts
-function degreesToRadians(degrees: number): number
+function degreesToRadians(degrees: number): number;
 ```
 
 
@@ -113,7 +113,7 @@ function degreesToRadians(degrees: number): number
 Converts radians to degrees.
 
 ```ts
-function radiansToDegrees(radians: number): number
+function radiansToDegrees(radians: number): number;
 ```
 
 
@@ -132,7 +132,7 @@ function radiansToDegrees(radians: number): number
 Tests whether two points have identical coordinates.
 
 ```ts
-function arePointsEqual([x1, y1]: Point, [x2, y2]: Point): boolean
+function arePointsEqual([x1, y1]: Point, [x2, y2]: Point): boolean;
 ```
 
 
@@ -152,7 +152,7 @@ function arePointsEqual([x1, y1]: Point, [x2, y2]: Point): boolean
 Returns the midpoint between two points.
 
 ```ts
-function getMidpoint(pointA: Point, pointB: Point): Point
+function getMidpoint(pointA: Point, pointB: Point): Point;
 ```
 
 
@@ -172,7 +172,7 @@ function getMidpoint(pointA: Point, pointB: Point): Point
 Returns a point along the line segment between two points at the given normalised position (0–1).
 
 ```ts
-function getWaypoint([x1, y1]: Point, [x2, y2]: Point, position: number): Point
+function getWaypoint([x1, y1]: Point, [x2, y2]: Point, position: number): Point;
 ```
 
 
@@ -193,7 +193,7 @@ function getWaypoint([x1, y1]: Point, [x2, y2]: Point, position: number): Point
 Computes the hypotenuse length from two right-triangle sides.
 
 ```ts
-function getHypLength(sideA: number, sideB: number): number
+function getHypLength(sideA: number, sideB: number): number;
 ```
 
 
@@ -213,7 +213,7 @@ function getHypLength(sideA: number, sideB: number): number
 Returns the point at a given angle and distance from an optional centre.
 
 ```ts
-function getThetaPoint(angle: number, distance: number, cx?: number, cy?: number): Point
+function getThetaPoint(angle: number, distance: number, cx?: number, cy?: number): Point;
 ```
 
 
@@ -241,7 +241,7 @@ function getPolygonPoints(
     cy: number,
     radius: number,
     closePath: boolean = true
-): Point[]
+): Point[];
 ```
 
 
@@ -264,7 +264,7 @@ function getPolygonPoints(
 Computes the smallest axis-aligned bounding box that contains all boxes extracted from the array.
 
 ```ts
-function getContainingBox<TValue>(value: TValue[], identity: (value: TValue) => Box): Box
+function getContainingBox<TValue>(value: TValue[], identity: (value: TValue) => Box): Box;
 ```
 
 
@@ -304,7 +304,7 @@ function isPointInBox([x, y]: Point,
 Normalises a border radius value into a four-corner tuple, expanding a single number to all corners.
 
 ```ts
-function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius
+function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius;
 ```
 
 
@@ -323,7 +323,7 @@ function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadiu
 Type guard that checks whether a value is a `Point` (a two-element array).
 
 ```ts
-function typeIsPoint(value: unknown): value is Point
+function typeIsPoint(value: unknown): value is Point;
 ```
 
 
@@ -342,7 +342,7 @@ function typeIsPoint(value: unknown): value is Point
 Computes the total length of an SVG path from its `d` attribute string.
 
 ```ts
-function getPathLength(pathData: string): number
+function getPathLength(pathData: string): number;
 ```
 
 
@@ -361,7 +361,7 @@ function getPathLength(pathData: string): number
 Samples a point and tangent angle at the given distance along an SVG path.
 
 ```ts
-function samplePathPoint(pathData: string, distance: number): PathPoint
+function samplePathPoint(pathData: string, distance: number): PathPoint;
 ```
 
 
@@ -381,7 +381,7 @@ function samplePathPoint(pathData: string, distance: number): PathPoint
 Returns the minimum of the provided numbers.
 
 ```ts
-function min(...values: number[]): number
+function min(...values: number[]): number;
 ```
 
 
@@ -400,7 +400,7 @@ function min(...values: number[]): number
 Returns the maximum of the provided numbers.
 
 ```ts
-function max(...values: number[]): number
+function max(...values: number[]): number;
 ```
 
 
@@ -419,7 +419,7 @@ function max(...values: number[]): number
 Returns the minimum numeric value extracted from an array via the accessor.
 
 ```ts
-function minOf<TValue>(values: TValue[], accessor: (value: TValue) => number)
+function minOf<TValue>(values: TValue[], accessor: (value: TValue) => number);
 ```
 
 
@@ -439,7 +439,7 @@ function minOf<TValue>(values: TValue[], accessor: (value: TValue) => number)
 Returns the maximum numeric value extracted from an array via the accessor.
 
 ```ts
-function maxOf<TValue>(values: TValue[], accessor: (value: TValue) => number)
+function maxOf<TValue>(values: TValue[], accessor: (value: TValue) => number);
 ```
 
 
@@ -459,7 +459,7 @@ function maxOf<TValue>(values: TValue[], accessor: (value: TValue) => number)
 Constrains a value to the inclusive range between lower and upper bounds.
 
 ```ts
-function clamp(value: number, lower: number, upper: number): number
+function clamp(value: number, lower: number, upper: number): number;
 ```
 
 
@@ -480,7 +480,7 @@ function clamp(value: number, lower: number, upper: number): number
 Returns the fractional part of a number (e.g. `fractional(3.7)` → `0.7`).
 
 ```ts
-function fractional(value: number): number
+function fractional(value: number): number;
 ```
 
 
@@ -499,7 +499,7 @@ function fractional(value: number): number
 Computes the `[min, max]` extent of an array using the given numeric accessor.
 
 ```ts
-function getExtent<TValue>(values: TValue[], accessor: (value: TValue) => number): [min: number, max: number]
+function getExtent<TValue>(values: TValue[], accessor: (value: TValue) => number): [min: number, max: number];
 ```
 
 
@@ -519,7 +519,7 @@ function getExtent<TValue>(values: TValue[], accessor: (value: TValue) => number
 Sums all numeric values extracted from an array via the accessor.
 
 ```ts
-function getTotal<TValue>(values: TValue[], accessor: (value: TValue) => number): number
+function getTotal<TValue>(values: TValue[], accessor: (value: TValue) => number): number;
 ```
 
 
@@ -539,7 +539,7 @@ function getTotal<TValue>(values: TValue[], accessor: (value: TValue) => number)
 Full circle in radians (2π).
 
 ```ts
-const TAU: number
+const TAU: number;
 ```
 
 ---

@@ -206,7 +206,7 @@ type ScaleMethod<TInput = number, TOutput = number> = (value: TInput) => TOutput
 Expands a numeric domain to "nice" tick-aligned boundaries and returns `[min, max, step]`.
 
 ```ts
-function padDomain(domain: number[], count: number = 10)
+function padDomain(domain: number[], count: number = 10);
 ```
 
 
@@ -226,7 +226,7 @@ function padDomain(domain: number[], count: number = 10)
 Assembles a `Scale` object from explicit conversion, inversion, and tick functions.
 
 ```ts
-function createScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange>
+function createScale<TDomain = number, TRange = number>(options: ScaleBindingOptions<TDomain, TRange>): Scale<TDomain, TRange>;
 ```
 
 
@@ -245,7 +245,7 @@ function createScale<TDomain = number, TRange = number>(options: ScaleBindingOpt
 Creates a linear mapping function from a numeric domain to a numeric range, with optional clamping and tick-padding.
 
 ```ts
-function getLinearScaleMethod(domain: number[], range: number[], options?: LinearScaleOptions): ScaleMethod
+function getLinearScaleMethod(domain: number[], range: number[], options?: LinearScaleOptions): ScaleMethod;
 ```
 
 
@@ -266,7 +266,7 @@ function getLinearScaleMethod(domain: number[], range: number[], options?: Linea
 Creates an `includes` predicate that tests whether a value falls within the numeric domain.
 
 ```ts
-function createNumericIncludesMethod(domain: number[])
+function createNumericIncludesMethod(domain: number[]);
 ```
 
 
@@ -285,7 +285,7 @@ function createNumericIncludesMethod(domain: number[])
 Generates an array of evenly spaced, "nice" tick values across the domain.
 
 ```ts
-function getLinearTicks(domain: number[], count: number = 10)
+function getLinearTicks(domain: number[], count: number = 10);
 ```
 
 
@@ -309,7 +309,7 @@ function scaleBand<TDomain = string>(
     domain: TDomain[],
     range: number[],
     options?: BandScaleOptions
-): BandScale<TDomain>
+): BandScale<TDomain>;
 ```
 
 
@@ -334,7 +334,7 @@ function scaleContinuous(
     domain: number[],
     range: number[],
     options?: LinearScaleOptions
-): Scale<number>
+): Scale<number>;
 ```
 
 
@@ -358,7 +358,7 @@ Creates a discrete (ordinal) scale that maps domain values to corresponding rang
 function scaleDiscrete<TDomain>(
     domain: TDomain[],
     range: number[]
-): Scale<TDomain>
+): Scale<TDomain>;
 ```
 
 
@@ -382,7 +382,7 @@ function scaleDiverging(
     domain: number[],
     range: number[],
     options?: DivergingScaleOptions
-): Scale<number>
+): Scale<number>;
 ```
 
 
@@ -407,7 +407,7 @@ function scaleLogarithmic(
     domain: number[],
     range: number[],
     options?: LogarithmicScaleOptions
-): Scale<number>
+): Scale<number>;
 ```
 
 
@@ -430,7 +430,7 @@ function scaleLog(
     domain: number[],
     range: number[],
     options?: LinearScaleOptions
-): Scale<number>
+): Scale<number>;
 ```
 
 
@@ -455,7 +455,7 @@ function scalePower(
     domain: number[],
     range: number[],
     options?: PowerScaleOptions
-): Scale<number>
+): Scale<number>;
 ```
 
 
@@ -479,7 +479,7 @@ Creates a quantile scale that divides a sorted numeric domain into quantiles map
 function scaleQuantile<TRange>(
     domain: number[],
     range: TRange[]
-): Scale<number, TRange>
+): Scale<number, TRange>;
 ```
 
 
@@ -502,7 +502,7 @@ Creates a quantize scale that divides a continuous numeric domain into uniform s
 function scaleQuantize<TRange>(
     domain: number[],
     range: TRange[]
-): Scale<number, TRange>
+): Scale<number, TRange>;
 ```
 
 
@@ -525,7 +525,7 @@ Creates a threshold scale that maps numeric values to range values based on a se
 function scaleThreshold<TRange>(
     domain: number[],
     range: TRange[]
-): Scale<number, TRange>
+): Scale<number, TRange>;
 ```
 
 
@@ -549,7 +549,7 @@ function scaleTime(
     domain: Date[],
     range: number[],
     options?: LinearScaleOptions
-): Scale<Date, number>
+): Scale<Date, number>;
 ```
 
 
@@ -570,7 +570,7 @@ function scaleTime(
 Shortcut for a power scale with exponent 0.5 (square root).
 
 ```ts
-const scaleSqrt: (domain: number[], range: number[], options?: LinearScaleOptions) => Scale<number>
+const scaleSqrt: (domain: number[], range: number[], options?: LinearScaleOptions) => Scale<number>;
 ```
 
 ---
