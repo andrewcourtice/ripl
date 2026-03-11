@@ -4,6 +4,9 @@ export type ContextType = 'canvas' | 'svg';
 export interface PlaygroundSettings {
     autoStop: boolean;
     cameraInteractions: boolean;
+    debugFps: boolean;
+    debugElementCount: boolean;
+    debugBoundingBoxes: boolean;
 }
 
 export interface PlaygroundState {
@@ -30,6 +33,11 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,
+                '    debug: {',
+                `        fps: ${settings.debugFps},`,
+                `        elementCount: ${settings.debugElementCount},`,
+                `        boundingBoxes: ${settings.debugBoundingBoxes},`,
+                '    },',
                 '});',
                 'const camera = createCamera(scene, {',
                 '    position: [0, 1.5, 5],',
@@ -51,7 +59,14 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
             body: [
                 'const context = createContext(\'#root\');',
                 'const scene = createScene(context);',
-                `const renderer = createRenderer(scene, { autoStop: ${settings.autoStop} });`,
+                'const renderer = createRenderer(scene, {',
+                `    autoStop: ${settings.autoStop},`,
+                '    debug: {',
+                `        fps: ${settings.debugFps},`,
+                `        elementCount: ${settings.debugElementCount},`,
+                `        boundingBoxes: ${settings.debugBoundingBoxes},`,
+                '    },',
+                '});',
             ].join('\n'),
         };
     }
@@ -63,7 +78,14 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
         body: [
             'const context = createContext(\'#root\', { buffer: false });',
             'const scene = createScene(context);',
-            `const renderer = createRenderer(scene, { autoStop: ${settings.autoStop} });`,
+            'const renderer = createRenderer(scene, {',
+            `    autoStop: ${settings.autoStop},`,
+            '    debug: {',
+            `        fps: ${settings.debugFps},`,
+            `        elementCount: ${settings.debugElementCount},`,
+            `        boundingBoxes: ${settings.debugBoundingBoxes},`,
+            '    },',
+            '});',
         ].join('\n'),
     };
 }
@@ -137,6 +159,7 @@ export function buildSrcdoc(
         }
 
         #root {
+            position: relative;
             width: 100%;
             height: 100%;
         }

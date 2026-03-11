@@ -142,12 +142,13 @@ export function elementIsCircle(value: unknown): value is Circle {
 - Each property must have an explicit getter/setter pair
 - `Shape` provides `autoFill` and `autoStroke` — these automatically call `context.fill(path)` and `context.stroke(path)` after the render callback
 - Use persistent path keys (`context.createPath(this.id)`) for SVG diffing efficiency
+- Always prefer factory functions (`createX()`) over direct class construction (`new X()`) in consumer-facing code. Direct `new` is only appropriate inside factory function implementations.
 
 ## Chart Patterns
 
 ### Base Chart Class
 
-All charts extend `Chart<TOptions>` from `@ripl/charts`:
+All charts extend `Chart<TOptions>` from `@ripl/charts`. Each chart must export a `createXChart` factory function:
 
 ```typescript
 export class BarChart<TData> extends Chart<BarChartOptions<TData>> {
@@ -157,7 +158,13 @@ export class BarChart<TData> extends Chart<BarChartOptions<TData>> {
         this.init();
     }
 }
+
+export function createBarChart(...options: ConstructorParameters<typeof BarChart>) {
+    return new BarChart(...options);
+}
 ```
+
+Consumers should always use `createBarChart()` rather than `new BarChart()`.
 
 The base `Chart` class provides:
 - **`scene`** and **`renderer`** — created automatically from the target

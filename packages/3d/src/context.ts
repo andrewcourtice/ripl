@@ -12,8 +12,13 @@ import {
     mat4Multiply,
     mat4Orthographic,
     mat4Perspective,
+    mat4TransformDirection,
     mat4TransformPoint,
 } from './math/matrix';
+
+import {
+    LIGHT_DIRECTION,
+} from './constants';
 
 import {
     degreesToRadians,
@@ -29,11 +34,16 @@ import type {
     Vector3,
 } from './math';
 
+/** Determines whether the light direction is fixed in world space or follows the camera. */
+export type LightMode = 'world' | 'camera';
+
 /** Options for the 3D rendering context, extending the base context options with camera parameters. */
 export interface Context3DOptions extends ContextOptions {
     fov?: number;
     near?: number;
     far?: number;
+    lightDirection?: Vector3;
+    lightMode?: LightMode;
 }
 
 /** 3D rendering context extending the Canvas context with view/projection matrices and a face buffer for painter's algorithm sorting. */
@@ -43,6 +53,7 @@ export class Context3D extends CanvasContext {
     public projectionMatrix: Matrix4;
     public viewProjectionMatrix: Matrix4;
     public lightDirection: Vector3;
+    public lightMode: LightMode;
     public faceBuffer: ProjectedFace3D[] = [];
 
     private fov: number;
@@ -61,7 +72,8 @@ export class Context3D extends CanvasContext {
         this.fov = fov;
         this.near = near;
         this.far = far;
-        this.lightDirection = [0, 0, -1];
+        this.lightDirection = options?.lightDirection ?? [...LIGHT_DIRECTION.topLeftFront];
+        this.lightMode = options?.lightMode ?? 'world';
         this.viewMatrix = mat4Identity();
         this.projectionMatrix = mat4Identity();
         this.viewProjectionMatrix = mat4Identity();
@@ -118,6 +130,15 @@ export class Context3D extends CanvasContext {
     ): void {
         this.projectionMatrix = mat4Orthographic(left, right, bottom, top, near, far);
         this.updateViewProjectionMatrix();
+    }
+
+    /** Returns the effective light direction for the current render, accounting for the light mode. */
+    public getLightDirectionForRender(): Vector3 {
+        if (this.lightMode === 'world') {
+            return mat4TransformDirection(this.viewMatrix, this.lightDirection);
+        }
+
+        return this.lightDirection;
     }
 
     /** Projects a 3D world-space point to 2D screen coordinates. */

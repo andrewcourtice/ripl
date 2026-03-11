@@ -67,6 +67,9 @@ const riplImportMap = ref<Record<string, string>>({});
 const settings = ref<PlaygroundSettings>({
     autoStop: false,
     cameraInteractions: true,
+    debugFps: false,
+    debugElementCount: false,
+    debugBoundingBoxes: false,
 });
 
 const { isDark } = useData();

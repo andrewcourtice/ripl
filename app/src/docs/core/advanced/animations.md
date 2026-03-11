@@ -32,17 +32,17 @@ await transition({
 
 The transition accepts `duration` (milliseconds), `ease` (easing function, defaults to `easeLinear`), and `loop` (repeat indefinitely).
 
-### Cancelling a Transition
+### Aborting a Transition
 
-The `transition` function returns a `Transition` object (which extends `Task`). You can cancel it:
+The `transition` function returns a `Transition` object (which extends `Task`). You can abort it:
 
 ```ts
 const t = transition({ duration: 2000 }, (t) => {
     circle.radius = 50 + t * 50;
 });
 
-// Cancel after 500ms
-setTimeout(() => t.cancel(), 500);
+// Abort after 500ms
+setTimeout(() => t.abort(), 500);
 ```
 
 ## Renderer Transitions

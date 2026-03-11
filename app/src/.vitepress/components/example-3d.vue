@@ -23,6 +23,10 @@ import {
 } from 'vue';
 
 import {
+    createContext,
+} from '@ripl/3d';
+
+import type {
     Context3D,
 } from '@ripl/3d';
 
@@ -37,7 +41,7 @@ watchEffect(() => {
     context?.destroy();
 
     if (root.value) {
-        context = new Context3D(root.value, {
+        context = createContext(root.value, {
             buffer: false,
         });
 

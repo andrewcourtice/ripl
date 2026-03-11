@@ -4,7 +4,7 @@ import {
 
 const cube = createCube({
     size: 1,
-    fillStyle: '#6366f1',
+    fill: '#6366f1',
 });
 
 scene.add(cube);

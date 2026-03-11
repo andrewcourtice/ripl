@@ -28,6 +28,22 @@
                         label="Interactions"
                     />
                 </template>
+                <RiplDropdownLabel>Debug</RiplDropdownLabel>
+                <RiplSwitch
+                    :modelValue="settings.debugFps"
+                    @update:modelValue="updateSetting('debugFps', $event)"
+                    label="FPS"
+                />
+                <RiplSwitch
+                    :modelValue="settings.debugElementCount"
+                    @update:modelValue="updateSetting('debugElementCount', $event)"
+                    label="Element Count"
+                />
+                <RiplSwitch
+                    :modelValue="settings.debugBoundingBoxes"
+                    @update:modelValue="updateSetting('debugBoundingBoxes', $event)"
+                    label="Bounding Boxes"
+                />
             </RiplDropdown>
         </div>
         <div class="playground-preview__body">

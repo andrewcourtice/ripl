@@ -174,7 +174,125 @@ group.queryAll('.shape');
 </ripl-example>
 :::
 
-### Using Scenes
+## Interaction
+
+Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, and `click` directly on any element — no scene or renderer required.
+
+:::tabs
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 200,
+    cy: 150,
+    radius: 60,
+});
+
+function render() {
+    context.clear();
+    context.markRenderStart();
+    circle.render(context);
+    context.markRenderEnd();
+}
+
+render();
+
+circle.on('mouseenter', () => {
+    circle.fill = '#ff006e';
+    render();
+});
+
+circle.on('mouseleave', () => {
+    circle.fill = '#3a86ff';
+    render();
+});
+
+circle.on('click', () => {
+    circle.radius = circle.radius === 60 ? 90 : 60;
+    render();
+});
+```
+== Demo
+<ripl-example @context-changed="interactionContextChanged"></ripl-example>
+:::
+
+> [!TIP]
+> Hover over and click the circle to see the events in action.
+
+> [!TIP]
+> After changing element properties, re-render to see the updates. The `markRenderStart()`/`markRenderEnd()` calls tell the context which elements are on screen for hit testing.
+
+## Animation
+
+Ripl provides a standalone `transition()` function for animating values over time. Combined with an element's `interpolate()` method, you can smoothly animate element properties without a renderer.
+
+The `transition()` function calls your callback on each animation frame with an eased time value (0–1). The element's `interpolate()` method creates an interpolator that maps that time value to intermediate property states.
+
+:::tabs
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    easeOutCubic,
+    transition,
+} from '@ripl/core';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 200,
+    cy: 150,
+    radius: 60,
+});
+
+function render() {
+    context.clear();
+    context.markRenderStart();
+    circle.render(context);
+    context.markRenderEnd();
+}
+
+render();
+
+const interpolator = circle.interpolate({
+    radius: 100,
+    fill: '#ff006e',
+});
+
+await transition(time => {
+    interpolator(time);
+    render();
+}, {
+    duration: 1000,
+    ease: easeOutCubic,
+});
+```
+== Demo
+<ripl-example @context-changed="transitionContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runTransition">Animate</RiplButton>
+            <RiplButton @click="resetTransition">Reset</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+:::
+
+> [!NOTE]
+> The `transition()` function returns a `Transition` (which extends `Task`) — it is both **awaitable** and **cancellable** via `transition.abort()`.
+
+The standalone `transition()` gives you full control, but for most use-cases a **Scene** and **Renderer** provide a more convenient approach.
+
+## Using Scenes
 
 A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle — clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
 
@@ -183,7 +301,6 @@ A **Scene** is a special group that binds to a context. It manages the full rend
 ```ts
 import {
     createCircle,
-    createContext,
     createRect,
     createScene,
 } from '@ripl/core';
@@ -215,13 +332,9 @@ scene.render();
 > [!TIP]
 > When you use a Scene, you don't need to manage `context.clear()` or `context.markRenderStart()`/`markRenderEnd()` yourself — the scene handles all of that.
 
-## Interactivity and Animation
+## Using a Renderer
 
-### Using Renderers
-
-A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene, which is essential for animations and interactive hover/click effects.
-
-The renderer also provides a `transition()` method that smoothly animates element properties from their current values to new values.
+A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, and its `transition()` method handles interpolation and re-rendering for you — no manual `scene.render()` calls needed.
 
 :::tabs
 == Code
@@ -247,7 +360,6 @@ const scene = createScene('.mount-element', {
 
 const renderer = createRenderer(scene);
 
-// Animate the circle
 const circle = scene.query('#my-circle');
 
 await renderer.transition(circle, {
@@ -270,15 +382,14 @@ await renderer.transition(circle, {
 </ripl-example>
 :::
 
-### Adding Animation
+### Chaining Transitions
 
-Transitions are **awaitable**, so you can chain animations sequentially. You can also animate multiple elements at once and use different easing functions.
+Because `renderer.transition()` returns a promise, you can chain animations sequentially. You can also animate multiple elements at once and use different easing functions.
 
 :::tabs
 == Code
 ```ts
 async function animate() {
-    // Animate one element
     await renderer.transition(circle, {
         duration: 800,
         ease: easeOutCubic,
@@ -288,7 +399,6 @@ async function animate() {
         },
     });
 
-    // Then animate it back
     await renderer.transition(circle, {
         duration: 800,
         ease: easeInOutQuad,
@@ -336,6 +446,7 @@ import {
     Group,
     Renderer,
     Scene,
+    transition,
 } from '@ripl/core';
 
 import type {
@@ -509,6 +620,127 @@ function runQuery(selector: string) {
 
     queryContext.clear();
     queryGroup.render(queryContext);
+}
+
+
+// Interaction example
+
+const {
+    contextChanged: interactionContextChanged
+} = useRiplExample(context => {
+    const width = context.width;
+    const height = context.height;
+
+    const circle = createCircle({
+        fill: '#3a86ff',
+        cx: width / 2,
+        cy: height / 2,
+        radius: Math.min(width, height) / 5,
+    });
+
+    const render = () => {
+        context.clear();
+        context.markRenderStart();
+        circle.render(context);
+        context.markRenderEnd();
+    };
+
+    render();
+
+    circle.on('mouseenter', () => {
+        circle.fill = '#ff006e';
+        render();
+    });
+
+    circle.on('mouseleave', () => {
+        circle.fill = '#3a86ff';
+        render();
+    });
+
+    const baseRadius = Math.min(width, height) / 5;
+    const expandedRadius = Math.min(width, height) / 3;
+
+    circle.on('click', () => {
+        circle.radius = circle.radius === baseRadius ? expandedRadius : baseRadius;
+        render();
+    });
+});
+
+
+// Transition example
+
+let transitionContext: Context | undefined;
+let transitionCircle: Circle;
+
+const {
+    contextChanged: transitionContextChanged
+} = useRiplExample(context => {
+    const width = context.width;
+    const height = context.height;
+
+    transitionContext = context;
+
+    transitionCircle = createCircle({
+        fill: '#3a86ff',
+        cx: width / 2,
+        cy: height / 2,
+        radius: Math.min(width, height) / 5,
+    });
+
+    const render = () => {
+        context.clear();
+        context.markRenderStart();
+        transitionCircle.render(context);
+        context.markRenderEnd();
+    };
+
+    render();
+});
+
+function transitionRender() {
+    if (!transitionContext || !transitionCircle) return;
+    transitionContext.clear();
+    transitionContext.markRenderStart();
+    transitionCircle.render(transitionContext);
+    transitionContext.markRenderEnd();
+}
+
+function runTransition() {
+    if (!transitionContext || !transitionCircle) return;
+
+    const shortSize = Math.min(transitionContext.width, transitionContext.height);
+
+    const interpolator = transitionCircle.interpolate({
+        radius: shortSize / 3,
+        fill: '#ff006e',
+    });
+
+    transition(time => {
+        interpolator(time);
+        transitionRender();
+    }, {
+        duration: 1000,
+        ease: easeOutCubic,
+    });
+}
+
+function resetTransition() {
+    if (!transitionContext || !transitionCircle) return;
+
+    const shortSize = Math.min(transitionContext.width, transitionContext.height);
+
+    const interpolator = transitionCircle.interpolate({
+        radius: shortSize / 5,
+        fill: '#3a86ff',
+    });
+
+    transition(time => {
+        interpolator(time);
+        transitionRender();
+    }, {
+        duration: 600,
+        ease: easeOutCubic,
+    });
 }
 
 

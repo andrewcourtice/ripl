@@ -217,7 +217,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const faces = this.getCachedFaces();
         const baseFillStyle = this.fill || '#888888';
         const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
-        const normalizedLight = vec3Normalize(ctx.lightDirection ?? [0, 0, -1]);
+        const normalizedLight = vec3Normalize(ctx.getLightDirectionForRender());
         const matrix = this.getModelMatrix();
 
         this.context = context;

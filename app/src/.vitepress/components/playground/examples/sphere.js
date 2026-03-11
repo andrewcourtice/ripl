@@ -5,7 +5,7 @@ import {
 const sphere = createSphere({
     radius: 0.8,
     segments: 32,
-    fillStyle: '#6366f1',
+    fill: '#6366f1',
 });
 
 scene.add(sphere);

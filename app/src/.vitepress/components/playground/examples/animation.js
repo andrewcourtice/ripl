@@ -10,13 +10,13 @@ const circle = createCircle({
     cx,
     cy,
     radius: 20,
-    fillStyle: '#6366f1',
+    fill: '#6366f1',
 });
 
 scene.add(circle);
 
 renderer.transition(circle, {
-    state: { radius: 80 },
     duration: 1200,
     ease: easeInOutCubic,
+    state: { radius: 80 },
 });

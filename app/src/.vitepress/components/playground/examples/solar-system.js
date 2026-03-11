@@ -49,14 +49,14 @@ const background = createRect({
     y: 0,
     width: context.width,
     height: context.height,
-    fillStyle: '#000000',
+    fill: '#000000',
 });
 
 const sun = createCircle({
     cx: centerX,
     cy: centerY,
     radius: 30,
-    fillStyle: '#FFD700',
+    fill: '#FFD700',
 });
 
 const planetElements = planets.map(data => ({
@@ -65,13 +65,13 @@ const planetElements = planets.map(data => ({
         cx: centerX,
         cy: centerY,
         radius: data.distance,
-        strokeStyle: '#333333',
+        stroke: '#333333',
     }),
     element: createCircle({
         cx: centerX + data.distance,
         cy: centerY,
         radius: data.size,
-        fillStyle: data.color,
+        fill: data.color,
     }),
     angle: Math.random() * Math.PI * 2, // Random starting position
 }));

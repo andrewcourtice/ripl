@@ -12,7 +12,10 @@ import {
 import {
     OneOrMore,
     stringEquals,
+    typeIsBoolean,
     typeIsNil,
+    typeIsNumber,
+    typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
 
@@ -63,6 +66,14 @@ const COMBINATOR_PRODUCERS = [
 }[];
 
 function serialiseAttribute(value: unknown) {
+    if (typeIsString(value)) {
+        return value;
+    }
+
+    if (typeIsNumber(value) || typeIsBoolean(value)) {
+        return String(value);
+    }
+
     try {
         return JSON.stringify(value).replaceAll(/(^"|"$)/g, '');
     } catch {
@@ -252,8 +263,8 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
 
     /** Returns all descendant elements whose type matches one of the given type names. */
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
-        const typeList = valueOneOrMore(types);
-        return this.graph(true).filter(element => typeList.includes(element.type)) as TElement[];
+        const typeList = new Set(valueOneOrMore(types));
+        return this.graph(true).filter(element => typeList.has(element.type)) as TElement[];
     }
 
     /** Returns all descendant elements that have all of the given CSS class names. */
