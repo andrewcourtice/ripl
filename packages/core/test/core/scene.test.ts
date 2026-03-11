@@ -13,51 +13,9 @@ import {
     createScene,
 } from '../../src';
 
-function mockCanvasContext() {
-    const stub = {
-        save: vi.fn(),
-        restore: vi.fn(),
-        scale: vi.fn(),
-        clearRect: vi.fn(),
-        fillRect: vi.fn(),
-        strokeRect: vi.fn(),
-        beginPath: vi.fn(),
-        closePath: vi.fn(),
-        moveTo: vi.fn(),
-        lineTo: vi.fn(),
-        arc: vi.fn(),
-        fill: vi.fn(),
-        stroke: vi.fn(),
-        clip: vi.fn(),
-        translate: vi.fn(),
-        rotate: vi.fn(),
-        setTransform: vi.fn(),
-        resetTransform: vi.fn(),
-        measureText: vi.fn(() => ({
-            width: 0,
-            actualBoundingBoxAscent: 0,
-            actualBoundingBoxDescent: 0,
-            actualBoundingBoxLeft: 0,
-            actualBoundingBoxRight: 0,
-        })),
-        createLinearGradient: vi.fn(() => ({
-            addColorStop: vi.fn(),
-        })),
-        createRadialGradient: vi.fn(() => ({
-            addColorStop: vi.fn(),
-        })),
-        setLineDash: vi.fn(),
-        getLineDash: vi.fn(() => []),
-        drawImage: vi.fn(),
-        getImageData: vi.fn(),
-        putImageData: vi.fn(),
-        canvas: document.createElement('canvas'),
-    };
-
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(stub as unknown as CanvasRenderingContext2D);
-
-    return stub;
-}
+import {
+    mockCanvasContext,
+} from '@ripl/test-utils';
 
 describe('Scene', () => {
 
