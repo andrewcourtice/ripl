@@ -1,12 +1,8 @@
 import {
-    BorderRadius,
     Context,
-    ContextElement,
-    ContextOptions,
     ContextPath,
     ContextText,
     createFrameBuffer,
-    FillRule,
     getThetaPoint,
     isGradientString,
     measureText,
@@ -15,31 +11,41 @@ import {
     parseGradient,
     radiansToDegrees,
     serialiseRGBA,
+} from '@ripl/core';
+
+import type {
+    BorderRadius,
+    ContextElement,
+    ContextOptions,
+    FillRule,
+    Gradient,
+    GradientColorStop,
     TextAlignment,
     TextBaseline,
     TextOptions,
 } from '@ripl/core';
 
 import {
-    AnyFunction,
-    GetMutableKeys,
     objectForEach,
     objectMap,
     stringUniqueId,
+} from '@ripl/utilities';
+
+import type {
+    AnyFunction,
+    GetMutableKeys,
 } from '@ripl/utilities';
 
 import {
     ensureGroupPath,
     getAncestorGroupIds,
     reconcileNode,
-    ReconcilerOptions,
-    VNode,
 } from '@ripl/vdom';
 
 import type {
-    Gradient,
-    GradientColorStop,
-} from '@ripl/core';
+    ReconcilerOptions,
+    VNode,
+} from '@ripl/vdom';
 
 type SVGVNode = VNode<SVGContextElement>;
 type GradientElementFactory = (gradient: Gradient) => SVGElement;

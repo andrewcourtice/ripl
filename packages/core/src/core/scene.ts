@@ -1,4 +1,4 @@
-import {
+import type {
     Element,
     ElementEventMap,
 } from './element';
@@ -15,6 +15,9 @@ import {
 
 import {
     Group,
+} from './group';
+
+import type {
     GroupOptions,
 } from './group';
 

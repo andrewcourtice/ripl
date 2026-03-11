@@ -1,26 +1,26 @@
 import {
-    parseColor,
-    serialiseRGBA,
-} from '@ripl/core';
-
-import {
     vec3Cross,
     vec3Dot,
     vec3Normalize,
     vec3Sub,
 } from './math/vector';
 
+import type {
+    Vector3,
+} from './math/vector';
+
 import {
-    typeIsString,
-} from '@ripl/utilities';
+    parseColor,
+    serialiseRGBA,
+} from '@ripl/core';
 
 import type {
     ColorRGBA,
 } from '@ripl/core';
 
-import type {
-    Vector3,
-} from './math/vector';
+import {
+    typeIsString,
+} from '@ripl/utilities';
 
 /** Computes the surface normal of a face from its first three vertices via the cross product. */
 export function computeFaceNormal(vertices: Vector3[]): Vector3 {

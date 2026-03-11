@@ -4,8 +4,11 @@ import type {
 } from '../context';
 
 import {
-    BaseElementState,
     Shape2D,
+} from '../core';
+
+import type {
+    BaseElementState,
     Shape2DOptions,
 } from '../core';
 

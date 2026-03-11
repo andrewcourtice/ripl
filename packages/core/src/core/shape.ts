@@ -1,4 +1,4 @@
-import {
+import type {
     Context,
     ContextPath,
 } from '../context';

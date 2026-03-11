@@ -1,27 +1,34 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {
-    BorderRadius,
     Box,
     degreesToRadians,
     getEuclideanDistance,
+} from '../../math';
+
+import type {
+    BorderRadius,
     Point,
 } from '../../math';
 
 import {
     EventBus,
+} from '../../core/event-bus';
+
+import type {
     EventMap,
 } from '../../core/event-bus';
 
 import {
-    Scale,
     scaleContinuous,
+} from '../../scales';
+
+import type {
+    Scale,
 } from '../../scales';
 
 import {
     arrayJoin,
-    DOMElementEventMap,
-    DOMEventHandler,
     functionCache,
     functionMemoize,
     hasWindow,
@@ -30,6 +37,11 @@ import {
     stringUniqueId,
     typeIsNumber,
     typeIsString,
+} from '@ripl/utilities';
+
+import type {
+    DOMElementEventMap,
+    DOMEventHandler,
 } from '@ripl/utilities';
 
 import {

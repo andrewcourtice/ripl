@@ -1,3 +1,7 @@
+import type {
+    Context3D,
+} from './context';
+
 import {
     vec3Add,
     vec3Cross,
@@ -7,27 +11,23 @@ import {
     vec3Sub,
 } from './math/vector';
 
+import type {
+    Vector3,
+} from './math/vector';
+
 import {
     degreesToRadians,
     Disposer,
+} from '@ripl/core';
+
+import type {
+    Scene,
 } from '@ripl/core';
 
 import {
     onDOMEvent,
     typeIsBoolean,
 } from '@ripl/utilities';
-
-import type {
-    Scene,
-} from '@ripl/core';
-
-import type {
-    Context3D,
-} from './context';
-
-import type {
-    Vector3,
-} from './math/vector';
 
 /** A camera interaction can be enabled/disabled with a boolean or configured with sensitivity. */
 export type CameraInteractionOption = boolean | CameraInteractionConfig;

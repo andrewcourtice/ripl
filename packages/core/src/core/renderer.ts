@@ -8,13 +8,16 @@ import {
     isGroup,
 } from './group';
 
-import {
+import type {
     Interpolator,
 } from '../interpolators';
 
 import {
-    BaseElementState,
     Element,
+} from './element';
+
+import type {
+    BaseElementState,
     ElementInterpolationState,
 } from './element';
 
@@ -24,9 +27,12 @@ import {
 
 import {
     computeTransitionTime,
-    Ease,
     easeLinear,
     Transition,
+} from '../animation';
+
+import type {
+    Ease,
     TransitionDirection,
 } from '../animation';
 

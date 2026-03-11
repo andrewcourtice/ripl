@@ -1,19 +1,22 @@
-import {
+import type {
     Context,
 } from '../context';
 
 import {
     interpolateRotation,
     interpolateTransformOrigin,
+} from '../interpolators';
+
+import type {
     InterpolatorFactory,
 } from '../interpolators';
 
-import {
+import type {
     BaseElementState,
     ElementEventMap,
 } from './element';
 
-import {
+import type {
     GetMutableKeys,
 } from '@ripl/utilities';
 

@@ -1,14 +1,17 @@
 import {
     Context,
-    ContextOptions,
     ContextPath,
     ContextText,
+    measureText,
+} from './_base';
+
+import type {
+    ContextOptions,
     Direction,
     FillRule,
     FontKerning,
     LineCap,
     LineJoin,
-    measureText,
     TextAlignment,
     TextBaseline,
 } from './_base';
@@ -24,10 +27,13 @@ import {
 } from '../color';
 
 import {
-    BorderRadius,
     getPathLength,
     samplePathPoint,
     TAU,
+} from '../math';
+
+import type {
+    BorderRadius,
 } from '../math';
 
 import {

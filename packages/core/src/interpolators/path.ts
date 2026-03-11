@@ -1,12 +1,15 @@
 import {
-    BorderRadius,
     fractional,
     getPolygonPoints,
     getWaypoint,
     normaliseBorderRadius,
-    Point,
     TAU,
     typeIsPoint,
+} from '../math';
+
+import type {
+    BorderRadius,
+    Point,
 } from '../math';
 
 import {
@@ -19,7 +22,8 @@ import {
 } from '@ripl/utilities';
 
 import type {
-    Interpolator, InterpolatorFactory,
+    Interpolator,
+    InterpolatorFactory,
 } from './types';
 
 function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {

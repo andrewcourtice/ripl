@@ -4,6 +4,11 @@ import {
     serialiseGradient,
 } from '../gradient';
 
+import type {
+    Gradient,
+    GradientColorStop,
+} from '../gradient';
+
 import {
     interpolateColor,
 } from './color';
@@ -11,12 +16,6 @@ import {
 import {
     interpolateNumber,
 } from './number';
-
-import type {
-    Gradient,
-    GradientColorStop,
-} from '../gradient';
-
 
 import type {
     InterpolatorFactory,

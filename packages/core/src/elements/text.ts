@@ -7,8 +7,11 @@ import {
 } from '../context';
 
 import {
-    BaseElementState,
     Element,
+} from '../core';
+
+import type {
+    BaseElementState,
     ElementOptions,
 } from '../core';
 
