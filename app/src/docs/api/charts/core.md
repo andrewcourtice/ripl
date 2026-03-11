@@ -624,7 +624,7 @@ type ChartAxisInput<TData = unknown> = boolean | ChartAxisOptions<TData>;
 Resolves an ease name or function to an `Ease` function, defaulting to `easeOutCubic`.
 
 ```ts
-function resolveEase(value?: EaseName | Ease): Ease;
+function resolveEase(value?: EaseName | Ease): Ease
 ```
 
 
@@ -643,7 +643,7 @@ function resolveEase(value?: EaseName | Ease): Ease;
 Normalizes a padding input into a `Padding` object, or returns `undefined` if no input.
 
 ```ts
-function normalizePadding(value?: PaddingInput): Padding | undefined;
+function normalizePadding(value?: PaddingInput): Padding | undefined
 ```
 
 
@@ -662,7 +662,7 @@ function normalizePadding(value?: PaddingInput): Padding | undefined;
 Normalizes a title input into fully resolved `ChartTitleOptions`.
 
 ```ts
-function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | undefined;
+function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | undefined
 ```
 
 
@@ -681,7 +681,7 @@ function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | undefined;
 Normalizes animation input into fully resolved `ChartAnimationOptions`.
 
 ```ts
-function normalizeAnimation(input?: ChartAnimationInput, defaults?: Partial<ChartAnimationOptions>): ChartAnimationOptions;
+function normalizeAnimation(input?: ChartAnimationInput, defaults?: Partial<ChartAnimationOptions>): ChartAnimationOptions
 ```
 
 
@@ -701,7 +701,7 @@ function normalizeAnimation(input?: ChartAnimationInput, defaults?: Partial<Char
 Normalizes grid input into fully resolved `ChartGridOptions`.
 
 ```ts
-function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions;
+function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions
 ```
 
 
@@ -721,7 +721,7 @@ function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptio
 Normalizes crosshair input into fully resolved `ChartCrosshairOptions`.
 
 ```ts
-function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions;
+function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions
 ```
 
 
@@ -741,7 +741,7 @@ function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<Char
 Normalizes tooltip input into fully resolved `ChartTooltipOptions`.
 
 ```ts
-function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions;
+function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions
 ```
 
 
@@ -761,7 +761,7 @@ function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartToo
 Normalizes legend input into fully resolved `ChartLegendOptions`.
 
 ```ts
-function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions;
+function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions
 ```
 
 
@@ -784,7 +784,7 @@ Normalizes a single axis item input into fully resolved options.
 function normalizeAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartAxisItemOptions<TData>>,
     defaults?: Partial<ChartAxisItemOptions<TData>>
-): ChartAxisItemOptions<TData>;
+): ChartAxisItemOptions<TData>
 ```
 
 
@@ -807,7 +807,7 @@ Normalizes a Y-axis item input into fully resolved options with position.
 function normalizeYAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartYAxisItemOptions<TData>>,
     defaults?: Partial<ChartYAxisItemOptions<TData>>
-): ChartYAxisItemOptions<TData>;
+): ChartYAxisItemOptions<TData>
 ```
 
 
@@ -827,7 +827,7 @@ function normalizeYAxisItem<TData = unknown>(
 Normalizes axis input into a full `ChartAxisOptions` object with both x and y.
 
 ```ts
-function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData>;
+function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData>
 ```
 
 
@@ -846,7 +846,7 @@ function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxi
 Resolves an axis format type or custom formatter into a label formatting function.
 
 ```ts
-function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined;
+function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined
 ```
 
 

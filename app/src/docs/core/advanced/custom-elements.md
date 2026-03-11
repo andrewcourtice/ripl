@@ -335,24 +335,21 @@ function renderDemo(context: Context) {
     const h = context.height;
     const r = Math.min(w, h) / 4;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        new Star({
+            fill: '#ff006e',
+            cx: w / 2, cy: h / 2,
+            outerRadius: r,
+            innerRadius: r * (innerPct.value / 100),
+            points: starPoints.value,
+        }).render(context);
 
-    new Star({
-        fill: '#ff006e',
-        cx: w / 2, cy: h / 2,
-        outerRadius: r,
-        innerRadius: r * (innerPct.value / 100),
-        points: starPoints.value,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + r + 24,
-        content: `${starPoints.value} points  inner: ${innerPct.value}%`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `${starPoints.value} points  inner: ${innerPct.value}%`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

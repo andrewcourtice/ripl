@@ -334,7 +334,7 @@ Tests whether a point is on the stroked outline of a path.
 | `x` | `number` |  |
 | `y` | `number` |  |
 
-#### `batch(body: () =&gt; TResult): TResult`
+#### `layer(body: () =&gt; TResult): TResult`
 
 Executes a callback within a save/restore pair, returning the callback's result.
 
@@ -355,6 +355,17 @@ Clears the cached list of tracked elements for interaction, forcing a rebuild on
 | Name | Type | Description |
 | --- | --- | --- |
 | `event` | `string` |  |
+
+#### `batch(body: () =&gt; TResult): TResult`
+
+Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.
+
+
+**Parameters:**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `body` | `() =&gt; TResult` |  |
 
 #### `createText(options: TextOptions): ContextText`
 
@@ -484,7 +495,7 @@ type LightMode = 'world' | 'camera';
 Creates a 3D rendering context attached to the given DOM target.
 
 ```ts
-function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D;
+function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D
 ```
 
 

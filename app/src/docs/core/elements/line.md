@@ -74,26 +74,23 @@ function renderDemo(context: Context) {
     const angle = angleDeg.value * Math.PI / 180;
     const dash = dashGap.value > 0 ? [dashGap.value, dashGap.value] : [];
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createLine({
+            stroke: '#3a86ff',
+            lineWidth: lineWidthVal.value,
+            lineDash: dash,
+            x1: cx - Math.cos(angle) * len,
+            y1: cy - Math.sin(angle) * len,
+            x2: cx + Math.cos(angle) * len,
+            y2: cy + Math.sin(angle) * len,
+        }).render(context);
 
-    createLine({
-        stroke: '#3a86ff',
-        lineWidth: lineWidthVal.value,
-        lineDash: dash,
-        x1: cx - Math.cos(angle) * len,
-        y1: cy - Math.sin(angle) * len,
-        x2: cx + Math.cos(angle) * len,
-        y2: cy + Math.sin(angle) * len,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h - 16,
-        content: `width: ${lineWidthVal.value}  dash: ${dashGap.value}  angle: ${angleDeg.value}°`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h - 16,
+            content: `width: ${lineWidthVal.value}  dash: ${dashGap.value}  angle: ${angleDeg.value}°`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

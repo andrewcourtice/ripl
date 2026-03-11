@@ -148,7 +148,7 @@ type TransitionDirection = 'forward' | 'reverse';
 Computes the eased time value for a transition given elapsed time, duration, easing function, and direction.
 
 ```ts
-function computeTransitionTime(elapsed: number, duration: number, ease: Ease, direction: TransitionDirection): number;
+function computeTransitionTime(elapsed: number, duration: number, ease: Ease, direction: TransitionDirection): number
 ```
 
 
@@ -170,7 +170,7 @@ function computeTransitionTime(elapsed: number, duration: number, ease: Ease, di
 Creates and starts a frame-driven transition that invokes the callback with the eased time on each animation frame.
 
 ```ts
-function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Transition;
+function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Transition
 ```
 
 
@@ -190,7 +190,7 @@ function transition(callback: TransitionCallback, options?: Partial<TransitionOp
 Creates a debounced `requestAnimationFrame` wrapper that cancels any pending frame before scheduling a new one.
 
 ```ts
-function createFrameBuffer();
+function createFrameBuffer()
 ```
 
 **Returns:** `(callback: AnyFunction) =&gt; void`
@@ -202,7 +202,7 @@ function createFrameBuffer();
 Linear easing — no acceleration or deceleration.
 
 ```ts
-const easeLinear: Ease;
+const easeLinear: Ease
 ```
 
 ---
@@ -212,7 +212,7 @@ const easeLinear: Ease;
 Quadratic ease-in — accelerates from zero velocity.
 
 ```ts
-const easeInQuad: Ease;
+const easeInQuad: Ease
 ```
 
 ---
@@ -222,7 +222,7 @@ const easeInQuad: Ease;
 Quadratic ease-out — decelerates to zero velocity.
 
 ```ts
-const easeOutQuad: Ease;
+const easeOutQuad: Ease
 ```
 
 ---
@@ -232,7 +232,7 @@ const easeOutQuad: Ease;
 Quadratic ease-in-out — accelerates then decelerates.
 
 ```ts
-const easeInOutQuad: Ease;
+const easeInOutQuad: Ease
 ```
 
 ---
@@ -242,7 +242,7 @@ const easeInOutQuad: Ease;
 Cubic ease-in — accelerates from zero velocity.
 
 ```ts
-const easeInCubic: Ease;
+const easeInCubic: Ease
 ```
 
 ---
@@ -252,7 +252,7 @@ const easeInCubic: Ease;
 Cubic ease-out — decelerates to zero velocity.
 
 ```ts
-const easeOutCubic: Ease;
+const easeOutCubic: Ease
 ```
 
 ---
@@ -262,7 +262,7 @@ const easeOutCubic: Ease;
 Cubic ease-in-out — accelerates then decelerates.
 
 ```ts
-const easeInOutCubic: Ease;
+const easeInOutCubic: Ease
 ```
 
 ---
@@ -272,7 +272,7 @@ const easeInOutCubic: Ease;
 Quartic ease-in — accelerates from zero velocity.
 
 ```ts
-const easeInQuart: Ease;
+const easeInQuart: Ease
 ```
 
 ---
@@ -282,7 +282,7 @@ const easeInQuart: Ease;
 Quartic ease-out — decelerates to zero velocity.
 
 ```ts
-const easeOutQuart: Ease;
+const easeOutQuart: Ease
 ```
 
 ---
@@ -292,7 +292,7 @@ const easeOutQuart: Ease;
 Quartic ease-in-out — accelerates then decelerates.
 
 ```ts
-const easeInOutQuart: Ease;
+const easeInOutQuart: Ease
 ```
 
 ---
@@ -302,7 +302,7 @@ const easeInOutQuart: Ease;
 Quintic ease-in — accelerates from zero velocity.
 
 ```ts
-const easeInQuint: Ease;
+const easeInQuint: Ease
 ```
 
 ---
@@ -312,7 +312,7 @@ const easeInQuint: Ease;
 Quintic ease-out — decelerates to zero velocity.
 
 ```ts
-const easeOutQuint: Ease;
+const easeOutQuint: Ease
 ```
 
 ---
@@ -322,7 +322,7 @@ const easeOutQuint: Ease;
 Quintic ease-in-out — accelerates then decelerates.
 
 ```ts
-const easeInOutQuint: Ease;
+const easeInOutQuint: Ease
 ```
 
 ---

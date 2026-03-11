@@ -44,24 +44,41 @@ context.fill = '#ff0000';
 context.restore(); // fill reverts to previous value
 ```
 
-### Using `batch()`
+### Using `layer()`
 
-The `batch()` convenience method wraps a callback in `save()`/`restore()` automatically:
+The `layer()` convenience method wraps a callback in `save()`/`restore()` automatically:
 
 ```ts
-context.batch(() => {
+context.layer(() => {
     context.fill = '#ff0000';
     circle.render(context);
 });
 // fill is automatically restored here
 ```
 
-## Render Markers
+## Render Batching
 
-The `markRenderStart()` and `markRenderEnd()` methods bracket a render pass. The SVG context uses these markers to know when to flush its virtual DOM.
+When rendering without a Scene or Renderer, you need to clear the surface and bracket your draw calls with `markRenderStart()`/`markRenderEnd()` so the context knows which elements are on screen (used for hit testing and SVG reconciliation). The `batch()` method handles all of this for you:
+
+```ts
+context.batch(() => {
+    circle.render(context);
+    rect.render(context);
+});
+```
+
+This is equivalent to:
+
+```ts
+context.clear();
+context.markRenderStart();
+circle.render(context);
+rect.render(context);
+context.markRenderEnd();
+```
 
 > [!TIP]
-> You typically don't need to call these yourself — elements and scenes handle this automatically.
+> When using a Scene or Renderer, you don't need `batch()` — they manage the render lifecycle automatically.
 
 ## Resizing
 
@@ -153,17 +170,13 @@ const {
     });
 
     const render = () => {
-        context.markRenderStart();
-        circle.render(context);
-        label.render(context);
-        context.markRenderEnd();
+        context.batch(() => {
+            circle.render(context);
+            label.render(context);
+        });
     };
 
     render();
-
-    context.on('resize', () => {
-        context.clear();
-        render();
-    });
+    context.on('resize', render);
 });
 </script>

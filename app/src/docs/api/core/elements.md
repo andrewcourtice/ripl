@@ -59,7 +59,6 @@ class Arc extends Shape2D<ArcState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -245,7 +244,6 @@ class Circle extends Shape2D<CircleState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -424,7 +422,6 @@ class Ellipse extends Shape2D<EllipseState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -597,7 +594,6 @@ class ImageElement extends Element<ImageState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -773,7 +769,6 @@ class Line extends Shape2D<LineState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -949,7 +944,6 @@ class Path extends Shape2D<PathState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1136,7 +1130,6 @@ class Polygon extends Shape2D<PolygonState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1310,7 +1303,6 @@ class Polyline extends Shape2D<PolylineState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1487,7 +1479,6 @@ class Rect extends Shape2D<RectState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1661,7 +1652,6 @@ class Text extends Element<TextState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -2382,7 +2372,7 @@ type PolylineRenderFunc = (context: Context, path: ContextPath, points: Point[])
 Factory function that creates a new `Arc` instance.
 
 ```ts
-function createArc(...options: ConstructorParameters<typeof Arc>);
+function createArc(...options: ConstructorParameters<typeof Arc>)
 ```
 
 
@@ -2401,7 +2391,7 @@ function createArc(...options: ConstructorParameters<typeof Arc>);
 Type guard that checks whether a value is an `Arc` instance.
 
 ```ts
-function elementIsArc(value: unknown): value is Arc;
+function elementIsArc(value: unknown): value is Arc
 ```
 
 
@@ -2420,7 +2410,7 @@ function elementIsArc(value: unknown): value is Arc;
 Factory function that creates a new `Circle` instance.
 
 ```ts
-function createCircle(...options: ConstructorParameters<typeof Circle>);
+function createCircle(...options: ConstructorParameters<typeof Circle>)
 ```
 
 
@@ -2439,7 +2429,7 @@ function createCircle(...options: ConstructorParameters<typeof Circle>);
 Type guard that checks whether a value is a `Circle` instance.
 
 ```ts
-function elementIsCircle(value: unknown): value is Circle;
+function elementIsCircle(value: unknown): value is Circle
 ```
 
 
@@ -2458,7 +2448,7 @@ function elementIsCircle(value: unknown): value is Circle;
 Factory function that creates a new `Ellipse` instance.
 
 ```ts
-function createEllipse(...options: ConstructorParameters<typeof Ellipse>);
+function createEllipse(...options: ConstructorParameters<typeof Ellipse>)
 ```
 
 
@@ -2477,7 +2467,7 @@ function createEllipse(...options: ConstructorParameters<typeof Ellipse>);
 Type guard that checks whether a value is an `Ellipse` instance.
 
 ```ts
-function elementIsEllipse(value: unknown): value is Ellipse;
+function elementIsEllipse(value: unknown): value is Ellipse
 ```
 
 
@@ -2496,7 +2486,7 @@ function elementIsEllipse(value: unknown): value is Ellipse;
 Factory function that creates a new `ImageElement` instance.
 
 ```ts
-function createImage(...options: ConstructorParameters<typeof ImageElement>);
+function createImage(...options: ConstructorParameters<typeof ImageElement>)
 ```
 
 
@@ -2515,7 +2505,7 @@ function createImage(...options: ConstructorParameters<typeof ImageElement>);
 Type guard that checks whether a value is an `ImageElement` instance.
 
 ```ts
-function elementIsImage(value: unknown): value is ImageElement;
+function elementIsImage(value: unknown): value is ImageElement
 ```
 
 
@@ -2534,7 +2524,7 @@ function elementIsImage(value: unknown): value is ImageElement;
 Factory function that creates a new `Line` instance.
 
 ```ts
-function createLine(...options: ConstructorParameters<typeof Line>);
+function createLine(...options: ConstructorParameters<typeof Line>)
 ```
 
 
@@ -2553,7 +2543,7 @@ function createLine(...options: ConstructorParameters<typeof Line>);
 Type guard that checks whether a value is a `Line` instance.
 
 ```ts
-function elementIsLine(value: unknown): value is Line;
+function elementIsLine(value: unknown): value is Line
 ```
 
 
@@ -2572,7 +2562,7 @@ function elementIsLine(value: unknown): value is Line;
 Factory function that creates a new `Path` instance.
 
 ```ts
-function createPath(...options: ConstructorParameters<typeof Path>);
+function createPath(...options: ConstructorParameters<typeof Path>)
 ```
 
 
@@ -2591,7 +2581,7 @@ function createPath(...options: ConstructorParameters<typeof Path>);
 Type guard that checks whether a value is a `Path` instance.
 
 ```ts
-function elementIsPath(value: unknown): value is Path;
+function elementIsPath(value: unknown): value is Path
 ```
 
 
@@ -2610,7 +2600,7 @@ function elementIsPath(value: unknown): value is Path;
 Factory function that creates a new `Polygon` instance.
 
 ```ts
-function createPolygon(...options: ConstructorParameters<typeof Polygon>);
+function createPolygon(...options: ConstructorParameters<typeof Polygon>)
 ```
 
 
@@ -2629,7 +2619,7 @@ function createPolygon(...options: ConstructorParameters<typeof Polygon>);
 Type guard that checks whether a value is a `Polygon` instance.
 
 ```ts
-function elementIsPolygon(value: unknown): value is Polygon;
+function elementIsPolygon(value: unknown): value is Polygon
 ```
 
 
@@ -2648,7 +2638,7 @@ function elementIsPolygon(value: unknown): value is Polygon;
 Creates a linear (straight segment) polyline renderer.
 
 ```ts
-function polylineLinearRenderer(): PolylineRenderFunc;
+function polylineLinearRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2660,7 +2650,7 @@ function polylineLinearRenderer(): PolylineRenderFunc;
 Creates a spline polyline renderer with configurable tension.
 
 ```ts
-function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc;
+function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc
 ```
 
 
@@ -2679,7 +2669,7 @@ function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc;
 Creates a cubic B-spline polyline renderer.
 
 ```ts
-function polylineBasisRenderer(): PolylineRenderFunc;
+function polylineBasisRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2691,7 +2681,7 @@ function polylineBasisRenderer(): PolylineRenderFunc;
 Creates a bump-X polyline renderer using horizontal midpoint bezier curves.
 
 ```ts
-function polylineBumpXRenderer(): PolylineRenderFunc;
+function polylineBumpXRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2703,7 +2693,7 @@ function polylineBumpXRenderer(): PolylineRenderFunc;
 Creates a bump-Y polyline renderer using vertical midpoint bezier curves.
 
 ```ts
-function polylineBumpYRenderer(): PolylineRenderFunc;
+function polylineBumpYRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2715,7 +2705,7 @@ function polylineBumpYRenderer(): PolylineRenderFunc;
 Creates a cardinal spline polyline renderer with configurable tension.
 
 ```ts
-function polylineCardinalRenderer(tension: number = 0): PolylineRenderFunc;
+function polylineCardinalRenderer(tension: number = 0): PolylineRenderFunc
 ```
 
 
@@ -2734,7 +2724,7 @@ function polylineCardinalRenderer(tension: number = 0): PolylineRenderFunc;
 Creates a Catmull-Rom spline polyline renderer with configurable alpha.
 
 ```ts
-function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderFunc;
+function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderFunc
 ```
 
 
@@ -2753,7 +2743,7 @@ function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderFunc;
 Creates a monotone-X polyline renderer preserving monotonicity along the x-axis.
 
 ```ts
-function polylineMonotoneXRenderer(): PolylineRenderFunc;
+function polylineMonotoneXRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2765,7 +2755,7 @@ function polylineMonotoneXRenderer(): PolylineRenderFunc;
 Creates a monotone-Y polyline renderer preserving monotonicity along the y-axis.
 
 ```ts
-function polylineMonotoneYRenderer(): PolylineRenderFunc;
+function polylineMonotoneYRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2777,7 +2767,7 @@ function polylineMonotoneYRenderer(): PolylineRenderFunc;
 Creates a natural cubic spline polyline renderer with second-derivative continuity.
 
 ```ts
-function polylineNaturalRenderer(): PolylineRenderFunc;
+function polylineNaturalRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2789,7 +2779,7 @@ function polylineNaturalRenderer(): PolylineRenderFunc;
 Creates a step polyline renderer with midpoint horizontal transitions.
 
 ```ts
-function polylineStepRenderer(): PolylineRenderFunc;
+function polylineStepRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2801,7 +2791,7 @@ function polylineStepRenderer(): PolylineRenderFunc;
 Creates a step-before polyline renderer where the vertical transition occurs at the start of each segment.
 
 ```ts
-function polylineStepBeforeRenderer(): PolylineRenderFunc;
+function polylineStepBeforeRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2813,7 +2803,7 @@ function polylineStepBeforeRenderer(): PolylineRenderFunc;
 Creates a step-after polyline renderer where the vertical transition occurs at the end of each segment.
 
 ```ts
-function polylineStepAfterRenderer(): PolylineRenderFunc;
+function polylineStepAfterRenderer(): PolylineRenderFunc
 ```
 
 **Returns:** `PolylineRenderFunc`
@@ -2825,7 +2815,7 @@ function polylineStepAfterRenderer(): PolylineRenderFunc;
 Factory function that creates a new `Polyline` instance.
 
 ```ts
-function createPolyline(...options: ConstructorParameters<typeof Polyline>);
+function createPolyline(...options: ConstructorParameters<typeof Polyline>)
 ```
 
 
@@ -2844,7 +2834,7 @@ function createPolyline(...options: ConstructorParameters<typeof Polyline>);
 Type guard that checks whether a value is a `Polyline` instance.
 
 ```ts
-function elementIsPolyline(value: unknown): value is Polyline;
+function elementIsPolyline(value: unknown): value is Polyline
 ```
 
 
@@ -2863,7 +2853,7 @@ function elementIsPolyline(value: unknown): value is Polyline;
 Factory function that creates a new `Rect` instance.
 
 ```ts
-function createRect(...options: ConstructorParameters<typeof Rect>);
+function createRect(...options: ConstructorParameters<typeof Rect>)
 ```
 
 
@@ -2882,7 +2872,7 @@ function createRect(...options: ConstructorParameters<typeof Rect>);
 Type guard that checks whether a value is a `Rect` instance.
 
 ```ts
-function elementIsRect(value: unknown): value is Rect;
+function elementIsRect(value: unknown): value is Rect
 ```
 
 
@@ -2901,7 +2891,7 @@ function elementIsRect(value: unknown): value is Rect;
 Factory function that creates a new `Text` instance.
 
 ```ts
-function createText(...options: ConstructorParameters<typeof Text>);
+function createText(...options: ConstructorParameters<typeof Text>)
 ```
 
 
@@ -2920,7 +2910,7 @@ function createText(...options: ConstructorParameters<typeof Text>);
 Type guard that checks whether a value is a `Text` instance.
 
 ```ts
-function elementIsText(value: unknown): value is Text;
+function elementIsText(value: unknown): value is Text
 ```
 
 
@@ -2939,7 +2929,7 @@ function elementIsText(value: unknown): value is Text;
 Interpolator factory that cross-fades between two image sources using an offscreen canvas.
 
 ```ts
-const interpolateImage: InterpolatorFactory<CanvasImageSource>;
+const interpolateImage: InterpolatorFactory<CanvasImageSource>
 ```
 
 ---

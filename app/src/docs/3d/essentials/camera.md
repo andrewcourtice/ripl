@@ -159,10 +159,9 @@ const cube = createCube({ size: 1.5, fill: '#4488ff' });
 
 function loop() {
     camera.flush();
-    context.clear();
-    context.markRenderStart();
-    cube.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        cube.render(context);
+    });
     requestAnimationFrame(loop);
 }
 loop();

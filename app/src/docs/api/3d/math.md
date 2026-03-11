@@ -71,7 +71,7 @@ type ProjectedPoint = [x: number, y: number, depth: number];
 Returns the component-wise sum of two vectors.
 
 ```ts
-function vec3Add(a: Vector3, b: Vector3): Vector3;
+function vec3Add(a: Vector3, b: Vector3): Vector3
 ```
 
 
@@ -91,7 +91,7 @@ function vec3Add(a: Vector3, b: Vector3): Vector3;
 Returns the component-wise difference of two vectors.
 
 ```ts
-function vec3Sub(a: Vector3, b: Vector3): Vector3;
+function vec3Sub(a: Vector3, b: Vector3): Vector3
 ```
 
 
@@ -111,7 +111,7 @@ function vec3Sub(a: Vector3, b: Vector3): Vector3;
 Scales a vector by a scalar.
 
 ```ts
-function vec3Scale(v: Vector3, s: number): Vector3;
+function vec3Scale(v: Vector3, s: number): Vector3
 ```
 
 
@@ -131,7 +131,7 @@ function vec3Scale(v: Vector3, s: number): Vector3;
 Computes the dot product of two vectors.
 
 ```ts
-function vec3Dot(a: Vector3, b: Vector3): number;
+function vec3Dot(a: Vector3, b: Vector3): number
 ```
 
 
@@ -151,7 +151,7 @@ function vec3Dot(a: Vector3, b: Vector3): number;
 Computes the cross product of two vectors.
 
 ```ts
-function vec3Cross(a: Vector3, b: Vector3): Vector3;
+function vec3Cross(a: Vector3, b: Vector3): Vector3
 ```
 
 
@@ -171,7 +171,7 @@ function vec3Cross(a: Vector3, b: Vector3): Vector3;
 Returns the Euclidean length of a vector.
 
 ```ts
-function vec3Length(v: Vector3): number;
+function vec3Length(v: Vector3): number
 ```
 
 
@@ -190,7 +190,7 @@ function vec3Length(v: Vector3): number;
 Returns the unit-length direction of a vector, or the zero vector if length is 0.
 
 ```ts
-function vec3Normalize(v: Vector3): Vector3;
+function vec3Normalize(v: Vector3): Vector3
 ```
 
 
@@ -209,7 +209,7 @@ function vec3Normalize(v: Vector3): Vector3;
 Linearly interpolates between two vectors by factor `t`.
 
 ```ts
-function vec3Lerp(a: Vector3, b: Vector3, t: number): Vector3;
+function vec3Lerp(a: Vector3, b: Vector3, t: number): Vector3
 ```
 
 
@@ -230,7 +230,7 @@ function vec3Lerp(a: Vector3, b: Vector3, t: number): Vector3;
 Negates all components of a vector.
 
 ```ts
-function vec3Negate(v: Vector3): Vector3;
+function vec3Negate(v: Vector3): Vector3
 ```
 
 
@@ -249,7 +249,7 @@ function vec3Negate(v: Vector3): Vector3;
 Returns the Euclidean distance between two points.
 
 ```ts
-function vec3Distance(a: Vector3, b: Vector3): number;
+function vec3Distance(a: Vector3, b: Vector3): number
 ```
 
 
@@ -269,7 +269,7 @@ function vec3Distance(a: Vector3, b: Vector3): number;
 Type guard that checks whether a value is a `Vector3` tuple.
 
 ```ts
-function typeIsVector3(value: unknown): value is Vector3;
+function typeIsVector3(value: unknown): value is Vector3
 ```
 
 
@@ -288,7 +288,7 @@ function typeIsVector3(value: unknown): value is Vector3;
 Creates a zeroed 4×4 matrix.
 
 ```ts
-function mat4Create(): Matrix4;
+function mat4Create(): Matrix4
 ```
 
 **Returns:** `Matrix4`
@@ -300,7 +300,7 @@ function mat4Create(): Matrix4;
 Creates a 4×4 identity matrix.
 
 ```ts
-function mat4Identity(): Matrix4;
+function mat4Identity(): Matrix4
 ```
 
 **Returns:** `Matrix4`
@@ -312,7 +312,7 @@ function mat4Identity(): Matrix4;
 Returns a copy of the given matrix.
 
 ```ts
-function mat4Clone(m: Matrix4): Matrix4;
+function mat4Clone(m: Matrix4): Matrix4
 ```
 
 
@@ -331,7 +331,7 @@ function mat4Clone(m: Matrix4): Matrix4;
 Multiplies two 4×4 matrices.
 
 ```ts
-function mat4Multiply(a: Matrix4, b: Matrix4): Matrix4;
+function mat4Multiply(a: Matrix4, b: Matrix4): Matrix4
 ```
 
 
@@ -351,7 +351,7 @@ function mat4Multiply(a: Matrix4, b: Matrix4): Matrix4;
 Applies a translation to a matrix.
 
 ```ts
-function mat4Translate(m: Matrix4, v: Vector3): Matrix4;
+function mat4Translate(m: Matrix4, v: Vector3): Matrix4
 ```
 
 
@@ -371,7 +371,7 @@ function mat4Translate(m: Matrix4, v: Vector3): Matrix4;
 Applies a scale transform to a matrix.
 
 ```ts
-function mat4Scale(m: Matrix4, v: Vector3): Matrix4;
+function mat4Scale(m: Matrix4, v: Vector3): Matrix4
 ```
 
 
@@ -391,7 +391,7 @@ function mat4Scale(m: Matrix4, v: Vector3): Matrix4;
 Applies a rotation around the X axis to a matrix.
 
 ```ts
-function mat4RotateX(m: Matrix4, angle: number): Matrix4;
+function mat4RotateX(m: Matrix4, angle: number): Matrix4
 ```
 
 
@@ -411,7 +411,7 @@ function mat4RotateX(m: Matrix4, angle: number): Matrix4;
 Applies a rotation around the Y axis to a matrix.
 
 ```ts
-function mat4RotateY(m: Matrix4, angle: number): Matrix4;
+function mat4RotateY(m: Matrix4, angle: number): Matrix4
 ```
 
 
@@ -431,7 +431,7 @@ function mat4RotateY(m: Matrix4, angle: number): Matrix4;
 Applies a rotation around the Z axis to a matrix.
 
 ```ts
-function mat4RotateZ(m: Matrix4, angle: number): Matrix4;
+function mat4RotateZ(m: Matrix4, angle: number): Matrix4
 ```
 
 
@@ -451,7 +451,7 @@ function mat4RotateZ(m: Matrix4, angle: number): Matrix4;
 Constructs a view matrix looking from `eye` toward `target` with the given `up` direction.
 
 ```ts
-function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4;
+function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4
 ```
 
 
@@ -472,7 +472,7 @@ function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4;
 Constructs a perspective projection matrix.
 
 ```ts
-function mat4Perspective(fovRadians: number, aspect: number, near: number, far: number): Matrix4;
+function mat4Perspective(fovRadians: number, aspect: number, near: number, far: number): Matrix4
 ```
 
 
@@ -501,7 +501,7 @@ function mat4Orthographic(
     top: number,
     near: number,
     far: number
-): Matrix4;
+): Matrix4
 ```
 
 
@@ -525,7 +525,7 @@ function mat4Orthographic(
 Transforms a direction vector by the upper-3×3 of a 4×4 matrix, ignoring translation.
 
 ```ts
-function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3;
+function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3
 ```
 
 
@@ -545,7 +545,7 @@ function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3;
 Transforms a 3D point by a 4×4 matrix, performing the perspective divide.
 
 ```ts
-function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3;
+function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3
 ```
 
 
@@ -565,7 +565,7 @@ function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3;
 Projects a 3D world-space point onto 2D screen-space via a view-projection matrix and viewport.
 
 ```ts
-function projectPoint(point: Vector3, viewProjection: Matrix4, viewport: Viewport): ProjectedPoint;
+function projectPoint(point: Vector3, viewProjection: Matrix4, viewport: Viewport): ProjectedPoint
 ```
 
 

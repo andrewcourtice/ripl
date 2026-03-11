@@ -306,7 +306,7 @@ Pushes the current state onto the stack and resets to defaults.
 
 Restores the most recently saved state from the stack.
 
-#### `batch(body: () =&gt; TResult): TResult`
+#### `layer(body: () =&gt; TResult): TResult`
 
 Executes a callback within a save/restore pair, returning the callback's result.
 
@@ -343,6 +343,17 @@ Signals the start of a render pass; resets the rendered-elements list at depth 0
 #### `markRenderEnd(): void`
 
 Signals the end of a render pass.
+
+#### `batch(body: () =&gt; TResult): TResult`
+
+Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.
+
+
+**Parameters:**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `body` | `() =&gt; TResult` |  |
 
 #### `rotate(angle: number): void`
 
@@ -1010,7 +1021,7 @@ Tests whether a point is on the stroked outline of a path.
 | `x` | `number` |  |
 | `y` | `number` |  |
 
-#### `batch(body: () =&gt; TResult): TResult`
+#### `layer(body: () =&gt; TResult): TResult`
 
 Executes a callback within a save/restore pair, returning the callback's result.
 
@@ -1039,6 +1050,17 @@ Signals the start of a render pass; resets the rendered-elements list at depth 0
 #### `markRenderEnd(): void`
 
 Signals the end of a render pass.
+
+#### `batch(body: () =&gt; TResult): TResult`
+
+Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.
+
+
+**Parameters:**
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `body` | `() =&gt; TResult` |  |
 
 #### `createText(options: TextOptions): ContextText`
 
@@ -1153,7 +1175,6 @@ interface RenderElement {
     parent?: RenderElement;
     abstract: boolean;
     pointerEvents: RenderElementPointerEvents;
-    renderDepth?: number;
     zIndex: number;
     getBoundingBox?(): Box;
     has(event: string): boolean;
@@ -1172,7 +1193,6 @@ interface RenderElement {
 | `parent?` | `RenderElement \| undefined` |  |
 | `abstract` | `boolean` |  |
 | `pointerEvents` | `RenderElementPointerEvents` |  |
-| `renderDepth?` | `number \| undefined` |  |
 | `zIndex` | `number` |  |
 | `getBoundingBox?` | `(() =&gt; Box) \| undefined` |  |
 | `has` | `(event: string) =&gt; boolean` |  |
@@ -1482,7 +1502,7 @@ type MeasureTextOptions = {
 Resolves a rotation value (number, degrees string, or radians string) to radians.
 
 ```ts
-function resolveRotation(value: Rotation): number;
+function resolveRotation(value: Rotation): number
 ```
 
 
@@ -1501,7 +1521,7 @@ function resolveRotation(value: Rotation): number;
 Resolves a transform-origin value (number or percentage string) to a pixel offset relative to the given dimension.
 
 ```ts
-function resolveTransformOrigin(value: TransformOrigin, dimension: number): number;
+function resolveTransformOrigin(value: TransformOrigin, dimension: number): number
 ```
 
 
@@ -1521,7 +1541,7 @@ function resolveTransformOrigin(value: TransformOrigin, dimension: number): numb
 Measures the dimensions of a text string using an optional font and context override.
 
 ```ts
-function measureText(value: string, options?: MeasureTextOptions): TextMetrics;
+function measureText(value: string, options?: MeasureTextOptions): TextMetrics
 ```
 
 
@@ -1541,7 +1561,7 @@ function measureText(value: string, options?: MeasureTextOptions): TextMetrics;
 Type guard that checks whether a value is a `Context` instance.
 
 ```ts
-function typeIsContext(value: unknown): value is Context;
+function typeIsContext(value: unknown): value is Context
 ```
 
 
@@ -1560,7 +1580,7 @@ function typeIsContext(value: unknown): value is Context;
 Creates a Canvas 2D rendering context attached to the given DOM target.
 
 ```ts
-function createContext(target: string | HTMLElement, options?: ContextOptions): Context;
+function createContext(target: string | HTMLElement, options?: ContextOptions): Context
 ```
 
 
@@ -1580,7 +1600,7 @@ function createContext(target: string | HTMLElement, options?: ContextOptions): 
 Returns a shared offscreen `CanvasRenderingContext2D` used for text measurement and default state retrieval.
 
 ```ts
-const getRefContext: CachedFunction<() => CanvasRenderingContext2D>;
+const getRefContext: CachedFunction<() => CanvasRenderingContext2D>
 ```
 
 ---
@@ -1590,7 +1610,7 @@ const getRefContext: CachedFunction<() => CanvasRenderingContext2D>;
 A scale that maps logical pixels to physical device pixels using `devicePixelRatio`.
 
 ```ts
-const scaleDPR: Scale<number, number>;
+const scaleDPR: Scale<number, number>
 ```
 
 ---

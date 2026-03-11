@@ -31,7 +31,7 @@ class Cube extends Shape3D<CubeState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;CubeState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;CubeState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -44,6 +44,7 @@ class Cube extends Shape3D<CubeState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -51,7 +52,6 @@ class Cube extends Shape3D<CubeState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -71,7 +71,6 @@ class Cube extends Shape3D<CubeState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -218,7 +217,7 @@ class Sphere extends Shape3D<SphereState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;SphereState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;SphereState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -233,6 +232,7 @@ class Sphere extends Shape3D<SphereState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -240,7 +240,6 @@ class Sphere extends Shape3D<SphereState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -260,7 +259,6 @@ class Sphere extends Shape3D<SphereState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -407,7 +405,7 @@ class Cylinder extends Shape3D<CylinderState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;CylinderState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;CylinderState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -423,6 +421,7 @@ class Cylinder extends Shape3D<CylinderState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -430,7 +429,6 @@ class Cylinder extends Shape3D<CylinderState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -450,7 +448,6 @@ class Cylinder extends Shape3D<CylinderState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -597,7 +594,7 @@ class Cone extends Shape3D<ConeState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;ConeState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;ConeState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -612,6 +609,7 @@ class Cone extends Shape3D<ConeState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -619,7 +617,6 @@ class Cone extends Shape3D<ConeState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -639,7 +636,6 @@ class Cone extends Shape3D<ConeState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -786,7 +782,7 @@ class Plane extends Shape3D<PlaneState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;PlaneState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;PlaneState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -800,6 +796,7 @@ class Plane extends Shape3D<PlaneState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -807,7 +804,6 @@ class Plane extends Shape3D<PlaneState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -827,7 +823,6 @@ class Plane extends Shape3D<PlaneState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -974,7 +969,7 @@ class Torus extends Shape3D<TorusState>
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `Partial&lt;ElementOptions&lt;TorusState&gt;&gt;` |  |
+| `options` | `Partial&lt;Omit&lt;ElementOptions&lt;TorusState&gt;, "zIndex"&gt;&gt;` |  |
 
 **Properties:**
 
@@ -990,6 +985,7 @@ class Torus extends Shape3D<TorusState>
 | `rotationX` | `number` |  |
 | `rotationY` | `number` |  |
 | `rotationZ` | `number` |  |
+| `zIndex` | `number` |  |
 | `id` | `string` |  |
 | `readonly type` | `string` |  |
 | `readonly classList` | `Set&lt;string&gt;` |  |
@@ -997,7 +993,6 @@ class Torus extends Shape3D<TorusState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1017,7 +1012,6 @@ class Torus extends Shape3D<TorusState>
 | `stroke` | `string \| undefined` |  |
 | `textAlign` | `TextAlignment \| undefined` |  |
 | `textBaseline` | `TextBaseline \| undefined` |  |
-| `zIndex` | `number` |  |
 | `translateX` | `number \| undefined` |  |
 | `translateY` | `number \| undefined` |  |
 | `transformScaleX` | `number \| undefined` |  |
@@ -1488,7 +1482,7 @@ interface TorusState extends Shape3DState {
 Factory function that creates a new `Cube` instance.
 
 ```ts
-function createCube(...options: ConstructorParameters<typeof Cube>);
+function createCube(...options: ConstructorParameters<typeof Cube>)
 ```
 
 
@@ -1496,7 +1490,7 @@ function createCube(...options: ConstructorParameters<typeof Cube>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;CubeState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;CubeState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Cube`
 
@@ -1507,7 +1501,7 @@ function createCube(...options: ConstructorParameters<typeof Cube>);
 Type guard that checks whether a value is a `Cube` instance.
 
 ```ts
-function elementIsCube(value: unknown): value is Cube;
+function elementIsCube(value: unknown): value is Cube
 ```
 
 
@@ -1526,7 +1520,7 @@ function elementIsCube(value: unknown): value is Cube;
 Factory function that creates a new `Sphere` instance.
 
 ```ts
-function createSphere(...options: ConstructorParameters<typeof Sphere>);
+function createSphere(...options: ConstructorParameters<typeof Sphere>)
 ```
 
 
@@ -1534,7 +1528,7 @@ function createSphere(...options: ConstructorParameters<typeof Sphere>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;SphereState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;SphereState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Sphere`
 
@@ -1545,7 +1539,7 @@ function createSphere(...options: ConstructorParameters<typeof Sphere>);
 Type guard that checks whether a value is a `Sphere` instance.
 
 ```ts
-function elementIsSphere(value: unknown): value is Sphere;
+function elementIsSphere(value: unknown): value is Sphere
 ```
 
 
@@ -1564,7 +1558,7 @@ function elementIsSphere(value: unknown): value is Sphere;
 Factory function that creates a new `Cylinder` instance.
 
 ```ts
-function createCylinder(...options: ConstructorParameters<typeof Cylinder>);
+function createCylinder(...options: ConstructorParameters<typeof Cylinder>)
 ```
 
 
@@ -1572,7 +1566,7 @@ function createCylinder(...options: ConstructorParameters<typeof Cylinder>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;CylinderState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;CylinderState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Cylinder`
 
@@ -1583,7 +1577,7 @@ function createCylinder(...options: ConstructorParameters<typeof Cylinder>);
 Type guard that checks whether a value is a `Cylinder` instance.
 
 ```ts
-function elementIsCylinder(value: unknown): value is Cylinder;
+function elementIsCylinder(value: unknown): value is Cylinder
 ```
 
 
@@ -1602,7 +1596,7 @@ function elementIsCylinder(value: unknown): value is Cylinder;
 Factory function that creates a new `Cone` instance.
 
 ```ts
-function createCone(...options: ConstructorParameters<typeof Cone>);
+function createCone(...options: ConstructorParameters<typeof Cone>)
 ```
 
 
@@ -1610,7 +1604,7 @@ function createCone(...options: ConstructorParameters<typeof Cone>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;ConeState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;ConeState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Cone`
 
@@ -1621,7 +1615,7 @@ function createCone(...options: ConstructorParameters<typeof Cone>);
 Type guard that checks whether a value is a `Cone` instance.
 
 ```ts
-function elementIsCone(value: unknown): value is Cone;
+function elementIsCone(value: unknown): value is Cone
 ```
 
 
@@ -1640,7 +1634,7 @@ function elementIsCone(value: unknown): value is Cone;
 Factory function that creates a new `Plane` instance.
 
 ```ts
-function createPlane(...options: ConstructorParameters<typeof Plane>);
+function createPlane(...options: ConstructorParameters<typeof Plane>)
 ```
 
 
@@ -1648,7 +1642,7 @@ function createPlane(...options: ConstructorParameters<typeof Plane>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;PlaneState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;PlaneState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Plane`
 
@@ -1659,7 +1653,7 @@ function createPlane(...options: ConstructorParameters<typeof Plane>);
 Type guard that checks whether a value is a `Plane` instance.
 
 ```ts
-function elementIsPlane(value: unknown): value is Plane;
+function elementIsPlane(value: unknown): value is Plane
 ```
 
 
@@ -1678,7 +1672,7 @@ function elementIsPlane(value: unknown): value is Plane;
 Factory function that creates a new `Torus` instance.
 
 ```ts
-function createTorus(...options: ConstructorParameters<typeof Torus>);
+function createTorus(...options: ConstructorParameters<typeof Torus>)
 ```
 
 
@@ -1686,7 +1680,7 @@ function createTorus(...options: ConstructorParameters<typeof Torus>);
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `options` | `[options: Partial&lt;ElementOptions&lt;TorusState&gt;&gt;]` |  |
+| `options` | `[options: Partial&lt;Omit&lt;ElementOptions&lt;TorusState&gt;, "zIndex"&gt;&gt;]` |  |
 
 **Returns:** `Torus`
 
@@ -1697,7 +1691,7 @@ function createTorus(...options: ConstructorParameters<typeof Torus>);
 Type guard that checks whether a value is a `Torus` instance.
 
 ```ts
-function elementIsTorus(value: unknown): value is Torus;
+function elementIsTorus(value: unknown): value is Torus
 ```
 
 

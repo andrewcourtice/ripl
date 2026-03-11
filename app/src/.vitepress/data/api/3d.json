@@ -1548,7 +1548,7 @@
           "protected": true
         },
         {
-          "name": "batch",
+          "name": "layer",
           "kind": "method",
           "description": "Executes a callback within a save/restore pair, returning the callback's result.",
           "type": "TResult",
@@ -1570,6 +1570,20 @@
             {
               "name": "event",
               "type": "string",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "batch",
+          "kind": "method",
+          "description": "Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.",
+          "type": "TResult",
+          "params": [
+            {
+              "name": "body",
+              "type": "() => TResult",
               "description": "",
               "optional": false
             }
@@ -2069,7 +2083,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[type: string, options: Partial<ElementOptions<Shape3DState>>]",
+          "type": "[type: string, options: Partial<Omit<ElementOptions<Shape3DState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -2357,7 +2371,7 @@
       "name": "Shape3DOptions",
       "kind": "type",
       "description": "Options for constructing a 3D shape, with all state properties optional.",
-      "typeSignature": "type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<ElementOptions<TState>>;",
+      "typeSignature": "type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;",
       "tags": {}
     },
     {
@@ -2380,7 +2394,7 @@
             },
             {
               "name": "options",
-              "type": "Partial<ElementOptions<TState>>",
+              "type": "Partial<Omit<ElementOptions<TState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -2428,6 +2442,12 @@
           "kind": "getter",
           "description": "",
           "type": "TState[\"rotationZ\"]"
+        },
+        {
+          "name": "zIndex",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
         },
         {
           "name": "setStateValue",
@@ -2604,12 +2624,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -2722,12 +2736,6 @@
           "kind": "getter",
           "description": "",
           "type": "TState[\"textBaseline\"]"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -2967,7 +2975,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CubeState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CubeState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -3216,7 +3224,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CubeState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CubeState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -3274,6 +3282,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -3446,12 +3460,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -3564,12 +3572,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -3807,7 +3809,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<SphereState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<SphereState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -4066,7 +4068,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<SphereState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<SphereState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -4136,6 +4138,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -4308,12 +4316,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -4426,12 +4428,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -4669,7 +4665,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CylinderState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CylinderState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -4933,7 +4929,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CylinderState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<CylinderState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -5009,6 +5005,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -5181,12 +5183,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -5299,12 +5295,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -5542,7 +5532,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<ConeState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<ConeState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -5801,7 +5791,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<ConeState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<ConeState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -5871,6 +5861,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -6043,12 +6039,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -6161,12 +6151,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -6404,7 +6388,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<PlaneState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<PlaneState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -6658,7 +6642,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<PlaneState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<PlaneState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -6722,6 +6706,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -6894,12 +6884,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -7012,12 +6996,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",
@@ -7255,7 +7233,7 @@
       "params": [
         {
           "name": "options",
-          "type": "[options: Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<TorusState>>]",
+          "type": "[options: Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<TorusState>, \"zIndex\">>]",
           "description": "",
           "optional": false
         }
@@ -7519,7 +7497,7 @@
           "params": [
             {
               "name": "options",
-              "type": "Partial<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<TorusState>>",
+              "type": "Partial<Omit<import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/index\").ElementOptions<TorusState>, \"zIndex\">>",
               "description": "",
               "optional": false
             }
@@ -7595,6 +7573,12 @@
         },
         {
           "name": "rotationZ",
+          "kind": "getter",
+          "description": "",
+          "type": "number"
+        },
+        {
+          "name": "zIndex",
           "kind": "getter",
           "description": "",
           "type": "number"
@@ -7767,12 +7751,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -7885,12 +7863,6 @@
           "kind": "getter",
           "description": "",
           "type": "import(\"/Users/andrewcourtice/Projects/ripl/packages/core/src/context/index\").TextBaseline | undefined"
-        },
-        {
-          "name": "zIndex",
-          "kind": "getter",
-          "description": "",
-          "type": "number"
         },
         {
           "name": "translateX",

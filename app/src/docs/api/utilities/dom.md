@@ -77,7 +77,7 @@ type DOMElementEventMap<TElement> = TElement extends MediaQueryList ? MediaQuery
 Attaches a strongly-typed event listener to a DOM element and returns a disposable for cleanup.
 
 ```ts
-function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable;
+function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable
 ```
 
 
@@ -98,7 +98,7 @@ function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof 
 Observes an element for size changes using `ResizeObserver` (with a `window.resize` fallback) and returns a disposable.
 
 ```ts
-function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable;
+function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable
 ```
 
 
@@ -118,7 +118,7 @@ function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandl
 Whether the current environment has a `window` object (i.e. is a browser context).
 
 ```ts
-const hasWindow: boolean;
+const hasWindow: boolean
 ```
 
 ---

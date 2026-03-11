@@ -1017,7 +1017,7 @@
       "name": "RenderElement",
       "kind": "interface",
       "description": "Minimal interface for any element that can be rendered and hit-tested by a context.",
-      "typeSignature": "interface RenderElement {\n    readonly id: string;\n    parent?: RenderElement;\n    abstract: boolean;\n    pointerEvents: RenderElementPointerEvents;\n    renderDepth?: number;\n    zIndex: number;\n    getBoundingBox?(): Box;\n    has(event: string): boolean;\n    intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;\n    // eslint-disable-next-line @typescript-eslint/no-explicit-any\n    emit(type: string, data: any): void;\n}",
+      "typeSignature": "interface RenderElement {\n    readonly id: string;\n    parent?: RenderElement;\n    abstract: boolean;\n    pointerEvents: RenderElementPointerEvents;\n    zIndex: number;\n    getBoundingBox?(): Box;\n    has(event: string): boolean;\n    intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;\n    // eslint-disable-next-line @typescript-eslint/no-explicit-any\n    emit(type: string, data: any): void;\n}",
       "tags": {},
       "properties": [
         {
@@ -1040,12 +1040,6 @@
           "name": "pointerEvents",
           "type": "RenderElementPointerEvents",
           "description": ""
-        },
-        {
-          "name": "renderDepth",
-          "type": "number | undefined",
-          "description": "",
-          "optional": true
         },
         {
           "name": "zIndex",
@@ -1079,7 +1073,7 @@
       "name": "ContextEventMap",
       "kind": "interface",
       "description": "Event map for a rendering context, including resize and pointer events.",
-      "typeSignature": "interface ContextEventMap extends EventMap {\n    resize: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n}",
+      "typeSignature": "interface ContextEventMap extends EventMap {\n    resize: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n        deltaX: number;\n        deltaY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n        deltaX: number;\n        deltaY: number;\n    };\n}",
       "tags": {},
       "properties": [
         {
@@ -1114,12 +1108,12 @@
         },
         {
           "name": "drag",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
           "name": "dragend",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
@@ -2169,7 +2163,7 @@
           "type": "void"
         },
         {
-          "name": "batch",
+          "name": "layer",
           "kind": "method",
           "description": "Executes a callback within a save/restore pair, returning the callback's result.",
           "type": "TResult",
@@ -2219,6 +2213,20 @@
           "kind": "method",
           "description": "Signals the end of a render pass.",
           "type": "void"
+        },
+        {
+          "name": "batch",
+          "kind": "method",
+          "description": "Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.",
+          "type": "TResult",
+          "params": [
+            {
+              "name": "body",
+              "type": "() => TResult",
+              "description": "",
+              "optional": false
+            }
+          ]
         },
         {
           "name": "rotate",
@@ -3847,7 +3855,7 @@
           "protected": true
         },
         {
-          "name": "batch",
+          "name": "layer",
           "kind": "method",
           "description": "Executes a callback within a save/restore pair, returning the callback's result.",
           "type": "TResult",
@@ -3885,6 +3893,20 @@
           "kind": "method",
           "description": "Signals the end of a render pass.",
           "type": "void"
+        },
+        {
+          "name": "batch",
+          "kind": "method",
+          "description": "Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.",
+          "type": "TResult",
+          "params": [
+            {
+              "name": "body",
+              "type": "() => TResult",
+              "description": "",
+              "optional": false
+            }
+          ]
         },
         {
           "name": "createText",
@@ -4382,7 +4404,7 @@
       "name": "ElementEventMap",
       "kind": "interface",
       "description": "Event map for elements, extending the base event map with lifecycle and interaction events.",
-      "typeSignature": "interface ElementEventMap extends EventMap {\n    graph: null;\n    track: keyof ElementEventMap;\n    untrack: keyof ElementEventMap;\n    attached: Group;\n    detached: Group;\n    updated: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n    };\n    destroyed: null;\n}",
+      "typeSignature": "interface ElementEventMap extends EventMap {\n    graph: null;\n    track: keyof ElementEventMap;\n    untrack: keyof ElementEventMap;\n    attached: Group;\n    detached: Group;\n    updated: null;\n    mouseenter: null;\n    mouseleave: null;\n    mousemove: {\n        x: number;\n        y: number;\n    };\n    click: {\n        x: number;\n        y: number;\n    };\n    dragstart: {\n        x: number;\n        y: number;\n    };\n    drag: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n        deltaX: number;\n        deltaY: number;\n    };\n    dragend: {\n        x: number;\n        y: number;\n        startX: number;\n        startY: number;\n        deltaX: number;\n        deltaY: number;\n    };\n    destroyed: null;\n}",
       "tags": {},
       "properties": [
         {
@@ -4442,12 +4464,12 @@
         },
         {
           "name": "drag",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
           "name": "dragend",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
@@ -4594,12 +4616,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -5824,12 +5840,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -6759,12 +6769,12 @@
         },
         {
           "name": "drag",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
           "name": "dragend",
-          "type": "{ x: number; y: number; startX: number; startY: number; }",
+          "type": "{ x: number; y: number; startX: number; startY: number; deltaX: number; deltaY: number; }",
           "description": ""
         },
         {
@@ -7263,12 +7273,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -7773,12 +7777,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -8367,12 +8365,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -9214,12 +9206,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -9977,12 +9963,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -10782,12 +10762,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -11519,12 +11493,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -12323,12 +12291,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -13120,12 +13082,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -13894,12 +13850,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -14803,12 +14753,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -15591,12 +15535,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -16327,12 +16265,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",
@@ -17083,20 +17015,20 @@
       "returnType": "Point"
     },
     {
-      "name": "getHypLength",
+      "name": "getEuclideanDistance",
       "kind": "function",
-      "description": "Computes the hypotenuse length from two right-triangle sides.",
-      "typeSignature": "function getHypLength(sideA: number, sideB: number): number",
+      "description": "Computes the Euclidean distance from two points.",
+      "typeSignature": "function getEuclideanDistance(dp: number, dq: number): number",
       "tags": {},
       "params": [
         {
-          "name": "sideA",
+          "name": "dp",
           "type": "number",
           "description": "",
           "optional": false
         },
         {
-          "name": "sideB",
+          "name": "dq",
           "type": "number",
           "description": "",
           "optional": false

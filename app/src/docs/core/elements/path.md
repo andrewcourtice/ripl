@@ -167,25 +167,22 @@ function renderDemo(context: Context) {
     const h = context.height;
     const s = size.value;
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createPath({
+            fill: colors[currentShape.value],
+            x: w / 2 - s / 2,
+            y: h / 2 - s / 2,
+            width: s,
+            height: s,
+            pathRenderer: renderers[currentShape.value],
+        }).render(context);
 
-    createPath({
-        fill: colors[currentShape.value],
-        x: w / 2 - s / 2,
-        y: h / 2 - s / 2,
-        width: s,
-        height: s,
-        pathRenderer: renderers[currentShape.value],
-    }).render(context);
-
-    createText({
-        fill: '#666', x: w / 2, y: h / 2 + s / 2 + 24,
-        content: `Path: ${currentShape.value} (${s}×${s})`,
-        textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            fill: '#666', x: w / 2, y: h / 2 + s / 2 + 24,
+            content: `Path: ${currentShape.value} (${s}×${s})`,
+            textAlign: 'center', font: '13px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

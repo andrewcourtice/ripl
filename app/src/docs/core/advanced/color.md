@@ -83,44 +83,41 @@ function renderDemo(context: Context) {
     const color = setColorAlpha(pickedColor.value, alpha.value / 100);
     const rgba = parseColor(color);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        const swatchSize = Math.min(w * 0.25, h * 0.6);
 
-    const swatchSize = Math.min(w * 0.25, h * 0.6);
+        createRect({
+            fill: '#e9ecef',
+            x: 0, y: 0, width: w, height: h,
+        }).render(context);
 
-    createRect({
-        fill: '#e9ecef',
-        x: 0, y: 0, width: w, height: h,
-    }).render(context);
+        createRect({
+            fill: color,
+            x: w * 0.08, y: h / 2 - swatchSize / 2,
+            width: swatchSize, height: swatchSize,
+            borderRadius: 12,
+        }).render(context);
 
-    createRect({
-        fill: color,
-        x: w * 0.08, y: h / 2 - swatchSize / 2,
-        width: swatchSize, height: swatchSize,
-        borderRadius: 12,
-    }).render(context);
+        if (rgba) {
+            const lines = [
+                `RGBA: ${rgba.join(', ')}`,
+                `HEX: ${serialiseHEX(...rgba)}`,
+                `RGB: ${serialiseRGBA(...rgba)}`,
+                `HSL: ${serialiseHSL(...rgba)}`,
+            ];
 
-    if (rgba) {
-        const lines = [
-            `RGBA: ${rgba.join(', ')}`,
-            `HEX: ${serialiseHEX(...rgba)}`,
-            `RGB: ${serialiseRGBA(...rgba)}`,
-            `HSL: ${serialiseHSL(...rgba)}`,
-        ];
+            const startX = w * 0.08 + swatchSize + 24;
+            const startY = h / 2 - (lines.length - 1) * 12;
 
-        const startX = w * 0.08 + swatchSize + 24;
-        const startY = h / 2 - (lines.length - 1) * 12;
-
-        lines.forEach((line, i) => {
-            createText({
-                fill: '#333', x: startX, y: startY + i * 24,
-                content: line, font: '13px monospace',
-                textBaseline: 'middle',
-            }).render(context);
-        });
-    }
-
-    context.markRenderEnd();
+            lines.forEach((line, i) => {
+                createText({
+                    fill: '#333', x: startX, y: startY + i * 24,
+                    content: line, font: '13px monospace',
+                    textBaseline: 'middle',
+                }).render(context);
+            });
+        }
+    });
 }
 
 const {

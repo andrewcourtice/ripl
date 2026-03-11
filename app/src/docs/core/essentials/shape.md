@@ -140,47 +140,45 @@ const {
     const r = Math.min(w, h) / 6;
 
     const render = () => {
-        context.markRenderStart();
+        context.batch(() => {
+            createCircle({
+                fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
+                cx: w / 4, cy: h / 2, radius: r,
+            }).render(context);
 
-        createCircle({
-            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
-            cx: w / 4, cy: h / 2, radius: r,
-        }).render(context);
+            createText({
+                x: w / 4, y: h / 2 + r + 20,
+                content: 'Fill + Stroke',
+                fill: '#666', textAlign: 'center', font: '13px sans-serif',
+            }).render(context);
 
-        createText({
-            x: w / 4, y: h / 2 + r + 20,
-            content: 'Fill + Stroke',
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
+            createCircle({
+                fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
+                autoStroke: false,
+                cx: w / 2, cy: h / 2, radius: r,
+            }).render(context);
 
-        createCircle({
-            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
-            autoStroke: false,
-            cx: w / 2, cy: h / 2, radius: r,
-        }).render(context);
+            createText({
+                x: w / 2, y: h / 2 + r + 20,
+                content: 'Fill Only',
+                fill: '#666', textAlign: 'center', font: '13px sans-serif',
+            }).render(context);
 
-        createText({
-            x: w / 2, y: h / 2 + r + 20,
-            content: 'Fill Only',
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
+            createCircle({
+                fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
+                autoFill: false,
+                cx: w * 3 / 4, cy: h / 2, radius: r,
+            }).render(context);
 
-        createCircle({
-            fill: '#3a86ff', stroke: '#1a56db', lineWidth: 4,
-            autoFill: false,
-            cx: w * 3 / 4, cy: h / 2, radius: r,
-        }).render(context);
-
-        createText({
-            x: w * 3 / 4, y: h / 2 + r + 20,
-            content: 'Stroke Only',
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
-
-        context.markRenderEnd();
+            createText({
+                x: w * 3 / 4, y: h / 2 + r + 20,
+                content: 'Stroke Only',
+                fill: '#666', textAlign: 'center', font: '13px sans-serif',
+            }).render(context);
+        });
     };
 
     render();
-    context.on('resize', () => { context.clear(); render(); });
+    context.on('resize', render);
 });
 </script>

@@ -68,24 +68,21 @@ function renderDemo(context: Context) {
     const h = context.height;
     const r = Math.min(w, h) / 3 * (radiusPct.value / 100);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createPolygon({
+            fill: '#3a86ff',
+            stroke: '#1a56db',
+            lineWidth: 2,
+            cx: w / 2, cy: h / 2,
+            radius: r, sides: sides.value,
+        }).render(context);
 
-    createPolygon({
-        fill: '#3a86ff',
-        stroke: '#1a56db',
-        lineWidth: 2,
-        cx: w / 2, cy: h / 2,
-        radius: r, sides: sides.value,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + r + 24,
-        content: `${NAMES[sides.value] || sides.value + '-gon'}  (${sides.value} sides, r=${Math.round(r)})`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + r + 24,
+            content: `${NAMES[sides.value] || sides.value + '-gon'}  (${sides.value} sides, r=${Math.round(r)})`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

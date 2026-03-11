@@ -9568,12 +9568,6 @@
           "type": "unknown"
         },
         {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
-        },
-        {
           "name": "direction",
           "kind": "getter",
           "description": "",
@@ -10342,12 +10336,6 @@
           "kind": "property",
           "description": "",
           "type": "unknown"
-        },
-        {
-          "name": "renderDepth",
-          "kind": "property",
-          "description": "",
-          "type": "number | undefined"
         },
         {
           "name": "direction",

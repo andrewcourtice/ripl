@@ -187,7 +187,7 @@ type CameraInteractionOption = boolean | CameraInteractionConfig;
 Factory function that creates a new `Camera` bound to a 3D scene.
 
 ```ts
-function createCamera(scene: Scene<Context3D>, options?: CameraOptions): Camera;
+function createCamera(scene: Scene<Context3D>, options?: CameraOptions): Camera
 ```
 
 

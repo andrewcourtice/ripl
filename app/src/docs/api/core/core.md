@@ -65,7 +65,6 @@ class Element<TState extends BaseElementState = BaseElementState, TEventMap exte
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;TEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `TState["direction"]` |  |
 | `fill` | `TState["fill"]` |  |
 | `filter` | `TState["filter"]` |  |
@@ -362,7 +361,6 @@ class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;TEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -761,7 +759,6 @@ class Scene<TContext extends Context = Context> extends Group<SceneEventMap>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;SceneEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -1038,7 +1035,6 @@ class Shape<TState extends BaseElementState = BaseElementState> extends Element<
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `TState["direction"]` |  |
 | `fill` | `TState["fill"]` |  |
 | `filter` | `TState["filter"]` |  |
@@ -1213,7 +1209,6 @@ class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `TState["direction"]` |  |
 | `fill` | `TState["fill"]` |  |
 | `filter` | `TState["filter"]` |  |
@@ -1913,7 +1908,7 @@ type Shape2DOptions<TState extends BaseElementState = BaseElementState> = Elemen
 Factory function that creates a new `Element` instance.
 
 ```ts
-function createElement(...options: ConstructorParameters<typeof Element>);
+function createElement(...options: ConstructorParameters<typeof Element>)
 ```
 
 
@@ -1932,7 +1927,7 @@ function createElement(...options: ConstructorParameters<typeof Element>);
 Type guard that checks whether a value is an `Element` instance.
 
 ```ts
-function typeIsElement(value: unknown): value is Element;
+function typeIsElement(value: unknown): value is Element
 ```
 
 
@@ -1951,7 +1946,7 @@ function typeIsElement(value: unknown): value is Element;
 Queries all elements matching a CSS-like selector across the given element(s) and their descendants.
 
 ```ts
-function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string);
+function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string)
 ```
 
 
@@ -1971,7 +1966,7 @@ function queryAll<TElement extends Element = Element>(elements: OneOrMore<Elemen
 Returns the first element matching a CSS-like selector, or `undefined` if none match.
 
 ```ts
-function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string);
+function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string)
 ```
 
 
@@ -1991,7 +1986,7 @@ function query<TElement extends Element = Element>(elements: OneOrMore<Element |
 Type guard that checks whether a value is a `Group` instance.
 
 ```ts
-function isGroup(value: unknown): value is Group;
+function isGroup(value: unknown): value is Group
 ```
 
 
@@ -2010,7 +2005,7 @@ function isGroup(value: unknown): value is Group;
 Factory function that creates a new `Group` instance.
 
 ```ts
-function createGroup(...options: ConstructorParameters<typeof Group>);
+function createGroup(...options: ConstructorParameters<typeof Group>)
 ```
 
 
@@ -2029,7 +2024,7 @@ function createGroup(...options: ConstructorParameters<typeof Group>);
 Factory function that creates a new `Renderer` bound to the given scene.
 
 ```ts
-function createRenderer(...options: ConstructorParameters<typeof Renderer>);
+function createRenderer(...options: ConstructorParameters<typeof Renderer>)
 ```
 
 
@@ -2048,7 +2043,7 @@ function createRenderer(...options: ConstructorParameters<typeof Renderer>);
 Factory function that creates a new `Scene` instance from a context, selector, or element.
 
 ```ts
-function createScene(...options: ConstructorParameters<typeof Scene>);
+function createScene(...options: ConstructorParameters<typeof Scene>)
 ```
 
 
@@ -2067,7 +2062,7 @@ function createScene(...options: ConstructorParameters<typeof Scene>);
 Factory function that creates a new `Shape2D` instance.
 
 ```ts
-function createShape(...options: ConstructorParameters<typeof Shape2D>);
+function createShape(...options: ConstructorParameters<typeof Shape2D>)
 ```
 
 
@@ -2086,7 +2081,7 @@ function createShape(...options: ConstructorParameters<typeof Shape2D>);
 Type guard that checks whether a value is a `Shape` instance.
 
 ```ts
-function elementIsShape(value: unknown): value is Shape;
+function elementIsShape(value: unknown): value is Shape
 ```
 
 
@@ -2105,34 +2100,7 @@ function elementIsShape(value: unknown): value is Shape;
 Maps element state properties to their corresponding context setter functions.
 
 ```ts
-const CONTEXT_OPERATIONS: { fill: (context: Context, value: string) => void;
-    filter: (context: Context, value: string) => void;
-    direction: (context: Context, value: NonNullable<Direction | undefined>) => void;
-    font: (context: Context, value: string) => void;
-    fontKerning: (context: Context, value: NonNullable<FontKerning | undefined>) => void;
-    opacity: (context: Context, value: number) => void;
-    globalCompositeOperation: (context: Context, value: {}) => void;
-    lineCap: (context: Context, value: NonNullable<LineCap | undefined>) => void;
-    lineDash: (context: Context, value: number[]) => void;
-    lineDashOffset: (context: Context, value: number) => void;
-    lineJoin: (context: Context, value: NonNullable<LineJoin | undefined>) => void;
-    lineWidth: (context: Context, value: number) => void;
-    miterLimit: (context: Context, value: number) => void;
-    shadowBlur: (context: Context, value: number) => void;
-    shadowColor: (context: Context, value: string) => void;
-    shadowOffsetX: (context: Context, value: number) => void;
-    shadowOffsetY: (context: Context, value: number) => void;
-    stroke: (context: Context, value: string) => void;
-    textAlign: (context: Context, value: NonNullable<TextAlignment | undefined>) => void;
-    textBaseline: (context: Context, value: NonNullable<TextBaseline | undefined>) => void;
-    zIndex: (context: Context, value: number) => void;
-    translateX: (context: Context, value: number) => void;
-    translateY: (context: Context, value: number) => void;
-    transformScaleX: (context: Context, value: number) => void;
-    transformScaleY: (context: Context, value: number) => void;
-    rotation: (context: Context, value: NonNullable<Rotation | undefined>) => void;
-    transformOriginX: (context: Context, value: NonNullable<TransformOrigin | undefined>) => void;
-    transformOriginY: (context: Context, value: NonNullable<TransformOrigin | undefined>) => void; };
+const CONTEXT_OPERATIONS: { fill: (context: Context, value: string) => void; filter: (context: Context, value: string) => void; direction: (context: Context, value: NonNullable<Direction | undefined>) => void; font: (context: Context, value: string) => void; fontKerning: (context: Context, value: NonNullable<FontKerning | undefined>) => void; opacity: (context: Context, value: number) => void; globalCompositeOperation: (context: Context, value: {}) => void; lineCap: (context: Context, value: NonNullable<LineCap | undefined>) => void; lineDash: (context: Context, value: number[]) => void; lineDashOffset: (context: Context, value: number) => void; lineJoin: (context: Context, value: NonNullable<LineJoin | undefined>) => void; lineWidth: (context: Context, value: number) => void; miterLimit: (context: Context, value: number) => void; shadowBlur: (context: Context, value: number) => void; shadowColor: (context: Context, value: string) => void; shadowOffsetX: (context: Context, value: number) => void; shadowOffsetY: (context: Context, value: number) => void; stroke: (context: Context, value: string) => void; textAlign: (context: Context, value: NonNullable<TextAlignment | undefined>) => void; textBaseline: (context: Context, value: NonNullable<TextBaseline | undefined>) => void; zIndex: (context: Context, value: number) => void; translateX: (context: Context, value: number) => void; translateY: (context: Context, value: number) => void; transformScaleX: (context: Context, value: number) => void; transformScaleY: (context: Context, value: number) => void; rotation: (context: Context, value: NonNullable<Rotation | undefined>) => void; transformOriginX: (context: Context, value: NonNullable<TransformOrigin | undefined>) => void; transformOriginY: (context: Context, value: NonNullable<TransformOrigin | undefined>) => void; }
 ```
 
 ---
@@ -2142,7 +2110,7 @@ const CONTEXT_OPERATIONS: { fill: (context: Context, value: string) => void;
 Interpolator factories for transform-related properties that require special interpolation (rotation, transform-origin).
 
 ```ts
-const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>>;
+const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>>
 ```
 
 ---
@@ -2152,7 +2120,7 @@ const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>>;
 Default numeric values for transform properties (translate, scale, rotation, transform-origin).
 
 ```ts
-const TRANSFORM_DEFAULTS: Record<string, number>;
+const TRANSFORM_DEFAULTS: Record<string, number>
 ```
 
 ---
@@ -2162,7 +2130,7 @@ const TRANSFORM_DEFAULTS: Record<string, number>;
 DOM event types that are tracked and forwarded to elements for hit testing and interaction.
 
 ```ts
-const TRACKED_EVENTS: (keyof ElementEventMap)[];
+const TRACKED_EVENTS: (keyof ElementEventMap)[]
 ```
 
 ---

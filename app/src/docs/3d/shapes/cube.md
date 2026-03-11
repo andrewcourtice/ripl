@@ -73,10 +73,9 @@ function loop() {
     angle += 0.005;
     camera.position = [Math.sin(angle) * 5, 1.5, Math.cos(angle) * 5];
     camera.flush();
-    context.clear();
-    context.markRenderStart();
-    cube.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        cube.render(context);
+    });
     requestAnimationFrame(loop);
 }
 loop();

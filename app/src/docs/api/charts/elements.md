@@ -54,7 +54,6 @@ class Ribbon extends Shape2D<RibbonState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -230,7 +229,6 @@ class SankeyLinkPath extends Shape2D<SankeyLinkState>
 | `pointerEvents` | `ElementPointerEvents` |  |
 | `parent` | `Group&lt;ElementEventMap&gt; \| undefined` |  |
 | `data` | `unknown` |  |
-| `renderDepth` | `number \| undefined` |  |
 | `direction` | `Direction \| undefined` |  |
 | `fill` | `string \| undefined` |  |
 | `filter` | `string \| undefined` |  |
@@ -486,7 +484,7 @@ interface SankeyLinkState extends BaseElementState {
 Factory function that creates a new `Ribbon` instance.
 
 ```ts
-function createRibbon(...options: ConstructorParameters<typeof Ribbon>);
+function createRibbon(...options: ConstructorParameters<typeof Ribbon>)
 ```
 
 
@@ -505,7 +503,7 @@ function createRibbon(...options: ConstructorParameters<typeof Ribbon>);
 Type guard that checks whether a value is a `Ribbon` instance.
 
 ```ts
-function elementIsRibbon(value: unknown): value is Ribbon;
+function elementIsRibbon(value: unknown): value is Ribbon
 ```
 
 
@@ -524,7 +522,7 @@ function elementIsRibbon(value: unknown): value is Ribbon;
 Factory function that creates a new `SankeyLinkPath` instance.
 
 ```ts
-function createSankeyLink(...options: ConstructorParameters<typeof SankeyLinkPath>);
+function createSankeyLink(...options: ConstructorParameters<typeof SankeyLinkPath>)
 ```
 
 
@@ -543,7 +541,7 @@ function createSankeyLink(...options: ConstructorParameters<typeof SankeyLinkPat
 Type guard that checks whether a value is a `SankeyLinkPath` instance.
 
 ```ts
-function elementIsSankeyLink(value: unknown): value is SankeyLinkPath;
+function elementIsSankeyLink(value: unknown): value is SankeyLinkPath
 ```
 
 

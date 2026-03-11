@@ -71,25 +71,22 @@ function renderDemo(context: Context) {
     const rw = w * 0.7 * (widthPct.value / 100);
     const rh = h * 0.6 * (heightPct.value / 100);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createRect({
+            fill: '#3a86ff',
+            x: w / 2 - rw / 2,
+            y: h / 2 - rh / 2,
+            width: rw,
+            height: rh,
+            borderRadius: borderRadiusVal.value,
+        }).render(context);
 
-    createRect({
-        fill: '#3a86ff',
-        x: w / 2 - rw / 2,
-        y: h / 2 - rh / 2,
-        width: rw,
-        height: rh,
-        borderRadius: borderRadiusVal.value,
-    }).render(context);
-
-    createText({
-        x: w / 2, y: h / 2 + rh / 2 + 22,
-        content: `${Math.round(rw)}×${Math.round(rh)}  radius: ${borderRadiusVal.value}`,
-        fill: '#666', textAlign: 'center', font: '12px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
+        createText({
+            x: w / 2, y: h / 2 + rh / 2 + 22,
+            content: `${Math.round(rw)}×${Math.round(rh)}  radius: ${borderRadiusVal.value}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(context);
+    });
 }
 
 const {

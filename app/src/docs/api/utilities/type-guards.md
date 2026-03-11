@@ -17,7 +17,7 @@ Runtime type checking predicates.
 Checks whether a value is an array.
 
 ```ts
-function typeIsArray(value: unknown): value is unknown[];
+function typeIsArray(value: unknown): value is unknown[]
 ```
 
 
@@ -36,7 +36,7 @@ function typeIsArray(value: unknown): value is unknown[];
 Checks whether a value is a `Date` instance.
 
 ```ts
-function typeIsDate(value: unknown): value is Date;
+function typeIsDate(value: unknown): value is Date
 ```
 
 
@@ -55,7 +55,7 @@ function typeIsDate(value: unknown): value is Date;
 Checks whether a value is a non-null object.
 
 ```ts
-function typeIsObject(value: unknown): value is object;
+function typeIsObject(value: unknown): value is object
 ```
 
 
@@ -74,7 +74,7 @@ function typeIsObject(value: unknown): value is object;
 Checks whether a value is a boolean.
 
 ```ts
-function typeIsBoolean(value: unknown): value is boolean;
+function typeIsBoolean(value: unknown): value is boolean
 ```
 
 
@@ -93,7 +93,7 @@ function typeIsBoolean(value: unknown): value is boolean;
 Checks whether a value is a function.
 
 ```ts
-function typeIsFunction(value: unknown): value is AnyFunction;
+function typeIsFunction(value: unknown): value is AnyFunction
 ```
 
 
@@ -112,7 +112,7 @@ function typeIsFunction(value: unknown): value is AnyFunction;
 Checks whether a value is a number.
 
 ```ts
-function typeIsNumber(value: unknown): value is number;
+function typeIsNumber(value: unknown): value is number
 ```
 
 
@@ -131,7 +131,7 @@ function typeIsNumber(value: unknown): value is number;
 Checks whether a value is a string.
 
 ```ts
-function typeIsString(value: unknown): value is string;
+function typeIsString(value: unknown): value is string
 ```
 
 
@@ -150,7 +150,7 @@ function typeIsString(value: unknown): value is string;
 Checks whether a value is `null` or `undefined`.
 
 ```ts
-function typeIsNil(value: unknown): value is null | undefined;
+function typeIsNil(value: unknown): value is null | undefined
 ```
 
 
@@ -169,7 +169,7 @@ function typeIsNil(value: unknown): value is null | undefined;
 Tests strict reference equality between two values.
 
 ```ts
-function predicateIdentity(valueA: unknown, valueB: unknown): boolean;
+function predicateIdentity(valueA: unknown, valueB: unknown): boolean
 ```
 
 
@@ -189,7 +189,7 @@ function predicateIdentity(valueA: unknown, valueB: unknown): boolean;
 Tests whether two objects share the same value at a given key.
 
 ```ts
-function predicateKey<TValue extends Record<PropertyKey, unknown>>(valueA: TValue, valueB: TValue, key: PropertyKey): boolean;
+function predicateKey<TValue extends Record<PropertyKey, unknown>>(valueA: TValue, valueB: TValue, key: PropertyKey): boolean
 ```
 
 

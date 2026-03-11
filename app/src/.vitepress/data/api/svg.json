@@ -1369,7 +1369,7 @@
           "protected": true
         },
         {
-          "name": "batch",
+          "name": "layer",
           "kind": "method",
           "description": "Executes a callback within a save/restore pair, returning the callback's result.",
           "type": "TResult",
@@ -1403,6 +1403,20 @@
             {
               "name": "event",
               "type": "string",
+              "description": "",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "name": "batch",
+          "kind": "method",
+          "description": "Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result.",
+          "type": "TResult",
+          "params": [
+            {
+              "name": "body",
+              "type": "() => TResult",
               "description": "",
               "optional": false
             }

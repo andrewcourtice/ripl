@@ -3045,7 +3045,7 @@ type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
 Factory function that creates a new {@link AreaChart} instance.
 
 ```ts
-function createAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: AreaChartOptions<TData>);
+function createAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: AreaChartOptions<TData>)
 ```
 
 
@@ -3065,7 +3065,7 @@ function createAreaChart<TData = unknown>(target: string | HTMLElement | Context
 Factory function that creates a new {@link BarChart} instance.
 
 ```ts
-function createBarChart<TData = unknown>(target: string | HTMLElement | Context, options: BarChartOptions<TData>);
+function createBarChart<TData = unknown>(target: string | HTMLElement | Context, options: BarChartOptions<TData>)
 ```
 
 
@@ -3085,7 +3085,7 @@ function createBarChart<TData = unknown>(target: string | HTMLElement | Context,
 Factory function that creates a new {@link ChordChart} instance.
 
 ```ts
-function createChordChart(target: string | HTMLElement | Context, options: ChordChartOptions);
+function createChordChart(target: string | HTMLElement | Context, options: ChordChartOptions)
 ```
 
 
@@ -3105,7 +3105,7 @@ function createChordChart(target: string | HTMLElement | Context, options: Chord
 Factory function that creates a new {@link FunnelChart} instance.
 
 ```ts
-function createFunnelChart<TData = unknown>(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>);
+function createFunnelChart<TData = unknown>(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>)
 ```
 
 
@@ -3125,7 +3125,7 @@ function createFunnelChart<TData = unknown>(target: string | HTMLElement | Conte
 Factory function that creates a new {@link GanttChart} instance.
 
 ```ts
-function createGanttChart<TData = unknown>(target: string | HTMLElement | Context, options: GanttChartOptions<TData>);
+function createGanttChart<TData = unknown>(target: string | HTMLElement | Context, options: GanttChartOptions<TData>)
 ```
 
 
@@ -3145,7 +3145,7 @@ function createGanttChart<TData = unknown>(target: string | HTMLElement | Contex
 Factory function that creates a new {@link GaugeChart} instance.
 
 ```ts
-function createGaugeChart(target: string | HTMLElement | Context, options: GaugeChartOptions);
+function createGaugeChart(target: string | HTMLElement | Context, options: GaugeChartOptions)
 ```
 
 
@@ -3165,7 +3165,7 @@ function createGaugeChart(target: string | HTMLElement | Context, options: Gauge
 Factory function that creates a new {@link HeatmapChart} instance.
 
 ```ts
-function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>);
+function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>)
 ```
 
 
@@ -3185,7 +3185,7 @@ function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Cont
 Factory function that creates a new {@link LineChart} instance.
 
 ```ts
-function createLineChart<TData = unknown>(target: string | HTMLElement | Context, options: LineChartOptions<TData>);
+function createLineChart<TData = unknown>(target: string | HTMLElement | Context, options: LineChartOptions<TData>)
 ```
 
 
@@ -3205,7 +3205,7 @@ function createLineChart<TData = unknown>(target: string | HTMLElement | Context
 Factory function that creates a new {@link PieChart} instance.
 
 ```ts
-function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>);
+function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>)
 ```
 
 
@@ -3225,7 +3225,7 @@ function createPieChart<TData = unknown>(target: string | HTMLElement | Context,
 Factory function that creates a new {@link PolarAreaChart} instance.
 
 ```ts
-function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>);
+function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>)
 ```
 
 
@@ -3245,7 +3245,7 @@ function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Co
 Factory function that creates a new {@link RadarChart} instance.
 
 ```ts
-function createRadarChart<TData = unknown>(target: string | HTMLElement | Context, options: RadarChartOptions<TData>);
+function createRadarChart<TData = unknown>(target: string | HTMLElement | Context, options: RadarChartOptions<TData>)
 ```
 
 
@@ -3265,7 +3265,7 @@ function createRadarChart<TData = unknown>(target: string | HTMLElement | Contex
 Factory function that creates a new {@link SankeyChart} instance.
 
 ```ts
-function createSankeyChart(target: string | HTMLElement | Context, options: SankeyChartOptions);
+function createSankeyChart(target: string | HTMLElement | Context, options: SankeyChartOptions)
 ```
 
 
@@ -3285,7 +3285,7 @@ function createSankeyChart(target: string | HTMLElement | Context, options: Sank
 Factory function that creates a new {@link ScatterChart} instance.
 
 ```ts
-function createScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>);
+function createScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>)
 ```
 
 
@@ -3305,7 +3305,7 @@ function createScatterChart<TData = unknown>(target: string | HTMLElement | Cont
 Factory function that creates a new {@link StockChart} instance.
 
 ```ts
-function createStockChart<TData = unknown>(target: string | HTMLElement | Context, options: StockChartOptions<TData>);
+function createStockChart<TData = unknown>(target: string | HTMLElement | Context, options: StockChartOptions<TData>)
 ```
 
 
@@ -3325,7 +3325,7 @@ function createStockChart<TData = unknown>(target: string | HTMLElement | Contex
 Factory function that creates a new {@link SunburstChart} instance.
 
 ```ts
-function createSunburstChart(target: string | HTMLElement | Context, options: SunburstChartOptions);
+function createSunburstChart(target: string | HTMLElement | Context, options: SunburstChartOptions)
 ```
 
 
@@ -3345,7 +3345,7 @@ function createSunburstChart(target: string | HTMLElement | Context, options: Su
 Factory function that creates a new {@link TreemapChart} instance.
 
 ```ts
-function createTreemapChart<TData = unknown>(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>);
+function createTreemapChart<TData = unknown>(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>)
 ```
 
 
@@ -3365,7 +3365,7 @@ function createTreemapChart<TData = unknown>(target: string | HTMLElement | Cont
 Factory function that creates a new {@link RealtimeChart} instance.
 
 ```ts
-function createRealtimeChart(target: string | HTMLElement | Context, options: RealtimeChartOptions);
+function createRealtimeChart(target: string | HTMLElement | Context, options: RealtimeChartOptions)
 ```
 
 
@@ -3385,7 +3385,7 @@ function createRealtimeChart(target: string | HTMLElement | Context, options: Re
 Factory function that creates a new {@link TrendChart} instance.
 
 ```ts
-function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>);
+function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>)
 ```
 
 

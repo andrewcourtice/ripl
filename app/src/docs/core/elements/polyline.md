@@ -81,30 +81,27 @@ function renderDemo(context: Context) {
         [w - pad, h * 0.5],
     ];
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        createPolyline({
+            stroke: '#3a86ff',
+            lineWidth: 3,
+            points,
+            renderer: currentRenderer.value,
+        }).render(context);
 
-    createPolyline({
-        stroke: '#3a86ff',
-        lineWidth: 3,
-        points,
-        renderer: currentRenderer.value,
-    }).render(context);
+        points.forEach(([x, y]) => {
+            createCircle({
+                fill: '#ff006e',
+                cx: x, cy: y, radius: 4,
+            }).render(context);
+        });
 
-    points.forEach(([x, y]) => {
-        createCircle({
-            fill: '#ff006e',
-            cx: x, cy: y, radius: 4,
+        createText({
+            x: w / 2, y: h - 12,
+            content: `renderer: '${currentRenderer.value}'`,
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
         }).render(context);
     });
-
-    createText({
-        x: w / 2, y: h - 12,
-        content: `renderer: '${currentRenderer.value}'`,
-        fill: '#666', textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
 }
 
 const {

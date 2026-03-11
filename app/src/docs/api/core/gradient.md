@@ -135,7 +135,7 @@ type GradientType = Gradient['type'];
 Parses a CSS gradient string (linear, radial, or conic) into a structured `Gradient` object, or returns `undefined` if the string is not a recognised gradient.
 
 ```ts
-function parseGradient(value: string): Gradient | undefined;
+function parseGradient(value: string): Gradient | undefined
 ```
 
 
@@ -154,7 +154,7 @@ function parseGradient(value: string): Gradient | undefined;
 Tests whether a string looks like a CSS gradient (starts with a recognised gradient function name).
 
 ```ts
-function isGradientString(value: string): boolean;
+function isGradientString(value: string): boolean
 ```
 
 
@@ -173,7 +173,7 @@ function isGradientString(value: string): boolean;
 Serialises a structured `Gradient` object back into a CSS gradient string.
 
 ```ts
-function serialiseGradient(gradient: Gradient): string;
+function serialiseGradient(gradient: Gradient): string
 ```
 
 

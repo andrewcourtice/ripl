@@ -101,14 +101,15 @@ function loop() {
     camera.position = [Math.sin(angle) * 6, 2, Math.cos(angle) * 6];
     camera.flush();
 
-    context.lightDirection = [-1, -1, -1];
-    context.clear();
-    context.markRenderStart();
-    cubeLeft.render(context);
+    context.batch(() => {
+        context.lightDirection = [-1, -1, -1];
+        cubeLeft.render(context);
 
-    context.lightDirection = [1, -1, 1];
-    cubeRight.render(context);
-    context.markRenderEnd();
+        context.layer(() => {
+            context.lightDirection = [1, -1, 1];
+            cubeRight.render(context);
+        });
+    });
     requestAnimationFrame(loop);
 }
 loop();

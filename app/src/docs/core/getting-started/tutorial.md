@@ -196,10 +196,9 @@ const circle = createCircle({
 });
 
 function render() {
-    context.clear();
-    context.markRenderStart();
-    circle.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        circle.render(context);
+    });
 }
 
 render();
@@ -227,7 +226,7 @@ circle.on('click', () => {
 > Hover over and click the circle to see the events in action.
 
 > [!TIP]
-> After changing element properties, re-render to see the updates. The `markRenderStart()`/`markRenderEnd()` calls tell the context which elements are on screen for hit testing.
+> After changing element properties, re-render to see the updates. The `batch()` call clears the surface and tells the context which elements are on screen for hit testing.
 
 ## Animation
 
@@ -255,10 +254,9 @@ const circle = createCircle({
 });
 
 function render() {
-    context.clear();
-    context.markRenderStart();
-    circle.render(context);
-    context.markRenderEnd();
+    context.batch(() => {
+        circle.render(context);
+    });
 }
 
 render();
@@ -330,7 +328,7 @@ scene.render();
 :::
 
 > [!TIP]
-> When you use a Scene, you don't need to manage `context.clear()` or `context.markRenderStart()`/`markRenderEnd()` yourself — the scene handles all of that.
+> When you use a Scene, you don't need to call `context.batch()` yourself — the scene handles clearing and render markers automatically.
 
 ## Using a Renderer
 
@@ -485,18 +483,14 @@ const {
     });
 
     const render = () => {
-        context.markRenderStart();
-        circle.render(context);
-        label.render(context);
-        context.markRenderEnd();
-    }
+        context.batch(() => {
+            circle.render(context);
+            label.render(context);
+        });
+    };
 
     render();
-
-    context.on('resize', () => {
-        context.clear();
-        render();
-    })
+    context.on('resize', render);
 });
 
 
@@ -639,10 +633,9 @@ const {
     });
 
     const render = () => {
-        context.clear();
-        context.markRenderStart();
-        circle.render(context);
-        context.markRenderEnd();
+        context.batch(() => {
+            circle.render(context);
+        });
     };
 
     render();
@@ -688,10 +681,9 @@ const {
     });
 
     const render = () => {
-        context.clear();
-        context.markRenderStart();
-        transitionCircle.render(context);
-        context.markRenderEnd();
+        context.batch(() => {
+            transitionCircle.render(context);
+        });
     };
 
     render();
@@ -699,10 +691,9 @@ const {
 
 function transitionRender() {
     if (!transitionContext || !transitionCircle) return;
-    transitionContext.clear();
-    transitionContext.markRenderStart();
-    transitionCircle.render(transitionContext);
-    transitionContext.markRenderEnd();
+    transitionContext.batch(() => {
+        transitionCircle.render(transitionContext);
+    });
 }
 
 function runTransition() {

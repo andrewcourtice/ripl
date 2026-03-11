@@ -161,45 +161,42 @@ function renderDemo(context: Context) {
     const maxR = Math.min(w, h) / 3;
     const r = maxR * (clipRadiusPct.value / 100);
 
-    context.clear();
-    context.markRenderStart();
+    context.batch(() => {
+        const clippedGroup = createGroup({
+            children: [
+                createCircle({ clip: true, cx, cy, radius: r }),
+                createRect({
+                    fill: '#3a86ff',
+                    x: cx - maxR, y: cy - maxR,
+                    width: maxR * 2, height: maxR * 2,
+                }),
+                ...Array.from({ length: 20 }, (_, i) => {
+                    const offset = (i - 10) * (maxR / 5);
+                    return createLine({
+                        stroke: '#ffffff44',
+                        lineWidth: 2,
+                        x1: cx - maxR + offset, y1: cy - maxR,
+                        x2: cx + maxR + offset, y2: cy + maxR,
+                    });
+                }),
+            ],
+        });
 
-    const clippedGroup = createGroup({
-        children: [
-            createCircle({ clip: true, cx, cy, radius: r }),
-            createRect({
-                fill: '#3a86ff',
-                x: cx - maxR, y: cy - maxR,
-                width: maxR * 2, height: maxR * 2,
-            }),
-            ...Array.from({ length: 20 }, (_, i) => {
-                const offset = (i - 10) * (maxR / 5);
-                return createLine({
-                    stroke: '#ffffff44',
-                    lineWidth: 2,
-                    x1: cx - maxR + offset, y1: cy - maxR,
-                    x2: cx + maxR + offset, y2: cy + maxR,
-                });
-            }),
-        ],
+        clippedGroup.render(context);
+
+        createCircle({
+            stroke: '#1a56db',
+            lineWidth: 3,
+            cx, cy, radius: r,
+            autoFill: false,
+        }).render(context);
+
+        createText({
+            x: cx, y: cy + maxR + 24,
+            content: `Clip radius: ${Math.round(r)}px`,
+            fill: '#666', textAlign: 'center', font: '13px sans-serif',
+        }).render(context);
     });
-
-    clippedGroup.render(context);
-
-    createCircle({
-        stroke: '#1a56db',
-        lineWidth: 3,
-        cx, cy, radius: r,
-        autoFill: false,
-    }).render(context);
-
-    createText({
-        x: cx, y: cy + maxR + 24,
-        content: `Clip radius: ${Math.round(r)}px`,
-        fill: '#666', textAlign: 'center', font: '13px sans-serif',
-    }).render(context);
-
-    context.markRenderEnd();
 }
 
 const {

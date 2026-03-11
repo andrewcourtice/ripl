@@ -17,7 +17,7 @@ Flat shading utilities based on face normals and light direction.
 Computes the surface normal of a face from its first three vertices via the cross product.
 
 ```ts
-function computeFaceNormal(vertices: Vector3[]): Vector3;
+function computeFaceNormal(vertices: Vector3[]): Vector3
 ```
 
 
@@ -36,7 +36,7 @@ function computeFaceNormal(vertices: Vector3[]): Vector3;
 Computes a 0–1 brightness value for a face given its normal and a light direction.
 
 ```ts
-function computeFaceBrightness(normal: Vector3, lightDirection: Vector3, normalized?: boolean): number;
+function computeFaceBrightness(normal: Vector3, lightDirection: Vector3, normalized?: boolean): number
 ```
 
 
