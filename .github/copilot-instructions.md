@@ -88,6 +88,58 @@ import {
 2. Use `let` only when reassignment is necessary
 3. Avoid `var` entirely
 4. Declare variables close to where they are used
+5. Declare `const` variables before `let` variables where possible
+6. Add a blank line between blocks of `const` and `let` declarations
+
+## Code Structure & Organization
+
+### File Structure
+
+Files should follow this ordering:
+
+1. **Imports** (follow import splitting and ordering rules above)
+2. **Local type definitions** (types/interfaces used only within this file)
+3. **Exported type definitions**
+4. **Local code** (not exported)
+   - Constants (`UPPER_SNAKE_CASE`)
+   - Functions
+   - Classes
+5. **Exported code** (same sub-ordering as local)
+   - Constants
+   - Functions
+   - Classes
+6. **Main exports** (barrel `export * from` statements in index files)
+
+When a file accumulates several constants, extract them into a dedicated `constants.ts` file.
+
+### Control Flow
+
+1. Invert conditions and return early — avoid `else` and `else-if` branches where possible
+2. Combine/invert logic so the happy path flows naturally without nesting
+3. No nested ternaries (enforced by ESLint)
+4. Limit block nesting depth to 4 (enforced by ESLint)
+5. Avoid nested loops — extract inner loops into descriptive functions where possible
+
+### Functions & Decomposition
+
+1. Break large blocks of logic into small, well-named functions that are easy to debug and test
+2. Each function should do one thing; if a function needs a comment explaining a section, that section is a candidate for extraction
+3. Prefer pure functions where feasible
+
+### Class Conventions
+
+1. Every member must have an explicit scope identifier (`private`, `protected`, `public`, or `static`)
+2. Use native JS `#` prefix for private fields (e.g. `#elements`), not the TypeScript `private` keyword
+3. Member ordering:
+   - Private fields (`#field`)
+   - Protected/public fields
+   - Getters/setters
+   - Constructor
+   - Private methods
+   - Protected methods
+   - Public methods
+   - Static methods
+4. Factory functions (`createX()`) and type guards (`elementIsX()`) go after the class as exported standalone functions
 
 ## Testing Standards
 

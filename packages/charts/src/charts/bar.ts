@@ -784,81 +784,81 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     this.yAxis.render(),
                     this.drawBarsHorizontal(categoryScale, valueScale, getKey),
                 ]);
-            } else {
-                // Vertical: categories on X, values on Y
-                const valueScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
-                    padToTicks: 10,
-                });
-
-                this.yAxis.scale = valueScale;
-                this.yAxis.bounds = new Box(
-                    chartTop,
-                    padding.left,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
-                );
-
-                const yAxisBoundingBox = this.yAxis.getBoundingBox();
-
-                const categoryScale = scaleBand(keys, [yAxisBoundingBox.right, scene.width - padding.right], {
-                    outerPadding: 0.15,
-                    innerPadding: 0.2,
-                });
-
-                // X axis shows categories
-                this.xAxis.scale = Object.assign(
-                    (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
-                    {
-                        domain: keys,
-                        range: categoryScale.range,
-                        inverse: categoryScale.inverse,
-                        ticks: () => keys,
-                        includes: (v: string) => keys.includes(v),
-                    }
-                ) as unknown as typeof this.xAxis.scale;
-
-                this.xAxis.bounds = new Box(
-                    chartTop,
-                    yAxisBoundingBox.right,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
-                );
-
-                const xAxisBoundingBox = this.xAxis.getBoundingBox();
-
-                // Recalculate value scale with correct bounds
-                const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
-                    padToTicks: 10,
-                });
-
-                this.yAxis.scale = adjustedValueScale;
-                this.yAxis.bounds.bottom = xAxisBoundingBox.top;
-
-                if (this.grid) {
-                    const yTicks = adjustedValueScale.ticks(10);
-                    const yTickPositions = yTicks.map(tick => adjustedValueScale(tick));
-
-                    this.grid.render(
-                        [],
-                        yTickPositions,
-                        yAxisBoundingBox.right,
-                        chartTop,
-                        scene.width - padding.right - yAxisBoundingBox.right,
-                        xAxisBoundingBox.top - chartTop
-                    );
-                }
-
-                // Render legend
-                if (this.legend && legendHeight > 0) {
-                    this.renderLegend(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
-                }
-
-                return Promise.all([
-                    this.xAxis.render(),
-                    this.yAxis.render(),
-                    this.drawBarsVertical(categoryScale, adjustedValueScale, getKey),
-                ]);
             }
+
+            // Vertical: categories on X, values on Y
+            const valueScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
+                padToTicks: 10,
+            });
+
+            this.yAxis.scale = valueScale;
+            this.yAxis.bounds = new Box(
+                chartTop,
+                padding.left,
+                scene.height - padding.bottom,
+                scene.width - padding.right
+            );
+
+            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+
+            const categoryScale = scaleBand(keys, [yAxisBoundingBox.right, scene.width - padding.right], {
+                outerPadding: 0.15,
+                innerPadding: 0.2,
+            });
+
+            // X axis shows categories
+            this.xAxis.scale = Object.assign(
+                (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
+                {
+                    domain: keys,
+                    range: categoryScale.range,
+                    inverse: categoryScale.inverse,
+                    ticks: () => keys,
+                    includes: (v: string) => keys.includes(v),
+                }
+            ) as unknown as typeof this.xAxis.scale;
+
+            this.xAxis.bounds = new Box(
+                chartTop,
+                yAxisBoundingBox.right,
+                scene.height - padding.bottom,
+                scene.width - padding.right
+            );
+
+            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+
+            // Recalculate value scale with correct bounds
+            const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
+                padToTicks: 10,
+            });
+
+            this.yAxis.scale = adjustedValueScale;
+            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+
+            if (this.grid) {
+                const yTicks = adjustedValueScale.ticks(10);
+                const yTickPositions = yTicks.map(tick => adjustedValueScale(tick));
+
+                this.grid.render(
+                    [],
+                    yTickPositions,
+                    yAxisBoundingBox.right,
+                    chartTop,
+                    scene.width - padding.right - yAxisBoundingBox.right,
+                    xAxisBoundingBox.top - chartTop
+                );
+            }
+
+            // Render legend
+            if (this.legend && legendHeight > 0) {
+                this.renderLegend(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
+            }
+
+            return Promise.all([
+                this.xAxis.render(),
+                this.yAxis.render(),
+                this.drawBarsVertical(categoryScale, adjustedValueScale, getKey),
+            ]);
         });
     }
 

@@ -49,6 +49,10 @@ export default tseslint.config(
             'no-useless-return': 'error',
             'no-var': 'error',
             'prefer-exponentiation-operator': 'error',
+            'no-else-return': 'error',
+            'no-lonely-if': 'error',
+            'max-depth': ['error', 4],
+            'max-nested-callbacks': ['error', 4],
 
             'camelcase': ['warn', { // remove when API changes to camelcase
                 'properties': 'never',
@@ -146,10 +150,25 @@ export default tseslint.config(
             '@stylistic/member-delimiter-style': 'error',
 
             // Typescript specific rules
+            '@typescript-eslint/explicit-member-accessibility': ['warn', {
+                'accessibility': 'explicit',
+                'overrides': {
+                    'constructors': 'no-public',
+                },
+            }],
             '@typescript-eslint/explicit-module-boundary-types': 'off',
             '@typescript-eslint/no-inferrable-types': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-empty-function': 'warn',
+        },
+    },
+
+    // Relax nesting rules for test files (describe > describe > test > callback is standard)
+    {
+        name: 'ripl/tests',
+        files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.bench.ts'],
+        rules: {
+            'max-nested-callbacks': ['error', 6],
         },
     },
 
