@@ -136,19 +136,15 @@ const renderer = createRenderer(scene);
 
 <script lang="ts" setup>
 import {
-    useRiplExample,
+    useAdvRiplExample,
 } from '../../../.vitepress/compositions/example';
 
 import {
     createCircle,
-    createRenderer,
-    createScene,
 } from '@ripl/core';
 
 import type {
     Circle,
-    Renderer,
-    Scene,
 } from '@ripl/core';
 
 import {
@@ -158,8 +154,6 @@ import {
 
 const elementCount = ref(1000);
 
-let scene: Scene | undefined;
-let renderer: Renderer | undefined;
 let circles: Circle[] = [];
 
 function makeCircle(w: number, h: number) {
@@ -171,49 +165,49 @@ function makeCircle(w: number, h: number) {
     });
 }
 
-watch(elementCount, (newCount, oldCount) => {
-    if (!scene) return;
-
-    const w = scene.width;
-    const h = scene.height;
-
-    if (newCount > oldCount) {
-        const added = Array.from({ length: newCount - oldCount }, () => makeCircle(w, h));
-        circles.push(...added);
-        scene.add(added);
-    } else if (newCount < oldCount) {
-        const removed = circles.splice(newCount);
-        scene.remove(removed);
-        removed.forEach(c => c.destroy());
-    }
-});
-
 const {
+    scene,
     contextChanged,
-} = useRiplExample(context => {
+} = useAdvRiplExample(({ context, renderer, scene }) => {
     const w = context.width;
     const h = context.height;
     const count = elementCount.value;
 
     circles = Array.from({ length: count }, () => makeCircle(w, h));
 
-    scene = createScene(context, { children: circles });
-    renderer = createRenderer(scene, {
-        autoStop: false,
-        debug: {
-            fps: true,
-            elementCount: true,
-        },
-    });
-
-    console.log(context);
-
+    scene.add(circles);
     renderer.on('tick', () => {
         circles.forEach(c => {
             c.cx += (Math.random() - 0.5) * 2;
             c.cy += (Math.random() - 0.5) * 2;
         });
     });
+}, {
+    renderer: {
+        autoStop: false,
+        debug: {
+            fps: true,
+            elementCount: true,
+        },
+    }
+});
+
+watch(elementCount, (newCount, oldCount) => {
+    console.log(scene.value);
+    if (!scene.value) return;
+
+    const w = scene.value.width;
+    const h = scene.value.height;
+
+    if (newCount > oldCount) {
+        const added = Array.from({ length: newCount - oldCount }, () => makeCircle(w, h));
+        circles.push(...added);
+        scene.value.add(added);
+    } else if (newCount < oldCount) {
+        const removed = circles.splice(newCount);
+        scene.value.remove(removed);
+        removed.forEach(c => c.destroy());
+    }
 });
 </script>
 
