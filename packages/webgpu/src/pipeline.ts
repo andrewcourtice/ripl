@@ -41,7 +41,7 @@ export const VERTEX_BUFFER_LAYOUT: GPUVertexBufferLayout = {
 export const SCENE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
     {
         binding: 0,
-        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        visibility: 0x3, // GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT
         buffer: {
             type: 'uniform',
         },
@@ -52,7 +52,7 @@ export const SCENE_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
 export const MODEL_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
     {
         binding: 0,
-        visibility: GPUShaderStage.VERTEX,
+        visibility: 0x1, // GPUShaderStage.VERTEX
         buffer: {
             type: 'uniform',
         },
