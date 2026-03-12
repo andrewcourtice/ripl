@@ -139,18 +139,18 @@ function getEdgeConnectionPoints(
             start: [startX, startY],
             end: [endX, endY],
         };
-    } else {
-        // LR: connect right of source to left of target
-        const startX = from.x + from.width;
-        const startY = fromCy;
-        const endX = to.x;
-        const endY = toCy;
-
-        return {
-            start: [startX, startY],
-            end: [endX, endY],
-        };
     }
+
+    // LR: connect right of source to left of target
+    const startX = from.x + from.width;
+    const startY = fromCy;
+    const endX = to.x;
+    const endY = toCy;
+
+    return {
+        start: [startX, startY],
+        end: [endX, endY],
+    };
 }
 
 export function computeLayout(ir: FlowchartIR): DiagramLayout {
@@ -262,12 +262,10 @@ export function computeLayout(ir: FlowchartIR): DiagramLayout {
                 points.push([start[0], midY]);
                 points.push([end[0], midY]);
             }
-        } else {
-            if (Math.abs(start[1] - end[1]) > 1) {
-                const midX = (start[0] + end[0]) / 2;
-                points.push([midX, start[1]]);
-                points.push([midX, end[1]]);
-            }
+        } else if (Math.abs(start[1] - end[1]) > 1) {
+            const midX = (start[0] + end[0]) / 2;
+            points.push([midX, start[1]]);
+            points.push([midX, end[1]]);
         }
 
         points.push(end);

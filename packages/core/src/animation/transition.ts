@@ -11,11 +11,21 @@ import {
 } from '../task';
 
 import type {
+    TaskExecutor,
+} from '../task';
+
+import type {
     Ease,
     TransitionCallback,
     TransitionDirection,
     TransitionOptions,
 } from './types';
+
+interface TransitionHooks {
+    onPause: () => void;
+    onPlay: () => void;
+    onSeek: (position: number) => void;
+}
 
 /** Computes the eased time value for a transition given elapsed time, duration, easing function, and direction. */
 export function computeTransitionTime(elapsed: number, duration: number, ease: Ease, direction: TransitionDirection): number {
@@ -28,19 +38,57 @@ export function computeTransitionTime(elapsed: number, duration: number, ease: E
 /** A `Task`-based animation that drives a callback over time with easing, looping, and abort support. */
 export class Transition extends Task {
 
+    private _paused = false;
+    private _hooks?: TransitionHooks;
 
+    /** A factory function that creates a new `Transition` running in the opposite direction. Set by the transition mechanism that created this instance. */
+    public inverse!: () => Transition;
+
+    constructor(executor: TaskExecutor<void>, hooks?: TransitionHooks) {
+        super(executor);
+        this._hooks = hooks;
+    }
+
+    /** Whether the transition is currently paused. */
+    public get paused(): boolean {
+        return this._paused;
+    }
+
+    /** Pauses the transition without resolving the promise. */
+    public pause(): this {
+        if (!this._paused) {
+            this._paused = true;
+            this._hooks?.onPause();
+        }
+
+        return this;
+    }
+
+    /** Resumes a paused transition from where it left off. */
+    public play(): this {
+        if (this._paused) {
+            this._paused = false;
+            this._hooks?.onPlay();
+        }
+
+        return this;
+    }
+
+    /** Seeks to a normalised position (0–1) and pauses. */
+    public seek(position: number): this {
+        const clamped = clamp(position, 0, 1);
+
+        this._paused = true;
+        this._hooks?.onSeek(clamped);
+
+        return this;
+    }
 
 }
 
 /** Creates and starts a frame-driven transition that invokes the callback with the eased time on each animation frame. */
 export function transition(callback: TransitionCallback, options?: Partial<TransitionOptions>): Transition {
-    const {
-        duration,
-        ease,
-        loop,
-        delay,
-        direction,
-    } = {
+    const resolved = {
         duration: 1000,
         ease: easeLinear,
         loop: false,
@@ -49,9 +97,50 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
         ...options,
     } as TransitionOptions;
 
-    return new Transition((resolve, _reject, onAbort) => {
-        let start = performance.now() + delay;
-        let handle: number | undefined;
+    const {
+        duration,
+        ease,
+        loop,
+        delay,
+        direction,
+    } = resolved;
+
+    let start = 0;
+    let handle: number | undefined;
+    let pausedElapsed = 0;
+    let currentDirection = direction;
+
+    let tick: () => void;
+
+    const hooks: TransitionHooks = {
+        onPause() {
+            pausedElapsed = performance.now() - start;
+
+            if (handle !== undefined) {
+                cancelAnimationFrame(handle);
+                handle = undefined;
+            }
+        },
+        onPlay() {
+            start = performance.now() - pausedElapsed;
+            handle = requestAnimationFrame(tick);
+        },
+        onSeek(position) {
+            pausedElapsed = position * duration;
+
+            const time = computeTransitionTime(pausedElapsed, duration, ease, currentDirection);
+
+            callback(time);
+
+            if (handle !== undefined) {
+                cancelAnimationFrame(handle);
+                handle = undefined;
+            }
+        },
+    };
+
+    const instance = new Transition((resolve, _reject, onAbort) => {
+        start = performance.now() + delay;
 
         onAbort(() => {
             if (handle !== undefined) {
@@ -60,7 +149,7 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
             }
         });
 
-        const tick = () => {
+        tick = () => {
             const current = performance.now();
             const elapsed = current - start;
 
@@ -69,7 +158,7 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
                 return;
             }
 
-            const time = computeTransitionTime(elapsed, duration, ease, direction);
+            const time = computeTransitionTime(elapsed, duration, ease, currentDirection);
 
             callback(time);
 
@@ -79,6 +168,10 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
             }
 
             if (loop) {
+                if (loop === 'alternate') {
+                    currentDirection = currentDirection === 'forward' ? 'reverse' : 'forward';
+                }
+
                 start = performance.now();
                 handle = requestAnimationFrame(tick);
             } else {
@@ -88,5 +181,15 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
         };
 
         handle = requestAnimationFrame(tick);
-    });
+    }, hooks);
+
+    instance.inverse = () => transition(
+        callback,
+        {
+            ...resolved,
+            direction: direction === 'reverse' ? 'forward' : 'reverse',
+        }
+    );
+
+    return instance;
 }

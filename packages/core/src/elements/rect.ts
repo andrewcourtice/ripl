@@ -3,15 +3,21 @@ import type {
 } from '../context';
 
 import {
-    BaseElementState,
     Shape2D,
+} from '../core';
+
+import type {
+    BaseElementState,
     Shape2DOptions,
 } from '../core';
 
 import {
-    BorderRadius,
     Box,
     normaliseBorderRadius,
+} from '../math';
+
+import type {
+    BorderRadius,
 } from '../math';
 
 /** State interface for a rectangle element, defining position, dimensions, and optional border radius. */

@@ -1,6 +1,6 @@
 import {
-    CanvasContext,
-} from '@ripl/core';
+    LIGHT_DIRECTION,
+} from './constants';
 
 import type {
     ProjectedFace3D,
@@ -16,23 +16,20 @@ import {
     mat4TransformPoint,
 } from './math/matrix';
 
-import {
-    LIGHT_DIRECTION,
-} from './constants';
+import type {
+    Matrix4,
+    ProjectedPoint,
+    Vector3,
+} from './math';
 
 import {
+    CanvasContext,
     degreesToRadians,
 } from '@ripl/core';
 
 import type {
     ContextOptions,
 } from '@ripl/core';
-
-import type {
-    Matrix4,
-    ProjectedPoint,
-    Vector3,
-} from './math';
 
 /** Determines whether the light direction is fixed in world space or follows the camera. */
 export type LightMode = 'world' | 'camera';

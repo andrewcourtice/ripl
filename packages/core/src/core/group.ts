@@ -19,7 +19,7 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
-import {
+import type {
     Context,
 } from '../context';
 

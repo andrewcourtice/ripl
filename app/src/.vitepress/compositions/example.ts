@@ -1,3 +1,15 @@
+import type {
+    Chart,
+} from '@ripl/charts';
+
+import type {
+    Context,
+    Renderer,
+    RendererOptions,
+    Scene,
+    SceneOptions,
+} from '@ripl/core';
+
 import {
     shallowRef,
 } from 'vue';
@@ -7,13 +19,21 @@ import {
     pauseTracking,
 } from '@vue/reactivity';
 
-import type {
-    Chart,
-} from '@ripl/charts';
-
-import type {
-    Context,
+import {
+    createRenderer,
+    createScene,
 } from '@ripl/core';
+
+type AdvancedExampleOptions = {
+    scene?: SceneOptions;
+    renderer?: RendererOptions;
+};
+
+type AdvancedExampleState = {
+    context: Context;
+    scene: Scene;
+    renderer: Renderer;
+};
 
 export function useRiplExample(onContextChanged?: (context: Context) => void) {
     const context = shallowRef<Context>();
@@ -30,6 +50,34 @@ export function useRiplExample(onContextChanged?: (context: Context) => void) {
     return {
         context,
         contextChanged,
+    };
+}
+
+export function useAdvRiplExample(onContextChanged?: (state: AdvancedExampleState) => void, options?: AdvancedExampleOptions) {
+    const scene = shallowRef<Scene>();
+    const renderer = shallowRef<Renderer>();
+
+    const output = useRiplExample(context => {
+        scene.value?.destroy();
+        renderer.value?.destroy();
+
+        const scn = createScene(context, options?.scene);
+        const rdr = createRenderer(scn, options?.renderer);
+
+        scene.value = scn;
+        renderer.value = rdr;
+
+        onContextChanged?.({
+            context,
+            scene: scn,
+            renderer: rdr,
+        });
+    });
+
+    return {
+        ...output,
+        scene,
+        renderer,
     };
 }
 

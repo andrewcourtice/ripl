@@ -12,6 +12,7 @@ import {
     easeInQuad,
     easeLinear,
     TaskAbortError,
+    Transition,
     transition,
 } from '../../src';
 
@@ -240,6 +241,222 @@ describe('transition', () => {
         expect(values[values.length - 1]).toBe(1);
 
         await t;
+    });
+
+    test('Should expose pause, play, seek methods and paused getter', () => {
+        const t = transition(() => {}, { duration: 100 });
+        expect(typeof t.pause).toBe('function');
+        expect(typeof t.play).toBe('function');
+        expect(typeof t.seek).toBe('function');
+        expect(t.paused).toBe(false);
+    });
+
+    test('Should pause the transition and stop callbacks', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(200);
+        const countBeforePause = values.length;
+        expect(countBeforePause).toBeGreaterThan(0);
+
+        t.pause();
+        expect(t.paused).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(500);
+
+        // No new callbacks while paused
+        expect(values.length).toBe(countBeforePause);
+    });
+
+    test('Should not resolve the promise while paused', async () => {
+        let resolved = false;
+
+        const t = transition(() => {}, { duration: 200 });
+        t.then(() => {
+            resolved = true;
+        });
+
+        await vi.advanceTimersByTimeAsync(100);
+        t.pause();
+
+        // Wait well past the original duration
+        await vi.advanceTimersByTimeAsync(500);
+        expect(resolved).toBe(false);
+
+        // Resume and let it complete
+        t.play();
+        await vi.advanceTimersByTimeAsync(200);
+        expect(resolved).toBe(true);
+    });
+
+    test('Should resume from paused position with play', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(300);
+        t.pause();
+        const lastBeforePause = values[values.length - 1];
+
+        t.play();
+        expect(t.paused).toBe(false);
+
+        await vi.advanceTimersByTimeAsync(100);
+
+        // Values should continue from approximately where they left off
+        const firstAfterPlay = values[values.length - 1];
+        expect(firstAfterPlay).toBeGreaterThanOrEqual(lastBeforePause);
+
+        // Let it complete
+        await vi.advanceTimersByTimeAsync(800);
+        expect(values[values.length - 1]).toBe(1);
+
+        await t;
+    });
+
+    test('Should seek to a position and pause', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(50);
+        t.seek(0.5);
+
+        expect(t.paused).toBe(true);
+
+        const seekValue = values[values.length - 1];
+        expect(seekValue).toBeCloseTo(0.5, 1);
+
+        // Should stay paused
+        const countAfterSeek = values.length;
+        await vi.advanceTimersByTimeAsync(500);
+        expect(values.length).toBe(countAfterSeek);
+    });
+
+    test('Should seek to 0', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(200);
+        t.seek(0);
+
+        expect(t.paused).toBe(true);
+        expect(values[values.length - 1]).toBeCloseTo(0, 1);
+    });
+
+    test('Should seek to 1', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(100);
+        t.seek(1);
+
+        expect(t.paused).toBe(true);
+        expect(values[values.length - 1]).toBeCloseTo(1, 1);
+    });
+
+    test('Should clamp seek values outside 0–1', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(50);
+
+        t.seek(-0.5);
+        expect(values[values.length - 1]).toBeCloseTo(0, 1);
+
+        t.seek(1.5);
+        expect(values[values.length - 1]).toBeCloseTo(1, 1);
+    });
+
+    test('Should play from seeked position', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), { duration: 1000 });
+
+        await vi.advanceTimersByTimeAsync(50);
+        t.seek(0.8);
+
+        t.play();
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(values[values.length - 1]).toBe(1);
+        await t;
+    });
+
+    test('Should return a factory from inverse getter', () => {
+        const t = transition(() => {}, { duration: 500 });
+        const inv = t.inverse;
+        expect(typeof inv).toBe('function');
+    });
+
+    test('Should cache the inverse getter', () => {
+        const t = transition(() => {}, { duration: 500 });
+        expect(t.inverse).toBe(t.inverse);
+    });
+
+    test('Should create a reversed transition from inverse', async () => {
+        const forwardValues: number[] = [];
+        const reverseValues: number[] = [];
+
+        const t = transition(time => forwardValues.push(time), {
+            duration: 200,
+            direction: 'forward',
+        });
+
+        await vi.advanceTimersByTimeAsync(250);
+        await t;
+
+        const inv = t.inverse();
+        expect(inv).toBeInstanceOf(Transition);
+
+        inv.then(() => {});
+
+        const cb = vi.fn(time => reverseValues.push(time));
+
+        const t2 = transition(cb, {
+            duration: 200,
+            direction: 'reverse',
+        });
+        await vi.advanceTimersByTimeAsync(250);
+        await t2;
+
+        // Reverse values should be non-increasing
+        for (let i = 1; i < reverseValues.length; i++) {
+            expect(reverseValues[i]).toBeLessThanOrEqual(reverseValues[i - 1]);
+        }
+    });
+
+    test('Should reverse direction for inverse of reverse transition', async () => {
+        const values: number[] = [];
+
+        const t = transition(time => values.push(time), {
+            duration: 200,
+            direction: 'reverse',
+        });
+
+        await vi.advanceTimersByTimeAsync(250);
+        await t;
+
+        // Inverse of a reverse transition should produce forward (non-decreasing) values
+        const invValues: number[] = [];
+        const inv = t.inverse();
+        expect(inv).toBeInstanceOf(Transition);
+
+        const invCb = transition(time => invValues.push(time), {
+            duration: 200,
+            direction: 'forward',
+        });
+
+        await vi.advanceTimersByTimeAsync(250);
+        await invCb;
+
+        for (let i = 1; i < invValues.length; i++) {
+            expect(invValues[i]).toBeGreaterThanOrEqual(invValues[i - 1]);
+        }
     });
 
 });

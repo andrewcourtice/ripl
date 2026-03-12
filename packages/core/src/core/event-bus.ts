@@ -3,8 +3,11 @@ import {
 } from './disposer';
 
 import {
-    Disposable,
     setForEach,
+} from '@ripl/utilities';
+
+import type {
+    Disposable,
 } from '@ripl/utilities';
 
 /** Base event map interface; all custom event maps should extend this. */

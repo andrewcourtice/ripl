@@ -7,6 +7,9 @@ import {
 
 import {
     EventBus,
+} from './event-bus';
+
+import type {
     EventHandler,
     EventMap,
     EventSubscriptionOptions,
@@ -29,6 +32,9 @@ import {
     interpolateGradient,
     interpolateNumber,
     interpolatePoints,
+} from '../interpolators';
+
+import type {
     Interpolator,
     InterpolatorFactory,
 } from '../interpolators';
@@ -48,10 +54,8 @@ import type {
 } from '../context';
 
 import {
-    AnyFunction,
     objectForEach,
     objectReduce,
-    OneOrMore,
     stringUniqueId,
     typeIsArray,
     typeIsFunction,
@@ -59,6 +63,11 @@ import {
     typeIsObject,
     typeIsString,
     valueOneOrMore,
+} from '@ripl/utilities';
+
+import type {
+    AnyFunction,
+    OneOrMore,
 } from '@ripl/utilities';
 
 /** Controls which pointer events an element responds to during hit testing. */

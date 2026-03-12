@@ -1,3 +1,7 @@
+import type {
+    Context3D,
+} from '../context';
+
 import {
     mat4Identity,
     mat4RotateX,
@@ -6,6 +10,12 @@ import {
     mat4TransformPoint,
     mat4Translate,
     vec3Normalize,
+} from '../math';
+
+import type {
+    Matrix4,
+    ProjectedPoint,
+    Vector3,
 } from '../math';
 
 import {
@@ -20,15 +30,6 @@ import {
     Shape,
 } from '@ripl/core';
 
-import {
-    functionCache,
-    numberSum,
-} from '@ripl/utilities';
-
-import type {
-    CachedFunction,
-} from '@ripl/utilities';
-
 import type {
     BaseElementState,
     ColorRGBA,
@@ -38,15 +39,14 @@ import type {
     ElementOptions,
 } from '@ripl/core';
 
-import type {
-    Context3D,
-} from '../context';
+import {
+    functionCache,
+    numberSum,
+} from '@ripl/utilities';
 
 import type {
-    Matrix4,
-    ProjectedPoint,
-    Vector3,
-} from '../math';
+    CachedFunction,
+} from '@ripl/utilities';
 
 /** A single face of a 3D mesh, defined by its vertices and an optional precomputed normal. */
 export interface Face3D {

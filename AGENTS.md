@@ -304,12 +304,63 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 - `let` only when reassignment is necessary
 - Never use `var`
 - Declare variables close to where they are used
+- Declare `const` variables before `let` variables where possible
+- Add a blank line between blocks of `const` and `let` declarations
 
 ### Function Declarations
 
 - Arrow functions for callbacks and methods
 - Function declarations for standalone/exported functions
 - Explicit return types for public API functions
+
+## Code Structure & Organization
+
+### File Structure
+
+Files should follow this ordering:
+
+1. **Imports** (follow import splitting and ordering rules above)
+2. **Local type definitions** (types/interfaces used only within this file)
+3. **Exported type definitions**
+4. **Local code** (not exported)
+   - Constants (`UPPER_SNAKE_CASE`)
+   - Functions
+   - Classes
+5. **Exported code** (same sub-ordering as local)
+   - Constants
+   - Functions
+   - Classes
+6. **Main exports** (barrel `export * from` statements in index files)
+
+When a file accumulates several constants, extract them into a dedicated `constants.ts` file.
+
+### Control Flow
+
+- **Invert conditions and return early** — avoid `else` and `else-if` branches where possible. Combine/invert logic so the happy path flows naturally without nesting.
+- **No nested ternaries** — enforced by ESLint (`no-nested-ternary`). Prefer early returns or intermediate variables over ternary chains.
+- **Limit nesting depth** — enforced by ESLint (`max-depth: 4`). If logic nests too deeply, extract inner blocks into well-named helper functions.
+- **Avoid nested loops** — extract inner loops into descriptive functions where possible.
+
+### Functions & Decomposition
+
+- Break large blocks of logic into small, well-named functions that are easy to debug and test
+- Each function should do one thing; if a function needs a comment explaining a section, that section is a candidate for extraction
+- Prefer pure functions where feasible — they are easier to test and reason about
+
+### Class Conventions
+
+- **Explicit scope identifiers** — every member must have `private`, `protected`, `public`, or `static` (enforced by ESLint `@typescript-eslint/explicit-member-accessibility`)
+- **Native `#` private fields** — use JS `#` prefix for private fields (e.g. `#elements`), not the TypeScript `private` keyword, for truly private data
+- **Member ordering:**
+  1. Private fields (`#field`)
+  2. Protected/public fields
+  3. Getters/setters
+  4. Constructor
+  5. Private methods
+  6. Protected methods
+  7. Public methods
+  8. Static methods
+- Factory functions (`createX()`) and type guards (`elementIsX()`) go after the class, as exported standalone functions
 
 ## Utility Conventions (`@ripl/utilities`)
 

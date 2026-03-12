@@ -45,6 +45,63 @@ const t = transition({ duration: 2000 }, (t) => {
 setTimeout(() => t.abort(), 500);
 ```
 
+### Playback Control
+
+A `Transition` can be paused, resumed, and seeked to any position. These methods are chainable and do not resolve the underlying promise until the transition completes normally.
+
+```ts
+const t = transition((time) => {
+    circle.radius = 50 + time * 50;
+    context.clear();
+    circle.render(context);
+}, { duration: 2000 });
+
+// Pause after 500ms
+setTimeout(() => t.pause(), 500);
+
+// Resume 1 second later
+setTimeout(() => t.play(), 1500);
+
+// Jump to 75% and pause
+t.seek(0.75);
+
+// Check state
+console.log(t.paused); // true
+```
+
+- **`pause()`** — stops the animation frame loop but keeps the promise pending
+- **`play()`** — resumes from the paused position
+- **`seek(position)`** — jumps to a normalised position (0–1), invokes the callback once with the eased time at that position, and pauses
+
+### Reversing a Transition
+
+Every `Transition` exposes an `inverse` property — a factory function that creates a new `Transition` running in the opposite direction. Both the standalone `transition()` function and `renderer.transition()` set this automatically:
+
+```ts
+const grow = transition((t) => {
+    circle.radius = 50 + t * 50;
+}, { duration: 800,
+    ease: easeOutCubic });
+
+await grow;
+
+// Shrink back
+await grow.inverse();
+```
+
+For renderer transitions, `inverse` re-schedules the same element transition with the flipped direction:
+
+```ts
+const t = await renderer.transition(circle, {
+    duration: 800,
+    ease: easeOutCubic,
+    state: { radius: 100 },
+});
+
+// Reverse back to original state
+await t.inverse();
+```
+
 ## Renderer Transitions
 
 When working with a scene and renderer, use `renderer.transition()` for a higher-level API that handles interpolation, re-rendering, and multi-element animations automatically.
@@ -73,6 +130,58 @@ The renderer automatically:
 - Interpolates each property using the appropriate [interpolator](/docs/core/advanced/interpolators)
 - Re-renders the scene each frame
 - Starts/stops the render loop as needed (with `autoStart`/`autoStop`)
+
+## Looping
+
+Both `transition()` and `renderer.transition()` support looping via the `loop` option. A looping transition repeats indefinitely and **never resolves** — you must call `abort()` to stop it.
+
+### Restart Loop
+
+Set `loop: true` to restart the animation from the beginning each iteration:
+
+```ts
+const t = renderer.transition(circle, {
+    duration: 1000,
+    ease: easeInOutQuad,
+    loop: true,
+    state: { radius: 100 },
+});
+
+// Stop after 5 seconds
+setTimeout(() => t.abort(), 5000);
+```
+
+### Alternate (Ping-Pong) Loop
+
+Set `loop: 'alternate'` to reverse direction each iteration, creating a ping-pong effect:
+
+```ts
+const t = renderer.transition(circle, {
+    duration: 1000,
+    ease: easeInOutQuad,
+    loop: 'alternate',
+    state: { cx: 300 },
+});
+
+// Stop after 5 seconds
+setTimeout(() => t.abort(), 5000);
+```
+
+Looping also works with the standalone `transition` function:
+
+```ts
+const t = transition((time) => {
+    circle.radius = 50 + time * 50;
+    context.clear();
+    circle.render(context);
+}, {
+    duration: 1000,
+    loop: 'alternate',
+});
+```
+
+> [!TIP]
+> Looping transitions support `pause()`, `play()`, and `seek()` — playback control operates within the current loop iteration.
 
 ## Easing Functions
 
@@ -277,7 +386,129 @@ await renderer.transition(circle, {
 ```
 :::
 
+### Playback Control Demo
+
+Use the controls below to start a transition, then pause, seek, and reverse it interactively.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="playbackContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="startPlayback">Start</RiplButton>
+            <RiplButton @click="togglePause" :active="isPaused">{{ isPaused ? 'Play' : 'Pause' }}</RiplButton>
+            <RiplButton @click="reversePlayback">Reverse</RiplButton>
+        </RiplControlGroup>
+        <RiplControlGroup>
+            <RiplInputRange v-model="seekValue" :min="0" :max="1" :step="0.01" @update:model-value="onSeek" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createScene,
+    easeInOutCubic,
+    transition,
+} from '@ripl/core';
+
+const scene = createScene('.container', {
+    children: [
+        createCircle({
+            fill: '#3a86ff',
+            cx: 100,
+            cy: 150,
+            radius: 40,
+        }),
+    ],
+});
+
+const circle = scene.query('circle');
+
+const t = transition((time) => {
+    circle.cx = 100 + time * 200;
+    circle.radius = 40 + time * 30;
+    scene.render();
+}, { duration: 2000,
+    ease: easeInOutCubic });
+
+// Pause at any time
+t.pause();
+
+// Seek to 50%
+t.seek(0.5);
+
+// Resume
+t.play();
+
+// Create and run the reverse
+await t.inverse();
+```
+:::
+
+### Looping Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="loopContextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runLoop">Loop</RiplButton>
+            <RiplButton @click="runAlternate">Alternate</RiplButton>
+            <RiplButton @click="stopLoop">Stop</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createRenderer,
+    createScene,
+    easeInOutQuad,
+} from '@ripl/core';
+
+const scene = createScene('.container', {
+    children: [
+        createCircle({
+            fill: '#3a86ff',
+            cx: 100,
+            cy: 150,
+            radius: 40,
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene);
+const circle = scene.query('circle');
+
+// Restart loop — circle pulses in size
+const t = renderer.transition(circle, {
+    duration: 800,
+    ease: easeInOutQuad,
+    loop: true,
+    state: { radius: 80 },
+});
+
+// Alternate loop — circle bounces left to right
+const t2 = renderer.transition(circle, {
+    duration: 1200,
+    ease: easeInOutQuad,
+    loop: 'alternate',
+    state: { cx: 300 },
+});
+
+// Stop looping
+t.abort();
+```
+:::
+
 <script lang="ts" setup>
+import {
+    ref,
+} from 'vue';
+
 import {
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
@@ -287,10 +518,17 @@ import {
     createCircle,
     createRenderer,
     createScene,
+    easeInOutCubic,
     easeInOutQuad,
     easeOutCubic,
     Renderer,
     Scene,
+    Transition,
+    transition,
+} from '@ripl/core';
+
+import type {
+    Context,
 } from '@ripl/core';
 
 let dScene: Scene;
@@ -305,7 +543,8 @@ const {
 
     dCircle = createCircle({
         fill: '#3a86ff',
-        cx: w / 2, cy: h / 2,
+        cx: w / 2,
+        cy: h / 2,
         radius: Math.min(w, h) / 5,
     });
 
@@ -319,12 +558,20 @@ async function runSequence() {
     const s = Math.min(dScene.width, dScene.height);
 
     await dRenderer.transition(dCircle, {
-        duration: 600, ease: easeOutCubic,
-        state: { radius: s / 3, fill: '#ff006e' },
+        duration: 600,
+        ease: easeOutCubic,
+        state: {
+            radius: s / 3,
+            fill: '#ff006e',
+        },
     });
     await dRenderer.transition(dCircle, {
-        duration: 600, ease: easeInOutQuad,
-        state: { radius: s / 5, fill: '#3a86ff' },
+        duration: 600,
+        ease: easeInOutQuad,
+        state: {
+            radius: s / 5,
+            fill: '#3a86ff',
+        },
     });
 }
 
@@ -332,7 +579,8 @@ async function runKeyframes() {
     if (!dRenderer || !dCircle) return;
 
     await dRenderer.transition(dCircle, {
-        duration: 2000, ease: easeInOutQuad,
+        duration: 2000,
+        ease: easeInOutQuad,
         state: {
             fill: [
                 { value: '#3a86ff', offset: 0 },
@@ -350,7 +598,8 @@ async function runCustom() {
     const baseRadius = Math.min(dScene.width, dScene.height) / 5;
 
     await dRenderer.transition(dCircle, {
-        duration: 2000, ease: easeInOutQuad,
+        duration: 2000,
+        ease: easeInOutQuad,
         state: {
             radius: (t: number) => baseRadius + Math.sin(t * Math.PI * 4) * baseRadius * 0.4,
         },
@@ -361,12 +610,194 @@ async function reset() {
     if (!dRenderer || !dCircle || !dScene) return;
 
     await dRenderer.transition(dCircle, {
-        duration: 400, ease: easeOutCubic,
+        duration: 400,
+        ease: easeOutCubic,
         state: {
             radius: Math.min(dScene.width, dScene.height) / 5,
             fill: '#3a86ff',
             cx: dScene.width / 2,
         },
     });
+}
+
+// Playback control demo
+let pbScene: Scene;
+let pbCircle: Circle;
+let pbContext: Context;
+let activeTransition: Transition | undefined;
+
+const isPaused = ref(false);
+const seekValue = ref(0);
+
+const {
+    contextChanged: playbackContextChanged
+} = useRiplExample(context => {
+    pbContext = context;
+    const w = context.width;
+    const h = context.height;
+
+    pbCircle = createCircle({
+        fill: '#3a86ff',
+        cx: w * 0.2,
+        cy: h / 2,
+        radius: Math.min(w, h) / 6,
+    });
+
+    pbScene = createScene(context, { children: [pbCircle] });
+    pbScene.render();
+});
+
+function startPlayback() {
+    if (!pbScene || !pbCircle || !pbContext) return;
+
+    if (activeTransition && !activeTransition.hasAborted) {
+        activeTransition.abort();
+    }
+
+    isPaused.value = false;
+    seekValue.value = 0;
+
+    const w = pbContext.width;
+    const h = pbContext.height;
+    const startX = w * 0.2;
+    const endX = w * 0.8;
+    const baseRadius = Math.min(w, h) / 6;
+
+    activeTransition = transition((time) => {
+        pbCircle.cx = startX + time * (endX - startX);
+        pbCircle.radius = baseRadius + time * baseRadius * 0.5;
+        pbCircle.fill = time < 0.5
+            ? lerpColor('#3a86ff', '#ff006e', time * 2)
+            : lerpColor('#ff006e', '#8338ec', (time - 0.5) * 2);
+        pbScene.render();
+    }, { duration: 3000, ease: easeInOutCubic });
+
+    activeTransition.then(() => {
+        isPaused.value = false;
+        seekValue.value = 1;
+    }).catch(() => {});
+}
+
+function togglePause() {
+    if (!activeTransition) return;
+
+    if (activeTransition.paused) {
+        activeTransition.play();
+        isPaused.value = false;
+    } else {
+        activeTransition.pause();
+        isPaused.value = true;
+    }
+}
+
+function onSeek(value: number) {
+    if (!activeTransition) return;
+
+    activeTransition.seek(value);
+    isPaused.value = true;
+}
+
+function reversePlayback() {
+    if (!activeTransition) return;
+
+    if (!activeTransition.hasAborted) {
+        activeTransition.abort();
+    }
+
+    isPaused.value = false;
+    seekValue.value = 0;
+
+    activeTransition = activeTransition.inverse();
+    activeTransition.then(() => {
+        isPaused.value = false;
+        seekValue.value = 1;
+    }).catch(() => {});
+}
+
+// Looping demo
+let loopScene: Scene;
+let loopRenderer: Renderer;
+let loopCircle: Circle;
+let loopTransition: Transition | undefined;
+
+const {
+    contextChanged: loopContextChanged
+} = useRiplExample(context => {
+    const w = context.width;
+    const h = context.height;
+
+    loopCircle = createCircle({
+        fill: '#3a86ff',
+        cx: w / 2,
+        cy: h / 2,
+        radius: Math.min(w, h) / 6,
+    });
+
+    loopScene = createScene(context, { children: [loopCircle] });
+    loopRenderer = createRenderer(loopScene);
+    loopScene.render();
+});
+
+function stopLoop() {
+    if (loopTransition && !loopTransition.hasAborted) {
+        loopTransition.abort();
+        loopTransition = undefined;
+    }
+}
+
+function runLoop() {
+    if (!loopRenderer || !loopCircle || !loopScene) return;
+
+    stopLoop();
+
+    const s = Math.min(loopScene.width, loopScene.height);
+
+    loopTransition = loopRenderer.transition(loopCircle, {
+        duration: 800,
+        ease: easeInOutQuad,
+        loop: true,
+        state: {
+            radius: s / 3,
+            fill: '#ff006e',
+        },
+    });
+
+    loopTransition.catch(() => {});
+}
+
+function runAlternate() {
+    if (!loopRenderer || !loopCircle || !loopScene) return;
+
+    stopLoop();
+
+    const w = loopScene.width;
+
+    loopTransition = loopRenderer.transition(loopCircle, {
+        duration: 1200,
+        ease: easeInOutQuad,
+        loop: 'alternate',
+        state: {
+            cx: w * 0.8,
+            fill: '#8338ec',
+        },
+    });
+
+    loopTransition.catch(() => {});
+}
+
+function lerpColor(from: string, to: string, t: number): string {
+    const fr = parseInt(from.slice(1, 3), 16);
+    const fg = parseInt(from.slice(3, 5), 16);
+    const fb = parseInt(from.slice(5, 7), 16);
+
+    const tr = parseInt(to.slice(1, 3), 16);
+    const tg = parseInt(to.slice(3, 5), 16);
+    const tb = parseInt(to.slice(5, 7), 16);
+
+    const r = Math.round(fr + (tr - fr) * t);
+    const g = Math.round(fg + (tg - fg) * t);
+    const b = Math.round(fb + (tb - fb) * t);
+
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 </script>

@@ -8,13 +8,16 @@ import {
     isGroup,
 } from './group';
 
-import {
+import type {
     Interpolator,
 } from '../interpolators';
 
 import {
-    BaseElementState,
     Element,
+} from './element';
+
+import type {
+    BaseElementState,
     ElementInterpolationState,
 } from './element';
 
@@ -24,10 +27,14 @@ import {
 
 import {
     computeTransitionTime,
-    Ease,
     easeLinear,
     Transition,
+} from '../animation';
+
+import type {
+    Ease,
     TransitionDirection,
+    TransitionLoopMode,
 } from '../animation';
 
 import {
@@ -59,9 +66,11 @@ export interface RendererTransition {
     startTime: number;
     duration: number;
     ease: Ease;
-    loop: boolean;
+    loop: TransitionLoopMode;
     direction: RendererTransitionDirection;
     interpolator: Interpolator<void>;
+    paused: boolean;
+    pauseOffset: number;
     callback(): void;
 }
 
@@ -69,7 +78,7 @@ export interface RendererTransition {
 export interface RendererTransitionOptions<TElement extends Element> {
     duration?: number;
     ease?: Ease;
-    loop?: boolean;
+    loop?: TransitionLoopMode;
     delay?: number;
     direction?: RendererTransitionDirection;
     state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
@@ -88,7 +97,6 @@ export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
     immediate?: boolean;
-    sortBuffer?: (buffer: Element[]) => Element[];
     debug?: boolean | RendererDebugOptions;
 }
 
@@ -142,7 +150,6 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     public autoStart = true;
     public autoStop = true;
-    public sortBuffer?: (buffer: Element[]) => Element[];
 
     /** Whether there are any active transitions in progress. */
     public get isBusy() {
@@ -155,14 +162,12 @@ export class Renderer extends EventBus<RendererEventMap> {
         const {
             autoStart = true,
             autoStop = true,
-            sortBuffer,
             debug = false,
         } = options || {};
 
         this.scene = scene;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
-        this.sortBuffer = sortBuffer;
         this.debugOptions = resolveDebugOptions(debug);
 
         if (this.debugOptions.fps || this.debugOptions.elementCount) {
@@ -187,72 +192,92 @@ export class Renderer extends EventBus<RendererEventMap> {
             return;
         }
 
-        this.scene.context.clear();
-        this.scene.context.markRenderStart();
+        const context = this.scene.context;
+        const buffer = this.scene.buffer;
 
-        this.currentTime = performance.now();
+        let deltaTime = 0;
 
-        const buffer = this.sortBuffer
-            ? this.sortBuffer(this.scene.buffer)
-            : this.scene.buffer;
+        context.batch(() => {
+            this.currentTime = performance.now();
 
-        const deltaTime = this.currentTime - this.previousTime;
+            deltaTime = this.currentTime - this.previousTime;
 
-        this.emit('tick', {
-            time: this.currentTime,
-            deltaTime,
+            this.emit('tick', {
+                time: this.currentTime,
+                deltaTime,
+            });
+
+            this.previousTime = this.currentTime;
+            this.renderBuffer();
         });
 
-        this.previousTime = this.currentTime;
+        this.updateDebugOverlay(buffer.length, deltaTime);
+        this.handle = requestAnimationFrame(() => this.tick());
+    }
+
+    private renderBoundingBoxes(element: Element) {
+        const box = element.getBoundingBox();
+        const context = this.scene.context;
+        const path = context.createPath();
+
+        context.layer(() => {
+            context.stroke = '#FF0000';
+            context.lineWidth = 1;
+
+            path.rect(box.left, box.top, box.width, box.height);
+            context.applyStroke(path);
+        });
+    }
+
+    private processTransition(entry: RendererTransition): void {
+        if (entry.paused) {
+            if (entry.pauseOffset > 0) {
+                const time = computeTransitionTime(entry.pauseOffset, entry.duration, entry.ease, entry.direction);
+                entry.interpolator(time);
+            }
+
+            return;
+        }
+
+        const elapsed = this.currentTime - entry.startTime;
+
+        if (elapsed <= 0) {
+            return;
+        }
+
+        const time = computeTransitionTime(elapsed, entry.duration, entry.ease, entry.direction);
+        entry.interpolator(time);
+
+        if (elapsed < entry.duration) {
+            return;
+        }
+
+        if (!entry.loop) {
+            entry.callback();
+            return;
+        }
+
+        if (entry.loop === 'alternate') {
+            entry.direction = entry.direction === 'forward' ? 'reverse' : 'forward';
+        }
+
+        entry.startTime = this.currentTime;
+    }
+
+    private renderBuffer() {
+        const buffer = this.scene.buffer;
 
         buffer.forEach(element => {
-            if (this.transitionMap.has(element.id)) {
-                let time = 0;
-
-                this.transitionMap.get(element.id)?.forEach(({
-                    startTime,
-                    duration,
-                    ease,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    loop: _loop,
-                    direction,
-                    interpolator,
-                    callback,
-                }) => {
-                    const elapsed = this.currentTime - startTime;
-
-                    if (elapsed > 0) {
-                        time = computeTransitionTime(elapsed, duration, ease, direction);
-
-                        interpolator(time);
-
-                        if (elapsed >= duration) {
-                            callback();
-                        }
-                    }
-                });
-            }
+            this.transitionMap.get(element.id)?.forEach(entry => {
+                this.processTransition(entry);
+            });
 
             element.render(this.scene.context);
 
             if (this.debugOptions.boundingBoxes) {
-                const box = element.getBoundingBox();
-                const context = this.scene.context;
-                const path = context.createPath();
-
-                context.layer(() => {
-                    context.stroke = '#FF0000';
-                    context.lineWidth = 1;
-
-                    path.rect(box.left, box.top, box.width, box.height);
-                    context.applyStroke(path);
-                });
+                this.renderBoundingBoxes(element);
             }
         });
-
-        this.scene.context.markRenderEnd();
-        this.updateDebugOverlay(buffer.length, deltaTime);
-        this.handle = requestAnimationFrame(() => this.tick());
     }
 
     /** Starts the animation loop if it is not already running. */
@@ -305,8 +330,42 @@ export class Renderer extends EventBus<RendererEventMap> {
             ? options
             : () => options || {} as RendererTransitionOptions<TElement>;
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        return new Transition((resolve, _reject, _onAbort) => {
+        const scopedTransitions = new Map<symbol, { elementId: Element['id'];
+            entry: RendererTransition; }>();
+
+        const hooks = {
+            onPause: () => {
+                const now = performance.now();
+
+                scopedTransitions.forEach(({ entry }) => {
+                    entry.pauseOffset = now - entry.startTime;
+                    entry.paused = true;
+                });
+            },
+            onPlay: () => {
+                const now = performance.now();
+
+                scopedTransitions.forEach(({ entry }) => {
+                    entry.startTime = now - entry.pauseOffset;
+                    entry.paused = false;
+                });
+
+                this.start();
+            },
+            onSeek: (position: number) => {
+                scopedTransitions.forEach(({ entry }) => {
+                    entry.pauseOffset = position * entry.duration;
+                    entry.paused = true;
+
+                    const time = computeTransitionTime(entry.pauseOffset, entry.duration, entry.ease, entry.direction);
+                    entry.interpolator(time);
+                });
+
+                this.start();
+            },
+        };
+
+        const instance = new Transition((resolve, _reject, onAbort) => {
             const elements = valueOneOrMore(element).flatMap(element => {
                 return isGroup(element) ? element.graph(false) : [element];
             });
@@ -355,19 +414,60 @@ export class Renderer extends EventBus<RendererEventMap> {
 
                 const transitions = this.transitionMap.get(element.id) || new Map<symbol, RendererTransition>();
 
-                transitions.set(transitionId, {
+                const entry: RendererTransition = {
                     loop,
                     ease,
                     startTime,
                     direction,
                     duration,
                     callback,
+                    paused: false,
+                    pauseOffset: 0,
                     interpolator: element.interpolate(state),
+                };
+
+                scopedTransitions.set(transitionId, {
+                    entry,
+                    elementId: element.id,
                 });
 
+                transitions.set(transitionId, entry);
                 this.transitionMap.set(element.id, transitions);
             });
-        });
+
+            onAbort(() => {
+                scopedTransitions.forEach(({ elementId }, id) => {
+                    const elementTransitions = this.transitionMap.get(elementId);
+                    elementTransitions?.delete(id);
+
+                    if (!elementTransitions?.size) {
+                        this.transitionMap.delete(elementId);
+                    }
+                });
+
+                this.stopOnIdle();
+            });
+        }, hooks);
+
+        instance.inverse = () => {
+            const flippedOptions = typeIsFunction(options)
+                ? ((el: TElement extends Group ? Element : TElement, idx: number, len: number) => {
+                    const resolved = options(el, idx, len);
+
+                    return {
+                        ...resolved,
+                        direction: (resolved.direction || 'forward') === 'reverse' ? 'forward' : 'reverse',
+                    } as RendererTransitionOptions<TElement>;
+                }) as RendererTransitionOptionsArg<TElement>
+                : {
+                    ...options,
+                    direction: ((options as RendererTransitionOptions<TElement>)?.direction || 'forward') === 'reverse' ? 'forward' : 'reverse',
+                } as RendererTransitionOptions<TElement>;
+
+            return this.transition(element, flippedOptions);
+        };
+
+        return instance;
     }
 
     private createDebugOverlay(): HTMLDivElement {

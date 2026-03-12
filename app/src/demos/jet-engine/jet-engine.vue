@@ -330,6 +330,9 @@ onMounted(() => {
     renderer = createRenderer(scene!, {
         autoStart: true,
         autoStop: false,
+        debug: {
+            fps: true
+        }
     });
 
     renderer.on('tick', (event) => {

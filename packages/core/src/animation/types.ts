@@ -7,11 +7,14 @@ export type TransitionCallback = (time: number) => void;
 /** The playback direction of a transition. */
 export type TransitionDirection = 'forward' | 'reverse';
 
+/** Controls whether a transition loops: `true` restarts from the beginning, `'alternate'` ping-pongs direction each iteration. */
+export type TransitionLoopMode = boolean | 'alternate';
+
 /** Configuration for a transition animation. */
 export interface TransitionOptions {
     duration: number;
     ease: Ease;
-    loop: boolean;
+    loop: TransitionLoopMode;
     delay: number;
     direction: TransitionDirection;
 }
