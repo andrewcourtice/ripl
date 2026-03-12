@@ -30,4 +30,9 @@ export const demos: DemoMeta[] = [
         link: '/demos/combustion-engine/',
         description: 'An animated inline 4-cylinder combustion engine with crankshaft, pistons, connecting rods, camshaft, valves, and full mechanical motion — built with @ripl/3d.',
     },
+    {
+        text: 'Jet Engine 3D (WebGPU)',
+        link: '/demos/jet-engine-webgpu/',
+        description: 'The jet engine exploded view demo re-implemented with @ripl/webgpu — GPU-accelerated rendering with hardware depth testing, WGSL shaders, and 4× MSAA.',
+    },
 ];

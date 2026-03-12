@@ -92,7 +92,7 @@ function resolveInteraction(option: CameraInteractionOption | undefined, fallbac
 /** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
 export class Camera extends Disposer {
 
-    private context: Context3D;
+    private context: Context3D & { element: unknown };
     private dirty = false;
     private scheduled = false;
     private previousTouchAction = '';
@@ -168,9 +168,10 @@ export class Camera extends Disposer {
         this.markDirty();
     }
 
-    constructor(scene: Scene<Context3D>, options?: CameraOptions) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    constructor(scene: Scene<any>, options?: CameraOptions) {
         super();
-        this.context = scene.context;
+        this.context = scene.context as Context3D & { element: unknown };
 
         this._position = options?.position ?? [0, 0, 5] as Vector3;
         this._target = options?.target ?? [0, 0, 0] as Vector3;
@@ -461,6 +462,7 @@ export class Camera extends Disposer {
 }
 
 /** Factory function that creates a new `Camera` bound to a 3D scene. */
-export function createCamera(scene: Scene<Context3D>, options?: CameraOptions): Camera {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createCamera(scene: Scene<any>, options?: CameraOptions): Camera {
     return new Camera(scene, options);
 }

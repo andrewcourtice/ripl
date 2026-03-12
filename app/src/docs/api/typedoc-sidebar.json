@@ -13,6 +13,10 @@
             "link": "/docs/api/@ripl/3d/classes/Camera.md"
           },
           {
+            "text": "CanvasContext3D",
+            "link": "/docs/api/@ripl/3d/classes/CanvasContext3D.md"
+          },
+          {
             "text": "Cone",
             "link": "/docs/api/@ripl/3d/classes/Cone.md"
           },
@@ -81,6 +85,10 @@
           {
             "text": "Face3D",
             "link": "/docs/api/@ripl/3d/interfaces/Face3D.md"
+          },
+          {
+            "text": "MeshSubmission",
+            "link": "/docs/api/@ripl/3d/interfaces/MeshSubmission.md"
           },
           {
             "text": "PlaneState",
@@ -1530,6 +1538,10 @@
           {
             "text": "TransitionDirection",
             "link": "/docs/api/@ripl/core/type-aliases/TransitionDirection.md"
+          },
+          {
+            "text": "TransitionLoopMode",
+            "link": "/docs/api/@ripl/core/type-aliases/TransitionLoopMode.md"
           }
         ]
       },

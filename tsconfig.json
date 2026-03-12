@@ -18,7 +18,8 @@
             "DOM",
         ],
         "types": [
-            "vitest/importMeta"
+            "vitest/importMeta",
+            "@webgpu/types"
         ],
         "baseUrl": ".",
         "paths": {
@@ -28,6 +29,7 @@
             "@ripl/svg": ["packages/svg/src/index.ts"],
             "@ripl/charts": ["packages/charts/src/index.ts"],
             "@ripl/3d": ["packages/3d/src/index.ts"],
+            "@ripl/webgpu": ["packages/webgpu/src/index.ts"],
             "@ripl/test-utils": ["packages/test-utils/src/index.ts"],
         }
     },

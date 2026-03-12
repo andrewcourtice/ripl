@@ -25,6 +25,7 @@
         "@eslint/markdown": "^7.5.1",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@vitest/coverage-v8": "^4.0.18",
+        "@webgpu/types": "^0.1.69",
         "eslint": "^10.0.3",
         "eslint-plugin-vue": "^10.8.0",
         "globals": "^17.4.0",
