@@ -12,8 +12,16 @@ import type {
 } from '../core';
 
 import {
+    factory,
+} from '../core/factory';
+
+import {
     Box,
 } from '../math';
+
+import {
+    functionCache,
+} from '@ripl/utilities';
 
 import type {
     InterpolatorFactory,
@@ -28,27 +36,19 @@ export interface ImageState extends BaseElementState {
     height?: number;
 }
 
-let refCanvas: HTMLCanvasElement | undefined;
-let refContext: CanvasRenderingContext2D | null;
+const getRefCanvas = functionCache(() => {
+    const canvas = factory.createElement('canvas') as HTMLCanvasElement;
+    const context = canvas.getContext('2d');
 
-function getRefCanvas(): {
-    canvas: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-} | undefined {
-    if (!refCanvas) {
-        refCanvas = document.createElement('canvas');
-        refContext = refCanvas.getContext('2d');
-    }
-
-    if (!refContext) {
+    if (!context) {
         return undefined;
     }
 
     return {
-        canvas: refCanvas,
-        context: refContext,
+        canvas,
+        context,
     };
-}
+});
 
 function getSourceSize(image: CanvasImageSource): [number, number] {
     if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {

@@ -1,7 +1,7 @@
 {
-    "name": "@ripl/vdom",
+    "name": "@ripl/web",
     "version": "1.0.0-beta.0",
-    "description": "Virtual DOM utilities for Ripl",
+    "description": "Ripl for the web — re-exports core with Canvas as the default context",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -16,7 +16,7 @@
     "files": [
         "dist"
     ],
-    "sideEffects": false,
+    "sideEffects": true,
     "repository": "https://github.com/andrewcourtice/ripl",
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.rocks",
@@ -26,5 +26,9 @@
     },
     "scripts": {
         "build": "tsup"
+    },
+    "dependencies": {
+        "@ripl/canvas": "1.0.0-beta.0",
+        "@ripl/core": "1.0.0-beta.0"
     }
 }

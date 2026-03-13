@@ -1,5 +1,4 @@
 import {
-    Context,
     ContextPath,
     ContextText,
     createFrameBuffer,
@@ -26,6 +25,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    DOMContext,
+} from '@ripl/dom';
+
+import {
     objectForEach,
     objectMap,
     stringUniqueId,
@@ -40,12 +43,12 @@ import {
     ensureGroupPath,
     getAncestorGroupIds,
     reconcileNode,
-} from '@ripl/vdom';
+} from '@ripl/dom';
 
 import type {
     ReconcilerOptions,
     VNode,
-} from '@ripl/vdom';
+} from '@ripl/dom';
 
 type SVGVNode = VNode<SVGContextElement>;
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
@@ -440,7 +443,7 @@ export class SVGTextPath implements SVGContextElement {
 }
 
 /** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
-export class SVGContext extends Context<SVGSVGElement> {
+export class SVGContext extends DOMContext<SVGSVGElement> {
 
     private vtree: SVGVNode;
     private domCache: Map<string, Element>;
@@ -834,6 +837,6 @@ export class SVGContext extends Context<SVGSVGElement> {
 }
 
 /** Creates an SVG rendering context attached to the given DOM target. */
-export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
+export function createContext(target: string | HTMLElement, options?: ContextOptions): SVGContext {
     return new SVGContext(target, options);
 }

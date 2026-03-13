@@ -73,7 +73,8 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
 
     return {
         imports: [
-            'import { createScene, createRenderer, createContext } from \'@ripl/core\';',
+            'import { createScene, createRenderer } from \'@ripl/core\';',
+            'import { createContext } from \'@ripl/canvas\';',
         ].join('\n'),
         body: [
             'const context = createContext(\'#root\', { buffer: false });',

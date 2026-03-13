@@ -23,12 +23,8 @@ import type {
 } from './math';
 
 import {
-    CanvasPath,
-    Context,
     ContextText,
     degreesToRadians,
-    measureText,
-    scaleContinuous,
 } from '@ripl/core';
 
 import type {
@@ -38,9 +34,19 @@ import type {
 } from '@ripl/core';
 
 import {
-    getPathLength,
-    samplePathPoint,
-} from '@ripl/core';
+    DOMContext,
+} from '@ripl/dom';
+
+import {
+    applyCanvasFill,
+    applyCanvasStroke,
+    canvasDrawImage,
+    canvasIsPointInPath,
+    canvasIsPointInStroke,
+    canvasMeasureText,
+    CanvasPath,
+    rescaleCanvas,
+} from '@ripl/canvas';
 
 /** Determines whether the light direction is fixed in world space or follows the camera. */
 export type LightMode = 'world' | 'camera';
@@ -63,7 +69,7 @@ export interface Context3DOptions extends ContextOptions {
 }
 
 /** Base 3D rendering context providing view/projection matrices, camera, lighting, and projection. Subclassed by CanvasContext3D and WebGPUContext3D. */
-export class Context3D extends Context<HTMLCanvasElement> {
+export class Context3D extends DOMContext<HTMLCanvasElement> {
 
     public viewMatrix: Matrix4;
     public projectionMatrix: Matrix4;
@@ -196,23 +202,16 @@ export class CanvasContext3D extends Context3D {
     }
 
     protected rescale(width: number, height: number) {
-        const dpr = window.devicePixelRatio;
-        const scaledWidth = Math.floor(width * dpr);
-        const scaledHeight = Math.floor(height * dpr);
+        const result = rescaleCanvas(this.element, this.context, width, height);
 
-        if (scaledWidth === this.element.width && scaledHeight === this.element.height) {
+        if (!result) {
             return;
         }
 
-        this.element.width = scaledWidth;
-        this.element.height = scaledHeight;
-
-        this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
-
         super.rescale(width, height);
 
-        this.scaleX = scaleContinuous([0, width], [0, scaledWidth]);
-        this.scaleY = scaleContinuous([0, height], [0, scaledHeight]);
+        this.scaleX = result.scaleX;
+        this.scaleY = result.scaleY;
 
         if (this.viewMatrix) {
             this.updateProjectionMatrix();
@@ -258,10 +257,7 @@ export class CanvasContext3D extends Context3D {
     }
 
     measureText(text: string, font?: string): TextMetrics {
-        return measureText(text, {
-            context: this.context,
-            font: font ?? this.context.font,
-        });
+        return canvasMeasureText(this.context, text, font);
     }
 
     createPath(id?: string): CanvasPath {
@@ -272,71 +268,21 @@ export class CanvasContext3D extends Context3D {
         return this.context.clip(path.ref, fillRule);
     }
 
-    private renderTextAlongPath(element: ContextText, method: 'fill' | 'stroke'): void {
-        const pathData = element.pathData!;
-        const totalLength = getPathLength(pathData);
-        let distance = (element.startOffset ?? 0) * totalLength;
-
-        for (const char of element.content) {
-            const charWidth = this.context.measureText(char).width;
-            const midDistance = distance + charWidth / 2;
-
-            if (midDistance > totalLength) {
-                break;
-            }
-
-            const { x, y, angle } = samplePathPoint(pathData, midDistance);
-
-            this.context.save();
-            this.context.translate(x, y);
-            this.context.rotate(angle);
-
-            if (method === 'fill') {
-                this.context.fillText(char, 0, 0);
-            } else {
-                this.context.strokeText(char, 0, 0);
-            }
-
-            this.context.restore();
-            distance += charWidth;
-        }
-    }
-
     drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
-        if (width && height) {
-            return this.context.drawImage(image, x, y, width, height);
-        }
-
-        return this.context.drawImage(image, x, y);
+        return canvasDrawImage(this.context, image, x, y, width, height);
     }
 
     applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
-        if (element instanceof ContextText) {
-            if (element.pathData) {
-                return this.renderTextAlongPath(element, 'fill');
-            }
-
-            return this.context.fillText(element.content, element.x, element.y, element.maxWidth);
-        }
-
-        return this.context.fill(element.ref, fillRule);
+        return applyCanvasFill(this.context, element, fillRule);
     }
 
     applyStroke(element: CanvasPath | ContextText): void {
-        if (element instanceof ContextText) {
-            if (element.pathData) {
-                return this.renderTextAlongPath(element, 'stroke');
-            }
-
-            return this.context.strokeText(element.content, element.x, element.y, element.maxWidth);
-        }
-
-        return this.context.stroke(element.ref);
+        return applyCanvasStroke(this.context, element);
     }
 
     isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         if (path instanceof CanvasPath) {
-            return this.context.isPointInPath(path.ref, x, y, fillRule);
+            return canvasIsPointInPath(this.context, path, x, y, fillRule);
         }
 
         return false;
@@ -344,7 +290,7 @@ export class CanvasContext3D extends Context3D {
 
     isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         if (path instanceof CanvasPath) {
-            return this.context.isPointInStroke(path.ref, x, y);
+            return canvasIsPointInStroke(this.context, path, x, y);
         }
 
         return false;

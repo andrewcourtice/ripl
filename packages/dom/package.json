@@ -1,7 +1,7 @@
 {
-    "name": "@ripl/charts",
+    "name": "@ripl/dom",
     "version": "1.0.0-beta.0",
-    "description": "Pre-built chart components for Ripl",
+    "description": "DOM utilities and context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -28,7 +28,6 @@
         "build": "tsup"
     },
     "dependencies": {
-        "@ripl/canvas": "1.0.0-beta.0",
         "@ripl/core": "1.0.0-beta.0",
         "@ripl/utilities": "1.0.0-beta.0"
     }

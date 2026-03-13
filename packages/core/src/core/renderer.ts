@@ -4,6 +4,10 @@ import {
 } from './event-bus';
 
 import {
+    factory,
+} from './factory';
+
+import {
     Group,
     isGroup,
 } from './group';
@@ -140,12 +144,11 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     private running = false;
     private handle?: number;
-    private startTime = performance.now();
-    private currentTime = performance.now();
-    private previousTime = performance.now();
+    private startTime = 0;
+    private currentTime = 0;
+    private previousTime = 0;
 
     private debugOptions: Required<RendererDebugOptions>;
-    private debugOverlay?: HTMLDivElement;
     private smoothedFps = 0;
 
     public autoStart = true;
@@ -170,10 +173,6 @@ export class Renderer extends EventBus<RendererEventMap> {
         this.autoStop = autoStop;
         this.debugOptions = resolveDebugOptions(debug);
 
-        if (this.debugOptions.fps || this.debugOptions.elementCount) {
-            this.debugOverlay = this.createDebugOverlay();
-        }
-
         if (autoStart) {
             this.start();
         }
@@ -193,12 +192,11 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         const context = this.scene.context;
-        const buffer = this.scene.buffer;
 
         let deltaTime = 0;
 
         context.batch(() => {
-            this.currentTime = performance.now();
+            this.currentTime = factory.now();
 
             deltaTime = this.currentTime - this.previousTime;
 
@@ -211,8 +209,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             this.renderBuffer();
         });
 
-        this.updateDebugOverlay(buffer.length, deltaTime);
-        this.handle = requestAnimationFrame(() => this.tick());
+        this.handle = factory.requestAnimationFrame(() => this.tick());
     }
 
     private renderBoundingBoxes(element: Element) {
@@ -287,14 +284,14 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         this.running = true;
-        this.startTime = performance.now();
+        this.startTime = factory.now();
         this.previousTime = this.startTime;
 
         this.emit('start', {
             startTime: this.startTime,
         });
 
-        requestAnimationFrame(() => this.tick());
+        factory.requestAnimationFrame(() => this.tick());
     }
 
     /** Stops the animation loop, cancels pending frames, and clears all transitions. */
@@ -304,7 +301,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (this.handle) {
-            cancelAnimationFrame(this.handle);
+            factory.cancelAnimationFrame(this.handle);
         }
 
         this.running = false;
@@ -335,7 +332,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         const hooks = {
             onPause: () => {
-                const now = performance.now();
+                const now = factory.now();
 
                 scopedTransitions.forEach(({ entry }) => {
                     entry.pauseOffset = now - entry.startTime;
@@ -343,7 +340,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                 });
             },
             onPlay: () => {
-                const now = performance.now();
+                const now = factory.now();
 
                 scopedTransitions.forEach(({ entry }) => {
                     entry.startTime = now - entry.pauseOffset;
@@ -389,7 +386,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                 } = getOptions(element as TElement extends Group ? Element : TElement, index, totalCount);
 
                 const transitionId = Symbol();
-                const startTime = performance.now() + delay;
+                const startTime = factory.now() + delay;
 
                 const callback = () => {
                     const elementTransitions = this.transitionMap.get(element.id);
@@ -470,62 +467,9 @@ export class Renderer extends EventBus<RendererEventMap> {
         return instance;
     }
 
-    private createDebugOverlay(): HTMLDivElement {
-        const overlay = document.createElement('div');
-
-        overlay.style.position = 'absolute';
-        overlay.style.top = '5px';
-        overlay.style.left = '5px';
-        overlay.style.padding = '4px 8px';
-        overlay.style.fontFamily = 'monospace';
-        overlay.style.fontSize = '12px';
-        overlay.style.lineHeight = '1.4';
-        overlay.style.color = '#FFFFFF';
-        overlay.style.background = 'rgba(0, 0, 0, 0.6)';
-        overlay.style.borderRadius = '3px';
-        overlay.style.pointerEvents = 'none';
-        overlay.style.zIndex = '9999';
-
-        const root = this.scene.context.root;
-        const position = getComputedStyle(root).position;
-
-        if (position === 'static' || !position) {
-            root.style.position = 'relative';
-        }
-
-        root.appendChild(overlay);
-
-        return overlay;
-    }
-
-    private updateDebugOverlay(elementCount: number, deltaTime: number): void {
-        if (!this.debugOverlay) {
-            return;
-        }
-
-        const instantFps = deltaTime > 0 ? 1000 / deltaTime : 0;
-
-        this.smoothedFps += (instantFps - this.smoothedFps) * 0.1;
-
-        const fps = Math.round(this.smoothedFps);
-        const parts: string[] = [];
-
-        if (this.debugOptions.elementCount) {
-            parts.push(`${elementCount} elements`);
-        }
-
-        if (this.debugOptions.fps) {
-            parts.push(`${fps} fps`);
-        }
-
-        this.debugOverlay.textContent = parts.join(' at ');
-    }
-
     /** Stops the renderer and destroys all event subscriptions. */
     public destroy(): void {
         this.stop();
-        this.debugOverlay?.remove();
-
         super.destroy();
     }
 

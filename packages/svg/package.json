@@ -30,6 +30,6 @@
     "dependencies": {
         "@ripl/core": "1.0.0-beta.0",
         "@ripl/utilities": "1.0.0-beta.0",
-        "@ripl/vdom": "1.0.0-beta.0"
+        "@ripl/dom": "1.0.0-beta.0"
     }
 }

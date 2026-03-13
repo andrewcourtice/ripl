@@ -21,7 +21,6 @@ import type {
 } from '@ripl/3d';
 
 import {
-    CanvasPath,
     scaleContinuous,
 } from '@ripl/core';
 
@@ -29,6 +28,10 @@ import type {
     ContextPath,
     FillRule,
 } from '@ripl/core';
+
+import {
+    CanvasPath,
+} from '@ripl/canvas';
 
 import {
     typeIsString,

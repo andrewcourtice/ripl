@@ -10,8 +10,11 @@ import {
 import {
     ContextPath,
     ContextText,
-    createContext,
 } from '../../src';
+
+import {
+    createContext,
+} from '@ripl/canvas';
 
 import {
     mockCanvasContext,

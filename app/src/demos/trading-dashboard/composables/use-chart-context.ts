@@ -7,7 +7,7 @@ import {
 
 import {
     createContext,
-} from '@ripl/core';
+} from '@ripl/canvas';
 
 import type {
     Ref,

@@ -1,9 +1,11 @@
 {
     "entryPointStrategy": "packages",
     "entryPoints": [
+        "../packages/canvas",
         "../packages/core",
         "../packages/charts",
         "../packages/svg",
+        "../packages/web",
         "../packages/3d",
         "../packages/utilities"
     ],

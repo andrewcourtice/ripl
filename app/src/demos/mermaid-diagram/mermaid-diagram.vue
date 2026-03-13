@@ -29,10 +29,16 @@ import {
 import {
     createScene,
     createRenderer,
+    Scene,
 } from '@ripl/core';
 
+import {
+    createContext,
+} from '@ripl/canvas';
+
+Scene.contextFactory = createContext;
+
 import type {
-    Scene,
     Renderer,
 } from '@ripl/core';
 
