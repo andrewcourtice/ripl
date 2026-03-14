@@ -82,9 +82,9 @@ import type {
 type EditorTab = 'code' | 'importmap';
 
 const GLOBALS_DTS = `
-declare const context: import('@ripl/core').Context;
-declare const scene: import('@ripl/core').Scene;
-declare const renderer: import('@ripl/core').Renderer;
+declare const context: import('@ripl/web').Context;
+declare const scene: import('@ripl/web').Scene;
+declare const renderer: import('@ripl/web').Renderer;
 declare const camera: import('@ripl/3d').Camera;
 `;
 

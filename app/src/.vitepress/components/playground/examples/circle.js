@@ -1,6 +1,6 @@
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     cx: scene.context.width / 2,

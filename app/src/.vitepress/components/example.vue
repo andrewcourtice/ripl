@@ -25,11 +25,8 @@ import RiplButtonGroup from './ripl-button-group.vue';
 
 import {
     Context,
-} from '@ripl/core';
-
-import {
-    createContext as createCanvasContext
-} from '@ripl/canvas';
+    createContext as createCanvasContext,
+} from '@ripl/web';
 
 import {
     createContext as createSVGContext

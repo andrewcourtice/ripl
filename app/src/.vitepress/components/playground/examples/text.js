@@ -1,6 +1,6 @@
 import {
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const text = createText({
     x: scene.context.width / 2,

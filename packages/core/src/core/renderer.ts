@@ -47,6 +47,22 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
+import {
+    createRect,
+} from '../elements/rect';
+
+import {
+    createText,
+} from '../elements/text';
+
+import type {
+    Rect,
+} from '../elements/rect';
+
+import type {
+    Text,
+} from '../elements/text';
+
 /** Alias for the transition playback direction within the renderer. */
 export type RendererTransitionDirection = TransitionDirection;
 
@@ -150,6 +166,8 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     private debugOptions: Required<RendererDebugOptions>;
     private smoothedFps = 0;
+    private debugBg?: Rect;
+    private debugLabel?: Text;
 
     public autoStart = true;
     public autoStop = true;
@@ -206,7 +224,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             });
 
             this.previousTime = this.currentTime;
-            this.renderBuffer();
+            this.renderBuffer(deltaTime);
         });
 
         this.handle = factory.requestAnimationFrame(() => this.tick());
@@ -261,7 +279,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         entry.startTime = this.currentTime;
     }
 
-    private renderBuffer() {
+    private renderBuffer(deltaTime: number) {
         const buffer = this.scene.buffer;
 
         buffer.forEach(element => {
@@ -275,6 +293,81 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this.renderBoundingBoxes(element);
             }
         });
+
+        this.renderDebugOverlay(buffer.length, deltaTime);
+    }
+
+    private renderDebugOverlay(elementCount: number, deltaTime: number) {
+        const {
+            fps: showFps,
+            elementCount: showElementCount,
+        } = this.debugOptions;
+
+        if (!showFps && !showElementCount) {
+            return;
+        }
+
+        const instantFps = deltaTime > 0 ? 1000 / deltaTime : 0;
+        this.smoothedFps += (instantFps - this.smoothedFps) * 0.1;
+
+        const parts: string[] = [];
+
+        if (showElementCount) {
+            parts.push(`${elementCount} elements`);
+        }
+
+        if (showFps) {
+            parts.push(`${Math.round(this.smoothedFps)} fps`);
+        }
+
+        const label = parts.join(' at ');
+        const context = this.scene.context;
+        const font = '12px monospace';
+        const paddingX = 8;
+        const paddingY = 4;
+        const offsetX = 5;
+        const offsetY = 5;
+
+        const metrics = context.measureText(label, font);
+        const textWidth = metrics.width;
+        const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        const boxWidth = textWidth + paddingX * 2;
+        const boxHeight = textHeight + paddingY * 2;
+
+        if (!this.debugBg) {
+            this.debugBg = createRect({
+                x: offsetX,
+                y: offsetY,
+                width: boxWidth,
+                height: boxHeight,
+                borderRadius: 3,
+                fill: '#000000',
+                opacity: 0.6,
+                pointerEvents: 'none',
+            });
+        } else {
+            this.debugBg.width = boxWidth;
+            this.debugBg.height = boxHeight;
+        }
+
+        if (!this.debugLabel) {
+            this.debugLabel = createText({
+                x: offsetX + paddingX,
+                y: offsetY + paddingY + textHeight,
+                content: label,
+                font,
+                fill: '#FFFFFF',
+                textAlign: 'left',
+                textBaseline: 'alphabetic',
+                pointerEvents: 'none',
+            });
+        } else {
+            this.debugLabel.content = label;
+            this.debugLabel.y = offsetY + paddingY + textHeight;
+        }
+
+        this.debugBg.render(context);
+        this.debugLabel.render(context);
     }
 
     /** Starts the animation loop if it is not already running. */

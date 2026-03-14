@@ -56,7 +56,7 @@ EventBus<TEventMap>
 
 ### Context Abstraction
 
-`Context` is the rendering abstraction. Canvas (`@ripl/core`) and SVG (`@ripl/svg`) each export a `createContext` function. All elements render through `Context`, making them context-agnostic.
+`Context` is the rendering abstraction. `@ripl/web` is the main entry point for browser usage — it re-exports everything from `@ripl/core` (elements, scene, renderer, animation, scales, etc.) and `@ripl/canvas` (Canvas context), and sets up browser-specific platform bindings. For SVG rendering, import `createContext` from `@ripl/svg` instead. All elements render through `Context`, making them context-agnostic.
 
 ### Scenegraph
 

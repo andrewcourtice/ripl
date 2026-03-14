@@ -25,7 +25,7 @@ import {
 
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.my-container');
 
@@ -114,7 +114,7 @@ import {
 import {
     createCircle,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -148,7 +148,7 @@ import {
     createCircle,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

@@ -12,6 +12,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    hasWindow,
+} from '@ripl/dom';
+
+import {
     functionCache,
 } from '@ripl/utilities';
 
@@ -67,20 +71,22 @@ function domMeasureText(value: string, options?: MeasureTextOptions): TextMetric
     return result;
 }
 
-factory.set({
-    requestAnimationFrame: (cb) => window.requestAnimationFrame(cb),
-    cancelAnimationFrame: (handle) => window.cancelAnimationFrame(handle),
-    now: () => performance.now(),
-    get devicePixelRatio() {
-        return window.devicePixelRatio;
-    },
-    getComputedStyle: (el) => window.getComputedStyle(el as Element),
-    createContext,
-    createElement: (tagName) => document.createElement(tagName),
-    createElementNS: (namespace, tagName) => document.createElementNS(namespace, tagName),
-    getDefaultState,
-    measureText: domMeasureText,
-});
+if (hasWindow) {
+    factory.set({
+        requestAnimationFrame: (cb) => window.requestAnimationFrame(cb),
+        cancelAnimationFrame: (handle) => window.cancelAnimationFrame(handle),
+        now: () => performance.now(),
+        get devicePixelRatio() {
+            return window.devicePixelRatio;
+        },
+        getComputedStyle: (el) => window.getComputedStyle(el as Element),
+        createContext,
+        createElement: (tagName) => document.createElement(tagName),
+        createElementNS: (namespace, tagName) => document.createElementNS(namespace, tagName),
+        getDefaultState,
+        measureText: domMeasureText,
+    });
+}
 
 export * from '@ripl/core';
 export * from '@ripl/canvas';

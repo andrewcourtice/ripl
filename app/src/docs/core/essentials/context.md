@@ -15,7 +15,7 @@ Use `createContext` to create a context attached to a DOM element. By default, R
 ```ts
 import {
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Pass a CSS selector or an HTMLElement
 const context = createContext('.my-container');
@@ -118,7 +118,7 @@ useEffect(() => () => context.destroy(), []);
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -147,7 +147,7 @@ import {
 import {
     createCircle,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

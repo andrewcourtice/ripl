@@ -25,9 +25,12 @@ import type {
 } from '@ripl/core';
 
 import {
-    onDOMEvent,
     typeIsBoolean,
 } from '@ripl/utilities';
+
+import {
+    onDOMEvent,
+} from '@ripl/dom';
 
 /** A camera interaction can be enabled/disabled with a boolean or configured with sensitivity. */
 export type CameraInteractionOption = boolean | CameraInteractionConfig;

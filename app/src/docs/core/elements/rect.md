@@ -27,7 +27,7 @@ A **Rect** draws a rectangle defined by position (`x`, `y`) and dimensions (`wid
 import {
     createContext,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -50,11 +50,11 @@ import {
 import {
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -107,7 +107,7 @@ function redraw() {
 ```ts
 import {
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const rect = createRect({
     fill: '#3a86ff',

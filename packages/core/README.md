@@ -29,7 +29,7 @@ import {
     createContext,
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 

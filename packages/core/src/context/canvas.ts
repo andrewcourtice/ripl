@@ -385,10 +385,9 @@ export class CanvasContext extends Context<HTMLCanvasElement> {
         canvas.style.width = '100%';
         canvas.style.height = '100%';
 
-        super('canvas', target, canvas, options);
+        super('canvas', canvas, options);
 
         this.context = context;
-        this.init();
     }
 
     protected rescale(width: number, height: number) {

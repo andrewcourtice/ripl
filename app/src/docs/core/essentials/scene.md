@@ -15,7 +15,7 @@ A scene can be created from a CSS selector, an HTMLElement, or an existing Conte
 ```ts
 import {
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // From a CSS selector (creates a canvas context automatically)
 const scene = createScene('.my-container');
@@ -127,7 +127,7 @@ import {
     createCircle,
     createRect,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     fill: '#3a86ff',
@@ -178,7 +178,7 @@ import {
     createCircle,
     createRect,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

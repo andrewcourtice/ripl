@@ -22,7 +22,7 @@ The most basic usage of Ripl involves 3 steps:
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -82,7 +82,7 @@ import {
     createContext,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -123,7 +123,7 @@ import {
     createContext,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -184,7 +184,7 @@ Ripl's context automatically handles pointer event delegation via hit testing. Y
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -242,7 +242,7 @@ import {
     createContext,
     easeOutCubic,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -301,7 +301,7 @@ import {
     createCircle,
     createRect,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.mount-element', {
     children: [
@@ -342,7 +342,7 @@ import {
     createRenderer,
     createScene,
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.mount-element', {
     children: [
@@ -445,12 +445,12 @@ import {
     Renderer,
     Scene,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     Element,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

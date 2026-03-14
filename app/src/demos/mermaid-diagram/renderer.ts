@@ -7,14 +7,14 @@ import {
     createText,
     easeOutCubic,
     easeOutQuart,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Element,
     Group,
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     DiagramLayout,

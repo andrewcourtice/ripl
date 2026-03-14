@@ -13,7 +13,7 @@ npm install @ripl/webgpu
 ```ts
 import { createContext } from '@ripl/webgpu';
 import { createCamera } from '@ripl/3d';
-import { createScene, createRenderer } from '@ripl/core';
+import { createScene, createRenderer } from '@ripl/web';
 import { createCube } from '@ripl/3d';
 
 const context = await createContext('#app');

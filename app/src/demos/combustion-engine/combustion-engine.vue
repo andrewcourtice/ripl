@@ -51,7 +51,7 @@ import {
 import {
     createScene,
     createRenderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context3D,
@@ -60,7 +60,7 @@ import type {
 import type {
     Scene,
     Renderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Shape3D,

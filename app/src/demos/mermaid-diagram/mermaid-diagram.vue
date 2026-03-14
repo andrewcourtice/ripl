@@ -27,20 +27,15 @@ import {
 } from 'vue';
 
 import {
+    createContext,
     createScene,
     createRenderer,
     Scene,
-} from '@ripl/core';
-
-import {
-    createContext,
-} from '@ripl/canvas';
-
-Scene.contextFactory = createContext;
+} from '@ripl/web';
 
 import type {
     Renderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import { parseMermaid } from './parser';
 import { computeLayout } from './layout';

@@ -25,7 +25,7 @@ A **Polygon** draws a regular polygon (triangle, pentagon, hexagon, etc.) define
 import {
     createContext,
     createPolygon,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -47,11 +47,11 @@ import {
 import {
     createPolygon,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -103,7 +103,7 @@ function redraw() {
 ```ts
 import {
     createPolygon,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const hexagon = createPolygon({
     fill: '#3a86ff',

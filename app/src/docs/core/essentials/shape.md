@@ -83,7 +83,7 @@ The demo below shows the difference between `autoFill` and `autoStroke`. The lef
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 const r = Math.min(context.width, context.height) / 6;
@@ -130,7 +130,7 @@ import {
 import {
     createCircle,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

@@ -11,21 +11,16 @@ import {
 
 import {
     createCircle,
+    createContext,
     createRenderer,
     createScene,
     Scene,
-} from '@ripl/core';
-
-import {
-    createContext,
-} from '@ripl/canvas';
-
-Scene.contextFactory = createContext;
+} from '@ripl/web';
 
 import type {
     Circle,
     Renderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const container = ref<HTMLElement>();
 

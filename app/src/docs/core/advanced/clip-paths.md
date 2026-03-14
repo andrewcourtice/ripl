@@ -18,7 +18,7 @@ import {
     createCircle,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const group = createGroup({
     children: [
@@ -102,7 +102,7 @@ import {
     createGroup,
     createLine,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 const cx = context.width / 2;
@@ -140,11 +140,11 @@ import {
     createLine,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

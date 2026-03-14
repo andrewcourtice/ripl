@@ -15,7 +15,7 @@ You don't create raw `Element` instances directly — instead you use factory fu
 ```ts
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     id: 'my-circle',
@@ -149,7 +149,7 @@ circle.destroy();
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -173,7 +173,7 @@ import {
 
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

@@ -1,6 +1,6 @@
 import {
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const rect = createRect({
     x: scene.context.width / 2 - 60,

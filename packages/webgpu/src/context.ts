@@ -30,6 +30,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    canvasMeasureText,
     CanvasPath,
 } from '@ripl/canvas';
 
@@ -301,6 +302,10 @@ export class WebGPUContext3D extends Context3D {
 
         renderPass.end();
         device.queue.submit([commandEncoder.finish()]);
+    }
+
+    public override measureText(text: string, font?: string): TextMetrics {
+        return canvasMeasureText(this.hitContext, text, font);
     }
 
     /** Destroys the WebGPU context and releases GPU resources. */

@@ -27,7 +27,7 @@ A **Circle** draws a filled and/or stroked circle defined by a center point (`cx
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -48,11 +48,11 @@ import {
 import {
     createCircle,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -104,7 +104,7 @@ function redraw() {
 ```ts
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     fill: '#3a86ff',

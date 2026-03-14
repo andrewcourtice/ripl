@@ -1973,7 +1973,19 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/3d@workspace:packages/3d"
   dependencies:
+    "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/dom": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  languageName: unknown
+  linkType: soft
+
+"@ripl/canvas@npm:1.0.0-beta.0, @ripl/canvas@workspace:packages/canvas":
+  version: 0.0.0-use.local
+  resolution: "@ripl/canvas@workspace:packages/canvas"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/dom": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
@@ -1982,6 +1994,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
+    "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
@@ -1995,13 +2008,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/dom@npm:1.0.0-beta.0, @ripl/dom@workspace:packages/dom":
+  version: 0.0.0-use.local
+  resolution: "@ripl/dom@workspace:packages/dom"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  languageName: unknown
+  linkType: soft
+
 "@ripl/svg@npm:1.0.0-beta.0, @ripl/svg@workspace:packages/svg":
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
   dependencies:
     "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/dom": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
-    "@ripl/vdom": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
@@ -2019,9 +2041,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/vdom@npm:1.0.0-beta.0, @ripl/vdom@workspace:packages/vdom":
+"@ripl/web@npm:1.0.0-beta.0, @ripl/web@workspace:packages/web":
   version: 0.0.0-use.local
-  resolution: "@ripl/vdom@workspace:packages/vdom"
+  resolution: "@ripl/web@workspace:packages/web"
+  dependencies:
+    "@ripl/canvas": "npm:1.0.0-beta.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
 
@@ -2030,6 +2055,7 @@ __metadata:
   resolution: "@ripl/webgpu@workspace:packages/webgpu"
   dependencies:
     "@ripl/3d": "npm:1.0.0-beta.0"
+    "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
@@ -3250,10 +3276,12 @@ __metadata:
   resolution: "app-f43f79@workspace:app"
   dependencies:
     "@ripl/3d": "npm:1.0.0-beta.0"
+    "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/charts": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/svg": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/web": "npm:1.0.0-beta.0"
     "@ripl/webgpu": "npm:1.0.0-beta.0"
     flex-layout-attribute: "npm:^1.0.3"
     lucide-vue-next: "npm:^0.577.0"

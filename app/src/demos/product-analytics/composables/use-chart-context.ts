@@ -5,17 +5,17 @@ import {
     watch,
 } from 'vue';
 
-import {
-    createContext,
-} from '@ripl/canvas';
-
 import type {
     Ref,
 } from 'vue';
 
+import {
+    createContext,
+} from '@ripl/web';
+
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 export function useChartContext(elRef: Ref<HTMLElement | undefined>) {
     const context = ref<Context>();

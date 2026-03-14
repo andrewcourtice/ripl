@@ -17,7 +17,7 @@ The `transition` function runs a timed animation loop using `requestAnimationFra
 import {
     easeOutCubic,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 await transition({
     duration: 1000,
@@ -111,7 +111,7 @@ import {
     createRenderer,
     createScene,
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.container', { children: [circle] });
 const renderer = createRenderer(scene);
@@ -190,7 +190,7 @@ Easing functions control the rate of change over time. Ripl ships with 13 built-
 ```ts
 import {
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 await renderer.transition(circle, {
     duration: 800,
@@ -349,7 +349,7 @@ import {
     createScene,
     easeInOutQuad,
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.container', {
     children: [
@@ -411,7 +411,7 @@ import {
     createScene,
     easeInOutCubic,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.container', {
     children: [
@@ -467,7 +467,7 @@ import {
     createRenderer,
     createScene,
     easeInOutQuad,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.container', {
     children: [
@@ -525,11 +525,11 @@ import {
     Scene,
     Transition,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 let dScene: Scene;
 let dRenderer: Renderer;

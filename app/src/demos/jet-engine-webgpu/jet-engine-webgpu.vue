@@ -59,7 +59,7 @@ import {
     createScene,
     createRenderer,
     easeInOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     createContext,
@@ -72,7 +72,7 @@ import type {
 import type {
     Scene,
     Renderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Shape3D,

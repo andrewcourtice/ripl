@@ -62,7 +62,7 @@ import {
     createCircle,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const group = createGroup({
     children: [
@@ -151,7 +151,7 @@ import {
     createScene,
     easeInOutQuad,
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const rect = createRect({
     x: 160,
@@ -218,7 +218,7 @@ import {
     Rect,
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 let dScene: Scene;
 let dRenderer: Renderer;

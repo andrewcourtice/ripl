@@ -35,7 +35,7 @@ import {
 import {
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Note: createContext is async (GPU adapter/device negotiation)
 const context = await createContext('#app');

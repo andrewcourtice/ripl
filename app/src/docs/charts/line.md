@@ -38,7 +38,7 @@ import {
 
 import type {
     PolylineRenderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

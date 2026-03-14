@@ -689,7 +689,7 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     /** Measures text dimensions using the context's current font or an optional override. */
     measureText(text: string, font?: string): TextMetrics {
-        return new TextMetrics();
+        return measureText(text, { font });
     }
 
     /** Creates a new path element, optionally reusing an id for SVG diffing efficiency. */
