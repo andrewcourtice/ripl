@@ -25,7 +25,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
     if (mode === '3d') {
         return {
             imports: [
-                'import { createScene, createRenderer } from \'@ripl/core\';',
+                'import { createScene, createRenderer } from \'@ripl/web\';',
                 'import { createContext, createCamera } from \'@ripl/3d\';',
             ].join('\n'),
             body: [
@@ -53,7 +53,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
     if (contextType === 'svg') {
         return {
             imports: [
-                'import { createScene, createRenderer } from \'@ripl/core\';',
+                'import { createScene, createRenderer } from \'@ripl/web\';',
                 'import { createContext } from \'@ripl/svg\';',
             ].join('\n'),
             body: [
@@ -73,7 +73,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
 
     return {
         imports: [
-            'import { createScene, createRenderer, createContext } from \'@ripl/core\';',
+            'import { createScene, createRenderer, createContext } from \'@ripl/web\';',
         ].join('\n'),
         body: [
             'const context = createContext(\'#root\', { buffer: false });',

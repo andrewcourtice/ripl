@@ -5,9 +5,12 @@ import type {
 
 import {
     Context,
-    createContext,
     typeIsContext,
 } from '../context';
+
+import {
+    factory,
+} from './factory';
 
 import {
     createFrameBuffer,
@@ -55,14 +58,24 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             ...groupOptions
         } = options || {};
 
-        const context = (typeIsContext(target)
-            ? target
-            : createContext(target)) as TContext;
+        let context: TContext;
+
+        if (typeIsContext(target)) {
+            context = target as TContext;
+        } else if (factory.createContext) {
+            context = factory.createContext(target) as TContext;
+        } else {
+            throw new Error('Scene requires a Context instance or factory.createContext to be set. Use @ripl/web or call factory.set() with a createContext implementation.');
+        }
 
         context.buffer = false;
 
+        const font = factory.getComputedStyle
+            ? factory.getComputedStyle(context.element).font
+            : undefined;
+
         super({
-            font: window.getComputedStyle(context.element).font,
+            ...font ? { font } : {},
             ...groupOptions,
         });
 

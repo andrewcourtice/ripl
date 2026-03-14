@@ -1,7 +1,7 @@
 {
-    "name": "@ripl/vdom",
+    "name": "@ripl/canvas",
     "version": "1.0.0-beta.0",
-    "description": "Virtual DOM utilities for Ripl",
+    "description": "Canvas 2D rendering context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -26,5 +26,10 @@
     },
     "scripts": {
         "build": "tsup"
+    },
+    "dependencies": {
+        "@ripl/core": "1.0.0-beta.0",
+        "@ripl/dom": "1.0.0-beta.0",
+        "@ripl/utilities": "1.0.0-beta.0"
     }
 }

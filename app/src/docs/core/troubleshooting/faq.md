@@ -91,7 +91,7 @@ The beauty of Ripl is that switching is a one-line change:
 // Canvas (default)
 import {
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // SVG — just change the import
 import {

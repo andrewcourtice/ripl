@@ -27,7 +27,7 @@ An **Ellipse** draws an elliptical shape with independent X and Y radii (`radius
 import {
     createContext,
     createEllipse,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -52,11 +52,11 @@ import {
 import {
     createEllipse,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -110,7 +110,7 @@ function redraw() {
 ```ts
 import {
     createEllipse,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const ellipse = createEllipse({
     fill: '#3a86ff',

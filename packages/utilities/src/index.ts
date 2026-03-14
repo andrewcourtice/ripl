@@ -1,6 +1,5 @@
 export * from './collection';
 export * from './comparitors';
-export * from './dom';
 export * from './function';
 export * from './number';
 export * from './object';

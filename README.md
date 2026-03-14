@@ -36,12 +36,13 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 | Package | Description |
 |---------|-------------|
+| [`@ripl/web`](packages/web) | **Main entry point for browser usage** — re-exports core + canvas context with browser platform bindings |
 | [`@ripl/core`](packages/core) | Core rendering — elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
 | [`@ripl/svg`](packages/svg) | SVG rendering context |
 | [`@ripl/charts`](packages/charts) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
 | [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
 | [`@ripl/utilities`](packages/utilities) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
-| [`@ripl/vdom`](packages/vdom) | Virtual DOM utilities used internally by the SVG context |
+| `@ripl/vdom` | Virtual DOM utilities used internally by the SVG context |
 
 The project is structured as a Yarn 4 monorepo:
 
@@ -66,7 +67,7 @@ The following is a tour of Ripl's features starting from the most basic and prog
 import {
     createCircle,
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Create a canvas context bound to a DOM element
 const context = createContext('.mount-element');
@@ -99,7 +100,7 @@ circle.render(context);
 
 ### Switch Contexts (Canvas / SVG)
 
-To render the same element to SVG, replace the `createContext` import from `@ripl/core` with `@ripl/svg`:
+To render the same element to SVG, replace the `createContext` import from `@ripl/web` with `@ripl/svg`:
 
 ```typescript
 import {
@@ -108,7 +109,7 @@ import {
 
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 const circle = createCircle({ /* same options */ });
@@ -125,7 +126,7 @@ import {
     createContext,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -185,7 +186,7 @@ import {
     createRect,
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     fill: 'rgb(30, 105, 120)',
@@ -223,7 +224,7 @@ The renderer provides transition-based animation. Transitions are cancellable `T
 ```typescript
 import {
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Animate a single element
 await renderer.transition(circle, {
@@ -388,7 +389,7 @@ import {
     scaleQuantize,
     scaleThreshold,
     scaleTime,
-} from '@ripl/core';
+} from '@ripl/web';
 ```
 
 ### Continuous (Linear)

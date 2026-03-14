@@ -4,10 +4,14 @@ import {
     createScene,
     EventBus,
     EventMap,
+    factory,
     Renderer,
     Scene,
 } from '@ripl/core';
 
+import {
+    createContext,
+} from '@ripl/canvas';
 
 import {
     getColorGenerator,
@@ -22,6 +26,10 @@ import {
     normalizeAnimation,
     normalizeTitle,
 } from './options';
+
+if (!factory.createContext) {
+    factory.set({ createContext });
+}
 
 export type {
     ChartAnimationOptions,

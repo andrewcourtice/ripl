@@ -45,10 +45,13 @@ export default defineConfig({
             alias: {
                 '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
                 '@ripl/vdom': path.resolve(__dirname, '../../../packages/vdom/src/index.ts'),
+                '@ripl/canvas': path.resolve(__dirname, '../../../packages/canvas/src/index.ts'),
                 '@ripl/core': path.resolve(__dirname, '../../../packages/core/src/index.ts'),
                 '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
+                '@ripl/web': path.resolve(__dirname, '../../../packages/web/src/index.ts'),
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
                 '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
+                '@ripl/webgpu': path.resolve(__dirname, '../../../packages/webgpu/src/index.ts'),
             },
         },
         css: {
@@ -335,6 +338,31 @@ export default defineConfig({
                         {
                             text: 'Torus',
                             link: '/docs/3d/shapes/torus',
+                        },
+                    ],
+                },
+            ],
+
+            '/docs/webgpu': [
+                {
+                    text: 'Getting Started',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/docs/webgpu/',
+                        },
+                    ],
+                },
+                {
+                    text: 'Essentials',
+                    items: [
+                        {
+                            text: 'WebGPU Context',
+                            link: '/docs/webgpu/essentials/context',
+                        },
+                        {
+                            text: 'Migration Guide',
+                            link: '/docs/webgpu/essentials/migration',
                         },
                     ],
                 },

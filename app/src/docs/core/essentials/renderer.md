@@ -14,7 +14,7 @@ The Renderer is what brings your scene to life. Without it, you'd need to manual
 import {
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.my-container', {
     children: [circle, rect],
@@ -88,7 +88,7 @@ import {
     createRect,
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.mount-element', {
     children: [
@@ -163,7 +163,7 @@ import {
     easeInOutQuint, easeInQuad, easeInQuart,
     easeInQuint, easeLinear, easeOutCubic,
     easeOutQuad, easeOutQuart, easeOutQuint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 await renderer.transition(circle, {
     duration: 800,
@@ -276,7 +276,7 @@ import {
     createRenderer,
     createScene,
     easeOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.mount-element', {
     children: [
@@ -337,11 +337,11 @@ import {
     easeOutCubic,
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     RendererDebugOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 let rScene: Scene;
 let rRenderer: Renderer;

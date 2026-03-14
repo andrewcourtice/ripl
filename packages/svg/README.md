@@ -20,7 +20,7 @@ import {
 } from '@ripl/svg';
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -36,7 +36,7 @@ circle.render(context);
 
 ## Features
 
-- **Drop-in replacement** — Replace `@ripl/core`'s `createContext` with `@ripl/svg`'s and everything just works
+- **Drop-in replacement** — Replace `@ripl/web`'s `createContext` with `@ripl/svg`'s and everything just works
 - **Efficient DOM updates** — Virtual DOM reconciler minimizes DOM mutations each frame
 - **Full API parity** — Paths, text, images, gradients, transforms, clipping, and hit testing
 - **Gradient support** — Linear and radial gradients rendered as native SVG gradient elements

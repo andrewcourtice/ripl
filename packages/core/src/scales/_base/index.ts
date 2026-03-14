@@ -124,6 +124,10 @@ export function getLinearTicks(domain: number[], count: number = 10) {
         step,
     ] = padDomain(domain, count);
 
+    if (!step || !isFinite(step) || min === max) {
+        return [min];
+    }
+
     const length = Math.floor((max - min) / step) + 1;
 
     return arrayMapRange(length, i => {

@@ -241,7 +241,7 @@ import {
     createRect,
     createScene,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

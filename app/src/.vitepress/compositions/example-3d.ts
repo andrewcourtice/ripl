@@ -11,7 +11,7 @@ import {
 import {
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Camera,
@@ -21,7 +21,7 @@ import type {
 import type {
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Camera, renderer: Renderer) => void, cameraOptions?: CameraOptions) {
     const context = shallowRef<Context3D>();

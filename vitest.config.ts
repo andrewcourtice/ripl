@@ -10,9 +10,11 @@ export default defineConfig({
     resolve: {
         alias: {
             '@ripl/utilities': resolve('utilities'),
-            '@ripl/vdom': resolve('vdom'),
+            '@ripl/dom': resolve('dom'),
+            '@ripl/canvas': resolve('canvas'),
             '@ripl/core': resolve('core'),
             '@ripl/svg': resolve('svg'),
+            '@ripl/web': resolve('web'),
             '@ripl/charts': resolve('charts'),
             '@ripl/3d': resolve('3d'),
         },
@@ -20,6 +22,7 @@ export default defineConfig({
     test: {
         watch: false,
         environment: 'jsdom',
+        setupFiles: ['./vitest.setup.ts'],
         exclude: [
             '**/node_modules/**',
             '**/dist/**',

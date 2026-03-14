@@ -27,7 +27,7 @@ import {
     createScene,
     easeInOutQuad,
     interpolateImage,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.container', {
     children: [
@@ -68,7 +68,7 @@ import {
     interpolateImage,
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
@@ -141,7 +141,7 @@ async function nextImage() {
 ```ts
 import {
     createImage,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const img = new Image();
 img.src = '/photo.jpg';
@@ -171,7 +171,7 @@ The `interpolateImage` factory produces a crossfade between two image sources. I
 ```ts
 import {
     interpolateImage,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Pass the interpolator directly as the state value
 renderer.transition(imageElement, {

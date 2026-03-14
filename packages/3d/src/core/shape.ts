@@ -1,3 +1,7 @@
+import {
+    CanvasContext3D,
+} from '../context';
+
 import type {
     Context3D,
 } from '../context';
@@ -225,32 +229,66 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const faces = this.getCachedFaces();
         const baseFillStyle = this.fill || '#888888';
         const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
-        const normalizedLight = vec3Normalize(ctx.getLightDirectionForRender());
         const matrix = this.getModelMatrix();
 
         this.context = context;
         this.hitPath = undefined;
 
-        let totalDepth = 0;
+        // GPU path: submit raw mesh data via the context's submitMesh method
+        ctx.submitMesh({
+            vertices: triangulateFacesFlat(faces, baseRGBA),
+            indices: triangulateFacesIndices(faces),
+            modelMatrix: matrix,
+            normalMatrix: matrix, // Valid when model has no non-uniform scale
+        });
+
         const hitPath = ctx.createPath(`${this.id}:hit`);
 
+        // Canvas 2D path: project faces on CPU and push to faceBuffer
+        if (ctx instanceof CanvasContext3D) {
+            const normalizedLight = vec3Normalize(ctx.getLightDirectionForRender());
+
+            let totalDepth = 0;
+
+            for (const face of faces) {
+                const transformed = this.transformVertices(face.vertices, matrix);
+                const normal = face.normal ?? computeFaceNormal(transformed);
+                const brightness = computeFaceBrightness(normal, normalizedLight, true);
+                const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
+                const points = transformed.map(vertex => ctx.project(vertex));
+                const depth = numberSum(points, p => p[2]) / points.length;
+
+                totalDepth += depth;
+
+                ctx.faceBuffer.push({
+                    points,
+                    fillColor,
+                    strokeStyle: this.stroke,
+                    lineWidth: this.lineWidth,
+                    depth,
+                });
+
+                hitPath.moveTo(points[0][0], points[0][1]);
+
+                for (let idx = 1; idx < points.length; idx++) {
+                    hitPath.lineTo(points[idx][0], points[idx][1]);
+                }
+
+                hitPath.closePath();
+            }
+
+            this.hitPath = hitPath;
+            this._depth = faces.length > 0
+                ? totalDepth / faces.length
+                : 0;
+
+            return;
+        }
+
+        // Non-canvas path (e.g. WebGPU): build 2D hit path from projected vertices for CPU-side interaction
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
-            const normal = face.normal ?? computeFaceNormal(transformed);
-            const brightness = computeFaceBrightness(normal, normalizedLight, true);
-            const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
             const points = transformed.map(vertex => ctx.project(vertex));
-            const depth = numberSum(points, p => p[2]) / points.length;
-
-            totalDepth += depth;
-
-            ctx.faceBuffer.push({
-                points,
-                fillColor,
-                strokeStyle: this.stroke,
-                lineWidth: this.lineWidth,
-                depth,
-            });
 
             hitPath.moveTo(points[0][0], points[0][1]);
 
@@ -262,9 +300,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         }
 
         this.hitPath = hitPath;
-        this._depth = faces.length > 0
-            ? totalDepth / faces.length
-            : 0;
+        this._depth = ctx.project([this.x, this.y, this.z])[2];
     }
 
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
@@ -300,6 +336,87 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return isAnyIntersecting();
     }
 
+}
+
+function computeTriangleNormal(a: Vector3, b: Vector3, c: Vector3): Vector3 {
+    const ux = b[0] - a[0];
+    const uy = b[1] - a[1];
+    const uz = b[2] - a[2];
+    const vx = c[0] - a[0];
+    const vy = c[1] - a[1];
+    const vz = c[2] - a[2];
+
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+
+    const len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+
+    if (len === 0) {
+        return [0, 1, 0];
+    }
+
+    return [nx / len, ny / len, nz / len];
+}
+
+function triangulateFacesFlat(faces: Face3D[], color: ColorRGBA): Float32Array {
+    let vertexCount = 0;
+
+    for (const face of faces) {
+        vertexCount += face.vertices.length;
+    }
+
+    const data = new Float32Array(vertexCount * 10);
+    const cr = color[0] / 255;
+    const cg = color[1] / 255;
+    const cb = color[2] / 255;
+    const ca = color[3];
+
+    let offset = 0;
+
+    for (const face of faces) {
+        const verts = face.vertices;
+        const normal = face.normal ?? computeTriangleNormal(verts[0], verts[1], verts[2]);
+
+        for (const vertex of verts) {
+            data[offset++] = vertex[0];
+            data[offset++] = vertex[1];
+            data[offset++] = vertex[2];
+            data[offset++] = normal[0];
+            data[offset++] = normal[1];
+            data[offset++] = normal[2];
+            data[offset++] = cr;
+            data[offset++] = cg;
+            data[offset++] = cb;
+            data[offset++] = ca;
+        }
+    }
+
+    return data;
+}
+
+function triangulateFacesIndices(faces: Face3D[]): Uint32Array {
+    let indexCount = 0;
+
+    for (const face of faces) {
+        indexCount += (face.vertices.length - 2) * 3;
+    }
+
+    const indices = new Uint32Array(indexCount);
+    let ii = 0;
+    let baseIndex = 0;
+
+    for (const face of faces) {
+        for (let t = 0; t < face.vertices.length - 2; t++) {
+            indices[ii++] = baseIndex;
+            indices[ii++] = baseIndex + t + 1;
+            indices[ii++] = baseIndex + t + 2;
+        }
+
+        baseIndex += face.vertices.length;
+    }
+
+    return indices;
 }
 
 /** Factory function that creates a new `Shape3D` instance. */

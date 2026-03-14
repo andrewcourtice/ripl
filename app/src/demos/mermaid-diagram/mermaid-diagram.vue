@@ -27,14 +27,15 @@ import {
 } from 'vue';
 
 import {
+    createContext,
     createScene,
     createRenderer,
-} from '@ripl/core';
+    Scene,
+} from '@ripl/web';
 
 import type {
-    Scene,
     Renderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import { parseMermaid } from './parser';
 import { computeLayout } from './layout';

@@ -7,6 +7,10 @@ import {
 } from '../math';
 
 import {
+    factory,
+} from '../core/factory';
+
+import {
     Task,
 } from '../task';
 
@@ -114,16 +118,16 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
 
     const hooks: TransitionHooks = {
         onPause() {
-            pausedElapsed = performance.now() - start;
+            pausedElapsed = factory.now() - start;
 
             if (handle !== undefined) {
-                cancelAnimationFrame(handle);
+                factory.cancelAnimationFrame(handle);
                 handle = undefined;
             }
         },
         onPlay() {
-            start = performance.now() - pausedElapsed;
-            handle = requestAnimationFrame(tick);
+            start = factory.now() - pausedElapsed;
+            handle = factory.requestAnimationFrame(tick);
         },
         onSeek(position) {
             pausedElapsed = position * duration;
@@ -133,28 +137,28 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
             callback(time);
 
             if (handle !== undefined) {
-                cancelAnimationFrame(handle);
+                factory.cancelAnimationFrame(handle);
                 handle = undefined;
             }
         },
     };
 
     const instance = new Transition((resolve, _reject, onAbort) => {
-        start = performance.now() + delay;
+        start = factory.now() + delay;
 
         onAbort(() => {
             if (handle !== undefined) {
-                cancelAnimationFrame(handle);
+                factory.cancelAnimationFrame(handle);
                 handle = undefined;
             }
         });
 
         tick = () => {
-            const current = performance.now();
+            const current = factory.now();
             const elapsed = current - start;
 
             if (elapsed < 0) {
-                handle = requestAnimationFrame(tick);
+                handle = factory.requestAnimationFrame(tick);
                 return;
             }
 
@@ -163,7 +167,7 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
             callback(time);
 
             if (elapsed < duration) {
-                handle = requestAnimationFrame(tick);
+                handle = factory.requestAnimationFrame(tick);
                 return;
             }
 
@@ -172,15 +176,15 @@ export function transition(callback: TransitionCallback, options?: Partial<Trans
                     currentDirection = currentDirection === 'forward' ? 'reverse' : 'forward';
                 }
 
-                start = performance.now();
-                handle = requestAnimationFrame(tick);
+                start = factory.now();
+                handle = factory.requestAnimationFrame(tick);
             } else {
                 handle = undefined;
                 resolve();
             }
         };
 
-        handle = requestAnimationFrame(tick);
+        handle = factory.requestAnimationFrame(tick);
     }, hooks);
 
     instance.inverse = () => transition(

@@ -8,7 +8,7 @@ import type {
     RendererOptions,
     Scene,
     SceneOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     shallowRef,
@@ -22,7 +22,7 @@ import {
 import {
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 type AdvancedExampleOptions = {
     scene?: SceneOptions;

@@ -32,7 +32,7 @@ import {
     getMidpoint,
     getPolygonPoints,
     getWaypoint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const points = getPolygonPoints(6, 200, 150, 80);
 const mid = getMidpoint(points[0], points[3]);
@@ -56,12 +56,12 @@ import {
     getPolygonPoints,
     getWaypoint,
     Box,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     Point,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -171,7 +171,7 @@ A `Point` is a simple `[x, y]` tuple used throughout Ripl:
 ```ts
 import type {
     Point,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const p: Point = [100, 200];
 ```
@@ -182,7 +182,7 @@ const p: Point = [100, 200];
 import {
     getMidpoint,
     getWaypoint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const a: Point = [0, 0];
 const b: Point = [100, 100];
@@ -198,7 +198,7 @@ getWaypoint(a, b, 0.75); // [75, 75]
 import {
     arePointsEqual,
     getHypLength,
-} from '@ripl/core';
+} from '@ripl/web';
 
 arePointsEqual([0, 0], [0, 0]); // true
 getHypLength(3, 4); // 5
@@ -211,7 +211,7 @@ import {
     degreesToRadians,
     radiansToDegrees,
     TAU,
-} from '@ripl/core';
+} from '@ripl/web';
 
 degreesToRadians(90); // π/2
 radiansToDegrees(TAU); // 360
@@ -225,7 +225,7 @@ Compute a point at a given angle and distance from a center:
 ```ts
 import {
     getThetaPoint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 getThetaPoint(0, 100, 200, 200); // [300, 200]
 getThetaPoint(Math.PI / 2, 100, 200, 200); // [200, 300]
@@ -238,7 +238,7 @@ Generate vertex points for a regular polygon:
 ```ts
 import {
     getPolygonPoints,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const hexagon = getPolygonPoints(6, 200, 200, 80);
 // 7 points (6 vertices + closing point)
@@ -256,7 +256,7 @@ import {
     Box,
     getContainingBox,
     isPointInBox,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const box = new Box(10, 20, 110, 220);
 box.width; // 200
@@ -294,7 +294,7 @@ import {
     maxOf,
     min,
     minOf,
-} from '@ripl/core';
+} from '@ripl/web';
 
 clamp(150, 0, 100); // 100
 clamp(-5, 0, 100); // 0
@@ -318,7 +318,7 @@ Measure and sample points along SVG path strings:
 import {
     getPathLength,
     samplePathPoint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const d = 'M 0,0 L 100,0 L 100,100';
 getPathLength(d); // ~200
@@ -336,7 +336,7 @@ Normalize a border radius value into a four-corner tuple:
 ```ts
 import {
     normaliseBorderRadius,
-} from '@ripl/core';
+} from '@ripl/web';
 
 normaliseBorderRadius(8); // [8, 8, 8, 8]
 normaliseBorderRadius([4, 8, 4, 8]); // [4, 8, 4, 8]

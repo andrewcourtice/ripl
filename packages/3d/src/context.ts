@@ -23,16 +23,41 @@ import type {
 } from './math';
 
 import {
-    CanvasContext,
+    ContextText,
     degreesToRadians,
 } from '@ripl/core';
 
 import type {
     ContextOptions,
+    ContextPath,
+    FillRule,
 } from '@ripl/core';
+
+import {
+    DOMContext,
+} from '@ripl/dom';
+
+import {
+    applyCanvasFill,
+    applyCanvasStroke,
+    canvasDrawImage,
+    canvasIsPointInPath,
+    canvasIsPointInStroke,
+    canvasMeasureText,
+    CanvasPath,
+    rescaleCanvas,
+} from '@ripl/canvas';
 
 /** Determines whether the light direction is fixed in world space or follows the camera. */
 export type LightMode = 'world' | 'camera';
+
+/** A mesh submission queued for a single frame. */
+export interface MeshSubmission {
+    vertices: Float32Array;
+    indices: Uint32Array;
+    modelMatrix: Matrix4;
+    normalMatrix: Matrix4;
+}
 
 /** Options for the 3D rendering context, extending the base context options with camera parameters. */
 export interface Context3DOptions extends ContextOptions {
@@ -43,22 +68,30 @@ export interface Context3DOptions extends ContextOptions {
     lightMode?: LightMode;
 }
 
-/** 3D rendering context extending the Canvas context with view/projection matrices and a face buffer for painter's algorithm sorting. */
-export class Context3D extends CanvasContext {
+/** Base 3D rendering context providing view/projection matrices, camera, lighting, and projection. Subclassed by CanvasContext3D and WebGPUContext3D. */
+export class Context3D extends DOMContext<HTMLCanvasElement> {
 
     public viewMatrix: Matrix4;
     public projectionMatrix: Matrix4;
     public viewProjectionMatrix: Matrix4;
     public lightDirection: Vector3;
     public lightMode: LightMode;
-    public faceBuffer: ProjectedFace3D[] = [];
 
-    private fov: number;
-    private near: number;
-    private far: number;
+    protected fov: number;
+    protected near: number;
+    protected far: number;
 
-    constructor(target: string | HTMLElement, options?: Context3DOptions) {
-        super(target, options);
+    constructor(
+        type: string,
+        target: string | HTMLElement,
+        element: HTMLCanvasElement,
+        options?: Context3DOptions
+    ) {
+        element.style.display = 'block';
+        element.style.width = '100%';
+        element.style.height = '100%';
+
+        super(type, target, element, options);
 
         const {
             fov = 60,
@@ -74,23 +107,13 @@ export class Context3D extends CanvasContext {
         this.viewMatrix = mat4Identity();
         this.projectionMatrix = mat4Identity();
         this.viewProjectionMatrix = mat4Identity();
-
-        this.updateProjectionMatrix();
     }
 
-    protected rescale(width: number, height: number) {
-        super.rescale(width, height);
-
-        if (this.viewMatrix) {
-            this.updateProjectionMatrix();
-        }
-    }
-
-    private updateViewProjectionMatrix(): void {
+    protected updateViewProjectionMatrix(): void {
         this.viewProjectionMatrix = mat4Multiply(this.projectionMatrix, this.viewMatrix);
     }
 
-    private updateProjectionMatrix(): void {
+    protected updateProjectionMatrix(): void {
         if (this.width > 0 && this.height > 0) {
             this.projectionMatrix = mat4Perspective(
                 degreesToRadians(this.fov),
@@ -147,6 +170,130 @@ export class Context3D extends CanvasContext {
             (-clip[1] * 0.5 + 0.5) * this.height,
             clip[2],
         ];
+    }
+
+    /** Submits a mesh for rendering this frame. Noop in the base class; overridden by GPU-backed contexts. */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public submitMesh(submission: MeshSubmission): void {
+        // noop — overridden in subclasses (e.g. WebGPUContext3D)
+    }
+
+}
+
+/** Canvas 2D–backed 3D rendering context with face buffer and painter's algorithm sorting. */
+export class CanvasContext3D extends Context3D {
+
+    protected context: CanvasRenderingContext2D;
+    public faceBuffer: ProjectedFace3D[] = [];
+
+    constructor(target: string | HTMLElement, options?: Context3DOptions) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+
+        if (!context) {
+            throw new Error();
+        }
+
+        super('canvas3d', target, canvas, options);
+
+        this.context = context;
+        this.updateProjectionMatrix();
+        this.init();
+    }
+
+    protected rescale(width: number, height: number) {
+        const result = rescaleCanvas(this.element, this.context, width, height);
+
+        if (!result) {
+            return;
+        }
+
+        super.rescale(width, height);
+
+        this.scaleX = result.scaleX;
+        this.scaleY = result.scaleY;
+
+        if (this.viewMatrix) {
+            this.updateProjectionMatrix();
+        }
+    }
+
+    save(): void {
+        return this.context.save();
+    }
+
+    restore(): void {
+        return this.context.restore();
+    }
+
+    clear(): void {
+        return this.context.clearRect(0, 0, this.width, this.height);
+    }
+
+    reset(): void {
+        return this.context.reset();
+    }
+
+    rotate(angle: number): void {
+        return this.context.rotate(angle);
+    }
+
+    scale(x: number, y: number): void {
+        return this.context.scale(x, y);
+    }
+
+    translate(x: number, y: number): void {
+        return this.context.translate(x, y);
+    }
+
+    // eslint-disable-next-line id-length
+    setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        return this.context.setTransform(a, b, c, d, e, f);
+    }
+
+    // eslint-disable-next-line id-length
+    transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        return this.context.transform(a, b, c, d, e, f);
+    }
+
+    measureText(text: string, font?: string): TextMetrics {
+        return canvasMeasureText(this.context, text, font);
+    }
+
+    createPath(id?: string): CanvasPath {
+        return new CanvasPath(id);
+    }
+
+    applyClip(path: CanvasPath, fillRule?: FillRule): void {
+        return this.context.clip(path.ref, fillRule);
+    }
+
+    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+        return canvasDrawImage(this.context, image, x, y, width, height);
+    }
+
+    applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
+        return applyCanvasFill(this.context, element, fillRule);
+    }
+
+    applyStroke(element: CanvasPath | ContextText): void {
+        return applyCanvasStroke(this.context, element);
+    }
+
+    isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
+        if (path instanceof CanvasPath) {
+            return canvasIsPointInPath(this.context, path, x, y, fillRule);
+        }
+
+        return false;
+    }
+
+    isPointInStroke(path: ContextPath, x: number, y: number): boolean {
+        if (path instanceof CanvasPath) {
+            return canvasIsPointInStroke(this.context, path, x, y);
+        }
+
+        return false;
     }
 
     markRenderStart(): void {
@@ -224,7 +371,7 @@ export class Context3D extends CanvasContext {
 
 }
 
-/** Creates a 3D rendering context attached to the given DOM target. */
-export function createContext(target: string | HTMLElement, options?: Context3DOptions): Context3D {
-    return new Context3D(target, options);
+/** Creates a Canvas 2D–backed 3D rendering context attached to the given DOM target. */
+export function createContext(target: string | HTMLElement, options?: Context3DOptions): CanvasContext3D {
+    return new CanvasContext3D(target, options);
 }

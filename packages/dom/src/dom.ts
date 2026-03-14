@@ -1,6 +1,6 @@
 import type {
     Disposable,
-} from './types';
+} from '@ripl/utilities';
 
 /** A strongly-typed DOM event handler bound to a specific element and event type. */
 export type DOMEventHandler<TElement, TEvent extends keyof DOMElementEventMap<TElement>> = (this: TElement, event: DOMElementEventMap<TElement>[TEvent]) => void;

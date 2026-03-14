@@ -118,7 +118,7 @@ import {
     createRenderer,
     createScene,
     transition,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circles = Array.from({ length: 1000 }, () =>
     createCircle({
@@ -141,11 +141,11 @@ import {
 
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Circle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

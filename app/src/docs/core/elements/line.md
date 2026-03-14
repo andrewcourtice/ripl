@@ -27,7 +27,7 @@ A **Line** draws a straight line between two points (`x1`, `y1`) to (`x2`, `y2`)
 import {
     createContext,
     createLine,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -50,11 +50,11 @@ import {
 import {
     createLine,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -111,7 +111,7 @@ function redraw() {
 ```ts
 import {
     createLine,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const line = createLine({
     stroke: '#3a86ff',

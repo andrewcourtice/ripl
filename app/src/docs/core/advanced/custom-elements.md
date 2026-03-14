@@ -19,7 +19,7 @@ import {
     Context,
     Shape,
     ShapeOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // 1. Define your state interface
 interface StarState extends BaseElementState {
@@ -127,7 +127,7 @@ import {
     Context,
     Element,
     ElementOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 interface BadgeState extends BaseElementState {
     x: number;
@@ -272,16 +272,16 @@ import {
 import {
     Context,
     Shape2D,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     BaseElementState,
     Shape2DOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

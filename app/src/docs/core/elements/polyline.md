@@ -26,7 +26,7 @@ The demo below shows the same set of points rendered with different renderer mod
 import {
     createContext,
     createPolyline,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 const points = [[50, 150], [120, 40], [200, 180], [300, 60], [400, 140]];
@@ -49,12 +49,12 @@ import {
     createCircle,
     createPolyline,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     PolylineRenderer,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -122,7 +122,7 @@ watch(currentRenderer, () => {
 ```ts
 import {
     createPolyline,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const polyline = createPolyline({
     stroke: '#3a86ff',

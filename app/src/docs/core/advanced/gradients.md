@@ -150,7 +150,7 @@ import {
     createCircle,
     createContext,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -180,11 +180,11 @@ import {
     createCircle,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

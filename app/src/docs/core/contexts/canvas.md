@@ -13,7 +13,7 @@ The canvas context is created by importing `createContext` from `@ripl/core`:
 ```ts
 import {
     createContext,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.my-container');
 ```
@@ -86,7 +86,7 @@ import {
     createCircle,
     createContext,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 // Creates a canvas context by default
 const context = createContext('.mount-element');
@@ -116,7 +116,7 @@ import {
 import {
     createCircle,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

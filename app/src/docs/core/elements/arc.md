@@ -28,7 +28,7 @@ An **Arc** draws a circular or annular (donut) arc segment defined by a center p
 ```ts
 import {
     createArc,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const TAU = Math.PI * 2;
 
@@ -54,11 +54,11 @@ import {
 import {
     createArc,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -117,7 +117,7 @@ function redraw() {
 ```ts
 import {
     createArc,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const arc = createArc({
     fill: '#3a86ff',
