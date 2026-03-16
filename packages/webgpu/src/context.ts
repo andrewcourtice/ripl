@@ -126,6 +126,7 @@ export class WebGPUContext3D extends Context3D {
         // Resize hit canvas to match
         this.hitCanvas.width = scaledWidth;
         this.hitCanvas.height = scaledHeight;
+        this.hitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
 
         super.rescale(width, height);
 

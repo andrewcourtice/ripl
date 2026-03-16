@@ -221,28 +221,29 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     public render(context: Context): void {
-        const ctx = context as Context3D;
-        const faces = this.getCachedFaces();
-        const baseFillStyle = this.fill || '#888888';
-        const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
-        const matrix = this.getModelMatrix();
+        super.render(context, () => {
+            const ctx = context as Context3D;
+            const faces = this.getCachedFaces();
+            const baseFillStyle = this.fill || '#888888';
+            const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
+            const matrix = this.getModelMatrix();
 
-        this.context = context;
-        this.hitPath = undefined;
+            this.hitPath = undefined;
 
-        // This is noop for CPU render strategies. Safe to call on all paths.
-        ctx.submitMesh({
-            vertices: triangulateFacesFlat(faces, baseRGBA),
-            indices: triangulateFacesIndices(faces),
-            modelMatrix: matrix,
-            normalMatrix: matrix, // Valid when model has no non-uniform scale
+            // This is noop for CPU render strategies. Safe to call on all paths.
+            ctx.submitMesh({
+                vertices: triangulateFacesFlat(faces, baseRGBA),
+                indices: triangulateFacesIndices(faces),
+                modelMatrix: matrix,
+                normalMatrix: matrix, // Valid when model has no non-uniform scale
+            });
+
+            if (ctx.renderStrategy === 'gpu') {
+                this.renderGPU(ctx, faces, matrix);
+            } else {
+                this.renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
+            }
         });
-
-        if (ctx.renderStrategy === 'gpu') {
-            this.renderGPU(ctx, faces, matrix);
-        } else {
-            this.renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
-        }
     }
 
     private renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
