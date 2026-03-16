@@ -70,7 +70,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         context.buffer = false;
 
-        const font = factory.getComputedStyle
+        const font = context.element instanceof globalThis.HTMLElement
             ? factory.getComputedStyle(context.element).font
             : undefined;
 

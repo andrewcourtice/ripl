@@ -1,9 +1,17 @@
 <template>
-    <div class="ripl-terminal-example ripl-terminal-example--interactive">
-        <div class="ripl-terminal-example__header">
-            <span class="ripl-terminal-example__label">Interactive Terminal</span>
+    <div class="terminal-demo">
+        <div class="terminal-demo__header">
+            <h1 class="terminal-demo__title">Interactive Terminal</h1>
+            <p class="terminal-demo__subtitle">Explore Ripl's terminal rendering — choose from basic shapes, animations, or full chart demos rendered in Unicode braille</p>
         </div>
-        <div class="ripl-terminal-example__body" ref="terminalContainer"></div>
+        <div class="terminal-demo__viewport">
+            <div class="terminal-demo__chrome">
+                <span class="terminal-demo__dot terminal-demo__dot--red"></span>
+                <span class="terminal-demo__dot terminal-demo__dot--yellow"></span>
+                <span class="terminal-demo__dot terminal-demo__dot--green"></span>
+            </div>
+            <div class="terminal-demo__body" ref="terminalContainer"></div>
+        </div>
     </div>
 </template>
 
@@ -441,7 +449,7 @@ onMounted(() => {
         fontFamily: 'monospace',
         fontSize: 14,
         theme: {
-            background: '#1a1a2e',
+            background: '#000000',
             foreground: '#e0e0e0',
         },
     });
@@ -475,3 +483,77 @@ onUnmounted(() => {
     terminal?.dispose();
 });
 </script>
+
+<style lang="scss">
+.terminal-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    padding: 2rem 2.5rem;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.terminal-demo__header {
+    margin-bottom: 0.5rem;
+}
+
+.terminal-demo__title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--vp-c-text-1);
+    line-height: 1.2;
+}
+
+.terminal-demo__subtitle {
+    margin: 0.375rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--vp-c-text-2);
+}
+
+.terminal-demo__viewport {
+    border: 1px solid var(--vp-c-divider);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.terminal-demo__chrome {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+}
+
+.terminal-demo__dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+
+    &--red {
+        background: #ff5f56;
+    }
+
+    &--yellow {
+        background: #ffbd2e;
+    }
+
+    &--green {
+        background: #27c93f;
+    }
+}
+
+.terminal-demo__body {
+    height: 600px;
+    background: #000000;
+
+    .xterm {
+        padding: 0.5rem;
+        height: 100%;
+    }
+}
+</style>

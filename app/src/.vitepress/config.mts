@@ -182,16 +182,12 @@ export default defineConfig({
                             link: '/docs/core/contexts/svg',
                         },
                         {
-                            text: 'Terminal',
-                            link: '/docs/core/contexts/terminal',
-                        },
-                        {
-                            text: 'Node',
-                            link: '/docs/core/contexts/node',
-                        },
-                        {
-                            text: 'WebGPU',
+                            text: 'WebGPU (experimental)',
                             link: '/docs/core/contexts/webgpu',
+                        },
+                        {
+                            text: 'Terminal (experimental)',
+                            link: '/docs/core/contexts/terminal',
                         },
                     ],
                 },
