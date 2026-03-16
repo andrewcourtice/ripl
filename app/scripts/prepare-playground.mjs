@@ -20,6 +20,7 @@ const PACKAGES = [
     '@ripl/svg',
     '@ripl/web',
     '@ripl/3d',
+    '@ripl/webgpu',
     '@ripl/charts',
 ];
 

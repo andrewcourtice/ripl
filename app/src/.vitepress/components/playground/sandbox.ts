@@ -1,5 +1,5 @@
 export type PlaygroundMode = '2d' | '3d';
-export type ContextType = 'canvas' | 'svg';
+export type ContextType = 'canvas' | 'svg' | 'webgpu';
 
 export interface PlaygroundSettings {
     autoStop: boolean;
@@ -19,9 +19,41 @@ export interface PlaygroundState {
 interface SetupCode {
     imports: string;
     body: string;
+    suffix?: string;
 }
 
 function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: PlaygroundSettings): SetupCode {
+    if (mode === '3d' && contextType === 'webgpu') {
+        return {
+            imports: [
+                'import { createScene, createRenderer } from \'@ripl/web\';',
+                'import { createContext } from \'@ripl/webgpu\';',
+                'import { createCamera } from \'@ripl/3d\';',
+            ].join('\n'),
+            body: [
+                '(async () => {',
+                'const context = await createContext(\'#root\');',
+                'const scene = createScene(context);',
+                'const renderer = createRenderer(scene, {',
+                `    autoStop: ${settings.autoStop},`,
+                '    debug: {',
+                `        fps: ${settings.debugFps},`,
+                `        elementCount: ${settings.debugElementCount},`,
+                `        boundingBoxes: ${settings.debugBoundingBoxes},`,
+                '    },',
+                '});',
+                'const camera = createCamera(scene, {',
+                '    position: [0, 1.5, 5],',
+                '    target: [0, 0, 0],',
+                '    fov: 50,',
+                `    interactions: ${settings.cameraInteractions},`,
+                '});',
+                'camera.flush();',
+            ].join('\n'),
+            suffix: 'window.addEventListener(\'pagehide\', () => { camera.dispose(); renderer.destroy() });\n})();',
+        };
+    }
+
     if (mode === '3d') {
         return {
             imports: [
@@ -122,15 +154,15 @@ export function buildSrcdoc(
     const userParts = extractImports(userCode);
 
     const allImports = [setup.imports, ...userParts.imports].filter(Boolean).join('\n');
-    const allBody = [setup.body, userParts.body].filter(Boolean).join('\n');
+    const allBody = [setup.body, userParts.body, setup.suffix].filter(Boolean).join('\n');
 
-    const cleanupParts = ['renderer.destroy()'];
+    let cleanup = '';
 
-    if (mode === '3d') {
-        cleanupParts.unshift('camera.dispose()');
+    if (mode === '3d' && contextType !== 'webgpu') {
+        cleanup = 'camera.dispose(); renderer.destroy()';
+    } else if (contextType !== 'webgpu') {
+        cleanup = 'renderer.destroy()';
     }
-
-    const cleanup = cleanupParts.join('; ');
 
     const resolvedMap: Record<string, string> = {};
 
@@ -195,7 +227,7 @@ export function buildSrcdoc(
 
         ${ allBody }
 
-        window.addEventListener('pagehide', () => { ${ cleanup } });
+        ${ cleanup ? `window.addEventListener('pagehide', () => { ${ cleanup } });` : '' }
     </script>
 </body>
 </html>`;
