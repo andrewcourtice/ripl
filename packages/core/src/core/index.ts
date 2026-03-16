@@ -1,5 +1,4 @@
 export * from './constants';
-export * from './context';
 export * from './disposer';
 export * from './element';
 export * from './event-bus';

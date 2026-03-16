@@ -1,26 +1,43 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {
-    Box,
-    degreesToRadians,
-} from '../math';
-
 import type {
-    BorderRadius,
-    Point,
+    BaseState,
+    ContextElement,
+    ContextEventMap,
+    ContextOptions,
+    Direction,
+    FillRule,
+    FontKerning,
+    LineCap,
+    LineJoin,
+    MeasureTextOptions,
+    RenderElement,
+    Rotation,
+    TextAlignment,
+    TextBaseline,
+    TextOptions,
+    TransformOrigin,
+} from './types';
+
+import {
+    ContextPath,
+} from './path';
+
+import {
+    ContextText,
+} from './text';
+
+import {
+    degreesToRadians,
 } from '../math';
 
 import {
     EventBus,
-} from './event-bus';
-
-import type {
-    EventMap,
-} from './event-bus';
+} from '../core/event-bus';
 
 import {
     factory,
-} from './factory';
+} from '../core/factory';
 
 import {
     scaleContinuous,
@@ -32,153 +49,8 @@ import type {
 
 import {
     functionMemoize,
-    stringUniqueId,
     typeIsNumber,
 } from '@ripl/utilities';
-
-/** Text direction for the rendering context. */
-export type Direction = 'inherit' | 'ltr' | 'rtl';
-
-/** Font kerning mode for the rendering context. */
-export type FontKerning = 'auto' | 'none' | 'normal';
-
-/** Line cap style for stroke endpoints. */
-export type LineCap = 'butt' | 'round' | 'square';
-
-/** Line join style for stroke corners. */
-export type LineJoin = 'bevel' | 'miter' | 'round';
-
-/** Horizontal text alignment relative to the drawing position. */
-export type TextAlignment = 'center' | 'end' | 'left' | 'right' | 'start';
-
-/** Vertical text baseline used when rendering text. */
-export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' | 'middle' | 'top';
-
-/** Fill rule algorithm used to determine if a point is inside a path. */
-export type FillRule = 'evenodd' | 'nonzero';
-
-/** Transform origin value — a numeric pixel offset or a percentage string. */
-export type TransformOrigin = number | string;
-
-/** Rotation value — a numeric radian value or a string with `deg`/`rad` suffix. */
-export type Rotation = number | string;
-
-/** Controls which pointer events a render element responds to during hit testing. */
-export type RenderElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
-
-/** Options for render element intersection testing. */
-export interface RenderElementIntersectionOptions {
-    isPointer: boolean;
-}
-
-/** Minimal interface for any element that can be rendered and hit-tested by a context. */
-export interface RenderElement {
-    readonly id: string;
-    parent?: RenderElement;
-    abstract: boolean;
-    pointerEvents: RenderElementPointerEvents;
-    zIndex: number;
-    getBoundingBox?(): Box;
-    has(event: string): boolean;
-    intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    emit(type: string, data: any): void;
-}
-
-/** Event map for a rendering context, including resize and pointer events. */
-export interface ContextEventMap extends EventMap {
-    resize: null;
-    mouseenter: null;
-    mouseleave: null;
-    mousemove: {
-        x: number;
-        y: number;
-    };
-    click: {
-        x: number;
-        y: number;
-    };
-    dragstart: {
-        x: number;
-        y: number;
-    };
-    drag: {
-        x: number;
-        y: number;
-        startX: number;
-        startY: number;
-        deltaX: number;
-        deltaY: number;
-    };
-    dragend: {
-        x: number;
-        y: number;
-        startX: number;
-        startY: number;
-        deltaX: number;
-        deltaY: number;
-    };
-}
-
-/** Options for constructing a rendering context. */
-export interface ContextOptions {
-    interactive?: boolean;
-    dragThreshold?: number;
-}
-
-/** Options for creating a text element within the context. */
-export type TextOptions = {
-    id?: string;
-    x: number;
-    y: number;
-    content: string;
-    maxWidth?: number;
-    pathData?: string;
-    startOffset?: number;
-};
-
-/** Minimal interface for context-level elements (paths, text) identified by a unique id. */
-export interface ContextElement {
-    readonly id: string;
-}
-
-/** The full set of visual state properties inherited by every renderable element. */
-export interface BaseState {
-    fill: string;
-    filter: string;
-    direction: Direction;
-    font: string;
-    fontKerning: FontKerning;
-    opacity: number;
-    globalCompositeOperation: unknown;
-    lineCap: LineCap;
-    lineDash: number[];
-    lineDashOffset: number;
-    lineJoin: LineJoin;
-    lineWidth: number;
-    miterLimit: number;
-    shadowBlur: number;
-    shadowColor: string;
-    shadowOffsetX: number;
-    shadowOffsetY: number;
-    stroke: string;
-    textAlign: TextAlignment;
-    textBaseline: TextBaseline;
-    zIndex: number;
-    translateX: number;
-    translateY: number;
-    transformScaleX: number;
-    transformScaleY: number;
-    rotation: Rotation;
-    transformOriginX: TransformOrigin;
-    transformOriginY: TransformOrigin;
-}
-
-/** Options for measuring text dimensions. */
-export type MeasureTextOptions = {
-    context?: CanvasRenderingContext2D;
-    font?: CanvasRenderingContext2D['font'];
-};
 
 /** Resolves a rotation value (number, degrees string, or radians string) to radians. */
 export function resolveRotation(value: Rotation): number {
@@ -217,104 +89,6 @@ export function resolveTransformOrigin(value: TransformOrigin, dimension: number
 /** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     return factory.measureText(value, options);
-}
-
-/** A virtual path element used to record drawing commands; subclassed by Canvas and SVG implementations. */
-export class ContextPath implements ContextElement {
-
-    public readonly id: string;
-
-    constructor(id: string = `path-${stringUniqueId()}`) {
-        this.id = id;
-    }
-
-    public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        // do nothing
-    }
-
-    public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
-        // do nothing
-    }
-
-    public circle(x: number, y: number, radius: number): void {
-        // do nothing
-    }
-
-    public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
-        // do nothing
-    }
-
-    public closePath(): void {
-        // do nothing
-    }
-
-    public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        // do nothing
-    }
-
-    public lineTo(x: number, y: number): void {
-        // do nothing
-    }
-
-    public moveTo(x: number, y: number): void {
-        // do nothing
-    }
-
-    public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
-        // do nothing
-    }
-
-    public rect(x: number, y: number, width: number, height: number): void {
-        // do nothing
-    }
-
-    public roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
-        // do nothing
-    }
-
-    public polyline(points: Point[]): void {
-        points.forEach(([x, y], index) => !index
-            ? this.moveTo(x,y)
-            : this.lineTo(x, y)
-        );
-    }
-
-    public addPath(path: ContextPath): void {
-        // do nothing
-    }
-
-}
-
-/** A virtual text element capturing position, content, and optional path-based text layout. */
-export class ContextText implements ContextElement {
-
-    public readonly id: string;
-
-    public x: number;
-    public y: number;
-    public content: string;
-    public maxWidth?: number;
-    public pathData?: string;
-    public startOffset?: number;
-
-    constructor({
-        x,
-        y,
-        content,
-        maxWidth,
-        pathData,
-        startOffset,
-        id = `text-${stringUniqueId()}`,
-    }: TextOptions) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.content = content;
-        this.maxWidth = maxWidth;
-        this.pathData = pathData;
-        this.startOffset = startOffset;
-    }
-
 }
 
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
@@ -629,10 +403,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     /** Clears the entire rendering surface. */
     public clear(): void {
+        // noop
     }
 
     /** Resets the context to its initial state. */
     public reset(): void {
+        // noop
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
@@ -670,22 +446,27 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     /** Applies a rotation transformation. */
     public rotate(angle: number): void {
+        // noop
     }
 
     /** Applies a scale transformation. */
     public scale(x: number, y: number): void {
+        // noop
     }
 
     /** Applies a translation transformation. */
     public translate(x: number, y: number): void {
+        // noop
     }
 
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        // noop
     }
 
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+        // noop
     }
 
     /** Measures text dimensions using the context's current font or an optional override. */
@@ -705,18 +486,22 @@ export abstract class Context<TElement extends Element = Element> extends EventB
 
     /** Draws an image onto the rendering surface at the given position and optional size. */
     public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+        // noop
     }
 
     /** Clips subsequent drawing operations to the given path. */
     public applyClip(path: ContextPath, fillRule?: FillRule): void {
+        // noop
     }
 
     /** Fills the given path or text element using the current fill style. */
     public applyFill(path: ContextElement, fillRule?: FillRule): void {
+        // noop
     }
 
     /** Strokes the given path or text element using the current stroke style. */
     public applyStroke(path: ContextElement): void {
+        // noop
     }
 
     /** Tests whether a point is inside the filled region of a path. */

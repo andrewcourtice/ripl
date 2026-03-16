@@ -4,9 +4,12 @@ import {
 
 import type {
     BaseElementState,
-    Context,
     Shape2DOptions,
 } from '../core';
+
+import type {
+    Context,
+} from '../context';
 
 import {
     Box,

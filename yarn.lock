@@ -346,9 +346,14 @@ __metadata:
   linkType: hard
 
 "@csstools/css-syntax-patches-for-csstree@npm:^1.0.28":
-  version: 1.1.0
-  resolution: "@csstools/css-syntax-patches-for-csstree@npm:1.1.0"
-  checksum: 10/4008d5c20c66c68a43c97f96c65c94c7587cb6d4f02b5c6adb9276fbcb940bd55e33a1043fdb5780587794b8ac67cba10e35127b31c436414b944cd78e54a48e
+  version: 1.1.1
+  resolution: "@csstools/css-syntax-patches-for-csstree@npm:1.1.1"
+  peerDependencies:
+    css-tree: ^3.2.1
+  peerDependenciesMeta:
+    css-tree:
+      optional: true
+  checksum: 10/745ec0f6f7d1c3707af9661d5dcc7e29c12c0416da46e10dda7518c872fef38446d39e13557b3d134e16eb1c78899fa6a712a27fd8ab544813e25a4cd0913cdc
   languageName: node
   linkType: hard
 
@@ -972,11 +977,11 @@ __metadata:
   linkType: hard
 
 "@iconify-json/simple-icons@npm:^1.2.21":
-  version: 1.2.73
-  resolution: "@iconify-json/simple-icons@npm:1.2.73"
+  version: 1.2.74
+  resolution: "@iconify-json/simple-icons@npm:1.2.74"
   dependencies:
     "@iconify/types": "npm:*"
-  checksum: 10/0d66574ec82bc4548f796150a8214f6d5c41963793cf7d0a5b68c5d5699c3ffe397839f2bcefea9e67ed25c292cb6408803e8c7b6fd1d0cd1cea4c998d263a27
+  checksum: 10/88acceea3691347b5870d112e7cdeecaf19ca689f70e8b65fe71d0ae95f655ad97522326fb8cc7964e7a4ec8158edb656d421a465983e91a66fa4e4a1e6e9964
   languageName: node
   linkType: hard
 
@@ -4683,7 +4688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.27.0, esbuild@npm:~0.27.0":
+"esbuild@npm:^0.27.0":
   version: 0.27.4
   resolution: "esbuild@npm:0.27.4"
   dependencies:
@@ -5343,15 +5348,6 @@ __metadata:
   version: 6.0.1
   resolution: "get-stream@npm:6.0.1"
   checksum: 10/781266d29725f35c59f1d214aedc92b0ae855800a980800e2923b3fbc4e56b3cb6e462c42e09a1cf1a00c64e056a78fa407cbe06c7c92b7e5cd49b4b85c2a497
-  languageName: node
-  linkType: hard
-
-"get-tsconfig@npm:^4.7.5":
-  version: 4.13.6
-  resolution: "get-tsconfig@npm:4.13.6"
-  dependencies:
-    resolve-pkg-maps: "npm:^1.0.0"
-  checksum: 10/5cd1c1f273e9f1cd9f1ebeaaea281a3b7b71562fc9614ee0cf0575463b0435de68831354434a5a1a564e1049062d597d0dae8ef33f489a6d12afccee032f6784
   languageName: node
   linkType: hard
 
@@ -8813,13 +8809,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve-pkg-maps@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "resolve-pkg-maps@npm:1.0.0"
-  checksum: 10/0763150adf303040c304009231314d1e84c6e5ebfa2d82b7d94e96a6e82bacd1dcc0b58ae257315f3c8adb89a91d8d0f12928241cba2df1680fbe6f60bf99b0e
-  languageName: node
-  linkType: hard
-
 "resolve.exports@npm:2.0.3":
   version: 2.0.3
   resolution: "resolve.exports@npm:2.0.3"
@@ -8883,20 +8872,6 @@ __metadata:
   checksum: 10/2f3d11d3d8929b4bfeefc9acb03aae90f971401de0add5ae6c5e38fec14f0405e6a4aad8fdb76344bfdd20c5193110e3750cbbd28ba86d73729d222b6cf4a729
   languageName: node
   linkType: hard
-
-"ripl-node-demo@workspace:apps/node-demo":
-  version: 0.0.0-use.local
-  resolution: "ripl-node-demo@workspace:apps/node-demo"
-  dependencies:
-    "@ripl/charts": "npm:1.0.0-beta.0"
-    "@ripl/core": "npm:1.0.0-beta.0"
-    "@ripl/node": "npm:1.0.0-beta.0"
-    "@ripl/terminal": "npm:1.0.0-beta.0"
-    "@ripl/utilities": "npm:1.0.0-beta.0"
-    "@types/node": "npm:^22.0.0"
-    tsx: "npm:^4.0.0"
-  languageName: unknown
-  linkType: soft
 
 "ripl-workspace@workspace:.":
   version: 0.0.0-use.local
@@ -9649,21 +9624,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tldts-core@npm:^7.0.25":
-  version: 7.0.25
-  resolution: "tldts-core@npm:7.0.25"
-  checksum: 10/54b1b68ddf2dfe37c7b0855a87eaa38cec2d315685e15f45c6fc8c7afef038bede3f191779b20a0bc87c12c9cfc8b754a2d2ccb1e5385cca659021fc8eec60a9
+"tldts-core@npm:^7.0.26":
+  version: 7.0.26
+  resolution: "tldts-core@npm:7.0.26"
+  checksum: 10/e9910cf851232dabdcb91af064ffdb62981dcd6dbe01cace4e0a70a8b92cfd13e0c3a17e03489761ae6017dad7407f163c7f9d11ca1798d3abe75d8aa4781372
   languageName: node
   linkType: hard
 
 "tldts@npm:^7.0.5":
-  version: 7.0.25
-  resolution: "tldts@npm:7.0.25"
+  version: 7.0.26
+  resolution: "tldts@npm:7.0.26"
   dependencies:
-    tldts-core: "npm:^7.0.25"
+    tldts-core: "npm:^7.0.26"
   bin:
     tldts: bin/cli.js
-  checksum: 10/e91da108a04980dce7805492e8efc920f9ef03a53bbc3a55df273170df83cdeb2a759c1d0124515fc5ac15962f87bde34ff1599f9057e8a0a6bf1a2e7ba4922b
+  checksum: 10/75af37304da475f191bd7aa3002108a1791773aeba68fd30bb8aa22bb5bb54d9be765baba942f764c8bc929c92b7f517ae97976922cef633382429a0c7e77a08
   languageName: node
   linkType: hard
 
@@ -9795,22 +9770,6 @@ __metadata:
     tsup: dist/cli-default.js
     tsup-node: dist/cli-node.js
   checksum: 10/f1927ec2dda93b218b39cd1cac1040902eef66e026261f5c265197c2f660cb5b9e1fb89353d50de5c6a5616463c02800e87e1daad7620b9c9051221d93c66824
-  languageName: node
-  linkType: hard
-
-"tsx@npm:^4.0.0":
-  version: 4.21.0
-  resolution: "tsx@npm:4.21.0"
-  dependencies:
-    esbuild: "npm:~0.27.0"
-    fsevents: "npm:~2.3.3"
-    get-tsconfig: "npm:^4.7.5"
-  dependenciesMeta:
-    fsevents:
-      optional: true
-  bin:
-    tsx: dist/cli.mjs
-  checksum: 10/7afedeff855ba98c47dc28b33d7e8e253c4dc1f791938db402d79c174bdf806b897c1a5f91e5b1259c112520c816f826b4c5d98f0bad7e95b02dec66fedb64d2
   languageName: node
   linkType: hard
 
@@ -9970,9 +9929,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^7.21.0":
-  version: 7.24.2
-  resolution: "undici@npm:7.24.2"
-  checksum: 10/bd9bb08e5b8848763e3055b0349e1e03c9c0e5340bda4d3f7c88eb62fbcd50b036dfa07bda943fbc535e979045160ad04b23e7041368d1083326b97fe7457c88
+  version: 7.24.4
+  resolution: "undici@npm:7.24.4"
+  checksum: 10/747e76e0fd685ae1bb6fc1a2ebce0caca4ee8bd5599a77da36a3f94eac146987a9547bdbec7a74d18c0776df8ad348dccb4209901ca83fc4076f560de0d5dc7a
   languageName: node
   linkType: hard
 

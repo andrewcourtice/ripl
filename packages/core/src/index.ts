@@ -1,6 +1,7 @@
 export * from './animation';
 export * from './color';
 export * from './gradient';
+export * from './context';
 export * from './core';
 export * from './elements';
 export * from './interpolators';

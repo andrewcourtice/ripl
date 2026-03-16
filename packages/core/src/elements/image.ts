@@ -4,9 +4,12 @@ import {
 
 import type {
     BaseElementState,
-    Context,
     ElementOptions,
 } from '../core';
+
+import type {
+    Context,
+} from '../context';
 
 import {
     factory,
@@ -16,13 +19,13 @@ import {
     Box,
 } from '../math';
 
-import {
-    functionCache,
-} from '@ripl/utilities';
-
 import type {
     InterpolatorFactory,
 } from '../interpolators';
+
+import {
+    functionCache,
+} from '@ripl/utilities';
 
 /** State interface for an image element, defining position, optional size, and image source. */
 export interface ImageState extends BaseElementState {

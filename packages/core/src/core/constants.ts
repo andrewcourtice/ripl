@@ -1,6 +1,6 @@
 import type {
     Context,
-} from './context';
+} from '../context';
 
 import {
     interpolateRotation,

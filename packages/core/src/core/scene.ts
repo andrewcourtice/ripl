@@ -6,7 +6,7 @@ import type {
 import {
     Context,
     typeIsContext,
-} from './context';
+} from '../context';
 
 import {
     factory,

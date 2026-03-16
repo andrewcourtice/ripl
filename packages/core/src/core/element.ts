@@ -46,12 +46,12 @@ import type {
 import {
     resolveRotation,
     resolveTransformOrigin,
-} from './context';
+} from '../context';
 
 import type {
     BaseState,
     Context,
-} from './context';
+} from '../context';
 
 import {
     objectForEach,
