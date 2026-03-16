@@ -6,6 +6,47 @@ outline: "deep"
 
 The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically — just change the import. Under the hood, it maintains a virtual tree and reconciles it against the real SVG DOM on each render pass, minimizing mutations for better performance.
 
+## Demo
+
+Toggle between Canvas and SVG using the buttons above the demo. The same drawing code renders to both contexts.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createContext,
+} from '@ripl/svg';
+
+import {
+    createCircle,
+    createRect,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+
+createCircle({
+    fill: '#3a86ff',
+    stroke: '#1a56db',
+    lineWidth: 2,
+    cx: context.width / 3,
+    cy: context.height / 2,
+    radius: Math.min(context.width, context.height) / 4,
+}).render(context);
+
+createRect({
+    fill: '#ff006e',
+    stroke: '#c9184a',
+    lineWidth: 2,
+    x: context.width / 2,
+    y: context.height / 4,
+    width: context.width / 3,
+    height: context.height / 2,
+}).render(context);
+```
+:::
+
 ## Installation
 
 The SVG context is provided by the `@ripl/svg` package:
@@ -97,47 +138,6 @@ SVG is less ideal when:
 
 > [!NOTE]
 > For the full API, see the [SVG Context API Reference](/docs/api/@ripl/svg/).
-
-## Demo
-
-Toggle between Canvas and SVG using the buttons above the demo. The same drawing code renders to both contexts.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createContext,
-} from '@ripl/svg';
-
-import {
-    createCircle,
-    createRect,
-} from '@ripl/web';
-
-const context = createContext('.mount-element');
-
-createCircle({
-    fill: '#3a86ff',
-    stroke: '#1a56db',
-    lineWidth: 2,
-    cx: context.width / 3,
-    cy: context.height / 2,
-    radius: Math.min(context.width, context.height) / 4,
-}).render(context);
-
-createRect({
-    fill: '#ff006e',
-    stroke: '#c9184a',
-    lineWidth: 2,
-    x: context.width / 2,
-    y: context.height / 4,
-    width: context.width / 3,
-    height: context.height / 2,
-}).render(context);
-```
-:::
 
 <script lang="ts" setup>
 import {

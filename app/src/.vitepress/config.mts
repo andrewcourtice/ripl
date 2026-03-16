@@ -53,6 +53,8 @@ export default defineConfig({
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
                 '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
                 '@ripl/webgpu': path.resolve(__dirname, '../../../packages/webgpu/src/index.ts'),
+                '@ripl/terminal': path.resolve(__dirname, '../../../packages/terminal/src/index.ts'),
+                '@ripl/node': path.resolve(__dirname, '../../../packages/node/src/index.ts'),
             },
         },
         css: {
@@ -126,6 +128,10 @@ export default defineConfig({
                             link: '/docs/core/',
                         },
                         {
+                            text: 'Packages',
+                            link: '/docs/core/getting-started/packages',
+                        },
+                        {
                             text: 'Installation',
                             link: '/docs/core/getting-started/installation',
                         },
@@ -174,6 +180,18 @@ export default defineConfig({
                         {
                             text: 'SVG',
                             link: '/docs/core/contexts/svg',
+                        },
+                        {
+                            text: 'Terminal',
+                            link: '/docs/core/contexts/terminal',
+                        },
+                        {
+                            text: 'Node',
+                            link: '/docs/core/contexts/node',
+                        },
+                        {
+                            text: 'WebGPU',
+                            link: '/docs/core/contexts/webgpu',
                         },
                     ],
                 },

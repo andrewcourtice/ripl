@@ -6,6 +6,39 @@ outline: "deep"
 
 The **Canvas context** is the default rendering backend in Ripl. It renders elements to an HTML `<canvas>` element using the Canvas 2D API, handling DPR (device pixel ratio) scaling automatically so your content looks crisp on Retina displays. It also parses CSS gradient strings directly in `fill` and `stroke` properties, converting them to native `CanvasGradient` objects behind the scenes.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    createRect,
+} from '@ripl/web';
+
+// Creates a canvas context by default
+const context = createContext('.mount-element');
+
+createCircle({
+    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+    cx: context.width / 3,
+    cy: context.height / 2,
+    radius: Math.min(context.width, context.height) / 4,
+}).render(context);
+
+createRect({
+    fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
+    x: context.width / 2,
+    y: context.height / 4,
+    width: context.width / 3,
+    height: context.height / 2,
+}).render(context);
+```
+:::
+
 ## Usage
 
 The canvas context is created by importing `createContext` from `@ripl/core`:
@@ -74,39 +107,6 @@ Canvas is less ideal when:
 - You need DOM accessibility for rendered elements
 - You need to inspect or style individual elements via browser DevTools
 - You need CSS animations on individual rendered elements
-
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-    createRect,
-} from '@ripl/web';
-
-// Creates a canvas context by default
-const context = createContext('.mount-element');
-
-createCircle({
-    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
-    cx: context.width / 3,
-    cy: context.height / 2,
-    radius: Math.min(context.width, context.height) / 4,
-}).render(context);
-
-createRect({
-    fill: 'linear-gradient(45deg, #ff006e, #fb5607)',
-    x: context.width / 2,
-    y: context.height / 4,
-    width: context.width / 3,
-    height: context.height / 2,
-}).render(context);
-```
-:::
 
 <script lang="ts" setup>
 import {

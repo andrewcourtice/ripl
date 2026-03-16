@@ -35,4 +35,9 @@ export const demos: DemoMeta[] = [
         link: '/demos/jet-engine-webgpu/',
         description: 'The jet engine exploded view demo re-implemented with @ripl/webgpu — GPU-accelerated rendering with hardware depth testing, WGSL shaders, and 4× MSAA.',
     },
+    {
+        text: 'Interactive Terminal',
+        link: '/demos/terminal/',
+        description: 'An interactive terminal powered by @ripl/terminal with a menu-driven interface — choose from basic shapes, animations, or full chart demos (line, bar, stock, Gantt) rendered in Unicode braille.',
+    },
 ];

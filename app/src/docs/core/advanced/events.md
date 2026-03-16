@@ -6,6 +6,51 @@ outline: "deep"
 
 Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped — all familiar patterns for web developers.
 
+## Demo
+
+Hover over, click, and drag the elements to see events in action.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 150,
+    cy: 150,
+    radius: 60,
+});
+
+const scene = createScene('.container', {
+    children: [circle],
+});
+scene.render();
+
+circle.on('mouseenter', () => {
+    circle.fill = '#ff006e';
+    scene.render();
+});
+
+circle.on('mouseleave', () => {
+    circle.fill = '#3a86ff';
+    scene.render();
+});
+
+circle.on('click', () => {
+    circle.fill = '#8338ec';
+    scene.render();
+});
+
+// Drag the circle to reposition it
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
+    scene.render();
+});
+```
+:::
+
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
@@ -185,51 +230,6 @@ const overlay = createRect({
     height: 300,
 });
 ```
-
-## Demo
-
-Hover over, click, and drag the elements to see events in action.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-const circle = createCircle({
-    fill: '#3a86ff',
-    cx: 150,
-    cy: 150,
-    radius: 60,
-});
-
-const scene = createScene('.container', {
-    children: [circle],
-});
-scene.render();
-
-circle.on('mouseenter', () => {
-    circle.fill = '#ff006e';
-    scene.render();
-});
-
-circle.on('mouseleave', () => {
-    circle.fill = '#3a86ff';
-    scene.render();
-});
-
-circle.on('click', () => {
-    circle.fill = '#8338ec';
-    scene.render();
-});
-
-// Drag the circle to reposition it
-circle.on('drag', (event) => {
-    circle.cx += event.data.deltaX;
-    circle.cy += event.data.deltaY;
-    scene.render();
-});
-```
-:::
 
 <script lang="ts" setup>
 import {

@@ -8,6 +8,82 @@ Ripl supports element-level transformations — translate, scale, and rotate —
 
 Every element exposes `translateX`, `translateY`, `transformScaleX`, `transformScaleY`, `rotation`, `transformOriginX`, and `transformOriginY` properties. These work identically across Canvas and SVG contexts and are fully animatable with smooth interpolation.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="runTranslate">Translate</RiplButton>
+            <RiplButton @click="runRotate">Rotate</RiplButton>
+            <RiplButton @click="runScale">Scale</RiplButton>
+            <RiplButton @click="runCombined">Combined</RiplButton>
+            <RiplButton @click="reset">Reset</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createRect,
+    createRenderer,
+    createScene,
+    easeInOutQuad,
+    easeOutCubic,
+} from '@ripl/web';
+
+const rect = createRect({
+    x: 160,
+    y: 100,
+    width: 80,
+    height: 80,
+    fill: '#3a86ff',
+    transformOriginX: '50%',
+    transformOriginY: '50%',
+});
+
+const scene = createScene('.container', { children: [rect] });
+const renderer = createRenderer(scene);
+
+// Translate
+await renderer.transition(rect, {
+    duration: 800,
+    ease: easeOutCubic,
+    state: { translateX: 100 },
+});
+
+// Rotate
+await renderer.transition(rect, {
+    duration: 1000,
+    ease: easeInOutQuad,
+    state: { rotation: '360deg' },
+});
+
+// Scale
+await renderer.transition(rect, {
+    duration: 600,
+    ease: easeOutCubic,
+    state: {
+        transformScaleX: 1.5,
+        transformScaleY: 1.5,
+    },
+});
+
+// Combined
+await renderer.transition(rect, {
+    duration: 1200,
+    ease: easeInOutQuad,
+    state: {
+        translateX: 80,
+        rotation: '180deg',
+        transformScaleX: 1.4,
+        transformScaleY: 1.4,
+    },
+});
+```
+:::
+
 ## Rotation
 
 Rotation can be specified as a number (radians) or a string with a unit suffix:
@@ -127,82 +203,6 @@ Transforms work identically for both Canvas and SVG contexts. In the SVG context
 
 > [!NOTE]
 > For the full list of transform properties, see the [Element API Reference](/docs/api/@ripl/core/).
-
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <RiplButton @click="runTranslate">Translate</RiplButton>
-            <RiplButton @click="runRotate">Rotate</RiplButton>
-            <RiplButton @click="runScale">Scale</RiplButton>
-            <RiplButton @click="runCombined">Combined</RiplButton>
-            <RiplButton @click="reset">Reset</RiplButton>
-        </RiplControlGroup>
-    </template>
-</ripl-example>
-== Code
-```ts
-import {
-    createRect,
-    createRenderer,
-    createScene,
-    easeInOutQuad,
-    easeOutCubic,
-} from '@ripl/web';
-
-const rect = createRect({
-    x: 160,
-    y: 100,
-    width: 80,
-    height: 80,
-    fill: '#3a86ff',
-    transformOriginX: '50%',
-    transformOriginY: '50%',
-});
-
-const scene = createScene('.container', { children: [rect] });
-const renderer = createRenderer(scene);
-
-// Translate
-await renderer.transition(rect, {
-    duration: 800,
-    ease: easeOutCubic,
-    state: { translateX: 100 },
-});
-
-// Rotate
-await renderer.transition(rect, {
-    duration: 1000,
-    ease: easeInOutQuad,
-    state: { rotation: '360deg' },
-});
-
-// Scale
-await renderer.transition(rect, {
-    duration: 600,
-    ease: easeOutCubic,
-    state: {
-        transformScaleX: 1.5,
-        transformScaleY: 1.5,
-    },
-});
-
-// Combined
-await renderer.transition(rect, {
-    duration: 1200,
-    ease: easeInOutQuad,
-    state: {
-        translateX: 80,
-        rotation: '180deg',
-        transformScaleX: 1.4,
-        transformScaleY: 1.4,
-    },
-});
-```
-:::
 
 <script lang="ts" setup>
 import {

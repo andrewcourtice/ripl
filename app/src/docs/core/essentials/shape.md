@@ -8,6 +8,57 @@ A **Shape** is a specialized [Element](/docs/core/essentials/element) that draws
 
 Most built-in elements (Circle, Rect, Arc, Line, Polygon, Polyline, Ellipse) extend `Shape`. The notable exception is [Text](/docs/core/elements/text), which extends `Element` directly.
 
+## Demo
+
+The demo below shows the difference between `autoFill` and `autoStroke`. The left circle has both enabled, the middle has only fill, and the right has only stroke.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+const r = Math.min(context.width, context.height) / 6;
+
+// Both fill and stroke (default)
+createCircle({
+    fill: '#3a86ff',
+    stroke: '#1a56db',
+    lineWidth: 4,
+    cx: context.width / 4,
+    cy: context.height / 2,
+    radius: r,
+}).render(context);
+
+// Fill only
+createCircle({
+    fill: '#3a86ff',
+    stroke: '#1a56db',
+    lineWidth: 4,
+    autoStroke: false,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: r,
+}).render(context);
+
+// Stroke only
+createCircle({
+    fill: '#3a86ff',
+    stroke: '#1a56db',
+    lineWidth: 4,
+    autoFill: false,
+    cx: context.width * 3 / 4,
+    cy: context.height / 2,
+    radius: r,
+}).render(context);
+```
+:::
+
 ## Element vs Shape
 
 | Feature | Element | Shape |
@@ -70,57 +121,6 @@ The `pointerEvents` property controls which parts of the shape respond to hits:
 
 > [!NOTE]
 > For the full list of Shape properties and methods, see the [Shape API Reference](/docs/api/@ripl/core/).
-
-## Demo
-
-The demo below shows the difference between `autoFill` and `autoStroke`. The left circle has both enabled, the middle has only fill, and the right has only stroke.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-} from '@ripl/web';
-
-const context = createContext('.mount-element');
-const r = Math.min(context.width, context.height) / 6;
-
-// Both fill and stroke (default)
-createCircle({
-    fill: '#3a86ff',
-    stroke: '#1a56db',
-    lineWidth: 4,
-    cx: context.width / 4,
-    cy: context.height / 2,
-    radius: r,
-}).render(context);
-
-// Fill only
-createCircle({
-    fill: '#3a86ff',
-    stroke: '#1a56db',
-    lineWidth: 4,
-    autoStroke: false,
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: r,
-}).render(context);
-
-// Stroke only
-createCircle({
-    fill: '#3a86ff',
-    stroke: '#1a56db',
-    lineWidth: 4,
-    autoFill: false,
-    cx: context.width * 3 / 4,
-    cy: context.height / 2,
-    radius: r,
-}).render(context);
-```
-:::
 
 <script lang="ts" setup>
 import {

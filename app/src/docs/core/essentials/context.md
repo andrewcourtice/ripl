@@ -8,6 +8,37 @@ A **Context** is the rendering abstraction at the heart of Ripl. It sits between
 
 The context manages the drawing state stack, coordinate transforms, path creation, and fill/stroke operations. It automatically sizes itself to fit its parent container and emits events when it resizes, making responsive rendering straightforward.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: Math.min(context.width, context.height) / 4,
+});
+
+circle.render(context);
+
+// Re-render on resize
+context.on('resize', () => {
+    context.clear();
+    circle.render(context);
+});
+```
+:::
+
 ## Creating a Context
 
 Use `createContext` to create a context attached to a DOM element. By default, Ripl creates a **Canvas** context:
@@ -107,37 +138,6 @@ useEffect(() => () => context.destroy(), []);
 
 > [!NOTE]
 > For the full list of properties, methods, and state options, see the [Context API Reference](/docs/api/@ripl/core/).
-
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-} from '@ripl/web';
-
-const context = createContext('.mount-element');
-
-const circle = createCircle({
-    fill: '#3a86ff',
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: Math.min(context.width, context.height) / 4,
-});
-
-circle.render(context);
-
-// Re-render on resize
-context.on('resize', () => {
-    context.clear();
-    circle.render(context);
-});
-```
-:::
 
 <script lang="ts" setup>
 import {

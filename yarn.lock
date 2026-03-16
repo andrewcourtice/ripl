@@ -2042,12 +2042,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ripl/node@npm:1.0.0-beta.0, @ripl/node@workspace:packages/node":
+  version: 0.0.0-use.local
+  resolution: "@ripl/node@workspace:packages/node"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/terminal": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@types/node": "npm:^22.0.0"
+  languageName: unknown
+  linkType: soft
+
 "@ripl/svg@npm:1.0.0-beta.0, @ripl/svg@workspace:packages/svg":
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
   dependencies:
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/dom": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  languageName: unknown
+  linkType: soft
+
+"@ripl/terminal@npm:1.0.0-beta.0, @ripl/terminal@workspace:packages/terminal":
+  version: 0.0.0-use.local
+  resolution: "@ripl/terminal@workspace:packages/terminal"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
   languageName: unknown
   linkType: soft
@@ -2730,6 +2750,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:^22.0.0":
+  version: 22.19.15
+  resolution: "@types/node@npm:22.19.15"
+  dependencies:
+    undici-types: "npm:~6.21.0"
+  checksum: 10/c75bc9a8dbc49a61f3e6f49304cf7b1c05e818a1071b46e9effd1a51af7a1b5c10fd2e04f314b74ce78f4ca7e3ddc1d6e61c94c2e3354c8be9f9f7ee5e79e23c
+  languageName: node
+  linkType: hard
+
 "@types/normalize-package-data@npm:^2.4.0":
   version: 2.4.4
   resolution: "@types/normalize-package-data@npm:2.4.4"
@@ -3249,6 +3278,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@xterm/addon-fit@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "@xterm/addon-fit@npm:0.10.0"
+  peerDependencies:
+    "@xterm/xterm": ^5.0.0
+  checksum: 10/8edfad561c0d0316c5883cbe2ce56109f105a2b2bf53b71d5f8c788e656a3205c1093a659dddcf4025a459e4b7ff8e07b6c6a19815c8711deeded560de5f1893
+  languageName: node
+  linkType: hard
+
+"@xterm/xterm@npm:^5.5.0":
+  version: 5.5.0
+  resolution: "@xterm/xterm@npm:5.5.0"
+  checksum: 10/d4cdc402de81a83a3e0ef93f38072cb8f54abe4d65865f2e29b92cbc2593f86d052f6b993895c9e5dec97f47548f504e90bcea0aad6845917c09b03f2f3a4629
+  languageName: node
+  linkType: hard
+
 "@yarnpkg/lockfile@npm:^1.1.0":
   version: 1.1.0
   resolution: "@yarnpkg/lockfile@npm:1.1.0"
@@ -3424,10 +3469,14 @@ __metadata:
     "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/charts": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/node": "npm:1.0.0-beta.0"
     "@ripl/svg": "npm:1.0.0-beta.0"
+    "@ripl/terminal": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
     "@ripl/web": "npm:1.0.0-beta.0"
     "@ripl/webgpu": "npm:1.0.0-beta.0"
+    "@xterm/addon-fit": "npm:^0.10.0"
+    "@xterm/xterm": "npm:^5.5.0"
     flex-layout-attribute: "npm:^1.0.3"
     lucide-vue-next: "npm:^0.577.0"
     monaco-editor: "npm:^0.55.1"
@@ -4634,7 +4683,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.27.0":
+"esbuild@npm:^0.27.0, esbuild@npm:~0.27.0":
   version: 0.27.4
   resolution: "esbuild@npm:0.27.4"
   dependencies:
@@ -5294,6 +5343,15 @@ __metadata:
   version: 6.0.1
   resolution: "get-stream@npm:6.0.1"
   checksum: 10/781266d29725f35c59f1d214aedc92b0ae855800a980800e2923b3fbc4e56b3cb6e462c42e09a1cf1a00c64e056a78fa407cbe06c7c92b7e5cd49b4b85c2a497
+  languageName: node
+  linkType: hard
+
+"get-tsconfig@npm:^4.7.5":
+  version: 4.13.6
+  resolution: "get-tsconfig@npm:4.13.6"
+  dependencies:
+    resolve-pkg-maps: "npm:^1.0.0"
+  checksum: 10/5cd1c1f273e9f1cd9f1ebeaaea281a3b7b71562fc9614ee0cf0575463b0435de68831354434a5a1a564e1049062d597d0dae8ef33f489a6d12afccee032f6784
   languageName: node
   linkType: hard
 
@@ -8755,6 +8813,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-pkg-maps@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "resolve-pkg-maps@npm:1.0.0"
+  checksum: 10/0763150adf303040c304009231314d1e84c6e5ebfa2d82b7d94e96a6e82bacd1dcc0b58ae257315f3c8adb89a91d8d0f12928241cba2df1680fbe6f60bf99b0e
+  languageName: node
+  linkType: hard
+
 "resolve.exports@npm:2.0.3":
   version: 2.0.3
   resolution: "resolve.exports@npm:2.0.3"
@@ -8818,6 +8883,20 @@ __metadata:
   checksum: 10/2f3d11d3d8929b4bfeefc9acb03aae90f971401de0add5ae6c5e38fec14f0405e6a4aad8fdb76344bfdd20c5193110e3750cbbd28ba86d73729d222b6cf4a729
   languageName: node
   linkType: hard
+
+"ripl-node-demo@workspace:apps/node-demo":
+  version: 0.0.0-use.local
+  resolution: "ripl-node-demo@workspace:apps/node-demo"
+  dependencies:
+    "@ripl/charts": "npm:1.0.0-beta.0"
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/node": "npm:1.0.0-beta.0"
+    "@ripl/terminal": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@types/node": "npm:^22.0.0"
+    tsx: "npm:^4.0.0"
+  languageName: unknown
+  linkType: soft
 
 "ripl-workspace@workspace:.":
   version: 0.0.0-use.local
@@ -9719,6 +9798,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tsx@npm:^4.0.0":
+  version: 4.21.0
+  resolution: "tsx@npm:4.21.0"
+  dependencies:
+    esbuild: "npm:~0.27.0"
+    fsevents: "npm:~2.3.3"
+    get-tsconfig: "npm:^4.7.5"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    tsx: dist/cli.mjs
+  checksum: 10/7afedeff855ba98c47dc28b33d7e8e253c4dc1f791938db402d79c174bdf806b897c1a5f91e5b1259c112520c816f826b4c5d98f0bad7e95b02dec66fedb64d2
+  languageName: node
+  linkType: hard
+
 "tuf-js@npm:^4.1.0":
   version: 4.1.0
   resolution: "tuf-js@npm:4.1.0"
@@ -9857,6 +9952,13 @@ __metadata:
   bin:
     uglifyjs: bin/uglifyjs
   checksum: 10/6b9639c1985d24580b01bb0ab68e78de310d38eeba7db45bec7850ab4093d8ee464d80ccfaceda9c68d1c366efbee28573b52f95e69ac792354c145acd380b11
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10/ec8f41aa4359d50f9b59fa61fe3efce3477cc681908c8f84354d8567bb3701fafdddf36ef6bff307024d3feb42c837cf6f670314ba37fc8145e219560e473d14
   languageName: node
   linkType: hard
 

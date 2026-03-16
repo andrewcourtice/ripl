@@ -6,6 +6,36 @@ outline: "deep"
 
 Ripl's built-in elements cover common shapes, but you can create your own custom elements by extending the `Shape` or `Element` class. This gives you full control over rendering while still benefiting from Ripl's style inheritance, events, interpolation, and scene management.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Points</span>
+            <RiplInputRange v-model="starPoints" :min="3" :max="12" :step="1" @update:model-value="redraw" />
+            <span>Inner Radius %</span>
+            <RiplInputRange v-model="innerPct" :min="10" :max="90" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+// Custom star element
+const star = createStar({
+    fill: '#ff006e',
+    cx: 200,
+    cy: 150,
+    outerRadius: 80,
+    innerRadius: 35,
+    points: 5,
+});
+
+star.render(context);
+```
+:::
+
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
@@ -233,36 +263,6 @@ await renderer.transition(star, {
     state: { outerRadius: 100 },
 });
 ```
-
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <span>Points</span>
-            <RiplInputRange v-model="starPoints" :min="3" :max="12" :step="1" @update:model-value="redraw" />
-            <span>Inner Radius %</span>
-            <RiplInputRange v-model="innerPct" :min="10" :max="90" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
-    </template>
-</ripl-example>
-== Code
-```ts
-// Custom star element
-const star = createStar({
-    fill: '#ff006e',
-    cx: 200,
-    cy: 150,
-    outerRadius: 80,
-    innerRadius: 35,
-    points: 5,
-});
-
-star.render(context);
-```
-:::
 
 <script lang="ts" setup>
 import {

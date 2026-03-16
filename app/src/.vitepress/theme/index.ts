@@ -33,6 +33,9 @@ import RiplInputRange from '../components/ripl-input-range.vue';
 import RiplDropdown from '../components/ripl-dropdown.vue';
 import RiplDropdownItem from '../components/ripl-dropdown-item.vue';
 import RiplDropdownLabel from '../components/ripl-dropdown-label.vue';
+import ExampleTerminal from '../components/example-terminal.vue';
+import Example3DWebGPU from '../components/example-3d-webgpu.vue';
+import ExampleTerminalInteractive from '../components/example-terminal-interactive.vue';
 
 import {
     enhanceAppWithTabs,
@@ -68,6 +71,9 @@ export default {
         app.component('RiplDropdown', RiplDropdown);
         app.component('RiplDropdownItem', RiplDropdownItem);
         app.component('RiplDropdownLabel', RiplDropdownLabel);
+        app.component('example-terminal', ExampleTerminal);
+        app.component('example-3d-webgpu', Example3DWebGPU);
+        app.component('example-terminal-interactive', ExampleTerminalInteractive);
 
         enhanceAppWithTabs(app);
     },

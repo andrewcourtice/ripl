@@ -32,6 +32,8 @@
             "@ripl/charts": ["packages/charts/src/index.ts"],
             "@ripl/3d": ["packages/3d/src/index.ts"],
             "@ripl/webgpu": ["packages/webgpu/src/index.ts"],
+            "@ripl/terminal": ["packages/terminal/src/index.ts"],
+            "@ripl/node": ["packages/node/src/index.ts"],
             "@ripl/test-utils": ["packages/test-utils/src/index.ts"],
         }
     },

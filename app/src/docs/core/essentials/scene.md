@@ -8,6 +8,61 @@ A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to 
 
 Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear, render, and handle events, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering and delegates pointer events from the DOM to individual elements through hit testing.
 
+## Demo
+
+Hover over, click, or drag the elements to see pointer events in action.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createRect,
+    createScene,
+} from '@ripl/web';
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    cx: 150,
+    cy: 150,
+    radius: 60,
+});
+
+const rect = createRect({
+    fill: '#ff006e',
+    x: 250,
+    y: 90,
+    width: 120,
+    height: 120,
+});
+
+const scene = createScene('.container', {
+    children: [circle, rect],
+});
+
+scene.render();
+
+circle.on('mouseenter', () => {
+    circle.fill = '#8338ec';
+    scene.render();
+});
+
+circle.on('mouseleave', () => {
+    circle.fill = '#3a86ff';
+    scene.render();
+});
+
+// Drag elements to reposition them
+circle.on('drag', (event) => {
+    circle.cx += event.data.deltaX;
+    circle.cy += event.data.deltaY;
+    scene.render();
+});
+```
+:::
+
 ## Creating a Scene
 
 A scene can be created from a CSS selector, an HTMLElement, or an existing Context:
@@ -113,61 +168,6 @@ scene.destroy();
 
 > [!NOTE]
 > For the full list of Scene properties and methods, see the [Scene API Reference](/docs/api/@ripl/core/).
-
-## Demo
-
-Hover over, click, or drag the elements to see pointer events in action.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createRect,
-    createScene,
-} from '@ripl/web';
-
-const circle = createCircle({
-    fill: '#3a86ff',
-    cx: 150,
-    cy: 150,
-    radius: 60,
-});
-
-const rect = createRect({
-    fill: '#ff006e',
-    x: 250,
-    y: 90,
-    width: 120,
-    height: 120,
-});
-
-const scene = createScene('.container', {
-    children: [circle, rect],
-});
-
-scene.render();
-
-circle.on('mouseenter', () => {
-    circle.fill = '#8338ec';
-    scene.render();
-});
-
-circle.on('mouseleave', () => {
-    circle.fill = '#3a86ff';
-    scene.render();
-});
-
-// Drag elements to reposition them
-circle.on('drag', (event) => {
-    circle.cx += event.data.deltaX;
-    circle.cy += event.data.deltaY;
-    scene.render();
-});
-```
-:::
 
 <script lang="ts" setup>
 import {
