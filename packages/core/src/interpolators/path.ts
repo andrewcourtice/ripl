@@ -26,47 +26,55 @@ import type {
     InterpolatorFactory,
 } from './types';
 
+function gcd(a: number, b: number): number {
+    return b === 0 ? a : gcd(b, a % b);
+}
+
+function lcm(a: number, b: number): number {
+    return (a / gcd(a, b)) * b;
+}
+
+function distributePoints(points: Point[], multiplier: number): Point[] {
+    const segmentCount = points.length - 1;
+    const result: Point[] = [];
+
+    for (let i = 0; i < segmentCount; i++) {
+        result.push(points[i]);
+
+        for (let si = 1; si < multiplier; si++) {
+            result.push(getWaypoint(points[i], points[i + 1], si / multiplier));
+        }
+    }
+
+    result.push(points[segmentCount]);
+    return result;
+}
+
 function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
-    const sets = [setA, setB];
+    const setALength = setA.length;
+    const setBLength = setB.length;
 
-    if (setA.length === setB.length) {
-        return sets;
+    if (setALength === setBLength) {
+        return [setA, setB];
     }
 
-    // Determine the greater set
-    const [
-        src,
-        dest,
-    ] = sets.slice().sort((sa, sb) => sb.length - sa.length);
+    const segmentsA = setALength - 1;
+    const segmentsB = setBLength - 1;
 
-    const destLength = dest.length;
-    const srcLength = src.length;
-    const pointCount = srcLength - destLength;
-    const partitionCount = destLength - 1;
-    const pointsPerPartition = Math.floor(pointCount / partitionCount);
-
-    const extrapolated = dest.slice();
-
-    Array.from({ length: partitionCount }, (_, pcIndex) => {
-        const insertionIndex = pcIndex * (pointsPerPartition + 1);
-        const points = Array.from({ length: pointsPerPartition }, (_, pppIndex) => {
-            return getWaypoint(dest[pcIndex], dest[pcIndex + 1], (1 / pointsPerPartition) * pppIndex);
-        });
-
-        extrapolated.splice(insertionIndex, 0, ...points);
-    });
-
-    const remainder = srcLength - extrapolated.length;
-
-    if (remainder) {
-        const points = Array.from({ length: remainder }, () => extrapolated[0]);
-        extrapolated.splice(0, 0, ...points);
+    if (segmentsA === 0) {
+        return [Array.from({ length: setBLength }, () => setA[0]), setB];
     }
+
+    if (segmentsB === 0) {
+        return [setA, Array.from({ length: setALength }, () => setB[0])];
+    }
+
+    const targetSegments = lcm(segmentsA, segmentsB);
 
     return [
-        src,
-        extrapolated,
-    ].sort(() => sets.indexOf(dest) - sets.indexOf(src));
+        distributePoints(setA, targetSegments / segmentsA),
+        distributePoints(setB, targetSegments / segmentsB),
+    ];
 }
 
 /** Interpolator factory that transitions between two point arrays, extrapolating additional points where set lengths differ. */
