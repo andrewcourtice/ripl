@@ -68,7 +68,13 @@ export class WebGPUContext3D extends Context3D {
         pipelineState: PipelineState,
         options?: WebGPUContextOptions
     ) {
-        super('webgpu', target, canvas, options);
+        super('webgpu', target, canvas, {
+            ...options,
+            meta: {
+                renderStrategy: 'gpu',
+                ...options?.meta,
+            },
+        });
 
         const {
             clearColor = [0, 0, 0, 0],

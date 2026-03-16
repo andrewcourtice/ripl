@@ -92,10 +92,11 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 }
 
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
-export abstract class Context<TElement extends Element = Element> extends EventBus<ContextEventMap> implements BaseState {
+export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
     public readonly type: string;
     public readonly element: TElement;
+    public readonly meta: TMeta;
 
     public buffer = false;
     public width: number;
@@ -349,12 +350,13 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     constructor(
         type: string,
         element: TElement,
-        options?: ContextOptions
+        options?: ContextOptions<TMeta>
     ) {
         super();
 
         this.type = type;
         this.element = element;
+        this.meta = { ...options?.meta } as TMeta;
         this.states = [];
         this.renderedElements = [];
         this.currentState = this.getDefaultState();

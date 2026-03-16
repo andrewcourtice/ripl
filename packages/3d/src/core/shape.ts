@@ -1,7 +1,3 @@
-import {
-    CanvasContext3D,
-} from '../context';
-
 import type {
     Context3D,
 } from '../context';
@@ -234,7 +230,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.context = context;
         this.hitPath = undefined;
 
-        // GPU path: submit raw mesh data via the context's submitMesh method
+        // This is noop for CPU render strategies. Safe to call on all paths.
         ctx.submitMesh({
             vertices: triangulateFacesFlat(faces, baseRGBA),
             indices: triangulateFacesIndices(faces),
@@ -242,65 +238,68 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             normalMatrix: matrix, // Valid when model has no non-uniform scale
         });
 
-        const hitPath = ctx.createPath(`${this.id}:hit`);
-
-        // Canvas 2D path: project faces on CPU and push to faceBuffer
-        if (ctx instanceof CanvasContext3D) {
-            const normalizedLight = vec3Normalize(ctx.getLightDirectionForRender());
-
-            let totalDepth = 0;
-
-            for (const face of faces) {
-                const transformed = this.transformVertices(face.vertices, matrix);
-                const normal = face.normal ?? computeFaceNormal(transformed);
-                const brightness = computeFaceBrightness(normal, normalizedLight, true);
-                const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
-                const points = transformed.map(vertex => ctx.project(vertex));
-                const depth = numberSum(points, p => p[2]) / points.length;
-
-                totalDepth += depth;
-
-                ctx.faceBuffer.push({
-                    points,
-                    fillColor,
-                    strokeStyle: this.stroke,
-                    lineWidth: this.lineWidth,
-                    depth,
-                });
-
-                hitPath.moveTo(points[0][0], points[0][1]);
-
-                for (let idx = 1; idx < points.length; idx++) {
-                    hitPath.lineTo(points[idx][0], points[idx][1]);
-                }
-
-                hitPath.closePath();
-            }
-
-            this.hitPath = hitPath;
-            this._depth = faces.length > 0
-                ? totalDepth / faces.length
-                : 0;
-
-            return;
+        if (ctx.renderStrategy === 'gpu') {
+            this.renderGPU(ctx, faces, matrix);
+        } else {
+            this.renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
         }
+    }
 
-        // Non-canvas path (e.g. WebGPU): build 2D hit path from projected vertices for CPU-side interaction
+    private renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
+        const hitPath = context.createPath(`${this.id}:hit`);
+        const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
+
+        let totalDepth = 0;
+
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
-            const points = transformed.map(vertex => ctx.project(vertex));
+            const normal = face.normal ?? computeFaceNormal(transformed);
+            const brightness = computeFaceBrightness(normal, normalizedLight, true);
+            const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
+            const points = transformed.map(vertex => context.project(vertex));
+            const depth = numberSum(points, p => p[2]) / points.length;
 
-            hitPath.moveTo(points[0][0], points[0][1]);
+            totalDepth += depth;
 
-            for (let idx = 1; idx < points.length; idx++) {
-                hitPath.lineTo(points[idx][0], points[idx][1]);
-            }
+            context.faceBuffer.push({
+                points,
+                fillColor,
+                strokeStyle: this.stroke,
+                lineWidth: this.lineWidth,
+                depth,
+            });
 
-            hitPath.closePath();
+            this.traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
-        this._depth = ctx.project([this.x, this.y, this.z])[2];
+        this._depth = faces.length > 0
+            ? totalDepth / faces.length
+            : 0;
+    }
+
+    private renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
+        const hitPath = context.createPath(`${this.id}:hit`);
+
+        for (const face of faces) {
+            const transformed = this.transformVertices(face.vertices, matrix);
+            const points = transformed.map(vertex => context.project(vertex));
+
+            this.traceFaceHitPath(hitPath, points);
+        }
+
+        this.hitPath = hitPath;
+        this._depth = context.project([this.x, this.y, this.z])[2];
+    }
+
+    private traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {
+        hitPath.moveTo(points[0][0], points[0][1]);
+
+        for (let idx = 1; idx < points.length; idx++) {
+            hitPath.lineTo(points[idx][0], points[idx][1]);
+        }
+
+        hitPath.closePath();
     }
 
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {

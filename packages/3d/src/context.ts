@@ -57,6 +57,15 @@ import {
     setCanvasStroke,
 } from '@ripl/canvas';
 
+/** The rendering strategy used by a 3D context. */
+export type RenderStrategy = 'cpu' | 'gpu';
+
+/** Typed metadata for 3D contexts. */
+export interface Context3DMeta {
+    renderStrategy: RenderStrategy;
+    [key: string]: unknown;
+}
+
 /** Determines whether the light direction is fixed in world space or follows the camera. */
 export type LightMode = 'world' | 'camera';
 
@@ -69,7 +78,7 @@ export interface MeshSubmission {
 }
 
 /** Options for the 3D rendering context, extending the base context options with camera parameters. */
-export interface Context3DOptions extends ContextOptions {
+export interface Context3DOptions extends ContextOptions<Context3DMeta> {
     fov?: number;
     near?: number;
     far?: number;
@@ -78,17 +87,22 @@ export interface Context3DOptions extends ContextOptions {
 }
 
 /** Base 3D rendering context providing view/projection matrices, camera, lighting, and projection. Subclassed by CanvasContext3D and WebGPUContext3D. */
-export class Context3D extends DOMContext<HTMLCanvasElement> {
+export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 
     public viewMatrix: Matrix4;
     public projectionMatrix: Matrix4;
     public viewProjectionMatrix: Matrix4;
     public lightDirection: Vector3;
     public lightMode: LightMode;
+    public faceBuffer: ProjectedFace3D[] = [];
 
     protected fov: number;
     protected near: number;
     protected far: number;
+
+    public get renderStrategy(): RenderStrategy {
+        return this.meta.renderStrategy;
+    }
 
     constructor(
         type: string,
@@ -100,7 +114,13 @@ export class Context3D extends DOMContext<HTMLCanvasElement> {
         element.style.width = '100%';
         element.style.height = '100%';
 
-        super(type, target, element, options);
+        super(type, target, element, {
+            ...options,
+            meta: {
+                renderStrategy: 'cpu',
+                ...options?.meta,
+            },
+        });
 
         const {
             fov = 60,
@@ -193,7 +213,6 @@ export class Context3D extends DOMContext<HTMLCanvasElement> {
 export class CanvasContext3D extends Context3D {
 
     protected context: CanvasRenderingContext2D;
-    public faceBuffer: ProjectedFace3D[] = [];
     private _fillCSS: string = '';
     private _strokeCSS: string = '';
 
@@ -487,7 +506,6 @@ export class CanvasContext3D extends Context3D {
         }
 
         const faces = this.faceBuffer;
-        const ctx = this.context;
 
         // Global painter's algorithm: sort back-to-front
         faces.sort((a, b) => b.depth - a.depth);

@@ -39,7 +39,7 @@ interface InteractionState {
 }
 
 /** DOM-aware rendering context that extends the base `Context` with element mounting, resize observation, and interaction handling. */
-export abstract class DOMContext<TElement extends Element = Element> extends Context<TElement> {
+export abstract class DOMContext<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends Context<TElement, TMeta> {
 
     public readonly root: HTMLElement;
 
@@ -53,7 +53,7 @@ export abstract class DOMContext<TElement extends Element = Element> extends Con
         type: string,
         target: string | HTMLElement,
         element: TElement,
-        options?: ContextOptions
+        options?: ContextOptions<TMeta>
     ) {
         const {
             interactive = true,

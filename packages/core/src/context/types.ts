@@ -91,9 +91,10 @@ export interface ContextEventMap extends EventMap {
 }
 
 /** Options for constructing a rendering context. */
-export interface ContextOptions {
+export interface ContextOptions<TMeta extends Record<string, unknown> = Record<string, unknown>> {
     interactive?: boolean;
     dragThreshold?: number;
+    meta?: TMeta;
 }
 
 /** Options for creating a text element within the context. */
