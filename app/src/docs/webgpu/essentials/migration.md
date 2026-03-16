@@ -16,13 +16,17 @@ npm install @ripl/webgpu
 
 **Before:**
 ```ts
-import { createContext } from '@ripl/3d';
+import {
+    createContext,
+} from '@ripl/3d';
 const context = createContext('#app');
 ```
 
 **After:**
 ```ts
-import { createContext } from '@ripl/webgpu';
+import {
+    createContext,
+} from '@ripl/webgpu';
 const context = await createContext('#app');
 ```
 

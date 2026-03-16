@@ -47,22 +47,6 @@ import {
     valueOneOrMore,
 } from '@ripl/utilities';
 
-import {
-    createRect,
-} from '../elements/rect';
-
-import {
-    createText,
-} from '../elements/text';
-
-import type {
-    Rect,
-} from '../elements/rect';
-
-import type {
-    Text,
-} from '../elements/text';
-
 /** Alias for the transition playback direction within the renderer. */
 export type RendererTransitionDirection = TransitionDirection;
 
@@ -166,8 +150,6 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     private debugOptions: Required<RendererDebugOptions>;
     private smoothedFps = 0;
-    private debugBg?: Rect;
-    private debugLabel?: Text;
 
     public autoStart = true;
     public autoStop = true;
@@ -224,7 +206,9 @@ export class Renderer extends EventBus<RendererEventMap> {
             });
 
             this.previousTime = this.currentTime;
-            this.renderBuffer(deltaTime);
+
+            this.renderBuffer();
+            this.renderDebugOverlay(deltaTime);
         });
 
         this.handle = factory.requestAnimationFrame(() => this.tick());
@@ -279,7 +263,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         entry.startTime = this.currentTime;
     }
 
-    private renderBuffer(deltaTime: number) {
+    private renderBuffer() {
         const buffer = this.scene.buffer;
 
         buffer.forEach(element => {
@@ -293,11 +277,9 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this.renderBoundingBoxes(element);
             }
         });
-
-        this.renderDebugOverlay(buffer.length, deltaTime);
     }
 
-    private renderDebugOverlay(elementCount: number, deltaTime: number) {
+    private renderDebugOverlay(deltaTime: number) {
         const {
             fps: showFps,
             elementCount: showElementCount,
@@ -307,6 +289,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             return;
         }
 
+        const elementCount = this.scene.buffer.length;
         const instantFps = deltaTime > 0 ? 1000 / deltaTime : 0;
         this.smoothedFps += (instantFps - this.smoothedFps) * 0.1;
 
@@ -334,40 +317,29 @@ export class Renderer extends EventBus<RendererEventMap> {
         const boxWidth = textWidth + paddingX * 2;
         const boxHeight = textHeight + paddingY * 2;
 
-        if (!this.debugBg) {
-            this.debugBg = createRect({
-                x: offsetX,
-                y: offsetY,
-                width: boxWidth,
-                height: boxHeight,
-                borderRadius: 3,
-                fill: '#000000',
-                opacity: 0.6,
-                pointerEvents: 'none',
-            });
-        } else {
-            this.debugBg.width = boxWidth;
-            this.debugBg.height = boxHeight;
-        }
+        context.layer(() => {
+            context.opacity = 0.6;
+            context.fill = '#000000';
 
-        if (!this.debugLabel) {
-            this.debugLabel = createText({
+            const bgPath = context.createPath();
+            bgPath.roundRect(offsetX, offsetY, boxWidth, boxHeight, [3, 3, 3, 3]);
+            context.applyFill(bgPath);
+        });
+
+        context.layer(() => {
+            context.font = font;
+            context.textAlign = 'left';
+            context.textBaseline = 'top';
+            context.fill = '#FFFFFF';
+
+            const text = context.createText({
                 x: offsetX + paddingX,
-                y: offsetY + paddingY + textHeight,
+                y: offsetY + paddingY,
                 content: label,
-                font,
-                fill: '#FFFFFF',
-                textAlign: 'left',
-                textBaseline: 'alphabetic',
-                pointerEvents: 'none',
             });
-        } else {
-            this.debugLabel.content = label;
-            this.debugLabel.y = offsetY + paddingY + textHeight;
-        }
 
-        this.debugBg.render(context);
-        this.debugLabel.render(context);
+            context.applyFill(text);
+        });
     }
 
     /** Starts the animation loop if it is not already running. */

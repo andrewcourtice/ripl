@@ -11,10 +11,18 @@ npm install @ripl/webgpu
 ## Quick Start
 
 ```ts
-import { createContext } from '@ripl/webgpu';
-import { createCamera } from '@ripl/3d';
-import { createScene, createRenderer } from '@ripl/web';
-import { createCube } from '@ripl/3d';
+import {
+    createContext,
+} from '@ripl/webgpu';
+import {
+    createCamera,
+} from '@ripl/3d';
+import {
+    createRenderer, createScene,
+} from '@ripl/web';
+import {
+    createCube,
+} from '@ripl/3d';
 
 const context = await createContext('#app');
 const scene = createScene(context);
@@ -25,7 +33,8 @@ const camera = createCamera(scene, {
     target: [0, 0, 0],
 });
 
-const cube = createCube({ size: 1, fill: '#4488ff' });
+const cube = createCube({ size: 1,
+    fill: '#4488ff' });
 scene.add(cube);
 renderer.render();
 ```

@@ -1,10 +1,6 @@
 import {
     ContextPath,
     ContextText,
-    isGradientString,
-    parseColor,
-    parseGradient,
-    serialiseRGBA,
     TAU,
 } from '@ripl/core';
 
@@ -14,7 +10,6 @@ import type {
     Direction,
     FillRule,
     FontKerning,
-    Gradient,
     LineCap,
     LineJoin,
     TextAlignment,
@@ -32,63 +27,11 @@ import {
     canvasIsPointInPath,
     canvasIsPointInStroke,
     canvasMeasureText,
+    getCanvasGradientBounds,
     rescaleCanvas,
+    setCanvasFill,
+    setCanvasStroke,
 } from './helpers';
-
-type GradientBounds = {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-};
-type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
-
-const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
-    linear: (context, gradient, { x, y, width, height }) => {
-        const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
-        const cos = Math.cos(angleRad);
-        const sin = Math.sin(angleRad);
-        const halfW = width / 2;
-        const halfH = height / 2;
-        const length = Math.abs(halfW * cos) + Math.abs(halfH * sin);
-
-        return context.createLinearGradient(
-            x + halfW - cos * length,
-            y + halfH - sin * length,
-            x + halfW + cos * length,
-            y + halfH + sin * length
-        );
-    },
-    radial: (context, gradient, { x, y, width, height }) => {
-        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
-        const radius = Math.max(width, height) / 2;
-
-        return context.createRadialGradient(cx, cy, 0, cx, cy, radius);
-    },
-    conic: (context, gradient, { x, y, width, height }) => {
-        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
-        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
-        const startAngle = (gradient as { angle: number }).angle * (Math.PI / 180);
-
-        return context.createConicGradient(startAngle, cx, cy);
-    },
-};
-
-function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds): CanvasGradient {
-    const factory = CANVAS_GRADIENT_FACTORIES[gradient.type];
-    const canvasGradient = factory(context, gradient, bounds);
-
-    gradient.stops.forEach((stop) => {
-        const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
-        const rgba = parseColor(stop.color);
-        const color = rgba ? serialiseRGBA(...rgba) : stop.color;
-
-        canvasGradient.addColorStop(offset, color);
-    });
-
-    return canvasGradient;
-}
 
 /** Canvas-specific path implementation backed by a native `Path2D` object. */
 export class CanvasPath extends ContextPath {
@@ -165,18 +108,8 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     set fill(value) {
         this._fillCSS = value;
-
-        if (isGradientString(value)) {
-            const gradient = parseGradient(value);
-
-            if (gradient) {
-                const bounds = this.getGradientBounds();
-                this.context.fillStyle = toCanvasGradient(this.context, gradient, bounds);
-                return;
-            }
-        }
-
-        this.context.fillStyle = value;
+        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+        setCanvasFill(this.context, value, bounds);
     }
 
     get filter(): string {
@@ -313,18 +246,8 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     set stroke(value) {
         this._strokeCSS = value;
-
-        if (isGradientString(value)) {
-            const gradient = parseGradient(value);
-
-            if (gradient) {
-                const bounds = this.getGradientBounds();
-                this.context.strokeStyle = toCanvasGradient(this.context, gradient, bounds);
-                return;
-            }
-        }
-
-        this.context.strokeStyle = value;
+        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+        setCanvasStroke(this.context, value, bounds);
     }
 
     get textAlign(): TextAlignment {
@@ -341,26 +264,6 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     set textBaseline(value) {
         this.context.textBaseline = value;
-    }
-
-    private getGradientBounds(): GradientBounds {
-        const box = this.currentRenderElement?.getBoundingBox?.();
-
-        if (box && box.width > 0 && box.height > 0) {
-            return {
-                x: box.left,
-                y: box.top,
-                width: box.width,
-                height: box.height,
-            };
-        }
-
-        return {
-            x: 0,
-            y: 0,
-            width: this.width,
-            height: this.height,
-        };
     }
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {

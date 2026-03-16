@@ -30,7 +30,13 @@ import {
 import type {
     ContextOptions,
     ContextPath,
+    Direction,
     FillRule,
+    FontKerning,
+    LineCap,
+    LineJoin,
+    TextAlignment,
+    TextBaseline,
 } from '@ripl/core';
 
 import {
@@ -45,7 +51,10 @@ import {
     canvasIsPointInStroke,
     canvasMeasureText,
     CanvasPath,
+    getCanvasGradientBounds,
     rescaleCanvas,
+    setCanvasFill,
+    setCanvasStroke,
 } from '@ripl/canvas';
 
 /** Determines whether the light direction is fixed in world space or follows the camera. */
@@ -185,6 +194,172 @@ export class CanvasContext3D extends Context3D {
 
     protected context: CanvasRenderingContext2D;
     public faceBuffer: ProjectedFace3D[] = [];
+    private _fillCSS: string = '';
+    private _strokeCSS: string = '';
+
+    get fill(): string {
+        return this._fillCSS || this.context.fillStyle as string;
+    }
+
+    set fill(value) {
+        this._fillCSS = value;
+        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+        setCanvasFill(this.context, value, bounds);
+    }
+
+    get filter(): string {
+        return this.context.filter;
+    }
+
+    set filter(value) {
+        this.context.filter = value;
+    }
+
+    get direction(): Direction {
+        return this.context.direction;
+    }
+
+    set direction(value) {
+        this.context.direction = value;
+    }
+
+    get font(): string {
+        return this.context.font;
+    }
+
+    set font(value) {
+        this.context.font = value;
+    }
+
+    get fontKerning(): FontKerning {
+        return this.context.fontKerning;
+    }
+
+    set fontKerning(value) {
+        this.context.fontKerning = value;
+    }
+
+    get opacity(): number {
+        return this.context.globalAlpha;
+    }
+
+    set opacity(value) {
+        this.context.globalAlpha = value;
+    }
+
+    get globalCompositeOperation(): unknown {
+        return this.context.globalCompositeOperation;
+    }
+
+    set globalCompositeOperation(value) {
+        this.context.globalCompositeOperation = value as GlobalCompositeOperation;
+    }
+
+    get lineCap(): LineCap {
+        return this.context.lineCap;
+    }
+
+    set lineCap(value) {
+        this.context.lineCap = value;
+    }
+
+    get lineDash(): number[] {
+        return this.context.getLineDash();
+    }
+
+    set lineDash(value) {
+        this.context.setLineDash(value);
+    }
+
+    get lineDashOffset(): number {
+        return this.context.lineDashOffset;
+    }
+
+    set lineDashOffset(value) {
+        this.context.lineDashOffset = value;
+    }
+
+    get lineJoin(): LineJoin {
+        return this.context.lineJoin;
+    }
+
+    set lineJoin(value) {
+        this.context.lineJoin = value;
+    }
+
+    get lineWidth(): number {
+        return this.context.lineWidth;
+    }
+
+    set lineWidth(value) {
+        this.context.lineWidth = value;
+    }
+
+    get miterLimit(): number {
+        return this.context.miterLimit;
+    }
+
+    set miterLimit(value) {
+        this.context.miterLimit = value;
+    }
+
+    get shadowBlur(): number {
+        return this.context.shadowBlur;
+    }
+
+    set shadowBlur(value) {
+        this.context.shadowBlur = value;
+    }
+
+    get shadowColor(): string {
+        return this.context.shadowColor;
+    }
+
+    set shadowColor(value) {
+        this.context.shadowColor = value;
+    }
+
+    get shadowOffsetX(): number {
+        return this.context.shadowOffsetX;
+    }
+
+    set shadowOffsetX(value) {
+        this.context.shadowOffsetX = value;
+    }
+
+    get shadowOffsetY(): number {
+        return this.context.shadowOffsetY;
+    }
+
+    set shadowOffsetY(value) {
+        this.context.shadowOffsetY = value;
+    }
+
+    get stroke(): string {
+        return this._strokeCSS || this.context.strokeStyle as string;
+    }
+
+    set stroke(value) {
+        this._strokeCSS = value;
+        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+        setCanvasStroke(this.context, value, bounds);
+    }
+
+    get textAlign(): TextAlignment {
+        return this.context.textAlign;
+    }
+
+    set textAlign(value) {
+        this.context.textAlign = value;
+    }
+
+    get textBaseline(): TextBaseline {
+        return this.context.textBaseline;
+    }
+
+    set textBaseline(value) {
+        this.context.textBaseline = value;
+    }
 
     constructor(target: string | HTMLElement, options?: Context3DOptions) {
         const canvas = document.createElement('canvas');
@@ -317,27 +492,29 @@ export class CanvasContext3D extends Context3D {
         // Global painter's algorithm: sort back-to-front
         faces.sort((a, b) => b.depth - a.depth);
 
-        let lastFill = '';
-        let lastStroke = '';
-        let lastLineWidth = -1;
+        this.layer(() => {
+            let lastFill = '';
+            let lastStroke = '';
+            let lastLineWidth = -1;
 
-        for (const face of faces) {
-            this.drawFace(ctx, face, lastFill, lastStroke, lastLineWidth);
+            for (const face of faces) {
+                this.drawFace(face, lastFill, lastStroke, lastLineWidth);
 
-            lastFill = face.fillColor;
-            lastStroke = face.strokeStyle ?? '';
-            lastLineWidth = face.lineWidth ?? -1;
-        }
+                lastFill = face.fillColor;
+                lastStroke = face.strokeStyle ?? '';
+                lastLineWidth = face.lineWidth ?? -1;
+            }
+        });
     }
 
     private drawFace(
-        ctx: CanvasRenderingContext2D,
         face: ProjectedFace3D,
         lastFill: string,
         lastStroke: string,
         lastLineWidth: number
     ): void {
         const points = face.points;
+        const ctx = this.context;
 
         ctx.beginPath();
         ctx.moveTo(points[0][0], points[0][1]);

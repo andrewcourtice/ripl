@@ -11,7 +11,9 @@ The `WebGPUContext3D` class extends the base `Context<HTMLCanvasElement>` and pr
 Unlike the synchronous `createContext` from `@ripl/3d`, the WebGPU factory is **async** because it must negotiate a GPU adapter and device:
 
 ```ts
-import { createContext } from '@ripl/webgpu';
+import {
+    createContext,
+} from '@ripl/webgpu';
 
 const context = await createContext('#app', {
     fov: 60,
@@ -47,11 +49,11 @@ context.setOrthographic(left, right, bottom, top, near, far);
 ### Properties
 
 ```ts
-context.viewMatrix;           // Matrix4
-context.projectionMatrix;     // Matrix4
+context.viewMatrix; // Matrix4
+context.projectionMatrix; // Matrix4
 context.viewProjectionMatrix; // Matrix4
-context.lightDirection;       // Vector3 (read/write)
-context.lightMode;            // 'world' | 'camera' (read/write)
+context.lightDirection; // Vector3 (read/write)
+context.lightMode; // 'world' | 'camera' (read/write)
 ```
 
 ### Projection

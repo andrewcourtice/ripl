@@ -45,8 +45,9 @@ export default defineConfig({
             alias: {
                 '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
                 '@ripl/vdom': path.resolve(__dirname, '../../../packages/vdom/src/index.ts'),
-                '@ripl/canvas': path.resolve(__dirname, '../../../packages/canvas/src/index.ts'),
                 '@ripl/core': path.resolve(__dirname, '../../../packages/core/src/index.ts'),
+                '@ripl/dom': path.resolve(__dirname, '../../../packages/dom/src/index.ts'),
+                '@ripl/canvas': path.resolve(__dirname, '../../../packages/canvas/src/index.ts'),
                 '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
                 '@ripl/web': path.resolve(__dirname, '../../../packages/web/src/index.ts'),
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),

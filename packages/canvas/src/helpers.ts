@@ -2,19 +2,130 @@ import {
     ContextText,
     factory,
     getPathLength,
+    isGradientString,
     measureText,
+    parseColor,
+    parseGradient,
     samplePathPoint,
     scaleContinuous,
+    serialiseRGBA,
 } from '@ripl/core';
 
 import type {
+    Box,
     FillRule,
+    Gradient,
     Scale,
 } from '@ripl/core';
 
 import {
     CanvasPath,
 } from './context';
+
+/** Bounding rectangle used to resolve gradient coordinates. */
+export type GradientBounds = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+};
+
+type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
+
+const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
+    linear: (context, gradient, { x, y, width, height }) => {
+        const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
+        const cos = Math.cos(angleRad);
+        const sin = Math.sin(angleRad);
+        const halfW = width / 2;
+        const halfH = height / 2;
+        const length = Math.abs(halfW * cos) + Math.abs(halfH * sin);
+
+        return context.createLinearGradient(
+            x + halfW - cos * length,
+            y + halfH - sin * length,
+            x + halfW + cos * length,
+            y + halfH + sin * length
+        );
+    },
+    radial: (context, gradient, { x, y, width, height }) => {
+        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
+        const radius = Math.max(width, height) / 2;
+
+        return context.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    },
+    conic: (context, gradient, { x, y, width, height }) => {
+        const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
+        const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
+        const startAngle = (gradient as { angle: number }).angle * (Math.PI / 180);
+
+        return context.createConicGradient(startAngle, cx, cy);
+    },
+};
+
+/** Converts a parsed gradient definition into a native `CanvasGradient` within the given bounds. */
+export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds): CanvasGradient {
+    const factory = CANVAS_GRADIENT_FACTORIES[gradient.type];
+    const canvasGradient = factory(context, gradient, bounds);
+
+    gradient.stops.forEach((stop) => {
+        const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
+        const rgba = parseColor(stop.color);
+        const color = rgba ? serialiseRGBA(...rgba) : stop.color;
+
+        canvasGradient.addColorStop(offset, color);
+    });
+
+    return canvasGradient;
+}
+
+/** Resolves gradient bounds from a bounding box or falls back to context dimensions. */
+export function getCanvasGradientBounds(box: Box | undefined, width: number, height: number): GradientBounds {
+    if (box && box.width > 0 && box.height > 0) {
+        return {
+            x: box.left,
+            y: box.top,
+            width: box.width,
+            height: box.height,
+        };
+    }
+
+    return {
+        x: 0,
+        y: 0,
+        width,
+        height,
+    };
+}
+
+/** Sets the fill style on a native canvas context, resolving gradient strings when applicable. */
+export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
+    if (isGradientString(value)) {
+        const gradient = parseGradient(value);
+
+        if (gradient) {
+            ctx.fillStyle = toCanvasGradient(ctx, gradient, bounds);
+            return;
+        }
+    }
+
+    ctx.fillStyle = value;
+}
+
+/** Sets the stroke style on a native canvas context, resolving gradient strings when applicable. */
+export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
+    if (isGradientString(value)) {
+        const gradient = parseGradient(value);
+
+        if (gradient) {
+            ctx.strokeStyle = toCanvasGradient(ctx, gradient, bounds);
+            return;
+        }
+    }
+
+    ctx.strokeStyle = value;
+}
 
 /** Result of a canvas rescale operation containing the updated coordinate scales. */
 export interface RescaleResult {

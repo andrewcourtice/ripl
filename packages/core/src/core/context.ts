@@ -3,32 +3,32 @@
 import {
     Box,
     degreesToRadians,
-} from '../../math';
+} from '../math';
 
 import type {
     BorderRadius,
     Point,
-} from '../../math';
+} from '../math';
 
 import {
     EventBus,
-} from '../../core/event-bus';
+} from './event-bus';
 
 import type {
     EventMap,
-} from '../../core/event-bus';
+} from './event-bus';
 
 import {
     factory,
-} from '../../core/factory';
+} from './factory';
 
 import {
     scaleContinuous,
-} from '../../scales';
+} from '../scales';
 
 import type {
     Scale,
-} from '../../scales';
+} from '../scales';
 
 import {
     functionMemoize,
@@ -329,13 +329,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     public scaleX: Scale<number, number>;
     public scaleY: Scale<number, number>;
     public scaleDPR: Scale<number, number>;
+    public renderElement?: RenderElement;
+    public renderedElements: RenderElement[];
 
     protected states: BaseState[];
     protected currentState: BaseState;
     protected renderDepth = 0;
-
-    public renderElement?: RenderElement;
-    public renderedElements: RenderElement[];
 
     get currentRenderElement() {
         return this.renderElement;
@@ -658,12 +657,14 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */
     batch<TResult = void>(body: () => TResult): TResult {
         this.clear();
+        this.save();
         this.markRenderStart();
 
         try {
             return body();
         } finally {
             this.markRenderEnd();
+            this.restore();
         }
     }
 
