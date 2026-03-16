@@ -39,15 +39,12 @@ onMounted(async () => {
         return;
     }
 
-    const [{ default: xterm }, { default: xtermFit }] = await Promise.all([
+    const [{ Terminal }, { FitAddon }] = await Promise.all([
         import('@xterm/xterm'),
         import('@xterm/addon-fit'),
     ]);
 
     import('@xterm/xterm/css/xterm.css');
-
-    const { Terminal } = xterm;
-    const { FitAddon } = xtermFit;
 
     terminal = new Terminal({
         cursorBlink: false,

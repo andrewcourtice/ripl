@@ -18,13 +18,13 @@
         "@ripl/utilities": "1.0.0-beta.0",
         "@ripl/web": "1.0.0-beta.0",
         "@ripl/webgpu": "1.0.0-beta.0",
-        "@xterm/addon-fit": "^0.10.0",
-        "@xterm/xterm": "^5.5.0",
+        "@xterm/addon-fit": "^0.11.0",
+        "@xterm/xterm": "^6.0.0",
         "flex-layout-attribute": "^1.0.3",
         "lucide-vue-next": "^0.577.0",
         "monaco-editor": "^0.55.1",
         "pinia": "^3.0.4",
-        "sass": "^1.97.3",
+        "sass": "^1.98.0",
         "vue": "^3.5.30"
     },
     "devDependencies": {
