@@ -16,14 +16,6 @@ import {
 } from 'vue';
 
 import {
-    Terminal,
-} from '@xterm/xterm';
-
-import {
-    FitAddon,
-} from '@xterm/addon-fit';
-
-import {
     BrailleRasterizer,
     TerminalContext,
 } from '@ripl/terminal';
@@ -32,22 +24,30 @@ import type {
     TerminalOutput,
 } from '@ripl/terminal';
 
-import '@xterm/xterm/css/xterm.css';
-
 const emit = defineEmits<{
     ready: [context: TerminalContext];
 }>();
 
 const terminalContainer = ref<HTMLElement>();
 
-let terminal: Terminal | undefined;
-let fitAddon: FitAddon | undefined;
+let terminal: any;
+let fitAddon: any;
 let context: TerminalContext | undefined;
 
-onMounted(() => {
+onMounted(async () => {
     if (!terminalContainer.value) {
         return;
     }
+
+    const [{ default: xterm }, { default: xtermFit }] = await Promise.all([
+        import('@xterm/xterm'),
+        import('@xterm/addon-fit'),
+    ]);
+
+    import('@xterm/xterm/css/xterm.css');
+
+    const { Terminal } = xterm;
+    const { FitAddon } = xtermFit;
 
     terminal = new Terminal({
         cursorBlink: false,
@@ -84,7 +84,7 @@ onMounted(() => {
             return state.rows;
         },
         onResize(callback: (c: number, r: number) => void) {
-            const disposable = term.onResize(({ cols: nc, rows: nr }) => callback(nc, nr));
+            const disposable = term.onResize(({ cols: nc, rows: nr }: { cols: number; rows: number }) => callback(nc, nr));
 
             return () => disposable.dispose();
         },

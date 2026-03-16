@@ -23,14 +23,6 @@ import {
 } from 'vue';
 
 import {
-    Terminal,
-} from '@xterm/xterm';
-
-import {
-    FitAddon,
-} from '@xterm/addon-fit';
-
-import {
     BrailleRasterizer,
     TerminalContext,
 } from '@ripl/terminal';
@@ -57,12 +49,10 @@ import {
     easeOutCubic,
 } from '@ripl/web';
 
-import '@xterm/xterm/css/xterm.css';
-
 const terminalContainer = ref<HTMLElement>();
 
-let terminal: Terminal | undefined;
-let fitAddon: FitAddon | undefined;
+let terminal: any;
+let fitAddon: any;
 let context: TerminalContext | undefined;
 let termOutput: TerminalOutput | undefined;
 let rasterizer: BrailleRasterizer | undefined;
@@ -71,11 +61,11 @@ type MenuState = 'main' | 'chart' | 'running';
 let menuState: MenuState = 'main';
 let inputBuffer = '';
 
-function writeLine(term: Terminal, text: string) {
+function writeLine(term: any, text: string) {
     term.write(text + '\r\n');
 }
 
-function showMainMenu(term: Terminal) {
+function showMainMenu(term: any) {
     menuState = 'main';
     inputBuffer = '';
     term.reset();
@@ -93,7 +83,7 @@ function showMainMenu(term: Terminal) {
     term.write('  \x1b[1;32m>\x1b[0m ');
 }
 
-function showChartMenu(term: Terminal) {
+function showChartMenu(term: any) {
     menuState = 'chart';
     inputBuffer = '';
     term.reset();
@@ -330,7 +320,7 @@ function runGanttChart(ctx: TerminalContext) {
     });
 }
 
-function handleInput(term: Terminal, ctx: TerminalContext, key: string) {
+function handleInput(term: any, ctx: TerminalContext, key: string) {
     if (menuState === 'running') {
         // Any key returns to main menu
         ctx.destroy();
@@ -430,7 +420,7 @@ function rebuildContext() {
             return state.rows;
         },
         onResize(callback: (c: number, r: number) => void) {
-            const disposable = term.onResize(({ cols: nc, rows: nr }) => callback(nc, nr));
+            const disposable = term.onResize(({ cols: nc, rows: nr }: { cols: number; rows: number }) => callback(nc, nr));
             return () => disposable.dispose();
         },
     };
@@ -439,8 +429,18 @@ function rebuildContext() {
     context = new TerminalContext(termOutput, { rasterizer });
 }
 
-onMounted(() => {
+onMounted(async () => {
     if (!terminalContainer.value) return;
+
+    const [{ default: xterm }, { default: xtermFit }] = await Promise.all([
+        import('@xterm/xterm'),
+        import('@xterm/addon-fit'),
+    ]);
+
+    import('@xterm/xterm/css/xterm.css');
+
+    const { Terminal } = xterm;
+    const { FitAddon } = xtermFit;
 
     terminal = new Terminal({
         cursorBlink: true,
@@ -463,7 +463,7 @@ onMounted(() => {
 
     const term = terminal;
 
-    term.onData((data) => {
+    term.onData((data: string) => {
         if (context) {
             handleInput(term, context, data);
         }
