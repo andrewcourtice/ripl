@@ -51,19 +51,22 @@ function distributePoints(points: Point[], multiplier: number): Point[] {
 }
 
 function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
-    if (setA.length === setB.length) {
+    const setALength = setA.length;
+    const setBLength = setB.length;
+
+    if (setALength === setBLength) {
         return [setA, setB];
     }
 
-    const segmentsA = setA.length - 1;
-    const segmentsB = setB.length - 1;
+    const segmentsA = setALength - 1;
+    const segmentsB = setBLength - 1;
 
     if (segmentsA === 0) {
-        return [Array.from({ length: setB.length }, () => setA[0]), setB];
+        return [Array.from({ length: setBLength }, () => setA[0]), setB];
     }
 
     if (segmentsB === 0) {
-        return [setA, Array.from({ length: setA.length }, () => setB[0])];
+        return [setA, Array.from({ length: setALength }, () => setB[0])];
     }
 
     const targetSegments = lcm(segmentsA, segmentsB);

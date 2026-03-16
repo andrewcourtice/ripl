@@ -2366,6 +2366,10 @@
             "link": "/docs/api/@ripl/utilities/functions/functionProduce.md"
           },
           {
+            "text": "noop",
+            "link": "/docs/api/@ripl/utilities/functions/noop.md"
+          },
+          {
             "text": "numberGCD",
             "link": "/docs/api/@ripl/utilities/functions/numberGCD.md"
           },
