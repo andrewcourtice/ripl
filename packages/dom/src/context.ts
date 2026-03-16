@@ -77,7 +77,7 @@ export abstract class DOMContext<TElement extends Element = Element> extends Con
         this.root = root;
     }
 
-    protected init() {
+    protected init(): void {
         const {
             width,
             height,

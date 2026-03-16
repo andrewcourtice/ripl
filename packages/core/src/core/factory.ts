@@ -1,12 +1,12 @@
 import type {
     BaseState,
     MeasureTextOptions,
-} from '../context';
+} from './context';
 
 import type {
     Context,
     ContextOptions,
-} from '../context';
+} from './context';
 
 /** Platform-specific function implementations injected at runtime. */
 export interface FactoryOptions {

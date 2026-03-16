@@ -1,13 +1,7 @@
-import type {
+import {
     Context,
-} from '../context';
-
-import {
-    measureText,
-} from '../context';
-
-import {
     Element,
+    measureText,
 } from '../core';
 
 import type {

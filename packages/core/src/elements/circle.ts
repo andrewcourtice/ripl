@@ -1,8 +1,5 @@
-import type {
-    Context,
-} from '../context';
-
 import {
+    Context,
     Shape2D,
 } from '../core';
 

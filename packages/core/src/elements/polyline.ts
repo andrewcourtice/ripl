@@ -1,14 +1,11 @@
-import type {
-    Context,
-    ContextPath,
-} from '../context';
-
 import {
     Shape2D,
 } from '../core';
 
 import type {
     BaseElementState,
+    Context,
+    ContextPath,
     Shape2DOptions,
 } from '../core';
 

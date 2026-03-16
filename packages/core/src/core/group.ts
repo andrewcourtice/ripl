@@ -21,7 +21,7 @@ import {
 
 import type {
     Context,
-} from '../context';
+} from './context';
 
 /** Options for constructing a group, extending element options with an optional initial set of children. */
 export interface GroupOptions extends ElementOptions {

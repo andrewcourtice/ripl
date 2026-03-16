@@ -228,58 +228,58 @@ export class ContextPath implements ContextElement {
         this.id = id;
     }
 
-    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
+    public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         // do nothing
     }
 
-    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
+    public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
         // do nothing
     }
 
-    circle(x: number, y: number, radius: number): void {
+    public circle(x: number, y: number, radius: number): void {
         // do nothing
     }
 
-    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
+    public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
         // do nothing
     }
 
-    closePath(): void {
+    public closePath(): void {
         // do nothing
     }
 
-    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
+    public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         // do nothing
     }
 
-    lineTo(x: number, y: number): void {
+    public lineTo(x: number, y: number): void {
         // do nothing
     }
 
-    moveTo(x: number, y: number): void {
+    public moveTo(x: number, y: number): void {
         // do nothing
     }
 
-    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+    public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
         // do nothing
     }
 
-    rect(x: number, y: number, width: number, height: number): void {
+    public rect(x: number, y: number, width: number, height: number): void {
         // do nothing
     }
 
-    roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
+    public roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
         // do nothing
     }
 
-    polyline(points: Point[]): void {
+    public polyline(points: Point[]): void {
         points.forEach(([x, y], index) => !index
             ? this.moveTo(x,y)
             : this.lineTo(x, y)
         );
     }
 
-    addPath(path: ContextPath): void {
+    public addPath(path: ContextPath): void {
         // do nothing
     }
 
@@ -336,11 +336,11 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     protected currentState: BaseState;
     protected renderDepth = 0;
 
-    get currentRenderElement() {
+    public get currentRenderElement() {
         return this.renderElement;
     }
 
-    set currentRenderElement(element: RenderElement | undefined) {
+    public set currentRenderElement(element: RenderElement | undefined) {
         this.renderElement = element;
 
         if (element && !element.abstract) {
@@ -348,227 +348,227 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         }
     }
 
-    get fill(): string {
+    public get fill(): string {
         return this.currentState.fill;
     }
 
-    set fill(value) {
+    public set fill(value) {
         this.currentState.fill = value;
     }
 
-    get filter(): string {
+    public get filter(): string {
         return this.currentState.filter;
     }
 
-    set filter(value) {
+    public set filter(value) {
         this.currentState.filter = value;
     }
 
-    get direction(): Direction {
+    public get direction(): Direction {
         return this.currentState.direction;
     }
 
-    set direction(value) {
+    public set direction(value) {
         this.currentState.direction = value;
     }
 
-    get font(): string {
+    public get font(): string {
         return this.currentState.font;
     }
 
-    set font(value) {
+    public set font(value) {
         this.currentState.font = value;
     }
 
-    get fontKerning(): FontKerning {
+    public get fontKerning(): FontKerning {
         return this.currentState.fontKerning;
     }
 
-    set fontKerning(value) {
+    public set fontKerning(value) {
         this.currentState.fontKerning = value;
     }
 
-    get opacity(): number {
+    public get opacity(): number {
         return this.currentState.opacity;
     }
 
-    set opacity(value) {
+    public set opacity(value) {
         this.currentState.opacity = value;
     }
 
-    get globalCompositeOperation(): unknown {
+    public get globalCompositeOperation(): unknown {
         return this.currentState.globalCompositeOperation;
     }
 
-    set globalCompositeOperation(value) {
+    public set globalCompositeOperation(value) {
         this.currentState.globalCompositeOperation = value;
     }
 
-    get lineCap(): LineCap {
+    public get lineCap(): LineCap {
         return this.currentState.lineCap;
     }
 
-    set lineCap(value) {
+    public set lineCap(value) {
         this.currentState.lineCap = value;
     }
 
-    get lineDash(): number[] {
+    public get lineDash(): number[] {
         return this.currentState.lineDash;
     }
 
-    set lineDash(value) {
+    public set lineDash(value) {
         this.currentState.lineDash = value;
     }
 
-    get lineDashOffset(): number {
+    public get lineDashOffset(): number {
         return this.currentState.lineDashOffset;
     }
 
-    set lineDashOffset(value) {
+    public set lineDashOffset(value) {
         this.currentState.lineDashOffset = value;
     }
 
-    get lineJoin(): LineJoin {
+    public get lineJoin(): LineJoin {
         return this.currentState.lineJoin;
     }
 
-    set lineJoin(value) {
+    public set lineJoin(value) {
         this.currentState.lineJoin = value;
     }
 
-    get lineWidth(): number {
+    public get lineWidth(): number {
         return this.currentState.lineWidth;
     }
 
-    set lineWidth(value) {
+    public set lineWidth(value) {
         this.currentState.lineWidth = value;
     }
 
-    get miterLimit(): number {
+    public get miterLimit(): number {
         return this.currentState.miterLimit;
     }
 
-    set miterLimit(value) {
+    public set miterLimit(value) {
         this.currentState.miterLimit = value;
     }
 
-    get shadowBlur(): number {
+    public get shadowBlur(): number {
         return this.currentState.shadowBlur;
     }
 
-    set shadowBlur(value) {
+    public set shadowBlur(value) {
         this.currentState.shadowBlur = value;
     }
 
-    get shadowColor(): string {
+    public get shadowColor(): string {
         return this.currentState.shadowColor;
     }
 
-    set shadowColor(value) {
+    public set shadowColor(value) {
         this.currentState.shadowColor = value;
     }
 
-    get shadowOffsetX(): number {
+    public get shadowOffsetX(): number {
         return this.currentState.shadowOffsetX;
     }
 
-    set shadowOffsetX(value) {
+    public set shadowOffsetX(value) {
         this.currentState.shadowOffsetX = value;
     }
 
-    get shadowOffsetY(): number {
+    public get shadowOffsetY(): number {
         return this.currentState.shadowOffsetY;
     }
 
-    set shadowOffsetY(value) {
+    public set shadowOffsetY(value) {
         this.currentState.shadowOffsetY = value;
     }
 
-    get stroke(): string {
+    public get stroke(): string {
         return this.currentState.stroke;
     }
 
-    set stroke(value) {
+    public set stroke(value) {
         this.currentState.stroke = value;
     }
 
-    get textAlign(): TextAlignment {
+    public get textAlign(): TextAlignment {
         return this.currentState.textAlign;
     }
 
-    set textAlign(value) {
+    public set textAlign(value) {
         this.currentState.textAlign = value;
     }
 
-    get textBaseline(): TextBaseline {
+    public get textBaseline(): TextBaseline {
         return this.currentState.textBaseline;
     }
 
-    set textBaseline(value) {
+    public set textBaseline(value) {
         this.currentState.textBaseline = value;
     }
 
-    get zIndex(): number {
+    public get zIndex(): number {
         return this.currentState.zIndex;
     }
 
-    set zIndex(value) {
+    public set zIndex(value) {
         this.currentState.zIndex = value;
     }
 
-    get translateX(): number {
+    public get translateX(): number {
         return this.currentState.translateX;
     }
 
-    set translateX(value) {
+    public set translateX(value) {
         this.currentState.translateX = value;
     }
 
-    get translateY(): number {
+    public get translateY(): number {
         return this.currentState.translateY;
     }
 
-    set translateY(value) {
+    public set translateY(value) {
         this.currentState.translateY = value;
     }
 
-    get transformScaleX(): number {
+    public get transformScaleX(): number {
         return this.currentState.transformScaleX;
     }
 
-    set transformScaleX(value) {
+    public set transformScaleX(value) {
         this.currentState.transformScaleX = value;
     }
 
-    get transformScaleY(): number {
+    public get transformScaleY(): number {
         return this.currentState.transformScaleY;
     }
 
-    set transformScaleY(value) {
+    public set transformScaleY(value) {
         this.currentState.transformScaleY = value;
     }
 
-    get rotation(): Rotation {
+    public get rotation(): Rotation {
         return this.currentState.rotation;
     }
 
-    set rotation(value) {
+    public set rotation(value) {
         this.currentState.rotation = value;
     }
 
-    get transformOriginX(): TransformOrigin {
+    public get transformOriginX(): TransformOrigin {
         return this.currentState.transformOriginX;
     }
 
-    set transformOriginX(value) {
+    public set transformOriginX(value) {
         this.currentState.transformOriginX = value;
     }
 
-    get transformOriginY(): TransformOrigin {
+    public get transformOriginY(): TransformOrigin {
         return this.currentState.transformOriginY;
     }
 
-    set transformOriginY(value) {
+    public set transformOriginY(value) {
         this.currentState.transformOriginY = value;
     }
 
@@ -601,23 +601,23 @@ export abstract class Context<TElement extends Element = Element> extends EventB
         this.emit('resize', null);
     }
 
-    protected getDefaultState() {
+    protected getDefaultState(): BaseState {
         return { ...factory.getDefaultState() };
     }
 
     /** Pushes the current state onto the stack and resets to defaults. */
-    save(): void {
+    public save(): void {
         this.states.push(this.currentState);
         this.currentState = this.getDefaultState();
     }
 
     /** Restores the most recently saved state from the stack. */
-    restore(): void {
+    public restore(): void {
         this.currentState = this.states.pop() || this.getDefaultState();
     }
 
     /** Executes a callback within a save/restore pair, returning the callback's result. */
-    layer<TResult = void>(body: () => TResult): TResult {
+    public layer<TResult = void>(body: () => TResult): TResult {
         this.save();
 
         try {
@@ -628,20 +628,20 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     /** Clears the entire rendering surface. */
-    clear(): void {
+    public clear(): void {
     }
 
     /** Resets the context to its initial state. */
-    reset(): void {
+    public reset(): void {
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
-    invalidateTrackedElements(event: string): void {
+    public invalidateTrackedElements(event: string): void {
         this.getTrackedElements.cache.clear();
     }
 
     /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */
-    markRenderStart(): void {
+    public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this.renderedElements = [];
         }
@@ -650,12 +650,12 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     /** Signals the end of a render pass. */
-    markRenderEnd(): void {
+    public markRenderEnd(): void {
         this.renderDepth -= 1;
     }
 
     /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */
-    batch<TResult = void>(body: () => TResult): TResult {
+    public batch<TResult = void>(body: () => TResult): TResult {
         this.clear();
         this.save();
         this.markRenderStart();
@@ -669,63 +669,63 @@ export abstract class Context<TElement extends Element = Element> extends EventB
     }
 
     /** Applies a rotation transformation. */
-    rotate(angle: number): void {
+    public rotate(angle: number): void {
     }
 
     /** Applies a scale transformation. */
-    scale(x: number, y: number): void {
+    public scale(x: number, y: number): void {
     }
 
     /** Applies a translation transformation. */
-    translate(x: number, y: number): void {
+    public translate(x: number, y: number): void {
     }
 
     // eslint-disable-next-line id-length
-    setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+    public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
     }
 
     // eslint-disable-next-line id-length
-    transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+    public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
     }
 
     /** Measures text dimensions using the context's current font or an optional override. */
-    measureText(text: string, font?: string): TextMetrics {
+    public measureText(text: string, font?: string): TextMetrics {
         return measureText(text, { font });
     }
 
     /** Creates a new path element, optionally reusing an id for SVG diffing efficiency. */
-    createPath(id?: string): ContextPath {
+    public createPath(id?: string): ContextPath {
         return new ContextPath(id);
     }
 
     /** Creates a new text element from the given options. */
-    createText(options: TextOptions): ContextText {
+    public createText(options: TextOptions): ContextText {
         return new ContextText(options);
     }
 
     /** Draws an image onto the rendering surface at the given position and optional size. */
-    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+    public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
     }
 
     /** Clips subsequent drawing operations to the given path. */
-    applyClip(path: ContextPath, fillRule?: FillRule): void {
+    public applyClip(path: ContextPath, fillRule?: FillRule): void {
     }
 
     /** Fills the given path or text element using the current fill style. */
-    applyFill(path: ContextElement, fillRule?: FillRule): void {
+    public applyFill(path: ContextElement, fillRule?: FillRule): void {
     }
 
     /** Strokes the given path or text element using the current stroke style. */
-    applyStroke(path: ContextElement): void {
+    public applyStroke(path: ContextElement): void {
     }
 
     /** Tests whether a point is inside the filled region of a path. */
-    isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
+    public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         return false;
     }
 
     /** Tests whether a point is on the stroked outline of a path. */
-    isPointInStroke(path: ContextPath, x: number, y: number): boolean {
+    public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         return false;
     }
 

@@ -1,13 +1,10 @@
-import type {
-    Context,
-} from '../context';
-
 import {
     Element,
 } from '../core';
 
 import type {
     BaseElementState,
+    Context,
     ElementOptions,
 } from '../core';
 
