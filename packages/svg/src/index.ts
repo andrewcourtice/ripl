@@ -1,5 +1,4 @@
 import {
-    Context,
     ContextPath,
     ContextText,
     createFrameBuffer,
@@ -26,6 +25,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    DOMContext,
+} from '@ripl/dom';
+
+import {
     objectForEach,
     objectMap,
     stringUniqueId,
@@ -40,12 +43,12 @@ import {
     ensureGroupPath,
     getAncestorGroupIds,
     reconcileNode,
-} from '@ripl/vdom';
+} from '@ripl/dom';
 
 import type {
     ReconcilerOptions,
     VNode,
-} from '@ripl/vdom';
+} from '@ripl/dom';
 
 type SVGVNode = VNode<SVGContextElement>;
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
@@ -251,7 +254,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
     }
 
-    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
+    public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
         const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
         const largeArcFlag = +(Math.abs(endAngle - startAngle) > Math.PI);
@@ -261,26 +264,26 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
     }
 
-    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
+    public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
         this.moveTo(x1, y1);
         this.appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
     }
 
-    circle(x: number, y: number, radius: number): void {
+    public circle(x: number, y: number, radius: number): void {
         this.moveTo(x + radius, y);
         this.appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
         this.appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * 2},0`);
     }
 
-    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
+    public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
         this.appendElementData(`C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x},${y}`);
     }
 
-    closePath(): void {
+    public closePath(): void {
         this.appendElementData('Z');
     }
 
-    ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
+    public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const rotDeg = rotation * 180 / Math.PI;
         const cos = Math.cos(rotation);
         const sin = Math.sin(rotation);
@@ -317,19 +320,19 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         }
     }
 
-    lineTo(x: number, y: number): void {
+    public lineTo(x: number, y: number): void {
         this.appendElementData(`L ${x},${y}`);
     }
 
-    moveTo(x: number, y: number): void {
+    public moveTo(x: number, y: number): void {
         this.appendElementData(`M ${x},${y}`);
     }
 
-    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+    public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
         this.appendElementData(`Q ${cpx},${cpy} ${x},${y}`);
     }
 
-    rect(x: number, y: number, width: number, height: number): void {
+    public rect(x: number, y: number, width: number, height: number): void {
         this.moveTo(x, y);
         this.lineTo(x + width, y);
         this.lineTo(x + width, y + height);
@@ -337,7 +340,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.lineTo(x, y);
     }
 
-    roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
+    public roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
         if (!radii) {
             return this.rect(x, y, width, height);
         }
@@ -440,7 +443,7 @@ export class SVGTextPath implements SVGContextElement {
 }
 
 /** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
-export class SVGContext extends Context<SVGSVGElement> {
+export class SVGContext extends DOMContext<SVGSVGElement> {
 
     private vtree: SVGVNode;
     private domCache: Map<string, Element>;
@@ -624,7 +627,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         reconcileNode(this.element, this.vtree, this.domCache, this.reconcilerOptions);
     }
 
-    markRenderStart(): void {
+    public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this.vtree = {
                 id: '__root__',
@@ -636,7 +639,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         super.markRenderStart();
     }
 
-    markRenderEnd(): void {
+    public markRenderEnd(): void {
         super.markRenderEnd();
 
         if (this.renderDepth !== 0) {
@@ -650,14 +653,14 @@ export class SVGContext extends Context<SVGSVGElement> {
         }
     }
 
-    createPath(id?: string): SVGPath {
+    public createPath(id?: string): SVGPath {
         const path = new SVGPath(id);
         this.addToVTree(path);
 
         return path;
     }
 
-    createText(options: TextOptions): ContextText {
+    public createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
         const renderElement = this.currentRenderElement;
         const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
@@ -711,7 +714,7 @@ export class SVGContext extends Context<SVGSVGElement> {
         return text;
     }
 
-    drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+    public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
         const [sourceWidth, sourceHeight] = getImageSourceSize(image);
         const imgWidth = width ?? sourceWidth;
         const imgHeight = height ?? sourceHeight;
@@ -727,41 +730,41 @@ export class SVGContext extends Context<SVGSVGElement> {
         this.addToVTree(svgImage);
     }
 
-    save(): void {
+    public save(): void {
         this.transformStack.push([...this.currentTransforms]);
         this.clipStack.push(this.currentClipId);
         super.save();
     }
 
-    restore(): void {
+    public restore(): void {
         this.currentTransforms = this.transformStack.pop() || [];
         this.currentClipId = this.clipStack.pop();
         super.restore();
     }
 
-    rotate(angle: number): void {
+    public rotate(angle: number): void {
         this.currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
     }
 
-    scale(x: number, y: number): void {
+    public scale(x: number, y: number): void {
         this.currentTransforms.push(`scale(${x},${y})`);
     }
 
-    translate(x: number, y: number): void {
+    public translate(x: number, y: number): void {
         this.currentTransforms.push(`translate(${x},${y})`);
     }
 
     // eslint-disable-next-line id-length
-    setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+    public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         this.currentTransforms = [`matrix(${a},${b},${c},${d},${e},${f})`];
     }
 
     // eslint-disable-next-line id-length
-    transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
+    public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    applyClip(path: SVGPath, fillRule?: FillRule): void {
+    public applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
         let cached = this.clipCache.get(cacheKey);
 
@@ -798,13 +801,13 @@ export class SVGContext extends Context<SVGSVGElement> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    applyFill(element: SVGContextElement, fillRule?: FillRule): void {
+    public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this.setElementStyles(element, {
             fill: this.resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
         });
     }
 
-    applyStroke(element: SVGContextElement): void {
+    public applyStroke(element: SVGContextElement): void {
         this.setElementStyles(element, {
             stroke: this.resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
             strokeLinecap: this.currentState.lineCap,
@@ -816,24 +819,24 @@ export class SVGContext extends Context<SVGSVGElement> {
         });
     }
 
-    measureText(text: string, font?: string): TextMetrics {
+    public measureText(text: string, font?: string): TextMetrics {
         return measureText(text, {
             font: font ?? this.currentState.font,
         });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
+    public isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
         return this.isPointIn('fill', path, x, y);
     }
 
-    isPointInStroke(path: SVGPath, x: number, y: number): boolean {
+    public isPointInStroke(path: SVGPath, x: number, y: number): boolean {
         return this.isPointIn('stroke', path, x, y);
     }
 
 }
 
 /** Creates an SVG rendering context attached to the given DOM target. */
-export function createContext(target: string | HTMLElement, options?: ContextOptions): Context {
+export function createContext(target: string | HTMLElement, options?: ContextOptions): SVGContext {
     return new SVGContext(target, options);
 }

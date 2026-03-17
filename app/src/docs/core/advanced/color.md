@@ -33,7 +33,7 @@ import {
     serialiseRGB,
     serialiseRGBA,
     setColorAlpha,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const rgba = parseColor('#3a86ff');
 // [58, 134, 255, 1]
@@ -60,12 +60,12 @@ import {
     serialiseHSL,
     serialiseRGBA,
     setColorAlpha,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     ColorRGBA,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -154,7 +154,7 @@ watch(pickedColor, redraw);
 ```ts
 import {
     parseColor,
-} from '@ripl/core';
+} from '@ripl/web';
 
 parseColor('#3a86ff'); // [58, 134, 255, 1]
 parseColor('rgb(58, 134, 255)'); // [58, 134, 255, 1]
@@ -167,7 +167,7 @@ For a specific format, use the named parser:
 import {
     parseHEX,
     parseRGB,
-} from '@ripl/core';
+} from '@ripl/web';
 
 parseHEX('#ff006e'); // [255, 0, 110, 1]
 parseRGB('rgb(255, 0, 110)'); // [255, 0, 110, 1]
@@ -181,7 +181,7 @@ Serializers convert RGBA channel values back to a color string:
 import {
     serialiseHEX,
     serialiseRGBA,
-} from '@ripl/core';
+} from '@ripl/web';
 
 serialiseHEX(58, 134, 255, 1); // '#3a86ff'
 serialiseRGBA(58, 134, 255, 1); // 'rgba(58, 134, 255, 1)'
@@ -197,7 +197,7 @@ import {
     hsvToRGBA,
     rgbaToHSL,
     rgbaToHSV,
-} from '@ripl/core';
+} from '@ripl/web';
 
 rgbaToHSL(58, 134, 255); // [216, 100, 61, 1]
 hslToRGBA(216, 100, 61); // [58, 134, 255, 1]
@@ -213,7 +213,7 @@ hsvToRGBA(216, 77, 100); // [58, 134, 255, 1]
 ```ts
 import {
     setColorAlpha,
-} from '@ripl/core';
+} from '@ripl/web';
 
 setColorAlpha('#3a86ff', 0.5); // 'rgba(58, 134, 255, 0.5)'
 setColorAlpha('rgb(255, 0, 110)', 0.8); // 'rgba(255, 0, 110, 0.8)'
@@ -226,7 +226,7 @@ When animating between colors via `renderer.transition()`, Ripl uses `interpolat
 ```ts
 import {
     interpolateColor,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const lerp = interpolateColor('#3a86ff', '#ff006e');
 lerp(0); // 'rgba(58, 134, 255, 1)'

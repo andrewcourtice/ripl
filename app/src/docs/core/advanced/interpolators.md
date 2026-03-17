@@ -22,7 +22,7 @@ An interpolator factory takes two values (start and end) and returns a function 
 ```ts
 import {
     interpolateNumber,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interpolate = interpolateNumber(0, 100);
 
@@ -48,7 +48,7 @@ Interpolates between CSS color strings by parsing them to RGBA, interpolating ea
 ```ts
 import {
     interpolateColor,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interpolate = interpolateColor('#3a86ff', '#ff006e');
 interpolate(0); // 'rgba(58, 134, 255, 1)'
@@ -65,7 +65,7 @@ The fallback interpolator for values that don't match any other type. It snaps t
 ```ts
 import {
     interpolateAny,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interpolate = interpolateAny('hello', 'world');
 interpolate(0.3); // 'hello'
@@ -109,7 +109,7 @@ For reusable interpolators, create an `InterpolatorFactory` — a function that 
 ```ts
 import type {
     InterpolatorFactory,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interpolateBoolean: InterpolatorFactory<boolean> = (a, b) => {
     return t => t > 0.5 ? b : a;
@@ -174,7 +174,7 @@ Linear interpolation between two numbers — the foundation of all other interpo
 ```ts
 import {
     interpolateNumber,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interp = interpolateNumber(20, 120);
 circle.radius = interp(t);
@@ -199,7 +199,7 @@ Interpolates between CSS color strings by parsing to RGBA, interpolating each ch
 ```ts
 import {
     interpolateColor,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interp = interpolateColor('#3a86ff', '#ff006e');
 rect.fill = interp(t);
@@ -224,7 +224,7 @@ Transitions between two CSS gradient strings by interpolating their stop colors,
 ```ts
 import {
     interpolateGradient,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interp = interpolateGradient(
     'linear-gradient(0deg, #3a86ff, #8338ec)',
@@ -252,7 +252,7 @@ Interpolates between rotation values — supports numbers (radians) and strings 
 ```ts
 import {
     interpolateRotation,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const interp = interpolateRotation('0deg', '360deg');
 rect.rotation = interp(t);
@@ -277,7 +277,7 @@ Progressively reveals a polyline path from start to end as `t` advances from 0 t
 ```ts
 import {
     getPolygonPoints, interpolatePath,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const points = getPolygonPoints(6, cx, cy, radius, true);
 const interp = interpolatePath(points);
@@ -303,7 +303,7 @@ polyline.points = interp(t);
 ```ts
 import {
     getPolygonPoints, interpolatePoints,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const triangle = getPolygonPoints(3, cx, cy, radius);
 const octagon = getPolygonPoints(8, cx, cy, radius);
@@ -354,12 +354,12 @@ import {
     interpolatePoints,
     interpolateRotation,
     TAU,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     Point,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

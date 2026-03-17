@@ -38,7 +38,7 @@ import {
     scaleLogarithmic,
     scalePower,
     scaleSqrt,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const linear = scaleContinuous([0, 100], [0, 400]);
 const log = scaleLogarithmic([1, 100], [0, 400]);
@@ -67,12 +67,12 @@ import {
     scaleLogarithmic,
     scalePower,
     scaleSqrt,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     Scale,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -164,7 +164,7 @@ The most common scale. Maps a numeric domain linearly to a numeric range.
 ```ts
 import {
     scaleContinuous,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scaleContinuous([0, 100], [0, 800]);
 
@@ -185,7 +185,7 @@ Divides a continuous range into evenly spaced bands for categorical data. Expose
 ```ts
 import {
     scaleBand,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scaleBand(['Jan', 'Feb', 'Mar'], [0, 300], {
     innerPadding: 0.1,
@@ -206,7 +206,7 @@ Maps discrete domain values to evenly spaced positions in a numeric range.
 ```ts
 import {
     scaleDiscrete,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const color = scaleDiscrete(['low', 'mid', 'high'], [0, 100]);
 
@@ -222,7 +222,7 @@ Like continuous, but splits at a midpoint — useful for scales that diverge aro
 ```ts
 import {
     scaleDiverging,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scaleDiverging([-100, 100], [0, 800], {
     midpoint: 0,
@@ -241,7 +241,7 @@ Maps values using a log transformation. Useful for data spanning several orders 
 import {
     scaleLog,
     scaleLogarithmic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scaleLogarithmic([1, 1000], [0, 600], { base: 10 });
 
@@ -262,7 +262,7 @@ Maps values using an exponential transformation. `exponent: 2` gives a quadratic
 import {
     scalePower,
     scaleSqrt,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scalePower([0, 100], [0, 400], { exponent: 2 });
 
@@ -277,7 +277,7 @@ Divides a sorted numeric domain into quantiles, each mapped to a discrete range 
 ```ts
 import {
     scaleQuantile,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const color = scaleQuantile(
     [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
@@ -296,7 +296,7 @@ Divides a continuous domain into uniform segments mapped to discrete range value
 ```ts
 import {
     scaleQuantize,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const rating = scaleQuantize([0, 100], ['poor', 'fair', 'good', 'excellent']);
 
@@ -313,7 +313,7 @@ Maps values to range values based on threshold breakpoints.
 ```ts
 import {
     scaleThreshold,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const grade = scaleThreshold([60, 70, 80, 90], ['F', 'D', 'C', 'B', 'A']);
 
@@ -331,7 +331,7 @@ Maps `Date` objects to a numeric range using linear interpolation of timestamps.
 ```ts
 import {
     scaleTime,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const x = scaleTime(
     [new Date('2024-01-01'), new Date('2024-12-31')],

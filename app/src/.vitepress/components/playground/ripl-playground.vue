@@ -167,6 +167,7 @@ watch(mode, (newMode) => {
         return;
     }
 
+    contextType.value = 'canvas';
     code.value = getDefaultCode(newMode);
     updateSrcdoc();
     debouncedSave();

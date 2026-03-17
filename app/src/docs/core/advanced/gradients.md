@@ -6,6 +6,45 @@ outline: "deep"
 
 Ripl supports CSS gradient strings directly in `fill` and `stroke` properties. The gradient syntax is parsed at render time and converted to the appropriate native gradient for the current context (Canvas or SVG).
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Angle</span>
+            <RiplInputRange v-model="angleDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    createRect,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+
+createRect({
+    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
+    x: 50,
+    y: 50,
+    width: 200,
+    height: 120,
+}).render(context);
+
+createCircle({
+    fill: 'radial-gradient(circle, #ff006e, #fb5607)',
+    cx: 400,
+    cy: 110,
+    radius: 70,
+}).render(context);
+```
+:::
+
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
@@ -132,45 +171,6 @@ await renderer.transition(rect, {
 });
 ```
 
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <span>Angle</span>
-            <RiplInputRange v-model="angleDeg" :min="0" :max="360" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
-    </template>
-</ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-    createRect,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-
-createRect({
-    fill: 'linear-gradient(135deg, #3a86ff, #8338ec)',
-    x: 50,
-    y: 50,
-    width: 200,
-    height: 120,
-}).render(context);
-
-createCircle({
-    fill: 'radial-gradient(circle, #ff006e, #fb5607)',
-    cx: 400,
-    cy: 110,
-    radius: 70,
-}).render(context);
-```
-:::
-
 <script lang="ts" setup>
 import {
     useRiplExample,
@@ -180,11 +180,11 @@ import {
     createCircle,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,

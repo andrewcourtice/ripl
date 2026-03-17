@@ -7,6 +7,10 @@ import {
 } from './structs';
 
 import {
+    factory,
+} from '../core/factory';
+
+import {
     functionCache,
     typeIsArray,
 } from '@ripl/utilities';
@@ -131,7 +135,7 @@ export type PathPoint = {
 };
 
 const getRefPathElement = functionCache(() => {
-    return document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    return factory.createElementNS('http://www.w3.org/2000/svg', 'path') as SVGPathElement;
 });
 
 /** Computes the total length of an SVG path from its `d` attribute string. */

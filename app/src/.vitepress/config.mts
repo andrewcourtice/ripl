@@ -44,11 +44,17 @@ export default defineConfig({
         resolve: {
             alias: {
                 '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
-                '@ripl/vdom': path.resolve(__dirname, '../../../packages/vdom/src/index.ts'),
+                '@ripl/vdom': path.resolve(__dirname, '../../../packages/dom/src/index.ts'),
                 '@ripl/core': path.resolve(__dirname, '../../../packages/core/src/index.ts'),
+                '@ripl/dom': path.resolve(__dirname, '../../../packages/dom/src/index.ts'),
+                '@ripl/canvas': path.resolve(__dirname, '../../../packages/canvas/src/index.ts'),
                 '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
+                '@ripl/web': path.resolve(__dirname, '../../../packages/web/src/index.ts'),
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
                 '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
+                '@ripl/webgpu': path.resolve(__dirname, '../../../packages/webgpu/src/index.ts'),
+                '@ripl/terminal': path.resolve(__dirname, '../../../packages/terminal/src/index.ts'),
+                '@ripl/node': path.resolve(__dirname, '../../../packages/node/src/index.ts'),
             },
         },
         css: {
@@ -122,6 +128,10 @@ export default defineConfig({
                             link: '/docs/core/',
                         },
                         {
+                            text: 'Packages',
+                            link: '/docs/core/getting-started/packages',
+                        },
+                        {
                             text: 'Installation',
                             link: '/docs/core/getting-started/installation',
                         },
@@ -170,6 +180,10 @@ export default defineConfig({
                         {
                             text: 'SVG',
                             link: '/docs/core/contexts/svg',
+                        },
+                        {
+                            text: 'Terminal (experimental)',
+                            link: '/docs/core/contexts/terminal',
                         },
                     ],
                 },
@@ -296,16 +310,25 @@ export default defineConfig({
                     text: 'Essentials',
                     items: [
                         {
-                            text: 'Context3D',
-                            link: '/docs/3d/essentials/context',
-                        },
-                        {
                             text: 'Camera',
                             link: '/docs/3d/essentials/camera',
                         },
                         {
                             text: 'Shading',
                             link: '/docs/3d/essentials/shading',
+                        },
+                    ],
+                },
+                {
+                    text: 'Contexts',
+                    items: [
+                        {
+                            text: 'Canvas (Context3D)',
+                            link: '/docs/3d/contexts/canvas',
+                        },
+                        {
+                            text: 'WebGPU (WebGPUContext3D)',
+                            link: '/docs/3d/contexts/webgpu',
                         },
                     ],
                 },

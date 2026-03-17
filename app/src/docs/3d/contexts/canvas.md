@@ -1,13 +1,53 @@
 ---
-title: Context3D
+title: Canvas (Context3D)
+outline: "deep"
 ---
 
-# Context3D
+# Canvas (Context3D)
 
 `Context3D` extends `CanvasContext` with 3D projection capabilities. It manages view, projection, and combined view-projection matrices, and provides methods to project 3D world-space points onto 2D canvas coordinates. It also exposes a `lightDirection` vector used by the flat-shading system. Because it inherits from the canvas context, all core drawing state, events, and gradient support are available.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
+
+## Demo
+
+:::tabs
+== Demo
+<ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
+== Code
+```ts
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
+
+const context = createContext('.mount-element');
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+});
+
+const cube = createCube({
+    size: 1.5,
+    fill: '#4488ff',
+});
+
+// Render loop with auto-rotation
+let angle = 0;
+function loop() {
+    angle += 0.005;
+    camera.position = [Math.sin(angle) * 5, 1.5, Math.cos(angle) * 5];
+    camera.flush();
+    context.batch(() => {
+        cube.render(context);
+    });
+    requestAnimationFrame(loop);
+}
+loop();
+```
+:::
 
 ## Creation
 
@@ -78,44 +118,13 @@ Returns the projected depth of a 3D point (used for sorting).
 const depth = context.projectDepth([1, 2, 3]);
 ```
 
-## Demo
+## When to Use Canvas
 
-:::tabs
-== Demo
-<ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
-== Code
-```ts
-import {
-    createCamera,
-    createContext,
-    createCube,
-} from '@ripl/3d';
+Canvas is the best choice when:
 
-const context = createContext('.mount-element');
-const camera = createCamera(scene, {
-    position: [0, 1.5, 5],
-    target: [0, 0, 0],
-});
-
-const cube = createCube({
-    size: 1.5,
-    fill: '#4488ff',
-});
-
-// Render loop with auto-rotation
-let angle = 0;
-function loop() {
-    angle += 0.005;
-    camera.position = [Math.sin(angle) * 5, 1.5, Math.cos(angle) * 5];
-    camera.flush();
-    context.batch(() => {
-        cube.render(context);
-    });
-    requestAnimationFrame(loop);
-}
-loop();
-```
-:::
+- **Broad browser support** — Works in all modern browsers without feature detection
+- **Simple scenes** — Sufficient for scenes that don't require hardware depth testing
+- **Fallback** — Use as a fallback for browsers without WebGPU support
 
 <script lang="ts" setup>
 import {

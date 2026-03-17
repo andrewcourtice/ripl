@@ -58,6 +58,44 @@ describe('Interpolators', () => {
             expect(result).toHaveLength(3);
         });
 
+        test('Should distribute extra points evenly across all segments', () => {
+            // 3 pts (2 segs) vs 4 pts (3 segs) → LCM(2,3)=6 → both become 7 pts
+            const setA: Point[] = [[0, 0], [10, 0], [10, 10]];
+            const setB: Point[] = [[0, 0], [5, 0], [10, 0], [10, 10]];
+            const interpolator = interpolatePoints(setA, setB);
+
+            const start = interpolator(0);
+            const end = interpolator(1);
+
+            expect(start).toHaveLength(7);
+            expect(end).toHaveLength(7);
+        });
+
+        test('Should preserve start and end points at t=0 and t=1', () => {
+            const setA: Point[] = [[0, 0], [10, 0], [10, 10]];
+            const setB: Point[] = [[5, 5], [15, 5], [15, 15], [5, 15]];
+            const interpolator = interpolatePoints(setA, setB);
+
+            const start = interpolator(0);
+            expect(start[0][0]).toBeCloseTo(0);
+            expect(start[0][1]).toBeCloseTo(0);
+
+            const end = interpolator(1);
+            expect(end[0][0]).toBeCloseTo(5);
+            expect(end[0][1]).toBeCloseTo(5);
+        });
+
+        test('Should handle a single-point set', () => {
+            const setA: Point[] = [[5, 5]];
+            const setB: Point[] = [[0, 0], [10, 0], [10, 10]];
+            const interpolator = interpolatePoints(setA, setB);
+
+            const end = interpolator(1);
+            expect(end).toHaveLength(3);
+            expect(end[0][0]).toBeCloseTo(0);
+            expect(end[0][1]).toBeCloseTo(0);
+        });
+
     });
 
     describe('Waypoint', () => {

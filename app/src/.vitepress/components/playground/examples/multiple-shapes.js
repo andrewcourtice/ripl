@@ -2,7 +2,7 @@ import {
     createCircle,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const cx = scene.context.width / 2;
 const cy = scene.context.height / 2;

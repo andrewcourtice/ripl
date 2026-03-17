@@ -9,6 +9,42 @@ The camera manages the view matrix on the `Context3D` and supports orbit, pan, z
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
+## Demo
+
+:::tabs
+== Auto-Rotate
+<ripl-3d-example @context-changed="autoRotateChanged"></ripl-3d-example>
+== Interactive
+<p style="margin-bottom: 8px; font-size: 0.9em; color: var(--vp-c-text-2);">Scroll to zoom, drag to orbit, Shift+drag to pan.</p>
+<ripl-3d-example @context-changed="interactiveChanged"></ripl-3d-example>
+== Code
+```ts
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
+
+const context = createContext('.mount-element');
+const camera = createCamera(scene, {
+    position: [0, 1.5, 5],
+    target: [0, 0, 0],
+    interactions: true,
+});
+
+const cube = createCube({ size: 1.5, fill: '#4488ff' });
+
+function loop() {
+    camera.flush();
+    context.batch(() => {
+        cube.render(context);
+    });
+    requestAnimationFrame(loop);
+}
+loop();
+```
+:::
+
 ## Creation
 
 ```ts
@@ -131,42 +167,6 @@ Removes all interaction event listeners.
 ```ts
 camera.dispose();
 ```
-
-## Demo
-
-:::tabs
-== Auto-Rotate
-<ripl-3d-example @context-changed="autoRotateChanged"></ripl-3d-example>
-== Interactive
-<p style="margin-bottom: 8px; font-size: 0.9em; color: var(--vp-c-text-2);">Scroll to zoom, drag to orbit, Shift+drag to pan.</p>
-<ripl-3d-example @context-changed="interactiveChanged"></ripl-3d-example>
-== Code
-```ts
-import {
-    createCamera,
-    createContext,
-    createCube,
-} from '@ripl/3d';
-
-const context = createContext('.mount-element');
-const camera = createCamera(scene, {
-    position: [0, 1.5, 5],
-    target: [0, 0, 0],
-    interactions: true,
-});
-
-const cube = createCube({ size: 1.5, fill: '#4488ff' });
-
-function loop() {
-    camera.flush();
-    context.batch(() => {
-        cube.render(context);
-    });
-    requestAnimationFrame(loop);
-}
-loop();
-```
-:::
 
 <script lang="ts" setup>
 import {

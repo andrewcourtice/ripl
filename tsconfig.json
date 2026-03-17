@@ -18,16 +18,22 @@
             "DOM",
         ],
         "types": [
-            "vitest/importMeta"
+            "vitest/importMeta",
+            "@webgpu/types"
         ],
         "baseUrl": ".",
         "paths": {
             "@ripl/utilities": ["packages/utilities/src/index.ts"],
-            "@ripl/vdom": ["packages/vdom/src/index.ts"],
+            "@ripl/dom": ["packages/dom/src/index.ts"],
+            "@ripl/canvas": ["packages/canvas/src/index.ts"],
             "@ripl/core": ["packages/core/src/index.ts"],
             "@ripl/svg": ["packages/svg/src/index.ts"],
+            "@ripl/web": ["packages/web/src/index.ts"],
             "@ripl/charts": ["packages/charts/src/index.ts"],
             "@ripl/3d": ["packages/3d/src/index.ts"],
+            "@ripl/webgpu": ["packages/webgpu/src/index.ts"],
+            "@ripl/terminal": ["packages/terminal/src/index.ts"],
+            "@ripl/node": ["packages/node/src/index.ts"],
             "@ripl/test-utils": ["packages/test-utils/src/index.ts"],
         }
     },

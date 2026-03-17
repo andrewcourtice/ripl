@@ -10,6 +10,15 @@
                     { label: 'SVG', value: 'svg' },
                 ]"
             />
+            <RiplButtonGroup
+                v-if="mode === '3d'"
+                :modelValue="contextType"
+                @update:modelValue="$emit('update:contextType', $event as ContextType)"
+                :options="[
+                    { label: 'Canvas', value: 'canvas' },
+                    { label: 'WebGPU', value: 'webgpu' },
+                ]"
+            />
             <RiplDropdown align="right" ref="settingsDropdown">
                 <template #trigger>
                     <RiplButton><Settings2 :size="14" /> Settings</RiplButton>

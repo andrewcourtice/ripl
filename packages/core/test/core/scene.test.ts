@@ -11,7 +11,12 @@ import {
     createGroup,
     createRect,
     createScene,
+    factory,
 } from '../../src';
+
+import {
+    createContext,
+} from '@ripl/canvas';
 
 import {
     mockCanvasContext,
@@ -23,12 +28,14 @@ describe('Scene', () => {
 
     beforeEach(() => {
         mockCanvasContext();
+        factory.set({ createContext });
         el = document.createElement('div');
         document.body.appendChild(el);
     });
 
     afterEach(() => {
         el.remove();
+        factory.set({ createContext: undefined });
         vi.restoreAllMocks();
     });
 
@@ -48,6 +55,11 @@ describe('Scene', () => {
         expect(typeof scene.height).toBe('number');
 
         scene.destroy();
+    });
+
+    test('Should throw without factory.createContext or Context', () => {
+        factory.set({ createContext: undefined });
+        expect(() => createScene(el)).toThrow();
     });
 
     test('Should initialise with empty buffer', () => {

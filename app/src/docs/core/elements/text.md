@@ -28,7 +28,7 @@ A **Text** element renders a text string at a given position. Unlike other built
 import {
     createContext,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 
@@ -58,7 +58,7 @@ Use `startOffset` (0–1) to control where along the path the text begins.
 import {
     createContext,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const context = createContext('.mount-element');
 const w = context.width;
@@ -81,11 +81,11 @@ import {
 import {
     createLine,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -187,7 +187,7 @@ const {
 ```ts
 import {
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const text = createText({
     fill: '#333333',

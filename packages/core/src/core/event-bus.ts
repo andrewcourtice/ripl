@@ -3,6 +3,10 @@ import {
 } from './disposer';
 
 import {
+    factory,
+} from './factory';
+
+import {
     setForEach,
 } from '@ripl/utilities';
 
@@ -58,7 +62,7 @@ export class Event<TData = undefined> {
         this.type = type;
         this.target = target;
         this.data = data as TData;
-        this.timestamp = performance.now();
+        this.timestamp = factory.now();
         this.#bubbles = bubbles;
     }
 

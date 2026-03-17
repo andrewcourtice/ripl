@@ -6,28 +6,29 @@ Ripl is a modular library split into focused packages so you only ship what you 
 
 | Package | Description |
 | --- | --- |
-| `@ripl/core` | Core library — elements, shapes, groups, scenes, renderer, canvas context, animation, scales, interpolation, color, math |
+| `@ripl/web` | **Main entry point for browser usage** — re-exports core + canvas context with browser platform bindings |
 | `@ripl/svg` | SVG rendering context — swap Canvas for SVG with a single import change |
 | `@ripl/charts` | Pre-built chart components — bar, line, area, pie, scatter, and 15+ more |
 | `@ripl/3d` | Experimental 3D rendering — shapes, camera, and shading projected onto 2D canvas |
+| `@ripl/core` | Core rendering internals (installed automatically as a dependency of `@ripl/web`) |
 | `@ripl/utilities` | Shared typed utilities (installed automatically as a dependency) |
 
 ## Install
 
-Install the core package to get started:
+Install the main package to get started:
 
 :::tabs
 == npm
 ```bash
-npm install @ripl/core
+npm install @ripl/web
 ```
 == yarn
 ```bash
-yarn add @ripl/core
+yarn add @ripl/web
 ```
 == pnpm
 ```bash
-pnpm add @ripl/core
+pnpm add @ripl/web
 ```
 :::
 
@@ -72,16 +73,16 @@ pnpm add @ripl/3d
 :::
 
 > [!TIP]
-> All packages depend on `@ripl/core`, so the core library is always shared automatically — no need to install it separately when using charts or SVG.
+> All packages depend on `@ripl/core` internally, so the core library is always shared automatically — no need to install it separately.
 
 ## CDN
 
 You can also load Ripl directly from a CDN for quick prototyping or non-bundled environments:
 
 ```html
-<!-- Core -->
+<!-- Core + Canvas -->
 <script type="module">
-import { createContext, createCircle } from 'https://esm.sh/@ripl/core';
+import { createContext, createCircle } from 'https://esm.sh/@ripl/web';
 
 const context = createContext('#canvas');
 createCircle({ fill: '#3a86ff', cx: 100, cy: 100, radius: 40 }).render(context);

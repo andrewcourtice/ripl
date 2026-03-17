@@ -87,11 +87,12 @@ export type BaseElementState = Partial<BaseState>;
 /** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
     graph: null;
-    track: keyof ElementEventMap;
-    untrack: keyof ElementEventMap;
     attached: Group;
     detached: Group;
-    updated: null;
+    updated: {
+        key: PropertyKey;
+        value: unknown;
+    };
     mouseenter: null;
     mouseleave: null;
     mousemove: {
@@ -537,7 +538,10 @@ export class Element<
     /** Sets a state value and emits an `updated` event. */
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this.state[key] = value;
-        this.emit('updated', null);
+        this.emit('updated', {
+            key,
+            value,
+        });
     }
 
     public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions) {
@@ -547,12 +551,10 @@ export class Element<
             return listener;
         }
 
-        this.emit('track' as keyof TEventMap, event as TEventMap[keyof TEventMap]);
         this.context?.invalidateTrackedElements(event as string);
 
         return {
             dispose: () => {
-                this.emit('untrack' as keyof TEventMap, event as TEventMap[keyof TEventMap]);
                 this.context?.invalidateTrackedElements(event as string);
                 listener.dispose();
             },

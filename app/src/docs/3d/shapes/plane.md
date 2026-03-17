@@ -9,27 +9,6 @@ The **Plane** is a flat rectangular 3D primitive. It's useful as a ground surfac
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
-## Usage
-
-```ts
-import {
-    createPlane,
-} from '@ripl/3d';
-
-const plane = createPlane({
-    width: 4,
-    height: 3,
-    fill: '#88cc44',
-});
-```
-
-## Properties
-
-- **`width`** — Width of the plane
-- **`height`** — Height of the plane
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-
 ## Demo
 
 :::tabs
@@ -69,6 +48,27 @@ function loop() {
 loop();
 ```
 :::
+
+## Usage
+
+```ts
+import {
+    createPlane,
+} from '@ripl/3d';
+
+const plane = createPlane({
+    width: 4,
+    height: 3,
+    fill: '#88cc44',
+});
+```
+
+## Properties
+
+- **`width`** — Width of the plane
+- **`height`** — Height of the plane
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

@@ -1,0 +1,23 @@
+{
+    "name": "ripl-node-demo",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "static": "npx tsx static.ts",
+        "animated": "npx tsx animated.ts",
+        "chart": "npx tsx chart.ts",
+        "charts": "npx tsx charts.ts"
+    },
+    "dependencies": {
+        "@ripl/charts": "1.0.0-beta.0",
+        "@ripl/core": "1.0.0-beta.0",
+        "@ripl/node": "1.0.0-beta.0",
+        "@ripl/terminal": "1.0.0-beta.0",
+        "@ripl/utilities": "1.0.0-beta.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "tsx": "^4.0.0"
+    }
+}

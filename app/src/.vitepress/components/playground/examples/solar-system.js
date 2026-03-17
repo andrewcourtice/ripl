@@ -1,7 +1,7 @@
 import {
     createCircle,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const planets = [
     {

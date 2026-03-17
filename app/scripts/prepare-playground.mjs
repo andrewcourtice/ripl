@@ -15,8 +15,12 @@ const PACKAGES = [
     '@ripl/utilities',
     '@ripl/vdom',
     '@ripl/core',
+    '@ripl/dom',
+    '@ripl/canvas',
     '@ripl/svg',
+    '@ripl/web',
     '@ripl/3d',
+    '@ripl/webgpu',
     '@ripl/charts',
 ];
 

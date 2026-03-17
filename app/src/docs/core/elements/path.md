@@ -31,7 +31,7 @@ The **Path** element is a general-purpose shape that delegates its geometry to a
 ```ts
 import {
     createPath,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const star = createPath({
     fill: '#ff006e',
@@ -67,13 +67,13 @@ import {
 import {
     createPath,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
     ContextPath,
     PathState,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
@@ -205,7 +205,7 @@ watch(currentShape, redraw);
 ```ts
 import {
     createPath,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const path = createPath({
     fill: '#3a86ff',

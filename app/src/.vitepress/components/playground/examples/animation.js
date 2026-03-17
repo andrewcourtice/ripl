@@ -1,7 +1,7 @@
 import {
     createCircle,
     easeInOutCubic,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const cx = scene.context.width / 2;
 const cy = scene.context.height / 2;

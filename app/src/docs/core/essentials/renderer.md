@@ -8,13 +8,76 @@ A **Renderer** provides an automatic render loop for a [Scene](/docs/core/essent
 
 The Renderer is what brings your scene to life. Without it, you'd need to manually call `scene.render()` every time something changes. With a Renderer, you describe *what* should change (via transitions) and the renderer handles *when* and *how* — including easing, chaining, staggering, and automatic start/stop to conserve resources when idle.
 
+## Demo
+
+Click "Animate" to run a transition. Click "Stagger" to see per-element staggered animation.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <RiplButton @click="animateAll">Animate</RiplButton>
+            <RiplButton @click="stagger">Stagger</RiplButton>
+            <RiplButton @click="reset">Reset</RiplButton>
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createRenderer,
+    createScene,
+    easeOutCubic,
+} from '@ripl/web';
+
+const scene = createScene('.mount-element', {
+    children: [
+        createCircle({
+            id: 'c1',
+            fill: '#3a86ff',
+            cx: 100,
+            cy: 150,
+            radius: 40,
+        }),
+        createCircle({
+            id: 'c2',
+            fill: '#3a86ff',
+            cx: 200,
+            cy: 150,
+            radius: 40,
+        }),
+        createCircle({
+            id: 'c3',
+            fill: '#3a86ff',
+            cx: 300,
+            cy: 150,
+            radius: 40,
+        }),
+    ],
+});
+
+const renderer = createRenderer(scene);
+
+await renderer.transition(scene, (el, i) => ({
+    duration: 600,
+    delay: i * 150,
+    ease: easeOutCubic,
+    state: {
+        fill: '#ff006e',
+    },
+}));
+```
+:::
+
 ## Creating a Renderer
 
 ```ts
 import {
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.my-container', {
     children: [circle, rect],
@@ -88,7 +151,7 @@ import {
     createRect,
     createRenderer,
     createScene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const scene = createScene('.mount-element', {
     children: [
@@ -163,7 +226,7 @@ import {
     easeInOutQuint, easeInQuad, easeInQuart,
     easeInQuint, easeLinear, easeOutCubic,
     easeOutQuad, easeOutQuart, easeOutQuint,
-} from '@ripl/core';
+} from '@ripl/web';
 
 await renderer.transition(circle, {
     duration: 800,
@@ -254,69 +317,6 @@ renderer.destroy(); // stops the loop and cleans up
 > [!NOTE]
 > For the full list of Renderer properties, methods, and events, see the [Renderer API Reference](/docs/api/@ripl/core/).
 
-## Demo
-
-Click "Animate" to run a transition. Click "Stagger" to see per-element staggered animation.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <RiplButton @click="animateAll">Animate</RiplButton>
-            <RiplButton @click="stagger">Stagger</RiplButton>
-            <RiplButton @click="reset">Reset</RiplButton>
-        </RiplControlGroup>
-    </template>
-</ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createRenderer,
-    createScene,
-    easeOutCubic,
-} from '@ripl/core';
-
-const scene = createScene('.mount-element', {
-    children: [
-        createCircle({
-            id: 'c1',
-            fill: '#3a86ff',
-            cx: 100,
-            cy: 150,
-            radius: 40,
-        }),
-        createCircle({
-            id: 'c2',
-            fill: '#3a86ff',
-            cx: 200,
-            cy: 150,
-            radius: 40,
-        }),
-        createCircle({
-            id: 'c3',
-            fill: '#3a86ff',
-            cx: 300,
-            cy: 150,
-            radius: 40,
-        }),
-    ],
-});
-
-const renderer = createRenderer(scene);
-
-await renderer.transition(scene, (el, i) => ({
-    duration: 600,
-    delay: i * 150,
-    ease: easeOutCubic,
-    state: {
-        fill: '#ff006e',
-    },
-}));
-```
-:::
-
 <script lang="ts" setup>
 import {
     ref,
@@ -337,11 +337,11 @@ import {
     easeOutCubic,
     Renderer,
     Scene,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     RendererDebugOptions,
-} from '@ripl/core';
+} from '@ripl/web';
 
 let rScene: Scene;
 let rRenderer: Renderer;

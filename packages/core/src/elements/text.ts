@@ -1,11 +1,3 @@
-import type {
-    Context,
-} from '../context';
-
-import {
-    measureText,
-} from '../context';
-
 import {
     Element,
 } from '../core';
@@ -14,6 +6,14 @@ import type {
     BaseElementState,
     ElementOptions,
 } from '../core';
+
+import {
+    measureText,
+} from '../context';
+
+import type {
+    Context,
+} from '../context';
 
 import {
     Box,

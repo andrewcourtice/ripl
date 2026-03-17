@@ -1,8 +1,3 @@
-import type {
-    Context,
-    ContextPath,
-} from '../context';
-
 import {
     Shape2D,
 } from '../core';
@@ -11,6 +6,11 @@ import type {
     BaseElementState,
     Shape2DOptions,
 } from '../core';
+
+import type {
+    Context,
+    ContextPath,
+} from '../context';
 
 import {
     Box,

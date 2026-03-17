@@ -8,6 +8,33 @@ outline: "deep"
 
 Elements follow a pattern inspired by the DOM: they have an `id`, a `classList`, a `parent` reference, and style properties that cascade through the group hierarchy. This makes Ripl's scene graph feel familiar to web developers while giving you full control over how things are drawn and animated.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+
+const circle = createCircle({
+    fill: '#3a86ff',
+    stroke: '#1a56db',
+    lineWidth: 3,
+    cx: context.width / 2,
+    cy: context.height / 2,
+    radius: Math.min(context.width, context.height) / 4,
+});
+
+circle.render(context);
+```
+:::
+
 ## Creating Elements
 
 You don't create raw `Element` instances directly — instead you use factory functions like `createCircle`, `createRect`, or `createText`. Each element accepts an options object with its specific properties (like `cx`/`cy`/`radius` for a circle) plus all the shared base properties:
@@ -15,7 +42,7 @@ You don't create raw `Element` instances directly — instead you use factory fu
 ```ts
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     id: 'my-circle',
@@ -57,7 +84,7 @@ circle.render(context);
 
 ## Hit Testing
 
-Elements support point intersection testing, which powers pointer events in scenes:
+Elements support point intersection testing, which the context uses internally for pointer event delegation:
 
 ```ts
 if (circle.intersectsWith(mouseX, mouseY)) {
@@ -101,7 +128,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!NOTE]
-> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element is inside a [Scene](/docs/core/essentials/scene), because the scene manages DOM event delegation.
+> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing — see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ## Style Inheritance
 
@@ -139,33 +166,6 @@ circle.destroy();
 > [!NOTE]
 > For the full list of properties, methods, and events, see the [Element API Reference](/docs/api/@ripl/core/).
 
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-
-const circle = createCircle({
-    fill: '#3a86ff',
-    stroke: '#1a56db',
-    lineWidth: 3,
-    cx: context.width / 2,
-    cy: context.height / 2,
-    radius: Math.min(context.width, context.height) / 4,
-});
-
-circle.render(context);
-```
-:::
-
 <script lang="ts" setup>
 import {
     useRiplExample,
@@ -173,7 +173,7 @@ import {
 
 import {
     createCircle,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

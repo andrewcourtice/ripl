@@ -20,14 +20,15 @@ import type {
     GetMutableKeys,
 } from '@ripl/utilities';
 
+import {
+    noop,
+} from '@ripl/utilities';
+
 function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
     return (context: Context, value: Context[TKey]) => {
         context[key] = value;
     };
 }
-
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
 
 /** Maps element state properties to their corresponding context setter functions. */
 export const CONTEXT_OPERATIONS = {

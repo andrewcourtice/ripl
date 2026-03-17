@@ -97,21 +97,6 @@ describe('Element', () => {
         expect(typeIsElement(null)).toBe(false);
     });
 
-    test('Should track and untrack events', () => {
-        const el = createElement('rect', {});
-        const trackHandler = vi.fn();
-        const untrackHandler = vi.fn();
-
-        el.on('track', trackHandler);
-        el.on('untrack', untrackHandler);
-
-        const { dispose } = el.on('click', () => {});
-        expect(trackHandler).toHaveBeenCalledTimes(1);
-
-        dispose();
-        expect(untrackHandler).toHaveBeenCalledTimes(1);
-    });
-
     test('Should remove from parent on destroy', () => {
         const el = createElement('rect', {});
         const group = createGroup();

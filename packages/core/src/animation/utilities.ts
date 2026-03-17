@@ -1,4 +1,8 @@
 import {
+    factory,
+} from '../core/factory';
+
+import {
     AnyFunction,
 } from '@ripl/utilities';
 
@@ -8,10 +12,10 @@ export function createFrameBuffer() {
 
     return (callback: AnyFunction) => {
         if (handle) {
-            cancelAnimationFrame(handle);
+            factory.cancelAnimationFrame(handle);
             handle = undefined;
         }
 
-        handle = requestAnimationFrame(callback);
+        handle = factory.requestAnimationFrame(callback);
     };
 }

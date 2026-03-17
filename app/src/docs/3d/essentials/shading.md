@@ -9,6 +9,57 @@ The `@ripl/3d` package includes flat shading utilities that compute face brightn
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
+## Demo
+
+Two cubes rendered with different light directions to illustrate how shading changes.
+
+:::tabs
+== Demo
+<ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
+== Code
+```ts
+import {
+    createCamera,
+    createContext,
+    createCube,
+} from '@ripl/3d';
+
+const context = createContext('.mount-element');
+context.lightDirection = [-1, -1, -1];
+
+const cubeLeft = createCube({
+    x: -1.5,
+    size: 1.5,
+    fill: '#4488ff',
+});
+const cubeRight = createCube({
+    x: 1.5,
+    size: 1.5,
+    fill: '#ff6644',
+});
+
+// Rotate camera around the scene
+let angle = 0;
+function loop() {
+    angle += 0.005;
+    camera.position = [Math.sin(angle) * 6, 2, Math.cos(angle) * 6];
+    camera.flush();
+
+    context.batch(() => {
+        context.lightDirection = [-1, -1, -1];
+        cubeLeft.render(context);
+
+        context.layer(() => {
+            context.lightDirection = [1, -1, 1];
+            cubeRight.render(context);
+        });
+    });
+    requestAnimationFrame(loop);
+}
+loop();
+```
+:::
+
 ## Functions
 
 ### computeFaceNormal
@@ -64,57 +115,6 @@ const color = shadeFaceColor('rgb(200, 100, 50)', 0.5);
 ```ts
 context.lightDirection = [1, -1, -1]; // top-right light
 ```
-
-## Demo
-
-Two cubes rendered with different light directions to illustrate how shading changes.
-
-:::tabs
-== Demo
-<ripl-3d-example @context-changed="contextChanged"></ripl-3d-example>
-== Code
-```ts
-import {
-    createCamera,
-    createContext,
-    createCube,
-} from '@ripl/3d';
-
-const context = createContext('.mount-element');
-context.lightDirection = [-1, -1, -1];
-
-const cubeLeft = createCube({
-    x: -1.5,
-    size: 1.5,
-    fill: '#4488ff',
-});
-const cubeRight = createCube({
-    x: 1.5,
-    size: 1.5,
-    fill: '#ff6644',
-});
-
-// Rotate camera around the scene
-let angle = 0;
-function loop() {
-    angle += 0.005;
-    camera.position = [Math.sin(angle) * 6, 2, Math.cos(angle) * 6];
-    camera.flush();
-
-    context.batch(() => {
-        context.lightDirection = [-1, -1, -1];
-        cubeLeft.render(context);
-
-        context.layer(() => {
-            context.lightDirection = [1, -1, 1];
-            cubeRight.render(context);
-        });
-    });
-    requestAnimationFrame(loop);
-}
-loop();
-```
-:::
 
 <script lang="ts" setup>
 import {

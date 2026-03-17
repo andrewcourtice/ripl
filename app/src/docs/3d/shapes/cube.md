@@ -9,41 +9,6 @@ The **Cube** is a 3D box primitive with equal-length sides. It supports position
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
-## Usage
-
-```ts
-import {
-    createCube,
-} from '@ripl/3d';
-
-const cube = createCube({
-    x: 0,
-    y: 0,
-    z: 0,
-    size: 2,
-    fill: '#4488ff',
-});
-```
-
-## Properties
-
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`size`** — Side length of the cube
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-- **`fill`** — Base fill color (shading is applied per-face)
-
-## Type Guard
-
-```ts
-import {
-    elementIsCube,
-} from '@ripl/3d';
-
-if (elementIsCube(element)) {
-    console.log(element.size);
-}
-```
-
 ## Demo
 
 :::tabs
@@ -81,6 +46,41 @@ function loop() {
 loop();
 ```
 :::
+
+## Usage
+
+```ts
+import {
+    createCube,
+} from '@ripl/3d';
+
+const cube = createCube({
+    x: 0,
+    y: 0,
+    z: 0,
+    size: 2,
+    fill: '#4488ff',
+});
+```
+
+## Properties
+
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`size`** — Side length of the cube
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`fill`** — Base fill color (shading is applied per-face)
+
+## Type Guard
+
+```ts
+import {
+    elementIsCube,
+} from '@ripl/3d';
+
+if (elementIsCube(element)) {
+    console.log(element.size);
+}
+```
 
 <script lang="ts" setup>
 import {

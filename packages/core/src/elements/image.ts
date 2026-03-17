@@ -1,7 +1,3 @@
-import type {
-    Context,
-} from '../context';
-
 import {
     Element,
 } from '../core';
@@ -11,6 +7,14 @@ import type {
     ElementOptions,
 } from '../core';
 
+import type {
+    Context,
+} from '../context';
+
+import {
+    factory,
+} from '../core/factory';
+
 import {
     Box,
 } from '../math';
@@ -18,6 +22,10 @@ import {
 import type {
     InterpolatorFactory,
 } from '../interpolators';
+
+import {
+    functionCache,
+} from '@ripl/utilities';
 
 /** State interface for an image element, defining position, optional size, and image source. */
 export interface ImageState extends BaseElementState {
@@ -28,27 +36,19 @@ export interface ImageState extends BaseElementState {
     height?: number;
 }
 
-let refCanvas: HTMLCanvasElement | undefined;
-let refContext: CanvasRenderingContext2D | null;
+const getRefCanvas = functionCache(() => {
+    const canvas = factory.createElement('canvas') as HTMLCanvasElement;
+    const context = canvas.getContext('2d');
 
-function getRefCanvas(): {
-    canvas: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-} | undefined {
-    if (!refCanvas) {
-        refCanvas = document.createElement('canvas');
-        refContext = refCanvas.getContext('2d');
-    }
-
-    if (!refContext) {
+    if (!context) {
         return undefined;
     }
 
     return {
-        canvas: refCanvas,
-        context: refContext,
+        canvas,
+        context,
     };
-}
+});
 
 function getSourceSize(image: CanvasImageSource): [number, number] {
     if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {

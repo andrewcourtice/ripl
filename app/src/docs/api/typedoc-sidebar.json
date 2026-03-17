@@ -13,6 +13,10 @@
             "link": "/docs/api/@ripl/3d/classes/Camera.md"
           },
           {
+            "text": "CanvasContext3D",
+            "link": "/docs/api/@ripl/3d/classes/CanvasContext3D.md"
+          },
+          {
             "text": "Cone",
             "link": "/docs/api/@ripl/3d/classes/Cone.md"
           },
@@ -67,6 +71,10 @@
             "link": "/docs/api/@ripl/3d/interfaces/ConeState.md"
           },
           {
+            "text": "Context3DMeta",
+            "link": "/docs/api/@ripl/3d/interfaces/Context3DMeta.md"
+          },
+          {
             "text": "Context3DOptions",
             "link": "/docs/api/@ripl/3d/interfaces/Context3DOptions.md"
           },
@@ -81,6 +89,10 @@
           {
             "text": "Face3D",
             "link": "/docs/api/@ripl/3d/interfaces/Face3D.md"
+          },
+          {
+            "text": "MeshSubmission",
+            "link": "/docs/api/@ripl/3d/interfaces/MeshSubmission.md"
           },
           {
             "text": "PlaneState",
@@ -127,6 +139,10 @@
           {
             "text": "ProjectedPoint",
             "link": "/docs/api/@ripl/3d/type-aliases/ProjectedPoint.md"
+          },
+          {
+            "text": "RenderStrategy",
+            "link": "/docs/api/@ripl/3d/type-aliases/RenderStrategy.md"
           },
           {
             "text": "Shape3DOptions",
@@ -339,6 +355,10 @@
         ]
       }
     ]
+  },
+  {
+    "text": "@ripl/canvas",
+    "link": "/docs/api/@ripl/canvas/"
   },
   {
     "text": "@ripl/charts",
@@ -1028,14 +1048,6 @@
             "link": "/docs/api/@ripl/core/classes/Box.md"
           },
           {
-            "text": "CanvasContext",
-            "link": "/docs/api/@ripl/core/classes/CanvasContext.md"
-          },
-          {
-            "text": "CanvasPath",
-            "link": "/docs/api/@ripl/core/classes/CanvasPath.md"
-          },
-          {
             "text": "Circle",
             "link": "/docs/api/@ripl/core/classes/Circle.md"
           },
@@ -1192,6 +1204,10 @@
           {
             "text": "EllipseState",
             "link": "/docs/api/@ripl/core/interfaces/EllipseState.md"
+          },
+          {
+            "text": "FactoryOptions",
+            "link": "/docs/api/@ripl/core/interfaces/FactoryOptions.md"
           },
           {
             "text": "GradientColorStop",
@@ -1530,6 +1546,10 @@
           {
             "text": "TransitionDirection",
             "link": "/docs/api/@ripl/core/type-aliases/TransitionDirection.md"
+          },
+          {
+            "text": "TransitionLoopMode",
+            "link": "/docs/api/@ripl/core/type-aliases/TransitionLoopMode.md"
           }
         ]
       },
@@ -1594,8 +1614,8 @@
             "link": "/docs/api/@ripl/core/variables/easeOutQuint.md"
           },
           {
-            "text": "getRefContext",
-            "link": "/docs/api/@ripl/core/variables/getRefContext.md"
+            "text": "factory",
+            "link": "/docs/api/@ripl/core/variables/factory.md"
           },
           {
             "text": "interpolateAny",
@@ -1638,10 +1658,6 @@
             "link": "/docs/api/@ripl/core/variables/interpolateTransformOrigin.md"
           },
           {
-            "text": "scaleDPR",
-            "link": "/docs/api/@ripl/core/variables/scaleDPR.md"
-          },
-          {
             "text": "TAU",
             "link": "/docs/api/@ripl/core/variables/TAU.md"
           },
@@ -1682,10 +1698,6 @@
           {
             "text": "createCircle",
             "link": "/docs/api/@ripl/core/functions/createCircle.md"
-          },
-          {
-            "text": "createContext",
-            "link": "/docs/api/@ripl/core/functions/createContext.md"
           },
           {
             "text": "createElement",
@@ -2220,10 +2232,6 @@
           {
             "text": "Disposable",
             "link": "/docs/api/@ripl/utilities/interfaces/Disposable.md"
-          },
-          {
-            "text": "DOMElementResizeEvent",
-            "link": "/docs/api/@ripl/utilities/interfaces/DOMElementResizeEvent.md"
           }
         ]
       },
@@ -2258,18 +2266,6 @@
           {
             "text": "CollectionIteratee",
             "link": "/docs/api/@ripl/utilities/type-aliases/CollectionIteratee.md"
-          },
-          {
-            "text": "DOMElementEventMap",
-            "link": "/docs/api/@ripl/utilities/type-aliases/DOMElementEventMap.md"
-          },
-          {
-            "text": "DOMElementResizeHandler",
-            "link": "/docs/api/@ripl/utilities/type-aliases/DOMElementResizeHandler.md"
-          },
-          {
-            "text": "DOMEventHandler",
-            "link": "/docs/api/@ripl/utilities/type-aliases/DOMEventHandler.md"
           },
           {
             "text": "GetMutableKeys",
@@ -2326,16 +2322,6 @@
         ]
       },
       {
-        "text": "Variables",
-        "collapsed": true,
-        "items": [
-          {
-            "text": "hasWindow",
-            "link": "/docs/api/@ripl/utilities/variables/hasWindow.md"
-          }
-        ]
-      },
-      {
         "text": "Functions",
         "collapsed": true,
         "items": [
@@ -2388,6 +2374,10 @@
             "link": "/docs/api/@ripl/utilities/functions/functionProduce.md"
           },
           {
+            "text": "noop",
+            "link": "/docs/api/@ripl/utilities/functions/noop.md"
+          },
+          {
             "text": "numberGCD",
             "link": "/docs/api/@ripl/utilities/functions/numberGCD.md"
           },
@@ -2414,14 +2404,6 @@
           {
             "text": "objectReduce",
             "link": "/docs/api/@ripl/utilities/functions/objectReduce.md"
-          },
-          {
-            "text": "onDOMElementResize",
-            "link": "/docs/api/@ripl/utilities/functions/onDOMElementResize.md"
-          },
-          {
-            "text": "onDOMEvent",
-            "link": "/docs/api/@ripl/utilities/functions/onDOMEvent.md"
           },
           {
             "text": "predicateIdentity",
@@ -2498,5 +2480,9 @@
         ]
       }
     ]
+  },
+  {
+    "text": "@ripl/web",
+    "link": "/docs/api/@ripl/web/"
   }
 ]

@@ -1,13 +1,13 @@
 # About
 
-Ripl (pronounced *ripple*) is a library that provides a unified API for 2D graphics rendering in the browser. Write your drawing code once and render it to **Canvas**, **SVG**, or any custom context — switching between them is a single line change.
+Ripl (pronounced *ripple*) is a library that provides a unified API for 2D graphics rendering. Write your drawing code once and render it to **Canvas**, **SVG**, **Terminal**, or any custom context — switching between them is a single line change.
 
 While Ripl has a focus on interactive data visualization, it is a general-purpose 2D drawing library that can be used for any kind of graphics work.
 
 ## Features
 
 - **Simple** — Ripl's API is designed to feel familiar. If you've worked with the DOM or CSS, you'll feel right at home with concepts like element hierarchy, style inheritance, event propagation, and CSS-like querying.
-- **Context Agnostic** — Write your drawing code once and render to Canvas, SVG, or any custom rendering context. Switching contexts is as simple as changing one import.
+- **Context Agnostic** — Write your drawing code once and render to Canvas, SVG, Terminal, or any custom rendering context. Switching contexts is as simple as changing one import.
 - **Modular** — Ripl is fully tree-shakable. Only ship the features you actually use. Core primitives, SVG support, and charts are all separate packages.
 - **Performant** — Scenes hoist elements into a flat render buffer for O(n) rendering. The renderer uses `requestAnimationFrame` with automatic start/stop to avoid unnecessary work.
 - **Animated** — Built-in interpolation for numbers, colors, gradients, points, and more. Supports CSS-like keyframe animations, custom easing functions, and awaitable transitions.

@@ -8,6 +8,49 @@ A **Group** is a container for organizing elements into a hierarchy — much lik
 
 Groups are the backbone of Ripl's scene graph. By nesting elements inside groups, you can apply shared styles (which cascade to children like CSS), manage collections of elements as a unit, and use CSS-like selectors to find elements deep in the tree. Groups themselves don't draw anything — they orchestrate their children.
 
+## Demo
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged"></ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    createGroup,
+    createRect,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+
+const group = createGroup({
+    fill: '#3a86ff',
+    children: [
+        createCircle({
+            cx: 120,
+            cy: 150,
+            radius: 50,
+        }),
+        createCircle({
+            cx: 200,
+            cy: 150,
+            radius: 35,
+            fill: '#ff006e',
+        }),
+        createRect({
+            x: 260,
+            y: 110,
+            width: 100,
+            height: 80,
+        }),
+    ],
+});
+
+group.render(context);
+```
+:::
+
 ## Creating a Group
 
 ```ts
@@ -15,7 +58,7 @@ import {
     createCircle,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const circle = createCircle({
     cx: 100,
@@ -202,49 +245,6 @@ Groups themselves are **abstract** — they don't draw anything directly. They s
 > [!NOTE]
 > For the full list of Group properties and methods, see the [Group API Reference](/docs/api/@ripl/core/).
 
-## Demo
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged"></ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-    createGroup,
-    createRect,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-
-const group = createGroup({
-    fill: '#3a86ff',
-    children: [
-        createCircle({
-            cx: 120,
-            cy: 150,
-            radius: 50,
-        }),
-        createCircle({
-            cx: 200,
-            cy: 150,
-            radius: 35,
-            fill: '#ff006e',
-        }),
-        createRect({
-            x: 260,
-            y: 110,
-            width: 100,
-            height: 80,
-        }),
-    ],
-});
-
-group.render(context);
-```
-:::
-
 <script lang="ts" setup>
 import {
     useRiplExample,
@@ -255,7 +255,7 @@ import {
     createGroup,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const {
     contextChanged

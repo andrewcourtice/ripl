@@ -1,2 +1,4 @@
-export * from './_base';
-export * from './canvas';
+export * from './path';
+export * from './text';
+export * from './context';
+export * from './types';

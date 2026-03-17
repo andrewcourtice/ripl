@@ -41,7 +41,7 @@ import {
 
 import {
     scaleContinuous,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     stringUniqueId,

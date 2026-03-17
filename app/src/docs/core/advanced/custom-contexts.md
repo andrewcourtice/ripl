@@ -30,11 +30,11 @@ import {
     Context,
     ContextPath,
     ContextText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     BaseContextState,
-} from '@ripl/core';
+} from '@ripl/web';
 
 class MyContext extends Context {
 

@@ -9,31 +9,6 @@ The **Cylinder** is a 3D primitive with configurable top and bottom radii — se
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
-## Usage
-
-```ts
-import {
-    createCylinder,
-} from '@ripl/3d';
-
-const cylinder = createCylinder({
-    radiusTop: 1,
-    radiusBottom: 1,
-    height: 2,
-    segments: 16,
-    fill: '#cc8844',
-});
-```
-
-## Properties
-
-- **`radiusTop`** — Radius of the top cap
-- **`radiusBottom`** — Radius of the bottom cap
-- **`height`** — Height of the cylinder
-- **`segments`** — Number of radial segments (default `16`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-
 ## Demo
 
 :::tabs
@@ -73,6 +48,31 @@ function loop() {
 loop();
 ```
 :::
+
+## Usage
+
+```ts
+import {
+    createCylinder,
+} from '@ripl/3d';
+
+const cylinder = createCylinder({
+    radiusTop: 1,
+    radiusBottom: 1,
+    height: 2,
+    segments: 16,
+    fill: '#cc8844',
+});
+```
+
+## Properties
+
+- **`radiusTop`** — Radius of the top cap
+- **`radiusBottom`** — Radius of the bottom cap
+- **`height`** — Height of the cylinder
+- **`segments`** — Number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

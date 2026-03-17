@@ -6,6 +6,55 @@ outline: "deep"
 
 A **clip path** turns a shape into a clipping mask — instead of being filled or stroked, the shape defines a visible region. Any sibling elements rendered after the clip shape (within the same group) are only visible where they overlap with the clip region.
 
+## Demo
+
+The demo below shows a circle clip path masking a gradient-filled rectangle and a pattern of lines. Only the portions inside the circle are visible. Use the slider to adjust the clip radius.
+
+:::tabs
+== Demo
+<ripl-example @context-changed="contextChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>Clip Radius</span>
+            <RiplInputRange v-model="clipRadiusPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+== Code
+```ts
+import {
+    createCircle,
+    createContext,
+    createGroup,
+    createLine,
+    createRect,
+} from '@ripl/web';
+
+const context = createContext('.mount-element');
+const cx = context.width / 2;
+const cy = context.height / 2;
+const r = Math.min(context.width, context.height) / 3;
+
+const group = createGroup({
+    children: [
+        createCircle({ clip: true,
+            cx,
+            cy,
+            radius: r }),
+        createRect({
+            fill: '#3a86ff',
+            x: cx - r,
+            y: cy - r,
+            width: r * 2,
+            height: r * 2,
+        }),
+    ],
+});
+
+group.render(context);
+```
+:::
+
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
 
@@ -18,7 +67,7 @@ import {
     createCircle,
     createGroup,
     createRect,
-} from '@ripl/core';
+} from '@ripl/web';
 
 const group = createGroup({
     children: [
@@ -80,55 +129,6 @@ Clip paths work identically with both the **Canvas** and **SVG** contexts:
 - **Canvas**: Uses the native `CanvasRenderingContext2D.clip()` method
 - **SVG**: Creates a `<clipPath>` element in `<defs>` and applies `clip-path="url(#...)"` to subsequent sibling elements
 
-## Demo
-
-The demo below shows a circle clip path masking a gradient-filled rectangle and a pattern of lines. Only the portions inside the circle are visible. Use the slider to adjust the clip radius.
-
-:::tabs
-== Demo
-<ripl-example @context-changed="contextChanged">
-    <template #footer>
-        <RiplControlGroup>
-            <span>Clip Radius</span>
-            <RiplInputRange v-model="clipRadiusPct" :min="10" :max="100" :step="1" @update:model-value="redraw" />
-        </RiplControlGroup>
-    </template>
-</ripl-example>
-== Code
-```ts
-import {
-    createCircle,
-    createContext,
-    createGroup,
-    createLine,
-    createRect,
-} from '@ripl/core';
-
-const context = createContext('.mount-element');
-const cx = context.width / 2;
-const cy = context.height / 2;
-const r = Math.min(context.width, context.height) / 3;
-
-const group = createGroup({
-    children: [
-        createCircle({ clip: true,
-            cx,
-            cy,
-            radius: r }),
-        createRect({
-            fill: '#3a86ff',
-            x: cx - r,
-            y: cy - r,
-            width: r * 2,
-            height: r * 2,
-        }),
-    ],
-});
-
-group.render(context);
-```
-:::
-
 <script lang="ts" setup>
 import {
     useRiplExample,
@@ -140,11 +140,11 @@ import {
     createLine,
     createRect,
     createText,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import type {
     Context,
-} from '@ripl/core';
+} from '@ripl/web';
 
 import {
     ref,
