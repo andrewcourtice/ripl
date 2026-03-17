@@ -33,6 +33,7 @@ export interface SceneEventMap extends ElementEventMap {
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
     renderOnResize?: boolean;
+    renderOnUpdate?: boolean;
 }
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
@@ -55,6 +56,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
             renderOnResize = true,
+            // renderOnUpdate = true,
             ...groupOptions
         } = options || {};
 
@@ -93,9 +95,21 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
 
         this.on('graph', () => requestFrame(() => {
-            this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
-            context.invalidateTrackedElements('');
+            this.rebuffer();
+            context.invalidateTrackedElements();
         }));
+
+        // this.on('updated', ({ data }) => requestFrame(() => {
+        //     if (data.key === 'zIndex') {
+        //         this.rebuffer();
+        //     }
+
+        //     this.render();
+        // }));
+    }
+
+    private rebuffer() {
+        this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
     }
 
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */
@@ -111,10 +125,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
     /** Clears the context and renders the entire element buffer in z-index order. */
     public render(): void {
-        this.context.clear();
-        this.context.markRenderStart();
-        this.buffer.forEach(element => element.render(this.context));
-        this.context.markRenderEnd();
+        this.context.batch(() => {
+            this.buffer.forEach(element => element.render(this.context));
+        });
     }
 
 }

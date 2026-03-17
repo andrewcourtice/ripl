@@ -111,6 +111,29 @@ context.markRenderEnd();
 > [!TIP]
 > When using a Scene or Renderer, you don't need `batch()` — they manage the render lifecycle automatically.
 
+## Interaction
+
+The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the correct Ripl elements automatically.
+
+Interaction is enabled by default. You can disable it via the `interactive` option:
+
+```ts
+const context = createContext('.container', {
+    interactive: false,
+});
+```
+
+The drag threshold (minimum pixel distance before a `dragstart` fires) is also configurable:
+
+```ts
+const context = createContext('.container', {
+    dragThreshold: 5, // default is 3
+});
+```
+
+> [!IMPORTANT]
+> Elements must be rendered to the context (between `markRenderStart()` and `markRenderEnd()`, or via `batch()` / `scene.render()`) for the context to track them for hit testing.
+
 ## Resizing
 
 The context emits a `resize` event whenever its container changes size. Use this to re-render your content responsively:

@@ -182,10 +182,6 @@ export default defineConfig({
                             link: '/docs/core/contexts/svg',
                         },
                         {
-                            text: 'WebGPU (experimental)',
-                            link: '/docs/core/contexts/webgpu',
-                        },
-                        {
                             text: 'Terminal (experimental)',
                             link: '/docs/core/contexts/terminal',
                         },
@@ -314,16 +310,25 @@ export default defineConfig({
                     text: 'Essentials',
                     items: [
                         {
-                            text: 'Context3D',
-                            link: '/docs/3d/essentials/context',
-                        },
-                        {
                             text: 'Camera',
                             link: '/docs/3d/essentials/camera',
                         },
                         {
                             text: 'Shading',
                             link: '/docs/3d/essentials/shading',
+                        },
+                    ],
+                },
+                {
+                    text: 'Contexts',
+                    items: [
+                        {
+                            text: 'Canvas (Context3D)',
+                            link: '/docs/3d/contexts/canvas',
+                        },
+                        {
+                            text: 'WebGPU (WebGPUContext3D)',
+                            link: '/docs/3d/contexts/webgpu',
                         },
                     ],
                 },
@@ -353,31 +358,6 @@ export default defineConfig({
                         {
                             text: 'Torus',
                             link: '/docs/3d/shapes/torus',
-                        },
-                    ],
-                },
-            ],
-
-            '/docs/webgpu': [
-                {
-                    text: 'Getting Started',
-                    items: [
-                        {
-                            text: 'Introduction',
-                            link: '/docs/webgpu/',
-                        },
-                    ],
-                },
-                {
-                    text: 'Essentials',
-                    items: [
-                        {
-                            text: 'WebGPU Context',
-                            link: '/docs/webgpu/essentials/context',
-                        },
-                        {
-                            text: 'Migration Guide',
-                            link: '/docs/webgpu/essentials/migration',
                         },
                     ],
                 },

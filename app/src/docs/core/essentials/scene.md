@@ -4,9 +4,9 @@ outline: "deep"
 
 # Scene
 
-A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to a [Context](/docs/core/essentials/context) and manages the full rendering lifecycle. It handles clearing, rendering in z-index order, automatic resize re-rendering, and DOM event delegation for pointer interactivity.
+A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to a [Context](/docs/core/essentials/context) and manages the full rendering lifecycle. It handles clearing, rendering in z-index order, and automatic resize re-rendering.
 
-Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear, render, and handle events, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering and delegates pointer events from the DOM to individual elements through hit testing.
+Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear and render, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering. Pointer interactivity (hit testing and event delegation) is handled by the [Context](/docs/core/essentials/context) itself — see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ## Demo
 
@@ -100,11 +100,11 @@ When elements are added to or removed from the scene (or any nested group), the 
 
 ## Events
 
-The scene extends the Group event system with DOM event delegation. It listens for mouse events on the context's DOM element and dispatches them to the appropriate Ripl elements based on hit testing.
+The scene extends the Group event system. Pointer interactivity — DOM event listening, hit testing, and event delegation — is handled by the [Context](/docs/core/essentials/context#interaction). The scene's role is to render elements so the context knows which elements are on screen for hit testing.
 
-### Supported Pointer Events
+### Pointer Events
 
-The scene delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to individual elements based on hit testing.
+Because the context handles interaction automatically, pointer events work on any element that has been rendered to the context:
 
 ```ts
 const circle = createCircle({
@@ -120,7 +120,7 @@ const scene = createScene('.container', {
 
 scene.render();
 
-// Now pointer events work on the circle
+// Pointer events work because the context tracks rendered elements
 circle.on('click', (event) => {
     console.log('Clicked!', event.data.x, event.data.y);
 });
@@ -138,10 +138,10 @@ circle.on('mouseleave', () => {
 
 ### Scene-Level Events
 
-The scene also emits `resize`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events at the scene level.
+The scene emits a `resize` event when the context resizes. Context-level pointer events (`mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) are emitted on the context itself.
 
 > [!NOTE]
-> Pointer events on individual elements only work when those elements are inside a Scene. The scene is responsible for DOM event delegation and hit testing.
+> Pointer events require elements to be rendered to the context so it can track them for hit testing. The scene handles this automatically when you call `scene.render()`.
 
 ## Automatic Resize
 

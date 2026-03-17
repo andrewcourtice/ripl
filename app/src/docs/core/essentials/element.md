@@ -84,7 +84,7 @@ circle.render(context);
 
 ## Hit Testing
 
-Elements support point intersection testing, which powers pointer events in scenes:
+Elements support point intersection testing, which the context uses internally for pointer event delegation:
 
 ```ts
 if (circle.intersectsWith(mouseX, mouseY)) {
@@ -128,7 +128,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!NOTE]
-> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element is inside a [Scene](/docs/core/essentials/scene), because the scene manages DOM event delegation.
+> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing — see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ## Style Inheritance
 

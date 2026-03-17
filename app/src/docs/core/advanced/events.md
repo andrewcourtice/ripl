@@ -116,11 +116,11 @@ circle.on('click', (event) => {
 
 ## Pointer Events
 
-When elements are inside a [Scene](/docs/core/essentials/scene), the scene automatically delegates DOM pointer events to the correct elements based on hit testing.
+When elements are rendered to a [Context](/docs/core/essentials/context), the context automatically delegates DOM pointer events to the correct elements based on hit testing. A [Scene](/docs/core/essentials/scene) manages the render lifecycle, but the context itself owns interaction.
 
 ### Tracked Events
 
-The scene tracks `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
+The context tracks `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.
 
 ```ts
 const scene = createScene('.container', {
@@ -141,7 +141,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!IMPORTANT]
-> Pointer events only work when elements are inside a Scene. The scene handles DOM event listening and hit testing.
+> Pointer events only work when elements have been rendered to a context. The context handles DOM event listening and hit testing — see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ### Drag Events
 

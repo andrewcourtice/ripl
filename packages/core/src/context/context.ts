@@ -414,8 +414,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
-    public invalidateTrackedElements(event: string): void {
-        this.getTrackedElements.cache.clear();
+    public invalidateTrackedElements(event?: string): void {
+        if (event) {
+            this.getTrackedElements.cache.delete(event);
+        } else {
+            this.getTrackedElements.cache.clear();
+        }
     }
 
     /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */

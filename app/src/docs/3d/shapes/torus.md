@@ -9,31 +9,6 @@ The **Torus** is a donut-shaped 3D primitive with configurable major radius, tub
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
-## Usage
-
-```ts
-import {
-    createTorus,
-} from '@ripl/3d';
-
-const torus = createTorus({
-    radius: 2,
-    tube: 0.5,
-    radialSegments: 12,
-    tubularSegments: 24,
-    fill: '#8844cc',
-});
-```
-
-## Properties
-
-- **`radius`** — Distance from center of torus to center of tube
-- **`tube`** — Radius of the tube
-- **`radialSegments`** — Number of segments around the tube cross-section (default `12`)
-- **`tubularSegments`** — Number of segments around the torus ring (default `24`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-
 ## Demo
 
 :::tabs
@@ -72,6 +47,31 @@ function loop() {
 loop();
 ```
 :::
+
+## Usage
+
+```ts
+import {
+    createTorus,
+} from '@ripl/3d';
+
+const torus = createTorus({
+    radius: 2,
+    tube: 0.5,
+    radialSegments: 12,
+    tubularSegments: 24,
+    fill: '#8844cc',
+});
+```
+
+## Properties
+
+- **`radius`** — Distance from center of torus to center of tube
+- **`tube`** — Radius of the tube
+- **`radialSegments`** — Number of segments around the tube cross-section (default `12`)
+- **`tubularSegments`** — Number of segments around the torus ring (default `24`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

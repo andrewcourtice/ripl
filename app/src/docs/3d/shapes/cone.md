@@ -9,29 +9,6 @@ The **Cone** is a 3D primitive with a pointed apex and circular base. Segment co
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
 
-## Usage
-
-```ts
-import {
-    createCone,
-} from '@ripl/3d';
-
-const cone = createCone({
-    radius: 1,
-    height: 2,
-    segments: 16,
-    fill: '#cc4444',
-});
-```
-
-## Properties
-
-- **`radius`** — Base radius
-- **`height`** — Height from base to apex
-- **`segments`** — Number of radial segments (default `16`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-
 ## Demo
 
 :::tabs
@@ -70,6 +47,29 @@ function loop() {
 loop();
 ```
 :::
+
+## Usage
+
+```ts
+import {
+    createCone,
+} from '@ripl/3d';
+
+const cone = createCone({
+    radius: 1,
+    height: 2,
+    segments: 16,
+    fill: '#cc4444',
+});
+```
+
+## Properties
+
+- **`radius`** — Base radius
+- **`height`** — Height from base to apex
+- **`segments`** — Number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {
