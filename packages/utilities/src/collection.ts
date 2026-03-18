@@ -161,6 +161,11 @@ export function arrayDifference<TLeft, TRight = TLeft>(leftInput: TLeft[], right
     return arrayFilterByMatch(leftInput, rightInput, predicate, false);
 }
 
+/** Returns a new array with duplicate values removed, preserving insertion order. */
+export function arrayDedupe<TValue>(input: TValue[]): TValue[] {
+    return [...new Set(input)];
+}
+
 /** Iterates over the enumerable properties of an object, invoking the iteratee for each key-value pair. */
 export function objectForEach<TSource extends IterableObject>(input: TSource, iteratee: ObjectIteratee<keyof TSource, TSource[keyof TSource]>): void {
     for (const key in input) {

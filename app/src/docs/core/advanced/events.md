@@ -118,6 +118,10 @@ circle.on('click', (event) => {
 
 When elements are rendered to a [Context](/docs/core/essentials/context), the context automatically delegates DOM pointer events to the correct elements based on hit testing. A [Scene](/docs/core/essentials/scene) manages the render lifecycle, but the context itself owns interaction.
 
+Following browser DOM behavior, pointer events target the **topmost element** (highest `zIndex`) at the cursor position. If overlapping elements exist, only the frontmost one receives the event — lower elements are occluded. The event then [bubbles](#event-bubbling) up through the parent hierarchy as usual.
+
+Elements with `pointerEvents` set to `'none'` are transparent to hit testing, allowing events to pass through to the next element below.
+
 ### Tracked Events
 
 The context tracks `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events automatically.

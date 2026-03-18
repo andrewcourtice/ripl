@@ -121,8 +121,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         const hitElements = this.hitTest(['dragstart', 'drag', 'dragend'], x, y);
 
         if (hitElements.length > 0) {
-            this.sortByZIndex(hitElements);
-
             state.dragElement = hitElements[0];
             state.dragStartX = rx;
             state.dragStartY = ry;
@@ -194,12 +192,15 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         const y = this.scaleY(ry);
 
         const hitElements = this.hitTest(['mousemove', 'mouseenter', 'mouseleave'], x, y);
+        const topmost = hitElements.length > 0 ? [hitElements[0]] : [];
 
         const {
             left: entries,
             inner: updates,
             right: exits,
-        } = arrayJoin(hitElements, [...this.activeElements], (hitElement, activeElement) => hitElement === activeElement);
+        } = arrayJoin(topmost, [...this.activeElements], (hitElement, activeElement) => {
+            return hitElement === activeElement;
+        });
 
         entries.forEach(element => {
             this.activeElements.add(element);
@@ -251,8 +252,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         const hitElements = this.hitTest(['click'], x, y);
 
         if (hitElements.length > 0) {
-            this.sortByZIndex(hitElements);
-
             hitElements[0].emit('click', {
                 x,
                 y,

@@ -113,7 +113,7 @@ context.markRenderEnd();
 
 ## Interaction
 
-The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the correct Ripl elements automatically.
+The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior — when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
 
 Interaction is enabled by default. You can disable it via the `interactive` option:
 

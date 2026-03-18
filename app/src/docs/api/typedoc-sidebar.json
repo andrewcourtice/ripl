@@ -2326,6 +2326,10 @@
         "collapsed": true,
         "items": [
           {
+            "text": "arrayDedupe",
+            "link": "/docs/api/@ripl/utilities/functions/arrayDedupe.md"
+          },
+          {
             "text": "arrayDifference",
             "link": "/docs/api/@ripl/utilities/functions/arrayDifference.md"
           },

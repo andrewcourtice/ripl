@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+    arrayDedupe,
     arrayDifference,
     arrayGroup,
     arrayIntersection,
@@ -194,6 +195,40 @@ describe('Utilities', () => {
                 const groups = arrayGroup(items, v => v % 2 === 0 ? 'even' : 'odd');
                 expect(groups['even']).toEqual([2, 4]);
                 expect(groups['odd']).toEqual([1, 3, 5]);
+            });
+        });
+
+        describe('arrayDedupe', () => {
+            test('Should remove duplicate primitives', () => {
+                const result = arrayDedupe([1, 2, 3, 2, 1, 4]);
+                expect(result).toEqual([1, 2, 3, 4]);
+            });
+
+            test('Should preserve insertion order', () => {
+                const result = arrayDedupe([5, 3, 5, 1, 3, 1]);
+                expect(result).toEqual([5, 3, 1]);
+            });
+
+            test('Should handle strings', () => {
+                const result = arrayDedupe(['a', 'b', 'a', 'c', 'b']);
+                expect(result).toEqual(['a', 'b', 'c']);
+            });
+
+            test('Should return empty array for empty input', () => {
+                const result = arrayDedupe([]);
+                expect(result).toEqual([]);
+            });
+
+            test('Should return same elements when no duplicates exist', () => {
+                const result = arrayDedupe([1, 2, 3]);
+                expect(result).toEqual([1, 2, 3]);
+            });
+
+            test('Should use reference equality for objects', () => {
+                const obj = { id: 1 };
+                const result = arrayDedupe([obj, { id: 1 }, obj]);
+                expect(result).toHaveLength(2);
+                expect(result[0]).toBe(obj);
             });
         });
 

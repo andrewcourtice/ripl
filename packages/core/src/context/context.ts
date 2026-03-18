@@ -48,6 +48,7 @@ import type {
 } from '../scales';
 
 import {
+    arrayDedupe,
     functionMemoize,
     typeIsNumber,
 } from '@ripl/utilities';
@@ -524,18 +525,19 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return this.renderedElements.filter(element => element.has(event));
     });
 
-    /** Sorts render elements by z-index (highest first) for hit testing priority. */
-    protected sortByZIndex(elements: RenderElement[]): RenderElement[] {
-        return elements.sort((ea, eb) => eb.zIndex - ea.zIndex);
-    }
-
-    /** Tests which rendered elements intersect the given point for the given event types. */
+    /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        const tracked = events.flatMap(event => this.getTrackedElements(event));
+        return arrayDedupe(events.flatMap(event => this.getTrackedElements(event)))
+            .filter(element => element.intersectsWith(x, y, {
+                isPointer: true,
+            }))
+            .sort((ea, eb) => {
+                const zDiff = eb.zIndex - ea.zIndex;
 
-        return tracked.filter(element => element.intersectsWith(x, y, {
-            isPointer: true,
-        }));
+                return zDiff !== 0
+                    ? zDiff
+                    : this.renderedElements.indexOf(eb) - this.renderedElements.indexOf(ea);
+            });
     }
 
     /** Destroys the context and disposes all resources. */

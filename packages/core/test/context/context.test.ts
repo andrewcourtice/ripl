@@ -1126,6 +1126,110 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        function createMockElement(id: string, zIndex: number, events: string[], intersects = true) {
+            const eventSet = new Set(events);
+
+            return {
+                id,
+                abstract: false,
+                pointerEvents: 'all' as const,
+                zIndex,
+                has: vi.fn((event: string) => eventSet.has(event)),
+                intersectsWith: vi.fn(() => intersects),
+                emit: vi.fn(),
+            };
+        }
+
+        function registerElements(ctx: ReturnType<typeof create>, elements: ReturnType<typeof createMockElement>[]) {
+            ctx.markRenderStart();
+
+            for (const element of elements) {
+                ctx.currentRenderElement = element;
+            }
+
+            ctx.markRenderEnd();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (ctx as any).invalidateTrackedElements();
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        function callHitTest(ctx: ReturnType<typeof create>, events: string[], x: number, y: number): any[] {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (ctx as any).hitTest(events, x, y);
+        }
+
+        test('hitTest should return elements sorted by zIndex (highest first)', () => {
+            const ctx = create();
+            const low = createMockElement('low', 1, ['click']);
+            const mid = createMockElement('mid', 5, ['click']);
+            const high = createMockElement('high', 10, ['click']);
+
+            registerElements(ctx, [low, mid, high]);
+
+            const result = callHitTest(ctx, ['click'], 0, 0);
+
+            expect(result.map((el: { id: string }) => el.id)).toEqual(['high', 'mid', 'low']);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should use render order as tiebreaker when zIndex is equal', () => {
+            const ctx = create();
+            const first = createMockElement('first', 0, ['click']);
+            const second = createMockElement('second', 0, ['click']);
+            const third = createMockElement('third', 0, ['click']);
+
+            registerElements(ctx, [first, second, third]);
+
+            const result = callHitTest(ctx, ['click'], 0, 0);
+
+            expect(result.map((el: { id: string }) => el.id)).toEqual(['third', 'second', 'first']);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should deduplicate elements listening to multiple events', () => {
+            const ctx = create();
+            const element = createMockElement('el', 1, ['mouseenter', 'mouseleave', 'mousemove']);
+
+            registerElements(ctx, [element]);
+
+            const result = callHitTest(ctx, ['mouseenter', 'mouseleave', 'mousemove'], 0, 0);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('el');
+
+            ctx.destroy();
+        });
+
+        test('hitTest should exclude elements that do not intersect', () => {
+            const ctx = create();
+            const hit = createMockElement('hit', 5, ['click']);
+            const miss = createMockElement('miss', 10, ['click'], false);
+
+            registerElements(ctx, [hit, miss]);
+
+            const result = callHitTest(ctx, ['click'], 0, 0);
+
+            expect(result).toHaveLength(1);
+            expect(result[0].id).toBe('hit');
+
+            ctx.destroy();
+        });
+
+        test('hitTest should pass isPointer option to intersectsWith', () => {
+            const ctx = create();
+            const element = createMockElement('el', 1, ['click']);
+
+            registerElements(ctx, [element]);
+
+            callHitTest(ctx, ['click'], 10, 20);
+
+            expect(element.intersectsWith).toHaveBeenCalledWith(10, 20, { isPointer: true });
+
+            ctx.destroy();
+        });
+
     });
 
 });

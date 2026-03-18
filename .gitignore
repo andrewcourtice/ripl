@@ -28,7 +28,7 @@ yarn-error.log*
 # macOS-specific files
 .DS_Store
 
-.tsbuildinfo
+tsconfig.tsbuildinfo
 
 app/.vitepress/cache/
 app/src/.vitepress/cache/
