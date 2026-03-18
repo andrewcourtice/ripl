@@ -1,6 +1,6 @@
 {
     "name": "@ripl/node",
-    "version": "1.0.0-beta.0",
+    "version": "1.0.0-beta.1",
     "description": "Node.js runtime bindings for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,9 +28,9 @@
         "build": "tsup"
     },
     "dependencies": {
-        "@ripl/core": "1.0.0-beta.0",
-        "@ripl/terminal": "1.0.0-beta.0",
-        "@ripl/utilities": "1.0.0-beta.0"
+        "@ripl/core": "^1.0.0-beta.1",
+        "@ripl/terminal": "^1.0.0-beta.1",
+        "@ripl/utilities": "^1.0.0-beta.1"
     },
     "devDependencies": {
         "@types/node": "^22.19.15"

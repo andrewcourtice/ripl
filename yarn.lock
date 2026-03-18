@@ -1992,81 +1992,163 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/3d@npm:1.0.0-beta.0, @ripl/3d@workspace:packages/3d":
+"@ripl/3d@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/3d@npm:1.0.0-beta.0"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/3b5ff6df52c1b4c290376e4293c12c2df975069425c979058acc61306da61a4473102316ae7739c86d2c8824d8bb328a6eed532b56c4fd01d2da74014f693e07
+  languageName: node
+  linkType: hard
+
+"@ripl/3d@npm:^1.0.0-beta.1, @ripl/3d@workspace:packages/3d":
   version: 0.0.0-use.local
   resolution: "@ripl/3d@workspace:packages/3d"
   dependencies:
-    "@ripl/canvas": "npm:1.0.0-beta.0"
-    "@ripl/core": "npm:1.0.0-beta.0"
-    "@ripl/dom": "npm:1.0.0-beta.0"
-    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/canvas": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/canvas@npm:1.0.0-beta.0, @ripl/canvas@workspace:packages/canvas":
+"@ripl/canvas@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/canvas@npm:1.0.0-beta.0"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/dom": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/37479712e8bf05b4713d3e437fc3ccfc2f9436bb20cb7796671a8a20ca3a13ec1e522e58eb577bb0e97923004dccfc6fe4bc827cfd6e4512da9c489e30cd6dac
+  languageName: node
+  linkType: hard
+
+"@ripl/canvas@npm:^1.0.0-beta.1, @ripl/canvas@workspace:packages/canvas":
   version: 0.0.0-use.local
   resolution: "@ripl/canvas@workspace:packages/canvas"
   dependencies:
-    "@ripl/core": "npm:1.0.0-beta.0"
-    "@ripl/dom": "npm:1.0.0-beta.0"
-    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/charts@npm:1.0.0-beta.0, @ripl/charts@workspace:packages/charts":
+"@ripl/charts@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/charts@npm:1.0.0-beta.0"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/284423ba9a7bb60c3423d593cab5a9d2ae1777b60cad6275a38b0d37ebd344d557a1a598aba2286d17723ae2dae01986fb387d007a64d14eca4aaca3dd12e420
+  languageName: node
+  linkType: hard
+
+"@ripl/charts@workspace:packages/charts":
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
-    "@ripl/canvas": "npm:1.0.0-beta.0"
-    "@ripl/core": "npm:1.0.0-beta.0"
-    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/canvas": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/core@npm:1.0.0-beta.0, @ripl/core@workspace:packages/core":
+"@ripl/core@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/core@npm:1.0.0-beta.0"
+  dependencies:
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/dca45d32e02a62ecd54f08cd98e1a6cf4953d6f16d956950169fb150436e15b1820c9b30e4f90558c47c82bbf588dc03475038ad246815f24fffcc8aba3e59e0
+  languageName: node
+  linkType: hard
+
+"@ripl/core@npm:^1.0.0-beta.1, @ripl/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@ripl/core@workspace:packages/core"
   dependencies:
-    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/dom@npm:1.0.0-beta.0, @ripl/dom@workspace:packages/dom":
-  version: 0.0.0-use.local
-  resolution: "@ripl/dom@workspace:packages/dom"
+"@ripl/dom@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/dom@npm:1.0.0-beta.0"
   dependencies:
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/ef78b62b119216b579efa9db9d7fe947d6eb7b2e2835973d63bbd344bba0fda5b733f4c4cea64c4a30bfd7b0d706656e78a16808bcc1c140c603d278714a151d
+  languageName: node
+  linkType: hard
+
+"@ripl/dom@npm:^1.0.0-beta.1, @ripl/dom@workspace:packages/dom":
+  version: 0.0.0-use.local
+  resolution: "@ripl/dom@workspace:packages/dom"
+  dependencies:
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/node@npm:1.0.0-beta.0, @ripl/node@workspace:packages/node":
-  version: 0.0.0-use.local
-  resolution: "@ripl/node@workspace:packages/node"
+"@ripl/node@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/node@npm:1.0.0-beta.0"
   dependencies:
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/terminal": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/b139ca743c2cb9dd7da34aedb7d44b17074b78beef3ddce4c89c92ffbd699f6d39301c5d32c72dab074c0265caaaad8fcca3e06d84f7cb88cd71477ef2cdecf0
+  languageName: node
+  linkType: hard
+
+"@ripl/node@workspace:packages/node":
+  version: 0.0.0-use.local
+  resolution: "@ripl/node@workspace:packages/node"
+  dependencies:
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/terminal": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
     "@types/node": "npm:^22.19.15"
   languageName: unknown
   linkType: soft
 
-"@ripl/svg@npm:1.0.0-beta.0, @ripl/svg@workspace:packages/svg":
+"@ripl/svg@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/svg@npm:1.0.0-beta.0"
+  dependencies:
+    "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/vdom": "npm:1.0.0-beta.0"
+  checksum: 10/ad10107165c2db24d46e00c62ffbf6f1553b09c06e0c712d55f191a4d3411d3511d9657b6cb72e644f91fff21fa9440ab8ee05ef8cc85720ce1e18e72fb2fd0e
+  languageName: node
+  linkType: hard
+
+"@ripl/svg@workspace:packages/svg":
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
   dependencies:
-    "@ripl/core": "npm:1.0.0-beta.0"
-    "@ripl/dom": "npm:1.0.0-beta.0"
-    "@ripl/utilities": "npm:1.0.0-beta.0"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/terminal@npm:1.0.0-beta.0, @ripl/terminal@workspace:packages/terminal":
-  version: 0.0.0-use.local
-  resolution: "@ripl/terminal@workspace:packages/terminal"
+"@ripl/terminal@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/terminal@npm:1.0.0-beta.0"
   dependencies:
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/e908baf0e3e9530a893a13e1b818d07450e6f6a37955b5a5b5f5b74d0b4dbd2cf63e003758d3da1bed24dccac6f3feb62d4c2726276455e352cae01acfe68a3a
+  languageName: node
+  linkType: hard
+
+"@ripl/terminal@npm:^1.0.0-beta.1, @ripl/terminal@workspace:packages/terminal":
+  version: 0.0.0-use.local
+  resolution: "@ripl/terminal@workspace:packages/terminal"
+  dependencies:
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
@@ -2078,31 +2160,69 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/utilities@npm:1.0.0-beta.0, @ripl/utilities@workspace:packages/utilities":
+"@ripl/utilities@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/utilities@npm:1.0.0-beta.0"
+  checksum: 10/067ea1e08bb7f829de9426591ac84786ea0959a11e37ae0d449a65f1d696e6b51e294b638c48893da10f4e4ded202685b201fbb0b0f8b82785bbfac522334d5e
+  languageName: node
+  linkType: hard
+
+"@ripl/utilities@npm:^1.0.0-beta.1, @ripl/utilities@workspace:packages/utilities":
   version: 0.0.0-use.local
   resolution: "@ripl/utilities@workspace:packages/utilities"
   languageName: unknown
   linkType: soft
 
-"@ripl/web@npm:1.0.0-beta.0, @ripl/web@workspace:packages/web":
-  version: 0.0.0-use.local
-  resolution: "@ripl/web@workspace:packages/web"
+"@ripl/vdom@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/vdom@npm:1.0.0-beta.0"
+  checksum: 10/10fa601eb4aedf42dfe131052074154e38192179f3b12a77226f13c750cdaa802dfb2c9b66594e35852b80a60af485f0251ddf3d823081647634205a5896c261
+  languageName: node
+  linkType: hard
+
+"@ripl/web@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/web@npm:1.0.0-beta.0"
   dependencies:
     "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/dom": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/fe46976c7c350e01b09bc2eddda6fcac11b2ec00c9e06c42f360882d634d1b90646ce3305e47ab8b6bab231fe2b94c3b23d5516e524eb54caa334d7dd7141fdd
+  languageName: node
+  linkType: hard
+
+"@ripl/web@workspace:packages/web":
+  version: 0.0.0-use.local
+  resolution: "@ripl/web@workspace:packages/web"
+  dependencies:
+    "@ripl/canvas": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 
-"@ripl/webgpu@npm:1.0.0-beta.0, @ripl/webgpu@workspace:packages/webgpu":
-  version: 0.0.0-use.local
-  resolution: "@ripl/webgpu@workspace:packages/webgpu"
+"@ripl/webgpu@npm:1.0.0-beta.0":
+  version: 1.0.0-beta.0
+  resolution: "@ripl/webgpu@npm:1.0.0-beta.0"
   dependencies:
     "@ripl/3d": "npm:1.0.0-beta.0"
     "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
     "@ripl/utilities": "npm:1.0.0-beta.0"
+  checksum: 10/c6fb913ba7b76aea5257c8815b87eaa0af50e92576af4bb031c7c90b8cc125e1306b025a121b31092c2e0dfd20a7c3c82f9587dff29edd1b1a4ba2561145b95a
+  languageName: node
+  linkType: hard
+
+"@ripl/webgpu@workspace:packages/webgpu":
+  version: 0.0.0-use.local
+  resolution: "@ripl/webgpu@workspace:packages/webgpu"
+  dependencies:
+    "@ripl/3d": "npm:^1.0.0-beta.1"
+    "@ripl/canvas": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
 

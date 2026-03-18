@@ -1,6 +1,6 @@
 {
     "name": "@ripl/web",
-    "version": "1.0.0-beta.0",
+    "version": "1.0.0-beta.1",
     "description": "Ripl for the web — re-exports core with Canvas as the default context",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,9 +28,9 @@
         "build": "tsup"
     },
     "dependencies": {
-        "@ripl/canvas": "1.0.0-beta.0",
-        "@ripl/core": "1.0.0-beta.0",
-        "@ripl/dom": "1.0.0-beta.0",
-        "@ripl/utilities": "1.0.0-beta.0"
+        "@ripl/canvas": "^1.0.0-beta.1",
+        "@ripl/core": "^1.0.0-beta.1",
+        "@ripl/dom": "^1.0.0-beta.1",
+        "@ripl/utilities": "^1.0.0-beta.1"
     }
 }
