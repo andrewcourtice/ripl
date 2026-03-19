@@ -7,6 +7,22 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 > [!IMPORTANT]
 > Ripl is currently in beta `1.0.0-beta.0`.
 
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>Spline Polyline</b><br><img src="./assets/polyline.png" width="300" alt="Spline Curve"/></td>
+      <td align="center"><b>3D Sphere</b><br><img src="./assets/sphere.png" width="300" alt="Sphere Rendering"/></td>
+      <td align="center"><b>Multi-Line Graph</b><br><img src="./assets/line-chart.png" width="300" alt="Line Chart Analysis"/></td>
+    </tr>
+    <tr></tr>
+    <tr>
+      <td align="center"><b>Bubble Scatter</b><br><img src="./assets/scatter-chart.png" width="300" alt="Scatter Plot"/></td>
+      <td align="center"><b>Candlestick Chart</b><br><img src="./assets/stock-chart.png" width="300" alt="Stock Market Chart"/></td>
+      <td align="center"><b>Jet Engine Model</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
+    </tr>
+  </table>
+</div>
+
 ## Features
 
 - **Unified rendering API** across Canvas, SVG, and experimental 3D contexts
@@ -31,21 +47,6 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Completely modular and tree-shakable** — only ship the features you use
 - **Strictly typed** in TypeScript
 - **Zero runtime dependencies**
-
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><b>Spline Polyline</b><br><img src="./assets/polyline.png" width="300" alt="Spline Curve"/></td>
-      <td align="center"><b>3D Sphere</b><br><img src="./assets/sphere.png" width="300" alt="Sphere Rendering"/></td>
-      <td align="center"><b>Multi-Line Graph</b><br><img src="./assets/line-chart.png" width="300" alt="Line Chart Analysis"/></td>
-    </tr>
-    <tr>
-      <td align="center"><b>Bubble Scatter</b><br><img src="./assets/scatter-chart.png" width="300" alt="Scatter Plot"/></td>
-      <td align="center"><b>Candlestick Chart</b><br><img src="./assets/stock-chart.png" width="300" alt="Stock Market Chart"/></td>
-      <td align="center"><b>Jet Engine Model</b><br><img src="./assets/jet-engine.png" width="300" alt="3D Jet Engine"/></td>
-    </tr>
-  </table>
-</div>
 
 ## Packages
 
