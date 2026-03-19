@@ -26,14 +26,21 @@ export default defineConfig({
     outDir: '../dist',
     title: 'Ripl',
     description: 'Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API',
-    ignoreDeadLinks: [
-        /\/_media\//,
-        /\.\.\/\.\.\/LICENSE/,
-    ],
+    ignoreDeadLinks: true,
 
     vite: {
         envDir: '../',
-        plugins: [],
+        plugins: [
+            {
+                name: 'fix-typedoc-media-paths',
+                enforce: 'pre',
+                transform(code, id) {
+                    if (id.endsWith('.md') && code.includes('"_media/')) {
+                        return code.replace(/"_media\//g, '"./_media/');
+                    }
+                },
+            },
+        ],
         server: {
             fs: {
                 allow: [
