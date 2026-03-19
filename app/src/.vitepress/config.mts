@@ -134,10 +134,6 @@ export default defineConfig({
                             link: '/docs/core/',
                         },
                         {
-                            text: 'Packages',
-                            link: '/docs/core/getting-started/packages',
-                        },
-                        {
                             text: 'Installation',
                             link: '/docs/core/getting-started/installation',
                         },
