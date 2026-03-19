@@ -2002,13 +2002,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/3d@npm:^1.0.0-beta.1, @ripl/3d@workspace:packages/3d":
+"@ripl/3d@npm:^1.0.0-beta.2, @ripl/3d@workspace:packages/3d":
   version: 0.0.0-use.local
   resolution: "@ripl/3d@workspace:packages/3d"
   dependencies:
-    "@ripl/canvas": "npm:^1.0.0-beta.1"
-    "@ripl/core": "npm:^1.0.0-beta.1"
-    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/canvas": "npm:^1.0.0-beta.2"
+    "@ripl/core": "npm:^1.0.0-beta.2"
+    "@ripl/dom": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2024,12 +2024,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/canvas@npm:^1.0.0-beta.1, @ripl/canvas@workspace:packages/canvas":
+"@ripl/canvas@npm:^1.0.0-beta.2, @ripl/canvas@workspace:packages/canvas":
   version: 0.0.0-use.local
   resolution: "@ripl/canvas@workspace:packages/canvas"
   dependencies:
-    "@ripl/core": "npm:^1.0.0-beta.1"
-    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.2"
+    "@ripl/dom": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2048,8 +2048,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/charts@workspace:packages/charts"
   dependencies:
-    "@ripl/canvas": "npm:^1.0.0-beta.1"
-    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/canvas": "npm:^1.0.0-beta.2"
+    "@ripl/core": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2063,7 +2063,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/core@npm:^1.0.0-beta.1, @ripl/core@workspace:packages/core":
+"@ripl/core@npm:^1.0.0-beta.2, @ripl/core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@ripl/core@workspace:packages/core"
   dependencies:
@@ -2081,11 +2081,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/dom@npm:^1.0.0-beta.1, @ripl/dom@workspace:packages/dom":
+"@ripl/dom@npm:^1.0.0-beta.2, @ripl/dom@workspace:packages/dom":
   version: 0.0.0-use.local
   resolution: "@ripl/dom@workspace:packages/dom"
   dependencies:
-    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2105,8 +2105,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/node@workspace:packages/node"
   dependencies:
-    "@ripl/core": "npm:^1.0.0-beta.1"
-    "@ripl/terminal": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.2"
+    "@ripl/terminal": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
     "@types/node": "npm:^22.19.15"
   languageName: unknown
@@ -2127,8 +2127,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/svg@workspace:packages/svg"
   dependencies:
-    "@ripl/core": "npm:^1.0.0-beta.1"
-    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.2"
+    "@ripl/dom": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2143,11 +2143,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ripl/terminal@npm:^1.0.0-beta.1, @ripl/terminal@workspace:packages/terminal":
+"@ripl/terminal@npm:^1.0.0-beta.2, @ripl/terminal@workspace:packages/terminal":
   version: 0.0.0-use.local
   resolution: "@ripl/terminal@workspace:packages/terminal"
   dependencies:
-    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/core": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2196,9 +2196,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/web@workspace:packages/web"
   dependencies:
-    "@ripl/canvas": "npm:^1.0.0-beta.1"
-    "@ripl/core": "npm:^1.0.0-beta.1"
-    "@ripl/dom": "npm:^1.0.0-beta.1"
+    "@ripl/canvas": "npm:^1.0.0-beta.2"
+    "@ripl/core": "npm:^1.0.0-beta.2"
+    "@ripl/dom": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft
@@ -2219,9 +2219,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ripl/webgpu@workspace:packages/webgpu"
   dependencies:
-    "@ripl/3d": "npm:^1.0.0-beta.1"
-    "@ripl/canvas": "npm:^1.0.0-beta.1"
-    "@ripl/core": "npm:^1.0.0-beta.1"
+    "@ripl/3d": "npm:^1.0.0-beta.2"
+    "@ripl/canvas": "npm:^1.0.0-beta.2"
+    "@ripl/core": "npm:^1.0.0-beta.2"
     "@ripl/utilities": "npm:^1.0.0-beta.1"
   languageName: unknown
   linkType: soft

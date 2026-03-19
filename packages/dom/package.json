@@ -1,6 +1,6 @@
 {
     "name": "@ripl/dom",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.2",
     "description": "DOM utilities and context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,7 +28,7 @@
         "build": "tsup"
     },
     "dependencies": {
-        "@ripl/core": "^1.0.0-beta.1",
+        "@ripl/core": "^1.0.0-beta.2",
         "@ripl/utilities": "^1.0.0-beta.1"
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "@ripl/3d",
-    "version": "1.0.0-beta.1",
+    "version": "1.0.0-beta.2",
     "description": "3D rendering for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,9 +28,9 @@
         "build": "tsup"
     },
     "dependencies": {
-        "@ripl/canvas": "^1.0.0-beta.1",
-        "@ripl/core": "^1.0.0-beta.1",
-        "@ripl/dom": "^1.0.0-beta.1",
+        "@ripl/canvas": "^1.0.0-beta.2",
+        "@ripl/core": "^1.0.0-beta.2",
+        "@ripl/dom": "^1.0.0-beta.2",
         "@ripl/utilities": "^1.0.0-beta.1"
     }
 }
