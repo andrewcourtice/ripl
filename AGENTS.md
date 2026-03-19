@@ -22,11 +22,17 @@ Yarn 4 monorepo with workspaces:
 ```
 packages/
 ├── core/         # Core rendering: elements, scene, renderer, animation, scales, math, color, interpolation
-├── charts/       # Pre-built chart components (bar, line, area, pie, radar, heatmap, etc.)
+├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
+├── charts/       # Pre-built chart components (bar, line, area, pie, radar, heatmap, etc.)
+├── 3d/           # 3D rendering (experimental)
+├── webgpu/       # WebGPU 3D rendering context
+├── terminal/     # Terminal rendering context
+├── node/         # Node.js runtime bindings
+├── web/          # Main browser entry point
+├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
-├── vdom/         # Virtual DOM utilities
-└── 3d/           # 3D rendering (experimental)
+└── test-utils/   # Test utilities
 app/              # Documentation site (VitePress) with demos
 ```
 

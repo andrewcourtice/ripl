@@ -54,22 +54,32 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 |---------|-------------|
 | [`@ripl/web`](@ripl/web/index.md) | **Main entry point for browser usage** — re-exports core + canvas context with browser platform bindings |
 | [`@ripl/core`](@ripl/core/index.md) | Core rendering — elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
+| [`@ripl/canvas`](@ripl/canvas/index.md) | Canvas 2D rendering context |
 | [`@ripl/svg`](@ripl/svg/index.md) | SVG rendering context |
 | [`@ripl/charts`](@ripl/charts/index.md) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
 | [`@ripl/3d`](@ripl/3d/index.md) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
+| [`@ripl/webgpu`](_media/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
+| [`@ripl/terminal`](_media/terminal) | Terminal rendering context — braille-character output with ANSI truecolor |
+| [`@ripl/node`](_media/node) | Node.js runtime bindings — configures the platform factory for headless environments |
+| [`@ripl/dom`](_media/dom) | DOM utilities used internally by browser contexts |
 | [`@ripl/utilities`](@ripl/utilities/index.md) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
-| `@ripl/vdom` | Virtual DOM utilities used internally by the SVG context |
 
 The project is structured as a Yarn 4 monorepo:
 
 ```
 packages/
 ├── core/         # Core rendering library
-├── charts/       # Pre-built chart components
+├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
+├── charts/       # Pre-built chart components
 ├── 3d/           # 3D rendering (experimental)
+├── webgpu/       # WebGPU 3D rendering context
+├── terminal/     # Terminal rendering context
+├── node/         # Node.js runtime bindings
+├── web/          # Main browser entry point
+├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
-└── vdom/         # Virtual DOM utilities
+└── test-utils/   # Test utilities
 app/              # Documentation site (VitePress) with live demos
 ```
 

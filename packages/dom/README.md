@@ -1,16 +1,16 @@
-# @ripl/vdom
+# @ripl/dom
 
-Virtual DOM utilities for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+DOM utilities for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
 ```bash
-npm install @ripl/vdom
+npm install @ripl/dom
 ```
 
 ## Overview
 
-A lightweight virtual DOM reconciler used internally by `@ripl/svg` to efficiently diff and patch SVG elements. This package is primarily an internal dependency — most users won't need to interact with it directly.
+DOM utilities and a lightweight virtual DOM reconciler used internally by browser contexts. This package is primarily an internal dependency — most users won't need to interact with it directly.
 
 ## API
 

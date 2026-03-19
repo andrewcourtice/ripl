@@ -5,7 +5,7 @@ Ripl (pronounced "ripple") is a library that provides a **unified API for 2D gra
 Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
 
 > [!IMPORTANT]
-> Ripl is currently in beta `1.0.0-beta.0`.
+> Ripl is currently in beta.
 
 <div align="center">
   <table>
@@ -54,22 +54,32 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 |---------|-------------|
 | [`@ripl/web`](packages/web) | **Main entry point for browser usage** — re-exports core + canvas context with browser platform bindings |
 | [`@ripl/core`](packages/core) | Core rendering — elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
+| [`@ripl/canvas`](packages/canvas) | Canvas 2D rendering context |
 | [`@ripl/svg`](packages/svg) | SVG rendering context |
 | [`@ripl/charts`](packages/charts) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
 | [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
+| [`@ripl/webgpu`](packages/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
+| [`@ripl/terminal`](packages/terminal) | Terminal rendering context — braille-character output with ANSI truecolor |
+| [`@ripl/node`](packages/node) | Node.js runtime bindings — configures the platform factory for headless environments |
+| [`@ripl/dom`](packages/dom) | DOM utilities used internally by browser contexts |
 | [`@ripl/utilities`](packages/utilities) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
-| `@ripl/vdom` | Virtual DOM utilities used internally by the SVG context |
 
 The project is structured as a Yarn 4 monorepo:
 
 ```
 packages/
 ├── core/         # Core rendering library
-├── charts/       # Pre-built chart components
+├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
+├── charts/       # Pre-built chart components
 ├── 3d/           # 3D rendering (experimental)
+├── webgpu/       # WebGPU 3D rendering context
+├── terminal/     # Terminal rendering context
+├── node/         # Node.js runtime bindings
+├── web/          # Main browser entry point
+├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
-└── vdom/         # Virtual DOM utilities
+└── test-utils/   # Test utilities
 app/              # Documentation site (VitePress) with live demos
 ```
 
