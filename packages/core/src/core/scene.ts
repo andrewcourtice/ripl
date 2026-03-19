@@ -24,6 +24,10 @@ import type {
     GroupOptions,
 } from './group';
 
+import {
+    typeIsNil,
+} from '@ripl/utilities';
+
 
 /** Event map for the scene, adding a `resize` event to the standard element events. */
 export interface SceneEventMap extends ElementEventMap {
@@ -72,7 +76,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         context.buffer = false;
 
-        const font = context.element instanceof globalThis.HTMLElement
+        const font = !typeIsNil(globalThis.HTMLElement) && context.element instanceof globalThis.HTMLElement
             ? factory.getComputedStyle(context.element).font
             : undefined;
 
