@@ -202,6 +202,11 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             return hitElement === activeElement;
         });
 
+        exits.forEach(element => {
+            this.activeElements.delete(element);
+            element.emit('mouseleave', null);
+        });
+
         entries.forEach(element => {
             this.activeElements.add(element);
             element.emit('mouseenter', null);
@@ -211,11 +216,6 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             x: rx,
             y: ry,
         }));
-
-        exits.forEach(element => {
-            this.activeElements.delete(element);
-            element.emit('mouseleave', null);
-        });
     }
 
     private handleMouseUp(event: MouseEvent): void {
