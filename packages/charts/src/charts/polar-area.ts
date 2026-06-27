@@ -289,7 +289,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             const colorGenerator = this.colorGenerator;
-            const size = Math.min(scene.width, scene.height);
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const size = Math.min(area.width, area.height);
+            const centerX = area.x + area.width / 2;
+            const centerY = area.y + area.height / 2;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -307,8 +313,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
             const gridTransition = this.drawGrid(
-                scene.width / 2,
-                scene.height / 2,
+                centerX,
+                centerY,
                 size * innerRadiusRatio,
                 size * maxRadiusRatio,
                 maxValue,
@@ -323,8 +329,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 const v = getValue(item);
                 const color = getColor(item);
                 const label = getLabel(item);
-                const cx = scene.width / 2;
-                const cy = scene.height / 2;
+                const cx = centerX;
+                const cy = centerY;
                 const startAngle = startOffset + index * angleStep;
                 const endAngle = startAngle + angleStep;
                 const innerRadius = size * innerRadiusRatio;

@@ -166,7 +166,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
             }
 
-            const padding = this.getPadding();
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
 
             const items = data.map(item => ({
                 key: getKey(item),
@@ -177,10 +179,10 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const nodes = layoutTreemap(
                 items,
-                padding.left,
-                padding.top,
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom,
+                area.x,
+                area.y,
+                area.width,
+                area.height,
                 gap
             );
 
