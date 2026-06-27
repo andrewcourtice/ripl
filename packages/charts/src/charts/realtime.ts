@@ -15,7 +15,6 @@ import {
     normalizeAxis,
     normalizeCrosshair,
     normalizeGrid,
-    normalizeLegend,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
@@ -30,7 +29,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -417,56 +415,44 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 yMax += 1;
             }
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label ?? srs.id,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const chartTop = area.y;
+            const chartBottom = area.y + area.height;
+            const chartRight = area.x + area.width;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous([yMin, yMax], [scene.height - padding.bottom, chartTop], {
+            this.yScale = scaleContinuous([yMin, yMax], [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
-            let chartLeft = padding.left;
+            let chartLeft = area.x;
 
             if (showYAxis !== false) {
                 this.yAxis.scale = this.yScale;
                 this.yAxis.bounds = new Box(
                     chartTop,
-                    padding.left,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
+                    area.x,
+                    chartBottom,
+                    chartRight
                 );
 
                 const yAxisBoundingBox = this.yAxis.getBoundingBox();
                 chartLeft = yAxisBoundingBox.right + 10;
             }
-
-            const chartRight = scene.width - padding.right;
-            const chartBottom = scene.height - padding.bottom;
 
             // Render grid
             if (this.grid) {
@@ -490,11 +476,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 chartRight - chartLeft,
                 chartBottom - chartTop
             );
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(chartLeft, 0, chartRight - chartLeft);
-            }
 
             const promises: Promise<unknown>[] = [];
 

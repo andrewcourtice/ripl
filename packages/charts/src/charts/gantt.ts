@@ -490,11 +490,16 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             const paddedMin = new Date(minDate.getTime() - timePadding);
             const paddedMax = new Date(maxDate.getTime() + timePadding);
 
-            const padding = this.getPadding();
-            const chartTop = padding.top + 10;
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const left = area.x;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
+            const chartTop = area.y + 10;
 
             // Setup y-axis with task labels
-            const categoryScale = scaleBand(labels, [chartTop, scene.height - padding.bottom], {
+            const categoryScale = scaleBand(labels, [chartTop, bottom], {
                 outerPadding: 0.15,
                 innerPadding: 0.25,
             });
@@ -512,9 +517,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
             this.yAxis.bounds = new Box(
                 chartTop,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                left,
+                bottom,
+                right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
@@ -522,7 +527,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             // Setup x-axis with time scale
             const timeScale = scaleTime(
                 [paddedMin, paddedMax],
-                [yAxisBoundingBox.right + 10, scene.width - padding.right]
+                [yAxisBoundingBox.right + 10, right]
             );
 
             this.xAxis.scale = timeScale;
@@ -534,8 +539,8 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
             this.xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                bottom,
+                right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
@@ -571,7 +576,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                     yTickPositions,
                     yAxisBoundingBox.right,
                     chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
+                    right - yAxisBoundingBox.right,
                     xAxisBoundingBox.top - chartTop
                 );
             }

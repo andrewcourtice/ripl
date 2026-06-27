@@ -281,9 +281,14 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             } = this.options;
 
             const colorGenerator = getColorGenerator();
-            const padding = this.getPadding();
-            const chartWidth = scene.width - padding.left - padding.right;
-            const chartHeight = scene.height - padding.top - padding.bottom;
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const offsetX = area.x;
+            const offsetY = area.y;
+            const chartWidth = area.width;
+            const chartHeight = area.height;
 
             const { layoutNodes, layoutLinks } = computeSankeyLayout(
                 nodes,
@@ -305,10 +310,10 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             linkExits.forEach(el => el.destroy());
 
             const linkEntryGroups = linkEntries.map(link => {
-                const sx = padding.left + link.source.x + link.source.width;
-                const sy = padding.top + link.sourceY;
-                const tx = padding.left + link.target.x;
-                const ty = padding.top + link.targetY;
+                const sx = offsetX + link.source.x + link.source.width;
+                const sy = offsetY + link.sourceY;
+                const tx = offsetX + link.target.x;
+                const ty = offsetY + link.targetY;
                 const midX = (sx + tx) / 2;
 
                 const linkEl = createSankeyLink({
@@ -377,8 +382,8 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             const nodeEntryGroups = nodeEntries.map(node => {
                 const rect = createRect({
                     id: `${node.id}-rect`,
-                    x: padding.left + node.x,
-                    y: padding.top + node.y,
+                    x: offsetX + node.x,
+                    y: offsetY + node.y,
                     width: node.width,
                     height: 0,
                     fill: setColorAlpha(node.color, 0.8),
@@ -391,8 +396,8 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
                 rect.on('mouseenter', () => {
                     this.tooltip.show(
-                        padding.left + node.x + node.width / 2,
-                        padding.top + node.y,
+                        offsetX + node.x + node.width / 2,
+                        offsetY + node.y,
                         `${node.label}: ${node.value}`
                     );
 
@@ -419,8 +424,8 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
                 const label = createText({
                     id: `${node.id}-label`,
-                    x: padding.left + node.x + node.width + 5,
-                    y: padding.top + node.y + node.height / 2,
+                    x: offsetX + node.x + node.width + 5,
+                    y: offsetY + node.y + node.height / 2,
                     content: node.label,
                     fill: '#333',
                     font: '11px sans-serif',
@@ -443,8 +448,8 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
                 if (rect) {
                     rect.data = {
-                        x: padding.left + node.x,
-                        y: padding.top + node.y,
+                        x: offsetX + node.x,
+                        y: offsetY + node.y,
                         width: node.width,
                         height: node.height,
                         fill: setColorAlpha(node.color, 0.8),

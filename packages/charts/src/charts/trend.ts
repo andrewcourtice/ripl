@@ -14,7 +14,6 @@ import {
     normalizeAxis,
     normalizeAxisItem,
     normalizeGrid,
-    normalizeLegend,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
@@ -30,7 +29,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -674,51 +672,41 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const chartTop = area.y;
+            const chartBottom = area.y + area.height;
+            const chartRight = area.x + area.width;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
+            this.yScale = scaleContinuous(dataExtent, [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
                 chartTop,
-                padding.left,
-                this.scene.height - padding.bottom,
-                this.scene.width - padding.right
+                area.x,
+                chartBottom,
+                chartRight
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
-            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, this.scene.width - padding.right], {
+            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, chartRight], {
                 outerPadding: 0.25,
                 innerPadding: 0.25,
             });
@@ -734,8 +722,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             this.xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
-                this.scene.height - padding.bottom,
-                this.scene.width - padding.right
+                chartBottom,
+                chartRight
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
@@ -757,14 +745,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     yTickPositions,
                     yAxisBoundingBox.right,
                     chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
+                    chartRight - yAxisBoundingBox.right,
                     xAxisBoundingBox.top - chartTop
                 );
-            }
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
             }
 
             return Promise.all([
