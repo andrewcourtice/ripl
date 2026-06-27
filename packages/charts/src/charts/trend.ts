@@ -138,7 +138,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
     private tooltip!: Tooltip;
-    private legend?: Legend;
     private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);

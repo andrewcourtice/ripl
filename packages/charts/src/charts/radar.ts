@@ -76,7 +76,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
     private seriesGroups: Group[] = [];
     private gridGroup?: Group;
     private tooltip!: Tooltip;
-    private legend?: Legend;
     constructor(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
         super(target, options);
 

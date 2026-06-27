@@ -1,7 +1,7 @@
 import {
-    BaseChartOptions,
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
@@ -11,32 +11,23 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeGrid,
-    normalizeLegend,
-    normalizeTooltip,
-    normalizeYAxisItem,
-    resolveFormatLabel,
-} from '../core/options';
+    ANIMATION_REFERENCE,
+    exitElement,
+    stagger,
+} from '../core/animation';
 
 import {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
+    applyHoverHighlight,
+} from '../core/interaction';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
+    computeStackOffset,
+    resolveAccessor,
+} from '../core/data';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
-
-import {
-    Grid,
-} from '../components/grid';
 
 import {
     BandScale,
@@ -44,8 +35,6 @@ import {
     Context,
     createGroup,
     createRect,
-    easeOutCubic,
-    easeOutQuart,
     getExtent,
     Group,
     max,
@@ -60,11 +49,13 @@ import {
 import {
     arrayJoin,
     functionIdentity,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 export type BarChartOrientation = 'vertical' | 'horizontal';
 export type BarChartMode = 'grouped' | 'stacked';
+
+/** The opacity applied to a bar's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.78;
 
 /** Configuration for an individual bar chart series. */
 export interface BarChartSeriesOptions<TData> {
@@ -75,7 +66,7 @@ export interface BarChartSeriesOptions<TData> {
 }
 
 /** Options for configuring a {@link BarChart}. */
-export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
+export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     data: TData[];
     series: BarChartSeriesOptions<TData>[];
     key: keyof TData | ((item: TData) => string);
@@ -91,77 +82,25 @@ export interface BarChartOptions<TData = unknown> extends BaseChartOptions {
 /**
  * Bar chart supporting vertical/horizontal orientation and grouped/stacked modes.
  *
- * Uses band scales for categorical axes and continuous scales for value axes.
- * Supports multiple series with grouped or stacked bar rendering, interactive
- * tooltips, legend, grid, and animated entry/update/exit transitions.
+ * Uses band scales for categorical axes and continuous scales for value axes. Supports multiple
+ * series with grouped or stacked bar rendering, interactive tooltips, legend, grid, chart title,
+ * and animated entry/update/exit transitions.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
+export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TData>, TData> {
 
     private barGroups: Group[] = [];
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
-    private legend?: Legend;
-    private grid?: Grid;
 
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
-            });
-        }
-
-        this.xAxis = new ChartXAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+        this.setupCartesian({
+            grid: {
+                horizontal: !this.isHorizontal,
+                vertical: this.isHorizontal,
+            },
         });
-
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
-
-        if (gridOpts.visible) {
-            this.grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: true,
-                vertical: false,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
 
         this.init();
     }
@@ -174,260 +113,48 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
         return this.options.mode === 'stacked';
     }
 
-
-    private async drawBarsVertical(
-        categoryScale: BandScale<string>,
-        valueScale: ReturnType<typeof scaleContinuous>,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getKey: (item: any) => string
-    ) {
-        const {
-            data,
-            series,
-        } = this.options;
-
-        const baseline = valueScale(0);
-        const borderRadius = this.options.borderRadius ?? 2;
-
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(series, this.barGroups, 'id');
-
-        seriesExits.forEach(el => el.destroy());
-
-        let seriesScale: BandScale<string> | undefined;
-
-        if (!this.isStacked) {
-            seriesScale = scaleBand(series.map(s => s.id), [0, categoryScale.bandwidth], {
-                innerPadding: 0.1,
-            });
-        }
-
-        const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData, stackOffset = 0) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-            const value = getValue(item);
-            const key = getKey(item);
-            const color = this.getSeriesColor(srs.id);
-
-            let x: number;
-            let width: number;
-            let y: number;
-            let height: number;
-
-            if (this.isStacked) {
-                x = categoryScale(key);
-                width = categoryScale.bandwidth;
-                y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
-                height = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
-            } else {
-                x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
-                width = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
-                y = valueScale(max(0, value));
-                height = Math.abs(baseline - valueScale(value));
-            }
-
-            return {
-                id: `${srs.id}-${key}`,
-                value,
-                state: {
-                    fill: color,
-                    x,
-                    y,
-                    width,
-                    height,
-                    borderRadius,
-                } as RectState,
-            };
-        };
-
-        // Compute stack offsets per category
-        const getStackOffset = (srs: BarChartSeriesOptions<TData>, item: TData): number => {
-            if (!this.isStacked) return 0;
-
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getSrsValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-            const currentValue = getSrsValue(item);
-            const seriesIndex = series.indexOf(srs);
-
-            return series.slice(0, seriesIndex).reduce((sum, prev) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
-                const prevValue = getValue(item);
-
-                if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
-                if (currentValue < 0 && prevValue < 0) return sum + prevValue;
-                return sum;
-            }, 0);
-        };
-
-        const seriesEntryGroups = seriesEntries.map(srs => {
-            const children = data.map(item => {
-                const stackOffset = getStackOffset(srs, item);
-                const { id, value, state } = getBarState(srs, item, stackOffset);
-
-                const bar = createRect({
-                    id,
-                    ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
-                    y: baseline,
-                    height: 0,
-                    data: {
-                        ...state,
-                        fill: setColorAlpha(state.fill as string, 0.7),
-                    },
-                });
-
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width / 2, state.y, `${srs.label}: ${value}`);
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
-
-                return bar;
-            });
-
-            return createGroup({
-                id: srs.id,
-                children,
-            });
-        });
-
-        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
-            const bars = group.getElementsByType('rect') as Rect[];
-
-            const {
-                left: barEntries,
-                inner: barUpdates,
-                right: barExits,
-            } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
-
-            barExits.forEach(el => el.destroy());
-
-            barEntries.map(item => {
-                const stackOffset = getStackOffset(srs, item);
-                const { id, state } = getBarState(srs, item, stackOffset);
-
-                const rect = createRect({
-                    id,
-                    ...state,
-                    y: baseline,
-                    height: 0,
-                    data: {
-                        ...state,
-                        fill: setColorAlpha(state.fill as string, 0.7),
-                    },
-                });
-
-                group.add(rect);
-            });
-
-            barUpdates.forEach(([item, bar]) => {
-                const stackOffset = getStackOffset(srs, item);
-                const { value, state } = getBarState(srs, item, stackOffset);
-
-                bar.data = {
-                    ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
-                };
-
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width / 2, state.y, `${srs.label}: ${value}`);
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
-            });
-
-            return group;
-        });
-
-        this.scene.add(seriesEntryGroups);
-
-        this.barGroups = [
-            ...seriesEntryGroups,
-            ...seriesUpdateGroups,
-        ];
-
-        const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[]).sort((a, b) => a.x - b.x);
-
-        const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => ({
-            duration: this.getAnimationDuration(1000),
-            delay: index * (this.getAnimationDuration(1000) / length),
-            ease: easeOutCubic,
-            state: element.data as RectState,
-        }));
-
-        const updatesTransition = this.renderer.transition(queryAll(seriesUpdateGroups, 'rect') as Rect[], element => ({
-            duration: this.getAnimationDuration(1000),
-            ease: easeOutCubic,
-            state: element.data as RectState,
-        }));
-
-        return Promise.all([
-            entriesTransition,
-            updatesTransition,
-        ]);
+    private seriesValue(series: BarChartSeriesOptions<TData>, item: TData): number {
+        return resolveAccessor<TData, number>(series.value)(item);
     }
 
-    private async drawBarsHorizontal(
+    private stackOffset(series: BarChartSeriesOptions<TData>[], current: BarChartSeriesOptions<TData>, item: TData): number {
+        if (!this.isStacked) {
+            return 0;
+        }
+
+        return computeStackOffset(series, current, item, (s, i) => this.seriesValue(s, i));
+    }
+
+    /** Wires consistent hover highlight + tooltip onto a bar. */
+    private attachBarHover(bar: Rect, label: string, value: number, anchor: () => { x: number; y: number }) {
+        if (!this.tooltip) {
+            return;
+        }
+
+        const restFill = bar.fill as string;
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        applyHoverHighlight(bar, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor,
+            content: () => `${label}: ${value}`,
+            highlight: { fill: setColorAlpha(restFill, 1) },
+            restore: { fill: restFill },
+        });
+    }
+
+    private async drawBars(
         categoryScale: BandScale<string>,
         valueScale: ReturnType<typeof scaleContinuous>,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        getKey: (item: any) => string
+        getKey: (item: TData) => string
     ) {
-        const {
-            data,
-            series,
-        } = this.options;
-
+        const { data, series } = this.options;
+        const horizontal = this.isHorizontal;
         const baseline = valueScale(0);
         const borderRadius = this.options.borderRadius ?? 2;
-
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(series, this.barGroups, 'id');
-
-        seriesExits.forEach(el => el.destroy());
 
         let seriesScale: BandScale<string> | undefined;
 
@@ -437,28 +164,41 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             });
         }
 
-        const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData, stackOffset = 0) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-            const value = getValue(item);
+        const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData) => {
+            const value = this.seriesValue(srs, item);
             const key = getKey(item);
             const color = this.getSeriesColor(srs.id);
+            const stackOffset = this.stackOffset(series, srs, item);
 
             let x: number;
             let y: number;
             let width: number;
             let height: number;
 
-            if (this.isStacked) {
-                y = categoryScale(key);
-                height = categoryScale.bandwidth;
-                x = valueScale(value >= 0 ? stackOffset : value + stackOffset);
-                width = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
+            if (horizontal) {
+                if (this.isStacked) {
+                    y = categoryScale(key);
+                    height = categoryScale.bandwidth;
+                    x = valueScale(value >= 0 ? stackOffset : value + stackOffset);
+                    width = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
+                } else {
+                    y = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
+                    height = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
+                    x = Math.min(baseline, valueScale(value));
+                    width = Math.abs(valueScale(value) - baseline);
+                }
             } else {
-                y = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
-                height = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
-                x = Math.min(baseline, valueScale(value));
-                width = Math.abs(valueScale(value) - baseline);
+                if (this.isStacked) {
+                    x = categoryScale(key);
+                    width = categoryScale.bandwidth;
+                    y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
+                    height = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
+                } else {
+                    x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
+                    width = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
+                    y = valueScale(max(0, value));
+                    height = Math.abs(baseline - valueScale(value));
+                }
             }
 
             return {
@@ -475,74 +215,57 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             };
         };
 
-        const getStackOffset = (srs: BarChartSeriesOptions<TData>, item: TData): number => {
-            if (!this.isStacked) return 0;
+        const anchorFor = (state: RectState) => () => (horizontal
+            ? { x: state.x + state.width, y: state.y + state.height / 2 }
+            : { x: state.x + state.width / 2, y: state.y });
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getSrsValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-            const currentValue = getSrsValue(item);
-            const seriesIndex = series.indexOf(srs);
+        // The collapsed initial geometry an entering bar grows from.
+        const collapsed = (): Partial<RectState> => (horizontal
+            ? { x: baseline, width: 0 }
+            : { y: baseline, height: 0 });
 
-            return series.slice(0, seriesIndex).reduce((sum, prev) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(prev.value) ? prev.value : (i: any) => i[prev.value] as number;
-                const prevValue = getValue(item);
+        const createBar = (srs: BarChartSeriesOptions<TData>) => (item: TData) => {
+            const { id, value, state } = getBarState(srs, item);
+            const restFill = setColorAlpha(state.fill as string, REST_ALPHA);
 
-                if (currentValue >= 0 && prevValue >= 0) return sum + prevValue;
-                if (currentValue < 0 && prevValue < 0) return sum + prevValue;
-                return sum;
-            }, 0);
+            const bar = createRect({
+                id,
+                ...state,
+                ...collapsed(),
+                fill: restFill,
+                data: {
+                    ...state,
+                    fill: restFill,
+                },
+            });
+
+            this.attachBarHover(bar, srs.label, value, anchorFor(state));
+
+            return bar;
         };
 
-        const seriesEntryGroups = seriesEntries.map(srs => {
-            const children = data.map(item => {
-                const stackOffset = getStackOffset(srs, item);
-                const { id, value, state } = getBarState(srs, item, stackOffset);
+        const {
+            left: seriesEntries,
+            inner: seriesUpdates,
+            right: seriesExits,
+        } = arrayJoin(series, this.barGroups, 'id');
 
-                const bar = createRect({
-                    id,
-                    ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
-                    x: baseline,
-                    width: 0,
-                    data: {
-                        ...state,
-                        fill: setColorAlpha(state.fill as string, 0.7),
-                    },
-                });
+        // Exit removed series.
+        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width, state.y + state.height / 2, `${srs.label}: ${value}`);
+        seriesExits.forEach(group => {
+            const exits = (group.getElementsByType('rect') as Rect[]).map(bar => exitElement(this.renderer, bar, exitAnimation, {
+                ...collapsed(),
+                opacity: 0,
+            }));
 
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
-
-                return bar;
-            });
-
-            return createGroup({
-                id: srs.id,
-                children,
-            });
+            void Promise.all(exits).then(() => group.destroy());
         });
+
+        const seriesEntryGroups = seriesEntries.map(srs => createGroup({
+            id: srs.id,
+            children: data.map(createBar(srs)),
+        }));
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const bars = group.getElementsByType('rect') as Rect[];
@@ -553,58 +276,23 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 right: barExits,
             } = arrayJoin(data, bars, (item, bar) => bar.id === `${srs.id}-${getKey(item)}`);
 
-            barExits.forEach(el => el.destroy());
+            barExits.forEach(bar => exitElement(this.renderer, bar, exitAnimation, {
+                ...collapsed(),
+                opacity: 0,
+            }));
 
-            barEntries.map(item => {
-                const stackOffset = getStackOffset(srs, item);
-                const { id, state } = getBarState(srs, item, stackOffset);
-
-                const rect = createRect({
-                    id,
-                    ...state,
-                    x: baseline,
-                    width: 0,
-                    data: {
-                        ...state,
-                        fill: setColorAlpha(state.fill as string, 0.7),
-                    },
-                });
-
-                group.add(rect);
-            });
+            barEntries.forEach(item => group.add(createBar(srs)(item)));
 
             barUpdates.forEach(([item, bar]) => {
-                const stackOffset = getStackOffset(srs, item);
-                const { value, state } = getBarState(srs, item, stackOffset);
+                const { value, state } = getBarState(srs, item);
+                const restFill = setColorAlpha(state.fill as string, REST_ALPHA);
 
                 bar.data = {
                     ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
+                    fill: restFill,
                 };
 
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width, state.y + state.height / 2, `${srs.label}: ${value}`);
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
+                this.attachBarHover(bar, srs.label, value, anchorFor(state));
             });
 
             return group;
@@ -617,18 +305,22 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             ...seriesUpdateGroups,
         ];
 
-        const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[]).sort((a, b) => a.y - b.y);
+        const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
+
+        const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[])
+            .sort((a, b) => (horizontal ? a.y - b.y : a.x - b.x));
 
         const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => ({
-            duration: this.getAnimationDuration(1000),
-            delay: index * (this.getAnimationDuration(1000) / length),
-            ease: easeOutCubic,
+            duration: enterAnimation.duration,
+            delay: stagger(index, length, enterAnimation.duration),
+            ease: enterAnimation.ease,
             state: element.data as RectState,
         }));
 
         const updatesTransition = this.renderer.transition(queryAll(seriesUpdateGroups, 'rect') as Rect[], element => ({
-            duration: this.getAnimationDuration(1000),
-            ease: easeOutCubic,
+            duration: updateAnimation.duration,
+            ease: updateAnimation.ease,
             state: element.data as RectState,
         }));
 
@@ -639,31 +331,18 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
     }
 
     public async render() {
-        return super.render(async (scene) => {
-            const {
-                data,
-                series,
-                key,
-            } = this.options;
+        return super.render(async () => {
+            const { data, series, key } = this.options;
 
             this.resolveSeriesColors(series);
+            this.prepareAxes();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
-                const getValue = typeIsFunction(valueAccessor)
-                    ? valueAccessor
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueAccessor] as number;
-
-                return getExtent(data, getValue);
-            }).concat(0);
-
+            const seriesExtents = series.flatMap(srs => getExtent(data, item => this.seriesValue(srs, item))).concat(0);
             let dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            // For stacked mode, compute stacked extents
             if (this.isStacked) {
                 let stackedMax = 0;
                 let stackedMin = 0;
@@ -673,9 +352,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     let negativeTotal = 0;
 
                     series.forEach(srs => {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-                        const value = getValue(item);
+                        const value = this.seriesValue(srs, item);
 
                         if (value >= 0) {
                             positiveTotal += value;
@@ -691,181 +368,111 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                 dataExtent = [stackedMin, stackedMax];
             }
 
-            const padding = this.getPadding();
+            // Shared layout pass: title and legend reserve their bands first.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
-
-            const chartTop = padding.top + 20 + legendHeight;
+            const area = layout.area;
+            const left = area.x;
+            const top = area.y;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
             if (this.isHorizontal) {
-                // Horizontal: categories on Y, values on X
-                const categoryScale = scaleBand(keys, [chartTop, scene.height - padding.bottom], {
+                // Categories on Y, values on X.
+                const valueScale = scaleContinuous(dataExtent, [left, right], { padToTicks: 10 });
+
+                this.xAxis.scale = valueScale;
+                this.xAxis.bounds = new Box(top, left, bottom, right);
+
+                const xAxisBox = this.xAxis.getBoundingBox();
+
+                const categoryScale = scaleBand(keys, [top, xAxisBox.top], {
                     outerPadding: 0.15,
                     innerPadding: 0.2,
                 });
 
-                const valueScale = scaleContinuous(dataExtent, [padding.left + 60, scene.width - padding.right], {
-                    padToTicks: 10,
-                });
+                this.yAxis.scale = this.bandAxisScale(categoryScale, keys);
+                this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
-                // Y axis shows categories
-                this.yAxis.scale = Object.assign(
-                    (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
-                    {
-                        domain: keys,
-                        range: categoryScale.range,
-                        inverse: categoryScale.inverse,
-                        ticks: () => keys,
-                        includes: (v: string) => keys.includes(v),
-                    }
-                ) as unknown as typeof this.yAxis.scale;
+                const yAxisBox = this.yAxis.getBoundingBox();
 
-                this.yAxis.bounds = new Box(
-                    chartTop,
-                    padding.left,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
+                const adjustedValueScale = scaleContinuous(dataExtent, [yAxisBox.right, right], { padToTicks: 10 });
+                this.xAxis.scale = adjustedValueScale;
+                this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
+
+                this.renderGrid(
+                    adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                    [],
+                    { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top }
                 );
-
-                // X axis shows values
-                this.xAxis.scale = valueScale;
-                this.xAxis.bounds = new Box(
-                    chartTop,
-                    padding.left + 60,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
-                );
-
-                if (this.grid) {
-                    const xTicks = valueScale.ticks(10);
-                    const xTickPositions = xTicks.map(tick => valueScale(tick));
-
-                    this.grid.render(
-                        xTickPositions,
-                        [],
-                        padding.left + 60,
-                        chartTop,
-                        scene.width - padding.right - padding.left - 60,
-                        scene.height - padding.bottom - chartTop
-                    );
-                }
-
-                // Render legend
-                if (this.legend && legendHeight > 0) {
-                    this.renderLegend(padding.left + 60, 0, scene.width - padding.left - 60 - padding.right);
-                }
 
                 return Promise.all([
-                    this.xAxis.render(),
-                    this.yAxis.render(),
-                    this.drawBarsHorizontal(categoryScale, valueScale, getKey),
+                    this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                    this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                    this.drawBars(categoryScale, adjustedValueScale, getKey),
                 ]);
             }
 
-            // Vertical: categories on X, values on Y
-            const valueScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
-                padToTicks: 10,
-            });
+            // Categories on X, values on Y.
+            const valueScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
 
             this.yAxis.scale = valueScale;
-            this.yAxis.bounds = new Box(
-                chartTop,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.yAxis.bounds = new Box(top, left, bottom, right);
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBox = this.yAxis.getBoundingBox();
 
-            const categoryScale = scaleBand(keys, [yAxisBoundingBox.right, scene.width - padding.right], {
+            const categoryScale = scaleBand(keys, [yAxisBox.right, right], {
                 outerPadding: 0.15,
                 innerPadding: 0.2,
             });
 
-            // X axis shows categories
-            this.xAxis.scale = Object.assign(
-                (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
-                {
-                    domain: keys,
-                    range: categoryScale.range,
-                    inverse: categoryScale.inverse,
-                    ticks: () => keys,
-                    includes: (v: string) => keys.includes(v),
-                }
-            ) as unknown as typeof this.xAxis.scale;
+            this.xAxis.scale = this.bandAxisScale(categoryScale, keys);
+            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-            this.xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+            const xAxisBox = this.xAxis.getBoundingBox();
+
+            const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this.yAxis.scale = adjustedValueScale;
+            this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
+
+            this.renderGrid(
+                [],
+                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top }
             );
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
-
-            // Recalculate value scale with correct bounds
-            const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
-                padToTicks: 10,
-            });
-
-            this.yAxis.scale = adjustedValueScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
-
-            if (this.grid) {
-                const yTicks = adjustedValueScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => adjustedValueScale(tick));
-
-                this.grid.render(
-                    [],
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.renderLegend(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
-            }
-
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawBarsVertical(categoryScale, adjustedValueScale, getKey),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.drawBars(categoryScale, adjustedValueScale, getKey),
             ]);
         });
     }
 
-    private renderLegend(x: number, y: number, width: number) {
-        if (this.legend) {
-            this.legend.render(x, y, width);
-        }
+    /** Wraps a band scale so an axis renders one centred tick per category. */
+    private bandAxisScale(categoryScale: BandScale<string>, keys: string[]) {
+        return Object.assign(
+            (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
+            {
+                domain: keys,
+                range: categoryScale.range,
+                inverse: categoryScale.inverse,
+                ticks: () => keys,
+                includes: (v: string) => keys.includes(v),
+            }
+        ) as unknown as typeof this.xAxis.scale;
     }
 
 }

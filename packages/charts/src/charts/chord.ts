@@ -197,7 +197,6 @@ export class ChordChart extends Chart<ChordChartOptions> {
     private arcGroups: Group[] = [];
     private ribbonGroups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);

@@ -1,7 +1,7 @@
 import {
-    BaseChartOptions,
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
@@ -12,37 +12,22 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeCrosshair,
-    normalizeGrid,
-    normalizeLegend,
-    normalizeTooltip,
-    normalizeYAxisItem,
-    resolveFormatLabel,
-} from '../core/options';
+    ANIMATION_REFERENCE,
+    exitElement,
+    stagger,
+} from '../core/animation';
 
 import {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
+    applyHoverHighlight,
+} from '../core/interaction';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
+    resolveAccessor,
+} from '../core/data';
 
 import {
-    Crosshair,
-} from '../components/crosshair';
-
-import {
-    Legend,
     LegendItem,
 } from '../components/legend';
-
-import {
-    Grid,
-} from '../components/grid';
 
 import {
     Box,
@@ -51,8 +36,6 @@ import {
     Context,
     createCircle,
     createGroup,
-    easeOutCubic,
-    easeOutQuart,
     getExtent,
     Group,
     Scale,
@@ -79,7 +62,7 @@ export interface ScatterChartSeriesOptions<TData> {
 }
 
 /** Options for configuring a {@link ScatterChart}. */
-export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
+export interface ScatterChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     data: TData[];
     series: ScatterChartSeriesOptions<TData>[];
     key: keyof TData | ((item: TData) => string);
@@ -90,147 +73,54 @@ export interface ScatterChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+const REST_ALPHA = 0.7;
+
 /**
  * Scatter chart (bubble chart) plotting data points as circles on two continuous axes.
  *
- * Supports optional bubble sizing via a third value dimension, multi-series
- * rendering, crosshair, tooltips, legend, and grid. Points animate in with
- * staggered scale transitions.
+ * Supports optional bubble sizing via a third value dimension, multi-series rendering, crosshair,
+ * tooltips, legend, chart title, and grid. Points animate in with staggered scale transitions and
+ * fade/shrink on exit.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TData>> {
+export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOptions<TData>, TData> {
 
     private bubbleGroups: Group[] = [];
     private xScale!: Scale;
     private yScale!: Scale;
     private sizeScale!: Scale;
-    private xAxis: ChartXAxis;
-    private yAxis: ChartYAxis;
-    private tooltip!: Tooltip;
-    private crosshair?: Crosshair;
-    private legend?: Legend;
-    private grid?: Grid;
+
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const crosshairOpts = normalizeCrosshair(options.crosshair, { axis: 'both' });
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        this.xAxis = new ChartXAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: this.xScale,
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+        this.setupCartesian({
+            grid: { horizontal: true, vertical: true },
+            crosshair: true,
+            crosshairAxisDefault: 'both',
         });
-
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: this.yScale,
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
-
-        if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
-
-        if (gridOpts.visible) {
-            this.grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: true,
-                vertical: true,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
-
-        if (crosshairOpts.visible) {
-            this.crosshair = new Crosshair({
-                scene: this.scene,
-                renderer: this.renderer,
-                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
-                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                stroke: crosshairOpts.lineColor,
-                lineWidth: crosshairOpts.lineWidth,
-            });
-        }
 
         this.init();
     }
 
     private getSizeExtent(): [number, number] {
-        const {
-            data,
-            series,
-        } = this.options;
-
-        const allSizes: number[] = [];
+        const { data, series } = this.options;
+        const sizes: number[] = [];
 
         series.forEach(({ sizeBy }) => {
             if (sizeBy === undefined) {
                 return;
             }
 
-            /* eslint-disable @typescript-eslint/no-explicit-any, no-nested-ternary */
-            const getSizeValue = typeIsFunction(sizeBy)
-                ? sizeBy
-                : typeof sizeBy === 'number'
-                    ? () => sizeBy
-                    : (item: any) => item[sizeBy] as number;
-            /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
-
-            data.forEach(item => {
-                allSizes.push(getSizeValue(item));
-            });
+            const getSize = resolveAccessor<TData, number>(sizeBy);
+            data.forEach(item => sizes.push(getSize(item)));
         });
 
-        return allSizes.length > 0
-            ? getExtent(allSizes, functionIdentity)
-            : [1, 1];
+        return sizes.length > 0 ? getExtent(sizes, functionIdentity) : [1, 1];
     }
 
-    private async drawBubbles() {
+    private bubbleValueProducer(series: ScatterChartSeriesOptions<TData>, getKey: (item: TData) => string) {
         const {
-            data,
-            series,
-            key,
-        } = this.options;
-
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(series, this.bubbleGroups, 'id');
-
-        seriesExits.forEach(el => el.destroy());
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-
-        const seriesBubbleValueProducer = ({
             id,
             xBy,
             yBy,
@@ -239,67 +129,95 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
             color,
             minRadius = 3,
             maxRadius = 20,
-        }: ScatterChartSeriesOptions<TData>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getXValue = typeIsFunction(xBy) ? xBy : (item: any) => item[xBy] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getYValue = typeIsFunction(yBy) ? yBy : (item: any) => item[yBy] as number;
-            /* eslint-disable @typescript-eslint/no-explicit-any, no-nested-ternary */
-            const getSizeValue = sizeBy === undefined
-                ? () => minRadius
-                : typeIsFunction(sizeBy)
-                    ? sizeBy
-                    : typeof sizeBy === 'number'
-                        ? () => sizeBy
-                        : (item: any) => item[sizeBy] as number;
-            /* eslint-enable @typescript-eslint/no-explicit-any, no-nested-ternary */
-            const getLabel = typeIsFunction(label) ? label : () => label;
+        } = series;
 
-            return (item: TData) => {
-                const key = getKey(item);
-                const xValue = getXValue(item);
-                const yValue = getYValue(item);
-                const sizeValue = getSizeValue(item);
-                const label = getLabel(item);
+        const getX = resolveAccessor<TData, number>(xBy);
+        const getY = resolveAccessor<TData, number>(yBy);
+        const getSize = sizeBy === undefined ? () => minRadius : resolveAccessor<TData, number>(sizeBy);
+        const getLabel = typeIsFunction(label) ? label : () => label;
+        const resolvedColor = color ?? this.getSeriesColor(id);
 
-                const x = this.xScale(xValue);
-                const y = this.yScale(yValue);
-                const radius = sizeBy === undefined
-                    ? minRadius
-                    : this.sizeScale(sizeValue) * (maxRadius - minRadius) + minRadius;
+        return (item: TData) => {
+            const xValue = getX(item);
+            const yValue = getY(item);
+            const sizeValue = getSize(item);
+            const radius = sizeBy === undefined
+                ? minRadius
+                : this.sizeScale(sizeValue) * (maxRadius - minRadius) + minRadius;
 
-                return {
-                    id: `${id}-${key}`,
-                    xValue,
-                    yValue,
-                    sizeValue,
-                    label,
-                    state: {
-                        fill: setColorAlpha(color as string, 0.7),
-                        stroke: color,
-                        lineWidth: 2,
-                        cx: x,
-                        cy: y,
-                        radius,
-                    } as CircleState,
-                };
+            return {
+                id: `${id}-${getKey(item)}`,
+                xValue,
+                yValue,
+                sizeValue,
+                label: getLabel(item),
+                hasSize: sizeBy !== undefined,
+                state: {
+                    fill: setColorAlpha(resolvedColor, REST_ALPHA),
+                    stroke: resolvedColor,
+                    lineWidth: 2,
+                    cx: this.xScale(xValue),
+                    cy: this.yScale(yValue),
+                    radius,
+                } as CircleState,
             };
         };
+    }
 
-        const seriesEntryGroups = seriesEntries.map(series => {
-            series.color ??= this.colorGenerator.next().value;
+    private attachBubbleHover(bubble: Circle, content: string, state: CircleState) {
+        if (!this.tooltip) {
+            return;
+        }
 
-            const getBubbleValues = seriesBubbleValueProducer(series);
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const stroke = state.stroke as string;
 
-            const children = data.map(item => {
-                const {
-                    id,
-                    xValue,
-                    yValue,
-                    sizeValue,
-                    label,
-                    state,
-                } = getBubbleValues(item);
+        applyHoverHighlight(bubble, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({ x: bubble.cx, y: bubble.cy - bubble.radius - 10 }),
+            content: () => content,
+            highlight: { fill: stroke, radius: state.radius * 1.2 },
+            restore: { fill: setColorAlpha(stroke, REST_ALPHA), radius: state.radius },
+        });
+    }
+
+    private tooltipText(values: { label: string; xValue: number; yValue: number; sizeValue: number; hasSize: boolean }): string {
+        const { label, xValue, yValue, sizeValue, hasSize } = values;
+
+        return hasSize
+            ? `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)}, ${sizeValue.toFixed(2)})`
+            : `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`;
+    }
+
+    private async drawBubbles(getKey: (item: TData) => string) {
+        const { data, series } = this.options;
+        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+
+        const {
+            left: seriesEntries,
+            inner: seriesUpdates,
+            right: seriesExits,
+        } = arrayJoin(series, this.bubbleGroups, 'id');
+
+        seriesExits.forEach(group => {
+            const exits = (group.getElementsByType('circle') as Circle[]).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
+                radius: 0,
+                fill: setColorAlpha(bubble.fill as string, 0),
+                stroke: setColorAlpha(bubble.stroke as string, 0),
+            }));
+
+            void Promise.all(exits).then(() => group.destroy());
+        });
+
+        const buildBubble = (srs: ScatterChartSeriesOptions<TData>) => {
+            const getValues = this.bubbleValueProducer(srs, getKey);
+
+            return (item: TData) => {
+                const values = getValues(item);
+                const { id, state } = values;
 
                 const bubble = createCircle({
                     id,
@@ -310,203 +228,76 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     data: state,
                 });
 
-                bubble.on('mouseenter', () => {
-                    const tooltipText = series.sizeBy !== undefined
-                        ? `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)}, ${sizeValue.toFixed(2)})`
-                        : `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`;
-
-                    this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
-
-                    this.renderer.transition(bubble, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: state.radius * 1.2,
-                        },
-                    });
-
-                    bubble.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bubble, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.stroke as string, 0.7),
-                                radius: state.radius,
-                            },
-                        });
-                    });
-                });
+                this.attachBubbleHover(bubble, this.tooltipText(values), state);
 
                 return bubble;
-            });
+            };
+        };
 
-            return createGroup({
-                id: series.id,
-                children,
-            });
-        });
+        const seriesEntryGroups = seriesEntries.map(srs => createGroup({
+            id: srs.id,
+            children: data.map(buildBubble(srs)),
+        }));
 
-        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
-            const getBubbleValues = seriesBubbleValueProducer(series);
+        const exitTransitions: Promise<unknown>[] = [];
+
+        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
+            const getValues = this.bubbleValueProducer(srs, getKey);
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             const {
                 left: bubbleEntries,
                 inner: bubbleUpdates,
                 right: bubbleExits,
-            } = arrayJoin(data, bubbles, (item, bubble) => bubble.id === `${series.id}-${getKey(item)}`);
+            } = arrayJoin(data, bubbles, (item, bubble) => bubble.id === `${srs.id}-${getKey(item)}`);
 
-            // Exit transition - fade out and shrink
-            const exitTransitions = bubbleExits.map(bubble => {
-                return this.renderer.transition(bubble, {
-                    duration: this.getAnimationDuration(500),
-                    ease: easeOutCubic,
-                    state: {
-                        radius: 0,
-                        fill: setColorAlpha(bubble.fill as string, 0),
-                        stroke: setColorAlpha(bubble.stroke as string, 0),
-                    },
-                }).then(() => bubble.destroy());
-            });
+            bubbleExits.forEach(bubble => exitTransitions.push(exitElement(this.renderer, bubble, exitAnimation, {
+                radius: 0,
+                fill: setColorAlpha(bubble.fill as string, 0),
+                stroke: setColorAlpha(bubble.stroke as string, 0),
+            })));
 
-            // Entry transitions - add new bubbles
-            bubbleEntries.map(item => {
-                const {
-                    id,
-                    xValue,
-                    yValue,
-                    sizeValue,
-                    label,
-                    state,
-                } = getBubbleValues(item);
+            bubbleEntries.forEach(item => group.add(buildBubble(srs)(item)));
 
-                const bubble = createCircle({
-                    id,
-                    ...state,
-                    radius: 0,
-                    fill: setColorAlpha(state.fill as string, 0),
-                    stroke: setColorAlpha(state.stroke as string, 0),
-                    data: state,
-                });
-
-                bubble.on('mouseenter', () => {
-                    const tooltipText = series.sizeBy !== undefined
-                        ? `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)}, ${sizeValue.toFixed(2)})`
-                        : `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`;
-
-                    this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
-
-                    this.renderer.transition(bubble, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: state.radius * 1.2,
-                        },
-                    });
-
-                    bubble.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bubble, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.stroke as string, 0.7),
-                                radius: state.radius,
-                            },
-                        });
-                    });
-                });
-
-                group.add(bubble);
-            });
-
-            // Update existing bubbles
             bubbleUpdates.forEach(([item, bubble]) => {
-                const {
-                    xValue,
-                    yValue,
-                    sizeValue,
-                    label,
-                    state,
-                } = getBubbleValues(item);
-
-                bubble.data = state;
-
-                // Update hover listeners for new values
-                bubble.on('mouseenter', () => {
-                    const tooltipText = series.sizeBy !== undefined
-                        ? `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)}, ${sizeValue.toFixed(2)})`
-                        : `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`;
-
-                    this.tooltip.show(state.cx, state.cy - state.radius - 10, tooltipText);
-
-                    this.renderer.transition(bubble, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: state.radius * 1.2,
-                        },
-                    });
-
-                    bubble.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bubble, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.stroke as string, 0.7),
-                                radius: state.radius,
-                            },
-                        });
-                    });
-                });
+                const values = getValues(item);
+                bubble.data = values.state;
+                this.attachBubbleHover(bubble, this.tooltipText(values), values.state);
             });
 
-            return {
-                group,
-                exitTransitions,
-            };
+            return group;
         });
 
         this.scene.add(seriesEntryGroups);
 
         this.bubbleGroups = [
             ...seriesEntryGroups,
-            ...seriesUpdateGroups.map(({ group }) => group),
+            ...seriesUpdateGroups,
         ];
 
-        // Entry animations - fade in and grow
+        const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
+
         const entryTransitions = seriesEntryGroups.map(group => {
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
-                duration: this.getAnimationDuration(1000),
-                delay: index * (this.getAnimationDuration(800) / length),
-                ease: easeOutCubic,
+                duration: enter.duration,
+                delay: stagger(index, length, enter.duration, 0.8),
+                ease: enter.ease,
                 state: element.data as CircleState,
             }));
         });
 
-        // Update animations - move and resize
-        const updateTransitions = seriesUpdateGroups.map(({ group }) => {
+        const updateTransitions = seriesUpdateGroups.map(group => {
             const bubbles = group.getElementsByType('circle') as Circle[];
 
             return this.renderer.transition(bubbles, element => ({
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
+                duration: update.duration,
+                ease: update.ease,
                 state: element.data as CircleState,
             }));
         });
-
-        // Collect all exit transitions
-        const exitTransitions = seriesUpdateGroups.map(({ exitTransitions }) => exitTransitions).flat();
 
         return Promise.all([
             ...entryTransitions,
@@ -515,149 +306,73 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         ]);
     }
 
-
     public async render() {
-        return super.render((scene) => {
-            const {
-                data,
-                series,
-            } = this.options;
+        return super.render(async () => {
+            const { data, series, key } = this.options;
 
             this.resolveSeriesColors(series);
+            this.prepareAxes();
 
-            // Assign colors to series that don't have them
-            series.forEach(srs => {
-                srs.color ??= this.getSeriesColor(srs.id);
-            });
+            const getKey = resolveAccessor<TData, string>(key);
 
-            // Calculate extents for all series
-            const xExtents = series.map(({ xBy }) => {
-                const getXValue = typeIsFunction(xBy)
-                    ? xBy
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[xBy] as number;
-
-                return getExtent(data, getXValue);
-            }).flat();
-
-            const yExtents = series.map(({ yBy }) => {
-                const getYValue = typeIsFunction(yBy)
-                    ? yBy
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[yBy] as number;
-
-                return getExtent(data, getYValue);
-            }).flat();
+            const xExtents = series.flatMap(({ xBy }) => getExtent(data, resolveAccessor<TData, number>(xBy)));
+            const yExtents = series.flatMap(({ yBy }) => getExtent(data, resolveAccessor<TData, number>(yBy)));
 
             const xExtent = getExtent(xExtents, functionIdentity);
             const yExtent = getExtent(yExtents, functionIdentity);
-            const sizeExtent = this.getSizeExtent();
+            this.sizeScale = scaleContinuous(this.getSizeExtent(), [0, 1]);
 
-            // Create size scale (normalized 0-1)
-            this.sizeScale = scaleContinuous(sizeExtent, [0, 1]);
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            const padding = this.getPadding();
-
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const left = area.x;
+            const top = area.y;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
-            const chartTop = padding.top + legendHeight;
-
-            // Create initial Y scale for axis positioning
-            this.yScale = scaleContinuous(yExtent, [scene.height - padding.bottom, chartTop], {
-                padToTicks: 10,
-            });
-
+            // Provisional Y scale to measure the y-axis width.
+            this.yScale = scaleContinuous(yExtent, [bottom, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds = new Box(
-                chartTop,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.yAxis.bounds = new Box(top, left, bottom, right);
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBox = this.yAxis.getBoundingBox();
 
-            // Create X scale
-            this.xScale = scaleContinuous(xExtent, [yAxisBoundingBox.right, scene.width - padding.right], {
-                padToTicks: 10,
-            });
-
+            this.xScale = scaleContinuous(xExtent, [yAxisBox.right, right], { padToTicks: 10 });
             this.xAxis.scale = this.xScale;
-            this.xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBox = this.xAxis.getBoundingBox();
 
-            // Update Y scale with correct range after X axis positioning
-            this.yScale = scaleContinuous(yExtent, [xAxisBoundingBox.top, chartTop], {
-                padToTicks: 10,
-            });
-
+            this.yScale = scaleContinuous(yExtent, [xAxisBox.top, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // Render grid
-            if (this.grid) {
-                const xTicks = this.xScale.ticks(10);
-                const yTicks = this.yScale.ticks(10);
-                const xTickPositions = xTicks.map(tick => this.xScale(tick));
-                const yTickPositions = yTicks.map(tick => this.yScale(tick));
+            const plot = { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top };
 
-                this.grid.render(
-                    xTickPositions,
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
-
-            // Setup crosshair
-            this.crosshair?.setup(
-                yAxisBoundingBox.right,
-                chartTop,
-                scene.width - padding.right - yAxisBoundingBox.right,
-                xAxisBoundingBox.top - chartTop
+            this.renderGrid(
+                this.xScale.ticks(10).map(tick => this.xScale(tick)),
+                this.yScale.ticks(10).map(tick => this.yScale(tick)),
+                plot
             );
 
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
-            }
+            this.setupCrosshair(plot);
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawBubbles(),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.drawBubbles(getKey),
             ]);
         });
     }

@@ -130,7 +130,6 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: SunburstChartOptions) {
         super(target, options);

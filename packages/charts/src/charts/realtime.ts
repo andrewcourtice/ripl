@@ -104,7 +104,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     private yScale!: Scale;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
-    private legend?: Legend;
     private grid?: Grid;
     private crosshair?: Crosshair;
     private windowSize: number;

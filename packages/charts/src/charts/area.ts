@@ -1,7 +1,7 @@
 import {
-    BaseChartOptions,
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
@@ -12,35 +12,19 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeCrosshair,
-    normalizeGrid,
-    normalizeLegend,
-    normalizeTooltip,
-    normalizeYAxisItem,
-    resolveFormatLabel,
-} from '../core/options';
+    ANIMATION_REFERENCE,
+    exitElement,
+} from '../core/animation';
 
 import {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
+    applyHoverHighlight,
+} from '../core/interaction';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
+    resolveAccessor,
+} from '../core/data';
 
 import {
-    Grid,
-} from '../components/grid';
-
-import {
-    Crosshair,
-} from '../components/crosshair';
-
-import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -52,8 +36,6 @@ import {
     createCircle,
     createGroup,
     createPolyline,
-    easeOutCubic,
-    easeOutQuart,
     getExtent,
     Group,
     Point,
@@ -68,7 +50,6 @@ import {
 import {
     arrayJoin,
     functionIdentity,
-    typeIsFunction,
 } from '@ripl/utilities';
 
 /** Configuration for an individual area chart series. */
@@ -84,7 +65,7 @@ export interface AreaChartSeriesOptions<TData> {
 }
 
 /** Options for configuring an {@link AreaChart}. */
-export interface AreaChartOptions<TData = unknown> extends BaseChartOptions {
+export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     data: TData[];
     series: AreaChartSeriesOptions<TData>[];
     key: keyof TData | ((item: TData) => string);
@@ -99,103 +80,57 @@ export interface AreaChartOptions<TData = unknown> extends BaseChartOptions {
 /**
  * Area chart rendering filled regions beneath series lines.
  *
- * Supports stacked and unstacked modes with optional markers, crosshair,
- * tooltips, legend, and grid. Areas animate upward from the baseline on
- * entry and smoothly transition on update.
+ * Supports stacked and unstacked modes with optional markers, crosshair, tooltips, legend, chart
+ * title, and grid. Areas animate upward from the baseline on entry, transition smoothly on update,
+ * and fade out on exit.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
+export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData> {
 
     private areaGroups: Group[] = [];
     private yScale!: Scale;
     private xScale!: Scale<string>;
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
-    private grid?: Grid;
-    private crosshair?: Crosshair;
-    private legend?: Legend;
+
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const crosshairOpts = normalizeCrosshair(options.crosshair);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
-            });
-        }
-
-        this.xAxis = new ChartXAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+        this.setupCartesian({
+            grid: { horizontal: true },
+            crosshair: true,
         });
-
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
-
-        if (gridOpts.visible) {
-            this.grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
-
-        if (crosshairOpts.visible) {
-            this.crosshair = new Crosshair({
-                scene: this.scene,
-                renderer: this.renderer,
-                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
-                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                stroke: crosshairOpts.lineColor,
-                lineWidth: crosshairOpts.lineWidth,
-            });
-        }
 
         this.init();
     }
 
-    private async drawAreas(baseline: number) {
-        const {
-            data,
-            series,
-            key,
-            stacked,
-        } = this.options;
+    private seriesValue(series: AreaChartSeriesOptions<TData>, item: TData): number {
+        return resolveAccessor<TData, number>(series.value)(item);
+    }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+    private attachMarkerHover(marker: Circle, label: string, value: number, color: string, x: number, y: number) {
+        if (!this.tooltip) {
+            return;
+        }
+
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        applyHoverHighlight(marker, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({ x, y }),
+            content: () => `${label}: ${value}`,
+            highlight: { fill: color, radius: 5 },
+            restore: { fill: '#FFFFFF', radius: 3 },
+        });
+    }
+
+    private async drawAreas(baseline: number) {
+        const { data, series, key, stacked } = this.options;
+
+        const getKey = resolveAccessor<TData, string>(key);
+        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
         const {
             left: seriesEntries,
@@ -203,9 +138,12 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.areaGroups, 'id');
 
-        seriesExits.forEach(el => el.destroy());
+        seriesExits.forEach(group => {
+            const exits = group.graph(false).map(element => exitElement(this.renderer, element, exitAnimation));
+            void Promise.all(exits).then(() => group.destroy());
+        });
 
-        // Precompute cumulative stacked values per data point
+        // Precompute cumulative stacked values per data point.
         const stackedValues: number[][] = [];
 
         if (stacked) {
@@ -214,18 +152,14 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 let cumulative = 0;
 
                 series.forEach((srs, seriesIndex) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-                    cumulative += getValue(item);
+                    cumulative += this.seriesValue(srs, item);
                     stackedValues[dataIndex][seriesIndex] = cumulative;
                 });
             });
         }
 
         const getSeriesValue = (srs: AreaChartSeriesOptions<TData>, item: TData, dataIndex: number) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-            const rawValue = getValue(item);
+            const rawValue = this.seriesValue(srs, item);
             const seriesIndex = series.indexOf(srs);
 
             if (stacked && seriesIndex >= 0) {
@@ -245,20 +179,13 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             return 0;
         };
 
-        const seriesEntryGroups = seriesEntries.map(srs => {
-            const color = this.getSeriesColor(srs.id);
-            const opacity = srs.opacity ?? 0.3;
-            const showMarkers = srs.markers !== false;
-
+        const buildPoints = (srs: AreaChartSeriesOptions<TData>) => {
             const linePoints: Point[] = [];
             const areaPoints: Point[] = [];
-            const markerElements: Circle[] = [];
 
             data.forEach((item, dataIndex) => {
-                const key = getKey(item);
-                const value = getSeriesValue(srs, item, dataIndex);
-                const x = this.xScale(key);
-                const y = this.yScale(value);
+                const x = this.xScale(getKey(item));
+                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
 
                 linePoints.push([x, y]);
 
@@ -273,23 +200,32 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                     const prevY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
                     areaPoints.push([x, prevY]);
 
-                    // Close the area by going back along the bottom
                     if (stacked) {
                         for (let i = data.length - 1; i >= 0; i--) {
                             const prevVal = getPrevSeriesValue(srs, i);
-                            const prevKey = getKey(data[i]);
-                            areaPoints.push([this.xScale(prevKey), this.yScale(prevVal)]);
+                            areaPoints.push([this.xScale(getKey(data[i])), this.yScale(prevVal)]);
                         }
                     }
                 }
+            });
 
-                if (showMarkers) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const rawGetValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-                    const rawValue = rawGetValue(item);
+            return { linePoints, areaPoints };
+        };
+
+        const seriesEntryGroups = seriesEntries.map(srs => {
+            const color = this.getSeriesColor(srs.id);
+            const opacity = srs.opacity ?? 0.3;
+            const showMarkers = srs.markers !== false;
+            const { linePoints, areaPoints } = buildPoints(srs);
+
+            const markerElements: Circle[] = showMarkers
+                ? data.map((item, dataIndex) => {
+                    const x = this.xScale(getKey(item));
+                    const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+                    const rawValue = this.seriesValue(srs, item);
 
                     const marker = createCircle({
-                        id: `${srs.id}-marker-${key}`,
+                        id: `${srs.id}-marker-${getKey(item)}`,
                         fill: '#FFFFFF',
                         stroke: color,
                         lineWidth: 2,
@@ -306,49 +242,19 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                         } as CircleState,
                     });
 
-                    marker.on('mouseenter', () => {
-                        this.tooltip.show(x, y, `${srs.label}: ${rawValue}`);
+                    this.attachMarkerHover(marker, srs.label, rawValue, color, x, y);
 
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: color,
-                                radius: 5,
-                            },
-                        });
-
-                        marker.on('mouseleave', () => {
-                            this.tooltip.hide();
-
-                            this.renderer.transition(marker, {
-                                duration: this.getAnimationDuration(300),
-                                ease: easeOutQuart,
-                                state: {
-                                    fill: '#FFFFFF',
-                                    radius: 3,
-                                },
-                            });
-                        });
-                    });
-
-                    markerElements.push(marker);
-                }
-            });
-
-            // Create baseline-flattened points for entry animation
-            const baselineLinePoints: Point[] = linePoints.map(([x]) => [x, baseline]);
-            const baselineAreaPoints: Point[] = areaPoints.map(([x]) => [x, baseline]);
+                    return marker;
+                })
+                : [];
 
             const areaFill = createPolyline({
                 id: `${srs.id}-area`,
                 fill: setColorAlpha(color, opacity),
                 stroke: undefined,
-                points: baselineAreaPoints,
+                points: areaPoints.map(([x]) => [x, baseline] as Point),
                 renderer: srs.lineType,
-                data: {
-                    points: areaPoints,
-                } as PolylineState,
+                data: { points: areaPoints } as PolylineState,
             });
 
             areaFill.autoStroke = false;
@@ -357,11 +263,9 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 stroke: color,
-                points: baselineLinePoints,
+                points: linePoints.map(([x]) => [x, baseline] as Point),
                 renderer: srs.lineType,
-                data: {
-                    points: linePoints,
-                } as PolylineState,
+                data: { points: linePoints } as PolylineState,
             });
 
             return createGroup({
@@ -376,69 +280,34 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const color = this.getSeriesColor(srs.id);
-            const line = group.getElementsByType('polyline')[1] as Polyline;
-            const areaFill = group.getElementsByType('polyline')[0] as Polyline;
-            const existingMarkers = group.getElementsByType('circle') as Circle[];
+            const polylines = group.getElementsByType('polyline') as Polyline[];
+            const areaFill = polylines[0];
+            const line = polylines[1];
+            const markers = group.getElementsByType('circle') as Circle[];
+            const { linePoints, areaPoints } = buildPoints(srs);
 
-            const linePoints: Point[] = [];
-            const areaPoints: Point[] = [];
+            line.data = { points: linePoints, renderer: srs.lineType } as PolylineState;
+            areaFill.data = { points: areaPoints } as PolylineState;
 
-            data.forEach((item, dataIndex) => {
-                const key = getKey(item);
-                const value = getSeriesValue(srs, item, dataIndex);
-                const x = this.xScale(key);
-                const y = this.yScale(value);
-
-                linePoints.push([x, y]);
-
-                if (dataIndex === 0) {
-                    const prevY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
-                    areaPoints.push([x, prevY]);
+            markers.forEach((marker, index) => {
+                if (index >= data.length) {
+                    return;
                 }
 
-                areaPoints.push([x, y]);
+                const item = data[index];
+                const x = this.xScale(getKey(item));
+                const y = this.yScale(getSeriesValue(srs, item, index));
 
-                if (dataIndex === data.length - 1) {
-                    const prevY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
-                    areaPoints.push([x, prevY]);
+                marker.data = {
+                    fill: '#FFFFFF',
+                    stroke: color,
+                    lineWidth: 2,
+                    cx: x,
+                    cy: y,
+                    radius: 3,
+                } as CircleState;
 
-                    if (stacked) {
-                        for (let i = data.length - 1; i >= 0; i--) {
-                            const prevVal = getPrevSeriesValue(srs, i);
-                            const prevKey = getKey(data[i]);
-                            areaPoints.push([this.xScale(prevKey), this.yScale(prevVal)]);
-                        }
-                    }
-                }
-            });
-
-            line.data = {
-                points: linePoints,
-                renderer: srs.lineType,
-            } as PolylineState;
-
-            areaFill.data = {
-                points: areaPoints,
-            } as PolylineState;
-
-            // Update markers
-            existingMarkers.forEach((marker, index) => {
-                if (index < data.length) {
-                    const item = data[index];
-                    const value = getSeriesValue(srs, item, index);
-                    const key = getKey(item);
-                    const x = this.xScale(key);
-                    const y = this.yScale(value);
-
-                    marker.data = {
-                        fill: '#FFFFFF',
-                        stroke: color,
-                        lineWidth: 2,
-                        cx: x,
-                        cy: y,
-                        radius: 3,
-                    } as CircleState;
-                }
+                this.attachMarkerHover(marker, srs.label, this.seriesValue(srs, item), color, x, y);
             });
 
             return group;
@@ -451,84 +320,48 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
             ...seriesUpdateGroups,
         ];
 
-        const entryTransitions = seriesEntryGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
+        const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
+
+        const transitionsFor = (groups: Group[], animation: typeof enter) => groups.flatMap(group => {
+            const markers = group.getElementsByType('circle') as Circle[];
             const polylines = group.getElementsByType('polyline') as Polyline[];
-            const areaFill = polylines[0];
-            const line = polylines[1];
 
-            const lineTransition = line ? this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: line.data as PolylineState,
-            }) : Promise.resolve();
-
-            const areaTransition = areaFill ? this.renderer.transition(areaFill, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: areaFill.data as PolylineState,
-            }) : Promise.resolve();
-
-            const markersTransition = markers.length > 0 ? this.renderer.transition(markers, (element) => ({
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            })) : Promise.resolve();
-
-            return [lineTransition, areaTransition, markersTransition];
-        });
-
-        const updateTransitions = seriesUpdateGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
-            const polylines = group.getElementsByType('polyline') as Polyline[];
-            const line = polylines[1];
-
-            const lineTransition = line ? this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: line.data as PolylineState,
-            }) : Promise.resolve();
-
-            const areaTransition = polylines[0] ? this.renderer.transition(polylines[0], {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: polylines[0].data as PolylineState,
-            }) : Promise.resolve();
-
-            const markersTransition = markers.length > 0 ? this.renderer.transition(markers, (element) => ({
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            })) : Promise.resolve();
-
-            return [lineTransition, areaTransition, markersTransition];
+            return [
+                ...polylines.map(polyline => this.renderer.transition(polyline, {
+                    duration: animation.duration,
+                    ease: animation.ease,
+                    state: polyline.data as PolylineState,
+                })),
+                ...(markers.length > 0
+                    ? [this.renderer.transition(markers, element => ({
+                        duration: animation.duration,
+                        ease: animation.ease,
+                        state: element.data as CircleState,
+                    }))]
+                    : []),
+            ];
         });
 
         return Promise.all([
-            ...entryTransitions,
-            ...updateTransitions,
-        ].flat());
+            ...transitionsFor(seriesEntryGroups, enter),
+            ...transitionsFor(seriesUpdateGroups, update),
+        ]);
     }
 
     public async render() {
-        return super.render(async (scene) => {
-            const {
-                data,
-                series,
-                key,
-                stacked,
-            } = this.options;
+        return super.render(async () => {
+            const { data, series, key, stacked } = this.options;
 
             this.resolveSeriesColors(series);
+            this.prepareAxes();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
             let dataExtent: number[];
 
             if (stacked) {
-                // For stacked, compute cumulative min and max
                 let stackedMax = 0;
                 let stackedMin = 0;
 
@@ -538,9 +371,7 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                     let cumulativeMin = 0;
 
                     series.forEach(srs => {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const getValue = typeIsFunction(srs.value) ? srs.value : (i: any) => i[srs.value] as number;
-                        cumulative += getValue(item);
+                        cumulative += this.seriesValue(srs, item);
                         cumulativeMax = Math.max(cumulativeMax, cumulative);
                         cumulativeMin = Math.min(cumulativeMin, cumulative);
                     });
@@ -551,133 +382,58 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
 
                 dataExtent = [stackedMin, stackedMax];
             } else {
-                const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
-                    const getValue = typeIsFunction(valueAccessor)
-                        ? valueAccessor
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        : (item: any) => item[valueAccessor] as number;
-
-                    return getExtent(data, getValue);
-                }).concat(0);
+                const seriesExtents = series
+                    .flatMap(srs => getExtent(data, item => this.seriesValue(srs, item)))
+                    .concat(0);
 
                 dataExtent = getExtent(seriesExtents, functionIdentity);
             }
 
-            const padding = this.getPadding();
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible !== false && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const left = area.x;
+            const top = area.y;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
-                padToTicks: 10,
-            });
-
+            this.yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds = new Box(
-                chartTop,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.yAxis.bounds = new Box(top, left, bottom, right);
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBox = this.yAxis.getBoundingBox();
 
-            // Build x scale
-            const xConvert = (value: string) => {
-                const index = keys.indexOf(value);
-                return yAxisBoundingBox.right + 20 + (index / Math.max(1, keys.length - 1)) * (scene.width - padding.right - yAxisBoundingBox.right - 20);
-            };
-
-            this.xScale = Object.assign(
-                (value: string) => xConvert(value),
-                {
-                    domain: keys,
-                    range: [yAxisBoundingBox.right + 20, scene.width - padding.right] as number[],
-                    inverse: (value: number) => {
-                        const range = scene.width - padding.right - yAxisBoundingBox.right - 20;
-                        const index = Math.round(((value - yAxisBoundingBox.right - 20) / range) * (keys.length - 1));
-                        return keys[Math.max(0, Math.min(keys.length - 1, index))];
-                    },
-                    ticks: () => keys,
-                    includes: (value: string) => keys.includes(value),
-                }
-            ) as unknown as Scale<string>;
-
+            this.xScale = this.pointScale(keys, yAxisBox.right, right);
             this.xAxis.scale = this.xScale;
-            this.xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
-                padToTicks: 10,
-            });
-
+            this.yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this.yAxis.bounds.bottom = xAxisBox.top;
 
             const baseline = this.yScale(0);
+            const plot = { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top };
 
-            // Render grid
-            if (this.grid) {
-                const yTicks = this.yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this.yScale(tick));
-
-                this.grid.render(
-                    [],
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
-
-            // Setup crosshair
-            this.crosshair?.setup(
-                yAxisBoundingBox.right,
-                chartTop,
-                scene.width - padding.right - yAxisBoundingBox.right,
-                xAxisBoundingBox.top - chartTop
-            );
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
-            }
+            this.renderGrid([], this.yScale.ticks(10).map(tick => this.yScale(tick)), plot);
+            this.setupCrosshair(plot);
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
                 this.drawAreas(baseline),
             ]);
         });

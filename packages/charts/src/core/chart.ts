@@ -19,13 +19,36 @@ import {
 
 import type {
     ChartAnimationOptions,
+    ChartLegendInput,
     ChartTitleOptions,
 } from './options';
 
 import {
     normalizeAnimation,
+    normalizeLegend,
     normalizeTitle,
 } from './options';
+
+import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
+    ChartArea,
+    ChartLayout,
+    ChartPadding,
+} from './layout';
+
+import {
+    ANIMATION_REFERENCE,
+    resolveAnimation,
+    ResolvedAnimation,
+} from './animation';
+
+import {
+    ChartTitle,
+} from '../components/title';
 
 if (!factory.createContext) {
     factory.set({ createContext });
@@ -34,23 +57,13 @@ if (!factory.createContext) {
 export type {
     ChartAnimationOptions,
     ChartTitleOptions,
+    ChartArea,
+    ChartPadding,
 };
 
-/** Chart padding with explicit top, right, bottom, and left values. */
-export interface ChartPadding {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-}
-
-/** The computed drawing area of a chart after padding is applied. */
-export interface ChartArea {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
+export {
+    ChartLayout,
+};
 
 /** Base options shared by all chart types. */
 export interface BaseChartOptions {
@@ -71,6 +84,8 @@ export class Chart<
     protected autoRender: boolean;
     protected animationOptions: ChartAnimationOptions;
     protected titleOptions?: ChartTitleOptions;
+    protected title?: ChartTitle;
+    protected legend?: Legend;
 
     private hasRendered: boolean = false;
 
@@ -130,12 +145,83 @@ export class Chart<
     }
 
     protected getAnimationDuration(referenceDuration: number = 1000): number {
-        if (!this.animationOptions.enabled) {
-            return 0;
+        return this.resolveAnimation(referenceDuration).duration;
+    }
+
+    /** Resolves the chart's animation options for a given reference duration (duration + easing + enabled). */
+    protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {
+        return resolveAnimation(this.animationOptions, referenceDuration);
+    }
+
+    /** Creates a fresh layout for the current canvas size and padding. */
+    protected createLayout(): ChartLayout {
+        const { width, height } = this.scene.context;
+        return new ChartLayout(width, height, this.getPadding());
+    }
+
+    /**
+     * Reserves a band for the chart title (if configured) and renders it. Returns the remaining
+     * area unchanged when there is no title. Call this first in a chart's layout pass so the
+     * title sits outermost.
+     */
+    protected reserveTitle(layout: ChartLayout) {
+        if (!this.titleOptions) {
+            this.title?.destroy();
+            return;
         }
 
-        const scale = this.animationOptions.duration / 1000;
-        return referenceDuration * scale;
+        if (!this.title) {
+            this.title = new ChartTitle({
+                scene: this.scene,
+                renderer: this.renderer,
+                options: this.titleOptions,
+            });
+        } else {
+            this.title.setOptions(this.titleOptions);
+        }
+
+        if (!this.title.visible) {
+            this.title.destroy();
+            return;
+        }
+
+        const thickness = this.title.measure();
+        const region = layout.reserve(this.title.position, thickness);
+        this.title.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
+    }
+
+    /**
+     * Reserves a band for the legend (when visible and given items) at its configured position
+     * and renders it into that band, reconciling against the previous render.
+     */
+    protected reserveLegend(layout: ChartLayout, items: LegendItem[], input?: ChartLegendInput) {
+        const legendOpts = normalizeLegend(input);
+
+        if (!legendOpts.visible || items.length === 0) {
+            this.legend?.destroy();
+            this.legend = undefined;
+            return;
+        }
+
+        if (!this.legend) {
+            this.legend = new Legend({
+                scene: this.scene,
+                renderer: this.renderer,
+                items,
+                position: legendOpts.position,
+                font: legendOpts.font,
+                fontColor: legendOpts.fontColor,
+                highlight: legendOpts.highlight,
+                onToggle: () => this.render(),
+            });
+        } else {
+            this.legend.update(items);
+        }
+
+        const thickness = this.legend.measure(layout.area);
+        const region = layout.reserve(legendOpts.position, thickness);
+
+        this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
