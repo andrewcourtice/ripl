@@ -8,15 +8,10 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeLegend,
-} from '../core/options';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -365,40 +360,25 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
             this.resolveSeriesColors(series);
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
-
-            const cx = scene.width / 2;
-            const cy = (scene.height + legendHeight) / 2;
-            const radius = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom - legendHeight
-            ) / 2 - 30;
+            const area = layout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const radius = Math.min(area.width, area.height) / 2 - 30;
 
             // Compute max value from data if not provided
             let computedMax = maxValue ?? 0;
@@ -415,11 +395,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             }
 
             this.drawGrid(cx, cy, radius, axes, levels);
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
-            }
 
             return this.drawSeries(cx, cy, radius, computedMax);
         });

@@ -8,10 +8,6 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeLegend,
-} from '../core/options';
-
-import {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -20,7 +16,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -147,7 +142,6 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             const { data } = this.options;
 
             const colorGenerator = this.colorGenerator;
-            const padding = this.getPadding();
 
             // Pre-resolve top-level node colors so legend and arcs stay in sync
             const resolvedColors = new Map<string, string>();
@@ -156,39 +150,23 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
             });
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = data.map(node => ({
-                    id: node.id,
-                    label: node.label,
-                    color: resolvedColors.get(node.id)!,
-                    active: true,
-                }));
+            const legendItems: LegendItem[] = data.map(node => ({
+                id: node.id,
+                label: node.label,
+                color: resolvedColors.get(node.id)!,
+                active: true,
+            }));
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'bottom',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                const legendWidth = scene.width - padding.left - padding.right;
-                legendHeight = this.legend.getBoundingBox(legendWidth).height;
-            }
-
-            const cx = scene.width / 2;
-            const cy = (scene.height - legendHeight) / 2;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom - legendHeight
-            );
+            const area = layout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const size = Math.min(area.width, area.height);
 
             const offset = TAU / 4;
             const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);
@@ -293,12 +271,6 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 ...entryGroups,
                 ...updateGroups,
             ];
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                const legendWidth = scene.width - padding.left - padding.right;
-                this.legend.render(padding.left, scene.height - legendHeight, legendWidth);
-            }
 
             // Animate entries
             const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];

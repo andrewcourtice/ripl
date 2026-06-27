@@ -63,13 +63,13 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 formatValue,
             } = this.options;
 
-            const padding = this.getPadding();
-            const cx = scene.width / 2;
-            const cy = scene.height / 2 + 20;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
-            );
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2 + 20;
+            const size = Math.min(area.width, area.height);
             const radius = size * 0.4;
             const innerRadius = radius * 0.7;
 
