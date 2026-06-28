@@ -224,40 +224,45 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             };
         };
 
+        // Builds a marker circle for a data item (radius animates from 0 up to its rest size).
+        const buildMarker = (srs: AreaChartSeriesOptions<TData>) => {
+            const color = this.getSeriesColor(srs.id);
+
+            return (item: TData, dataIndex: number) => {
+                const x = this.xScale(getKey(item));
+                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+
+                const state: CircleState = {
+                    fill: '#FFFFFF',
+                    stroke: color,
+                    lineWidth: 2,
+                    cx: x,
+                    cy: y,
+                    radius: 3,
+                };
+
+                const marker = createCircle({
+                    id: `${srs.id}-marker-${getKey(item)}`,
+                    ...state,
+                    radius: 0,
+                    data: state,
+                });
+
+                this.attachMarkerHover(marker, srs.label, this.seriesValue(srs, item), color, x, y);
+
+                return marker;
+            };
+        };
+
         const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
             const opacity = srs.opacity ?? 0.3;
             const showMarkers = srs.markers !== false;
             const { linePoints, areaPoints } = buildPoints(srs);
+            const makeMarker = buildMarker(srs);
 
             const markerElements: Circle[] = showMarkers
-                ? data.map((item, dataIndex) => {
-                    const x = this.xScale(getKey(item));
-                    const y = this.yScale(getSeriesValue(srs, item, dataIndex));
-                    const rawValue = this.seriesValue(srs, item);
-
-                    const marker = createCircle({
-                        id: `${srs.id}-marker-${getKey(item)}`,
-                        fill: '#FFFFFF',
-                        stroke: color,
-                        lineWidth: 2,
-                        cx: x,
-                        cy: y,
-                        radius: 0,
-                        data: {
-                            fill: '#FFFFFF',
-                            stroke: color,
-                            lineWidth: 2,
-                            cx: x,
-                            cy: y,
-                            radius: 3,
-                        } as CircleState,
-                    });
-
-                    this.attachMarkerHover(marker, srs.label, rawValue, color, x, y);
-
-                    return marker;
-                })
+                ? data.map((item, dataIndex) => makeMarker(item, dataIndex))
                 : [];
 
             const areaFill = createPolyline({
@@ -304,14 +309,30 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             } as PolylineState;
             areaFill.data = { points: areaPoints } as PolylineState;
 
-            markers.forEach((marker, index) => {
-                if (index >= data.length) {
-                    return;
-                }
+            // Diff markers by key so new data points add markers and removed ones exit,
+            // instead of the previous index-based update that ignored points beyond the
+            // original marker count.
+            const makeMarker = buildMarker(srs);
 
-                const item = data[index];
+            const {
+                left: markerEntries,
+                inner: markerUpdates,
+                right: markerExits,
+            } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-marker-${getKey(item)}`);
+
+            markerExits.forEach(marker => exitElement(this.renderer, marker, exitAnimation, {
+                radius: 0,
+                opacity: 0,
+            }));
+
+            if (srs.markers !== false) {
+                markerEntries.forEach(item => group.add(makeMarker(item, data.indexOf(item))));
+            }
+
+            markerUpdates.forEach(([item, marker]) => {
+                const dataIndex = data.indexOf(item);
                 const x = this.xScale(getKey(item));
-                const y = this.yScale(getSeriesValue(srs, item, index));
+                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
 
                 marker.data = {
                     fill: '#FFFFFF',

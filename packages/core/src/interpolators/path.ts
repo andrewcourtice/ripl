@@ -93,10 +93,24 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         ];
     });
 
-    return position => interpolators.map(([ix, iy]) => [
-        ix(position),
-        iy(position),
-    ]);
+    // Settle on the original (un-extrapolated) sets at the endpoints so a completed morph
+    // commits the clean target points rather than the LCM-upsampled set. Without this the
+    // element would retain the inflated point array and each subsequent morph would compound
+    // the point count (lcm of ever-growing lengths), exhausting memory.
+    return position => {
+        if (position <= 0) {
+            return setA;
+        }
+
+        if (position >= 1) {
+            return setB;
+        }
+
+        return interpolators.map(([ix, iy]) => [
+            ix(position),
+            iy(position),
+        ]);
+    };
 };
 
 interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));

@@ -30,6 +30,10 @@ import {
 } from '../components/tooltip';
 
 import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
     Grid,
 } from '../components/grid';
 
@@ -192,6 +196,30 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
         return typeIsFunction(accessor) ? accessor : (item: any) => item[accessor] as TReturn;
     }
 
+    /**
+     * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
+     * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
+     */
+    private attachBodyHover(body: Rect, color: string, anchorX: number, anchorY: number, label: string) {
+        applyHoverHighlight(body, {
+            renderer: this.renderer,
+            duration: this.getAnimationDuration(200),
+            ease: easeOutQuart,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => label,
+            highlight: {
+                fill: setColorAlpha(color, 0.8),
+            },
+            restore: {
+                fill: color,
+            },
+        });
+    }
+
     private getCandlestickValues(item: TData): CandlestickValues {
         const {
             key: keyAccessor,
@@ -299,33 +327,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 children: [wick, body],
             });
 
-            body.on('mouseenter', () => {
-                this.tooltip.show(
-                    x,
-                    bodyTop,
-                    `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-                );
-
-                this.renderer.transition(body, {
-                    duration: this.getAnimationDuration(200),
-                    ease: easeOutQuart,
-                    state: {
-                        fill: setColorAlpha(color, 0.8),
-                    },
-                });
-
-                body.on('mouseleave', () => {
-                    this.tooltip.hide();
-
-                    this.renderer.transition(body, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: color,
-                        },
-                    });
-                });
-            });
+            this.attachBodyHover(
+                body,
+                color,
+                x,
+                bodyTop,
+                `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
+            );
 
             return group;
         });
@@ -356,33 +364,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     borderRadius: 1,
                 } as RectState;
 
-                body.on('mouseenter', () => {
-                    this.tooltip.show(
-                        x,
-                        bodyTop,
-                        `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-                    );
-
-                    this.renderer.transition(body, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: setColorAlpha(color, 0.8),
-                        },
-                    });
-
-                    body.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(body, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: color,
-                            },
-                        });
-                    });
-                });
+                this.attachBodyHover(
+                    body,
+                    color,
+                    x,
+                    bodyTop,
+                    `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
+                );
             }
 
             if (wick) {
