@@ -98,6 +98,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             const getLabel = resolveAccessor<TData, string>(label);
             const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
 
+            // Register each segment in the shared colour map so it draws a palette colour instead
+            // of the unresolved-series grey fallback (honouring any explicit per-item colour).
+            this.resolveSeriesColors(data.map(item => ({
+                id: getKey(item),
+                color: getColor(item),
+            })));
+
             const colorFor = (item: TData) => getColor(item) ?? this.getSeriesColor(getKey(item));
 
             // Shared layout pass: reserve title and legend bands first.
@@ -345,7 +352,10 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             tooltip: this.tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
-                return { x, y };
+                return {
+                    x,
+                    y,
+                };
             },
             content: () => value.toString(),
             highlight: { fill: color },

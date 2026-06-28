@@ -42,7 +42,10 @@ export class ChartTitle extends ChartComponent {
     private group?: Group;
 
     constructor({ scene, renderer, options }: ChartTitleComponentOptions) {
-        super({ scene, renderer });
+        super({
+            scene,
+            renderer,
+        });
         this.options = options;
     }
 
@@ -73,7 +76,12 @@ export class ChartTitle extends ChartComponent {
 
         const metrics = this.context.measureText(this.options.text, this.options.font);
         const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
-        const padding = normalizePadding(this.options.padding) ?? { top: 0, right: 0, bottom: 0, left: 0 };
+        const padding = normalizePadding(this.options.padding) ?? {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+        };
 
         return this.isVertical
             ? textHeight + padding.left + padding.right

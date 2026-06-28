@@ -25,7 +25,9 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsup"
+        "build": "tsup",
+        "test:visual": "playwright test -c test/visual/playwright.config.ts",
+        "test:visual:update": "playwright test -c test/visual/playwright.config.ts --update-snapshots"
     },
     "dependencies": {
         "@ripl/canvas": "^1.0.0-beta.2",

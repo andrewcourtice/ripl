@@ -10,7 +10,7 @@ import {
 } from '@ripl/utilities';
 
 /** A value accessor expressed as a property key, a constant, or a function. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export type Accessor<TData, TValue> = keyof TData | TValue | ((item: TData) => TValue);
 
 /**

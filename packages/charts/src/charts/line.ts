@@ -148,10 +148,19 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             duration: hover.duration,
             ease: hover.ease,
             tooltip: this.tooltip,
-            anchor: () => ({ x: marker.cx, y: marker.cy }),
+            anchor: () => ({
+                x: marker.cx,
+                y: marker.cy,
+            }),
             content: () => `${this.seriesLabel(series, item)}: ${value}`,
-            highlight: { fill: state.stroke as string, radius: radius + 2 },
-            restore: { fill: '#FFFFFF', radius },
+            highlight: {
+                fill: state.stroke as string,
+                radius: radius + 2,
+            },
+            restore: {
+                fill: '#FFFFFF',
+                radius,
+            },
         });
     }
 
@@ -183,7 +192,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.attachMarkerHover(marker, srs, item, value, state);
 
-            return { point, marker };
+            return {
+                point,
+                marker,
+            };
         };
 
         const seriesEntryGroups = seriesEntries.map(srs => {
@@ -222,7 +234,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${getKey(item)}`);
 
-            markerExits.forEach(marker => exitElement(this.renderer, marker, exitAnimation, { radius: 0, opacity: 0 }));
+            markerExits.forEach(marker => exitElement(this.renderer, marker, exitAnimation, {
+                radius: 0,
+                opacity: 0,
+            }));
 
             markerEntries.forEach(item => group.add(buildMarker(srs)(item).marker));
 
@@ -344,10 +359,20 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.renderGrid(
                 [],
                 this.yScale.ticks(10).map(tick => this.yScale(tick)),
-                { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top }
+                {
+                    x: yAxisBox.right,
+                    y: top,
+                    width: right - yAxisBox.right,
+                    height: xAxisBox.top - top,
+                }
             );
 
-            this.setupCrosshair({ x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top });
+            this.setupCrosshair({
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            });
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

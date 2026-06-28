@@ -95,7 +95,10 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         super(target, options);
 
         this.setupCartesian({
-            grid: { horizontal: true, vertical: true },
+            grid: {
+                horizontal: true,
+                vertical: true,
+            },
             crosshair: true,
             crosshairAxisDefault: 'both',
         });
@@ -141,9 +144,13 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const xValue = getX(item);
             const yValue = getY(item);
             const sizeValue = getSize(item);
+            // When every size value is identical the size extent is degenerate and the scale
+            // returns a non-finite value; fall back to the midpoint so bubbles share one size.
+            const sizeRatio = this.sizeScale(sizeValue);
+            const normalizedSize = Number.isFinite(sizeRatio) ? sizeRatio : 0.5;
             const radius = sizeBy === undefined
                 ? minRadius
-                : this.sizeScale(sizeValue) * (maxRadius - minRadius) + minRadius;
+                : normalizedSize * (maxRadius - minRadius) + minRadius;
 
             return {
                 id: `${id}-${getKey(item)}`,
@@ -177,14 +184,27 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             duration: hover.duration,
             ease: hover.ease,
             tooltip: this.tooltip,
-            anchor: () => ({ x: bubble.cx, y: bubble.cy - bubble.radius - 10 }),
+            anchor: () => ({
+                x: bubble.cx,
+                y: bubble.cy - bubble.radius - 10,
+            }),
             content: () => content,
-            highlight: { fill: stroke, radius: state.radius * 1.2 },
-            restore: { fill: setColorAlpha(stroke, REST_ALPHA), radius: state.radius },
+            highlight: {
+                fill: stroke,
+                radius: state.radius * 1.2,
+            },
+            restore: {
+                fill: setColorAlpha(stroke, REST_ALPHA),
+                radius: state.radius,
+            },
         });
     }
 
-    private tooltipText(values: { label: string; xValue: number; yValue: number; sizeValue: number; hasSize: boolean }): string {
+    private tooltipText(values: { label: string;
+        xValue: number;
+        yValue: number;
+        sizeValue: number;
+        hasSize: boolean; }): string {
         const { label, xValue, yValue, sizeValue, hasSize } = values;
 
         return hasSize
@@ -359,7 +379,12 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            const plot = { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top };
+            const plot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
 
             this.renderGrid(
                 this.xScale.ticks(10).map(tick => this.xScale(tick)),

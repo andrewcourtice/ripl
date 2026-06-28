@@ -126,7 +126,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     }
 
     /** Wires consistent hover highlight + tooltip onto a bar. */
-    private attachBarHover(bar: Rect, label: string, value: number, anchor: () => { x: number; y: number }) {
+    private attachBarHover(bar: Rect, label: string, value: number, anchor: () => { x: number;
+        y: number; }) {
         if (!this.tooltip) {
             return;
         }
@@ -187,18 +188,16 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     x = Math.min(baseline, valueScale(value));
                     width = Math.abs(valueScale(value) - baseline);
                 }
+            } else if (this.isStacked) {
+                x = categoryScale(key);
+                width = categoryScale.bandwidth;
+                y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
+                height = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
             } else {
-                if (this.isStacked) {
-                    x = categoryScale(key);
-                    width = categoryScale.bandwidth;
-                    y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
-                    height = Math.abs(valueScale(0) - valueScale(Math.abs(value)));
-                } else {
-                    x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
-                    width = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
-                    y = valueScale(max(0, value));
-                    height = Math.abs(baseline - valueScale(value));
-                }
+                x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
+                width = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
+                y = valueScale(max(0, value));
+                height = Math.abs(baseline - valueScale(value));
             }
 
             return {
@@ -216,13 +215,25 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         };
 
         const anchorFor = (state: RectState) => () => (horizontal
-            ? { x: state.x + state.width, y: state.y + state.height / 2 }
-            : { x: state.x + state.width / 2, y: state.y });
+            ? {
+                x: state.x + state.width,
+                y: state.y + state.height / 2,
+            }
+            : {
+                x: state.x + state.width / 2,
+                y: state.y,
+            });
 
         // The collapsed initial geometry an entering bar grows from.
         const collapsed = (): Partial<RectState> => (horizontal
-            ? { x: baseline, width: 0 }
-            : { y: baseline, height: 0 });
+            ? {
+                x: baseline,
+                width: 0,
+            }
+            : {
+                y: baseline,
+                height: 0,
+            });
 
         const createBar = (srs: BarChartSeriesOptions<TData>) => (item: TData) => {
             const { id, value, state } = getBarState(srs, item);
@@ -415,7 +426,12 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.renderGrid(
                     adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
                     [],
-                    { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top }
+                    {
+                        x: yAxisBox.right,
+                        y: top,
+                        width: right - yAxisBox.right,
+                        height: xAxisBox.top - top,
+                    }
                 );
 
                 return Promise.all([
@@ -450,7 +466,12 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.renderGrid(
                 [],
                 adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
-                { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top }
+                {
+                    x: yAxisBox.right,
+                    y: top,
+                    width: right - yAxisBox.right,
+                    height: xAxisBox.top - top,
+                }
             );
 
             return Promise.all([

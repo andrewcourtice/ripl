@@ -350,7 +350,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 axes,
                 series,

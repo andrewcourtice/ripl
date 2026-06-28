@@ -1,6 +1,15 @@
 import {
+    fileURLToPath,
+} from 'node:url';
+
+import path from 'node:path';
+
+import {
     defineConfig,
 } from '@playwright/test';
+
+// The workspace is an ES module ("type": "module"), so `__dirname` is unavailable — derive it.
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Playwright config for chart visual-regression snapshots.
@@ -10,9 +19,9 @@ import {
  * the CHROMIUM_PATH env var if Playwright's bundled browser is unavailable.
  */
 export default defineConfig({
-    testDir: __dirname,
+    testDir: dirname,
     testMatch: '**/*.spec.ts',
-    snapshotDir: `${__dirname}/__snapshots__`,
+    snapshotDir: `${dirname}/__snapshots__`,
     use: {
         baseURL: 'http://localhost:5180',
         ...(process.env.CHROMIUM_PATH
@@ -20,8 +29,8 @@ export default defineConfig({
             : {}),
     },
     webServer: {
-        command: 'npx vite --config vite.config.ts',
-        cwd: __dirname,
+        command: `npx vite --config ${path.join(dirname, 'vite.config.ts')}`,
+        cwd: dirname,
         url: 'http://localhost:5180',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

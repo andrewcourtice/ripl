@@ -34,7 +34,8 @@ export interface HoverHighlightOptions<TElement extends Element> {
     /** Optional tooltip to show/hide alongside the highlight. */
     tooltip?: HoverTooltip;
     /** Resolves the tooltip anchor point (called on enter). */
-    anchor?: () => { x: number; y: number };
+    anchor?: () => { x: number;
+        y: number; };
     /** Resolves the tooltip content (called on enter). */
     content?: () => string;
 }

@@ -456,7 +456,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 key: keyAccessor,

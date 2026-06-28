@@ -183,7 +183,10 @@ export class Legend extends ChartComponent {
                 y += rowHeight + ROW_GAP;
             });
 
-            return { placements, thickness };
+            return {
+                placements,
+                thickness,
+            };
         }
 
         // Vertical: single column stacked top to bottom, centred within the region height.
@@ -206,7 +209,10 @@ export class Legend extends ChartComponent {
             y += rowHeight + ROW_GAP;
         });
 
-        return { placements, thickness };
+        return {
+            placements,
+            thickness,
+        };
     }
 
     /** Measures the band thickness the legend needs within the given available area. */
@@ -247,9 +253,19 @@ export class Legend extends ChartComponent {
             const x = regionOrX;
             const y = animationOrY as number;
             const legendWidth = width ?? 0;
-            const thickness = this.measure({ x, y, width: legendWidth, height: 0 });
+            const thickness = this.measure({
+                x,
+                y,
+                width: legendWidth,
+                height: 0,
+            });
 
-            this.draw({ x, y, width: legendWidth, height: thickness });
+            this.draw({
+                x,
+                y,
+                width: legendWidth,
+                height: thickness,
+            });
             return;
         }
 
@@ -290,6 +306,7 @@ export class Legend extends ChartComponent {
         entries.forEach(placement => {
             const { item } = placement;
             const isActive = item.active !== false;
+            const restOpacity = isActive ? 1 : 0.5;
 
             const swatch = createRect({
                 id: `legend-swatch-${item.id}`,
@@ -299,7 +316,7 @@ export class Legend extends ChartComponent {
                 height: SWATCH_SIZE,
                 borderRadius: SWATCH_RADIUS,
                 fill: isActive ? item.color : INACTIVE_COLOR,
-                opacity: animation?.enabled ? 0 : (isActive ? 1 : 0.5),
+                opacity: animation?.enabled ? 0 : restOpacity,
                 data: item,
             });
 
@@ -353,14 +370,22 @@ export class Legend extends ChartComponent {
                 this.renderer.transition(swatch, {
                     duration: animation.duration,
                     ease: animation.ease,
-                    state: { x: target.swatchX, y: target.swatchY, opacity: isActive ? 1 : 0.5 },
+                    state: {
+                        x: target.swatchX,
+                        y: target.swatchY,
+                        opacity: isActive ? 1 : 0.5,
+                    },
                 });
 
                 if (label) {
                     this.renderer.transition(label, {
                         duration: animation.duration,
                         ease: animation.ease,
-                        state: { x: target.labelX, y: target.labelY, opacity: 1 },
+                        state: {
+                            x: target.labelX,
+                            y: target.labelY,
+                            opacity: 1,
+                        },
                     });
                 }
             } else {

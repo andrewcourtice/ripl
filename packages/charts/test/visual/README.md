@@ -1,34 +1,39 @@
 # Chart visual-regression tests
 
-Playwright snapshots of the flagship charts, used to catch visual regressions such as missing
-titles, horizontally-clipped y-axis titles, and legends overlapping the plot area.
+Playwright snapshots of **all 18 charts**, used to catch visual regressions such as missing
+titles, horizontally-clipped y-axis titles, legends overlapping the plot area, missing data
+points, and unresolved (grey) segment colours.
 
 The gallery (`gallery.ts` / `index.html`) renders each chart with `animation: false` and fixed
-data so screenshots are deterministic. `@ripl/*` packages are aliased to source via
-`vite.config.ts`, so no build step is required.
+data so screenshots are deterministic. The list of charts lives in `chart-ids.ts` and is shared
+by the gallery and the spec so the two never drift. `@ripl/*` packages are aliased to source via
+`vite.config.ts` (and `@ripl/web` is imported for its platform side-effect), so no build step is
+required.
 
 ## Running
 
 From the repository root (requires `yarn install` to have completed):
 
 ```bash
-# Install Playwright's browser the first time (skip in environments where Chromium
-# is pre-installed; instead set CHROMIUM_PATH to the existing binary).
-npx playwright install chromium
-
 # Generate / update baseline snapshots
-npx playwright test -c packages/charts/test/visual/playwright.config.ts --update-snapshots
+yarn workspace @ripl/charts test:visual:update
 
-# Run the comparison
-npx playwright test -c packages/charts/test/visual/playwright.config.ts
+# Run the comparison against the committed baselines
+yarn workspace @ripl/charts test:visual
 ```
 
-In the managed remote environment Chromium is pre-installed at `/opt/pw-browsers`; point the
-runner at it instead of downloading:
+### Browser binary
+
+Playwright 1.56 ships Chromium revision 1194. If Playwright's bundled browser is unavailable,
+point the runner at an existing Chromium via the `CHROMIUM_PATH` env var (it is wired into
+`launchOptions.executablePath`). In the managed remote environment the matching build is
+pre-installed:
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium npx playwright test \
-  -c packages/charts/test/visual/playwright.config.ts
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome \
+  yarn workspace @ripl/charts test:visual
 ```
 
-Baselines are written to `__snapshots__/`.
+Baselines are written to `__snapshots__/` and are committed. They are rendered with the
+pre-installed Linux Chromium; regenerate them (`test:visual:update`) if you run on a platform
+whose font rendering differs.

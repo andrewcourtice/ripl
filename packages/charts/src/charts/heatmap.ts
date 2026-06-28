@@ -143,7 +143,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 xBy,

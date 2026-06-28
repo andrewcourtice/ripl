@@ -23,6 +23,7 @@
         "@eslint/compat": "^2.0.3",
         "@eslint/js": "^10.0.1",
         "@eslint/markdown": "^7.5.1",
+        "@playwright/test": "1.56.0",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@vitest/coverage-v8": "^4.1.0",
         "@webgpu/types": "^0.1.69",

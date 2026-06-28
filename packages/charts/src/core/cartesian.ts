@@ -84,7 +84,8 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
 export interface CartesianSetup {
     xAxisAlignment?: ChartXAxisAlignment;
     yAxisAlignment?: ChartYAxisAlignment;
-    grid?: { horizontal?: boolean; vertical?: boolean };
+    grid?: { horizontal?: boolean;
+        vertical?: boolean; };
     crosshair?: boolean;
     crosshairAxisDefault?: CrosshairAxis;
 }

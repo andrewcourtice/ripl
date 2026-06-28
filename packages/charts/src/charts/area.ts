@@ -119,10 +119,19 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             duration: hover.duration,
             ease: hover.ease,
             tooltip: this.tooltip,
-            anchor: () => ({ x, y }),
+            anchor: () => ({
+                x,
+                y,
+            }),
             content: () => `${label}: ${value}`,
-            highlight: { fill: color, radius: 5 },
-            restore: { fill: '#FFFFFF', radius: 3 },
+            highlight: {
+                fill: color,
+                radius: 5,
+            },
+            restore: {
+                fill: '#FFFFFF',
+                radius: 3,
+            },
         });
     }
 
@@ -209,7 +218,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 }
             });
 
-            return { linePoints, areaPoints };
+            return {
+                linePoints,
+                areaPoints,
+            };
         };
 
         const seriesEntryGroups = seriesEntries.map(srs => {
@@ -286,7 +298,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const markers = group.getElementsByType('circle') as Circle[];
             const { linePoints, areaPoints } = buildPoints(srs);
 
-            line.data = { points: linePoints, renderer: srs.lineType } as PolylineState;
+            line.data = {
+                points: linePoints,
+                renderer: srs.lineType,
+            } as PolylineState;
             areaFill.data = { points: areaPoints } as PolylineState;
 
             markers.forEach((marker, index) => {
@@ -426,7 +441,12 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.yAxis.bounds.bottom = xAxisBox.top;
 
             const baseline = this.yScale(0);
-            const plot = { x: yAxisBox.right, y: top, width: right - yAxisBox.right, height: xAxisBox.top - top };
+            const plot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
 
             this.renderGrid([], this.yScale.ticks(10).map(tick => this.yScale(tick)), plot);
             this.setupCrosshair(plot);

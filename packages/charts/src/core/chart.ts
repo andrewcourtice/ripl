@@ -61,9 +61,7 @@ export type {
     ChartPadding,
 };
 
-export {
-    ChartLayout,
-};
+export { ChartLayout };
 
 /** Base options shared by all chart types. */
 export interface BaseChartOptions {

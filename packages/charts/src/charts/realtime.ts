@@ -378,7 +378,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 series,
                 showYAxis,

@@ -581,7 +581,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 showVolume = true,

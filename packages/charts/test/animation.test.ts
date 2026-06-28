@@ -12,19 +12,31 @@ import {
 
 describe('resolveAnimation', () => {
     it('scales the reference duration by the configured speed', () => {
-        const resolved = resolveAnimation({ enabled: true, duration: 500, ease: 'easeLinear' }, 1000);
+        const resolved = resolveAnimation({
+            enabled: true,
+            duration: 500,
+            ease: 'easeLinear',
+        }, 1000);
         expect(resolved.duration).toBe(500);
         expect(resolved.enabled).toBe(true);
     });
 
     it('collapses to zero duration when disabled', () => {
-        const resolved = resolveAnimation({ enabled: false, duration: 1000, ease: 'easeLinear' }, ANIMATION_REFERENCE.enter);
+        const resolved = resolveAnimation({
+            enabled: false,
+            duration: 1000,
+            ease: 'easeLinear',
+        }, ANIMATION_REFERENCE.enter);
         expect(resolved.enabled).toBe(false);
         expect(resolved.duration).toBe(0);
     });
 
     it('resolves the easing function', () => {
-        const resolved = resolveAnimation({ enabled: true, duration: 1000, ease: 'easeLinear' });
+        const resolved = resolveAnimation({
+            enabled: true,
+            duration: 1000,
+            ease: 'easeLinear',
+        });
         expect(typeof resolved.ease).toBe('function');
     });
 });

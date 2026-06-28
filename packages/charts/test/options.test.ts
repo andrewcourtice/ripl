@@ -25,12 +25,24 @@ describe('normalizeTitle', () => {
 
     it('wraps a string into title options', () => {
         const title = normalizeTitle('Sales');
-        expect(title).toMatchObject({ text: 'Sales', visible: true, position: 'top' });
+        expect(title).toMatchObject({
+            text: 'Sales',
+            visible: true,
+            position: 'top',
+        });
     });
 
     it('merges partial options over defaults', () => {
-        const title = normalizeTitle({ text: 'Revenue', position: 'left', fontColor: '#f00' });
-        expect(title).toMatchObject({ text: 'Revenue', position: 'left', fontColor: '#f00' });
+        const title = normalizeTitle({
+            text: 'Revenue',
+            position: 'left',
+            fontColor: '#f00',
+        });
+        expect(title).toMatchObject({
+            text: 'Revenue',
+            position: 'left',
+            fontColor: '#f00',
+        });
     });
 });
 
@@ -51,14 +63,24 @@ describe('normalizeLegend', () => {
     });
 
     it('merges a partial options object', () => {
-        const legend = normalizeLegend({ position: 'bottom', highlight: false });
-        expect(legend).toMatchObject({ position: 'bottom', highlight: false, visible: true });
+        const legend = normalizeLegend({
+            position: 'bottom',
+            highlight: false,
+        });
+        expect(legend).toMatchObject({
+            position: 'bottom',
+            highlight: false,
+            visible: true,
+        });
     });
 });
 
 describe('normalizeAnimation', () => {
     it('defaults to enabled with 1000ms', () => {
-        expect(normalizeAnimation()).toMatchObject({ enabled: true, duration: 1000 });
+        expect(normalizeAnimation()).toMatchObject({
+            enabled: true,
+            duration: 1000,
+        });
     });
 
     it('treats a boolean as an enabled toggle', () => {
@@ -66,17 +88,30 @@ describe('normalizeAnimation', () => {
     });
 
     it('merges partial options', () => {
-        expect(normalizeAnimation({ duration: 500 })).toMatchObject({ enabled: true, duration: 500 });
+        expect(normalizeAnimation({ duration: 500 })).toMatchObject({
+            enabled: true,
+            duration: 500,
+        });
     });
 });
 
 describe('normalizePadding', () => {
     it('expands a number to all sides', () => {
-        expect(normalizePadding(8)).toEqual({ top: 8, right: 8, bottom: 8, left: 8 });
+        expect(normalizePadding(8)).toEqual({
+            top: 8,
+            right: 8,
+            bottom: 8,
+            left: 8,
+        });
     });
 
     it('maps a tuple to sides', () => {
-        expect(normalizePadding([1, 2, 3, 4])).toEqual({ top: 1, right: 2, bottom: 3, left: 4 });
+        expect(normalizePadding([1, 2, 3, 4])).toEqual({
+            top: 1,
+            right: 2,
+            bottom: 3,
+            left: 4,
+        });
     });
 });
 

@@ -17,17 +17,26 @@ interface Row {
 describe('resolveAccessor', () => {
     it('reads a property by key', () => {
         const get = resolveAccessor<Row, number>('value');
-        expect(get({ name: 'a', value: 42 })).toBe(42);
+        expect(get({
+            name: 'a',
+            value: 42,
+        })).toBe(42);
     });
 
     it('passes through a function accessor', () => {
         const get = resolveAccessor<Row, number>(item => item.value * 2);
-        expect(get({ name: 'a', value: 5 })).toBe(10);
+        expect(get({
+            name: 'a',
+            value: 5,
+        })).toBe(10);
     });
 
     it('treats a non-key value as a constant', () => {
         const get = resolveAccessor<Row, number>(7);
-        expect(get({ name: 'a', value: 1 })).toBe(7);
+        expect(get({
+            name: 'a',
+            value: 1,
+        })).toBe(7);
     });
 });
 
@@ -56,7 +65,11 @@ describe('computeStackOffset', () => {
 
     it('sums all preceding values of the same sign', () => {
         const positives = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-        const allPositive = (s: { id: string }) => ({ a: 1, b: 2, c: 3 }[s.id] ?? 0);
+        const allPositive = (s: { id: string }) => ({
+            a: 1,
+            b: 2,
+            c: 3,
+        }[s.id] ?? 0);
         expect(computeStackOffset(positives, positives[2], {}, allPositive)).toBe(3);
     });
 });

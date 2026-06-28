@@ -3,8 +3,9 @@ import {
     test,
 } from '@playwright/test';
 
-/** Charts rendered in the gallery; each is snapshotted individually. */
-const CHARTS = ['bar', 'line', 'area', 'scatter', 'pie'];
+import {
+    CHART_IDS,
+} from './chart-ids';
 
 test.describe('charts visual regression', () => {
     test.beforeEach(async ({ page }) => {
@@ -13,7 +14,7 @@ test.describe('charts visual regression', () => {
         await page.waitForSelector('body[data-ready="true"]');
     });
 
-    for (const chart of CHARTS) {
+    for (const chart of CHART_IDS) {
         test(`${chart} chart matches snapshot`, async ({ page }) => {
             const el = page.locator(`[data-chart="${chart}"]`);
             await expect(el).toHaveScreenshot(`${chart}.png`, {
