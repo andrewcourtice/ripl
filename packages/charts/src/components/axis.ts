@@ -107,6 +107,7 @@ export class ChartAxis extends ChartComponent {
     public formatLabel?: (value: any) => string;
 
     protected group: Group;
+    protected line: Line;
 
     private labelDimension: LabelDimension;
     protected cachedTicks?: unknown[];
@@ -175,17 +176,21 @@ export class ChartAxis extends ChartComponent {
         this.labelColor = labelColor;
         this.animation = options.animation ?? DEFAULT_AXIS_ANIMATION;
 
+        // The axis line is kept as a direct reference (rather than re-queried each render) but still
+        // lives inside the axis group alongside the tick groups and title text.
+        this.line = createLine({
+            class: 'chart-axis__line',
+            stroke: this.stroke,
+            x1: 0,
+            y1: 0,
+            x2: 0,
+            y2: 0,
+        });
+
         this.group = createGroup({
             class: 'chart-axis',
             children: [
-                createLine({
-                    class: 'chart-axis__line',
-                    stroke: this.stroke,
-                    x1: 0,
-                    y1: 0,
-                    x2: 0,
-                    y2: 0,
-                }),
+                this.line,
             ],
         });
 
@@ -291,14 +296,11 @@ export class ChartXAxis extends ChartAxis {
         this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
-        const line = this.group.query<Line>('.chart-axis__line');
 
-        if (line) {
-            line.x1 = boundingBox.left;
-            line.y1 = boundingBox.top;
-            line.x2 = boundingBox.right;
-            line.y2 = boundingBox.top;
-        }
+        this.line.x1 = boundingBox.left;
+        this.line.y1 = boundingBox.top;
+        this.line.x2 = boundingBox.right;
+        this.line.y2 = boundingBox.top;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 
@@ -445,14 +447,11 @@ export class ChartYAxis extends ChartAxis {
         this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
-        const line = this.group.query<Line>('.chart-axis__line');
 
-        if (line) {
-            line.x1 = boundingBox.right;
-            line.x2 = boundingBox.right;
-            line.y1 = boundingBox.top;
-            line.y2 = boundingBox.bottom;
-        }
+        this.line.x1 = boundingBox.right;
+        this.line.x2 = boundingBox.right;
+        this.line.y1 = boundingBox.top;
+        this.line.y2 = boundingBox.bottom;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 

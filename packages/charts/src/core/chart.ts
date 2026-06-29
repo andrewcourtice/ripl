@@ -193,7 +193,9 @@ export class Chart<
      * and renders it into that band, reconciling against the previous render.
      */
     protected reserveLegend(layout: ChartLayout, items: LegendItem[], input?: ChartLegendInput) {
-        const legendOpts = normalizeLegend(input);
+        // When the chart hasn't explicitly configured a legend, show one automatically for
+        // multi-series / multi-segment charts (more than one legend item) and hide it otherwise.
+        const legendOpts = normalizeLegend(input, { visible: items.length > 1 });
 
         if (!legendOpts.visible || items.length === 0) {
             this.legend?.destroy();

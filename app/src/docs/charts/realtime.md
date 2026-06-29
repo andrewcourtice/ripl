@@ -19,12 +19,21 @@ The **Realtime Chart** smoothly visualizes data streaming in over time. It maint
             </RiplSelect>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createRealtimeChart,
@@ -34,11 +43,24 @@ import {
 import {
     onUnmounted,
     ref,
+    watch,
 } from 'vue';
 
 const streaming = ref(true);
 const speed = ref('300');
 let intervalId: ReturnType<typeof setInterval> | null = null;
+
+const seriesMeta = [
+    { id: 'cpu', label: 'CPU %', showArea: true, areaOpacity: 0.15 },
+    { id: 'memory', label: 'Memory %', showArea: true, areaOpacity: 0.15 },
+    { id: 'network', label: 'Network MB/s', showArea: false, lineWidth: 1.5 },
+];
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'System Metrics',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
 
 // Simulated metrics with smooth random walks
 let cpuBase = 45;
@@ -50,21 +72,31 @@ function nextValue(base: number, volatility: number, min: number, max: number): 
     return Math.max(min, Math.min(max, base + delta));
 }
 
+function getSeries() {
+    return seriesMeta.map(s => ({
+        id: s.id,
+        label: s.label,
+        showArea: s.showArea,
+        areaOpacity: s.areaOpacity,
+        lineWidth: s.lineWidth,
+        color: config.colors[s.id],
+    }));
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     const c = createRealtimeChart(context, {
         padding: { top: 30, right: 20, bottom: 20, left: 20 },
         windowSize: 60,
         transitionDuration: 200,
-        series: [
-            { id: 'cpu', label: 'CPU %', showArea: true, areaOpacity: 0.15 },
-            { id: 'memory', label: 'Memory %', showArea: true, areaOpacity: 0.15 },
-            { id: 'network', label: 'Network MB/s', showArea: false, lineWidth: 1.5 },
-        ],
+        series: getSeries(),
+        ...buildCommonOptions(config),
     });
 
     startStreaming(c);
     return c;
 });
+
+watch(config, () => chart.value?.update({ series: getSeries(), ...buildCommonOptions(config) }), { deep: true });
 
 function startStreaming(c?: RealtimeChart) {
     stopStreaming();

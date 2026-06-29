@@ -13,8 +13,14 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
             <RiplButton @click="randomize">Randomize</RiplButton>
             <RiplButton @click="addTask">Add Task</RiplButton>
             <RiplButton @click="removeTask">Remove Task</RiplButton>
-            <RiplSwitch v-model="showToday" @update:model-value="toggleToday" label="Today" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Gantt">
+            <RiplField label="Today marker" inline>
+                <RiplSwitch v-model="showToday" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -24,12 +30,23 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createGanttChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
+
+const config = useChartConfig({
+    features: { title: true, grid: true, animation: true },
+    title: 'Project Schedule',
+});
 
 const TASKS = [
     'Research',
@@ -82,8 +99,19 @@ const { contextChanged, chart } = useRiplChart(context => {
         progress: 'progress',
         showToday: showToday.value,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
+        ...buildCommonOptions(config),
     });
 });
+
+function apply() {
+    chart.value?.update({
+        showToday: showToday.value,
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch(showToday, apply);
 
 function randomize() {
     data = generateData();
@@ -106,9 +134,6 @@ function removeTask() {
     }
 }
 
-function toggleToday() {
-    chart.value?.update({ showToday: showToday.value });
-}
 </script>
 
 ## Usage

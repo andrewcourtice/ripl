@@ -231,7 +231,7 @@ createLineChart('#container', {
 
 | Property | Type | Default | Description |
 | --- | --- | --- | --- |
-| `visible` | `boolean` | `false` | Show/hide legend (hidden by default) |
+| `visible` | `boolean` | auto | Show/hide legend. When unset, shown automatically for charts with more than one series/segment and hidden otherwise. Pass `true`/`false` to force. |
 | `position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Legend position |
 | `padding` | `number \| Partial<Padding>` | `16` | Outer padding |
 | `font` | `string` | `'11px sans-serif'` | Label font |

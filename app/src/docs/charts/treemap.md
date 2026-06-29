@@ -13,6 +13,9 @@ The **Treemap Chart** displays hierarchical data as nested rectangles, where eac
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,14 +24,24 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createTreemapChart,
 } from '@ripl/charts';
 
 import {
-    ref,
+    watch,
 } from 'vue';
 
 const CATEGORIES = ['Electronics', 'Clothing', 'Food', 'Books', 'Sports', 'Home', 'Toys', 'Health'];
+
+const config = useChartConfig({
+    features: { title: true, animation: true },
+    title: 'Revenue by Category',
+});
 
 function generateData() {
     return CATEGORIES.map(name => ({
@@ -37,20 +50,24 @@ function generateData() {
     }));
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createTreemapChart(context, {
-        data: data.value,
+        data,
         key: 'name',
         value: 'value',
         label: 'name',
         padding: { top: 10, right: 10, bottom: 10, left: 10 },
+        ...buildCommonOptions(config),
     });
 });
 
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 function randomize() {
-    data.value = generateData();
+    data = generateData();
+    chart.value?.update({ data });
 }
 </script>
 

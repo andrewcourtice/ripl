@@ -13,6 +13,9 @@ The **Chord Chart** visualizes relationships between groups using arcs and ribbo
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,12 +24,22 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createChordChart,
 } from '@ripl/charts';
 
 import {
-    ref,
+    watch,
 } from 'vue';
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Team Collaboration',
+});
 
 function generateMatrix() {
     const size = 4;
@@ -35,19 +48,22 @@ function generateMatrix() {
     );
 }
 
-const matrix = ref(generateMatrix());
+let matrix = generateMatrix();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createChordChart(context, {
         labels: ['Engineering', 'Design', 'Marketing', 'Sales'],
-        matrix: matrix.value,
-        legend: true,
+        matrix,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
+        ...buildCommonOptions(config),
     });
 });
 
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 function randomize() {
-    matrix.value = generateMatrix();
+    matrix = generateMatrix();
+    chart.value?.update({ matrix });
 }
 </script>
 

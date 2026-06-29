@@ -20,9 +20,7 @@ import type {
 } from '../core/animation';
 
 import {
-    createGroup,
     createText,
-    Group,
     Text,
 } from '@ripl/core';
 
@@ -39,7 +37,7 @@ export interface ChartTitleComponentOptions extends ChartComponentOptions {
 export class ChartTitle extends ChartComponent {
 
     private options: ChartTitleOptions;
-    private group?: Group;
+    private text?: Text;
 
     constructor({ scene, renderer, options }: ChartTitleComponentOptions) {
         super({
@@ -68,14 +66,41 @@ export class ChartTitle extends ChartComponent {
         return this.options.position === 'left' || this.options.position === 'right';
     }
 
+    /** Lazily creates the title text element (added directly to the scene — no wrapping group). */
+    private ensureText(): Text {
+        if (!this.text) {
+            this.text = createText({
+                id: 'chart-title',
+                class: 'chart-title',
+                zIndex: 2500,
+                content: this.options.text,
+                x: 0,
+                y: 0,
+                textAlign: 'center',
+                textBaseline: 'middle',
+                fill: this.options.fontColor,
+                font: this.options.font,
+            });
+
+            this.scene.add(this.text);
+        }
+
+        return this.text;
+    }
+
     /** The thickness of the band this title needs (height for top/bottom, width for left/right). */
     public measure(): number {
         if (!this.visible) {
             return 0;
         }
 
-        const metrics = this.context.measureText(this.options.text, this.options.font);
-        const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+        // The text element already measures itself via getBoundingBox, so reuse it rather than
+        // re-deriving the metrics by hand.
+        const text = this.ensureText();
+        text.content = this.options.text;
+        text.font = this.options.font;
+
+        const textHeight = text.getBoundingBox().height;
         const padding = normalizePadding(this.options.padding) ?? {
             top: 0,
             right: 0,
@@ -106,35 +131,8 @@ export class ChartTitle extends ChartComponent {
             rotation = Math.PI / 2;
         }
 
-        const isNew = !this.group;
-
-        if (!this.group) {
-            const text = createText({
-                id: 'chart-title-text',
-                content: this.options.text,
-                x,
-                y,
-                textAlign: 'center',
-                textBaseline: 'middle',
-                fill: this.options.fontColor,
-                font: this.options.font,
-                rotation,
-                transformOriginX: x,
-                transformOriginY: y,
-                opacity: animation?.enabled ? 0 : 1,
-            });
-
-            this.group = createGroup({
-                id: 'chart-title',
-                class: 'chart-title',
-                zIndex: 2500,
-                children: [text],
-            });
-
-            this.scene.add(this.group);
-        }
-
-        const text = this.group.query('#chart-title-text') as Text;
+        const isNew = !this.text;
+        const text = this.ensureText();
 
         text.content = this.options.text;
         text.x = x;
@@ -146,6 +144,8 @@ export class ChartTitle extends ChartComponent {
         text.transformOriginY = y;
 
         if (isNew && animation?.enabled) {
+            text.opacity = 0;
+
             this.renderer.transition(text, {
                 duration: animation.duration,
                 ease: animation.ease,
@@ -158,9 +158,9 @@ export class ChartTitle extends ChartComponent {
 
     /** Removes the title from the scene. */
     public destroy() {
-        if (this.group) {
-            this.scene.remove(this.group);
-            this.group = undefined;
+        if (this.text) {
+            this.scene.remove(this.text);
+            this.text = undefined;
         }
     }
 

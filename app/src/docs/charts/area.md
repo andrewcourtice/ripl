@@ -11,8 +11,14 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
-            <RiplSwitch v-model="stacked" @update:model-value="toggleStacked" label="Stacked" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area">
+            <RiplField label="Stacked" inline>
+                <RiplSwitch v-model="stacked" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -22,14 +28,34 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createAreaChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
+const seriesMeta = [
+    { id: 'desktop', label: 'Desktop' },
+    { id: 'mobile', label: 'Mobile' },
+];
+
 const stacked = ref(false);
+
+const config = useChartConfig({
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    title: 'Traffic by Device',
+    axisX: 'Month',
+    axisY: 'Sessions',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
 
 function generateData() {
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map(month => ({
@@ -39,27 +65,43 @@ function generateData() {
     }));
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+function getSeries() {
+    return seriesMeta.map(s => ({
+        id: s.id,
+        value: s.id,
+        label: s.label,
+        opacity: 0.3,
+        color: config.colors[s.id],
+    }));
+}
+
+const { contextChanged, chart } = useRiplChart(context => {
     return createAreaChart(context, {
-        data: data.value,
+        data,
         key: 'month',
         stacked: stacked.value,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
-        series: [
-            { id: 'desktop', value: 'desktop', label: 'Desktop', opacity: 0.3 },
-            { id: 'mobile', value: 'mobile', label: 'Mobile', opacity: 0.3 },
-        ],
+        series: getSeries(),
+        ...buildCommonOptions(config),
     });
 });
 
-function randomize() {
-    data.value = generateData();
+function apply() {
+    chart.value?.update({
+        stacked: stacked.value,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    });
 }
 
-function toggleStacked() {
-    data.value = [...data.value];
+watch(config, apply, { deep: true });
+watch(stacked, apply);
+
+function randomize() {
+    data = generateData();
+    chart.value?.update({ data });
 }
 </script>
 

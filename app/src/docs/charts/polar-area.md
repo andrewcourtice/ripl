@@ -15,12 +15,20 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script lang="ts" setup>
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createPolarAreaChart,
@@ -31,10 +39,15 @@ import {
 } from '@ripl/utilities';
 
 import {
-    ref,
+    watch,
 } from 'vue';
 
 const LABELS = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Stamina', 'Wisdom'];
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Attribute Spread',
+});
 
 function getDataValue() {
     return Math.round(Math.random() * 100);
@@ -58,11 +71,18 @@ const {
     value: 'value',
     label: 'label',
     data,
+    ...buildCommonOptions(config),
 }));
 
 function update() {
     chart.value?.update({ data });
 }
+
+function apply() {
+    chart.value?.update(buildCommonOptions(config));
+}
+
+watch(config, apply, { deep: true });
 
 function addData() {
     const unusedLabels = LABELS.filter(l => !data.some(d => d.label === l));

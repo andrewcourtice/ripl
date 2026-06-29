@@ -393,7 +393,7 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
     if (input === undefined) {
         return {
             ...base,
-            visible: false,
+            visible: defaults?.visible ?? false,
         };
     }
 
