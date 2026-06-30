@@ -97,7 +97,7 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
         title: defaults.title ?? '',
         titleVisible: defaults.titleVisible ?? !!defaults.title,
         legendVisible: defaults.legendVisible ?? true,
-        legendPosition: defaults.legendPosition ?? 'top',
+        legendPosition: defaults.legendPosition ?? 'bottom',
         axesVisible: defaults.axesVisible ?? true,
         axisX: defaults.axisX ?? '',
         axisY: defaults.axisY ?? '',

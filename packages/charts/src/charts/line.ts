@@ -114,6 +114,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         const x = this.xScale(key);
         const y = this.yScale(value);
         const color = this.getSeriesColor(series.id);
+        // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
+        const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
 
         return {
             id: `${series.id}-${key}`,
@@ -125,7 +127,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 lineWidth: 2,
                 cx: x,
                 cy: y,
-                radius: series.markerRadius ?? 3,
+                radius,
             } as CircleState,
         };
     }

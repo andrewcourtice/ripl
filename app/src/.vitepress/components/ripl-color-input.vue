@@ -4,7 +4,7 @@
             type="color"
             class="ripl-color-input__picker"
             :value="modelValue"
-            @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+            @change="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
         >
         <span class="ripl-color-input__value">{{ modelValue }}</span>
     </span>

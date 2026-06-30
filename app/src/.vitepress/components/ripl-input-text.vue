@@ -4,7 +4,7 @@
         class="ripl-input-text"
         :value="modelValue"
         :placeholder="placeholder"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @change="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
     >
 </template>
 

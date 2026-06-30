@@ -135,7 +135,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         });
     }
 
-    private async drawAreas(baseline: number) {
+    private async drawAreas(baseline: number, plot: { x: number;
+        y: number;
+        width: number;
+        height: number; }) {
         const { data, series, key, stacked } = this.options;
 
         const getKey = resolveAccessor<TData, string>(key);
@@ -190,33 +193,23 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         const buildPoints = (srs: AreaChartSeriesOptions<TData>) => {
             const linePoints: Point[] = [];
-            const areaPoints: Point[] = [];
+            const bottomPoints: Point[] = [];
 
             data.forEach((item, dataIndex) => {
                 const x = this.xScale(getKey(item));
                 const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+                // Lower boundary: the previous series' cumulative top when stacked, else the baseline.
+                const bottomY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
 
                 linePoints.push([x, y]);
-
-                if (dataIndex === 0) {
-                    const prevY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
-                    areaPoints.push([x, prevY]);
-                }
-
-                areaPoints.push([x, y]);
-
-                if (dataIndex === data.length - 1) {
-                    const prevY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
-                    areaPoints.push([x, prevY]);
-
-                    if (stacked) {
-                        for (let i = data.length - 1; i >= 0; i--) {
-                            const prevVal = getPrevSeriesValue(srs, i);
-                            areaPoints.push([this.xScale(getKey(data[i])), this.yScale(prevVal)]);
-                        }
-                    }
-                }
+                bottomPoints.push([x, bottomY]);
             });
+
+            // Closed band polygon: top edge left→right, then the lower boundary right→left.
+            const areaPoints: Point[] = [
+                ...linePoints,
+                ...bottomPoints.slice().reverse(),
+            ];
 
             return {
                 linePoints,
@@ -265,13 +258,22 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 ? data.map((item, dataIndex) => makeMarker(item, dataIndex))
                 : [];
 
+            // Areas/lines are created at their final geometry but horizontally collapsed to the
+            // plot's left edge (transformScaleX: 0); the entry transition scales them out to 1,
+            // wiping the series in from left to right.
             const areaFill = createPolyline({
                 id: `${srs.id}-area`,
                 fill: setColorAlpha(color, opacity),
                 stroke: undefined,
-                points: areaPoints.map(([x]) => [x, baseline] as Point),
+                points: areaPoints,
                 renderer: srs.lineType,
-                data: { points: areaPoints } as PolylineState,
+                transformScaleX: 0,
+                transformOriginX: plot.x,
+                transformOriginY: baseline,
+                data: {
+                    points: areaPoints,
+                    transformScaleX: 1,
+                } as PolylineState,
             });
 
             areaFill.autoStroke = false;
@@ -280,9 +282,15 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 stroke: color,
-                points: linePoints.map(([x]) => [x, baseline] as Point),
+                points: linePoints,
                 renderer: srs.lineType,
-                data: { points: linePoints } as PolylineState,
+                transformScaleX: 0,
+                transformOriginX: plot.x,
+                transformOriginY: baseline,
+                data: {
+                    points: linePoints,
+                    transformScaleX: 1,
+                } as PolylineState,
             });
 
             return createGroup({
@@ -359,29 +367,59 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
-        const transitionsFor = (groups: Group[], animation: typeof enter) => groups.flatMap(group => {
+        // Updates morph polylines/markers to their new data in place.
+        const updateTransitions = seriesUpdateGroups.flatMap(group => {
             const markers = group.getElementsByType('circle') as Circle[];
             const polylines = group.getElementsByType('polyline') as Polyline[];
 
             return [
                 ...polylines.map(polyline => this.renderer.transition(polyline, {
-                    duration: animation.duration,
-                    ease: animation.ease,
+                    duration: update.duration,
+                    ease: update.ease,
                     state: polyline.data as PolylineState,
                 })),
                 ...(markers.length > 0
                     ? [this.renderer.transition(markers, element => ({
-                        duration: animation.duration,
-                        ease: animation.ease,
+                        duration: update.duration,
+                        ease: update.ease,
                         state: element.data as CircleState,
                     }))]
                     : []),
             ];
         });
 
+        // Entry: scale the area/line out from the left edge (left→right wipe) while each marker
+        // pops in as the reveal front passes its x position.
+        const entryTransitions = seriesEntryGroups.flatMap(group => {
+            const markers = group.getElementsByType('circle') as Circle[];
+            const polylines = group.getElementsByType('polyline') as Polyline[];
+
+            return [
+                ...polylines.map(polyline => this.renderer.transition(polyline, {
+                    duration: enter.duration,
+                    ease: enter.ease,
+                    state: polyline.data as PolylineState,
+                })),
+                ...(markers.length > 0
+                    ? [this.renderer.transition(markers, element => {
+                        const fraction = plot.width > 0
+                            ? Math.min(Math.max(((element as Circle).cx - plot.x) / plot.width, 0), 1)
+                            : 0;
+
+                        return {
+                            duration: enter.duration * 0.4,
+                            delay: fraction * enter.duration,
+                            ease: enter.ease,
+                            state: element.data as CircleState,
+                        };
+                    })]
+                    : []),
+            ];
+        });
+
         return Promise.all([
-            ...transitionsFor(seriesEntryGroups, enter),
-            ...transitionsFor(seriesUpdateGroups, update),
+            ...entryTransitions,
+            ...updateTransitions,
         ]);
     }
 
@@ -475,7 +513,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this.drawAreas(baseline),
+                this.drawAreas(baseline, plot),
             ]);
         });
     }
