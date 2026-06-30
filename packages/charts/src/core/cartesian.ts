@@ -67,6 +67,7 @@ import {
 import {
     Box,
     Context,
+    EventMap,
     Scale,
     scaleContinuous,
 } from '@ripl/core';
@@ -93,8 +94,9 @@ export interface CartesianSetup {
 /** Base class providing shared cartesian component lifecycle and layout. */
 export abstract class CartesianChart<
     TOptions extends CartesianChartOptions<TData>,
-    TData = unknown
-> extends Chart<TOptions> {
+    TData = unknown,
+    TEventMap extends EventMap = EventMap
+> extends Chart<TOptions, TEventMap> {
 
     protected xAxis!: ChartXAxis;
     protected yAxis!: ChartYAxis;

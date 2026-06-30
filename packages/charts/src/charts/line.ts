@@ -6,10 +6,22 @@ import {
 import type {
     ChartAxisInput,
     ChartCrosshairInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    normalizeDataLabels,
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
     ANIMATION_REFERENCE,
@@ -37,6 +49,7 @@ import {
     createCircle,
     createGroup,
     createPolyline,
+    EventMap,
     getExtent,
     Group,
     interpolatePath,
@@ -46,6 +59,8 @@ import {
     PolylineState,
     Scale,
     scaleContinuous,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -77,6 +92,26 @@ export interface LineChartOptions<TData = unknown> extends CartesianChartOptions
     tooltip?: ChartTooltipInput;
     legend?: ChartLegendInput;
     axis?: ChartAxisInput<TData>;
+    /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to marker values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for line marker interaction events. */
+export interface LineChartMarkerEvent {
+    x: number;
+    y: number;
+    xValue: string;
+    yValue: number;
+    seriesId: string;
+}
+
+/** Events emitted by a {@link LineChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface LineChartEventMap extends EventMap {
+    markerclick: LineChartMarkerEvent;
+    markerenter: LineChartMarkerEvent;
+    markerleave: LineChartMarkerEvent;
 }
 
 /**
@@ -88,7 +123,7 @@ export interface LineChartOptions<TData = unknown> extends CartesianChartOptions
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData> {
+export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
     private lineGroups: Group[] = [];
     private yScale!: Scale;
@@ -133,18 +168,24 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
     }
 
-    private attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState) {
+    private attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState, key: string) {
         if (series.markers === false) {
             marker.pointerEvents = 'none';
             return;
         }
 
-        if (!this.tooltip) {
-            return;
-        }
-
         const radius = series.markerRadius ?? 3;
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): LineChartMarkerEvent => ({
+            x: point.x,
+            y: point.y,
+            xValue: key,
+            yValue: value,
+            seriesId: series.id,
+        });
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
@@ -155,7 +196,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 x: marker.cx,
                 y: marker.cy,
             }),
-            content: () => `${this.seriesLabel(series, item)}: ${value}`,
+            content: () => `${this.seriesLabel(series, item)}: ${formatValue(value)}`,
             highlight: {
                 fill: state.stroke as string,
                 radius: radius + 2,
@@ -164,11 +205,16 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 fill: '#FFFFFF',
                 radius,
             },
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
         });
     }
 
     private async drawLines(getKey: (item: TData) => string) {
         const { data, series } = this.options;
+        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
+        const formatValue = resolveValueFormat(this.options.format);
 
         const {
             left: seriesEntries,
@@ -177,6 +223,44 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         } = arrayJoin(series, this.lineGroups, 'id');
 
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+
+        // Builds/updates the value label for a marker, offset clear of the marker radius.
+        const labelOffset = (srs: LineChartSeriesOptions<TData>) => (srs.markerRadius ?? 3) + 4;
+
+        const buildLabel = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
+            const { id, value, point } = this.markerState(srs, item, getKey);
+
+            return createDataLabel({
+                id: `${id}-label`,
+                x: point[0],
+                y: point[1],
+                anchor: dataLabels.anchor,
+                content: formatValue(value),
+                font: dataLabels.font,
+                fill: dataLabels.fontColor,
+                offset: labelOffset(srs),
+            });
+        };
+
+        const updateLabel = (srs: LineChartSeriesOptions<TData>, item: TData, label: Text) => {
+            const { value, point } = this.markerState(srs, item, getKey);
+            const layout = resolveDataLabelLayout({
+                x: point[0],
+                y: point[1],
+                anchor: dataLabels.anchor,
+                offset: labelOffset(srs),
+            });
+
+            label.content = formatValue(value);
+            label.data = {
+                x: layout.x,
+                y: layout.y,
+                opacity: 1,
+            } as Partial<TextState>;
+        };
+
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
 
         seriesExits.forEach(group => {
             const exits = group.graph(false).map(element => exitElement(this.renderer, element, exitAnimation));
@@ -193,7 +277,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 data: state,
             });
 
-            this.attachMarkerHover(marker, srs, item, value, state);
+            this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
 
             return {
                 point,
@@ -218,6 +302,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 children: [
                     line,
                     ...items.map(item => item.marker),
+                    ...(dataLabels.visible ? data.map(buildLabel(srs)) : []),
                 ],
             });
         });
@@ -247,8 +332,34 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             markerUpdates.forEach(([item, marker]) => {
                 const { state, value } = this.markerState(srs, item, getKey);
                 marker.data = state;
-                this.attachMarkerHover(marker, srs, item, value, state);
+                this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
             });
+
+            // Reconcile value labels alongside the markers.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (dataLabels.visible) {
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-${getKey(item)}-label`);
+
+                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+
+                labelEntries.forEach(item => {
+                    const label = buildLabel(srs)(item);
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    updateLabel(srs, item, label);
+                    updatingLabels.push(label);
+                });
+            } else {
+                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+            }
 
             return group;
         });
@@ -300,9 +411,38 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             ];
         });
 
+        // Value labels: entry labels fade in; updated labels animate to their refreshed position.
+        const entryLabels = seriesEntryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
+        const labelTransitions: Promise<unknown>[] = [];
+
+        if (entryLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(entryLabels, {
+                duration: enterAnimation.duration,
+                ease: enterAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (enteringLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(enteringLabels, {
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (updatingLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: element.data as Partial<TextState>,
+            })));
+        }
+
         return Promise.all([
             ...entryTransitions,
             ...updateTransitions,
+            ...labelTransitions,
         ]);
     }
 

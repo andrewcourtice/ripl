@@ -6,10 +6,22 @@ import {
 import type {
     ChartAxisInput,
     ChartCrosshairInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    normalizeDataLabels,
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
     ANIMATION_REFERENCE,
@@ -36,6 +48,7 @@ import {
     createCircle,
     createGroup,
     createPolyline,
+    EventMap,
     getExtent,
     Group,
     interpolatePath,
@@ -48,6 +61,8 @@ import {
     Scale,
     scaleContinuous,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -102,6 +117,26 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
     tooltip?: ChartTooltipInput;
     legend?: ChartLegendInput;
     axis?: ChartAxisInput<TData>;
+    /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to marker values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for area marker interaction events. */
+export interface AreaChartMarkerEvent {
+    x: number;
+    y: number;
+    xValue: string;
+    yValue: number;
+    seriesId: string;
+}
+
+/** Events emitted by an {@link AreaChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface AreaChartEventMap extends EventMap {
+    markerclick: AreaChartMarkerEvent;
+    markerenter: AreaChartMarkerEvent;
+    markerleave: AreaChartMarkerEvent;
 }
 
 /**
@@ -113,7 +148,7 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData> {
+export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData, AreaChartEventMap> {
 
     private areaGroups: Group[] = [];
     private yScale!: Scale;
@@ -134,12 +169,18 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
-    private attachMarkerHover(marker: Circle, label: string, value: number, color: string, x: number, y: number) {
-        if (!this.tooltip) {
-            return;
-        }
-
+    private attachMarkerHover(marker: Circle, srs: AreaChartSeriesOptions<TData>, key: string, value: number, color: string, x: number, y: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): AreaChartMarkerEvent => ({
+            x: point.x,
+            y: point.y,
+            xValue: key,
+            yValue: value,
+            seriesId: srs.id,
+        });
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
@@ -150,7 +191,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 x,
                 y,
             }),
-            content: () => `${label}: ${value}`,
+            content: () => `${srs.label}: ${formatValue(value)}`,
             highlight: {
                 fill: color,
                 radius: 5,
@@ -159,6 +200,9 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 fill: '#FFFFFF',
                 radius: 3,
             },
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
         });
     }
 
@@ -170,12 +214,52 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         const getKey = resolveAccessor<TData, string>(key);
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
+        const formatValue = resolveValueFormat(this.options.format);
 
         const {
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
         } = arrayJoin(series, this.areaGroups, 'id');
+
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
+
+        // Builds/updates the value label for a marker, positioned at its data point.
+        const buildLabel = (srs: AreaChartSeriesOptions<TData>) => (item: TData, dataIndex: number) => {
+            const x = this.xScale(getKey(item));
+            const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+
+            return createDataLabel({
+                id: `${srs.id}-marker-${getKey(item)}-label`,
+                x,
+                y,
+                anchor: dataLabels.anchor,
+                content: formatValue(this.seriesValue(srs, item)),
+                font: dataLabels.font,
+                fill: dataLabels.fontColor,
+                offset: 7,
+            });
+        };
+
+        const updateLabel = (srs: AreaChartSeriesOptions<TData>, item: TData, dataIndex: number, label: Text) => {
+            const x = this.xScale(getKey(item));
+            const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+            const layout = resolveDataLabelLayout({
+                x,
+                y,
+                anchor: dataLabels.anchor,
+                offset: 7,
+            });
+
+            label.content = formatValue(this.seriesValue(srs, item));
+            label.data = {
+                x: layout.x,
+                y: layout.y,
+                opacity: 1,
+            } as Partial<TextState>;
+        };
 
         seriesExits.forEach(group => {
             const exits = group.graph(false).map(element => exitElement(this.renderer, element, exitAnimation));
@@ -269,7 +353,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     data: state,
                 });
 
-                this.attachMarkerHover(marker, srs.label, this.seriesValue(srs, item), color, x, y);
+                this.attachMarkerHover(marker, srs, getKey(item), this.seriesValue(srs, item), color, x, y);
 
                 return marker;
             };
@@ -327,6 +411,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     areaFill,
                     line,
                     ...markerElements,
+                    ...(dataLabels.visible ? data.map((item, dataIndex) => buildLabel(srs)(item, dataIndex)) : []),
                 ],
             });
         });
@@ -379,8 +464,34 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     radius: 3,
                 } as CircleState;
 
-                this.attachMarkerHover(marker, srs.label, this.seriesValue(srs, item), color, x, y);
+                this.attachMarkerHover(marker, srs, getKey(item), this.seriesValue(srs, item), color, x, y);
             });
+
+            // Reconcile value labels alongside the markers.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (dataLabels.visible) {
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-marker-${getKey(item)}-label`);
+
+                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+
+                labelEntries.forEach(item => {
+                    const label = buildLabel(srs)(item, data.indexOf(item));
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    updateLabel(srs, item, data.indexOf(item), label);
+                    updatingLabels.push(label);
+                });
+            } else {
+                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+            }
 
             return group;
         });
@@ -463,9 +574,38 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             ];
         });
 
+        // Value labels: entry labels fade in; updated labels animate to their refreshed position.
+        const entryLabels = seriesEntryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
+        const labelTransitions: Promise<unknown>[] = [];
+
+        if (entryLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(entryLabels, {
+                duration: enter.duration,
+                ease: enter.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (enteringLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(enteringLabels, {
+                duration: update.duration,
+                ease: update.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (updatingLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
+                duration: update.duration,
+                ease: update.ease,
+                state: element.data as Partial<TextState>,
+            })));
+        }
+
         return Promise.all([
             ...entryTransitions,
             ...updateTransitions,
+            ...labelTransitions,
         ]);
     }
 

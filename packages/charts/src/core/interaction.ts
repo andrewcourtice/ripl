@@ -22,6 +22,12 @@ export interface HoverTooltip {
 
 type StateOf<TElement extends Element> = ElementInterpolationState<TElement extends Element<infer TState> ? TState : never>;
 
+/** The pointer position passed to interaction callbacks. */
+export interface InteractionPoint {
+    x: number;
+    y: number;
+}
+
 /** Options describing how an element should respond to hover. */
 export interface HoverHighlightOptions<TElement extends Element> {
     renderer: Renderer;
@@ -38,6 +44,12 @@ export interface HoverHighlightOptions<TElement extends Element> {
         y: number; };
     /** Resolves the tooltip content (called on enter). */
     content?: () => string;
+    /** Called when the pointer enters the element, with the current pointer position. */
+    onEnter?: (point: InteractionPoint) => void;
+    /** Called when the pointer leaves the element, with the last known pointer position. */
+    onLeave?: (point: InteractionPoint) => void;
+    /** Called when the element is clicked, with the pointer position. */
+    onClick?: (point: InteractionPoint) => void;
 }
 
 const HOVER_DISPOSERS = Symbol('hover-disposers');
@@ -68,30 +80,62 @@ export function applyHoverHighlight<TElement extends Element>(
         tooltip,
         anchor,
         content,
+        onEnter,
+        onLeave,
+        onClick,
     } = options;
 
-    const enter = element.on('mouseenter', () => {
+    const disposers: { dispose(): void }[] = [];
+
+    // Tracks the latest pointer position so enter/leave callbacks can report a meaningful
+    // location (the `mouseenter`/`mouseleave` events themselves carry no coordinates).
+    const pointer: InteractionPoint = { x: 0, y: 0 };
+    const wantsPointer = !!(onEnter || onLeave || onClick);
+
+    if (wantsPointer) {
+        disposers.push(element.on('mousemove', event => {
+            const data = event.data as InteractionPoint | null;
+
+            if (data) {
+                pointer.x = data.x;
+                pointer.y = data.y;
+            }
+        }));
+    }
+
+    disposers.push(element.on('mouseenter', () => {
         if (tooltip && anchor && content) {
             const { x, y } = anchor();
             tooltip.show(x, y, content());
         }
+
+        onEnter?.({ ...pointer });
 
         renderer.transition(element, {
             duration,
             ease,
             state: highlight,
         });
-    });
+    }));
 
-    const leave = element.on('mouseleave', () => {
+    disposers.push(element.on('mouseleave', () => {
         tooltip?.hide();
+
+        onLeave?.({ ...pointer });
 
         renderer.transition(element, {
             duration,
             ease,
             state: restore,
         });
-    });
+    }));
 
-    host[HOVER_DISPOSERS] = [enter, leave];
+    if (onClick) {
+        disposers.push(element.on('click', event => {
+            const data = event.data as InteractionPoint | null;
+            onClick(data ? { x: data.x, y: data.y } : { ...pointer });
+        }));
+    }
+
+    host[HOVER_DISPOSERS] = disposers;
 }

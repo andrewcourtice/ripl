@@ -6,10 +6,22 @@ import {
 import type {
     ChartAxisInput,
     ChartCrosshairInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    normalizeDataLabels,
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
     ANIMATION_REFERENCE,
@@ -36,11 +48,14 @@ import {
     Context,
     createCircle,
     createGroup,
+    EventMap,
     getExtent,
     Group,
     Scale,
     scaleContinuous,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -71,6 +86,27 @@ export interface ScatterChartOptions<TData = unknown> extends CartesianChartOpti
     tooltip?: ChartTooltipInput;
     legend?: ChartLegendInput;
     axis?: ChartAxisInput<TData>;
+    /** Show value labels next to each bubble. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to bubble values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for scatter marker interaction events. */
+export interface ScatterChartMarkerEvent {
+    x: number;
+    y: number;
+    xValue: number;
+    yValue: number;
+    sizeValue: number;
+    seriesId: string;
+}
+
+/** Events emitted by a {@link ScatterChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface ScatterChartEventMap extends EventMap {
+    markerclick: ScatterChartMarkerEvent;
+    markerenter: ScatterChartMarkerEvent;
+    markerleave: ScatterChartMarkerEvent;
 }
 
 const REST_ALPHA = 0.7;
@@ -84,7 +120,7 @@ const REST_ALPHA = 0.7;
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOptions<TData>, TData> {
+export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOptions<TData>, TData, ScatterChartEventMap> {
 
     private bubbleGroups: Group[] = [];
     private xScale!: Scale;
@@ -122,6 +158,18 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         return sizes.length > 0 ? getExtent(sizes, functionIdentity) : [1, 1];
     }
 
+    /**
+     * The largest radius any bubble can reach at rest, used to inset the plot scales so edge
+     * points stay fully inside the chart area. Includes a small cushion for the bubble stroke.
+     */
+    private getMaxBubbleRadius(): number {
+        const { series } = this.options;
+        const radii = series.map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
+        const largest = radii.length > 0 ? Math.max(...radii) : 3;
+
+        return largest + 2;
+    }
+
     private bubbleValueProducer(series: ScatterChartSeriesOptions<TData>, getKey: (item: TData) => string) {
         const {
             id,
@@ -154,6 +202,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             return {
                 id: `${id}-${getKey(item)}`,
+                seriesId: id,
                 xValue,
                 yValue,
                 sizeValue,
@@ -171,13 +220,22 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         };
     }
 
-    private attachBubbleHover(bubble: Circle, content: string, state: CircleState) {
-        if (!this.tooltip) {
-            return;
-        }
-
+    private attachBubbleHover(bubble: Circle, values: { seriesId: string;
+        xValue: number;
+        yValue: number;
+        sizeValue: number; }, content: string, state: CircleState) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const stroke = state.stroke as string;
+
+        const payload = (point: { x: number;
+            y: number; }): ScatterChartMarkerEvent => ({
+            x: point.x,
+            y: point.y,
+            xValue: values.xValue,
+            yValue: values.yValue,
+            sizeValue: values.sizeValue,
+            seriesId: values.seriesId,
+        });
 
         applyHoverHighlight(bubble, {
             renderer: this.renderer,
@@ -197,6 +255,9 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 fill: setColorAlpha(stroke, REST_ALPHA),
                 radius: state.radius,
             },
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
         });
     }
 
@@ -206,21 +267,66 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         sizeValue: number;
         hasSize: boolean; }): string {
         const { label, xValue, yValue, sizeValue, hasSize } = values;
+        const format = resolveValueFormat(this.options.format);
 
         return hasSize
-            ? `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)}, ${sizeValue.toFixed(2)})`
-            : `${label}: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`;
+            ? `${label}: (${format(xValue)}, ${format(yValue)}, ${format(sizeValue)})`
+            : `${label}: (${format(xValue)}, ${format(yValue)})`;
     }
 
     private async drawBubbles(getKey: (item: TData) => string) {
         const { data, series } = this.options;
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
+        const formatValue = resolveValueFormat(this.options.format);
 
         const {
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
         } = arrayJoin(series, this.bubbleGroups, 'id');
+
+        // Builds the value label for a bubble, offset clear of the bubble's radius.
+        const buildLabel = (srs: ScatterChartSeriesOptions<TData>) => {
+            const getValues = this.bubbleValueProducer(srs, getKey);
+
+            return (item: TData) => {
+                const values = getValues(item);
+                const { state } = values;
+
+                return createDataLabel({
+                    id: `${values.id}-label`,
+                    x: state.cx as number,
+                    y: state.cy as number,
+                    anchor: dataLabels.anchor,
+                    content: formatValue(values.yValue),
+                    font: dataLabels.font,
+                    fill: dataLabels.fontColor,
+                    offset: (state.radius as number) + 4,
+                });
+            };
+        };
+
+        const updateLabel = (srs: ScatterChartSeriesOptions<TData>, item: TData, label: Text) => {
+            const values = this.bubbleValueProducer(srs, getKey)(item);
+            const { state } = values;
+            const layout = resolveDataLabelLayout({
+                x: state.cx as number,
+                y: state.cy as number,
+                anchor: dataLabels.anchor,
+                offset: (state.radius as number) + 4,
+            });
+
+            label.content = formatValue(values.yValue);
+            label.data = {
+                x: layout.x,
+                y: layout.y,
+                opacity: 1,
+            } as Partial<TextState>;
+        };
+
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
 
         seriesExits.forEach(group => {
             const exits = (group.getElementsByType('circle') as Circle[]).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
@@ -248,7 +354,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     data: state,
                 });
 
-                this.attachBubbleHover(bubble, this.tooltipText(values), state);
+                this.attachBubbleHover(bubble, values, this.tooltipText(values), state);
 
                 return bubble;
             };
@@ -256,7 +362,10 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
         const seriesEntryGroups = seriesEntries.map(srs => createGroup({
             id: srs.id,
-            children: data.map(buildBubble(srs)),
+            children: [
+                ...data.map(buildBubble(srs)),
+                ...(dataLabels.visible ? data.map(buildLabel(srs)) : []),
+            ],
         }));
 
         const exitTransitions: Promise<unknown>[] = [];
@@ -282,8 +391,34 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             bubbleUpdates.forEach(([item, bubble]) => {
                 const values = getValues(item);
                 bubble.data = values.state;
-                this.attachBubbleHover(bubble, this.tooltipText(values), values.state);
+                this.attachBubbleHover(bubble, values, this.tooltipText(values), values.state);
             });
+
+            // Reconcile value labels alongside the bubbles.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (dataLabels.visible) {
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-${getKey(item)}-label`);
+
+                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+
+                labelEntries.forEach(item => {
+                    const label = buildLabel(srs)(item);
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    updateLabel(srs, item, label);
+                    updatingLabels.push(label);
+                });
+            } else {
+                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+            }
 
             return group;
         });
@@ -319,10 +454,39 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             }));
         });
 
+        // Value labels: entry labels fade in; updated labels animate to their refreshed position.
+        const entryLabels = seriesEntryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
+        const labelTransitions: Promise<unknown>[] = [];
+
+        if (entryLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(entryLabels, {
+                duration: enter.duration,
+                ease: enter.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (enteringLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(enteringLabels, {
+                duration: update.duration,
+                ease: update.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (updatingLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
+                duration: update.duration,
+                ease: update.ease,
+                state: element.data as Partial<TextState>,
+            })));
+        }
+
         return Promise.all([
             ...entryTransitions,
             ...updateTransitions,
             ...exitTransitions,
+            ...labelTransitions,
         ]);
     }
 
@@ -362,20 +526,25 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            // Inset the data range by the largest possible bubble radius so a point sitting on the
+            // edge of the data extent keeps its whole circle inside the plot area instead of
+            // drawing past the boundary. The axis bounds/grid still span the full plot.
+            const maxRadius = this.getMaxBubbleRadius();
+
             // Provisional Y scale to measure the y-axis width.
-            this.yScale = scaleContinuous(yExtent, [bottom, top], { padToTicks: 10 });
+            this.yScale = scaleContinuous(yExtent, [bottom - maxRadius, top + maxRadius], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this.xScale = scaleContinuous(xExtent, [yAxisBox.right, right], { padToTicks: 10 });
+            this.xScale = scaleContinuous(xExtent, [yAxisBox.right + maxRadius, right - maxRadius], { padToTicks: 10 });
             this.xAxis.scale = this.xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(yExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this.yScale = scaleContinuous(yExtent, [xAxisBox.top - maxRadius, top + maxRadius], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 

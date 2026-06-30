@@ -3,6 +3,7 @@ export * from './options';
 export * from './layout';
 export * from './animation';
 export * from './interaction';
+export * from './labels';
 export * from './data';
 export * from './cartesian';
 

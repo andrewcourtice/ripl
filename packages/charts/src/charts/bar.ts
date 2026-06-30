@@ -5,10 +5,22 @@ import {
 
 import type {
     ChartAxisInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    normalizeDataLabels,
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
     ANIMATION_REFERENCE,
@@ -36,6 +48,7 @@ import {
     Context,
     createGroup,
     createRect,
+    EventMap,
     getExtent,
     Group,
     max,
@@ -45,6 +58,8 @@ import {
     scaleBand,
     scaleContinuous,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -78,6 +93,26 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
     legend?: ChartLegendInput;
     axis?: ChartAxisInput<TData>;
     borderRadius?: number;
+    /** Show value labels next to each bar. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to bar values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for bar interaction events. */
+export interface BarChartBarEvent {
+    x: number;
+    y: number;
+    xValue: string;
+    yValue: number;
+    seriesId: string;
+}
+
+/** Events emitted by a {@link BarChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface BarChartEventMap extends EventMap {
+    barclick: BarChartBarEvent;
+    barenter: BarChartBarEvent;
+    barleave: BarChartBarEvent;
 }
 
 /**
@@ -91,7 +126,7 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TData>, TData> {
+export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TData>, TData, BarChartEventMap> {
 
     private barGroups: Group[] = [];
 
@@ -128,15 +163,21 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return computeStackOffset(series, current, item, (s, i) => this.seriesValue(s, i));
     }
 
-    /** Wires consistent hover highlight + tooltip onto a bar. */
-    private attachBarHover(bar: Rect, label: string, value: number, anchor: () => { x: number;
+    /** Wires consistent hover highlight + tooltip + interaction events onto a bar. */
+    private attachBarHover(bar: Rect, srs: BarChartSeriesOptions<TData>, key: string, value: number, anchor: () => { x: number;
         y: number; }) {
-        if (!this.tooltip) {
-            return;
-        }
-
         const restFill = bar.fill as string;
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): BarChartBarEvent => ({
+            x: point.x,
+            y: point.y,
+            xValue: key,
+            yValue: value,
+            seriesId: srs.id,
+        });
 
         applyHoverHighlight(bar, {
             renderer: this.renderer,
@@ -144,9 +185,12 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             ease: hover.ease,
             tooltip: this.tooltip,
             anchor,
-            content: () => `${label}: ${value}`,
+            content: () => `${srs.label}: ${formatValue(value)}`,
             highlight: { fill: setColorAlpha(restFill, 1) },
             restore: { fill: restFill },
+            onEnter: point => this.emit('barenter', payload(point)),
+            onLeave: point => this.emit('barleave', payload(point)),
+            onClick: point => this.emit('barclick', payload(point)),
         });
     }
 
@@ -159,6 +203,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         const horizontal = this.isHorizontal;
         const baseline = valueScale(0);
         const cornerRadius = this.options.borderRadius ?? 2;
+        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: horizontal ? 'right' : 'top' });
+        const formatValue = resolveValueFormat(this.options.format);
 
         let seriesScale: BandScale<string> | undefined;
 
@@ -353,9 +399,43 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 },
             });
 
-            this.attachBarHover(bar, srs.label, value, anchorFor(state));
+            this.attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
 
             return bar;
+        };
+
+        // Builds the value label for a bar, positioned at the bar's outer-edge anchor.
+        const createBarLabel = (srs: BarChartSeriesOptions<TData>) => (item: TData) => {
+            const { id, value, state } = getBarState(srs, item);
+            const point = anchorFor(state)();
+
+            return createDataLabel({
+                id: `${id}-label`,
+                x: point.x,
+                y: point.y,
+                anchor: dataLabels.anchor,
+                content: formatValue(value),
+                font: dataLabels.font,
+                fill: dataLabels.fontColor,
+            });
+        };
+
+        // Repositions/refreshes an existing label for an updated bar (data drives the transition).
+        const updateBarLabel = (srs: BarChartSeriesOptions<TData>, item: TData, label: Text) => {
+            const { value, state } = getBarState(srs, item);
+            const point = anchorFor(state)();
+            const layout = resolveDataLabelLayout({
+                x: point.x,
+                y: point.y,
+                anchor: dataLabels.anchor,
+            });
+
+            label.content = formatValue(value);
+            label.data = {
+                x: layout.x,
+                y: layout.y,
+                opacity: 1,
+            } as Partial<TextState>;
         };
 
         const {
@@ -378,8 +458,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
         const seriesEntryGroups = seriesEntries.map(srs => createGroup({
             id: srs.id,
-            children: data.map(createBar(srs)),
+            children: [
+                ...data.map(createBar(srs)),
+                ...(dataLabels.visible ? data.map(createBarLabel(srs)) : []),
+            ],
         }));
+
+        // Labels added/repositioned during the update pass, animated after the maps below.
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const bars = group.getElementsByType('rect') as Rect[];
@@ -406,8 +493,34 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     fill: restFill,
                 };
 
-                this.attachBarHover(bar, srs.label, value, anchorFor(state));
+                this.attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
             });
+
+            // Reconcile value labels alongside the bars.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (dataLabels.visible) {
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-${getKey(item)}-label`);
+
+                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+
+                labelEntries.forEach(item => {
+                    const label = createBarLabel(srs)(item);
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    updateBarLabel(srs, item, label);
+                    updatingLabels.push(label);
+                });
+            } else {
+                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+            }
 
             return group;
         });
@@ -456,9 +569,40 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             state: element.data as RectState,
         }));
 
+        // Value labels: entry labels (on new series and new bars) fade in; updated labels
+        // animate to their refreshed position.
+        const entryLabels = queryAll(seriesEntryGroups, 'text') as Text[];
+
+        const labelTransitions: Promise<unknown>[] = [];
+
+        if (entryLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(entryLabels, {
+                duration: enterAnimation.duration,
+                ease: enterAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (enteringLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(enteringLabels, {
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (updatingLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: element.data as Partial<TextState>,
+            })));
+        }
+
         return Promise.all([
             entriesTransition,
             updatesTransition,
+            ...labelTransitions,
         ]);
     }
 

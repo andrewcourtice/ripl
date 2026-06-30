@@ -5,6 +5,11 @@ import {
 
 import type {
     ChartLegendInput,
+    ValueFormatInput,
+} from '../core/options';
+
+import {
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -37,6 +42,7 @@ import {
     createText,
     elementIsArc,
     elementIsText,
+    EventMap,
     getTotal,
     Group,
     scaleContinuous,
@@ -53,6 +59,9 @@ import {
 /** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
 const REST_ALPHA = 0.55;
 
+/** Slices narrower than this angle (radians) omit their label to avoid clutter. */
+const MIN_LABEL_ANGLE = 0.15;
+
 /** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
@@ -62,6 +71,24 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     color?: keyof TData | ((item: TData) => string);
     innerRadius?: number;
     legend?: ChartLegendInput;
+    /** Format applied to segment values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for pie segment interaction events. */
+export interface PieChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    key: string;
+}
+
+/** Events emitted by a {@link PieChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface PieChartEventMap extends EventMap {
+    segmentclick: PieChartSegmentEvent;
+    segmententer: PieChartSegmentEvent;
+    segmentleave: PieChartSegmentEvent;
 }
 
 /**
@@ -73,7 +100,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
+export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, PieChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
@@ -206,16 +233,24 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     } as Partial<ArcState>,
                 });
 
-                this.attachSegmentHover(segmentArc, segmentColor, segmentValue);
+                this.attachSegmentHover(segmentArc, {
+                    color: segmentColor,
+                    value: segmentValue,
+                    label: segmentLabel,
+                    key: segmentKey,
+                });
 
                 const [centroidX, centroidY] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
 
+                const showLabel = segmentEnd - segmentStart >= MIN_LABEL_ANGLE;
+
                 const labelText = createText({
                     class: 'segment__label',
-                    fill: '#000000',
+                    fill: '#ffffff',
+                    font: '600 11px sans-serif',
                     x: centroidX,
                     y: centroidY,
-                    content: segmentLabel,
+                    content: showLabel ? segmentLabel : '',
                     textAlign: 'center',
                     textBaseline: 'middle',
                     opacity: 0,
@@ -263,7 +298,14 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 const [centroidX, centroidY] = arc.getCentroid(arcData);
 
                 arc.data = arcData;
-                this.attachSegmentHover(arc, resolvedColor, item.value);
+                this.attachSegmentHover(arc, {
+                    color: resolvedColor,
+                    value: item.value,
+                    label: item.label,
+                    key: item.key,
+                });
+
+                labelText.content = segmentEnd - segmentStart >= MIN_LABEL_ANGLE ? item.label : '';
 
                 labelText.data = {
                     x: centroidX,
@@ -342,8 +384,22 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
         });
     }
 
-    private attachSegmentHover(arc: Arc, color: string, value: number) {
+    private attachSegmentHover(arc: Arc, segment: { color: string;
+        value: number;
+        label: string;
+        key: string; }) {
+        const { color, value, label, key } = segment;
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): PieChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+            label,
+            key,
+        });
 
         applyHoverHighlight(arc, {
             renderer: this.renderer,
@@ -357,9 +413,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     y,
                 };
             },
-            content: () => value.toString(),
+            content: () => formatValue(value),
             highlight: { fill: color },
             restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 
