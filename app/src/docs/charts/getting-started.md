@@ -117,7 +117,7 @@ Most chart types also support these feature options:
 | `axis` | `boolean \| ChartAxisOptions` | `true` | Show/configure x and y axes |
 | `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure background grid lines |
 | `tooltip` | `boolean \| ChartTooltipOptions` | `true` | Show/configure hover tooltips |
-| `legend` | `boolean \| ChartLegendOptions` | `false` | Show/configure series legend |
+| `legend` | `boolean \| ChartLegendOptions` | auto | Show/configure series legend (shown by default for charts with more than one series/segment, at the bottom) |
 | `crosshair` | `boolean \| ChartCrosshairOptions` | varies | Show/configure crosshair tracking |
 
 See [Shared Options](/docs/charts/shared-options) for a complete reference on each of these.

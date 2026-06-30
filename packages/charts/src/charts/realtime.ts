@@ -91,9 +91,11 @@ export interface RealtimeChartOptions extends BaseChartOptions {
  * Realtime streaming chart rendering continuously updating line/area series.
  *
  * Data is pushed incrementally via {@link RealtimeChart.push} and maintained
- * in a fixed-size sliding window buffer. Each render cycle smoothly transitions
- * polylines to reflect the latest data. Supports y-axis, grid, crosshair,
- * legend, and configurable transition duration.
+ * in a fixed-size sliding window buffer. While the window fills the line grows
+ * from the left; once full, each push scrolls the series left by one step with
+ * the newest point entering at the right (rather than morphing every point in
+ * place). Supports y-axis, grid, crosshair, legend, and configurable transition
+ * duration.
  */
 export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
@@ -230,6 +232,8 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
         const maxLen = this.getWindowSize();
         const duration = this.getTransitionDuration();
+        // Horizontal distance between adjacent samples; one window slides left by this each push.
+        const step = (chartRight - chartLeft) / Math.max(1, maxLen - 1);
 
         const existingGroupMap = new Map<string, Group>();
         this.seriesGroups.forEach(group => existingGroupMap.set(group.id, group));
@@ -285,7 +289,18 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 const areaFill = showArea ? polylines[0] : undefined;
                 const line = showArea ? polylines[1] : polylines[0];
 
+                // Once the window is full each push drops the oldest sample, so slot i now holds
+                // the value previously shown in slot i+1. Seeding the current points one step to
+                // the right (their previous on-screen positions) makes the transition slide the
+                // whole line left by one step — a scroll — with the newest point entering at the
+                // right, instead of morphing every point's height in place.
+                const scrolling = pointCount >= maxLen;
+
                 if (line) {
+                    if (scrolling) {
+                        line.points = linePoints.map(([x, y]) => [x + step, y] as Point);
+                    }
+
                     line.data = {
                         points: linePoints,
                         renderer: srs.lineType,
@@ -293,6 +308,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 }
 
                 if (areaFill && showArea) {
+                    if (scrolling) {
+                        areaFill.points = areaPoints.map(([x, y]) => [x + step, y] as Point);
+                    }
+
                     areaFill.data = {
                         points: areaPoints,
                     } as PolylineState;

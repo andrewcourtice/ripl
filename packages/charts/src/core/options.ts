@@ -376,7 +376,7 @@ export type ChartLegendInput = boolean | LegendPosition | Partial<ChartLegendOpt
 
 const LEGEND_DEFAULTS: ChartLegendOptions = {
     visible: true,
-    position: 'top',
+    position: 'bottom',
     padding: 16,
     font: '11px sans-serif',
     fontColor: '#333333',
@@ -393,7 +393,7 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
     if (input === undefined) {
         return {
             ...base,
-            visible: false,
+            visible: defaults?.visible ?? false,
         };
     }
 

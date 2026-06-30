@@ -31,6 +31,7 @@ import {
 
 import {
     BandScale,
+    BorderRadius,
     Box,
     Context,
     createGroup,
@@ -84,7 +85,9 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
  *
  * Uses band scales for categorical axes and continuous scales for value axes. Supports multiple
  * series with grouped or stacked bar rendering, interactive tooltips, legend, grid, chart title,
- * and animated entry/update/exit transitions.
+ * and animated entry/update/exit transitions. In stacked mode only the outermost segment is
+ * rounded (on its outer corners) and the column reveals as a single rising fill on entry rather
+ * than each segment animating separately.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
@@ -155,7 +158,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         const { data, series } = this.options;
         const horizontal = this.isHorizontal;
         const baseline = valueScale(0);
-        const borderRadius = this.options.borderRadius ?? 2;
+        const cornerRadius = this.options.borderRadius ?? 2;
 
         let seriesScale: BandScale<string> | undefined;
 
@@ -164,6 +167,73 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 innerPadding: 0.1,
             });
         }
+
+        // Per-column totals (by sign) and category order — used to round only the outermost
+        // segment of a stack and to time the stacked entry as a single rising fill.
+        const keyIndex = new Map<string, number>(data.map((item, index) => [getKey(item), index]));
+        const columnTotals = new Map<string, { pos: number;
+            neg: number; }>();
+
+        data.forEach(item => {
+            let pos = 0;
+            let neg = 0;
+
+            series.forEach(srs => {
+                const value = this.seriesValue(srs, item);
+
+                if (value >= 0) {
+                    pos += value;
+                } else {
+                    neg += -value;
+                }
+            });
+
+            columnTotals.set(getKey(item), {
+                pos,
+                neg,
+            });
+        });
+
+        // The index of the last same-sign series contributing to a column (its outermost segment).
+        const outermostStackIndex = (item: TData, positive: boolean) => {
+            let outer = -1;
+
+            series.forEach((srs, index) => {
+                const value = this.seriesValue(srs, item);
+
+                if (value === 0) {
+                    return;
+                }
+
+                if ((value >= 0) === positive) {
+                    outer = index;
+                }
+            });
+
+            return outer;
+        };
+
+        const stackedBorderRadius = (srs: BarChartSeriesOptions<TData>, item: TData, value: number): number | BorderRadius => {
+            const positive = value >= 0;
+
+            if (series.indexOf(srs) !== outermostStackIndex(item, positive)) {
+                return 0;
+            }
+
+            if (horizontal) {
+                return positive
+                    ? [0, cornerRadius, cornerRadius, 0]
+                    : [cornerRadius, 0, 0, cornerRadius];
+            }
+
+            return positive
+                ? [cornerRadius, cornerRadius, 0, 0]
+                : [0, 0, cornerRadius, cornerRadius];
+        };
+
+        const entryTiming = new Map<string, { delayFraction: number;
+            durationFraction: number;
+            columnIndex: number; }>();
 
         const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData) => {
             const value = this.seriesValue(srs, item);
@@ -200,6 +270,19 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 height = Math.abs(baseline - valueScale(value));
             }
 
+            const borderRadius = this.isStacked ? stackedBorderRadius(srs, item, value) : cornerRadius;
+
+            if (this.isStacked) {
+                const totals = columnTotals.get(key);
+                const columnTotal = value >= 0 ? (totals?.pos ?? 0) : (totals?.neg ?? 0);
+
+                entryTiming.set(`${srs.id}-${key}`, {
+                    delayFraction: columnTotal > 0 ? Math.abs(stackOffset) / columnTotal : 0,
+                    durationFraction: columnTotal > 0 ? Math.abs(value) / columnTotal : 1,
+                    columnIndex: keyIndex.get(key) ?? 0,
+                });
+            }
+
             return {
                 id: `${srs.id}-${key}`,
                 value,
@@ -224,7 +307,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 y: state.y,
             });
 
-        // The collapsed initial geometry an entering bar grows from.
+        // The collapsed initial geometry an entering/exiting bar grows from (chart baseline).
         const collapsed = (): Partial<RectState> => (horizontal
             ? {
                 x: baseline,
@@ -235,6 +318,26 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 height: 0,
             });
 
+        // A stacked segment collapses to its own lower edge so the column reveals as one rising
+        // fill rather than every segment growing from the chart baseline.
+        const collapsedEntry = (srs: BarChartSeriesOptions<TData>, item: TData): Partial<RectState> => {
+            if (!this.isStacked) {
+                return collapsed();
+            }
+
+            const stackOffset = this.stackOffset(series, srs, item);
+
+            return horizontal
+                ? {
+                    x: valueScale(stackOffset),
+                    width: 0,
+                }
+                : {
+                    y: valueScale(stackOffset),
+                    height: 0,
+                };
+        };
+
         const createBar = (srs: BarChartSeriesOptions<TData>) => (item: TData) => {
             const { id, value, state } = getBarState(srs, item);
             const restFill = setColorAlpha(state.fill as string, REST_ALPHA);
@@ -242,7 +345,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const bar = createRect({
                 id,
                 ...state,
-                ...collapsed(),
+                ...collapsedEntry(srs, item),
                 fill: restFill,
                 data: {
                     ...state,
@@ -322,12 +425,30 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[])
             .sort((a, b) => (horizontal ? a.y - b.y : a.x - b.x));
 
-        const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => ({
-            duration: enterAnimation.duration,
-            delay: stagger(index, length, enterAnimation.duration),
-            ease: enterAnimation.ease,
-            state: element.data as RectState,
-        }));
+        const categoryCount = Math.max(1, keyIndex.size);
+
+        const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => {
+            // Stacked: each column fills as one rising unit — segments are timed by their position
+            // in the stack so the fill front sweeps the whole column once, in colour order.
+            if (this.isStacked) {
+                const timing = entryTiming.get(element.id);
+                const columnDelay = stagger(timing?.columnIndex ?? 0, categoryCount, enterAnimation.duration) * 0.4;
+
+                return {
+                    duration: Math.max((timing?.durationFraction ?? 1) * enterAnimation.duration, 80),
+                    delay: columnDelay + (timing?.delayFraction ?? 0) * enterAnimation.duration,
+                    ease: enterAnimation.ease,
+                    state: element.data as RectState,
+                };
+            }
+
+            return {
+                duration: enterAnimation.duration,
+                delay: stagger(index, length, enterAnimation.duration),
+                ease: enterAnimation.ease,
+                state: element.data as RectState,
+            };
+        });
 
         const updatesTransition = this.renderer.transition(queryAll(seriesUpdateGroups, 'rect') as Rect[], element => ({
             duration: updateAnimation.duration,

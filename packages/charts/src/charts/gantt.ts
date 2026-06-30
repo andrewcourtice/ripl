@@ -41,6 +41,7 @@ import {
     easeOutCubic,
     easeOutQuart,
     Group,
+    Line,
     Rect,
     RectState,
     scaleBand,
@@ -85,7 +86,7 @@ const DEFAULT_TODAY_COLOR = '#ef4444';
 export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>> {
 
     private barGroups: Group[] = [];
-    private todayLine?: Group;
+    private todayLine?: Line;
     private xAxis!: ChartXAxis;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
@@ -430,29 +431,28 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
 
         const x = timeScale(today);
 
-        if (this.todayLine) {
-            this.todayLine.clear();
-            this.scene.remove(this.todayLine);
+        // The marker is a single line, so it lives directly in the scene (no wrapping group).
+        if (!this.todayLine) {
+            this.todayLine = createLine({
+                id: 'today-marker',
+                zIndex: 500,
+                x1: x,
+                y1: chartTop,
+                x2: x,
+                y2: chartBottom,
+                stroke: todayColor,
+                lineWidth: 1.5,
+                lineDash: [6, 4],
+            });
+
+            this.scene.add(this.todayLine);
+        } else {
+            this.todayLine.x1 = x;
+            this.todayLine.x2 = x;
+            this.todayLine.y1 = chartTop;
+            this.todayLine.y2 = chartBottom;
+            this.todayLine.stroke = todayColor;
         }
-
-        this.todayLine = createGroup({
-            id: 'today-marker',
-            zIndex: 500,
-            children: [
-                createLine({
-                    id: 'today-line',
-                    x1: x,
-                    y1: chartTop,
-                    x2: x,
-                    y2: chartBottom,
-                    stroke: todayColor,
-                    lineWidth: 1.5,
-                    lineDash: [6, 4],
-                }),
-            ],
-        });
-
-        this.scene.add(this.todayLine);
     }
 
     public async render() {

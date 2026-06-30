@@ -13,6 +13,9 @@ The **Sunburst Chart** displays hierarchical data as concentric rings, where eac
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,12 +24,22 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createSunburstChart,
 } from '@ripl/charts';
 
 import {
-    ref,
+    watch,
 } from 'vue';
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Sector Breakdown',
+});
 
 function generateData() {
     return [
@@ -57,17 +70,21 @@ function generateData() {
     ];
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createSunburstChart(context, {
-        data: data.value,
+        data,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        ...buildCommonOptions(config),
     });
 });
 
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 function randomize() {
-    data.value = generateData();
+    data = generateData();
+    chart.value?.update({ data });
 }
 </script>
 

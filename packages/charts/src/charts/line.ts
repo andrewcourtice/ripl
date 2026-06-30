@@ -62,6 +62,7 @@ export interface LineChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
+    /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
     markerRadius?: number;
 }
@@ -114,6 +115,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         const x = this.xScale(key);
         const y = this.yScale(value);
         const color = this.getSeriesColor(series.id);
+        // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
+        const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
 
         return {
             id: `${series.id}-${key}`,
@@ -125,7 +128,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 lineWidth: 2,
                 cx: x,
                 cy: y,
-                radius: series.markerRadius ?? 3,
+                radius,
             } as CircleState,
         };
     }
