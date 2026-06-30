@@ -62,6 +62,7 @@ export interface LineChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
+    /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
     markerRadius?: number;
 }

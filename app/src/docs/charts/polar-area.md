@@ -1,6 +1,6 @@
 # Polar Area Chart
 
-The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle — only the radius varies. The chart includes animated axis rings, radial lines, and labels that enter on first render and transition smoothly on data updates.
+The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle — only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

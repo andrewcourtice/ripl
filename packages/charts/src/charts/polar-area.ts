@@ -57,6 +57,7 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     padAngle?: number;
     /** Number of concentric grid rings. Defaults to 4 */
     levels?: number;
+    /** Legend showing each segment. Shown by default (more than one segment); pass `false` to hide. */
     legend?: ChartLegendInput;
 }
 
@@ -65,7 +66,8 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
  *
  * Each data point occupies an equal angular slice; the radial extent of each
  * segment is proportional to its value. Includes a concentric grid with
- * value labels, radial axis lines, and animated entry/update/exit transitions.
+ * value labels, radial axis lines, an optional legend, and animated
+ * entry/update/exit transitions.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */

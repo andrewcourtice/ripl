@@ -91,9 +91,11 @@ export interface RealtimeChartOptions extends BaseChartOptions {
  * Realtime streaming chart rendering continuously updating line/area series.
  *
  * Data is pushed incrementally via {@link RealtimeChart.push} and maintained
- * in a fixed-size sliding window buffer. Each render cycle smoothly transitions
- * polylines to reflect the latest data. Supports y-axis, grid, crosshair,
- * legend, and configurable transition duration.
+ * in a fixed-size sliding window buffer. While the window fills the line grows
+ * from the left; once full, each push scrolls the series left by one step with
+ * the newest point entering at the right (rather than morphing every point in
+ * place). Supports y-axis, grid, crosshair, legend, and configurable transition
+ * duration.
  */
 export class RealtimeChart extends Chart<RealtimeChartOptions> {
 

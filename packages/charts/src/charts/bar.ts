@@ -85,7 +85,9 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
  *
  * Uses band scales for categorical axes and continuous scales for value axes. Supports multiple
  * series with grouped or stacked bar rendering, interactive tooltips, legend, grid, chart title,
- * and animated entry/update/exit transitions.
+ * and animated entry/update/exit transitions. In stacked mode only the outermost segment is
+ * rounded (on its outer corners) and the column reveals as a single rising fill on entry rather
+ * than each segment animating separately.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */

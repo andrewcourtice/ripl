@@ -1,6 +1,6 @@
 # Realtime Chart
 
-The **Realtime Chart** smoothly visualizes data streaming in over time. It maintains a sliding window of data points and animates the line (and optional area fill) as new values arrive via the `push()` method. Ideal for live dashboards, server monitoring, and any scenario where data arrives continuously. Each series can show an area fill with configurable opacity, and the chart includes crosshair, grid, legend, and tooltips.
+The **Realtime Chart** smoothly visualizes data streaming in over time. It maintains a sliding window of data points: while the window fills the line grows from the left, and once full it scrolls left with each new value entering from the right as you `push()`. Ideal for live dashboards, server monitoring, and any scenario where data arrives continuously. Each series can show an area fill with configurable opacity, and the chart includes crosshair, grid, legend, and tooltips.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

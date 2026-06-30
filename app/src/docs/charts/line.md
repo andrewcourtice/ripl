@@ -229,11 +229,11 @@ createLineChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `markers`, `markerRadius`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `markers` (show/hide point markers, default `true`), `markerRadius`
 - **`key`** — Key accessor for each data point
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
 - **`padding`** — Chart padding
