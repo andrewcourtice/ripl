@@ -19,6 +19,14 @@ import {
 } from '../core/options';
 
 import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -39,7 +47,7 @@ import {
     createLine,
     createRect,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Line,
     Rect,
@@ -72,6 +80,21 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
 }
 
+/** Payload emitted for gantt task interaction events. */
+export interface GanttChartTaskEvent {
+    x: number;
+    y: number;
+    id: string;
+    label: string;
+}
+
+/** Events emitted by a {@link GanttChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface GanttChartEventMap extends EventMap {
+    taskclick: GanttChartTaskEvent;
+    taskenter: GanttChartTaskEvent;
+    taskleave: GanttChartTaskEvent;
+}
+
 const DEFAULT_TODAY_COLOR = '#ef4444';
 
 /**
@@ -83,7 +106,7 @@ const DEFAULT_TODAY_COLOR = '#ef4444';
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>> {
+export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>, GanttChartEventMap> {
 
     private barGroups: Group[] = [];
     private todayLine?: Line;
@@ -228,7 +251,8 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
         exits.forEach(el => el.destroy());
 
         const entryGroups = entries.map(item => {
-            const { id, label, start, end, color, progress, state } = getBarState(item);
+            const barState = getBarState(item);
+            const { id, color, progress, state } = barState;
 
             const bar = createRect({
                 id: `${id}-bar`,
@@ -270,42 +294,14 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                 children,
             });
 
-            bar.on('mouseenter', () => {
-                const startStr = this.formatDate(start);
-                const endStr = this.formatDate(end);
-                const progressStr = progress !== undefined ? ` (${Math.round(progress * 100)}%)` : '';
-                this.tooltip.show(
-                    (state.x as number) + (state.width as number) / 2,
-                    state.y as number,
-                    `${label}: ${startStr} – ${endStr}${progressStr}`
-                );
-
-                this.renderer.transition(bar, {
-                    duration: this.getAnimationDuration(300),
-                    ease: easeOutQuart,
-                    state: {
-                        fill: color,
-                    },
-                });
-
-                bar.on('mouseleave', () => {
-                    this.tooltip.hide();
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: setColorAlpha(color, 0.7),
-                        },
-                    });
-                });
-            });
+            this.attachTaskHover(bar, barState);
 
             return group;
         });
 
         const updateGroups = updates.map(([item, group]) => {
-            const { label, start, end, color, progress, state } = getBarState(item);
+            const barState = getBarState(item);
+            const { color, progress, state } = barState;
 
             const bar = group.getElementsByType('rect')[0] as Rect;
 
@@ -314,36 +310,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                     ...state,
                 };
 
-                bar.on('mouseenter', () => {
-                    const startStr = this.formatDate(start);
-                    const endStr = this.formatDate(end);
-                    const progressStr = progress !== undefined ? ` (${Math.round(progress * 100)}%)` : '';
-                    this.tooltip.show(
-                        (state.x as number) + (state.width as number) / 2,
-                        state.y as number,
-                        `${label}: ${startStr} – ${endStr}${progressStr}`
-                    );
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: color,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(color, 0.7),
-                            },
-                        });
-                    });
-                });
+                this.attachTaskHover(bar, barState);
             }
 
             // Update progress bar
@@ -589,6 +556,43 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>>
                 this.yAxis.render(),
                 this.drawBars(adjustedCategoryScale, timeScale, getKey, getLabel),
             ]);
+        });
+    }
+
+    private attachTaskHover(bar: Rect, task: { id: string;
+        label: string;
+        start: Date;
+        end: Date;
+        color: string;
+        progress?: number;
+        state: RectState; }) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const progressStr = task.progress !== undefined ? ` (${Math.round(task.progress * 100)}%)` : '';
+        const tooltipText = `${task.label}: ${this.formatDate(task.start)} – ${this.formatDate(task.end)}${progressStr}`;
+
+        const payload = (point: { x: number;
+            y: number; }): GanttChartTaskEvent => ({
+            x: point.x,
+            y: point.y,
+            id: task.id,
+            label: task.label,
+        });
+
+        applyHoverHighlight(bar, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: (task.state.x as number) + (task.state.width as number) / 2,
+                y: task.state.y as number,
+            }),
+            content: () => tooltipText,
+            highlight: { fill: task.color },
+            restore: { fill: setColorAlpha(task.color, 0.7) },
+            onEnter: point => this.emit('taskenter', payload(point)),
+            onLeave: point => this.emit('taskleave', payload(point)),
+            onClick: point => this.emit('taskclick', payload(point)),
         });
     }
 

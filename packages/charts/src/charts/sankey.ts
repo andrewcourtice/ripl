@@ -4,6 +4,18 @@ import {
 } from '../core/chart';
 
 import {
+    formatNumber,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -22,7 +34,7 @@ import {
     createRect,
     createText,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
@@ -54,6 +66,35 @@ export interface SankeyChartOptions extends BaseChartOptions {
     nodeWidth?: number;
     nodePadding?: number;
     iterations?: number;
+}
+
+/** Payload emitted for Sankey node interaction events. */
+export interface SankeyChartNodeEvent {
+    x: number;
+    y: number;
+    id: string;
+    label: string;
+    value: number;
+}
+
+/** Payload emitted for Sankey link interaction events. */
+export interface SankeyChartLinkEvent {
+    x: number;
+    y: number;
+    id: string;
+    sourceLabel: string;
+    targetLabel: string;
+    value: number;
+}
+
+/** Events emitted by a {@link SankeyChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface SankeyChartEventMap extends EventMap {
+    nodeclick: SankeyChartNodeEvent;
+    nodeenter: SankeyChartNodeEvent;
+    nodeleave: SankeyChartNodeEvent;
+    linkclick: SankeyChartLinkEvent;
+    linkenter: SankeyChartLinkEvent;
+    linkleave: SankeyChartLinkEvent;
 }
 
 interface LayoutNode {
@@ -254,7 +295,7 @@ function computeSankeyLayout(
  * paths connecting source and target nodes. Supports tooltips and
  * staggered entry animations for nodes, labels, and links.
  */
-export class SankeyChart extends Chart<SankeyChartOptions> {
+export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> {
 
     private nodeGroups: Group[] = [];
     private linkGroups: Group[] = [];
@@ -331,29 +372,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     },
                 });
 
-                linkEl.on('mouseenter', () => {
-                    this.tooltip.show(midX, (sy + ty) / 2, `${link.source.label} → ${link.target.label}: ${link.value}`);
-
-                    renderer.transition(linkEl, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            stroke: setColorAlpha(link.color, 0.6),
-                        },
-                    });
-
-                    linkEl.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(linkEl, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                stroke: setColorAlpha(link.color, 0.3),
-                            },
-                        });
-                    });
-                });
+                this.attachLinkHover(linkEl, link, midX, (sy + ty) / 2);
 
                 return createGroup({
                     id: link.id,
@@ -394,33 +413,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     } as RectState,
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(
-                        offsetX + node.x + node.width / 2,
-                        offsetY + node.y,
-                        `${node.label}: ${node.value}`
-                    );
-
-                    renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: node.color,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(node.color, 0.8),
-                            },
-                        });
-                    });
-                });
+                this.attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
                 const label = createText({
                     id: `${node.id}-label`,
@@ -508,6 +501,67 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 labelsTransition,
                 updatesTransition,
             ]);
+        });
+    }
+
+    private attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): SankeyChartLinkEvent => ({
+            x: point.x,
+            y: point.y,
+            id: link.id,
+            sourceLabel: link.source.label,
+            targetLabel: link.target.label,
+            value: link.value,
+        });
+
+        applyHoverHighlight(linkEl, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => `${link.source.label} → ${link.target.label}: ${formatNumber(link.value)}`,
+            highlight: { stroke: setColorAlpha(link.color, 0.6) },
+            restore: { stroke: setColorAlpha(link.color, 0.3) },
+            onEnter: point => this.emit('linkenter', payload(point)),
+            onLeave: point => this.emit('linkleave', payload(point)),
+            onClick: point => this.emit('linkclick', payload(point)),
+        });
+    }
+
+    private attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): SankeyChartNodeEvent => ({
+            x: point.x,
+            y: point.y,
+            id: node.id,
+            label: node.label,
+            value: node.value,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => `${node.label}: ${formatNumber(node.value)}`,
+            highlight: { fill: node.color },
+            restore: { fill: setColorAlpha(node.color, 0.8) },
+            onEnter: point => this.emit('nodeenter', payload(point)),
+            onLeave: point => this.emit('nodeleave', payload(point)),
+            onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
 
