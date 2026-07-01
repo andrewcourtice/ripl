@@ -217,6 +217,6 @@ createPieChart('#container', {
 - **`value`** — Numeric value field
 - **`label`** — Display label field
 - **`innerRadius`** — Inner radius ratio for donut mode (0–1, default `0`)
-- **`startAngle`** — Starting angle in radians (default `0`)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`labels`** — `boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions` — Segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customises `position` / `font` / `fontColor`.
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | ((value) => string)` — Formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

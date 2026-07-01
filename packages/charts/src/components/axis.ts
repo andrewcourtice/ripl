@@ -4,6 +4,10 @@ import {
 } from './_base';
 
 import {
+    formatNumber,
+} from '../core/options';
+
+import {
     ANIMATION_REFERENCE,
     ResolvedAnimation,
 } from '../core/animation';
@@ -200,7 +204,7 @@ export class ChartAxis extends ChartComponent {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
         return values.reduce((output, value) => {
-            const label = this.formatLabel ? this.formatLabel(value) : value.toString();
+            const label = this.formatLabel ? this.formatLabel(value) : formatNumber(value);
             const metrics = this.context.measureText(label, this.labelFont);
             return Math.max(output, producer(metrics));
         }, 0);
@@ -208,7 +212,7 @@ export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected formatTickLabel(value: any): string {
-        return this.formatLabel ? this.formatLabel(value) : value.toString();
+        return this.formatLabel ? this.formatLabel(value) : formatNumber(value);
     }
 
     /** The thickness reserved for the axis title (0 when there is no title). */
