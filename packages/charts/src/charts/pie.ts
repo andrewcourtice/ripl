@@ -6,7 +6,6 @@ import {
 import type {
     ChartLegendInput,
     ChartSegmentLabelsInput,
-    ChartSegmentLabelsOptions,
     ValueFormatInput,
 } from '../core/options';
 
@@ -17,9 +16,7 @@ import {
 
 import {
     createSegmentLabel,
-    resolveRadialLabel,
-    SEGMENT_LABEL_INSIDE_FILL,
-    SEGMENT_LABEL_OUTSIDE_FILL,
+    resolveSegmentLabelLayout,
 } from '../core/labels';
 
 import {
@@ -54,7 +51,6 @@ import {
     EventMap,
     getTotal,
     Group,
-    Point,
     Polyline,
     scaleContinuous,
     setColorAlpha,
@@ -261,7 +257,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     key: segmentKey,
                 });
 
-                const labelInfo = this.computeLabel(item, labels, segmentLabel);
+                const labelInfo = resolveSegmentLabelLayout(item, labels, segmentLabel, MIN_LABEL_ANGLE);
 
                 const connector = createPolyline({
                     class: 'segment__connector',
@@ -331,7 +327,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     key: item.key,
                 });
 
-                const labelInfo = this.computeLabel(item, labels, item.label);
+                const labelInfo = resolveSegmentLabelLayout(item, labels, item.label, MIN_LABEL_ANGLE);
 
                 labelText.content = labelInfo.content;
                 labelText.textAlign = labelInfo.textAlign;
@@ -433,45 +429,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 transitionExits(),
             ]);
         });
-    }
-
-    /**
-     * Resolves a segment's label placement (inside centroid or outside leader line) and content,
-     * using the shared radial-label helper. The connector always has ≥2 points (a degenerate line
-     * at the anchor when hidden) so bounding-box computation stays safe.
-     */
-    private computeLabel(
-        geometry: { cx: number;
-            cy: number;
-            startAngle: number;
-            endAngle: number;
-            radius: number;
-            innerRadius: number; },
-        labels: ChartSegmentLabelsOptions,
-        text: string
-    ) {
-        const visible = labels.visible && (geometry.endAngle - geometry.startAngle) >= MIN_LABEL_ANGLE;
-        const outside = labels.position === 'outside';
-        const placement = resolveRadialLabel(geometry);
-        const anchor = outside ? placement.outside : placement.inside;
-        const fill = labels.fontColor ?? (outside ? SEGMENT_LABEL_OUTSIDE_FILL : SEGMENT_LABEL_INSIDE_FILL);
-        const showConnector = visible && outside;
-        const connector: Point[] = showConnector
-            ? placement.outside.connector
-            : [[anchor.x, anchor.y], [anchor.x, anchor.y]];
-
-        return {
-            visible,
-            content: visible ? text : '',
-            x: anchor.x,
-            y: anchor.y,
-            textAlign: anchor.textAlign,
-            textBaseline: anchor.textBaseline,
-            fill,
-            font: labels.font,
-            connector,
-            showConnector,
-        };
     }
 
     private attachSegmentHover(arc: Arc, segment: { color: string;

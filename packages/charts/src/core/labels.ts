@@ -15,6 +15,7 @@ import {
 } from '@ripl/core';
 
 import type {
+    ChartSegmentLabelsOptions,
     LabelAnchor,
     SegmentLabelPosition,
 } from './options';
@@ -213,6 +214,61 @@ export function resolveRadialLabel(input: RadialLabelInput): RadialLabelPlacemen
                 [endX, elbowY],
             ],
         },
+    };
+}
+
+/** Fully resolved layout for a segment label: placement, content, styling, and leader-line points. */
+export interface SegmentLabelLayout {
+    /** Whether the label should be shown (respects `labels.visible` and the min-angle guard). */
+    visible: boolean;
+    /** Text content, or `''` when hidden. */
+    content: string;
+    x: number;
+    y: number;
+    textAlign: TextState['textAlign'];
+    textBaseline: TextState['textBaseline'];
+    fill: string;
+    font?: string;
+    /** Leader-line points; always ≥2 (a degenerate line at the anchor when hidden/inside). */
+    connector: Point[];
+    /** Whether the leader line should be shown (visible outside labels only). */
+    showConnector: boolean;
+}
+
+/**
+ * Resolves a segment's label into a ready-to-render layout (inside centroid or outside leader line),
+ * honouring visibility, an optional minimum-angle clutter guard, and position/font/colour options.
+ * Shared by the pie and polar-area charts so their label behaviour is identical.
+ *
+ * The connector always has ≥2 points (a degenerate line at the anchor when hidden or inside) so
+ * `Polyline.getBoundingBox` stays safe and renders nothing for non-outside labels.
+ */
+export function resolveSegmentLabelLayout(
+    geometry: RadialLabelInput,
+    labels: ChartSegmentLabelsOptions,
+    text: string,
+    minAngle: number = 0
+): SegmentLabelLayout {
+    const visible = labels.visible && (geometry.endAngle - geometry.startAngle) >= minAngle;
+    const outside = labels.position === 'outside';
+    const placement = resolveRadialLabel(geometry);
+    const anchor = outside ? placement.outside : placement.inside;
+    const fill = labels.fontColor ?? (outside ? SEGMENT_LABEL_OUTSIDE_FILL : SEGMENT_LABEL_INSIDE_FILL);
+    const showConnector = visible && outside;
+
+    return {
+        visible,
+        content: visible ? text : '',
+        x: anchor.x,
+        y: anchor.y,
+        textAlign: anchor.textAlign,
+        textBaseline: anchor.textBaseline,
+        fill,
+        font: labels.font,
+        connector: showConnector
+            ? placement.outside.connector
+            : [[anchor.x, anchor.y], [anchor.x, anchor.y]],
+        showConnector,
     };
 }
 

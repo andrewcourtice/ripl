@@ -5,7 +5,32 @@ import {
 
 import type {
     ChartLegendInput,
+    ChartSegmentLabelsInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    formatNumber,
+    normalizeSegmentLabels,
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createSegmentLabel,
+    resolveSegmentLabelLayout,
+} from '../core/labels';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
+    Tooltip,
+} from '../components/tooltip';
 
 import {
     LegendItem,
@@ -22,14 +47,16 @@ import {
     createCircle,
     createGroup,
     createLine,
+    createPolyline,
     createText,
     easeOutQuint,
     elementIsArc,
-    elementIsText,
+    EventMap,
     Group,
     Line,
     LineState,
     maxOf,
+    Polyline,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -41,6 +68,9 @@ import {
     arrayJoin,
     typeIsFunction,
 } from '@ripl/utilities';
+
+/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.55;
 
 /** Options for configuring a {@link PolarAreaChart}. */
 export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
@@ -59,6 +89,30 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     levels?: number;
     /** Legend showing each segment. Shown by default (more than one segment); pass `false` to hide. */
     legend?: ChartLegendInput;
+    /**
+     * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
+     * inside each segment; `'outside'` places them beyond the arc with a leader line; a full object
+     * customises position/font/colour.
+     */
+    labels?: ChartSegmentLabelsInput;
+    /** Format applied to segment values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for polar-area segment interaction events. */
+export interface PolarAreaChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    key: string;
+}
+
+/** Events emitted by a {@link PolarAreaChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface PolarAreaChartEventMap extends EventMap {
+    segmentclick: PolarAreaChartSegmentEvent;
+    segmententer: PolarAreaChartSegmentEvent;
+    segmentleave: PolarAreaChartSegmentEvent;
 }
 
 /**
@@ -71,16 +125,23 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>> {
+export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>, PolarAreaChartEventMap> {
 
     private groups: Group[] = [];
     private gridGroup?: Group;
     private gridRings: Circle[] = [];
     private gridLabels: Text[] = [];
     private gridLines: Line[] = [];
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
+
+        this.tooltip = new Tooltip({
+            scene: this.scene,
+            renderer: this.renderer,
+        });
+
         this.init();
     }
 
@@ -167,13 +228,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         const newLabels = labelEntries.map(level => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = Math.round((maxValue / levels) * level);
+            const levelValue = formatNumber((maxValue / levels) * level);
 
             const label = createText({
                 id: `polar-ring-label-${level}`,
                 x: cx + 4,
                 y: cy - levelRadius - 2,
-                content: levelValue.toString(),
+                content: levelValue,
                 fill: '#9ca3af',
                 font: '10px sans-serif',
                 textAlign: 'left',
@@ -191,9 +252,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         labelUpdates.forEach(([level, label]) => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = Math.round((maxValue / levels) * level);
+            const levelValue = formatNumber((maxValue / levels) * level);
 
-            label.content = levelValue.toString();
+            label.content = levelValue;
             label.data = {
                 x: cx + 4,
                 y: cy - levelRadius - 2,
@@ -319,6 +380,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
             const colorFor = (item: TData) => getColor(item) ?? this.getSeriesColor(getKey(item));
 
+            const labels = normalizeSegmentLabels(this.options.labels);
+
             // Shared layout pass: reserve title and legend bands first.
             this.reserveTitle(layout);
 
@@ -410,7 +473,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     endAngle: startAngle, // animate angle grow subtly
                     padAngle,
                     stroke: color,
-                    fill: setColorAlpha(color, 0.55),
+                    fill: setColorAlpha(color, REST_ALPHA),
                     lineWidth: 2,
                     radius: innerRadius, // animate radial growth
                     innerRadius,
@@ -420,38 +483,33 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     } as Partial<ArcState>,
                 });
 
-                segmentArc.on('mouseenter', () => {
-                    renderer.transition(segmentArc, {
-                        duration: this.getAnimationDuration(400),
-                        ease: easeOutQuint,
-                        state: {
-                            fill: color,
-                        },
-                    });
-
-                    segmentArc.on('mouseleave', () => {
-                        renderer.transition(segmentArc, {
-                            duration: this.getAnimationDuration(400),
-                            ease: easeOutQuint,
-                            state: {
-                                fill: setColorAlpha(color, 0.55),
-                            },
-                        });
-                    });
+                this.attachSegmentHover(segmentArc, {
+                    color,
+                    value: item.value,
+                    label,
+                    key,
                 });
 
-                const [centroidX, centroidY] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
+                const labelInfo = resolveSegmentLabelLayout(item, labels, label);
 
-                const segmentLabel = createText({
-                    class: 'segment__label',
-                    fill: '#000000',
-                    x: centroidX,
-                    y: centroidY,
-                    content: label,
-                    textAlign: 'center',
-                    textBaseline: 'middle',
+                const connector = createPolyline({
+                    class: 'segment__connector',
+                    points: labelInfo.connector,
+                    stroke: color,
+                    lineWidth: 1,
                     opacity: 0,
+                    pointerEvents: 'none',
                     zIndex: 1,
+                });
+
+                const segmentLabel = createSegmentLabel({
+                    content: labelInfo.content,
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    textAlign: labelInfo.textAlign,
+                    textBaseline: labelInfo.textBaseline,
+                    fill: labelInfo.fill,
+                    font: labelInfo.font,
                 });
 
                 return createGroup({
@@ -459,6 +517,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     class: 'segment',
                     children: [
                         segmentArc,
+                        connector,
                         segmentLabel,
                     ],
                 });
@@ -477,8 +536,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? arc.stroke;
+                const resolvedColor = item.color ?? (arc.stroke as string);
 
                 const arcData = {
                     cx,
@@ -489,15 +549,39 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     endAngle,
                     padAngle,
                     stroke: resolvedColor,
-                    fill: setColorAlpha(resolvedColor, 0.55),
+                    fill: setColorAlpha(resolvedColor, REST_ALPHA),
                 } as Partial<ArcState>;
 
-                const [centroidx, centroidY] = arc.getCentroid(arcData);
-
                 arc.data = arcData;
+
+                this.attachSegmentHover(arc, {
+                    color: resolvedColor,
+                    value: item.value,
+                    label: item.label,
+                    key: item.key,
+                });
+
+                const labelInfo = resolveSegmentLabelLayout(item, labels, item.label);
+
+                label.content = labelInfo.content;
+                label.textAlign = labelInfo.textAlign;
+                label.textBaseline = labelInfo.textBaseline;
+                label.fill = labelInfo.fill;
+
+                if (labelInfo.font) {
+                    label.font = labelInfo.font;
+                }
+
                 label.data = {
-                    x: centroidx,
-                    y: centroidY,
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    opacity: labelInfo.visible ? 1 : 0,
+                } as Partial<TextState>;
+
+                connector.points = labelInfo.connector;
+                connector.stroke = resolvedColor;
+                connector.data = {
+                    opacity: labelInfo.showConnector ? 1 : 0,
                 };
 
                 return group;
@@ -506,6 +590,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
                 const label = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
                 const midAngle = (arc.startAngle + arc.endAngle) / 2;
 
@@ -519,6 +604,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     opacity: 0,
                 } as Partial<TextState>;
 
+                connector.data = {
+                    opacity: 0,
+                };
+
                 return group;
             });
 
@@ -526,6 +615,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 ...entries,
                 ...updates,
             ];
+
+            this.registerHighlightGroups(this.groups);
 
             scene.add(entries);
 
@@ -541,7 +632,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(elements.filter(elementIsText), {
+                return renderer.transition(elements.filter(element => !elementIsArc(element)), {
                     duration: animDuration * 1.5,
                     ease: easeOutQuint,
                     state: {
@@ -573,6 +664,44 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 transitionUpdates(),
                 transitionExits(),
             ]);
+        });
+    }
+
+    private attachSegmentHover(arc: Arc, segment: { color: string;
+        value: number;
+        label: string;
+        key: string; }) {
+        const { color, value, label, key } = segment;
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): PolarAreaChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+            label,
+            key,
+        });
+
+        applyHoverHighlight(arc, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => `${label}: ${formatValue(value)}`,
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 }
