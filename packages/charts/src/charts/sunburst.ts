@@ -5,7 +5,20 @@ import {
 
 import type {
     ChartLegendInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     getColorGenerator,
@@ -25,8 +38,8 @@ import {
     Context,
     createArc,
     createGroup,
-    easeOutQuart,
     easeOutQuint,
+    EventMap,
     Group,
     scaleContinuous,
     setColorAlpha,
@@ -36,6 +49,9 @@ import {
 import {
     arrayJoin,
 } from '@ripl/utilities';
+
+/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.65;
 
 /** A node in a sunburst hierarchy with optional nested children. */
 export interface SunburstNode {
@@ -50,6 +66,24 @@ export interface SunburstNode {
 export interface SunburstChartOptions extends BaseChartOptions {
     data: SunburstNode[];
     legend?: ChartLegendInput;
+    /** Format applied to node values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for sunburst segment interaction events. */
+export interface SunburstChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    id: string;
+}
+
+/** Events emitted by a {@link SunburstChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface SunburstChartEventMap extends EventMap {
+    segmentclick: SunburstChartSegmentEvent;
+    segmententer: SunburstChartSegmentEvent;
+    segmentleave: SunburstChartSegmentEvent;
 }
 
 interface FlattenedArc {
@@ -121,7 +155,7 @@ function flattenNodes(
  * colors and are positioned within the parent's angular range. Supports
  * legend, tooltips, and staggered radial entry animations.
  */
-export class SunburstChart extends Chart<SunburstChartOptions> {
+export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
@@ -208,7 +242,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle,
-                    fill: setColorAlpha(arc.color, 0.65),
+                    fill: setColorAlpha(arc.color, REST_ALPHA),
                     stroke: arc.color,
                     lineWidth: 1,
                     data: {
@@ -218,30 +252,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     } as Partial<ArcState>,
                 });
 
-                segment.on('mouseenter', () => {
-                    const [centroidX, centroidY] = segment.getCentroid(segment.data as Partial<ArcState>);
-                    this.tooltip.show(centroidX, centroidY, `${arc.label}: ${arc.value}`);
-
-                    renderer.transition(segment, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: arc.color,
-                        },
-                    });
-
-                    segment.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(segment, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(arc.color, 0.65),
-                            },
-                        });
-                    });
-                });
+                this.attachSegmentHover(segment, arc);
 
                 return createGroup({
                     id: arc.id,
@@ -262,9 +273,11 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: setColorAlpha(arc.color, 0.65),
+                        fill: setColorAlpha(arc.color, REST_ALPHA),
                         stroke: arc.color,
                     } as Partial<ArcState>;
+
+                    this.attachSegmentHover(segment, arc);
                 }
 
                 return group;
@@ -297,6 +310,40 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }));
 
             return Promise.all([entriesTransition, updatesTransition]);
+        });
+    }
+
+    private attachSegmentHover(segment: Arc, arc: FlattenedArc) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): SunburstChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value: arc.value,
+            label: arc.label,
+            id: arc.id,
+        });
+
+        applyHoverHighlight(segment, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => `${arc.label}: ${formatValue(arc.value)}`,
+            highlight: { fill: arc.color },
+            restore: { fill: setColorAlpha(arc.color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 

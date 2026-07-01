@@ -3,6 +3,26 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ValueFormatInput,
+} from '../core/options';
+
+import {
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createSegmentLabel,
+} from '../core/labels';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
 import {
     Tooltip,
 } from '../components/tooltip';
@@ -11,9 +31,8 @@ import {
     Context,
     createGroup,
     createRect,
-    createText,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
@@ -25,6 +44,9 @@ import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.7;
+
 /** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
@@ -34,6 +56,24 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     color?: keyof TData | ((item: TData) => string);
     gap?: number;
     borderRadius?: number;
+    /** Format applied to segment values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for funnel segment interaction events. */
+export interface FunnelChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    key: string;
+}
+
+/** Events emitted by a {@link FunnelChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface FunnelChartEventMap extends EventMap {
+    segmentclick: FunnelChartSegmentEvent;
+    segmententer: FunnelChartSegmentEvent;
+    segmentleave: FunnelChartSegmentEvent;
 }
 
 /**
@@ -46,7 +86,7 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>> {
+export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>, FunnelChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
@@ -73,8 +113,6 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 gap = 4,
                 borderRadius = 4,
             } = this.options;
-
-            const colorGenerator = this.colorGenerator;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -106,6 +144,13 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             const centerX = area.x + area.width / 2;
             const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
 
+            // Resolve colours through the shared id-keyed map so they stay stable across data
+            // updates instead of being reassigned from the generator on every render.
+            this.resolveSeriesColors(data.map(item => ({
+                id: getKey(item),
+                color: getColor ? getColor(item) : undefined,
+            })));
+
             const calculations = data.map((item, index) => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
@@ -136,8 +181,11 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             exits.forEach(el => el.destroy());
 
+            const colorFor = (item: { key: string;
+                color?: string; }) => item.color ?? this.getSeriesColor(item.key);
+
             const entryGroups = entries.map(item => {
-                const itemColor = item.color ?? colorGenerator.next().value!;
+                const itemColor = colorFor(item);
 
                 const rect = createRect({
                     id: `${item.key}-rect`,
@@ -145,53 +193,25 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     y: item.y,
                     width: 0,
                     height: item.height,
-                    fill: setColorAlpha(itemColor, 0.7),
+                    fill: setColorAlpha(itemColor, REST_ALPHA),
                     borderRadius,
                     data: {
                         x: item.x,
                         width: item.width,
-                        fill: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, REST_ALPHA),
                     } as RectState,
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(item.x + item.width / 2, item.y, `${item.label}: ${item.value}`);
+                this.attachSegmentHover(rect, item, itemColor);
 
-                    renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: itemColor,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(itemColor, 0.7),
-                            },
-                        });
-                    });
-                });
-
-                const text = createText({
+                const text = createSegmentLabel({
                     id: `${item.key}-label`,
                     x: centerX,
                     y: item.y + item.height / 2,
                     content: item.label,
-                    fill: '#333',
-                    font: '12px sans-serif',
-                    textAlign: 'center',
-                    textBaseline: 'middle',
-                    opacity: 0,
-                    data: {
-                        opacity: 1,
-                    },
                 });
+
+                text.data = { opacity: 1 };
 
                 return createGroup({
                     id: item.key,
@@ -201,7 +221,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             const updateGroups = updates.map(([item, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const itemColor = item.color ?? (rect.fill as string);
+                const itemColor = colorFor(item);
 
                 if (rect) {
                     rect.data = {
@@ -209,8 +229,10 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         y: item.y,
                         width: item.width,
                         height: item.height,
-                        fill: setColorAlpha(itemColor, 0.7),
+                        fill: setColorAlpha(itemColor, REST_ALPHA),
                     } as RectState;
+
+                    this.attachSegmentHover(rect, item, itemColor);
                 }
 
                 return group;
@@ -255,6 +277,42 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 textsTransition,
                 updatesTransition,
             ]);
+        });
+    }
+
+    private attachSegmentHover(rect: Rect, item: { key: string;
+        value: number;
+        label: string;
+        x: number;
+        y: number;
+        width: number; }, color: string) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): FunnelChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value: item.value,
+            label: item.label,
+            key: item.key,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: item.x + item.width / 2,
+                y: item.y,
+            }),
+            content: () => `${item.label}: ${formatValue(item.value)}`,
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 
