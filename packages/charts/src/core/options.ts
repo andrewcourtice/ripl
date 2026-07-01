@@ -19,9 +19,29 @@ import {
 } from '@ripl/core';
 
 import {
+    roundTo,
     typeIsBoolean,
+    typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
+
+/** Default maximum number of decimal places applied when rendering numeric values as text. */
+export const DEFAULT_NUMBER_PRECISION = 2;
+
+/**
+ * Formats a numeric value as a localized string, capping the precision at `precision` decimal
+ * places (default {@link DEFAULT_NUMBER_PRECISION}). Integers render without decimals; fractional
+ * values are rounded to at most `precision` places with trailing zeros stripped. Non-numeric values
+ * fall back to `String(value)`. This is the shared entry point every chart uses so labels, axes,
+ * tooltips, and tick marks share one consistent precision cap.
+ */
+export function formatNumber(value: unknown, precision: number = DEFAULT_NUMBER_PRECISION): string {
+    if (!typeIsNumber(value)) {
+        return String(value);
+    }
+
+    return roundTo(value, precision).toLocaleString();
+}
 
 // ---------------------------------------------------------------------------
 // Ease
@@ -558,7 +578,9 @@ export type ValueFormatInput = AxisFormatType | ((value: any) => string);
  */
 export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) => string {
     const resolved = resolveFormatLabel(format);
-    return resolved ?? (value => String(value));
+    // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
+    // untyped numeric values still respect the default 2-decimal cap.
+    return resolved ?? (value => formatNumber(value));
 }
 
 // ---------------------------------------------------------------------------
@@ -642,9 +664,9 @@ export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => st
 
     switch (format) {
         case 'number':
-            return (v: number) => v.toLocaleString();
+            return (v: number) => formatNumber(v);
         case 'percentage':
-            return (v: number) => `${(v * 100).toFixed(1)}%`;
+            return (v: number) => `${formatNumber(v * 100)}%`;
         case 'date':
             return (v: Date | number) => new Date(v).toLocaleDateString();
         case 'string':

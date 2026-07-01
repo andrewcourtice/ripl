@@ -25,6 +25,24 @@ export function numberGCD(valueA: number, valueB: number) {
     return valueA;
 }
 
+/**
+ * Rounds a number to at most `precision` decimal places, stripping any trailing zeros.
+ *
+ * Unlike `Number.prototype.toFixed` (which returns a fixed-width string), this returns a `number`
+ * so integers stay integers (`roundTo(5, 2) === 5`) and fractional values are capped
+ * (`roundTo(1.005, 2) === 1.01`, `roundTo(3.14159, 2) === 3.14`). Non-finite values pass through
+ * unchanged. Used as the default precision cap for chart labels, axes, and tooltips.
+ */
+export function roundTo(value: number, precision: number = 2): number {
+    if (!Number.isFinite(value)) {
+        return value;
+    }
+
+    const factor = 10 ** Math.max(0, Math.trunc(precision));
+
+    return Math.round(value * factor) / factor;
+}
+
 /** Rounds a value to a "nice" human-readable number (1, 2, 5, or 10 scaled by the appropriate power of ten). */
 export function numberNice(value: number, round: boolean = false) {
     const exponent = Math.floor(Math.log10(value));

@@ -46,6 +46,8 @@ export interface LegendOptions extends ChartComponentOptions {
     itemPadding?: number;
     highlight?: boolean;
     onToggle?: (item: LegendItem, active: boolean) => void;
+    /** Called with an item id while its legend entry is hovered, and `null` when the pointer leaves. */
+    onHighlight?: (id: string | null) => void;
 }
 
 const SWATCH_SIZE = 10;
@@ -86,6 +88,7 @@ export class Legend extends ChartComponent {
     private itemPadding: number;
     private highlight: boolean;
     private onToggle?: (item: LegendItem, active: boolean) => void;
+    private onHighlight?: (id: string | null) => void;
     private labelWidthCache = new Map<string, number>();
 
     constructor(options: LegendOptions) {
@@ -98,6 +101,7 @@ export class Legend extends ChartComponent {
         this.itemPadding = options.itemPadding ?? DEFAULT_PADDING;
         this.highlight = options.highlight ?? true;
         this.onToggle = options.onToggle;
+        this.onHighlight = options.onHighlight;
     }
 
     private get isHorizontal() {
@@ -336,6 +340,15 @@ export class Legend extends ChartComponent {
                 const toggle = () => this.toggleItem(item);
                 swatch.on('click', toggle);
                 label.on('click', toggle);
+
+                if (this.onHighlight) {
+                    const enter = () => this.onHighlight?.(item.id);
+                    const leave = () => this.onHighlight?.(null);
+                    swatch.on('mouseenter', enter);
+                    swatch.on('mouseleave', leave);
+                    label.on('mouseenter', enter);
+                    label.on('mouseleave', leave);
+                }
             }
 
             this.group!.add([swatch, label]);

@@ -5,6 +5,7 @@ import {
     EventBus,
     EventMap,
     factory,
+    Group,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -90,6 +91,7 @@ export class Chart<
     protected options: TOptions;
     protected colorGenerator = getColorGenerator();
     private seriesColorMap: Map<string, string> = new Map();
+    private highlightGroups: Map<string, Group> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
@@ -213,6 +215,7 @@ export class Chart<
                 fontColor: legendOpts.fontColor,
                 highlight: legendOpts.highlight,
                 onToggle: () => this.render(),
+                onHighlight: id => this.highlightSeries(id),
             });
         } else {
             this.legend.update(items);
@@ -275,6 +278,38 @@ export class Chart<
 
     protected getSeriesColor(seriesId: string): string {
         return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
+    }
+
+    /**
+     * Registers the top-level series/segment groups that map one-to-one to legend items (by matching
+     * `group.id` to the legend item id). Charts call this each render so {@link highlightSeries} can
+     * dim the other series when a legend entry is hovered. Replaces any previously registered set.
+     */
+    protected registerHighlightGroups(groups: Group[]) {
+        this.highlightGroups = new Map(groups.map(group => [group.id, group]));
+    }
+
+    /**
+     * Highlights a single series/segment by id (dimming the others), or restores all when `null`.
+     * Wired to legend hover via {@link reserveLegend}. No-ops for charts that never registered
+     * highlight groups.
+     */
+    protected highlightSeries(id: string | null) {
+        if (this.highlightGroups.size === 0) {
+            return;
+        }
+
+        const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        this.highlightGroups.forEach((group, groupId) => {
+            this.renderer.transition(group, {
+                duration,
+                ease,
+                state: {
+                    opacity: id === null || groupId === id ? 1 : 0.15,
+                },
+            });
+        });
     }
 
     /** Destroys the chart, its scene, context, and cleans up all event subscriptions. */

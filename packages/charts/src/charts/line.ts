@@ -311,9 +311,13 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const line = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle') as Circle[];
 
+            // Apply the curve renderer directly (not via the transition). The renderer is a
+            // discrete curve-function selector, not an interpolatable value — routing it through
+            // the transition made it snap to the `linear` fallback mid-animation (see interpolateAny).
+            line.renderer = srs.lineType;
+
             line.data = {
                 points: data.map(item => this.markerState(srs, item, getKey).point),
-                renderer: srs.lineType,
             } as PolylineState;
 
             const {

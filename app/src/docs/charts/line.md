@@ -20,12 +20,18 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
             <RiplField label="Line type">
                 <RiplSelect v-model="lineType">
                     <option value="linear">Linear</option>
-                    <option value="monotoneX">Monotone X</option>
-                    <option value="natural">Natural</option>
-                    <option value="step">Step</option>
+                    <option value="spline">Spline</option>
+                    <option value="basis">Basis</option>
                     <option value="cardinal">Cardinal</option>
                     <option value="catmullRom">Catmull-Rom</option>
+                    <option value="natural">Natural</option>
+                    <option value="monotoneX">Monotone X</option>
+                    <option value="monotoneY">Monotone Y</option>
                     <option value="bumpX">Bump X</option>
+                    <option value="bumpY">Bump Y</option>
+                    <option value="step">Step</option>
+                    <option value="stepBefore">Step Before</option>
+                    <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
             <RiplField label="Markers" inline>

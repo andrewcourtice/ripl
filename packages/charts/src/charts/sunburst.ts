@@ -143,12 +143,17 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
 
             const colorGenerator = this.colorGenerator;
 
-            // Pre-resolve top-level node colors so legend and arcs stay in sync
-            const resolvedColors = new Map<string, string>();
+            // Resolve top-level node colours through the shared, id-keyed colour map so they stay
+            // stable across data updates (randomising values must not reshuffle colours). Child
+            // nodes inherit their parent's colour via `flattenNodes`.
+            this.resolveSeriesColors(data.map(node => ({
+                id: node.id,
+                color: node.color,
+            })));
 
-            data.forEach(node => {
-                resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
-            });
+            const resolvedColors = new Map<string, string>(
+                data.map(node => [node.id, node.color ?? this.getSeriesColor(node.id)])
+            );
 
             // Shared layout pass: reserve title and legend bands.
             const layout = this.createLayout();

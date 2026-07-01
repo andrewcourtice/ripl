@@ -22,6 +22,7 @@ import {
 import {
     createRibbon,
     Ribbon,
+    RibbonState,
 } from '../elements';
 
 import {
@@ -215,9 +216,15 @@ export class ChordChart extends Chart<ChordChartOptions> {
 
             const colorGenerator = this.colorGenerator;
 
-            // Pre-assign a stable colour per label so the legend and arcs stay in sync. Colours
-            // are geometry-independent, so this can happen before the layout area is known.
-            const resolvedColors = labels.map((_, index) => colors?.[index] ?? colorGenerator.next().value!);
+            // Resolve a stable colour per label through the shared, id-keyed colour map so colours
+            // are preserved across data updates (not reshuffled each render) and stay in sync with
+            // the legend. Keyed by `arc-${label}` to match the arc group / legend item ids.
+            this.resolveSeriesColors(labels.map((label, index) => ({
+                id: `arc-${label}`,
+                color: colors?.[index],
+            })));
+
+            const resolvedColors = labels.map(label => this.getSeriesColor(`arc-${label}`));
 
             // Shared layout pass: reserve title and legend bands.
             const chartLayout = this.createLayout();
@@ -383,7 +390,29 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const ribbonUpdateGroups = ribbonUpdates.map(([, group]) => group);
+            // Apply the new layout to existing ribbons so the inner ribbons animate to their new
+            // positions on data update (previously the update path discarded ribbon geometry, so
+            // only the outer ring moved).
+            const ribbonUpdateGroups = ribbonUpdates.map(([ribbon, group]) => {
+                const ribbonEl = group.query('ribbon') as Ribbon;
+
+                if (ribbonEl) {
+                    ribbonEl.data = {
+                        cx,
+                        cy,
+                        radius: innerRadius - 2,
+                        sourceStart: ribbon.sourceStart,
+                        sourceEnd: ribbon.sourceEnd,
+                        targetStart: ribbon.targetStart,
+                        targetEnd: ribbon.targetEnd,
+                        fill: setColorAlpha(ribbon.color, 0.2),
+                        stroke: setColorAlpha(ribbon.color, 0.4),
+                        opacity: 1,
+                    } as Partial<RibbonState>;
+                }
+
+                return group;
+            });
 
             scene.add(ribbonEntryGroups);
 
@@ -422,7 +451,15 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 state: element.data as Partial<ArcState>,
             }));
 
-            return Promise.all([arcsTransition, ribbonsTransition, updatesTransition]);
+            const updateRibbons = ribbonUpdateGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
+
+            const ribbonUpdatesTransition = renderer.transition(updateRibbons, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: element.data as Record<string, unknown>,
+            }));
+
+            return Promise.all([arcsTransition, ribbonsTransition, updatesTransition, ribbonUpdatesTransition]);
         });
     }
 

@@ -167,7 +167,9 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 const endAngle = startAngle + scale(itemValue);
                 const radius = size * 0.45;
                 const innerRadiusOption = this.options.innerRadius;
-                let innerRadius = size * 0.25;
+                // Default to a true pie (no hole); a donut is opt-in via `innerRadius`. This matches
+                // the documented default of 0 and keeps the demo's pie/donut toggle consistent.
+                let innerRadius = 0;
 
                 if (innerRadiusOption !== undefined) {
                     innerRadius = innerRadiusOption <= 1 ? size * innerRadiusOption : innerRadiusOption;
