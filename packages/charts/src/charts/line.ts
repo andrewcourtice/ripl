@@ -53,6 +53,7 @@ import {
     getExtent,
     Group,
     interpolatePath,
+    interpolatePoints,
     Point,
     Polyline,
     PolylineRenderer,
@@ -62,6 +63,11 @@ import {
     Text,
     TextState,
 } from '@ripl/core';
+
+import {
+    correspondence,
+    keysDiffer,
+} from '../core/morph';
 
 import {
     arrayJoin,
@@ -126,6 +132,8 @@ export interface LineChartEventMap extends EventMap {
 export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
     private lineGroups: Group[] = [];
+    /** Previous ordered data keys per series, used to key-reconcile the line morph across add/remove. */
+    private morphKeys = new Map<string, string[]>();
     private yScale!: Scale;
     private xScale!: Scale<string>;
 
@@ -297,6 +305,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 renderer: srs.lineType,
             });
 
+            this.morphKeys.set(srs.id, data.map(getKey));
+
             return createGroup({
                 id: srs.id,
                 children: [
@@ -316,9 +326,22 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             // the transition made it snap to the `linear` fallback mid-animation (see interpolateAny).
             line.renderer = srs.lineType;
 
+            const newKeys = data.map(getKey);
+            const targetPoints = data.map(item => this.markerState(srs, item, getKey).point);
+            const prevKeys = this.morphKeys.get(srs.id);
+
+            // When the set of keys changes (add/remove/reorder), match points by identity so the
+            // curve renderer keeps its shape across the morph instead of drawing through the
+            // straight-line points the default extrapolation would insert (which looks linear).
             line.data = {
-                points: data.map(item => this.markerState(srs, item, getKey).point),
-            } as PolylineState;
+                points: prevKeys && keysDiffer(prevKeys, newKeys)
+                    ? interpolatePoints(line.points, targetPoints, {
+                        resolveKeys: () => correspondence(prevKeys, newKeys),
+                    })
+                    : targetPoints,
+            };
+
+            this.morphKeys.set(srs.id, newKeys);
 
             const {
                 left: markerEntries,

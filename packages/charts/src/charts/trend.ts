@@ -34,6 +34,11 @@ import {
 } from '../core/interaction';
 
 import {
+    correspondence,
+    keysDiffer,
+} from '../core/morph';
+
+import {
     LegendItem,
 } from '../components/legend';
 
@@ -58,6 +63,7 @@ import {
     getExtent,
     Group,
     interpolatePath,
+    interpolatePoints,
     max,
     Point,
     Polyline,
@@ -153,6 +159,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
     private barGroups: Group[] = [];
     private lineGroups: Group[] = [];
+    /** Previous ordered data keys per line series, used to key-reconcile the morph across add/remove. */
+    private morphKeys = new Map<string, string[]>();
     private yScale!: Scale;
     private xScaleBand!: BandScale<string>;
     private xScalePoint!: Scale<string>;
@@ -371,6 +379,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                 renderer: series.lineType,
             });
 
+            this.morphKeys.set(series.id, data.map(getKey));
+
             return createGroup({
                 id: series.id,
                 children: [
@@ -385,12 +395,23 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             const line = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle') as Circle[];
 
-            const points = data.map(item => getMarkerValues(item).point);
+            const targetPoints = data.map(item => getMarkerValues(item).point);
+            const newKeys = data.map(getKey);
+            const prevKeys = this.morphKeys.get(series.id);
+
+            // Apply the renderer directly (not via the transition, which would snap it at t=0.5),
+            // and key-reconcile the point morph so curved lines stay curved across add/remove.
+            line.renderer = series.lineType;
 
             line.data = {
-                points,
-                renderer: series.lineType,
-            } as PolylineState;
+                points: prevKeys && keysDiffer(prevKeys, newKeys)
+                    ? interpolatePoints(line.points, targetPoints, {
+                        resolveKeys: () => correspondence(prevKeys, newKeys),
+                    })
+                    : targetPoints,
+            };
+
+            this.morphKeys.set(series.id, newKeys);
 
             const {
                 left: markerEntries,

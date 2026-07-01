@@ -121,6 +121,49 @@ describe('Interpolators', () => {
             expect(end[0][1]).toBeCloseTo(0);
         });
 
+        describe('resolveKeys (identity matching)', () => {
+
+            test('Should not upsample mid-transition when a point is appended', () => {
+                // 3 → 4 points. Without resolveKeys the mid frame would be LCM-upsampled (7 pts);
+                // with an identity correspondence the mid frame stays the target length (4).
+                const setA: Point[] = [[0, 0], [1, 10], [2, 20]];
+                const setB: Point[] = [[0, 5], [1, 15], [2, 25], [3, 35]];
+                const interpolator = interpolatePoints(setA, setB, {
+                    resolveKeys: () => [0, 1, 2, -1], // last point is new
+                });
+
+                expect(interpolator(0.5)).toHaveLength(4);
+                expect(interpolator(0)).toEqual(setA);
+                expect(interpolator(1)).toEqual(setB);
+            });
+
+            test('Surviving points interpolate their own Y; the new point uses its target X', () => {
+                const setA: Point[] = [[0, 0], [1, 10], [2, 20]];
+                const setB: Point[] = [[0, 100], [1, 110], [2, 120], [3, 130]];
+                const interpolator = interpolatePoints(setA, setB, {
+                    resolveKeys: () => [0, 1, 2, -1],
+                });
+
+                const mid = interpolator(0.5);
+                // survivor index 0: y morphs 0 → 100
+                expect(mid[0][1]).toBeCloseTo(50);
+                // new point (index 3): X is the target X (monotonic), start Y seeded from a neighbour
+                expect(mid[3][0]).toBeCloseTo(3);
+            });
+
+            test('Should drop a removed point without upsampling', () => {
+                const setA: Point[] = [[0, 0], [1, 10], [2, 20], [3, 30]];
+                const setB: Point[] = [[0, 5], [1, 15], [2, 25]];
+                const interpolator = interpolatePoints(setA, setB, {
+                    resolveKeys: () => [0, 1, 2], // last source point removed
+                });
+
+                expect(interpolator(0.5)).toHaveLength(3);
+                expect(interpolator(1)).toEqual(setB);
+            });
+
+        });
+
     });
 
     describe('Waypoint', () => {

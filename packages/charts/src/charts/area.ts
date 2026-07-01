@@ -52,6 +52,7 @@ import {
     getExtent,
     Group,
     interpolatePath,
+    interpolatePoints,
     interpolateWaypoint,
     Interpolator,
     Point,
@@ -64,6 +65,11 @@ import {
     Text,
     TextState,
 } from '@ripl/core';
+
+import {
+    correspondence,
+    keysDiffer,
+} from '../core/morph';
 
 import {
     arrayJoin,
@@ -151,6 +157,8 @@ export interface AreaChartEventMap extends EventMap {
 export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData, AreaChartEventMap> {
 
     private areaGroups: Group[] = [];
+    /** Previous ordered data keys per series, used to key-reconcile the line/fill morph across add/remove. */
+    private morphKeys = new Map<string, string[]>();
     private yScale!: Scale;
     private xScale!: Scale<string>;
 
@@ -405,6 +413,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 } as PolylineState,
             });
 
+            this.morphKeys.set(srs.id, data.map(getKey));
+
             return createGroup({
                 id: srs.id,
                 children: [
@@ -424,11 +434,39 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const markers = group.getElementsByType('circle') as Circle[];
             const { linePoints, areaPoints } = buildPoints(srs);
 
+            const newKeys = data.map(getKey);
+            const prevKeys = this.morphKeys.get(srs.id);
+            const keyed = !!prevKeys && keysDiffer(prevKeys, newKeys);
+
+            // Apply the renderer directly (not via the transition, which would snap it at t=0.5) and
+            // key-reconcile the morph so curved lines/fills stay curved across add/remove. The fill is
+            // a closed [top, reversed-bottom] polygon, so its keys are disambiguated per run (t:/b:)
+            // to keep top matched to top and bottom to bottom.
+            line.renderer = srs.lineType;
+            areaFill.renderer = srs.lineType;
+
+            const fillKeys = (keys: string[]): string[] => [
+                ...keys.map(key => `t:${key}`),
+                ...keys.slice().reverse().map(key => `b:${key}`),
+            ];
+
             line.data = {
-                points: linePoints,
-                renderer: srs.lineType,
-            } as PolylineState;
-            areaFill.data = { points: areaPoints } as PolylineState;
+                points: keyed
+                    ? interpolatePoints(line.points, linePoints, {
+                        resolveKeys: () => correspondence(prevKeys!, newKeys),
+                    })
+                    : linePoints,
+            };
+
+            areaFill.data = {
+                points: keyed
+                    ? interpolatePoints(areaFill.points, areaPoints, {
+                        resolveKeys: () => correspondence(fillKeys(prevKeys!), fillKeys(newKeys)),
+                    })
+                    : areaPoints,
+            };
+
+            this.morphKeys.set(srs.id, newKeys);
 
             // Diff markers by key so new data points add markers and removed ones exit,
             // instead of the previous index-based update that ignored points beyond the
