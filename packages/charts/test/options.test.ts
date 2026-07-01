@@ -10,10 +10,12 @@ import {
 } from '@ripl/core';
 
 import {
+    formatNumber,
     normalizeAnimation,
     normalizeDataLabels,
     normalizeLegend,
     normalizePadding,
+    normalizeSegmentLabels,
     normalizeTitle,
     resolveEase,
     resolveFormatLabel,
@@ -132,13 +134,58 @@ describe('resolveEase', () => {
 });
 
 describe('resolveFormatLabel', () => {
-    it('formats percentages', () => {
-        expect(resolveFormatLabel('percentage')!(0.25)).toBe('25.0%');
+    it('formats percentages, capping at 2 decimals', () => {
+        expect(resolveFormatLabel('percentage')!(0.25)).toBe('25%');
+        expect(resolveFormatLabel('percentage')!(0.12345)).toBe('12.35%');
+    });
+
+    it('formats numbers with the 2-decimal precision cap', () => {
+        expect(resolveFormatLabel('number')!(3.14159)).toBe('3.14');
+        expect(resolveFormatLabel('number')!(1000)).toBe((1000).toLocaleString());
     });
 
     it('passes through a custom formatter', () => {
         const fn = (v: number) => `$${v}`;
         expect(resolveFormatLabel(fn)).toBe(fn);
+    });
+});
+
+describe('formatNumber', () => {
+    it('caps at 2 decimals by default and strips trailing zeros', () => {
+        expect(formatNumber(3.14159)).toBe('3.14');
+        expect(formatNumber(5)).toBe('5');
+        expect(formatNumber(5.5)).toBe('5.5');
+    });
+
+    it('respects a custom precision', () => {
+        expect(formatNumber(3.14159, 3)).toBe('3.142');
+    });
+
+    it('stringifies non-numeric values', () => {
+        expect(formatNumber('abc')).toBe('abc');
+    });
+});
+
+describe('normalizeSegmentLabels', () => {
+    it('is hidden by default', () => {
+        expect(normalizeSegmentLabels()).toMatchObject({ visible: false, position: 'inside' });
+    });
+
+    it('enables labels from a boolean', () => {
+        expect(normalizeSegmentLabels(true)).toMatchObject({ visible: true, position: 'inside' });
+        expect(normalizeSegmentLabels(false).visible).toBe(false);
+    });
+
+    it('enables labels and sets position from a string', () => {
+        expect(normalizeSegmentLabels('outside')).toMatchObject({ visible: true, position: 'outside' });
+    });
+
+    it('merges a partial options object and enables labels', () => {
+        expect(normalizeSegmentLabels({ position: 'outside', fontColor: '#111' })).toMatchObject({
+            visible: true,
+            position: 'outside',
+            fontColor: '#111',
+        });
     });
 });
 
@@ -158,7 +205,11 @@ describe('resolveValueFormat', () => {
     });
 
     it('applies a built-in format type', () => {
-        expect(resolveValueFormat('percentage')(0.5)).toBe('50.0%');
+        expect(resolveValueFormat('percentage')(0.5)).toBe('50%');
+    });
+
+    it('caps untyped numeric values at 2 decimals', () => {
+        expect(resolveValueFormat()(3.14159)).toBe('3.14');
     });
 
     it('uses a custom formatter', () => {
