@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 10
   cacheKey: 10
 
 "@algolia/abtesting@npm:1.21.1":
@@ -8798,7 +8798,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.43, postcss@npm:^8.5.15, postcss@npm:^8.5.16":
+"postcss@npm:^8.4.43, postcss@npm:^8.5.15":
   version: 8.5.16
   resolution: "postcss@npm:8.5.16"
   dependencies:
@@ -9222,7 +9222,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"rolldown@npm:~1.1.3":
+"rolldown@npm:~1.1.2":
   version: 1.1.3
   resolution: "rolldown@npm:1.1.3"
   dependencies:
@@ -10492,14 +10492,14 @@ __metadata:
   linkType: hard
 
 "vite@npm:^6.0.0 || ^7.0.0 || ^8.0.0":
-  version: 8.1.2
-  resolution: "vite@npm:8.1.2"
+  version: 8.1.0
+  resolution: "vite@npm:8.1.0"
   dependencies:
     fsevents: "npm:~2.3.3"
     lightningcss: "npm:^1.32.0"
     picomatch: "npm:^4.0.4"
-    postcss: "npm:^8.5.16"
-    rolldown: "npm:~1.1.3"
+    postcss: "npm:^8.5.15"
+    rolldown: "npm:~1.1.2"
     tinyglobby: "npm:^0.2.17"
   peerDependencies:
     "@types/node": ^20.19.0 || >=22.12.0
@@ -10544,7 +10544,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10/0f19c652919459ee010f8795f757c2b86025658ca3c7f0b317d65198289bcb7a679187ac0340da533371960385a65f468bfe3ff52811835f015a87dad05562a6
+  checksum: 10/da5b7dfb4045c2936e0afe03afa0bcbb417526d804b80412a2efc23896dccb457f92aaa7d1e44a9c3ff45cea39139e2c45fc6d1be979dca0ef2c1eab38b7cebe
   languageName: node
   linkType: hard
 
