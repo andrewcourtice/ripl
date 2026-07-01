@@ -375,6 +375,9 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             ...seriesUpdateGroups,
         ];
 
+        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
+        this.registerHighlightGroups(this.lineGroups);
+
         const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 

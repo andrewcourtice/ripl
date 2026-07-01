@@ -503,6 +503,9 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             ...seriesUpdateGroups,
         ];
 
+        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
+        this.registerHighlightGroups(this.areaGroups);
+
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 

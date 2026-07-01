@@ -532,6 +532,9 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             ...seriesUpdateGroups,
         ];
 
+        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
+        this.registerHighlightGroups(this.barGroups);
+
         const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 

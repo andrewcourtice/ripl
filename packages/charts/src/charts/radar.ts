@@ -442,6 +442,9 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             ...seriesUpdateGroups,
         ];
 
+        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
+        this.registerHighlightGroups(this.seriesGroups);
+
         // Animate entries
         const entryTransitions = seriesEntryGroups.map(group => {
             const area = group.getElementsByType('polyline')[0] as Polyline;

@@ -430,6 +430,9 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             ...seriesUpdateGroups,
         ];
 
+        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
+        this.registerHighlightGroups(this.bubbleGroups);
+
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
