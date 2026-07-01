@@ -9,12 +9,21 @@ import type {
 } from '../core/options';
 
 import {
+    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
 } from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     ChartXAxis,
@@ -31,7 +40,7 @@ import {
     createGroup,
     createRect,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
@@ -56,6 +65,22 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
     tooltip?: ChartTooltipInput;
     axis?: ChartAxisInput<TData>;
+}
+
+/** Payload emitted for heatmap cell interaction events. */
+export interface HeatmapChartCellEvent {
+    x: number;
+    y: number;
+    value: number;
+    xLabel: string;
+    yLabel: string;
+}
+
+/** Events emitted by a {@link HeatmapChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface HeatmapChartEventMap extends EventMap {
+    cellclick: HeatmapChartCellEvent;
+    cellenter: HeatmapChartCellEvent;
+    cellleave: HeatmapChartCellEvent;
 }
 
 const DEFAULT_LOW_COLOR = '#e0f2fe';
@@ -90,7 +115,7 @@ function interpolateHexColor(colorA: string, colorB: string, t: number): string 
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>> {
+export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>, HeatmapChartEventMap> {
 
     private cellGroups: Group[] = [];
     private xAxis!: ChartXAxis;
@@ -325,33 +350,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     },
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(
-                        cell.x + cell.width / 2,
-                        cell.y,
-                        `${cell.xLabel}, ${cell.yLabel}: ${cell.value}`
-                    );
-
-                    this.renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            opacity: 0.8,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                opacity: 1,
-                            },
-                        });
-                    });
-                });
+                this.attachCellHover(rect, cell);
 
                 return createGroup({
                     id: cell.id,
@@ -371,6 +370,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         fill: cell.color,
                         opacity: 1,
                     } as RectState;
+
+                    this.attachCellHover(rect, cell);
                 }
 
                 return group;
@@ -407,6 +408,41 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 entriesTransition,
                 updatesTransition,
             ]);
+        });
+    }
+
+    private attachCellHover(rect: Rect, cell: { x: number;
+        y: number;
+        width: number;
+        value: number;
+        xLabel: string;
+        yLabel: string; }) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): HeatmapChartCellEvent => ({
+            x: point.x,
+            y: point.y,
+            value: cell.value,
+            xLabel: cell.xLabel,
+            yLabel: cell.yLabel,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: cell.x + cell.width / 2,
+                y: cell.y,
+            }),
+            content: () => `${cell.xLabel}, ${cell.yLabel}: ${formatNumber(cell.value)}`,
+            highlight: { opacity: 0.8 },
+            restore: { opacity: 1 },
+            onEnter: point => this.emit('cellenter', payload(point)),
+            onLeave: point => this.emit('cellleave', payload(point)),
+            onClick: point => this.emit('cellclick', payload(point)),
         });
     }
 

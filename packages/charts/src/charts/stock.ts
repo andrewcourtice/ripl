@@ -11,6 +11,7 @@ import type {
 } from '../core/options';
 
 import {
+    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeCrosshair,
@@ -49,6 +50,7 @@ import {
     createRect,
     easeOutCubic,
     easeOutQuart,
+    EventMap,
     getExtent,
     Group,
     Line,
@@ -84,6 +86,25 @@ export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     downColor?: string;
 }
 
+/** Payload emitted for stock candlestick interaction events. */
+export interface StockChartCandleEvent {
+    x: number;
+    y: number;
+    key: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+}
+
+/** Events emitted by a {@link StockChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface StockChartEventMap extends EventMap {
+    candleclick: StockChartCandleEvent;
+    candleenter: StockChartCandleEvent;
+    candleleave: StockChartCandleEvent;
+}
+
 interface CandlestickValues {
     key: string;
     open: number;
@@ -108,7 +129,7 @@ const VOLUME_HEIGHT_RATIO = 0.2;
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>> {
+export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>, StockChartEventMap> {
 
     private candlestickGroups: Group[] = [];
     private volumeGroup?: Group;
@@ -200,7 +221,21 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
      * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
      * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
-    private attachBodyHover(body: Rect, color: string, anchorX: number, anchorY: number, label: string) {
+    private attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
+        const label = `O: ${formatNumber(values.open)}  H: ${formatNumber(values.high)}  L: ${formatNumber(values.low)}  C: ${formatNumber(values.close)}`;
+
+        const payload = (point: { x: number;
+            y: number; }): StockChartCandleEvent => ({
+            x: point.x,
+            y: point.y,
+            key: values.key,
+            open: values.open,
+            high: values.high,
+            low: values.low,
+            close: values.close,
+            volume: values.volume,
+        });
+
         applyHoverHighlight(body, {
             renderer: this.renderer,
             duration: this.getAnimationDuration(200),
@@ -211,6 +246,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 y: anchorY,
             }),
             content: () => label,
+            onEnter: point => this.emit('candleenter', payload(point)),
+            onLeave: point => this.emit('candleleave', payload(point)),
+            onClick: point => this.emit('candleclick', payload(point)),
             highlight: {
                 fill: setColorAlpha(color, 0.8),
             },
@@ -327,13 +365,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 children: [wick, body],
             });
 
-            this.attachBodyHover(
-                body,
-                color,
-                x,
-                bodyTop,
-                `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-            );
+            this.attachBodyHover(body, values, color, x, bodyTop);
 
             return group;
         });
@@ -364,13 +396,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     borderRadius: 1,
                 } as RectState;
 
-                this.attachBodyHover(
-                    body,
-                    color,
-                    x,
-                    bodyTop,
-                    `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-                );
+                this.attachBodyHover(body, values, color, x, bodyTop);
             }
 
             if (wick) {

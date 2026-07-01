@@ -5,7 +5,20 @@ import {
 
 import type {
     ChartLegendInput,
+    ValueFormatInput,
 } from '../core/options';
+
+import {
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     Tooltip,
@@ -16,6 +29,7 @@ import {
 } from '../components/legend';
 
 import {
+    Circle,
     Context,
     createCircle,
     createGroup,
@@ -24,6 +38,7 @@ import {
     createText,
     easeOutCubic,
     easeOutQuart,
+    EventMap,
     Group,
     Line,
     LineState,
@@ -57,6 +72,24 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     maxValue?: number;
     levels?: number;
     legend?: ChartLegendInput;
+    /** Format applied to point values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for radar point interaction events. */
+export interface RadarChartPointEvent {
+    x: number;
+    y: number;
+    value: number;
+    axisLabel: string;
+    seriesId: string;
+}
+
+/** Events emitted by a {@link RadarChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface RadarChartEventMap extends EventMap {
+    pointclick: RadarChartPointEvent;
+    pointenter: RadarChartPointEvent;
+    pointleave: RadarChartPointEvent;
 }
 
 const TAU = Math.PI * 2;
@@ -70,7 +103,7 @@ const TAU = Math.PI * 2;
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>> {
+export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>, RadarChartEventMap> {
 
     private seriesGroups: Group[] = [];
     private gridGroup?: Group;
@@ -374,29 +407,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                     },
                 });
 
-                marker.on('mouseenter', () => {
-                    this.tooltip.show(pd.point[0], pd.point[1], `${pd.axisLabel}: ${pd.value}`);
-
-                    this.renderer.transition(marker, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            radius: 5,
-                        },
-                    });
-
-                    marker.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                radius: 3,
-                            },
-                        });
-                    });
-                });
+                this.attachPointHover(marker, pd, srs.id, color);
 
                 return marker;
             });
@@ -420,7 +431,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 points: closedPoints,
             } as PolylineState;
 
-            const markers = group.getElementsByType('circle');
+            const updateColor = this.getSeriesColor(srs.id);
+            const markers = group.getElementsByType('circle') as Circle[];
 
             markers.forEach((marker, index) => {
                 if (index < pointsData.length) {
@@ -429,6 +441,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                         cy: pointsData[index].point[1],
                         radius: 3,
                     };
+
+                    this.attachPointHover(marker, pointsData[index], srs.id, updateColor);
                 }
             });
 
@@ -540,6 +554,45 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
             const seriesTransition = this.drawSeries(cx, cy, radius, computedMax);
 
             return Promise.all([gridTransition, seriesTransition]);
+        });
+    }
+
+    private attachPointHover(marker: Circle, pd: { point: Point;
+        axisLabel: string;
+        value: number; }, seriesId: string, color: string) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): RadarChartPointEvent => ({
+            x: point.x,
+            y: point.y,
+            value: pd.value,
+            axisLabel: pd.axisLabel,
+            seriesId,
+        });
+
+        applyHoverHighlight(marker, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: marker.cx,
+                y: marker.cy,
+            }),
+            content: () => `${pd.axisLabel}: ${formatValue(pd.value)}`,
+            highlight: {
+                fill: color,
+                radius: 5,
+            },
+            restore: {
+                fill: color,
+                radius: 3,
+            },
+            onEnter: point => this.emit('pointenter', payload(point)),
+            onLeave: point => this.emit('pointleave', payload(point)),
+            onClick: point => this.emit('pointclick', payload(point)),
         });
     }
 

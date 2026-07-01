@@ -11,6 +11,7 @@ import type {
 } from '../core/options';
 
 import {
+    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeGrid,
@@ -53,6 +54,7 @@ import {
     createScale,
     easeOutCubic,
     easeOutQuart,
+    EventMap,
     getExtent,
     Group,
     interpolatePath,
@@ -121,6 +123,23 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
     axis?: ChartAxisInput<TData>;
 }
 
+/** Payload emitted for trend bar/marker interaction events. */
+export interface TrendChartValueEvent {
+    x: number;
+    y: number;
+    value: number;
+}
+
+/** Events emitted by a {@link TrendChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface TrendChartEventMap extends EventMap {
+    barclick: TrendChartValueEvent;
+    barenter: TrendChartValueEvent;
+    barleave: TrendChartValueEvent;
+    markerclick: TrendChartValueEvent;
+    markerenter: TrendChartValueEvent;
+    markerleave: TrendChartValueEvent;
+}
+
 /**
  * Trend chart combining bar and line series on shared categorical/value axes.
  *
@@ -130,7 +149,7 @@ export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>> {
+export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>, TrendChartEventMap> {
 
     private barGroups: Group[] = [];
     private lineGroups: Group[] = [];
@@ -204,6 +223,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
      * prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
     private attachMarkerHover(marker: Circle, value: number, color: string) {
+        const payload = (point: { x: number;
+            y: number; }): TrendChartValueEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+        });
+
         applyHoverHighlight(marker, {
             renderer: this.renderer,
             duration: this.getAnimationDuration(300),
@@ -213,7 +239,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 x: marker.cx,
                 y: marker.cy,
             }),
-            content: () => value.toString(),
+            content: () => formatNumber(value),
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
             highlight: {
                 fill: color,
                 radius: 5,
@@ -230,6 +259,13 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
      * listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
     private attachBarHover(bar: Rect, value: number, fill: string) {
+        const payload = (point: { x: number;
+            y: number; }): TrendChartValueEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+        });
+
         applyHoverHighlight(bar, {
             renderer: this.renderer,
             duration: this.getAnimationDuration(300),
@@ -239,7 +275,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 x: bar.x + bar.width / 2,
                 y: bar.y,
             }),
-            content: () => value.toString(),
+            content: () => formatNumber(value),
+            onEnter: point => this.emit('barenter', payload(point)),
+            onLeave: point => this.emit('barleave', payload(point)),
+            onClick: point => this.emit('barclick', payload(point)),
             highlight: {
                 fill,
             },
