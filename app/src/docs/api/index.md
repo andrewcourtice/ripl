@@ -5,7 +5,7 @@ Ripl (pronounced "ripple") is a library that provides a **unified API for 2D gra
 Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
 
 > [!IMPORTANT]
-> Ripl is currently in beta `1.0.0-beta.0`.
+> Ripl is currently in beta.
 
 <div align="center">
   <table>

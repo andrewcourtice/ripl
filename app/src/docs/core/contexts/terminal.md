@@ -54,7 +54,9 @@ createCircle({
 Since `@ripl/terminal` is runtime-agnostic, you can wire it to any output that implements the `TerminalOutput` interface — including an xterm.js instance in the browser:
 
 ```ts
-import { Terminal } from '@xterm/xterm';
+import {
+    Terminal,
+} from '@xterm/xterm';
 import {
     BrailleRasterizer,
     TerminalContext,
