@@ -12,13 +12,22 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
             <RiplButton @click="removeData">Remove Data</RiplButton>
             <RiplButton @click="randomise">Randomise</RiplButton>
         </RiplControlGroup>
-    </template>    
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" />
+    </template>
 </ripl-example>
 
 <script lang="ts" setup>
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createScatterChart,
@@ -33,14 +42,41 @@ import {
 } from '@ripl/utilities';
 
 import {
-    ref,
+    watch,
 } from 'vue';
 
 const xScale = scaleContinuous([0, 1], [0, 100]);
 const yScale = scaleContinuous([0, 1], [0, 100]);
 const sizeScale = scaleContinuous([0, 1], [5, 50]);
 
+const seriesMeta = [
+    { id: 'sales', label: 'Sales', xBy: 'sales', yBy: 'profit', sizeBy: 'volume' },
+    { id: 'marketing', label: 'Marketing', xBy: 'marketing', yBy: 'engagement', sizeBy: 'reach' },
+    { id: 'support', label: 'Support', xBy: 'support', yBy: 'satisfaction', sizeBy: 'tickets' },
+];
+
+const config = useChartConfig({
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    title: 'Channel Performance',
+    axisX: 'X Value',
+    axisY: 'Y Value',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
+
 let data = Array.from({ length: 20 }, getDataItem);
+
+function getSeries() {
+    return seriesMeta.map(s => ({
+        id: s.id,
+        label: s.label,
+        xBy: s.xBy,
+        yBy: s.yBy,
+        sizeBy: s.sizeBy,
+        minRadius: 5,
+        maxRadius: 25,
+        color: config.colors[s.id],
+    }));
+}
 
 const {
     chart,
@@ -48,40 +84,18 @@ const {
 } = useRiplChart(context => createScatterChart(context, {
     data,
     key: 'id',
-    axis: {
-        x: { title: 'X Value' },
-        y: { title: 'Y Value' },
-    },
-    series: [
-        {
-            id: 'sales',
-            label: 'Sales',
-            xBy: 'sales',
-            yBy: 'profit',
-            sizeBy: 'volume',
-            minRadius: 5,
-            maxRadius: 25,
-        },
-        {
-            id: 'marketing',
-            label: 'Marketing',
-            xBy: 'marketing',
-            yBy: 'engagement',
-            sizeBy: 'reach',
-            minRadius: 5,
-            maxRadius: 25,
-        },
-        {
-            id: 'support',
-            label: 'Support',
-            xBy: 'support',
-            yBy: 'satisfaction',
-            sizeBy: 'tickets',
-            minRadius: 5,
-            maxRadius: 25,
-        },
-    ],
+    series: getSeries(),
+    ...buildCommonOptions(config),
 }));
+
+function apply() {
+    chart.value?.update({
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
 
 function getDataItem() {
     return {

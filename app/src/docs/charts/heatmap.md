@@ -13,6 +13,16 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Colour scale">
+            <RiplField label="Low colour" inline>
+                <RiplColorInput v-model="lowColor" />
+            </RiplField>
+            <RiplField label="High colour" inline>
+                <RiplColorInput v-model="highColor" />
+            </RiplField>
+        </RiplChartConfig>
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,15 +31,29 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createHeatmapChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const HOURS = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
+
+const lowColor = ref('#e0f2fe');
+const highColor = ref('#0369a1');
+
+const config = useChartConfig({
+    features: { title: true, animation: true },
+    title: 'Activity by Hour',
+});
 
 function generateData() {
     const result = [];
@@ -41,22 +65,35 @@ function generateData() {
     return result;
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createHeatmapChart(context, {
-        data: data.value,
+        data,
         xBy: 'hour',
         yBy: 'day',
         value: 'value',
         xCategories: HOURS,
         yCategories: DAYS,
+        colorRange: [lowColor.value, highColor.value],
         padding: { top: 20, right: 20, bottom: 40, left: 20 },
+        ...buildCommonOptions(config),
     });
 });
 
+function apply() {
+    chart.value?.update({
+        colorRange: [lowColor.value, highColor.value],
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch([lowColor, highColor], apply);
+
 function randomize() {
-    data.value = generateData();
+    data = generateData();
+    chart.value?.update({ data });
 }
 </script>
 

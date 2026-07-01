@@ -11,8 +11,14 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
             <RiplButton @click="addData">Add Data</RiplButton>
             <RiplButton @click="removeData">Remove Data</RiplButton>
             <RiplButton @click="randomize">Randomize</RiplButton>
-            <RiplSwitch v-model="donut" @update:model-value="toggleDonut" label="Donut" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Pie">
+            <RiplField label="Donut" inline>
+                <RiplSwitch v-model="donut" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -20,6 +26,11 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createPieChart,
@@ -31,6 +42,7 @@ import {
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const COUNTRIES = [
@@ -40,6 +52,11 @@ const COUNTRIES = [
 ];
 
 const donut = ref(false);
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Sales by Country',
+});
 
 function getDataValue() {
     return Math.round(Math.random() * 500);
@@ -63,11 +80,22 @@ const {
     value: 'value',
     label: 'label',
     data,
+    ...buildCommonOptions(config),
 }));
 
 function update() {
     chart.value?.update({ data });
 }
+
+function apply() {
+    chart.value?.update({
+        innerRadius: donut.value ? 0.25 : 0,
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch(donut, apply);
 
 function editData(body: (index: number) => void) {
     const index = Math.floor(Math.random() * data.length);
@@ -90,10 +118,6 @@ function randomize() {
     }));
 
     update();
-}
-
-function toggleDonut() {
-    chart.value?.update({ innerRadius: donut.value ? 0.25 : 0 });
 }
 </script>
 

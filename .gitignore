@@ -21,6 +21,10 @@ yarn-error.log*
 # reports
 .reports
 
+# playwright
+test-results/
+playwright-report/
+
 # environment variables
 .env
 .env.production

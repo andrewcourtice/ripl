@@ -8,10 +8,6 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeLegend,
-} from '../core/options';
-
-import {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -20,7 +16,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -197,7 +192,6 @@ export class ChordChart extends Chart<ChordChartOptions> {
     private arcGroups: Group[] = [];
     private ribbonGroups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);
@@ -220,17 +214,32 @@ export class ChordChart extends Chart<ChordChartOptions> {
             } = this.options;
 
             const colorGenerator = this.colorGenerator;
-            const padding = this.getPadding();
-            const cx = scene.width / 2;
-            const cy = scene.height / 2;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
-            );
+
+            // Pre-assign a stable colour per label so the legend and arcs stay in sync. Colours
+            // are geometry-independent, so this can happen before the layout area is known.
+            const resolvedColors = labels.map((_, index) => colors?.[index] ?? colorGenerator.next().value!);
+
+            // Shared layout pass: reserve title and legend bands.
+            const chartLayout = this.createLayout();
+            this.reserveTitle(chartLayout);
+
+            const legendItems: LegendItem[] = labels.map((label, index) => ({
+                id: `arc-${label}`,
+                label,
+                color: resolvedColors[index],
+                active: true,
+            }));
+
+            this.reserveLegend(chartLayout, legendItems, this.options.legend);
+
+            const area = chartLayout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const size = Math.min(area.width, area.height);
             const outerRadius = size * 0.42;
             const innerRadius = outerRadius - 15;
 
-            const layout = computeChordLayout(labels, matrix, padAngle, colorGenerator, colors);
+            const layout = computeChordLayout(labels, matrix, padAngle, colorGenerator, resolvedColors);
 
             // Draw arcs
             const {
@@ -382,29 +391,6 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 ...ribbonEntryGroups,
                 ...ribbonUpdateGroups,
             ];
-
-            // Legend
-            if (normalizeLegend(this.options.legend).visible && layout.arcs.length > 0) {
-                const legendItems: LegendItem[] = layout.arcs.map(arc => ({
-                    id: arc.id,
-                    label: arc.label,
-                    color: arc.color,
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
-                this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
-            }
 
             // Sequential animation: arcs first, then ribbons
             const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];

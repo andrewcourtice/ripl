@@ -1,48 +1,45 @@
 import {
-    BaseChartOptions,
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
     ChartCrosshairInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeCrosshair,
-    normalizeGrid,
-    normalizeLegend,
-    normalizeTooltip,
-    normalizeYAxisItem,
-    resolveFormatLabel,
+    normalizeDataLabels,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
+    ANIMATION_REFERENCE,
+    exitElement,
+    stagger,
+} from '../core/animation';
 
 import {
-    Legend,
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    resolveAccessor,
+} from '../core/data';
+
+import {
     LegendItem,
 } from '../components/legend';
-
-import {
-    Grid,
-} from '../components/grid';
-
-import {
-    Crosshair,
-} from '../components/crosshair';
 
 import {
     Box,
@@ -52,8 +49,7 @@ import {
     createCircle,
     createGroup,
     createPolyline,
-    easeOutCubic,
-    easeOutQuart,
+    EventMap,
     getExtent,
     Group,
     interpolatePath,
@@ -63,6 +59,8 @@ import {
     PolylineState,
     Scale,
     scaleContinuous,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -79,12 +77,13 @@ export interface LineChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
+    /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
     markerRadius?: number;
 }
 
 /** Options for configuring a {@link LineChart}. */
-export interface LineChartOptions<TData = unknown> extends BaseChartOptions {
+export interface LineChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     data: TData[];
     series: LineChartSeriesOptions<TData>[];
     key: keyof TData | ((item: TData) => string);
@@ -93,111 +92,129 @@ export interface LineChartOptions<TData = unknown> extends BaseChartOptions {
     tooltip?: ChartTooltipInput;
     legend?: ChartLegendInput;
     axis?: ChartAxisInput<TData>;
+    /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to marker values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for line marker interaction events. */
+export interface LineChartMarkerEvent {
+    x: number;
+    y: number;
+    xValue: string;
+    yValue: number;
+    seriesId: string;
+}
+
+/** Events emitted by a {@link LineChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface LineChartEventMap extends EventMap {
+    markerclick: LineChartMarkerEvent;
+    markerenter: LineChartMarkerEvent;
+    markerleave: LineChartMarkerEvent;
 }
 
 /**
  * Line chart rendering one or more series as polylines with optional markers.
  *
- * Supports customisable line renderers (e.g. curved, stepped), interactive
- * crosshair, tooltips, legend, and grid. Entry animations draw lines
- * progressively while markers appear with staggered delays.
+ * Supports customisable line renderers (e.g. curved, stepped), interactive crosshair, tooltips,
+ * legend, grid, chart title, and animated entry/update/exit transitions. Entry animations draw
+ * lines progressively while markers appear with staggered delays.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
+export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
     private lineGroups: Group[] = [];
     private yScale!: Scale;
     private xScale!: Scale<string>;
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
-    private legend?: Legend;
-    private grid?: Grid;
-    private crosshair?: Crosshair;
 
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const crosshairOpts = normalizeCrosshair(options.crosshair);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
-            });
-        }
-
-        this.xAxis = new ChartXAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+        this.setupCartesian({
+            grid: { horizontal: true },
+            crosshair: true,
         });
-
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
-
-        if (gridOpts.visible) {
-            this.grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: true,
-                vertical: false,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
-
-        if (crosshairOpts.visible) {
-            this.crosshair = new Crosshair({
-                scene: this.scene,
-                renderer: this.renderer,
-                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
-                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                stroke: crosshairOpts.lineColor,
-                lineWidth: crosshairOpts.lineWidth,
-            });
-        }
 
         this.init();
     }
 
+    private seriesLabel(series: LineChartSeriesOptions<TData>, item: TData): string {
+        return typeIsFunction(series.label) ? series.label(item) : series.label;
+    }
 
-    private async drawLines() {
-        const {
-            data,
-            series,
-            key,
-        } = this.options;
+    private markerState(series: LineChartSeriesOptions<TData>, item: TData, getKey: (item: TData) => string) {
+        const value = resolveAccessor<TData, number>(series.value)(item);
+        const key = getKey(item);
+        const x = this.xScale(key);
+        const y = this.yScale(value);
+        const color = this.getSeriesColor(series.id);
+        // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
+        const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+        return {
+            id: `${series.id}-${key}`,
+            value,
+            point: [x, y] as Point,
+            state: {
+                fill: '#FFFFFF',
+                stroke: color,
+                lineWidth: 2,
+                cx: x,
+                cy: y,
+                radius,
+            } as CircleState,
+        };
+    }
+
+    private attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState, key: string) {
+        if (series.markers === false) {
+            marker.pointerEvents = 'none';
+            return;
+        }
+
+        const radius = series.markerRadius ?? 3;
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): LineChartMarkerEvent => ({
+            x: point.x,
+            y: point.y,
+            xValue: key,
+            yValue: value,
+            seriesId: series.id,
+        });
+
+        applyHoverHighlight(marker, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: marker.cx,
+                y: marker.cy,
+            }),
+            content: () => `${this.seriesLabel(series, item)}: ${formatValue(value)}`,
+            highlight: {
+                fill: state.stroke as string,
+                radius: radius + 2,
+            },
+            restore: {
+                fill: '#FFFFFF',
+                radius,
+            },
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
+        });
+    }
+
+    private async drawLines(getKey: (item: TData) => string) {
+        const { data, series } = this.options;
+        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
+        const formatValue = resolveValueFormat(this.options.format);
 
         const {
             left: seriesEntries,
@@ -205,86 +222,72 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             right: seriesExits,
         } = arrayJoin(series, this.lineGroups, 'id');
 
-        seriesExits.forEach(el => el.destroy());
+        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
-        const seriesLineValueProducer = (srs: LineChartSeriesOptions<TData>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
-            const color = this.getSeriesColor(srs.id);
+        // Builds/updates the value label for a marker, offset clear of the marker radius.
+        const labelOffset = (srs: LineChartSeriesOptions<TData>) => (srs.markerRadius ?? 3) + 4;
 
-            return (item: TData) => {
-                const key = getKey(item);
-                const value = getValue(item);
-                const x = this.xScale(key);
-                const y = this.yScale(value);
+        const buildLabel = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
+            const { id, value, point } = this.markerState(srs, item, getKey);
 
-                return {
-                    id: `${srs.id}-${key}`,
-                    value,
-                    point: [x, y] as Point,
-                    state: {
-                        fill: '#FFFFFF',
-                        stroke: color,
-                        lineWidth: 2,
-                        cx: x,
-                        cy: y,
-                        radius: srs.markerRadius ?? 3,
-                    } as CircleState,
-                };
+            return createDataLabel({
+                id: `${id}-label`,
+                x: point[0],
+                y: point[1],
+                anchor: dataLabels.anchor,
+                content: formatValue(value),
+                font: dataLabels.font,
+                fill: dataLabels.fontColor,
+                offset: labelOffset(srs),
+            });
+        };
+
+        const updateLabel = (srs: LineChartSeriesOptions<TData>, item: TData, label: Text) => {
+            const { value, point } = this.markerState(srs, item, getKey);
+            const layout = resolveDataLabelLayout({
+                x: point[0],
+                y: point[1],
+                anchor: dataLabels.anchor,
+                offset: labelOffset(srs),
+            });
+
+            label.content = formatValue(value);
+            label.data = {
+                x: layout.x,
+                y: layout.y,
+                opacity: 1,
+            } as Partial<TextState>;
+        };
+
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
+
+        seriesExits.forEach(group => {
+            const exits = group.graph(false).map(element => exitElement(this.renderer, element, exitAnimation));
+            void Promise.all(exits).then(() => group.destroy());
+        });
+
+        const buildMarker = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
+            const { id, value, point, state } = this.markerState(srs, item, getKey);
+
+            const marker = createCircle({
+                id,
+                ...state,
+                radius: 0,
+                data: state,
+            });
+
+            this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
+
+            return {
+                point,
+                marker,
             };
         };
 
         const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
-            const getValues = seriesLineValueProducer(srs);
-            const showMarkers = srs.markers !== false;
-
-            const items = data.map(item => {
-                const { id, value, point, state } = getValues(item);
-
-                const marker = createCircle({
-                    id,
-                    ...state,
-                    radius: 0,
-                    data: state,
-                });
-
-                if (showMarkers) {
-                    marker.on('mouseenter', () => {
-                        const getLabel = typeIsFunction(srs.label) ? srs.label : () => srs.label as string;
-                        this.tooltip.show(state.cx, state.cy, `${getLabel(item)}: ${value}`);
-
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: state.stroke,
-                                radius: (srs.markerRadius ?? 3) + 2,
-                            },
-                        });
-
-                        marker.on('mouseleave', () => {
-                            this.tooltip.hide();
-
-                            this.renderer.transition(marker, {
-                                duration: this.getAnimationDuration(300),
-                                ease: easeOutQuart,
-                                state: {
-                                    fill: '#FFFFFF',
-                                    radius: srs.markerRadius ?? 3,
-                                },
-                            });
-                        });
-                    });
-                } else {
-                    marker.pointerEvents = 'none';
-                }
-
-                return {
-                    point,
-                    marker,
-                };
-            });
+            const items = data.map(buildMarker(srs));
 
             const line = createPolyline({
                 id: `${srs.id}-line`,
@@ -299,19 +302,17 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 children: [
                     line,
                     ...items.map(item => item.marker),
+                    ...(dataLabels.visible ? data.map(buildLabel(srs)) : []),
                 ],
             });
         });
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
-            const getValues = seriesLineValueProducer(srs);
             const line = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle') as Circle[];
 
-            const points = data.map(item => getValues(item).point);
-
             line.data = {
-                points,
+                points: data.map(item => this.markerState(srs, item, getKey).point),
                 renderer: srs.lineType,
             } as PolylineState;
 
@@ -321,52 +322,44 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                 right: markerExits,
             } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${getKey(item)}`);
 
-            markerExits.forEach(el => el.destroy());
+            markerExits.forEach(marker => exitElement(this.renderer, marker, exitAnimation, {
+                radius: 0,
+                opacity: 0,
+            }));
 
-            markerEntries.map(item => {
-                const { id, state } = getValues(item);
-
-                const marker = createCircle({
-                    id,
-                    ...state,
-                    radius: 0,
-                    data: state,
-                });
-
-                group.add(marker);
-            });
+            markerEntries.forEach(item => group.add(buildMarker(srs)(item).marker));
 
             markerUpdates.forEach(([item, marker]) => {
-                const { state, value } = getValues(item);
+                const { state, value } = this.markerState(srs, item, getKey);
                 marker.data = state;
-
-                marker.on('mouseenter', () => {
-                    const getLabel = typeIsFunction(srs.label) ? srs.label : () => srs.label as string;
-                    this.tooltip.show(state.cx, state.cy, `${getLabel(item)}: ${value}`);
-
-                    this.renderer.transition(marker, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: (srs.markerRadius ?? 3) + 2,
-                        },
-                    });
-
-                    marker.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: '#FFFFFF',
-                                radius: srs.markerRadius ?? 3,
-                            },
-                        });
-                    });
-                });
+                this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
             });
+
+            // Reconcile value labels alongside the markers.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (dataLabels.visible) {
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-${getKey(item)}-label`);
+
+                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+
+                labelEntries.forEach(item => {
+                    const label = buildLabel(srs)(item);
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    updateLabel(srs, item, label);
+                    updatingLabels.push(label);
+                });
+            } else {
+                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
+            }
 
             return group;
         });
@@ -378,217 +371,156 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
             ...seriesUpdateGroups,
         ];
 
-        const entryTransitions = seriesEntryGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
-            const line = group.query('polyline') as Polyline;
+        const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
-            const lineTransition = this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: {
-                    points: interpolatePath(line.points),
-                },
-            });
-
-            const markersTransition = this.renderer.transition(markers, (element, index, length) => ({
-                duration: this.getAnimationDuration(1000),
-                delay: index * (this.getAnimationDuration(1000) / length),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            }));
+        const entryTransitions = seriesEntryGroups.flatMap(group => {
+            const markers = group.getElementsByType('circle') as Circle[];
+            const line = group.getElementsByType('polyline')[0] as Polyline;
 
             return [
-                lineTransition,
-                markersTransition,
+                this.renderer.transition(line, {
+                    duration: enterAnimation.duration,
+                    ease: enterAnimation.ease,
+                    state: { points: interpolatePath(line.points) },
+                }),
+                this.renderer.transition(markers, (element, index, length) => ({
+                    duration: enterAnimation.duration,
+                    delay: stagger(index, length, enterAnimation.duration),
+                    ease: enterAnimation.ease,
+                    state: element.data as CircleState,
+                })),
             ];
         });
 
-        const updateTransitions = seriesUpdateGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
-            const line = group.query('polyline') as Polyline;
-
-            const lineTransition = this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: line.data as PolylineState,
-            });
-
-            const markersTransition = this.renderer.transition(markers, (element) => ({
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            }));
+        const updateTransitions = seriesUpdateGroups.flatMap(group => {
+            const markers = group.getElementsByType('circle') as Circle[];
+            const line = group.getElementsByType('polyline')[0] as Polyline;
 
             return [
-                lineTransition,
-                markersTransition,
+                this.renderer.transition(line, {
+                    duration: updateAnimation.duration,
+                    ease: updateAnimation.ease,
+                    state: line.data as PolylineState,
+                }),
+                this.renderer.transition(markers, element => ({
+                    duration: updateAnimation.duration,
+                    ease: updateAnimation.ease,
+                    state: element.data as CircleState,
+                })),
             ];
         });
+
+        // Value labels: entry labels fade in; updated labels animate to their refreshed position.
+        const entryLabels = seriesEntryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
+        const labelTransitions: Promise<unknown>[] = [];
+
+        if (entryLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(entryLabels, {
+                duration: enterAnimation.duration,
+                ease: enterAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (enteringLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(enteringLabels, {
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: { opacity: 1 },
+            }));
+        }
+
+        if (updatingLabels.length > 0) {
+            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
+                duration: updateAnimation.duration,
+                ease: updateAnimation.ease,
+                state: element.data as Partial<TextState>,
+            })));
+        }
 
         return Promise.all([
             ...entryTransitions,
             ...updateTransitions,
-        ].flat());
+            ...labelTransitions,
+        ]);
     }
 
     public async render() {
-        return super.render(async (scene) => {
-            const {
-                data,
-                series,
-                key,
-            } = this.options;
+        return super.render(async () => {
+            const { data, series, key } = this.options;
 
             this.resolveSeriesColors(series);
+            this.prepareAxes();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
-                const getValue = typeIsFunction(valueAccessor)
-                    ? valueAccessor
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueAccessor] as number;
-
-                return getExtent(data, getValue);
-            }).concat(0);
+            const seriesExtents = series
+                .flatMap(srs => getExtent(data, resolveAccessor<TData, number>(srs.value)))
+                .concat(0);
 
             const dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            const padding = this.getPadding();
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const left = area.x;
+            const top = area.y;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
-                padToTicks: 10,
-            });
-
+            // Provisional value scale to measure the y-axis width.
+            this.yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds = new Box(
-                chartTop,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.yAxis.bounds = new Box(top, left, bottom, right);
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBox = this.yAxis.getBoundingBox();
 
-            this.xScale = scaleContinuous(
-                [0, keys.length - 1],
-                [yAxisBoundingBox.right + 20, scene.width - padding.right]
-            ) as unknown as Scale<string>;
-
-            // Create a string-keyed scale
-            const xConvert = (value: string) => {
-                const index = keys.indexOf(value);
-                return yAxisBoundingBox.right + 20 + (index / Math.max(1, keys.length - 1)) * (scene.width - padding.right - yAxisBoundingBox.right - 20);
-            };
-
-            const xInvert = (value: number) => {
-                const range = scene.width - padding.right - yAxisBoundingBox.right - 20;
-                const index = Math.round(((value - yAxisBoundingBox.right - 20) / range) * (keys.length - 1));
-                return keys[Math.max(0, Math.min(keys.length - 1, index))];
-            };
-
-            this.xScale = {
-                ...(() => xConvert)(),
-                domain: keys,
-                range: [yAxisBoundingBox.right + 20, scene.width - padding.right],
-                inverse: xInvert,
-                ticks: () => keys,
-                includes: (value: string) => keys.includes(value),
-            } as unknown as Scale<string>;
-
-            // Wrap as callable
-            const xScaleCallable = Object.assign(
-                (value: string) => xConvert(value),
-                {
-                    domain: keys,
-                    range: [yAxisBoundingBox.right + 20, scene.width - padding.right] as number[],
-                    inverse: xInvert,
-                    ticks: () => keys,
-                    includes: (value: string) => keys.includes(value),
-                }
-            );
-
-            this.xScale = xScaleCallable as unknown as Scale<string>;
-
+            this.xScale = this.pointScale(keys, yAxisBox.right, right);
             this.xAxis.scale = this.xScale;
-            this.xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
-            );
+            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
-                padToTicks: 10,
-            });
-
+            this.yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
             this.yAxis.scale = this.yScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // Render grid
-            if (this.grid) {
-                const yTicks = this.yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this.yScale(tick));
-
-                this.grid.render(
-                    [],
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
-
-            // Setup crosshair
-            this.crosshair?.setup(
-                yAxisBoundingBox.right,
-                chartTop,
-                scene.width - padding.right - yAxisBoundingBox.right,
-                xAxisBoundingBox.top - chartTop
+            this.renderGrid(
+                [],
+                this.yScale.ticks(10).map(tick => this.yScale(tick)),
+                {
+                    x: yAxisBox.right,
+                    y: top,
+                    width: right - yAxisBox.right,
+                    height: xAxisBox.top - top,
+                }
             );
 
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
-            }
+            this.setupCrosshair({
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            });
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawLines(),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.drawLines(getKey),
             ]);
         });
     }

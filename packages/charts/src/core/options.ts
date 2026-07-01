@@ -133,8 +133,8 @@ export type ChartTitleInput = string | Partial<ChartTitleOptions>;
 const TITLE_DEFAULTS: ChartTitleOptions = {
     visible: true,
     text: '',
-    padding: 10,
-    font: '16px sans-serif',
+    padding: 16,
+    font: 'bold 16px sans-serif',
     fontColor: '#333333',
     position: 'top',
 };
@@ -376,7 +376,7 @@ export type ChartLegendInput = boolean | LegendPosition | Partial<ChartLegendOpt
 
 const LEGEND_DEFAULTS: ChartLegendOptions = {
     visible: true,
-    position: 'top',
+    position: 'bottom',
     padding: 16,
     font: '11px sans-serif',
     fontColor: '#333333',
@@ -393,7 +393,7 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
     if (input === undefined) {
         return {
             ...base,
-            visible: false,
+            visible: defaults?.visible ?? false,
         };
     }
 
@@ -541,11 +541,96 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 }
 
 // ---------------------------------------------------------------------------
+// Value format
+// ---------------------------------------------------------------------------
+
+/**
+ * A value formatter accepted anywhere a chart renders a raw value as text (tooltips, data
+ * labels, pie segment labels). Either a built-in format type or a custom callback.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ValueFormatInput = AxisFormatType | ((value: any) => string);
+
+/**
+ * Resolves a value formatter into a function, always returning a usable formatter (falling back
+ * to `String` when no custom format is supplied). Convenience wrapper over {@link resolveFormatLabel}
+ * for the value-as-text sites that always need to print something.
+ */
+export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) => string {
+    const resolved = resolveFormatLabel(format);
+    return resolved ?? (value => String(value));
+}
+
+// ---------------------------------------------------------------------------
+// Data labels
+// ---------------------------------------------------------------------------
+
+/** Where a data label is anchored relative to its marker/bar. */
+export type LabelAnchor = 'top' | 'left' | 'bottom' | 'right';
+
+/** Fully resolved data label options. */
+export interface ChartDataLabelsOptions {
+    visible: boolean;
+    anchor: LabelAnchor;
+    font: string;
+    fontColor: string;
+}
+
+/**
+ * Data label input: a boolean toggle, a {@link LabelAnchor} string selecting where labels sit,
+ * or a partial options object.
+ */
+export type ChartDataLabelsInput = boolean | LabelAnchor | Partial<ChartDataLabelsOptions>;
+
+const DATA_LABELS_DEFAULTS: ChartDataLabelsOptions = {
+    visible: false,
+    anchor: 'top',
+    font: '11px sans-serif',
+    fontColor: '#555555',
+};
+
+const LABEL_ANCHORS: LabelAnchor[] = ['top', 'left', 'bottom', 'right'];
+
+/** Normalizes a data label input into fully resolved `ChartDataLabelsOptions`. */
+export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Partial<ChartDataLabelsOptions>): ChartDataLabelsOptions {
+    const base = {
+        ...DATA_LABELS_DEFAULTS,
+        ...defaults,
+    };
+
+    if (input === undefined) {
+        return { ...base };
+    }
+
+    if (typeIsBoolean(input)) {
+        return {
+            ...base,
+            visible: input,
+        };
+    }
+
+    if (typeIsString(input) && LABEL_ANCHORS.includes(input as LabelAnchor)) {
+        return {
+            ...base,
+            visible: true,
+            anchor: input as LabelAnchor,
+        };
+    }
+
+    return {
+        ...base,
+        visible: true,
+        ...(input as Partial<ChartDataLabelsOptions>),
+    };
+}
+
+// ---------------------------------------------------------------------------
 // Format helper
 // ---------------------------------------------------------------------------
 
 
 /** Resolves an axis format type or custom formatter into a label formatting function. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
     if (!format) {
         return undefined;

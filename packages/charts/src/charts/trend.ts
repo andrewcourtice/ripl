@@ -14,7 +14,6 @@ import {
     normalizeAxis,
     normalizeAxisItem,
     normalizeGrid,
-    normalizeLegend,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
@@ -30,7 +29,10 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
     LegendItem,
 } from '../components/legend';
 
@@ -138,7 +140,6 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
     private xAxis: ChartXAxis;
     private yAxis: ChartYAxis;
     private tooltip!: Tooltip;
-    private legend?: Legend;
     private grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
@@ -196,6 +197,56 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
         }
 
         this.init();
+    }
+
+    /**
+     * Wires hover highlight + tooltip onto a line marker. Uses {@link applyHoverHighlight} so
+     * prior listeners are disposed on re-apply — calling this on every update no longer leaks.
+     */
+    private attachMarkerHover(marker: Circle, value: number, color: string) {
+        applyHoverHighlight(marker, {
+            renderer: this.renderer,
+            duration: this.getAnimationDuration(300),
+            ease: easeOutQuart,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: marker.cx,
+                y: marker.cy,
+            }),
+            content: () => value.toString(),
+            highlight: {
+                fill: color,
+                radius: 5,
+            },
+            restore: {
+                fill: '#FFFFFF',
+                radius: 3,
+            },
+        });
+    }
+
+    /**
+     * Wires hover highlight + tooltip onto a bar. Uses {@link applyHoverHighlight} so prior
+     * listeners are disposed on re-apply — calling this on every update no longer leaks.
+     */
+    private attachBarHover(bar: Rect, value: number, fill: string) {
+        applyHoverHighlight(bar, {
+            renderer: this.renderer,
+            duration: this.getAnimationDuration(300),
+            ease: easeOutQuart,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: bar.x + bar.width / 2,
+                y: bar.y,
+            }),
+            content: () => value.toString(),
+            highlight: {
+                fill,
+            },
+            restore: {
+                fill: setColorAlpha(fill, 0.7),
+            },
+        });
     }
 
     private async drawLines() {
@@ -265,31 +316,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     data: state,
                 });
 
-                marker.on('mouseenter', () => {
-                    this.tooltip.show(state.cx, state.cy, value.toString());
-
-                    this.renderer.transition(marker, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: 5,
-                        },
-                    });
-
-                    marker.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: '#FFFFFF',
-                                radius: 3,
-                            },
-                        });
-                    });
-                });
+                this.attachMarkerHover(marker, value, state.stroke as string);
 
                 return {
                     point,
@@ -336,6 +363,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             markerEntries.map(item => {
                 const { id, state } = getMarkerValues(item);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
 
                 const marker = createCircle({
                     id,
@@ -343,6 +372,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     radius: 0,
                     data: state,
                 });
+
+                this.attachMarkerHover(marker, getValue(item), state.stroke as string);
 
                 group.add(marker);
             });
@@ -355,32 +386,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
                 marker.data = state;
 
-                // Update hover listeners for new values
-                marker.on('mouseenter', () => {
-                    this.tooltip.show(state.cx, state.cy, value.toString());
-
-                    this.renderer.transition(marker, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.stroke,
-                            radius: 5,
-                        },
-                    });
-
-                    marker.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(marker, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: '#FFFFFF',
-                                radius: 3,
-                            },
-                        });
-                    });
-                });
+                this.attachMarkerHover(marker, value, state.stroke as string);
             });
 
             return group;
@@ -523,29 +529,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     },
                 });
 
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
+                this.attachBarHover(bar, value, state.fill as string);
 
                 return bar;
             });
@@ -581,6 +565,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     data: state,
                 });
 
+                this.attachBarHover(rect, getValue(item), state.fill as string);
+
                 group.add(rect);
             });
 
@@ -593,30 +579,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
-                // Update hover listeners for new values
-                bar.on('mouseenter', () => {
-                    this.tooltip.show(state.x + state.width / 2, state.y, value.toString());
-
-                    this.renderer.transition(bar, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: state.fill,
-                        },
-                    });
-
-                    bar.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(bar, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(state.fill as string, 0.7),
-                            },
-                        });
-                    });
-                });
+                this.attachBarHover(bar, value, state.fill as string);
             });
 
             return group;
@@ -675,51 +638,41 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
 
             const dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const chartTop = area.y;
+            const chartBottom = area.y + area.height;
+            const chartRight = area.x + area.width;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous(dataExtent, [scene.height - padding.bottom, chartTop], {
+            this.yScale = scaleContinuous(dataExtent, [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
                 chartTop,
-                padding.left,
-                this.scene.height - padding.bottom,
-                this.scene.width - padding.right
+                area.x,
+                chartBottom,
+                chartRight
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
-            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, this.scene.width - padding.right], {
+            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, chartRight], {
                 outerPadding: 0.25,
                 innerPadding: 0.25,
             });
@@ -735,8 +688,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
             this.xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
-                this.scene.height - padding.bottom,
-                this.scene.width - padding.right
+                chartBottom,
+                chartRight
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
@@ -758,14 +711,9 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     yTickPositions,
                     yAxisBoundingBox.right,
                     chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
+                    chartRight - yAxisBoundingBox.right,
                     xAxisBoundingBox.top - chartTop
                 );
-            }
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(yAxisBoundingBox.right, 0, scene.width - yAxisBoundingBox.right - padding.right);
             }
 
             return Promise.all([

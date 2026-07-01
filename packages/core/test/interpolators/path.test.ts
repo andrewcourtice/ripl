@@ -58,17 +58,42 @@ describe('Interpolators', () => {
             expect(result).toHaveLength(3);
         });
 
-        test('Should distribute extra points evenly across all segments', () => {
-            // 3 pts (2 segs) vs 4 pts (3 segs) → LCM(2,3)=6 → both become 7 pts
+        test('Should distribute extra points evenly across all segments mid-transition', () => {
+            // 3 pts (2 segs) vs 4 pts (3 segs) → LCM(2,3)=6 → both become 7 pts while morphing.
             const setA: Point[] = [[0, 0], [10, 0], [10, 10]];
             const setB: Point[] = [[0, 0], [5, 0], [10, 0], [10, 10]];
             const interpolator = interpolatePoints(setA, setB);
 
-            const start = interpolator(0);
-            const end = interpolator(1);
+            // Only in-between frames are upsampled; the endpoints settle on the original sets.
+            expect(interpolator(0)).toHaveLength(3);
+            expect(interpolator(1)).toHaveLength(4);
+            expect(interpolator(0.5)).toHaveLength(7);
+        });
 
-            expect(start).toHaveLength(7);
-            expect(end).toHaveLength(7);
+        test('Should settle on the exact original sets at the endpoints (no upsampling persisted)', () => {
+            const setA: Point[] = [[0, 0], [10, 0], [10, 10]];
+            const setB: Point[] = [[0, 0], [5, 0], [10, 0], [10, 10]];
+            const interpolator = interpolatePoints(setA, setB);
+
+            expect(interpolator(0)).toEqual(setA);
+            expect(interpolator(1)).toEqual(setB);
+        });
+
+        test('Repeated completed morphs do not compound the point count (memory-leak regression)', () => {
+            // Models the chart update loop: an element keeps interpolator(1) as its next baseline.
+            // Before the endpoint fix this kept the LCM-upsampled set, so the count exploded
+            // (6 → 31 → 211 → 841 → …) and ran the tab out of memory. It must stay == the target.
+            let current: Point[] = Array.from({ length: 6 }, (_, i) => [i, i] as Point);
+
+            for (let count = 7; count <= 40; count++) {
+                const next: Point[] = Array.from({ length: count }, (_, i) => [i, i * 2] as Point);
+                const settled = interpolatePoints(current, next)(1);
+
+                expect(settled).toHaveLength(count);
+                expect(settled).toEqual(next);
+
+                current = settled;
+            }
         });
 
         test('Should preserve start and end points at t=0 and t=1', () => {

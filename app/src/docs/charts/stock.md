@@ -11,8 +11,20 @@ The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with 
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
-            <RiplSwitch v-model="showVolume" @update:model-value="toggleVolume" label="Volume" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Candles">
+            <RiplField label="Volume" inline>
+                <RiplSwitch v-model="showVolume" />
+            </RiplField>
+            <RiplField label="Up colour" inline>
+                <RiplColorInput v-model="upColor" />
+            </RiplField>
+            <RiplField label="Down colour" inline>
+                <RiplColorInput v-model="downColor" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -22,15 +34,29 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createStockChart,
-    StockChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const showVolume = ref(true);
+const upColor = ref('#6dd5b1');
+const downColor = ref('#f4a0b9');
+
+const config = useChartConfig({
+    features: { title: true, axes: true, grid: true, animation: true },
+    title: 'Daily Prices',
+    axisX: 'Date',
+    axisY: 'Price ($)',
+});
 
 function generateData(count = 30) {
     const data = [];
@@ -65,17 +91,27 @@ const { contextChanged, chart } = useRiplChart(context => {
         close: 'close',
         volume: 'volume',
         showVolume: showVolume.value,
+        upColor: upColor.value,
+        downColor: downColor.value,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
     });
 });
 
+function apply() {
+    chart.value?.update({
+        showVolume: showVolume.value,
+        upColor: upColor.value,
+        downColor: downColor.value,
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch([showVolume, upColor, downColor], apply);
+
 function randomize() {
     data = generateData();
     chart.value?.update({ data });
-}
-
-function toggleVolume() {
-    chart.value?.update({ showVolume: showVolume.value });
 }
 </script>
 

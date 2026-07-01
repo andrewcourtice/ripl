@@ -4,11 +4,17 @@ import {
 } from './_base';
 
 import {
+    ANIMATION_REFERENCE,
+    ResolvedAnimation,
+} from '../core/animation';
+
+import {
     Box,
     createGroup,
     createLine,
     createText,
     easeOutCubic,
+    Element,
     Group,
     Line,
     Scale,
@@ -18,6 +24,16 @@ import {
 import {
     arrayJoin,
 } from '@ripl/utilities';
+
+/** Gap (px) between axis tick labels and the axis title. */
+const TITLE_GAP = 6;
+
+/** Fallback animation used when an axis is not given one by its host chart. */
+const DEFAULT_AXIS_ANIMATION: ResolvedAnimation = {
+    enabled: true,
+    duration: ANIMATION_REFERENCE.axis,
+    ease: easeOutCubic,
+};
 
 /** Horizontal axis alignment within the chart area. */
 export type ChartXAxisAlignment = 'top' | 'bottom';
@@ -41,9 +57,11 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     gridLines?: boolean;
     labelDimension: LabelDimension;
     title?: string;
+    titleFont?: string;
     stroke?: string;
     labelFont?: string;
     labelColor?: string;
+    animation?: ResolvedAnimation;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatLabel?: (value: any) => string;
 }
@@ -79,13 +97,17 @@ export class ChartAxis extends ChartComponent {
     public tickSize: number;
     public tickCount: number;
     public title?: string;
+    public titleFont: string;
     public stroke: string;
     public labelFont: string;
     public labelColor: string;
+    public animation: ResolvedAnimation;
+    public visible: boolean = true;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public formatLabel?: (value: any) => string;
 
     protected group: Group;
+    protected line: Line;
 
     private labelDimension: LabelDimension;
     protected cachedTicks?: unknown[];
@@ -147,22 +169,28 @@ export class ChartAxis extends ChartComponent {
         this.tickCount = tickCount;
         this.labelDimension = labelDimension;
         this.title = options.title;
+        this.titleFont = options.titleFont ?? `bold ${labelFont}`;
         this.formatLabel = options.formatLabel;
         this.stroke = stroke;
         this.labelFont = labelFont;
         this.labelColor = labelColor;
+        this.animation = options.animation ?? DEFAULT_AXIS_ANIMATION;
+
+        // The axis line is kept as a direct reference (rather than re-queried each render) but still
+        // lives inside the axis group alongside the tick groups and title text.
+        this.line = createLine({
+            class: 'chart-axis__line',
+            stroke: this.stroke,
+            x1: 0,
+            y1: 0,
+            x2: 0,
+            y2: 0,
+        });
 
         this.group = createGroup({
             class: 'chart-axis',
             children: [
-                createLine({
-                    class: 'chart-axis__line',
-                    stroke: this.stroke,
-                    x1: 0,
-                    y1: 0,
-                    x2: 0,
-                    y2: 0,
-                }),
+                this.line,
             ],
         });
 
@@ -183,8 +211,38 @@ export class ChartAxis extends ChartComponent {
         return this.formatLabel ? this.formatLabel(value) : value.toString();
     }
 
+    /** The thickness reserved for the axis title (0 when there is no title). */
+    protected get titleBand(): number {
+        if (!this.title) {
+            return 0;
+        }
+
+        const metrics = this.context.measureText(this.title, this.titleFont);
+        const titleHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+        return titleHeight + TITLE_GAP;
+    }
+
     public getBoundingBox(): Box {
         return this.bounds;
+    }
+
+    /** Fades in newly-entered tick labels and lines using the chart's resolved animation. */
+    protected animateEntries(elements: Element[]) {
+        if (elements.length === 0) {
+            return;
+        }
+
+        if (!this.animation.enabled || this.animation.duration <= 0) {
+            elements.forEach(element => Object.assign(element, element.data ?? {}));
+            return;
+        }
+
+        this.renderer.transition(elements, element => ({
+            duration: this.animation.duration,
+            ease: this.animation.ease,
+            state: (element.data ?? {}) as Record<string, unknown>,
+        }));
     }
 
     public render() {
@@ -216,7 +274,8 @@ export class ChartXAxis extends ChartAxis {
         const clearance = this.maxLabelHeight
             + this.padding
             + this.tickSize
-            + 1; // 1 for line width
+            + 1 // 1 for line width
+            + this.titleBand;
 
         const {
             top,
@@ -237,14 +296,11 @@ export class ChartXAxis extends ChartAxis {
         this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
-        const line = this.group.query<Line>('.chart-axis__line');
 
-        if (line) {
-            line.x1 = boundingBox.left;
-            line.y1 = boundingBox.top;
-            line.x2 = boundingBox.right;
-            line.y2 = boundingBox.top;
-        }
+        this.line.x1 = boundingBox.left;
+        this.line.y1 = boundingBox.top;
+        this.line.x2 = boundingBox.right;
+        this.line.y2 = boundingBox.top;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 
@@ -293,13 +349,7 @@ export class ChartXAxis extends ChartAxis {
         // Animate entries
         const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
-        if (entryElements.length > 0) {
-            this.renderer.transition(entryElements, element => ({
-                duration: 400,
-                ease: easeOutCubic,
-                state: (element.data ?? {}) as Record<string, unknown>,
-            }));
-        }
+        this.animateEntries(entryElements);
 
         groupUpdates.forEach(([value, group]) => {
             const line = group.query<Line>('line');
@@ -320,28 +370,30 @@ export class ChartXAxis extends ChartAxis {
             }
         });
 
-        // Render title
+        // Render title in its own band below the tick labels.
         if (this.title) {
             const titleId = 'chart-axis__x-title';
+            const titleX = (boundingBox.left + boundingBox.right) / 2;
+            const titleY = boundingBox.bottom;
             let titleText = this.group.query<Text>(`#${titleId}`);
 
             if (!titleText) {
                 titleText = createText({
                     id: titleId,
                     content: this.title,
-                    x: (boundingBox.left + boundingBox.right) / 2,
-                    y: boundingBox.bottom - 2,
+                    x: titleX,
+                    y: titleY,
                     textAlign: 'center',
                     textBaseline: 'bottom',
                     fill: this.labelColor,
-                    font: `bold ${this.labelFont}`,
+                    font: this.titleFont,
                 });
 
                 this.group.add(titleText);
             } else {
                 titleText.content = this.title;
-                titleText.x = (boundingBox.left + boundingBox.right) / 2;
-                titleText.y = boundingBox.bottom - 2;
+                titleText.x = titleX;
+                titleText.y = titleY;
             }
         }
 
@@ -373,7 +425,8 @@ export class ChartYAxis extends ChartAxis {
         const clearance = this.maxLabelWidth
             + this.padding
             + this.tickSize
-            + 1; // 1 for line width
+            + 1 // 1 for line width
+            + this.titleBand;
 
         const {
             top,
@@ -394,14 +447,11 @@ export class ChartYAxis extends ChartAxis {
         this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
-        const line = this.group.query<Line>('.chart-axis__line');
 
-        if (line) {
-            line.x1 = boundingBox.right;
-            line.x2 = boundingBox.right;
-            line.y1 = boundingBox.top;
-            line.y2 = boundingBox.bottom;
-        }
+        this.line.x1 = boundingBox.right;
+        this.line.x2 = boundingBox.right;
+        this.line.y1 = boundingBox.top;
+        this.line.y2 = boundingBox.bottom;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 
@@ -450,13 +500,7 @@ export class ChartYAxis extends ChartAxis {
         // Animate entries
         const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
 
-        if (entryElements.length > 0) {
-            this.renderer.transition(entryElements, element => ({
-                duration: 400,
-                ease: easeOutCubic,
-                state: (element.data ?? {}) as Record<string, unknown>,
-            }));
-        }
+        this.animateEntries(entryElements);
 
         groupUpdates.forEach(([value, group]) => {
             const line = group.query<Line>('line');
@@ -474,27 +518,42 @@ export class ChartYAxis extends ChartAxis {
             }
         });
 
-        // Render title
+        // Render the title rotated vertically in its own band at the far edge of the axis,
+        // outside the tick labels so the two never overlap or clip.
         if (this.title) {
+            const isLeftAligned = this.alignment === 'left';
             const titleId = 'chart-axis__y-title';
+            const titleX = isLeftAligned
+                ? boundingBox.left + this.titleBand / 2
+                : boundingBox.right - this.titleBand / 2;
+            const titleY = (boundingBox.top + boundingBox.bottom) / 2;
+            const rotation = isLeftAligned ? -Math.PI / 2 : Math.PI / 2;
+
             let titleText = this.group.query<Text>(`#${titleId}`);
 
             if (!titleText) {
                 titleText = createText({
                     id: titleId,
                     content: this.title,
-                    x: boundingBox.left + 2,
-                    y: (boundingBox.top + boundingBox.bottom) / 2,
+                    x: titleX,
+                    y: titleY,
                     textAlign: 'center',
                     textBaseline: 'middle',
                     fill: this.labelColor,
-                    font: `bold ${this.labelFont}`,
+                    font: this.titleFont,
+                    rotation,
+                    transformOriginX: titleX,
+                    transformOriginY: titleY,
                 });
 
                 this.group.add(titleText);
             } else {
                 titleText.content = this.title;
-                titleText.y = (boundingBox.top + boundingBox.bottom) / 2;
+                titleText.x = titleX;
+                titleText.y = titleY;
+                titleText.rotation = rotation;
+                titleText.transformOriginX = titleX;
+                titleText.transformOriginY = titleY;
             }
         }
 

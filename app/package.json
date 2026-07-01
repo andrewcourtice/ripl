@@ -21,17 +21,17 @@
         "@xterm/addon-fit": "^0.11.0",
         "@xterm/xterm": "^6.0.0",
         "flex-layout-attribute": "^1.0.3",
-        "lucide-vue-next": "^0.577.0",
+        "lucide-vue-next": "^1.0.0",
         "monaco-editor": "^0.55.1",
         "pinia": "^3.0.4",
-        "sass": "^1.98.0",
-        "vue": "^3.5.30"
+        "sass": "^1.101.0",
+        "vue": "^3.5.39"
     },
     "devDependencies": {
-        "typedoc": "^0.28.17",
-        "typedoc-plugin-markdown": "^4.10.0",
-        "typedoc-vitepress-theme": "^1.1.2",
+        "typedoc": "^0.28.19",
+        "typedoc-plugin-markdown": "^4.12.0",
+        "typedoc-vitepress-theme": "^1.1.3",
         "vitepress": "^1.6.4",
-        "vitepress-plugin-tabs": "^0.8.0"
+        "vitepress-plugin-tabs": "^0.9.0"
     }
 }

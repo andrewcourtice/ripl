@@ -97,9 +97,13 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
-            const padding = this.getPadding();
-            const availableWidth = scene.width - padding.left - padding.right;
-            const availableHeight = scene.height - padding.top - padding.bottom;
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+
+            const availableWidth = area.width;
+            const availableHeight = area.height;
+            const centerX = area.x + area.width / 2;
             const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
 
             const calculations = data.map((item, index) => {
@@ -109,8 +113,8 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 const itemColor = getColor ? getColor(item) : undefined;
                 const widthRatio = itemValue / (maxValue || 1);
                 const segmentWidth = availableWidth * widthRatio;
-                const x = padding.left + (availableWidth - segmentWidth) / 2;
-                const y = padding.top + index * (segmentHeight + gap);
+                const x = area.x + (availableWidth - segmentWidth) / 2;
+                const y = area.y + index * (segmentHeight + gap);
 
                 return {
                     key: itemKey,
@@ -137,7 +141,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
                 const rect = createRect({
                     id: `${item.key}-rect`,
-                    x: scene.width / 2,
+                    x: centerX,
                     y: item.y,
                     width: 0,
                     height: item.height,
@@ -176,7 +180,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
                 const text = createText({
                     id: `${item.key}-label`,
-                    x: scene.width / 2,
+                    x: centerX,
                     y: item.y + item.height / 2,
                     content: item.label,
                     fill: '#333',

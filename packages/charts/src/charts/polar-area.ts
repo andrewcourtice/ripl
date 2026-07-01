@@ -3,6 +3,14 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+} from '../core/options';
+
+import {
+    LegendItem,
+} from '../components/legend';
+
 import {
     Arc,
     ArcState,
@@ -49,6 +57,8 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     padAngle?: number;
     /** Number of concentric grid rings. Defaults to 4 */
     levels?: number;
+    /** Legend showing each segment. Shown by default (more than one segment); pass `false` to hide. */
+    legend?: ChartLegendInput;
 }
 
 /**
@@ -56,7 +66,8 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
  *
  * Each data point occupies an equal angular slice; the radial extent of each
  * segment is proportional to its value. Includes a concentric grid with
- * value labels, radial axis lines, and animated entry/update/exit transitions.
+ * value labels, radial axis lines, an optional legend, and animated
+ * entry/update/exit transitions.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
@@ -288,8 +299,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 return Promise.resolve();
             }
 
-            const colorGenerator = this.colorGenerator;
-            const size = Math.min(scene.width, scene.height);
+            const layout = this.createLayout();
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
@@ -300,6 +310,32 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
 
+            // Register each segment in the shared colour map so legend swatches and segments share
+            // stable palette colours (honouring any explicit per-item colour).
+            this.resolveSeriesColors(data.map(item => ({
+                id: getKey(item),
+                color: getColor(item),
+            })));
+
+            const colorFor = (item: TData) => getColor(item) ?? this.getSeriesColor(getKey(item));
+
+            // Shared layout pass: reserve title and legend bands first.
+            this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = data.map(item => ({
+                id: getKey(item),
+                label: getLabel(item),
+                color: colorFor(item),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
+            const size = Math.min(area.width, area.height);
+            const centerX = area.x + area.width / 2;
+            const centerY = area.y + area.height / 2;
+
             const maxValue = maxOf(data, getValue) ?? 0;
             const valueScale = scaleContinuous([0, maxValue], [size * innerRadiusRatio, size * maxRadiusRatio], { clamp: true });
 
@@ -307,8 +343,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
             const gridTransition = this.drawGrid(
-                scene.width / 2,
-                scene.height / 2,
+                centerX,
+                centerY,
                 size * innerRadiusRatio,
                 size * maxRadiusRatio,
                 maxValue,
@@ -321,10 +357,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const calculations = data.map((item, index) => {
                 const key = getKey(item);
                 const v = getValue(item);
-                const color = getColor(item);
+                const color = colorFor(item);
                 const label = getLabel(item);
-                const cx = scene.width / 2;
-                const cy = scene.height / 2;
+                const cx = centerX;
+                const cy = centerY;
                 const startAngle = startOffset + index * angleStep;
                 const endAngle = startAngle + angleStep;
                 const innerRadius = size * innerRadiusRatio;
@@ -355,7 +391,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const entries = entryData.map(item => {
                 const {
                     key,
-                    color = colorGenerator.next().value,
+                    color,
                     label,
                     cx,
                     cy,

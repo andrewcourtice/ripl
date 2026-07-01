@@ -8,15 +8,10 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeLegend,
-} from '../core/options';
-
-import {
     Tooltip,
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -30,10 +25,14 @@ import {
     easeOutCubic,
     easeOutQuart,
     Group,
+    Line,
+    LineState,
     Point,
     Polyline,
     PolylineState,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -75,8 +74,10 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
     private seriesGroups: Group[] = [];
     private gridGroup?: Group;
+    private gridLevels: Polyline[] = [];
+    private gridAxisLines: Line[] = [];
+    private gridLabels: Text[] = [];
     private tooltip!: Tooltip;
-    private legend?: Legend;
     constructor(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
         super(target, options);
 
@@ -89,21 +90,21 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
     }
 
     private drawGrid(cx: number, cy: number, radius: number, axes: string[], levels: number) {
-        if (this.gridGroup) {
-            this.gridGroup.clear();
-            this.scene.remove(this.gridGroup);
-        }
-
-        this.gridGroup = createGroup({
-            id: 'radar-grid',
-            class: 'radar-grid',
-            zIndex: 0,
-        });
-
+        const isEntry = !this.gridGroup;
+        const animDuration = this.getAnimationDuration(800);
         const angleStep = TAU / axes.length;
 
-        // Draw concentric level polygons
-        for (let level = 1; level <= levels; level++) {
+        if (isEntry) {
+            this.gridGroup = createGroup({
+                id: 'radar-grid',
+                class: 'radar-grid',
+                zIndex: 0,
+            });
+
+            this.scene.add(this.gridGroup);
+        }
+
+        const levelPoints = (level: number): Point[] => {
             const levelRadius = (radius / levels) * level;
             const points: Point[] = [];
 
@@ -115,33 +116,107 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 ]);
             }
 
+            return points;
+        };
+
+        // --- Concentric level polygons ---
+        const levelIndices = Array.from({ length: levels }).map((_, i) => i + 1);
+
+        const {
+            left: levelEntries,
+            inner: levelUpdates,
+            right: levelExits,
+        } = arrayJoin(levelIndices, this.gridLevels, (level, poly) => poly.id === `radar-level-${level}`);
+
+        levelExits.forEach(el => el.destroy());
+
+        const newLevels = levelEntries.map(level => {
+            const points = levelPoints(level);
+
             const polygon = createPolyline({
                 id: `radar-level-${level}`,
                 stroke: '#e5e7eb',
                 lineWidth: 1,
-                points,
+                points: isEntry ? points.map(() => [cx, cy] as Point) : points,
+                data: {
+                    points,
+                } as PolylineState,
             });
 
             polygon.autoFill = false;
-            this.gridGroup.add(polygon);
-        }
+            this.gridGroup!.add(polygon);
 
-        // Draw axis lines and labels
-        axes.forEach((axis, index) => {
+            return polygon;
+        });
+
+        levelUpdates.forEach(([level, poly]) => {
+            poly.data = {
+                points: levelPoints(level),
+            } as PolylineState;
+        });
+
+        this.gridLevels = [
+            ...newLevels,
+            ...levelUpdates.map(([, poly]) => poly),
+        ];
+
+        // --- Radial axis lines ---
+        const axisIndices = axes.map((_, i) => i);
+
+        const axisEnd = (index: number): Point => {
             const angle = index * angleStep - TAU / 4;
-            const x = cx + radius * Math.cos(angle);
-            const y = cy + radius * Math.sin(angle);
+            return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+        };
 
-            this.gridGroup!.add(createLine({
-                id: `radar-axis-${index}`,
+        const {
+            left: lineEntries,
+            inner: lineUpdates,
+            right: lineExits,
+        } = arrayJoin(axisIndices, this.gridAxisLines, (idx, line) => line.id === `radar-axis-${idx}`);
+
+        lineExits.forEach(el => el.destroy());
+
+        const newLines = lineEntries.map(idx => {
+            const [x2, y2] = axisEnd(idx);
+
+            const line = createLine({
+                id: `radar-axis-${idx}`,
                 x1: cx,
                 y1: cy,
-                x2: x,
-                y2: y,
+                x2: isEntry ? cx : x2,
+                y2: isEntry ? cy : y2,
                 stroke: '#d1d5db',
                 lineWidth: 1,
-            }));
+                data: {
+                    x2,
+                    y2,
+                } as Partial<LineState>,
+            });
 
+            this.gridGroup!.add(line);
+
+            return line;
+        });
+
+        lineUpdates.forEach(([idx, line]) => {
+            const [x2, y2] = axisEnd(idx);
+
+            line.data = {
+                x1: cx,
+                y1: cy,
+                x2,
+                y2,
+            } as Partial<LineState>;
+        });
+
+        this.gridAxisLines = [
+            ...newLines,
+            ...lineUpdates.map(([, line]) => line),
+        ];
+
+        // --- Axis labels ---
+        const labelProps = (index: number) => {
+            const angle = index * angleStep - TAU / 4;
             const labelX = cx + (radius + 15) * Math.cos(angle);
             const labelY = cy + (radius + 15) * Math.sin(angle);
 
@@ -153,19 +228,77 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 textAlign = 'right';
             }
 
-            this.gridGroup!.add(createText({
-                id: `radar-label-${index}`,
+            return {
+                labelX,
+                labelY,
+                textAlign,
+            };
+        };
+
+        const {
+            left: labelEntries,
+            inner: labelUpdates,
+            right: labelExits,
+        } = arrayJoin(axisIndices, this.gridLabels, (idx, label) => label.id === `radar-label-${idx}`);
+
+        labelExits.forEach(el => el.destroy());
+
+        const newLabels = labelEntries.map(idx => {
+            const { labelX, labelY, textAlign } = labelProps(idx);
+
+            const label = createText({
+                id: `radar-label-${idx}`,
                 x: labelX,
                 y: labelY,
-                content: axis,
+                content: axes[idx] ?? '',
                 fill: '#6b7280',
                 font: '11px sans-serif',
                 textAlign,
                 textBaseline: 'middle',
-            }));
+                opacity: isEntry ? 0 : 1,
+                data: {
+                    opacity: 1,
+                } as Partial<TextState>,
+            });
+
+            this.gridGroup!.add(label);
+
+            return label;
         });
 
-        this.scene.add(this.gridGroup);
+        labelUpdates.forEach(([idx, label]) => {
+            const { labelX, labelY, textAlign } = labelProps(idx);
+
+            label.content = axes[idx] ?? '';
+            label.textAlign = textAlign;
+            label.data = {
+                x: labelX,
+                y: labelY,
+            } as Partial<TextState>;
+        });
+
+        this.gridLabels = [
+            ...newLabels,
+            ...labelUpdates.map(([, label]) => label),
+        ];
+
+        // Animate: staggered grow on entry, smooth morph on update.
+        const allElements = this.gridGroup!.children;
+
+        if (isEntry) {
+            return this.renderer.transition(allElements, (element, index, length) => ({
+                duration: animDuration,
+                delay: index * (animDuration / length) * 0.2,
+                ease: easeOutQuart,
+                state: element.data as Record<string, unknown>,
+            }));
+        }
+
+        return this.renderer.transition(allElements, element => ({
+            duration: animDuration,
+            ease: easeOutQuart,
+            state: element.data as Record<string, unknown>,
+        }));
     }
 
     private async drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
@@ -356,7 +489,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 axes,
                 series,
@@ -366,40 +499,25 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
 
             this.resolveSeriesColors(series);
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
-
-            const cx = scene.width / 2;
-            const cy = (scene.height + legendHeight) / 2;
-            const radius = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom - legendHeight
-            ) / 2 - 30;
+            const area = layout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const radius = Math.min(area.width, area.height) / 2 - 30;
 
             // Compute max value from data if not provided
             let computedMax = maxValue ?? 0;
@@ -415,14 +533,10 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>>
                 });
             }
 
-            this.drawGrid(cx, cy, radius, axes, levels);
+            const gridTransition = this.drawGrid(cx, cy, radius, axes, levels);
+            const seriesTransition = this.drawSeries(cx, cy, radius, computedMax);
 
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
-            }
-
-            return this.drawSeries(cx, cy, radius, computedMax);
+            return Promise.all([gridTransition, seriesTransition]);
         });
     }
 

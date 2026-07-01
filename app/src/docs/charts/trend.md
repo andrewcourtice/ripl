@@ -10,30 +10,41 @@ The **Trend Chart** is a composite chart that lets you mix bar, line, and area s
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
             <RiplButton @click="randomise">Randomise</RiplButton>
-            <RiplSwitch v-model="showGrid" @update:model-value="toggleGrid" label="Grid" />
-            <RiplSelect v-model="lineRenderer" @change="updateRenderer">
-                <option value="linear">Linear</option>
-                <option value="spline">Spline</option>
-                <option value="basis">Basis</option>
-                <option value="bumpX">Bump X</option>
-                <option value="bumpY">Bump Y</option>
-                <option value="cardinal">Cardinal</option>
-                <option value="catmullRom">Catmull-Rom</option>
-                <option value="monotoneX">Monotone X</option>
-                <option value="monotoneY">Monotone Y</option>
-                <option value="natural">Natural</option>
-                <option value="step">Step</option>
-                <option value="stepBefore">Step Before</option>
-                <option value="stepAfter">Step After</option>
-            </RiplSelect>
         </RiplControlGroup>
-    </template>    
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Trend">
+            <RiplField label="Line type">
+                <RiplSelect v-model="lineRenderer">
+                    <option value="linear">Linear</option>
+                    <option value="spline">Spline</option>
+                    <option value="basis">Basis</option>
+                    <option value="bumpX">Bump X</option>
+                    <option value="bumpY">Bump Y</option>
+                    <option value="cardinal">Cardinal</option>
+                    <option value="catmullRom">Catmull-Rom</option>
+                    <option value="monotoneX">Monotone X</option>
+                    <option value="monotoneY">Monotone Y</option>
+                    <option value="natural">Natural</option>
+                    <option value="step">Step</option>
+                    <option value="stepBefore">Step Before</option>
+                    <option value="stepAfter">Step After</option>
+                </RiplSelect>
+            </RiplField>
+        </RiplChartConfig>
+    </template>
 </ripl-example>
 
 <script lang="ts" setup>
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createTrendChart,
@@ -49,11 +60,37 @@ import {
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const dataScale = scaleContinuous([0, 1], [-500, 1200]);
 const lineRenderer = ref('linear');
-const showGrid = ref(true);
+
+const seriesMeta = [
+    { type: 'bar', id: 'australia', label: 'Australia', value: 'australia' },
+    { type: 'bar', id: 'new-zealand', label: 'New Zealand', value: 'newZealand' },
+    { type: 'bar', id: 'sweden', label: 'Sweden', value: 'sweden' },
+    { type: 'bar', id: 'united-states', label: 'United States', value: 'unitedStates' },
+    { type: 'line', id: 'great-britain', label: 'Great Britain', value: 'greatBritain' },
+];
+
+const config = useChartConfig({
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    title: 'Medal Trend',
+    axisY: 'Count',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
+
+function getSeries() {
+    return seriesMeta.map(s => ({
+        type: s.type,
+        id: s.id,
+        label: s.label,
+        value: s.value,
+        color: config.colors[s.id],
+        ...(s.type === 'line' ? { lineType: lineRenderer.value } : {}),
+    }));
+}
 
 let data = Array.from({ length: 15 }, getDataItem);
 
@@ -63,42 +100,19 @@ const {
 } = useRiplChart(context => createTrendChart(context, {
     data,
     key: 'id',
-    grid: showGrid.value,
-    legend: true,
-    series: [
-        {
-            type: 'bar',
-            id: 'australia',
-            label: 'Australia',
-            value: 'australia',
-        },
-        {
-            type: 'bar',
-            id: 'new-zealand',
-            label: 'New Zealand',
-            value: 'newZealand',
-        },
-        {
-            type: 'bar',
-            id: 'sweden',
-            label: 'Sweden',
-            value: 'sweden',
-        },
-        {
-            type: 'bar',
-            id: 'united-states',
-            label: 'United States',
-            value: 'unitedStates',
-        },
-        {
-            type: 'line',
-            id: 'great-britain',
-            label: 'Great Britain',
-            value: 'greatBritain',
-            lineType: lineRenderer.value,
-        }
-    ]
+    series: getSeries(),
+    ...buildCommonOptions(config),
 }));
+
+function apply() {
+    chart.value?.update({
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch(lineRenderer, apply);
 
 function getDataItem() {
     return {
@@ -127,48 +141,6 @@ function randomise() {
     }));
 
     chart.value?.update({ data });
-}
-
-function toggleGrid() {
-    chart.value?.update({ grid: showGrid.value });
-}
-
-function updateRenderer() {
-    chart.value?.update({
-        series: [
-            {
-                type: 'bar',
-                id: 'australia',
-                label: 'Australia',
-                value: 'australia',
-            },
-            {
-                type: 'bar',
-                id: 'new-zealand',
-                label: 'New Zealand',
-                value: 'newZealand',
-            },
-            {
-                type: 'bar',
-                id: 'sweden',
-                label: 'Sweden',
-                value: 'sweden',
-            },
-            {
-                type: 'bar',
-                id: 'united-states',
-                label: 'United States',
-                value: 'unitedStates',
-            },
-            {
-                type: 'line',
-                id: 'great-britain',
-                label: 'Great Britain',
-                value: 'greatBritain',
-                lineType: lineRenderer.value,
-            }
-        ]
-    });
 }
 </script>
 

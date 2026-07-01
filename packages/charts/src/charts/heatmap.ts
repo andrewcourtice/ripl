@@ -143,7 +143,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 xBy,
@@ -176,10 +176,17 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
 
             const valueRange = maxVal - minVal || 1;
-            const padding = this.getPadding();
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const top = area.y;
+            const left = area.x;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
             // Initial y-axis setup to measure label width
-            const initialYScale = scaleBand(yCategories, [padding.top, scene.height - padding.bottom], {
+            const initialYScale = scaleBand(yCategories, [top, bottom], {
                 innerPadding: 0.05,
             });
 
@@ -195,16 +202,16 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.yAxis.scale;
 
             this.yAxis.bounds = new Box(
-                padding.top,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                top,
+                left,
+                bottom,
+                right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
             // Initial x-axis setup to measure label height
-            const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
+            const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
             });
 
@@ -220,20 +227,20 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.xAxis.scale;
 
             this.xAxis.bounds = new Box(
-                padding.top,
+                top,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                bottom,
+                right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
             // Rebuild scales with correct chart area bounds
-            const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
+            const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
             });
 
-            const yScale = scaleBand(yCategories, [padding.top, xAxisBoundingBox.top], {
+            const yScale = scaleBand(yCategories, [top, xAxisBoundingBox.top], {
                 innerPadding: 0.05,
             });
 
@@ -250,10 +257,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.xAxis.scale;
 
             this.xAxis.bounds = new Box(
-                padding.top,
+                top,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                bottom,
+                right
             );
 
             this.yAxis.scale = Object.assign(
@@ -268,10 +275,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.yAxis.scale;
 
             this.yAxis.bounds = new Box(
-                padding.top,
-                padding.left,
+                top,
+                left,
                 xAxisBoundingBox.top,
-                scene.width - padding.right
+                right
             );
 
             // Draw cells

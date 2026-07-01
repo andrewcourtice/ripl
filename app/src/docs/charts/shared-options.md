@@ -220,7 +220,7 @@ createLineChart('#container', { legend: 'bottom' });
 createLineChart('#container', {
     legend: {
         visible: true,
-        position: 'top',
+        position: 'bottom',
         padding: 16,
         font: '12px sans-serif',
         fontColor: '#333',
@@ -231,8 +231,8 @@ createLineChart('#container', {
 
 | Property | Type | Default | Description |
 | --- | --- | --- | --- |
-| `visible` | `boolean` | `false` | Show/hide legend (hidden by default) |
-| `position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'top'` | Legend position |
+| `visible` | `boolean` | auto | Show/hide legend. When unset, shown automatically for charts with more than one series/segment and hidden otherwise. Pass `true`/`false` to force. |
+| `position` | `'top' \| 'bottom' \| 'left' \| 'right'` | `'bottom'` | Legend position |
 | `padding` | `number \| Partial<Padding>` | `16` | Outer padding |
 | `font` | `string` | `'11px sans-serif'` | Label font |
 | `fontColor` | `string` | `'#333333'` | Label color |
