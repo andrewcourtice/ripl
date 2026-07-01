@@ -4,6 +4,22 @@ import {
 } from '../core/chart';
 
 import {
+    formatNumber,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
+    Tooltip,
+} from '../components/tooltip';
+
+import {
     Arc,
     ArcState,
     Context,
@@ -12,6 +28,7 @@ import {
     createLine,
     createText,
     easeOutCubic,
+    EventMap,
     Group,
     Line,
     LineState,
@@ -22,6 +39,7 @@ import {
 
 import {
     arrayJoin,
+    roundTo,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link GaugeChart}. */
@@ -41,6 +59,20 @@ export interface GaugeChartOptions extends BaseChartOptions {
     formatTickLabel?: (value: number) => string;
 }
 
+/** Payload emitted for gauge value interaction events. */
+export interface GaugeChartValueEvent {
+    x: number;
+    y: number;
+    value: number;
+}
+
+/** Events emitted by a {@link GaugeChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface GaugeChartEventMap extends EventMap {
+    valueclick: GaugeChartValueEvent;
+    valueenter: GaugeChartValueEvent;
+    valueleave: GaugeChartValueEvent;
+}
+
 const DEFAULT_COLOR = '#7cacf8';
 const DEFAULT_TRACK_COLOR = '#e5e7eb';
 
@@ -51,7 +83,7 @@ const DEFAULT_TRACK_COLOR = '#e5e7eb';
  * the minimum to the current value. Supports configurable tick marks
  * with labels, a central value display, and an optional descriptive label.
  */
-export class GaugeChart extends Chart<GaugeChartOptions> {
+export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
     private group?: Group;
     private track?: Arc;
@@ -60,9 +92,18 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
     private labelText?: Text;
     private tickLines: Line[] = [];
     private tickLabels: Text[] = [];
+    private tooltip: Tooltip;
+    /** The last rendered value, so data updates can animate the value text counting up/down. */
+    private currentValue?: number;
 
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
         super(target, options);
+
+        this.tooltip = new Tooltip({
+            scene: this.scene,
+            renderer: this.renderer,
+        });
+
         this.init();
     }
 
@@ -162,7 +203,13 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
             } as Partial<ArcState>;
 
             // --- Value text ---
-            const displayValue = formatValue ? formatValue(clampedValue) : clampedValue.toString();
+            // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
+            const formatDisplay = (v: number) => (formatValue ? formatValue(roundTo(v, 2)) : formatNumber(v));
+            // The value the text counts up/down *from* on a data update (the previously shown value).
+            const displayFrom = this.currentValue ?? clampedValue;
+            const displayValue = formatDisplay(clampedValue);
+
+            this.currentValue = clampedValue;
 
             if (!this.valueText) {
                 this.valueText = createText({
@@ -309,7 +356,7 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                     x: cx + labelRadius * Math.cos(tickAngle),
                     y: cy + labelRadius * Math.sin(tickAngle),
                     textAlign,
-                    content: formatTickLabel ? formatTickLabel(tickValue) : Math.round(tickValue).toString(),
+                    content: formatTickLabel ? formatTickLabel(tickValue) : formatNumber(tickValue),
                 };
             };
 
@@ -356,6 +403,9 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 ...tickLabelUpdates.map(([, label]) => label),
             ];
 
+            // Hover/click on the value arc: tooltip + valueclick/enter/leave events.
+            this.attachValueHover(this.valueArc, clampedValue, color, formatDisplay);
+
             // Animate: the value arc sweeps to its new angle; text fades in on first render.
             const arcTransition = renderer.transition(this.valueArc, {
                 duration: this.getAnimationDuration(1200),
@@ -372,7 +422,15 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
                 }))
-                : Promise.resolve();
+                // On a data update the value counts up/down to the new value (only the bar and the
+                // number change — the rest of the gauge stays put).
+                : renderer.transition(this.valueText, {
+                    duration: this.getAnimationDuration(1200),
+                    ease: easeOutCubic,
+                    state: {
+                        content: (time: number) => formatDisplay(displayFrom + (clampedValue - displayFrom) * time),
+                    },
+                });
 
             const tickTransition = lineUpdates.length || tickLabelUpdates.length
                 ? renderer.transition([
@@ -386,6 +444,37 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 : Promise.resolve();
 
             return Promise.all([arcTransition, textTransition, tickTransition]);
+        });
+    }
+
+    private attachValueHover(arc: Arc, value: number, color: string, formatDisplay: (value: number) => string) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): GaugeChartValueEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+        });
+
+        applyHoverHighlight(arc, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => formatDisplay(value),
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, 0.8) },
+            onEnter: point => this.emit('valueenter', payload(point)),
+            onLeave: point => this.emit('valueleave', payload(point)),
+            onClick: point => this.emit('valueclick', payload(point)),
         });
     }
 
