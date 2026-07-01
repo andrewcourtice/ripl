@@ -16,7 +16,12 @@ import {
 
 import type {
     LabelAnchor,
+    SegmentLabelPosition,
 } from './options';
+
+export type {
+    SegmentLabelPosition,
+};
 
 /** Describes a single data label to render. */
 export interface DataLabelSpec {
@@ -82,9 +87,6 @@ export const SEGMENT_LABEL_FONT = '600 11px sans-serif';
 export const SEGMENT_LABEL_INSIDE_FILL = '#ffffff';
 /** Fill for labels drawn outside a segment (on the chart background). */
 export const SEGMENT_LABEL_OUTSIDE_FILL = '#333333';
-
-/** Whether a segment label sits inside the shape or outside with a leader line. */
-export type SegmentLabelPosition = 'inside' | 'outside';
 
 /** Describes a single segment label to render. */
 export interface SegmentLabelSpec {

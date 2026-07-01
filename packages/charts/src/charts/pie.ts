@@ -5,12 +5,22 @@ import {
 
 import type {
     ChartLegendInput,
+    ChartSegmentLabelsInput,
+    ChartSegmentLabelsOptions,
     ValueFormatInput,
 } from '../core/options';
 
 import {
+    normalizeSegmentLabels,
     resolveValueFormat,
 } from '../core/options';
+
+import {
+    createSegmentLabel,
+    resolveRadialLabel,
+    SEGMENT_LABEL_INSIDE_FILL,
+    SEGMENT_LABEL_OUTSIDE_FILL,
+} from '../core/labels';
 
 import {
     ANIMATION_REFERENCE,
@@ -39,12 +49,13 @@ import {
     Context,
     createArc,
     createGroup,
-    createText,
+    createPolyline,
     elementIsArc,
-    elementIsText,
     EventMap,
     getTotal,
     Group,
+    Point,
+    Polyline,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -71,6 +82,12 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     color?: keyof TData | ((item: TData) => string);
     innerRadius?: number;
     legend?: ChartLegendInput;
+    /**
+     * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
+     * inside each segment; `'outside'` places them beyond the arc with a leader line; a full object
+     * customises position/font/colour.
+     */
+    labels?: ChartSegmentLabelsInput;
     /** Format applied to segment values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -124,6 +141,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             const getValue = resolveAccessor<TData, number>(value);
             const getLabel = resolveAccessor<TData, string>(label);
             const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
+
+            const labels = normalizeSegmentLabels(this.options.labels);
 
             // Register each segment in the shared colour map so it draws a palette colour instead
             // of the unresolved-series grey fallback (honouring any explicit per-item colour).
@@ -242,21 +261,26 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     key: segmentKey,
                 });
 
-                const [centroidX, centroidY] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
+                const labelInfo = this.computeLabel(item, labels, segmentLabel);
 
-                const showLabel = segmentEnd - segmentStart >= MIN_LABEL_ANGLE;
-
-                const labelText = createText({
-                    class: 'segment__label',
-                    fill: '#ffffff',
-                    font: '600 11px sans-serif',
-                    x: centroidX,
-                    y: centroidY,
-                    content: showLabel ? segmentLabel : '',
-                    textAlign: 'center',
-                    textBaseline: 'middle',
+                const connector = createPolyline({
+                    class: 'segment__connector',
+                    points: labelInfo.connector,
+                    stroke: segmentColor,
+                    lineWidth: 1,
                     opacity: 0,
+                    pointerEvents: 'none',
                     zIndex: 1,
+                });
+
+                const labelText = createSegmentLabel({
+                    content: labelInfo.content,
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    textAlign: labelInfo.textAlign,
+                    textBaseline: labelInfo.textBaseline,
+                    fill: labelInfo.fill,
+                    font: labelInfo.font,
                 });
 
                 return createGroup({
@@ -264,6 +288,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     class: 'segment',
                     children: [
                         segmentArc,
+                        connector,
                         labelText,
                     ],
                 });
@@ -282,6 +307,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
                 const arc = group.query('arc') as Arc;
                 const labelText = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
                 const resolvedColor = item.color ?? (arc.stroke as string);
 
@@ -297,8 +323,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     fill: setColorAlpha(resolvedColor, REST_ALPHA),
                 } as Partial<ArcState>;
 
-                const [centroidX, centroidY] = arc.getCentroid(arcData);
-
                 arc.data = arcData;
                 this.attachSegmentHover(arc, {
                     color: resolvedColor,
@@ -307,11 +331,27 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     key: item.key,
                 });
 
-                labelText.content = segmentEnd - segmentStart >= MIN_LABEL_ANGLE ? item.label : '';
+                const labelInfo = this.computeLabel(item, labels, item.label);
+
+                labelText.content = labelInfo.content;
+                labelText.textAlign = labelInfo.textAlign;
+                labelText.textBaseline = labelInfo.textBaseline;
+                labelText.fill = labelInfo.fill;
+
+                if (labelInfo.font) {
+                    labelText.font = labelInfo.font;
+                }
 
                 labelText.data = {
-                    x: centroidX,
-                    y: centroidY,
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    opacity: labelInfo.visible ? 1 : 0,
+                } as Partial<TextState>;
+
+                connector.points = labelInfo.connector;
+                connector.stroke = resolvedColor;
+                connector.data = {
+                    opacity: labelInfo.showConnector ? 1 : 0,
                 };
 
                 return group;
@@ -320,6 +360,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
                 const labelText = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
                 const midAngle = (arc.startAngle + arc.endAngle) / 2;
 
@@ -334,6 +375,10 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     opacity: 0,
                 } as Partial<TextState>;
 
+                connector.data = {
+                    opacity: 0,
+                };
+
                 return group;
             });
 
@@ -341,6 +386,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 ...entries,
                 ...updates,
             ];
+
+            this.registerHighlightGroups(this.groups);
 
             scene.add(entries);
 
@@ -358,7 +405,9 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(elements.filter(elementIsText), {
+                // Fade in the non-arc children (labels and any outside-label connectors). Hidden
+                // labels have empty content / degenerate connectors, so this renders nothing for them.
+                return renderer.transition(elements.filter(element => !elementIsArc(element)), {
                     duration: enter.duration,
                     ease: enter.ease,
                     state: { opacity: 1 },
@@ -384,6 +433,45 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 transitionExits(),
             ]);
         });
+    }
+
+    /**
+     * Resolves a segment's label placement (inside centroid or outside leader line) and content,
+     * using the shared radial-label helper. The connector always has ≥2 points (a degenerate line
+     * at the anchor when hidden) so bounding-box computation stays safe.
+     */
+    private computeLabel(
+        geometry: { cx: number;
+            cy: number;
+            startAngle: number;
+            endAngle: number;
+            radius: number;
+            innerRadius: number; },
+        labels: ChartSegmentLabelsOptions,
+        text: string
+    ) {
+        const visible = labels.visible && (geometry.endAngle - geometry.startAngle) >= MIN_LABEL_ANGLE;
+        const outside = labels.position === 'outside';
+        const placement = resolveRadialLabel(geometry);
+        const anchor = outside ? placement.outside : placement.inside;
+        const fill = labels.fontColor ?? (outside ? SEGMENT_LABEL_OUTSIDE_FILL : SEGMENT_LABEL_INSIDE_FILL);
+        const showConnector = visible && outside;
+        const connector: Point[] = showConnector
+            ? placement.outside.connector
+            : [[anchor.x, anchor.y], [anchor.x, anchor.y]];
+
+        return {
+            visible,
+            content: visible ? text : '',
+            x: anchor.x,
+            y: anchor.y,
+            textAlign: anchor.textAlign,
+            textBaseline: anchor.textBaseline,
+            fill,
+            font: labels.font,
+            connector,
+            showConnector,
+        };
     }
 
     private attachSegmentHover(arc: Arc, segment: { color: string;

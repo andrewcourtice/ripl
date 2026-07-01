@@ -647,6 +647,70 @@ export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Par
 }
 
 // ---------------------------------------------------------------------------
+// Segment labels (radial charts: pie, polar-area)
+// ---------------------------------------------------------------------------
+
+/** Where a radial segment label sits: inside the segment, or outside with a leader line. */
+export type SegmentLabelPosition = 'inside' | 'outside';
+
+/** Fully resolved segment-label options for radial charts. */
+export interface ChartSegmentLabelsOptions {
+    visible: boolean;
+    position: SegmentLabelPosition;
+    /** Label font; when omitted the shared segment-label font is used. */
+    font?: string;
+    /** Label colour; when omitted a sensible default is chosen for the position. */
+    fontColor?: string;
+}
+
+/**
+ * Segment-label input: a boolean toggle, a {@link SegmentLabelPosition} string (which also enables
+ * labels), or a partial options object.
+ */
+export type ChartSegmentLabelsInput = boolean | SegmentLabelPosition | Partial<ChartSegmentLabelsOptions>;
+
+const SEGMENT_LABELS_DEFAULTS: ChartSegmentLabelsOptions = {
+    // Hidden by default — the legend is shown by default, so on-segment labels are opt-in.
+    visible: false,
+    position: 'inside',
+};
+
+const SEGMENT_LABEL_POSITIONS: SegmentLabelPosition[] = ['inside', 'outside'];
+
+/** Normalizes a segment-label input into fully resolved {@link ChartSegmentLabelsOptions}. */
+export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults?: Partial<ChartSegmentLabelsOptions>): ChartSegmentLabelsOptions {
+    const base = {
+        ...SEGMENT_LABELS_DEFAULTS,
+        ...defaults,
+    };
+
+    if (input === undefined) {
+        return { ...base };
+    }
+
+    if (typeIsBoolean(input)) {
+        return {
+            ...base,
+            visible: input,
+        };
+    }
+
+    if (typeIsString(input) && SEGMENT_LABEL_POSITIONS.includes(input as SegmentLabelPosition)) {
+        return {
+            ...base,
+            visible: true,
+            position: input as SegmentLabelPosition,
+        };
+    }
+
+    return {
+        ...base,
+        visible: true,
+        ...(input as Partial<ChartSegmentLabelsOptions>),
+    };
+}
+
+// ---------------------------------------------------------------------------
 // Format helper
 // ---------------------------------------------------------------------------
 
