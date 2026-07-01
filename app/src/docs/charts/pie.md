@@ -18,6 +18,13 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
             <RiplField label="Donut" inline>
                 <RiplSwitch v-model="donut" />
             </RiplField>
+            <RiplField label="Labels">
+                <RiplSelect v-model="labels">
+                    <option value="off">Off</option>
+                    <option value="inside">Inside</option>
+                    <option value="outside">Outside</option>
+                </RiplSelect>
+            </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -52,6 +59,11 @@ const COUNTRIES = [
 ];
 
 const donut = ref(false);
+const labels = ref<'off' | 'inside' | 'outside'>('off');
+
+function labelsOption() {
+    return labels.value === 'off' ? false : labels.value;
+}
 
 const config = useChartConfig({
     features: { title: true, legend: true, animation: true },
@@ -80,6 +92,7 @@ const {
     value: 'value',
     label: 'label',
     data,
+    labels: labelsOption(),
     ...buildCommonOptions(config),
 }));
 
@@ -90,12 +103,13 @@ function update() {
 function apply() {
     chart.value?.update({
         innerRadius: donut.value ? 0.25 : 0,
+        labels: labelsOption(),
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch(donut, apply);
+watch([donut, labels], apply);
 
 function editData(body: (index: number) => void) {
     const index = Math.floor(Math.random() * data.length);

@@ -16,7 +16,15 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Polar Area">
+            <RiplField label="Labels">
+                <RiplSelect v-model="labels">
+                    <option value="off">Off</option>
+                    <option value="inside">Inside</option>
+                    <option value="outside">Outside</option>
+                </RiplSelect>
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -39,10 +47,17 @@ import {
 } from '@ripl/utilities';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
 const LABELS = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Stamina', 'Wisdom'];
+
+const labels = ref<'off' | 'inside' | 'outside'>('off');
+
+function labelsOption() {
+    return labels.value === 'off' ? false : labels.value;
+}
 
 const config = useChartConfig({
     features: { title: true, legend: true, animation: true },
@@ -71,6 +86,7 @@ const {
     value: 'value',
     label: 'label',
     data,
+    labels: labelsOption(),
     ...buildCommonOptions(config),
 }));
 
@@ -79,10 +95,14 @@ function update() {
 }
 
 function apply() {
-    chart.value?.update(buildCommonOptions(config));
+    chart.value?.update({
+        labels: labelsOption(),
+        ...buildCommonOptions(config),
+    });
 }
 
 watch(config, apply, { deep: true });
+watch(labels, apply);
 
 function addData() {
     const unusedLabels = LABELS.filter(l => !data.some(d => d.label === l));
