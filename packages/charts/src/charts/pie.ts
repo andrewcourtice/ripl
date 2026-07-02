@@ -52,6 +52,7 @@ import {
     getTotal,
     Group,
     Polyline,
+    PolylineState,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -124,6 +125,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();
@@ -279,6 +281,11 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     font: labelInfo.font,
                 });
 
+                // Fade each to its intended rest opacity on entry (hidden labels/connectors settle at
+                // 0 so they can later fade *in* on an update, rather than sitting at full opacity).
+                connector.data = { opacity: labelInfo.showConnector ? 1 : 0 } as Partial<PolylineState>;
+                labelText.data = { opacity: labelInfo.visible ? 1 : 0 } as Partial<TextState>;
+
                 return createGroup({
                     id: segmentKey,
                     class: 'segment',
@@ -344,11 +351,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     opacity: labelInfo.visible ? 1 : 0,
                 } as Partial<TextState>;
 
-                connector.points = labelInfo.connector;
+                // Route the connector's new geometry through `.data` (not a direct `points =`) so it
+                // tweens in lockstep with the label position instead of snapping.
                 connector.stroke = resolvedColor;
                 connector.data = {
+                    points: labelInfo.connector,
                     opacity: labelInfo.showConnector ? 1 : 0,
-                };
+                } as Partial<PolylineState>;
 
                 return group;
             });
@@ -401,13 +410,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     state: element.data as Partial<ArcState>,
                 }));
 
-                // Fade in the non-arc children (labels and any outside-label connectors). Hidden
-                // labels have empty content / degenerate connectors, so this renders nothing for them.
-                return renderer.transition(elements.filter(element => !elementIsArc(element)), {
+                // Fade in the non-arc children (labels and any outside-label connectors) to their
+                // intended rest opacity (hidden ones settle at 0), read from each element's `.data`.
+                return renderer.transition(elements.filter(element => !elementIsArc(element)), element => ({
                     duration: enter.duration,
                     ease: enter.ease,
-                    state: { opacity: 1 },
-                });
+                    state: element.data as Partial<BaseElementState>,
+                }));
             };
 
             const transitionUpdates = async () => renderer.transition(updates, element => ({

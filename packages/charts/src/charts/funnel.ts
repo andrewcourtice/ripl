@@ -37,6 +37,8 @@ import {
     Rect,
     RectState,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -221,6 +223,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             const updateGroups = updates.map(([item, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
+                const label = group.getElementsByType('text')[0] as Text;
                 const itemColor = colorFor(item);
 
                 if (rect) {
@@ -233,6 +236,16 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     } as RectState;
 
                     this.attachSegmentHover(rect, item, itemColor);
+                }
+
+                // Re-centre the label on the resized/repositioned segment (was previously left stale).
+                if (label) {
+                    label.content = item.label;
+                    label.data = {
+                        x: centerX,
+                        y: item.y + item.height / 2,
+                        opacity: 1,
+                    } as Partial<TextState>;
                 }
 
                 return group;
@@ -263,8 +276,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 state: element.data as Record<string, unknown>,
             }));
 
-            // Animate updates
+            // Animate updates (rects reposition/resize; labels re-centre on their segment).
             const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            const updateTexts = updateGroups.flatMap(g => g.getElementsByType('text')) as Text[];
 
             const updatesTransition = renderer.transition(updateRects, element => ({
                 duration: this.getAnimationDuration(800),
@@ -272,10 +286,17 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 state: element.data as RectState,
             }));
 
+            const updateTextsTransition = renderer.transition(updateTexts, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: element.data as Partial<TextState>,
+            }));
+
             return Promise.all([
                 rectsTransition,
                 textsTransition,
                 updatesTransition,
+                updateTextsTransition,
             ]);
         });
     }

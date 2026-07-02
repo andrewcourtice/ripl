@@ -92,6 +92,7 @@ const {
     value: 'value',
     label: 'label',
     data,
+    innerRadius: donut.value ? 0.25 : 0,
     labels: labelsOption(),
     ...buildCommonOptions(config),
 }));

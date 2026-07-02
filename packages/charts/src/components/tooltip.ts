@@ -13,6 +13,9 @@ import {
     Text,
 } from '@ripl/core';
 
+/** Where the tooltip box sits relative to the anchor point. */
+export type TooltipPlacement = 'above' | 'center';
+
 /** Options for constructing a tooltip component. */
 export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
@@ -24,6 +27,12 @@ export interface TooltipOptions extends ChartComponentOptions {
     maxWidth?: number;
     wrap?: boolean;
     formatContent?: (content: string) => string;
+    /**
+     * Where the box sits relative to the anchor point. `'above'` (default) floats it above the point
+     * (best for cartesian markers); `'center'` centres the box on the point (best for radial charts
+     * whose anchor is a segment centroid).
+     */
+    placement?: TooltipPlacement;
 }
 
 /** A boundary-aware tooltip component that shows text content near the mouse pointer with animated transitions. */
@@ -37,6 +46,7 @@ export class Tooltip extends ChartComponent {
     private backgroundColor: string;
     private borderColor: string;
     private borderRadiusValue: number;
+    private placement: TooltipPlacement;
 
     constructor(options: TooltipOptions) {
         const {
@@ -48,6 +58,7 @@ export class Tooltip extends ChartComponent {
             backgroundColor = '#1a1a1a',
             borderColor = '#444444',
             borderRadius = 6,
+            placement = 'above',
         } = options;
 
         super({
@@ -61,6 +72,7 @@ export class Tooltip extends ChartComponent {
         this.backgroundColor = backgroundColor;
         this.borderColor = borderColor;
         this.borderRadiusValue = borderRadius;
+        this.placement = placement;
     }
 
     /** Shows the tooltip at the given position with the specified text content. */
@@ -119,9 +131,11 @@ export class Tooltip extends ChartComponent {
         const bgWidth = textWidth + this.padding * 2;
         const bgHeight = textHeight + this.padding * 2;
 
-        // Calculate initial position (centered above the point)
+        // Horizontally centred on the point; vertically either above it (default) or centred on it.
         let bgX = x - bgWidth / 2;
-        let bgY = y - bgHeight - 10;
+        let bgY = this.placement === 'center'
+            ? y - bgHeight / 2
+            : y - bgHeight - 10;
 
         // Get scene boundaries
         const sceneWidth = this.scene.width;
@@ -140,8 +154,8 @@ export class Tooltip extends ChartComponent {
 
         // Check vertical boundaries
         if (bgY < 0) {
-            // Would be cut off on the top, position below the point instead
-            bgY = y + offset;
+            // Above placement flips below the point; center placement just clamps to the top edge.
+            bgY = this.placement === 'above' ? y + offset : offset;
         } else if (bgY + bgHeight > sceneHeight) {
             // Would be cut off on the bottom
             bgY = sceneHeight - bgHeight - offset;

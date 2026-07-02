@@ -166,6 +166,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();

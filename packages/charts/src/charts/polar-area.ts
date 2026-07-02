@@ -140,6 +140,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();

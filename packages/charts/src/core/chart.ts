@@ -72,6 +72,16 @@ export interface BaseChartOptions {
     animation?: boolean | Partial<ChartAnimationOptions>;
 }
 
+/** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
+const HIGHLIGHT_DIM_OPACITY = 0.15;
+
+/** Symbol slot used to remember an element's rest opacity across legend hover-highlight dim/restore. */
+const HIGHLIGHT_REST = Symbol('highlight-rest');
+
+interface HighlightHost {
+    [HIGHLIGHT_REST]?: number;
+}
+
 /** Abstract base class for all chart types, providing scene, renderer, animation, color management, and lifecycle. */
 export class Chart<
     TOptions extends BaseChartOptions,
@@ -293,6 +303,12 @@ export class Chart<
      * Highlights a single series/segment by id (dimming the others), or restores all when `null`.
      * Wired to legend hover via {@link reserveLegend}. No-ops for charts that never registered
      * highlight groups.
+     *
+     * Dims the leaf elements of each group rather than the group itself: a group's opacity does not
+     * cascade multiplicatively, and the leaves carry no explicit `opacity` (so a group-level tween is
+     * a no-op — `element.interpolate` skips nil current values). Each leaf's rest opacity is captured
+     * once on the element (via a Symbol slot, like `applyHoverHighlight`), so hidden elements stay
+     * hidden and restoring returns to the true value.
      */
     protected highlightSeries(id: string | null) {
         if (this.highlightGroups.size === 0) {
@@ -302,12 +318,27 @@ export class Chart<
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         this.highlightGroups.forEach((group, groupId) => {
-            this.renderer.transition(group, {
-                duration,
-                ease,
-                state: {
-                    opacity: id === null || groupId === id ? 1 : 0.15,
-                },
+            const active = id === null || groupId === id;
+
+            group.graph(false).forEach(element => {
+                const host = element as unknown as HighlightHost;
+
+                if (host[HIGHLIGHT_REST] === undefined) {
+                    const rest = element.opacity ?? 1;
+                    host[HIGHLIGHT_REST] = rest;
+                    // Seed a concrete opacity so the transition below has a non-nil value to animate.
+                    element.opacity = rest;
+                }
+
+                const rest = host[HIGHLIGHT_REST]!;
+
+                this.renderer.transition(element, {
+                    duration,
+                    ease,
+                    state: {
+                        opacity: active ? rest : rest * HIGHLIGHT_DIM_OPACITY,
+                    },
+                });
             });
         });
     }

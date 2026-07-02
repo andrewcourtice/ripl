@@ -253,6 +253,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();
