@@ -243,6 +243,12 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             exits.forEach(el => el.destroy());
 
+            // A cell only carries a label when it is large enough to fit one; the font scales with
+            // the cell width. Shared by the entry and update branches so both stay in sync.
+            const showLabelFor = (node: { width: number;
+                height: number; }) => node.width > 40 && node.height > 20;
+            const labelFont = (width: number) => `600 ${Math.min(12, Math.max(9, width / 8))}px sans-serif`;
+
             const entryGroups = entries.map(node => {
                 const nodeColor = colorFor(node);
 
@@ -268,7 +274,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 // Add label if the cell is large enough
                 const children: (Rect | Text)[] = [rect];
 
-                if (node.width > 40 && node.height > 20) {
+                if (showLabelFor(node)) {
                     const text = createSegmentLabel({
                         id: `${node.key}-label`,
                         x: node.x + node.width / 2,
@@ -276,7 +282,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         content: node.label,
                         // Keep the treemap's size-adaptive font, but with the shared weight/family
                         // (and explicit styling, so Canvas and SVG render identically).
-                        font: `600 ${Math.min(12, Math.max(9, node.width / 8))}px sans-serif`,
+                        font: labelFont(node.width),
                     });
 
                     text.data = { opacity: 1 };
@@ -289,6 +295,10 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     children,
                 });
             });
+
+            // Labels reconciled on the update path (repositioned, and faded in/out as cells cross the
+            // size threshold), collected here so they animate alongside their rectangles below.
+            const updateTexts: Text[] = [];
 
             const updateGroups = updates.map(([node, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
@@ -304,6 +314,38 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     } as RectState;
 
                     this.attachCellHover(rect, node, nodeColor);
+                }
+
+                // Move the label to the cell's new centre in lockstep with the rect (routing the new
+                // position through `.data` so it tweens instead of snapping). Cells that grew past the
+                // threshold gain a label; cells that shrank below it fade theirs out.
+                const cx = node.x + node.width / 2;
+                const cy = node.y + node.height / 2;
+                const showLabel = showLabelFor(node);
+                let text = group.getElementsByType('text')[0] as Text | undefined;
+
+                if (!text && showLabel) {
+                    text = createSegmentLabel({
+                        id: `${node.key}-label`,
+                        x: cx,
+                        y: cy,
+                        content: node.label,
+                        font: labelFont(node.width),
+                    });
+
+                    group.add(text);
+                }
+
+                if (text) {
+                    text.content = node.label;
+                    text.font = labelFont(node.width);
+                    text.data = {
+                        x: cx,
+                        y: cy,
+                        opacity: showLabel ? 1 : 0,
+                    };
+
+                    updateTexts.push(text);
                 }
 
                 return group;
@@ -344,10 +386,18 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
+            // Glide the labels to their cells' new centres (and fade in/out) alongside the rects.
+            const updateTextsTransition = renderer.transition(updateTexts, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: (element.data ?? {}) as Record<string, unknown>,
+            }));
+
             return Promise.all([
                 rectsTransition,
                 textsTransition,
                 updatesTransition,
+                updateTextsTransition,
             ]);
         });
     }
