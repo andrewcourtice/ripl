@@ -359,6 +359,7 @@ export interface PageLoadPoint {
     page: string;
     loadTime: number;
     views: number;
+    sessions: number;
 }
 
 export function generatePageLoadData(period: Period): PageLoadPoint[] {
@@ -374,5 +375,7 @@ export function generatePageLoadData(period: Period): PageLoadPoint[] {
         page,
         loadTime: Math.round((200 + rand() * 2800) * 10) / 10,
         views: Math.round((100 + rand() * 4900) * multiplier),
+        // A third dimension for the scatter's bubble size (unique sessions on the page).
+        sessions: Math.round((80 + rand() * 3200) * multiplier),
     }));
 }

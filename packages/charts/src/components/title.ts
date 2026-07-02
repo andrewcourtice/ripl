@@ -72,7 +72,9 @@ export class ChartTitle extends ChartComponent {
             this.text = createText({
                 id: 'chart-title',
                 class: 'chart-title',
-                zIndex: 2500,
+                // Sit above the plot/axes but below the tooltip (1000) so tooltips near the
+                // top of the chart aren't occluded by the title.
+                zIndex: 500,
                 content: this.options.text,
                 x: 0,
                 y: 0,

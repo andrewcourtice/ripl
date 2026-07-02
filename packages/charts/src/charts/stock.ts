@@ -305,7 +305,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         } = arrayJoin(
             data,
             this.candlestickGroups,
-            (item, group) => group.id === this.getCandlestickValues(item).key
+            (item, group) => group.id === `candle-${this.getCandlestickValues(item).key}`
         );
 
         exits.forEach(el => el.destroy());
@@ -361,7 +361,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             });
 
             const group = createGroup({
-                id: values.key,
+                // Namespace the candle group id so a data key can never equal an axis tick id
+                // (which shares a single global DOM cache in the SVG renderer).
+                id: `candle-${values.key}`,
                 children: [wick, body],
             });
 

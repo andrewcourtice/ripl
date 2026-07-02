@@ -48,6 +48,18 @@ export function generateMockDailyData(count = 100, basePrice = 450): MockDailyPo
     });
 }
 
+/**
+ * Adds a trailing simple moving average of `close` as an `ma` field, so a chart can render it as a
+ * second series (which makes the legend — and its hover-highlight — appear).
+ */
+export function withMovingAverage<T extends { close: number }>(data: T[], window = 7): (T & { ma: number })[] {
+    return data.map((item, index) => {
+        const slice = data.slice(Math.max(0, index - window + 1), index + 1);
+        const avg = slice.reduce((sum, entry) => sum + entry.close, 0) / slice.length;
+        return { ...item, ma: Math.round(avg * 100) / 100 };
+    });
+}
+
 export interface MockIntradayPoint {
     datetime: string;
     open: number;

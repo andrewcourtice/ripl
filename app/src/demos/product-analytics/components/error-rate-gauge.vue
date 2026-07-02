@@ -1,6 +1,7 @@
 <template>
     <dashboard-card title="Error Rate">
         <div ref="chartEl" class="dashboard-chart"></div>
+        <div class="chart-readout">{{ readout }}</div>
     </dashboard-card>
 </template>
 
@@ -21,8 +22,10 @@ import { useAnalyticsStore } from '../store/analytics';
 const store = useAnalyticsStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let chart: any;
+let chart: ReturnType<typeof createGaugeChart> | undefined;
+
+const DEFAULT_READOUT = 'Hover the gauge for the current rate';
+const readout = ref(DEFAULT_READOUT);
 
 function buildChart() {
     const value = store.errorRate;
@@ -52,6 +55,13 @@ function buildChart() {
     }
 
     chart = createGaugeChart(context.value, options);
+
+    chart.on('valueenter', event => {
+        readout.value = `Current error rate: ${event.data.value.toFixed(2)}%`;
+    });
+    chart.on('valueleave', () => {
+        readout.value = DEFAULT_READOUT;
+    });
 }
 
 watch(context, () => buildChart());

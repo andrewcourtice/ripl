@@ -57,6 +57,7 @@ import {
     LineState,
     maxOf,
     Polyline,
+    PolylineState,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -513,6 +514,11 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     font: labelInfo.font,
                 });
 
+                // Fade each to its intended rest opacity on entry (hidden labels/connectors settle at
+                // 0 so they can later fade *in* on an update, rather than sitting at full opacity).
+                connector.data = { opacity: labelInfo.showConnector ? 1 : 0 } as Partial<PolylineState>;
+                segmentLabel.data = { opacity: labelInfo.visible ? 1 : 0 } as Partial<TextState>;
+
                 return createGroup({
                     id: key,
                     class: 'segment',
@@ -579,11 +585,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     opacity: labelInfo.visible ? 1 : 0,
                 } as Partial<TextState>;
 
-                connector.points = labelInfo.connector;
+                // Route the connector's new geometry through `.data` (not a direct `points =`) so it
+                // tweens in lockstep with the label position instead of snapping.
                 connector.stroke = resolvedColor;
                 connector.data = {
+                    points: labelInfo.connector,
                     opacity: labelInfo.showConnector ? 1 : 0,
-                };
+                } as Partial<PolylineState>;
 
                 return group;
             });
@@ -633,13 +641,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(elements.filter(element => !elementIsArc(element)), {
+                // Fade in the non-arc children (labels and any outside-label connectors) to their
+                // intended rest opacity (hidden ones settle at 0), read from each element's `.data`.
+                return renderer.transition(elements.filter(element => !elementIsArc(element)), element => ({
                     duration: animDuration * 1.5,
                     ease: easeOutQuint,
-                    state: {
-                        opacity: 1,
-                    },
-                });
+                    state: element.data as Partial<BaseElementState>,
+                }));
             }
 
             async function transitionUpdates() {

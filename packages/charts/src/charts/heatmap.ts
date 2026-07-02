@@ -213,6 +213,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             // Initial y-axis setup to measure label width
             const initialYScale = scaleBand(yCategories, [top, bottom], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             this.yAxis.scale = Object.assign(
@@ -238,6 +239,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             // Initial x-axis setup to measure label height
             const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             this.xAxis.scale = Object.assign(
@@ -263,10 +265,12 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             // Rebuild scales with correct chart area bounds
             const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             const yScale = scaleBand(yCategories, [top, xAxisBoundingBox.top], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             // Update axes with final scales

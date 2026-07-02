@@ -17,12 +17,12 @@ import {
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
+import type { MockIntradayPoint } from '../data/mock';
 
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let chart: any;
+let chart: ReturnType<typeof createStockChart<MockIntradayPoint>> | undefined;
 
 function buildChart() {
     const data = store.stockIntradayData;
@@ -42,6 +42,8 @@ function buildChart() {
         close: 'close',
         volume: 'volume',
         showVolume: true,
+        upColor: '#16a34a',
+        downColor: '#dc2626',
         padding: {
             top: 20,
             right: 20,
@@ -55,8 +57,16 @@ function buildChart() {
                     return parts.length > 1 ? parts[1].slice(0, 5) : val;
                 },
             },
+            y: {
+                format: (val: number) => `$${val.toFixed(2)}`,
+            },
         },
     });
+
+    // Drive the summary cards from the hovered/selected candle; clear back to the latest on leave.
+    chart.on('candleenter', event => store.setSelectedCandle(event.data.key));
+    chart.on('candleclick', event => store.setSelectedCandle(event.data.key));
+    chart.on('candleleave', () => store.setSelectedCandle(null));
 }
 
 watch(context, () => buildChart());

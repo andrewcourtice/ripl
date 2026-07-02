@@ -312,14 +312,20 @@ export class ChartXAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
+        } = arrayJoin(ticks, groups, (value, group) => group.id === `x-tick:${value}`);
 
         const labelEntryTexts = groupEntries.map(value => {
             const x = this.scale(value);
             const label = this.formatTickLabel(value);
 
             return createGroup({
-                id: label,
+                // Key by the raw tick value (namespaced), not the display label: the label is not
+                // guaranteed unique/stable and, in the SVG renderer, tick-group ids share a single
+                // global DOM cache with every other element — so a formatted label colliding with a
+                // data element id (e.g. a candlestick group keyed by the same date string) makes the
+                // two fight over one DOM node and the axis label vanishes. A value-namespaced id is
+                // unique per tick and can't collide with data ids.
+                id: `x-tick:${value}`,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [
@@ -463,14 +469,16 @@ export class ChartYAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => this.formatTickLabel(value) === group.id);
+        } = arrayJoin(ticks, groups, (value, group) => group.id === `y-tick:${value}`);
 
         const labelEntryTexts = groupEntries.map(value => {
             const y = this.scale(value);
             const label = this.formatTickLabel(value);
 
             return createGroup({
-                id: label,
+                // See the x-axis note: key by the namespaced raw tick value, not the display label,
+                // so ids stay unique/stable and can't collide with data element ids in the SVG cache.
+                id: `y-tick:${value}`,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [

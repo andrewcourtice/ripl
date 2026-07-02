@@ -38,6 +38,7 @@ import {
     createText,
     easeOutCubic,
     easeOutQuart,
+    Element,
     EventMap,
     Group,
     Line,
@@ -274,7 +275,20 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             right: labelExits,
         } = arrayJoin(axisIndices, this.gridLabels, (idx, label) => label.id === `radar-label-${idx}`);
 
-        labelExits.forEach(el => el.destroy());
+        // Fade exiting axis labels out before destroying them (instead of removing instantly) so
+        // removing an axis animates symmetrically with adding one.
+        const exitLabels = new Set<Element>(labelExits);
+
+        labelExits.forEach(label => {
+            this.renderer.transition(label, {
+                duration: animDuration,
+                ease: easeOutQuart,
+                state: {
+                    opacity: 0,
+                },
+                onComplete: el => el.destroy(),
+            });
+        });
 
         const newLabels = labelEntries.map(idx => {
             const { labelX, labelY, textAlign } = labelProps(idx);
@@ -288,7 +302,9 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 font: '11px sans-serif',
                 textAlign,
                 textBaseline: 'middle',
-                opacity: isEntry ? 0 : 1,
+                // Always start hidden so a newly-added axis label fades in via the transition below,
+                // not just on the first render.
+                opacity: 0,
                 data: {
                     opacity: 1,
                 } as Partial<TextState>,
@@ -315,8 +331,9 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             ...labelUpdates.map(([, label]) => label),
         ];
 
-        // Animate: staggered grow on entry, smooth morph on update.
-        const allElements = this.gridGroup!.children;
+        // Animate: staggered grow on entry, smooth morph on update. Exclude exiting labels — they
+        // run their own fade-out transition above and are destroyed on completion.
+        const allElements = this.gridGroup!.children.filter(element => !exitLabels.has(element));
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({
