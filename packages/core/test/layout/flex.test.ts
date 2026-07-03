@@ -307,7 +307,7 @@ describe('Flex', () => {
             expect(graphSpy).not.toHaveBeenCalled();
         });
 
-        test('Should repaint the owning scene after reflow', () => {
+        test('Should repaint the owning scene once (coalesced) after reflow', async () => {
             const scene = createScene(el);
             const flex = createFlex({
                 x: 0,
@@ -317,12 +317,14 @@ describe('Flex', () => {
             });
 
             scene.add(flex);
+            await nextFrame();
 
             const renderSpy = vi.spyOn(scene, 'render');
 
             flex.reflow();
+            await nextFrame();
 
-            expect(renderSpy).toHaveBeenCalled();
+            expect(renderSpy).toHaveBeenCalledTimes(1);
 
             scene.destroy();
         });

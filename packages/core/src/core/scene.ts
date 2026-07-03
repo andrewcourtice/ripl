@@ -44,9 +44,16 @@ export interface SceneOptions extends GroupOptions {
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<BaseElementState, SceneEventMap> {
 
+    #frame = createFrameBuffer();
+    #graphDirty = false;
+    #renderOnUpdate: boolean;
+
     public context: TContext;
 
     public buffer: Element[];
+
+    /** The renderer driving this scene, if any. Set by `Renderer`; used to avoid redundant renders. */
+    public renderer?: { isRunning: boolean };
 
     /** The pixel width of the scene's rendering context. */
     public get width() {
@@ -61,7 +68,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
     constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
             renderOnResize = true,
-            // renderOnUpdate = true,
+            renderOnUpdate = true,
             ...groupOptions
         } = options || {};
 
@@ -88,8 +95,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
 
         this.context = context;
         this.buffer = this.graph();
-
-        const requestFrame = createFrameBuffer();
+        this.#renderOnUpdate = renderOnUpdate;
 
         this.retain(context.on('resize', () => {
             this.emit('resize', null);
@@ -99,22 +105,33 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
             }
         }));
 
-        this.on('graph', () => requestFrame(() => {
-            this.rebuffer();
-            context.invalidateTrackedElements();
-        }));
-
-        // this.on('updated', ({ data }) => requestFrame(() => {
-        //     if (data.key === 'zIndex') {
-        //         this.rebuffer();
-        //     }
-
-        //     this.render();
-        // }));
+        this.on('graph', () => {
+            this.#graphDirty = true;
+            this.requestRender();
+        });
     }
 
     private rebuffer() {
         this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+    }
+
+    /**
+     * Requests a single coalesced render on the next frame. If the scene's graph changed it is
+     * rebuffered first (so the render never paints a stale buffer). The render itself is skipped
+     * when a renderer loop is actively driving the scene, or when `renderOnUpdate` is disabled.
+     */
+    public requestRender(): void {
+        this.#frame(() => {
+            if (this.#graphDirty) {
+                this.rebuffer();
+                this.context.invalidateTrackedElements();
+                this.#graphDirty = false;
+            }
+
+            if (this.#renderOnUpdate && !this.renderer?.isRunning) {
+                this.render();
+            }
+        });
     }
 
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */

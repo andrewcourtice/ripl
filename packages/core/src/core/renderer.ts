@@ -159,6 +159,11 @@ export class Renderer extends EventBus<RendererEventMap> {
         return !!this.transitionMap.size;
     }
 
+    /** Whether the animation loop is currently running. */
+    public get isRunning() {
+        return this.running;
+    }
+
     constructor(scene: Scene, options?: RendererOptions) {
         super();
 
@@ -169,6 +174,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         } = options || {};
 
         this.scene = scene;
+        this.scene.renderer = this;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
         this.debugOptions = resolveDebugOptions(debug);
@@ -535,6 +541,11 @@ export class Renderer extends EventBus<RendererEventMap> {
     /** Stops the renderer and destroys all event subscriptions. */
     public destroy(): void {
         this.stop();
+
+        if (this.scene.renderer === this) {
+            this.scene.renderer = undefined;
+        }
+
         super.destroy();
     }
 

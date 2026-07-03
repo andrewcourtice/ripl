@@ -21,6 +21,10 @@ import {
     Box,
 } from '../math';
 
+import type {
+    Context,
+} from '../context';
+
 import {
     typeIsNumber,
     valueOneOrMore,
@@ -180,7 +184,7 @@ export abstract class Layout<
     }
 
     #repaint(): void {
-        this.#findScene()?.render();
+        this.#findScene()?.requestRender();
     }
 
     #findScene(): Scene | undefined {
@@ -296,6 +300,13 @@ export abstract class Layout<
         });
 
         super.remove(element);
+    }
+
+    /** Renders the laid-out children. Runs a synchronous relayout first so standalone
+     * `layout.render(context)` (outside a scene) positions children correctly. */
+    public render(context: Context): void {
+        this.reflow();
+        super.render(context);
     }
 
     /** Forces a synchronous relayout (useful for tests and per-frame animated reflow). */
