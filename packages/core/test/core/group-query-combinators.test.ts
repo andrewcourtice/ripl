@@ -5,9 +5,11 @@ import {
 } from 'vitest';
 
 import {
+    closest,
     createCircle,
     createGroup,
     createRect,
+    matches,
     queryAll,
 } from '../../src';
 
@@ -100,6 +102,84 @@ describe('Group querying', () => {
 
         expect(() => queryAll(standalone, 'rect + rect')).not.toThrow();
         expect(queryAll(standalone, 'rect + rect')).toEqual([]);
+    });
+
+});
+
+describe('matches', () => {
+
+    test('tests an element against a compound selector', () => {
+        const target = createRect({
+            id: 'box',
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            class: 'active',
+        });
+
+        expect(matches(target, 'rect')).toBe(true);
+        expect(matches(target, 'rect.active')).toBe(true);
+        expect(matches(target, '#box')).toBe(true);
+        expect(matches(target, 'circle')).toBe(false);
+        expect(matches(target, '.inactive')).toBe(false);
+    });
+
+    test('returns false for an empty selector', () => {
+        expect(matches(rect(), '')).toBe(false);
+    });
+
+    test('supports combinator selectors relative to the root', () => {
+        const target = rect('deep');
+        const inner = createGroup({ children: [target] });
+        createGroup({ children: [inner] });
+
+        expect(matches(target, 'group rect')).toBe(true);
+        expect(matches(target, 'group > rect')).toBe(true);
+    });
+
+});
+
+describe('closest', () => {
+
+    test('returns the nearest matching ancestor', () => {
+        const target = rect('deep');
+        const inner = createGroup({
+            id: 'inner',
+            children: [target],
+        });
+        const outer = createGroup({
+            id: 'outer',
+            children: [inner],
+        });
+
+        expect(closest(target, 'group')).toBe(inner);
+        expect(closest(target, '#outer')).toBe(outer);
+    });
+
+    test('returns the element itself when it matches', () => {
+        const target = rect('self');
+
+        expect(closest(target, 'rect')).toBe(target);
+        expect(closest(target, '#self')).toBe(target);
+    });
+
+    test('returns undefined when nothing matches', () => {
+        const target = rect();
+        createGroup({ children: [target] });
+
+        expect(closest(target, 'circle')).toBeUndefined();
+    });
+
+    test('is available as a Group method', () => {
+        const inner = createGroup({ id: 'inner' });
+        const outer = createGroup({
+            id: 'outer',
+            children: [inner],
+        });
+
+        expect(inner.matches('group')).toBe(true);
+        expect(inner.closest('#outer')).toBe(outer);
     });
 
 });

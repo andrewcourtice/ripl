@@ -80,6 +80,43 @@ function serialiseAttribute(value: unknown) {
     }
 }
 
+function matchesSegment(element: Element, segment: string): boolean {
+    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
+    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
+    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
+    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
+
+    const typeMatch = !type || element.type === type;
+    const idMatch = !id || element.id === id.replace(ELEMENT_PATTERNS.id, '');
+
+    const classMatch = !classes.length || classes.every(cls => {
+        return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
+    });
+
+    const attrsMatch = !attributes.length || attributes.every(attr => {
+        if (!attr) {
+            return false;
+        }
+
+        const [
+            ,
+            ,
+            key,
+            value,
+        ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
+
+        return !typeIsNil(key)
+            && !typeIsNil(value)
+            && key in element
+            && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
+    });
+
+    return typeMatch
+        && idMatch
+        && classMatch
+        && attrsMatch;
+}
+
 function executeQuery(elements: Element[], segments: string[], segmentIndex: number = 0) {
     if (segmentIndex >= segments.length || !elements.length) {
         return elements;
@@ -101,42 +138,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
         return executeQuery(elements.flatMap(element => producer.produce(element)), segments, segmentIndex + 1);
     }
 
-    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
-    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
-    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
-    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
-
-    return executeQuery(elements.filter(element => {
-        const typeMatch = !type || element.type === type;
-        const idMatch = !id || element.id === id.replace(ELEMENT_PATTERNS.id, '');
-
-        const classMatch = !classes.length || classes.every(cls => {
-            return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
-        });
-
-        const attrsMatch = !attributes.length || attributes.every(attr => {
-            if (!attr) {
-                return false;
-            }
-
-            const [
-                ,
-                ,
-                key,
-                value,
-            ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
-
-            return !typeIsNil(key)
-                && !typeIsNil(value)
-                && key in element
-                && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
-        });
-
-        return typeMatch
-            && idMatch
-            && classMatch
-            && attrsMatch;
-    }), segments, segmentIndex + 1);
+    return executeQuery(elements.filter(element => matchesSegment(element, segment)), segments, segmentIndex + 1);
 }
 
 /** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
@@ -153,6 +155,42 @@ export function queryAll<TElement extends Element = Element>(elements: OneOrMore
 /** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
 export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     return queryAll<TElement>(elements, selector).at(0);
+}
+
+/** Tests whether an element matches a CSS-like selector. */
+export function matches(element: Element, selector: string): boolean {
+    const segments = selector.trim().replace(/\s+/g, ' ').split(QUERY_PATTERNS.combinators).filter(Boolean);
+
+    if (!segments.length) {
+        return false;
+    }
+
+    if (segments.length === 1) {
+        return matchesSegment(element, segments[0]);
+    }
+
+    let root: Element = element;
+
+    while (root.parent) {
+        root = root.parent;
+    }
+
+    return queryAll(root, selector).includes(element);
+}
+
+/** Returns the closest ancestor (including the element itself) matching a CSS-like selector, or `undefined`. */
+export function closest<TElement extends Element = Element>(element: Element, selector: string): TElement | undefined {
+    let current: Element | undefined = element;
+
+    while (current) {
+        if (matches(current, selector)) {
+            return current as TElement;
+        }
+
+        current = current.parent;
+    }
+
+    return undefined;
 }
 
 /** Type guard that checks whether a value is a `Group` instance. */
@@ -268,6 +306,16 @@ export class Group<
     /** Returns all descendants matching the CSS-like selector. */
     public queryAll<TElement extends Element = Element>(selector: string) {
         return queryAll<TElement>(this, selector);
+    }
+
+    /** Tests whether this group matches the CSS-like selector. */
+    public matches(selector: string): boolean {
+        return matches(this as unknown as Element, selector);
+    }
+
+    /** Returns the closest ancestor (including this group) matching the CSS-like selector, or `undefined`. */
+    public closest<TElement extends Element = Element>(selector: string) {
+        return closest<TElement>(this as unknown as Element, selector);
     }
 
     /** Finds a descendant element by its unique id, or `undefined` if none match. */
