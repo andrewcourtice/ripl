@@ -11,7 +11,6 @@ import {
 
 import {
     OneOrMore,
-    stringEquals,
     typeIsBoolean,
     typeIsNil,
     typeIsNumber,
@@ -43,8 +42,8 @@ const QUERY_PATTERNS = {
     type: new RegExp(`^${ELEMENT_PATTERNS.name.source}`),
     id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
     class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
-    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
+    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="([^"]*)"\\])+`, 'g'),
+    combinators: new RegExp(`(\\s(?:${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')})\\s|\\s)`),
 };
 
 const COMBINATOR_PRODUCERS = [
@@ -58,7 +57,7 @@ const COMBINATOR_PRODUCERS = [
     },
     {
         pattern: COMBINATOR_PATTERNS.nextSibling,
-        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1),
+        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1) ?? [],
     },
 ] as {
     pattern: RegExp;
@@ -82,10 +81,14 @@ function serialiseAttribute(value: unknown) {
 }
 
 function executeQuery(elements: Element[], segments: string[], segmentIndex: number = 0) {
+    if (segmentIndex >= segments.length || !elements.length) {
+        return elements;
+    }
+
     const segment = segments[segmentIndex];
 
-    if (!segment || !elements.length) {
-        return elements;
+    if (!segment) {
+        return executeQuery(elements, segments, segmentIndex + 1);
     }
 
     if (QUERY_PATTERNS.combinators.test(segment)) {
@@ -104,8 +107,8 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
     const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
 
     return executeQuery(elements.filter(element => {
-        const typeMatch = !type || stringEquals(element.type, type);
-        const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
+        const typeMatch = !type || element.type === type;
+        const idMatch = !id || element.id === id.replace(ELEMENT_PATTERNS.id, '');
 
         const classMatch = !classes.length || classes.every(cls => {
             return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
@@ -142,7 +145,9 @@ export function queryAll<TElement extends Element = Element>(elements: OneOrMore
         return isGroup(element) ? element.graph(true) : [element];
     });
 
-    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
+    const normalisedSelector = selector.trim().replace(/\s+/g, ' ');
+
+    return executeQuery(els, normalisedSelector.split(QUERY_PATTERNS.combinators)) as TElement[];
 }
 
 /** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
@@ -194,9 +199,9 @@ export class Group<
         this.emit('graph', null);
     }
 
-    /** Replaces all children with the given elements. */
+    /** Replaces all children with the given elements, detaching the previous children. */
     public set(elements: Element[]) {
-        this.#elements.clear();
+        this.remove(this.children);
         this.add(elements);
     }
 
@@ -265,9 +270,14 @@ export class Group<
         return queryAll<TElement>(this, selector);
     }
 
-    /** Finds a descendant element by its unique id. */
+    /** Finds a descendant element by its unique id, or `undefined` if none match. */
+    public getElementById<TElement extends Element = Element>(id: string) {
+        return this.graph(true).find(element => element.id === id) as TElement | undefined;
+    }
+
+    /** @deprecated Use {@link getElementById}. */
     public getElementByID<TElement extends Element = Element>(id: string) {
-        return this.graph(true).find(element => element.id === id) as TElement;
+        return this.getElementById<TElement>(id);
     }
 
     /** Returns all descendant elements whose type matches one of the given type names. */
@@ -287,12 +297,20 @@ export class Group<
         return getContainingBox(this.children, element => element.getBoundingBox());
     }
 
-    /** Renders all child elements in order within a save/restore context. */
+    /** Detaches all children (clearing their parent), then destroys this group. */
+    public destroy(): void {
+        this.clear();
+        super.destroy();
+    }
+
+    /** Renders all child elements in z-index order within a save/restore context. */
     public render(context: Context): void {
         context.save();
         context.markRenderStart();
 
-        this.children.forEach(element => element.render(context));
+        this.children
+            .sort((first, second) => first.zIndex - second.zIndex)
+            .forEach(element => element.render(context));
 
         context.markRenderEnd();
         context.restore();

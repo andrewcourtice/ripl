@@ -87,6 +87,30 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
     layoutY: 0,
 };
 
+/** State keys that cascade from parent to child (CSS-like style inheritance). Geometry, transform, and layout keys never inherit. */
+export const INHERITED_STYLE_KEYS = new Set<string>([
+    'fill',
+    'filter',
+    'direction',
+    'font',
+    'fontKerning',
+    'opacity',
+    'globalCompositeOperation',
+    'lineCap',
+    'lineDash',
+    'lineDashOffset',
+    'lineJoin',
+    'lineWidth',
+    'miterLimit',
+    'shadowBlur',
+    'shadowColor',
+    'shadowOffsetX',
+    'shadowOffsetY',
+    'stroke',
+    'textAlign',
+    'textBaseline',
+]);
+
 /** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
 export const TRACKED_EVENTS = [
     'click',

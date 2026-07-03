@@ -1,5 +1,6 @@
 import {
     CONTEXT_OPERATIONS,
+    INHERITED_STYLE_KEYS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
     TRANSFORM_INTERPOLATORS,
@@ -325,6 +326,14 @@ export class Element<
         this.setStateValue('font', value);
     }
 
+    public get fontKerning() {
+        return this.getStateValue('fontKerning');
+    }
+
+    public set fontKerning(value) {
+        this.setStateValue('fontKerning', value);
+    }
+
     public get opacity() {
         return this.getStateValue('opacity');
     }
@@ -540,9 +549,15 @@ export class Element<
         } as unknown as TState;
     }
 
-    /** Reads a state value, falling back to the parent’s value if the local value is nil (property inheritance). */
+    /** Reads a state value, falling back to the parent’s value for inheritable style keys when the local value is nil. */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
-        return this.state[key] ?? (this.parent as unknown as TState)?.[key];
+        const value = this.state[key];
+
+        if (!typeIsNil(value) || !INHERITED_STYLE_KEYS.has(key as string)) {
+            return value;
+        }
+
+        return (this.parent as unknown as TState)?.[key];
     }
 
     /** Sets a state value and emits an `updated` event. */
