@@ -82,10 +82,10 @@ export abstract class Layout<
     TEventMap extends ElementEventMap = ElementEventMap
 > extends Group<TState, TEventMap> {
 
-    #applying = false;
-    #resolvedWidth = 0;
-    #resolvedHeight = 0;
-    #requestFrame = createFrameBuffer();
+    private _applying = false;
+    private _resolvedWidth = 0;
+    private _resolvedHeight = 0;
+    private _requestFrame = createFrameBuffer();
 
     public get x(): number {
         return this.state.x ?? 0;
@@ -138,30 +138,30 @@ export abstract class Layout<
     protected constructor(type: string, options: LayoutOptions<TState>) {
         super(type, options);
 
-        this.retain(this.on('graph', () => this.#schedule()));
-        this.retain(this.on('updated', event => this.#onUpdated(event as Event<ElementEventMap['updated']>)));
+        this.retain(this.on('graph', () => this.schedule()));
+        this.retain(this.on('updated', event => this.onUpdated(event as Event<ElementEventMap['updated']>)));
 
-        this.#schedule();
+        this.schedule();
     }
 
-    #schedule(): void {
-        this.#requestFrame(() => this.#runRelayout());
+    private schedule(): void {
+        this._requestFrame(() => this.runRelayout());
     }
 
-    #runRelayout(): void {
-        this.#applying = true;
+    private runRelayout(): void {
+        this._applying = true;
 
         try {
             this.relayout();
         } finally {
-            this.#applying = false;
+            this._applying = false;
         }
 
-        this.#repaint();
+        this.repaint();
     }
 
-    #onUpdated(event: Event<ElementEventMap['updated']>): void {
-        if (this.#applying) {
+    private onUpdated(event: Event<ElementEventMap['updated']>): void {
+        if (this._applying) {
             return;
         }
 
@@ -169,7 +169,7 @@ export abstract class Layout<
 
         if (event.target === this) {
             if (this.isRelayoutKey(key)) {
-                this.#schedule();
+                this.schedule();
             }
 
             return;
@@ -179,15 +179,15 @@ export abstract class Layout<
         // ignore transform-key echoes (including our own placement writes). Any other change
         // may affect a child's measured size and must trigger a relayout.
         if (!(key in TRANSFORM_DEFAULTS)) {
-            this.#schedule();
+            this.schedule();
         }
     }
 
-    #repaint(): void {
-        this.#findScene()?.requestRender();
+    private repaint(): void {
+        this.findScene()?.requestRender();
     }
 
-    #findScene(): Scene | undefined {
+    private findScene(): Scene | undefined {
         let current: Element | undefined = this as unknown as Element;
 
         while (current) {
@@ -203,8 +203,8 @@ export abstract class Layout<
 
     /** Records the content size computed by a relayout pass (used by `getBoundingBox`). */
     protected setContentSize(width: number, height: number): void {
-        this.#resolvedWidth = width;
-        this.#resolvedHeight = height;
+        this._resolvedWidth = width;
+        this._resolvedHeight = height;
     }
 
     /** Resolves the container's padding into explicit per-edge values. */
@@ -278,8 +278,8 @@ export abstract class Layout<
 
     /** Returns the container's own resolved box, bypassing the composite child box. */
     public getBoundingBox(): Box {
-        const width = this.state.width ?? this.#resolvedWidth;
-        const height = this.state.height ?? this.#resolvedHeight;
+        const width = this.state.width ?? this._resolvedWidth;
+        const height = this.state.height ?? this._resolvedHeight;
 
         return new Box(this.y, this.x, this.y + height, this.x + width);
     }
@@ -311,7 +311,7 @@ export abstract class Layout<
 
     /** Forces a synchronous relayout (useful for tests and per-frame animated reflow). */
     public reflow(): void {
-        this.#runRelayout();
+        this.runRelayout();
     }
 
 }

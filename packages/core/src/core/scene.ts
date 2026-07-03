@@ -44,9 +44,9 @@ export interface SceneOptions extends GroupOptions {
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<BaseElementState, SceneEventMap> {
 
-    #frame = createFrameBuffer();
-    #graphDirty = false;
-    #renderOnUpdate: boolean;
+    private _frame = createFrameBuffer();
+    private _graphDirty = false;
+    private _renderOnUpdate: boolean;
 
     public context: TContext;
 
@@ -95,7 +95,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
 
         this.context = context;
         this.buffer = this.graph();
-        this.#renderOnUpdate = renderOnUpdate;
+        this._renderOnUpdate = renderOnUpdate;
 
         this.retain(context.on('resize', () => {
             this.emit('resize', null);
@@ -106,7 +106,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
         }));
 
         this.on('graph', () => {
-            this.#graphDirty = true;
+            this._graphDirty = true;
             this.requestRender();
         });
     }
@@ -121,14 +121,14 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
      * when a renderer loop is actively driving the scene, or when `renderOnUpdate` is disabled.
      */
     public requestRender(): void {
-        this.#frame(() => {
-            if (this.#graphDirty) {
+        this._frame(() => {
+            if (this._graphDirty) {
                 this.rebuffer();
                 this.context.invalidateTrackedElements();
-                this.#graphDirty = false;
+                this._graphDirty = false;
             }
 
-            if (this.#renderOnUpdate && !this.renderer?.isRunning) {
+            if (this._renderOnUpdate && !this.renderer?.isRunning) {
                 this.render();
             }
         });

@@ -209,11 +209,11 @@ export class Group<
     TEventMap extends ElementEventMap = ElementEventMap
 > extends Element<TState, TEventMap> {
 
-    #elements = new Set<Element>();
+    private _elements = new Set<Element>();
 
     /** Returns a snapshot array of this group's direct child elements. */
     public get children() {
-        return Array.from(this.#elements);
+        return Array.from(this._elements);
     }
 
     constructor(type: string, options?: GroupOptions<TState>);
@@ -257,7 +257,7 @@ export class Group<
             }
 
             item.parent = this as unknown as Group;
-            this.#elements.add(item);
+            this._elements.add(item);
         });
 
         this.updateSceneGraph();
@@ -273,7 +273,7 @@ export class Group<
 
         elements.forEach(item => {
             item.parent = undefined;
-            this.#elements.delete(item);
+            this._elements.delete(item);
         });
 
         this.updateSceneGraph();
