@@ -3,7 +3,7 @@ import {
 } from './constants';
 
 import {
-    clamp,
+    numberClamp,
 } from '../math';
 
 import {
@@ -30,12 +30,12 @@ export class ColorParseError extends Error {
 }
 
 function parsePercentage(value: string) {
-    return clamp(parseInt(value.replace('%', ''), 10) / 100, 0, 1);
+    return numberClamp(parseInt(value.replace('%', ''), 10) / 100, 0, 1);
 }
 
 function parseRGBChannel(value: string): number {
     if (!value.endsWith('%')) {
-        return clamp(parseInt(value, 10), 0, 255);
+        return numberClamp(parseInt(value, 10), 0, 255);
     }
 
     return scaleRGB(parsePercentage(value));
@@ -43,18 +43,18 @@ function parseRGBChannel(value: string): number {
 
 function parseAlphaChannel(value: string): number {
     if (!value.endsWith('%')) {
-        return clamp(parseFloat(value), 0, 1);
+        return numberClamp(parseFloat(value), 0, 1);
     }
 
     return parsePercentage(value);
 }
 
 function parseHueChannel(value: string): number {
-    return clamp(parseInt(value, 10), 0, 360);
+    return numberClamp(parseInt(value, 10), 0, 360);
 }
 
 function parsePercentageChannel(value: string): number {
-    return clamp(parseInt(value.replace('%', ''), 10), 0, 100);
+    return numberClamp(parseInt(value.replace('%', ''), 10), 0, 100);
 }
 
 /** Parses a hexadecimal color string (e.g. `#ff0000` or `#ff000080`) into an RGBA tuple. */

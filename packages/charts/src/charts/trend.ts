@@ -51,10 +51,10 @@ import {
     createScale,
     easeOutCubic,
     easeOutQuart,
-    getExtent,
     Group,
     interpolatePath,
-    max,
+    numberExtent,
+    numberMax,
     Point,
     Polyline,
     PolylineRenderer,
@@ -484,7 +484,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                 const label = getLabel(item);
 
                 const x = this.xScaleBand(key) + xScaleSeries(id);
-                const y = this.yScale(max(0, value));
+                const y = this.yScale(numberMax(0, value));
                 const width = xScaleSeries.bandwidth;
                 const height = Math.abs(baseline - this.yScale(value));
 
@@ -670,10 +670,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>>
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[valueAccessor] as number;
 
-                return getExtent(data, getValue);
+                return numberExtent(data, getValue);
             }).concat(0);
 
-            const dataExtent = getExtent(seriesExtents, functionIdentity);
+            const dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             const padding = this.getPadding();
 

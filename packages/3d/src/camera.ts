@@ -16,8 +16,8 @@ import type {
 } from './math/vector';
 
 import {
-    degreesToRadians,
     Disposer,
+    geometryDegreesToRadians,
 } from '@ripl/core';
 
 import type {
@@ -218,7 +218,7 @@ export class Camera extends Disposer {
             this.context.setPerspective(this._fov, this._near, this._far);
         } else {
             const dist = vec3Distance(this._position, this._target);
-            const halfH = dist * Math.tan(degreesToRadians(this._fov) / 2);
+            const halfH = dist * Math.tan(geometryDegreesToRadians(this._fov) / 2);
             const aspect = this.context.width / (this.context.height || 1);
             const halfW = halfH * aspect;
 

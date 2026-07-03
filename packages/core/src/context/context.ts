@@ -28,7 +28,7 @@ import {
 } from './text';
 
 import {
-    degreesToRadians,
+    geometryDegreesToRadians,
 } from '../math';
 
 import {
@@ -62,7 +62,7 @@ export function resolveRotation(value: Rotation): number {
     const trimmed = value.trim();
 
     if (trimmed.endsWith('deg')) {
-        return degreesToRadians(parseFloat(trimmed));
+        return geometryDegreesToRadians(parseFloat(trimmed));
     }
 
     if (trimmed.endsWith('rad')) {
@@ -406,12 +406,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Clears the entire rendering surface. */
     public clear(): void {
-        // noop
+        // functionNoop
     }
 
     /** Resets the context to its initial state. */
     public reset(): void {
-        // noop
+        // functionNoop
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
@@ -453,27 +453,27 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Applies a rotation transformation. */
     public rotate(angle: number): void {
-        // noop
+        // functionNoop
     }
 
     /** Applies a scale transformation. */
     public scale(x: number, y: number): void {
-        // noop
+        // functionNoop
     }
 
     /** Applies a translation transformation. */
     public translate(x: number, y: number): void {
-        // noop
+        // functionNoop
     }
 
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        // noop
+        // functionNoop
     }
 
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        // noop
+        // functionNoop
     }
 
     /** Measures text dimensions using the context's current font or an optional override. */
@@ -493,22 +493,22 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Draws an image onto the rendering surface at the given position and optional size. */
     public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
-        // noop
+        // functionNoop
     }
 
     /** Clips subsequent drawing operations to the given path. */
     public applyClip(path: ContextPath, fillRule?: FillRule): void {
-        // noop
+        // functionNoop
     }
 
     /** Fills the given path or text element using the current fill style. */
     public applyFill(path: ContextElement, fillRule?: FillRule): void {
-        // noop
+        // functionNoop
     }
 
     /** Strokes the given path or text element using the current stroke style. */
     public applyStroke(path: ContextElement): void {
-        // noop
+        // functionNoop
     }
 
     /** Tests whether a point is inside the filled region of a path. */

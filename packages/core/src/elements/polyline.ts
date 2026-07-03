@@ -14,8 +14,8 @@ import type {
 
 import {
     Box,
-    getEuclideanDistance,
-    getExtent,
+    geometryEuclideanDistance,
+    numberExtent,
     Point,
 } from '../math';
 
@@ -132,8 +132,8 @@ export function polylineLinearRenderer(): PolylineRenderFunc {
 /** Creates a spline polyline renderer with configurable tension. */
 export function polylineSplineRenderer(tension: number = 0.5): PolylineRenderFunc {
     const getControlPoint = ([x0, y0]: Point, [x1, y1]: Point, [x2, y2]: Point, tension: number = 0.5) => {
-        const distance1 = getEuclideanDistance(x1 - x0, y1 - y0);
-        const distance2 = getEuclideanDistance(x2 - x1, y2 - y1);
+        const distance1 = geometryEuclideanDistance(x1 - x0, y1 - y0);
+        const distance2 = geometryEuclideanDistance(x2 - x1, y2 - y1);
 
         const width = Math.abs(x2 - x0);
         const height = Math.abs(y2 - y0);
@@ -311,9 +311,9 @@ export function polylineCatmullRomRenderer(alpha: number = 0.5): PolylineRenderF
             const point2 = points[index + 1];
             const point3 = index < pointCount - 2 ? points[index + 2] : points[index + 1];
 
-            const distance1 = getEuclideanDistance(point1[0] - point0[0], point1[1] - point0[1]) ** alpha;
-            const distance2 = getEuclideanDistance(point2[0] - point1[0], point2[1] - point1[1]) ** alpha;
-            const distance3 = getEuclideanDistance(point3[0] - point2[0], point3[1] - point2[1]) ** alpha;
+            const distance1 = geometryEuclideanDistance(point1[0] - point0[0], point1[1] - point0[1]) ** alpha;
+            const distance2 = geometryEuclideanDistance(point2[0] - point1[0], point2[1] - point1[1]) ** alpha;
+            const distance3 = geometryEuclideanDistance(point3[0] - point2[0], point3[1] - point2[1]) ** alpha;
 
             const cpx1 = distance2 === 0 ? point1[0] : point1[0] + (point2[0] - point0[0]) / (6 * distance1 + 6 * distance2) * distance2;
             const cpy1 = distance2 === 0 ? point1[1] : point1[1] + (point2[1] - point0[1]) / (6 * distance1 + 6 * distance2) * distance2;
@@ -518,8 +518,8 @@ export class Polyline extends Shape2D<PolylineState> {
     }
 
     public getBoundingBox(): Box {
-        const [left, right] = getExtent(this.points, point => point[0]);
-        const [top, bottom] = getExtent(this.points, point => point[1]);
+        const [left, right] = numberExtent(this.points, point => point[0]);
+        const [top, bottom] = numberExtent(this.points, point => point[1]);
 
         return new Box(
             top,

@@ -24,7 +24,7 @@ import type {
 
 import {
     ContextText,
-    degreesToRadians,
+    geometryDegreesToRadians,
 } from '@ripl/core';
 
 import type {
@@ -145,7 +145,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     protected updateProjectionMatrix(): void {
         if (this.width > 0 && this.height > 0) {
             this.projectionMatrix = mat4Perspective(
-                degreesToRadians(this.fov),
+                geometryDegreesToRadians(this.fov),
                 this.width / this.height,
                 this.near,
                 this.far
@@ -204,7 +204,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     /** Submits a mesh for rendering this frame. Noop in the base class; overridden by GPU-backed contexts. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public submitMesh(submission: MeshSubmission): void {
-        // noop — overridden in subclasses (e.g. WebGPUContext3D)
+        // functionNoop — overridden in subclasses (e.g. WebGPUContext3D)
     }
 
 }

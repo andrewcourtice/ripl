@@ -3,7 +3,7 @@ import {
 } from './ease';
 
 import {
-    clamp,
+    numberClamp,
 } from '../math';
 
 import {
@@ -33,7 +33,7 @@ interface TransitionHooks {
 
 /** Computes the eased time value for a transition given elapsed time, duration, easing function, and direction. */
 export function computeTransitionTime(elapsed: number, duration: number, ease: Ease, direction: TransitionDirection): number {
-    const position = clamp(elapsed / duration, 0, 1);
+    const position = numberClamp(elapsed / duration, 0, 1);
     const time = ease(direction === 'reverse' ? 1 - position : position);
 
     return time;
@@ -80,7 +80,7 @@ export class Transition extends Task {
 
     /** Seeks to a normalised position (0–1) and pauses. */
     public seek(position: number): this {
-        const clamped = clamp(position, 0, 1);
+        const clamped = numberClamp(position, 0, 1);
 
         this._paused = true;
         this._hooks?.onSeek(clamped);

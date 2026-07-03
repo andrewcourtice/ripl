@@ -1,7 +1,7 @@
 import {
     Context,
     createFrameBuffer,
-    getEuclideanDistance,
+    geometryEuclideanDistance,
 } from '@ripl/core';
 
 import type {
@@ -151,7 +151,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         const dy = ry - state.dragStartY;
 
         if (!state.dragStarted) {
-            if (getEuclideanDistance(dx, dy) >= this.dragThreshold) {
+            if (geometryEuclideanDistance(dx, dy) >= this.dragThreshold) {
                 state.dragStarted = true;
                 state.dragPrevX = state.dragStartX;
                 state.dragPrevY = state.dragStartY;

@@ -21,8 +21,8 @@ export type MemoizedFunction<TValue extends AnyFunction, TKey> = {
 /** Derives a cache key from the arguments of a memoized function. */
 export type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;
 
-export function noop() {
-    // noop
+export function functionNoop() {
+    // functionNoop
 }
 
 /** Returns the value it receives unchanged — useful as a default transform or placeholder. */

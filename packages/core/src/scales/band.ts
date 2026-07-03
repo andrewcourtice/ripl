@@ -3,7 +3,7 @@ import {
 } from './_base';
 
 import {
-    max,
+    numberMax,
 } from '../math';
 
 import type {
@@ -44,7 +44,7 @@ export function scaleBand<TDomain = string>(
 
     const rangeLength = rangeMax - rangeMin;
     const domainLength = domain.length - innerPadding;
-    const step = rangeLength / max(1, domainLength + outerPadding * 2);
+    const step = rangeLength / numberMax(1, domainLength + outerPadding * 2);
     const bandwidth = step * (1 - innerPadding);
     const adjustedMin = rangeMin + (rangeLength - step * domainLength) * alignment;
 

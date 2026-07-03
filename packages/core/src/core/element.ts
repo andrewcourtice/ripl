@@ -18,7 +18,7 @@ import type {
 
 import {
     Box,
-    isPointInBox,
+    geometryIsPointInBox,
 } from '../math';
 
 import {
@@ -613,7 +613,7 @@ export class Element<
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        return isPointInBox([x, y], this.getBoundingBox());
+        return geometryIsPointInBox([x, y], this.getBoundingBox());
     }
 
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */

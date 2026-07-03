@@ -21,7 +21,7 @@ import {
     Group,
     Line,
     LineState,
-    maxOf,
+    numberMaxOf,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -300,7 +300,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
 
-            const maxValue = maxOf(data, getValue) ?? 0;
+            const maxValue = numberMaxOf(data, getValue) ?? 0;
             const valueScale = scaleContinuous([0, maxValue], [size * innerRadiusRatio, size * maxRadiusRatio], { clamp: true });
 
             const angleStep = TAU / data.length;

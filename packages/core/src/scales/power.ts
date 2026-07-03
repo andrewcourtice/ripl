@@ -7,7 +7,7 @@ import {
 } from './_base';
 
 import {
-    clamp as numberClamp,
+    numberClamp,
 } from '../math';
 
 import {

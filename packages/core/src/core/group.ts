@@ -6,7 +6,7 @@ import {
 } from './element';
 
 import {
-    getContainingBox,
+    geometryContainingBox,
 } from '../math';
 
 import {
@@ -342,7 +342,7 @@ export class Group<
 
     /** Returns the composite bounding box enclosing all children. */
     public getBoundingBox() {
-        return getContainingBox(this.children, element => element.getBoundingBox());
+        return geometryContainingBox(this.children, element => element.getBoundingBox());
     }
 
     /** Detaches all children (clearing their parent), then destroys this group. */

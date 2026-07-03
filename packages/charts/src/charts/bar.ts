@@ -46,9 +46,9 @@ import {
     createRect,
     easeOutCubic,
     easeOutQuart,
-    getExtent,
     Group,
-    max,
+    numberExtent,
+    numberMax,
     queryAll,
     Rect,
     RectState,
@@ -225,7 +225,7 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
             } else {
                 x = categoryScale(key) + (seriesScale ? seriesScale(srs.id) : 0);
                 width = seriesScale ? seriesScale.bandwidth : categoryScale.bandwidth;
-                y = valueScale(max(0, value));
+                y = valueScale(numberMax(0, value));
                 height = Math.abs(baseline - valueScale(value));
             }
 
@@ -658,10 +658,10 @@ export class BarChart<TData = unknown> extends Chart<BarChartOptions<TData>> {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[valueAccessor] as number;
 
-                return getExtent(data, getValue);
+                return numberExtent(data, getValue);
             }).concat(0);
 
-            let dataExtent = getExtent(seriesExtents, functionIdentity);
+            let dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             // For stacked mode, compute stacked extents
             if (this.isStacked) {

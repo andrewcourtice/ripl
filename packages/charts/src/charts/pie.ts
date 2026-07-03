@@ -32,8 +32,8 @@ import {
     easeOutQuint,
     elementIsArc,
     elementIsText,
-    getTotal,
     Group,
+    numberTotal,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -134,7 +134,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             const size = Math.min(scene.width, scene.height - legendHeight);
 
-            const total = getTotal(data, getValue);
+            const total = numberTotal(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
             const offset = TAU / 4;
             const padAngle = data.length === 1 ? 0 : 0.1 / data.length;

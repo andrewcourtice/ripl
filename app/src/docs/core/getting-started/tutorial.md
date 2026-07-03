@@ -432,7 +432,7 @@ import {
 
 import {
     Circle,
-    clamp,
+    numberClamp,
     createCircle,
     createGroup,
     createRect,
@@ -534,7 +534,7 @@ watch(changePropsRadius, (radius) => {
         return;
     }
 
-    changeCircle.radius = clamp(radius, changePropsMin.value, changePropsMax.value);
+    changeCircle.radius = numberClamp(radius, changePropsMin.value, changePropsMax.value);
 
     changeContext.value.clear();
     changeCircle.render(changeContext.value);

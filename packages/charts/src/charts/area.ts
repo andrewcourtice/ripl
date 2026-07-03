@@ -54,8 +54,8 @@ import {
     createPolyline,
     easeOutCubic,
     easeOutQuart,
-    getExtent,
     Group,
+    numberExtent,
     Point,
     Polyline,
     PolylineRenderer,
@@ -557,10 +557,10 @@ export class AreaChart<TData = unknown> extends Chart<AreaChartOptions<TData>> {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         : (item: any) => item[valueAccessor] as number;
 
-                    return getExtent(data, getValue);
+                    return numberExtent(data, getValue);
                 }).concat(0);
 
-                dataExtent = getExtent(seriesExtents, functionIdentity);
+                dataExtent = numberExtent(seriesExtents, functionIdentity);
             }
 
             const padding = this.getPadding();

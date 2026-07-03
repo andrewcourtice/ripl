@@ -1,12 +1,12 @@
 import {
     ContextText,
     factory,
-    getPathLength,
+    geometryPathLength,
+    geometrySamplePathPoint,
     isGradientString,
     measureText,
     parseColor,
     parseGradient,
-    samplePathPoint,
     scaleContinuous,
     serialiseRGBA,
 } from '@ripl/core';
@@ -162,7 +162,7 @@ export function rescaleCanvas(
 /** Renders text character-by-character along a path using fill or stroke. */
 export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: ContextText, method: 'fill' | 'stroke'): void {
     const pathData = element.pathData!;
-    const totalLength = getPathLength(pathData);
+    const totalLength = geometryPathLength(pathData);
     let distance = (element.startOffset ?? 0) * totalLength;
 
     for (const char of element.content) {
@@ -173,7 +173,7 @@ export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: Cont
             break;
         }
 
-        const { x, y, angle } = samplePathPoint(pathData, midDistance);
+        const { x, y, angle } = geometrySamplePathPoint(pathData, midDistance);
 
         ctx.save();
         ctx.translate(x, y);

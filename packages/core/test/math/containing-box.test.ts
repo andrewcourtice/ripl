@@ -6,12 +6,12 @@ import {
 
 import {
     Box,
-    getContainingBox,
+    geometryContainingBox,
 } from '../../src';
 
 describe('Math', () => {
 
-    describe('getContainingBox', () => {
+    describe('geometryContainingBox', () => {
 
         test('Should not include the origin for boxes away from it', () => {
             const boxes = [
@@ -19,7 +19,7 @@ describe('Math', () => {
                 new Box(150, 150, 260, 260),
             ];
 
-            const result = getContainingBox(boxes, box => box);
+            const result = geometryContainingBox(boxes, box => box);
 
             expect(result.top).toBe(100);
             expect(result.left).toBe(100);
@@ -28,7 +28,7 @@ describe('Math', () => {
         });
 
         test('Should contain boxes with negative coordinates', () => {
-            const result = getContainingBox([new Box(-50, -40, -10, -20)], box => box);
+            const result = geometryContainingBox([new Box(-50, -40, -10, -20)], box => box);
 
             expect(result.top).toBe(-50);
             expect(result.left).toBe(-40);
@@ -37,7 +37,7 @@ describe('Math', () => {
         });
 
         test('Should return an empty box for no input', () => {
-            const result = getContainingBox([] as Box[], box => box);
+            const result = geometryContainingBox([] as Box[], box => box);
 
             expect(result.top).toBe(0);
             expect(result.left).toBe(0);

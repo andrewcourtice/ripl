@@ -48,8 +48,8 @@ import {
     createGroup,
     createPolyline,
     easeOutCubic,
-    getExtent,
     Group,
+    numberExtent,
     Point,
     Polyline,
     PolylineRenderer,
@@ -401,7 +401,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 allValues.push(0, 1);
             }
 
-            let [yMin, yMax] = getExtent(allValues, functionIdentity);
+            let [yMin, yMax] = numberExtent(allValues, functionIdentity);
 
             // Apply fixed bounds if provided
             if (this.options.yMin !== undefined) {

@@ -4,7 +4,7 @@ outline: "deep"
 
 # Math & Geometry
 
-Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, SVG path sampling, and common numeric helpers like `clamp`, `min`/`max`, and extent calculation.
+Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, SVG path sampling, and common numeric helpers like `numberClamp`, `numberMin`/`numberMax`, and extent calculation.
 
 > [!NOTE]
 > For the full API, see the [Math & Geometry API Reference](/docs/api/@ripl/core/).
@@ -28,15 +28,15 @@ The demo below visualizes several geometry utilities: polygon vertex generation,
 == Code
 ```ts
 import {
-    getContainingBox,
-    getMidpoint,
-    getPolygonPoints,
-    getWaypoint,
+    geometryContainingBox,
+    geometryMidpoint,
+    geometryPolygonPoints,
+    geometryWaypoint,
 } from '@ripl/web';
 
-const points = getPolygonPoints(6, 200, 150, 80);
-const mid = getMidpoint(points[0], points[3]);
-const wp = getWaypoint(points[0], points[3], 0.75);
+const points = geometryPolygonPoints(6, 200, 150, 80);
+const mid = geometryMidpoint(points[0], points[3]);
+const wp = geometryWaypoint(points[0], points[3], 0.75);
 ```
 :::
 
@@ -51,10 +51,10 @@ import {
     createPolygon,
     createRect,
     createText,
-    getContainingBox,
-    getMidpoint,
-    getPolygonPoints,
-    getWaypoint,
+    geometryContainingBox,
+    geometryMidpoint,
+    geometryPolygonPoints,
+    geometryWaypoint,
     Box,
 } from '@ripl/web';
 
@@ -80,7 +80,7 @@ function renderDemo(context: Context) {
     const r = Math.min(w * 0.25, h * 0.35);
 
     context.batch(() => {
-        const points = getPolygonPoints(sides.value, cx, cy, r, false);
+        const points = geometryPolygonPoints(sides.value, cx, cy, r, false);
 
         createPolygon({
             fill: 'rgba(58, 134, 255, 0.15)',
@@ -106,14 +106,14 @@ function renderDemo(context: Context) {
                 x1: p0[0], y1: p0[1], x2: pLast[0], y2: pLast[1],
             }).render(context);
 
-            const mid = getMidpoint(p0, pLast);
+            const mid = geometryMidpoint(p0, pLast);
             createCircle({ fill: '#ff006e', cx: mid[0], cy: mid[1], radius: 5 }).render(context);
             createText({
                 fill: '#ff006e', x: mid[0] + 10, y: mid[1] - 8,
                 content: 'midpoint', font: '11px sans-serif',
             }).render(context);
 
-            const wp = getWaypoint(p0, pLast, waypoint.value / 100);
+            const wp = geometryWaypoint(p0, pLast, waypoint.value / 100);
             createCircle({ fill: '#8338ec', cx: wp[0], cy: wp[1], radius: 5 }).render(context);
             createText({
                 fill: '#8338ec', x: wp[0] + 10, y: wp[1] + 14,
@@ -121,7 +121,7 @@ function renderDemo(context: Context) {
             }).render(context);
         }
 
-        const bbox = getContainingBox(points, ([x, y]) => new Box(y, x, y, x));
+        const bbox = geometryContainingBox(points, ([x, y]) => new Box(y, x, y, x));
         createRect({
             stroke: '#fb5607', lineWidth: 1, lineDash: [4, 4],
             autoFill: false,
@@ -180,41 +180,41 @@ const p: Point = [100, 200];
 
 ```ts
 import {
-    getMidpoint,
-    getWaypoint,
+    geometryMidpoint,
+    geometryWaypoint,
 } from '@ripl/web';
 
 const a: Point = [0, 0];
 const b: Point = [100, 100];
 
-getMidpoint(a, b); // [50, 50]
-getWaypoint(a, b, 0.25); // [25, 25]
-getWaypoint(a, b, 0.75); // [75, 75]
+geometryMidpoint(a, b); // [50, 50]
+geometryWaypoint(a, b, 0.25); // [25, 25]
+geometryWaypoint(a, b, 0.75); // [75, 75]
 ```
 
 ### Equality and Distance
 
 ```ts
 import {
-    arePointsEqual,
-    getHypLength,
+    geometryPointsEqual,
+    geometryEuclideanDistance,
 } from '@ripl/web';
 
-arePointsEqual([0, 0], [0, 0]); // true
-getHypLength(3, 4); // 5
+geometryPointsEqual([0, 0], [0, 0]); // true
+geometryEuclideanDistance(3, 4); // 5
 ```
 
 ## Angles
 
 ```ts
 import {
-    degreesToRadians,
-    radiansToDegrees,
+    geometryDegreesToRadians,
+    geometryRadiansToDegrees,
     TAU,
 } from '@ripl/web';
 
-degreesToRadians(90); // π/2
-radiansToDegrees(TAU); // 360
+geometryDegreesToRadians(90); // π/2
+geometryRadiansToDegrees(TAU); // 360
 TAU; // 6.283... (2π)
 ```
 
@@ -224,11 +224,11 @@ Compute a point at a given angle and distance from a center:
 
 ```ts
 import {
-    getThetaPoint,
+    geometryThetaPoint,
 } from '@ripl/web';
 
-getThetaPoint(0, 100, 200, 200); // [300, 200]
-getThetaPoint(Math.PI / 2, 100, 200, 200); // [200, 300]
+geometryThetaPoint(0, 100, 200, 200); // [300, 200]
+geometryThetaPoint(Math.PI / 2, 100, 200, 200); // [200, 300]
 ```
 
 ## Polygons
@@ -237,13 +237,13 @@ Generate vertex points for a regular polygon:
 
 ```ts
 import {
-    getPolygonPoints,
+    geometryPolygonPoints,
 } from '@ripl/web';
 
-const hexagon = getPolygonPoints(6, 200, 200, 80);
+const hexagon = geometryPolygonPoints(6, 200, 200, 80);
 // 7 points (6 vertices + closing point)
 
-const triangle = getPolygonPoints(3, 100, 100, 50, false);
+const triangle = geometryPolygonPoints(3, 100, 100, 50, false);
 // 3 points (no closing point)
 ```
 
@@ -254,16 +254,16 @@ The `Box` class represents an axis-aligned bounding box:
 ```ts
 import {
     Box,
-    getContainingBox,
-    isPointInBox,
+    geometryContainingBox,
+    geometryIsPointInBox,
 } from '@ripl/web';
 
 const box = new Box(10, 20, 110, 220);
 box.width; // 200
 box.height; // 100
 
-isPointInBox([50, 50], box); // true
-isPointInBox([0, 0], box); // false
+geometryIsPointInBox([50, 50], box); // true
+geometryIsPointInBox([0, 0], box); // false
 
 Box.empty(); // Box(0, 0, 0, 0)
 ```
@@ -278,7 +278,7 @@ const boxes = [
     new Box(100, 100, 200, 200),
 ];
 
-const container = getContainingBox(boxes, box => box);
+const container = geometryContainingBox(boxes, box => box);
 // Box(0, 0, 200, 200)
 ```
 
@@ -286,28 +286,28 @@ const container = getContainingBox(boxes, box => box);
 
 ```ts
 import {
-    clamp,
-    fractional,
-    getExtent,
-    getTotal,
-    max,
-    maxOf,
-    min,
-    minOf,
+    numberClamp,
+    numberFractional,
+    numberExtent,
+    numberTotal,
+    numberMax,
+    numberMaxOf,
+    numberMin,
+    numberMinOf,
 } from '@ripl/web';
 
-clamp(150, 0, 100); // 100
-clamp(-5, 0, 100); // 0
-fractional(3.7); // 0.7
+numberClamp(150, 0, 100); // 100
+numberClamp(-5, 0, 100); // 0
+numberFractional(3.7); // 0.7
 
-min(10, 20, 5); // 5
-max(10, 20, 5); // 20
+numberMin(10, 20, 5); // 5
+numberMax(10, 20, 5); // 20
 
 const data = [{ v: 10 }, { v: 50 }, { v: 30 }];
-minOf(data, d => d.v); // 10
-maxOf(data, d => d.v); // 50
-getExtent(data, d => d.v); // [10, 50]
-getTotal(data, d => d.v); // 90
+numberMinOf(data, d => d.v); // 10
+numberMaxOf(data, d => d.v); // 50
+numberExtent(data, d => d.v); // [10, 50]
+numberTotal(data, d => d.v); // 90
 ```
 
 ## SVG Path Utilities
@@ -316,18 +316,18 @@ Measure and sample points along SVG path strings:
 
 ```ts
 import {
-    getPathLength,
-    samplePathPoint,
+    geometryPathLength,
+    geometrySamplePathPoint,
 } from '@ripl/web';
 
 const d = 'M 0,0 L 100,0 L 100,100';
-getPathLength(d); // ~200
+geometryPathLength(d); // ~200
 
-const point = samplePathPoint(d, 50);
+const point = geometrySamplePathPoint(d, 50);
 // { x: 50, y: 0, angle: 0 }
 ```
 
-`samplePathPoint` returns the position and tangent angle at a given distance along the path — this powers the [Text on Path](/docs/core/elements/text#text-on-path) feature.
+`geometrySamplePathPoint` returns the position and tangent angle at a given distance along the path — this powers the [Text on Path](/docs/core/elements/text#text-on-path) feature.
 
 ## Border Radius
 
@@ -335,9 +335,9 @@ Normalize a border radius value into a four-corner tuple:
 
 ```ts
 import {
-    normaliseBorderRadius,
+    geometryNormaliseBorderRadius,
 } from '@ripl/web';
 
-normaliseBorderRadius(8); // [8, 8, 8, 8]
-normaliseBorderRadius([4, 8, 4, 8]); // [4, 8, 4, 8]
+geometryNormaliseBorderRadius(8); // [8, 8, 8, 8]
+geometryNormaliseBorderRadius([4, 8, 4, 8]); // [4, 8, 4, 8]
 ```

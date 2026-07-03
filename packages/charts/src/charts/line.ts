@@ -54,9 +54,9 @@ import {
     createPolyline,
     easeOutCubic,
     easeOutQuart,
-    getExtent,
     Group,
     interpolatePath,
+    numberExtent,
     Point,
     Polyline,
     PolylineRenderer,
@@ -451,10 +451,10 @@ export class LineChart<TData = unknown> extends Chart<LineChartOptions<TData>> {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[valueAccessor] as number;
 
-                return getExtent(data, getValue);
+                return numberExtent(data, getValue);
             }).concat(0);
 
-            const dataExtent = getExtent(seriesExtents, functionIdentity);
+            const dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             const padding = this.getPadding();
 
