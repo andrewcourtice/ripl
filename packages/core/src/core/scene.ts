@@ -1,4 +1,5 @@
 import type {
+    BaseElementState,
     Element,
     ElementEventMap,
 } from './element';
@@ -41,7 +42,7 @@ export interface SceneOptions extends GroupOptions {
 }
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
-export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
+export class Scene<TContext extends Context = Context> extends Group<BaseElementState, SceneEventMap> {
 
     public context: TContext;
 

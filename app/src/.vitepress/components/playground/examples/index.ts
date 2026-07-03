@@ -1,6 +1,8 @@
 import animationCode from './animation.js?raw';
 import circleCode from './circle.js?raw';
 import cubeCode from './cube.js?raw';
+import flexCode from './flex.js?raw';
+import gridCode from './grid.js?raw';
 import multiple3dShapesCode from './multiple-3d-shapes.js?raw';
 import multipleShapesCode from './multiple-shapes.js?raw';
 import rectangleCode from './rectangle.js?raw';
@@ -29,6 +31,16 @@ export const EXAMPLES: PlaygroundExample[] = [
         label: 'Multiple Shapes',
         mode: '2d',
         code: multipleShapesCode,
+    },
+    {
+        label: 'Flex Layout',
+        mode: '2d',
+        code: flexCode,
+    },
+    {
+        label: 'Grid Layout',
+        mode: '2d',
+        code: gridCode,
     },
     {
         label: 'Animation',

@@ -24,9 +24,9 @@ import type {
 } from '../context';
 
 /** Options for constructing a group, extending element options with an optional initial set of children. */
-export interface GroupOptions extends ElementOptions {
+export type GroupOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
     children?: OneOrMore<Element>;
-}
+};
 
 const ELEMENT_PATTERNS = {
     id: /#/,
@@ -161,7 +161,10 @@ export function createGroup(...options: ConstructorParameters<typeof Group>) {
 }
 
 /** A container element that manages child elements, providing scenegraph traversal, CSS-like querying, and composite bounding boxes. */
-export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> {
+export class Group<
+    TState extends BaseElementState = BaseElementState,
+    TEventMap extends ElementEventMap = ElementEventMap
+> extends Element<TState, TEventMap> {
 
     #elements = new Set<Element>();
 
@@ -170,11 +173,17 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return Array.from(this.#elements);
     }
 
-    constructor({
-        children = [],
-        ...options
-    }: GroupOptions = {}) {
-        super('group', options);
+    constructor(type: string, options?: GroupOptions<TState>);
+    constructor(options?: GroupOptions<TState>);
+    constructor(typeOrOptions?: string | GroupOptions<TState>, maybeOptions?: GroupOptions<TState>) {
+        const type = typeIsString(typeOrOptions) ? typeOrOptions : 'group';
+
+        const {
+            children = [],
+            ...options
+        } = (typeIsString(typeOrOptions) ? maybeOptions : typeOrOptions) ?? {};
+
+        super(type, options as ElementOptions<TState>);
 
         this.abstract = true;
         this.add(children);

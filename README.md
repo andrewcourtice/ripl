@@ -27,6 +27,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 - **Unified rendering API** across Canvas, SVG, and experimental 3D contexts
 - **Grouping and property inheritance** — CSS-like cascading of visual properties through the element tree
+- **Dynamic layout containers** — flexbox-like `Flex` and grid-like `Grid` elements that position children automatically and re-flow on change
 - **Scene and renderer management** — hoisted scenegraph with O(n) rendering and an automatic `requestAnimationFrame` loop
 - **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
 - **CSS-like element querying** — `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll` with selector syntax

@@ -170,6 +170,10 @@ export default defineConfig({
                             text: 'Renderer',
                             link: '/docs/core/essentials/renderer',
                         },
+                        {
+                            text: 'Layout',
+                            link: '/docs/core/essentials/layout',
+                        },
                     ],
                 },
                 {
@@ -203,6 +207,14 @@ export default defineConfig({
                         {
                             text: 'Ellipse',
                             link: '/docs/core/elements/ellipse',
+                        },
+                        {
+                            text: 'Flex',
+                            link: '/docs/core/elements/flex',
+                        },
+                        {
+                            text: 'Grid',
+                            link: '/docs/core/elements/grid',
                         },
                         {
                             text: 'Image',
