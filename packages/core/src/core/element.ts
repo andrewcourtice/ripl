@@ -223,8 +223,8 @@ function getInterpolator<TValue>(value: TValue, key?: string) {
 }
 
 function applyTransform(context: Context, _value: unknown, element: Element) {
-    const translateX = element.translateX ?? 0;
-    const translateY = element.translateY ?? 0;
+    const translateX = (element.translateX ?? 0) + (element.layoutX ?? 0);
+    const translateY = (element.translateY ?? 0) + (element.layoutY ?? 0);
     const scaleX = element.transformScaleX ?? 1;
     const scaleY = element.transformScaleY ?? 1;
     const rawRotation = element.rotation ?? 0;
@@ -509,6 +509,16 @@ export class Element<
         this.setStateValue('transformOriginY', value);
     }
 
+    /** Layout-managed horizontal offset, summed with `translateX` at render. Set via `setLayoutOffset`. */
+    public get layoutX() {
+        return this.getStateValue('layoutX');
+    }
+
+    /** Layout-managed vertical offset, summed with `translateY` at render. Set via `setLayoutOffset`. */
+    public get layoutY() {
+        return this.getStateValue('layoutY');
+    }
+
     constructor(type: string, {
         id = `${type}:${stringUniqueId()}`,
         class: classes = [],
@@ -568,6 +578,16 @@ export class Element<
             class: Array.from(this.classList),
             ...this.state,
         });
+    }
+
+    /**
+     * Sets the layout-managed offset (summed with `translateX`/`translateY` at render).
+     * Writes state directly without emitting `updated` — layout containers own this and drive
+     * their own repaint, so it generates no event traffic and leaves `translate` free for users.
+     */
+    public setLayoutOffset(x: number, y: number) {
+        this.state.layoutX = x;
+        this.state.layoutY = y;
     }
 
     /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */

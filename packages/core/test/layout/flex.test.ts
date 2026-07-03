@@ -57,8 +57,8 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 30, 60]);
-        expect(children.map(child => child.translateY)).toEqual([0, 0, 0]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 30, 60]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 0, 0]);
     });
 
     test('Should lay children in a column', () => {
@@ -73,8 +73,8 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateY)).toEqual([0, 30, 60]);
-        expect(children.map(child => child.translateX)).toEqual([0, 0, 0]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 30, 60]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 0, 0]);
     });
 
     test('Should justify centre within a fixed width', () => {
@@ -90,7 +90,7 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([70, 90, 110]);
+        expect(children.map(child => child.layoutX)).toEqual([70, 90, 110]);
     });
 
     test('Should justify space-between within a fixed width', () => {
@@ -106,7 +106,7 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 90, 180]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 90, 180]);
     });
 
     test('Should justify space-evenly within a fixed width', () => {
@@ -122,7 +122,7 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([35, 90, 145]);
+        expect(children.map(child => child.layoutX)).toEqual([35, 90, 145]);
     });
 
     test('Should align children on the cross axis', () => {
@@ -150,8 +150,8 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children[0].translateY).toBe(10);
-        expect(children[1].translateY).toBe(0);
+        expect(children[0].layoutY).toBe(10);
+        expect(children[1].layoutY).toBe(0);
     });
 
     test('Should wrap children onto multiple lines', () => {
@@ -167,8 +167,8 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 30, 0]);
-        expect(children.map(child => child.translateY)).toEqual([0, 0, 30]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 30, 0]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 0, 30]);
     });
 
     test('Should offset children by padding', () => {
@@ -182,8 +182,30 @@ describe('Flex', () => {
 
         flex.reflow();
 
-        expect(children[0].translateX).toBe(8);
-        expect(children[0].translateY).toBe(8);
+        expect(children[0].layoutX).toBe(8);
+        expect(children[0].layoutY).toBe(8);
+    });
+
+    test('Should leave the user translate free and compose it with the slot', () => {
+        const children = rects(2);
+        const flex = createFlex({
+            x: 0,
+            y: 0,
+            gap: 10,
+            children,
+        });
+
+        children[1].translateX = 5;
+
+        flex.reflow();
+
+        expect(children[1].layoutX).toBe(30);
+        expect(children[1].translateX).toBe(5);
+
+        flex.reflow();
+
+        expect(children[1].layoutX).toBe(30);
+        expect(children[1].translateX).toBe(5);
     });
 
     test('Should report a resolved content bounding box', () => {
@@ -250,7 +272,7 @@ describe('Flex', () => {
         flex.reflow();
         flex.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 30, 60]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 30, 60]);
     });
 
     describe('Reactivity', () => {
@@ -316,13 +338,13 @@ describe('Flex', () => {
 
             await nextFrame();
 
-            expect(children[1].translateX).toBe(30);
+            expect(children[1].layoutX).toBe(30);
 
             children[0].width = 40;
             await nextFrame();
 
-            expect(children[1].translateX).toBe(50);
-            expect(children[2].translateX).toBe(80);
+            expect(children[1].layoutX).toBe(50);
+            expect(children[2].layoutX).toBe(80);
             expect(flex.getBoundingBox().width).toBe(100);
         });
 

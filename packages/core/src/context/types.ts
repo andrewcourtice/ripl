@@ -143,6 +143,8 @@ export interface BaseState {
     rotation: Rotation;
     transformOriginX: TransformOrigin;
     transformOriginY: TransformOrigin;
+    layoutX?: number;
+    layoutY?: number;
 }
 
 /** Options for measuring text dimensions. */

@@ -23,6 +23,7 @@ import {
 
 import {
     typeIsNumber,
+    valueOneOrMore,
 } from '@ripl/utilities';
 
 import type {
@@ -247,17 +248,15 @@ export abstract class Layout<
         }
 
         if (isGroup(child)) {
-            // Plain abstract group: offset every leaf descendant's translate by the delta.
-            child.graph(false).forEach(leaf => {
-                leaf.translateX = (leaf.translateX ?? 0) + dx;
-                leaf.translateY = (leaf.translateY ?? 0) + dy;
-            });
+            // Plain abstract group: shift every leaf descendant by the same delta (absolute,
+            // so repeated reflows are idempotent). translate stays free for the user.
+            child.graph(false).forEach(leaf => leaf.setLayoutOffset(dx, dy));
             return;
         }
 
-        // Leaf shape: translate is applied at render. Absolute assignment keeps relayout idempotent.
-        child.translateX = dx;
-        child.translateY = dy;
+        // Leaf shape: the offset is summed with the user's translate at render. Absolute
+        // assignment keeps relayout idempotent and leaves translateX/translateY free.
+        child.setLayoutOffset(dx, dy);
     }
 
     /** Whether a change to one of this container's own state keys requires a relayout. */
@@ -279,6 +278,24 @@ export abstract class Layout<
         const height = this.state.height ?? this.#resolvedHeight;
 
         return new Box(this.y, this.x, this.y + height, this.x + width);
+    }
+
+    /** Removes children, clearing the layout offset this container applied to them. */
+    public remove(element: OneOrMore<Element>): void {
+        valueOneOrMore(element).forEach(item => {
+            if (isLayout(item)) {
+                return;
+            }
+
+            if (isGroup(item)) {
+                item.graph(false).forEach(leaf => leaf.setLayoutOffset(0, 0));
+                return;
+            }
+
+            item.setLayoutOffset(0, 0);
+        });
+
+        super.remove(element);
     }
 
     /** Forces a synchronous relayout (useful for tests and per-frame animated reflow). */

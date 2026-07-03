@@ -6,7 +6,7 @@ outline: "deep"
 
 A **Flex** is a dynamic layout container that arranges its children along a main axis — a row or a column — with control over spacing, distribution, wrapping, and cross-axis alignment. It works just like CSS flexbox, but for canvas and SVG scenes.
 
-Unlike a plain [Group](/docs/core/essentials/group) (which only organises elements and cascades styles), a Flex **positions** its children for you. As children are added, removed, resized, or as layout options change, the container automatically recomputes and re-applies positions — coalesced into a single frame for performance. Children keep their own coordinates; the layout drives each leaf's `translate`, so laid-out shapes stay fully queryable, styleable, and animatable.
+Unlike a plain [Group](/docs/core/essentials/group) (which only organises elements and cascades styles), a Flex **positions** its children for you. As children are added, removed, resized, or as layout options change, the container automatically recomputes and re-applies positions — coalesced into a single frame for performance. Positioning uses a dedicated **layout offset**, so each child's own `translateX` / `translateY` stays free — you can still translate, drag, or animate a laid-out shape relative to its slot, and it stays fully queryable and styleable.
 
 ## Example
 
@@ -132,7 +132,7 @@ const toolbar = createFlex({
 Flex containers **nest** — a Flex can contain another Flex (or a [Grid](/docs/core/elements/grid)) as a child, composing complex responsive layouts. See [Layout](/docs/core/essentials/layout) for the underlying model.
 
 > [!TIP]
-> Because layout options are ordinary animatable state, transitioning `gap`, `padding`, or a child's size produces a smooth reflow. Pair the transition with `flex.reflow()` on each renderer `tick` to animate the rearrangement rather than snapping.
+> Because layout options are ordinary animatable state, transitioning `gap`, `padding`, or a child's size produces a smooth reflow. Pair the transition with `flex.reflow()` on each renderer `tick` to animate the rearrangement rather than snapping. And because the layout uses a separate offset, you can animate a child's own `translateX` / `translateY` (an entrance slide, a hover lift) on top of its slot — the two compose.
 
 > [!NOTE]
 > For the full property list, see the [Flex API Reference](/docs/api/@ripl/core/).

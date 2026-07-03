@@ -40,8 +40,8 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 20, 0, 20]);
-        expect(children.map(child => child.translateY)).toEqual([0, 0, 20, 20]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 20, 0, 20]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 0, 20, 20]);
     });
 
     test('Should honour column and row gaps', () => {
@@ -57,8 +57,8 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 30, 0, 30]);
-        expect(children.map(child => child.translateY)).toEqual([0, 0, 25, 25]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 30, 0, 30]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 0, 25, 25]);
     });
 
     test('Should use explicit column track widths', () => {
@@ -72,7 +72,7 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 100]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 100]);
     });
 
     test('Should divide a fixed width into equal fractions', () => {
@@ -88,7 +88,7 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 120]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 120]);
     });
 
     test('Should align items within their cell', () => {
@@ -103,7 +103,7 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children[0].translateX).toBe(40);
+        expect(children[0].layoutX).toBe(40);
     });
 
     test('Should report a resolved content bounding box', () => {
@@ -133,8 +133,8 @@ describe('Grid', () => {
 
         grid.reflow();
 
-        expect(children.map(child => child.translateX)).toEqual([0, 0, 0]);
-        expect(children.map(child => child.translateY)).toEqual([0, 25, 50]);
+        expect(children.map(child => child.layoutX)).toEqual([0, 0, 0]);
+        expect(children.map(child => child.layoutY)).toEqual([0, 25, 50]);
     });
 
 });

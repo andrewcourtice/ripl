@@ -6,7 +6,7 @@ outline: "deep"
 
 A **Grid** is a dynamic layout container that arranges its children into rows and columns of sized tracks — like CSS grid, for canvas and SVG scenes. You define a column count (or explicit track widths) and the Grid places children row-major, sizing rows and columns automatically or to the sizes you provide.
 
-Like [Flex](/docs/core/elements/flex), a Grid **positions** its children and re-flows automatically whenever children or options change. Children remain ordinary, queryable, styleable elements — the Grid simply drives their placement.
+Like [Flex](/docs/core/elements/flex), a Grid **positions** its children and re-flows automatically whenever children or options change. Placement uses a dedicated **layout offset**, so a child's own `translateX` / `translateY` stays free to animate or drag relative to its cell. Children remain ordinary, queryable, styleable elements.
 
 ## Example
 

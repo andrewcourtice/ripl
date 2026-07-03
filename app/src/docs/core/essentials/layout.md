@@ -61,10 +61,15 @@ const card = createFlex({
 
 Ripl's renderer draws a flattened list of leaf elements, so a container's own transform is never applied to its children. Instead, a layout container writes **concrete positions onto the children themselves**:
 
-- **Leaf shapes** are positioned via their `translateX` / `translateY`.
+- **Leaf shapes** are positioned via a dedicated **layout offset** (`layoutX` / `layoutY`, set by the layout through `setLayoutOffset`). This offset is summed with the element's own `translateX` / `translateY` at render time.
 - **Nested layout containers** are positioned via their own `x` / `y` origin, which cascades to their children.
 
-The practical consequence: a laid-out child's `translateX`/`translateY` is **owned by the layout**. Don't also set `translate` manually on a child that a layout manages — instead adjust its intrinsic coordinates, wrap it, or animate it after layout. Everything else about the child (fill, stroke, events, querying) is untouched.
+The practical consequence: the layout **owns the layout offset**, but your `translateX` / `translateY` stay **completely free**. Final position = intrinsic geometry + layout slot + your translate. So you can translate, drag, or animate a laid-out child *relative to its slot* — for an entrance animation, a hover nudge, or a drag — without fighting the layout, and it survives reflows. Everything else about the child (fill, stroke, events, querying) is untouched.
+
+```ts
+// child sits in its flex/grid slot AND is nudged 8px right by the user:
+child.translateX = 8; // composes with the layout offset; preserved across reflow
+```
 
 ## Reactivity
 

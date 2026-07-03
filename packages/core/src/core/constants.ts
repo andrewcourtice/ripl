@@ -60,6 +60,8 @@ export const CONTEXT_OPERATIONS = {
     rotation: noop,
     transformOriginX: noop,
     transformOriginY: noop,
+    layoutX: noop,
+    layoutY: noop,
 } as {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };
@@ -81,6 +83,8 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
     rotation: 0,
     transformOriginX: 0,
     transformOriginY: 0,
+    layoutX: 0,
+    layoutY: 0,
 };
 
 /** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
