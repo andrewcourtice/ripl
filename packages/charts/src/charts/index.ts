@@ -8,6 +8,7 @@ export * from './heatmap';
 export * from './line';
 export * from './pie';
 export * from './polar-area';
+export * from './polar-scatter';
 export * from './radar';
 export * from './sankey';
 export * from './scatter';

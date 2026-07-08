@@ -36,6 +36,11 @@ export const charts: ChartMeta[] = [
         description: 'Equal-angle segments whose radius encodes value, making it easy to compare magnitudes across categories.',
     },
     {
+        text: 'Polar Scatter',
+        link: '/docs/charts/polar-scatter',
+        description: 'Points on a circular grid where angle and radius each encode a variable, ideal for directional or cyclical data.',
+    },
+    {
         text: 'Scatter',
         link: '/docs/charts/scatter',
         description: 'Data points on a two-dimensional plane with optional size variation to represent a third dimension.',
