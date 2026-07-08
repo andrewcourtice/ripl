@@ -222,4 +222,53 @@ describe('Group / Layout composition', () => {
 
     });
 
+    describe('Render efficiency', () => {
+
+        test('a position-only reflow repaints without rebuffering or a graph event', async () => {
+            const scene = createScene(el);
+            vi.spyOn(scene, 'render').mockImplementation(() => undefined);
+            const flex = createFlex({
+                x: 0,
+                y: 0,
+                gap: 10,
+                children: rects(3),
+            });
+
+            scene.add(flex);
+            await settle();
+
+            const bufferBefore = scene.buffer;
+            const graphSpy = vi.fn();
+            const repaintSpy = vi.fn();
+            scene.on('graph', graphSpy);
+            scene.on('repaint', repaintSpy);
+
+            flex.gap = 24; // position-only change: relayout -> repaint, no structural change
+            await settle();
+
+            expect(repaintSpy).toHaveBeenCalled();
+            expect(graphSpy).not.toHaveBeenCalled();
+            expect(scene.buffer).toBe(bufferBefore); // same identity => buffer was not rebuilt
+
+            scene.destroy();
+        });
+
+        test('reflow measures each child exactly once (no double getBoundingBox)', () => {
+            const children = rects(3);
+            const spies = children.map(child => vi.spyOn(child, 'getBoundingBox'));
+
+            const flex = createFlex({
+                x: 0,
+                y: 0,
+                gap: 10,
+                children,
+            });
+
+            flex.reflow();
+
+            spies.forEach(spy => expect(spy).toHaveBeenCalledTimes(1));
+        });
+
+    });
+
 });

@@ -53,12 +53,6 @@ export interface LayoutEdges {
     left: number;
 }
 
-/** Intrinsic size of a child measured for layout. */
-export interface LayoutSize {
-    width: number;
-    height: number;
-}
-
 /** Base state shared by all layout containers. */
 export interface LayoutState extends BaseElementState {
     x: number;
@@ -229,19 +223,20 @@ export abstract class Layout<
         return this.children.sort((first, second) => (first.layout?.order ?? 0) - (second.layout?.order ?? 0));
     }
 
-    /** Measures a child's intrinsic size from its bounding box. */
-    protected measureChild(child: Element): LayoutSize {
-        const box = child.getBoundingBox();
-
-        return {
-            width: box.width,
-            height: box.height,
-        };
+    /**
+     * Measures a child's current bounding box — the single measurement primitive for layouts.
+     * The box carries both size (`width`/`height`) and origin (`left`/`top`), so one measurement
+     * feeds both track sizing and placement in a relayout pass.
+     */
+    protected measureChild(child: Element): Box {
+        return child.getBoundingBox();
     }
 
     /** Places a child so the top-left of its bounding box lands at the target coordinates. */
-    protected place(child: Element, targetX: number, targetY: number): void {
-        const box = child.getBoundingBox();
+    protected place(child: Element, targetX: number, targetY: number, box: Box = child.getBoundingBox()): void {
+        // `box` may be passed by the caller to avoid re-measuring a child already measured this
+        // pass. Only its top-left is used, which is unaffected by any width/height resize applied
+        // between measure and placement.
         const dx = targetX - box.left;
         const dy = targetY - box.top;
 

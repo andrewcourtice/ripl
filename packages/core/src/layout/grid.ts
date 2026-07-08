@@ -15,6 +15,10 @@ import type {
     Element,
 } from '../core';
 
+import type {
+    Box,
+} from '../math';
+
 import {
     typeIsArray,
     typeIsNumber,
@@ -32,6 +36,7 @@ export interface GridState extends LayoutState {
 
 interface GridCell {
     child: Element;
+    box: Box;
     width: number;
     height: number;
 }
@@ -188,7 +193,7 @@ export class Grid extends Layout<GridState> {
             dy = this.alignOffset(cell.height, rowHeight, align);
         }
 
-        this.place(cell.child, cellX + dx, cellY + dy);
+        this.place(cell.child, cellX + dx, cellY + dy, cell.box);
     }
 
     protected isRelayoutKey(key: string): boolean {
@@ -214,12 +219,14 @@ export class Grid extends Layout<GridState> {
         const rowCount = this.rowCount(children.length, columnCount);
 
         const cells: (GridCell | undefined)[] = children.map(child => {
-            const { width, height } = this.measureChild(child);
+            // Measure once; `place()` reuses this box (its top-left is stable under resize).
+            const box = this.measureChild(child);
 
             return {
                 child,
-                width,
-                height,
+                box,
+                width: box.width,
+                height: box.height,
             };
         });
 

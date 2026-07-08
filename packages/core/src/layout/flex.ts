@@ -11,6 +11,10 @@ import type {
     Element,
 } from '../core';
 
+import type {
+    Box,
+} from '../math';
+
 /** Main-axis direction of a flex container. */
 export type FlexDirection = 'row' | 'column';
 
@@ -30,6 +34,7 @@ export interface FlexState extends LayoutState {
 
 interface FlexItem {
     child: Element;
+    box: Box;
     main: number;
     cross: number;
 }
@@ -97,7 +102,8 @@ export class Flex extends Layout<FlexState> {
         const isRow = this.isRow;
 
         return this.orderedChildren().map(child => {
-            const { width, height } = this.measureChild(child);
+            // Measure once; `place()` reuses this box (its top-left is stable under resize).
+            const box = this.measureChild(child);
             const basis = child.layout?.basis;
 
             // `basis` overrides the measured main size (CSS flex-basis) and resizes the child to
@@ -108,8 +114,9 @@ export class Flex extends Layout<FlexState> {
 
             return {
                 child,
-                main: basis ?? (isRow ? width : height),
-                cross: isRow ? height : width,
+                box,
+                main: basis ?? (isRow ? box.width : box.height),
+                cross: isRow ? box.height : box.width,
             };
         });
     }
@@ -318,7 +325,7 @@ export class Flex extends Layout<FlexState> {
                 const targetX = isRow ? mainPos : crossPos;
                 const targetY = isRow ? crossPos : mainPos;
 
-                this.place(item.child, targetX, targetY);
+                this.place(item.child, targetX, targetY, item.box);
 
                 mainCursor += item.main + spacing;
             });
