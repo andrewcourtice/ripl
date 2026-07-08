@@ -96,12 +96,19 @@ export class Flex extends Layout<FlexState> {
     private measureItems(): FlexItem[] {
         const isRow = this.isRow;
 
-        return this.children.map(child => {
+        return this.orderedChildren().map(child => {
             const { width, height } = this.measureChild(child);
+            const basis = child.layout?.basis;
+
+            // `basis` overrides the measured main size (CSS flex-basis) and resizes the child to
+            // match when it exposes a numeric main dimension.
+            if (basis !== undefined) {
+                this.resizeChild(child, isRow ? 'width' : 'height', basis);
+            }
 
             return {
                 child,
-                main: isRow ? width : height,
+                main: basis ?? (isRow ? width : height),
                 cross: isRow ? height : width,
             };
         });
@@ -195,27 +202,69 @@ export class Flex extends Layout<FlexState> {
         };
     }
 
-    private crossOffset(itemCross: number, lineCross: number): number {
-        if (this.align === 'center') {
+    private crossOffset(itemCross: number, lineCross: number, align: FlexAlign): number {
+        if (align === 'center') {
             return (lineCross - itemCross) / 2;
         }
 
-        if (this.align === 'end') {
+        if (align === 'end') {
             return lineCross - itemCross;
         }
 
         return 0;
     }
 
-    private applyStretch(child: Element, lineCross: number): void {
-        const property = this.isRow ? 'height' : 'width';
+    /** Sets a numeric `width`/`height` on a child, ignoring shapes without that dimension. */
+    private resizeChild(child: Element, property: 'width' | 'height', size: number): void {
         const target = child as unknown as Record<string, unknown>;
 
-        if (typeof target[property] !== 'number' || Math.abs((target[property] as number) - lineCross) < EPSILON) {
+        if (typeof target[property] !== 'number' || Math.abs((target[property] as number) - size) < EPSILON) {
             return;
         }
 
-        target[property] = lineCross;
+        target[property] = size;
+    }
+
+    private applyStretch(child: Element, lineCross: number): void {
+        this.resizeChild(child, this.isRow ? 'height' : 'width', lineCross);
+    }
+
+    /**
+     * Distributes a line's leftover (grow) or overflowing (shrink) main-axis space across its
+     * items by their `grow`/`shrink` factors, resizing each item's main dimension in place.
+     * No-op unless some item opts in, so layouts without hints are unaffected.
+     */
+    private resolveFlexibleLengths(line: FlexLine, mainSpace: number): void {
+        const free = mainSpace - line.usedMain;
+
+        if (Math.abs(free) < EPSILON) {
+            return;
+        }
+
+        const grow = free > 0;
+        const factorOf = (item: FlexItem) => (grow ? item.child.layout?.grow : item.child.layout?.shrink) ?? 0;
+        const totalFactor = line.items.reduce((sum, item) => sum + factorOf(item), 0);
+
+        if (totalFactor <= 0) {
+            return;
+        }
+
+        const property = this.isRow ? 'width' : 'height';
+
+        line.items.forEach(item => {
+            const factor = factorOf(item);
+
+            if (factor <= 0) {
+                return;
+            }
+
+            const nextMain = Math.max(0, item.main + free * (factor / totalFactor));
+
+            this.resizeChild(item.child, property, nextMain);
+            item.main = nextMain;
+        });
+
+        line.usedMain = line.items.reduce((sum, item) => sum + item.main, 0) + this.gap * Math.max(0, line.items.length - 1);
     }
 
     protected isRelayoutKey(key: string): boolean {
@@ -242,23 +291,27 @@ export class Flex extends Layout<FlexState> {
         const items = this.measureItems();
         const lines = this.buildLines(items, availMain);
 
-        const stretch = this.align === 'stretch';
-
         let contentMain = 0;
         let crossCursor = 0;
 
         lines.forEach((line, lineIndex) => {
             const mainSpace = availMain ?? line.usedMain;
+
+            this.resolveFlexibleLengths(line, mainSpace);
+
             const { leading, spacing } = this.justifyLine(line.items.length, line.usedMain, mainSpace);
 
             let mainCursor = leading;
 
             line.items.forEach(item => {
+                const alignSelf = item.child.layout?.alignSelf ?? this.align;
+                const stretch = alignSelf === 'stretch';
+
                 if (stretch) {
                     this.applyStretch(item.child, line.lineCross);
                 }
 
-                const cross = stretch ? 0 : this.crossOffset(item.cross, line.lineCross);
+                const cross = stretch ? 0 : this.crossOffset(item.cross, line.lineCross, alignSelf);
                 const mainPos = mainOrigin + mainCursor;
                 const crossPos = crossOrigin + crossCursor + cross;
 

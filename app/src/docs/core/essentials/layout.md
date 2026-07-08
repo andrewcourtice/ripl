@@ -71,6 +71,40 @@ The practical consequence: the layout **owns the layout offset**, but your `tran
 child.translateX = 8; // composes with the layout offset; preserved across reflow
 ```
 
+## Per-child options
+
+Any element can carry a `layout` hint object — the Ripl analogue of CSS flex/grid **item**
+properties. A parent flex or grid reads it when positioning that child; unset fields fall back to
+the container's own settings.
+
+```ts
+const cell = createRect({
+    width: 64,
+    height: 48,
+    layout: {
+        order: 2,          // reorder within the container (lower first)
+        grow: 1,           // share of leftover main-axis space (flex)
+        shrink: 1,         // share of main-axis overflow to absorb (flex)
+        basis: 80,         // overrides the measured main size (flex)
+        alignSelf: 'center',   // cross-axis alignment, overriding align / alignItems
+        justifySelf: 'end',    // grid main-axis alignment, overriding justifyItems
+    },
+});
+```
+
+| Option        | Applies to | Effect |
+| ------------- | ---------- | ------ |
+| `order`       | flex, grid | Orders children (default `0`); ties keep insertion order. |
+| `grow`        | flex       | Distributes a line's leftover main space by weight (default `0`). |
+| `shrink`      | flex       | Absorbs a line's main-axis overflow by weight (default `0`). |
+| `basis`       | flex       | Sets the main-axis size used for layout, resizing the child to match. |
+| `alignSelf`   | flex, grid | Overrides the container's cross-axis `align` / `alignItems`. |
+| `justifySelf` | grid       | Overrides the grid's main-axis `justifyItems`. |
+
+`grow` / `shrink` / `basis` resize a child only when it exposes a numeric `width` / `height`;
+`order` and the alignment hints work for any element. All are opt-in, so layouts without hints
+behave exactly as before.
+
 ## Reactivity
 
 Layout is automatic. A container re-flows when:

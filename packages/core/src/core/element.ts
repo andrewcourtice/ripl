@@ -44,6 +44,10 @@ import type {
     Group,
 } from './group';
 
+import type {
+    LayoutItem,
+} from '../layout';
+
 import {
     resolveRotation,
     resolveTransformOrigin,
@@ -134,6 +138,7 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     class?: OneOrMore<string>;
     data?: unknown;
     pointerEvents?: ElementPointerEvents;
+    layout?: LayoutItem;
 } & TState;
 
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
@@ -292,6 +297,9 @@ export class Element<
     public pointerEvents: ElementPointerEvents = 'all';
     public declare parent?: Group<BaseElementState, TEventMap>;
     public data: unknown;
+
+    /** CSS-like per-child hints (order, alignSelf, grow, …) read by a parent flex/grid layout. */
+    public layout?: LayoutItem;
 
     // Props
 
@@ -540,6 +548,7 @@ export class Element<
         class: classes = [],
         data,
         pointerEvents = 'all',
+        layout,
         ...state
     }: ElementOptions<TState>) {
         super();
@@ -548,6 +557,7 @@ export class Element<
         this.id = id;
         this.data = data;
         this.pointerEvents = pointerEvents;
+        this.layout = layout;
         this.classList = new Set(valueOneOrMore(classes));
 
         this.state = {
@@ -593,11 +603,12 @@ export class Element<
         };
     }
 
-    /** Creates a shallow clone of this element with the same id, classes, and state. */
+    /** Creates a shallow clone of this element with the same id, classes, state, and layout hints. */
     public clone() {
         return new Element(this.type, {
             id: this.id,
             class: Array.from(this.classList),
+            ...this.layout ? { layout: { ...this.layout } } : {},
             ...this.state,
         });
     }

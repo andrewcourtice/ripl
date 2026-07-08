@@ -170,19 +170,22 @@ export class Grid extends Layout<GridState> {
     }
 
     private placeCell(cell: GridCell, cellX: number, cellY: number, columnWidth: number, rowHeight: number): void {
+        const justify = cell.child.layout?.justifySelf ?? this.justifyItems;
+        const align = cell.child.layout?.alignSelf ?? this.alignItems;
+
         let dx = 0;
         let dy = 0;
 
-        if (this.justifyItems === 'stretch') {
+        if (justify === 'stretch') {
             this.applyStretch(cell.child, 'width', columnWidth);
         } else {
-            dx = this.alignOffset(cell.width, columnWidth, this.justifyItems);
+            dx = this.alignOffset(cell.width, columnWidth, justify);
         }
 
-        if (this.alignItems === 'stretch') {
+        if (align === 'stretch') {
             this.applyStretch(cell.child, 'height', rowHeight);
         } else {
-            dy = this.alignOffset(cell.height, rowHeight, this.alignItems);
+            dy = this.alignOffset(cell.height, rowHeight, align);
         }
 
         this.place(cell.child, cellX + dx, cellY + dy);
@@ -199,7 +202,7 @@ export class Grid extends Layout<GridState> {
     }
 
     protected relayout(): void {
-        const children = this.children;
+        const children = this.orderedChildren();
         const padding = this.resolvePadding();
         const ox = this.x + padding.left;
         const oy = this.y + padding.top;

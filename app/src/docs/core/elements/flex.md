@@ -91,6 +91,17 @@ flex.gap = 24;
 | `gap` | `number` | Space between children (and between wrapped lines). Defaults to `0`. |
 | `padding` | `number \| { top, right, bottom, left }` | Inner padding around the content. |
 
+## Per-child options
+
+Individual children can override the container via a `layout` hint: `order`, `alignSelf`, and the
+flex-sizing hints `grow` / `shrink` / `basis`.
+
+```ts
+createRect({ width: 64, height: 48, layout: { grow: 1, alignSelf: 'center' } });
+```
+
+See [Layout → Per-child options](../essentials/layout#per-child-options) for the full list.
+
 ## Usage
 
 ```ts

@@ -75,6 +75,17 @@ const renderer = createRenderer(scene);
 - **Explicit tracks**: pass an array, e.g. `columns: [120, 80, 120]`, to fix track sizes.
 - **Fractions**: pass a count plus a fixed `width`/`height` to split the available space evenly, e.g. `columns: 3, width: 600`.
 
+## Per-child options
+
+Individual children can override the grid via a `layout` hint: `order`, `justifySelf` (horizontal),
+and `alignSelf` (vertical) — each overriding the grid's `justifyItems` / `alignItems` for that cell.
+
+```ts
+createRect({ width: 40, height: 40, layout: { order: -1, justifySelf: 'end', alignSelf: 'center' } });
+```
+
+See [Layout → Per-child options](../essentials/layout#per-child-options) for the full list.
+
 ## Usage
 
 ```ts

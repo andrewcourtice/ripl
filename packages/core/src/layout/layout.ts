@@ -24,6 +24,10 @@ import type {
     Context,
 } from '../context';
 
+import type {
+    FlexAlign,
+} from './flex';
+
 import {
     typeIsNumber,
     valueOneOrMore,
@@ -69,6 +73,26 @@ export interface LayoutState extends BaseElementState {
 export type LayoutOptions<TState extends LayoutState = LayoutState> = ElementOptions<TState> & {
     children?: OneOrMore<Element>;
 };
+
+/**
+ * Per-child layout hints — the Ripl analogue of CSS flex/grid item properties. Set on any element
+ * via its `layout` option/property; layout containers read them when positioning that child.
+ * Unset fields fall back to the container's own settings.
+ */
+export interface LayoutItem {
+    /** Ordering within the container; lower values are placed first. Ties keep insertion order. Default `0`. */
+    order?: number;
+    /** Flex grow factor — share of a line's leftover main-axis space. Default `0` (no growth). */
+    grow?: number;
+    /** Flex shrink factor — share of a line's main-axis overflow to absorb. Default `0` (no shrink). */
+    shrink?: number;
+    /** Overrides the child's measured main-axis size used as the flex base (CSS `flex-basis`). */
+    basis?: number;
+    /** Cross-axis alignment for this child, overriding the container's `align`/`alignItems`. */
+    alignSelf?: FlexAlign;
+    /** Main-axis (grid) alignment for this child, overriding the grid's `justifyItems`. */
+    justifySelf?: FlexAlign;
+}
 
 /**
  * Abstract base for dynamic layout containers (flex, grid). A `Layout` is an abstract `Group`
@@ -195,6 +219,14 @@ export abstract class Layout<
             bottom: padding?.bottom ?? 0,
             left: padding?.left ?? 0,
         };
+    }
+
+    /**
+     * Children sorted by their `layout.order` hint (default `0`). `children` returns a fresh array,
+     * and `Array.prototype.sort` is stable, so equal-order children keep their insertion order.
+     */
+    protected orderedChildren(): Element[] {
+        return this.children.sort((first, second) => (first.layout?.order ?? 0) - (second.layout?.order ?? 0));
     }
 
     /** Measures a child's intrinsic size from its bounding box. */
