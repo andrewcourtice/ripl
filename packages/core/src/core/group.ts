@@ -339,6 +339,12 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return getContainingBox(this.children, element => element.getBoundingBox());
     }
 
+    /** Detaches all children (clearing their parent), then destroys this group. */
+    public destroy(): void {
+        this.clear();
+        super.destroy();
+    }
+
     /** Renders all child elements in order within a save/restore context. */
     public render(context: Context): void {
         context.save();
