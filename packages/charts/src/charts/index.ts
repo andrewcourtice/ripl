@@ -1,6 +1,7 @@
 export * from './area';
 export * from './bar';
 export * from './chord';
+export * from './force-directed';
 export * from './funnel';
 export * from './gantt';
 export * from './gauge';

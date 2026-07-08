@@ -101,6 +101,16 @@ export const charts: ChartMeta[] = [
         description: 'Flow between nodes using weighted links. Ideal for energy flows, budget allocations, or user journeys.',
     },
     {
+        text: 'Force-Directed',
+        link: '/docs/charts/force-directed',
+        description: 'A network of nodes and links laid out by a physics simulation, ideal for relationship and dependency data.',
+    },
+    {
+        text: 'Arc Diagram',
+        link: '/docs/charts/arc-diagram',
+        description: 'Nodes along a line connected by arcs whose thickness encodes relationship strength.',
+    },
+    {
         text: 'Realtime',
         link: '/docs/charts/realtime',
         description: 'Smoothly visualize streaming data with a sliding window and animated transitions. Ideal for live dashboards.',
