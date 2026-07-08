@@ -67,7 +67,9 @@ const providers = [
 function buildTree() {
     const target = createRect({
         id: 'target',
-        class: 'leaf active',
+        // Two separate classes — Ripl's `class` option doesn't split on whitespace, so a
+        // space-joined string would be a single class token and `.leaf` wouldn't match here.
+        class: ['leaf', 'active'],
         x: 0,
         y: 0,
         width: 10,
