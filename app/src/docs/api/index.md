@@ -37,7 +37,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
 - **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
 - **11 scale types** — continuous, discrete, band, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3)
-- **18 pre-built chart types** via `@ripl/charts`
+- **23 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives** (experimental) — cube, sphere, cylinder, cone, plane, torus
 - **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
@@ -338,21 +338,26 @@ Transforms can also be animated via `renderer.transition`.
 
 ## Charts
 
-`@ripl/charts` provides 18 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+`@ripl/charts` provides 23 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
 
 | Chart | Factory |
 |-------|---------|
+| Arc Diagram | `createArcDiagramChart` |
 | Area | `createAreaChart` |
 | Bar | `createBarChart` |
 | Chord | `createChordChart` |
+| Force-Directed | `createForceDirectedChart` |
 | Funnel | `createFunnelChart` |
 | Gantt | `createGanttChart` |
 | Gauge | `createGaugeChart` |
 | Heatmap | `createHeatmapChart` |
 | Line | `createLineChart` |
+| Packed Circle | `createPackedCircleChart` |
 | Pie / Donut | `createPieChart` |
 | Polar Area | `createPolarAreaChart` |
+| Polar Scatter | `createPolarScatterChart` |
 | Radar | `createRadarChart` |
+| Radial Bar | `createRadialBarChart` |
 | Realtime | `createRealtimeChart` |
 | Sankey | `createSankeyChart` |
 | Scatter | `createScatterChart` |

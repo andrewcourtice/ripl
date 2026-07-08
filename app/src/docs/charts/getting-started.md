@@ -171,6 +171,14 @@ chart.destroy();
 | [Chord](/docs/charts/chord) | `createChordChart` | Relationship matrices |
 | [Sunburst](/docs/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
 | [Trend](/docs/charts/trend) | `createTrendChart` | Sparkline-style |
+| [Stock](/docs/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
+| [Gantt](/docs/charts/gantt) | `createGanttChart` | Tasks over a time axis |
+| [Realtime](/docs/charts/realtime) | `createRealtimeChart` | Streaming sliding window |
+| [Polar Scatter](/docs/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
+| [Radial Bar](/docs/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
+| [Packed Circle](/docs/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
+| [Force-Directed](/docs/charts/force-directed) | `createForceDirectedChart` | Physics-based network |
+| [Arc Diagram](/docs/charts/arc-diagram) | `createArcDiagramChart` | Nodes linked by arcs |
 
 ## Next Steps
 
