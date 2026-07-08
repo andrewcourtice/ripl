@@ -518,12 +518,18 @@ export class Element<
         this.setStateValue('transformOriginY', value);
     }
 
-    /** Layout-managed horizontal offset, summed with `translateX` at render. Set via `setLayoutOffset`. */
+    /**
+     * Layout-managed horizontal offset, summed with `translateX` at render.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
+     */
     public get layoutX() {
         return this.getStateValue('layoutX');
     }
 
-    /** Layout-managed vertical offset, summed with `translateY` at render. Set via `setLayoutOffset`. */
+    /**
+     * Layout-managed vertical offset, summed with `translateY` at render.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
+     */
     public get layoutY() {
         return this.getStateValue('layoutY');
     }
@@ -599,6 +605,7 @@ export class Element<
      * Sets the layout-managed offset (summed with `translateX`/`translateY` at render).
      * Writes state directly without emitting `updated` — layout containers own this and drive
      * their own repaint, so it generates no event traffic and leaves `translate` free for users.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
      */
     public setLayoutOffset(x: number, y: number) {
         this.state.layoutX = x;

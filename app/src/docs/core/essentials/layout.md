@@ -61,7 +61,7 @@ const card = createFlex({
 
 Ripl's renderer draws a flattened list of leaf elements, so a container's own transform is never applied to its children. Instead, a layout container writes **concrete positions onto the children themselves**:
 
-- **Leaf shapes** are positioned via a dedicated **layout offset** (`layoutX` / `layoutY`, set by the layout through `setLayoutOffset`). This offset is summed with the element's own `translateX` / `translateY` at render time.
+- **Leaf shapes** are positioned via a dedicated, Ripl-managed **layout offset** that the container maintains internally. This offset is composed with the element's own `translateX` / `translateY` at render time.
 - **Nested layout containers** are positioned via their own `x` / `y` origin, which cascades to their children.
 
 The practical consequence: the layout **owns the layout offset**, but your `translateX` / `translateY` stay **completely free**. Final position = intrinsic geometry + layout slot + your translate. So you can translate, drag, or animate a laid-out child *relative to its slot* — for an entrance animation, a hover nudge, or a drag — without fighting the layout, and it survives reflows. Everything else about the child (fill, stroke, events, querying) is untouched.

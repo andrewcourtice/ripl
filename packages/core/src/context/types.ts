@@ -143,7 +143,9 @@ export interface BaseState {
     rotation: Rotation;
     transformOriginX: TransformOrigin;
     transformOriginY: TransformOrigin;
+    /** @internal Ripl-internal layout offset — owned by layout containers, not part of the public API. */
     layoutX?: number;
+    /** @internal Ripl-internal layout offset — owned by layout containers, not part of the public API. */
     layoutY?: number;
 }
 
