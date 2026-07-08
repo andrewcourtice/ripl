@@ -189,7 +189,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 let innerRadius = 0;
 
                 if (innerRadiusOption !== undefined) {
-                    innerRadius = innerRadiusOption <= 1 ? size * innerRadiusOption : innerRadiusOption;
+                    // A fractional value is a fraction of the *outer radius* (so 0.55 is a hole 55% of
+                    // the ring), not of the overall size — otherwise the hole could exceed the ring and
+                    // render an inverted donut. Absolute values are taken as-is. Always clamp below the
+                    // outer radius so the ring stays visible.
+                    const resolved = innerRadiusOption <= 1 ? radius * innerRadiusOption : innerRadiusOption;
+                    innerRadius = Math.min(resolved, radius * 0.95);
                 }
 
                 const output = {
