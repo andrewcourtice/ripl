@@ -143,7 +143,7 @@ const toolbar = createFlex({
 Flex containers **nest** — a Flex can contain another Flex (or a [Grid](/docs/core/elements/grid)) as a child, composing complex responsive layouts. See [Layout](/docs/core/essentials/layout) for the underlying model.
 
 > [!TIP]
-> Because layout options are ordinary animatable state, transitioning `gap`, `padding`, or a child's size produces a smooth reflow. Pair the transition with `flex.reflow()` on each renderer `tick` to animate the rearrangement rather than snapping. And because the layout uses a separate offset, you can animate a child's own `translateX` / `translateY` (an entrance slide, a hover lift) on top of its slot — the two compose.
+> Transitioning a child's size (e.g. a `Rect`'s `width`) produces a smooth reflow — the renderer reflows the scene's layouts each tick, so siblings rearrange automatically with no manual `reflow()` (pass `{ autoReflow: false }` to opt out). And because the layout uses a separate offset, you can animate a child's own `translateX` / `translateY` (an entrance slide, a hover lift) on top of its slot — the two compose.
 
 > [!NOTE]
 > For the full property list, see the [Flex API Reference](/docs/api/@ripl/core/).

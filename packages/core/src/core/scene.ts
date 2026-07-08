@@ -19,11 +19,20 @@ import {
 
 import {
     Group,
+    isGroup,
 } from './group';
 
 import type {
     GroupOptions,
 } from './group';
+
+import {
+    isLayout,
+} from '../layout';
+
+import type {
+    Layout,
+} from '../layout';
 
 import {
     typeIsNil,
@@ -50,7 +59,11 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
 
     public context: TContext;
 
-    public buffer: Element[];
+    /** Flattened, z-sorted leaf elements — the render buffer. Rebuilt on graph changes. */
+    public buffer: Element[] = [];
+
+    /** Layout containers in the scene, outermost-first. Rebuilt on graph changes; reflowed by `reflow()`. */
+    public layouts: Layout[] = [];
 
     /** The renderer driving this scene, if any. Set by `Renderer`; used to avoid redundant renders. */
     public renderer?: { isRunning: boolean };
@@ -94,7 +107,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
         });
 
         this.context = context;
-        this.buffer = this.graph();
+        this.rebuffer();
         this._renderOnUpdate = renderOnUpdate;
 
         this.retain(context.on('resize', () => {
@@ -116,7 +129,20 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
     }
 
     private rebuffer() {
-        this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+        // One graph walk: leaves feed the z-sorted render buffer; layout containers are collected
+        // (outermost-first, the order `graph(true)` produces) for `reflow()`.
+        const graph = this.graph(true);
+
+        this.layouts = graph.filter(isLayout);
+        this.buffer = graph
+            .filter(element => !isGroup(element))
+            .sort((ea, eb) => ea.zIndex - eb.zIndex);
+    }
+
+    /** Reflows every layout in the scene, outermost-first, so parents reposition nested layouts
+     * before those lay out their own children. Called by the renderer each tick. */
+    public reflow(): void {
+        this.layouts.forEach(layout => layout.reflow());
     }
 
     /**

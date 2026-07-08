@@ -242,8 +242,12 @@ export abstract class Layout<
 
         if (isLayout(child)) {
             // Nested layout is abstract, so its own translate is never applied — drive its origin.
-            child.x += dx;
-            child.y += dy;
+            // Skip when already in place so a per-frame reflow emits no redundant `updated` events.
+            if (dx || dy) {
+                child.x += dx;
+                child.y += dy;
+            }
+
             return;
         }
 

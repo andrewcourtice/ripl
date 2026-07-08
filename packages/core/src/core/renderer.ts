@@ -101,6 +101,8 @@ export interface RendererOptions {
     autoStart?: boolean;
     autoStop?: boolean;
     immediate?: boolean;
+    /** Reflow the scene's layouts automatically on every tick so animated layouts reposition without manual `reflow()`. Defaults to `true`. */
+    autoReflow?: boolean;
     debug?: boolean | RendererDebugOptions;
 }
 
@@ -153,6 +155,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     public autoStart = true;
     public autoStop = true;
+    public autoReflow = true;
 
     /** Whether there are any active transitions in progress. */
     public get isBusy() {
@@ -170,6 +173,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         const {
             autoStart = true,
             autoStop = true,
+            autoReflow = true,
             debug = false,
         } = options || {};
 
@@ -177,6 +181,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         this.scene.renderer = this;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
+        this.autoReflow = autoReflow;
         this.debugOptions = resolveDebugOptions(debug);
 
         if (autoStart) {
@@ -212,6 +217,15 @@ export class Renderer extends EventBus<RendererEventMap> {
             });
 
             this.previousTime = this.currentTime;
+
+            // Update phase: advance every active transition (leaves, groups, and layouts — not
+            // just buffered leaves), then reflow the scene's layouts so they reposition from the
+            // freshly-updated children within this same frame. Render phase draws the result.
+            this.advanceTransitions();
+
+            if (this.autoReflow) {
+                this.scene.reflow();
+            }
 
             this.renderBuffer();
             this.renderDebugOverlay(deltaTime);
@@ -269,14 +283,18 @@ export class Renderer extends EventBus<RendererEventMap> {
         entry.startTime = this.currentTime;
     }
 
+    /** Advances every active transition, including those on layouts/groups that are not in the
+     * leaf render buffer (so animating a layout's own `gap`/`padding`/`width` works). */
+    private advanceTransitions() {
+        this.transitionMap.forEach(entries => {
+            entries.forEach(entry => this.processTransition(entry));
+        });
+    }
+
     private renderBuffer() {
         const buffer = this.scene.buffer;
 
         buffer.forEach(element => {
-            this.transitionMap.get(element.id)?.forEach(entry => {
-                this.processTransition(entry);
-            });
-
             element.render(this.scene.context);
 
             if (this.debugOptions.boundingBoxes) {

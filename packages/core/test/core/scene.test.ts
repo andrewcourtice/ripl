@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 
 import {
+    createFlex,
     createGroup,
     createRect,
     createScene,
@@ -191,6 +192,89 @@ describe('Scene', () => {
         expect(scene.buffer).toContain(rect);
 
         scene.destroy();
+    });
+
+    describe('layouts', () => {
+
+        // A layout's own reflow frame reschedules the scene's coalesced (re)buffer frame, so allow
+        // a few frames to settle — mirrors composition.test.ts.
+        async function settle() {
+            for (let i = 0; i < 3; i++) {
+                await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+            }
+        }
+
+        test('collects layouts (outermost-first) and keeps buffer as z-sorted leaves', async () => {
+            const scene = createScene(el, { renderOnUpdate: false });
+
+            const inner = createFlex({
+                x: 0,
+                y: 0,
+                gap: 4,
+                children: [createRect({
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                })],
+            });
+            const outer = createFlex({
+                x: 0,
+                y: 0,
+                gap: 10,
+                children: [inner],
+            });
+
+            scene.add(outer);
+            await settle();
+
+            // outermost-first
+            expect(scene.layouts).toEqual([outer, inner]);
+            // buffer holds only the leaf rect (no groups/layouts)
+            expect(scene.layouts.every(layout => !scene.buffer.includes(layout))).toBe(true);
+            expect(scene.buffer).toHaveLength(1);
+
+            scene.destroy();
+        });
+
+        test('reflow() reflows every layout and is idempotent (no redundant updated events)', async () => {
+            const scene = createScene(el, { renderOnUpdate: false });
+            const flex = createFlex({
+                x: 0,
+                y: 0,
+                gap: 10,
+                children: [
+                    createRect({
+                        x: 0,
+                        y: 0,
+                        width: 20,
+                        height: 20,
+                    }),
+                    createRect({
+                        x: 0,
+                        y: 0,
+                        width: 20,
+                        height: 20,
+                    }),
+                ],
+            });
+
+            scene.add(flex);
+            await settle();
+
+            const reflowSpy = vi.spyOn(flex, 'reflow');
+            scene.reflow();
+            expect(reflowSpy).toHaveBeenCalledTimes(1);
+
+            // A second reflow with nothing changed must not emit further updates.
+            const updatedSpy = vi.fn();
+            scene.on('updated', updatedSpy);
+            scene.reflow();
+            expect(updatedSpy).not.toHaveBeenCalled();
+
+            scene.destroy();
+        });
+
     });
 
 });

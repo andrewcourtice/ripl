@@ -123,7 +123,21 @@ flex.reflow();
 
 ## Animating layout
 
-Because layout options and child positions are ordinary animatable state, reflow can be animated. Note that `renderer.transition(...)` writes state directly (bypassing the change events), so animating a layout option won't auto-reflow every frame on its own. To animate a rearrangement smoothly, call `reflow()` on each renderer `tick` while the transition runs; otherwise the layout snaps to its new arrangement in a single frame.
+`renderer.transition(...)` writes state directly (bypassing the change events that normally trigger a relayout), so during a transition the layout would otherwise not know to re-flow. The **renderer handles this for you**: on every tick it reflows the scene's layouts (outermost-first) after advancing transitions, so animating a child's size smoothly re-arranges its siblings — no manual `reflow()` needed.
+
+```ts
+const renderer = createRenderer(scene);
+
+// The flex re-flows automatically each frame as the rect grows.
+renderer.transition(rect, { duration: 400, state: { width: 120 } });
+```
+
+Pass `{ autoReflow: false }` to `createRenderer` if you'd rather drive `reflow()` yourself (e.g. for a custom animation loop):
+
+```ts
+const renderer = createRenderer(scene, { autoReflow: false });
+// ...then call flex.reflow() (or scene.reflow()) when you need a relayout.
+```
 
 > [!NOTE]
 > For full APIs, see [Flex](/docs/core/elements/flex) and [Grid](/docs/core/elements/grid).
