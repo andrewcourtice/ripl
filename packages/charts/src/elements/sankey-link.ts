@@ -5,8 +5,8 @@ import type {
 import {
     BaseElementState,
     Box,
-    numberMax,
-    numberMin,
+    max,
+    min,
     Shape2D,
     Shape2DOptions,
 } from '@ripl/core';
@@ -72,10 +72,10 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         const midX = (sx + tx) / 2;
 
         return new Box(
-            numberMin(sy, ty),
-            numberMin(sx, midX, tx),
-            numberMax(sy, ty),
-            numberMax(sx, midX, tx)
+            min(sy, ty),
+            min(sx, midX, tx),
+            max(sy, ty),
+            max(sx, midX, tx)
         );
     }
 

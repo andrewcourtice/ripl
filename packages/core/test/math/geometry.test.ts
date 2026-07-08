@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 
 import {
-    geometryPointsEqual,
+    arePointsEqual,
     Point,
 } from '../../src';
 
@@ -17,7 +17,7 @@ describe('Math', () => {
             const point1 = [3, 5] as Point;
             const point2 = point1.slice() as Point;
 
-            expect(geometryPointsEqual(point1, point2)).toBe(true);
+            expect(arePointsEqual(point1, point2)).toBe(true);
         });
 
     });

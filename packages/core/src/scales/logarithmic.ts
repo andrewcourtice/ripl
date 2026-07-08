@@ -9,7 +9,7 @@ import {
 } from '@ripl/utilities';
 
 import {
-    numberClamp,
+    clamp as numberClamp,
 } from '../math';
 
 import {

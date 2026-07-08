@@ -1,5 +1,5 @@
 import {
-    numberClamp,
+    clamp as numberClamp,
 } from '../../math';
 
 import {

@@ -230,7 +230,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
             this.hitPath = undefined;
 
-            // This is functionNoop for CPU render strategies. Safe to call on all paths.
+            // This is noop for CPU render strategies. Safe to call on all paths.
             ctx.submitMesh({
                 vertices: triangulateFacesFlat(faces, baseRGBA),
                 indices: triangulateFacesIndices(faces),

@@ -45,10 +45,10 @@ import {
     createRect,
     easeOutCubic,
     easeOutQuart,
+    getExtent,
     Group,
     Line,
     LineState,
-    numberExtent,
     Rect,
     RectState,
     Scale,
@@ -472,7 +472,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
         const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
 
         const volumes = data.map(item => this.getAccessor<number>(volumeAccessor)(item));
-        const volumeExtent = numberExtent(volumes.concat(0), functionIdentity);
+        const volumeExtent = getExtent(volumes.concat(0), functionIdentity);
 
         this.volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
 
@@ -592,7 +592,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const highs = allValues.map(v => v.high);
             const lows = allValues.map(v => v.low);
-            const priceExtent = numberExtent(highs.concat(lows), functionIdentity);
+            const priceExtent = getExtent(highs.concat(lows), functionIdentity);
 
             const keys = allValues.map(v => v.key);
 

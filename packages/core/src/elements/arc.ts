@@ -13,9 +13,9 @@ import type {
 
 import {
     Box,
-    geometryThetaPoint,
-    numberMax,
-    numberMin,
+    getThetaPoint,
+    max,
+    min,
 } from '../math';
 
 import {
@@ -127,7 +127,7 @@ export class Arc extends Shape2D<ArcState> {
         const angle = (startAngle + endAngle) / 2;
         const distance = innerRadius + (radius - innerRadius) / 2;
 
-        return geometryThetaPoint(angle, distance, cx, cy);
+        return getThetaPoint(angle, distance, cx, cy);
     }
 
     public getBoundingBox(): Box {
@@ -140,26 +140,26 @@ export class Arc extends Shape2D<ArcState> {
             endAngle,
         } = this;
 
-        const [outerX1, outerY1] = geometryThetaPoint(startAngle, radius, cx, cy);
-        const [outerX2, outerY2] = geometryThetaPoint(endAngle, radius, cx, cy);
+        const [outerX1, outerY1] = getThetaPoint(startAngle, radius, cx, cy);
+        const [outerX2, outerY2] = getThetaPoint(endAngle, radius, cx, cy);
 
         if (typeIsNil(innerRadius)) {
             return new Box(
-                numberMin(cy, outerY1, outerY2),
-                numberMin(cx, outerX1, outerX2),
-                numberMax(cy, outerY1, outerY2),
-                numberMax(cx, outerX1, outerX2)
+                min(cy, outerY1, outerY2),
+                min(cx, outerX1, outerX2),
+                max(cy, outerY1, outerY2),
+                max(cx, outerX1, outerX2)
             );
         }
 
-        const [innerX1, innerY1] = geometryThetaPoint(startAngle, innerRadius, cx, cy);
-        const [innerX2, innerY2] = geometryThetaPoint(endAngle, innerRadius, cx, cy);
+        const [innerX1, innerY1] = getThetaPoint(startAngle, innerRadius, cx, cy);
+        const [innerX2, innerY2] = getThetaPoint(endAngle, innerRadius, cx, cy);
 
         return new Box(
-            numberMin(innerY1, innerY2, outerY1, outerY2),
-            numberMin(innerX1, innerX2, outerX1, outerX2),
-            numberMax(innerY1, innerY2, outerY1, outerY2),
-            numberMax(innerX1, innerX2, outerX1, outerX2)
+            min(innerY1, innerY2, outerY1, outerY2),
+            min(innerX1, innerX2, outerX1, outerX2),
+            max(innerY1, innerY2, outerY1, outerY2),
+            max(innerX1, innerX2, outerX1, outerX2)
         );
     }
 
@@ -189,8 +189,8 @@ export class Arc extends Shape2D<ArcState> {
                 return path.arc(cx, cy, radius, startAngle, endAngle);
             }
 
-            const [x1, y1] = geometryThetaPoint(startAngle, radius, cx, cy);
-            const [x2, y2] = geometryThetaPoint(endAngle, innerRadius, cx, cy);
+            const [x1, y1] = getThetaPoint(startAngle, radius, cx, cy);
+            const [x2, y2] = getThetaPoint(endAngle, innerRadius, cx, cy);
 
             path.moveTo(x1, y1);
             path.arc(cx, cy, radius, startAngle, endAngle);

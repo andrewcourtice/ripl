@@ -13,7 +13,7 @@ import type {
 
 import {
     Box,
-    geometryNormaliseBorderRadius,
+    normaliseBorderRadius,
 } from '../math';
 
 import type {
@@ -99,7 +99,7 @@ export class Rect extends Shape2D<RectState> {
                 return path.rect(x, y, width, height);
             }
 
-            const borders = geometryNormaliseBorderRadius(borderRadius);
+            const borders = normaliseBorderRadius(borderRadius);
 
             if (path.roundRect) {
                 return path.roundRect(x, y, width, height, borders);

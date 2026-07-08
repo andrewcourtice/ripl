@@ -13,8 +13,8 @@ import type {
 
 import {
     Box,
-    geometryPolygonPoints,
-    numberMax,
+    getPolygonPoints,
+    max,
 } from '../math';
 
 /** State interface for a regular polygon element, defining center, radius, and number of sides. */
@@ -57,7 +57,7 @@ export class Polygon extends Shape2D<PolygonState> {
     }
 
     public set sides(value) {
-        this.setStateValue('sides', numberMax(value, 3));
+        this.setStateValue('sides', max(value, 3));
     }
 
     constructor(options: Shape2DOptions<PolygonState>) {
@@ -75,7 +75,7 @@ export class Polygon extends Shape2D<PolygonState> {
 
     public render(context: Context) {
         return super.render(context, path => {
-            const points = geometryPolygonPoints(
+            const points = getPolygonPoints(
                 this.sides,
                 this.cx,
                 this.cy,

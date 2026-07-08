@@ -276,10 +276,10 @@ Progressively reveals a polyline path from start to end as `t` advances from 0 t
 == Code
 ```ts
 import {
-    geometryPolygonPoints, interpolatePath,
+    getPolygonPoints, interpolatePath,
 } from '@ripl/web';
 
-const points = geometryPolygonPoints(6, cx, cy, radius, true);
+const points = getPolygonPoints(6, cx, cy, radius, true);
 const interp = interpolatePath(points);
 polyline.points = interp(t);
 ```
@@ -302,11 +302,11 @@ polyline.points = interp(t);
 == Code
 ```ts
 import {
-    geometryPolygonPoints, interpolatePoints,
+    getPolygonPoints, interpolatePoints,
 } from '@ripl/web';
 
-const triangle = geometryPolygonPoints(3, cx, cy, radius);
-const octagon = geometryPolygonPoints(8, cx, cy, radius);
+const triangle = getPolygonPoints(3, cx, cy, radius);
+const octagon = getPolygonPoints(8, cx, cy, radius);
 
 const interp = interpolatePoints(triangle, octagon);
 polygon.points = interp(t); // smoothly morphs between shapes
@@ -346,7 +346,7 @@ import {
     createPolyline,
     createRect,
     createText,
-    geometryPolygonPoints,
+    getPolygonPoints,
     interpolateColor,
     interpolateGradient,
     interpolateNumber,
@@ -519,7 +519,7 @@ function renderPath(ctx: Context) {
     const h = ctx.height;
     const t = pathT.value / 100;
     const r = Math.min(w, h) * 0.35;
-    const points = geometryPolygonPoints(6, w / 2, h / 2, r, true);
+    const points = getPolygonPoints(6, w / 2, h / 2, r, true);
     const interp = interpolatePath(points);
     const revealed = interp(t);
 
@@ -572,8 +572,8 @@ function renderMorph(ctx: Context) {
     const cx = w / 2;
     const cy = h / 2;
 
-    const fromPts = geometryPolygonPoints(parseInt(morphFrom.value), cx, cy, r);
-    const toPts = geometryPolygonPoints(parseInt(morphTo.value), cx, cy, r);
+    const fromPts = getPolygonPoints(parseInt(morphFrom.value), cx, cy, r);
+    const toPts = getPolygonPoints(parseInt(morphTo.value), cx, cy, r);
     const interp = interpolatePoints(fromPts, toPts);
     const morphed = interp(t) as Point[];
 

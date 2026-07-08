@@ -2,13 +2,13 @@ import {
     ContextPath,
     ContextText,
     createFrameBuffer,
-    geometryNormaliseBorderRadius,
-    geometryRadiansToDegrees,
-    geometryThetaPoint,
+    getThetaPoint,
     isGradientString,
     measureText,
+    normaliseBorderRadius,
     parseColor,
     parseGradient,
+    radiansToDegrees,
     serialiseRGBA,
 } from '@ripl/core';
 
@@ -255,8 +255,8 @@ export class SVGPath extends ContextPath implements SVGContextElement {
     }
 
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        const [x1, y1] = geometryThetaPoint(startAngle, radius, x, y);
-        const [x2, y2] = geometryThetaPoint(endAngle, radius, x, y);
+        const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
+        const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
         const largeArcFlag = +(Math.abs(endAngle - startAngle) > Math.PI);
         const clockwiseFlag = +!counterclockwise;
 
@@ -350,7 +350,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
             borderTopRight,
             borderBottomRight,
             borderBottomLeft,
-        ] = geometryNormaliseBorderRadius(radii);
+        ] = normaliseBorderRadius(radii);
 
         this.moveTo(x + borderTopLeft, y);
         this.lineTo(x + width - borderTopRight, y);
@@ -743,7 +743,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     }
 
     public rotate(angle: number): void {
-        this.currentTransforms.push(`rotate(${geometryRadiansToDegrees(angle)})`);
+        this.currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
     }
 
     public scale(x: number, y: number): void {

@@ -4,8 +4,8 @@ import {
 } from '@ripl/utilities';
 
 import {
-    geometryDegreesToRadians,
-    geometryRadiansToDegrees,
+    degreesToRadians,
+    radiansToDegrees,
 } from '../math';
 
 import {
@@ -26,7 +26,7 @@ function toRadians(value: number | string): number {
     const trimmed = (value as string).trim();
 
     if (trimmed.endsWith('deg')) {
-        return geometryDegreesToRadians(parseFloat(trimmed));
+        return degreesToRadians(parseFloat(trimmed));
     }
 
     if (trimmed.endsWith('rad')) {
@@ -53,7 +53,7 @@ export const interpolateRotation: InterpolatorFactory<number | string> = (valueA
         }
 
         if (bUnit === 'deg') {
-            return `${geometryRadiansToDegrees(radians)}deg`;
+            return `${radiansToDegrees(radians)}deg`;
         }
 
         if (bUnit === 'rad') {

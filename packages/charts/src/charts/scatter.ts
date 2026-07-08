@@ -53,8 +53,8 @@ import {
     createGroup,
     easeOutCubic,
     easeOutQuart,
+    getExtent,
     Group,
-    numberExtent,
     Scale,
     scaleContinuous,
     setColorAlpha,
@@ -208,7 +208,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
         });
 
         return allSizes.length > 0
-            ? numberExtent(allSizes, functionIdentity)
+            ? getExtent(allSizes, functionIdentity)
             : [1, 1];
     }
 
@@ -537,7 +537,7 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[xBy] as number;
 
-                return numberExtent(data, getXValue);
+                return getExtent(data, getXValue);
             }).flat();
 
             const yExtents = series.map(({ yBy }) => {
@@ -546,11 +546,11 @@ export class ScatterChart<TData = unknown> extends Chart<ScatterChartOptions<TDa
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     : (item: any) => item[yBy] as number;
 
-                return numberExtent(data, getYValue);
+                return getExtent(data, getYValue);
             }).flat();
 
-            const xExtent = numberExtent(xExtents, functionIdentity);
-            const yExtent = numberExtent(yExtents, functionIdentity);
+            const xExtent = getExtent(xExtents, functionIdentity);
+            const yExtent = getExtent(yExtents, functionIdentity);
             const sizeExtent = this.getSizeExtent();
 
             // Create size scale (normalized 0-1)

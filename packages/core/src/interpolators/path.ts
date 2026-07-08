@@ -1,8 +1,8 @@
 import {
-    geometryNormaliseBorderRadius,
-    geometryPolygonPoints,
-    geometryWaypoint,
-    numberFractional,
+    fractional,
+    getPolygonPoints,
+    getWaypoint,
+    normaliseBorderRadius,
     TAU,
     typeIsPoint,
 } from '../math';
@@ -42,7 +42,7 @@ function distributePoints(points: Point[], multiplier: number): Point[] {
         result.push(points[i]);
 
         for (let si = 1; si < multiplier; si++) {
-            result.push(geometryWaypoint(points[i], points[i + 1], si / multiplier));
+            result.push(getWaypoint(points[i], points[i + 1], si / multiplier));
         }
     }
 
@@ -114,14 +114,14 @@ export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
         const lowerBound = Math.floor(offset);
         const upperBound = Math.ceil(offset);
 
-        return geometryWaypoint(points[lowerBound], points[upperBound], numberFractional(offset));
+        return getWaypoint(points[lowerBound], points[upperBound], fractional(offset));
     };
 }
 
 /** Creates an interpolator that progressively reveals a path from start to end as position advances from 0 to 1. */
 export function interpolatePath(points: Point[]): Interpolator<Point[]> {
     const lastIndex = points.length - 1;
-    const geometryWaypoint = interpolateWaypoint(points);
+    const getWaypoint = interpolateWaypoint(points);
 
     return position => {
         if (position === 1) {
@@ -129,7 +129,7 @@ export function interpolatePath(points: Point[]): Interpolator<Point[]> {
         }
 
         return points.slice(0, Math.ceil(lastIndex * position)).concat([
-            geometryWaypoint(position),
+            getWaypoint(position),
         ]);
     };
 }
@@ -142,7 +142,7 @@ export function interpolatePolygonPoint(
     radius: number,
     closePath: boolean = true
 ): Interpolator<Point> {
-    const points = geometryPolygonPoints(sides, cx, cy, radius, closePath);
+    const points = getPolygonPoints(sides, cx, cy, radius, closePath);
     return interpolateWaypoint(points);
 }
 
@@ -162,8 +162,8 @@ export function interpolateCirclePoint(
 
 /** Interpolator factory that transitions between two border-radius values (single number or four-corner tuple). */
 export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius> = (radiusA, radiusB) => {
-    const nRadiusA = geometryNormaliseBorderRadius(radiusA);
-    const nRadiusB = geometryNormaliseBorderRadius(radiusB);
+    const nRadiusA = normaliseBorderRadius(radiusA);
+    const nRadiusB = normaliseBorderRadius(radiusB);
     const interpolators = nRadiusA.map((value, index) => interpolateNumber(value, nRadiusB[index]));
 
     return position => interpolators.map(ib => ib(position)) as BorderRadius;
