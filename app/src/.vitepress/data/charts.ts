@@ -71,6 +71,11 @@ export const charts: ChartMeta[] = [
         description: 'Hierarchical data as nested rectangles, where each rectangle\'s area is proportional to its value.',
     },
     {
+        text: 'Packed Circle',
+        link: '/docs/charts/packed-circle',
+        description: 'Each datum as a circle whose area encodes its value, arranged in a tight non-overlapping cluster.',
+    },
+    {
         text: 'Funnel',
         link: '/docs/charts/funnel',
         description: 'Progressively narrowing horizontal bars, ideal for visualizing conversion pipelines and drop-off rates.',

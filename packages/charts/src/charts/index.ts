@@ -6,6 +6,7 @@ export * from './gantt';
 export * from './gauge';
 export * from './heatmap';
 export * from './line';
+export * from './packed-circle';
 export * from './pie';
 export * from './polar-area';
 export * from './polar-scatter';
