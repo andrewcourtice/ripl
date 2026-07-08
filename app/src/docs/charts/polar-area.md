@@ -159,3 +159,41 @@ const chart = createPolarAreaChart(context, {
     ],
 });
 ```
+
+## Data Format
+
+Each item needs a unique key, a numeric value (encoded as the segment's radius), and a label:
+
+```ts
+const data = [
+    { id: 'speed',
+        label: 'Speed',
+        value: 72 },
+    { id: 'strength',
+        label: 'Strength',
+        value: 45 },
+    { id: 'defense',
+        label: 'Defense',
+        value: 88 },
+];
+```
+
+Every segment spans the same angle — only the radius varies with `value`.
+
+## Options
+
+- **`data`** — The data array
+- **`key`** — Key accessor for each segment (a field name or a function)
+- **`value`** — Numeric value accessor; encoded as the segment radius
+- **`label`** — Label accessor for each segment
+- **`color`** — Optional per-segment color accessor (otherwise a palette color is assigned)
+- **`innerRadiusRatio`** — Inner radius as a ratio of the chart size (`0`–`1`, default `0.15`)
+- **`maxRadiusRatio`** — Maximum outer radius as a ratio of the chart size (`0`–`0.5`, default `0.45`)
+- **`padAngle`** — Padding angle between segments in radians (default `0.02`)
+- **`levels`** — Number of concentric grid rings (default `4`)
+- **`labels`** — `false` (default) \| `true` (inside) \| `'outside'` (leader-line) \| a full options object
+- **`legend`** — `boolean | ChartLegendOptions` — Segment legend (shown by default for multiple segments)
+- **`format`** — Value formatter for tooltips/labels (`'number'`, `'percentage'`, or a function)
+- **`padding`** — Chart padding
+- **`title`** — `string | ChartTitleOptions` — Chart title
+- **`animation`** — `boolean | ChartAnimationOptions` — Enable/configure entry/update animations

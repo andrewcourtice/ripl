@@ -95,6 +95,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
     private tooltip: Tooltip;
     /** The last rendered value, so data updates can animate the value text counting up/down. */
     private currentValue?: number;
+    /** Signature of the tick geometry (centre/radius/count) so ticks only re-animate when they move. */
+    private tickSignature?: string;
 
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
         super(target, options);
@@ -211,6 +213,9 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
             this.currentValue = clampedValue;
 
+            // Duration the value arc sweeps and the centre number counts over on a data update.
+            const valueDuration = this.getAnimationDuration(1200);
+
             if (!this.valueText) {
                 this.valueText = createText({
                     id: 'gauge-value-text',
@@ -229,11 +234,14 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
                 this.group.add(this.valueText);
             } else {
-                this.valueText.content = displayValue;
                 this.valueText.x = cx;
                 this.valueText.y = cy - 10;
                 this.valueText.font = `bold ${Math.round(size * 0.08)}px sans-serif`;
                 this.valueText.opacity = 1;
+                // Seed the starting number so the counting transition below ticks smoothly from the
+                // previously shown value; with animation off, show the final value immediately (rather
+                // than flashing the end number for a frame before the count begins).
+                this.valueText.content = valueDuration > 0 ? formatDisplay(displayFrom) : displayValue;
             }
 
             // --- Label text --- created/updated/removed depending on the `label` option.
@@ -271,6 +279,12 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const tickCount = this.options.tickCount ?? 5;
             const showTickLabels = this.options.showTickLabels !== false;
             const formatTickLabel = this.options.formatTickLabel;
+
+            // Ticks only move when the centre/radius/count/label-visibility changes — not on a plain
+            // value update — so a value change animates only the arc and the centre number.
+            const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
+            const tickGeometryChanged = tickSignature !== this.tickSignature;
+            this.tickSignature = tickSignature;
 
             const tickIndices = tickCount > 0
                 ? Array.from({ length: tickCount + 1 }).map((_, i) => i)
@@ -408,7 +422,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
             // Animate: the value arc sweeps to its new angle; text fades in on first render.
             const arcTransition = renderer.transition(this.valueArc, {
-                duration: this.getAnimationDuration(1200),
+                duration: valueDuration,
                 ease: easeOutCubic,
                 state: this.valueArc.data as Partial<ArcState>,
             });
@@ -425,14 +439,14 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 // On a data update the value counts up/down to the new value (only the bar and the
                 // number change — the rest of the gauge stays put).
                 : renderer.transition(this.valueText, {
-                    duration: this.getAnimationDuration(1200),
+                    duration: valueDuration,
                     ease: easeOutCubic,
                     state: {
                         content: (time: number) => formatDisplay(displayFrom + (clampedValue - displayFrom) * time),
                     },
                 });
 
-            const tickTransition = lineUpdates.length || tickLabelUpdates.length
+            const tickTransition = tickGeometryChanged && (lineUpdates.length || tickLabelUpdates.length)
                 ? renderer.transition([
                     ...lineUpdates.map(([, line]) => line),
                     ...tickLabelUpdates.map(([, label]) => label),
