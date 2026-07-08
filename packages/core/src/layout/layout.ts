@@ -2,7 +2,6 @@ import {
     Element,
     Group,
     isGroup,
-    Scene,
     TRANSFORM_DEFAULTS,
 } from '../core';
 
@@ -145,19 +144,7 @@ export abstract class Layout<
     }
 
     private schedule(): void {
-        this._requestFrame(() => this.runRelayout());
-    }
-
-    private runRelayout(): void {
-        this._applying = true;
-
-        try {
-            this.relayout();
-        } finally {
-            this._applying = false;
-        }
-
-        this.repaint();
+        this._requestFrame(() => this.reflow());
     }
 
     private onUpdated(event: Event<ElementEventMap['updated']>): void {
@@ -181,24 +168,6 @@ export abstract class Layout<
         if (!(key in TRANSFORM_DEFAULTS)) {
             this.schedule();
         }
-    }
-
-    private repaint(): void {
-        this.findScene()?.requestRender();
-    }
-
-    private findScene(): Scene | undefined {
-        let current: Element | undefined = this as unknown as Element;
-
-        while (current) {
-            if (current instanceof Scene) {
-                return current;
-            }
-
-            current = current.parent;
-        }
-
-        return undefined;
     }
 
     /** Records the content size computed by a relayout pass (used by `getBoundingBox`). */
@@ -309,9 +278,24 @@ export abstract class Layout<
         super.render(context);
     }
 
-    /** Forces a synchronous relayout (useful for tests and per-frame animated reflow). */
+    /**
+     * Recomputes and applies the positions of all children, then requests a repaint of the owning
+     * scene. Runs synchronously — useful for tests and per-frame animated reflow. Relayout is
+     * normally coalesced to one call per animation frame; this forces it immediately.
+     */
     public reflow(): void {
-        this.runRelayout();
+        this._applying = true;
+
+        try {
+            this.relayout();
+        } finally {
+            this._applying = false;
+        }
+
+        // Position-only change: ask the owning scene (an ancestor) to repaint via a bubbling
+        // event. Distinct from `graph` so no buffer rebuild/re-sort is triggered. No-op when the
+        // layout is standalone (no scene ancestor listening).
+        this.emit('repaint', null);
     }
 
 }

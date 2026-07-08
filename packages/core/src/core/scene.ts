@@ -109,6 +109,10 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
             this._graphDirty = true;
             this.requestRender();
         });
+
+        // A descendant layout requests a repaint after a position-only reflow. Bubbles up to the
+        // scene; unlike `graph` it does not rebuffer, so it is a pure coalesced re-render.
+        this.on('repaint', () => this.requestRender());
     }
 
     private rebuffer() {
@@ -120,7 +124,7 @@ export class Scene<TContext extends Context = Context> extends Group<BaseElement
      * rebuffered first (so the render never paints a stale buffer). The render itself is skipped
      * when a renderer loop is actively driving the scene, or when `renderOnUpdate` is disabled.
      */
-    public requestRender(): void {
+    private requestRender(): void {
         this._frame(() => {
             if (this._graphDirty) {
                 this.rebuffer();

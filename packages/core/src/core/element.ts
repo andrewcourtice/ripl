@@ -88,6 +88,7 @@ export type BaseElementState = Partial<BaseState>;
 /** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
     graph: null;
+    repaint: null;
     attached: Group;
     detached: Group;
     updated: {
