@@ -41,6 +41,11 @@ export const charts: ChartMeta[] = [
         description: 'Points on a circular grid where angle and radius each encode a variable, ideal for directional or cyclical data.',
     },
     {
+        text: 'Radial Bar',
+        link: '/docs/charts/radial-bar',
+        description: 'Concentric rings whose arc length encodes each category\'s value — a circular take on the bar chart.',
+    },
+    {
         text: 'Scatter',
         link: '/docs/charts/scatter',
         description: 'Data points on a two-dimensional plane with optional size variation to represent a third dimension.',
