@@ -11,7 +11,6 @@ import {
 
 import {
     OneOrMore,
-    stringEquals,
     typeIsBoolean,
     typeIsNil,
     typeIsNumber,
@@ -43,8 +42,8 @@ const QUERY_PATTERNS = {
     type: new RegExp(`^${ELEMENT_PATTERNS.name.source}`),
     id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
     class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
-    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
+    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="([^"]*)"\\])+`, 'g'),
+    combinators: new RegExp(`(\\s(?:${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')})\\s|\\s)`),
 };
 
 const COMBINATOR_PRODUCERS = [
@@ -58,7 +57,7 @@ const COMBINATOR_PRODUCERS = [
     },
     {
         pattern: COMBINATOR_PATTERNS.nextSibling,
-        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1),
+        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1) ?? [],
     },
 ] as {
     pattern: RegExp;
@@ -81,11 +80,53 @@ function serialiseAttribute(value: unknown) {
     }
 }
 
+/** Tests whether a single (combinator-free) selector segment matches the element. */
+function matchesSegment(element: Element, segment: string): boolean {
+    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
+    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
+    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
+    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
+
+    const typeMatch = !type || element.type === type;
+    const idMatch = !id || element.id === id.replace(ELEMENT_PATTERNS.id, '');
+
+    const classMatch = !classes.length || classes.every(cls => {
+        return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
+    });
+
+    const attrsMatch = !attributes.length || attributes.every(attr => {
+        if (!attr) {
+            return false;
+        }
+
+        const [
+            ,
+            ,
+            key,
+            value,
+        ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
+
+        return !typeIsNil(key)
+            && !typeIsNil(value)
+            && key in element
+            && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
+    });
+
+    return typeMatch
+        && idMatch
+        && classMatch
+        && attrsMatch;
+}
+
 function executeQuery(elements: Element[], segments: string[], segmentIndex: number = 0) {
+    if (segmentIndex >= segments.length || !elements.length) {
+        return elements;
+    }
+
     const segment = segments[segmentIndex];
 
-    if (!segment || !elements.length) {
-        return elements;
+    if (!segment) {
+        return executeQuery(elements, segments, segmentIndex + 1);
     }
 
     if (QUERY_PATTERNS.combinators.test(segment)) {
@@ -98,42 +139,7 @@ function executeQuery(elements: Element[], segments: string[], segmentIndex: num
         return executeQuery(elements.flatMap(element => producer.produce(element)), segments, segmentIndex + 1);
     }
 
-    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
-    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
-    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
-    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
-
-    return executeQuery(elements.filter(element => {
-        const typeMatch = !type || stringEquals(element.type, type);
-        const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
-
-        const classMatch = !classes.length || classes.every(cls => {
-            return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
-        });
-
-        const attrsMatch = !attributes.length || attributes.every(attr => {
-            if (!attr) {
-                return false;
-            }
-
-            const [
-                ,
-                ,
-                key,
-                value,
-            ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
-
-            return !typeIsNil(key)
-                && !typeIsNil(value)
-                && key in element
-                && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
-        });
-
-        return typeMatch
-            && idMatch
-            && classMatch
-            && attrsMatch;
-    }), segments, segmentIndex + 1);
+    return executeQuery(elements.filter(element => matchesSegment(element, segment)), segments, segmentIndex + 1);
 }
 
 /** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
@@ -142,12 +148,52 @@ export function queryAll<TElement extends Element = Element>(elements: OneOrMore
         return isGroup(element) ? element.graph(true) : [element];
     });
 
-    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
+    const normalisedSelector = selector.trim().replace(/\s+/g, ' ');
+
+    return executeQuery(els, normalisedSelector.split(QUERY_PATTERNS.combinators)) as TElement[];
 }
 
 /** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
 export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
     return queryAll<TElement>(elements, selector).at(0);
+}
+
+/** Tests whether an element matches a CSS-like selector. */
+export function matches(element: Element, selector: string): boolean {
+    const segments = selector.trim().replace(/\s+/g, ' ').split(QUERY_PATTERNS.combinators).filter(Boolean);
+
+    if (!segments.length) {
+        return false;
+    }
+
+    // A single simple segment can be tested directly; multi-segment selectors (with combinators)
+    // are resolved against the element's root so ancestor/sibling constraints are honoured.
+    if (segments.length === 1) {
+        return matchesSegment(element, segments[0]);
+    }
+
+    let root: Element = element;
+
+    while (root.parent) {
+        root = root.parent;
+    }
+
+    return queryAll(root, selector).includes(element);
+}
+
+/** Returns the closest ancestor (including the element itself) matching a CSS-like selector, or `undefined`. */
+export function closest<TElement extends Element = Element>(element: Element, selector: string): TElement | undefined {
+    let current: Element | undefined = element;
+
+    while (current) {
+        if (matches(current, selector)) {
+            return current as TElement;
+        }
+
+        current = current.parent;
+    }
+
+    return undefined;
 }
 
 /** Type guard that checks whether a value is a `Group` instance. */
@@ -185,9 +231,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.emit('graph', null);
     }
 
-    /** Replaces all children with the given elements. */
+    /** Replaces all children with the given elements, detaching the previous children. */
     public set(elements: Element[]) {
-        this.#elements.clear();
+        this.remove(this.children);
         this.add(elements);
     }
 
@@ -256,9 +302,24 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return queryAll<TElement>(this, selector);
     }
 
-    /** Finds a descendant element by its unique id. */
+    /** Tests whether this group matches the CSS-like selector. */
+    public matches(selector: string): boolean {
+        return matches(this as unknown as Element, selector);
+    }
+
+    /** Returns the closest ancestor (including this group) matching the CSS-like selector, or `undefined`. */
+    public closest<TElement extends Element = Element>(selector: string) {
+        return closest<TElement>(this as unknown as Element, selector);
+    }
+
+    /** Finds a descendant element by its unique id, or `undefined` if none match. */
+    public getElementById<TElement extends Element = Element>(id: string) {
+        return this.graph(true).find(element => element.id === id) as TElement | undefined;
+    }
+
+    /** @deprecated Use {@link getElementById}. */
     public getElementByID<TElement extends Element = Element>(id: string) {
-        return this.graph(true).find(element => element.id === id) as TElement;
+        return this.getElementById<TElement>(id);
     }
 
     /** Returns all descendant elements whose type matches one of the given type names. */
