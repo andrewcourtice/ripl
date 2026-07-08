@@ -1,4 +1,5 @@
 import type {
+    BaseElementState,
     Element,
     ElementEventMap,
 } from './element';
@@ -18,11 +19,20 @@ import {
 
 import {
     Group,
+    isGroup,
 } from './group';
 
 import type {
     GroupOptions,
 } from './group';
+
+import {
+    isLayout,
+} from '../layout';
+
+import type {
+    Layout,
+} from '../layout';
 
 import {
     typeIsNil,
@@ -41,11 +51,22 @@ export interface SceneOptions extends GroupOptions {
 }
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
-export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
+export class Scene<TContext extends Context = Context> extends Group<BaseElementState, SceneEventMap> {
+
+    private _frame = createFrameBuffer();
+    private _graphDirty = false;
+    private _renderOnUpdate: boolean;
 
     public context: TContext;
 
-    public buffer: Element[];
+    /** Flattened, z-sorted leaf elements — the render buffer. Rebuilt on graph changes. */
+    public buffer: Element[] = [];
+
+    /** Layout containers in the scene, outermost-first. Rebuilt on graph changes; reflowed by `reflow()`. */
+    public layouts: Layout[] = [];
+
+    /** The renderer driving this scene, if any. Set by `Renderer`; used to avoid redundant renders. */
+    public renderer?: { isRunning: boolean };
 
     /** The pixel width of the scene's rendering context. */
     public get width() {
@@ -60,7 +81,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
             renderOnResize = true,
-            // renderOnUpdate = true,
+            renderOnUpdate = true,
             ...groupOptions
         } = options || {};
 
@@ -86,9 +107,8 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         });
 
         this.context = context;
-        this.buffer = this.graph();
-
-        const requestFrame = createFrameBuffer();
+        this.rebuffer();
+        this._renderOnUpdate = renderOnUpdate;
 
         this.retain(context.on('resize', () => {
             this.emit('resize', null);
@@ -98,22 +118,50 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             }
         }));
 
-        this.on('graph', () => requestFrame(() => {
-            this.rebuffer();
-            context.invalidateTrackedElements();
-        }));
+        this.on('graph', () => {
+            this._graphDirty = true;
+            this.requestRender();
+        });
 
-        // this.on('updated', ({ data }) => requestFrame(() => {
-        //     if (data.key === 'zIndex') {
-        //         this.rebuffer();
-        //     }
-
-        //     this.render();
-        // }));
+        // A descendant layout requests a repaint after a position-only reflow. Bubbles up to the
+        // scene; unlike `graph` it does not rebuffer, so it is a pure coalesced re-render.
+        this.on('repaint', () => this.requestRender());
     }
 
     private rebuffer() {
-        this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+        // One graph walk: leaves feed the z-sorted render buffer; layout containers are collected
+        // (outermost-first, the order `graph(true)` produces) for `reflow()`.
+        const graph = this.graph(true);
+
+        this.layouts = graph.filter(isLayout);
+        this.buffer = graph
+            .filter(element => !isGroup(element))
+            .sort((ea, eb) => ea.zIndex - eb.zIndex);
+    }
+
+    /** Reflows every layout in the scene, outermost-first, so parents reposition nested layouts
+     * before those lay out their own children. Called by the renderer each tick. */
+    public reflow(): void {
+        this.layouts.forEach(layout => layout.reflow());
+    }
+
+    /**
+     * Requests a single coalesced render on the next frame. If the scene's graph changed it is
+     * rebuffered first (so the render never paints a stale buffer). The render itself is skipped
+     * when a renderer loop is actively driving the scene, or when `renderOnUpdate` is disabled.
+     */
+    private requestRender(): void {
+        this._frame(() => {
+            if (this._graphDirty) {
+                this.rebuffer();
+                this.context.invalidateTrackedElements();
+                this._graphDirty = false;
+            }
+
+            if (this._renderOnUpdate && !this.renderer?.isRunning) {
+                this.render();
+            }
+        });
     }
 
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */

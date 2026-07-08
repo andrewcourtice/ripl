@@ -34,6 +34,8 @@ function createMockScene() {
     const scene = {
         context: mockContext,
         buffer: elements,
+        layouts: [],
+        reflow: vi.fn(),
         on: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         once: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         emit: vi.fn(),
@@ -66,6 +68,35 @@ describe('Renderer', () => {
         });
 
         expect(renderer).toBeInstanceOf(Renderer);
+
+        renderer.destroy();
+    });
+
+    test('Should reflow the scene each tick when autoReflow (default)', async () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: true,
+            autoStop: false,
+        });
+
+        await vi.advanceTimersByTimeAsync(50);
+
+        expect(scene.reflow).toHaveBeenCalled();
+
+        renderer.destroy();
+    });
+
+    test('Should not reflow the scene when autoReflow is false', async () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: true,
+            autoStop: false,
+            autoReflow: false,
+        });
+
+        await vi.advanceTimersByTimeAsync(50);
+
+        expect(scene.reflow).not.toHaveBeenCalled();
 
         renderer.destroy();
     });

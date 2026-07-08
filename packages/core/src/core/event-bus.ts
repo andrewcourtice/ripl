@@ -40,7 +40,7 @@ export type EventHandler<TData = any> = {
 /** An event object carrying type, data, target reference, and propagation control. */
 export class Event<TData = undefined> {
 
-    #bubbles = true;
+    private _bubbles = true;
 
     public readonly type: string;
     public readonly data: TData;
@@ -49,7 +49,7 @@ export class Event<TData = undefined> {
     public readonly target: EventBus<any>;
 
     public get bubbles() {
-        return this.#bubbles;
+        return this._bubbles;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,12 +63,12 @@ export class Event<TData = undefined> {
         this.target = target;
         this.data = data as TData;
         this.timestamp = factory.now();
-        this.#bubbles = bubbles;
+        this._bubbles = bubbles;
     }
 
     /** Prevents this event from bubbling further up the parent chain. */
     public stopPropagation() {
-        this.#bubbles = false;
+        this._bubbles = false;
     }
 
 }

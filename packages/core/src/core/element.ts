@@ -1,5 +1,6 @@
 import {
     CONTEXT_OPERATIONS,
+    INHERITED_STYLE_KEYS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
     TRANSFORM_INTERPOLATORS,
@@ -42,6 +43,10 @@ import type {
 import type {
     Group,
 } from './group';
+
+import type {
+    LayoutItem,
+} from '../layout';
 
 import {
     resolveRotation,
@@ -87,6 +92,7 @@ export type BaseElementState = Partial<BaseState>;
 /** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
     graph: null;
+    repaint: null;
     attached: Group;
     detached: Group;
     updated: {
@@ -132,6 +138,7 @@ export type ElementOptions<TState extends BaseElementState = BaseElementState> =
     class?: OneOrMore<string>;
     data?: unknown;
     pointerEvents?: ElementPointerEvents;
+    layout?: LayoutItem;
 } & TState;
 
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
@@ -223,8 +230,8 @@ function getInterpolator<TValue>(value: TValue, key?: string) {
 }
 
 function applyTransform(context: Context, _value: unknown, element: Element) {
-    const translateX = element.translateX ?? 0;
-    const translateY = element.translateY ?? 0;
+    const translateX = (element.translateX ?? 0) + (element.layoutX ?? 0);
+    const translateY = (element.translateY ?? 0) + (element.layoutY ?? 0);
     const scaleX = element.transformScaleX ?? 1;
     const scaleY = element.transformScaleY ?? 1;
     const rawRotation = element.rotation ?? 0;
@@ -288,8 +295,11 @@ export class Element<
 
     public abstract: boolean = false;
     public pointerEvents: ElementPointerEvents = 'all';
-    public declare parent?: Group<TEventMap>;
+    public declare parent?: Group<BaseElementState, TEventMap>;
     public data: unknown;
+
+    /** CSS-like per-child hints (order, alignSelf, grow, …) read by a parent flex/grid layout. */
+    public layout?: LayoutItem;
 
     // Props
 
@@ -323,6 +333,14 @@ export class Element<
 
     public set font(value) {
         this.setStateValue('font', value);
+    }
+
+    public get fontKerning() {
+        return this.getStateValue('fontKerning');
+    }
+
+    public set fontKerning(value) {
+        this.setStateValue('fontKerning', value);
     }
 
     public get opacity() {
@@ -509,11 +527,28 @@ export class Element<
         this.setStateValue('transformOriginY', value);
     }
 
+    /**
+     * Layout-managed horizontal offset, summed with `translateX` at render.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
+     */
+    public get layoutX() {
+        return this.getStateValue('layoutX');
+    }
+
+    /**
+     * Layout-managed vertical offset, summed with `translateY` at render.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
+     */
+    public get layoutY() {
+        return this.getStateValue('layoutY');
+    }
+
     constructor(type: string, {
         id = `${type}:${stringUniqueId()}`,
         class: classes = [],
         data,
         pointerEvents = 'all',
+        layout,
         ...state
     }: ElementOptions<TState>) {
         super();
@@ -522,6 +557,7 @@ export class Element<
         this.id = id;
         this.data = data;
         this.pointerEvents = pointerEvents;
+        this.layout = layout;
         this.classList = new Set(valueOneOrMore(classes));
 
         this.state = {
@@ -530,9 +566,15 @@ export class Element<
         } as unknown as TState;
     }
 
-    /** Reads a state value, falling back to the parent’s value if the local value is nil (property inheritance). */
+    /** Reads a state value, falling back to the parent’s value for inheritable style keys when the local value is nil. */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
-        return this.state[key] ?? (this.parent as unknown as TState)?.[key];
+        const value = this.state[key];
+
+        if (!typeIsNil(value) || !INHERITED_STYLE_KEYS.has(key as string)) {
+            return value;
+        }
+
+        return (this.parent as unknown as TState)?.[key];
     }
 
     /** Sets a state value and emits an `updated` event. */
@@ -561,13 +603,25 @@ export class Element<
         };
     }
 
-    /** Creates a shallow clone of this element with the same id, classes, and state. */
+    /** Creates a shallow clone of this element with the same id, classes, state, and layout hints. */
     public clone() {
         return new Element(this.type, {
             id: this.id,
             class: Array.from(this.classList),
+            ...this.layout ? { layout: { ...this.layout } } : {},
             ...this.state,
         });
+    }
+
+    /**
+     * Sets the layout-managed offset (summed with `translateX`/`translateY` at render).
+     * Writes state directly without emitting `updated` — layout containers own this and drive
+     * their own repaint, so it generates no event traffic and leaves `translate` free for users.
+     * @internal Ripl-internal plumbing owned by layout containers — not part of the public API.
+     */
+    public setLayoutOffset(x: number, y: number) {
+        this.state.layoutX = x;
+        this.state.layoutY = y;
     }
 
     /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */

@@ -2,6 +2,14 @@ import {
     factory,
 } from './packages/core/src/core/factory';
 
+import {
+    polyfillPath2D,
+} from './packages/test-utils/src/canvas';
+
+// jsdom has no Path2D. Install the polyfill globally so any test that paints (directly or via
+// the scene's auto-render on graph changes) works regardless of file/worker isolation.
+polyfillPath2D();
+
 factory.set({
     requestAnimationFrame: (cb: FrameRequestCallback) => window.requestAnimationFrame(cb),
     cancelAnimationFrame: (handle: number) => window.cancelAnimationFrame(handle),

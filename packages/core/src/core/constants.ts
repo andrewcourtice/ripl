@@ -60,6 +60,8 @@ export const CONTEXT_OPERATIONS = {
     rotation: noop,
     transformOriginX: noop,
     transformOriginY: noop,
+    layoutX: noop,
+    layoutY: noop,
 } as {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };
@@ -81,7 +83,33 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
     rotation: 0,
     transformOriginX: 0,
     transformOriginY: 0,
+    layoutX: 0,
+    layoutY: 0,
 };
+
+/** State keys that cascade from parent to child (CSS-like style inheritance). Geometry, transform, and layout keys never inherit. */
+export const INHERITED_STYLE_KEYS = new Set<string>([
+    'fill',
+    'filter',
+    'direction',
+    'font',
+    'fontKerning',
+    'opacity',
+    'globalCompositeOperation',
+    'lineCap',
+    'lineDash',
+    'lineDashOffset',
+    'lineJoin',
+    'lineWidth',
+    'miterLimit',
+    'shadowBlur',
+    'shadowColor',
+    'shadowOffsetX',
+    'shadowOffsetY',
+    'stroke',
+    'textAlign',
+    'textBaseline',
+]);
 
 /** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
 export const TRACKED_EVENTS = [

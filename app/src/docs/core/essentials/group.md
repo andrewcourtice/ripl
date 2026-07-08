@@ -214,6 +214,39 @@ circle[radius="50"]
 rect + circle
 ```
 
+### `matches(selector)`
+
+Test whether an element matches a selector — returns a boolean:
+
+```ts
+group.matches('group.active'); // true if this group has class "active"
+```
+
+The same selector syntax as `query`/`queryAll` is supported (type, `#id`, `.class`, `[attr="…"]`,
+and combinator selectors).
+
+### `closest(selector)`
+
+Walk **up** the tree — starting from the element itself — and return the nearest ancestor that
+matches the selector, or `undefined` if none do (just like `Element.closest` in the DOM):
+
+```ts
+const container = group.closest('group.panel');
+```
+
+`matches` and `closest` are methods on `Group`. For a leaf element (a shape), use the standalone
+functions, which accept any element as the first argument:
+
+```ts
+import {
+    closest,
+    matches,
+} from '@ripl/web';
+
+matches(circle, 'circle.highlighted'); // boolean
+const panel = closest(circle, 'group.panel'); // nearest ancestor group, or undefined
+```
+
 ## Nesting Groups
 
 Groups can contain other groups, creating a tree structure:

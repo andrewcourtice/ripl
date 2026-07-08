@@ -1,0 +1,143 @@
+---
+outline: "deep"
+---
+
+# Layout
+
+**Layout containers** position their children dynamically. Where a [Group](/docs/core/essentials/group) only organises elements and cascades styles, a layout container computes and applies each child's position based on layout rules — and keeps them arranged as content and options change.
+
+Ripl ships two layout containers, both built on a shared `Layout` base:
+
+- **[Flex](/docs/core/elements/flex)** — one-dimensional rows/columns with distribution, wrapping, and alignment (like CSS flexbox).
+- **[Grid](/docs/core/elements/grid)** — two-dimensional rows and columns of sized tracks (like CSS grid).
+
+## The model
+
+A layout container is an abstract `Group`, so it inherits child management (`add`, `remove`, `set`, `clear`), querying (`query`, `getElementsByType`, …), and style inheritance. On top of that it adds:
+
+- **An origin** — `x` and `y` define the top-left of the layout box. Children are positioned relative to it.
+- **Optional size** — set `width`/`height` for a fixed box, or leave them out to **size to content** (the container measures its children and reports a bounding box that hugs them).
+- **Spacing** — `padding` (uniform or per-edge) and `gap` between children.
+
+Layout containers **nest**: a Flex or Grid can contain another as a child, and positions compose into absolute scene coordinates.
+
+```ts
+import {
+    createFlex,
+    createGrid,
+    createRect,
+} from '@ripl/web';
+
+const card = createFlex({
+    x: 0,
+    y: 0,
+    flexDirection: 'column',
+    gap: 12,
+    padding: 16,
+    children: [
+        createRect({
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 24,
+        }), // title
+        createGrid({
+            x: 0,
+            y: 0,
+            columns: 2,
+            gap: 8,
+            children: items.map(() => createRect({
+                x: 0,
+                y: 0,
+                width: 90,
+                height: 60,
+            })),
+        }),
+    ],
+});
+```
+
+## How positioning works
+
+Ripl's renderer draws a flattened list of leaf elements, so a container's own transform is never applied to its children. Instead, a layout container writes **concrete positions onto the children themselves**:
+
+- **Leaf shapes** are positioned via a dedicated, Ripl-managed **layout offset** that the container maintains internally. This offset is composed with the element's own `translateX` / `translateY` at render time.
+- **Nested layout containers** are positioned via their own `x` / `y` origin, which cascades to their children.
+
+The practical consequence: the layout **owns the layout offset**, but your `translateX` / `translateY` stay **completely free**. Final position = intrinsic geometry + layout slot + your translate. So you can translate, drag, or animate a laid-out child *relative to its slot* — for an entrance animation, a hover nudge, or a drag — without fighting the layout, and it survives reflows. Everything else about the child (fill, stroke, events, querying) is untouched.
+
+```ts
+// child sits in its flex/grid slot AND is nudged 8px right by the user:
+child.translateX = 8; // composes with the layout offset; preserved across reflow
+```
+
+## Per-child options
+
+Any element can carry a `layout` hint object — the Ripl analogue of CSS flex/grid **item**
+properties. A parent flex or grid reads it when positioning that child; unset fields fall back to
+the container's own settings.
+
+```ts
+const cell = createRect({
+    width: 64,
+    height: 48,
+    layout: {
+        order: 2,          // reorder within the container (lower first)
+        grow: 1,           // share of leftover main-axis space (flex)
+        shrink: 1,         // share of main-axis overflow to absorb (flex)
+        basis: 80,         // overrides the measured main size (flex)
+        alignSelf: 'center',   // cross-axis alignment, overriding align / alignItems
+        justifySelf: 'end',    // grid main-axis alignment, overriding justifyItems
+    },
+});
+```
+
+| Option        | Applies to | Effect |
+| ------------- | ---------- | ------ |
+| `order`       | flex, grid | Orders children (default `0`); ties keep insertion order. |
+| `grow`        | flex       | Distributes a line's leftover main space by weight (default `0`). |
+| `shrink`      | flex       | Absorbs a line's main-axis overflow by weight (default `0`). |
+| `basis`       | flex       | Sets the main-axis size used for layout, resizing the child to match. |
+| `alignSelf`   | flex, grid | Overrides the container's cross-axis `align` / `alignItems`. |
+| `justifySelf` | grid       | Overrides the grid's main-axis `justifyItems`. |
+
+`grow` / `shrink` / `basis` resize a child only when it exposes a numeric `width` / `height`;
+`order` and the alignment hints work for any element. All are opt-in, so layouts without hints
+behave exactly as before.
+
+## Reactivity
+
+Layout is automatic. A container re-flows when:
+
+- children are **added or removed**,
+- a child's **size changes** (e.g. a `Rect`'s `width`, a `Text`'s content),
+- one of the container's own **layout options changes** (`gap`, `justify`, `padding`, …).
+
+These changes are detected through Ripl's event system and coalesced into a **single relayout per animation frame**, so bursts of updates cost one pass. After a reflow the scene is repainted automatically.
+
+You can also force a synchronous relayout at any time:
+
+```ts
+flex.reflow();
+```
+
+## Animating layout
+
+`renderer.transition(...)` writes state directly (bypassing the change events that normally trigger a relayout), so during a transition the layout would otherwise not know to re-flow. The **renderer handles this for you**: on every tick it reflows the scene's layouts (outermost-first) after advancing transitions, so animating a child's size smoothly re-arranges its siblings — no manual `reflow()` needed.
+
+```ts
+const renderer = createRenderer(scene);
+
+// The flex re-flows automatically each frame as the rect grows.
+renderer.transition(rect, { duration: 400, state: { width: 120 } });
+```
+
+Pass `{ autoReflow: false }` to `createRenderer` if you'd rather drive `reflow()` yourself (e.g. for a custom animation loop):
+
+```ts
+const renderer = createRenderer(scene, { autoReflow: false });
+// ...then call flex.reflow() (or scene.reflow()) when you need a relayout.
+```
+
+> [!NOTE]
+> For full APIs, see [Flex](/docs/core/elements/flex) and [Grid](/docs/core/elements/grid).
