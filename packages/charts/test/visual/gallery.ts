@@ -13,17 +13,22 @@
 import '@ripl/web';
 
 import {
+    createArcDiagramChart,
     createAreaChart,
     createBarChart,
     createChordChart,
+    createForceDirectedChart,
     createFunnelChart,
     createGanttChart,
     createGaugeChart,
     createHeatmapChart,
     createLineChart,
+    createPackedCircleChart,
     createPieChart,
     createPolarAreaChart,
+    createPolarScatterChart,
     createRadarChart,
+    createRadialBarChart,
     createRealtimeChart,
     createSankeyChart,
     createScatterChart,
@@ -691,6 +696,87 @@ createTrendChart(mount('trend'), {
             label: 'Great Britain',
             value: 'greatBritain',
         },
+    ],
+});
+
+createPolarScatterChart(mount('polar-scatter'), {
+    animation: false,
+    title: 'Polar Scatter — Wind',
+    data: [
+        { angle: 30, speed: 60, gust: 70 },
+        { angle: 90, speed: 40, gust: 50 },
+        { angle: 150, speed: 80, gust: 90 },
+        { angle: 220, speed: 55, gust: 60 },
+        { angle: 300, speed: 35, gust: 45 },
+    ],
+    series: [
+        { id: 'wind', label: 'Wind', angle: 'angle', radius: 'speed', sizeBy: 'gust' },
+    ],
+    maxRadiusValue: 100,
+});
+
+createRadialBarChart(mount('radial-bar'), {
+    animation: false,
+    title: 'Radial Bar — Languages',
+    data: [
+        { language: 'JavaScript', share: 90 },
+        { language: 'Python', share: 72 },
+        { language: 'Rust', share: 58 },
+        { language: 'Go', share: 44 },
+    ],
+    key: 'language',
+    value: 'share',
+    maxValue: 100,
+});
+
+createPackedCircleChart(mount('packed-circle'), {
+    animation: false,
+    title: 'Packed Circle — Teams',
+    data: [
+        { name: 'Alpha', size: 80 },
+        { name: 'Bravo', size: 55 },
+        { name: 'Charlie', size: 40 },
+        { name: 'Delta', size: 30 },
+        { name: 'Echo', size: 20 },
+    ],
+    key: 'name',
+    value: 'size',
+    label: 'name',
+});
+
+createForceDirectedChart(mount('force-directed'), {
+    animation: false,
+    title: 'Force-Directed — Network',
+    nodes: [
+        { id: 'a', label: 'A', group: 'x' },
+        { id: 'b', label: 'B', group: 'x' },
+        { id: 'c', label: 'C', group: 'y' },
+        { id: 'd', label: 'D', group: 'y' },
+        { id: 'e', label: 'E', group: 'z' },
+    ],
+    links: [
+        { source: 'a', target: 'b', value: 3 },
+        { source: 'a', target: 'c', value: 2 },
+        { source: 'c', target: 'd', value: 4 },
+        { source: 'd', target: 'e', value: 1 },
+    ],
+});
+
+createArcDiagramChart(mount('arc-diagram'), {
+    animation: false,
+    title: 'Arc Diagram — Links',
+    nodes: [
+        { id: 'a', label: 'A' },
+        { id: 'b', label: 'B' },
+        { id: 'c', label: 'C' },
+        { id: 'd', label: 'D' },
+        { id: 'e', label: 'E' },
+    ],
+    links: [
+        { source: 'a', target: 'c', value: 3 },
+        { source: 'b', target: 'e', value: 2 },
+        { source: 'c', target: 'd', value: 4 },
+        { source: 'a', target: 'e', value: 1 },
     ],
 });
 
