@@ -15,7 +15,12 @@ import type {
 
 import {
     normalizeDataLabels,
+    resolveLineDash,
     resolveValueFormat,
+} from '../core/options';
+
+import type {
+    LineStyle,
 } from '../core/options';
 
 import {
@@ -107,6 +112,8 @@ export interface AreaChartSeriesOptions<TData> {
     value: keyof TData | number | ((item: TData) => number);
     label: string;
     lineType?: PolylineRenderer;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
     lineWidth?: number;
     opacity?: number;
     markers?: boolean;
@@ -406,6 +413,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 stroke: color,
+                lineDash: resolveLineDash(srs.lineStyle),
                 points: linePoints,
                 renderer: srs.lineType,
                 data: {
@@ -444,6 +452,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             // to keep top matched to top and bottom to bottom.
             line.renderer = srs.lineType;
             areaFill.renderer = srs.lineType;
+            // Dash pattern is a static style (not tweened) — apply it directly.
+            line.lineDash = resolveLineDash(srs.lineStyle);
 
             const fillKeys = (keys: string[]): string[] => [
                 ...keys.map(key => `t:${key}`),

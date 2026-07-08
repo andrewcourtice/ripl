@@ -584,6 +584,29 @@ export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) 
 }
 
 // ---------------------------------------------------------------------------
+// Line style (dash pattern)
+// ---------------------------------------------------------------------------
+
+/** How a series line is stroked: a preset, or a custom canvas dash array. */
+export type LineStyle = 'solid' | 'dashed' | 'dotted' | number[];
+
+/** Resolves a {@link LineStyle} into a `lineDash` array (`[]` for a solid line). */
+export function resolveLineDash(style?: LineStyle): number[] {
+    if (Array.isArray(style)) {
+        return style;
+    }
+
+    switch (style) {
+        case 'dashed':
+            return [6, 4];
+        case 'dotted':
+            return [2, 3];
+        default:
+            return [];
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Data labels
 // ---------------------------------------------------------------------------
 

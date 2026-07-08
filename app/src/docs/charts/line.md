@@ -34,6 +34,13 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
+            <RiplField label="Line style">
+                <RiplSelect v-model="lineStyle">
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
+                </RiplSelect>
+            </RiplField>
             <RiplField label="Markers" inline>
                 <RiplSwitch v-model="markers" />
             </RiplField>
@@ -74,6 +81,7 @@ const seriesMeta = [
 ];
 
 const lineType = ref<PolylineRenderer>('monotoneX');
+const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
 const markers = ref(true);
 
 const config = useChartConfig({
@@ -101,6 +109,7 @@ function getSeries() {
         value: s.id,
         label: s.label,
         lineType: lineType.value,
+        lineStyle: lineStyle.value,
         markers: markers.value,
         color: config.colors[s.id],
     }));
@@ -124,7 +133,7 @@ function apply() {
 }
 
 watch(config, apply, { deep: true });
-watch([lineType, markers], apply);
+watch([lineType, lineStyle, markers], apply);
 
 function randomize() {
     data = generateData(data.length);
@@ -235,7 +244,7 @@ createLineChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `markers` (show/hide point markers, default `true`), `markerRadius`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `markerRadius`
 - **`key`** — Key accessor for each data point
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)

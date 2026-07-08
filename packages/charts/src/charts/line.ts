@@ -15,7 +15,12 @@ import type {
 
 import {
     normalizeDataLabels,
+    resolveLineDash,
     resolveValueFormat,
+} from '../core/options';
+
+import type {
+    LineStyle,
 } from '../core/options';
 
 import {
@@ -83,6 +88,8 @@ export interface LineChartSeriesOptions<TData> {
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
     /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
     markerRadius?: number;
@@ -301,6 +308,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 id: `${srs.id}-line`,
                 lineWidth: srs.lineWidth ?? 2,
                 stroke: color,
+                lineDash: resolveLineDash(srs.lineStyle),
                 points: items.map(item => item.point),
                 renderer: srs.lineType,
             });
@@ -325,6 +333,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             // discrete curve-function selector, not an interpolatable value — routing it through
             // the transition made it snap to the `linear` fallback mid-animation (see interpolateAny).
             line.renderer = srs.lineType;
+            // Dash pattern is a static style (not tweened) — apply it directly.
+            line.lineDash = resolveLineDash(srs.lineStyle);
 
             const newKeys = data.map(getKey);
             const targetPoints = data.map(item => this.markerState(srs, item, getKey).point);
