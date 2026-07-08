@@ -1,3 +1,4 @@
+export * from './arc-diagram';
 export * from './area';
 export * from './bar';
 export * from './chord';
