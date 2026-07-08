@@ -62,10 +62,10 @@ function buildChart() {
         key: 'date',
         format: 'number',
         padding: {
-            top: 20,
-            right: 20,
-            bottom: 30,
-            left: 50,
+            top: 16,
+            right: 16,
+            bottom: 16,
+            left: 12,
         },
         grid: true,
         series: [

@@ -153,7 +153,7 @@ export class ChartAxis extends ChartComponent {
             scale,
             bounds,
             labelDimension,
-            padding = 5,
+            padding = 8,
             tickSize = 5,
             tickCount = 10,
             stroke = '#777777',
@@ -275,11 +275,14 @@ export class ChartXAxis extends ChartAxis {
 
     public getBoundingBox(): Box {
         const isBottomAligned = this.alignment === 'bottom';
-        const clearance = this.maxLabelHeight
-            + this.padding
-            + this.tickSize
-            + 1 // 1 for line width
-            + this.titleBand;
+        // A hidden axis reserves no band so the plot can use the full area.
+        const clearance = this.visible
+            ? this.maxLabelHeight
+                + this.padding
+                + this.tickSize
+                + 1 // 1 for line width
+                + this.titleBand
+            : 0;
 
         const {
             top,
@@ -432,11 +435,14 @@ export class ChartYAxis extends ChartAxis {
 
     public getBoundingBox(): Box {
         const isLeftAligned = this.alignment === 'left';
-        const clearance = this.maxLabelWidth
-            + this.padding
-            + this.tickSize
-            + 1 // 1 for line width
-            + this.titleBand;
+        // A hidden axis reserves no band so the plot can use the full area.
+        const clearance = this.visible
+            ? this.maxLabelWidth
+                + this.padding
+                + this.tickSize
+                + 1 // 1 for line width
+                + this.titleBand
+            : 0;
 
         const {
             top,

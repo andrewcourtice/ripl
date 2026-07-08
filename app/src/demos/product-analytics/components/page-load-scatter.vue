@@ -50,10 +50,10 @@ function buildChart() {
             y: { title: 'Page Views', format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)) },
         },
         padding: {
-            top: 20,
-            right: 20,
-            bottom: 40,
-            left: 60,
+            top: 16,
+            right: 16,
+            bottom: 16,
+            left: 12,
         },
         series: [
             {

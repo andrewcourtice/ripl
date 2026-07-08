@@ -53,10 +53,10 @@ function buildChart() {
             y: { title: 'Cohort' },
         },
         padding: {
-            top: 20,
-            right: 20,
-            bottom: 40,
-            left: 70,
+            top: 16,
+            right: 16,
+            bottom: 16,
+            left: 12,
         },
     };
 
