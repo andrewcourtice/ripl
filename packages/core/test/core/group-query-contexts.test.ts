@@ -120,14 +120,16 @@ function assertQueryApi() {
     expect(root.query('group > rect')).toBe(target);
     expect(root.queryAll('rect + rect')).toEqual([sibling]);
 
-    // matches (function form works on any element; Group also exposes the method)
+    // matches (free function + method — the method lives on Element, so leaves have it too)
     expect(matches(target, 'rect.active')).toBe(true);
     expect(matches(target, 'circle')).toBe(false);
+    expect(target.matches('rect.active')).toBe(true);
     expect(inner.matches('group')).toBe(true);
 
-    // closest (from a leaf up through the groups)
+    // closest (from a leaf up through the groups; free function + Element method)
     expect(closest(target, '#root')).toBe(root);
     expect(closest(target, 'group')).toBe(inner);
+    expect(target.closest('#root')).toBe(root);
     expect(inner.closest('#root')).toBe(root);
 }
 

@@ -219,17 +219,18 @@ rect + circle
 
 ### `matches(selector)`
 
-Tests whether the group itself matches a CSS-like selector, returning a boolean. Multi-segment
-selectors (with combinators) are evaluated relative to the element's root, so ancestor and sibling
-constraints are honoured:
+Tests whether an element matches a CSS-like selector, returning a boolean. `matches` is a method on
+**every element** (it comes from `Element`, so leaf shapes have it too — not just groups).
+Multi-segment selectors (with combinators) are evaluated relative to the element's root, so ancestor
+and sibling constraints are honoured:
 
 ```ts
-group.matches('group');          // true
-group.matches('#chart.active');  // matches id + class
+group.matches('group');               // true
+group.matches('#chart.active');       // matches id + class
+circle.matches('circle.highlighted'); // works on any element
 ```
 
-A standalone `matches(element, selector)` function is also exported for testing any element (not just
-groups):
+A standalone `matches(element, selector)` function is also exported:
 
 ```ts
 import { matches } from '@ripl/core';
@@ -240,7 +241,8 @@ matches(circle, 'circle.highlighted');
 ### `closest(selector)`
 
 Walks up the parent chain (starting with the element itself) and returns the nearest ancestor that
-matches the selector, or `undefined` if none do — the inverse of `query`:
+matches the selector, or `undefined` if none do — the inverse of `query`. Like `matches`, `closest`
+is available on **every element**:
 
 ```ts
 const chart = marker.closest('#chart');   // nearest ancestor group with id "chart"

@@ -94,6 +94,16 @@ if (circle.intersectsWith(mouseX, mouseY)) {
 
 The `pointerEvents` property controls hit testing behavior: `'all'` (default), `'fill'`, `'stroke'`, or `'none'`.
 
+## Selector Matching
+
+Every element supports CSS-like selector testing via `matches(selector)` and ancestor lookup via
+`closest(selector)` — the same selector syntax used by [Group querying](/docs/core/essentials/group#query-selector-queryall-selector):
+
+```ts
+circle.matches('circle.highlighted'); // test the element itself
+const panel = circle.closest('.panel'); // nearest matching ancestor (or the element itself)
+```
+
 ## Interpolation
 
 The `interpolate()` method creates a function that smoothly transitions the element's properties. It returns an interpolator that accepts a progress value from 0 to 1:

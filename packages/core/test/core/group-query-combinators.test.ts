@@ -182,4 +182,34 @@ describe('closest', () => {
         expect(inner.closest('#outer')).toBe(outer);
     });
 
+    test('is available as a method on every element, not just groups', () => {
+        const leaf = createRect({
+            id: 'leaf',
+            class: 'active',
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        });
+
+        const inner = createGroup({
+            id: 'inner',
+            children: [leaf],
+        });
+
+        const outer = createGroup({
+            id: 'outer',
+            children: [inner],
+        });
+
+        expect(leaf.matches('rect.active')).toBe(true);
+        expect(leaf.matches('group > rect')).toBe(true);
+        expect(leaf.matches('circle')).toBe(false);
+
+        expect(leaf.closest('rect')).toBe(leaf);
+        expect(leaf.closest('group')).toBe(inner);
+        expect(leaf.closest('#outer')).toBe(outer);
+        expect(leaf.closest('circle')).toBeUndefined();
+    });
+
 });
