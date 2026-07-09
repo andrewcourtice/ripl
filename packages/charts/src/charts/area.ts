@@ -77,6 +77,10 @@ import {
 } from '../core/morph';
 
 import {
+    areaBandRenderer,
+} from '../core/fill';
+
+import {
     arrayJoin,
     functionIdentity,
 } from '@ripl/utilities';
@@ -401,7 +405,9 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 fill: setColorAlpha(color, opacity),
                 stroke: undefined,
                 points: areaPoints,
-                renderer: srs.lineType,
+                // Curve only the top edge (matching the line) and straight-close the baseline; a
+                // plain curve renderer would smooth through the corners and gap away from the line.
+                renderer: areaBandRenderer(srs.lineType),
                 data: {
                     points: areaPoints,
                 } as PolylineState,
@@ -451,7 +457,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             // a closed [top, reversed-bottom] polygon, so its keys are disambiguated per run (t:/b:)
             // to keep top matched to top and bottom to bottom.
             line.renderer = srs.lineType;
-            areaFill.renderer = srs.lineType;
+            areaFill.renderer = areaBandRenderer(srs.lineType);
             // Dash pattern is a static style (not tweened) — apply it directly.
             line.lineDash = resolveLineDash(srs.lineStyle);
 

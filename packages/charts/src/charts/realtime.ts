@@ -41,6 +41,10 @@ import {
 } from '../components/crosshair';
 
 import {
+    anchoredAreaRenderer,
+} from '../core/fill';
+
+import {
     Box,
     Context,
     createGroup,
@@ -312,6 +316,8 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                         areaFill.points = areaPoints.map(([x, y]) => [x + step, y] as Point);
                     }
 
+                    // Re-apply directly (a renderer isn't tweenable) in case the series lineType changed.
+                    areaFill.renderer = anchoredAreaRenderer(srs.lineType);
                     areaFill.data = {
                         points: areaPoints,
                     } as PolylineState;
@@ -329,7 +335,9 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                         fill: setColorAlpha(color, areaOpacity),
                         stroke: undefined,
                         points: areaPoints,
-                        renderer: srs.lineType,
+                        // Curve only the interior line points; the two baseline anchors join with
+                        // straight edges so the fill's top edge exactly matches the line.
+                        renderer: anchoredAreaRenderer(srs.lineType),
                         data: {
                             points: areaPoints,
                         } as PolylineState,
