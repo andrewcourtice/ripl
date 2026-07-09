@@ -87,6 +87,31 @@ The terminal context:
 5. Encodes each 2×4 cell into a Unicode braille character
 6. Flushes the serialized output to the `TerminalOutput` adapter
 
+## Logical Sizing
+
+By default the context's coordinate space **is** the braille pixel grid — `columns × 2` wide by
+`rows × 4` tall (an 80×24 terminal is a 160×96 space). A scene authored in typical screen pixels
+(fixed radii, offsets in the hundreds) will overflow that space entirely.
+
+Pass `logicalWidth`/`logicalHeight` to author in a larger logical space instead. The context then
+reports the logical size via `context.width`/`context.height` and uniformly scales + centres
+(letterboxes) it into the character grid — the same way the canvas context maps CSS pixels onto its
+device-pixel backing store:
+
+```ts
+// A scene written for a 800×600 canvas renders proportionally in any terminal.
+const context = createContext(output, {
+    logicalWidth: 800,
+    logicalHeight: 600,
+});
+```
+
+The scale factor is uniform on both axes, so circles stay circular. Text glyphs remain cell-sized
+(inherent to terminals); only their position follows the logical space, and `measureText` reports
+metrics in logical units. On terminal resize the logical size is preserved and the mapping is
+recomputed. The docs playground's Terminal mode uses this to render examples with the same
+proportions as the Canvas and SVG modes.
+
 ## Extensible Rasterizer
 
 The default `BrailleRasterizer` can be swapped for alternative character sets by implementing the `Rasterizer` interface:

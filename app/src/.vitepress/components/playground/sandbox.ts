@@ -92,10 +92,11 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
             ].join('\n'),
             body: [
                 // Render into a real web-terminal emulator so examples show up as ANSI/braille output.
+                'const root = document.getElementById(\'root\');',
                 'const term = new Terminal({ convertEol: true, fontSize: 12, cursorBlink: false, theme: { background: \'#1b1b1f\', foreground: \'#e6e6e6\' } });',
                 'const fit = new FitAddon();',
                 'term.loadAddon(fit);',
-                'term.open(document.getElementById(\'root\'));',
+                'term.open(root);',
                 'fit.fit();',
                 'const output = {',
                 '    write: (data) => term.write(data),',
@@ -103,7 +104,9 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 '    get rows() { return term.rows; },',
                 '    onResize(cb) { const sub = term.onResize((e) => cb(e.cols, e.rows)); return () => sub.dispose(); },',
                 '};',
-                'const context = createContext(output);',
+                // Author examples against the host box size (like canvas/SVG); the context scales
+                // that logical space into the braille grid so nothing renders out of bounds.
+                'const context = createContext(output, { logicalWidth: root.clientWidth, logicalHeight: root.clientHeight });',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,
