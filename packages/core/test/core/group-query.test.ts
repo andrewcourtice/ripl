@@ -7,12 +7,9 @@ import {
 import {
     createGroup,
     createRect,
-} from '../../src';
-
-import {
     query,
     queryAll,
-} from '../../src/core/group';
+} from '../../src';
 
 describe('Group.query / Group.queryAll', () => {
 
