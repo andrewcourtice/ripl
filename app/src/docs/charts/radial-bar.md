@@ -71,7 +71,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         maxValue: 100,
         innerRadius: 0.25,
         range: range.value,
-        cornerRadius: rounded.value ? 8 : 0,
+        rounded: rounded.value,
         format: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildCommonOptions(config),
@@ -81,7 +81,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 function apply() {
     chart.value?.update({
         range: range.value,
-        cornerRadius: rounded.value ? 8 : 0,
+        rounded: rounded.value,
         ...buildCommonOptions(config),
     });
 }
@@ -139,7 +139,7 @@ const data = [
 - **`innerRadius`** — Inner hole radius as a ratio of the chart size (default `0.2`)
 - **`range`** — Angular sweep of a full-value bar in degrees (default `360`)
 - **`gap`** — Gap between rings as a ratio of ring thickness (default `0.25`)
-- **`cornerRadius`** — Rounded arc caps (default `0`)
+- **`rounded`** — Round the ends of each value bar and its track (default `false`)
 - **`trackColor`** — Background track color
 - **`legend`** — `boolean | ChartLegendOptions` — Category legend
 - **`format`** — Value formatter for tooltips

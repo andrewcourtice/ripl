@@ -42,6 +42,7 @@ import {
     easeOutCubic,
     EventMap,
     getExtent,
+    getThetaPoint,
     Group,
     setColorAlpha,
 } from '@ripl/core';
@@ -72,6 +73,9 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     /** Gap between concentric rings as a ratio of the ring thickness (0–0.9). Defaults to 0.25. */
     gap?: number;
     trackColor?: string;
+    /** Round the ends of each value bar (and its track). Defaults to `false`. */
+    rounded?: boolean;
+    /** @deprecated Use `rounded`. Any value `> 0` rounds the bar ends. */
     cornerRadius?: number;
     legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
@@ -135,15 +139,22 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             ease: hover.ease,
             tooltip: this.tooltip,
             anchor: () => {
-                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+                // Bars are stroked open arcs (no inner radius), so `getCentroid` (which assumes an
+                // annular sector) would land halfway to the centre. Anchor at the mid-sweep point
+                // on the band centreline instead, honouring the animated target state in `data`.
+                const state = (arc.data ?? {}) as Partial<ArcState>;
+                const radius = state.radius ?? arc.radius;
+                const startAngle = state.startAngle ?? arc.startAngle;
+                const endAngle = state.endAngle ?? arc.endAngle;
+                const [x, y] = getThetaPoint((startAngle + endAngle) / 2, radius, arc.cx, arc.cy);
                 return {
                     x,
                     y,
                 };
             },
             content: () => content,
-            highlight: { fill: color },
-            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            highlight: { stroke: color },
+            restore: { stroke: setColorAlpha(color, REST_ALPHA) },
             onEnter: point => this.emit('barenter', payload(point)),
             onLeave: point => this.emit('barleave', payload(point)),
             onClick: point => this.emit('barclick', payload(point)),
@@ -162,8 +173,12 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 range = 360,
                 gap = 0.25,
                 trackColor = '#eceff3',
+                rounded,
                 cornerRadius = 0,
             } = this.options;
+
+            // `rounded` is the primary control; `cornerRadius > 0` remains a back-compat alias.
+            const lineCap = (rounded ?? cornerRadius > 0) ? 'round' : 'butt';
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
@@ -206,15 +221,18 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const bandCount = Math.max(1, data.length);
             const band = (outerRadius - holeRadius) / bandCount;
 
-            // Geometry for the ring at data index `i` (first category outermost).
+            // Geometry for the ring at data index `i` (first category outermost). Bars are stroked
+            // arcs, so we return the band centreline radius + thickness (the stroke width) rather
+            // than an inner/outer pair.
             const ringGeometry = (i: number, itemValue: number) => {
                 const ringOuter = outerRadius - i * band;
-                const ringInner = ringOuter - band * (1 - gap);
+                const thickness = band * (1 - gap);
+                const centre = ringOuter - thickness / 2;
                 const endAngle = TOP_ANGLE + Math.max(0, Math.min(1, itemValue / maxValue)) * sweep;
 
                 return {
-                    ringOuter,
-                    ringInner,
+                    centre,
+                    thickness,
                     endAngle,
                 };
             };
@@ -230,41 +248,41 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const entryGroups = entries.map(item => {
                 const i = data.indexOf(item);
                 const itemColor = colorFor(item);
-                const { ringOuter, ringInner, endAngle } = ringGeometry(i, getValue(item));
+                const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
 
                 const track = createArc({
                     id: `${getKey(item)}-track`,
                     class: 'radial-bar__track',
                     cx,
                     cy,
-                    radius: ringOuter,
-                    innerRadius: ringInner,
+                    radius: centre,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE + sweep,
-                    fill: trackColor,
-                    borderRadius: cornerRadius,
+                    stroke: trackColor,
+                    lineWidth: thickness,
+                    lineCap,
                     pointerEvents: 'none',
                 });
 
-                track.autoStroke = false;
+                track.autoFill = false;
 
                 const bar = createArc({
                     id: `${getKey(item)}-bar`,
                     class: 'radial-bar__bar',
                     cx,
                     cy,
-                    radius: ringOuter,
-                    innerRadius: ringInner,
+                    radius: centre,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE,
-                    fill: setColorAlpha(itemColor, REST_ALPHA),
-                    borderRadius: cornerRadius,
+                    stroke: setColorAlpha(itemColor, REST_ALPHA),
+                    lineWidth: thickness,
+                    lineCap,
                     data: {
                         endAngle,
                     } as Partial<ArcState>,
                 });
 
-                bar.autoStroke = false;
+                bar.autoFill = false;
 
                 this.attachBarHover(bar, {
                     x: cx,
@@ -284,30 +302,34 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             updates.forEach(([item, group]) => {
                 const i = data.indexOf(item);
                 const itemColor = colorFor(item);
-                const { ringOuter, ringInner, endAngle } = ringGeometry(i, getValue(item));
+                const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
 
                 const track = group.query('.radial-bar__track') as Arc;
                 const bar = group.query('.radial-bar__bar') as Arc;
 
                 if (track) {
+                    // lineCap isn't a tweenable value — apply it directly so toggling `rounded`
+                    // takes effect on update, not just first render.
+                    track.lineCap = lineCap;
+                    track.stroke = trackColor;
                     track.data = {
                         cx,
                         cy,
-                        radius: ringOuter,
-                        innerRadius: ringInner,
+                        radius: centre,
+                        lineWidth: thickness,
                         startAngle: TOP_ANGLE,
                         endAngle: TOP_ANGLE + sweep,
-                        fill: trackColor,
                     } as Partial<ArcState>;
                 }
 
                 if (bar) {
-                    bar.fill = setColorAlpha(itemColor, REST_ALPHA);
+                    bar.lineCap = lineCap;
+                    bar.stroke = setColorAlpha(itemColor, REST_ALPHA);
                     bar.data = {
                         cx,
                         cy,
-                        radius: ringOuter,
-                        innerRadius: ringInner,
+                        radius: centre,
+                        lineWidth: thickness,
                         startAngle: TOP_ANGLE,
                         endAngle,
                     } as Partial<ArcState>;

@@ -727,6 +727,7 @@ createRadialBarChart(mount('radial-bar'), {
     key: 'language',
     value: 'share',
     maxValue: 100,
+    rounded: true,
 });
 
 createPackedCircleChart(mount('packed-circle'), {
