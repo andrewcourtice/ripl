@@ -1,6 +1,7 @@
 import animationCode from './animation.js?raw';
 import circleCode from './circle.js?raw';
 import cubeCode from './cube.js?raw';
+import lineChartCode from './line-chart.js?raw';
 import multiple3dShapesCode from './multiple-3d-shapes.js?raw';
 import multipleShapesCode from './multiple-shapes.js?raw';
 import rectangleCode from './rectangle.js?raw';
@@ -34,6 +35,11 @@ export const EXAMPLES: PlaygroundExample[] = [
         label: 'Animation',
         mode: '2d',
         code: animationCode,
+    },
+    {
+        label: 'Line Chart',
+        mode: '2d',
+        code: lineChartCode,
     },
     {
         label: 'Text',
