@@ -105,6 +105,7 @@ interface PackedNode {
 export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartOptions<TData>, PackedCircleChartEventMap> {
 
     private groups: Group[] = [];
+    private enclosing?: Circle;
     private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: PackedCircleChartOptions<TData>) {
@@ -178,6 +179,38 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             const cx = area.x + area.width / 2;
             const cy = area.y + area.height / 2;
             const fitRadius = (Math.min(area.width, area.height) / 2) * 0.96;
+
+            // A single visible circle that contains the whole pack, drawn behind the cells. The pack
+            // is scaled so its enclosing circle has radius `fitRadius`, so this exactly bounds it.
+            const enclosingIsNew = !this.enclosing;
+
+            if (!this.enclosing) {
+                this.enclosing = createCircle({
+                    id: 'packed-circle__enclosing',
+                    class: 'packed-circle__enclosing',
+                    cx,
+                    cy,
+                    radius: 0,
+                    fill: setColorAlpha('#94a3b8', 0.06),
+                    stroke: setColorAlpha('#94a3b8', 0.35),
+                    lineWidth: 1.5,
+                    pointerEvents: 'none',
+                    zIndex: -1,
+                    data: {
+                        cx,
+                        cy,
+                        radius: fitRadius,
+                    } as CircleState,
+                });
+
+                this.scene.add(this.enclosing);
+            } else {
+                this.enclosing.data = {
+                    cx,
+                    cy,
+                    radius: fitRadius,
+                } as CircleState;
+            }
 
             // Pack circles with relative radii (area ∝ value), then centre + scale to fit the area.
             const packInput: PackCircle[] = data.map(item => ({
@@ -316,6 +349,11 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             const updateCircles = updates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             return Promise.all([
+                this.renderer.transition(this.enclosing, {
+                    duration: (enclosingIsNew ? enter : update).duration,
+                    ease: easeOutCubic,
+                    state: this.enclosing.data as CircleState,
+                }),
                 this.renderer.transition(entryCircles, (element, index, length) => ({
                     duration: enter.duration,
                     delay: stagger(index, length, enter.duration),

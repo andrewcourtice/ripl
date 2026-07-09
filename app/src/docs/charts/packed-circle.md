@@ -1,6 +1,6 @@
 # Packed Circle Chart
 
-The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, arranged in a tight, non-overlapping cluster. It's a softer alternative to the treemap for showing many parts of a whole — proportions read at a glance without a rigid grid. Larger circles are labelled automatically.
+The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole — proportions read at a glance without a rigid grid. Larger circles are labelled automatically.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -46,14 +46,14 @@ const config = useChartConfig({
     title: 'Team Sizes',
 });
 
-function makeData(count: number) {
-    return NAMES.slice(0, count).map(name => ({
+function makeItem(name: string) {
+    return {
         name,
         size: Math.round(Math.random() * 90 + 10),
-    }));
+    };
 }
 
-let data = makeData(8);
+let data = NAMES.slice(0, 8).map(makeItem);
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createPackedCircleChart(context, {
@@ -69,7 +69,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
-        data,
+        data: [...data],
         ...buildCommonOptions(config),
     });
 }
@@ -77,20 +77,23 @@ function apply() {
 watch(config, apply, { deep: true });
 
 function randomize() {
-    data = makeData(data.length);
+    // Re-roll every circle's value, keeping the same members, so the pack reflows smoothly.
+    data = data.map(item => makeItem(item.name));
     apply();
 }
 
 function addItem() {
     if (data.length < NAMES.length) {
-        data = makeData(data.length + 1);
+        // Append one new circle; existing circles keep their values and animate to new positions.
+        data = [...data, makeItem(NAMES[data.length])];
         apply();
     }
 }
 
 function removeItem() {
     if (data.length > 3) {
-        data = makeData(data.length - 1);
+        // Remove one circle; the rest re-pack inside the containing circle.
+        data = data.slice(0, -1);
         apply();
     }
 }

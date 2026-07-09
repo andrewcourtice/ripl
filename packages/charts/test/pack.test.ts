@@ -48,6 +48,39 @@ describe('packSiblings', () => {
         expect(packed).toHaveLength(25);
     });
 
+    test('packs a large varied set without overlap', () => {
+        const packed = packSiblings(circles(Array.from({ length: 60 }, (_, i) => 3 + (i % 9))));
+        expect(anyOverlap(packed)).toBe(false);
+        expect(packed).toHaveLength(60);
+    });
+
+    test('preserves input order (results map back by index)', () => {
+        const input = circles([5, 20, 8]);
+        const packed = packSiblings(input);
+        // Same array, same element identities — only x/y were assigned.
+        expect(packed).toBe(input);
+        expect(packed.map(circle => circle.r)).toEqual([5, 20, 8]);
+    });
+
+    test('centres the packed cluster on the origin', () => {
+        const packed = packSiblings(circles([20, 15, 15, 10, 8, 8, 6, 5, 5, 4, 3]));
+        const bounds = enclosingCircle(packed);
+        expect(Math.abs(bounds.x)).toBeLessThan(1e-6);
+        expect(Math.abs(bounds.y)).toBeLessThan(1e-6);
+    });
+
+    test('produces a tight cluster (front-chain, not a loose spiral)', () => {
+        const radii = Array.from({ length: 40 }, (_, i) => 4 + (i % 7));
+        const packed = packSiblings(circles(radii));
+        const bounds = enclosingCircle(packed);
+
+        const circleArea = radii.reduce((sum, r) => sum + Math.PI * r * r, 0);
+        const enclosingArea = Math.PI * bounds.r * bounds.r;
+
+        // A tight pack fills well over half the enclosing disc; the old spiral packer fell short.
+        expect(circleArea / enclosingArea).toBeGreaterThan(0.6);
+    });
+
     test('is a no-op for an empty input', () => {
         expect(packSiblings([])).toEqual([]);
     });
