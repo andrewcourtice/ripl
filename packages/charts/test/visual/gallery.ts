@@ -766,6 +766,7 @@ createForceDirectedChart(mount('force-directed'), {
 createArcDiagramChart(mount('arc-diagram'), {
     animation: false,
     title: 'Arc Diagram — Links',
+    sizeByConnections: true,
     nodes: [
         { id: 'a', label: 'A' },
         { id: 'b', label: 'B' },
