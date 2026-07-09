@@ -36,7 +36,6 @@ import {
 } from '@ripl/charts';
 
 import {
-    ref,
     watch,
 } from 'vue';
 
@@ -51,27 +50,31 @@ const config = useChartConfig({
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
-function makePoints(count: number) {
-    return Array.from({ length: count }, () => ({
-        angle: Math.round(Math.random() * 360),
-        speed: Math.round(Math.random() * 100),
-        gust: Math.round(Math.random() * 100 + 10),
-    }));
+// Each sample row carries both readings, so the two series occupy visibly distinct regions:
+// a gentler easterly morning breeze vs a stronger westerly evening front.
+function makeSample() {
+    return {
+        morningAngle: Math.round(30 + Math.random() * 120),
+        morningSpeed: Math.round(20 + Math.random() * 40),
+        morningGust: Math.round(30 + Math.random() * 35),
+        eveningAngle: Math.round(210 + Math.random() * 120),
+        eveningSpeed: Math.round(50 + Math.random() * 45),
+        eveningGust: Math.round(60 + Math.random() * 50),
+    };
 }
 
-let morning = makePoints(12);
-let evening = makePoints(12);
+let samples = Array.from({ length: 12 }, makeSample);
 
 function getSeries() {
     return [
-        { id: 'morning', label: 'Morning', angle: 'angle', radius: 'speed', sizeBy: 'gust', color: config.colors.morning },
-        { id: 'evening', label: 'Evening', angle: 'angle', radius: 'speed', sizeBy: 'gust', color: config.colors.evening },
+        { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed', sizeBy: 'morningGust', color: config.colors.morning },
+        { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed', sizeBy: 'eveningGust', color: config.colors.evening },
     ];
 }
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createPolarScatterChart(context, {
-        data: [...morning, ...evening],
+        data: samples,
         series: getSeries(),
         maxRadiusValue: 100,
         format: v => `${v} km/h`,
@@ -82,7 +85,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
-        data: [...morning, ...evening],
+        data: [...samples],
         series: getSeries(),
         ...buildCommonOptions(config),
     });
@@ -91,21 +94,21 @@ function apply() {
 watch(config, apply, { deep: true });
 
 function randomize() {
-    morning = makePoints(morning.length);
-    evening = makePoints(evening.length);
+    // Re-roll every sample's values but keep the count, so points morph in place.
+    samples = samples.map(makeSample);
     apply();
 }
 
 function addPoint() {
-    morning = makePoints(morning.length + 1);
-    evening = makePoints(evening.length + 1);
+    // Append a single new sample — existing points stay put while the new one animates in.
+    samples = [...samples, makeSample()];
     apply();
 }
 
 function removePoint() {
-    if (morning.length > 3) {
-        morning = makePoints(morning.length - 1);
-        evening = makePoints(evening.length - 1);
+    if (samples.length > 3) {
+        // Drop only the newest sample so exactly one point exits.
+        samples = samples.slice(0, -1);
         apply();
     }
 }
@@ -143,6 +146,20 @@ const data = [
     { angle: 120,
         speed: 34,
         gust: 40 },
+];
+```
+
+Every series reads **all** rows through its own accessors. For multiple series, keep one row per
+observation and point each series at its own fields:
+
+```ts
+const data = [
+    { morningAngle: 60, morningSpeed: 32, eveningAngle: 250, eveningSpeed: 78 },
+];
+
+const series = [
+    { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed' },
+    { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed' },
 ];
 ```
 
