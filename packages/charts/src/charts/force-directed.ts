@@ -21,7 +21,6 @@ import {
 
 import {
     ANIMATION_REFERENCE,
-    stagger,
 } from '../core/animation';
 
 import {
@@ -41,6 +40,7 @@ import {
     createCircle,
     createGroup,
     createLine,
+    easeOutBack,
     easeOutCubic,
     EventMap,
     getExtent,
@@ -88,6 +88,8 @@ export interface ForceDirectedChartOptions extends BaseChartOptions {
     linkStrength?: number;
     centerStrength?: number;
     iterations?: number;
+    /** Id of the node the layout springs out from on entry. Defaults to the highest-degree node. */
+    root?: string;
     /** Format applied to node/link values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -144,6 +146,9 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
     private nodeElements: Group[] = [];
     private linkElements: Line[] = [];
     private tooltip: Tooltip;
+    /** Last settled sim-space positions per node id, so reweights relax from the previous layout. */
+    private positions = new Map<string, { x: number;
+        y: number; }>();
 
     constructor(target: string | HTMLElement | Context, options: ForceDirectedChartOptions) {
         super(target, options);
@@ -258,8 +263,19 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 return nodeRadius * (0.7 + ratio * 0.9);
             };
 
-            // Run the (deterministic) simulation centred on the origin, then fit to the area.
-            const simNodes: ForceNode[] = nodes.map(node => ({ id: node.id, x: 0, y: 0, vx: 0, vy: 0 }));
+            // Run the (deterministic) simulation centred on the origin, then fit to the area. Seed
+            // existing nodes from their last settled positions so a reweight relaxes from the current
+            // layout (nodes glide to new spots) rather than re-seeding from scratch (a full reshuffle).
+            const simNodes: ForceNode[] = nodes.map(node => {
+                const previous = this.positions.get(node.id);
+                return {
+                    id: node.id,
+                    x: previous?.x ?? 0,
+                    y: previous?.y ?? 0,
+                    vx: 0,
+                    vy: 0,
+                };
+            });
             const simLinks: ForceLink[] = links.map(link => ({ source: link.source, target: link.target }));
 
             simulateForce(simNodes, simLinks, {
@@ -271,6 +287,9 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 centerX: 0,
                 centerY: 0,
             });
+
+            // Persist the settled positions (and drop nodes that no longer exist) for the next render.
+            this.positions = new Map(simNodes.map(node => [node.id, { x: node.x, y: node.y }]));
 
             const simById = new Map(simNodes.map(node => [node.id, node]));
 
@@ -303,6 +322,51 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 });
             });
 
+            // Root + BFS depth drive the springy entry: nodes spring out from the root in waves, each
+            // wave delayed by its graph distance so the layout unfolds from the centre outward.
+            const adjacency = new Map<string, string[]>();
+            nodes.forEach(node => adjacency.set(node.id, []));
+            links.forEach(link => {
+                adjacency.get(link.source)?.push(link.target);
+                adjacency.get(link.target)?.push(link.source);
+            });
+
+            const rootId = this.options.root && placed.has(this.options.root)
+                ? this.options.root
+                : nodes.reduce<ForceNetworkNode | undefined>((best, node) => (
+                    !best || (degree.get(node.id) ?? 0) > (degree.get(best.id) ?? 0) ? node : best
+                ), undefined)?.id;
+
+            const depthById = new Map<string, number>();
+            if (rootId) {
+                const queue = [rootId];
+                depthById.set(rootId, 0);
+
+                while (queue.length) {
+                    const current = queue.shift()!;
+                    const nextDepth = depthById.get(current)! + 1;
+
+                    (adjacency.get(current) ?? []).forEach(neighbour => {
+                        if (!depthById.has(neighbour)) {
+                            depthById.set(neighbour, nextDepth);
+                            queue.push(neighbour);
+                        }
+                    });
+                }
+            }
+
+            const maxDepth = depthById.size ? Math.max(...depthById.values()) : 0;
+            const depthOf = (id: string) => depthById.get(id) ?? maxDepth + 1;
+
+            const rootPlaced = rootId ? placed.get(rootId) : undefined;
+            const springOriginX = rootPlaced?.x ?? cx;
+            const springOriginY = rootPlaced?.y ?? cy;
+
+            const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+            const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
+            // Each graph-distance ring waits ~18% of the entry duration behind the previous one.
+            const springDelay = (id: string) => depthOf(id) * enter.duration * 0.18;
+
             // --- Links (drawn under the nodes) ---
             if (!this.linksGroup) {
                 this.linksGroup = createGroup({ id: 'force-links', class: 'force-links', zIndex: 0 });
@@ -333,15 +397,36 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 };
             };
 
+            // The endpoint nearer the root is the one the link grows out from during entry.
+            const linkOrigin = (link: ForceNetworkLink, ends: ReturnType<typeof linkEndpoints>) => (
+                depthOf(link.source) <= depthOf(link.target)
+                    ? { x: ends.x1, y: ends.y1 }
+                    : { x: ends.x2, y: ends.y2 }
+            );
+
+            // Entry delay per new link, keyed by its element id — it draws once the ripple reaches its
+            // root-ward endpoint (the shallower of its two nodes).
+            const linkEntryDelays = new Map<string, number>();
+
             const newLinks = linkEntries.map(link => {
                 const ends = linkEndpoints(link);
+                const origin = linkOrigin(link, ends);
+                linkEntryDelays.set(linkId(link), Math.min(depthOf(link.source), depthOf(link.target)) * enter.duration * 0.18);
+                // Start collapsed at the root-ward node, then grow out to the full endpoints so the
+                // link appears to draw itself toward the child as the ripple reaches it.
                 const line = createLine({
                     id: linkId(link),
-                    ...ends,
+                    x1: origin.x,
+                    y1: origin.y,
+                    x2: origin.x,
+                    y2: origin.y,
                     stroke: '#cbd5e1',
                     lineWidth: linkWidth(link),
                     opacity: 0,
-                    data: { opacity: 0.9 } as Partial<LineState>,
+                    data: {
+                        ...ends,
+                        opacity: 0.9,
+                    } as Partial<LineState>,
                 });
 
                 this.attachLinkHover(line, link, `${link.source} → ${link.target}${link.value !== undefined ? `: ${formatValue(link.value)}` : ''}`);
@@ -384,10 +469,11 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 const placedNode = placed.get(node.id)!;
                 const restFill = setColorAlpha(placedNode.color, REST_ALPHA);
 
+                // Start each node at the root's position and spring it out to its settled spot.
                 const circle = createCircle({
                     id: `node-${node.id}-circle`,
-                    cx: placedNode.x,
-                    cy: placedNode.y,
+                    cx: springOriginX,
+                    cy: springOriginY,
                     radius: 0,
                     fill: restFill,
                     stroke: '#ffffff',
@@ -404,14 +490,18 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
 
                 const text = createSegmentLabel({
                     id: `node-${node.id}-label`,
-                    x: placedNode.x,
-                    y: placedNode.y + placedNode.r + 8,
+                    x: springOriginX,
+                    y: springOriginY,
                     content: placedNode.label,
                     fill: '#6b7280',
                     font: '10px sans-serif',
                 });
 
-                text.data = { opacity: 1 };
+                text.data = {
+                    x: placedNode.x,
+                    y: placedNode.y + placedNode.r + 8,
+                    opacity: 1,
+                };
 
                 return createGroup({
                     id: `node-${node.id}`,
@@ -456,35 +546,42 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 ...nodeUpdates.map(([, group]) => group),
             ];
 
-            const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
-            const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
-
             const entryCircles = entryNodeGroups.flatMap(group => group.getElementsByType('circle') as Circle[]);
             const entryLabels = entryNodeGroups.flatMap(group => group.getElementsByType('text') as Text[]);
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
+            // Recover a node id from a child element id (`node-<id>-circle` / `-label`) to look up its
+            // spring delay — robust even when node ids contain dashes.
+            const delayForChild = (elementId: string, suffix: string) => (
+                springDelay(elementId.replace(/^node-/, '').replace(new RegExp(`-${suffix}$`), ''))
+            );
+
             return Promise.all([
-                newLinks.length ? this.renderer.transition(newLinks, {
+                newLinks.length ? this.renderer.transition(newLinks, element => ({
                     duration: enter.duration,
+                    // Wait for the ripple to reach this link's root-ward endpoint before drawing it.
+                    delay: linkEntryDelays.get((element as Line).id) ?? 0,
                     ease: easeOutCubic,
-                    state: { opacity: 0.9 },
-                }) : Promise.resolve(),
+                    state: element.data as Partial<LineState>,
+                })) : Promise.resolve(),
                 linkUpdates.length ? this.renderer.transition(linkUpdates.map(([, line]) => line), element => ({
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as Partial<LineState>,
                 })) : Promise.resolve(),
-                this.renderer.transition(entryCircles, (element, index, length) => ({
+                this.renderer.transition(entryCircles, element => ({
                     duration: enter.duration,
-                    delay: stagger(index, length, enter.duration),
-                    ease: easeOutCubic,
+                    delay: delayForChild(element.id, 'circle'),
+                    // Springy overshoot as each node arrives at its settled position.
+                    ease: easeOutBack,
                     state: element.data as CircleState,
                 })),
-                entryLabels.length ? this.renderer.transition(entryLabels, {
+                entryLabels.length ? this.renderer.transition(entryLabels, element => ({
                     duration: enter.duration,
+                    delay: delayForChild(element.id, 'label'),
                     ease: easeOutCubic,
-                    state: { opacity: 1 },
-                }) : Promise.resolve(),
+                    state: (element.data ?? {}) as Record<string, unknown>,
+                })) : Promise.resolve(),
                 this.renderer.transition(updateCircles, element => ({
                     duration: update.duration,
                     ease: easeOutCubic,

@@ -40,3 +40,23 @@ export const easeOutQuint: Ease = time => 1 + (time - 1) * (time - 1) * (time - 
 
 /** Quintic ease-in-out — accelerates then decelerates. */
 export const easeInOutQuint: Ease = time => time < 0.5 ? 16 * time * time * time * time * time : 1 + 16 * (time - 1) * (time - 1) * (time - 1) * (time - 1) * (time - 1);
+
+/** Back ease-out — overshoots slightly past the target and settles back (a subtle spring). */
+export const easeOutBack: Ease = time => {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    const t = time - 1;
+
+    return 1 + c3 * t * t * t + c1 * t * t;
+};
+
+/** Elastic ease-out — springs past the target and oscillates with decaying amplitude before settling. */
+export const easeOutElastic: Ease = time => {
+    if (time === 0 || time === 1) {
+        return time;
+    }
+
+    const c4 = (2 * Math.PI) / 3;
+
+    return Math.pow(2, -10 * time) * Math.sin((time * 10 - 0.75) * c4) + 1;
+};

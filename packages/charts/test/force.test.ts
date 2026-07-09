@@ -69,6 +69,41 @@ describe('simulateForce', () => {
         expect(distance).toBeGreaterThan(0);
     });
 
+    test('keeps pre-seeded positions instead of re-seeding them', () => {
+        // The chart seeds existing nodes from their last layout so reweights animate from where they
+        // were. Only zero positions get the circular seed; non-zero positions are left in place.
+        const seeded: ForceNode[] = [
+            { id: 'a', x: 42, y: -17, vx: 0, vy: 0 },
+            { id: 'b', x: -8, y: 30, vx: 0, vy: 0 },
+        ];
+
+        simulateForce(seeded, [], { iterations: 0 });
+
+        expect(seeded[0]).toMatchObject({ x: 42, y: -17 });
+        expect(seeded[1]).toMatchObject({ x: -8, y: 30 });
+    });
+
+    test('relaxes only slightly when re-run from a settled layout', () => {
+        const ids = ['a', 'b', 'c', 'd', 'e'];
+        const links: ForceLink[] = [
+            { source: 'a', target: 'b' },
+            { source: 'a', target: 'c' },
+            { source: 'b', target: 'd' },
+            { source: 'c', target: 'e' },
+        ];
+
+        // Settle once, then re-run seeded from those positions (as the chart does on a reweight of
+        // the same topology). The layout should barely move, not reshuffle.
+        const settled = simulateForce(nodes(ids), links, { iterations: 300 });
+        const seeded = settled.map(node => ({ ...node, vx: 0, vy: 0 }));
+        const relaxed = simulateForce(seeded, links, { iterations: 300 });
+
+        relaxed.forEach((node, index) => {
+            const moved = Math.hypot(node.x - settled[index].x, node.y - settled[index].y);
+            expect(moved).toBeLessThan(5);
+        });
+    });
+
     test('is a no-op for an empty graph', () => {
         expect(simulateForce([], [])).toEqual([]);
     });
