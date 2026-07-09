@@ -8,6 +8,7 @@
                 :options="[
                     { label: 'Canvas', value: 'canvas' },
                     { label: 'SVG', value: 'svg' },
+                    { label: 'Terminal', value: 'terminal' },
                 ]"
             />
             <RiplButtonGroup
