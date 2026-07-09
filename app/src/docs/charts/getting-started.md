@@ -177,8 +177,8 @@ chart.destroy();
 | [Polar Scatter](/docs/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
 | [Radial Bar](/docs/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
 | [Packed Circle](/docs/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
-| [Force-Directed](/docs/charts/force-directed) | `createForceDirectedChart` | Physics-based network |
-| [Arc Diagram](/docs/charts/arc-diagram) | `createArcDiagramChart` | Nodes linked by arcs |
+| [Force-Directed](/docs/charts/force-directed) | `createForceDirectedChart` | Springy physics network |
+| [Arc Diagram](/docs/charts/arc-diagram) | `createArcDiagramChart` | Axis of nodes linked by arcs |
 
 ## Next Steps
 
