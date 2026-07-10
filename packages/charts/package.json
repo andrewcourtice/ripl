@@ -25,7 +25,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsup",
+        "build": "tsup && tsc -p tsconfig.build.json",
         "test:visual": "playwright test -c test/visual/playwright.config.ts",
         "test:visual:update": "playwright test -c test/visual/playwright.config.ts --update-snapshots"
     },

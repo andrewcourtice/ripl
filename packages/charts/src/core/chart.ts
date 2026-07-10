@@ -1,10 +1,14 @@
 import {
-    Context,
     createRenderer,
     createScene,
     EventBus,
-    EventMap,
     factory,
+} from '@ripl/core';
+
+import type {
+    Context,
+    ContextExport,
+    EventMap,
     Group,
     Renderer,
     Scene,
@@ -30,21 +34,27 @@ import {
     normalizeTitle,
 } from './options';
 
-import {
-    Legend,
+import type {
     LegendItem,
 } from '../components/legend';
-
 import {
+    Legend,
+} from '../components/legend';
+
+import type {
     ChartArea,
-    ChartLayout,
     ChartPadding,
 } from './layout';
+import {
+    ChartLayout,
+} from './layout';
 
+import type {
+    ResolvedAnimation,
+} from './animation';
 import {
     ANIMATION_REFERENCE,
     resolveAnimation,
-    ResolvedAnimation,
 } from './animation';
 
 import {
@@ -341,6 +351,11 @@ export class Chart<
                 });
             });
         });
+    }
+
+    /** Exports a snapshot of the chart's rendered context (image, url, or string). See {@link Context.export}. */
+    public export(): ContextExport {
+        return this.scene.context.export();
     }
 
     /** Destroys the chart, its scene, context, and cleans up all event subscriptions. */

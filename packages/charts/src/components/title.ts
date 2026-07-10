@@ -1,6 +1,8 @@
+import type {
+    ChartComponentOptions,
+} from './_base';
 import {
     ChartComponent,
-    ChartComponentOptions,
 } from './_base';
 
 import type {
@@ -19,9 +21,11 @@ import type {
     ResolvedAnimation,
 } from '../core/animation';
 
+import type {
+    Text,
+} from '@ripl/core';
 import {
     createText,
-    Text,
 } from '@ripl/core';
 
 /** Options for constructing a {@link ChartTitle}. */

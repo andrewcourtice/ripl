@@ -6,12 +6,14 @@
  * callers can fade it in alongside the element it annotates.
  */
 
-import {
-    createText,
-    getThetaPoint,
+import type {
     Point,
     Text,
     TextState,
+} from '@ripl/core';
+import {
+    createText,
+    getThetaPoint,
 } from '@ripl/core';
 
 import type {
@@ -20,9 +22,7 @@ import type {
     SegmentLabelPosition,
 } from './options';
 
-export type {
-    SegmentLabelPosition,
-};
+export type { SegmentLabelPosition };
 
 /** Describes a single data label to render. */
 export interface DataLabelSpec {

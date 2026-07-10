@@ -1,8 +1,10 @@
-import {
-    EventBus,
+import type {
     EventMap,
     Renderer,
     Scene,
+} from '@ripl/core';
+import {
+    EventBus,
 } from '@ripl/core';
 
 /** Base options for chart components, providing scene and renderer references. */

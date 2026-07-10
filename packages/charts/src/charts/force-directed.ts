@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -23,9 +25,11 @@ import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
 
-import {
+import type {
     ForceLink,
     ForceNode,
+} from '../core/force';
+import {
     simulateForce,
 } from '../core/force';
 
@@ -33,22 +37,24 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Line,
+    LineState,
+    Text,
+} from '@ripl/core';
+import {
     createCircle,
     createGroup,
     createLine,
     easeOutBack,
     easeOutCubic,
-    EventMap,
     getExtent,
-    Group,
-    Line,
-    LineState,
     setColorAlpha,
-    Text,
 } from '@ripl/core';
 
 import {
@@ -276,7 +282,10 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                     vy: 0,
                 };
             });
-            const simLinks: ForceLink[] = links.map(link => ({ source: link.source, target: link.target }));
+            const simLinks: ForceLink[] = links.map(link => ({
+                source: link.source,
+                target: link.target,
+            }));
 
             simulateForce(simNodes, simLinks, {
                 charge,
@@ -289,7 +298,10 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             });
 
             // Persist the settled positions (and drop nodes that no longer exist) for the next render.
-            this.positions = new Map(simNodes.map(node => [node.id, { x: node.x, y: node.y }]));
+            this.positions = new Map(simNodes.map(node => [node.id, {
+                x: node.x,
+                y: node.y,
+            }]));
 
             const simById = new Map(simNodes.map(node => [node.id, node]));
 
@@ -369,7 +381,11 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
 
             // --- Links (drawn under the nodes) ---
             if (!this.linksGroup) {
-                this.linksGroup = createGroup({ id: 'force-links', class: 'force-links', zIndex: 0 });
+                this.linksGroup = createGroup({
+                    id: 'force-links',
+                    class: 'force-links',
+                    zIndex: 0,
+                });
                 this.scene.add(this.linksGroup);
             }
 
@@ -400,8 +416,14 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             // The endpoint nearer the root is the one the link grows out from during entry.
             const linkOrigin = (link: ForceNetworkLink, ends: ReturnType<typeof linkEndpoints>) => (
                 depthOf(link.source) <= depthOf(link.target)
-                    ? { x: ends.x1, y: ends.y1 }
-                    : { x: ends.x2, y: ends.y2 }
+                    ? {
+                        x: ends.x1,
+                        y: ends.y1,
+                    }
+                    : {
+                        x: ends.x2,
+                        y: ends.y2,
+                    }
             );
 
             // Entry delay per new link, keyed by its element id — it draws once the ripple reaches its
@@ -451,7 +473,11 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
 
             // --- Nodes ---
             if (!this.nodesGroup) {
-                this.nodesGroup = createGroup({ id: 'force-nodes', class: 'force-nodes', zIndex: 1 });
+                this.nodesGroup = createGroup({
+                    id: 'force-nodes',
+                    class: 'force-nodes',
+                    zIndex: 1,
+                });
                 this.scene.add(this.nodesGroup);
             }
 

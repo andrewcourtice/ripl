@@ -3,11 +3,13 @@ import type {
     ContextPath,
 } from '../context';
 
-import {
+import type {
     BaseElementState,
-    Element,
     ElementIntersectionOptions,
     ElementOptions,
+} from './element';
+import {
+    Element,
 } from './element';
 
 /** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */

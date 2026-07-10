@@ -58,5 +58,5 @@ export const easeOutElastic: Ease = time => {
 
     const c4 = (2 * Math.PI) / 3;
 
-    return Math.pow(2, -10 * time) * Math.sin((time * 10 - 0.75) * c4) + 1;
+    return 2 ** (-10 * time) * Math.sin((time * 10 - 0.75) * c4) + 1;
 };

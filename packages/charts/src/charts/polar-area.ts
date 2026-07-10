@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -32,17 +34,27 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
+import type {
     Arc,
     ArcState,
     BaseElementState,
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Line,
+    LineState,
+    Polyline,
+    PolylineState,
+    Text,
+    TextState,
+} from '@ripl/core';
+import {
     createArc,
     createCircle,
     createGroup,
@@ -51,18 +63,10 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
-    EventMap,
-    Group,
-    Line,
-    LineState,
     maxOf,
-    Polyline,
-    PolylineState,
     scaleContinuous,
     setColorAlpha,
     TAU,
-    Text,
-    TextState,
 } from '@ripl/core';
 
 import {

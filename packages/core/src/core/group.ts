@@ -1,8 +1,10 @@
-import {
+import type {
     BaseElementState,
-    Element,
     ElementEventMap,
     ElementOptions,
+} from './element';
+import {
+    Element,
 } from './element';
 
 import {
@@ -18,8 +20,10 @@ import {
     getContainingBox,
 } from '../math';
 
-import {
+import type {
     OneOrMore,
+} from '@ripl/utilities';
+import {
     valueOneOrMore,
 } from '@ripl/utilities';
 

@@ -1,6 +1,8 @@
+import type {
+    CartesianChartOptions,
+} from '../core/cartesian';
 import {
     CartesianChart,
-    CartesianChartOptions,
 } from '../core/cartesian';
 
 import type {
@@ -37,25 +39,27 @@ import {
     resolveAccessor,
 } from '../core/data';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
-    Box,
+import type {
     Circle,
     CircleState,
     Context,
-    createCircle,
-    createGroup,
     EventMap,
-    getExtent,
     Group,
     Scale,
-    scaleContinuous,
-    setColorAlpha,
     Text,
     TextState,
+} from '@ripl/core';
+import {
+    Box,
+    createCircle,
+    createGroup,
+    getExtent,
+    scaleContinuous,
+    setColorAlpha,
 } from '@ripl/core';
 
 import {

@@ -18,7 +18,7 @@ import type {
     Scale,
 } from '@ripl/core';
 
-import {
+import type {
     CanvasPath,
 } from './context';
 

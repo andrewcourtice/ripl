@@ -4,7 +4,7 @@ import type {
     ContextElement,
 } from './types';
 
-import {
+import type {
     BorderRadius,
     Point,
 } from '../math';

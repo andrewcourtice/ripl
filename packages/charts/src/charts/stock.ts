@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -42,22 +44,24 @@ import {
     Crosshair,
 } from '../components/crosshair';
 
-import {
-    Box,
+import type {
     Context,
-    createGroup,
-    createLine,
-    createRect,
-    easeOutCubic,
-    easeOutQuart,
     EventMap,
-    getExtent,
     Group,
     Line,
     LineState,
     Rect,
     RectState,
     Scale,
+} from '@ripl/core';
+import {
+    Box,
+    createGroup,
+    createLine,
+    createRect,
+    easeOutCubic,
+    easeOutQuart,
+    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';

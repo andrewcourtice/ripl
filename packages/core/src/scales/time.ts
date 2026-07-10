@@ -1,7 +1,9 @@
+import type {
+    LinearScaleOptions,
+} from './_base';
 import {
     createScale,
     getLinearScaleMethod,
-    LinearScaleOptions,
 } from './_base';
 
 import {

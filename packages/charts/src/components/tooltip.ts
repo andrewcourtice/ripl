@@ -1,16 +1,20 @@
-import {
-    ChartComponent,
+import type {
     ChartComponentOptions,
 } from './_base';
+import {
+    ChartComponent,
+} from './_base';
 
+import type {
+    Group,
+    Rect,
+    Text,
+} from '@ripl/core';
 import {
     createGroup,
     createRect,
     createText,
     easeOutQuart,
-    Group,
-    Rect,
-    Text,
 } from '@ripl/core';
 
 /** Where the tooltip box sits relative to the anchor point. */

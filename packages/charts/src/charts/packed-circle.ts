@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -28,27 +30,31 @@ import {
     resolveAccessor,
 } from '../core/data';
 
+import type {
+    PackCircle,
+} from '../core/pack';
 import {
     enclosingCircle,
     packSiblings,
-    PackCircle,
 } from '../core/pack';
 
 import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Text,
+} from '@ripl/core';
+import {
     createCircle,
     createGroup,
     easeOutCubic,
-    EventMap,
-    Group,
     setColorAlpha,
-    Text,
 } from '@ripl/core';
 
 import {

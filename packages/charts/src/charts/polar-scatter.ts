@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -29,27 +31,29 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
+import type {
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Line,
+    Scale,
+    Text,
+} from '@ripl/core';
+import {
     createCircle,
     createGroup,
     createLine,
     createText,
     easeOutCubic,
-    EventMap,
     getExtent,
-    Group,
-    Line,
     scaleContinuous,
-    Scale,
     setColorAlpha,
-    Text,
 } from '@ripl/core';
 
 import {

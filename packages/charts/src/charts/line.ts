@@ -1,6 +1,8 @@
+import type {
+    CartesianChartOptions,
+} from '../core/cartesian';
 import {
     CartesianChart,
-    CartesianChartOptions,
 } from '../core/cartesian';
 
 import type {
@@ -42,31 +44,33 @@ import {
     resolveAccessor,
 } from '../core/data';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
-    Box,
+import type {
     Circle,
     CircleState,
     Context,
-    createCircle,
-    createGroup,
-    createPolyline,
     EventMap,
-    getExtent,
     Group,
-    interpolatePath,
-    interpolatePoints,
     Point,
     Polyline,
     PolylineRenderer,
     PolylineState,
     Scale,
-    scaleContinuous,
     Text,
     TextState,
+} from '@ripl/core';
+import {
+    Box,
+    createCircle,
+    createGroup,
+    createPolyline,
+    getExtent,
+    interpolatePath,
+    interpolatePoints,
+    scaleContinuous,
 } from '@ripl/core';
 
 import {

@@ -1,6 +1,8 @@
+import type {
+    ChartComponentOptions,
+} from './_base';
 import {
     ChartComponent,
-    ChartComponentOptions,
 } from './_base';
 
 import type {
@@ -15,14 +17,16 @@ import type {
     ResolvedAnimation,
 } from '../core/animation';
 
+import type {
+    Group,
+    Rect,
+    Text,
+} from '@ripl/core';
 import {
     Box,
     createGroup,
     createRect,
     createText,
-    Group,
-    Rect,
-    Text,
 } from '@ripl/core';
 
 import {

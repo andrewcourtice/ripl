@@ -6,6 +6,7 @@ import {
 
 import type {
     ContextElement,
+    ContextExport,
     ContextOptions,
     FillRule,
     TextOptions,
@@ -47,6 +48,50 @@ import {
 import type {
     TerminalOutput,
 } from './output';
+
+/** Converts a base64 data URL into a `Blob` synchronously. */
+function dataURLToBlob(dataURL: string): Blob {
+    const [header, data] = dataURL.split(',');
+    const mimeMatch = /:(.*?);/.exec(header);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([bytes], {
+        type: mime,
+    });
+}
+
+/**
+ * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
+ * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
+ */
+function terminalSnapshotToURL(imageData: ImageData, text: string): string {
+    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+
+        const context = canvas.getContext('2d');
+
+        if (context) {
+            context.putImageData(imageData, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/png');
+
+            if (dataURL?.startsWith('data:image')) {
+                return URL.createObjectURL(dataURLToBlob(dataURL));
+            }
+        }
+    }
+
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+}
 
 /** Options for constructing a terminal rendering context. */
 export interface TerminalContextOptions extends ContextOptions {
@@ -197,6 +242,19 @@ export class TerminalContext extends Context<Element> {
             hangingBaseline: charHeight,
             ideographicBaseline: 0,
         } as TextMetrics;
+    }
+
+    public export(): ContextExport {
+        const text = this.rasterizer.serialize({
+            ansi: false,
+        });
+        const imageData = this.rasterizer.toImageData();
+
+        return {
+            toString: () => text,
+            toURL: () => terminalSnapshotToURL(imageData, text),
+            toImage: () => Promise.resolve(imageData),
+        };
     }
 
     private flush(): void {

@@ -1,8 +1,8 @@
-import {
+import type {
     EventMap,
 } from '../core';
 
-import {
+import type {
     Box,
 } from '../math';
 
@@ -95,6 +95,24 @@ export interface ContextOptions<TMeta extends Record<string, unknown> = Record<s
     interactive?: boolean;
     dragThreshold?: number;
     meta?: TMeta;
+}
+
+/**
+ * Snapshot exporter returned by {@link Context.export}. Each method serializes the snapshot that
+ * was captured at the moment `export()` was called, so later mutations to the context do not
+ * affect the exported result. Contexts implement the formats relevant to them (see each context's
+ * `export()` for specifics); unsupported formats throw a descriptive error.
+ */
+export interface ContextExport {
+    /** The context's native string form — SVG markup, a PNG data URL, or terminal text. */
+    toString(): string;
+    /** An openable `Blob` object URL — `image/svg+xml` for SVG, `image/png` for raster contexts. */
+    toURL(): string;
+    /**
+     * Low-level, environment-agnostic pixel data. Promise-wrapped so contexts that must rasterize
+     * asynchronously (e.g. SVG) share one signature; pixel-backed contexts resolve immediately.
+     */
+    toImage(): Promise<ImageData>;
 }
 
 /** Options for creating a text element within the context. */
