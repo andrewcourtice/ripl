@@ -1,3 +1,8 @@
+---
+title: About
+description: Ripl core — a unified, zero-dependency TypeScript API for 2D graphics rendering across Canvas, SVG, and Terminal. Elements, scenes, renderer, animation, 11 scale types, color, gradients, and interpolation.
+---
+
 # About
 
 Ripl (pronounced *ripple*) is a library that provides a unified API for 2D graphics rendering. Write your drawing code once and render it to **Canvas**, **SVG**, **Terminal**, or any custom context — switching between them is a single line change.

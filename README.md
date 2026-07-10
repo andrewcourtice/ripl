@@ -31,6 +31,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
 - **CSS-like element querying** — `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll` with selector syntax
 - **Bounding box detection** via `getBoundingBox` on all shape elements
+- **Context exporting** — snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
 - **Transforms** — translate, scale, rotation, and transform-origin on every element
 - **Clipping** — path-based clipping via `Shape2D`
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
@@ -335,6 +336,27 @@ const rect = createRect({
 ```
 
 Transforms can also be animated via `renderer.transition`.
+
+## Exporting
+
+Every context can capture a snapshot of what it has rendered and export it to an image, URL, or string via `export()`:
+
+```typescript
+const snapshot = context.export();
+
+const str = snapshot.toString();         // PNG data URL (SVG → markup, Terminal → braille text)
+const url = snapshot.toURL();            // openable Blob object URL
+const image = await snapshot.toImage();  // low-level ImageData (environment-agnostic)
+```
+
+The exact outputs depend on the context: Canvas, 3D, and WebGPU export raster images; SVG exports vector markup (and can rasterize to an image); Terminal exports braille text (and a rasterized image). Charts forward `export()` to their underlying context:
+
+```typescript
+const chart = createBarChart('.mount-element', options);
+
+// e.g. open the rendered chart in a new tab
+window.open(chart.export().toURL(), '_blank');
+```
 
 ## Charts
 

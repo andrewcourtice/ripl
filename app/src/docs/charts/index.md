@@ -1,3 +1,8 @@
+---
+title: Charts
+description: "@ripl/charts — 23 animated, interactive chart types for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
+---
+
 # Charts
 
 The `@ripl/charts` package provides a comprehensive set of chart types for data visualization. Every chart is built on the Ripl core rendering engine, so they inherit animated transitions, pointer-event interactivity, responsive sizing, and context-agnostic rendering (Canvas or SVG) out of the box. Charts are created with a simple `createXxxChart(target, options)` factory and updated reactively via `chart.update(options)`.

@@ -25,8 +25,59 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../package
 export default defineConfig({
     outDir: '../dist',
     title: 'Ripl',
-    description: 'Ripl is a high performance canvas rendering library with a focus on providing a rich set of features in a simple and familiar API',
+    description: 'One unified TypeScript API for drawing 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU — high-performance and zero-dependency.',
     ignoreDeadLinks: true,
+
+    head: [
+        ['meta', {
+            name: 'keywords',
+            content: 'ripl, canvas library, svg rendering, data visualization, charting library, javascript charts, typescript graphics, 2d graphics, terminal graphics, webgpu, 3d rendering, animation library, unified rendering api, zero dependency, interactive charts',
+        }],
+        ['meta', {
+            property: 'og:type',
+            content: 'website',
+        }],
+        ['meta', {
+            property: 'og:site_name',
+            content: 'Ripl',
+        }],
+        ['meta', {
+            property: 'og:title',
+            content: 'Ripl — one API for drawing in any context',
+        }],
+        ['meta', {
+            property: 'og:description',
+            content: 'A unified, high-performance TypeScript API for drawing and animating 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and experimental WebGPU 3D. Write once, render in any context.',
+        }],
+        ['meta', {
+            property: 'og:image',
+            content: 'https://www.ripl.rocks/og-image.png',
+        }],
+        ['meta', {
+            property: 'og:url',
+            content: 'https://www.ripl.rocks/',
+        }],
+        ['meta', {
+            name: 'twitter:card',
+            content: 'summary_large_image',
+        }],
+        ['meta', {
+            name: 'twitter:title',
+            content: 'Ripl — one API for drawing in any context',
+        }],
+        ['meta', {
+            name: 'twitter:description',
+            content: 'A unified, high-performance TypeScript API for 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU.',
+        }],
+        ['meta', {
+            name: 'twitter:image',
+            content: 'https://www.ripl.rocks/og-image.png',
+        }],
+        ['link', {
+            rel: 'canonical',
+            href: 'https://www.ripl.rocks/',
+        }],
+    ],
 
     vite: {
         envDir: '../',
