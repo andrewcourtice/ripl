@@ -63,6 +63,10 @@ function domMeasureText(value: string, options?: MeasureTextOptions): TextMetric
 
     context.save();
     context.font = options?.font ?? context.font;
+    // The `actualBoundingBox*` metrics are relative to the text alignment point and baseline, so
+    // measure with the caller's alignment to keep bounding boxes anchor-correct.
+    context.textAlign = options?.textAlign ?? context.textAlign;
+    context.textBaseline = options?.textBaseline ?? context.textBaseline;
 
     const result = context.measureText(value);
 

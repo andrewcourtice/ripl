@@ -37,6 +37,7 @@ import type {
 
 interface ExportItem {
     label: string;
+    filename: string;
     run: () => string | Promise<string>;
 }
 
@@ -46,7 +47,23 @@ const props = defineProps<{
 
 const dropdown = ref<InstanceType<typeof RiplDropdown>>();
 
-/** Rasterizes ImageData to a PNG data URL for contexts (e.g. SVG) exposed only as vectors/pixels. */
+/** Converts a base64 data URL to a Blob object URL — browsers block top-level `data:` navigation. */
+function dataURLToObjectURL(dataURL: string): string {
+    const [header, data] = dataURL.split(',');
+    const mime = /:(.*?);/.exec(header)?.[1] ?? 'image/png';
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return URL.createObjectURL(new Blob([bytes], {
+        type: mime,
+    }));
+}
+
+/** Rasterizes ImageData to a PNG Blob object URL (for contexts, e.g. SVG, exposed as vectors/pixels). */
 function imageDataToURL(image: ImageData): string {
     const canvas = document.createElement('canvas');
 
@@ -54,7 +71,7 @@ function imageDataToURL(image: ImageData): string {
     canvas.height = image.height;
     canvas.getContext('2d')?.putImageData(image, 0, 0);
 
-    return canvas.toDataURL('image/png');
+    return dataURLToObjectURL(canvas.toDataURL('image/png'));
 }
 
 function textToURL(text: string): string {
@@ -71,10 +88,12 @@ const items = computed<ExportItem[]>(() => {
         return [
             {
                 label: 'SVG',
+                filename: 'ripl-export.svg',
                 run: () => context.export().toURL(),
             },
             {
                 label: 'PNG image',
+                filename: 'ripl-export.png',
                 run: async () => imageDataToURL(await context.export().toImage()),
             },
         ];
@@ -84,10 +103,12 @@ const items = computed<ExportItem[]>(() => {
         return [
             {
                 label: 'Text',
+                filename: 'ripl-export.txt',
                 run: () => textToURL(context.export().toString()),
             },
             {
                 label: 'PNG image',
+                filename: 'ripl-export.png',
                 run: () => context.export().toURL(),
             },
         ];
@@ -96,24 +117,69 @@ const items = computed<ExportItem[]>(() => {
     return [
         {
             label: 'PNG image',
+            filename: 'ripl-export.png',
             run: () => context.export().toURL(),
         },
     ];
 });
 
-async function run(item: ExportItem): Promise<void> {
-    dropdown.value?.close();
-
-    try {
-        const url = await item.run();
-
-        window.open(url, '_blank');
-
-        if (url.startsWith('blob:')) {
-            setTimeout(() => URL.revokeObjectURL(url), 10000);
-        }
-    } catch (error) {
-        console.error('Export failed', error);
+function scheduleRevoke(url: string): void {
+    if (url.startsWith('blob:')) {
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
+}
+
+/** Downloads a URL via a temporary anchor — the fallback when a popup is blocked. */
+function download(url: string, filename: string): void {
+    const anchor = document.createElement('a');
+
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+}
+
+/** Opens a URL in a new tab, falling back to a download when the popup is blocked. */
+function openInTab(url: string, filename: string): void {
+    const tab = window.open(url, '_blank');
+
+    if (!tab) {
+        download(url, filename);
+    }
+
+    scheduleRevoke(url);
+}
+
+function run(item: ExportItem): void {
+    const result = item.run();
+
+    // `window.open` must be called synchronously within the click gesture or popup blockers reject
+    // it. Sync formats open immediately; async formats (e.g. SVG → PNG) open a blank tab now and
+    // navigate it once the URL resolves.
+    if (typeof result === 'string') {
+        openInTab(result, item.filename);
+        dropdown.value?.close();
+        return;
+    }
+
+    const tab = window.open('', '_blank');
+
+    result
+        .then(url => {
+            if (tab) {
+                tab.location.href = url;
+            } else {
+                download(url, item.filename);
+            }
+
+            scheduleRevoke(url);
+        })
+        .catch(error => {
+            tab?.close();
+            console.error('Export failed', error);
+        });
+
+    dropdown.value?.close();
 }
 </script>

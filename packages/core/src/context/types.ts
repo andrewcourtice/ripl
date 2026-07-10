@@ -167,4 +167,6 @@ export interface BaseState {
 export type MeasureTextOptions = {
     context?: CanvasRenderingContext2D;
     font?: CanvasRenderingContext2D['font'];
+    textAlign?: TextAlignment;
+    textBaseline?: TextBaseline;
 };

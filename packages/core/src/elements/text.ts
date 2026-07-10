@@ -78,16 +78,18 @@ export class Text extends Element<TextState> {
     public getBoundingBox(): Box {
         const text = this.content.toString();
 
+        // Measure with the element's alignment so the anchor-relative `actualBoundingBox*` metrics
+        // position the box correctly for any `textAlign`/`textBaseline` (not just start/alphabetic).
         const {
             actualBoundingBoxAscent,
             actualBoundingBoxLeft,
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
-        } = this.context
-            ? this.context.measureText(text, this.font)
-            : measureText(text, {
-                font: this.font,
-            });
+        } = measureText(text, {
+            font: this.font,
+            textAlign: this.textAlign,
+            textBaseline: this.textBaseline,
+        });
 
         return new Box(
             this.y - actualBoundingBoxAscent,

@@ -1,4 +1,6 @@
 import {
+    afterEach,
+    beforeEach,
     describe,
     expect,
     test,
@@ -7,7 +9,50 @@ import {
 import {
     createText,
     elementIsText,
+    factory,
 } from '../../src';
+
+import type {
+    MeasureTextOptions,
+} from '../../src';
+
+/** Emulates a real canvas's anchor-relative `actualBoundingBox*` metrics for a fixed 10px/char font. */
+function fakeMeasureText(text: string, options?: MeasureTextOptions): TextMetrics {
+    const width = text.length * 10;
+    const height = 12;
+    const align = options?.textAlign ?? 'start';
+    const baseline = options?.textBaseline ?? 'alphabetic';
+
+    let actualBoundingBoxLeft = 0;
+    let actualBoundingBoxRight = width;
+
+    if (align === 'center') {
+        actualBoundingBoxLeft = width / 2;
+        actualBoundingBoxRight = width / 2;
+    } else if (align === 'right' || align === 'end') {
+        actualBoundingBoxLeft = width;
+        actualBoundingBoxRight = 0;
+    }
+
+    let actualBoundingBoxAscent = height;
+    let actualBoundingBoxDescent = 0;
+
+    if (baseline === 'middle') {
+        actualBoundingBoxAscent = height / 2;
+        actualBoundingBoxDescent = height / 2;
+    } else if (baseline === 'top') {
+        actualBoundingBoxAscent = 0;
+        actualBoundingBoxDescent = height;
+    }
+
+    return {
+        width,
+        actualBoundingBoxLeft,
+        actualBoundingBoxRight,
+        actualBoundingBoxAscent,
+        actualBoundingBoxDescent,
+    } as TextMetrics;
+}
 
 describe('Text', () => {
 
@@ -79,9 +124,76 @@ describe('Text', () => {
             content: 'test',
         });
 
-        // getBoundingBox requires a canvas context for measureText;
-        // verify the method exists (full integration tested with canvas)
         expect(typeof text.getBoundingBox).toBe('function');
+    });
+
+});
+
+describe('Text getBoundingBox', () => {
+
+    let originalMeasureText: typeof factory.measureText;
+
+    beforeEach(() => {
+        originalMeasureText = factory.measureText;
+        factory.set({
+            measureText: fakeMeasureText,
+        });
+    });
+
+    afterEach(() => {
+        factory.set({
+            measureText: originalMeasureText,
+        });
+    });
+
+    test('Should anchor the box at the position for start/alphabetic text', () => {
+        const text = createText({
+            x: 100,
+            y: 100,
+            content: 'ab',
+        });
+
+        const box = text.getBoundingBox();
+
+        expect(box.top).toBe(88);
+        expect(box.left).toBe(100);
+        expect(box.bottom).toBe(100);
+        expect(box.right).toBe(120);
+    });
+
+    test('Should shift the box for centered/middle text while keeping the same size', () => {
+        const text = createText({
+            x: 100,
+            y: 100,
+            content: 'ab',
+        });
+
+        text.textAlign = 'center';
+        text.textBaseline = 'middle';
+
+        const box = text.getBoundingBox();
+
+        expect(box.right - box.left).toBe(20);
+        expect(box.bottom - box.top).toBe(12);
+        expect(box.left).toBe(90);
+        expect(box.right).toBe(110);
+        expect(box.top).toBe(94);
+        expect(box.bottom).toBe(106);
+    });
+
+    test('Should right-align the box for right/bottom text', () => {
+        const text = createText({
+            x: 100,
+            y: 100,
+            content: 'ab',
+        });
+
+        text.textAlign = 'right';
+
+        const box = text.getBoundingBox();
+
+        expect(box.left).toBe(80);
+        expect(box.right).toBe(100);
     });
 
 });

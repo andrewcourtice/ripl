@@ -53,6 +53,8 @@ factory.set({
 
         ctx.save();
         ctx.font = options?.font ?? ctx.font;
+        ctx.textAlign = options?.textAlign ?? ctx.textAlign;
+        ctx.textBaseline = options?.textBaseline ?? ctx.textBaseline;
 
         const result = ctx.measureText(text);
 
