@@ -8,8 +8,10 @@ import {
     scaleContinuous,
 } from '@ripl/web';
 
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const VALUES = [42, 58, 51, 74, 68, 92, 85, 110, 98, 124, 118, 139];
+const VALUE_SCALE = scaleContinuous([0, 1], [30, 150]); // for color interpolation
+const VALUES = Array.from({ length: 15 }, () => VALUE_SCALE(Math.random()));
 const COLOR = '#6366f1';
 const DURATION = 1600;
 
@@ -41,14 +43,18 @@ function getPoints(scales) {
 // --- Build the chart elements (geometry is assigned by layout below) ---
 
 const gridLines = [0, 1, 2, 3].map(() => createLine({
-    x1: 0, y1: 0, x2: 0, y2: 0,
+    x1: 0,
+    y1: 0,
+    x2: 0,
+    y2: 0,
     stroke: '#a1a1aa',
     lineWidth: 1,
     opacity: 0,
 }));
 
 const tickLabels = gridLines.map(() => createText({
-    x: 0, y: 0,
+    x: 0,
+    y: 0,
     content: '',
     fill: '#9ca3af',
     font: '11px sans-serif',
@@ -59,7 +65,8 @@ const tickLabels = gridLines.map(() => createText({
 
 // Label every other month so narrow viewports (like a terminal) stay legible.
 const monthLabels = MONTHS.filter((_, index) => index % 2 === 0).map(month => createText({
-    x: 0, y: 0,
+    x: 0,
+    y: 0,
     content: month,
     fill: '#9ca3af',
     font: '11px sans-serif',
@@ -69,7 +76,10 @@ const monthLabels = MONTHS.filter((_, index) => index % 2 === 0).map(month => cr
 }));
 
 const baseline = createLine({
-    x1: 0, y1: 0, x2: 0, y2: 0,
+    x1: 0,
+    y1: 0,
+    x2: 0,
+    y2: 0,
     stroke: '#71717a',
     lineWidth: 1,
     opacity: 0,
@@ -83,7 +93,8 @@ const line = createPolyline({
 });
 
 const markers = VALUES.map(() => createCircle({
-    cx: 0, cy: 0,
+    cx: 0,
+    cy: 0,
     radius: 0,
     fill: '#ffffff',
     stroke: COLOR,
