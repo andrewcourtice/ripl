@@ -10,8 +10,8 @@ import {
 
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const VALUE_SCALE = scaleContinuous([0, 1], [30, 150]); // for color interpolation
-const VALUES = Array.from({ length: 15 }, () => VALUE_SCALE(Math.random()));
+const VALUE_SCALE = scaleContinuous([0, 1], [40, 120]); // for color interpolation
+const VALUES = Array.from({ length: 12 }, () => VALUE_SCALE(Math.random()));
 const COLOR = '#6366f1';
 const DURATION = 1600;
 

@@ -26,7 +26,7 @@ export const charts: ChartMeta[] = [
         description: 'Combine x/y series such as bar, line, or area into a single composite chart.',
     },
     {
-        text: 'Pie',
+        text: 'Pie/Donut',
         link: '/docs/charts/pie',
         description: 'Illustrate numerical proportions of statistical data with animated slices and tooltips.',
     },
