@@ -63,6 +63,7 @@
                 sandbox="allow-scripts allow-same-origin"
                 :srcdoc="srcdoc"
             ></iframe>
+            <RiplSpinner v-if="loading" overlay label="Loading playground…" />
         </div>
         <div v-if="error" class="playground-preview__error">
             {{ error }}
@@ -86,6 +87,7 @@ import RiplButton from '../ripl-button.vue';
 import RiplButtonGroup from '../ripl-button-group.vue';
 import RiplDropdown from '../ripl-dropdown.vue';
 import RiplDropdownLabel from '../ripl-dropdown-label.vue';
+import RiplSpinner from '../ripl-spinner.vue';
 import RiplSwitch from '../ripl-switch.vue';
 
 import type {
@@ -99,6 +101,7 @@ const props = defineProps<{
     mode: PlaygroundMode;
     contextType: ContextType;
     settings: PlaygroundSettings;
+    loading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -160,6 +163,7 @@ onBeforeUnmount(() => {
 }
 
 .playground-preview__body {
+    position: relative;
     flex: 1;
     min-height: 0;
     overflow: hidden;

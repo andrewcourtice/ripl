@@ -211,7 +211,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 
     /**
      * Exports the rendered canvas. Shared by CPU and GPU 3D contexts; call after a frame has
-     * rendered (GPU present textures are transient — see {@link createCanvasExport}).
+     * rendered (GPU present textures are transient, so `createCanvasExport` snapshots immediately).
      */
     public export(): ContextExport {
         return createCanvasExport(this.element);

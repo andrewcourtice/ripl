@@ -36,8 +36,11 @@
                 @click="activeTab = 'importmap'"
             ><FileJson :size="14" /> Import Map</button>
         </div>
-        <div v-show="activeTab === 'code'" class="playground-editor__body" ref="editorContainer"></div>
-        <div v-show="activeTab === 'importmap'" class="playground-editor__body" ref="importMapContainer"></div>
+        <div class="playground-editor__editors">
+            <div v-show="activeTab === 'code'" class="playground-editor__body" ref="editorContainer"></div>
+            <div v-show="activeTab === 'importmap'" class="playground-editor__body" ref="importMapContainer"></div>
+            <RiplSpinner v-if="!editorInstance" overlay label="Loading editor…" />
+        </div>
     </div>
 </template>
 
@@ -66,6 +69,7 @@ import RiplButtonGroup from '../ripl-button-group.vue';
 import RiplDropdown from '../ripl-dropdown.vue';
 import RiplDropdownItem from '../ripl-dropdown-item.vue';
 import RiplDropdownLabel from '../ripl-dropdown-label.vue';
+import RiplSpinner from '../ripl-spinner.vue';
 
 import {
     EXAMPLES,
@@ -444,6 +448,14 @@ onBeforeUnmount(() => {
 
 .playground-editor__reset {
     margin-left: auto;
+}
+
+.playground-editor__editors {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .playground-editor__body {
