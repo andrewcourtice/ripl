@@ -18,6 +18,7 @@ import {
 
 import {
     typeIsArray,
+    typeIsNil,
     typeIsNumber,
 } from '@ripl/utilities';
 
@@ -108,11 +109,13 @@ function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[]
     const nearestMatchedY = (index: number): number | undefined => {
         for (let offset = 1; offset < setB.length; offset++) {
             const left = map[index - offset];
+
             if (left !== undefined && left >= 0 && left < setA.length) {
                 return setA[left][1];
             }
 
             const right = map[index + offset];
+
             if (right !== undefined && right >= 0 && right < setA.length) {
                 return setA[right][1];
             }
@@ -134,15 +137,15 @@ function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[]
 
 /** Interpolator factory that transitions between two point arrays. By default it extrapolates additional points where set lengths differ; pass `resolveKeys` to match points by identity instead (preserving curved renderers across add/remove). */
 export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?: InterpolatePointsOptions) => {
-    const map = options?.resolveKeys?.(setA, setB);
+    const resolveKeys = options?.resolveKeys;
 
     // Keyed morph: a from-array the length of setB, matched point-for-point (no LCM upsampling).
     // Otherwise fall back to the default extrapolation that equalises differing lengths.
     const [
         extSetA,
         extSetB,
-    ] = map
-        ? [buildKeyedFromSet(setA, setB, map), setB]
+    ] = !typeIsNil(resolveKeys)
+        ? [buildKeyedFromSet(setA, setB, resolveKeys(setA, setB)), setB]
         : extrapolatePointSet(setA, setB);
 
     const interpolators = extSetA.map((pointA, index) => {

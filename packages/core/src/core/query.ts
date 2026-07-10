@@ -1,6 +1,7 @@
 import {
     OneOrMore,
     typeIsBoolean,
+    typeIsFunction,
     typeIsNil,
     typeIsNumber,
     typeIsString,
@@ -34,7 +35,7 @@ type QueryableContainer = Queryable & {
 };
 
 function isQueryableContainer(value: Queryable): value is QueryableContainer {
-    return typeof value.graph === 'function';
+    return typeIsFunction(value.graph);
 }
 
 const ELEMENT_PATTERNS = {

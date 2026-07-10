@@ -69,7 +69,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
 
     /** Replaces all children with the given elements, detaching the previous children. */
     public set(elements: Element[]) {
-        this.remove(this.children);
+        this.clear();
         this.add(elements);
     }
 
