@@ -4,11 +4,13 @@
             <RiplButtonGroup :modelValue="store.stockTimeRange" @update:modelValue="onRangeChange($event as TimeRange)" :options="rangeOptions" />
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
+        <div class="chart-readout">{{ readout }}</div>
     </dashboard-card>
 </template>
 
 <script lang="ts" setup>
 import {
+    computed,
     ref,
     watch,
 } from 'vue';
@@ -21,21 +23,34 @@ import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vu
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
+import { withMovingAverage } from '../data/mock';
+import type { MockDailyPoint } from '../data/mock';
 
 import type {
     TimeRange,
 } from '../store/dashboard';
+
+type StockDatum = MockDailyPoint & { ma: number };
 
 const ranges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
 const rangeOptions = ranges.map(r => ({ label: r, value: r }));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let chart: any;
+let chart: ReturnType<typeof createLineChart<StockDatum>> | undefined;
+
+const DEFAULT_READOUT = 'Hover a point · toggle a legend series to highlight it';
+const hovered = ref('');
+const selected = ref('');
+const readout = computed(() => hovered.value || selected.value || DEFAULT_READOUT);
+
+function describe(seriesId: string, xValue: string, yValue: number): string {
+    const label = seriesId === 'ma' ? '7-day avg' : 'Close';
+    return `${xValue} · ${label}: $${yValue.toFixed(2)}`;
+}
 
 function buildChart() {
-    const data = store.stockDailyData();
+    const data = withMovingAverage(store.stockDailyData());
     if (!context.value || data.length === 0) return;
 
     if (chart) {
@@ -46,6 +61,7 @@ function buildChart() {
     chart = createLineChart(context.value, {
         data,
         key: 'date',
+        format: (value: number) => `$${value.toFixed(2)}`,
         padding: {
             top: 20,
             right: 20,
@@ -59,7 +75,24 @@ function buildChart() {
                 label: 'Close',
                 lineType: 'monotoneX',
             },
+            {
+                id: 'ma',
+                value: 'ma',
+                label: '7-Day Average',
+                lineType: 'monotoneX',
+                markers: false,
+            },
         ],
+    });
+
+    chart.on('markerenter', event => {
+        hovered.value = describe(event.data.seriesId, event.data.xValue, event.data.yValue);
+    });
+    chart.on('markerleave', () => {
+        hovered.value = '';
+    });
+    chart.on('markerclick', event => {
+        selected.value = `Pinned — ${describe(event.data.seriesId, event.data.xValue, event.data.yValue)}`;
     });
 }
 

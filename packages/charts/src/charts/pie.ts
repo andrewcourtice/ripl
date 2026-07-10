@@ -5,18 +5,37 @@ import {
 
 import type {
     ChartLegendInput,
+    ChartSegmentLabelsInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
-    normalizeLegend,
+    normalizeSegmentLabels,
+    resolveValueFormat,
 } from '../core/options';
+
+import {
+    createSegmentLabel,
+    resolveSegmentLabelLayout,
+} from '../core/labels';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    resolveAccessor,
+} from '../core/data';
 
 import {
     Tooltip,
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -27,13 +46,13 @@ import {
     Context,
     createArc,
     createGroup,
-    createText,
-    easeOutQuart,
-    easeOutQuint,
+    createPolyline,
     elementIsArc,
-    elementIsText,
+    EventMap,
     getTotal,
     Group,
+    Polyline,
+    PolylineState,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -43,8 +62,13 @@ import {
 
 import {
     arrayJoin,
-    typeIsFunction,
 } from '@ripl/utilities';
+
+/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.55;
+
+/** Slices narrower than this angle (radians) omit their label to avoid clutter. */
+const MIN_LABEL_ANGLE = 0.15;
 
 /** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
@@ -55,22 +79,45 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     color?: keyof TData | ((item: TData) => string);
     innerRadius?: number;
     legend?: ChartLegendInput;
+    /**
+     * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
+     * inside each segment; `'outside'` places them beyond the arc with a leader line; a full object
+     * customises position/font/colour.
+     */
+    labels?: ChartSegmentLabelsInput;
+    /** Format applied to segment values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for pie segment interaction events. */
+export interface PieChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    key: string;
+}
+
+/** Events emitted by a {@link PieChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface PieChartEventMap extends EventMap {
+    segmentclick: PieChartSegmentEvent;
+    segmententer: PieChartSegmentEvent;
+    segmentleave: PieChartSegmentEvent;
 }
 
 /**
  * Pie chart rendering proportional arc segments with optional inner radius (donut).
  *
- * Supports interactive tooltips, legend, and animated entry/update/exit
- * transitions. Segments grow outward from the center with staggered delays,
+ * Supports a chart title, interactive tooltips, a legend in any position, and animated
+ * entry/update/exit transitions. Segments grow outward from the centre with staggered delays,
  * and labels fade in after the arcs have settled.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
+export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, PieChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
         super(target, options);
@@ -78,6 +125,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();
@@ -85,54 +133,41 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
     public async render() {
         return super.render((scene, renderer) => {
-            const {
-                data,
-                key,
-                value,
-                label,
-                color,
-            } = this.options;
+            const { data, key, value, label, color } = this.options;
 
-            const colorGenerator = this.colorGenerator;
+            const getKey = resolveAccessor<TData, string>(key);
+            const getValue = resolveAccessor<TData, number>(value);
+            const getLabel = resolveAccessor<TData, string>(label);
+            const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(value) ? value : (item: any) => item[value] as number;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
+            const labels = normalizeSegmentLabels(this.options.labels);
 
-            // Compute legend bounds early to reserve space
-            const padding = this.getPadding();
-            let legendHeight = 0;
+            // Register each segment in the shared colour map so it draws a palette colour instead
+            // of the unresolved-series grey fallback (honouring any explicit per-item colour).
+            this.resolveSeriesColors(data.map(item => ({
+                id: getKey(item),
+                color: getColor(item),
+            })));
 
-            if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = data.map(item => ({
-                    id: getKey(item),
-                    label: getLabel(item),
-                    color: getColor(item) ?? colorGenerator.next().value,
-                    active: true,
-                }));
+            const colorFor = (item: TData) => getColor(item) ?? this.getSeriesColor(getKey(item));
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'bottom',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            // Shared layout pass: reserve title and legend bands first.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-                const legendWidth = scene.width - padding.left - padding.right;
-                legendHeight = this.legend.getBoundingBox(legendWidth).height;
-            }
+            const legendItems: LegendItem[] = data.map(item => ({
+                id: getKey(item),
+                label: getLabel(item),
+                color: colorFor(item),
+                active: true,
+            }));
 
-            const size = Math.min(scene.width, scene.height - legendHeight);
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
+            const size = Math.min(area.width, area.height);
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
 
             const total = getTotal(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
@@ -142,26 +177,31 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
             let startAngle = -offset;
 
             const calculations = data.map(item => {
-                const key = getKey(item);
-                const value = getValue(item);
-                const color = getColor(item);
-                const label = getLabel(item);
-                const cx = scene.width / 2;
-                const cy = (scene.height - legendHeight) / 2;
-                const endAngle = startAngle + scale(value);
+                const itemKey = getKey(item);
+                const itemValue = getValue(item);
+                const itemColor = colorFor(item);
+                const itemLabel = getLabel(item);
+                const endAngle = startAngle + scale(itemValue);
                 const radius = size * 0.45;
                 const innerRadiusOption = this.options.innerRadius;
-                let innerRadius = size * 0.25;
+                // Default to a true pie (no hole); a donut is opt-in via `innerRadius`. This matches
+                // the documented default of 0 and keeps the demo's pie/donut toggle consistent.
+                let innerRadius = 0;
 
                 if (innerRadiusOption !== undefined) {
-                    innerRadius = innerRadiusOption <= 1 ? size * innerRadiusOption : innerRadiusOption;
+                    // A fractional value is a fraction of the *outer radius* (so 0.55 is a hole 55% of
+                    // the ring), not of the overall size — otherwise the hole could exceed the ring and
+                    // render an inverted donut. Absolute values are taken as-is. Always clamp below the
+                    // outer radius so the ring stays visible.
+                    const resolved = innerRadiusOption <= 1 ? radius * innerRadiusOption : innerRadiusOption;
+                    innerRadius = Math.min(resolved, radius * 0.95);
                 }
 
                 const output = {
-                    key,
-                    value,
-                    color,
-                    label,
+                    key: itemKey,
+                    value: itemValue,
+                    color: itemColor,
+                    label: itemLabel,
                     cx,
                     cy,
                     startAngle,
@@ -185,139 +225,152 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
 
             const entries = entryData.map(item => {
                 const {
-                    key,
-                    value,
-                    color = colorGenerator.next().value,
-                    label,
-                    cx,
-                    cy,
-                    startAngle,
-                    endAngle,
-                    padAngle,
+                    key: segmentKey,
+                    value: segmentValue,
+                    color: segmentColor,
+                    label: segmentLabel,
+                    cx: segmentCx,
+                    cy: segmentCy,
+                    startAngle: segmentStart,
+                    endAngle: segmentEnd,
+                    padAngle: segmentPad,
                     radius,
                     innerRadius,
                 } = item;
 
                 const segmentArc = createArc({
                     class: 'segment__arc',
-                    cx,
-                    cy,
-                    startAngle,
-                    padAngle,
-                    stroke: color,
-                    fill: setColorAlpha(color, 0.55),
+                    cx: segmentCx,
+                    cy: segmentCy,
+                    startAngle: segmentStart,
+                    padAngle: segmentPad,
+                    stroke: segmentColor,
+                    fill: setColorAlpha(segmentColor, REST_ALPHA),
                     lineWidth: 2,
-                    endAngle: startAngle,
+                    endAngle: segmentStart,
                     radius: 0,
                     innerRadius: 0,
                     data: {
-                        endAngle,
+                        endAngle: segmentEnd,
                         radius,
                         innerRadius,
                     } as Partial<ArcState>,
                 });
 
-                segmentArc.on('mouseenter', () => {
-                    const [
-                        centroidX,
-                        centroidY,
-                    ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
-
-                    this.tooltip.show(centroidX, centroidY, value.toString());
-
-                    renderer.transition(segmentArc, {
-                        duration: this.getAnimationDuration(500),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: color,
-                        },
-                    });
+                this.attachSegmentHover(segmentArc, {
+                    color: segmentColor,
+                    value: segmentValue,
+                    label: segmentLabel,
+                    key: segmentKey,
                 });
 
-                segmentArc.on('mouseleave', () => {
-                    this.tooltip.hide();
+                const labelInfo = resolveSegmentLabelLayout(item, labels, segmentLabel, MIN_LABEL_ANGLE);
 
-                    renderer.transition(segmentArc, {
-                        duration: this.getAnimationDuration(500),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: setColorAlpha(color, 0.55),
-                        },
-                    });
-                });
-
-                const [
-                    centroidX,
-                    centroidY,
-                ] = segmentArc.getCentroid(segmentArc.data as Partial<ArcState>);
-
-                const segmentLabel = createText({
-                    class: 'segment__label',
-                    fill: '#000000',
-                    x: centroidX,
-                    y: centroidY,
-                    content: label,
-                    textAlign: 'center',
-                    textBaseline: 'middle',
+                const connector = createPolyline({
+                    class: 'segment__connector',
+                    points: labelInfo.connector,
+                    stroke: segmentColor,
+                    lineWidth: 1,
                     opacity: 0,
+                    pointerEvents: 'none',
                     zIndex: 1,
                 });
 
+                const labelText = createSegmentLabel({
+                    content: labelInfo.content,
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    textAlign: labelInfo.textAlign,
+                    textBaseline: labelInfo.textBaseline,
+                    fill: labelInfo.fill,
+                    font: labelInfo.font,
+                });
+
+                // Fade each to its intended rest opacity on entry (hidden labels/connectors settle at
+                // 0 so they can later fade *in* on an update, rather than sitting at full opacity).
+                connector.data = { opacity: labelInfo.showConnector ? 1 : 0 } as Partial<PolylineState>;
+                labelText.data = { opacity: labelInfo.visible ? 1 : 0 } as Partial<TextState>;
+
                 return createGroup({
-                    id: key,
+                    id: segmentKey,
                     class: 'segment',
                     children: [
                         segmentArc,
-                        segmentLabel,
+                        connector,
+                        labelText,
                     ],
                 });
             });
 
             const updates = updateData.map(([item, group]) => {
                 const {
-                    cx,
-                    cy,
+                    cx: segmentCx,
+                    cy: segmentCy,
                     radius,
                     innerRadius,
-                    startAngle,
-                    endAngle,
-                    padAngle,
+                    startAngle: segmentStart,
+                    endAngle: segmentEnd,
+                    padAngle: segmentPad,
                 } = item;
 
                 const arc = group.query('arc') as Arc;
-                const label = group.query('text') as Text;
+                const labelText = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
-                const resolvedColor = item.color ?? arc.stroke;
+                const resolvedColor = item.color ?? (arc.stroke as string);
 
                 const arcData = {
-                    cx,
-                    cy,
+                    cx: segmentCx,
+                    cy: segmentCy,
                     radius,
                     innerRadius,
-                    startAngle,
-                    endAngle,
-                    padAngle,
+                    startAngle: segmentStart,
+                    endAngle: segmentEnd,
+                    padAngle: segmentPad,
                     stroke: resolvedColor,
-                    fill: setColorAlpha(resolvedColor, 0.55),
+                    fill: setColorAlpha(resolvedColor, REST_ALPHA),
                 } as Partial<ArcState>;
 
-                const [
-                    centroidx,
-                    centroidY,
-                ] = arc.getCentroid(arcData);
-
                 arc.data = arcData;
-                label.data = {
-                    x: centroidx,
-                    y: centroidY,
-                };
+                this.attachSegmentHover(arc, {
+                    color: resolvedColor,
+                    value: item.value,
+                    label: item.label,
+                    key: item.key,
+                });
+
+                const labelInfo = resolveSegmentLabelLayout(item, labels, item.label, MIN_LABEL_ANGLE);
+
+                labelText.content = labelInfo.content;
+                labelText.textAlign = labelInfo.textAlign;
+                labelText.textBaseline = labelInfo.textBaseline;
+                labelText.fill = labelInfo.fill;
+
+                if (labelInfo.font) {
+                    labelText.font = labelInfo.font;
+                }
+
+                labelText.data = {
+                    x: labelInfo.x,
+                    y: labelInfo.y,
+                    opacity: labelInfo.visible ? 1 : 0,
+                } as Partial<TextState>;
+
+                // Route the connector's new geometry through `.data` (not a direct `points =`) so it
+                // tweens in lockstep with the label position instead of snapping.
+                connector.stroke = resolvedColor;
+                connector.data = {
+                    points: labelInfo.connector,
+                    opacity: labelInfo.showConnector ? 1 : 0,
+                } as Partial<PolylineState>;
 
                 return group;
             });
 
             const exits = exitData.map(group => {
                 const arc = group.query('arc') as Arc;
-                const label = group.query('text') as Text;
+                const labelText = group.query('text') as Text;
+                const connector = group.query('polyline') as Polyline;
 
                 const midAngle = (arc.startAngle + arc.endAngle) / 2;
 
@@ -328,9 +381,13 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                     innerRadius: 0,
                 } as Partial<ArcState>;
 
-                label.data = {
+                labelText.data = {
                     opacity: 0,
                 } as Partial<TextState>;
+
+                connector.data = {
+                    opacity: 0,
+                };
 
                 return group;
             });
@@ -340,57 +397,89 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>> {
                 ...updates,
             ];
 
+            this.registerHighlightGroups(this.groups);
+
             scene.add(entries);
 
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                const legendWidth = scene.width - padding.left - padding.right;
-                this.legend.render(padding.left, scene.height - legendHeight, legendWidth);
-            }
+            const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+            const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
+            const exit = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
-            const animDuration = this.getAnimationDuration(1000);
-
-            async function transitionEntries() {
+            const transitionEntries = async () => {
                 const elements = entries.flatMap(group => group.children);
 
                 await renderer.transition(elements.filter(elementIsArc), (element, index, length) => ({
-                    duration: animDuration,
-                    ease: easeOutQuint,
-                    delay: index * (animDuration / length),
+                    duration: enter.duration,
+                    ease: enter.ease,
+                    delay: length <= 1 ? 0 : (index / length) * enter.duration,
                     state: element.data as Partial<ArcState>,
                 }));
 
-                return renderer.transition(elements.filter(elementIsText), {
-                    duration: animDuration * 2,
-                    ease: easeOutQuint,
-                    state: {
-                        opacity: 1,
-                    },
-                });
-            }
-
-            async function transitionUpdates() {
-                return renderer.transition(updates, element => ({
-                    duration: animDuration,
-                    ease: easeOutQuint,
+                // Fade in the non-arc children (labels and any outside-label connectors) to their
+                // intended rest opacity (hidden ones settle at 0), read from each element's `.data`.
+                return renderer.transition(elements.filter(element => !elementIsArc(element)), element => ({
+                    duration: enter.duration,
+                    ease: enter.ease,
                     state: element.data as Partial<BaseElementState>,
                 }));
-            }
+            };
 
-            async function transitionExits() {
-                return renderer.transition(exits, element => ({
-                    duration: animDuration,
-                    ease: easeOutQuint,
-                    state: element.data as Partial<BaseElementState>,
-                    onComplete: element => element.destroy(),
-                }));
-            }
+            const transitionUpdates = async () => renderer.transition(updates, element => ({
+                duration: update.duration,
+                ease: update.ease,
+                state: element.data as Partial<BaseElementState>,
+            }));
+
+            const transitionExits = async () => renderer.transition(exits, element => ({
+                duration: exit.duration,
+                ease: exit.ease,
+                state: element.data as Partial<BaseElementState>,
+                onComplete: el => el.destroy(),
+            }));
 
             return Promise.all([
                 transitionEntries(),
                 transitionUpdates(),
                 transitionExits(),
             ]);
+        });
+    }
+
+    private attachSegmentHover(arc: Arc, segment: { color: string;
+        value: number;
+        label: string;
+        key: string; }) {
+        const { color, value, label, key } = segment;
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): PieChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+            label,
+            key,
+        });
+
+        applyHoverHighlight(arc, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => formatValue(value),
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 

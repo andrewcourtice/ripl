@@ -63,6 +63,13 @@ const RENDERERS = {
     stepAfter: polylineStepAfterRenderer(),
 } as Record<PolylineRenderer, PolylineRenderFunc>;
 
+/** Resolves a named curve algorithm (or a custom render function) to its render function. Defaults to `linear`. */
+export function resolvePolylineRenderer(renderer?: PolylineRenderer | PolylineRenderFunc): PolylineRenderFunc {
+    return typeIsFunction(renderer)
+        ? renderer
+        : RENDERERS[renderer ?? 'linear'];
+}
+
 
 function handleSimplePolyline(path: ContextPath, points: Point[], minPoints: number = 2): boolean {
     if (points.length < minPoints) {
@@ -530,9 +537,7 @@ export class Polyline extends Shape2D<PolylineState> {
     }
 
     public render(context: Context) {
-        const renderer = typeIsFunction(this.renderer)
-            ? this.renderer
-            : RENDERERS[this.renderer ?? 'linear'];
+        const renderer = resolvePolylineRenderer(this.renderer);
 
         return super.render(context, path => renderer(context, path, this.points));
     }

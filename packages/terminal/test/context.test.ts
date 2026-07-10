@@ -236,3 +236,147 @@ describe('TerminalContext', () => {
     });
 
 });
+
+describe('TerminalContext logical sizing', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    /** Captures every plotted pixel so tests can assert raster-space bounds. */
+    function createSpyRasterizer(cols: number, rows: number) {
+        const pixels: [number, number][] = [];
+
+        return {
+            pixels,
+            pixelWidth: cols * BRAILLE_CELL_WIDTH,
+            pixelHeight: rows * BRAILLE_CELL_HEIGHT,
+            resize: vi.fn(),
+            setPixel(x: number, y: number) {
+                pixels.push([x, y]);
+            },
+            setChar: vi.fn(),
+            clear: vi.fn(),
+            serialize: () => '',
+        };
+    }
+
+    test('reports the logical dimensions, not the braille grid', () => {
+        const output = createMockOutput(40, 12);
+        const ctx = createContext(output, {
+            logicalWidth: 400,
+            logicalHeight: 300,
+        });
+
+        expect(ctx.width).toBe(400);
+        expect(ctx.height).toBe(300);
+    });
+
+    test('maps the logical space into the raster with a uniform, centred scale', () => {
+        // 40×12 cells → 80×48 raster pixels; 400×300 logical → limiting axis is Y (48/300)
+        const output = createMockOutput(40, 12);
+        const ctx = createContext(output, {
+            logicalWidth: 400,
+            logicalHeight: 300,
+        });
+
+        const scale = 48 / 300;
+        const scaledWidth = 400 * scale;
+        const offsetX = (80 - scaledWidth) / 2;
+
+        // Uniform factor on both axes (circles stay circular).
+        expect(ctx.scaleX(400) - ctx.scaleX(0)).toBeCloseTo(scaledWidth, 6);
+        expect(ctx.scaleY(300) - ctx.scaleY(0)).toBeCloseTo(48, 6);
+        expect((ctx.scaleX(400) - ctx.scaleX(0)) / 400).toBeCloseTo((ctx.scaleY(300) - ctx.scaleY(0)) / 300, 6);
+
+        // Letterboxed symmetrically on the non-limiting axis, flush on the limiting one.
+        expect(ctx.scaleX(0)).toBeCloseTo(offsetX, 6);
+        expect(ctx.scaleX(400)).toBeCloseTo(80 - offsetX, 6);
+        expect(ctx.scaleY(0)).toBeCloseTo(0, 6);
+        expect(ctx.scaleY(300)).toBeCloseTo(48, 6);
+    });
+
+    test('rasterizes logical-space geometry within the raster bounds', () => {
+        const output = createMockOutput(40, 12);
+        const rasterizer = createSpyRasterizer(40, 12);
+        const ctx = createContext(output, {
+            rasterizer,
+            logicalWidth: 400,
+            logicalHeight: 300,
+        });
+
+        ctx.stroke = '#ffffff';
+
+        // A line spanning the full logical space — far outside a bare 80×48 raster.
+        const path = ctx.createPath();
+        path.moveTo(0, 0);
+        path.lineTo(400, 300);
+
+        ctx.markRenderStart();
+        ctx.applyStroke(path);
+        ctx.markRenderEnd();
+
+        expect(rasterizer.pixels.length).toBeGreaterThan(0);
+
+        const xs = rasterizer.pixels.map(([x]) => x);
+        const ys = rasterizer.pixels.map(([, y]) => y);
+
+        expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+        expect(Math.max(...xs)).toBeLessThanOrEqual(80);
+        expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+        expect(Math.max(...ys)).toBeLessThanOrEqual(48);
+    });
+
+    test('measures text in logical units', () => {
+        const output = createMockOutput(40, 12);
+        const ctx = createContext(output, {
+            logicalWidth: 400,
+            logicalHeight: 300,
+        });
+
+        const scale = 48 / 300;
+        const metrics = ctx.measureText('hello');
+
+        expect(metrics.width).toBeCloseTo((5 * BRAILLE_CELL_WIDTH) / scale, 6);
+    });
+
+    test('re-applies the logical mapping when the output resizes', () => {
+        let notifyResize: ((cols: number, rows: number) => void) | undefined;
+
+        const output: TerminalOutput = {
+            write: vi.fn(),
+            columns: 40,
+            rows: 12,
+            onResize(callback) {
+                notifyResize = callback;
+                return () => {};
+            },
+        };
+
+        const ctx = createContext(output, {
+            logicalWidth: 400,
+            logicalHeight: 300,
+        });
+
+        // Grow to 80×24 cells → 160×96 raster pixels; the logical size must not change.
+        notifyResize?.(80, 24);
+
+        expect(ctx.width).toBe(400);
+        expect(ctx.height).toBe(300);
+        // BrailleRasterizer.resize mutates its dimensions, so the mapping now targets 160×96.
+        expect(ctx.scaleY(300) - ctx.scaleY(0)).toBeCloseTo(96, 6);
+    });
+
+    test('behaves exactly as before when no logical size is given', () => {
+        const output = createMockOutput(40, 12);
+        const ctx = createContext(output);
+
+        expect(ctx.width).toBe(40 * BRAILLE_CELL_WIDTH);
+        expect(ctx.height).toBe(12 * BRAILLE_CELL_HEIGHT);
+        // Identity mapping.
+        expect(ctx.scaleX(37)).toBe(37);
+        expect(ctx.scaleY(21)).toBe(21);
+        expect(ctx.measureText('hi').width).toBe(2 * BRAILLE_CELL_WIDTH);
+    });
+
+});

@@ -4,6 +4,23 @@ import {
 } from '../core/chart';
 
 import {
+    formatNumber,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
+    createSegmentLabel,
+    SEGMENT_LABEL_OUTSIDE_FILL,
+} from '../core/labels';
+
+import {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -14,19 +31,21 @@ import {
 import {
     createSankeyLink,
     SankeyLinkPath,
+    SankeyLinkState,
 } from '../elements';
 
 import {
     Context,
     createGroup,
     createRect,
-    createText,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -54,6 +73,35 @@ export interface SankeyChartOptions extends BaseChartOptions {
     nodeWidth?: number;
     nodePadding?: number;
     iterations?: number;
+}
+
+/** Payload emitted for Sankey node interaction events. */
+export interface SankeyChartNodeEvent {
+    x: number;
+    y: number;
+    id: string;
+    label: string;
+    value: number;
+}
+
+/** Payload emitted for Sankey link interaction events. */
+export interface SankeyChartLinkEvent {
+    x: number;
+    y: number;
+    id: string;
+    sourceLabel: string;
+    targetLabel: string;
+    value: number;
+}
+
+/** Events emitted by a {@link SankeyChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface SankeyChartEventMap extends EventMap {
+    nodeclick: SankeyChartNodeEvent;
+    nodeenter: SankeyChartNodeEvent;
+    nodeleave: SankeyChartNodeEvent;
+    linkclick: SankeyChartLinkEvent;
+    linkenter: SankeyChartLinkEvent;
+    linkleave: SankeyChartLinkEvent;
 }
 
 interface LayoutNode {
@@ -172,15 +220,34 @@ function computeSankeyLayout(
     const xStep = maxDepth > 0 ? (width - nodeWidth) / maxDepth : 0;
     const layoutNodeMap = new Map<string, LayoutNode>();
 
-    depthGroups.forEach((nodeIds, depth) => {
-        const totalValue = nodeIds.reduce((sum, id) => sum + (nodeValueMap.get(id) ?? 0), 0);
+    // A single global value→pixel scale shared by every column: the densest column must fit the
+    // available height, and using one scale everywhere makes a link's width identical at its source
+    // and target ends (so links tile the node edges instead of overlapping/gapping).
+    let scale = Infinity;
+
+    depthGroups.forEach(nodeIds => {
+        const columnValue = nodeIds.reduce((sum, id) => sum + (nodeValueMap.get(id) ?? 0), 0);
         const availableHeight = height - nodePadding * (nodeIds.length - 1);
-        let currentY = 0;
+
+        if (columnValue > 0 && availableHeight > 0) {
+            scale = Math.min(scale, availableHeight / columnValue);
+        }
+    });
+
+    if (!Number.isFinite(scale)) {
+        scale = 1;
+    }
+
+    depthGroups.forEach((nodeIds, depth) => {
+        const columnValue = nodeIds.reduce((sum, id) => sum + (nodeValueMap.get(id) ?? 0), 0);
+        const columnHeight = columnValue * scale + nodePadding * Math.max(nodeIds.length - 1, 0);
+        // Centre each column's stack vertically within the plot area.
+        let currentY = Math.max(0, (height - columnHeight) / 2);
 
         nodeIds.forEach(nodeId => {
             const nodeConfig = nodes.find(n => n.id === nodeId);
             const value = nodeValueMap.get(nodeId) ?? 0;
-            const nodeHeight = totalValue > 0 ? (value / totalValue) * availableHeight : availableHeight / nodeIds.length;
+            const nodeHeight = Math.max(value * scale, 2);
             const color = nodeConfig?.color ?? colorGenerator.next().value!;
 
             layoutNodeMap.set(nodeId, {
@@ -190,13 +257,14 @@ function computeSankeyLayout(
                 x: depth * xStep,
                 y: currentY,
                 width: nodeWidth,
-                height: Math.max(nodeHeight, 2),
+                height: nodeHeight,
                 depth,
                 value,
                 sourceY: currentY,
                 targetY: currentY,
             });
 
+            // Advance by the actual (clamped) height so sub-2px nodes don't drift.
             currentY += nodeHeight + nodePadding;
         });
     });
@@ -215,18 +283,17 @@ function computeSankeyLayout(
             return null as unknown as LayoutLink;
         }
 
-        const sourceValue = nodeValueMap.get(link.source) ?? 1;
-        const targetValue = nodeValueMap.get(link.target) ?? 1;
-        const linkWidth = Math.max((link.value / sourceValue) * source.height, 1);
+        // One global scale → the link's width is the same at both ends, so it tiles the node edges.
+        const linkWidth = Math.max(link.value * scale, 1);
 
         const sourceOffset = sourceOffsets.get(link.source) ?? 0;
         const targetOffset = targetOffsets.get(link.target) ?? 0;
 
         const sourceY = source.y + sourceOffset + linkWidth / 2;
-        const targetY = target.y + targetOffset + (link.value / targetValue) * target.height / 2;
+        const targetY = target.y + targetOffset + linkWidth / 2;
 
         sourceOffsets.set(link.source, sourceOffset + linkWidth);
-        targetOffsets.set(link.target, targetOffset + (link.value / targetValue) * target.height);
+        targetOffsets.set(link.target, targetOffset + linkWidth);
 
         return {
             id: `${link.source}-${link.target}`,
@@ -254,7 +321,7 @@ function computeSankeyLayout(
  * paths connecting source and target nodes. Supports tooltips and
  * staggered entry animations for nodes, labels, and links.
  */
-export class SankeyChart extends Chart<SankeyChartOptions> {
+export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> {
 
     private nodeGroups: Group[] = [];
     private linkGroups: Group[] = [];
@@ -281,9 +348,14 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             } = this.options;
 
             const colorGenerator = getColorGenerator();
-            const padding = this.getPadding();
-            const chartWidth = scene.width - padding.left - padding.right;
-            const chartHeight = scene.height - padding.top - padding.bottom;
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const offsetX = area.x;
+            const offsetY = area.y;
+            const chartWidth = area.width;
+            const chartHeight = area.height;
 
             const { layoutNodes, layoutLinks } = computeSankeyLayout(
                 nodes,
@@ -305,10 +377,10 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             linkExits.forEach(el => el.destroy());
 
             const linkEntryGroups = linkEntries.map(link => {
-                const sx = padding.left + link.source.x + link.source.width;
-                const sy = padding.top + link.sourceY;
-                const tx = padding.left + link.target.x;
-                const ty = padding.top + link.targetY;
+                const sx = offsetX + link.source.x + link.source.width;
+                const sy = offsetY + link.sourceY;
+                const tx = offsetX + link.target.x;
+                const ty = offsetY + link.targetY;
                 const midX = (sx + tx) / 2;
 
                 const linkEl = createSankeyLink({
@@ -318,7 +390,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     tx,
                     ty,
                     stroke: setColorAlpha(link.color, 0.3),
-                    lineWidth: Math.max(link.width, 4),
+                    lineWidth: link.width,
                     pointerEvents: 'stroke',
                     opacity: 0,
                     data: {
@@ -326,29 +398,7 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     },
                 });
 
-                linkEl.on('mouseenter', () => {
-                    this.tooltip.show(midX, (sy + ty) / 2, `${link.source.label} → ${link.target.label}: ${link.value}`);
-
-                    renderer.transition(linkEl, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            stroke: setColorAlpha(link.color, 0.6),
-                        },
-                    });
-
-                    linkEl.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(linkEl, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                stroke: setColorAlpha(link.color, 0.3),
-                            },
-                        });
-                    });
-                });
+                this.attachLinkHover(linkEl, link, midX, (sy + ty) / 2);
 
                 return createGroup({
                     id: link.id,
@@ -356,7 +406,32 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 });
             });
 
-            const linkUpdateGroups = linkUpdates.map(([, group]) => group);
+            // Reposition existing links to their new geometry (previously the update path discarded
+            // it, freezing links while nodes moved).
+            const linkUpdateGroups = linkUpdates.map(([link, group]) => {
+                const linkEl = group.getElementsByType('sankey-link')[0] as SankeyLinkPath;
+
+                if (linkEl) {
+                    const sx = offsetX + link.source.x + link.source.width;
+                    const sy = offsetY + link.sourceY;
+                    const tx = offsetX + link.target.x;
+                    const ty = offsetY + link.targetY;
+
+                    linkEl.stroke = setColorAlpha(link.color, 0.3);
+                    linkEl.lineWidth = link.width;
+                    linkEl.data = {
+                        sx,
+                        sy,
+                        tx,
+                        ty,
+                        opacity: 1,
+                    } as Partial<SankeyLinkState>;
+
+                    this.attachLinkHover(linkEl, link, (sx + tx) / 2, (sy + ty) / 2);
+                }
+
+                return group;
+            });
 
             scene.add(linkEntryGroups);
 
@@ -377,8 +452,8 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
             const nodeEntryGroups = nodeEntries.map(node => {
                 const rect = createRect({
                     id: `${node.id}-rect`,
-                    x: padding.left + node.x,
-                    y: padding.top + node.y,
+                    x: offsetX + node.x,
+                    y: offsetY + node.y,
                     width: node.width,
                     height: 0,
                     fill: setColorAlpha(node.color, 0.8),
@@ -389,48 +464,21 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                     } as RectState,
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(
-                        padding.left + node.x + node.width / 2,
-                        padding.top + node.y,
-                        `${node.label}: ${node.value}`
-                    );
+                this.attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
-                    renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: node.color,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(node.color, 0.8),
-                            },
-                        });
-                    });
-                });
-
-                const label = createText({
+                // Node labels sit to the right of the node (outside), so use the shared segment-label
+                // helper with the outside fill — consistent with the other charts' labels.
+                const label = createSegmentLabel({
                     id: `${node.id}-label`,
-                    x: padding.left + node.x + node.width + 5,
-                    y: padding.top + node.y + node.height / 2,
+                    x: offsetX + node.x + node.width + 5,
+                    y: offsetY + node.y + node.height / 2,
                     content: node.label,
-                    fill: '#333',
-                    font: '11px sans-serif',
+                    fill: SEGMENT_LABEL_OUTSIDE_FILL,
                     textAlign: 'left',
                     textBaseline: 'middle',
-                    opacity: 0,
-                    data: {
-                        opacity: 1,
-                    },
                 });
+
+                label.data = { opacity: 1 } as Partial<TextState>;
 
                 return createGroup({
                     id: node.id,
@@ -440,15 +488,28 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
 
             const nodeUpdateGroups = nodeUpdates.map(([node, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
+                const label = group.getElementsByType('text')[0] as Text;
 
                 if (rect) {
                     rect.data = {
-                        x: padding.left + node.x,
-                        y: padding.top + node.y,
+                        x: offsetX + node.x,
+                        y: offsetY + node.y,
                         width: node.width,
                         height: node.height,
                         fill: setColorAlpha(node.color, 0.8),
                     } as RectState;
+
+                    this.attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
+                }
+
+                // Re-centre the label on the node's new position (was previously left stale).
+                if (label) {
+                    label.content = node.label;
+                    label.data = {
+                        x: offsetX + node.x + node.width + 5,
+                        y: offsetY + node.y + node.height / 2,
+                        opacity: 1,
+                    } as Partial<TextState>;
                 }
 
                 return group;
@@ -489,12 +550,16 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 state: (element.data ?? {}) as Record<string, unknown>,
             }));
 
-            const updateRects = nodeUpdateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
+            // Updates: nodes, their labels, and links all re-animate to their new geometry.
+            const updateElements = [
+                ...nodeUpdateGroups.flatMap(g => g.graph(false)),
+                ...linkUpdateGroups.flatMap(g => g.getElementsByType('sankey-link')),
+            ];
 
-            const updatesTransition = renderer.transition(updateRects, element => ({
+            const updatesTransition = renderer.transition(updateElements, element => ({
                 duration: this.getAnimationDuration(800),
                 ease: easeOutCubic,
-                state: element.data as RectState,
+                state: element.data as Record<string, unknown>,
             }));
 
             return Promise.all([
@@ -503,6 +568,67 @@ export class SankeyChart extends Chart<SankeyChartOptions> {
                 labelsTransition,
                 updatesTransition,
             ]);
+        });
+    }
+
+    private attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): SankeyChartLinkEvent => ({
+            x: point.x,
+            y: point.y,
+            id: link.id,
+            sourceLabel: link.source.label,
+            targetLabel: link.target.label,
+            value: link.value,
+        });
+
+        applyHoverHighlight(linkEl, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => `${link.source.label} → ${link.target.label}: ${formatNumber(link.value)}`,
+            highlight: { stroke: setColorAlpha(link.color, 0.6) },
+            restore: { stroke: setColorAlpha(link.color, 0.3) },
+            onEnter: point => this.emit('linkenter', payload(point)),
+            onLeave: point => this.emit('linkleave', payload(point)),
+            onClick: point => this.emit('linkclick', payload(point)),
+        });
+    }
+
+    private attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): SankeyChartNodeEvent => ({
+            x: point.x,
+            y: point.y,
+            id: node.id,
+            label: node.label,
+            value: node.value,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => `${node.label}: ${formatNumber(node.value)}`,
+            highlight: { fill: node.color },
+            restore: { fill: setColorAlpha(node.color, 0.8) },
+            onEnter: point => this.emit('nodeenter', payload(point)),
+            onLeave: point => this.emit('nodeleave', payload(point)),
+            onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
 

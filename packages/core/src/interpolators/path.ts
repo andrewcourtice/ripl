@@ -18,12 +18,14 @@ import {
 
 import {
     typeIsArray,
+    typeIsNil,
     typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
     Interpolator,
     InterpolatorFactory,
+    PredicatedFunction,
 } from './types';
 
 function gcd(a: number, b: number): number {
@@ -77,12 +79,74 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     ];
 }
 
-/** Interpolator factory that transitions between two point arrays, extrapolating additional points where set lengths differ. */
-export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
+/** Options controlling how {@link interpolatePoints} reconciles two point sets. */
+export interface InterpolatePointsOptions {
+    /**
+     * Reconciles the two sets by **identity**: given the source (`setA`) and target (`setB`) point
+     * arrays, returns for each target point the index of the source point it continues from, or `-1`
+     * for a point that has no predecessor (an "entering" point).
+     *
+     * When provided, the interpolator matches points by this correspondence instead of upsampling
+     * both sets to a common resolution with straight-line waypoints. That blind upsampling makes a
+     * curved renderer (monotoneX, catmullRom, …) drawn through the densely collinear points look
+     * **linear** for the whole morph; matching by identity keeps the sparse real points, so the
+     * curve is preserved while a point is added or removed.
+     */
+    resolveKeys?: (setA: Point[], setB: Point[]) => number[];
+}
+
+/** The {@link interpolatePoints} factory: a point-array interpolator factory that also accepts {@link InterpolatePointsOptions}. */
+export interface InterpolatePointsFactory extends PredicatedFunction {
+    (setA: Point[], setB: Point[], options?: InterpolatePointsOptions): Interpolator<Point[]>;
+}
+
+/**
+ * Builds the "from" array (length of `setB`) for a keyed morph: surviving target points start at
+ * their matched source point; entering points (`-1`) start at the nearest matched neighbour's Y but
+ * the target's own X — keeping X strictly monotonic so curve tangent maths never divides by zero.
+ */
+function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[] {
+    const nearestMatchedY = (index: number): number | undefined => {
+        for (let offset = 1; offset < setB.length; offset++) {
+            const left = map[index - offset];
+
+            if (left !== undefined && left >= 0 && left < setA.length) {
+                return setA[left][1];
+            }
+
+            const right = map[index + offset];
+
+            if (right !== undefined && right >= 0 && right < setA.length) {
+                return setA[right][1];
+            }
+        }
+
+        return undefined;
+    };
+
+    return setB.map((target, index) => {
+        const sourceIndex = map[index];
+
+        if (sourceIndex >= 0 && sourceIndex < setA.length) {
+            return setA[sourceIndex];
+        }
+
+        return [target[0], nearestMatchedY(index) ?? target[1]] as Point;
+    });
+}
+
+/** Interpolator factory that transitions between two point arrays. By default it extrapolates additional points where set lengths differ; pass `resolveKeys` to match points by identity instead (preserving curved renderers across add/remove). */
+export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?: InterpolatePointsOptions) => {
+    const resolveKeys = options?.resolveKeys;
+
+    // Keyed morph: a from-array the length of setB, matched point-for-point (no LCM upsampling).
+    // Otherwise fall back to the default extrapolation that equalises differing lengths.
     const [
         extSetA,
         extSetB,
-    ] = extrapolatePointSet(setA, setB);
+    ] = !typeIsNil(resolveKeys)
+        ? [buildKeyedFromSet(setA, setB, resolveKeys(setA, setB)), setB]
+        : extrapolatePointSet(setA, setB);
 
     const interpolators = extSetA.map((pointA, index) => {
         const pointB = extSetB[index];
@@ -93,10 +157,24 @@ export const interpolatePoints: InterpolatorFactory<Point[]> = (setA, setB) => {
         ];
     });
 
-    return position => interpolators.map(([ix, iy]) => [
-        ix(position),
-        iy(position),
-    ]);
+    // Settle on the original (un-extrapolated) sets at the endpoints so a completed morph
+    // commits the clean target points rather than the LCM-upsampled set. Without this the
+    // element would retain the inflated point array and each subsequent morph would compound
+    // the point count (lcm of ever-growing lengths), exhausting memory.
+    return position => {
+        if (position <= 0) {
+            return setA;
+        }
+
+        if (position >= 1) {
+            return setB;
+        }
+
+        return interpolators.map(([ix, iy]) => [
+            ix(position),
+            iy(position),
+        ]);
+    };
 };
 
 interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));

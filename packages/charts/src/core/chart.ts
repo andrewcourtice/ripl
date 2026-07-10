@@ -5,6 +5,7 @@ import {
     EventBus,
     EventMap,
     factory,
+    Group,
     Renderer,
     Scene,
 } from '@ripl/core';
@@ -19,13 +20,36 @@ import {
 
 import type {
     ChartAnimationOptions,
+    ChartLegendInput,
     ChartTitleOptions,
 } from './options';
 
 import {
     normalizeAnimation,
+    normalizeLegend,
     normalizeTitle,
 } from './options';
+
+import {
+    Legend,
+    LegendItem,
+} from '../components/legend';
+
+import {
+    ChartArea,
+    ChartLayout,
+    ChartPadding,
+} from './layout';
+
+import {
+    ANIMATION_REFERENCE,
+    resolveAnimation,
+    ResolvedAnimation,
+} from './animation';
+
+import {
+    ChartTitle,
+} from '../components/title';
 
 if (!factory.createContext) {
     factory.set({ createContext });
@@ -34,23 +58,11 @@ if (!factory.createContext) {
 export type {
     ChartAnimationOptions,
     ChartTitleOptions,
+    ChartArea,
+    ChartPadding,
 };
 
-/** Chart padding with explicit top, right, bottom, and left values. */
-export interface ChartPadding {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-}
-
-/** The computed drawing area of a chart after padding is applied. */
-export interface ChartArea {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
+export { ChartLayout };
 
 /** Base options shared by all chart types. */
 export interface BaseChartOptions {
@@ -58,6 +70,16 @@ export interface BaseChartOptions {
     padding?: Partial<ChartPadding>;
     title?: string | Partial<ChartTitleOptions>;
     animation?: boolean | Partial<ChartAnimationOptions>;
+}
+
+/** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
+const HIGHLIGHT_DIM_OPACITY = 0.15;
+
+/** Symbol slot used to remember an element's rest opacity across legend hover-highlight dim/restore. */
+const HIGHLIGHT_REST = Symbol('highlight-rest');
+
+interface HighlightHost {
+    [HIGHLIGHT_REST]?: number;
 }
 
 /** Abstract base class for all chart types, providing scene, renderer, animation, color management, and lifecycle. */
@@ -71,12 +93,15 @@ export class Chart<
     protected autoRender: boolean;
     protected animationOptions: ChartAnimationOptions;
     protected titleOptions?: ChartTitleOptions;
+    protected title?: ChartTitle;
+    protected legend?: Legend;
 
     private hasRendered: boolean = false;
 
     protected options: TOptions;
     protected colorGenerator = getColorGenerator();
     private seriesColorMap: Map<string, string> = new Map();
+    private highlightGroups: Map<string, Group> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
@@ -130,12 +155,86 @@ export class Chart<
     }
 
     protected getAnimationDuration(referenceDuration: number = 1000): number {
-        if (!this.animationOptions.enabled) {
-            return 0;
+        return this.resolveAnimation(referenceDuration).duration;
+    }
+
+    /** Resolves the chart's animation options for a given reference duration (duration + easing + enabled). */
+    protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {
+        return resolveAnimation(this.animationOptions, referenceDuration);
+    }
+
+    /** Creates a fresh layout for the current canvas size and padding. */
+    protected createLayout(): ChartLayout {
+        const { width, height } = this.scene.context;
+        return new ChartLayout(width, height, this.getPadding());
+    }
+
+    /**
+     * Reserves a band for the chart title (if configured) and renders it. Returns the remaining
+     * area unchanged when there is no title. Call this first in a chart's layout pass so the
+     * title sits outermost.
+     */
+    protected reserveTitle(layout: ChartLayout) {
+        if (!this.titleOptions) {
+            this.title?.destroy();
+            return;
         }
 
-        const scale = this.animationOptions.duration / 1000;
-        return referenceDuration * scale;
+        if (!this.title) {
+            this.title = new ChartTitle({
+                scene: this.scene,
+                renderer: this.renderer,
+                options: this.titleOptions,
+            });
+        } else {
+            this.title.setOptions(this.titleOptions);
+        }
+
+        if (!this.title.visible) {
+            this.title.destroy();
+            return;
+        }
+
+        const thickness = this.title.measure();
+        const region = layout.reserve(this.title.position, thickness);
+        this.title.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
+    }
+
+    /**
+     * Reserves a band for the legend (when visible and given items) at its configured position
+     * and renders it into that band, reconciling against the previous render.
+     */
+    protected reserveLegend(layout: ChartLayout, items: LegendItem[], input?: ChartLegendInput) {
+        // When the chart hasn't explicitly configured a legend, show one automatically for
+        // multi-series / multi-segment charts (more than one legend item) and hide it otherwise.
+        const legendOpts = normalizeLegend(input, { visible: items.length > 1 });
+
+        if (!legendOpts.visible || items.length === 0) {
+            this.legend?.destroy();
+            this.legend = undefined;
+            return;
+        }
+
+        if (!this.legend) {
+            this.legend = new Legend({
+                scene: this.scene,
+                renderer: this.renderer,
+                items,
+                position: legendOpts.position,
+                font: legendOpts.font,
+                fontColor: legendOpts.fontColor,
+                highlight: legendOpts.highlight,
+                onToggle: () => this.render(),
+                onHighlight: id => this.highlightSeries(id),
+            });
+        } else {
+            this.legend.update(items);
+        }
+
+        const thickness = this.legend.measure(layout.area);
+        const region = layout.reserve(legendOpts.position, thickness);
+
+        this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,6 +288,59 @@ export class Chart<
 
     protected getSeriesColor(seriesId: string): string {
         return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
+    }
+
+    /**
+     * Registers the top-level series/segment groups that map one-to-one to legend items (by matching
+     * `group.id` to the legend item id). Charts call this each render so {@link highlightSeries} can
+     * dim the other series when a legend entry is hovered. Replaces any previously registered set.
+     */
+    protected registerHighlightGroups(groups: Group[]) {
+        this.highlightGroups = new Map(groups.map(group => [group.id, group]));
+    }
+
+    /**
+     * Highlights a single series/segment by id (dimming the others), or restores all when `null`.
+     * Wired to legend hover via {@link reserveLegend}. No-ops for charts that never registered
+     * highlight groups.
+     *
+     * Dims the leaf elements of each group rather than the group itself: a group's opacity does not
+     * cascade multiplicatively, and the leaves carry no explicit `opacity` (so a group-level tween is
+     * a no-op — `element.interpolate` skips nil current values). Each leaf's rest opacity is captured
+     * once on the element (via a Symbol slot, like `applyHoverHighlight`), so hidden elements stay
+     * hidden and restoring returns to the true value.
+     */
+    protected highlightSeries(id: string | null) {
+        if (this.highlightGroups.size === 0) {
+            return;
+        }
+
+        const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        this.highlightGroups.forEach((group, groupId) => {
+            const active = id === null || groupId === id;
+
+            group.graph(false).forEach(element => {
+                const host = element as unknown as HighlightHost;
+
+                if (host[HIGHLIGHT_REST] === undefined) {
+                    const rest = element.opacity ?? 1;
+                    host[HIGHLIGHT_REST] = rest;
+                    // Seed a concrete opacity so the transition below has a non-nil value to animate.
+                    element.opacity = rest;
+                }
+
+                const rest = host[HIGHLIGHT_REST]!;
+
+                this.renderer.transition(element, {
+                    duration,
+                    ease,
+                    state: {
+                        opacity: active ? rest : rest * HIGHLIGHT_DIM_OPACITY,
+                    },
+                });
+            });
+        });
     }
 
     /** Destroys the chart, its scene, context, and cleans up all event subscriptions. */

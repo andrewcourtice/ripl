@@ -13,9 +13,17 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
             <RiplButton @click="randomize">Randomize</RiplButton>
             <RiplButton @click="addData">Add Month</RiplButton>
             <RiplButton @click="removeData">Remove Month</RiplButton>
-            <RiplSwitch v-model="stacked" @update:model-value="toggleMode" label="Stacked" />
-            <RiplSwitch v-model="horizontal" @update:model-value="toggleOrientation" label="Horizontal" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bars">
+            <RiplField label="Stacked" inline>
+                <RiplSwitch v-model="stacked" />
+            </RiplField>
+            <RiplField label="Horizontal" inline>
+                <RiplSwitch v-model="horizontal" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -25,19 +33,40 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
-    BarChart,
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createBarChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+const seriesMeta = [
+    { id: 'sales', label: 'Sales' },
+    { id: 'costs', label: 'Costs' },
+    { id: 'profit', label: 'Profit' },
+    { id: 'returns', label: 'Returns' },
+];
+
 const stacked = ref(false);
 const horizontal = ref(false);
 let monthCount = 6;
+
+const config = useChartConfig({
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    title: 'Monthly Breakdown',
+    axisX: 'Month',
+    axisY: 'Amount ($)',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
 
 function generateItem(month: string) {
     return {
@@ -55,6 +84,15 @@ function generateData() {
 
 let data = generateData();
 
+function getSeries() {
+    return seriesMeta.map(s => ({
+        id: s.id,
+        value: s.id,
+        label: s.label,
+        color: config.colors[s.id],
+    }));
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createBarChart(context, {
         data,
@@ -62,14 +100,22 @@ const { contextChanged, chart } = useRiplChart(context => {
         mode: stacked.value ? 'stacked' : 'grouped',
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
-        series: [
-            { id: 'sales', value: 'sales', label: 'Sales' },
-            { id: 'costs', value: 'costs', label: 'Costs' },
-            { id: 'profit', value: 'profit', label: 'Profit' },
-            { id: 'returns', value: 'returns', label: 'Returns' },
-        ],
+        series: getSeries(),
+        ...buildCommonOptions(config),
     });
 });
+
+function apply() {
+    chart.value?.update({
+        mode: stacked.value ? 'stacked' : 'grouped',
+        orientation: horizontal.value ? 'horizontal' : 'vertical',
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch([stacked, horizontal], apply);
 
 function randomize() {
     data = generateData();
@@ -90,14 +136,6 @@ function removeData() {
         data = generateData();
         chart.value?.update({ data });
     }
-}
-
-function toggleMode() {
-    chart.value?.update({ mode: stacked.value ? 'stacked' : 'grouped' });
-}
-
-function toggleOrientation() {
-    chart.value?.update({ orientation: horizontal.value ? 'horizontal' : 'vertical' });
 }
 </script>
 

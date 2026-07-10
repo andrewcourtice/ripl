@@ -31,6 +31,8 @@ export default defineConfig({
             '**/node_modules/**',
             '**/dist/**',
             '**/_media/**',
+            // Playwright visual-regression specs run via their own runner, not vitest.
+            '**/test/visual/**',
         ],
         outputFile: './.reports/test-results.xml',
         reporters: [

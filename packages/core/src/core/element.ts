@@ -44,6 +44,15 @@ import type {
 } from './group';
 
 import {
+    closest,
+    matches,
+} from './query';
+
+import type {
+    Queryable,
+} from './query';
+
+import {
     resolveRotation,
     resolveTransformOrigin,
 } from '../context';
@@ -277,7 +286,7 @@ function applyTransform(context: Context, _value: unknown, element: Element) {
 export class Element<
     TState extends BaseElementState = BaseElementState,
     TEventMap extends ElementEventMap = ElementEventMap
-> extends EventBus<TEventMap> {
+> extends EventBus<TEventMap> implements Queryable {
 
     protected state: TState;
     protected context?: Context;
@@ -568,6 +577,16 @@ export class Element<
             class: Array.from(this.classList),
             ...this.state,
         });
+    }
+
+    /** Tests whether this element matches the CSS-like selector. */
+    public matches(selector: string): boolean {
+        return matches(this, selector);
+    }
+
+    /** Returns the closest ancestor (including this element) matching the CSS-like selector, or `undefined`. */
+    public closest<TElement extends Element = Element>(selector: string) {
+        return closest<TElement>(this, selector);
     }
 
     /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */

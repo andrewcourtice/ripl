@@ -8,6 +8,7 @@ import {
     numberGCD,
     numberNice,
     numberSum,
+    roundTo,
 } from '../src/number';
 
 describe('numberSum', () => {
@@ -53,6 +54,35 @@ describe('numberGCD', () => {
 
     test('Should handle coprime numbers', () => {
         expect(numberGCD(7, 13)).toBe(1);
+    });
+
+});
+
+describe('roundTo', () => {
+
+    test('Should default to at most 2 decimal places', () => {
+        expect(roundTo(3.14159)).toBe(3.14);
+        expect(roundTo(1.236)).toBe(1.24);
+    });
+
+    test('Should leave integers unchanged and strip trailing zeros', () => {
+        expect(roundTo(5)).toBe(5);
+        expect(roundTo(5.10)).toBe(5.1);
+        expect(roundTo(5.001)).toBe(5);
+    });
+
+    test('Should respect a custom precision', () => {
+        expect(roundTo(3.14159, 3)).toBe(3.142);
+        expect(roundTo(3.14159, 0)).toBe(3);
+    });
+
+    test('Should handle negative numbers', () => {
+        expect(roundTo(-1.239, 2)).toBe(-1.24);
+    });
+
+    test('Should pass non-finite values through unchanged', () => {
+        expect(roundTo(Infinity)).toBe(Infinity);
+        expect(Number.isNaN(roundTo(NaN))).toBe(true);
     });
 
 });

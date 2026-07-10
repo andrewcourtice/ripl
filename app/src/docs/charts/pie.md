@@ -11,8 +11,21 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
             <RiplButton @click="addData">Add Data</RiplButton>
             <RiplButton @click="removeData">Remove Data</RiplButton>
             <RiplButton @click="randomize">Randomize</RiplButton>
-            <RiplSwitch v-model="donut" @update:model-value="toggleDonut" label="Donut" />
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Pie">
+            <RiplField label="Donut" inline>
+                <RiplSwitch v-model="donut" />
+            </RiplField>
+            <RiplField label="Labels">
+                <RiplSelect v-model="labels">
+                    <option value="off">Off</option>
+                    <option value="inside">Inside</option>
+                    <option value="outside">Outside</option>
+                </RiplSelect>
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -20,6 +33,11 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
 import {
     useRiplChart,
 } from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
 
 import {
     createPieChart,
@@ -31,6 +49,7 @@ import {
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const COUNTRIES = [
@@ -40,6 +59,16 @@ const COUNTRIES = [
 ];
 
 const donut = ref(false);
+const labels = ref<'off' | 'inside' | 'outside'>('off');
+
+function labelsOption() {
+    return labels.value === 'off' ? false : labels.value;
+}
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Sales by Country',
+});
 
 function getDataValue() {
     return Math.round(Math.random() * 500);
@@ -63,11 +92,25 @@ const {
     value: 'value',
     label: 'label',
     data,
+    innerRadius: donut.value ? 0.5 : 0,
+    labels: labelsOption(),
+    ...buildCommonOptions(config),
 }));
 
 function update() {
     chart.value?.update({ data });
 }
+
+function apply() {
+    chart.value?.update({
+        innerRadius: donut.value ? 0.25 : 0,
+        labels: labelsOption(),
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch([donut, labels], apply);
 
 function editData(body: (index: number) => void) {
     const index = Math.floor(Math.random() * data.length);
@@ -90,10 +133,6 @@ function randomize() {
     }));
 
     update();
-}
-
-function toggleDonut() {
-    chart.value?.update({ innerRadius: donut.value ? 0.25 : 0 });
 }
 </script>
 
@@ -179,6 +218,6 @@ createPieChart('#container', {
 - **`value`** — Numeric value field
 - **`label`** — Display label field
 - **`innerRadius`** — Inner radius ratio for donut mode (0–1, default `0`)
-- **`startAngle`** — Starting angle in radians (default `0`)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`labels`** — `boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions` — Segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customises `position` / `font` / `fontColor`.
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | ((value) => string)` — Formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

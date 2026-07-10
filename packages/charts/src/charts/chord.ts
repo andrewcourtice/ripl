@@ -5,11 +5,20 @@ import {
 
 import type {
     ChartLegendInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
-    normalizeLegend,
+    resolveValueFormat,
 } from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     getColorGenerator,
@@ -20,13 +29,13 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
 import {
     createRibbon,
     Ribbon,
+    RibbonState,
 } from '../elements';
 
 import {
@@ -36,7 +45,7 @@ import {
     createArc,
     createGroup,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     setColorAlpha,
     TAU,
@@ -46,6 +55,15 @@ import {
     arrayJoin,
 } from '@ripl/utilities';
 
+/** Fill opacity for an outer arc at rest (full opacity on hover). */
+const ARC_REST_ALPHA = 0.8;
+/** Fill opacity for a ribbon at rest. */
+const RIBBON_REST_ALPHA = 0.2;
+/** Fill opacity for a ribbon while hovered. */
+const RIBBON_HOVER_ALPHA = 0.5;
+/** Stroke opacity for a ribbon. */
+const RIBBON_STROKE_ALPHA = 0.4;
+
 /** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
     labels: string[];
@@ -53,6 +71,37 @@ export interface ChordChartOptions extends BaseChartOptions {
     colors?: string[];
     padAngle?: number;
     legend?: ChartLegendInput;
+    /** Format applied to flow values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for chord outer-arc interaction events. */
+export interface ChordChartArcEvent {
+    x: number;
+    y: number;
+    id: string;
+    label: string;
+    value: number;
+}
+
+/** Payload emitted for chord ribbon interaction events. */
+export interface ChordChartRibbonEvent {
+    x: number;
+    y: number;
+    id: string;
+    sourceLabel: string;
+    targetLabel: string;
+    value: number;
+}
+
+/** Events emitted by a {@link ChordChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface ChordChartEventMap extends EventMap {
+    arcclick: ChordChartArcEvent;
+    arcenter: ChordChartArcEvent;
+    arcleave: ChordChartArcEvent;
+    ribbonclick: ChordChartRibbonEvent;
+    ribbonenter: ChordChartRibbonEvent;
+    ribbonleave: ChordChartRibbonEvent;
 }
 
 interface ChordArc {
@@ -192,12 +241,11 @@ function computeChordLayout(
  * proportional to the flow value. Supports legend, tooltips, and
  * sequential animation (arcs first, then ribbons).
  */
-export class ChordChart extends Chart<ChordChartOptions> {
+export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
     private arcGroups: Group[] = [];
     private ribbonGroups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);
@@ -205,6 +253,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();
@@ -220,17 +269,38 @@ export class ChordChart extends Chart<ChordChartOptions> {
             } = this.options;
 
             const colorGenerator = this.colorGenerator;
-            const padding = this.getPadding();
-            const cx = scene.width / 2;
-            const cy = scene.height / 2;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
-            );
+
+            // Resolve a stable colour per label through the shared, id-keyed colour map so colours
+            // are preserved across data updates (not reshuffled each render) and stay in sync with
+            // the legend. Keyed by `arc-${label}` to match the arc group / legend item ids.
+            this.resolveSeriesColors(labels.map((label, index) => ({
+                id: `arc-${label}`,
+                color: colors?.[index],
+            })));
+
+            const resolvedColors = labels.map(label => this.getSeriesColor(`arc-${label}`));
+
+            // Shared layout pass: reserve title and legend bands.
+            const chartLayout = this.createLayout();
+            this.reserveTitle(chartLayout);
+
+            const legendItems: LegendItem[] = labels.map((label, index) => ({
+                id: `arc-${label}`,
+                label,
+                color: resolvedColors[index],
+                active: true,
+            }));
+
+            this.reserveLegend(chartLayout, legendItems, this.options.legend);
+
+            const area = chartLayout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const size = Math.min(area.width, area.height);
             const outerRadius = size * 0.42;
             const innerRadius = outerRadius - 15;
 
-            const layout = computeChordLayout(labels, matrix, padAngle, colorGenerator, colors);
+            const layout = computeChordLayout(labels, matrix, padAngle, colorGenerator, resolvedColors);
 
             // Draw arcs
             const {
@@ -251,7 +321,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle: 0,
-                    fill: setColorAlpha(arc.color, 0.8),
+                    fill: setColorAlpha(arc.color, ARC_REST_ALPHA),
                     stroke: arc.color,
                     lineWidth: 1,
                     data: {
@@ -261,30 +331,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     } as Partial<ArcState>,
                 });
 
-                segment.on('mouseenter', () => {
-                    const [centroidX, centroidY] = segment.getCentroid(segment.data as Partial<ArcState>);
-                    this.tooltip.show(centroidX, centroidY, `${arc.label}: ${arc.value}`);
-
-                    renderer.transition(segment, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: arc.color,
-                        },
-                    });
-
-                    segment.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(segment, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(arc.color, 0.8),
-                            },
-                        });
-                    });
-                });
+                this.attachArcHover(segment, arc);
 
                 return createGroup({
                     id: arc.id,
@@ -301,9 +348,11 @@ export class ChordChart extends Chart<ChordChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: setColorAlpha(arc.color, 0.8),
+                        fill: setColorAlpha(arc.color, ARC_REST_ALPHA),
                         stroke: arc.color,
                     } as Partial<ArcState>;
+
+                    this.attachArcHover(segment, arc);
                 }
 
                 return group;
@@ -315,6 +364,9 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 ...arcEntryGroups,
                 ...arcUpdateGroups,
             ];
+
+            // Outer arcs map 1:1 to legend items (by id), so register them for legend hover-highlight.
+            this.registerHighlightGroups(this.arcGroups);
 
             // Draw ribbons
             const {
@@ -335,8 +387,8 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     sourceEnd: ribbon.sourceEnd,
                     targetStart: ribbon.targetStart,
                     targetEnd: ribbon.targetEnd,
-                    fill: setColorAlpha(ribbon.color, 0.2),
-                    stroke: setColorAlpha(ribbon.color, 0.4),
+                    fill: setColorAlpha(ribbon.color, RIBBON_REST_ALPHA),
+                    stroke: setColorAlpha(ribbon.color, RIBBON_STROKE_ALPHA),
                     lineWidth: 0.5,
                     opacity: 0,
                     data: {
@@ -344,29 +396,7 @@ export class ChordChart extends Chart<ChordChartOptions> {
                     },
                 });
 
-                ribbonEl.on('mouseenter', () => {
-                    this.tooltip.show(cx, cy, `${ribbon.sourceLabel} → ${ribbon.targetLabel}: ${ribbon.value}`);
-
-                    renderer.transition(ribbonEl, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: setColorAlpha(ribbon.color, 0.5),
-                        },
-                    });
-
-                    ribbonEl.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(ribbonEl, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(ribbon.color, 0.2),
-                            },
-                        });
-                    });
-                });
+                this.attachRibbonHover(ribbonEl, ribbon, cx, cy);
 
                 return createGroup({
                     id: ribbon.id,
@@ -374,7 +404,31 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 });
             });
 
-            const ribbonUpdateGroups = ribbonUpdates.map(([, group]) => group);
+            // Apply the new layout to existing ribbons so the inner ribbons animate to their new
+            // positions on data update (previously the update path discarded ribbon geometry, so
+            // only the outer ring moved).
+            const ribbonUpdateGroups = ribbonUpdates.map(([ribbon, group]) => {
+                const ribbonEl = group.query('ribbon') as Ribbon;
+
+                if (ribbonEl) {
+                    ribbonEl.data = {
+                        cx,
+                        cy,
+                        radius: innerRadius - 2,
+                        sourceStart: ribbon.sourceStart,
+                        sourceEnd: ribbon.sourceEnd,
+                        targetStart: ribbon.targetStart,
+                        targetEnd: ribbon.targetEnd,
+                        fill: setColorAlpha(ribbon.color, RIBBON_REST_ALPHA),
+                        stroke: setColorAlpha(ribbon.color, RIBBON_STROKE_ALPHA),
+                        opacity: 1,
+                    } as Partial<RibbonState>;
+
+                    this.attachRibbonHover(ribbonEl, ribbon, cx, cy);
+                }
+
+                return group;
+            });
 
             scene.add(ribbonEntryGroups);
 
@@ -382,29 +436,6 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 ...ribbonEntryGroups,
                 ...ribbonUpdateGroups,
             ];
-
-            // Legend
-            if (normalizeLegend(this.options.legend).visible && layout.arcs.length > 0) {
-                const legendItems: LegendItem[] = layout.arcs.map(arc => ({
-                    id: arc.id,
-                    label: arc.label,
-                    color: arc.color,
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
-                this.legend.render(padding.left, 0, scene.width - padding.left - padding.right);
-            }
 
             // Sequential animation: arcs first, then ribbons
             const entryArcs = arcEntryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
@@ -436,7 +467,81 @@ export class ChordChart extends Chart<ChordChartOptions> {
                 state: element.data as Partial<ArcState>,
             }));
 
-            return Promise.all([arcsTransition, ribbonsTransition, updatesTransition]);
+            const updateRibbons = ribbonUpdateGroups.flatMap(g => g.getElementsByType('ribbon')) as Ribbon[];
+
+            const ribbonUpdatesTransition = renderer.transition(updateRibbons, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: element.data as Record<string, unknown>,
+            }));
+
+            return Promise.all([arcsTransition, ribbonsTransition, updatesTransition, ribbonUpdatesTransition]);
+        });
+    }
+
+    private attachArcHover(segment: Arc, arc: ChordArc) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): ChordChartArcEvent => ({
+            x: point.x,
+            y: point.y,
+            id: arc.id,
+            label: arc.label,
+            value: arc.value,
+        });
+
+        applyHoverHighlight(segment, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => `${arc.label}: ${formatValue(arc.value)}`,
+            highlight: { fill: arc.color },
+            restore: { fill: setColorAlpha(arc.color, ARC_REST_ALPHA) },
+            onEnter: point => this.emit('arcenter', payload(point)),
+            onLeave: point => this.emit('arcleave', payload(point)),
+            onClick: point => this.emit('arcclick', payload(point)),
+        });
+    }
+
+    private attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): ChordChartRibbonEvent => ({
+            x: point.x,
+            y: point.y,
+            id: ribbon.id,
+            sourceLabel: ribbon.sourceLabel,
+            targetLabel: ribbon.targetLabel,
+            value: ribbon.value,
+        });
+
+        applyHoverHighlight(ribbonEl, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: cx,
+                y: cy,
+            }),
+            content: () => `${ribbon.sourceLabel} → ${ribbon.targetLabel}: ${formatValue(ribbon.value)}`,
+            highlight: { fill: setColorAlpha(ribbon.color, RIBBON_HOVER_ALPHA) },
+            restore: { fill: setColorAlpha(ribbon.color, RIBBON_REST_ALPHA) },
+            onEnter: point => this.emit('ribbonenter', payload(point)),
+            onLeave: point => this.emit('ribbonleave', payload(point)),
+            onClick: point => this.emit('ribbonclick', payload(point)),
         });
     }
 

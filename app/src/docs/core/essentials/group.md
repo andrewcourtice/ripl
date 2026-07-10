@@ -214,6 +214,43 @@ circle[radius="50"]
 rect + circle
 ```
 
+> [!NOTE]
+> Type and id matching is **case-sensitive** — `#Item` and `rect` will not match an element with id `item` or type `Rect`. Extra whitespace in a selector is collapsed, so `group   circle` and `group circle` are equivalent.
+
+### `matches(selector)`
+
+Tests whether an element matches a CSS-like selector, returning a boolean. `matches` is a method on
+**every element** (it comes from `Element`, so leaf shapes have it too — not just groups).
+Multi-segment selectors (with combinators) are evaluated relative to the element's root, so ancestor
+and sibling constraints are honoured:
+
+```ts
+group.matches('group');               // true
+group.matches('#chart.active');       // matches id + class
+circle.matches('circle.highlighted'); // works on any element
+```
+
+A standalone `matches(element, selector)` function is also exported:
+
+```ts
+import { matches } from '@ripl/core';
+
+matches(circle, 'circle.highlighted');
+```
+
+### `closest(selector)`
+
+Walks up the parent chain (starting with the element itself) and returns the nearest ancestor that
+matches the selector, or `undefined` if none do — the inverse of `query`. Like `matches`, `closest`
+is available on **every element**:
+
+```ts
+const chart = marker.closest('#chart');   // nearest ancestor group with id "chart"
+group.closest('.panel');
+```
+
+A standalone `closest(element, selector)` function is exported as well.
+
 ## Nesting Groups
 
 Groups can contain other groups, creating a tree structure:

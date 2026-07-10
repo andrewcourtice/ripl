@@ -4,6 +4,23 @@ import {
 } from '../core/chart';
 
 import {
+    formatNumber,
+} from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
+import {
+    Tooltip,
+} from '../components/tooltip';
+
+import {
+    Arc,
     ArcState,
     Context,
     createArc,
@@ -11,9 +28,19 @@ import {
     createLine,
     createText,
     easeOutCubic,
+    EventMap,
     Group,
+    Line,
+    LineState,
     setColorAlpha,
+    Text,
+    TextState,
 } from '@ripl/core';
+
+import {
+    arrayJoin,
+    roundTo,
+} from '@ripl/utilities';
 
 /** Options for configuring a {@link GaugeChart}. */
 export interface GaugeChartOptions extends BaseChartOptions {
@@ -32,6 +59,20 @@ export interface GaugeChartOptions extends BaseChartOptions {
     formatTickLabel?: (value: number) => string;
 }
 
+/** Payload emitted for gauge value interaction events. */
+export interface GaugeChartValueEvent {
+    x: number;
+    y: number;
+    value: number;
+}
+
+/** Events emitted by a {@link GaugeChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface GaugeChartEventMap extends EventMap {
+    valueclick: GaugeChartValueEvent;
+    valueenter: GaugeChartValueEvent;
+    valueleave: GaugeChartValueEvent;
+}
+
 const DEFAULT_COLOR = '#7cacf8';
 const DEFAULT_TRACK_COLOR = '#e5e7eb';
 
@@ -42,12 +83,29 @@ const DEFAULT_TRACK_COLOR = '#e5e7eb';
  * the minimum to the current value. Supports configurable tick marks
  * with labels, a central value display, and an optional descriptive label.
  */
-export class GaugeChart extends Chart<GaugeChartOptions> {
+export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
     private group?: Group;
+    private track?: Arc;
+    private valueArc?: Arc;
+    private valueText?: Text;
+    private labelText?: Text;
+    private tickLines: Line[] = [];
+    private tickLabels: Text[] = [];
+    private tooltip: Tooltip;
+    /** The last rendered value, so data updates can animate the value text counting up/down. */
+    private currentValue?: number;
+    /** Signature of the tick geometry (centre/radius/count) so ticks only re-animate when they move. */
+    private tickSignature?: string;
 
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
         super(target, options);
+
+        this.tooltip = new Tooltip({
+            scene: this.scene,
+            renderer: this.renderer,
+        });
+
         this.init();
     }
 
@@ -63,13 +121,13 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
                 formatValue,
             } = this.options;
 
-            const padding = this.getPadding();
-            const cx = scene.width / 2;
-            const cy = scene.height / 2 + 20;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom
-            );
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2 + 20;
+            const size = Math.min(area.width, area.height);
             const radius = size * 0.4;
             const innerRadius = radius * 0.7;
 
@@ -80,168 +138,357 @@ export class GaugeChart extends Chart<GaugeChartOptions> {
             const clampedValue = Math.max(min, Math.min(max, value));
             const valueAngle = startAngle + ((clampedValue - min) / range) * (endAngle - startAngle);
 
-            if (this.group) {
-                this.group.clear();
-                scene.remove(this.group);
+            const isEntry = !this.group;
+
+            if (!this.group) {
+                this.group = createGroup({
+                    id: 'gauge',
+                    class: 'gauge-chart',
+                });
+
+                scene.add(this.group);
             }
 
-            this.group = createGroup({
-                id: 'gauge',
-                class: 'gauge-chart',
-            });
+            // --- Track arc (background) --- created once, geometry kept in sync.
+            if (!this.track) {
+                this.track = createArc({
+                    id: 'gauge-track',
+                    cx,
+                    cy,
+                    radius,
+                    innerRadius,
+                    startAngle,
+                    endAngle,
+                    fill: trackColor,
+                    padAngle: 0,
+                });
 
-            // Track arc (background)
-            const track = createArc({
-                id: 'gauge-track',
-                cx,
-                cy,
-                radius,
-                innerRadius,
-                startAngle,
-                endAngle,
-                fill: trackColor,
-                padAngle: 0,
-            });
+                this.track.autoStroke = false;
+                this.group.add(this.track);
+            } else {
+                this.track.cx = cx;
+                this.track.cy = cy;
+                this.track.radius = radius;
+                this.track.innerRadius = innerRadius;
+                this.track.startAngle = startAngle;
+                this.track.endAngle = endAngle;
+                this.track.fill = trackColor;
+            }
 
-            track.autoStroke = false;
+            // --- Value arc --- animates its end angle from the current value to the new one.
+            if (!this.valueArc) {
+                this.valueArc = createArc({
+                    id: 'gauge-value',
+                    cx,
+                    cy,
+                    radius,
+                    innerRadius,
+                    startAngle,
+                    endAngle: startAngle,
+                    fill: setColorAlpha(color, 0.8),
+                    padAngle: 0,
+                });
 
-            // Value arc
-            const valueArc = createArc({
-                id: 'gauge-value',
-                cx,
-                cy,
-                radius,
-                innerRadius,
-                startAngle,
-                endAngle: startAngle,
-                fill: setColorAlpha(color, 0.8),
-                padAngle: 0,
-                data: {
-                    endAngle: valueAngle,
-                } as Partial<ArcState>,
-            });
+                this.valueArc.autoStroke = false;
+                this.group.add(this.valueArc);
+            } else {
+                this.valueArc.cx = cx;
+                this.valueArc.cy = cy;
+                this.valueArc.radius = radius;
+                this.valueArc.innerRadius = innerRadius;
+                this.valueArc.startAngle = startAngle;
+                this.valueArc.fill = setColorAlpha(color, 0.8);
+            }
 
-            valueArc.autoStroke = false;
+            this.valueArc.data = {
+                endAngle: valueAngle,
+            } as Partial<ArcState>;
 
-            // Value text
-            const displayValue = formatValue ? formatValue(clampedValue) : clampedValue.toString();
+            // --- Value text ---
+            // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
+            const formatDisplay = (v: number) => (formatValue ? formatValue(roundTo(v, 2)) : formatNumber(v));
+            // The value the text counts up/down *from* on a data update (the previously shown value).
+            const displayFrom = this.currentValue ?? clampedValue;
+            const displayValue = formatDisplay(clampedValue);
 
-            const valueText = createText({
-                id: 'gauge-value-text',
-                x: cx,
-                y: cy - 10,
-                content: displayValue,
-                fill: '#333',
-                font: `bold ${Math.round(size * 0.08)}px sans-serif`,
-                textAlign: 'center',
-                textBaseline: 'middle',
-                opacity: 0,
-                data: {
-                    opacity: 1,
-                },
-            });
+            this.currentValue = clampedValue;
 
-            this.group.add([track, valueArc, valueText]);
+            // Duration the value arc sweeps and the centre number counts over on a data update.
+            const valueDuration = this.getAnimationDuration(1200);
 
-            // Label text
-            if (label) {
-                const labelText = createText({
-                    id: 'gauge-label',
+            if (!this.valueText) {
+                this.valueText = createText({
+                    id: 'gauge-value-text',
                     x: cx,
-                    y: cy + 15,
-                    content: label,
-                    fill: '#6b7280',
-                    font: `${Math.round(size * 0.04)}px sans-serif`,
+                    y: cy - 10,
+                    content: displayValue,
+                    fill: '#333',
+                    font: `bold ${Math.round(size * 0.08)}px sans-serif`,
                     textAlign: 'center',
                     textBaseline: 'middle',
-                    opacity: 0,
+                    opacity: isEntry ? 0 : 1,
                     data: {
                         opacity: 1,
                     },
                 });
 
-                this.group.add(labelText);
+                this.group.add(this.valueText);
+            } else {
+                this.valueText.x = cx;
+                this.valueText.y = cy - 10;
+                this.valueText.font = `bold ${Math.round(size * 0.08)}px sans-serif`;
+                this.valueText.opacity = 1;
+                // Seed the starting number so the counting transition below ticks smoothly from the
+                // previously shown value; with animation off, show the final value immediately (rather
+                // than flashing the end number for a frame before the count begins).
+                this.valueText.content = valueDuration > 0 ? formatDisplay(displayFrom) : displayValue;
             }
 
-            // Tick marks and labels
+            // --- Label text --- created/updated/removed depending on the `label` option.
+            if (label) {
+                if (!this.labelText) {
+                    this.labelText = createText({
+                        id: 'gauge-label',
+                        x: cx,
+                        y: cy + 15,
+                        content: label,
+                        fill: '#6b7280',
+                        font: `${Math.round(size * 0.04)}px sans-serif`,
+                        textAlign: 'center',
+                        textBaseline: 'middle',
+                        opacity: isEntry ? 0 : 1,
+                        data: {
+                            opacity: 1,
+                        },
+                    });
+
+                    this.group.add(this.labelText);
+                } else {
+                    this.labelText.content = label;
+                    this.labelText.x = cx;
+                    this.labelText.y = cy + 15;
+                    this.labelText.font = `${Math.round(size * 0.04)}px sans-serif`;
+                    this.labelText.opacity = 1;
+                }
+            } else if (this.labelText) {
+                this.labelText.destroy();
+                this.labelText = undefined;
+            }
+
+            // --- Tick marks and labels --- reconciled via arrayJoin so tick count can change.
             const tickCount = this.options.tickCount ?? 5;
             const showTickLabels = this.options.showTickLabels !== false;
             const formatTickLabel = this.options.formatTickLabel;
 
-            if (tickCount > 0) {
-                const tickOuterRadius = radius + 4;
-                const tickInnerRadius = radius - 4;
-                const labelRadius = radius + 16;
+            // Ticks only move when the centre/radius/count/label-visibility changes — not on a plain
+            // value update — so a value change animates only the arc and the centre number.
+            const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
+            const tickGeometryChanged = tickSignature !== this.tickSignature;
+            this.tickSignature = tickSignature;
 
-                for (let i = 0; i <= tickCount; i++) {
-                    const t = i / tickCount;
-                    const tickAngle = startAngle + t * (endAngle - startAngle);
-                    const tickValue = min + t * range;
+            const tickIndices = tickCount > 0
+                ? Array.from({ length: tickCount + 1 }).map((_, i) => i)
+                : [];
 
-                    const outerX = cx + tickOuterRadius * Math.cos(tickAngle);
-                    const outerY = cy + tickOuterRadius * Math.sin(tickAngle);
-                    const innerX = cx + tickInnerRadius * Math.cos(tickAngle);
-                    const innerY = cy + tickInnerRadius * Math.sin(tickAngle);
+            const tickOuterRadius = radius + 4;
+            const tickInnerRadius = radius - 4;
+            const labelRadius = radius + 16;
 
-                    this.group.add(createLine({
-                        id: `gauge-tick-${i}`,
-                        x1: innerX,
-                        y1: innerY,
-                        x2: outerX,
-                        y2: outerY,
-                        stroke: '#9ca3af',
-                        lineWidth: 1.5,
-                    }));
+            const tickGeometry = (i: number) => {
+                const t = i / tickCount;
+                const tickAngle = startAngle + t * (endAngle - startAngle);
+                const tickValue = min + t * range;
 
-                    if (showTickLabels) {
-                        const labelX = cx + labelRadius * Math.cos(tickAngle);
-                        const labelY = cy + labelRadius * Math.sin(tickAngle);
-                        const cosAngle = Math.cos(tickAngle);
+                return {
+                    tickAngle,
+                    tickValue,
+                    outerX: cx + tickOuterRadius * Math.cos(tickAngle),
+                    outerY: cy + tickOuterRadius * Math.sin(tickAngle),
+                    innerX: cx + tickInnerRadius * Math.cos(tickAngle),
+                    innerY: cy + tickInnerRadius * Math.sin(tickAngle),
+                };
+            };
 
-                        let textAlign: CanvasTextAlign = 'center';
+            const {
+                left: lineEntries,
+                inner: lineUpdates,
+                right: lineExits,
+            } = arrayJoin(tickIndices, this.tickLines, (i, line) => line.id === `gauge-tick-${i}`);
 
-                        if (cosAngle > 0.1) {
-                            textAlign = 'left';
-                        } else if (cosAngle < -0.1) {
-                            textAlign = 'right';
-                        }
+            lineExits.forEach(el => el.destroy());
 
-                        const tickLabel = formatTickLabel
-                            ? formatTickLabel(tickValue)
-                            : Math.round(tickValue).toString();
+            const newTickLines = lineEntries.map(i => {
+                const { innerX, innerY, outerX, outerY } = tickGeometry(i);
 
-                        this.group.add(createText({
-                            id: `gauge-tick-label-${i}`,
-                            x: labelX,
-                            y: labelY,
-                            content: tickLabel,
-                            fill: '#9ca3af',
-                            font: '10px sans-serif',
-                            textAlign,
-                            textBaseline: 'middle',
-                        }));
-                    }
-                }
-            }
-            scene.add(this.group);
+                const line = createLine({
+                    id: `gauge-tick-${i}`,
+                    x1: innerX,
+                    y1: innerY,
+                    x2: outerX,
+                    y2: outerY,
+                    stroke: '#9ca3af',
+                    lineWidth: 1.5,
+                });
 
-            // Animate
-            const arcTransition = renderer.transition(valueArc, {
-                duration: this.getAnimationDuration(1200),
-                ease: easeOutCubic,
-                state: valueArc.data as Partial<ArcState>,
+                this.group!.add(line);
+
+                return line;
             });
 
-            const textElements = this.group.getElementsByType('text');
+            lineUpdates.forEach(([i, line]) => {
+                const { innerX, innerY, outerX, outerY } = tickGeometry(i);
 
-            const textTransition = renderer.transition(textElements, (element) => ({
-                duration: this.getAnimationDuration(600),
-                delay: this.getAnimationDuration(400),
+                line.data = {
+                    x1: innerX,
+                    y1: innerY,
+                    x2: outerX,
+                    y2: outerY,
+                } as Partial<LineState>;
+            });
+
+            this.tickLines = [
+                ...newTickLines,
+                ...lineUpdates.map(([, line]) => line),
+            ];
+
+            // Tick labels: only present when enabled.
+            const labelIndices = showTickLabels ? tickIndices : [];
+
+            const tickLabelProps = (i: number) => {
+                const { tickAngle, tickValue } = tickGeometry(i);
+                const cosAngle = Math.cos(tickAngle);
+
+                let textAlign: CanvasTextAlign = 'center';
+
+                if (cosAngle > 0.1) {
+                    textAlign = 'left';
+                } else if (cosAngle < -0.1) {
+                    textAlign = 'right';
+                }
+
+                return {
+                    x: cx + labelRadius * Math.cos(tickAngle),
+                    y: cy + labelRadius * Math.sin(tickAngle),
+                    textAlign,
+                    content: formatTickLabel ? formatTickLabel(tickValue) : formatNumber(tickValue),
+                };
+            };
+
+            const {
+                left: tickLabelEntries,
+                inner: tickLabelUpdates,
+                right: tickLabelExits,
+            } = arrayJoin(labelIndices, this.tickLabels, (i, label) => label.id === `gauge-tick-label-${i}`);
+
+            tickLabelExits.forEach(el => el.destroy());
+
+            const newTickLabels = tickLabelEntries.map(i => {
+                const { x, y, textAlign, content } = tickLabelProps(i);
+
+                const tickLabel = createText({
+                    id: `gauge-tick-label-${i}`,
+                    x,
+                    y,
+                    content,
+                    fill: '#9ca3af',
+                    font: '10px sans-serif',
+                    textAlign,
+                    textBaseline: 'middle',
+                });
+
+                this.group!.add(tickLabel);
+
+                return tickLabel;
+            });
+
+            tickLabelUpdates.forEach(([i, label]) => {
+                const { x, y, textAlign, content } = tickLabelProps(i);
+
+                label.content = content;
+                label.textAlign = textAlign;
+                label.data = {
+                    x,
+                    y,
+                } as Partial<TextState>;
+            });
+
+            this.tickLabels = [
+                ...newTickLabels,
+                ...tickLabelUpdates.map(([, label]) => label),
+            ];
+
+            // Hover/click on the value arc: tooltip + valueclick/enter/leave events.
+            this.attachValueHover(this.valueArc, clampedValue, color, formatDisplay);
+
+            // Animate: the value arc sweeps to its new angle; text fades in on first render.
+            const arcTransition = renderer.transition(this.valueArc, {
+                duration: valueDuration,
                 ease: easeOutCubic,
-                state: (element.data ?? {}) as Record<string, unknown>,
-            }));
+                state: this.valueArc.data as Partial<ArcState>,
+            });
 
-            return Promise.all([arcTransition, textTransition]);
+            const entryTexts = [this.valueText, this.labelText].filter(Boolean) as Text[];
+
+            const textTransition = isEntry
+                ? renderer.transition(entryTexts, element => ({
+                    duration: this.getAnimationDuration(600),
+                    delay: this.getAnimationDuration(400),
+                    ease: easeOutCubic,
+                    state: (element.data ?? {}) as Record<string, unknown>,
+                }))
+                // On a data update the value counts up/down to the new value (only the bar and the
+                // number change — the rest of the gauge stays put).
+                : renderer.transition(this.valueText, {
+                    duration: valueDuration,
+                    ease: easeOutCubic,
+                    state: {
+                        content: (time: number) => formatDisplay(displayFrom + (clampedValue - displayFrom) * time),
+                    },
+                });
+
+            const tickTransition = tickGeometryChanged && (lineUpdates.length || tickLabelUpdates.length)
+                ? renderer.transition([
+                    ...lineUpdates.map(([, line]) => line),
+                    ...tickLabelUpdates.map(([, label]) => label),
+                ], element => ({
+                    duration: this.getAnimationDuration(600),
+                    ease: easeOutCubic,
+                    state: (element.data ?? {}) as Record<string, unknown>,
+                }))
+                : Promise.resolve();
+
+            return Promise.all([arcTransition, textTransition, tickTransition]);
+        });
+    }
+
+    private attachValueHover(arc: Arc, value: number, color: string, formatDisplay: (value: number) => string) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): GaugeChartValueEvent => ({
+            x: point.x,
+            y: point.y,
+            value,
+        });
+
+        applyHoverHighlight(arc, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => formatDisplay(value),
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, 0.8) },
+            onEnter: point => this.emit('valueenter', payload(point)),
+            onLeave: point => this.emit('valueleave', payload(point)),
+            onClick: point => this.emit('valueclick', payload(point)),
         });
     }
 

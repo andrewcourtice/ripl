@@ -68,12 +68,20 @@ export class Grid extends ChartComponent {
             this.scene.add(this.group);
         }
 
+        // Drop grid lines that sit on the plot boundary — that's where the (solid) axis line lives,
+        // so a dotted grid line there would draw right on top of it.
+        const EDGE_EPSILON = 0.5;
+        const onEdge = (value: number, min: number, max: number) => Math.abs(value - min) < EDGE_EPSILON || Math.abs(value - max) < EDGE_EPSILON;
+
+        const hTicks = yTicks.filter(tick => !onEdge(tick, y, y + height));
+        const vTicks = xTicks.filter(tick => !onEdge(tick, x, x + width));
+
         if (this.horizontal) {
             const {
                 left: hEntries,
                 inner: hUpdates,
                 right: hExits,
-            } = arrayJoin(yTicks, this.horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
+            } = arrayJoin(hTicks, this.horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
 
             hExits.forEach(el => el.destroy());
 
@@ -114,7 +122,7 @@ export class Grid extends ChartComponent {
                 left: vEntries,
                 inner: vUpdates,
                 right: vExits,
-            } = arrayJoin(xTicks, this.verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
+            } = arrayJoin(vTicks, this.verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
 
             vExits.forEach(el => el.destroy());
 

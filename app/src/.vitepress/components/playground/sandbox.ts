@@ -1,5 +1,5 @@
 export type PlaygroundMode = '2d' | '3d';
-export type ContextType = 'canvas' | 'svg' | 'webgpu';
+export type ContextType = 'canvas' | 'svg' | 'webgpu' | 'terminal';
 
 export interface PlaygroundSettings {
     autoStop: boolean;
@@ -82,6 +82,45 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
         };
     }
 
+    if (contextType === 'terminal') {
+        return {
+            imports: [
+                'import { createScene, createRenderer } from \'@ripl/web\';',
+                'import { createContext } from \'@ripl/terminal\';',
+                'import { Terminal } from \'@xterm/xterm\';',
+                'import { FitAddon } from \'@xterm/addon-fit\';',
+            ].join('\n'),
+            body: [
+                // Render into a real web-terminal emulator so examples show up as ANSI/braille output.
+                'const root = document.getElementById(\'root\');',
+                'const term = new Terminal({ convertEol: true, fontSize: 12, cursorBlink: false, theme: { background: \'#1b1b1f\', foreground: \'#e6e6e6\' } });',
+                'const fit = new FitAddon();',
+                'term.loadAddon(fit);',
+                'term.open(root);',
+                'fit.fit();',
+                'const output = {',
+                '    write: (data) => term.write(data),',
+                '    get columns() { return term.cols; },',
+                '    get rows() { return term.rows; },',
+                '    onResize(cb) { const sub = term.onResize((e) => cb(e.cols, e.rows)); return () => sub.dispose(); },',
+                '};',
+                // Author examples against the host box size (like canvas/SVG); the context scales
+                // that logical space into the braille grid so nothing renders out of bounds.
+                'const context = createContext(output, { logicalWidth: root.clientWidth, logicalHeight: root.clientHeight });',
+                'const scene = createScene(context);',
+                'const renderer = createRenderer(scene, {',
+                `    autoStop: ${settings.autoStop},`,
+                '    debug: {',
+                `        fps: ${settings.debugFps},`,
+                `        elementCount: ${settings.debugElementCount},`,
+                `        boundingBoxes: ${settings.debugBoundingBoxes},`,
+                '    },',
+                '});',
+                'window.addEventListener(\'resize\', () => fit.fit());',
+            ].join('\n'),
+        };
+    }
+
     if (contextType === 'svg') {
         return {
             imports: [
@@ -160,6 +199,8 @@ export function buildSrcdoc(
 
     if (mode === '3d' && contextType !== 'webgpu') {
         cleanup = 'camera.dispose(); renderer.destroy()';
+    } else if (contextType === 'terminal') {
+        cleanup = 'renderer.destroy(); term.dispose()';
     } else if (contextType !== 'webgpu') {
         cleanup = 'renderer.destroy()';
     }
@@ -172,9 +213,33 @@ export function buildSrcdoc(
 
     const importMapJson = JSON.stringify({ imports: resolvedMap }, null, 2);
 
+    const isTerminal = contextType === 'terminal';
+    // The terminal context renders into an xterm.js emulator, which needs its own stylesheet and a
+    // dark, padded host so the ANSI/braille output reads like a real terminal.
+    const terminalStylesheet = isTerminal && resolvedMap['@xterm/xterm']
+        ? `<link rel="stylesheet" href="${origin}/_playground/xterm/xterm.css">`
+        : '';
+    const terminalStyles = isTerminal
+        ? `
+        html,
+        body {
+            background: #1b1b1f;
+        }
+
+        #root {
+            padding: 8px;
+        }
+
+        .xterm,
+        .xterm .xterm-viewport {
+            height: 100%;
+        }`
+        : '';
+
     return `<!DOCTYPE html>
 <html>
 <head>
+    ${terminalStylesheet}
     <style>
         * {
             margin: 0;
@@ -207,6 +272,7 @@ export function buildSrcdoc(
             width: 100%;
             height: 100%;
         }
+        ${terminalStyles}
     </style>
     <script type="importmap">
         ${importMapJson}

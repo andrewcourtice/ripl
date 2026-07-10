@@ -11,7 +11,16 @@ The **Radar Chart** displays multivariate data on a radial grid, ideal for compa
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
+            <RiplButton @click="addAxis">Add Axis</RiplButton>
+            <RiplButton @click="removeAxis">Remove Axis</RiplButton>
         </RiplControlGroup>
+    </template>
+    <template #config>
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Radar">
+            <RiplField label="Levels">
+                <RiplInputRange v-model="levels" :min="3" :max="8" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -21,39 +30,103 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    seedColors,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createRadarChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
-const AXES = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'];
+const AXIS_POOL = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Stamina', 'Wisdom'];
+
+const seriesMeta = [
+    { id: 'player1', label: 'Player 1' },
+    { id: 'player2', label: 'Player 2' },
+];
+
+const levels = ref(5);
+let axisCount = 6;
+
+const config = useChartConfig({
+    features: { title: true, legend: true, animation: true },
+    title: 'Player Comparison',
+    colors: seedColors(seriesMeta.map(s => s.id)),
+});
+
+function currentAxes() {
+    return AXIS_POOL.slice(0, axisCount);
+}
 
 function generateData() {
-    return AXES.map(axis => ({
+    return currentAxes().map(axis => ({
         axis,
         player1: Math.round(Math.random() * 80 + 20),
         player2: Math.round(Math.random() * 80 + 20),
     }));
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+function getSeries() {
+    return seriesMeta.map(s => ({
+        id: s.id,
+        value: s.id,
+        label: s.label,
+        opacity: 0.25,
+        color: config.colors[s.id],
+    }));
+}
+
+const { contextChanged, chart } = useRiplChart(context => {
     return createRadarChart(context, {
-        data: data.value,
-        axes: AXES,
+        data,
+        axes: currentAxes(),
+        levels: levels.value,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
-        series: [
-            { id: 'player1', value: 'player1', label: 'Player 1' },
-            { id: 'player2', value: 'player2', label: 'Player 2' },
-        ],
+        series: getSeries(),
+        ...buildCommonOptions(config),
     });
 });
 
+function apply() {
+    chart.value?.update({
+        axes: currentAxes(),
+        data,
+        levels: levels.value,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch(levels, apply);
+
 function randomize() {
-    data.value = generateData();
+    data = generateData();
+    chart.value?.update({ data });
+}
+
+function addAxis() {
+    if (axisCount < AXIS_POOL.length) {
+        axisCount++;
+        data = generateData();
+        chart.value?.update({ axes: currentAxes(), data });
+    }
+}
+
+function removeAxis() {
+    if (axisCount > 3) {
+        axisCount--;
+        data = generateData();
+        chart.value?.update({ axes: currentAxes(), data });
+    }
 }
 </script>
 

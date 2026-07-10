@@ -13,6 +13,9 @@ The **Sankey Chart** visualizes flow between nodes using weighted links. It's id
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,12 +24,22 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createSankeyChart,
 } from '@ripl/charts';
 
 import {
-    ref,
+    watch,
 } from 'vue';
+
+const config = useChartConfig({
+    features: { title: true, animation: true },
+    title: 'Budget Flow',
+});
 
 function generateLinks() {
     return [
@@ -40,9 +53,9 @@ function generateLinks() {
     ];
 }
 
-const links = ref(generateLinks());
+let links = generateLinks();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createSankeyChart(context, {
         nodes: [
             { id: 'budget', label: 'Budget' },
@@ -54,13 +67,17 @@ const { contextChanged } = useRiplChart(context => {
             { id: 'ads', label: 'Ads' },
             { id: 'content', label: 'Content' },
         ],
-        links: links.value,
+        links,
         padding: { top: 20, right: 80, bottom: 20, left: 20 },
+        ...buildCommonOptions(config),
     });
 });
 
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 function randomize() {
-    links.value = generateLinks();
+    links = generateLinks();
+    chart.value?.update({ links });
 }
 </script>
 

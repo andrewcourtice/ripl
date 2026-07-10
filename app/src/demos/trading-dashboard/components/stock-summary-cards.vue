@@ -34,24 +34,39 @@ import {
 
 const store = useDashboardStore();
 
-const latestIntraday = computed(() => {
+// The candle currently hovered/selected in the candlestick chart, falling back to the most recent
+// point when nothing is active — so the cards reflect whatever candle the user is inspecting.
+const activeIndex = computed(() => {
     const data = store.stockIntradayData;
-    return data.length > 0 ? data[data.length - 1] : null;
+    if (data.length === 0) return -1;
+
+    const key = store.selectedCandleKey;
+    if (key) {
+        const index = data.findIndex(point => point.datetime === key);
+        if (index >= 0) return index;
+    }
+
+    return data.length - 1;
+});
+
+const activeIntraday = computed(() => {
+    const data = store.stockIntradayData;
+    return activeIndex.value >= 0 ? data[activeIndex.value] : null;
 });
 
 const prevIntraday = computed(() => {
     const data = store.stockIntradayData;
-    return data.length > 1 ? data[data.length - 2] : null;
+    return activeIndex.value > 0 ? data[activeIndex.value - 1] : null;
 });
 
-const latestClose = computed(() => latestIntraday.value?.close ?? 0);
-const latestHigh = computed(() => latestIntraday.value?.high ?? 0);
-const latestLow = computed(() => latestIntraday.value?.low ?? 0);
-const latestVolume = computed(() => latestIntraday.value?.volume ?? 0);
+const latestClose = computed(() => activeIntraday.value?.close ?? 0);
+const latestHigh = computed(() => activeIntraday.value?.high ?? 0);
+const latestLow = computed(() => activeIntraday.value?.low ?? 0);
+const latestVolume = computed(() => activeIntraday.value?.volume ?? 0);
 
 const change = computed(() => {
-    if (!latestIntraday.value || !prevIntraday.value) return 0;
-    return latestIntraday.value.close - prevIntraday.value.close;
+    if (!activeIntraday.value || !prevIntraday.value) return 0;
+    return activeIntraday.value.close - prevIntraday.value.close;
 });
 
 const changePct = computed(() => {

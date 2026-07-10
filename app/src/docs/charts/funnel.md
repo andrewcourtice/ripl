@@ -13,6 +13,9 @@ The **Funnel Chart** displays data as progressively narrowing horizontal bars, i
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" />
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,12 +24,22 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createFunnelChart,
 } from '@ripl/charts';
 
 import {
-    ref,
+    watch,
 } from 'vue';
+
+const config = useChartConfig({
+    features: { title: true, animation: true },
+    title: 'Conversion Funnel',
+});
 
 function generateData() {
     let remaining = 10000;
@@ -37,20 +50,24 @@ function generateData() {
     });
 }
 
-const data = ref(generateData());
+let data = generateData();
 
-const { contextChanged } = useRiplChart(context => {
+const { contextChanged, chart } = useRiplChart(context => {
     return createFunnelChart(context, {
-        data: data.value,
+        data,
         key: 'stage',
         value: 'value',
         label: 'stage',
         padding: { top: 20, right: 40, bottom: 20, left: 40 },
+        ...buildCommonOptions(config),
     });
 });
 
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 function randomize() {
-    data.value = generateData();
+    data = generateData();
+    chart.value?.update({ data });
 }
 </script>
 

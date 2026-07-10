@@ -117,7 +117,7 @@ Most chart types also support these feature options:
 | `axis` | `boolean \| ChartAxisOptions` | `true` | Show/configure x and y axes |
 | `grid` | `boolean \| ChartGridOptions` | `true` | Show/configure background grid lines |
 | `tooltip` | `boolean \| ChartTooltipOptions` | `true` | Show/configure hover tooltips |
-| `legend` | `boolean \| ChartLegendOptions` | `false` | Show/configure series legend |
+| `legend` | `boolean \| ChartLegendOptions` | auto | Show/configure series legend (shown by default for charts with more than one series/segment, at the bottom) |
 | `crosshair` | `boolean \| ChartCrosshairOptions` | varies | Show/configure crosshair tracking |
 
 See [Shared Options](/docs/charts/shared-options) for a complete reference on each of these.
@@ -171,6 +171,14 @@ chart.destroy();
 | [Chord](/docs/charts/chord) | `createChordChart` | Relationship matrices |
 | [Sunburst](/docs/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
 | [Trend](/docs/charts/trend) | `createTrendChart` | Sparkline-style |
+| [Stock](/docs/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
+| [Gantt](/docs/charts/gantt) | `createGanttChart` | Tasks over a time axis |
+| [Realtime](/docs/charts/realtime) | `createRealtimeChart` | Streaming sliding window |
+| [Polar Scatter](/docs/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
+| [Radial Bar](/docs/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
+| [Packed Circle](/docs/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
+| [Force-Directed](/docs/charts/force-directed) | `createForceDirectedChart` | Springy physics network |
+| [Arc Diagram](/docs/charts/arc-diagram) | `createArcDiagramChart` | Axis of nodes linked by arcs |
 
 ## Next Steps
 

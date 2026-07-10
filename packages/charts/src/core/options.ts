@@ -19,9 +19,29 @@ import {
 } from '@ripl/core';
 
 import {
+    roundTo,
     typeIsBoolean,
+    typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
+
+/** Default maximum number of decimal places applied when rendering numeric values as text. */
+export const DEFAULT_NUMBER_PRECISION = 2;
+
+/**
+ * Formats a numeric value as a localized string, capping the precision at `precision` decimal
+ * places (default {@link DEFAULT_NUMBER_PRECISION}). Integers render without decimals; fractional
+ * values are rounded to at most `precision` places with trailing zeros stripped. Non-numeric values
+ * fall back to `String(value)`. This is the shared entry point every chart uses so labels, axes,
+ * tooltips, and tick marks share one consistent precision cap.
+ */
+export function formatNumber(value: unknown, precision: number = DEFAULT_NUMBER_PRECISION): string {
+    if (!typeIsNumber(value)) {
+        return String(value);
+    }
+
+    return roundTo(value, precision).toLocaleString();
+}
 
 // ---------------------------------------------------------------------------
 // Ease
@@ -133,8 +153,8 @@ export type ChartTitleInput = string | Partial<ChartTitleOptions>;
 const TITLE_DEFAULTS: ChartTitleOptions = {
     visible: true,
     text: '',
-    padding: 10,
-    font: '16px sans-serif',
+    padding: 16,
+    font: 'bold 16px sans-serif',
     fontColor: '#333333',
     position: 'top',
 };
@@ -376,7 +396,7 @@ export type ChartLegendInput = boolean | LegendPosition | Partial<ChartLegendOpt
 
 const LEGEND_DEFAULTS: ChartLegendOptions = {
     visible: true,
-    position: 'top',
+    position: 'bottom',
     padding: 16,
     font: '11px sans-serif',
     fontColor: '#333333',
@@ -393,7 +413,7 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
     if (input === undefined) {
         return {
             ...base,
-            visible: false,
+            visible: defaults?.visible ?? false,
         };
     }
 
@@ -541,11 +561,185 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 }
 
 // ---------------------------------------------------------------------------
+// Value format
+// ---------------------------------------------------------------------------
+
+/**
+ * A value formatter accepted anywhere a chart renders a raw value as text (tooltips, data
+ * labels, pie segment labels). Either a built-in format type or a custom callback.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ValueFormatInput = AxisFormatType | ((value: any) => string);
+
+/**
+ * Resolves a value formatter into a function, always returning a usable formatter (falling back
+ * to `String` when no custom format is supplied). Convenience wrapper over {@link resolveFormatLabel}
+ * for the value-as-text sites that always need to print something.
+ */
+export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) => string {
+    const resolved = resolveFormatLabel(format);
+    // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
+    // untyped numeric values still respect the default 2-decimal cap.
+    return resolved ?? (value => formatNumber(value));
+}
+
+// ---------------------------------------------------------------------------
+// Line style (dash pattern)
+// ---------------------------------------------------------------------------
+
+/** How a series line is stroked: a preset, or a custom canvas dash array. */
+export type LineStyle = 'solid' | 'dashed' | 'dotted' | number[];
+
+/** Resolves a {@link LineStyle} into a `lineDash` array (`[]` for a solid line). */
+export function resolveLineDash(style?: LineStyle): number[] {
+    if (Array.isArray(style)) {
+        return style;
+    }
+
+    switch (style) {
+        case 'dashed':
+            return [6, 4];
+        case 'dotted':
+            return [2, 3];
+        default:
+            return [];
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Data labels
+// ---------------------------------------------------------------------------
+
+/** Where a data label is anchored relative to its marker/bar. */
+export type LabelAnchor = 'top' | 'left' | 'bottom' | 'right';
+
+/** Fully resolved data label options. */
+export interface ChartDataLabelsOptions {
+    visible: boolean;
+    anchor: LabelAnchor;
+    font: string;
+    fontColor: string;
+}
+
+/**
+ * Data label input: a boolean toggle, a {@link LabelAnchor} string selecting where labels sit,
+ * or a partial options object.
+ */
+export type ChartDataLabelsInput = boolean | LabelAnchor | Partial<ChartDataLabelsOptions>;
+
+const DATA_LABELS_DEFAULTS: ChartDataLabelsOptions = {
+    visible: false,
+    anchor: 'top',
+    font: '11px sans-serif',
+    fontColor: '#555555',
+};
+
+const LABEL_ANCHORS: LabelAnchor[] = ['top', 'left', 'bottom', 'right'];
+
+/** Normalizes a data label input into fully resolved `ChartDataLabelsOptions`. */
+export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Partial<ChartDataLabelsOptions>): ChartDataLabelsOptions {
+    const base = {
+        ...DATA_LABELS_DEFAULTS,
+        ...defaults,
+    };
+
+    if (input === undefined) {
+        return { ...base };
+    }
+
+    if (typeIsBoolean(input)) {
+        return {
+            ...base,
+            visible: input,
+        };
+    }
+
+    if (typeIsString(input) && LABEL_ANCHORS.includes(input as LabelAnchor)) {
+        return {
+            ...base,
+            visible: true,
+            anchor: input as LabelAnchor,
+        };
+    }
+
+    return {
+        ...base,
+        visible: true,
+        ...(input as Partial<ChartDataLabelsOptions>),
+    };
+}
+
+// ---------------------------------------------------------------------------
+// Segment labels (radial charts: pie, polar-area)
+// ---------------------------------------------------------------------------
+
+/** Where a radial segment label sits: inside the segment, or outside with a leader line. */
+export type SegmentLabelPosition = 'inside' | 'outside';
+
+/** Fully resolved segment-label options for radial charts. */
+export interface ChartSegmentLabelsOptions {
+    visible: boolean;
+    position: SegmentLabelPosition;
+    /** Label font; when omitted the shared segment-label font is used. */
+    font?: string;
+    /** Label colour; when omitted a sensible default is chosen for the position. */
+    fontColor?: string;
+}
+
+/**
+ * Segment-label input: a boolean toggle, a {@link SegmentLabelPosition} string (which also enables
+ * labels), or a partial options object.
+ */
+export type ChartSegmentLabelsInput = boolean | SegmentLabelPosition | Partial<ChartSegmentLabelsOptions>;
+
+const SEGMENT_LABELS_DEFAULTS: ChartSegmentLabelsOptions = {
+    // Hidden by default — the legend is shown by default, so on-segment labels are opt-in.
+    visible: false,
+    position: 'inside',
+};
+
+const SEGMENT_LABEL_POSITIONS: SegmentLabelPosition[] = ['inside', 'outside'];
+
+/** Normalizes a segment-label input into fully resolved {@link ChartSegmentLabelsOptions}. */
+export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults?: Partial<ChartSegmentLabelsOptions>): ChartSegmentLabelsOptions {
+    const base = {
+        ...SEGMENT_LABELS_DEFAULTS,
+        ...defaults,
+    };
+
+    if (input === undefined) {
+        return { ...base };
+    }
+
+    if (typeIsBoolean(input)) {
+        return {
+            ...base,
+            visible: input,
+        };
+    }
+
+    if (typeIsString(input) && SEGMENT_LABEL_POSITIONS.includes(input as SegmentLabelPosition)) {
+        return {
+            ...base,
+            visible: true,
+            position: input as SegmentLabelPosition,
+        };
+    }
+
+    return {
+        ...base,
+        visible: true,
+        ...(input as Partial<ChartSegmentLabelsOptions>),
+    };
+}
+
+// ---------------------------------------------------------------------------
 // Format helper
 // ---------------------------------------------------------------------------
 
 
 /** Resolves an axis format type or custom formatter into a label formatting function. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
     if (!format) {
         return undefined;
@@ -557,9 +751,9 @@ export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => st
 
     switch (format) {
         case 'number':
-            return (v: number) => v.toLocaleString();
+            return (v: number) => formatNumber(v);
         case 'percentage':
-            return (v: number) => `${(v * 100).toFixed(1)}%`;
+            return (v: number) => `${formatNumber(v * 100)}%`;
         case 'date':
             return (v: Date | number) => new Date(v).toLocaleDateString();
         case 'string':

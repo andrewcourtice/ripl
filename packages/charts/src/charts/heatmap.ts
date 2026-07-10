@@ -9,12 +9,21 @@ import type {
 } from '../core/options';
 
 import {
+    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
 } from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     ChartXAxis,
@@ -31,7 +40,7 @@ import {
     createGroup,
     createRect,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
@@ -56,6 +65,22 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
     tooltip?: ChartTooltipInput;
     axis?: ChartAxisInput<TData>;
+}
+
+/** Payload emitted for heatmap cell interaction events. */
+export interface HeatmapChartCellEvent {
+    x: number;
+    y: number;
+    value: number;
+    xLabel: string;
+    yLabel: string;
+}
+
+/** Events emitted by a {@link HeatmapChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface HeatmapChartEventMap extends EventMap {
+    cellclick: HeatmapChartCellEvent;
+    cellenter: HeatmapChartCellEvent;
+    cellleave: HeatmapChartCellEvent;
 }
 
 const DEFAULT_LOW_COLOR = '#e0f2fe';
@@ -90,7 +115,7 @@ function interpolateHexColor(colorA: string, colorB: string, t: number): string 
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>> {
+export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>, HeatmapChartEventMap> {
 
     private cellGroups: Group[] = [];
     private xAxis!: ChartXAxis;
@@ -143,7 +168,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 xBy,
@@ -176,11 +201,19 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
 
             const valueRange = maxVal - minVal || 1;
-            const padding = this.getPadding();
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const top = area.y;
+            const left = area.x;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
             // Initial y-axis setup to measure label width
-            const initialYScale = scaleBand(yCategories, [padding.top, scene.height - padding.bottom], {
+            const initialYScale = scaleBand(yCategories, [top, bottom], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             this.yAxis.scale = Object.assign(
@@ -195,17 +228,18 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.yAxis.scale;
 
             this.yAxis.bounds = new Box(
-                padding.top,
-                padding.left,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                top,
+                left,
+                bottom,
+                right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
 
             // Initial x-axis setup to measure label height
-            const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
+            const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             this.xAxis.scale = Object.assign(
@@ -220,21 +254,23 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.xAxis.scale;
 
             this.xAxis.bounds = new Box(
-                padding.top,
+                top,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                bottom,
+                right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
 
             // Rebuild scales with correct chart area bounds
-            const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, scene.width - padding.right], {
+            const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
-            const yScale = scaleBand(yCategories, [padding.top, xAxisBoundingBox.top], {
+            const yScale = scaleBand(yCategories, [top, xAxisBoundingBox.top], {
                 innerPadding: 0.05,
+                outerPadding: 0.05,
             });
 
             // Update axes with final scales
@@ -250,10 +286,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.xAxis.scale;
 
             this.xAxis.bounds = new Box(
-                padding.top,
+                top,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom,
-                scene.width - padding.right
+                bottom,
+                right
             );
 
             this.yAxis.scale = Object.assign(
@@ -268,10 +304,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             ) as unknown as typeof this.yAxis.scale;
 
             this.yAxis.bounds = new Box(
-                padding.top,
-                padding.left,
+                top,
+                left,
                 xAxisBoundingBox.top,
-                scene.width - padding.right
+                right
             );
 
             // Draw cells
@@ -318,33 +354,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     },
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(
-                        cell.x + cell.width / 2,
-                        cell.y,
-                        `${cell.xLabel}, ${cell.yLabel}: ${cell.value}`
-                    );
-
-                    this.renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            opacity: 0.8,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                opacity: 1,
-                            },
-                        });
-                    });
-                });
+                this.attachCellHover(rect, cell);
 
                 return createGroup({
                     id: cell.id,
@@ -364,6 +374,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         fill: cell.color,
                         opacity: 1,
                     } as RectState;
+
+                    this.attachCellHover(rect, cell);
                 }
 
                 return group;
@@ -400,6 +412,41 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 entriesTransition,
                 updatesTransition,
             ]);
+        });
+    }
+
+    private attachCellHover(rect: Rect, cell: { x: number;
+        y: number;
+        width: number;
+        value: number;
+        xLabel: string;
+        yLabel: string; }) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+
+        const payload = (point: { x: number;
+            y: number; }): HeatmapChartCellEvent => ({
+            x: point.x,
+            y: point.y,
+            value: cell.value,
+            xLabel: cell.xLabel,
+            yLabel: cell.yLabel,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: cell.x + cell.width / 2,
+                y: cell.y,
+            }),
+            content: () => `${cell.xLabel}, ${cell.yLabel}: ${formatNumber(cell.value)}`,
+            highlight: { opacity: 0.8 },
+            restore: { opacity: 1 },
+            onEnter: point => this.emit('cellenter', payload(point)),
+            onLeave: point => this.emit('cellleave', payload(point)),
+            onClick: point => this.emit('cellclick', payload(point)),
         });
     }
 

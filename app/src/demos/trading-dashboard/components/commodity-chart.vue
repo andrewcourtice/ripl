@@ -10,6 +10,7 @@
             <RiplButtonGroup :modelValue="store.commodityTimeRange" @update:modelValue="onRangeChange($event as TimeRange)" :options="rangeOptions" />
         </template>
         <div ref="chartEl" class="dashboard-chart"></div>
+        <div class="chart-readout">{{ readout }}</div>
     </dashboard-card>
 </template>
 
@@ -28,6 +29,7 @@ import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vu
 import DashboardCard from './dashboard-card.vue';
 import { useChartContext } from '../composables/use-chart-context';
 import { useDashboardStore } from '../store/dashboard';
+import type { MockCommodityPoint } from '../data/mock';
 
 import type {
     CommodityType,
@@ -39,8 +41,10 @@ const rangeOptions = ranges.map(r => ({ label: r, value: r }));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let chart: any;
+let chart: ReturnType<typeof createLineChart<MockCommodityPoint>> | undefined;
+
+const DEFAULT_READOUT = 'Hover a point for the price on that day';
+const readout = ref(DEFAULT_READOUT);
 
 function buildChart() {
     const data = store.commodityData();
@@ -63,6 +67,7 @@ function buildChart() {
     chart = createLineChart(context.value, {
         data,
         key: 'date',
+        format: (value: number) => `$${value.toFixed(2)}`,
         padding: {
             top: 20,
             right: 20,
@@ -70,6 +75,13 @@ function buildChart() {
             left: 20,
         },
         series,
+    });
+
+    chart.on('markerenter', event => {
+        readout.value = `${event.data.xValue} · ${store.commodityLabel()}: $${event.data.yValue.toFixed(2)}`;
+    });
+    chart.on('markerleave', () => {
+        readout.value = DEFAULT_READOUT;
     });
 }
 

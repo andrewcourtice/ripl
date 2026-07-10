@@ -1,6 +1,7 @@
 import {
     Context,
     ContextText,
+    scaleContinuous,
 } from '@ripl/core';
 
 import type {
@@ -52,6 +53,16 @@ export interface TerminalContextOptions extends ContextOptions {
     width?: number;
     height?: number;
     rasterizer?: Rasterizer;
+    /**
+     * Author the scene in this logical width (e.g. CSS pixels) instead of raw braille pixels.
+     * Rendering uniformly scales and letterboxes the logical space into the character grid, so a
+     * scene written for a canvas-sized viewport renders proportionally in any terminal. Requires
+     * `logicalHeight`. Text glyphs remain cell-sized (inherent to terminals); only their position
+     * (and `maxWidth` clipping) follows the logical space.
+     */
+    logicalWidth?: number;
+    /** Logical height counterpart to {@link TerminalContextOptions.logicalWidth}. */
+    logicalHeight?: number;
 }
 
 /** Terminal rendering context that rasterizes Ripl elements into character-based output via a `TerminalOutput` adapter. */
@@ -59,35 +70,72 @@ export class TerminalContext extends Context<Element> {
 
     private output: TerminalOutput;
     private rasterizer: Rasterizer;
+    private logicalWidth?: number;
+    private logicalHeight?: number;
+    /** Uniform logical→raster scale factor (1 when no logical size is set). */
+    private rasterScale: number = 1;
 
     constructor(output: TerminalOutput, options?: TerminalContextOptions) {
         const {
             width,
             height,
             rasterizer,
+            logicalWidth,
+            logicalHeight,
         } = options || {};
 
         // Pass a dummy element — terminal has no DOM element
         super('terminal', {} as Element, options);
 
         this.output = output;
+        this.logicalWidth = logicalWidth;
+        this.logicalHeight = logicalHeight;
         this.rasterizer = rasterizer || new BrailleRasterizer(
             width ?? output.columns,
             height ?? output.rows
         );
 
-        this.rescale(this.rasterizer.pixelWidth, this.rasterizer.pixelHeight);
+        this.applyScaling();
 
         if (output.onResize) {
             const dispose = output.onResize((cols, rows) => {
                 this.rasterizer.resize(cols, rows);
-                this.rescale(this.rasterizer.pixelWidth, this.rasterizer.pixelHeight);
+                this.applyScaling();
             });
 
             this.retain({
                 dispose,
             });
         }
+    }
+
+    /**
+     * Sizes the context's coordinate space against the rasterizer. Without a logical size the
+     * space *is* the braille pixel grid (the historical behaviour). With one, the context reports
+     * the logical size and `scaleX`/`scaleY` uniformly scale + centre (letterbox) it into the grid,
+     * mirroring how the canvas context maps CSS pixels onto its device-pixel backing store.
+     */
+    private applyScaling(): void {
+        const pixelWidth = this.rasterizer.pixelWidth;
+        const pixelHeight = this.rasterizer.pixelHeight;
+
+        if (!this.logicalWidth || !this.logicalHeight) {
+            this.rasterScale = 1;
+            this.rescale(pixelWidth, pixelHeight);
+            return;
+        }
+
+        const scale = Math.min(pixelWidth / this.logicalWidth, pixelHeight / this.logicalHeight);
+        const offsetX = (pixelWidth - this.logicalWidth * scale) / 2;
+        const offsetY = (pixelHeight - this.logicalHeight * scale) / 2;
+
+        this.rasterScale = scale;
+
+        // `rescale` resets scaleX/scaleY to identity (and emits `resize`), so set the letterbox
+        // mapping immediately after it.
+        this.rescale(this.logicalWidth, this.logicalHeight);
+        this.scaleX = scaleContinuous([0, this.logicalWidth], [offsetX, offsetX + this.logicalWidth * scale]);
+        this.scaleY = scaleContinuous([0, this.logicalHeight], [offsetY, offsetY + this.logicalHeight * scale]);
     }
 
     public clear(): void {
@@ -131,8 +179,9 @@ export class TerminalContext extends Context<Element> {
     }
 
     public measureText(text: string): TextMetrics {
-        const charWidth = BRAILLE_CELL_WIDTH;
-        const charHeight = BRAILLE_CELL_HEIGHT;
+        // Report metrics in logical units so layout code sizes text consistently with its space.
+        const charWidth = BRAILLE_CELL_WIDTH / this.rasterScale;
+        const charHeight = BRAILLE_CELL_HEIGHT / this.rasterScale;
 
         return {
             width: text.length * charWidth,
@@ -157,10 +206,11 @@ export class TerminalContext extends Context<Element> {
 
     private rasterizeText(text: ContextText, color: string): void {
         const rasterizer = this.rasterizer;
-        const col = Math.round(text.x / BRAILLE_CELL_WIDTH);
-        const row = Math.round(text.y / BRAILLE_CELL_HEIGHT);
+        // Position follows the logical space; glyphs themselves stay cell-sized.
+        const col = Math.round(this.scaleX(text.x) / BRAILLE_CELL_WIDTH);
+        const row = Math.round(this.scaleY(text.y) / BRAILLE_CELL_HEIGHT);
         const content = text.maxWidth
-            ? text.content.slice(0, Math.floor(text.maxWidth / BRAILLE_CELL_WIDTH))
+            ? text.content.slice(0, Math.floor((text.maxWidth * this.rasterScale) / BRAILLE_CELL_WIDTH))
             : text.content;
 
         for (let i = 0; i < content.length; i++) {
@@ -198,6 +248,11 @@ export class TerminalContext extends Context<Element> {
     }
 
     private executeCommands(path: TerminalPath, plot: PixelCallback): void {
+        // Map logical coordinates into the raster (identity when no logical size is configured).
+        const sx = this.scaleX;
+        const sy = this.scaleY;
+        const s = this.rasterScale;
+
         for (const cmd of path.commands) {
             const args = cmd.args;
 
@@ -207,35 +262,35 @@ export class TerminalContext extends Context<Element> {
                     break;
 
                 case 'lineTo':
-                    rasterizeLine(args[0], args[1], args[2], args[3], plot);
+                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
                     break;
 
                 case 'arc':
                     if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
-                        rasterizeCircle(args[0], args[1], args[2], plot);
+                        rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
                     } else {
-                        rasterizeArc(args[0], args[1], args[2], args[3], args[4], !!args[5], plot);
+                        rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
                     }
                     break;
 
                 case 'ellipse':
-                    rasterizeEllipse(args[0], args[1], args[2], args[3], plot);
+                    rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
                     break;
 
                 case 'bezierCurveTo':
-                    rasterizeCubicBezier(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], plot);
+                    rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
                     break;
 
                 case 'quadraticCurveTo':
-                    rasterizeQuadBezier(args[0], args[1], args[2], args[3], args[4], args[5], plot);
+                    rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
                     break;
 
                 case 'rect':
-                    rasterizeRect(args[0], args[1], args[2], args[3], plot);
+                    rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
                     break;
 
                 case 'closePath':
-                    rasterizeLine(args[0], args[1], args[2], args[3], plot);
+                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
                     break;
             }
         }

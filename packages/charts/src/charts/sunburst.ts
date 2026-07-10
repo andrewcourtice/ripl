@@ -5,11 +5,20 @@ import {
 
 import type {
     ChartLegendInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
-    normalizeLegend,
+    resolveValueFormat,
 } from '../core/options';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
 import {
     getColorGenerator,
@@ -20,7 +29,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -30,8 +38,8 @@ import {
     Context,
     createArc,
     createGroup,
-    easeOutQuart,
     easeOutQuint,
+    EventMap,
     Group,
     scaleContinuous,
     setColorAlpha,
@@ -41,6 +49,9 @@ import {
 import {
     arrayJoin,
 } from '@ripl/utilities';
+
+/** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.65;
 
 /** A node in a sunburst hierarchy with optional nested children. */
 export interface SunburstNode {
@@ -55,6 +66,24 @@ export interface SunburstNode {
 export interface SunburstChartOptions extends BaseChartOptions {
     data: SunburstNode[];
     legend?: ChartLegendInput;
+    /** Format applied to node values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for sunburst segment interaction events. */
+export interface SunburstChartSegmentEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    id: string;
+}
+
+/** Events emitted by a {@link SunburstChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface SunburstChartEventMap extends EventMap {
+    segmentclick: SunburstChartSegmentEvent;
+    segmententer: SunburstChartSegmentEvent;
+    segmentleave: SunburstChartSegmentEvent;
 }
 
 interface FlattenedArc {
@@ -126,11 +155,10 @@ function flattenNodes(
  * colors and are positioned within the parent's angular range. Supports
  * legend, tooltips, and staggered radial entry animations.
  */
-export class SunburstChart extends Chart<SunburstChartOptions> {
+export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
-    private legend?: Legend;
 
     constructor(target: string | HTMLElement | Context, options: SunburstChartOptions) {
         super(target, options);
@@ -138,6 +166,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
         this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
+            placement: 'center',
         });
 
         this.init();
@@ -148,48 +177,36 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             const { data } = this.options;
 
             const colorGenerator = this.colorGenerator;
-            const padding = this.getPadding();
 
-            // Pre-resolve top-level node colors so legend and arcs stay in sync
-            const resolvedColors = new Map<string, string>();
+            // Resolve top-level node colours through the shared, id-keyed colour map so they stay
+            // stable across data updates (randomising values must not reshuffle colours). Child
+            // nodes inherit their parent's colour via `flattenNodes`.
+            this.resolveSeriesColors(data.map(node => ({
+                id: node.id,
+                color: node.color,
+            })));
 
-            data.forEach(node => {
-                resolvedColors.set(node.id, node.color ?? colorGenerator.next().value!);
-            });
-
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && data.length > 0) {
-                const legendItems: LegendItem[] = data.map(node => ({
-                    id: node.id,
-                    label: node.label,
-                    color: resolvedColors.get(node.id)!,
-                    active: true,
-                }));
-
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'bottom',
-                        onToggle: () => this.render(),
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
-
-                const legendWidth = scene.width - padding.left - padding.right;
-                legendHeight = this.legend.getBoundingBox(legendWidth).height;
-            }
-
-            const cx = scene.width / 2;
-            const cy = (scene.height - legendHeight) / 2;
-            const size = Math.min(
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom - legendHeight
+            const resolvedColors = new Map<string, string>(
+                data.map(node => [node.id, node.color ?? this.getSeriesColor(node.id)])
             );
+
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = data.map(node => ({
+                id: node.id,
+                label: node.label,
+                color: resolvedColors.get(node.id)!,
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
+            const cx = area.x + area.width / 2;
+            const cy = area.y + area.height / 2;
+            const size = Math.min(area.width, area.height);
 
             const offset = TAU / 4;
             const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);
@@ -226,7 +243,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     radius: 0,
                     innerRadius: 0,
                     padAngle,
-                    fill: setColorAlpha(arc.color, 0.65),
+                    fill: setColorAlpha(arc.color, REST_ALPHA),
                     stroke: arc.color,
                     lineWidth: 1,
                     data: {
@@ -236,30 +253,7 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                     } as Partial<ArcState>,
                 });
 
-                segment.on('mouseenter', () => {
-                    const [centroidX, centroidY] = segment.getCentroid(segment.data as Partial<ArcState>);
-                    this.tooltip.show(centroidX, centroidY, `${arc.label}: ${arc.value}`);
-
-                    renderer.transition(segment, {
-                        duration: this.getAnimationDuration(300),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: arc.color,
-                        },
-                    });
-
-                    segment.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(segment, {
-                            duration: this.getAnimationDuration(300),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(arc.color, 0.65),
-                            },
-                        });
-                    });
-                });
+                this.attachSegmentHover(segment, arc);
 
                 return createGroup({
                     id: arc.id,
@@ -280,9 +274,11 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                         endAngle: arc.endAngle,
                         radius: outerRadius,
                         innerRadius,
-                        fill: setColorAlpha(arc.color, 0.65),
+                        fill: setColorAlpha(arc.color, REST_ALPHA),
                         stroke: arc.color,
                     } as Partial<ArcState>;
+
+                    this.attachSegmentHover(segment, arc);
                 }
 
                 return group;
@@ -294,12 +290,6 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
                 ...entryGroups,
                 ...updateGroups,
             ];
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                const legendWidth = scene.width - padding.left - padding.right;
-                this.legend.render(padding.left, scene.height - legendHeight, legendWidth);
-            }
 
             // Animate entries
             const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
@@ -321,6 +311,40 @@ export class SunburstChart extends Chart<SunburstChartOptions> {
             }));
 
             return Promise.all([entriesTransition, updatesTransition]);
+        });
+    }
+
+    private attachSegmentHover(segment: Arc, arc: FlattenedArc) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): SunburstChartSegmentEvent => ({
+            x: point.x,
+            y: point.y,
+            value: arc.value,
+            label: arc.label,
+            id: arc.id,
+        });
+
+        applyHoverHighlight(segment, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => {
+                const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
+                return {
+                    x,
+                    y,
+                };
+            },
+            content: () => `${arc.label}: ${formatValue(arc.value)}`,
+            highlight: { fill: arc.color },
+            restore: { fill: setColorAlpha(arc.color, REST_ALPHA) },
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 

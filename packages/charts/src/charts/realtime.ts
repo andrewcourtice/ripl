@@ -15,7 +15,6 @@ import {
     normalizeAxis,
     normalizeCrosshair,
     normalizeGrid,
-    normalizeLegend,
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
@@ -30,7 +29,6 @@ import {
 } from '../components/tooltip';
 
 import {
-    Legend,
     LegendItem,
 } from '../components/legend';
 
@@ -41,6 +39,10 @@ import {
 import {
     Crosshair,
 } from '../components/crosshair';
+
+import {
+    anchoredAreaRenderer,
+} from '../core/fill';
 
 import {
     Box,
@@ -93,9 +95,11 @@ export interface RealtimeChartOptions extends BaseChartOptions {
  * Realtime streaming chart rendering continuously updating line/area series.
  *
  * Data is pushed incrementally via {@link RealtimeChart.push} and maintained
- * in a fixed-size sliding window buffer. Each render cycle smoothly transitions
- * polylines to reflect the latest data. Supports y-axis, grid, crosshair,
- * legend, and configurable transition duration.
+ * in a fixed-size sliding window buffer. While the window fills the line grows
+ * from the left; once full, each push scrolls the series left by one step with
+ * the newest point entering at the right (rather than morphing every point in
+ * place). Supports y-axis, grid, crosshair, legend, and configurable transition
+ * duration.
  */
 export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
@@ -104,7 +108,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     private yScale!: Scale;
     private yAxis!: ChartYAxis;
     private tooltip!: Tooltip;
-    private legend?: Legend;
     private grid?: Grid;
     private crosshair?: Crosshair;
     private windowSize: number;
@@ -233,6 +236,8 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
         const maxLen = this.getWindowSize();
         const duration = this.getTransitionDuration();
+        // Horizontal distance between adjacent samples; one window slides left by this each push.
+        const step = (chartRight - chartLeft) / Math.max(1, maxLen - 1);
 
         const existingGroupMap = new Map<string, Group>();
         this.seriesGroups.forEach(group => existingGroupMap.set(group.id, group));
@@ -288,7 +293,18 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 const areaFill = showArea ? polylines[0] : undefined;
                 const line = showArea ? polylines[1] : polylines[0];
 
+                // Once the window is full each push drops the oldest sample, so slot i now holds
+                // the value previously shown in slot i+1. Seeding the current points one step to
+                // the right (their previous on-screen positions) makes the transition slide the
+                // whole line left by one step — a scroll — with the newest point entering at the
+                // right, instead of morphing every point's height in place.
+                const scrolling = pointCount >= maxLen;
+
                 if (line) {
+                    if (scrolling) {
+                        line.points = linePoints.map(([x, y]) => [x + step, y] as Point);
+                    }
+
                     line.data = {
                         points: linePoints,
                         renderer: srs.lineType,
@@ -296,6 +312,12 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 }
 
                 if (areaFill && showArea) {
+                    if (scrolling) {
+                        areaFill.points = areaPoints.map(([x, y]) => [x + step, y] as Point);
+                    }
+
+                    // Re-apply directly (a renderer isn't tweenable) in case the series lineType changed.
+                    areaFill.renderer = anchoredAreaRenderer(srs.lineType);
                     areaFill.data = {
                         points: areaPoints,
                     } as PolylineState;
@@ -313,7 +335,9 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                         fill: setColorAlpha(color, areaOpacity),
                         stroke: undefined,
                         points: areaPoints,
-                        renderer: srs.lineType,
+                        // Curve only the interior line points; the two baseline anchors join with
+                        // straight edges so the fill's top edge exactly matches the line.
+                        renderer: anchoredAreaRenderer(srs.lineType),
                         data: {
                             points: areaPoints,
                         } as PolylineState,
@@ -381,7 +405,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 series,
                 showYAxis,
@@ -418,56 +442,44 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 yMax += 1;
             }
 
-            const padding = this.getPadding();
+            // Shared layout pass: reserve title and legend bands.
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
 
-            // Compute legend bounds early to reserve space
-            let legendHeight = 0;
-
-            if (normalizeLegend(this.options.legend).visible && series.length > 1) {
-                const legendItems: LegendItem[] = series.map(srs => ({
+            const legendItems: LegendItem[] = series.length > 1
+                ? series.map(srs => ({
                     id: srs.id,
                     label: srs.label ?? srs.id,
                     color: this.getSeriesColor(srs.id),
                     active: true,
-                }));
+                }))
+                : [];
 
-                if (!this.legend) {
-                    this.legend = new Legend({
-                        scene: this.scene,
-                        renderer: this.renderer,
-                        items: legendItems,
-                        position: 'top',
-                    });
-                } else {
-                    this.legend.update(legendItems);
-                }
+            this.reserveLegend(layout, legendItems, this.options.legend);
 
-                legendHeight = this.legend.getBoundingBox(scene.width - padding.left - padding.right).height;
-            }
+            const area = layout.area;
+            const chartTop = area.y;
+            const chartBottom = area.y + area.height;
+            const chartRight = area.x + area.width;
 
-            const chartTop = padding.top + legendHeight;
-
-            this.yScale = scaleContinuous([yMin, yMax], [scene.height - padding.bottom, chartTop], {
+            this.yScale = scaleContinuous([yMin, yMax], [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
-            let chartLeft = padding.left;
+            let chartLeft = area.x;
 
             if (showYAxis !== false) {
                 this.yAxis.scale = this.yScale;
                 this.yAxis.bounds = new Box(
                     chartTop,
-                    padding.left,
-                    scene.height - padding.bottom,
-                    scene.width - padding.right
+                    area.x,
+                    chartBottom,
+                    chartRight
                 );
 
                 const yAxisBoundingBox = this.yAxis.getBoundingBox();
                 chartLeft = yAxisBoundingBox.right + 10;
             }
-
-            const chartRight = scene.width - padding.right;
-            const chartBottom = scene.height - padding.bottom;
 
             // Render grid
             if (this.grid) {
@@ -491,11 +503,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 chartRight - chartLeft,
                 chartBottom - chartTop
             );
-
-            // Render legend
-            if (this.legend && legendHeight > 0) {
-                this.legend.render(chartLeft, 0, chartRight - chartLeft);
-            }
 
             const promises: Promise<unknown>[] = [];
 

@@ -13,6 +13,19 @@ The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KP
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
+    <template #config>
+        <RiplChartConfig :config="config" extra-title="Gauge">
+            <RiplField label="Value">
+                <RiplInputRange v-model="value" :min="0" :max="100" :step="1" />
+            </RiplField>
+            <RiplField label="Ticks">
+                <RiplInputRange v-model="tickCount" :min="0" :max="12" :step="1" />
+            </RiplField>
+            <RiplField label="Fill colour" inline>
+                <RiplColorInput v-model="color" />
+            </RiplField>
+        </RiplChartConfig>
+    </template>
 </ripl-example>
 
 <script setup lang="ts">
@@ -21,28 +34,56 @@ import {
 } from '../../.vitepress/compositions/example';
 
 import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
     createGaugeChart,
 } from '@ripl/charts';
 
 import {
     ref,
+    watch,
 } from 'vue';
 
 const value = ref(72);
+const tickCount = ref(10);
+const color = ref('#7cacf8');
 
-const { contextChanged } = useRiplChart(context => {
+const config = useChartConfig({
+    features: { title: true, animation: true },
+    title: 'Performance',
+    titleVisible: false,
+});
+
+const { contextChanged, chart } = useRiplChart(context => {
     return createGaugeChart(context, {
         value: value.value,
         min: 0,
         max: 100,
         label: 'Performance',
+        color: color.value,
         formatValue: v => `${v}%`,
-        tickCount: 10,
+        tickCount: tickCount.value,
         showTickLabels: true,
         formatTickLabel: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        ...buildCommonOptions(config),
     });
 });
+
+function apply() {
+    chart.value?.update({
+        value: value.value,
+        color: color.value,
+        tickCount: tickCount.value,
+        ...buildCommonOptions(config),
+    });
+}
+
+watch(config, apply, { deep: true });
+watch([value, tickCount, color], apply);
 
 function randomize() {
     value.value = Math.round(Math.random() * 100);

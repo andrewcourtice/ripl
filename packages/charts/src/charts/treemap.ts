@@ -3,6 +3,26 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ValueFormatInput,
+} from '../core/options';
+
+import {
+    resolveValueFormat,
+} from '../core/options';
+
+import {
+    createSegmentLabel,
+} from '../core/labels';
+
+import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
+
 import {
     Tooltip,
 } from '../components/tooltip';
@@ -11,13 +31,13 @@ import {
     Context,
     createGroup,
     createRect,
-    createText,
     easeOutCubic,
-    easeOutQuart,
+    EventMap,
     Group,
     Rect,
     RectState,
     setColorAlpha,
+    Text,
 } from '@ripl/core';
 
 import {
@@ -34,6 +54,24 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     color?: keyof TData | ((item: TData) => string);
     gap?: number;
     borderRadius?: number;
+    /** Format applied to cell values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+}
+
+/** Payload emitted for treemap cell interaction events. */
+export interface TreemapChartCellEvent {
+    x: number;
+    y: number;
+    value: number;
+    label: string;
+    key: string;
+}
+
+/** Events emitted by a {@link TreemapChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface TreemapChartEventMap extends EventMap {
+    cellclick: TreemapChartCellEvent;
+    cellenter: TreemapChartCellEvent;
+    cellleave: TreemapChartCellEvent;
 }
 
 interface TreemapNode {
@@ -122,7 +160,10 @@ function layoutTreemap(
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>> {
+/** The opacity applied to a cell's fill at rest (full opacity is used on hover). */
+const REST_ALPHA = 0.65;
+
+export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>, TreemapChartEventMap> {
 
     private groups: Group[] = [];
     private tooltip: Tooltip;
@@ -150,8 +191,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 borderRadius = 4,
             } = this.options;
 
-            const colorGenerator = this.colorGenerator;
-
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,7 +205,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
             }
 
-            const padding = this.getPadding();
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
 
             const items = data.map(item => ({
                 key: getKey(item),
@@ -175,12 +216,22 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 color: getColor ? getColor(item) : undefined,
             }));
 
+            // Resolve colours through the shared id-keyed map so they stay stable across data
+            // updates instead of being reassigned from the generator on every render.
+            this.resolveSeriesColors(items.map(item => ({
+                id: item.key,
+                color: item.color,
+            })));
+
+            const colorFor = (node: { key: string;
+                color?: string; }) => node.color ?? this.getSeriesColor(node.key);
+
             const nodes = layoutTreemap(
                 items,
-                padding.left,
-                padding.top,
-                scene.width - padding.left - padding.right,
-                scene.height - padding.top - padding.bottom,
+                area.x,
+                area.y,
+                area.width,
+                area.height,
                 gap
             );
 
@@ -192,8 +243,14 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             exits.forEach(el => el.destroy());
 
+            // A cell only carries a label when it is large enough to fit one; the font scales with
+            // the cell width. Shared by the entry and update branches so both stay in sync.
+            const showLabelFor = (node: { width: number;
+                height: number; }) => node.width > 40 && node.height > 20;
+            const labelFont = (width: number) => `600 ${Math.min(12, Math.max(9, width / 8))}px sans-serif`;
+
             const entryGroups = entries.map(node => {
-                const nodeColor = node.color ?? colorGenerator.next().value!;
+                const nodeColor = colorFor(node);
 
                 const rect = createRect({
                     id: `${node.key}-rect`,
@@ -201,63 +258,34 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     y: node.y + node.height / 2,
                     width: 0,
                     height: 0,
-                    fill: setColorAlpha(nodeColor, 0.65),
+                    fill: setColorAlpha(nodeColor, REST_ALPHA),
                     borderRadius,
                     data: {
                         x: node.x,
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fill: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, REST_ALPHA),
                     } as RectState,
                 });
 
-                rect.on('mouseenter', () => {
-                    this.tooltip.show(
-                        node.x + node.width / 2,
-                        node.y,
-                        `${node.label}: ${node.value}`
-                    );
-
-                    renderer.transition(rect, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: nodeColor,
-                        },
-                    });
-
-                    rect.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        renderer.transition(rect, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: setColorAlpha(nodeColor, 0.65),
-                            },
-                        });
-                    });
-                });
+                this.attachCellHover(rect, node, nodeColor);
 
                 // Add label if the cell is large enough
-                const children: (Rect | ReturnType<typeof createText>)[] = [rect];
+                const children: (Rect | Text)[] = [rect];
 
-                if (node.width > 40 && node.height > 20) {
-                    const text = createText({
+                if (showLabelFor(node)) {
+                    const text = createSegmentLabel({
                         id: `${node.key}-label`,
                         x: node.x + node.width / 2,
                         y: node.y + node.height / 2,
                         content: node.label,
-                        fill: '#333',
-                        font: `${Math.min(12, Math.max(9, node.width / 8))}px sans-serif`,
-                        textAlign: 'center',
-                        textBaseline: 'middle',
-                        opacity: 0,
-                        data: {
-                            opacity: 1,
-                        },
+                        // Keep the treemap's size-adaptive font, but with the shared weight/family
+                        // (and explicit styling, so Canvas and SVG render identically).
+                        font: labelFont(node.width),
                     });
+
+                    text.data = { opacity: 1 };
 
                     children.push(text);
                 }
@@ -268,9 +296,13 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 });
             });
 
+            // Labels reconciled on the update path (repositioned, and faded in/out as cells cross the
+            // size threshold), collected here so they animate alongside their rectangles below.
+            const updateTexts: Text[] = [];
+
             const updateGroups = updates.map(([node, group]) => {
                 const rect = group.getElementsByType('rect')[0] as Rect;
-                const nodeColor = node.color ?? (rect.fill as string);
+                const nodeColor = colorFor(node);
 
                 if (rect) {
                     rect.data = {
@@ -278,8 +310,42 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         y: node.y,
                         width: node.width,
                         height: node.height,
-                        fill: setColorAlpha(nodeColor, 0.65),
+                        fill: setColorAlpha(nodeColor, REST_ALPHA),
                     } as RectState;
+
+                    this.attachCellHover(rect, node, nodeColor);
+                }
+
+                // Move the label to the cell's new centre in lockstep with the rect (routing the new
+                // position through `.data` so it tweens instead of snapping). Cells that grew past the
+                // threshold gain a label; cells that shrank below it fade theirs out.
+                const cx = node.x + node.width / 2;
+                const cy = node.y + node.height / 2;
+                const showLabel = showLabelFor(node);
+                let text = group.getElementsByType('text')[0] as Text | undefined;
+
+                if (!text && showLabel) {
+                    text = createSegmentLabel({
+                        id: `${node.key}-label`,
+                        x: cx,
+                        y: cy,
+                        content: node.label,
+                        font: labelFont(node.width),
+                    });
+
+                    group.add(text);
+                }
+
+                if (text) {
+                    text.content = node.label;
+                    text.font = labelFont(node.width);
+                    text.data = {
+                        x: cx,
+                        y: cy,
+                        opacity: showLabel ? 1 : 0,
+                    };
+
+                    updateTexts.push(text);
                 }
 
                 return group;
@@ -320,11 +386,50 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
+            // Glide the labels to their cells' new centres (and fade in/out) alongside the rects.
+            const updateTextsTransition = renderer.transition(updateTexts, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: (element.data ?? {}) as Record<string, unknown>,
+            }));
+
             return Promise.all([
                 rectsTransition,
                 textsTransition,
                 updatesTransition,
+                updateTextsTransition,
             ]);
+        });
+    }
+
+    private attachCellHover(rect: Rect, node: TreemapNode, color: string) {
+        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const payload = (point: { x: number;
+            y: number; }): TreemapChartCellEvent => ({
+            x: point.x,
+            y: point.y,
+            value: node.value,
+            label: node.label,
+            key: node.key,
+        });
+
+        applyHoverHighlight(rect, {
+            renderer: this.renderer,
+            duration: hover.duration,
+            ease: hover.ease,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: node.x + node.width / 2,
+                y: node.y,
+            }),
+            content: () => `${node.label}: ${formatValue(node.value)}`,
+            highlight: { fill: color },
+            restore: { fill: setColorAlpha(color, REST_ALPHA) },
+            onEnter: point => this.emit('cellenter', payload(point)),
+            onLeave: point => this.emit('cellleave', payload(point)),
+            onClick: point => this.emit('cellclick', payload(point)),
         });
     }
 

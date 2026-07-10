@@ -26,7 +26,7 @@ export const charts: ChartMeta[] = [
         description: 'Combine x/y series such as bar, line, or area into a single composite chart.',
     },
     {
-        text: 'Pie',
+        text: 'Pie/Donut',
         link: '/docs/charts/pie',
         description: 'Illustrate numerical proportions of statistical data with animated slices and tooltips.',
     },
@@ -34,6 +34,16 @@ export const charts: ChartMeta[] = [
         text: 'Polar Area',
         link: '/docs/charts/polar-area',
         description: 'Equal-angle segments whose radius encodes value, making it easy to compare magnitudes across categories.',
+    },
+    {
+        text: 'Polar Scatter',
+        link: '/docs/charts/polar-scatter',
+        description: 'Points on a circular grid where angle and radius each encode a variable, ideal for directional or cyclical data.',
+    },
+    {
+        text: 'Radial Bar',
+        link: '/docs/charts/radial-bar',
+        description: 'Concentric rings whose arc length encodes each category\'s value — a circular take on the bar chart.',
     },
     {
         text: 'Scatter',
@@ -61,6 +71,11 @@ export const charts: ChartMeta[] = [
         description: 'Hierarchical data as nested rectangles, where each rectangle\'s area is proportional to its value.',
     },
     {
+        text: 'Packed Circle',
+        link: '/docs/charts/packed-circle',
+        description: 'Each datum as a circle whose area encodes its value, arranged in a tight non-overlapping cluster.',
+    },
+    {
         text: 'Funnel',
         link: '/docs/charts/funnel',
         description: 'Progressively narrowing horizontal bars, ideal for visualizing conversion pipelines and drop-off rates.',
@@ -84,6 +99,16 @@ export const charts: ChartMeta[] = [
         text: 'Sankey',
         link: '/docs/charts/sankey',
         description: 'Flow between nodes using weighted links. Ideal for energy flows, budget allocations, or user journeys.',
+    },
+    {
+        text: 'Force-Directed',
+        link: '/docs/charts/force-directed',
+        description: 'A network of nodes and links laid out by a physics simulation, ideal for relationship and dependency data.',
+    },
+    {
+        text: 'Arc Diagram',
+        link: '/docs/charts/arc-diagram',
+        description: 'Nodes along a line connected by arcs whose thickness encodes relationship strength.',
     },
     {
         text: 'Realtime',

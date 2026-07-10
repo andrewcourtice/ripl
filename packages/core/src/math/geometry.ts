@@ -85,10 +85,14 @@ export function getPolygonPoints(
 
 /** Computes the smallest axis-aligned bounding box that contains all boxes extracted from the array. */
 export function getContainingBox<TValue>(value: TValue[], identity: (value: TValue) => Box): Box {
-    let top = 0,
-        left = 0,
-        bottom = 0,
-        right = 0;
+    if (!value.length) {
+        return Box.empty();
+    }
+
+    let top = Infinity,
+        left = Infinity,
+        bottom = -Infinity,
+        right = -Infinity;
 
     value.forEach(item => {
         const box = identity(item);

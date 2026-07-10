@@ -13,9 +13,9 @@ npm install @ripl/charts
 | Category | Charts |
 |----------|--------|
 | **Cartesian** | Bar, Line, Area, Scatter, Trend (multi-series bar/line), Stock, Realtime |
-| **Radial** | Pie/Donut, Radar, Polar Area, Gauge, Sunburst |
-| **Relational** | Sankey, Chord |
-| **Distribution** | Heatmap, Treemap, Funnel |
+| **Radial** | Pie/Donut, Radar, Polar Area, Polar Scatter, Radial Bar, Gauge, Sunburst |
+| **Relational** | Sankey, Chord, Force-Directed, Arc Diagram |
+| **Distribution** | Heatmap, Treemap, Packed Circle, Funnel |
 | **Scheduling** | Gantt |
 
 ## Usage

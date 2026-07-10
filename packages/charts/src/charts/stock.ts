@@ -11,6 +11,7 @@ import type {
 } from '../core/options';
 
 import {
+    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeCrosshair,
@@ -30,6 +31,10 @@ import {
 } from '../components/tooltip';
 
 import {
+    applyHoverHighlight,
+} from '../core/interaction';
+
+import {
     Grid,
 } from '../components/grid';
 
@@ -45,6 +50,7 @@ import {
     createRect,
     easeOutCubic,
     easeOutQuart,
+    EventMap,
     getExtent,
     Group,
     Line,
@@ -80,6 +86,25 @@ export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     downColor?: string;
 }
 
+/** Payload emitted for stock candlestick interaction events. */
+export interface StockChartCandleEvent {
+    x: number;
+    y: number;
+    key: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
+}
+
+/** Events emitted by a {@link StockChart} that consumers can subscribe to via `chart.on(...)`. */
+export interface StockChartEventMap extends EventMap {
+    candleclick: StockChartCandleEvent;
+    candleenter: StockChartCandleEvent;
+    candleleave: StockChartCandleEvent;
+}
+
 interface CandlestickValues {
     key: string;
     open: number;
@@ -104,7 +129,7 @@ const VOLUME_HEIGHT_RATIO = 0.2;
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>> {
+export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>, StockChartEventMap> {
 
     private candlestickGroups: Group[] = [];
     private volumeGroup?: Group;
@@ -192,6 +217,47 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
         return typeIsFunction(accessor) ? accessor : (item: any) => item[accessor] as TReturn;
     }
 
+    /**
+     * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
+     * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
+     */
+    private attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
+        const label = `O: ${formatNumber(values.open)}  H: ${formatNumber(values.high)}  L: ${formatNumber(values.low)}  C: ${formatNumber(values.close)}`;
+
+        const payload = (point: { x: number;
+            y: number; }): StockChartCandleEvent => ({
+            x: point.x,
+            y: point.y,
+            key: values.key,
+            open: values.open,
+            high: values.high,
+            low: values.low,
+            close: values.close,
+            volume: values.volume,
+        });
+
+        applyHoverHighlight(body, {
+            renderer: this.renderer,
+            duration: this.getAnimationDuration(200),
+            ease: easeOutQuart,
+            tooltip: this.tooltip,
+            anchor: () => ({
+                x: anchorX,
+                y: anchorY,
+            }),
+            content: () => label,
+            onEnter: point => this.emit('candleenter', payload(point)),
+            onLeave: point => this.emit('candleleave', payload(point)),
+            onClick: point => this.emit('candleclick', payload(point)),
+            highlight: {
+                fill: setColorAlpha(color, 0.8),
+            },
+            restore: {
+                fill: color,
+            },
+        });
+    }
+
     private getCandlestickValues(item: TData): CandlestickValues {
         const {
             key: keyAccessor,
@@ -239,7 +305,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
         } = arrayJoin(
             data,
             this.candlestickGroups,
-            (item, group) => group.id === this.getCandlestickValues(item).key
+            (item, group) => group.id === `candle-${this.getCandlestickValues(item).key}`
         );
 
         exits.forEach(el => el.destroy());
@@ -295,37 +361,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             });
 
             const group = createGroup({
-                id: values.key,
+                // Namespace the candle group id so a data key can never equal an axis tick id
+                // (which shares a single global DOM cache in the SVG renderer).
+                id: `candle-${values.key}`,
                 children: [wick, body],
             });
 
-            body.on('mouseenter', () => {
-                this.tooltip.show(
-                    x,
-                    bodyTop,
-                    `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-                );
-
-                this.renderer.transition(body, {
-                    duration: this.getAnimationDuration(200),
-                    ease: easeOutQuart,
-                    state: {
-                        fill: setColorAlpha(color, 0.8),
-                    },
-                });
-
-                body.on('mouseleave', () => {
-                    this.tooltip.hide();
-
-                    this.renderer.transition(body, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: color,
-                        },
-                    });
-                });
-            });
+            this.attachBodyHover(body, values, color, x, bodyTop);
 
             return group;
         });
@@ -356,33 +398,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     borderRadius: 1,
                 } as RectState;
 
-                body.on('mouseenter', () => {
-                    this.tooltip.show(
-                        x,
-                        bodyTop,
-                        `O: ${values.open}  H: ${values.high}  L: ${values.low}  C: ${values.close}`
-                    );
-
-                    this.renderer.transition(body, {
-                        duration: this.getAnimationDuration(200),
-                        ease: easeOutQuart,
-                        state: {
-                            fill: setColorAlpha(color, 0.8),
-                        },
-                    });
-
-                    body.on('mouseleave', () => {
-                        this.tooltip.hide();
-
-                        this.renderer.transition(body, {
-                            duration: this.getAnimationDuration(200),
-                            ease: easeOutQuart,
-                            state: {
-                                fill: color,
-                            },
-                        });
-                    });
-                });
+                this.attachBodyHover(body, values, color, x, bodyTop);
             }
 
             if (wick) {
@@ -581,7 +597,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
     }
 
     public async render() {
-        return super.render(async (scene) => {
+        return super.render(async () => {
             const {
                 data,
                 showVolume = true,
@@ -596,24 +612,29 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
 
             const keys = allValues.map(v => v.key);
 
-            const padding = this.getPadding();
-            const chartTop = padding.top;
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+            const area = layout.area;
+            const left = area.x;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
+            const chartTop = area.y;
 
             const hasVolume = showVolume && !!volumeAccessor;
             const volumeHeight = hasVolume
-                ? (scene.height - padding.top - padding.bottom) * VOLUME_HEIGHT_RATIO
+                ? area.height * VOLUME_HEIGHT_RATIO
                 : 0;
 
-            this.yScale = scaleContinuous(priceExtent, [scene.height - padding.bottom - volumeHeight, chartTop], {
+            this.yScale = scaleContinuous(priceExtent, [bottom - volumeHeight, chartTop], {
                 padToTicks: 10,
             });
 
             this.yAxis.scale = this.yScale;
             this.yAxis.bounds = new Box(
                 chartTop,
-                padding.left,
-                scene.height - padding.bottom - volumeHeight,
-                scene.width - padding.right
+                left,
+                bottom - volumeHeight,
+                right
             );
 
             const yAxisBoundingBox = this.yAxis.getBoundingBox();
@@ -622,13 +643,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             const xConvert = (value: string) => {
                 const index = keys.indexOf(value);
                 const rangeStart = yAxisBoundingBox.right + 20;
-                const rangeEnd = scene.width - padding.right;
+                const rangeEnd = right;
                 return rangeStart + ((index + 0.5) / Math.max(1, keys.length)) * (rangeEnd - rangeStart);
             };
 
             const xInvert = (value: number) => {
                 const rangeStart = yAxisBoundingBox.right + 20;
-                const rangeEnd = scene.width - padding.right;
+                const rangeEnd = right;
                 const index = Math.round(((value - rangeStart) / (rangeEnd - rangeStart)) * keys.length - 0.5);
                 return keys[Math.max(0, Math.min(keys.length - 1, index))];
             };
@@ -637,7 +658,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                 (value: string) => xConvert(value),
                 {
                     domain: keys,
-                    range: [yAxisBoundingBox.right + 20, scene.width - padding.right] as number[],
+                    range: [yAxisBoundingBox.right + 20, right] as number[],
                     inverse: xInvert,
                     ticks: (count?: number) => {
                         if (!count || count >= keys.length) {
@@ -655,8 +676,8 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             this.xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
-                scene.height - padding.bottom - volumeHeight,
-                scene.width - padding.right
+                bottom - volumeHeight,
+                right
             );
 
             const xAxisBoundingBox = this.xAxis.getBoundingBox();
@@ -670,7 +691,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             this.yAxis.bounds.bottom = xAxisBoundingBox.top;
 
             const chartLeft = yAxisBoundingBox.right + 20;
-            const chartRight = scene.width - padding.right;
+            const chartRight = right;
 
             // Render grid
             if (this.grid) {
@@ -682,7 +703,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
                     yTickPositions,
                     yAxisBoundingBox.right,
                     chartTop,
-                    scene.width - padding.right - yAxisBoundingBox.right,
+                    right - yAxisBoundingBox.right,
                     xAxisBoundingBox.top - chartTop
                 );
             }
@@ -691,13 +712,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>>
             this.crosshair?.setup(
                 yAxisBoundingBox.right,
                 chartTop,
-                scene.width - padding.right - yAxisBoundingBox.right,
+                right - yAxisBoundingBox.right,
                 xAxisBoundingBox.top - chartTop
             );
 
             // Volume area sits below the x axis
             const volumeTop = xAxisBoundingBox.bottom + 5;
-            const volumeBottom = scene.height - padding.bottom;
+            const volumeBottom = bottom;
 
             const promises: Promise<unknown>[] = [
                 this.xAxis.render(),

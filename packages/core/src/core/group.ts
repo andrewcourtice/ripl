@@ -6,16 +6,20 @@ import {
 } from './element';
 
 import {
+    query,
+    queryAll,
+} from './query';
+
+import type {
+    Queryable,
+} from './query';
+
+import {
     getContainingBox,
 } from '../math';
 
 import {
     OneOrMore,
-    stringEquals,
-    typeIsBoolean,
-    typeIsNil,
-    typeIsNumber,
-    typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
 
@@ -26,128 +30,6 @@ import type {
 /** Options for constructing a group, extending element options with an optional initial set of children. */
 export interface GroupOptions extends ElementOptions {
     children?: OneOrMore<Element>;
-}
-
-const ELEMENT_PATTERNS = {
-    id: /#/,
-    class: /\./,
-    name: /([a-zA-Z\d\-_]+)/,
-};
-
-const COMBINATOR_PATTERNS = {
-    child: />/,
-    nextSibling: /\+/,
-};
-
-const QUERY_PATTERNS = {
-    type: new RegExp(`^${ELEMENT_PATTERNS.name.source}`),
-    id: new RegExp(`${ELEMENT_PATTERNS.id.source}${ELEMENT_PATTERNS.name.source}`),
-    class: new RegExp(`${ELEMENT_PATTERNS.class.source}${ELEMENT_PATTERNS.name.source}`, 'g'),
-    attribute: new RegExp(`(\\[${ELEMENT_PATTERNS.name.source}="(.*)"\\])+`, 'g'),
-    combinators: new RegExp(`(\\s[${Object.values(COMBINATOR_PATTERNS).map(pattern => pattern.source).join('|')}]\\s|\\s)`),
-};
-
-const COMBINATOR_PRODUCERS = [
-    {
-        pattern: /^\s$/,
-        produce: element => isGroup(element) ? element.graph(true) : [],
-    },
-    {
-        pattern: COMBINATOR_PATTERNS.child,
-        produce: element => isGroup(element) ? element.children : [],
-    },
-    {
-        pattern: COMBINATOR_PATTERNS.nextSibling,
-        produce: element => element.parent?.children.slice(element.parent.children.indexOf(element) + 1),
-    },
-] as {
-    pattern: RegExp;
-    produce: (element: Element) => Element[];
-}[];
-
-function serialiseAttribute(value: unknown) {
-    if (typeIsString(value)) {
-        return value;
-    }
-
-    if (typeIsNumber(value) || typeIsBoolean(value)) {
-        return String(value);
-    }
-
-    try {
-        return JSON.stringify(value).replaceAll(/(^"|"$)/g, '');
-    } catch {
-        return String(value);
-    }
-}
-
-function executeQuery(elements: Element[], segments: string[], segmentIndex: number = 0) {
-    const segment = segments[segmentIndex];
-
-    if (!segment || !elements.length) {
-        return elements;
-    }
-
-    if (QUERY_PATTERNS.combinators.test(segment)) {
-        const producer = COMBINATOR_PRODUCERS.find(({ pattern }) => pattern.test(segment));
-
-        if (!producer) {
-            throw new Error('Failed to query!');
-        }
-
-        return executeQuery(elements.flatMap(element => producer.produce(element)), segments, segmentIndex + 1);
-    }
-
-    const type = segment.match(QUERY_PATTERNS.type)?.at(0);
-    const id = segment.match(QUERY_PATTERNS.id)?.at(0);
-    const classes = Array.from(segment.matchAll(QUERY_PATTERNS.class), match => match.at(0));
-    const attributes = Array.from(segment.matchAll(QUERY_PATTERNS.attribute), match => match.at(0));
-
-    return executeQuery(elements.filter(element => {
-        const typeMatch = !type || stringEquals(element.type, type);
-        const idMatch = !id || stringEquals(element.id, id.replace(ELEMENT_PATTERNS.id, ''));
-
-        const classMatch = !classes.length || classes.every(cls => {
-            return !!cls && element.classList.has(cls.replace(ELEMENT_PATTERNS.class, ''));
-        });
-
-        const attrsMatch = !attributes.length || attributes.every(attr => {
-            if (!attr) {
-                return false;
-            }
-
-            const [
-                ,
-                ,
-                key,
-                value,
-            ] = Array.from(attr.matchAll(QUERY_PATTERNS.attribute)).at(0) || [];
-
-            return !typeIsNil(key)
-                && !typeIsNil(value)
-                && key in element
-                && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
-        });
-
-        return typeMatch
-            && idMatch
-            && classMatch
-            && attrsMatch;
-    }), segments, segmentIndex + 1);
-}
-
-/** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
-export function queryAll<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
-    const els = ([] as Element[]).concat(elements).flatMap(element => {
-        return isGroup(element) ? element.graph(true) : [element];
-    });
-
-    return executeQuery(els, selector.split(QUERY_PATTERNS.combinators)) as TElement[];
-}
-
-/** Returns the first element matching a CSS-like selector, or `undefined` if none match. */
-export function query<TElement extends Element = Element>(elements: OneOrMore<Element | Group>, selector: string) {
-    return queryAll<TElement>(elements, selector).at(0);
 }
 
 /** Type guard that checks whether a value is a `Group` instance. */
@@ -161,7 +43,7 @@ export function createGroup(...options: ConstructorParameters<typeof Group>) {
 }
 
 /** A container element that manages child elements, providing scenegraph traversal, CSS-like querying, and composite bounding boxes. */
-export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> {
+export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> implements Queryable {
 
     #elements = new Set<Element>();
 
@@ -185,9 +67,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         this.emit('graph', null);
     }
 
-    /** Replaces all children with the given elements. */
+    /** Replaces all children with the given elements, detaching the previous children. */
     public set(elements: Element[]) {
-        this.#elements.clear();
+        this.clear();
         this.add(elements);
     }
 
@@ -256,9 +138,14 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return queryAll<TElement>(this, selector);
     }
 
-    /** Finds a descendant element by its unique id. */
+    /** Finds a descendant element by its unique id, or `undefined` if none match. */
+    public getElementById<TElement extends Element = Element>(id: string) {
+        return this.graph(true).find(element => element.id === id) as TElement | undefined;
+    }
+
+    /** @deprecated Use {@link getElementById}. */
     public getElementByID<TElement extends Element = Element>(id: string) {
-        return this.graph(true).find(element => element.id === id) as TElement;
+        return this.getElementById<TElement>(id);
     }
 
     /** Returns all descendant elements whose type matches one of the given type names. */
@@ -276,6 +163,12 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     /** Returns the composite bounding box enclosing all children. */
     public getBoundingBox() {
         return getContainingBox(this.children, element => element.getBoundingBox());
+    }
+
+    /** Detaches all children (clearing their parent), then destroys this group. */
+    public destroy(): void {
+        this.clear();
+        super.destroy();
     }
 
     /** Renders all child elements in order within a save/restore context. */

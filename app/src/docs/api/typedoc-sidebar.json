@@ -378,8 +378,16 @@
             "link": "/docs/api/@ripl/charts/classes/BarChart.md"
           },
           {
+            "text": "CartesianChart",
+            "link": "/docs/api/@ripl/charts/classes/CartesianChart.md"
+          },
+          {
             "text": "Chart",
             "link": "/docs/api/@ripl/charts/classes/Chart.md"
+          },
+          {
+            "text": "ChartLayout",
+            "link": "/docs/api/@ripl/charts/classes/ChartLayout.md"
           },
           {
             "text": "ChordChart",
@@ -484,6 +492,14 @@
             "link": "/docs/api/@ripl/charts/interfaces/BaseTrendChartSeriesOptions.md"
           },
           {
+            "text": "CartesianChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/CartesianChartOptions.md"
+          },
+          {
+            "text": "CartesianSetup",
+            "link": "/docs/api/@ripl/charts/interfaces/CartesianSetup.md"
+          },
+          {
             "text": "ChartAnimationOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ChartAnimationOptions.md"
           },
@@ -548,6 +564,14 @@
             "link": "/docs/api/@ripl/charts/interfaces/HeatmapChartOptions.md"
           },
           {
+            "text": "HoverHighlightOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/HoverHighlightOptions.md"
+          },
+          {
+            "text": "HoverTooltip",
+            "link": "/docs/api/@ripl/charts/interfaces/HoverTooltip.md"
+          },
+          {
             "text": "LineChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/LineChartOptions.md"
           },
@@ -582,6 +606,10 @@
           {
             "text": "RealtimeChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/RealtimeChartSeriesOptions.md"
+          },
+          {
+            "text": "ResolvedAnimation",
+            "link": "/docs/api/@ripl/charts/interfaces/ResolvedAnimation.md"
           },
           {
             "text": "RibbonState",
@@ -650,6 +678,10 @@
         "collapsed": true,
         "items": [
           {
+            "text": "Accessor",
+            "link": "/docs/api/@ripl/charts/type-aliases/Accessor.md"
+          },
+          {
             "text": "AxisFormatType",
             "link": "/docs/api/@ripl/charts/type-aliases/AxisFormatType.md"
           },
@@ -664,6 +696,10 @@
           {
             "text": "BorderRadiusInput",
             "link": "/docs/api/@ripl/charts/type-aliases/BorderRadiusInput.md"
+          },
+          {
+            "text": "CartesianTarget",
+            "link": "/docs/api/@ripl/charts/type-aliases/CartesianTarget.md"
           },
           {
             "text": "ChartAnimationInput",
@@ -688,6 +724,10 @@
           {
             "text": "ChartOptions",
             "link": "/docs/api/@ripl/charts/type-aliases/ChartOptions.md"
+          },
+          {
+            "text": "ChartSide",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartSide.md"
           },
           {
             "text": "ChartTitleInput",
@@ -728,9 +768,27 @@
         ]
       },
       {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "ANIMATION_REFERENCE",
+            "link": "/docs/api/@ripl/charts/variables/ANIMATION_REFERENCE.md"
+          }
+        ]
+      },
+      {
         "text": "Functions",
         "collapsed": true,
         "items": [
+          {
+            "text": "applyHoverHighlight",
+            "link": "/docs/api/@ripl/charts/functions/applyHoverHighlight.md"
+          },
+          {
+            "text": "computeStackOffset",
+            "link": "/docs/api/@ripl/charts/functions/computeStackOffset.md"
+          },
           {
             "text": "createAreaChart",
             "link": "/docs/api/@ripl/charts/functions/createAreaChart.md"
@@ -820,6 +878,10 @@
             "link": "/docs/api/@ripl/charts/functions/elementIsSankeyLink.md"
           },
           {
+            "text": "exitElement",
+            "link": "/docs/api/@ripl/charts/functions/exitElement.md"
+          },
+          {
             "text": "normalizeAnimation",
             "link": "/docs/api/@ripl/charts/functions/normalizeAnimation.md"
           },
@@ -860,12 +922,24 @@
             "link": "/docs/api/@ripl/charts/functions/normalizeYAxisItem.md"
           },
           {
+            "text": "resolveAccessor",
+            "link": "/docs/api/@ripl/charts/functions/resolveAccessor.md"
+          },
+          {
+            "text": "resolveAnimation",
+            "link": "/docs/api/@ripl/charts/functions/resolveAnimation.md"
+          },
+          {
             "text": "resolveEase",
             "link": "/docs/api/@ripl/charts/functions/resolveEase.md"
           },
           {
             "text": "resolveFormatLabel",
             "link": "/docs/api/@ripl/charts/functions/resolveFormatLabel.md"
+          },
+          {
+            "text": "stagger",
+            "link": "/docs/api/@ripl/charts/functions/stagger.md"
           }
         ]
       }

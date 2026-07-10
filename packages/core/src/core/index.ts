@@ -4,6 +4,7 @@ export * from './element';
 export * from './event-bus';
 export * from './factory';
 export * from './group';
+export * from './query';
 export * from './renderer';
 export * from './scene';
 export * from './shape';

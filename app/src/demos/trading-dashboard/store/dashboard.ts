@@ -80,6 +80,10 @@ export const useDashboardStore = defineStore('trading-dashboard', () => {
     const stockIntradayData = ref<MockIntradayPoint[]>([]);
     const searchResults = ref<MockSearchResult[]>([]);
 
+    // The intraday candle currently hovered/selected in the candlestick chart (its `datetime` key),
+    // driving the summary cards. Null falls back to the latest candle.
+    const selectedCandleKey = ref<string | null>(null);
+
     const marketLoading = ref(false);
     const commodityLoading = ref(false);
     const stockLoading = ref(false);
@@ -169,7 +173,12 @@ export const useDashboardStore = defineStore('trading-dashboard', () => {
         selectedSymbol.value = symbol;
         selectedSymbolName.value = name;
         searchResults.value = [];
+        selectedCandleKey.value = null;
         fetchStockData();
+    }
+
+    function setSelectedCandle(key: string | null) {
+        selectedCandleKey.value = key;
     }
 
     async function init() {
@@ -194,6 +203,7 @@ export const useDashboardStore = defineStore('trading-dashboard', () => {
         stockDailyDataRaw,
         stockIntradayData,
         searchResults,
+        selectedCandleKey,
 
         marketLoading,
         commodityLoading,
@@ -211,6 +221,7 @@ export const useDashboardStore = defineStore('trading-dashboard', () => {
         fetchStockData,
         searchSymbols,
         selectSymbol,
+        setSelectedCandle,
         init,
     };
 });
