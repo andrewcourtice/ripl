@@ -1,0 +1,22 @@
+{
+    "name": "Ripl",
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+    "postCreateCommand": "corepack enable && yarn install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint",
+                "Vue.volar"
+            ]
+        }
+    },
+    "forwardPorts": [
+        5173
+    ],
+    "portsAttributes": {
+        "5173": {
+            "label": "VitePress docs",
+            "onAutoForward": "notify"
+        }
+    }
+}
