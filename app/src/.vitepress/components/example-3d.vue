@@ -47,6 +47,27 @@ import type {
 
 type ContextType = 'canvas' | 'webgpu';
 
+/** Upper bound on WebGPU acquisition — a present-but-broken adapter can leave `requestAdapter()` pending forever. */
+const WEBGPU_TIMEOUT_MS = 10000;
+
+/** Rejects with `message` if `promise` has not settled within `ms`, so a hung device never strands the spinner. */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), ms);
+
+        promise.then(
+            value => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            reason => {
+                clearTimeout(timer);
+                reject(reason);
+            },
+        );
+    });
+}
+
 const emit = defineEmits<{
     'context-changed': [context: Context3D]
 }>();
@@ -67,6 +88,8 @@ watchEffect(async () => {
     context.value?.destroy();
     context.value = undefined;
     error.value = '';
+    // Reset on every run so switching back to Canvas (or superseding an in-flight WebGPU run) never strands the spinner.
+    loading.value = false;
 
     if (!element) {
         return;
@@ -82,7 +105,11 @@ watchEffect(async () => {
     loading.value = true;
 
     try {
-        const created = await createWebGPUContext(element);
+        const created = await withTimeout(
+            createWebGPUContext(element),
+            WEBGPU_TIMEOUT_MS,
+            'WebGPU initialisation timed out.',
+        );
 
         if (token !== generation) {
             created.destroy();
@@ -93,7 +120,7 @@ watchEffect(async () => {
         emit('context-changed', created);
     } catch {
         if (token === generation) {
-            error.value = 'WebGPU is not supported in this browser. Try Chrome 113+ or Edge 113+.';
+            error.value = 'WebGPU is unavailable or timed out. Try Chrome 113+ or Edge 113+.';
         }
     } finally {
         if (token === generation) {
