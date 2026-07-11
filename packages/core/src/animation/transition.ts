@@ -42,27 +42,27 @@ export function computeTransitionTime(elapsed: number, duration: number, ease: E
 /** A `Task`-based animation that drives a callback over time with easing, looping, and abort support. */
 export class Transition extends Task {
 
-    #paused = false;
-    #hooks?: TransitionHooks;
+    private _paused = false;
+    private _hooks?: TransitionHooks;
 
     /** A factory function that creates a new `Transition` running in the opposite direction. Set by the transition mechanism that created this instance. */
     public inverse!: () => Transition;
 
     constructor(executor: TaskExecutor<void>, hooks?: TransitionHooks) {
         super(executor);
-        this.#hooks = hooks;
+        this._hooks = hooks;
     }
 
     /** Whether the transition is currently paused. */
     public get paused(): boolean {
-        return this.#paused;
+        return this._paused;
     }
 
     /** Pauses the transition without resolving the promise. */
     public pause(): this {
-        if (!this.#paused) {
-            this.#paused = true;
-            this.#hooks?.onPause();
+        if (!this._paused) {
+            this._paused = true;
+            this._hooks?.onPause();
         }
 
         return this;
@@ -70,9 +70,9 @@ export class Transition extends Task {
 
     /** Resumes a paused transition from where it left off. */
     public play(): this {
-        if (this.#paused) {
-            this.#paused = false;
-            this.#hooks?.onPlay();
+        if (this._paused) {
+            this._paused = false;
+            this._hooks?.onPlay();
         }
 
         return this;
@@ -82,8 +82,8 @@ export class Transition extends Task {
     public seek(position: number): this {
         const clamped = clamp(position, 0, 1);
 
-        this.#paused = true;
-        this.#hooks?.onSeek(clamped);
+        this._paused = true;
+        this._hooks?.onSeek(clamped);
 
         return this;
     }

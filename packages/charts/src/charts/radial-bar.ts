@@ -113,13 +113,13 @@ export interface RadialBarChartEventMap extends EventMap {
  */
 export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions<TData>, RadialBarChartEventMap> {
 
-    #groups: Group[] = [];
-    #tooltip: Tooltip;
+    private groups: Group[] = [];
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: RadialBarChartOptions<TData>) {
         super(target, options);
 
-        this.#tooltip = new Tooltip({
+        this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -127,7 +127,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
         this.init();
     }
 
-    #attachBarHover(arc: Arc, values: RadialBarChartBarEvent, color: string, content: string) {
+    private attachBarHover(arc: Arc, values: RadialBarChartBarEvent, color: string, content: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -141,7 +141,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.#tooltip,
+            tooltip: this.tooltip,
             anchor: () => {
                 // Bars are stroked open arcs (no inner radius), so `getCentroid` (which assumes an
                 // annular sector) would land halfway to the centre. Anchor at the mid-sweep point
@@ -243,7 +243,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(data, this.#groups, (item, group) => group.id === getKey(item));
+            } = arrayJoin(data, this.groups, (item, group) => group.id === getKey(item));
 
             exits.forEach(group => group.destroy());
 
@@ -286,7 +286,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
                 bar.autoFill = false;
 
-                this.#attachBarHover(bar, {
+                this.attachBarHover(bar, {
                     x: cx,
                     y: cy,
                     value: getValue(item),
@@ -336,7 +336,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                         endAngle,
                     } as Partial<ArcState>;
 
-                    this.#attachBarHover(bar, {
+                    this.attachBarHover(bar, {
                         x: cx,
                         y: cy,
                         value: getValue(item),
@@ -348,12 +348,12 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
             this.scene.add(entryGroups);
 
-            this.#groups = [
+            this.groups = [
                 ...entryGroups,
                 ...updates.map(([, group]) => group),
             ];
 
-            this.registerHighlightGroups(this.#groups);
+            this.registerHighlightGroups(this.groups);
 
             const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);

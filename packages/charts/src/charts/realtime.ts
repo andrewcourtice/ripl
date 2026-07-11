@@ -109,24 +109,21 @@ export interface RealtimeChartOptions extends BaseChartOptions {
  */
 export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
-    #buffers: Map<string, number[]> = new Map();
-    #seriesGroups: Group[] = [];
-    #yScale!: Scale;
-    #yAxis!: ChartYAxis;
-    // Owned by the chart so the tooltip's scene/renderer lifecycle is tied to it; the realtime chart
-    // constructs it from the `tooltip` option but does not yet drive show/hide.
-    // eslint-disable-next-line no-unused-private-class-members
-    #tooltip!: Tooltip;
-    #grid?: Grid;
-    #crosshair?: Crosshair;
-    #windowSize: number;
-    #transitionDuration: number;
+    private buffers: Map<string, number[]> = new Map();
+    private seriesGroups: Group[] = [];
+    private yScale!: Scale;
+    private yAxis!: ChartYAxis;
+    private tooltip!: Tooltip;
+    private grid?: Grid;
+    private crosshair?: Crosshair;
+    private windowSize: number;
+    private transitionDuration: number;
 
     constructor(target: string | HTMLElement | Context, options: RealtimeChartOptions) {
         super(target, options);
 
-        this.#windowSize = options.windowSize ?? 60;
-        this.#transitionDuration = options.transitionDuration ?? 300;
+        this.windowSize = options.windowSize ?? 60;
+        this.transitionDuration = options.transitionDuration ?? 300;
 
         const axisOpts = normalizeAxis(options.axis);
         const yAxis = normalizeYAxisItem(
@@ -137,7 +134,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         const tooltipOpts = normalizeTooltip(options.tooltip);
 
         if (tooltipOpts.visible) {
-            this.#tooltip = new Tooltip({
+            this.tooltip = new Tooltip({
                 scene: this.scene,
                 renderer: this.renderer,
                 font: tooltipOpts.font,
@@ -146,7 +143,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             });
         }
 
-        this.#yAxis = new ChartYAxis({
+        this.yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -158,7 +155,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         });
 
         if (gridOpts.visible) {
-            this.#grid = new Grid({
+            this.grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
@@ -170,7 +167,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         }
 
         if (crosshairOpts.visible) {
-            this.#crosshair = new Crosshair({
+            this.crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
@@ -182,29 +179,29 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
         // Initialise buffers for each series
         options.series.forEach(srs => {
-            this.#buffers.set(srs.id, []);
+            this.buffers.set(srs.id, []);
         });
 
         this.init();
     }
 
-    #getWindowSize(): number {
-        return this.#windowSize;
+    private getWindowSize(): number {
+        return this.windowSize;
     }
 
-    #getTransitionDuration(): number {
-        return this.#transitionDuration;
+    private getTransitionDuration(): number {
+        return this.transitionDuration;
     }
 
     public push(values: Record<string, number>): void {
-        const maxLen = this.#getWindowSize();
+        const maxLen = this.getWindowSize();
 
         Object.entries(values).forEach(([seriesId, value]) => {
-            let buffer = this.#buffers.get(seriesId);
+            let buffer = this.buffers.get(seriesId);
 
             if (!buffer) {
                 buffer = [];
-                this.#buffers.set(seriesId, buffer);
+                this.buffers.set(seriesId, buffer);
             }
 
             buffer.push(value);
@@ -218,44 +215,44 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     }
 
     public clear(): void {
-        this.#buffers.forEach(buffer => buffer.length = 0);
-        this.#seriesGroups.forEach(group => group.destroy());
-        this.#seriesGroups = [];
+        this.buffers.forEach(buffer => buffer.length = 0);
+        this.seriesGroups.forEach(group => group.destroy());
+        this.seriesGroups = [];
         this.render();
     }
 
     public override update(options: Partial<RealtimeChartOptions>): void {
         if (options.windowSize !== undefined) {
-            this.#windowSize = options.windowSize;
+            this.windowSize = options.windowSize;
         }
 
         if (options.transitionDuration !== undefined) {
-            this.#transitionDuration = options.transitionDuration;
+            this.transitionDuration = options.transitionDuration;
         }
 
         super.update(options);
     }
 
-    #drawSeries(chartLeft: number, chartRight: number, chartTop: number, chartBottom: number) {
+    private drawSeries(chartLeft: number, chartRight: number, chartTop: number, chartBottom: number) {
         const {
             series,
         } = this.options;
 
         this.resolveSeriesColors(series);
 
-        const maxLen = this.#getWindowSize();
-        const duration = this.#getTransitionDuration();
+        const maxLen = this.getWindowSize();
+        const duration = this.getTransitionDuration();
         // Horizontal distance between adjacent samples; one window slides left by this each push.
         const step = (chartRight - chartLeft) / Math.max(1, maxLen - 1);
 
         const existingGroupMap = new Map<string, Group>();
-        this.#seriesGroups.forEach(group => existingGroupMap.set(group.id, group));
+        this.seriesGroups.forEach(group => existingGroupMap.set(group.id, group));
 
         const newGroups: Group[] = [];
         const updatedGroups: Group[] = [];
 
         series.forEach(srs => {
-            const buffer = this.#buffers.get(srs.id) || [];
+            const buffer = this.buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
             const areaOpacity = srs.areaOpacity ?? 0.2;
@@ -277,7 +274,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Compute points from buffer
             const linePoints: Point[] = buffer.map((value, index) => {
                 const x = chartLeft + (index / Math.max(1, maxLen - 1)) * (chartRight - chartLeft);
-                const y = this.#yScale(value);
+                const y = this.yScale(value);
                 return [x, y];
             });
 
@@ -386,13 +383,13 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             this.scene.add(newGroups);
         }
 
-        this.#seriesGroups = [
+        this.seriesGroups = [
             ...newGroups,
             ...updatedGroups,
         ];
 
         // Transition all groups (only polylines with ≥2 points)
-        const transitions = this.#seriesGroups.map(group => {
+        const transitions = this.seriesGroups.map(group => {
             const polylines = group.getElementsByType('polyline') as Polyline[];
 
             return polylines.map(polyline => {
@@ -425,7 +422,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Compute y extent from all buffers
             const allValues: number[] = [];
 
-            this.#buffers.forEach(buffer => {
+            this.buffers.forEach(buffer => {
                 buffer.forEach(value => allValues.push(value));
             });
 
@@ -471,31 +468,31 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const chartBottom = area.y + area.height;
             const chartRight = area.x + area.width;
 
-            this.#yScale = scaleContinuous([yMin, yMax], [chartBottom, chartTop], {
+            this.yScale = scaleContinuous([yMin, yMax], [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
             let chartLeft = area.x;
 
             if (showYAxis !== false) {
-                this.#yAxis.scale = this.#yScale;
-                this.#yAxis.bounds = new Box(
+                this.yAxis.scale = this.yScale;
+                this.yAxis.bounds = new Box(
                     chartTop,
                     area.x,
                     chartBottom,
                     chartRight
                 );
 
-                const yAxisBoundingBox = this.#yAxis.getBoundingBox();
+                const yAxisBoundingBox = this.yAxis.getBoundingBox();
                 chartLeft = yAxisBoundingBox.right + 10;
             }
 
             // Render grid
-            if (this.#grid) {
-                const yTicks = this.#yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this.#yScale(tick));
+            if (this.grid) {
+                const yTicks = this.yScale.ticks(10);
+                const yTickPositions = yTicks.map(tick => this.yScale(tick));
 
-                this.#grid.render(
+                this.grid.render(
                     [],
                     yTickPositions,
                     chartLeft,
@@ -506,7 +503,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             }
 
             // Setup crosshair
-            this.#crosshair?.setup(
+            this.crosshair?.setup(
                 chartLeft,
                 chartTop,
                 chartRight - chartLeft,
@@ -516,10 +513,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const promises: Promise<unknown>[] = [];
 
             if (showYAxis !== false) {
-                promises.push(this.#yAxis.render());
+                promises.push(this.yAxis.render());
             }
 
-            promises.push(this.#drawSeries(chartLeft, chartRight, chartTop, chartBottom));
+            promises.push(this.drawSeries(chartLeft, chartRight, chartTop, chartBottom));
 
             return Promise.all(promises);
         });

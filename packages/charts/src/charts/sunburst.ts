@@ -163,13 +163,13 @@ function flattenNodes(
  */
 export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEventMap> {
 
-    #groups: Group[] = [];
-    #tooltip: Tooltip;
+    private groups: Group[] = [];
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: SunburstChartOptions) {
         super(target, options);
 
-        this.#tooltip = new Tooltip({
+        this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
             placement: 'center',
@@ -231,7 +231,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(arcs, this.#groups, (arc, group) => arc.id === group.id);
+            } = arrayJoin(arcs, this.groups, (arc, group) => arc.id === group.id);
 
             exits.forEach(el => el.destroy());
 
@@ -259,7 +259,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
                     } as Partial<ArcState>,
                 });
 
-                this.#attachSegmentHover(segment, arc);
+                this.attachSegmentHover(segment, arc);
 
                 return createGroup({
                     id: arc.id,
@@ -284,7 +284,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
                         stroke: arc.color,
                     } as Partial<ArcState>;
 
-                    this.#attachSegmentHover(segment, arc);
+                    this.attachSegmentHover(segment, arc);
                 }
 
                 return group;
@@ -292,7 +292,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
 
             scene.add(entryGroups);
 
-            this.#groups = [
+            this.groups = [
                 ...entryGroups,
                 ...updateGroups,
             ];
@@ -320,7 +320,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
         });
     }
 
-    #attachSegmentHover(segment: Arc, arc: FlattenedArc) {
+    private attachSegmentHover(segment: Arc, arc: FlattenedArc) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
@@ -337,7 +337,7 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.#tooltip,
+            tooltip: this.tooltip,
             anchor: () => {
                 const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
                 return {

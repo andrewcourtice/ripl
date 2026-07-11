@@ -91,23 +91,23 @@ const DEFAULT_TRACK_COLOR = '#e5e7eb';
  */
 export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
-    #group?: Group;
-    #track?: Arc;
-    #valueArc?: Arc;
-    #valueText?: Text;
-    #labelText?: Text;
-    #tickLines: Line[] = [];
-    #tickLabels: Text[] = [];
-    #tooltip: Tooltip;
+    private group?: Group;
+    private track?: Arc;
+    private valueArc?: Arc;
+    private valueText?: Text;
+    private labelText?: Text;
+    private tickLines: Line[] = [];
+    private tickLabels: Text[] = [];
+    private tooltip: Tooltip;
     /** The last rendered value, so data updates can animate the value text counting up/down. */
-    #currentValue?: number;
+    private currentValue?: number;
     /** Signature of the tick geometry (centre/radius/count) so ticks only re-animate when they move. */
-    #tickSignature?: string;
+    private tickSignature?: string;
 
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
         super(target, options);
 
-        this.#tooltip = new Tooltip({
+        this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -144,20 +144,20 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const clampedValue = Math.max(min, Math.min(max, value));
             const valueAngle = startAngle + ((clampedValue - min) / range) * (endAngle - startAngle);
 
-            const isEntry = !this.#group;
+            const isEntry = !this.group;
 
-            if (!this.#group) {
-                this.#group = createGroup({
+            if (!this.group) {
+                this.group = createGroup({
                     id: 'gauge',
                     class: 'gauge-chart',
                 });
 
-                scene.add(this.#group);
+                scene.add(this.group);
             }
 
             // --- Track arc (background) --- created once, geometry kept in sync.
-            if (!this.#track) {
-                this.#track = createArc({
+            if (!this.track) {
+                this.track = createArc({
                     id: 'gauge-track',
                     cx,
                     cy,
@@ -169,21 +169,21 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     padAngle: 0,
                 });
 
-                this.#track.autoStroke = false;
-                this.#group.add(this.#track);
+                this.track.autoStroke = false;
+                this.group.add(this.track);
             } else {
-                this.#track.cx = cx;
-                this.#track.cy = cy;
-                this.#track.radius = radius;
-                this.#track.innerRadius = innerRadius;
-                this.#track.startAngle = startAngle;
-                this.#track.endAngle = endAngle;
-                this.#track.fill = trackColor;
+                this.track.cx = cx;
+                this.track.cy = cy;
+                this.track.radius = radius;
+                this.track.innerRadius = innerRadius;
+                this.track.startAngle = startAngle;
+                this.track.endAngle = endAngle;
+                this.track.fill = trackColor;
             }
 
             // --- Value arc --- animates its end angle from the current value to the new one.
-            if (!this.#valueArc) {
-                this.#valueArc = createArc({
+            if (!this.valueArc) {
+                this.valueArc = createArc({
                     id: 'gauge-value',
                     cx,
                     cy,
@@ -195,18 +195,18 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     padAngle: 0,
                 });
 
-                this.#valueArc.autoStroke = false;
-                this.#group.add(this.#valueArc);
+                this.valueArc.autoStroke = false;
+                this.group.add(this.valueArc);
             } else {
-                this.#valueArc.cx = cx;
-                this.#valueArc.cy = cy;
-                this.#valueArc.radius = radius;
-                this.#valueArc.innerRadius = innerRadius;
-                this.#valueArc.startAngle = startAngle;
-                this.#valueArc.fill = setColorAlpha(color, 0.8);
+                this.valueArc.cx = cx;
+                this.valueArc.cy = cy;
+                this.valueArc.radius = radius;
+                this.valueArc.innerRadius = innerRadius;
+                this.valueArc.startAngle = startAngle;
+                this.valueArc.fill = setColorAlpha(color, 0.8);
             }
 
-            this.#valueArc.data = {
+            this.valueArc.data = {
                 endAngle: valueAngle,
             } as Partial<ArcState>;
 
@@ -214,16 +214,16 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
             const formatDisplay = (v: number) => (formatValue ? formatValue(roundTo(v, 2)) : formatNumber(v));
             // The value the text counts up/down *from* on a data update (the previously shown value).
-            const displayFrom = this.#currentValue ?? clampedValue;
+            const displayFrom = this.currentValue ?? clampedValue;
             const displayValue = formatDisplay(clampedValue);
 
-            this.#currentValue = clampedValue;
+            this.currentValue = clampedValue;
 
             // Duration the value arc sweeps and the centre number counts over on a data update.
             const valueDuration = this.getAnimationDuration(1200);
 
-            if (!this.#valueText) {
-                this.#valueText = createText({
+            if (!this.valueText) {
+                this.valueText = createText({
                     id: 'gauge-value-text',
                     x: cx,
                     y: cy - 10,
@@ -238,22 +238,22 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     },
                 });
 
-                this.#group.add(this.#valueText);
+                this.group.add(this.valueText);
             } else {
-                this.#valueText.x = cx;
-                this.#valueText.y = cy - 10;
-                this.#valueText.font = `bold ${Math.round(size * 0.08)}px sans-serif`;
-                this.#valueText.opacity = 1;
+                this.valueText.x = cx;
+                this.valueText.y = cy - 10;
+                this.valueText.font = `bold ${Math.round(size * 0.08)}px sans-serif`;
+                this.valueText.opacity = 1;
                 // Seed the starting number so the counting transition below ticks smoothly from the
                 // previously shown value; with animation off, show the final value immediately (rather
                 // than flashing the end number for a frame before the count begins).
-                this.#valueText.content = valueDuration > 0 ? formatDisplay(displayFrom) : displayValue;
+                this.valueText.content = valueDuration > 0 ? formatDisplay(displayFrom) : displayValue;
             }
 
             // --- Label text --- created/updated/removed depending on the `label` option.
             if (label) {
-                if (!this.#labelText) {
-                    this.#labelText = createText({
+                if (!this.labelText) {
+                    this.labelText = createText({
                         id: 'gauge-label',
                         x: cx,
                         y: cy + 15,
@@ -268,17 +268,17 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                         },
                     });
 
-                    this.#group.add(this.#labelText);
+                    this.group.add(this.labelText);
                 } else {
-                    this.#labelText.content = label;
-                    this.#labelText.x = cx;
-                    this.#labelText.y = cy + 15;
-                    this.#labelText.font = `${Math.round(size * 0.04)}px sans-serif`;
-                    this.#labelText.opacity = 1;
+                    this.labelText.content = label;
+                    this.labelText.x = cx;
+                    this.labelText.y = cy + 15;
+                    this.labelText.font = `${Math.round(size * 0.04)}px sans-serif`;
+                    this.labelText.opacity = 1;
                 }
-            } else if (this.#labelText) {
-                this.#labelText.destroy();
-                this.#labelText = undefined;
+            } else if (this.labelText) {
+                this.labelText.destroy();
+                this.labelText = undefined;
             }
 
             // --- Tick marks and labels --- reconciled via arrayJoin so tick count can change.
@@ -289,8 +289,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             // Ticks only move when the centre/radius/count/label-visibility changes — not on a plain
             // value update — so a value change animates only the arc and the centre number.
             const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
-            const tickGeometryChanged = tickSignature !== this.#tickSignature;
-            this.#tickSignature = tickSignature;
+            const tickGeometryChanged = tickSignature !== this.tickSignature;
+            this.tickSignature = tickSignature;
 
             const tickIndices = tickCount > 0
                 ? Array.from({ length: tickCount + 1 }).map((_, i) => i)
@@ -319,7 +319,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 left: lineEntries,
                 inner: lineUpdates,
                 right: lineExits,
-            } = arrayJoin(tickIndices, this.#tickLines, (i, line) => line.id === `gauge-tick-${i}`);
+            } = arrayJoin(tickIndices, this.tickLines, (i, line) => line.id === `gauge-tick-${i}`);
 
             lineExits.forEach(el => el.destroy());
 
@@ -336,7 +336,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     lineWidth: 1.5,
                 });
 
-                this.#group!.add(line);
+                this.group!.add(line);
 
                 return line;
             });
@@ -352,7 +352,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 } as Partial<LineState>;
             });
 
-            this.#tickLines = [
+            this.tickLines = [
                 ...newTickLines,
                 ...lineUpdates.map(([, line]) => line),
             ];
@@ -384,7 +384,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 left: tickLabelEntries,
                 inner: tickLabelUpdates,
                 right: tickLabelExits,
-            } = arrayJoin(labelIndices, this.#tickLabels, (i, label) => label.id === `gauge-tick-label-${i}`);
+            } = arrayJoin(labelIndices, this.tickLabels, (i, label) => label.id === `gauge-tick-label-${i}`);
 
             tickLabelExits.forEach(el => el.destroy());
 
@@ -402,7 +402,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     textBaseline: 'middle',
                 });
 
-                this.#group!.add(tickLabel);
+                this.group!.add(tickLabel);
 
                 return tickLabel;
             });
@@ -418,22 +418,22 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 } as Partial<TextState>;
             });
 
-            this.#tickLabels = [
+            this.tickLabels = [
                 ...newTickLabels,
                 ...tickLabelUpdates.map(([, label]) => label),
             ];
 
             // Hover/click on the value arc: tooltip + valueclick/enter/leave events.
-            this.#attachValueHover(this.#valueArc, clampedValue, color, formatDisplay);
+            this.attachValueHover(this.valueArc, clampedValue, color, formatDisplay);
 
             // Animate: the value arc sweeps to its new angle; text fades in on first render.
-            const arcTransition = renderer.transition(this.#valueArc, {
+            const arcTransition = renderer.transition(this.valueArc, {
                 duration: valueDuration,
                 ease: easeOutCubic,
-                state: this.#valueArc.data as Partial<ArcState>,
+                state: this.valueArc.data as Partial<ArcState>,
             });
 
-            const entryTexts = [this.#valueText, this.#labelText].filter(Boolean) as Text[];
+            const entryTexts = [this.valueText, this.labelText].filter(Boolean) as Text[];
 
             const textTransition = isEntry
                 ? renderer.transition(entryTexts, element => ({
@@ -444,7 +444,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 }))
                 // On a data update the value counts up/down to the new value (only the bar and the
                 // number change — the rest of the gauge stays put).
-                : renderer.transition(this.#valueText, {
+                : renderer.transition(this.valueText, {
                     duration: valueDuration,
                     ease: easeOutCubic,
                     state: {
@@ -467,7 +467,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
         });
     }
 
-    #attachValueHover(arc: Arc, value: number, color: string, formatDisplay: (value: number) => string) {
+    private attachValueHover(arc: Arc, value: number, color: string, formatDisplay: (value: number) => string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -481,7 +481,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.#tooltip,
+            tooltip: this.tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
                 return {

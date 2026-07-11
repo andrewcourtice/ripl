@@ -290,7 +290,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         };
     }
 
-    #appendElementData(data: string) {
+    private appendElementData(data: string) {
         this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
     }
 
@@ -301,26 +301,26 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         const clockwiseFlag = +!counterclockwise;
 
         this.moveTo(x1, y1);
-        this.#appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
+        this.appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
     }
 
     public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
         this.moveTo(x1, y1);
-        this.#appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
+        this.appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
     }
 
     public circle(x: number, y: number, radius: number): void {
         this.moveTo(x + radius, y);
-        this.#appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
-        this.#appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * 2},0`);
+        this.appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
+        this.appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * 2},0`);
     }
 
     public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
-        this.#appendElementData(`C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x},${y}`);
+        this.appendElementData(`C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x},${y}`);
     }
 
     public closePath(): void {
-        this.#appendElementData('Z');
+        this.appendElementData('Z');
     }
 
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
@@ -343,8 +343,8 @@ export class SVGPath extends ContextPath implements SVGContextElement {
             const [mx, my] = pointOnEllipse(startAngle);
             const [ox, oy] = pointOnEllipse(startAngle + Math.PI);
             this.moveTo(mx, my);
-            this.#appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${ox},${oy}`);
-            this.#appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${mx},${my}`);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${ox},${oy}`);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} 1 ${+!counterclockwise} ${mx},${my}`);
         } else {
             const [x1, y1] = pointOnEllipse(startAngle);
             const [x2, y2] = pointOnEllipse(endAngle);
@@ -356,20 +356,20 @@ export class SVGPath extends ContextPath implements SVGContextElement {
             const largeArc = +(sweep > Math.PI);
 
             this.moveTo(x1, y1);
-            this.#appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} ${largeArc} ${+!counterclockwise} ${x2},${y2}`);
+            this.appendElementData(`A ${radiusX} ${radiusY} ${rotDeg} ${largeArc} ${+!counterclockwise} ${x2},${y2}`);
         }
     }
 
     public lineTo(x: number, y: number): void {
-        this.#appendElementData(`L ${x},${y}`);
+        this.appendElementData(`L ${x},${y}`);
     }
 
     public moveTo(x: number, y: number): void {
-        this.#appendElementData(`M ${x},${y}`);
+        this.appendElementData(`M ${x},${y}`);
     }
 
     public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
-        this.#appendElementData(`Q ${cpx},${cpy} ${x},${y}`);
+        this.appendElementData(`Q ${cpx},${cpy} ${x},${y}`);
     }
 
     public rect(x: number, y: number, width: number, height: number): void {
@@ -394,13 +394,13 @@ export class SVGPath extends ContextPath implements SVGContextElement {
 
         this.moveTo(x + borderTopLeft, y);
         this.lineTo(x + width - borderTopRight, y);
-        this.#appendElementData(`A ${borderTopRight} ${borderTopRight} 0 0 1 ${x + width},${y + borderTopRight}`);
+        this.appendElementData(`A ${borderTopRight} ${borderTopRight} 0 0 1 ${x + width},${y + borderTopRight}`);
         this.lineTo(x + width, y + height - borderBottomRight);
-        this.#appendElementData(`A ${borderBottomRight} ${borderBottomRight} 0 0 1 ${x + width - borderBottomRight},${y + height}`);
+        this.appendElementData(`A ${borderBottomRight} ${borderBottomRight} 0 0 1 ${x + width - borderBottomRight},${y + height}`);
         this.lineTo(x + borderBottomLeft, y + height);
-        this.#appendElementData(`A ${borderBottomLeft} ${borderBottomLeft} 0 0 1 ${x},${y + height - borderBottomLeft}`);
+        this.appendElementData(`A ${borderBottomLeft} ${borderBottomLeft} 0 0 1 ${x},${y + height - borderBottomLeft}`);
         this.lineTo(x, y + borderTopLeft);
-        this.#appendElementData(`A ${borderTopLeft} ${borderTopLeft} 0 0 1 ${x + borderTopLeft},${y}`);
+        this.appendElementData(`A ${borderTopLeft} ${borderTopLeft} 0 0 1 ${x + borderTopLeft},${y}`);
         this.closePath();
     }
 
@@ -485,21 +485,21 @@ export class SVGTextPath implements SVGContextElement {
 /** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
 export class SVGContext extends DOMContext<SVGSVGElement> {
 
-    #vtree: SVGVNode;
-    #domCache: Map<string, Element>;
-    #reconcilerOptions: ReconcilerOptions<SVGContextElement>;
-    #requestFrame: (callback: AnyFunction) => void;
-    #defs: SVGDefsElement;
-    #gradientCache: Map<string, { gradientId: string;
+    private vtree: SVGVNode;
+    private domCache: Map<string, Element>;
+    private reconcilerOptions: ReconcilerOptions<SVGContextElement>;
+    private requestFrame: (callback: AnyFunction) => void;
+    private defs: SVGDefsElement;
+    private gradientCache: Map<string, { gradientId: string;
         element: SVGElement; }>;
-    #textPathCache: Map<string, { pathId: string;
+    private textPathCache: Map<string, { pathId: string;
         element: SVGElement; }>;
-    #transformStack: string[][];
-    #currentTransforms: string[];
-    #clipCache: Map<string, { clipId: string;
+    private transformStack: string[][];
+    private currentTransforms: string[];
+    private clipCache: Map<string, { clipId: string;
         element: SVGElement; }>;
-    #clipStack: (string | undefined)[];
-    #currentClipId: string | undefined;
+    private clipStack: (string | undefined)[];
+    private currentClipId: string | undefined;
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -511,13 +511,13 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         super('svg', target, svg, options);
 
         this.buffer = true;
-        this.#vtree = {
+        this.vtree = {
             id: '__root__',
             tag: 'svg',
             children: [],
         };
 
-        this.#reconcilerOptions = {
+        this.reconcilerOptions = {
             createElement: (tag, id) => {
                 const el = createSVGElement(tag as keyof SVGElementTagNameMap);
                 el.setAttribute('id', id);
@@ -530,35 +530,35 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             excludeSelectors: ['defs'],
         };
 
-        this.#domCache = new Map();
-        this.#gradientCache = new Map();
-        this.#textPathCache = new Map();
-        this.#transformStack = [];
-        this.#currentTransforms = [];
-        this.#clipCache = new Map();
-        this.#clipStack = [];
-        this.#currentClipId = undefined;
-        this.#defs = createSVGElement('defs');
-        this.element.appendChild(this.#defs);
-        this.#requestFrame = createFrameBuffer();
+        this.domCache = new Map();
+        this.gradientCache = new Map();
+        this.textPathCache = new Map();
+        this.transformStack = [];
+        this.currentTransforms = [];
+        this.clipCache = new Map();
+        this.clipStack = [];
+        this.currentClipId = undefined;
+        this.defs = createSVGElement('defs');
+        this.element.appendChild(this.defs);
+        this.requestFrame = createFrameBuffer();
 
         this.init();
     }
 
-    #removeGradientDef(cacheKey: string): void {
-        const existing = this.#gradientCache.get(cacheKey);
+    private removeGradientDef(cacheKey: string): void {
+        const existing = this.gradientCache.get(cacheKey);
 
         if (!existing) {
             return;
         }
 
-        this.#defs.removeChild(existing.element);
-        this.#gradientCache.delete(cacheKey);
+        this.defs.removeChild(existing.element);
+        this.gradientCache.delete(cacheKey);
     }
 
-    #resolveGradientStyle(value: string, cacheKey: string): string {
+    private resolveGradientStyle(value: string, cacheKey: string): string {
         if (!isGradientString(value)) {
-            this.#removeGradientDef(cacheKey);
+            this.removeGradientDef(cacheKey);
             return value;
         }
 
@@ -568,7 +568,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return value;
         }
 
-        const cached = this.#gradientCache.get(cacheKey);
+        const cached = this.gradientCache.get(cacheKey);
 
         if (cached) {
             updateSVGGradientElement(cached.element, gradient);
@@ -583,8 +583,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return value;
         }
 
-        this.#defs.appendChild(gradientEl);
-        this.#gradientCache.set(cacheKey, {
+        this.defs.appendChild(gradientEl);
+        this.gradientCache.set(cacheKey, {
             gradientId,
             element: gradientEl,
         });
@@ -597,7 +597,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         super.rescale(width, height);
     }
 
-    #setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
+    private setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
         Object.assign(element.definition.styles, mapSVGStyles({
             filter: this.currentState.filter,
             direction: this.currentState.direction,
@@ -613,18 +613,18 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             ...styles,
         }));
 
-        const transformStr = this.#currentTransforms.join(' ');
+        const transformStr = this.currentTransforms.join(' ');
 
         if (transformStr) {
             element.definition.attributes.transform = transformStr;
         }
 
-        if (this.#currentClipId) {
-            element.definition.attributes['clip-path'] = `url(#${this.#currentClipId})`;
+        if (this.currentClipId) {
+            element.definition.attributes['clip-path'] = `url(#${this.currentClipId})`;
         }
     }
 
-    #isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
+    private isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
         const element = this.element.getElementById(path.id);
         const point = this.element.createSVGPoint();
 
@@ -637,10 +637,10 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         );
     }
 
-    #addToVTree(contextElement: SVGContextElement): void {
+    private addToVTree(contextElement: SVGContextElement): void {
         const renderElement = this.currentRenderElement;
         const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this.#vtree, groupIds);
+        const parent = ensureGroupPath(this.vtree, groupIds);
 
         parent.children.push({
             id: contextElement.id,
@@ -650,10 +650,10 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
-    #removeFromVTree(id: string): void {
+    private removeFromVTree(id: string): void {
         const renderElement = this.currentRenderElement;
         const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this.#vtree, groupIds);
+        const parent = ensureGroupPath(this.vtree, groupIds);
         const index = parent.children.findIndex(c => c.id === id);
 
         if (index !== -1) {
@@ -661,13 +661,13 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         }
     }
 
-    #render() {
-        reconcileNode(this.element, this.#vtree, this.#domCache, this.#reconcilerOptions);
+    private render() {
+        reconcileNode(this.element, this.vtree, this.domCache, this.reconcilerOptions);
     }
 
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
-            this.#vtree = {
+            this.vtree = {
                 id: '__root__',
                 tag: 'svg',
                 children: [],
@@ -685,16 +685,16 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         }
 
         if (this.buffer) {
-            this.#requestFrame(() => this.#render());
+            this.requestFrame(() => this.render());
         } else {
-            this.#render();
+            this.render();
         }
     }
 
     public export(): ContextExport {
         // Rendering is deferred to rAF when buffering is enabled, so force a synchronous reconcile
         // to ensure the serialized markup reflects the latest scene.
-        this.#render();
+        this.render();
 
         const markup = new XMLSerializer().serializeToString(this.element);
         const width = this.width;
@@ -711,7 +711,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
     public createPath(id?: string): SVGPath {
         const path = new SVGPath(id);
-        this.#addToVTree(path);
+        this.addToVTree(path);
 
         return path;
     }
@@ -720,7 +720,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         const text = new SVGText(options);
         const renderElement = this.currentRenderElement;
         const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this.#vtree, groupIds);
+        const parent = ensureGroupPath(this.vtree, groupIds);
 
         const textNode: SVGVNode = {
             id: text.id,
@@ -731,18 +731,18 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         if (options.pathData) {
             const cacheKey = text.id;
-            let cached = this.#textPathCache.get(cacheKey);
+            let cached = this.textPathCache.get(cacheKey);
 
             if (!cached) {
                 const pathId = `textpath-${stringUniqueId()}`;
                 const pathEl = createSVGElement('path');
                 pathEl.setAttribute('id', pathId);
-                this.#defs.appendChild(pathEl);
+                this.defs.appendChild(pathEl);
                 cached = {
                     pathId,
                     element: pathEl,
                 };
-                this.#textPathCache.set(cacheKey, cached);
+                this.textPathCache.set(cacheKey, cached);
             }
 
             cached.element.setAttribute('d', options.pathData);
@@ -757,11 +757,11 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             });
         } else {
             const cacheKey = text.id;
-            const cached = this.#textPathCache.get(cacheKey);
+            const cached = this.textPathCache.get(cacheKey);
 
             if (cached) {
-                this.#defs.removeChild(cached.element);
-                this.#textPathCache.delete(cacheKey);
+                this.defs.removeChild(cached.element);
+                this.textPathCache.delete(cacheKey);
             }
         }
 
@@ -779,50 +779,50 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         const href = canvasImageSourceToDataURL(image, imgWidth, imgHeight);
         const svgImage = new SVGImage(id, href, x, y, imgWidth, imgHeight);
 
-        this.#setElementStyles(svgImage, {
+        this.setElementStyles(svgImage, {
             opacity: this.currentState.opacity.toString(),
         });
 
-        this.#addToVTree(svgImage);
+        this.addToVTree(svgImage);
     }
 
     public save(): void {
-        this.#transformStack.push([...this.#currentTransforms]);
-        this.#clipStack.push(this.#currentClipId);
+        this.transformStack.push([...this.currentTransforms]);
+        this.clipStack.push(this.currentClipId);
         super.save();
     }
 
     public restore(): void {
-        this.#currentTransforms = this.#transformStack.pop() || [];
-        this.#currentClipId = this.#clipStack.pop();
+        this.currentTransforms = this.transformStack.pop() || [];
+        this.currentClipId = this.clipStack.pop();
         super.restore();
     }
 
     public rotate(angle: number): void {
-        this.#currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
+        this.currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
     }
 
     public scale(x: number, y: number): void {
-        this.#currentTransforms.push(`scale(${x},${y})`);
+        this.currentTransforms.push(`scale(${x},${y})`);
     }
 
     public translate(x: number, y: number): void {
-        this.#currentTransforms.push(`translate(${x},${y})`);
+        this.currentTransforms.push(`translate(${x},${y})`);
     }
 
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        this.#currentTransforms = [`matrix(${a},${b},${c},${d},${e},${f})`];
+        this.currentTransforms = [`matrix(${a},${b},${c},${d},${e},${f})`];
     }
 
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        this.#currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
+        this.currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
     public applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
-        let cached = this.#clipCache.get(cacheKey);
+        let cached = this.clipCache.get(cacheKey);
 
         if (!cached) {
             const clipId = `clip-${stringUniqueId()}`;
@@ -831,19 +831,19 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
             const useEl = createSVGElement('path');
             clipPathEl.appendChild(useEl);
-            this.#defs.appendChild(clipPathEl);
+            this.defs.appendChild(clipPathEl);
 
             cached = {
                 clipId,
                 element: useEl,
             };
-            this.#clipCache.set(cacheKey, cached);
+            this.clipCache.set(cacheKey, cached);
         }
 
         cached.element.setAttribute('d', path.definition.attributes.d);
 
-        if (this.#currentTransforms.length > 0) {
-            cached.element.setAttribute('transform', this.#currentTransforms.join(' '));
+        if (this.currentTransforms.length > 0) {
+            cached.element.setAttribute('transform', this.currentTransforms.join(' '));
         } else {
             cached.element.removeAttribute('transform');
         }
@@ -852,20 +852,20 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             cached.element.setAttribute('clip-rule', fillRule);
         }
 
-        this.#removeFromVTree(path.id);
-        this.#currentClipId = cached.clipId;
+        this.removeFromVTree(path.id);
+        this.currentClipId = cached.clipId;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
-        this.#setElementStyles(element, {
-            fill: this.#resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
+        this.setElementStyles(element, {
+            fill: this.resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
         });
     }
 
     public applyStroke(element: SVGContextElement): void {
-        this.#setElementStyles(element, {
-            stroke: this.#resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
+        this.setElementStyles(element, {
+            stroke: this.resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
             strokeLinecap: this.currentState.lineCap,
             strokeDasharray: this.currentState.lineDash.join(' '),
             strokeDashoffset: this.currentState.lineDashOffset.toString(),
@@ -883,11 +883,11 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
-        return this.#isPointIn('fill', path, x, y);
+        return this.isPointIn('fill', path, x, y);
     }
 
     public isPointInStroke(path: SVGPath, x: number, y: number): boolean {
-        return this.#isPointIn('stroke', path, x, y);
+        return this.isPointIn('stroke', path, x, y);
     }
 
 }

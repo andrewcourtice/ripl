@@ -43,11 +43,11 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
     public readonly root: HTMLElement;
 
-    #interactive: boolean;
-    #interactionEnabled = false;
-    #activeElements = new Set<RenderElement>();
-    #dragThreshold: number;
-    #interactionState?: InteractionState;
+    private interactive: boolean;
+    private interactionEnabled = false;
+    private activeElements = new Set<RenderElement>();
+    private dragThreshold: number;
+    private interactionState?: InteractionState;
 
     constructor(
         type: string,
@@ -72,8 +72,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         root.appendChild(element);
 
-        this.#interactive = interactive;
-        this.#dragThreshold = dragThreshold;
+        this.interactive = interactive;
+        this.dragThreshold = dragThreshold;
         this.root = root;
     }
 
@@ -87,17 +87,17 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.retain(onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height)));
 
-        if (this.#interactive) {
+        if (this.interactive) {
             this.enableInteraction();
         }
     }
 
-    #attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
+    private attachInteractionEvent<TEvent extends keyof DOMElementEventMap<HTMLElement>>(event: TEvent, handler: DOMEventHandler<HTMLElement, TEvent>) {
         this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), INTERACTION_KEY);
     }
 
-    #handleMouseEnter(): void {
-        const state = this.#interactionState!;
+    private handleMouseEnter(): void {
+        const state = this.interactionState!;
 
         ({
             left: state.left,
@@ -107,12 +107,12 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this.emit('mouseenter', null);
     }
 
-    #handleMouseLeave(): void {
+    private handleMouseLeave(): void {
         this.emit('mouseleave', null);
     }
 
-    #handleMouseDown(event: MouseEvent): void {
-        const state = this.#interactionState!;
+    private handleMouseDown(event: MouseEvent): void {
+        const state = this.interactionState!;
         const rx = event.clientX - state.left;
         const ry = event.clientY - state.top;
         const x = this.scaleX(rx);
@@ -128,8 +128,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         }
     }
 
-    #handleMouseMove(event: MouseEvent): void {
-        const state = this.#interactionState!;
+    private handleMouseMove(event: MouseEvent): void {
+        const state = this.interactionState!;
         const x = event.clientX - state.left;
         const y = event.clientY - state.top;
 
@@ -139,19 +139,19 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         });
 
         if (state.dragElement) {
-            this.#handleDrag(x, y);
+            this.handleDrag(x, y);
         }
 
-        state.scheduleHitTest(() => this.#handleHoverHitTest(x, y));
+        state.scheduleHitTest(() => this.handleHoverHitTest(x, y));
     }
 
-    #handleDrag(rx: number, ry: number): void {
-        const state = this.#interactionState!;
+    private handleDrag(rx: number, ry: number): void {
+        const state = this.interactionState!;
         const dx = rx - state.dragStartX;
         const dy = ry - state.dragStartY;
 
         if (!state.dragStarted) {
-            if (getEuclideanDistance(dx, dy) >= this.#dragThreshold) {
+            if (getEuclideanDistance(dx, dy) >= this.dragThreshold) {
                 state.dragStarted = true;
                 state.dragPrevX = state.dragStartX;
                 state.dragPrevY = state.dragStartY;
@@ -187,7 +187,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.dragElement!.emit('drag', payload);
     }
 
-    #handleHoverHitTest(rx: number, ry: number): void {
+    private handleHoverHitTest(rx: number, ry: number): void {
         const x = this.scaleX(rx);
         const y = this.scaleY(ry);
 
@@ -198,17 +198,17 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             left: entries,
             inner: updates,
             right: exits,
-        } = arrayJoin(topmost, [...this.#activeElements], (hitElement, activeElement) => {
+        } = arrayJoin(topmost, [...this.activeElements], (hitElement, activeElement) => {
             return hitElement === activeElement;
         });
 
         exits.forEach(element => {
-            this.#activeElements.delete(element);
+            this.activeElements.delete(element);
             element.emit('mouseleave', null);
         });
 
         entries.forEach(element => {
-            this.#activeElements.add(element);
+            this.activeElements.add(element);
             element.emit('mouseenter', null);
         });
 
@@ -218,8 +218,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         }));
     }
 
-    #handleMouseUp(event: MouseEvent): void {
-        const state = this.#interactionState!;
+    private handleMouseUp(event: MouseEvent): void {
+        const state = this.interactionState!;
 
         if (state.dragElement && state.dragStarted) {
             const rx = event.clientX - state.left;
@@ -244,8 +244,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.dragStarted = false;
     }
 
-    #handleClick(event: MouseEvent): void {
-        const state = this.#interactionState!;
+    private handleClick(event: MouseEvent): void {
+        const state = this.interactionState!;
         const x = this.scaleX(event.clientX - state.left);
         const y = this.scaleY(event.clientY - state.top);
 
@@ -261,13 +261,13 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
     /** Enables DOM interaction events (mouse enter, leave, move, click, drag) with element hit testing. */
     public enableInteraction(): void {
-        if (this.#interactionEnabled) {
+        if (this.interactionEnabled) {
             return;
         }
 
-        this.#interactionEnabled = true;
+        this.interactionEnabled = true;
 
-        this.#interactionState = {
+        this.interactionState = {
             left: 0,
             top: 0,
             dragElement: undefined,
@@ -279,24 +279,24 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             scheduleHitTest: createFrameBuffer(),
         };
 
-        this.#attachInteractionEvent('mouseenter', () => this.#handleMouseEnter());
-        this.#attachInteractionEvent('mouseleave', () => this.#handleMouseLeave());
-        this.#attachInteractionEvent('mousedown', event => this.#handleMouseDown(event));
-        this.#attachInteractionEvent('mousemove', event => this.#handleMouseMove(event));
-        this.#attachInteractionEvent('mouseup', event => this.#handleMouseUp(event));
-        this.#attachInteractionEvent('click', event => this.#handleClick(event));
+        this.attachInteractionEvent('mouseenter', () => this.handleMouseEnter());
+        this.attachInteractionEvent('mouseleave', () => this.handleMouseLeave());
+        this.attachInteractionEvent('mousedown', event => this.handleMouseDown(event));
+        this.attachInteractionEvent('mousemove', event => this.handleMouseMove(event));
+        this.attachInteractionEvent('mouseup', event => this.handleMouseUp(event));
+        this.attachInteractionEvent('click', event => this.handleClick(event));
     }
 
     /** Disables DOM interaction events and clears the active element set. */
     public disableInteraction(): void {
-        if (!this.#interactionEnabled) {
+        if (!this.interactionEnabled) {
             return;
         }
 
-        this.#interactionEnabled = false;
-        this.#interactionState = undefined;
+        this.interactionEnabled = false;
+        this.interactionState = undefined;
         this.dispose(INTERACTION_KEY);
-        this.#activeElements.clear();
+        this.activeElements.clear();
     }
 
     /** Destroys the context, removing the DOM element and disposing all resources. */

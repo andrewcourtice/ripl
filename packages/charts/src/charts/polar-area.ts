@@ -134,17 +134,17 @@ export interface PolarAreaChartEventMap extends EventMap {
  */
 export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions<TData>, PolarAreaChartEventMap> {
 
-    #groups: Group[] = [];
-    #gridGroup?: Group;
-    #gridRings: Circle[] = [];
-    #gridLabels: Text[] = [];
-    #gridLines: Line[] = [];
-    #tooltip: Tooltip;
+    private groups: Group[] = [];
+    private gridGroup?: Group;
+    private gridRings: Circle[] = [];
+    private gridLabels: Text[] = [];
+    private gridLines: Line[] = [];
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
         super(target, options);
 
-        this.#tooltip = new Tooltip({
+        this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
             placement: 'center',
@@ -153,7 +153,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         this.init();
     }
 
-    #drawGrid(
+    private drawGrid(
         cx: number,
         cy: number,
         innerRadius: number,
@@ -164,18 +164,18 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         startOffset: number,
         segmentCount: number
     ) {
-        const isEntry = !this.#gridGroup;
+        const isEntry = !this.gridGroup;
         const animDuration = this.getAnimationDuration(800);
         const radiusStep = (maxRadius - innerRadius) / levels;
 
         if (isEntry) {
-            this.#gridGroup = createGroup({
+            this.gridGroup = createGroup({
                 id: 'polar-grid',
                 class: 'polar-grid',
                 zIndex: 0,
             });
 
-            this.scene.add(this.#gridGroup);
+            this.scene.add(this.gridGroup);
         }
 
         // --- Concentric rings ---
@@ -185,7 +185,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             left: ringEntries,
             inner: ringUpdates,
             right: ringExits,
-        } = arrayJoin(levelIndices, this.#gridRings, (level, ring) => ring.id === `polar-ring-${level}`);
+        } = arrayJoin(levelIndices, this.gridRings, (level, ring) => ring.id === `polar-ring-${level}`);
 
         ringExits.forEach(el => el.destroy());
 
@@ -205,7 +205,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             });
 
             ring.autoFill = false;
-            this.#gridGroup!.add(ring);
+            this.gridGroup!.add(ring);
 
             return ring;
         });
@@ -220,7 +220,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             } as Partial<CircleState>;
         });
 
-        this.#gridRings = [
+        this.gridRings = [
             ...newRings,
             ...ringUpdates.map(([, ring]) => ring),
         ];
@@ -230,7 +230,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             left: labelEntries,
             inner: labelUpdates,
             right: labelExits,
-        } = arrayJoin(levelIndices, this.#gridLabels, (level, label) => label.id === `polar-ring-label-${level}`);
+        } = arrayJoin(levelIndices, this.gridLabels, (level, label) => label.id === `polar-ring-label-${level}`);
 
         labelExits.forEach(el => el.destroy());
 
@@ -253,7 +253,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 },
             });
 
-            this.#gridGroup!.add(label);
+            this.gridGroup!.add(label);
 
             return label;
         });
@@ -269,7 +269,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             } as Partial<TextState>;
         });
 
-        this.#gridLabels = [
+        this.gridLabels = [
             ...newLabels,
             ...labelUpdates.map(([, label]) => label),
         ];
@@ -281,7 +281,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             left: lineEntries,
             inner: lineUpdates,
             right: lineExits,
-        } = arrayJoin(lineIndices, this.#gridLines, (idx, line) => line.id === `polar-axis-${idx}`);
+        } = arrayJoin(lineIndices, this.gridLines, (idx, line) => line.id === `polar-axis-${idx}`);
 
         lineExits.forEach(el => el.destroy());
 
@@ -306,7 +306,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 },
             });
 
-            this.#gridGroup!.add(line);
+            this.gridGroup!.add(line);
 
             return line;
         });
@@ -326,13 +326,13 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             } as Partial<LineState>;
         });
 
-        this.#gridLines = [
+        this.gridLines = [
             ...newLines,
             ...lineUpdates.map(([, line]) => line),
         ];
 
         // Animate: staggered entry for new elements, smooth transition for updates
-        const allElements = this.#gridGroup!.children;
+        const allElements = this.gridGroup!.children;
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({
@@ -413,7 +413,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const angleStep = TAU / data.length;
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
-            const gridTransition = this.#drawGrid(
+            const gridTransition = this.drawGrid(
                 centerX,
                 centerY,
                 size * innerRadiusRatio,
@@ -457,7 +457,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 left: entryData,
                 inner: updateData,
                 right: exitData,
-            } = arrayJoin(calculations, this.#groups, (item, group) => item.key === group.id);
+            } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
 
             const entries = entryData.map(item => {
                 const {
@@ -491,7 +491,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     } as Partial<ArcState>,
                 });
 
-                this.#attachSegmentHover(segmentArc, {
+                this.attachSegmentHover(segmentArc, {
                     color,
                     value: item.value,
                     label,
@@ -567,7 +567,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
                 arc.data = arcData;
 
-                this.#attachSegmentHover(arc, {
+                this.attachSegmentHover(arc, {
                     color: resolvedColor,
                     value: item.value,
                     label: item.label,
@@ -626,12 +626,12 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 return group;
             });
 
-            this.#groups = [
+            this.groups = [
                 ...entries,
                 ...updates,
             ];
 
-            this.registerHighlightGroups(this.#groups);
+            this.registerHighlightGroups(this.groups);
 
             scene.add(entries);
 
@@ -682,7 +682,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         });
     }
 
-    #attachSegmentHover(arc: Arc, segment: { color: string;
+    private attachSegmentHover(arc: Arc, segment: { color: string;
         value: number;
         label: string;
         key: string; }) {
@@ -703,7 +703,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.#tooltip,
+            tooltip: this.tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
                 return {

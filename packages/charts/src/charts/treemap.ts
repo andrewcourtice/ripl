@@ -171,13 +171,13 @@ const REST_ALPHA = 0.65;
 
 export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TData>, TreemapChartEventMap> {
 
-    #groups: Group[] = [];
-    #tooltip: Tooltip;
+    private groups: Group[] = [];
+    private tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
         super(target, options);
 
-        this.#tooltip = new Tooltip({
+        this.tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -245,7 +245,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(nodes, this.#groups, (node, group) => node.key === group.id);
+            } = arrayJoin(nodes, this.groups, (node, group) => node.key === group.id);
 
             exits.forEach(el => el.destroy());
 
@@ -275,7 +275,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     } as RectState,
                 });
 
-                this.#attachCellHover(rect, node, nodeColor);
+                this.attachCellHover(rect, node, nodeColor);
 
                 // Add label if the cell is large enough
                 const children: (Rect | Text)[] = [rect];
@@ -319,7 +319,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         fill: setColorAlpha(nodeColor, REST_ALPHA),
                     } as RectState;
 
-                    this.#attachCellHover(rect, node, nodeColor);
+                    this.attachCellHover(rect, node, nodeColor);
                 }
 
                 // Move the label to the cell's new centre in lockstep with the rect (routing the new
@@ -359,7 +359,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             scene.add(entryGroups);
 
-            this.#groups = [
+            this.groups = [
                 ...entryGroups,
                 ...updateGroups,
             ];
@@ -408,7 +408,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
         });
     }
 
-    #attachCellHover(rect: Rect, node: TreemapNode, color: string) {
+    private attachCellHover(rect: Rect, node: TreemapNode, color: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
@@ -425,7 +425,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.#tooltip,
+            tooltip: this.tooltip,
             anchor: () => ({
                 x: node.x + node.width / 2,
                 y: node.y,

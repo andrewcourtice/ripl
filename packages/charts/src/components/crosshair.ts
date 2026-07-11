@@ -33,16 +33,16 @@ const DEFAULT_LINE_DASH = [4, 4];
 /** A crosshair overlay that follows mouse position within the chart area. */
 export class Crosshair extends ChartComponent {
 
-    #group?: Group;
-    #verticalLine?: Line;
-    #horizontalLine?: Line;
-    #showVertical: boolean;
-    #showHorizontal: boolean;
-    #stroke: string;
-    #lineWidth: number;
-    #lineDash: number[];
+    private group?: Group;
+    private verticalLine?: Line;
+    private horizontalLine?: Line;
+    private showVertical: boolean;
+    private showHorizontal: boolean;
+    private stroke: string;
+    private lineWidth: number;
+    private lineDash: number[];
 
-    #bounds = {
+    private bounds = {
         x: 0,
         y: 0,
         width: 0,
@@ -52,66 +52,66 @@ export class Crosshair extends ChartComponent {
     constructor(options: CrosshairOptions) {
         super(options);
 
-        this.#showVertical = options.vertical ?? true;
-        this.#showHorizontal = options.horizontal ?? false;
-        this.#stroke = options.stroke ?? DEFAULT_STROKE;
-        this.#lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
-        this.#lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
+        this.showVertical = options.vertical ?? true;
+        this.showHorizontal = options.horizontal ?? false;
+        this.stroke = options.stroke ?? DEFAULT_STROKE;
+        this.lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
+        this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
 
     /** Initializes the crosshair lines and attaches mouse event listeners within the given bounds. */
     public setup(x: number, y: number, width: number, height: number) {
-        this.#bounds = {
+        this.bounds = {
             x,
             y,
             width,
             height,
         };
 
-        if (this.#group) {
-            this.#group.clear();
-            this.scene.remove(this.#group);
+        if (this.group) {
+            this.group.clear();
+            this.scene.remove(this.group);
         }
 
-        this.#group = createGroup({
+        this.group = createGroup({
             id: 'crosshair',
             class: 'chart-crosshair',
             zIndex: 1500,
         });
 
-        if (this.#showVertical) {
-            this.#verticalLine = createLine({
+        if (this.showVertical) {
+            this.verticalLine = createLine({
                 id: 'crosshair-v',
                 x1: 0,
                 y1: y,
                 x2: 0,
                 y2: y + height,
-                stroke: this.#stroke,
-                lineWidth: this.#lineWidth,
-                lineDash: this.#lineDash,
+                stroke: this.stroke,
+                lineWidth: this.lineWidth,
+                lineDash: this.lineDash,
                 opacity: 0,
             });
 
-            this.#group.add(this.#verticalLine);
+            this.group.add(this.verticalLine);
         }
 
-        if (this.#showHorizontal) {
-            this.#horizontalLine = createLine({
+        if (this.showHorizontal) {
+            this.horizontalLine = createLine({
                 id: 'crosshair-h',
                 x1: x,
                 y1: 0,
                 x2: x + width,
                 y2: 0,
-                stroke: this.#stroke,
-                lineWidth: this.#lineWidth,
-                lineDash: this.#lineDash,
+                stroke: this.stroke,
+                lineWidth: this.lineWidth,
+                lineDash: this.lineDash,
                 opacity: 0,
             });
 
-            this.#group.add(this.#horizontalLine);
+            this.group.add(this.horizontalLine);
         }
 
-        this.scene.add(this.#group);
+        this.scene.add(this.group);
 
         this.dispose(EVENTS_KEY);
 
@@ -127,34 +127,34 @@ export class Crosshair extends ChartComponent {
 
     /** Shows the crosshair lines at the given mouse coordinates, hiding if outside bounds. */
     public show(mouseX: number, mouseY: number) {
-        const { x, y, width, height } = this.#bounds;
+        const { x, y, width, height } = this.bounds;
 
         if (mouseX < x || mouseX > x + width || mouseY < y || mouseY > y + height) {
             this.hide();
             return;
         }
 
-        if (this.#verticalLine) {
-            this.#verticalLine.x1 = mouseX;
-            this.#verticalLine.x2 = mouseX;
-            this.#verticalLine.opacity = 1;
+        if (this.verticalLine) {
+            this.verticalLine.x1 = mouseX;
+            this.verticalLine.x2 = mouseX;
+            this.verticalLine.opacity = 1;
         }
 
-        if (this.#horizontalLine) {
-            this.#horizontalLine.y1 = mouseY;
-            this.#horizontalLine.y2 = mouseY;
-            this.#horizontalLine.opacity = 1;
+        if (this.horizontalLine) {
+            this.horizontalLine.y1 = mouseY;
+            this.horizontalLine.y2 = mouseY;
+            this.horizontalLine.opacity = 1;
         }
     }
 
     /** Hides the crosshair lines. */
     public hide() {
-        if (this.#verticalLine) {
-            this.#verticalLine.opacity = 0;
+        if (this.verticalLine) {
+            this.verticalLine.opacity = 0;
         }
 
-        if (this.#horizontalLine) {
-            this.#horizontalLine.opacity = 0;
+        if (this.horizontalLine) {
+            this.horizontalLine.opacity = 0;
         }
     }
 
@@ -162,8 +162,8 @@ export class Crosshair extends ChartComponent {
     public destroy() {
         this.dispose();
 
-        if (this.#group) {
-            this.scene.remove(this.#group);
+        if (this.group) {
+            this.scene.remove(this.group);
         }
     }
 

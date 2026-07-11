@@ -47,18 +47,18 @@ export interface WebGPUContextOptions extends Context3DOptions {
 /** WebGPU-backed 3D rendering context with hardware depth testing and WGSL shaders. */
 export class WebGPUContext3D extends Context3D {
 
-    #gpuContext: GPUCanvasContext;
-    #pipelineState: PipelineState;
-    #geometryManager: GeometryManager;
-    #sceneUniformBuffer: GPUBuffer;
-    #sceneBindGroup: GPUBindGroup;
-    #depthTexture: GPUTexture | null = null;
-    #msaaTexture: GPUTexture | null = null;
-    #clearColor: [number, number, number, number];
+    private gpuContext: GPUCanvasContext;
+    private pipelineState: PipelineState;
+    private geometryManager: GeometryManager;
+    private sceneUniformBuffer: GPUBuffer;
+    private sceneBindGroup: GPUBindGroup;
+    private depthTexture: GPUTexture | null = null;
+    private msaaTexture: GPUTexture | null = null;
+    private clearColor: [number, number, number, number];
 
     // Offscreen canvas for CPU-side hit testing
-    #hitCanvas: HTMLCanvasElement;
-    #hitContext: CanvasRenderingContext2D;
+    private hitCanvas: HTMLCanvasElement;
+    private hitContext: CanvasRenderingContext2D;
 
     constructor(
         target: string | HTMLElement,
@@ -80,32 +80,32 @@ export class WebGPUContext3D extends Context3D {
             clearColor = [0, 0, 0, 0],
         } = options || {};
 
-        this.#gpuContext = gpuContext;
-        this.#pipelineState = pipelineState;
-        this.#clearColor = clearColor;
+        this.gpuContext = gpuContext;
+        this.pipelineState = pipelineState;
+        this.clearColor = clearColor;
 
-        this.#sceneUniformBuffer = device.createBuffer({
+        this.sceneUniformBuffer = device.createBuffer({
             size: SCENE_UNIFORM_SIZE,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
 
-        this.#sceneBindGroup = device.createBindGroup({
+        this.sceneBindGroup = device.createBindGroup({
             layout: pipelineState.sceneBindGroupLayout,
             entries: [
                 {
                     binding: 0,
                     resource: {
-                        buffer: this.#sceneUniformBuffer,
+                        buffer: this.sceneUniformBuffer,
                     },
                 },
             ],
         });
 
-        this.#geometryManager = new GeometryManager(device, pipelineState);
+        this.geometryManager = new GeometryManager(device, pipelineState);
 
         // Offscreen canvas for hit testing
-        this.#hitCanvas = document.createElement('canvas');
-        this.#hitContext = this.#hitCanvas.getContext('2d')!;
+        this.hitCanvas = document.createElement('canvas');
+        this.hitContext = this.hitCanvas.getContext('2d')!;
 
         this.updateProjectionMatrix();
         this.init();
@@ -124,65 +124,65 @@ export class WebGPUContext3D extends Context3D {
         this.element.height = scaledHeight;
 
         // Resize hit canvas to match
-        this.#hitCanvas.width = scaledWidth;
-        this.#hitCanvas.height = scaledHeight;
-        this.#hitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.hitCanvas.width = scaledWidth;
+        this.hitCanvas.height = scaledHeight;
+        this.hitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
 
         super.rescale(width, height);
 
         this.scaleX = scaleContinuous([0, width], [0, scaledWidth]);
         this.scaleY = scaleContinuous([0, height], [0, scaledHeight]);
 
-        this.#recreateDepthTexture(scaledWidth, scaledHeight);
-        this.#recreateMSAATexture(scaledWidth, scaledHeight);
+        this.recreateDepthTexture(scaledWidth, scaledHeight);
+        this.recreateMSAATexture(scaledWidth, scaledHeight);
 
         if (this.viewMatrix) {
             this.updateProjectionMatrix();
         }
     }
 
-    #recreateDepthTexture(width: number, height: number): void {
-        this.#depthTexture?.destroy();
+    private recreateDepthTexture(width: number, height: number): void {
+        this.depthTexture?.destroy();
 
         if (width <= 0 || height <= 0) {
-            this.#depthTexture = null;
+            this.depthTexture = null;
             return;
         }
 
-        this.#depthTexture = this.#pipelineState.device.createTexture({
+        this.depthTexture = this.pipelineState.device.createTexture({
             size: [width, height],
-            format: this.#pipelineState.depthFormat,
+            format: this.pipelineState.depthFormat,
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            sampleCount: this.#pipelineState.sampleCount,
+            sampleCount: this.pipelineState.sampleCount,
         });
     }
 
-    #recreateMSAATexture(width: number, height: number): void {
-        this.#msaaTexture?.destroy();
+    private recreateMSAATexture(width: number, height: number): void {
+        this.msaaTexture?.destroy();
 
-        if (width <= 0 || height <= 0 || this.#pipelineState.sampleCount <= 1) {
-            this.#msaaTexture = null;
+        if (width <= 0 || height <= 0 || this.pipelineState.sampleCount <= 1) {
+            this.msaaTexture = null;
             return;
         }
 
-        this.#msaaTexture = this.#pipelineState.device.createTexture({
+        this.msaaTexture = this.pipelineState.device.createTexture({
             size: [width, height],
-            format: this.#pipelineState.presentationFormat,
+            format: this.pipelineState.presentationFormat,
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
-            sampleCount: this.#pipelineState.sampleCount,
+            sampleCount: this.pipelineState.sampleCount,
         });
     }
 
     /** Submits a mesh for GPU rendering this frame. */
     public override submitMesh(submission: MeshSubmission): void {
-        this.#geometryManager.submit(submission);
+        this.geometryManager.submit(submission);
     }
 
     public markRenderStart(): void {
         super.markRenderStart();
 
         if (this.renderDepth === 1) {
-            this.#geometryManager.beginFrame();
+            this.geometryManager.beginFrame();
         }
     }
 
@@ -193,7 +193,7 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        this.#executeRenderPass();
+        this.executeRenderPass();
     }
 
     public clear(): void {
@@ -205,26 +205,26 @@ export class WebGPUContext3D extends Context3D {
     }
 
     public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
-        const canvasPath = this.#rebuildPath2D(path);
+        const canvasPath = this.rebuildPath2D(path);
 
         if (!canvasPath) {
             return false;
         }
 
-        return this.#hitContext.isPointInPath(canvasPath, x, y, fillRule);
+        return this.hitContext.isPointInPath(canvasPath, x, y, fillRule);
     }
 
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
-        const canvasPath = this.#rebuildPath2D(path);
+        const canvasPath = this.rebuildPath2D(path);
 
         if (!canvasPath) {
             return false;
         }
 
-        return this.#hitContext.isPointInStroke(canvasPath, x, y);
+        return this.hitContext.isPointInStroke(canvasPath, x, y);
     }
 
-    #rebuildPath2D(path: ContextPath): Path2D | null {
+    private rebuildPath2D(path: ContextPath): Path2D | null {
         // CanvasPath instances from @ripl/core have a .ref property with the native Path2D
         const ref = (path as { ref?: Path2D }).ref;
 
@@ -235,10 +235,10 @@ export class WebGPUContext3D extends Context3D {
         return null;
     }
 
-    #executeRenderPass(): void {
-        const device = this.#pipelineState.device;
+    private executeRenderPass(): void {
+        const device = this.pipelineState.device;
 
-        if (!this.#depthTexture || this.element.width <= 0 || this.element.height <= 0) {
+        if (!this.depthTexture || this.element.width <= 0 || this.element.height <= 0) {
             return;
         }
 
@@ -252,23 +252,23 @@ export class WebGPUContext3D extends Context3D {
         uniformData[18] = lightDir[2];
         uniformData[19] = 0.3; // ambient
 
-        device.queue.writeBuffer(this.#sceneUniformBuffer, 0, uniformData);
+        device.queue.writeBuffer(this.sceneUniformBuffer, 0, uniformData);
 
         // Flush geometry
-        const flushResult = this.#geometryManager.flush();
+        const flushResult = this.geometryManager.flush();
 
         const commandEncoder = device.createCommandEncoder();
-        const textureView = this.#gpuContext.getCurrentTexture().createView();
+        const textureView = this.gpuContext.getCurrentTexture().createView();
 
-        const colorAttachment: GPURenderPassColorAttachment = this.#msaaTexture
+        const colorAttachment: GPURenderPassColorAttachment = this.msaaTexture
             ? {
-                view: this.#msaaTexture.createView(),
+                view: this.msaaTexture.createView(),
                 resolveTarget: textureView,
                 clearValue: {
-                    r: this.#clearColor[0],
-                    g: this.#clearColor[1],
-                    b: this.#clearColor[2],
-                    a: this.#clearColor[3],
+                    r: this.clearColor[0],
+                    g: this.clearColor[1],
+                    b: this.clearColor[2],
+                    a: this.clearColor[3],
                 },
                 loadOp: 'clear' as GPULoadOp,
                 storeOp: 'discard' as GPUStoreOp,
@@ -276,10 +276,10 @@ export class WebGPUContext3D extends Context3D {
             : {
                 view: textureView,
                 clearValue: {
-                    r: this.#clearColor[0],
-                    g: this.#clearColor[1],
-                    b: this.#clearColor[2],
-                    a: this.#clearColor[3],
+                    r: this.clearColor[0],
+                    g: this.clearColor[1],
+                    b: this.clearColor[2],
+                    a: this.clearColor[3],
                 },
                 loadOp: 'clear' as GPULoadOp,
                 storeOp: 'store' as GPUStoreOp,
@@ -288,7 +288,7 @@ export class WebGPUContext3D extends Context3D {
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [colorAttachment],
             depthStencilAttachment: {
-                view: this.#depthTexture.createView(),
+                view: this.depthTexture.createView(),
                 depthClearValue: 1.0,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'store',
@@ -296,8 +296,8 @@ export class WebGPUContext3D extends Context3D {
         });
 
         if (flushResult) {
-            renderPass.setPipeline(this.#pipelineState.pipeline);
-            renderPass.setBindGroup(0, this.#sceneBindGroup);
+            renderPass.setPipeline(this.pipelineState.pipeline);
+            renderPass.setBindGroup(0, this.sceneBindGroup);
             renderPass.setVertexBuffer(0, flushResult.vertexBuffer);
             renderPass.setIndexBuffer(flushResult.indexBuffer, 'uint32');
 
@@ -312,15 +312,15 @@ export class WebGPUContext3D extends Context3D {
     }
 
     public override measureText(text: string, font?: string): TextMetrics {
-        return canvasMeasureText(this.#hitContext, text, font);
+        return canvasMeasureText(this.hitContext, text, font);
     }
 
     /** Destroys the WebGPU context and releases GPU resources. */
     public override destroy(): void {
-        this.#geometryManager.destroy();
-        this.#sceneUniformBuffer.destroy();
-        this.#depthTexture?.destroy();
-        this.#msaaTexture?.destroy();
+        this.geometryManager.destroy();
+        this.sceneUniformBuffer.destroy();
+        this.depthTexture?.destroy();
+        this.msaaTexture?.destroy();
         super.destroy();
     }
 

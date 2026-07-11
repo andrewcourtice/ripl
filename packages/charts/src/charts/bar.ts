@@ -134,43 +134,43 @@ export interface BarChartEventMap extends EventMap {
  */
 export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TData>, TData, BarChartEventMap> {
 
-    #barGroups: Group[] = [];
+    private barGroups: Group[] = [];
 
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 
         this.setupCartesian({
             grid: {
-                horizontal: !this.#isHorizontal,
-                vertical: this.#isHorizontal,
+                horizontal: !this.isHorizontal,
+                vertical: this.isHorizontal,
             },
         });
 
         this.init();
     }
 
-    get #isHorizontal() {
+    private get isHorizontal() {
         return this.options.orientation === 'horizontal';
     }
 
-    get #isStacked() {
+    private get isStacked() {
         return this.options.mode === 'stacked';
     }
 
-    #seriesValue(series: BarChartSeriesOptions<TData>, item: TData): number {
+    private seriesValue(series: BarChartSeriesOptions<TData>, item: TData): number {
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
-    #stackOffset(series: BarChartSeriesOptions<TData>[], current: BarChartSeriesOptions<TData>, item: TData): number {
-        if (!this.#isStacked) {
+    private stackOffset(series: BarChartSeriesOptions<TData>[], current: BarChartSeriesOptions<TData>, item: TData): number {
+        if (!this.isStacked) {
             return 0;
         }
 
-        return computeStackOffset(series, current, item, (s, i) => this.#seriesValue(s, i));
+        return computeStackOffset(series, current, item, (s, i) => this.seriesValue(s, i));
     }
 
     /** Wires consistent hover highlight + tooltip + interaction events onto a bar. */
-    #attachBarHover(bar: Rect, srs: BarChartSeriesOptions<TData>, key: string, value: number, anchor: () => { x: number;
+    private attachBarHover(bar: Rect, srs: BarChartSeriesOptions<TData>, key: string, value: number, anchor: () => { x: number;
         y: number; }) {
         const restFill = bar.fill as string;
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
@@ -200,13 +200,13 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         });
     }
 
-    async #drawBars(
+    private async drawBars(
         categoryScale: BandScale<string>,
         valueScale: ReturnType<typeof scaleContinuous>,
         getKey: (item: TData) => string
     ) {
         const { data, series } = this.options;
-        const horizontal = this.#isHorizontal;
+        const horizontal = this.isHorizontal;
         const baseline = valueScale(0);
         const cornerRadius = this.options.borderRadius ?? 2;
         const dataLabels = normalizeDataLabels(this.options.labels, { anchor: horizontal ? 'right' : 'top' });
@@ -214,7 +214,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
         let seriesScale: BandScale<string> | undefined;
 
-        if (!this.#isStacked) {
+        if (!this.isStacked) {
             seriesScale = scaleBand(series.map(s => s.id), [0, categoryScale.bandwidth], {
                 innerPadding: 0.1,
             });
@@ -231,7 +231,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             let neg = 0;
 
             series.forEach(srs => {
-                const value = this.#seriesValue(srs, item);
+                const value = this.seriesValue(srs, item);
 
                 if (value >= 0) {
                     pos += value;
@@ -251,7 +251,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             let outer = -1;
 
             series.forEach((srs, index) => {
-                const value = this.#seriesValue(srs, item);
+                const value = this.seriesValue(srs, item);
 
                 if (value === 0) {
                     return;
@@ -288,10 +288,10 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             columnIndex: number; }>();
 
         const getBarState = (srs: BarChartSeriesOptions<TData>, item: TData) => {
-            const value = this.#seriesValue(srs, item);
+            const value = this.seriesValue(srs, item);
             const key = getKey(item);
             const color = this.getSeriesColor(srs.id);
-            const stackOffset = this.#stackOffset(series, srs, item);
+            const stackOffset = this.stackOffset(series, srs, item);
 
             let x: number;
             let y: number;
@@ -299,7 +299,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             let height: number;
 
             if (horizontal) {
-                if (this.#isStacked) {
+                if (this.isStacked) {
                     y = categoryScale(key);
                     height = categoryScale.bandwidth;
                     x = valueScale(value >= 0 ? stackOffset : value + stackOffset);
@@ -310,7 +310,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     x = Math.min(baseline, valueScale(value));
                     width = Math.abs(valueScale(value) - baseline);
                 }
-            } else if (this.#isStacked) {
+            } else if (this.isStacked) {
                 x = categoryScale(key);
                 width = categoryScale.bandwidth;
                 y = valueScale(value >= 0 ? value + stackOffset : stackOffset);
@@ -322,9 +322,9 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 height = Math.abs(baseline - valueScale(value));
             }
 
-            const borderRadius = this.#isStacked ? stackedBorderRadius(srs, item, value) : cornerRadius;
+            const borderRadius = this.isStacked ? stackedBorderRadius(srs, item, value) : cornerRadius;
 
-            if (this.#isStacked) {
+            if (this.isStacked) {
                 const totals = columnTotals.get(key);
                 const columnTotal = value >= 0 ? (totals?.pos ?? 0) : (totals?.neg ?? 0);
 
@@ -373,11 +373,11 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         // A stacked segment collapses to its own lower edge so the column reveals as one rising
         // fill rather than every segment growing from the chart baseline.
         const collapsedEntry = (srs: BarChartSeriesOptions<TData>, item: TData): Partial<RectState> => {
-            if (!this.#isStacked) {
+            if (!this.isStacked) {
                 return collapsed();
             }
 
-            const stackOffset = this.#stackOffset(series, srs, item);
+            const stackOffset = this.stackOffset(series, srs, item);
 
             return horizontal
                 ? {
@@ -405,7 +405,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 },
             });
 
-            this.#attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
+            this.attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
 
             return bar;
         };
@@ -448,7 +448,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(series, this.#barGroups, 'id');
+        } = arrayJoin(series, this.barGroups, 'id');
 
         // Exit removed series.
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
@@ -499,7 +499,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     fill: restFill,
                 };
 
-                this.#attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
+                this.attachBarHover(bar, srs, getKey(item), value, anchorFor(state));
             });
 
             // Reconcile value labels alongside the bars.
@@ -533,13 +533,13 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
         this.scene.add(seriesEntryGroups);
 
-        this.#barGroups = [
+        this.barGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
 
         // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
-        this.registerHighlightGroups(this.#barGroups);
+        this.registerHighlightGroups(this.barGroups);
 
         const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
@@ -552,7 +552,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => {
             // Stacked: each column fills as one rising unit — segments are timed by their position
             // in the stack so the fill front sweeps the whole column once, in colour order.
-            if (this.#isStacked) {
+            if (this.isStacked) {
                 const timing = entryTiming.get(element.id);
                 const columnDelay = stagger(timing?.columnIndex ?? 0, categoryCount, enterAnimation.duration) * 0.4;
 
@@ -625,10 +625,10 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series.flatMap(srs => getExtent(data, item => this.#seriesValue(srs, item))).concat(0);
+            const seriesExtents = series.flatMap(srs => getExtent(data, item => this.seriesValue(srs, item))).concat(0);
             let dataExtent = getExtent(seriesExtents, functionIdentity);
 
-            if (this.#isStacked) {
+            if (this.isStacked) {
                 let stackedMax = 0;
                 let stackedMin = 0;
 
@@ -637,7 +637,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     let negativeTotal = 0;
 
                     series.forEach(srs => {
-                        const value = this.#seriesValue(srs, item);
+                        const value = this.seriesValue(srs, item);
 
                         if (value >= 0) {
                             positiveTotal += value;
@@ -674,7 +674,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            if (this.#isHorizontal) {
+            if (this.isHorizontal) {
                 // Categories on Y, values on X.
                 const valueScale = scaleContinuous(dataExtent, [left, right], { padToTicks: 10 });
 
@@ -688,7 +688,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     innerPadding: 0.2,
                 });
 
-                this.yAxis.scale = this.#bandAxisScale(categoryScale, keys);
+                this.yAxis.scale = this.bandAxisScale(categoryScale, keys);
                 this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
                 const yAxisBox = this.yAxis.getBoundingBox();
@@ -711,7 +711,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 return Promise.all([
                     this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                     this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                    this.#drawBars(categoryScale, adjustedValueScale, getKey),
+                    this.drawBars(categoryScale, adjustedValueScale, getKey),
                 ]);
             }
 
@@ -728,7 +728,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 innerPadding: 0.2,
             });
 
-            this.xAxis.scale = this.#bandAxisScale(categoryScale, keys);
+            this.xAxis.scale = this.bandAxisScale(categoryScale, keys);
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
             const xAxisBox = this.xAxis.getBoundingBox();
@@ -751,13 +751,13 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this.#drawBars(categoryScale, adjustedValueScale, getKey),
+                this.drawBars(categoryScale, adjustedValueScale, getKey),
             ]);
         });
     }
 
     /** Wraps a band scale so an axis renders one centred tick per category. */
-    #bandAxisScale(categoryScale: BandScale<string>, keys: string[]) {
+    private bandAxisScale(categoryScale: BandScale<string>, keys: string[]) {
         return Object.assign(
             (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
             {

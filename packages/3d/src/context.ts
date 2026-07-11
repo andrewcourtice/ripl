@@ -224,15 +224,15 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 export class CanvasContext3D extends Context3D {
 
     protected context: CanvasRenderingContext2D;
-    #fillCSS: string = '';
-    #strokeCSS: string = '';
+    private _fillCSS: string = '';
+    private _strokeCSS: string = '';
 
     public get fill(): string {
-        return this.#fillCSS || this.context.fillStyle as string;
+        return this._fillCSS || this.context.fillStyle as string;
     }
 
     public set fill(value) {
-        this.#fillCSS = value;
+        this._fillCSS = value;
 
         // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
         if (isGradientString(value)) {
@@ -372,11 +372,11 @@ export class CanvasContext3D extends Context3D {
     }
 
     public get stroke(): string {
-        return this.#strokeCSS || this.context.strokeStyle as string;
+        return this._strokeCSS || this.context.strokeStyle as string;
     }
 
     public set stroke(value) {
-        this.#strokeCSS = value;
+        this._strokeCSS = value;
 
         // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
         if (isGradientString(value)) {
@@ -539,7 +539,7 @@ export class CanvasContext3D extends Context3D {
             let lastLineWidth = -1;
 
             for (const face of faces) {
-                this.#drawFace(face, lastFill, lastStroke, lastLineWidth);
+                this.drawFace(face, lastFill, lastStroke, lastLineWidth);
 
                 lastFill = face.fillColor;
                 lastStroke = face.strokeStyle ?? '';
@@ -548,7 +548,7 @@ export class CanvasContext3D extends Context3D {
         });
     }
 
-    #drawFace(
+    private drawFace(
         face: ProjectedFace3D,
         lastFill: string,
         lastStroke: string,

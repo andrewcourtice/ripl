@@ -40,8 +40,8 @@ export class TaskAbortError extends Error {
 /** A cancellable promise with `AbortController` integration, supporting abort callbacks and chaining. */
 export class Task<TResult = void> extends Promise<TResult> {
 
-    #controller: AbortController;
-    #abortReason: unknown;
+    private controller: AbortController;
+    private abortReason: unknown;
 
     constructor(executor: TaskExecutor<TResult>, controller: AbortController = new AbortController()) {
         if (controller.signal.aborted) {
@@ -74,7 +74,7 @@ export class Task<TResult = void> extends Promise<TResult> {
 
                 setForEach(listeners, listener => {
                     try {
-                        listener(this.#abortReason);
+                        listener(this.abortReason);
                     } finally {
                         listeners.delete(listener);
                     }
@@ -85,7 +85,7 @@ export class Task<TResult = void> extends Promise<TResult> {
                 const finalise = finaliser || (reason => _reject(new TaskAbortError(reason)));
 
                 dispose();
-                finalise(this.#abortReason);
+                finalise(this.abortReason);
             };
 
             controller.signal.addEventListener('abort', abort);
@@ -93,12 +93,12 @@ export class Task<TResult = void> extends Promise<TResult> {
             executor(resolve, reject, onAbort, controller);
         });
 
-        this.#controller = controller;
+        this.controller = controller;
     }
 
     /** The `AbortSignal` associated with this task's controller. */
     public get signal(): AbortSignal {
-        return this.#controller.signal;
+        return this.controller.signal;
     }
 
     /** Whether this task has already been aborted. */
@@ -108,8 +108,8 @@ export class Task<TResult = void> extends Promise<TResult> {
 
     /** Aborts the task with an optional reason, triggering all registered abort callbacks. */
     public abort(reason?: unknown): this {
-        this.#abortReason = reason;
-        this.#controller.abort();
+        this.abortReason = reason;
+        this.controller.abort();
 
         return this;
     }

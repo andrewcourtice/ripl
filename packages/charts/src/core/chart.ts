@@ -109,12 +109,12 @@ export class Chart<
     protected title?: ChartTitle;
     protected legend?: Legend;
 
-    #hasRendered: boolean = false;
+    private hasRendered: boolean = false;
 
     protected options: TOptions;
     protected colorGenerator = getColorGenerator();
-    #seriesColorMap: Map<string, string> = new Map();
-    #highlightGroups: Map<string, Group> = new Map();
+    private seriesColorMap: Map<string, string> = new Map();
+    private highlightGroups: Map<string, Group> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
@@ -137,7 +137,7 @@ export class Chart<
 
     protected init() {
         this.scene.on('resize', () => {
-            if (this.#hasRendered) {
+            if (this.hasRendered) {
                 this.render();
             }
         });
@@ -258,7 +258,7 @@ export class Chart<
             console.error('failed', error);
             this.scene.context.clear();
         } finally {
-            this.#hasRendered = true;
+            this.hasRendered = true;
         }
     }
 
@@ -289,18 +289,18 @@ export class Chart<
         color?: string;
     }[]) {
         series.forEach(srs => {
-            if (!this.#seriesColorMap.has(srs.id)) {
-                this.#seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
+            if (!this.seriesColorMap.has(srs.id)) {
+                this.seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
             }
 
             if (srs.color) {
-                this.#seriesColorMap.set(srs.id, srs.color);
+                this.seriesColorMap.set(srs.id, srs.color);
             }
         });
     }
 
     protected getSeriesColor(seriesId: string): string {
-        return this.#seriesColorMap.get(seriesId) ?? '#a1afc4';
+        return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
     }
 
     /**
@@ -309,7 +309,7 @@ export class Chart<
      * dim the other series when a legend entry is hovered. Replaces any previously registered set.
      */
     protected registerHighlightGroups(groups: Group[]) {
-        this.#highlightGroups = new Map(groups.map(group => [group.id, group]));
+        this.highlightGroups = new Map(groups.map(group => [group.id, group]));
     }
 
     /**
@@ -324,13 +324,13 @@ export class Chart<
      * hidden and restoring returns to the true value.
      */
     protected highlightSeries(id: string | null) {
-        if (this.#highlightGroups.size === 0) {
+        if (this.highlightGroups.size === 0) {
             return;
         }
 
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
-        this.#highlightGroups.forEach((group, groupId) => {
+        this.highlightGroups.forEach((group, groupId) => {
             const active = id === null || groupId === id;
 
             group.graph(false).forEach(element => {

@@ -110,7 +110,7 @@ Use `import type { ... }` for type-only imports.
 - **Strict mode** — `"strict": true`, no implicit any, strict null checks
 - **Interfaces over types** for object definitions
 - **Named exports only** — no default exports
-- **Explicit member accessibility** — every non-`#` class member must have `protected`, `public`, or `static`. Use native `#` private fields/methods (not the TypeScript `private` keyword) for internal state so consumers cannot reach it at runtime
+- **Explicit member accessibility** — every class member must have `private`, `protected`, `public`, or `static`
 - **Generics** for reusable, type-safe code
 
 ## Architecture Quick Reference
