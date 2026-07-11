@@ -24,6 +24,7 @@ import type {
 
 import {
     degreesToRadians,
+    isGradientString,
 } from '@ripl/core';
 
 import type {
@@ -232,8 +233,14 @@ export class CanvasContext3D extends Context3D {
 
     public set fill(value) {
         this._fillCSS = value;
-        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-        setCanvasFill(this.context, value, bounds);
+
+        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
+        if (isGradientString(value)) {
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            setCanvasFill(this.context, value, bounds);
+        } else {
+            this.context.fillStyle = value;
+        }
     }
 
     public get filter(): string {
@@ -370,8 +377,14 @@ export class CanvasContext3D extends Context3D {
 
     public set stroke(value) {
         this._strokeCSS = value;
-        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-        setCanvasStroke(this.context, value, bounds);
+
+        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
+        if (isGradientString(value)) {
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            setCanvasStroke(this.context, value, bounds);
+        } else {
+            this.context.strokeStyle = value;
+        }
     }
 
     public get textAlign(): TextAlignment {

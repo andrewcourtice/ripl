@@ -99,10 +99,32 @@ export function getCanvasGradientBounds(box: Box | undefined, width: number, hei
     };
 }
 
+// Parsing a CSS gradient string is comparatively expensive and fill/stroke are re-applied for the
+// same gradient across frames (and across many elements within a frame), so memoize by string. The
+// cache is bounded to avoid unbounded growth when the string varies every frame (animated gradients).
+const GRADIENT_CACHE_LIMIT = 256;
+const gradientCache = new Map<string, Gradient | undefined>();
+
+/** Parses a CSS gradient string, memoizing the result within a bounded cache. */
+function parseGradientMemoized(value: string): Gradient | undefined {
+    if (gradientCache.has(value)) {
+        return gradientCache.get(value);
+    }
+
+    if (gradientCache.size >= GRADIENT_CACHE_LIMIT) {
+        gradientCache.clear();
+    }
+
+    const gradient = parseGradient(value);
+    gradientCache.set(value, gradient);
+
+    return gradient;
+}
+
 /** Sets the fill style on a native canvas context, resolving gradient strings when applicable. */
 export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
     if (isGradientString(value)) {
-        const gradient = parseGradient(value);
+        const gradient = parseGradientMemoized(value);
 
         if (gradient) {
             ctx.fillStyle = toCanvasGradient(ctx, gradient, bounds);
@@ -116,7 +138,7 @@ export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, boun
 /** Sets the stroke style on a native canvas context, resolving gradient strings when applicable. */
 export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
     if (isGradientString(value)) {
-        const gradient = parseGradient(value);
+        const gradient = parseGradientMemoized(value);
 
         if (gradient) {
             ctx.strokeStyle = toCanvasGradient(ctx, gradient, bounds);

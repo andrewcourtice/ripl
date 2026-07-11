@@ -607,11 +607,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             alignmentBaseline: this.currentState.textBaseline,
             opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
-            // shadowBlur,
-            // shadowColor,
-            // shadowOffsetX,
-            // shadowOffsetY,
-            //textBaseline,
+            // Shadow properties (shadowBlur/Color/OffsetX/OffsetY) are intentionally not mapped: SVG
+            // has no direct equivalent (it needs an <feDropShadow> filter in <defs>), so they are
+            // silently dropped rather than approximated.
             ...styles,
         }));
 

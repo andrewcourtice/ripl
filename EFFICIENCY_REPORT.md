@@ -26,30 +26,15 @@ This report documents several places in the codebase where performance could be 
 
 ---
 
-## 5. stringUniqueId uses inefficient string concatenation in reduce
+## 5. ~~stringUniqueId uses inefficient string concatenation in reduce~~ ✅ FIXED
 
-**File:** `packages/utilities/src/string.ts` (lines 1-8)
-
-**Issue:** The `stringUniqueId` function uses `reduce` with string concatenation, which creates a new string on each iteration. Building an array and joining at the end would be more efficient.
-
-```typescript
-export function stringUniqueId(length: number = 6): string {
-    const container = new Uint8Array(length / 2);
-    window.crypto.getRandomValues(container);
-
-    return container.reduce((output, value) => {
-        return output + value.toString(16).padStart(2, '0'); // String concat in loop
-    }, '');
-}
-```
-
-**Fix:** Use `Array.from().map().join('')` pattern instead.
+**Status:** Resolved. `stringUniqueId` now builds the hex string with `Array.from(container, value => …).join('')` instead of a `reduce` that concatenates a new string per iteration.
 
 ---
 
 ## 6. Group.children getter creates new array on every access
 
-**File:** `packages/core/src/core/group.ts` (lines 155-157)
+**File:** `packages/core/src/core/group.ts`
 
 **Issue:** The `children` getter creates a new array from the internal Set every time it's accessed. This is called frequently during rendering and querying operations.
 
@@ -60,31 +45,19 @@ public get children() {
 }
 ```
 
-**Fix:** Cache the array and invalidate the cache when elements are added/removed.
+**Status:** Intentionally deferred. Several call sites mutate the returned array in place — notably `Group.render`, which sorts `children` by z-index before drawing — so the getter must keep returning a fresh copy. Caching a shared array would let those in-place sorts corrupt the cache.
 
 ---
 
-## 7. SVGContext.render uses O(n) indexOf in sort comparator
+## 7. ~~SVGContext.render uses O(n) indexOf in sort comparator~~ ✅ FIXED
 
-**File:** `packages/svg/src/index.ts` (lines 287-289)
-
-**Issue:** The sorting of elements uses `order.indexOf()` which is O(n) for each comparison, making the overall sort O(n^2 log n) instead of O(n log n).
-
-```typescript
-const orderedElements = newElements
-    .concat(updatedElements)
-    .sort((ea, eb) => order.indexOf(ea.id) - order.indexOf(eb.id)); // O(n) indexOf in sort
-```
-
-**Fix:** Create a Map from id to index for O(1) lookups.
+**Status:** Resolved. SVG rendering reconciles through `reconcileNode` (`packages/dom/src/vdom.ts`), which orders children in a single O(n) pass using a `Set` of desired ids plus a `Map` of existing elements and `insertBefore`/`appendChild` — the O(n) `indexOf`-in-`sort` comparator no longer exists.
 
 ---
 
 ## Summary
 
-**Fixed (items 1-4):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimised. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`.
+**Fixed (items 1–5, 7):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimised. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`. `stringUniqueId` builds its hex string via `Array.from(...).join('')`. SVG rendering reorders through the O(n) `reconcileNode` pass.
 
 **Remaining:**
-1. **stringUniqueId** (#5) — string concat in reduce
-2. **Group.children caching** (#6) — new array on every access
-3. **SVGContext sort** (#7) — O(n) indexOf in comparator
+1. **Group.children caching** (#6) — deferred by design: callers (e.g. `Group.render`'s z-index sort) mutate the returned array, so it must stay a fresh copy.

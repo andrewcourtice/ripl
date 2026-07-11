@@ -172,12 +172,17 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         super.destroy();
     }
 
-    /** Renders all child elements in order within a save/restore context. */
+    /** Renders all child elements in ascending z-index order within a save/restore context. */
     public render(context: Context): void {
         context.save();
         context.markRenderStart();
 
-        this.children.forEach(element => element.render(context));
+        // `children` returns a fresh array, so this sort is safe. Rendering scene-less (a group drawn
+        // directly to a context) must honour z-index just as `Scene` does with its sorted buffer; the
+        // sort is stable, so equal-z-index siblings keep insertion order.
+        this.children
+            .sort((ea, eb) => ea.zIndex - eb.zIndex)
+            .forEach(element => element.render(context));
 
         context.markRenderEnd();
         context.restore();

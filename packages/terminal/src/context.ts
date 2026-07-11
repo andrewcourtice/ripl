@@ -268,7 +268,15 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
     },
 };
 
-/** Terminal rendering context that rasterizes Ripl elements into character-based output via a `TerminalOutput` adapter. */
+/**
+ * Terminal rendering context that rasterizes Ripl elements into character-based output via a
+ * `TerminalOutput` adapter.
+ *
+ * Unsupported operations (inherited as no-ops from {@link Context}): affine transforms
+ * (`rotate`/`scale`/`translate`/`setTransform`/`transform`), path clipping (`applyClip`), image
+ * drawing (`drawImage`) and pointer hit testing (`isPointInPath`/`isPointInStroke`). Elements are
+ * positioned through the context's own `scaleX`/`scaleY`/`rasterScale` mapping instead.
+ */
 export class TerminalContext extends Context<Element> {
 
     private output: TerminalOutput;
@@ -362,6 +370,9 @@ export class TerminalContext extends Context<Element> {
         return new ContextText(options);
     }
 
+    // `fillRule` is intentionally ignored: the braille scanline rasterizer (`fillPolygon`) implements
+    // only the even-odd rule. Honouring non-zero winding would require tracking edge directions per
+    // crossing, which is out of scope for the character-grid renderer.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: ContextElement, fillRule?: FillRule): void {
         const color = colorToAnsiFg(this.fill);
