@@ -20,6 +20,10 @@ import {
     TerminalPath,
 } from './path';
 
+import type {
+    TerminalPathCommandType,
+} from './path';
+
 import {
     fillPolygon,
     flattenArc,
@@ -133,6 +137,136 @@ export interface TerminalContextOptions extends ContextOptions {
     /** Logical height counterpart to {@link TerminalContextOptions.logicalWidth}. */
     logicalHeight?: number;
 }
+
+/** Coordinate mapping shared by both command passes: points via `sx`/`sy`, radii via `s`. */
+interface TerminalCommandScale {
+    sx(value: number): number;
+    sy(value: number): number;
+    s: number;
+}
+
+/** Contour-building state passed to a command's `toContour` handler. */
+interface ContourContext extends TerminalCommandScale {
+    contours: Vertex[][];
+    flush(): void;
+    append(point: Vertex): void;
+}
+
+/** Rasterization state passed to a command's `rasterize` handler. */
+interface RasterContext extends TerminalCommandScale {
+    plot: PixelCallback;
+}
+
+/** A path command's two rendering passes: contour flattening (for fills) and outline rasterization. */
+interface TerminalCommandHandler {
+    toContour(context: ContourContext, args: number[]): void;
+    rasterize(context: RasterContext, args: number[]): void;
+}
+
+/**
+ * Dispatch table keyed by path command type, replacing the parallel `switch` statements in
+ * {@link TerminalContext.buildContours} and {@link TerminalContext.executeCommands}.
+ */
+const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommandHandler> = {
+    moveTo: {
+        toContour({ sx, sy, flush, append }, args) {
+            flush();
+            append({
+                x: sx(args[0]),
+                y: sy(args[1]),
+            });
+        },
+        rasterize() {
+            // No pixels to draw for moveTo.
+        },
+    },
+    lineTo: {
+        toContour({ sx, sy, append }, args) {
+            append({
+                x: sx(args[0]),
+                y: sy(args[1]),
+            });
+            append({
+                x: sx(args[2]),
+                y: sy(args[3]),
+            });
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
+        },
+    },
+    arc: {
+        toContour({ sx, sy, s, append }, args) {
+            flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
+                rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
+            } else {
+                rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
+            }
+        },
+    },
+    ellipse: {
+        toContour({ sx, sy, s, contours, flush }, args) {
+            flush();
+            contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s));
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
+        },
+    },
+    bezierCurveTo: {
+        toContour({ sx, sy, append }, args) {
+            flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
+        },
+    },
+    quadraticCurveTo: {
+        toContour({ sx, sy, append }, args) {
+            flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
+        },
+    },
+    rect: {
+        toContour({ sx, sy, s, contours, flush }, args) {
+            flush();
+            contours.push([
+                {
+                    x: sx(args[0]),
+                    y: sy(args[1]),
+                },
+                {
+                    x: sx(args[0]) + args[2] * s,
+                    y: sy(args[1]),
+                },
+                {
+                    x: sx(args[0]) + args[2] * s,
+                    y: sy(args[1]) + args[3] * s,
+                },
+                {
+                    x: sx(args[0]),
+                    y: sy(args[1]) + args[3] * s,
+                },
+            ]);
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
+        },
+    },
+    closePath: {
+        toContour({ flush }) {
+            flush();
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
+        },
+    },
+};
 
 /** Terminal rendering context that rasterizes Ripl elements into character-based output via a `TerminalOutput` adapter. */
 export class TerminalContext extends Context<Element> {
@@ -326,9 +460,6 @@ export class TerminalContext extends Context<Element> {
      * used by {@link executeCommands}: points via `scaleX`/`scaleY`, radii via `rasterScale`.
      */
     private buildContours(path: TerminalPath): Vertex[][] {
-        const sx = this.scaleX;
-        const sy = this.scaleY;
-        const s = this.rasterScale;
         const contours: Vertex[][] = [];
 
         let current: Vertex[] = [];
@@ -349,72 +480,17 @@ export class TerminalContext extends Context<Element> {
             }
         };
 
+        const context: ContourContext = {
+            sx: this.scaleX,
+            sy: this.scaleY,
+            s: this.rasterScale,
+            contours,
+            flush,
+            append,
+        };
+
         for (const cmd of path.commands) {
-            const args = cmd.args;
-
-            switch (cmd.type) {
-                case 'moveTo':
-                    flush();
-                    append({
-                        x: sx(args[0]),
-                        y: sy(args[1]),
-                    });
-                    break;
-
-                case 'lineTo':
-                    append({
-                        x: sx(args[0]),
-                        y: sy(args[1]),
-                    });
-                    append({
-                        x: sx(args[2]),
-                        y: sy(args[3]),
-                    });
-                    break;
-
-                case 'arc':
-                    flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
-                    break;
-
-                case 'ellipse':
-                    flush();
-                    contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s));
-                    break;
-
-                case 'bezierCurveTo':
-                    flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
-                    break;
-
-                case 'quadraticCurveTo':
-                    flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
-                    break;
-
-                case 'rect':
-                    flush();
-                    contours.push([
-                        {
-                            x: sx(args[0]),
-                            y: sy(args[1]),
-                        },
-                        {
-                            x: sx(args[0]) + args[2] * s,
-                            y: sy(args[1]),
-                        },
-                        {
-                            x: sx(args[0]) + args[2] * s,
-                            y: sy(args[1]) + args[3] * s,
-                        },
-                        {
-                            x: sx(args[0]),
-                            y: sy(args[1]) + args[3] * s,
-                        },
-                    ]);
-                    break;
-
-                case 'closePath':
-                    flush();
-                    break;
-            }
+            TERMINAL_COMMAND_HANDLERS[cmd.type].toContour(context, cmd.args);
         }
 
         flush();
@@ -424,50 +500,15 @@ export class TerminalContext extends Context<Element> {
 
     private executeCommands(path: TerminalPath, plot: PixelCallback): void {
         // Map logical coordinates into the raster (identity when no logical size is configured).
-        const sx = this.scaleX;
-        const sy = this.scaleY;
-        const s = this.rasterScale;
+        const context: RasterContext = {
+            sx: this.scaleX,
+            sy: this.scaleY,
+            s: this.rasterScale,
+            plot,
+        };
 
         for (const cmd of path.commands) {
-            const args = cmd.args;
-
-            switch (cmd.type) {
-                case 'moveTo':
-                    // No pixels to draw for moveTo
-                    break;
-
-                case 'lineTo':
-                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-                    break;
-
-                case 'arc':
-                    if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
-                        rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
-                    } else {
-                        rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
-                    }
-                    break;
-
-                case 'ellipse':
-                    rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
-                    break;
-
-                case 'bezierCurveTo':
-                    rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
-                    break;
-
-                case 'quadraticCurveTo':
-                    rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
-                    break;
-
-                case 'rect':
-                    rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
-                    break;
-
-                case 'closePath':
-                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-                    break;
-            }
+            TERMINAL_COMMAND_HANDLERS[cmd.type].rasterize(context, cmd.args);
         }
     }
 

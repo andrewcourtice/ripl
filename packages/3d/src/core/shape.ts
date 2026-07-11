@@ -76,6 +76,16 @@ export interface Shape3DState extends BaseElementState {
 /** Options for constructing a 3D shape, with all state properties optional. */
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
 
+/**
+ * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
+ * to testing both fill and stroke.
+ */
+const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPath, x: number, y: number) => boolean> = {
+    none: () => false,
+    stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
+    fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
+};
+
 /** Base class for 3D shapes, handling model transforms, face projection, shading, and hit testing. */
 export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<TState> {
 
@@ -321,19 +331,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             return isAnyIntersecting();
         }
 
-        if (this.pointerEvents === 'none') {
-            return false;
-        }
+        const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
 
-        if (this.pointerEvents === 'stroke') {
-            return !!this.context.isPointInStroke(this.hitPath, x, y);
-        }
-
-        if (this.pointerEvents === 'fill') {
-            return !!this.context.isPointInPath(this.hitPath, x, y);
-        }
-
-        return isAnyIntersecting();
+        return hitTest
+            ? hitTest(this.context, this.hitPath, x, y)
+            : isAnyIntersecting();
     }
 
 }

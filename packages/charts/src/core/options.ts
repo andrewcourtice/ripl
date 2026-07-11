@@ -590,20 +590,19 @@ export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) 
 /** How a series line is stroked: a preset, or a custom canvas dash array. */
 export type LineStyle = 'solid' | 'dashed' | 'dotted' | number[];
 
+/** Dash arrays for the named line-style presets (`solid` is the implicit `[]` default). */
+const LINE_DASH_PRESETS: Record<string, number[]> = {
+    dashed: [6, 4],
+    dotted: [2, 3],
+};
+
 /** Resolves a {@link LineStyle} into a `lineDash` array (`[]` for a solid line). */
 export function resolveLineDash(style?: LineStyle): number[] {
     if (Array.isArray(style)) {
         return style;
     }
 
-    switch (style) {
-        case 'dashed':
-            return [6, 4];
-        case 'dotted':
-            return [2, 3];
-        default:
-            return [];
-    }
+    return (style && LINE_DASH_PRESETS[style]) ?? [];
 }
 
 // ---------------------------------------------------------------------------
@@ -738,6 +737,14 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
 // ---------------------------------------------------------------------------
 
 
+/** Built-in value formatters keyed by {@link AxisFormatType}. */
+const VALUE_FORMATTERS: Record<AxisFormatType, (value: never) => string> = {
+    number: (value: number) => formatNumber(value),
+    percentage: (value: number) => `${formatNumber(value * 100)}%`,
+    date: (value: Date | number) => new Date(value).toLocaleDateString(),
+    string: (value: unknown) => String(value),
+};
+
 /** Resolves an axis format type or custom formatter into a label formatting function. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
@@ -749,16 +756,5 @@ export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => st
         return format;
     }
 
-    switch (format) {
-        case 'number':
-            return (v: number) => formatNumber(v);
-        case 'percentage':
-            return (v: number) => `${formatNumber(v * 100)}%`;
-        case 'date':
-            return (v: Date | number) => new Date(v).toLocaleDateString();
-        case 'string':
-            return (v: unknown) => String(v);
-        default:
-            return undefined;
-    }
+    return VALUE_FORMATTERS[format];
 }
