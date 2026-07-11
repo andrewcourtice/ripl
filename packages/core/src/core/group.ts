@@ -149,11 +149,6 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return this.graph(true).find(element => element.id === id) as TElement | undefined;
     }
 
-    /** @deprecated Use {@link getElementById}. */
-    public getElementByID<TElement extends Element = Element>(id: string) {
-        return this.getElementById<TElement>(id);
-    }
-
     /** Returns all descendant elements whose type matches one of the given type names. */
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = new Set(valueOneOrMore(types));

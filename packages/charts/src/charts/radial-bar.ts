@@ -81,8 +81,6 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     trackColor?: string;
     /** Round the ends of each value bar (and its track). Defaults to `false`. */
     rounded?: boolean;
-    /** @deprecated Use `rounded`. Any value `> 0` rounds the bar ends. */
-    cornerRadius?: number;
     legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -180,11 +178,9 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 gap = 0.25,
                 trackColor = '#eceff3',
                 rounded,
-                cornerRadius = 0,
             } = this.options;
 
-            // `rounded` is the primary control; `cornerRadius > 0` remains a back-compat alias.
-            const lineCap = (rounded ?? cornerRadius > 0) ? 'round' : 'butt';
+            const lineCap = rounded ? 'round' : 'butt';
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);

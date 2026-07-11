@@ -25,7 +25,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     createGroup,
     createRect,
     createText,
@@ -234,52 +233,9 @@ export class Legend extends ChartComponent {
         return this.computeLayout(area).thickness;
     }
 
-    /**
-     * Measures the legend's footprint for the given available area, returning a `Box` whose
-     * `width`/`height` both equal the band thickness.
-     *
-     * @deprecated Prefer {@link Legend.measure}; retained for charts not yet on the layout system.
-     */
-    public getBoundingBox(availableWidth?: number): Box {
-        const thickness = this.measure({
-            x: 0,
-            y: 0,
-            width: availableWidth ?? 0,
-            height: 0,
-        });
-
-        return new Box(0, 0, thickness, thickness);
-    }
-
-    /**
-     * Renders (and reconciles) the legend. Accepts either a layout region (preferred) or the
-     * legacy positional form `(x, y, width)` used by charts not yet migrated to the layout system.
-     */
-    public render(region: ChartArea, animation?: ResolvedAnimation): void;
-    /** @deprecated Positional form retained for charts not yet on the layout system. */
-    public render(x: number, y: number, width: number): void;
-    public render(regionOrX: ChartArea | number, animationOrY?: ResolvedAnimation | number, width?: number): void {
-        if (typeof regionOrX === 'number') {
-            const x = regionOrX;
-            const y = animationOrY as number;
-            const legendWidth = width ?? 0;
-            const thickness = this.measure({
-                x,
-                y,
-                width: legendWidth,
-                height: 0,
-            });
-
-            this.draw({
-                x,
-                y,
-                width: legendWidth,
-                height: thickness,
-            });
-            return;
-        }
-
-        this.draw(regionOrX, animationOrY as ResolvedAnimation | undefined);
+    /** Renders (and reconciles) the legend within the given layout region. */
+    public render(region: ChartArea, animation?: ResolvedAnimation): void {
+        this.draw(region, animation);
     }
 
     private draw(region: ChartArea, animation?: ResolvedAnimation) {
