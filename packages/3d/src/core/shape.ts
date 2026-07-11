@@ -92,7 +92,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     protected hitPath?: ContextPath;
 
     private _depth = 0;
-    private getCachedFaces: CachedFunction<() => Face3D[]>;
+    private _getCachedFaces: CachedFunction<() => Face3D[]>;
 
     public get x() {
         return this.getStateValue('x');
@@ -161,12 +161,12 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             ...options,
         } as unknown as ElementOptions<TState>);
 
-        this.getCachedFaces = functionCache(() => this.computeFaces());
+        this._getCachedFaces = functionCache(() => this.computeFaces());
     }
 
     protected override setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         super.setStateValue(key, value);
-        this.getCachedFaces.invalidate();
+        this._getCachedFaces.invalidate();
     }
 
     protected computeFaces(): Face3D[] {
@@ -202,7 +202,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             return new Box(0, 0, 0, 0);
         }
 
-        const faces = this.getCachedFaces();
+        const faces = this._getCachedFaces();
         const matrix = this.getModelMatrix();
 
         let minX = Infinity;
@@ -233,7 +233,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     public render(context: Context): void {
         super.render(context, () => {
             const ctx = context as Context3D;
-            const faces = this.getCachedFaces();
+            const faces = this._getCachedFaces();
             const baseFillStyle = this.fill || '#888888';
             const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
             const matrix = this.getModelMatrix();
@@ -249,14 +249,14 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             });
 
             if (ctx.renderStrategy === 'gpu') {
-                this.renderGPU(ctx, faces, matrix);
+                this._renderGPU(ctx, faces, matrix);
             } else {
-                this.renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
+                this._renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
             }
         });
     }
 
-    private renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
+    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
 
@@ -280,7 +280,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 depth,
             });
 
-            this.traceFaceHitPath(hitPath, points);
+            this._traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
@@ -289,21 +289,21 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             : 0;
     }
 
-    private renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
+    private _renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
             const points = transformed.map(vertex => context.project(vertex));
 
-            this.traceFaceHitPath(hitPath, points);
+            this._traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
         this._depth = context.project([this.x, this.y, this.z])[2];
     }
 
-    private traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {
+    private _traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {
         hitPath.moveTo(points[0][0], points[0][1]);
 
         for (let idx = 1; idx < points.length; idx++) {

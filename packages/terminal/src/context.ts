@@ -279,12 +279,12 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
  */
 export class TerminalContext extends Context<Element> {
 
-    private output: TerminalOutput;
-    private rasterizer: Rasterizer;
-    private logicalWidth?: number;
-    private logicalHeight?: number;
+    private _output: TerminalOutput;
+    private _rasterizer: Rasterizer;
+    private _logicalWidth?: number;
+    private _logicalHeight?: number;
     /** Uniform logical→raster scale factor (1 when no logical size is set). */
-    private rasterScale: number = 1;
+    private _rasterScale: number = 1;
 
     constructor(output: TerminalOutput, options?: TerminalContextOptions) {
         const {
@@ -298,20 +298,20 @@ export class TerminalContext extends Context<Element> {
         // Pass a dummy element — terminal has no DOM element
         super('terminal', {} as Element, options);
 
-        this.output = output;
-        this.logicalWidth = logicalWidth;
-        this.logicalHeight = logicalHeight;
-        this.rasterizer = rasterizer || new BrailleRasterizer(
+        this._output = output;
+        this._logicalWidth = logicalWidth;
+        this._logicalHeight = logicalHeight;
+        this._rasterizer = rasterizer || new BrailleRasterizer(
             width ?? output.columns,
             height ?? output.rows
         );
 
-        this.applyScaling();
+        this._applyScaling();
 
         if (output.onResize) {
             const dispose = output.onResize((cols, rows) => {
-                this.rasterizer.resize(cols, rows);
-                this.applyScaling();
+                this._rasterizer.resize(cols, rows);
+                this._applyScaling();
             });
 
             this.retain({
@@ -326,39 +326,39 @@ export class TerminalContext extends Context<Element> {
      * the logical size and `scaleX`/`scaleY` uniformly scale + centre (letterbox) it into the grid,
      * mirroring how the canvas context maps CSS pixels onto its device-pixel backing store.
      */
-    private applyScaling(): void {
-        const pixelWidth = this.rasterizer.pixelWidth;
-        const pixelHeight = this.rasterizer.pixelHeight;
+    private _applyScaling(): void {
+        const pixelWidth = this._rasterizer.pixelWidth;
+        const pixelHeight = this._rasterizer.pixelHeight;
 
-        if (!this.logicalWidth || !this.logicalHeight) {
-            this.rasterScale = 1;
+        if (!this._logicalWidth || !this._logicalHeight) {
+            this._rasterScale = 1;
             this.rescale(pixelWidth, pixelHeight);
             return;
         }
 
-        const scale = Math.min(pixelWidth / this.logicalWidth, pixelHeight / this.logicalHeight);
-        const offsetX = (pixelWidth - this.logicalWidth * scale) / 2;
-        const offsetY = (pixelHeight - this.logicalHeight * scale) / 2;
+        const scale = Math.min(pixelWidth / this._logicalWidth, pixelHeight / this._logicalHeight);
+        const offsetX = (pixelWidth - this._logicalWidth * scale) / 2;
+        const offsetY = (pixelHeight - this._logicalHeight * scale) / 2;
 
-        this.rasterScale = scale;
+        this._rasterScale = scale;
 
         // `rescale` resets scaleX/scaleY to identity (and emits `resize`), so set the letterbox
         // mapping immediately after it.
-        this.rescale(this.logicalWidth, this.logicalHeight);
-        this.scaleX = scaleContinuous([0, this.logicalWidth], [offsetX, offsetX + this.logicalWidth * scale]);
-        this.scaleY = scaleContinuous([0, this.logicalHeight], [offsetY, offsetY + this.logicalHeight * scale]);
+        this.rescale(this._logicalWidth, this._logicalHeight);
+        this.scaleX = scaleContinuous([0, this._logicalWidth], [offsetX, offsetX + this._logicalWidth * scale]);
+        this.scaleY = scaleContinuous([0, this._logicalHeight], [offsetY, offsetY + this._logicalHeight * scale]);
     }
 
     public clear(): void {
-        this.output.write('\x1b[H');
-        this.rasterizer.clear();
+        this._output.write('\x1b[H');
+        this._rasterizer.clear();
     }
 
     public markRenderEnd(): void {
         super.markRenderEnd();
 
         if (this.renderDepth === 0) {
-            this.flush();
+            this._flush();
         }
     }
 
@@ -378,9 +378,9 @@ export class TerminalContext extends Context<Element> {
         const color = colorToAnsiFg(this.fill);
 
         if (element instanceof TerminalPath) {
-            this.rasterizePath(element, color, true);
+            this._rasterizePath(element, color, true);
         } else if (element instanceof ContextText) {
-            this.rasterizeText(element, color);
+            this._rasterizeText(element, color);
         }
     }
 
@@ -388,14 +388,14 @@ export class TerminalContext extends Context<Element> {
         const color = colorToAnsiFg(this.stroke);
 
         if (element instanceof TerminalPath) {
-            this.rasterizePath(element, color, false);
+            this._rasterizePath(element, color, false);
         }
     }
 
     public measureText(text: string): TextMetrics {
         // Report metrics in logical units so layout code sizes text consistently with its space.
-        const charWidth = BRAILLE_CELL_WIDTH / this.rasterScale;
-        const charHeight = BRAILLE_CELL_HEIGHT / this.rasterScale;
+        const charWidth = BRAILLE_CELL_WIDTH / this._rasterScale;
+        const charHeight = BRAILLE_CELL_HEIGHT / this._rasterScale;
 
         return {
             width: text.length * charWidth,
@@ -414,10 +414,10 @@ export class TerminalContext extends Context<Element> {
     }
 
     public export(): ContextExport {
-        const text = this.rasterizer.serialize({
+        const text = this._rasterizer.serialize({
             ansi: false,
         });
-        const imageData = this.rasterizer.toImageData();
+        const imageData = this._rasterizer.toImageData();
 
         return {
             toString: () => text,
@@ -426,15 +426,15 @@ export class TerminalContext extends Context<Element> {
         };
     }
 
-    private flush(): void {
-        const data = this.rasterizer.serialize();
-        this.output.write(data);
+    private _flush(): void {
+        const data = this._rasterizer.serialize();
+        this._output.write(data);
     }
 
-    private rasterizeText(text: ContextText, color: string): void {
-        const rasterizer = this.rasterizer;
+    private _rasterizeText(text: ContextText, color: string): void {
+        const rasterizer = this._rasterizer;
         const content = text.maxWidth
-            ? text.content.slice(0, Math.floor((text.maxWidth * this.rasterScale) / BRAILLE_CELL_WIDTH))
+            ? text.content.slice(0, Math.floor((text.maxWidth * this._rasterScale) / BRAILLE_CELL_WIDTH))
             : text.content;
 
         // Position follows the logical space; glyphs stay cell-sized. Approximate textAlign/
@@ -450,19 +450,19 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
-    private rasterizePath(path: TerminalPath, color: string, fill: boolean): void {
-        const rasterizer = this.rasterizer;
+    private _rasterizePath(path: TerminalPath, color: string, fill: boolean): void {
+        const rasterizer = this._rasterizer;
 
         const plot: PixelCallback = (x, y) => {
             rasterizer.setPixel(x, y, color);
         };
 
         if (fill) {
-            fillPolygon(this.buildContours(path), plot);
+            fillPolygon(this._buildContours(path), plot);
         }
 
         // Always draw the outline
-        this.executeCommands(path, plot);
+        this._executeCommands(path, plot);
     }
 
     /**
@@ -470,7 +470,7 @@ export class TerminalContext extends Context<Element> {
      * semantics) so the interior can be filled with the even-odd rule. Mirrors the coordinate mapping
      * used by {@link executeCommands}: points via `scaleX`/`scaleY`, radii via `rasterScale`.
      */
-    private buildContours(path: TerminalPath): Vertex[][] {
+    private _buildContours(path: TerminalPath): Vertex[][] {
         const contours: Vertex[][] = [];
 
         let current: Vertex[] = [];
@@ -494,7 +494,7 @@ export class TerminalContext extends Context<Element> {
         const context: ContourContext = {
             sx: this.scaleX,
             sy: this.scaleY,
-            s: this.rasterScale,
+            s: this._rasterScale,
             contours,
             flush,
             append,
@@ -509,12 +509,12 @@ export class TerminalContext extends Context<Element> {
         return contours;
     }
 
-    private executeCommands(path: TerminalPath, plot: PixelCallback): void {
+    private _executeCommands(path: TerminalPath, plot: PixelCallback): void {
         // Map logical coordinates into the raster (identity when no logical size is configured).
         const context: RasterContext = {
             sx: this.scaleX,
             sy: this.scaleY,
-            s: this.rasterScale,
+            s: this._rasterScale,
             plot,
         };
 

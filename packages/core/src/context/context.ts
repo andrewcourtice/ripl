@@ -418,9 +418,9 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
     public invalidateTrackedElements(event?: string): void {
         if (event) {
-            this.getTrackedElements.cache.delete(event);
+            this._getTrackedElements.cache.delete(event);
         } else {
-            this.getTrackedElements.cache.clear();
+            this._getTrackedElements.cache.clear();
         }
     }
 
@@ -522,13 +522,13 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return false;
     }
 
-    private getTrackedElements = functionMemoize((event: string) => {
+    private _getTrackedElements = functionMemoize((event: string) => {
         return this.renderedElements.filter(element => element.has(event));
     });
 
     /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        return arrayDedupe(events.flatMap(event => this.getTrackedElements(event)))
+        return arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
             .filter(element => element.intersectsWith(x, y, {
                 isPointer: true,
             }))

@@ -539,7 +539,7 @@ export class CanvasContext3D extends Context3D {
             let lastLineWidth = -1;
 
             for (const face of faces) {
-                this.drawFace(face, lastFill, lastStroke, lastLineWidth);
+                this._drawFace(face, lastFill, lastStroke, lastLineWidth);
 
                 lastFill = face.fillColor;
                 lastStroke = face.strokeStyle ?? '';
@@ -548,7 +548,7 @@ export class CanvasContext3D extends Context3D {
         });
     }
 
-    private drawFace(
+    private _drawFace(
         face: ProjectedFace3D,
         lastFill: string,
         lastStroke: string,

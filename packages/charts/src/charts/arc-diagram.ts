@@ -137,18 +137,18 @@ export interface ArcDiagramChartEventMap extends EventMap {
  */
 export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramChartEventMap> {
 
-    private axisGroup?: Group;
-    private axisLine?: Line;
-    private linksGroup?: Group;
-    private nodesGroup?: Group;
-    private linkElements: Polyline[] = [];
-    private nodeElements: Group[] = [];
-    private tooltip: Tooltip;
+    private _axisGroup?: Group;
+    private _axisLine?: Line;
+    private _linksGroup?: Group;
+    private _nodesGroup?: Group;
+    private _linkElements: Polyline[] = [];
+    private _nodeElements: Group[] = [];
+    private _tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: ArcDiagramChartOptions) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -156,7 +156,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
         this.init();
     }
 
-    private attachNodeHover(circle: Circle, node: ArcDiagramNode, color: string) {
+    private _attachNodeHover(circle: Circle, node: ArcDiagramNode, color: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -171,7 +171,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: circle.cx,
                 y: circle.cy,
@@ -185,7 +185,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
         });
     }
 
-    private attachLinkHover(arc: Polyline, link: ArcDiagramLink, content: string, color: string) {
+    private _attachLinkHover(arc: Polyline, link: ArcDiagramLink, content: string, color: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -201,7 +201,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => {
                 const points = arc.points;
                 const mid = points[Math.floor(points.length / 2)] ?? [0, 0];
@@ -331,20 +331,20 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
             // --- Axis line ---
-            if (!this.axisGroup) {
-                this.axisGroup = createGroup({
+            if (!this._axisGroup) {
+                this._axisGroup = createGroup({
                     id: 'arc-axis',
                     class: 'arc-axis',
                     zIndex: 0,
                 });
-                this.scene.add(this.axisGroup);
+                this.scene.add(this._axisGroup);
             }
 
             const axisFrom = toXY(alongStart - margin / 2, baseCross);
             const axisTo = toXY(alongEnd + margin / 2, baseCross);
 
-            if (!this.axisLine) {
-                this.axisLine = createLine({
+            if (!this._axisLine) {
+                this._axisLine = createLine({
                     id: 'arc-axis-line',
                     x1: axisFrom[0],
                     y1: axisFrom[1],
@@ -354,9 +354,9 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                     lineWidth: 1,
                     pointerEvents: 'none',
                 });
-                this.axisGroup.add(this.axisLine);
+                this._axisGroup.add(this._axisLine);
             } else {
-                this.axisLine.data = {
+                this._axisLine.data = {
                     x1: axisFrom[0],
                     y1: axisFrom[1],
                     x2: axisTo[0],
@@ -365,13 +365,13 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
             }
 
             // --- Links (semicircular arcs off the axis) ---
-            if (!this.linksGroup) {
-                this.linksGroup = createGroup({
+            if (!this._linksGroup) {
+                this._linksGroup = createGroup({
                     id: 'arc-links',
                     class: 'arc-links',
                     zIndex: 1,
                 });
-                this.scene.add(this.linksGroup);
+                this.scene.add(this._linksGroup);
             }
 
             const linkValues = links.map(link => link.value ?? 1);
@@ -390,7 +390,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                 left: linkEntries,
                 inner: linkUpdates,
                 right: linkExits,
-            } = arrayJoin(links, this.linkElements, (link, poly) => poly.id === linkId(link));
+            } = arrayJoin(links, this._linkElements, (link, poly) => poly.id === linkId(link));
 
             linkExits.forEach(el => el.destroy());
 
@@ -415,8 +415,8 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 
                 arc.autoFill = false;
                 arcEntryDelays.set(arc.id, stagger(linkOrderIndex(link), nodes.length, enter.duration, 0.6));
-                this.attachLinkHover(arc, link, linkContent(link), color);
-                this.linksGroup!.add(arc);
+                this._attachLinkHover(arc, link, linkContent(link), color);
+                this._linksGroup!.add(arc);
 
                 return arc;
             });
@@ -428,22 +428,22 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                     points: linkPoints(link),
                     opacity: 1,
                 } as Partial<PolylineState>;
-                this.attachLinkHover(arc, link, linkContent(link), arcColor(link));
+                this._attachLinkHover(arc, link, linkContent(link), arcColor(link));
             });
 
-            this.linkElements = [
+            this._linkElements = [
                 ...newLinks,
                 ...linkUpdates.map(([, arc]) => arc),
             ];
 
             // --- Nodes (tick + dot + label along the axis) ---
-            if (!this.nodesGroup) {
-                this.nodesGroup = createGroup({
+            if (!this._nodesGroup) {
+                this._nodesGroup = createGroup({
                     id: 'arc-nodes',
                     class: 'arc-nodes',
                     zIndex: 2,
                 });
-                this.scene.add(this.nodesGroup);
+                this.scene.add(this._nodesGroup);
             }
 
             // Outward direction (toward the labels) for ticks + label placement.
@@ -466,7 +466,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                 left: nodeEntries,
                 inner: nodeUpdates,
                 right: nodeExits,
-            } = arrayJoin(nodes, this.nodeElements, (node, group) => group.id === `arc-node-${node.id}`);
+            } = arrayJoin(nodes, this._nodeElements, (node, group) => group.id === `arc-node-${node.id}`);
 
             nodeExits.forEach(group => group.destroy());
 
@@ -510,7 +510,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                     } as CircleState,
                 });
 
-                this.attachNodeHover(circle, node, color);
+                this._attachNodeHover(circle, node, color);
 
                 const text = createText({
                     id: `arc-node-${node.id}-label`,
@@ -556,7 +556,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                         radius,
                         fill: restFill,
                     } as CircleState;
-                    this.attachNodeHover(circle, node, color);
+                    this._attachNodeHover(circle, node, color);
                 }
 
                 if (tick) {
@@ -580,9 +580,9 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
                 }
             });
 
-            entryNodeGroups.forEach(group => this.nodesGroup!.add(group));
+            entryNodeGroups.forEach(group => this._nodesGroup!.add(group));
 
-            this.nodeElements = [
+            this._nodeElements = [
                 ...entryNodeGroups,
                 ...nodeUpdates.map(([, group]) => group),
             ];
@@ -593,10 +593,10 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             return Promise.all([
-                this.axisLine ? this.renderer.transition(this.axisLine, {
+                this._axisLine ? this.renderer.transition(this._axisLine, {
                     duration: update.duration,
                     ease: easeOutCubic,
-                    state: (this.axisLine.data ?? {}) as Partial<LineState>,
+                    state: (this._axisLine.data ?? {}) as Partial<LineState>,
                 }) : Promise.resolve(),
 
                 // Entry arcs draw out of their earlier node and fade in, cascading along the axis.

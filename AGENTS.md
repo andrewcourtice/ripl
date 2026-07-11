@@ -360,7 +360,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 
 ### Class Conventions
 
-- **Explicit scope identifiers** — every member must have `private`, `protected`, `public`, or `static` (enforced by ESLint `@typescript-eslint/explicit-member-accessibility`)
+- **Explicit scope identifiers** — every member must have `private`, `protected`, `public`, or `static` (enforced by ESLint `@typescript-eslint/explicit-member-accessibility`). Internal (`private`) members carry a leading underscore (`private _name`) to signal they are backing state
 - **Native `#` private fields** — use JS `#` prefix for private fields (e.g. `#elements`), not the TypeScript `private` keyword, for truly private data
 - **Member ordering:**
   1. Private fields (`#field`)

@@ -110,7 +110,7 @@ Use `import type { ... }` for type-only imports.
 - **Strict mode** — `"strict": true`, no implicit any, strict null checks
 - **Interfaces over types** for object definitions
 - **Named exports only** — no default exports
-- **Explicit member accessibility** — every class member must have `private`, `protected`, `public`, or `static`
+- **Explicit member accessibility** — every class member must have `private`, `protected`, `public`, or `static`; `private` members carry a leading underscore (`private _name`)
 - **Generics** for reusable, type-safe code
 
 ## Architecture Quick Reference

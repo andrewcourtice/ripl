@@ -41,7 +41,7 @@ This report documents several places in the codebase where performance could be 
 <!-- eslint-skip -->
 ```typescript
 public get children() {
-    return Array.from(this.#elements);  // New array created on every access
+    return Array.from(this._elements);  // New array created on every access
 }
 ```
 

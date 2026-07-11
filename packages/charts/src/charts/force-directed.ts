@@ -150,19 +150,19 @@ interface PlacedNode {
  */
 export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDirectedChartEventMap> {
 
-    private nodesGroup?: Group;
-    private linksGroup?: Group;
-    private nodeElements: Group[] = [];
-    private linkElements: Line[] = [];
-    private tooltip: Tooltip;
+    private _nodesGroup?: Group;
+    private _linksGroup?: Group;
+    private _nodeElements: Group[] = [];
+    private _linkElements: Line[] = [];
+    private _tooltip: Tooltip;
     /** Last settled sim-space positions per node id, so reweights relax from the previous layout. */
-    private positions = new Map<string, { x: number;
+    private _positions = new Map<string, { x: number;
         y: number; }>();
 
     constructor(target: string | HTMLElement | Context, options: ForceDirectedChartOptions) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -170,7 +170,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
         this.init();
     }
 
-    private attachNodeHover(circle: Circle, node: PlacedNode, content: string) {
+    private _attachNodeHover(circle: Circle, node: PlacedNode, content: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -186,7 +186,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: circle.cx,
                 y: circle.cy - node.r,
@@ -200,7 +200,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
         });
     }
 
-    private attachLinkHover(line: Line, link: ForceNetworkLink, content: string) {
+    private _attachLinkHover(line: Line, link: ForceNetworkLink, content: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -216,7 +216,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: (line.x1 + line.x2) / 2,
                 y: (line.y1 + line.y2) / 2,
@@ -276,7 +276,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             // existing nodes from their last settled positions so a reweight relaxes from the current
             // layout (nodes glide to new spots) rather than re-seeding from scratch (a full reshuffle).
             const simNodes: ForceNode[] = nodes.map(node => {
-                const previous = this.positions.get(node.id);
+                const previous = this._positions.get(node.id);
                 return {
                     id: node.id,
                     x: previous?.x ?? 0,
@@ -301,7 +301,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             });
 
             // Persist the settled positions (and drop nodes that no longer exist) for the next render.
-            this.positions = new Map(simNodes.map(node => [node.id, {
+            this._positions = new Map(simNodes.map(node => [node.id, {
                 x: node.x,
                 y: node.y,
             }]));
@@ -383,13 +383,13 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
             const springDelay = (id: string) => depthOf(id) * enter.duration * 0.18;
 
             // --- Links (drawn under the nodes) ---
-            if (!this.linksGroup) {
-                this.linksGroup = createGroup({
+            if (!this._linksGroup) {
+                this._linksGroup = createGroup({
                     id: 'force-links',
                     class: 'force-links',
                     zIndex: 0,
                 });
-                this.scene.add(this.linksGroup);
+                this.scene.add(this._linksGroup);
             }
 
             const linkValues = links.map(link => link.value ?? 1);
@@ -401,7 +401,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 left: linkEntries,
                 inner: linkUpdates,
                 right: linkExits,
-            } = arrayJoin(links, this.linkElements, (link, line) => line.id === linkId(link));
+            } = arrayJoin(links, this._linkElements, (link, line) => line.id === linkId(link));
 
             linkExits.forEach(el => el.destroy());
 
@@ -454,8 +454,8 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                     } as Partial<LineState>,
                 });
 
-                this.attachLinkHover(line, link, `${link.source} → ${link.target}${link.value !== undefined ? `: ${formatValue(link.value)}` : ''}`);
-                this.linksGroup!.add(line);
+                this._attachLinkHover(line, link, `${link.source} → ${link.target}${link.value !== undefined ? `: ${formatValue(link.value)}` : ''}`);
+                this._linksGroup!.add(line);
 
                 return line;
             });
@@ -466,29 +466,29 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                     ...linkEndpoints(link),
                     opacity: 0.9,
                 } as Partial<LineState>;
-                this.attachLinkHover(line, link, `${link.source} → ${link.target}${link.value !== undefined ? `: ${formatValue(link.value)}` : ''}`);
+                this._attachLinkHover(line, link, `${link.source} → ${link.target}${link.value !== undefined ? `: ${formatValue(link.value)}` : ''}`);
             });
 
-            this.linkElements = [
+            this._linkElements = [
                 ...newLinks,
                 ...linkUpdates.map(([, line]) => line),
             ];
 
             // --- Nodes ---
-            if (!this.nodesGroup) {
-                this.nodesGroup = createGroup({
+            if (!this._nodesGroup) {
+                this._nodesGroup = createGroup({
                     id: 'force-nodes',
                     class: 'force-nodes',
                     zIndex: 1,
                 });
-                this.scene.add(this.nodesGroup);
+                this.scene.add(this._nodesGroup);
             }
 
             const {
                 left: nodeEntries,
                 inner: nodeUpdates,
                 right: nodeExits,
-            } = arrayJoin(nodes, this.nodeElements, (node, group) => group.id === `node-${node.id}`);
+            } = arrayJoin(nodes, this._nodeElements, (node, group) => group.id === `node-${node.id}`);
 
             nodeExits.forEach(group => group.destroy());
 
@@ -515,7 +515,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                     } as CircleState,
                 });
 
-                this.attachNodeHover(circle, placedNode, nodeContent(placedNode));
+                this._attachNodeHover(circle, placedNode, nodeContent(placedNode));
 
                 const text = createSegmentLabel({
                     id: `node-${node.id}-label`,
@@ -554,7 +554,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                         radius: placedNode.r,
                         fill: restFill,
                     } as CircleState;
-                    this.attachNodeHover(circle, placedNode, nodeContent(placedNode));
+                    this._attachNodeHover(circle, placedNode, nodeContent(placedNode));
                 }
 
                 if (text) {
@@ -568,9 +568,9 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
                 }
             });
 
-            entryNodeGroups.forEach(group => this.nodesGroup!.add(group));
+            entryNodeGroups.forEach(group => this._nodesGroup!.add(group));
 
-            this.nodeElements = [
+            this._nodeElements = [
                 ...entryNodeGroups,
                 ...nodeUpdates.map(([, group]) => group),
             ];

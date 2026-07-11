@@ -122,13 +122,13 @@ export interface PieChartEventMap extends EventMap {
  */
 export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, PieChartEventMap> {
 
-    private groups: Group[] = [];
-    private tooltip: Tooltip;
+    private _groups: Group[] = [];
+    private _tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
             placement: 'center',
@@ -227,7 +227,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 left: entryData,
                 inner: updateData,
                 right: exitData,
-            } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
+            } = arrayJoin(calculations, this._groups, (item, group) => item.key === group.id);
 
             const entries = entryData.map(item => {
                 const {
@@ -263,7 +263,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     } as Partial<ArcState>,
                 });
 
-                this.attachSegmentHover(segmentArc, {
+                this._attachSegmentHover(segmentArc, {
                     color: segmentColor,
                     value: segmentValue,
                     label: segmentLabel,
@@ -338,7 +338,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 } as Partial<ArcState>;
 
                 arc.data = arcData;
-                this.attachSegmentHover(arc, {
+                this._attachSegmentHover(arc, {
                     color: resolvedColor,
                     value: item.value,
                     label: item.label,
@@ -398,12 +398,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 return group;
             });
 
-            this.groups = [
+            this._groups = [
                 ...entries,
                 ...updates,
             ];
 
-            this.registerHighlightGroups(this.groups);
+            this.registerHighlightGroups(this._groups);
 
             scene.add(entries);
 
@@ -451,7 +451,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
         });
     }
 
-    private attachSegmentHover(arc: Arc, segment: { color: string;
+    private _attachSegmentHover(arc: Arc, segment: { color: string;
         value: number;
         label: string;
         key: string; }) {
@@ -472,7 +472,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);
                 return {
