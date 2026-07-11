@@ -37,6 +37,7 @@ import {
 import type {
     LegendItem,
 } from '../components/legend';
+
 import {
     Legend,
 } from '../components/legend';
@@ -45,6 +46,7 @@ import type {
     ChartArea,
     ChartPadding,
 } from './layout';
+
 import {
     ChartLayout,
 } from './layout';
@@ -52,6 +54,7 @@ import {
 import type {
     ResolvedAnimation,
 } from './animation';
+
 import {
     ANIMATION_REFERENCE,
     resolveAnimation,

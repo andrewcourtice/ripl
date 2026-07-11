@@ -1,12 +1,21 @@
 import animationCode from './animation.js?raw';
+
 import circleCode from './circle.js?raw';
+
 import cubeCode from './cube.js?raw';
+
 import lineChartCode from './line-chart.js?raw';
+
 import multiple3dShapesCode from './multiple-3d-shapes.js?raw';
+
 import multipleShapesCode from './multiple-shapes.js?raw';
+
 import rectangleCode from './rectangle.js?raw';
+
 import sphereCode from './sphere.js?raw';
+
 import textCode from './text.js?raw';
+
 import solarSystemCode from './solar-system.js?raw';
 
 export interface PlaygroundExample {

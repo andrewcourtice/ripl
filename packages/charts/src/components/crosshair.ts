@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -9,6 +10,7 @@ import type {
     Group,
     Line,
 } from '@ripl/core';
+
 import {
     createGroup,
     createLine,

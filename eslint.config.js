@@ -5,12 +5,19 @@ import {
 import {
     includeIgnoreFile,
 } from '@eslint/compat';
+
 import eslint from '@eslint/js';
+
 import markdown from '@eslint/markdown';
+
 import tseslint from 'typescript-eslint';
+
 import stylistic from '@stylistic/eslint-plugin';
+
 import vue from 'eslint-plugin-vue';
+
 import globals from 'globals';
+
 import vueParser from 'vue-eslint-parser';
 
 const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
@@ -64,6 +71,8 @@ export default tseslint.config(
                 'exceptions': [
                     '_',
                     'i',
+                    'j',
+                    'k',
                     'x',
                     'y',
                     // Color components (RGB, HSL, HSV)
@@ -148,6 +157,11 @@ export default tseslint.config(
                 'avoidEscape': true,
             }],
             '@stylistic/member-delimiter-style': 'error',
+            '@stylistic/padding-line-between-statements': ['error', {
+                'blankLine': 'always',
+                'prev': 'import',
+                'next': 'import',
+            }],
 
             // Typescript specific rules
             '@typescript-eslint/explicit-member-accessibility': ['warn', {
@@ -172,9 +186,23 @@ export default tseslint.config(
     // Relax nesting rules for test files (describe > describe > test > callback is standard)
     {
         name: 'ripl/tests',
-        files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.bench.ts'],
+        files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.bench.ts', 'packages/test-utils/**/*.ts'],
         rules: {
             'max-nested-callbacks': ['error', 6],
+            // Test doubles, spies and edge-case casts legitimately use empty
+            // callbacks, `any`, and un-annotated members.
+            '@typescript-eslint/no-empty-function': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/explicit-member-accessibility': 'off',
+        },
+    },
+
+    // Build/tooling scripts may log progress to the console.
+    {
+        name: 'ripl/scripts',
+        files: ['app/scripts/**/*.mjs', 'app/scripts/**/*.js'],
+        rules: {
+            'no-console': 'off',
         },
     },
 
@@ -197,8 +225,18 @@ export default tseslint.config(
             'no-console': 'off',
             'no-undef': 'off',
             'no-unused-vars': 'off',
+            'no-unused-expressions': 'off',
+            // Documentation snippets favour compact, illustrative code over
+            // production-strictness rules, so relax those for fenced code blocks.
+            'id-length': 'off',
+            'no-multi-assign': 'off',
+            '@stylistic/object-property-newline': 'off',
+            '@stylistic/no-multi-spaces': 'off',
             '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-expressions': 'off',
             '@typescript-eslint/no-require-imports': 'off',
+            '@typescript-eslint/no-empty-function': 'off',
+            '@typescript-eslint/explicit-member-accessibility': 'off',
             '@stylistic/indent': ['error', INDENT],
             '@stylistic/semi': ['error', 'always'],
             '@stylistic/quotes': ['error', 'single', { 'avoidEscape': true }],
@@ -212,6 +250,11 @@ export default tseslint.config(
             '@stylistic/object-curly-spacing': ['error', 'always'],
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
+            }],
+            '@stylistic/padding-line-between-statements': ['error', {
+                'blankLine': 'always',
+                'prev': 'import',
+                'next': 'import',
             }],
         },
     },
@@ -255,6 +298,25 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
+            '@stylistic/padding-line-between-statements': ['error', {
+                'blankLine': 'always',
+                'prev': 'import',
+                'next': 'import',
+            }],
+        },
+    },
+
+    // Playground examples run inside the docs editor with `context`, `scene` and
+    // `renderer` injected into scope, so treat them as read-only globals.
+    {
+        name: 'ripl/playground-examples',
+        files: ['app/src/.vitepress/components/playground/examples/**/*.js'],
+        languageOptions: {
+            globals: {
+                context: 'readonly',
+                scene: 'readonly',
+                renderer: 'readonly',
+            },
         },
     }
 );

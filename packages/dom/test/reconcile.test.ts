@@ -4,13 +4,16 @@ import {
     test,
 } from 'vitest';
 
+import type {
+    ReconcilerOptions,
+    VNode,
+} from '../src';
+
 import {
     createVNode,
     ensureGroupPath,
     getAncestorGroupIds,
     reconcileNode,
-    ReconcilerOptions,
-    VNode,
 } from '../src';
 
 function createDOMElement(tag: string, id?: string): Element {

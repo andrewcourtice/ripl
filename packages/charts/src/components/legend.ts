@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -22,6 +23,7 @@ import type {
     Rect,
     Text,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,

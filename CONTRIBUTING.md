@@ -83,11 +83,11 @@ ESLint enforces most style rules automatically. Key points:
 - **Variables, functions** — `camelCase`
 - **Classes, interfaces, types** — `PascalCase`
 - **Constants** — `UPPER_SNAKE_CASE`
-- **Min 2-char identifiers** (exceptions: `_`, `i`, `x`, `y`, and single-letter math/color vars)
+- **Min 2-char identifiers** (exceptions: `_`, `i`, `j`, `k`, `x`, `y`, and single-letter math/color vars)
 
 ### Import Ordering
 
-Always use named imports/exports (no default exports). One import per line, trailing comma, alphabetical within each group, blank line between groups:
+Always use named imports/exports (no default exports). One import per line, trailing comma, alphabetical within each group, and a blank line between **every** import statement (including a same-module `import type` / value `import` pair):
 
 ```typescript
 // 1. Internal (current package)

@@ -1,9 +1,13 @@
 import DefaultTheme from 'vitepress/theme';
 
 import 'flex-layout-attribute';
+
 import './style.scss';
+
 import '../../demos/trading-dashboard/styles/dashboard.scss';
+
 import '../../demos/jet-engine/styles/jet-engine.scss';
+
 import '../../demos/mermaid-diagram/styles/mermaid-diagram.scss';
 
 import {
@@ -19,26 +23,47 @@ import {
 } from 'vitepress';
 
 import Example from '../components/example.vue';
+
 import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vue';
+
 import Example3D from '../components/example-3d.vue';
+
 import RippleBackground from '../components/ripple-background.vue';
+
 import RiplPlayground from '../components/playground/ripl-playground.vue';
+
 import PlaygroundLayout from '../components/playground/playground-layout.vue';
+
 import RiplButton from '../components/ripl-button.vue';
+
 import RiplButtonGroup from '../components/ripl-button-group.vue';
+
 import RiplControlGroup from '../components/ripl-control-group.vue';
+
 import RiplSwitch from '../components/ripl-switch.vue';
+
 import RiplSelect from '../components/ripl-select.vue';
+
 import RiplInputRange from '../components/ripl-input-range.vue';
+
 import RiplInputText from '../components/ripl-input-text.vue';
+
 import RiplColorInput from '../components/ripl-color-input.vue';
+
 import RiplField from '../components/ripl-field.vue';
+
 import RiplChartConfig from '../components/ripl-chart-config.vue';
+
 import RiplDropdown from '../components/ripl-dropdown.vue';
+
 import RiplDropdownItem from '../components/ripl-dropdown-item.vue';
+
 import RiplDropdownLabel from '../components/ripl-dropdown-label.vue';
+
 import ExampleTerminal from '../components/example-terminal.vue';
+
 import Example3DWebGPU from '../components/example-3d-webgpu.vue';
+
 import ExampleTerminalInteractive from '../components/example-terminal-interactive.vue';
 
 import {

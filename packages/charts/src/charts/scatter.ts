@@ -1,6 +1,7 @@
 import type {
     CartesianChartOptions,
 } from '../core/cartesian';
+
 import {
     CartesianChart,
 } from '../core/cartesian';
@@ -53,6 +54,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     Box,
     createCircle,

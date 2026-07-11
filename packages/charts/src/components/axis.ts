@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -12,6 +13,7 @@ import {
 import type {
     ResolvedAnimation,
 } from '../core/animation';
+
 import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
@@ -23,6 +25,7 @@ import type {
     Scale,
     Text,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,
@@ -256,7 +259,8 @@ export class ChartAxis extends ChartComponent {
     }
 
     public render() {
-
+        // No direct render pass: concrete axes draw through their tick/label
+        // helpers, so the base component render is intentionally a no-op.
     }
 
 }

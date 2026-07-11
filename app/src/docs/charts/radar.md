@@ -138,7 +138,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createRadarChart('#container', {
-    data: [...],
+    data: [/* ... */],
     axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
     series: [
         { id: 'player1', value: 'player1', label: 'Player 1' },

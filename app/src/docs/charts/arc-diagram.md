@@ -133,13 +133,20 @@ import {
 
 const chart = createArcDiagramChart('#container', {
     nodes: [
-        { id: 'a', label: 'A' },
-        { id: 'b', label: 'B' },
-        { id: 'c', label: 'C' },
+        { id: 'a',
+            label: 'A' },
+        { id: 'b',
+            label: 'B' },
+        { id: 'c',
+            label: 'C' },
     ],
     links: [
-        { source: 'a', target: 'b', value: 4 },
-        { source: 'a', target: 'c', value: 2 },
+        { source: 'a',
+            target: 'b',
+            value: 4 },
+        { source: 'a',
+            target: 'c',
+            value: 2 },
     ],
 });
 ```

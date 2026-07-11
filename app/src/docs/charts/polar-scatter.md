@@ -123,12 +123,22 @@ import {
 
 const chart = createPolarScatterChart('#container', {
     data: [
-        { angle: 45, speed: 62, gust: 80 },
-        { angle: 120, speed: 34, gust: 40 },
-        { angle: 250, speed: 88, gust: 95 },
+        { angle: 45,
+            speed: 62,
+            gust: 80 },
+        { angle: 120,
+            speed: 34,
+            gust: 40 },
+        { angle: 250,
+            speed: 88,
+            gust: 95 },
     ],
     series: [
-        { id: 'wind', label: 'Wind', angle: 'angle', radius: 'speed', sizeBy: 'gust' },
+        { id: 'wind',
+            label: 'Wind',
+            angle: 'angle',
+            radius: 'speed',
+            sizeBy: 'gust' },
     ],
     maxRadiusValue: 100,
 });
@@ -154,12 +164,21 @@ observation and point each series at its own fields:
 
 ```ts
 const data = [
-    { morningAngle: 60, morningSpeed: 32, eveningAngle: 250, eveningSpeed: 78 },
+    { morningAngle: 60,
+        morningSpeed: 32,
+        eveningAngle: 250,
+        eveningSpeed: 78 },
 ];
 
 const series = [
-    { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed' },
-    { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed' },
+    { id: 'morning',
+        label: 'Morning',
+        angle: 'morningAngle',
+        radius: 'morningSpeed' },
+    { id: 'evening',
+        label: 'Evening',
+        angle: 'eveningAngle',
+        radius: 'eveningSpeed' },
 ];
 ```
 

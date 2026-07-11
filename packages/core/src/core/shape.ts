@@ -8,6 +8,7 @@ import type {
     ElementIntersectionOptions,
     ElementOptions,
 } from './element';
+
 import {
     Element,
 } from './element';

@@ -7,9 +7,12 @@ import {
     vi,
 } from 'vitest';
 
+import type {
+    SVGContext,
+} from '../src';
+
 import {
     createContext,
-    SVGContext,
     SVGImage,
     SVGPath,
     SVGText,

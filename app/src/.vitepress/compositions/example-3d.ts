@@ -4,7 +4,6 @@ import {
 } from 'vue';
 
 import {
-    Context3D,
     createCamera,
 } from '@ripl/3d';
 
@@ -16,6 +15,8 @@ import {
 import type {
     Camera,
     CameraOptions,
+
+    Context3D,
 } from '@ripl/3d';
 
 import type {

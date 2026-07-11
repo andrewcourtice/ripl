@@ -105,7 +105,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createHeatmapChart('#container', {
-    data: [...],
+    data: [/* ... */],
     xBy: 'hour',
     yBy: 'day',
     value: 'value',

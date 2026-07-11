@@ -18,6 +18,7 @@ This package provides an SVG implementation of Ripl's `Context` interface. Swap 
 import {
     createContext,
 } from '@ripl/svg';
+
 import {
     createCircle,
 } from '@ripl/web';

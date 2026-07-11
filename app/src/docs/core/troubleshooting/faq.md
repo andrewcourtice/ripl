@@ -105,7 +105,7 @@ Pointer events (click, mouseenter, mouseleave, mousemove) only work when element
 
 ```ts
 // ❌ Won't work — no scene
-const circle = createCircle({ ... });
+const circle = createCircle({ /* ... */ });
 circle.render(context);
 circle.on('click', () => {}); // Never fires
 
@@ -147,7 +147,7 @@ Yes. Ripl renders to a DOM element, so it works with any framework. Create the c
 // Vue 3 example
 onMounted(() => {
     const context = createContext(containerRef.value);
-    const scene = createScene(context, { children: [...] });
+    const scene = createScene(context, { children: [/* ... */] });
     scene.render();
 
     onUnmounted(() => scene.destroy());

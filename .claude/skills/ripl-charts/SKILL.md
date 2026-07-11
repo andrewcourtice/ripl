@@ -38,6 +38,7 @@ layouts), `pie.ts`/`radial-bar.ts` (arcs).
 
 ## Anatomy of a chart
 
+<!-- eslint-skip -->
 ```ts
 export interface <Name>ChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
@@ -95,7 +96,7 @@ Inside `super.render(async () => { ... })`:
    ```ts
    const { left: entries, inner: updates, right: exits } =
        arrayJoin(data, this.groups, (item, group) => group.id === getKey(item));
-   exits.forEach(group => group.destroy());          // or exitElement(...) to animate out
+   exits.forEach(group => group.destroy()); // or exitElement(...) to animate out
    ```
    `left` = entering (new), `inner` = `[data, element]` pairs to update, `right` = leaving. Persist the
    combined `[...entryGroups, ...updates.map(([, g]) => g)]` back onto `this.groups`.
@@ -109,9 +110,9 @@ Inside `super.render(async () => { ... })`:
    const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
    this.renderer.transition(entryCircles, (element, index, length) => ({
        duration: enter.duration,
-       delay: stagger(index, length, enter.duration),   // sequence the entry
+       delay: stagger(index, length, enter.duration), // sequence the entry
        ease: easeOutCubic,
-       state: element.data as CircleState,               // animate toward the stashed target
+       state: element.data as CircleState, // animate toward the stashed target
    }));
    ```
    Use `ANIMATION_REFERENCE.enter | update | hover` so `animation: false` and custom durations are

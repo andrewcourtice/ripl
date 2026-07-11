@@ -40,8 +40,8 @@ createCircle({
 Every context can snapshot its current output via `export()`:
 
 ```typescript
-const url = context.export().toURL();        // PNG object URL
-const dataUrl = context.export().toString();  // PNG data URL
+const url = context.export().toURL(); // PNG object URL
+const dataUrl = context.export().toString(); // PNG data URL
 const image = await context.export().toImage(); // ImageData
 ```
 

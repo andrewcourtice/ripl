@@ -3,6 +3,7 @@ import type {
     Renderer,
     Scene,
 } from '@ripl/core';
+
 import {
     EventBus,
 } from '@ripl/core';

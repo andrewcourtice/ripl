@@ -168,20 +168,32 @@ describe('formatNumber', () => {
 
 describe('normalizeSegmentLabels', () => {
     it('is hidden by default', () => {
-        expect(normalizeSegmentLabels()).toMatchObject({ visible: false, position: 'inside' });
+        expect(normalizeSegmentLabels()).toMatchObject({
+            visible: false,
+            position: 'inside',
+        });
     });
 
     it('enables labels from a boolean', () => {
-        expect(normalizeSegmentLabels(true)).toMatchObject({ visible: true, position: 'inside' });
+        expect(normalizeSegmentLabels(true)).toMatchObject({
+            visible: true,
+            position: 'inside',
+        });
         expect(normalizeSegmentLabels(false).visible).toBe(false);
     });
 
     it('enables labels and sets position from a string', () => {
-        expect(normalizeSegmentLabels('outside')).toMatchObject({ visible: true, position: 'outside' });
+        expect(normalizeSegmentLabels('outside')).toMatchObject({
+            visible: true,
+            position: 'outside',
+        });
     });
 
     it('merges a partial options object and enables labels', () => {
-        expect(normalizeSegmentLabels({ position: 'outside', fontColor: '#111' })).toMatchObject({
+        expect(normalizeSegmentLabels({
+            position: 'outside',
+            fontColor: '#111',
+        })).toMatchObject({
             visible: true,
             position: 'outside',
             fontColor: '#111',
@@ -245,7 +257,10 @@ describe('normalizeDataLabels', () => {
     });
 
     it('merges a partial options object and makes it visible', () => {
-        expect(normalizeDataLabels({ anchor: 'left', fontColor: '#111' })).toMatchObject({
+        expect(normalizeDataLabels({
+            anchor: 'left',
+            fontColor: '#111',
+        })).toMatchObject({
             visible: true,
             anchor: 'left',
             fontColor: '#111',

@@ -118,7 +118,7 @@ describe('EventBus', () => {
 
         expect(bus.has('test')).toBe(false);
 
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
+
         const { dispose } = bus.on('test', () => {});
         expect(bus.has('test')).toBe(true);
 

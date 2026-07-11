@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -33,6 +34,7 @@ import {
 import type {
     PackCircle,
 } from '../core/pack';
+
 import {
     enclosingCircle,
     packSiblings,
@@ -50,6 +52,7 @@ import type {
     Group,
     Text,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,

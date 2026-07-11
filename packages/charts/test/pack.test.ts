@@ -4,14 +4,21 @@ import {
     test,
 } from 'vitest';
 
-import {
-    enclosingCircle,
-    packSiblings,
+import type {
     PackCircle,
 } from '../src/core/pack';
 
+import {
+    enclosingCircle,
+    packSiblings,
+} from '../src/core/pack';
+
 function circles(radii: number[]): PackCircle[] {
-    return radii.map(r => ({ x: 0, y: 0, r }));
+    return radii.map(r => ({
+        x: 0,
+        y: 0,
+        r,
+    }));
 }
 
 function anyOverlap(packed: PackCircle[]): boolean {
@@ -100,7 +107,11 @@ describe('enclosingCircle', () => {
     });
 
     test('returns a zero circle for empty input', () => {
-        expect(enclosingCircle([])).toEqual({ x: 0, y: 0, r: 0 });
+        expect(enclosingCircle([])).toEqual({
+            x: 0,
+            y: 0,
+            r: 0,
+        });
     });
 
 });

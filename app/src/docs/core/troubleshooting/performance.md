@@ -57,6 +57,7 @@ const renderer = createRenderer(scene, {
 
 When creating paths in custom elements, always provide a **persistent key**:
 
+<!-- eslint-skip -->
 ```ts
 // ✅ Good — persistent key allows efficient DOM reconciliation
 render(context: Context) {

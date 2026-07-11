@@ -13,42 +13,42 @@ import {
 describe('Shape2D', () => {
 
     test('Should default autoFill to true', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', {} as any);
 
         expect(shape.autoFill).toBe(true);
     });
 
     test('Should default autoStroke to true', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', {} as any);
 
         expect(shape.autoStroke).toBe(true);
     });
 
     test('Should default clip to false', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', {} as any);
 
         expect(shape.clip).toBe(false);
     });
 
     test('Should accept autoFill: false', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', { autoFill: false } as any);
 
         expect(shape.autoFill).toBe(false);
     });
 
     test('Should accept autoStroke: false', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', { autoStroke: false } as any);
 
         expect(shape.autoStroke).toBe(false);
     });
 
     test('Should accept clip: true', () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         const shape = createShape('test-shape', { clip: true } as any);
 
         expect(shape.clip).toBe(true);

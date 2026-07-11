@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -50,6 +51,7 @@ import type {
     Rect,
     RectState,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,

@@ -126,6 +126,7 @@ Extends x-axis options with:
 
 Multiple y-axes are supported by passing an array:
 
+<!-- eslint-skip -->
 ```ts
 axis: {
     y: [
@@ -268,6 +269,7 @@ createLineChart('#container', {
 
 Every feature option accepts three input forms:
 
+<!-- eslint-skip -->
 ```ts
 // 1. Boolean — toggle with defaults
 { grid: true }

@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -55,6 +56,7 @@ import type {
     PolylineState,
     Scale,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,

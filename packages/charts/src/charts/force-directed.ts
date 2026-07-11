@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -29,6 +30,7 @@ import type {
     ForceLink,
     ForceNode,
 } from '../core/force';
+
 import {
     simulateForce,
 } from '../core/force';
@@ -47,6 +49,7 @@ import type {
     LineState,
     Text,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,

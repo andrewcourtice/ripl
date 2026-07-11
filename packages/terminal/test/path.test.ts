@@ -270,7 +270,7 @@ describe('TerminalPath', () => {
 
         path.moveTo(0, 0);
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         path.addPath({} as any);
 
         expect(path.commands).toHaveLength(1);

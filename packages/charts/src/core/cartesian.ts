@@ -11,6 +11,7 @@
 import type {
     BaseChartOptions,
 } from './chart';
+
 import {
     Chart,
 } from './chart';
@@ -47,6 +48,7 @@ import type {
     ChartXAxisAlignment,
     ChartYAxisAlignment,
 } from '../components/axis';
+
 import {
     ChartXAxis,
     ChartYAxis,
@@ -73,6 +75,7 @@ import type {
     EventMap,
     Scale,
 } from '@ripl/core';
+
 import {
     Box,
     scaleContinuous,

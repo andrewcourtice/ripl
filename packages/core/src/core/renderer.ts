@@ -1,6 +1,7 @@
 import type {
     EventMap,
 } from './event-bus';
+
 import {
     EventBus,
 } from './event-bus';
@@ -12,6 +13,7 @@ import {
 import type {
     Group,
 } from './group';
+
 import {
     isGroup,
 } from './group';
@@ -48,7 +50,9 @@ import type {
 import type {
     OneOrMore,
 } from '@ripl/utilities';
+
 import {
+    noop,
     typeIsFunction,
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -451,7 +455,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     delay = 0,
                     loop = false,
                     ease = easeLinear,
-                    onComplete = () => {},
+                    onComplete = noop,
                     direction = 'forward',
                     state,
                 } = getOptions(element as TElement extends Group ? Element : TElement, index, totalCount);

@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -10,6 +11,7 @@ import type {
     Line,
     LineState,
 } from '@ripl/core';
+
 import {
     createGroup,
     createLine,

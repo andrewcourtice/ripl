@@ -163,7 +163,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createLineChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'month',
     series: [
         {

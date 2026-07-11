@@ -225,15 +225,17 @@ Multi-segment selectors (with combinators) are evaluated relative to the element
 and sibling constraints are honoured:
 
 ```ts
-group.matches('group');               // true
-group.matches('#chart.active');       // matches id + class
+group.matches('group'); // true
+group.matches('#chart.active'); // matches id + class
 circle.matches('circle.highlighted'); // works on any element
 ```
 
 A standalone `matches(element, selector)` function is also exported:
 
 ```ts
-import { matches } from '@ripl/core';
+import {
+    matches,
+} from '@ripl/core';
 
 matches(circle, 'circle.highlighted');
 ```
@@ -245,7 +247,7 @@ matches the selector, or `undefined` if none do — the inverse of `query`. Like
 is available on **every element**:
 
 ```ts
-const chart = marker.closest('#chart');   // nearest ancestor group with id "chart"
+const chart = marker.closest('#chart'); // nearest ancestor group with id "chart"
 group.closest('.panel');
 ```
 

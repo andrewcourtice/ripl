@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -41,6 +42,7 @@ import type {
     EventMap,
     Group,
 } from '@ripl/core';
+
 import {
     createArc,
     createGroup,

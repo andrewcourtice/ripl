@@ -6,7 +6,8 @@ import {
 export class ChartBarSeries extends ChartComponent {
 
     public async render() {
-
+        // Placeholder: bar segments are currently rendered by the owning chart,
+        // so this component has no render pass of its own yet.
     }
 
 }

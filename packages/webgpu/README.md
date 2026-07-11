@@ -14,12 +14,15 @@ npm install @ripl/webgpu
 import {
     createContext,
 } from '@ripl/webgpu';
+
 import {
     createCamera,
 } from '@ripl/3d';
+
 import {
     createRenderer, createScene,
 } from '@ripl/web';
+
 import {
     createCube,
 } from '@ripl/3d';

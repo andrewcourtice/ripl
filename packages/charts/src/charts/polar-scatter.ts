@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -45,6 +46,7 @@ import type {
     Scale,
     Text,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,
@@ -59,10 +61,7 @@ import {
 import {
     arrayJoin,
     functionIdentity,
-    typeIsFunction,
 } from '@ripl/utilities';
-
-const TAU = Math.PI * 2;
 
 /** Opacity applied to a marker's fill at rest (full opacity on hover). */
 const REST_ALPHA = 0.7;

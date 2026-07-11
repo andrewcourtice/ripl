@@ -1,11 +1,15 @@
 import fs from 'node:fs';
+
 import path from 'node:path';
+
 import {
     execSync,
 } from 'node:child_process';
+
 import {
     createRequire,
 } from 'node:module';
+
 import {
     fileURLToPath,
 } from 'node:url';
@@ -113,8 +117,14 @@ try {
     fs.copyFileSync(path.resolve(xtermPkgDir, 'css/xterm.css'), path.resolve(xtermOutput, 'xterm.css'));
 
     // Both specifiers point at the same bundle, which re-exports Terminal and FitAddon.
-    manifest['@xterm/xterm'] = { esm: '/_playground/xterm/index.js', types: null };
-    manifest['@xterm/addon-fit'] = { esm: '/_playground/xterm/index.js', types: null };
+    manifest['@xterm/xterm'] = {
+        esm: '/_playground/xterm/index.js',
+        types: null,
+    };
+    manifest['@xterm/addon-fit'] = {
+        esm: '/_playground/xterm/index.js',
+        types: null,
+    };
 } catch (error) {
     console.warn('Warning: could not bundle xterm for the terminal playground, skipping:', error.message);
 }

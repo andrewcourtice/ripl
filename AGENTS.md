@@ -249,7 +249,7 @@ This is strictly enforced by ESLint:
 2. Each import on its **own line** within braces
 3. **Trailing comma** after the last import in a group
 4. Sort imports **alphabetically** within each group
-5. **Blank line** between import groups
+5. **Blank line** between **every** import statement — including a same-module `import type { … }` and its value `import { … }` (enforced by `@stylistic/padding-line-between-statements`)
 6. Group ordering: **internal (current package) → other Ripl packages → external**
 
 ```typescript
@@ -273,11 +273,15 @@ import {
 
 ### Type-only Imports
 
-Use `import type { ... }` when importing types that are not used as values:
+Use `import type { ... }` when importing types that are not used as values. A same-module type import and value import are still separated by a blank line:
 
 ```typescript
 import type {
     Context,
+} from '../context';
+
+import {
+    createContext,
 } from '../context';
 ```
 
@@ -294,6 +298,7 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 | Brace style | `1tbs` |
 | Object properties | One per line (`object-property-newline`) |
 | Object curlies in imports | Always on new lines |
+| Blank line between imports | Every import statement (`padding-line-between-statements`) |
 | Line endings | Unix (LF) |
 
 ### Naming Conventions

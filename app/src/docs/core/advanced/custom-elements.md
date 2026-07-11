@@ -44,11 +44,14 @@ star.render(context);
 Most custom elements should extend `Shape`, which provides path-based rendering with automatic fill/stroke and hit testing. Here's a complete example of a custom **Star** element:
 
 ```ts
-import {
+import type {
     BaseElementState,
     Context,
-    Shape,
     ShapeOptions,
+} from '@ripl/web';
+
+import {
+    Shape,
 } from '@ripl/web';
 
 // 1. Define your state interface
@@ -152,11 +155,14 @@ The `this.id` passed to `createPath` is important — it acts as a persistent ke
 For non-path elements (like text or images), extend `Element` directly:
 
 ```ts
-import {
+import type {
     BaseElementState,
     Context,
-    Element,
     ElementOptions,
+} from '@ripl/web';
+
+import {
+    Element,
 } from '@ripl/web';
 
 interface BadgeState extends BaseElementState {
@@ -230,6 +236,7 @@ These protected methods read and write state values. `getStateValue` automatical
 
 Always expose state properties as getter/setter pairs. The setter should call `setStateValue`, which triggers an `updated` event that the scene graph uses to know when to re-render:
 
+<!-- eslint-skip -->
 ```ts
 get radius() { return this.getStateValue('radius'); }
 set radius(value) { this.setStateValue('radius', value); }

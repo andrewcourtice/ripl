@@ -79,7 +79,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createTreemapChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'name',
     value: 'value',
     label: 'name',

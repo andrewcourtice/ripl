@@ -3,6 +3,7 @@ import type {
     ElementEventMap,
     ElementOptions,
 } from './element';
+
 import {
     Element,
 } from './element';
@@ -23,6 +24,7 @@ import {
 import type {
     OneOrMore,
 } from '@ripl/utilities';
+
 import {
     valueOneOrMore,
 } from '@ripl/utilities';

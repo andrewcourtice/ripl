@@ -144,7 +144,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createGanttChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'id',
     label: 'name',
     start: 'start',

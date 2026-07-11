@@ -11,6 +11,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     createText,
     getThetaPoint,

@@ -53,6 +53,7 @@ export function stringUniqueId(length: number = 6): string {
 
 **Issue:** The `children` getter creates a new array from the internal Set every time it's accessed. This is called frequently during rendering and querying operations.
 
+<!-- eslint-skip -->
 ```typescript
 public get children() {
     return Array.from(this.#elements);  // New array created on every access

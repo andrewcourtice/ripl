@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -24,6 +25,7 @@ import type {
 import type {
     Text,
 } from '@ripl/core';
+
 import {
     createText,
 } from '@ripl/core';

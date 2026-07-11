@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -38,6 +39,7 @@ import type {
     Ribbon,
     RibbonState,
 } from '../elements';
+
 import {
     createRibbon,
 } from '../elements';
@@ -49,6 +51,7 @@ import type {
     EventMap,
     Group,
 } from '@ripl/core';
+
 import {
     createArc,
     createGroup,

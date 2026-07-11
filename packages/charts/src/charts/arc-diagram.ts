@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -40,6 +41,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,

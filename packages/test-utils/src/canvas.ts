@@ -5,7 +5,7 @@ import {
 /** Installs a minimal `Path2D` polyfill on `globalThis` if not already present. */
 export function polyfillPath2D() {
     if (typeof globalThis.Path2D === 'undefined') {
-        /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function */
+
         (globalThis as any).Path2D = class Path2D {
             arc() {}
             arcTo() {}
@@ -19,7 +19,7 @@ export function polyfillPath2D() {
             rect() {}
             roundRect() {}
         };
-        /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-empty-function */
+
     }
 }
 
