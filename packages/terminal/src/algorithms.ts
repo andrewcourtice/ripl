@@ -1,6 +1,14 @@
 /** Callback invoked for each pixel in a rasterization pass. */
 export type PixelCallback = (x: number, y: number) => void;
 
+/** A 2D point in raster (pixel) space. */
+export interface Vertex {
+    x: number;
+    y: number;
+}
+
+const TAU = Math.PI * 2;
+
 /** Rasterizes a line segment from (x0,y0) to (x1,y1) using Bresenham's algorithm. */
 export function rasterizeLine(x0: number, y0: number, x1: number, y1: number, plot: PixelCallback): void {
     let ix0 = Math.round(x0);
@@ -165,6 +173,41 @@ function quadBezierAt(t: number, p0: number, p1: number, p2: number): number {
     return mt * mt * p0 + 2 * mt * t * p1 + t * t * p2;
 }
 
+/** Rasterizes a polyline by drawing a line between each consecutive pair of points. */
+function rasterizePolyline(points: Vertex[], plot: PixelCallback): void {
+    for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const next = points[i];
+
+        rasterizeLine(prev.x, prev.y, next.x, next.y, plot);
+    }
+}
+
+/** Samples a cubic bezier curve into a polyline of points (inclusive of both endpoints). */
+export function flattenCubicBezier(
+    x0: number, y0: number,
+    cp1x: number, cp1y: number,
+    cp2x: number, cp2y: number,
+    x1: number, y1: number
+): Vertex[] {
+    const steps = estimateBezierSteps(x0, y0, cp1x, cp1y, cp2x, cp2y, x1, y1);
+    const points: Vertex[] = [{
+        x: x0,
+        y: y0,
+    }];
+
+    for (let i = 1; i <= steps; i++) {
+        const t = i / steps;
+
+        points.push({
+            x: cubicBezierAt(t, x0, cp1x, cp2x, x1),
+            y: cubicBezierAt(t, y0, cp1y, cp2y, y1),
+        });
+    }
+
+    return points;
+}
+
 /** Rasterizes a cubic bezier curve by adaptive subdivision into line segments. */
 export function rasterizeCubicBezier(
     x0: number, y0: number,
@@ -173,21 +216,33 @@ export function rasterizeCubicBezier(
     x1: number, y1: number,
     plot: PixelCallback
 ): void {
-    const steps = estimateBezierSteps(x0, y0, cp1x, cp1y, cp2x, cp2y, x1, y1);
+    rasterizePolyline(flattenCubicBezier(x0, y0, cp1x, cp1y, cp2x, cp2y, x1, y1), plot);
+}
 
-    let prevX = x0;
-    let prevY = y0;
+/** Samples a quadratic bezier curve into a polyline of points (inclusive of both endpoints). */
+export function flattenQuadBezier(
+    x0: number, y0: number,
+    cpx: number, cpy: number,
+    x1: number, y1: number
+): Vertex[] {
+    const dx = Math.abs(x1 - x0) + Math.abs(cpx - x0);
+    const dy = Math.abs(y1 - y0) + Math.abs(cpy - y0);
+    const steps = Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
+    const points: Vertex[] = [{
+        x: x0,
+        y: y0,
+    }];
 
     for (let i = 1; i <= steps; i++) {
         const t = i / steps;
-        const nx = cubicBezierAt(t, x0, cp1x, cp2x, x1);
-        const ny = cubicBezierAt(t, y0, cp1y, cp2y, y1);
 
-        rasterizeLine(prevX, prevY, nx, ny, plot);
-
-        prevX = nx;
-        prevY = ny;
+        points.push({
+            x: quadBezierAt(t, x0, cpx, x1),
+            y: quadBezierAt(t, y0, cpy, y1),
+        });
     }
+
+    return points;
 }
 
 /** Rasterizes a quadratic bezier curve by adaptive subdivision into line segments. */
@@ -197,23 +252,7 @@ export function rasterizeQuadBezier(
     x1: number, y1: number,
     plot: PixelCallback
 ): void {
-    const dx = Math.abs(x1 - x0) + Math.abs(cpx - x0);
-    const dy = Math.abs(y1 - y0) + Math.abs(cpy - y0);
-    const steps = Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
-
-    let prevX = x0;
-    let prevY = y0;
-
-    for (let i = 1; i <= steps; i++) {
-        const t = i / steps;
-        const nx = quadBezierAt(t, x0, cpx, x1);
-        const ny = quadBezierAt(t, y0, cpy, y1);
-
-        rasterizeLine(prevX, prevY, nx, ny, plot);
-
-        prevX = nx;
-        prevY = ny;
-    }
+    rasterizePolyline(flattenQuadBezier(x0, y0, cpx, cpy, x1, y1), plot);
 }
 
 /** Estimates a reasonable number of line segments for a cubic bezier curve. */
@@ -229,6 +268,42 @@ function estimateBezierSteps(
     return Math.max(8, Math.ceil(Math.sqrt(dx * dx + dy * dy) / 2));
 }
 
+/** Samples an arc from startAngle to endAngle into a polyline of points (inclusive of both endpoints). */
+export function flattenArc(
+    cx: number, cy: number,
+    radius: number,
+    startAngle: number, endAngle: number,
+    counterclockwise: boolean
+): Vertex[] {
+    const start = startAngle;
+
+    let end = endAngle;
+
+    if (counterclockwise && end > start) {
+        end -= TAU;
+    } else if (!counterclockwise && end < start) {
+        end += TAU;
+    }
+
+    const angleDiff = Math.abs(end - start);
+    const steps = Math.max(8, Math.ceil(angleDiff * radius / 2));
+    const points: Vertex[] = [{
+        x: cx + radius * Math.cos(start),
+        y: cy + radius * Math.sin(start),
+    }];
+
+    for (let i = 1; i <= steps; i++) {
+        const angle = start + (end - start) * (i / steps);
+
+        points.push({
+            x: cx + radius * Math.cos(angle),
+            y: cy + radius * Math.sin(angle),
+        });
+    }
+
+    return points;
+}
+
 /** Rasterizes an arc from startAngle to endAngle at (cx,cy) with given radius by subdivision into line segments. */
 export function rasterizeArc(
     cx: number, cy: number,
@@ -237,49 +312,87 @@ export function rasterizeArc(
     counterclockwise: boolean,
     plot: PixelCallback
 ): void {
-    const start = startAngle;
-
-    let end = endAngle;
-
-    if (counterclockwise && end > start) {
-        end -= Math.PI * 2;
-    } else if (!counterclockwise && end < start) {
-        end += Math.PI * 2;
-    }
-
-    const angleDiff = Math.abs(end - start);
-    const steps = Math.max(8, Math.ceil(angleDiff * radius / 2));
-
-    let prevX = cx + radius * Math.cos(start);
-    let prevY = cy + radius * Math.sin(start);
-
-    for (let i = 1; i <= steps; i++) {
-        const t = i / steps;
-        const angle = start + (end - start) * t;
-        const nx = cx + radius * Math.cos(angle);
-        const ny = cy + radius * Math.sin(angle);
-
-        rasterizeLine(prevX, prevY, nx, ny, plot);
-
-        prevX = nx;
-        prevY = ny;
-    }
+    rasterizePolyline(flattenArc(cx, cy, radius, startAngle, endAngle, counterclockwise), plot);
 }
 
-/** Scanline-fills the interior of a polygon defined by its edge pixels. Expects edges to have been rasterized and collected. */
-export function scanlineFill(edges: Map<number, number[]>, plot: PixelCallback): void {
-    edges.forEach((xCoords, y) => {
-        if (xCoords.length < 2) {
-            return;
+/** Samples a full ellipse outline into a closed polyline of points. */
+export function flattenEllipse(cx: number, cy: number, rx: number, ry: number): Vertex[] {
+    const steps = Math.max(16, Math.ceil((Math.abs(rx) + Math.abs(ry))));
+    const points: Vertex[] = [];
+
+    for (let i = 0; i < steps; i++) {
+        const angle = (i / steps) * TAU;
+
+        points.push({
+            x: cx + rx * Math.cos(angle),
+            y: cy + ry * Math.sin(angle),
+        });
+    }
+
+    return points;
+}
+
+/** Computes the x-coordinates where a horizontal scanline crosses the edges of the given contours. */
+function scanlineCrossings(contours: Vertex[][], scanY: number): number[] {
+    const crossings: number[] = [];
+
+    for (const contour of contours) {
+        const count = contour.length;
+
+        if (count < 2) {
+            continue;
         }
 
-        xCoords.sort((a, b) => a - b);
+        for (let i = 0; i < count; i++) {
+            const a = contour[i];
+            const b = contour[(i + 1) % count];
 
-        const minX = xCoords[0];
-        const maxX = xCoords[xCoords.length - 1];
-
-        for (let x = minX; x <= maxX; x++) {
-            plot(x, y);
+            // Half-open test avoids double-counting shared vertices.
+            if ((a.y <= scanY && b.y > scanY) || (b.y <= scanY && a.y > scanY)) {
+                crossings.push(a.x + ((scanY - a.y) / (b.y - a.y)) * (b.x - a.x));
+            }
         }
-    });
+    }
+
+    return crossings;
+}
+
+/**
+ * Fills the interior of one or more closed contours using the even-odd rule. Each contour is a
+ * polyline (implicitly closed); interiors are determined per scanline from edge crossings, so
+ * concave shapes, circular segments, and annular sectors (holes) fill correctly.
+ */
+export function fillPolygon(contours: Vertex[][], plot: PixelCallback): void {
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    for (const contour of contours) {
+        for (const point of contour) {
+            minY = Math.min(minY, point.y);
+            maxY = Math.max(maxY, point.y);
+        }
+    }
+
+    if (minY > maxY) {
+        return;
+    }
+
+    for (let y = Math.floor(minY); y <= Math.ceil(maxY); y++) {
+        const crossings = scanlineCrossings(contours, y + 0.5);
+
+        if (crossings.length < 2) {
+            continue;
+        }
+
+        crossings.sort((first, second) => first - second);
+
+        for (let i = 0; i + 1 < crossings.length; i += 2) {
+            const xStart = Math.round(crossings[i]);
+            const xEnd = Math.round(crossings[i + 1]);
+
+            for (let x = xStart; x <= xEnd; x++) {
+                plot(x, y);
+            }
+        }
+    }
 }

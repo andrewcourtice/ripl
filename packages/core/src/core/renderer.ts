@@ -1,14 +1,18 @@
+import type {
+    EventMap,
+} from './event-bus';
 import {
     EventBus,
-    EventMap,
 } from './event-bus';
 
 import {
     factory,
 } from './factory';
 
-import {
+import type {
     Group,
+} from './group';
+import {
     isGroup,
 } from './group';
 
@@ -16,7 +20,7 @@ import type {
     Interpolator,
 } from '../interpolators';
 
-import {
+import type {
     Element,
 } from './element';
 
@@ -25,7 +29,7 @@ import type {
     ElementInterpolationState,
 } from './element';
 
-import {
+import type {
     Scene,
 } from './scene';
 
@@ -41,8 +45,10 @@ import type {
     TransitionLoopMode,
 } from '../animation';
 
-import {
+import type {
     OneOrMore,
+} from '@ripl/utilities';
+import {
     typeIsFunction,
     valueOneOrMore,
 } from '@ripl/utilities';

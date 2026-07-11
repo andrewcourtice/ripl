@@ -160,6 +160,12 @@ export default tseslint.config(
             '@typescript-eslint/no-inferrable-types': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-empty-function': 'warn',
+            // Enforce `import type` for type-only imports so the codebase stays compatible with
+            // `verbatimModuleSyntax` and the future TypeScript 7 compiler.
+            '@typescript-eslint/consistent-type-imports': ['error', {
+                'prefer': 'type-imports',
+                'fixStyle': 'separate-type-imports',
+            }],
         },
     },
 

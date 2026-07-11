@@ -4,6 +4,7 @@ import type {
     BaseState,
     ContextElement,
     ContextEventMap,
+    ContextExport,
     ContextOptions,
     Direction,
     FillRule,
@@ -538,6 +539,15 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
                     ? zDiff
                     : this.renderedElements.indexOf(eb) - this.renderedElements.indexOf(ea);
             });
+    }
+
+    /**
+     * Captures a snapshot of the current context surface and returns format-specific exporters
+     * (see {@link ContextExport}). The base implementation is unsupported; each context overrides
+     * this with the formats relevant to it (image, url, string).
+     */
+    public export(): ContextExport {
+        throw new Error(`export() is not supported by the "${this.type}" context`);
     }
 
     /** Destroys the context and disposes all resources. */

@@ -210,10 +210,11 @@ describe('TerminalContext', () => {
 
         ctx.fill = '#ffffff';
 
+        // y is offset from the top edge so the default (alphabetic) baseline keeps the glyph on-grid.
         const text = ctx.createText({
             content: 'Hi',
             x: 0,
-            y: 0,
+            y: 8,
         });
 
         ctx.markRenderStart();
@@ -377,6 +378,86 @@ describe('TerminalContext logical sizing', () => {
         expect(ctx.scaleX(37)).toBe(37);
         expect(ctx.scaleY(21)).toBe(21);
         expect(ctx.measureText('hi').width).toBe(2 * BRAILLE_CELL_WIDTH);
+    });
+
+});
+
+describe('TerminalContext text alignment', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    /** Renders text through the context and returns the captured `setChar(col, row, …)` calls. */
+    function renderText(
+        content: string,
+        x: number,
+        y: number,
+        textAlign: 'left' | 'center' | 'right' | 'start' | 'end',
+        textBaseline: 'top' | 'middle' | 'bottom' | 'alphabetic'
+    ): [number, number, string, string][] {
+        const output = createMockOutput(40, 12);
+        const calls: [number, number, string, string][] = [];
+
+        const rasterizer = {
+            pixelWidth: 40 * BRAILLE_CELL_WIDTH,
+            pixelHeight: 12 * BRAILLE_CELL_HEIGHT,
+            resize: vi.fn(),
+            setPixel: vi.fn(),
+            setChar: (col: number, row: number, char: string, color: string) => {
+                calls.push([col, row, char, color]);
+            },
+            clear: vi.fn(),
+            serialize: () => '',
+            toImageData: () => ({
+                data: new Uint8ClampedArray(0),
+                width: 0,
+                height: 0,
+            } as ImageData),
+        };
+
+        const ctx = createContext(output, {
+            rasterizer,
+        });
+
+        // No logical size → identity scale, so col = round(x / cellWidth) before alignment.
+        ctx.fill = '#ffffff';
+        ctx.textAlign = textAlign;
+        ctx.textBaseline = textBaseline;
+
+        const text = ctx.createText({
+            content,
+            x,
+            y,
+        });
+
+        ctx.markRenderStart();
+        ctx.applyFill(text);
+        ctx.markRenderEnd();
+
+        return calls;
+    }
+
+    // 'ABCD' (width 4 cells) anchored at x=40 → base column 20, so shifts are exact cell counts.
+    test('left/start alignment anchors the first character at the position', () => {
+        expect(renderText('ABCD', 40, 20, 'left', 'top')[0][0]).toBe(20);
+        expect(renderText('ABCD', 40, 20, 'start', 'top')[0][0]).toBe(20);
+    });
+
+    test('center alignment shifts the text left by half its width', () => {
+        expect(renderText('ABCD', 40, 20, 'center', 'top')[0][0]).toBe(18);
+    });
+
+    test('right/end alignment shifts the text left by its full width', () => {
+        expect(renderText('ABCD', 40, 20, 'right', 'top')[0][0]).toBe(16);
+        expect(renderText('ABCD', 40, 20, 'end', 'top')[0][0]).toBe(16);
+    });
+
+    test('baseline shifts the row — bottom sits one cell above top', () => {
+        const top = renderText('ABCD', 40, 20, 'left', 'top')[0][1];
+        const bottom = renderText('ABCD', 40, 20, 'left', 'bottom')[0][1];
+
+        expect(bottom).toBe(top - 1);
     });
 
 });

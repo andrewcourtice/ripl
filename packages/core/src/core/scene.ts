@@ -3,8 +3,10 @@ import type {
     ElementEventMap,
 } from './element';
 
-import {
+import type {
     Context,
+} from '../context';
+import {
     typeIsContext,
 } from '../context';
 

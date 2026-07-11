@@ -12,11 +12,13 @@ import type {
     ContextPath,
 } from '../context';
 
+import type {
+    Point,
+} from '../math';
 import {
     Box,
     getEuclideanDistance,
     getExtent,
-    Point,
 } from '../math';
 
 import {

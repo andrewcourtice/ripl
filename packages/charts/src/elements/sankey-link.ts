@@ -1,14 +1,14 @@
 import type {
+    BaseElementState,
     Context,
+    Shape2DOptions,
 } from '@ripl/core';
 
 import {
-    BaseElementState,
     Box,
     max,
     min,
     Shape2D,
-    Shape2DOptions,
 } from '@ripl/core';
 
 /** State interface for a Sankey link, defining source and target endpoint coordinates. */

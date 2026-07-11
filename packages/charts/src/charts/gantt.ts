@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -39,19 +41,21 @@ import {
     Grid,
 } from '../components/grid';
 
-import {
+import type {
     BandScale,
-    Box,
     Context,
-    createGroup,
-    createLine,
-    createRect,
-    easeOutCubic,
     EventMap,
     Group,
     Line,
     Rect,
     RectState,
+} from '@ripl/core';
+import {
+    Box,
+    createGroup,
+    createLine,
+    createRect,
+    easeOutCubic,
     scaleBand,
     scaleContinuous,
     scaleTime,

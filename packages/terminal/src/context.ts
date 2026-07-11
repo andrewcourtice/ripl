@@ -6,6 +6,7 @@ import {
 
 import type {
     ContextElement,
+    ContextExport,
     ContextOptions,
     FillRule,
     TextOptions,
@@ -20,6 +21,11 @@ import {
 } from './path';
 
 import {
+    fillPolygon,
+    flattenArc,
+    flattenCubicBezier,
+    flattenEllipse,
+    flattenQuadBezier,
     rasterizeArc,
     rasterizeCircle,
     rasterizeCubicBezier,
@@ -27,11 +33,11 @@ import {
     rasterizeLine,
     rasterizeQuadBezier,
     rasterizeRect,
-    scanlineFill,
 } from './algorithms';
 
 import type {
     PixelCallback,
+    Vertex,
 } from './algorithms';
 
 import type {
@@ -47,6 +53,69 @@ import {
 import type {
     TerminalOutput,
 } from './output';
+
+/** Converts a base64 data URL into a `Blob` synchronously. */
+function dataURLToBlob(dataURL: string): Blob {
+    const [header, data] = dataURL.split(',');
+    const mimeMatch = /:(.*?);/.exec(header);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const binary = atob(data);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([bytes], {
+        type: mime,
+    });
+}
+
+/**
+ * Produces an openable URL for a rasterized terminal snapshot. In a browser this is a PNG `Blob`
+ * object URL; in a headless environment it falls back to a `text/plain` data URL of the braille art.
+ */
+function terminalSnapshotToURL(imageData: ImageData, text: string): string {
+    if (typeof document !== 'undefined' && imageData.width > 0 && imageData.height > 0) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = imageData.width;
+        canvas.height = imageData.height;
+
+        const context = canvas.getContext('2d');
+
+        if (context) {
+            context.putImageData(imageData, 0, 0);
+
+            const dataURL = canvas.toDataURL('image/png');
+
+            if (dataURL?.startsWith('data:image')) {
+                return URL.createObjectURL(dataURLToBlob(dataURL));
+            }
+        }
+    }
+
+    return `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`;
+}
+
+/** Fraction of the text width to shift the anchor left by, per `textAlign` (LTR). */
+const TEXT_ALIGN_FACTORS: Record<string, number> = {
+    left: 0,
+    start: 0,
+    center: 0.5,
+    right: 1,
+    end: 1,
+};
+
+/** Number of cells to shift the anchor up by, per `textBaseline` (glyphs are one cell tall). */
+const TEXT_BASELINE_FACTORS: Record<string, number> = {
+    top: 0,
+    hanging: 0,
+    middle: 0.5,
+    alphabetic: 1,
+    ideographic: 1,
+    bottom: 1,
+};
 
 /** Options for constructing a terminal rendering context. */
 export interface TerminalContextOptions extends ContextOptions {
@@ -199,6 +268,19 @@ export class TerminalContext extends Context<Element> {
         } as TextMetrics;
     }
 
+    public export(): ContextExport {
+        const text = this.rasterizer.serialize({
+            ansi: false,
+        });
+        const imageData = this.rasterizer.toImageData();
+
+        return {
+            toString: () => text,
+            toURL: () => terminalSnapshotToURL(imageData, text),
+            toImage: () => Promise.resolve(imageData),
+        };
+    }
+
     private flush(): void {
         const data = this.rasterizer.serialize();
         this.output.write(data);
@@ -206,12 +288,17 @@ export class TerminalContext extends Context<Element> {
 
     private rasterizeText(text: ContextText, color: string): void {
         const rasterizer = this.rasterizer;
-        // Position follows the logical space; glyphs themselves stay cell-sized.
-        const col = Math.round(this.scaleX(text.x) / BRAILLE_CELL_WIDTH);
-        const row = Math.round(this.scaleY(text.y) / BRAILLE_CELL_HEIGHT);
         const content = text.maxWidth
             ? text.content.slice(0, Math.floor((text.maxWidth * this.rasterScale) / BRAILLE_CELL_WIDTH))
             : text.content;
+
+        // Position follows the logical space; glyphs stay cell-sized. Approximate textAlign/
+        // textBaseline by shifting the anchor cell (each glyph is one cell wide and tall).
+        const alignFactor = TEXT_ALIGN_FACTORS[this.textAlign] ?? 0;
+        const baselineFactor = TEXT_BASELINE_FACTORS[this.textBaseline] ?? 1;
+
+        const col = Math.round(this.scaleX(text.x) / BRAILLE_CELL_WIDTH - content.length * alignFactor);
+        const row = Math.round(this.scaleY(text.y) / BRAILLE_CELL_HEIGHT - baselineFactor);
 
         for (let i = 0; i < content.length; i++) {
             rasterizer.setChar(col + i, row, content[i], color);
@@ -226,25 +313,113 @@ export class TerminalContext extends Context<Element> {
         };
 
         if (fill) {
-            const edges = new Map<number, number[]>();
-
-            const collectEdge: PixelCallback = (x, y) => {
-                const iy = Math.round(y);
-                const row = edges.get(iy);
-
-                if (row) {
-                    row.push(Math.round(x));
-                } else {
-                    edges.set(iy, [Math.round(x)]);
-                }
-            };
-
-            this.executeCommands(path, collectEdge);
-            scanlineFill(edges, plot);
+            fillPolygon(this.buildContours(path), plot);
         }
 
         // Always draw the outline
         this.executeCommands(path, plot);
+    }
+
+    /**
+     * Flattens the path's commands into closed contours in raster space (following canvas subpath
+     * semantics) so the interior can be filled with the even-odd rule. Mirrors the coordinate mapping
+     * used by {@link executeCommands}: points via `scaleX`/`scaleY`, radii via `rasterScale`.
+     */
+    private buildContours(path: TerminalPath): Vertex[][] {
+        const sx = this.scaleX;
+        const sy = this.scaleY;
+        const s = this.rasterScale;
+        const contours: Vertex[][] = [];
+
+        let current: Vertex[] = [];
+
+        const flush = () => {
+            if (current.length > 1) {
+                contours.push(current);
+            }
+
+            current = [];
+        };
+
+        const append = (point: Vertex) => {
+            const last = current[current.length - 1];
+
+            if (!last || last.x !== point.x || last.y !== point.y) {
+                current.push(point);
+            }
+        };
+
+        for (const cmd of path.commands) {
+            const args = cmd.args;
+
+            switch (cmd.type) {
+                case 'moveTo':
+                    flush();
+                    append({
+                        x: sx(args[0]),
+                        y: sy(args[1]),
+                    });
+                    break;
+
+                case 'lineTo':
+                    append({
+                        x: sx(args[0]),
+                        y: sy(args[1]),
+                    });
+                    append({
+                        x: sx(args[2]),
+                        y: sy(args[3]),
+                    });
+                    break;
+
+                case 'arc':
+                    flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
+                    break;
+
+                case 'ellipse':
+                    flush();
+                    contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s));
+                    break;
+
+                case 'bezierCurveTo':
+                    flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
+                    break;
+
+                case 'quadraticCurveTo':
+                    flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
+                    break;
+
+                case 'rect':
+                    flush();
+                    contours.push([
+                        {
+                            x: sx(args[0]),
+                            y: sy(args[1]),
+                        },
+                        {
+                            x: sx(args[0]) + args[2] * s,
+                            y: sy(args[1]),
+                        },
+                        {
+                            x: sx(args[0]) + args[2] * s,
+                            y: sy(args[1]) + args[3] * s,
+                        },
+                        {
+                            x: sx(args[0]),
+                            y: sy(args[1]) + args[3] * s,
+                        },
+                    ]);
+                    break;
+
+                case 'closePath':
+                    flush();
+                    break;
+            }
+        }
+
+        flush();
+
+        return contours;
     }
 
     private executeCommands(path: TerminalPath, plot: PixelCallback): void {

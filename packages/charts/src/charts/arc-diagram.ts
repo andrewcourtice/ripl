@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -24,28 +26,30 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Line,
+    LineState,
+    Point,
+    Polyline,
+    PolylineState,
+    Text,
+    TextState,
+} from '@ripl/core';
+import {
     createCircle,
     createGroup,
     createLine,
     createPolyline,
     createText,
     easeOutCubic,
-    EventMap,
     getExtent,
-    Group,
     interpolatePath,
-    Line,
-    LineState,
-    Point,
-    Polyline,
-    PolylineState,
     setColorAlpha,
-    Text,
-    TextState,
 } from '@ripl/core';
 
 import {
@@ -282,7 +286,10 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 
             const nodeInfo = new Map<string, { along: number;
                 index: number; }>();
-            nodes.forEach((node, index) => nodeInfo.set(node.id, { along: alongOf(index), index }));
+            nodes.forEach((node, index) => nodeInfo.set(node.id, {
+                along: alongOf(index),
+                index,
+            }));
 
             const toXY = (along: number, cross: number): Point => horizontal ? [along, cross] : [cross, along];
             const nodePoint = (id: string): Point => toXY(nodeInfo.get(id)?.along ?? alongStart, baseCross);
@@ -323,7 +330,11 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 
             // --- Axis line ---
             if (!this.axisGroup) {
-                this.axisGroup = createGroup({ id: 'arc-axis', class: 'arc-axis', zIndex: 0 });
+                this.axisGroup = createGroup({
+                    id: 'arc-axis',
+                    class: 'arc-axis',
+                    zIndex: 0,
+                });
                 this.scene.add(this.axisGroup);
             }
 
@@ -353,7 +364,11 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 
             // --- Links (semicircular arcs off the axis) ---
             if (!this.linksGroup) {
-                this.linksGroup = createGroup({ id: 'arc-links', class: 'arc-links', zIndex: 1 });
+                this.linksGroup = createGroup({
+                    id: 'arc-links',
+                    class: 'arc-links',
+                    zIndex: 1,
+                });
                 this.scene.add(this.linksGroup);
             }
 
@@ -421,7 +436,11 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 
             // --- Nodes (tick + dot + label along the axis) ---
             if (!this.nodesGroup) {
-                this.nodesGroup = createGroup({ id: 'arc-nodes', class: 'arc-nodes', zIndex: 2 });
+                this.nodesGroup = createGroup({
+                    id: 'arc-nodes',
+                    class: 'arc-nodes',
+                    zIndex: 2,
+                });
                 this.scene.add(this.nodesGroup);
             }
 

@@ -22,7 +22,7 @@ import {
     serialiseRGBA,
 } from './serialisers';
 
-import {
+import type {
     ColorParser,
     ColorRGBA,
 } from './types';

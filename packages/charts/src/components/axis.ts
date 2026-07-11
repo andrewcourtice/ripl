@@ -1,28 +1,34 @@
+import type {
+    ChartComponentOptions,
+} from './_base';
 import {
     ChartComponent,
-    ChartComponentOptions,
 } from './_base';
 
 import {
     formatNumber,
 } from '../core/options';
 
-import {
-    ANIMATION_REFERENCE,
+import type {
     ResolvedAnimation,
 } from '../core/animation';
+import {
+    ANIMATION_REFERENCE,
+} from '../core/animation';
 
+import type {
+    Element,
+    Group,
+    Line,
+    Scale,
+    Text,
+} from '@ripl/core';
 import {
     Box,
     createGroup,
     createLine,
     createText,
     easeOutCubic,
-    Element,
-    Group,
-    Line,
-    Scale,
-    Text,
 } from '@ripl/core';
 
 import {

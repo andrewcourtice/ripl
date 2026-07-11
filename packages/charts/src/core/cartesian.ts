@@ -8,12 +8,14 @@
  * legends and axes never overlap or clip the plotting region.
  */
 
-import {
+import type {
     BaseChartOptions,
+} from './chart';
+import {
     Chart,
 } from './chart';
 
-import {
+import type {
     ChartArea,
     ChartLayout,
 } from './layout';
@@ -41,11 +43,13 @@ import {
     resolveFormatLabel,
 } from './options';
 
+import type {
+    ChartXAxisAlignment,
+    ChartYAxisAlignment,
+} from '../components/axis';
 import {
     ChartXAxis,
-    ChartXAxisAlignment,
     ChartYAxis,
-    ChartYAxisAlignment,
 } from '../components/axis';
 
 import {
@@ -60,15 +64,17 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
-    Box,
+import type {
     Context,
     EventMap,
     Scale,
+} from '@ripl/core';
+import {
+    Box,
     scaleContinuous,
 } from '@ripl/core';
 

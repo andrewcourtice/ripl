@@ -1,14 +1,18 @@
-import {
-    ChartComponent,
+import type {
     ChartComponentOptions,
 } from './_base';
-
 import {
-    createGroup,
-    createLine,
+    ChartComponent,
+} from './_base';
+
+import type {
     Group,
     Line,
     LineState,
+} from '@ripl/core';
+import {
+    createGroup,
+    createLine,
 } from '@ripl/core';
 
 import {

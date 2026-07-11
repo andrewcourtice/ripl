@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -28,7 +30,7 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
@@ -44,19 +46,21 @@ import {
     anchoredAreaRenderer,
 } from '../core/fill';
 
-import {
-    Box,
+import type {
     Context,
-    createGroup,
-    createPolyline,
-    easeOutCubic,
-    getExtent,
     Group,
     Point,
     Polyline,
     PolylineRenderer,
     PolylineState,
     Scale,
+} from '@ripl/core';
+import {
+    Box,
+    createGroup,
+    createPolyline,
+    easeOutCubic,
+    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';

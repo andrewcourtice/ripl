@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -20,7 +22,7 @@ import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
 
-import {
+import type {
     getColorGenerator,
 } from '../constants/colors';
 
@@ -28,19 +30,21 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
-import {
+import type {
     Arc,
     ArcState,
     Context,
+    EventMap,
+    Group,
+} from '@ripl/core';
+import {
     createArc,
     createGroup,
     easeOutQuint,
-    EventMap,
-    Group,
     scaleContinuous,
     setColorAlpha,
     TAU,

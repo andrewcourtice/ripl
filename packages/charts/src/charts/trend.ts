@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -38,7 +40,7 @@ import {
     keysDiffer,
 } from '../core/morph';
 
-import {
+import type {
     LegendItem,
 } from '../components/legend';
 
@@ -46,12 +48,23 @@ import {
     Grid,
 } from '../components/grid';
 
-import {
+import type {
     BandScale,
-    Box,
     Circle,
     CircleState,
     Context,
+    EventMap,
+    Group,
+    Point,
+    Polyline,
+    PolylineRenderer,
+    PolylineState,
+    Rect,
+    RectState,
+    Scale,
+} from '@ripl/core';
+import {
+    Box,
     createCircle,
     createGroup,
     createPolyline,
@@ -59,20 +72,11 @@ import {
     createScale,
     easeOutCubic,
     easeOutQuart,
-    EventMap,
     getExtent,
-    Group,
     interpolatePath,
     interpolatePoints,
     max,
-    Point,
-    Polyline,
-    PolylineRenderer,
-    PolylineState,
     queryAll,
-    Rect,
-    RectState,
-    Scale,
     scaleBand,
     scaleContinuous,
     setColorAlpha,

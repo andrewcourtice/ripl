@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+    fillPolygon,
     rasterizeArc,
     rasterizeCircle,
     rasterizeCubicBezier,
@@ -12,11 +13,11 @@ import {
     rasterizeLine,
     rasterizeQuadBezier,
     rasterizeRect,
-    scanlineFill,
 } from '../src/algorithms';
 
 import type {
     PixelCallback,
+    Vertex,
 } from '../src/algorithms';
 
 function collectPixels(rasterize: (plot: PixelCallback) => void): [number, number][] {
@@ -274,50 +275,83 @@ describe('rasterizeArc', () => {
 
 });
 
-describe('scanlineFill', () => {
+describe('fillPolygon', () => {
 
-    test('Should fill between min and max x per row', () => {
-        const edges = new Map<number, number[]>();
+    const square = (x: number, y: number, size: number): Vertex[] => [
+        {
+            x,
+            y,
+        },
+        {
+            x: x + size,
+            y,
+        },
+        {
+            x: x + size,
+            y: y + size,
+        },
+        {
+            x,
+            y: y + size,
+        },
+    ];
 
-        edges.set(0, [2, 8]);
-        edges.set(1, [3, 7]);
+    test('Should fill the interior of a convex polygon', () => {
+        const set = pixelSet(collectPixels(plot => fillPolygon([square(0, 0, 10)], plot)));
 
-        const pixels = collectPixels(plot => scanlineFill(edges, plot));
-        const set = pixelSet(pixels);
-
-        // Row 0: x=2..8
-        for (let x = 2; x <= 8; x++) {
-            expect(set.has(`${x},0`)).toBe(true);
-        }
-
-        // Row 1: x=3..7
-        for (let x = 3; x <= 7; x++) {
-            expect(set.has(`${x},1`)).toBe(true);
-        }
+        expect(set.has('5,5')).toBe(true);
+        expect(set.has('1,1')).toBe(true);
+        expect(set.has('9,9')).toBe(true);
     });
 
-    test('Should skip rows with fewer than 2 edge pixels', () => {
-        const edges = new Map<number, number[]>();
+    test('Should fill a concave (triangle) polygon between its edge crossings', () => {
+        const triangle: Vertex[] = [
+            {
+                x: 0,
+                y: 0,
+            },
+            {
+                x: 10,
+                y: 0,
+            },
+            {
+                x: 5,
+                y: 10,
+            },
+        ];
 
-        edges.set(0, [5]);
-        edges.set(1, [2, 6]);
+        const set = pixelSet(collectPixels(plot => fillPolygon([triangle], plot)));
 
-        const pixels = collectPixels(plot => scanlineFill(edges, plot));
-
-        // Row 0 should be skipped
-        const row0 = pixels.filter(([, y]) => y === 0);
-
-        expect(row0.length).toBe(0);
-
-        // Row 1 should be filled
-        const row1 = pixels.filter(([, y]) => y === 1);
-
-        expect(row1.length).toBe(5); // x=2..6
+        expect(set.has('5,2')).toBe(true);
+        // The apex narrows, so points far outside the triangle at low y stay empty.
+        expect(set.has('0,9')).toBe(false);
+        expect(set.has('10,9')).toBe(false);
     });
 
-    test('Should handle empty edges map', () => {
-        const edges = new Map<number, number[]>();
-        const pixels = collectPixels(plot => scanlineFill(edges, plot));
+    test('Should leave the hole of an annular (ring) shape empty via the even-odd rule', () => {
+        const outer = square(0, 0, 20);
+        const inner = square(6, 6, 8);
+
+        const set = pixelSet(collectPixels(plot => fillPolygon([outer, inner], plot)));
+
+        // Ring bands on both sides of the hole are filled...
+        expect(set.has('2,10')).toBe(true);
+        expect(set.has('18,10')).toBe(true);
+        // ...but the interior hole is NOT (this is the bug the gauge exposed).
+        expect(set.has('10,10')).toBe(false);
+    });
+
+    test('Should ignore degenerate contours', () => {
+        const pixels = collectPixels(plot => fillPolygon([[{
+            x: 5,
+            y: 5,
+        }]], plot));
+
+        expect(pixels.length).toBe(0);
+    });
+
+    test('Should handle an empty contour list', () => {
+        const pixels = collectPixels(plot => fillPolygon([], plot));
 
         expect(pixels.length).toBe(0);
     });

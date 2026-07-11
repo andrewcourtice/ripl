@@ -1,9 +1,11 @@
+import type {
+    LinearScaleOptions,
+} from './_base';
 import {
     createNumericIncludesMethod,
     createScale,
     getLinearScaleMethod,
     getLinearTicks,
-    LinearScaleOptions,
 } from './_base';
 
 import type {

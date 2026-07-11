@@ -1,6 +1,6 @@
 # @ripl/core
 
-Core rendering library for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering (Canvas & SVG) in the browser.
+Core rendering library for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering across Canvas, SVG, and Terminal contexts.
 
 ## Installation
 

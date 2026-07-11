@@ -23,13 +23,14 @@ import type {
 } from './math';
 
 import {
-    ContextText,
     degreesToRadians,
 } from '@ripl/core';
 
 import type {
+    ContextExport,
     ContextOptions,
     ContextPath,
+    ContextText,
     Direction,
     FillRule,
     FontKerning,
@@ -40,6 +41,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    createCanvasExport,
     DOMContext,
 } from '@ripl/dom';
 
@@ -205,6 +207,14 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public submitMesh(submission: MeshSubmission): void {
         // noop — overridden in subclasses (e.g. WebGPUContext3D)
+    }
+
+    /**
+     * Exports the rendered canvas. Shared by CPU and GPU 3D contexts; call after a frame has
+     * rendered (GPU present textures are transient, so `createCanvasExport` snapshots immediately).
+     */
+    public export(): ContextExport {
+        return createCanvasExport(this.element);
     }
 
 }

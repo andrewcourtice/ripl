@@ -87,7 +87,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
     // Pack largest-first for a denser layout, without disturbing the caller's array order.
     const order = circles.slice().sort((left, right) => right.r - left.r);
 
-    let a = order[0];
+    const a = order[0];
     a.x = 0;
     a.y = 0;
 
@@ -95,7 +95,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
         return circles;
     }
 
-    let b = order[1];
+    const b = order[1];
     a.x = -b.r;
     b.x = a.r;
     b.y = 0;
@@ -111,9 +111,21 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
     place(b, a, c);
 
     // Seed the front-chain with the first three circles.
-    let nodeA: ChainNode = { circle: a, next: null!, previous: null! };
-    let nodeB: ChainNode = { circle: b, next: null!, previous: null! };
-    let nodeC: ChainNode = { circle: c, next: null!, previous: null! };
+    let nodeA: ChainNode = {
+        circle: a,
+        next: null!,
+        previous: null!,
+    };
+    let nodeB: ChainNode = {
+        circle: b,
+        next: null!,
+        previous: null!,
+    };
+    const nodeC: ChainNode = {
+        circle: c,
+        next: null!,
+        previous: null!,
+    };
     nodeA.next = nodeC.previous = nodeB;
     nodeB.next = nodeA.previous = nodeC;
     nodeC.next = nodeB.previous = nodeA;
@@ -210,7 +222,11 @@ function enclosesNot(a: PackCircle, b: PackCircle): boolean {
 }
 
 function encloseBasis1(a: PackCircle): PackCircle {
-    return { x: a.x, y: a.y, r: a.r };
+    return {
+        x: a.x,
+        y: a.y,
+        r: a.r,
+    };
 }
 
 function encloseBasis2(a: PackCircle, b: PackCircle): PackCircle {
@@ -307,7 +323,11 @@ export function enclosingCircle(circles: PackCircle[]): { x: number;
     y: number;
     r: number; } {
     if (!circles.length) {
-        return { x: 0, y: 0, r: 0 };
+        return {
+            x: 0,
+            y: 0,
+            r: 0,
+        };
     }
 
     let basis: PackCircle[] = [];

@@ -370,6 +370,10 @@
         "collapsed": true,
         "items": [
           {
+            "text": "ArcDiagramChart",
+            "link": "/docs/api/@ripl/charts/classes/ArcDiagramChart.md"
+          },
+          {
             "text": "AreaChart",
             "link": "/docs/api/@ripl/charts/classes/AreaChart.md"
           },
@@ -394,6 +398,10 @@
             "link": "/docs/api/@ripl/charts/classes/ChordChart.md"
           },
           {
+            "text": "ForceDirectedChart",
+            "link": "/docs/api/@ripl/charts/classes/ForceDirectedChart.md"
+          },
+          {
             "text": "FunnelChart",
             "link": "/docs/api/@ripl/charts/classes/FunnelChart.md"
           },
@@ -414,6 +422,10 @@
             "link": "/docs/api/@ripl/charts/classes/LineChart.md"
           },
           {
+            "text": "PackedCircleChart",
+            "link": "/docs/api/@ripl/charts/classes/PackedCircleChart.md"
+          },
+          {
             "text": "PieChart",
             "link": "/docs/api/@ripl/charts/classes/PieChart.md"
           },
@@ -422,8 +434,16 @@
             "link": "/docs/api/@ripl/charts/classes/PolarAreaChart.md"
           },
           {
+            "text": "PolarScatterChart",
+            "link": "/docs/api/@ripl/charts/classes/PolarScatterChart.md"
+          },
+          {
             "text": "RadarChart",
             "link": "/docs/api/@ripl/charts/classes/RadarChart.md"
+          },
+          {
+            "text": "RadialBarChart",
+            "link": "/docs/api/@ripl/charts/classes/RadialBarChart.md"
           },
           {
             "text": "RealtimeChart",
@@ -468,12 +488,52 @@
         "collapsed": true,
         "items": [
           {
+            "text": "ArcDiagramChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramChartEventMap.md"
+          },
+          {
+            "text": "ArcDiagramChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramChartOptions.md"
+          },
+          {
+            "text": "ArcDiagramLink",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramLink.md"
+          },
+          {
+            "text": "ArcDiagramLinkEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramLinkEvent.md"
+          },
+          {
+            "text": "ArcDiagramNode",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramNode.md"
+          },
+          {
+            "text": "ArcDiagramNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramNodeEvent.md"
+          },
+          {
+            "text": "AreaChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/AreaChartEventMap.md"
+          },
+          {
+            "text": "AreaChartMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/AreaChartMarkerEvent.md"
+          },
+          {
             "text": "AreaChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/AreaChartOptions.md"
           },
           {
             "text": "AreaChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/AreaChartSeriesOptions.md"
+          },
+          {
+            "text": "BarChartBarEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/BarChartBarEvent.md"
+          },
+          {
+            "text": "BarChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/BarChartEventMap.md"
           },
           {
             "text": "BarChartOptions",
@@ -520,6 +580,10 @@
             "link": "/docs/api/@ripl/charts/interfaces/ChartCrosshairOptions.md"
           },
           {
+            "text": "ChartDataLabelsOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartDataLabelsOptions.md"
+          },
+          {
             "text": "ChartGridOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ChartGridOptions.md"
           },
@@ -530,6 +594,10 @@
           {
             "text": "ChartPadding",
             "link": "/docs/api/@ripl/charts/interfaces/ChartPadding.md"
+          },
+          {
+            "text": "ChartSegmentLabelsOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartSegmentLabelsOptions.md"
           },
           {
             "text": "ChartTitleOptions",
@@ -544,20 +612,92 @@
             "link": "/docs/api/@ripl/charts/interfaces/ChartYAxisItemOptions.md"
           },
           {
+            "text": "ChordChartArcEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ChordChartArcEvent.md"
+          },
+          {
+            "text": "ChordChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/ChordChartEventMap.md"
+          },
+          {
             "text": "ChordChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ChordChartOptions.md"
+          },
+          {
+            "text": "ChordChartRibbonEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ChordChartRibbonEvent.md"
+          },
+          {
+            "text": "DataLabelSpec",
+            "link": "/docs/api/@ripl/charts/interfaces/DataLabelSpec.md"
+          },
+          {
+            "text": "ForceDirectedChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceDirectedChartEventMap.md"
+          },
+          {
+            "text": "ForceDirectedChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceDirectedChartOptions.md"
+          },
+          {
+            "text": "ForceDirectedLinkEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceDirectedLinkEvent.md"
+          },
+          {
+            "text": "ForceDirectedNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceDirectedNodeEvent.md"
+          },
+          {
+            "text": "ForceNetworkLink",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceNetworkLink.md"
+          },
+          {
+            "text": "ForceNetworkNode",
+            "link": "/docs/api/@ripl/charts/interfaces/ForceNetworkNode.md"
+          },
+          {
+            "text": "FunnelChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/FunnelChartEventMap.md"
           },
           {
             "text": "FunnelChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/FunnelChartOptions.md"
           },
           {
+            "text": "FunnelChartSegmentEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/FunnelChartSegmentEvent.md"
+          },
+          {
+            "text": "GanttChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/GanttChartEventMap.md"
+          },
+          {
             "text": "GanttChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/GanttChartOptions.md"
           },
           {
+            "text": "GanttChartTaskEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/GanttChartTaskEvent.md"
+          },
+          {
+            "text": "GaugeChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/GaugeChartEventMap.md"
+          },
+          {
             "text": "GaugeChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/GaugeChartOptions.md"
+          },
+          {
+            "text": "GaugeChartValueEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/GaugeChartValueEvent.md"
+          },
+          {
+            "text": "HeatmapChartCellEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/HeatmapChartCellEvent.md"
+          },
+          {
+            "text": "HeatmapChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/HeatmapChartEventMap.md"
           },
           {
             "text": "HeatmapChartOptions",
@@ -572,6 +712,18 @@
             "link": "/docs/api/@ripl/charts/interfaces/HoverTooltip.md"
           },
           {
+            "text": "InteractionPoint",
+            "link": "/docs/api/@ripl/charts/interfaces/InteractionPoint.md"
+          },
+          {
+            "text": "LineChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/LineChartEventMap.md"
+          },
+          {
+            "text": "LineChartMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/LineChartMarkerEvent.md"
+          },
+          {
             "text": "LineChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/LineChartOptions.md"
           },
@@ -580,24 +732,100 @@
             "link": "/docs/api/@ripl/charts/interfaces/LineChartSeriesOptions.md"
           },
           {
+            "text": "PackedCircleChartCellEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartCellEvent.md"
+          },
+          {
+            "text": "PackedCircleChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartEventMap.md"
+          },
+          {
+            "text": "PackedCircleChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartOptions.md"
+          },
+          {
             "text": "Padding",
             "link": "/docs/api/@ripl/charts/interfaces/Padding.md"
+          },
+          {
+            "text": "PieChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/PieChartEventMap.md"
           },
           {
             "text": "PieChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/PieChartOptions.md"
           },
           {
+            "text": "PieChartSegmentEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/PieChartSegmentEvent.md"
+          },
+          {
+            "text": "PolarAreaChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarAreaChartEventMap.md"
+          },
+          {
             "text": "PolarAreaChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/PolarAreaChartOptions.md"
+          },
+          {
+            "text": "PolarAreaChartSegmentEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarAreaChartSegmentEvent.md"
+          },
+          {
+            "text": "PolarScatterChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarScatterChartEventMap.md"
+          },
+          {
+            "text": "PolarScatterChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarScatterChartOptions.md"
+          },
+          {
+            "text": "PolarScatterMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarScatterMarkerEvent.md"
+          },
+          {
+            "text": "PolarScatterSeriesOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/PolarScatterSeriesOptions.md"
+          },
+          {
+            "text": "RadarChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/RadarChartEventMap.md"
           },
           {
             "text": "RadarChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/RadarChartOptions.md"
           },
           {
+            "text": "RadarChartPointEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/RadarChartPointEvent.md"
+          },
+          {
             "text": "RadarChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/RadarChartSeriesOptions.md"
+          },
+          {
+            "text": "RadialBarChartBarEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialBarChartBarEvent.md"
+          },
+          {
+            "text": "RadialBarChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialBarChartEventMap.md"
+          },
+          {
+            "text": "RadialBarChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialBarChartOptions.md"
+          },
+          {
+            "text": "RadialLabelAnchor",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialLabelAnchor.md"
+          },
+          {
+            "text": "RadialLabelInput",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialLabelInput.md"
+          },
+          {
+            "text": "RadialLabelPlacement",
+            "link": "/docs/api/@ripl/charts/interfaces/RadialLabelPlacement.md"
           },
           {
             "text": "RealtimeChartOptions",
@@ -616,6 +844,18 @@
             "link": "/docs/api/@ripl/charts/interfaces/RibbonState.md"
           },
           {
+            "text": "SankeyChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/SankeyChartEventMap.md"
+          },
+          {
+            "text": "SankeyChartLinkEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/SankeyChartLinkEvent.md"
+          },
+          {
+            "text": "SankeyChartNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/SankeyChartNodeEvent.md"
+          },
+          {
             "text": "SankeyChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/SankeyChartOptions.md"
           },
@@ -632,6 +872,14 @@
             "link": "/docs/api/@ripl/charts/interfaces/SankeyNode.md"
           },
           {
+            "text": "ScatterChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/ScatterChartEventMap.md"
+          },
+          {
+            "text": "ScatterChartMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ScatterChartMarkerEvent.md"
+          },
+          {
             "text": "ScatterChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ScatterChartOptions.md"
           },
@@ -640,16 +888,48 @@
             "link": "/docs/api/@ripl/charts/interfaces/ScatterChartSeriesOptions.md"
           },
           {
+            "text": "SegmentLabelLayout",
+            "link": "/docs/api/@ripl/charts/interfaces/SegmentLabelLayout.md"
+          },
+          {
+            "text": "SegmentLabelSpec",
+            "link": "/docs/api/@ripl/charts/interfaces/SegmentLabelSpec.md"
+          },
+          {
+            "text": "StockChartCandleEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/StockChartCandleEvent.md"
+          },
+          {
+            "text": "StockChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/StockChartEventMap.md"
+          },
+          {
             "text": "StockChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/StockChartOptions.md"
+          },
+          {
+            "text": "SunburstChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartEventMap.md"
           },
           {
             "text": "SunburstChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/SunburstChartOptions.md"
           },
           {
+            "text": "SunburstChartSegmentEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartSegmentEvent.md"
+          },
+          {
             "text": "SunburstNode",
             "link": "/docs/api/@ripl/charts/interfaces/SunburstNode.md"
+          },
+          {
+            "text": "TreemapChartCellEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/TreemapChartCellEvent.md"
+          },
+          {
+            "text": "TreemapChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/TreemapChartEventMap.md"
           },
           {
             "text": "TreemapChartOptions",
@@ -664,12 +944,20 @@
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartBarSeriesOptions.md"
           },
           {
+            "text": "TrendChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartEventMap.md"
+          },
+          {
             "text": "TrendChartLineSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartLineSeriesOptions.md"
           },
           {
             "text": "TrendChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartOptions.md"
+          },
+          {
+            "text": "TrendChartValueEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartValueEvent.md"
           }
         ]
       },
@@ -680,6 +968,10 @@
           {
             "text": "Accessor",
             "link": "/docs/api/@ripl/charts/type-aliases/Accessor.md"
+          },
+          {
+            "text": "ArcDiagramOrientation",
+            "link": "/docs/api/@ripl/charts/type-aliases/ArcDiagramOrientation.md"
           },
           {
             "text": "AxisFormatType",
@@ -714,6 +1006,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/ChartCrosshairInput.md"
           },
           {
+            "text": "ChartDataLabelsInput",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartDataLabelsInput.md"
+          },
+          {
             "text": "ChartGridInput",
             "link": "/docs/api/@ripl/charts/type-aliases/ChartGridInput.md"
           },
@@ -724,6 +1020,10 @@
           {
             "text": "ChartOptions",
             "link": "/docs/api/@ripl/charts/type-aliases/ChartOptions.md"
+          },
+          {
+            "text": "ChartSegmentLabelsInput",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartSegmentLabelsInput.md"
           },
           {
             "text": "ChartSide",
@@ -746,12 +1046,24 @@
             "link": "/docs/api/@ripl/charts/type-aliases/EaseName.md"
           },
           {
+            "text": "LabelAnchor",
+            "link": "/docs/api/@ripl/charts/type-aliases/LabelAnchor.md"
+          },
+          {
             "text": "LegendPosition",
             "link": "/docs/api/@ripl/charts/type-aliases/LegendPosition.md"
           },
           {
+            "text": "LineStyle",
+            "link": "/docs/api/@ripl/charts/type-aliases/LineStyle.md"
+          },
+          {
             "text": "PaddingInput",
             "link": "/docs/api/@ripl/charts/type-aliases/PaddingInput.md"
+          },
+          {
+            "text": "SegmentLabelPosition",
+            "link": "/docs/api/@ripl/charts/type-aliases/SegmentLabelPosition.md"
           },
           {
             "text": "SeriesType",
@@ -764,6 +1076,10 @@
           {
             "text": "TrendChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/type-aliases/TrendChartSeriesOptions.md"
+          },
+          {
+            "text": "ValueFormatInput",
+            "link": "/docs/api/@ripl/charts/type-aliases/ValueFormatInput.md"
           }
         ]
       },
@@ -774,6 +1090,22 @@
           {
             "text": "ANIMATION_REFERENCE",
             "link": "/docs/api/@ripl/charts/variables/ANIMATION_REFERENCE.md"
+          },
+          {
+            "text": "DEFAULT_NUMBER_PRECISION",
+            "link": "/docs/api/@ripl/charts/variables/DEFAULT_NUMBER_PRECISION.md"
+          },
+          {
+            "text": "SEGMENT_LABEL_FONT",
+            "link": "/docs/api/@ripl/charts/variables/SEGMENT_LABEL_FONT.md"
+          },
+          {
+            "text": "SEGMENT_LABEL_INSIDE_FILL",
+            "link": "/docs/api/@ripl/charts/variables/SEGMENT_LABEL_INSIDE_FILL.md"
+          },
+          {
+            "text": "SEGMENT_LABEL_OUTSIDE_FILL",
+            "link": "/docs/api/@ripl/charts/variables/SEGMENT_LABEL_OUTSIDE_FILL.md"
           }
         ]
       },
@@ -790,6 +1122,10 @@
             "link": "/docs/api/@ripl/charts/functions/computeStackOffset.md"
           },
           {
+            "text": "createArcDiagramChart",
+            "link": "/docs/api/@ripl/charts/functions/createArcDiagramChart.md"
+          },
+          {
             "text": "createAreaChart",
             "link": "/docs/api/@ripl/charts/functions/createAreaChart.md"
           },
@@ -800,6 +1136,14 @@
           {
             "text": "createChordChart",
             "link": "/docs/api/@ripl/charts/functions/createChordChart.md"
+          },
+          {
+            "text": "createDataLabel",
+            "link": "/docs/api/@ripl/charts/functions/createDataLabel.md"
+          },
+          {
+            "text": "createForceDirectedChart",
+            "link": "/docs/api/@ripl/charts/functions/createForceDirectedChart.md"
           },
           {
             "text": "createFunnelChart",
@@ -822,6 +1166,10 @@
             "link": "/docs/api/@ripl/charts/functions/createLineChart.md"
           },
           {
+            "text": "createPackedCircleChart",
+            "link": "/docs/api/@ripl/charts/functions/createPackedCircleChart.md"
+          },
+          {
             "text": "createPieChart",
             "link": "/docs/api/@ripl/charts/functions/createPieChart.md"
           },
@@ -830,8 +1178,16 @@
             "link": "/docs/api/@ripl/charts/functions/createPolarAreaChart.md"
           },
           {
+            "text": "createPolarScatterChart",
+            "link": "/docs/api/@ripl/charts/functions/createPolarScatterChart.md"
+          },
+          {
             "text": "createRadarChart",
             "link": "/docs/api/@ripl/charts/functions/createRadarChart.md"
+          },
+          {
+            "text": "createRadialBarChart",
+            "link": "/docs/api/@ripl/charts/functions/createRadialBarChart.md"
           },
           {
             "text": "createRealtimeChart",
@@ -852,6 +1208,10 @@
           {
             "text": "createScatterChart",
             "link": "/docs/api/@ripl/charts/functions/createScatterChart.md"
+          },
+          {
+            "text": "createSegmentLabel",
+            "link": "/docs/api/@ripl/charts/functions/createSegmentLabel.md"
           },
           {
             "text": "createStockChart",
@@ -882,6 +1242,10 @@
             "link": "/docs/api/@ripl/charts/functions/exitElement.md"
           },
           {
+            "text": "formatNumber",
+            "link": "/docs/api/@ripl/charts/functions/formatNumber.md"
+          },
+          {
             "text": "normalizeAnimation",
             "link": "/docs/api/@ripl/charts/functions/normalizeAnimation.md"
           },
@@ -898,6 +1262,10 @@
             "link": "/docs/api/@ripl/charts/functions/normalizeCrosshair.md"
           },
           {
+            "text": "normalizeDataLabels",
+            "link": "/docs/api/@ripl/charts/functions/normalizeDataLabels.md"
+          },
+          {
             "text": "normalizeGrid",
             "link": "/docs/api/@ripl/charts/functions/normalizeGrid.md"
           },
@@ -908,6 +1276,10 @@
           {
             "text": "normalizePadding",
             "link": "/docs/api/@ripl/charts/functions/normalizePadding.md"
+          },
+          {
+            "text": "normalizeSegmentLabels",
+            "link": "/docs/api/@ripl/charts/functions/normalizeSegmentLabels.md"
           },
           {
             "text": "normalizeTitle",
@@ -930,12 +1302,32 @@
             "link": "/docs/api/@ripl/charts/functions/resolveAnimation.md"
           },
           {
+            "text": "resolveDataLabelLayout",
+            "link": "/docs/api/@ripl/charts/functions/resolveDataLabelLayout.md"
+          },
+          {
             "text": "resolveEase",
             "link": "/docs/api/@ripl/charts/functions/resolveEase.md"
           },
           {
             "text": "resolveFormatLabel",
             "link": "/docs/api/@ripl/charts/functions/resolveFormatLabel.md"
+          },
+          {
+            "text": "resolveLineDash",
+            "link": "/docs/api/@ripl/charts/functions/resolveLineDash.md"
+          },
+          {
+            "text": "resolveRadialLabel",
+            "link": "/docs/api/@ripl/charts/functions/resolveRadialLabel.md"
+          },
+          {
+            "text": "resolveSegmentLabelLayout",
+            "link": "/docs/api/@ripl/charts/functions/resolveSegmentLabelLayout.md"
+          },
+          {
+            "text": "resolveValueFormat",
+            "link": "/docs/api/@ripl/charts/functions/resolveValueFormat.md"
           },
           {
             "text": "stagger",
@@ -1260,6 +1652,10 @@
             "link": "/docs/api/@ripl/core/interfaces/ContextEventMap.md"
           },
           {
+            "text": "ContextExport",
+            "link": "/docs/api/@ripl/core/interfaces/ContextExport.md"
+          },
+          {
             "text": "ContextOptions",
             "link": "/docs/api/@ripl/core/interfaces/ContextOptions.md"
           },
@@ -1296,6 +1692,14 @@
             "link": "/docs/api/@ripl/core/interfaces/ImageState.md"
           },
           {
+            "text": "InterpolatePointsFactory",
+            "link": "/docs/api/@ripl/core/interfaces/InterpolatePointsFactory.md"
+          },
+          {
+            "text": "InterpolatePointsOptions",
+            "link": "/docs/api/@ripl/core/interfaces/InterpolatePointsOptions.md"
+          },
+          {
             "text": "LinearGradient",
             "link": "/docs/api/@ripl/core/interfaces/LinearGradient.md"
           },
@@ -1326,6 +1730,10 @@
           {
             "text": "PowerScaleOptions",
             "link": "/docs/api/@ripl/core/interfaces/PowerScaleOptions.md"
+          },
+          {
+            "text": "Queryable",
+            "link": "/docs/api/@ripl/core/interfaces/Queryable.md"
           },
           {
             "text": "RadialGradient",
@@ -1672,8 +2080,16 @@
             "link": "/docs/api/@ripl/core/variables/easeLinear.md"
           },
           {
+            "text": "easeOutBack",
+            "link": "/docs/api/@ripl/core/variables/easeOutBack.md"
+          },
+          {
             "text": "easeOutCubic",
             "link": "/docs/api/@ripl/core/variables/easeOutCubic.md"
+          },
+          {
+            "text": "easeOutElastic",
+            "link": "/docs/api/@ripl/core/variables/easeOutElastic.md"
           },
           {
             "text": "easeOutQuad",
@@ -1760,6 +2176,10 @@
           {
             "text": "clamp",
             "link": "/docs/api/@ripl/core/functions/clamp.md"
+          },
+          {
+            "text": "closest",
+            "link": "/docs/api/@ripl/core/functions/closest.md"
           },
           {
             "text": "computeTransitionTime",
@@ -1978,6 +2398,10 @@
             "link": "/docs/api/@ripl/core/functions/isPointInBox.md"
           },
           {
+            "text": "matches",
+            "link": "/docs/api/@ripl/core/functions/matches.md"
+          },
+          {
             "text": "max",
             "link": "/docs/api/@ripl/core/functions/max.md"
           },
@@ -2104,6 +2528,10 @@
           {
             "text": "radiansToDegrees",
             "link": "/docs/api/@ripl/core/functions/radiansToDegrees.md"
+          },
+          {
+            "text": "resolvePolylineRenderer",
+            "link": "/docs/api/@ripl/core/functions/resolvePolylineRenderer.md"
           },
           {
             "text": "resolveRotation",
@@ -2490,6 +2918,10 @@
           {
             "text": "predicateKey",
             "link": "/docs/api/@ripl/utilities/functions/predicateKey.md"
+          },
+          {
+            "text": "roundTo",
+            "link": "/docs/api/@ripl/utilities/functions/roundTo.md"
           },
           {
             "text": "setFilter",

@@ -1,5 +1,7 @@
-import {
+import type {
     BaseChartOptions,
+} from '../core/chart';
+import {
     Chart,
 } from '../core/chart';
 
@@ -27,18 +29,20 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
-import {
+import type {
     Context,
-    createGroup,
-    createRect,
-    easeOutCubic,
     EventMap,
     Group,
     Rect,
     RectState,
-    setColorAlpha,
     Text,
     TextState,
+} from '@ripl/core';
+import {
+    createGroup,
+    createRect,
+    easeOutCubic,
+    setColorAlpha,
 } from '@ripl/core';
 
 import {

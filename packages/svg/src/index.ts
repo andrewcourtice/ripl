@@ -15,6 +15,7 @@ import {
 import type {
     BorderRadius,
     ContextElement,
+    ContextExport,
     ContextOptions,
     FillRule,
     Gradient,
@@ -228,6 +229,45 @@ function canvasImageSourceToDataURL(image: CanvasImageSource, width?: number, he
     }
 
     return canvas.toDataURL();
+}
+
+/** Rasterizes serialized SVG markup to `ImageData` by decoding it through an `Image` onto a canvas. */
+function svgMarkupToImageData(markup: string, width: number, height: number): Promise<ImageData> {
+    const imgWidth = Math.max(1, Math.round(width));
+    const imgHeight = Math.max(1, Math.round(height));
+    const url = URL.createObjectURL(new Blob([markup], {
+        type: 'image/svg+xml',
+    }));
+
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+
+        image.onload = () => {
+            URL.revokeObjectURL(url);
+
+            const canvas = document.createElement('canvas');
+
+            canvas.width = imgWidth;
+            canvas.height = imgHeight;
+
+            const context = canvas.getContext('2d');
+
+            if (!context) {
+                reject(new Error('Unable to acquire a 2D context for SVG export'));
+                return;
+            }
+
+            context.drawImage(image, 0, 0, imgWidth, imgHeight);
+            resolve(context.getImageData(0, 0, imgWidth, imgHeight));
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Failed to rasterize SVG for export'));
+        };
+
+        image.src = url;
+    });
 }
 
 /** SVG-specific path implementation that builds an SVG `d` attribute string from drawing commands. */
@@ -651,6 +691,24 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         } else {
             this.render();
         }
+    }
+
+    public export(): ContextExport {
+        // Rendering is deferred to rAF when buffering is enabled, so force a synchronous reconcile
+        // to ensure the serialized markup reflects the latest scene.
+        this.render();
+
+        const markup = new XMLSerializer().serializeToString(this.element);
+        const width = this.width;
+        const height = this.height;
+
+        return {
+            toString: () => markup,
+            toURL: () => URL.createObjectURL(new Blob([markup], {
+                type: 'image/svg+xml',
+            })),
+            toImage: () => svgMarkupToImageData(markup, width, height),
+        };
     }
 
     public createPath(id?: string): SVGPath {

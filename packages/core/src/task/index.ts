@@ -1,5 +1,7 @@
-import {
+import type {
     AnyFunction,
+} from '@ripl/utilities';
+import {
     setForEach,
 } from '@ripl/utilities';
 

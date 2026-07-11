@@ -18,6 +18,7 @@
                 <PlaygroundPreview
                     :srcdoc="currentSrcdoc"
                     :mode="mode"
+                    :loading="!currentSrcdoc"
                     v-model:context-type="contextType"
                     v-model:settings="settings"
                 />

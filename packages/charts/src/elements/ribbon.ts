@@ -1,15 +1,15 @@
 import type {
+    BaseElementState,
     Context,
+    Shape2DOptions,
 } from '@ripl/core';
 
 import {
-    BaseElementState,
     Box,
     getThetaPoint,
     max,
     min,
     Shape2D,
-    Shape2DOptions,
 } from '@ripl/core';
 
 /** State interface for a ribbon shape connecting two arc segments via quadratic curves. */

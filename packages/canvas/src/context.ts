@@ -1,12 +1,13 @@
 import {
     ContextPath,
-    ContextText,
     TAU,
 } from '@ripl/core';
 
 import type {
     BorderRadius,
+    ContextExport,
     ContextOptions,
+    ContextText,
     Direction,
     FillRule,
     FontKerning,
@@ -17,6 +18,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    createCanvasExport,
     DOMContext,
 } from '@ripl/dom';
 
@@ -365,6 +367,10 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     public isPointInStroke(path: CanvasPath, x: number, y: number): boolean {
         return canvasIsPointInStroke(this.context, path, x, y);
+    }
+
+    public export(): ContextExport {
+        return createCanvasExport(this.element);
     }
 
 }

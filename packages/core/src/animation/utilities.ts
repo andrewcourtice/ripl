@@ -2,7 +2,7 @@ import {
     factory,
 } from '../core/factory';
 
-import {
+import type {
     AnyFunction,
 } from '@ripl/utilities';
 
