@@ -44,15 +44,15 @@ export interface TooltipOptions extends ChartComponentOptions {
 /** A boundary-aware tooltip component that shows text content near the mouse pointer with animated transitions. */
 export class Tooltip extends ChartComponent {
 
-    private group: Group | null = null;
-    private hideTimeout: number | null = null;
-    private padding: number;
-    private font: string;
-    private fontColor: string;
-    private backgroundColor: string;
-    private borderColor: string;
-    private borderRadiusValue: number;
-    private placement: TooltipPlacement;
+    #group: Group | null = null;
+    #hideTimeout: number | null = null;
+    #padding: number;
+    #font: string;
+    #fontColor: string;
+    #backgroundColor: string;
+    #borderColor: string;
+    #borderRadiusValue: number;
+    #placement: TooltipPlacement;
 
     constructor(options: TooltipOptions) {
         const {
@@ -72,28 +72,28 @@ export class Tooltip extends ChartComponent {
             renderer,
         });
 
-        this.padding = padding;
-        this.font = font;
-        this.fontColor = fontColor;
-        this.backgroundColor = backgroundColor;
-        this.borderColor = borderColor;
-        this.borderRadiusValue = borderRadius;
-        this.placement = placement;
+        this.#padding = padding;
+        this.#font = font;
+        this.#fontColor = fontColor;
+        this.#backgroundColor = backgroundColor;
+        this.#borderColor = borderColor;
+        this.#borderRadiusValue = borderRadius;
+        this.#placement = placement;
     }
 
     /** Shows the tooltip at the given position with the specified text content. */
     public show(x: number, y: number, content: string) {
         // Clear any pending hide timeout
-        if (this.hideTimeout !== null) {
-            clearTimeout(this.hideTimeout);
-            this.hideTimeout = null;
+        if (this.#hideTimeout !== null) {
+            clearTimeout(this.#hideTimeout);
+            this.#hideTimeout = null;
         }
 
-        if (!this.group) {
+        if (!this.#group) {
             const textElement = createText({
                 id: 'tooltip-text',
-                fill: this.fontColor,
-                font: this.font,
+                fill: this.#fontColor,
+                font: this.#font,
                 textAlign: 'center',
                 textBaseline: 'middle',
                 content: '',
@@ -103,17 +103,17 @@ export class Tooltip extends ChartComponent {
 
             const background = createRect({
                 id: 'tooltip-bg',
-                fill: this.backgroundColor,
-                stroke: this.borderColor,
+                fill: this.#backgroundColor,
+                stroke: this.#borderColor,
                 lineWidth: 1,
-                borderRadius: this.borderRadiusValue,
+                borderRadius: this.#borderRadiusValue,
                 x: 0,
                 y: 0,
                 width: 0,
                 height: 0,
             });
 
-            this.group = createGroup({
+            this.#group = createGroup({
                 id: 'tooltip',
                 opacity: 0,
                 zIndex: 1000,
@@ -121,11 +121,11 @@ export class Tooltip extends ChartComponent {
                 children: [background, textElement],
             });
 
-            this.scene.add(this.group);
+            this.scene.add(this.#group);
         }
 
-        const textElement = this.group.query('#tooltip-text') as Text;
-        const background = this.group.query('#tooltip-bg') as Rect;
+        const textElement = this.#group.query('#tooltip-text') as Text;
+        const background = this.#group.query('#tooltip-bg') as Rect;
 
         textElement.content = content;
 
@@ -134,12 +134,12 @@ export class Tooltip extends ChartComponent {
         const textWidth = textBox.width || 40;
         const textHeight = textBox.height || 16;
 
-        const bgWidth = textWidth + this.padding * 2;
-        const bgHeight = textHeight + this.padding * 2;
+        const bgWidth = textWidth + this.#padding * 2;
+        const bgHeight = textHeight + this.#padding * 2;
 
         // Horizontally centred on the point; vertically either above it (default) or centred on it.
         let bgX = x - bgWidth / 2;
-        let bgY = this.placement === 'center'
+        let bgY = this.#placement === 'center'
             ? y - bgHeight / 2
             : y - bgHeight - 10;
 
@@ -161,7 +161,7 @@ export class Tooltip extends ChartComponent {
         // Check vertical boundaries
         if (bgY < 0) {
             // Above placement flips below the point; center placement just clamps to the top edge.
-            bgY = this.placement === 'above' ? y + offset : offset;
+            bgY = this.#placement === 'above' ? y + offset : offset;
         } else if (bgY + bgHeight > sceneHeight) {
             // Would be cut off on the bottom
             bgY = sceneHeight - bgHeight - offset;
@@ -174,11 +174,11 @@ export class Tooltip extends ChartComponent {
         const textY = bgY + bgHeight / 2;
 
         // If tooltip is already visible, smoothly transition position
-        const isVisible = (this.group.opacity || 0) > 0.1;
+        const isVisible = (this.#group.opacity || 0) > 0.1;
 
         if (isVisible) {
             // Ensure tooltip stays visible while repositioning
-            this.group.opacity = 1;
+            this.#group.opacity = 1;
 
             this.renderer.transition(background, {
                 duration: 150,
@@ -203,7 +203,7 @@ export class Tooltip extends ChartComponent {
             textElement.x = textX;
             textElement.y = textY;
 
-            this.renderer.transition(this.group, {
+            this.renderer.transition(this.#group, {
                 duration: 200,
                 ease: easeOutQuart,
                 state: {
@@ -215,19 +215,19 @@ export class Tooltip extends ChartComponent {
 
     /** Hides the tooltip with a short delay and fade-out animation. */
     public hide() {
-        if (!this.group) {
+        if (!this.#group) {
             return;
         }
 
         // Clear any existing timeout
-        if (this.hideTimeout !== null) {
-            clearTimeout(this.hideTimeout);
+        if (this.#hideTimeout !== null) {
+            clearTimeout(this.#hideTimeout);
         }
 
         // Delay the hide by 150ms
-        this.hideTimeout = setTimeout(() => {
-            if (this.group) {
-                this.renderer.transition(this.group, {
+        this.#hideTimeout = setTimeout(() => {
+            if (this.#group) {
+                this.renderer.transition(this.#group, {
                     duration: 200,
                     ease: easeOutQuart,
                     state: {
@@ -235,7 +235,7 @@ export class Tooltip extends ChartComponent {
                     },
                 });
             }
-            this.hideTimeout = null;
+            this.#hideTimeout = null;
         }, 150) as unknown as number;
     }
 

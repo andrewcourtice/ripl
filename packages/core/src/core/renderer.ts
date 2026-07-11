@@ -149,24 +149,24 @@ export type RendererTransitionOptionsArg<TElement extends Element> = RendererTra
 /** Drives the animation loop via `requestAnimationFrame`, managing per-element transitions and rendering the scene each frame. */
 export class Renderer extends EventBus<RendererEventMap> {
 
-    private scene: Scene;
-    private transitionMap = new Map<string, Map<symbol, RendererTransition>>();
+    #scene: Scene;
+    #transitionMap = new Map<string, Map<symbol, RendererTransition>>();
 
-    private running = false;
-    private handle?: number;
-    private startTime = 0;
-    private currentTime = 0;
-    private previousTime = 0;
+    #running = false;
+    #handle?: number;
+    #startTime = 0;
+    #currentTime = 0;
+    #previousTime = 0;
 
-    private debugOptions: Required<RendererDebugOptions>;
-    private smoothedFps = 0;
+    #debugOptions: Required<RendererDebugOptions>;
+    #smoothedFps = 0;
 
     public autoStart = true;
     public autoStop = true;
 
     /** Whether there are any active transitions in progress. */
     public get isBusy() {
-        return !!this.transitionMap.size;
+        return !!this.#transitionMap.size;
     }
 
     constructor(scene: Scene, options?: RendererOptions) {
@@ -178,10 +178,10 @@ export class Renderer extends EventBus<RendererEventMap> {
             debug = false,
         } = options || {};
 
-        this.scene = scene;
+        this.#scene = scene;
         this.autoStart = autoStart;
         this.autoStop = autoStop;
-        this.debugOptions = resolveDebugOptions(debug);
+        this.#debugOptions = resolveDebugOptions(debug);
 
         if (autoStart) {
             this.start();
@@ -189,44 +189,44 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         if (autoStop) {
             this.retain(scene.context.on('mousemove', () => this.start()));
-            this.retain(scene.context.on('mouseleave', () => this.stopOnIdle()));
+            this.retain(scene.context.on('mouseleave', () => this.#stopOnIdle()));
         }
 
         this.retain(scene.on('graph', () => this.start()));
         scene.once('destroyed', () => this.destroy());
     }
 
-    private tick() {
-        if (!this.running) {
+    #tick() {
+        if (!this.#running) {
             return;
         }
 
-        const context = this.scene.context;
+        const context = this.#scene.context;
 
         let deltaTime = 0;
 
         context.batch(() => {
-            this.currentTime = factory.now();
+            this.#currentTime = factory.now();
 
-            deltaTime = this.currentTime - this.previousTime;
+            deltaTime = this.#currentTime - this.#previousTime;
 
             this.emit('tick', {
-                time: this.currentTime,
+                time: this.#currentTime,
                 deltaTime,
             });
 
-            this.previousTime = this.currentTime;
+            this.#previousTime = this.#currentTime;
 
-            this.renderBuffer();
-            this.renderDebugOverlay(deltaTime);
+            this.#renderBuffer();
+            this.#renderDebugOverlay(deltaTime);
         });
 
-        this.handle = factory.requestAnimationFrame(() => this.tick());
+        this.#handle = factory.requestAnimationFrame(() => this.#tick());
     }
 
-    private renderBoundingBoxes(element: Element) {
+    #renderBoundingBoxes(element: Element) {
         const box = element.getBoundingBox();
-        const context = this.scene.context;
+        const context = this.#scene.context;
         const path = context.createPath();
 
         context.layer(() => {
@@ -238,7 +238,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         });
     }
 
-    private processTransition(entry: RendererTransition): void {
+    #processTransition(entry: RendererTransition): void {
         if (entry.paused) {
             if (entry.pauseOffset > 0) {
                 const time = computeTransitionTime(entry.pauseOffset, entry.duration, entry.ease, entry.direction);
@@ -248,7 +248,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             return;
         }
 
-        const elapsed = this.currentTime - entry.startTime;
+        const elapsed = this.#currentTime - entry.startTime;
 
         if (elapsed <= 0) {
             return;
@@ -270,38 +270,38 @@ export class Renderer extends EventBus<RendererEventMap> {
             entry.direction = entry.direction === 'forward' ? 'reverse' : 'forward';
         }
 
-        entry.startTime = this.currentTime;
+        entry.startTime = this.#currentTime;
     }
 
-    private renderBuffer() {
-        const buffer = this.scene.buffer;
+    #renderBuffer() {
+        const buffer = this.#scene.buffer;
 
         buffer.forEach(element => {
-            this.transitionMap.get(element.id)?.forEach(entry => {
-                this.processTransition(entry);
+            this.#transitionMap.get(element.id)?.forEach(entry => {
+                this.#processTransition(entry);
             });
 
-            element.render(this.scene.context);
+            element.render(this.#scene.context);
 
-            if (this.debugOptions.boundingBoxes) {
-                this.renderBoundingBoxes(element);
+            if (this.#debugOptions.boundingBoxes) {
+                this.#renderBoundingBoxes(element);
             }
         });
     }
 
-    private renderDebugOverlay(deltaTime: number) {
+    #renderDebugOverlay(deltaTime: number) {
         const {
             fps: showFps,
             elementCount: showElementCount,
-        } = this.debugOptions;
+        } = this.#debugOptions;
 
         if (!showFps && !showElementCount) {
             return;
         }
 
-        const elementCount = this.scene.buffer.length;
+        const elementCount = this.#scene.buffer.length;
         const instantFps = deltaTime > 0 ? 1000 / deltaTime : 0;
-        this.smoothedFps += (instantFps - this.smoothedFps) * 0.1;
+        this.#smoothedFps += (instantFps - this.#smoothedFps) * 0.1;
 
         const parts: string[] = [];
 
@@ -310,11 +310,11 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         if (showFps) {
-            parts.push(`${Math.round(this.smoothedFps)} fps`);
+            parts.push(`${Math.round(this.#smoothedFps)} fps`);
         }
 
         const label = parts.join(' at ');
-        const context = this.scene.context;
+        const context = this.#scene.context;
         const font = '12px monospace';
         const paddingX = 8;
         const paddingY = 4;
@@ -354,42 +354,42 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     /** Starts the animation loop if it is not already running. */
     public start() {
-        if (this.running) {
+        if (this.#running) {
             return;
         }
 
-        this.running = true;
-        this.startTime = factory.now();
-        this.previousTime = this.startTime;
+        this.#running = true;
+        this.#startTime = factory.now();
+        this.#previousTime = this.#startTime;
 
         this.emit('start', {
-            startTime: this.startTime,
+            startTime: this.#startTime,
         });
 
-        factory.requestAnimationFrame(() => this.tick());
+        factory.requestAnimationFrame(() => this.#tick());
     }
 
     /** Stops the animation loop, cancels pending frames, and clears all transitions. */
     public stop() {
-        if (!this.running) {
+        if (!this.#running) {
             return;
         }
 
-        if (this.handle) {
-            factory.cancelAnimationFrame(this.handle);
+        if (this.#handle) {
+            factory.cancelAnimationFrame(this.#handle);
         }
 
-        this.running = false;
-        this.transitionMap.clear();
+        this.#running = false;
+        this.#transitionMap.clear();
 
         this.emit('stop', {
-            startTime: this.startTime,
-            endTime: this.currentTime,
+            startTime: this.#startTime,
+            endTime: this.#currentTime,
         });
     }
 
-    private stopOnIdle() {
-        if (this.autoStop && this.transitionMap.size === 0) {
+    #stopOnIdle() {
+        if (this.autoStop && this.#transitionMap.size === 0) {
             this.stop();
         }
     }
@@ -464,19 +464,19 @@ export class Renderer extends EventBus<RendererEventMap> {
                 const startTime = factory.now() + delay;
 
                 const callback = () => {
-                    const elementTransitions = this.transitionMap.get(element.id);
+                    const elementTransitions = this.#transitionMap.get(element.id);
 
                     completeCount += 1;
                     elementTransitions?.delete(transitionId);
 
                     if (!elementTransitions?.size) {
-                        this.transitionMap.delete(element.id);
+                        this.#transitionMap.delete(element.id);
                     }
 
                     try {
                         onComplete(element);
                     } finally {
-                        this.stopOnIdle();
+                        this.#stopOnIdle();
 
                         if (completeCount >= totalCount) {
                             resolve();
@@ -484,7 +484,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     }
                 };
 
-                const transitions = this.transitionMap.get(element.id) || new Map<symbol, RendererTransition>();
+                const transitions = this.#transitionMap.get(element.id) || new Map<symbol, RendererTransition>();
 
                 const entry: RendererTransition = {
                     loop,
@@ -504,20 +504,20 @@ export class Renderer extends EventBus<RendererEventMap> {
                 });
 
                 transitions.set(transitionId, entry);
-                this.transitionMap.set(element.id, transitions);
+                this.#transitionMap.set(element.id, transitions);
             });
 
             onAbort(() => {
                 scopedTransitions.forEach(({ elementId }, id) => {
-                    const elementTransitions = this.transitionMap.get(elementId);
+                    const elementTransitions = this.#transitionMap.get(elementId);
                     elementTransitions?.delete(id);
 
                     if (!elementTransitions?.size) {
-                        this.transitionMap.delete(elementId);
+                        this.#transitionMap.delete(elementId);
                     }
                 });
 
-                this.stopOnIdle();
+                this.#stopOnIdle();
             });
         }, hooks);
 

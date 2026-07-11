@@ -332,14 +332,14 @@ function computeSankeyLayout(
  */
 export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> {
 
-    private nodeGroups: Group[] = [];
-    private linkGroups: Group[] = [];
-    private tooltip: Tooltip;
+    #nodeGroups: Group[] = [];
+    #linkGroups: Group[] = [];
+    #tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: SankeyChartOptions) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this.#tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -381,7 +381,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                 left: linkEntries,
                 inner: linkUpdates,
                 right: linkExits,
-            } = arrayJoin(layoutLinks, this.linkGroups, (link, group) => link.id === group.id);
+            } = arrayJoin(layoutLinks, this.#linkGroups, (link, group) => link.id === group.id);
 
             linkExits.forEach(el => el.destroy());
 
@@ -407,7 +407,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                     },
                 });
 
-                this.attachLinkHover(linkEl, link, midX, (sy + ty) / 2);
+                this.#attachLinkHover(linkEl, link, midX, (sy + ty) / 2);
 
                 return createGroup({
                     id: link.id,
@@ -436,7 +436,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                         opacity: 1,
                     } as Partial<SankeyLinkState>;
 
-                    this.attachLinkHover(linkEl, link, (sx + tx) / 2, (sy + ty) / 2);
+                    this.#attachLinkHover(linkEl, link, (sx + tx) / 2, (sy + ty) / 2);
                 }
 
                 return group;
@@ -444,7 +444,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
 
             scene.add(linkEntryGroups);
 
-            this.linkGroups = [
+            this.#linkGroups = [
                 ...linkEntryGroups,
                 ...linkUpdateGroups,
             ];
@@ -454,7 +454,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                 left: nodeEntries,
                 inner: nodeUpdates,
                 right: nodeExits,
-            } = arrayJoin(layoutNodes, this.nodeGroups, (node, group) => node.id === group.id);
+            } = arrayJoin(layoutNodes, this.#nodeGroups, (node, group) => node.id === group.id);
 
             nodeExits.forEach(el => el.destroy());
 
@@ -473,7 +473,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                     } as RectState,
                 });
 
-                this.attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
+                this.#attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
                 // Node labels sit to the right of the node (outside), so use the shared segment-label
                 // helper with the outside fill — consistent with the other charts' labels.
@@ -508,7 +508,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
                         fill: setColorAlpha(node.color, 0.8),
                     } as RectState;
 
-                    this.attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
+                    this.#attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
                 }
 
                 // Re-centre the label on the node's new position (was previously left stale).
@@ -526,7 +526,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
 
             scene.add(nodeEntryGroups);
 
-            this.nodeGroups = [
+            this.#nodeGroups = [
                 ...nodeEntryGroups,
                 ...nodeUpdateGroups,
             ];
@@ -580,7 +580,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
         });
     }
 
-    private attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
+    #attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -597,7 +597,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this.#tooltip,
             anchor: () => ({
                 x: anchorX,
                 y: anchorY,
@@ -611,7 +611,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
         });
     }
 
-    private attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
+    #attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -627,7 +627,7 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this.#tooltip,
             anchor: () => ({
                 x: anchorX,
                 y: anchorY,

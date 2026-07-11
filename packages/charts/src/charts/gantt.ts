@@ -114,12 +114,12 @@ const DEFAULT_TODAY_COLOR = '#ef4444';
  */
 export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>, GanttChartEventMap> {
 
-    private barGroups: Group[] = [];
-    private todayLine?: Line;
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
-    private grid?: Grid;
+    #barGroups: Group[] = [];
+    #todayLine?: Line;
+    #xAxis!: ChartXAxis;
+    #yAxis!: ChartYAxis;
+    #tooltip!: Tooltip;
+    #grid?: Grid;
 
     constructor(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
         super(target, options);
@@ -133,7 +133,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         const tooltipOpts = normalizeTooltip(options.tooltip);
 
         if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
+            this.#tooltip = new Tooltip({
                 scene: this.scene,
                 renderer: this.renderer,
                 font: tooltipOpts.font,
@@ -142,7 +142,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             });
         }
 
-        this.xAxis = new ChartXAxis({
+        this.#xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -153,7 +153,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             title: xAxis.title,
         });
 
-        this.yAxis = new ChartYAxis({
+        this.#yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -165,7 +165,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         });
 
         if (gridOpts.visible) {
-            this.grid = new Grid({
+            this.#grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
@@ -179,17 +179,17 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         this.init();
     }
 
-    private getAccessor<TReturn>(accessor: keyof TData | ((item: TData) => TReturn)): (item: TData) => TReturn {
+    #getAccessor<TReturn>(accessor: keyof TData | ((item: TData) => TReturn)): (item: TData) => TReturn {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeIsFunction(accessor) ? accessor : (item: any) => item[accessor] as TReturn;
     }
 
-    private formatDate(date: Date): string {
+    #formatDate(date: Date): string {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         return `${months[date.getMonth()]} ${date.getDate()}`;
     }
 
-    private async drawBars(
+    async #drawBars(
         categoryScale: BandScale<string>,
         timeScale: ReturnType<typeof scaleTime>,
         getKey: (item: TData) => string,
@@ -203,10 +203,10 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             progress: progressAccessor,
         } = this.options;
 
-        const getStart = this.getAccessor<Date>(startAccessor);
-        const getEnd = this.getAccessor<Date>(endAccessor);
-        const getColor = colorAccessor ? this.getAccessor<string>(colorAccessor) : undefined;
-        const getProgress = progressAccessor ? this.getAccessor<number>(progressAccessor) : undefined;
+        const getStart = this.#getAccessor<Date>(startAccessor);
+        const getEnd = this.#getAccessor<Date>(endAccessor);
+        const getColor = colorAccessor ? this.#getAccessor<string>(colorAccessor) : undefined;
+        const getProgress = progressAccessor ? this.#getAccessor<number>(progressAccessor) : undefined;
         const borderRadius = this.options.borderRadius ?? 3;
 
         const getBarState = (item: TData) => {
@@ -250,7 +250,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             right: exits,
         } = arrayJoin(
             data,
-            this.barGroups,
+            this.#barGroups,
             (item, group) => group.id === getKey(item)
         );
 
@@ -300,7 +300,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 children,
             });
 
-            this.attachTaskHover(bar, barState);
+            this.#attachTaskHover(bar, barState);
 
             return group;
         });
@@ -316,7 +316,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                     ...state,
                 };
 
-                this.attachTaskHover(bar, barState);
+                this.#attachTaskHover(bar, barState);
             }
 
             // Update progress bar
@@ -341,7 +341,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
         this.scene.add(entryGroups);
 
-        this.barGroups = [
+        this.#barGroups = [
             ...entryGroups,
             ...updateGroups,
         ];
@@ -372,7 +372,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         ]);
     }
 
-    private drawTodayMarker(
+    #drawTodayMarker(
         timeScale: ReturnType<typeof scaleTime>,
         chartTop: number,
         chartBottom: number
@@ -383,9 +383,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         } = this.options;
 
         if (!showToday) {
-            if (this.todayLine) {
-                this.scene.remove(this.todayLine);
-                this.todayLine = undefined;
+            if (this.#todayLine) {
+                this.scene.remove(this.#todayLine);
+                this.#todayLine = undefined;
             }
             return;
         }
@@ -395,9 +395,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
         // Only draw if today is within the visible range
         if (today < domainStart || today > domainEnd) {
-            if (this.todayLine) {
-                this.scene.remove(this.todayLine);
-                this.todayLine = undefined;
+            if (this.#todayLine) {
+                this.scene.remove(this.#todayLine);
+                this.#todayLine = undefined;
             }
             return;
         }
@@ -405,8 +405,8 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         const x = timeScale(today);
 
         // The marker is a single line, so it lives directly in the scene (no wrapping group).
-        if (!this.todayLine) {
-            this.todayLine = createLine({
+        if (!this.#todayLine) {
+            this.#todayLine = createLine({
                 id: 'today-marker',
                 zIndex: 500,
                 x1: x,
@@ -418,13 +418,13 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 lineDash: [6, 4],
             });
 
-            this.scene.add(this.todayLine);
+            this.scene.add(this.#todayLine);
         } else {
-            this.todayLine.x1 = x;
-            this.todayLine.x2 = x;
-            this.todayLine.y1 = chartTop;
-            this.todayLine.y2 = chartBottom;
-            this.todayLine.stroke = todayColor;
+            this.#todayLine.x1 = x;
+            this.#todayLine.x2 = x;
+            this.#todayLine.y1 = chartTop;
+            this.#todayLine.y2 = chartBottom;
+            this.#todayLine.stroke = todayColor;
         }
     }
 
@@ -438,10 +438,10 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 end: endAccessor,
             } = this.options;
 
-            const getKey = this.getAccessor<string>(keyAccessor);
-            const getLabel = this.getAccessor<string>(labelAccessor);
-            const getStart = this.getAccessor<Date>(startAccessor);
-            const getEnd = this.getAccessor<Date>(endAccessor);
+            const getKey = this.#getAccessor<string>(keyAccessor);
+            const getLabel = this.#getAccessor<string>(labelAccessor);
+            const getStart = this.#getAccessor<Date>(startAccessor);
+            const getEnd = this.#getAccessor<Date>(endAccessor);
 
             const labels = data.map(getLabel);
 
@@ -477,7 +477,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 innerPadding: 0.25,
             });
 
-            this.yAxis.scale = Object.assign(
+            this.#yAxis.scale = Object.assign(
                 (value: string) => categoryScale(value) + categoryScale.bandwidth / 2,
                 {
                     domain: labels,
@@ -486,16 +486,16 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                     ticks: () => labels,
                     includes: (v: string) => labels.includes(v),
                 }
-            ) as unknown as typeof this.yAxis.scale;
+            ) as unknown as ChartYAxis['scale'];
 
-            this.yAxis.bounds = new Box(
+            this.#yAxis.bounds = new Box(
                 chartTop,
                 left,
                 bottom,
                 right
             );
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBoundingBox = this.#yAxis.getBoundingBox();
 
             // Setup x-axis with time scale
             const timeScale = scaleTime(
@@ -503,20 +503,20 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 [yAxisBoundingBox.right + 10, right]
             );
 
-            this.xAxis.scale = timeScale;
+            this.#xAxis.scale = timeScale;
 
-            if (!this.xAxis.formatLabel) {
-                this.xAxis.formatLabel = (value: Date) => this.formatDate(value);
+            if (!this.#xAxis.formatLabel) {
+                this.#xAxis.formatLabel = (value: Date) => this.#formatDate(value);
             }
 
-            this.xAxis.bounds = new Box(
+            this.#xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
                 bottom,
                 right
             );
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBoundingBox = this.#xAxis.getBoundingBox();
 
             // Recalculate category scale with final bounds
             const adjustedCategoryScale = scaleBand(labels, [chartTop, xAxisBoundingBox.top], {
@@ -525,7 +525,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             });
 
             // Update y-axis scale with adjusted bounds
-            this.yAxis.scale = Object.assign(
+            this.#yAxis.scale = Object.assign(
                 (value: string) => adjustedCategoryScale(value) + adjustedCategoryScale.bandwidth / 2,
                 {
                     domain: labels,
@@ -534,17 +534,17 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                     ticks: () => labels,
                     includes: (v: string) => labels.includes(v),
                 }
-            ) as unknown as typeof this.yAxis.scale;
+            ) as unknown as ChartYAxis['scale'];
 
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this.#yAxis.bounds.bottom = xAxisBoundingBox.top;
 
             // Render grid
-            if (this.grid) {
+            if (this.#grid) {
                 const yTickPositions = labels.map(label =>
                     adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2
                 );
 
-                this.grid.render(
+                this.#grid.render(
                     [],
                     yTickPositions,
                     yAxisBoundingBox.right,
@@ -555,17 +555,17 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             }
 
             // Draw today marker
-            this.drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
+            this.#drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawBars(adjustedCategoryScale, timeScale, getKey, getLabel),
+                this.#xAxis.render(),
+                this.#yAxis.render(),
+                this.#drawBars(adjustedCategoryScale, timeScale, getKey, getLabel),
             ]);
         });
     }
 
-    private attachTaskHover(bar: Rect, task: { id: string;
+    #attachTaskHover(bar: Rect, task: { id: string;
         label: string;
         start: Date;
         end: Date;
@@ -574,7 +574,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         state: RectState; }) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const progressStr = task.progress !== undefined ? ` (${Math.round(task.progress * 100)}%)` : '';
-        const tooltipText = `${task.label}: ${this.formatDate(task.start)} – ${this.formatDate(task.end)}${progressStr}`;
+        const tooltipText = `${task.label}: ${this.#formatDate(task.start)} – ${this.#formatDate(task.end)}${progressStr}`;
 
         const payload = (point: { x: number;
             y: number; }): GanttChartTaskEvent => ({
@@ -588,7 +588,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this.#tooltip,
             anchor: () => ({
                 x: (task.state.x as number) + (task.state.width as number) / 2,
                 y: task.state.y as number,

@@ -102,7 +102,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
 
         this.on('graph', () => requestFrame(() => {
-            this.rebuffer();
+            this.#rebuffer();
             context.invalidateTrackedElements();
         }));
 
@@ -115,7 +115,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         // }));
     }
 
-    private rebuffer() {
+    #rebuffer() {
         this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
     }
 

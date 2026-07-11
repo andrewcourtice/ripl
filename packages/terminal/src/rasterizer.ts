@@ -99,44 +99,44 @@ function plotBrailleCell(data: Uint8ClampedArray, width: number, col: number, ro
 /** Braille-dot rasterizer. Each terminal cell encodes a 2×4 grid of sub-pixel dots via Unicode braille patterns (U+2800–U+28FF). */
 export class BrailleRasterizer implements Rasterizer {
 
-    private cols: number;
-    private rows: number;
-    private dots: Uint8Array;
-    private colors: string[];
-    private chars: Map<number, {
+    #cols: number;
+    #rows: number;
+    #dots: Uint8Array;
+    #colors: string[];
+    #chars: Map<number, {
         char: string;
         color: string;
     }>;
 
 
     public get pixelWidth() {
-        return this.cols * BRAILLE_CELL_WIDTH;
+        return this.#cols * BRAILLE_CELL_WIDTH;
     }
 
     public get pixelHeight() {
-        return this.rows * BRAILLE_CELL_HEIGHT;
+        return this.#rows * BRAILLE_CELL_HEIGHT;
     }
 
     constructor(cols: number, rows: number) {
-        this.cols = cols;
-        this.rows = rows;
+        this.#cols = cols;
+        this.#rows = rows;
 
         const cellCount = cols * rows;
 
-        this.dots = new Uint8Array(cellCount);
-        this.colors = new Array(cellCount).fill('');
-        this.chars = new Map();
+        this.#dots = new Uint8Array(cellCount);
+        this.#colors = new Array(cellCount).fill('');
+        this.#chars = new Map();
     }
 
     public resize(cols: number, rows: number): void {
-        this.cols = cols;
-        this.rows = rows;
+        this.#cols = cols;
+        this.#rows = rows;
 
         const cellCount = cols * rows;
 
-        this.dots = new Uint8Array(cellCount);
-        this.colors = new Array(cellCount).fill('');
-        this.chars = new Map();
+        this.#dots = new Uint8Array(cellCount);
+        this.#colors = new Array(cellCount).fill('');
+        this.#chars = new Map();
     }
 
     public setPixel(x: number, y: number, color: string): void {
@@ -151,39 +151,39 @@ export class BrailleRasterizer implements Rasterizer {
         const row = (py / BRAILLE_CELL_HEIGHT) | 0;
         const dx = px % BRAILLE_CELL_WIDTH;
         const dy = py % BRAILLE_CELL_HEIGHT;
-        const cellIndex = row * this.cols + col;
+        const cellIndex = row * this.#cols + col;
 
-        this.dots[cellIndex] |= BRAILLE_DOT_MAP[dy][dx];
+        this.#dots[cellIndex] |= BRAILLE_DOT_MAP[dy][dx];
 
         if (color) {
-            this.colors[cellIndex] = color;
+            this.#colors[cellIndex] = color;
         }
     }
 
     public setChar(col: number, row: number, char: string, color: string): void {
-        if (col < 0 || row < 0 || col >= this.cols || row >= this.rows) {
+        if (col < 0 || row < 0 || col >= this.#cols || row >= this.#rows) {
             return;
         }
 
-        this.chars.set(row * this.cols + col, {
+        this.#chars.set(row * this.#cols + col, {
             char,
             color,
         });
     }
 
     public clear(): void {
-        this.dots.fill(0);
-        this.colors.fill('');
-        this.chars.clear();
+        this.#dots.fill(0);
+        this.#colors.fill('');
+        this.#chars.clear();
     }
 
-    private serializeRow(row: number): string {
+    #serializeRow(row: number): string {
         let output = '';
         let lastColor = '';
 
-        for (let col = 0; col < this.cols; col++) {
-            const cellIndex = row * this.cols + col;
-            const charEntry = this.chars.get(cellIndex);
+        for (let col = 0; col < this.#cols; col++) {
+            const cellIndex = row * this.#cols + col;
+            const charEntry = this.#chars.get(cellIndex);
 
             if (charEntry) {
                 if (charEntry.color !== lastColor) {
@@ -195,7 +195,7 @@ export class BrailleRasterizer implements Rasterizer {
                 continue;
             }
 
-            const dotBits = this.dots[cellIndex];
+            const dotBits = this.#dots[cellIndex];
 
             if (dotBits === 0) {
                 if (lastColor) {
@@ -207,7 +207,7 @@ export class BrailleRasterizer implements Rasterizer {
                 continue;
             }
 
-            const color = this.colors[cellIndex];
+            const color = this.#colors[cellIndex];
 
             if (color !== lastColor) {
                 output += color;
@@ -220,19 +220,19 @@ export class BrailleRasterizer implements Rasterizer {
         return lastColor ? `${output}${ANSI_RESET}` : output;
     }
 
-    private serializePlainRow(row: number): string {
+    #serializePlainRow(row: number): string {
         let output = '';
 
-        for (let col = 0; col < this.cols; col++) {
-            const cellIndex = row * this.cols + col;
-            const charEntry = this.chars.get(cellIndex);
+        for (let col = 0; col < this.#cols; col++) {
+            const cellIndex = row * this.#cols + col;
+            const charEntry = this.#chars.get(cellIndex);
 
             if (charEntry) {
                 output += charEntry.char;
                 continue;
             }
 
-            const dotBits = this.dots[cellIndex];
+            const dotBits = this.#dots[cellIndex];
 
             output += dotBits === 0 ? ' ' : String.fromCharCode(BRAILLE_BASE + dotBits);
         }
@@ -246,8 +246,8 @@ export class BrailleRasterizer implements Rasterizer {
         if (!ansi) {
             const lines: string[] = [];
 
-            for (let row = 0; row < this.rows; row++) {
-                lines.push(this.serializePlainRow(row));
+            for (let row = 0; row < this.#rows; row++) {
+                lines.push(this.#serializePlainRow(row));
             }
 
             return lines.join('\n');
@@ -255,9 +255,9 @@ export class BrailleRasterizer implements Rasterizer {
 
         let output = '';
 
-        for (let row = 0; row < this.rows; row++) {
+        for (let row = 0; row < this.#rows; row++) {
             // Position cursor at the start of each row (1-indexed)
-            output += `\x1b[${row + 1};1H${this.serializeRow(row)}`;
+            output += `\x1b[${row + 1};1H${this.#serializeRow(row)}`;
         }
 
         return output;
@@ -268,16 +268,16 @@ export class BrailleRasterizer implements Rasterizer {
         const height = this.pixelHeight;
         const data = new Uint8ClampedArray(width * height * 4);
 
-        for (let row = 0; row < this.rows; row++) {
-            for (let col = 0; col < this.cols; col++) {
-                const cellIndex = row * this.cols + col;
-                const dotBits = this.dots[cellIndex];
+        for (let row = 0; row < this.#rows; row++) {
+            for (let col = 0; col < this.#cols; col++) {
+                const cellIndex = row * this.#cols + col;
+                const dotBits = this.#dots[cellIndex];
 
                 if (dotBits === 0) {
                     continue;
                 }
 
-                plotBrailleCell(data, width, col, row, dotBits, parseAnsiColor(this.colors[cellIndex]));
+                plotBrailleCell(data, width, col, row, dotBits, parseAnsiColor(this.#colors[cellIndex]));
             }
         }
 

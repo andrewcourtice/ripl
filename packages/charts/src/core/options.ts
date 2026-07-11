@@ -738,7 +738,8 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
 
 
 /** Built-in value formatters keyed by {@link AxisFormatType}. */
-const VALUE_FORMATTERS: Record<AxisFormatType, (value: never) => string> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const VALUE_FORMATTERS: Record<AxisFormatType, (value: any) => string> = {
     number: (value: number) => formatNumber(value),
     percentage: (value: number) => `${formatNumber(value * 100)}%`,
     date: (value: Date | number) => new Date(value).toLocaleDateString(),

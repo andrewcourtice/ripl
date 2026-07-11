@@ -78,20 +78,20 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     public parent?: EventBus<TEventMap>;
 
-    private listeners = new Map<keyof TEventMap, Set<EventHandler>>();
+    #listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
     /** Returns whether there are any listeners registered for the given event type. */
     public has(type: keyof TEventMap) {
-        return !!this.listeners.get(type)?.size;
+        return !!this.#listeners.get(type)?.size;
     }
 
     /** Subscribes a handler to the given event type and returns a disposable for cleanup. */
     public on<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions): Disposable {
-        const handlers = this.listeners.get(type) || new Set();
+        const handlers = this.#listeners.get(type) || new Set();
 
         Object.assign(handler, options);
         handlers.add(handler);
-        this.listeners.set(type, handlers);
+        this.#listeners.set(type, handlers);
 
         return {
             dispose: () => this.off(type, handler),
@@ -100,7 +100,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     /** Removes a previously registered handler for the given event type. */
     public off<TEvent extends keyof TEventMap>(type: TEvent, handler: EventHandler<TEventMap[TEvent]>): void {
-        const handlers = this.listeners.get(type);
+        const handlers = this.#listeners.get(type);
 
         if (!handlers) {
             return;
@@ -109,7 +109,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
         handlers.delete(handler);
 
         if (!handlers.size) {
-            this.listeners.delete(type);
+            this.#listeners.delete(type);
         }
     }
 
@@ -134,7 +134,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
                 data: args[1],
             });
 
-        const handlers = this.listeners.get(event.type);
+        const handlers = this.#listeners.get(event.type);
 
         if (handlers) {
             setForEach(handlers, handler => {
@@ -154,7 +154,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
     /** Emits a `destroyed` event, clears all listeners, and disposes retained resources. */
     public destroy() {
         this.emit('destroyed', null);
-        this.listeners.clear();
+        this.#listeners.clear();
         this.dispose();
     }
 

@@ -23,51 +23,51 @@ export interface FactoryOptions {
 
 class Factory {
 
-    private _state: Partial<FactoryOptions> = {};
+    #state: Partial<FactoryOptions> = {};
 
     public get requestAnimationFrame() {
-        return this._state.requestAnimationFrame!;
+        return this.#state.requestAnimationFrame!;
     }
 
     public get cancelAnimationFrame() {
-        return this._state.cancelAnimationFrame!;
+        return this.#state.cancelAnimationFrame!;
     }
 
     public get now() {
-        return this._state.now!;
+        return this.#state.now!;
     }
 
     public get devicePixelRatio() {
-        return this._state.devicePixelRatio!;
+        return this.#state.devicePixelRatio!;
     }
 
     public get getComputedStyle() {
-        return this._state.getComputedStyle!;
+        return this.#state.getComputedStyle!;
     }
 
     public get createContext() {
-        return this._state.createContext!;
+        return this.#state.createContext!;
     }
 
     public get createElement() {
-        return this._state.createElement!;
+        return this.#state.createElement!;
     }
 
     public get createElementNS() {
-        return this._state.createElementNS!;
+        return this.#state.createElementNS!;
     }
 
     public get getDefaultState() {
-        return this._state.getDefaultState!;
+        return this.#state.getDefaultState!;
     }
 
     public get measureText() {
-        return this._state.measureText!;
+        return this.#state.measureText!;
     }
 
     public set(options: Partial<FactoryOptions>) {
-        this._state = {
-            ...this._state,
+        this.#state = {
+            ...this.#state,
             ...options,
         };
     }

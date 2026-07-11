@@ -173,11 +173,11 @@ export interface AreaChartEventMap extends EventMap {
  */
 export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData, AreaChartEventMap> {
 
-    private areaGroups: Group[] = [];
+    #areaGroups: Group[] = [];
     /** Previous ordered data keys per series, used to key-reconcile the line/fill morph across add/remove. */
-    private morphKeys = new Map<string, string[]>();
-    private yScale!: Scale;
-    private xScale!: Scale<string>;
+    #morphKeys = new Map<string, string[]>();
+    #yScale!: Scale;
+    #xScale!: Scale<string>;
 
     constructor(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
         super(target, options);
@@ -190,11 +190,11 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         this.init();
     }
 
-    private seriesValue(series: AreaChartSeriesOptions<TData>, item: TData): number {
+    #seriesValue(series: AreaChartSeriesOptions<TData>, item: TData): number {
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
-    private attachMarkerHover(marker: Circle, srs: AreaChartSeriesOptions<TData>, key: string, value: number, color: string, x: number, y: number) {
+    #attachMarkerHover(marker: Circle, srs: AreaChartSeriesOptions<TData>, key: string, value: number, color: string, x: number, y: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
@@ -231,7 +231,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         });
     }
 
-    private async drawAreas(baseline: number, plot: { x: number;
+    async #drawAreas(baseline: number, plot: { x: number;
         y: number;
         width: number;
         height: number; }) {
@@ -246,22 +246,22 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(series, this.areaGroups, 'id');
+        } = arrayJoin(series, this.#areaGroups, 'id');
 
         const enteringLabels: Text[] = [];
         const updatingLabels: Text[] = [];
 
         // Builds/updates the value label for a marker, positioned at its data point.
         const buildLabel = (srs: AreaChartSeriesOptions<TData>) => (item: TData, dataIndex: number) => {
-            const x = this.xScale(getKey(item));
-            const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+            const x = this.#xScale(getKey(item));
+            const y = this.#yScale(getSeriesValue(srs, item, dataIndex));
 
             return createDataLabel({
                 id: `${srs.id}-marker-${getKey(item)}-label`,
                 x,
                 y,
                 anchor: dataLabels.anchor,
-                content: formatValue(this.seriesValue(srs, item)),
+                content: formatValue(this.#seriesValue(srs, item)),
                 font: dataLabels.font,
                 fill: dataLabels.fontColor,
                 offset: 7,
@@ -269,8 +269,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         };
 
         const updateLabel = (srs: AreaChartSeriesOptions<TData>, item: TData, dataIndex: number, label: Text) => {
-            const x = this.xScale(getKey(item));
-            const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+            const x = this.#xScale(getKey(item));
+            const y = this.#yScale(getSeriesValue(srs, item, dataIndex));
             const layout = resolveDataLabelLayout({
                 x,
                 y,
@@ -278,7 +278,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 offset: 7,
             });
 
-            label.content = formatValue(this.seriesValue(srs, item));
+            label.content = formatValue(this.#seriesValue(srs, item));
             label.data = {
                 x: layout.x,
                 y: layout.y,
@@ -300,14 +300,14 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 let cumulative = 0;
 
                 series.forEach((srs, seriesIndex) => {
-                    cumulative += this.seriesValue(srs, item);
+                    cumulative += this.#seriesValue(srs, item);
                     stackedValues[dataIndex][seriesIndex] = cumulative;
                 });
             });
         }
 
         const getSeriesValue = (srs: AreaChartSeriesOptions<TData>, item: TData, dataIndex: number) => {
-            const rawValue = this.seriesValue(srs, item);
+            const rawValue = this.#seriesValue(srs, item);
             const seriesIndex = series.indexOf(srs);
 
             if (stacked && seriesIndex >= 0) {
@@ -332,10 +332,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const bottomPoints: Point[] = [];
 
             data.forEach((item, dataIndex) => {
-                const x = this.xScale(getKey(item));
-                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+                const x = this.#xScale(getKey(item));
+                const y = this.#yScale(getSeriesValue(srs, item, dataIndex));
                 // Lower boundary: the previous series' cumulative top when stacked, else the baseline.
-                const bottomY = stacked ? this.yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
+                const bottomY = stacked ? this.#yScale(getPrevSeriesValue(srs, dataIndex)) : baseline;
 
                 linePoints.push([x, y]);
                 bottomPoints.push([x, bottomY]);
@@ -359,8 +359,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const color = this.getSeriesColor(srs.id);
 
             return (item: TData, dataIndex: number) => {
-                const x = this.xScale(getKey(item));
-                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+                const x = this.#xScale(getKey(item));
+                const y = this.#yScale(getSeriesValue(srs, item, dataIndex));
 
                 const state: CircleState = {
                     fill: '#FFFFFF',
@@ -378,7 +378,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     data: state,
                 });
 
-                this.attachMarkerHover(marker, srs, getKey(item), this.seriesValue(srs, item), color, x, y);
+                this.#attachMarkerHover(marker, srs, getKey(item), this.#seriesValue(srs, item), color, x, y);
 
                 return marker;
             };
@@ -433,7 +433,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 } as PolylineState,
             });
 
-            this.morphKeys.set(srs.id, data.map(getKey));
+            this.#morphKeys.set(srs.id, data.map(getKey));
 
             return createGroup({
                 id: srs.id,
@@ -455,7 +455,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const { linePoints, areaPoints } = buildPoints(srs);
 
             const newKeys = data.map(getKey);
-            const prevKeys = this.morphKeys.get(srs.id);
+            const prevKeys = this.#morphKeys.get(srs.id);
             const keyed = !!prevKeys && keysDiffer(prevKeys, newKeys);
 
             // Apply the renderer directly (not via the transition, which would snap it at t=0.5) and
@@ -488,7 +488,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     : areaPoints,
             };
 
-            this.morphKeys.set(srs.id, newKeys);
+            this.#morphKeys.set(srs.id, newKeys);
 
             // Diff markers by key so new data points add markers and removed ones exit,
             // instead of the previous index-based update that ignored points beyond the
@@ -512,8 +512,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             markerUpdates.forEach(([item, marker]) => {
                 const dataIndex = data.indexOf(item);
-                const x = this.xScale(getKey(item));
-                const y = this.yScale(getSeriesValue(srs, item, dataIndex));
+                const x = this.#xScale(getKey(item));
+                const y = this.#yScale(getSeriesValue(srs, item, dataIndex));
 
                 marker.data = {
                     fill: '#FFFFFF',
@@ -524,7 +524,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     radius: 3,
                 } as CircleState;
 
-                this.attachMarkerHover(marker, srs, getKey(item), this.seriesValue(srs, item), color, x, y);
+                this.#attachMarkerHover(marker, srs, getKey(item), this.#seriesValue(srs, item), color, x, y);
             });
 
             // Reconcile value labels alongside the markers.
@@ -558,13 +558,13 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         this.scene.add(seriesEntryGroups);
 
-        this.areaGroups = [
+        this.#areaGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
 
         // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
-        this.registerHighlightGroups(this.areaGroups);
+        this.registerHighlightGroups(this.#areaGroups);
 
         const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
@@ -694,7 +694,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     let cumulativeMin = 0;
 
                     series.forEach(srs => {
-                        cumulative += this.seriesValue(srs, item);
+                        cumulative += this.#seriesValue(srs, item);
                         cumulativeMax = Math.max(cumulativeMax, cumulative);
                         cumulativeMin = Math.min(cumulativeMin, cumulative);
                     });
@@ -706,7 +706,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 dataExtent = [stackedMin, stackedMax];
             } else {
                 const seriesExtents = series
-                    .flatMap(srs => getExtent(data, item => this.seriesValue(srs, item)))
+                    .flatMap(srs => getExtent(data, item => this.#seriesValue(srs, item)))
                     .concat(0);
 
                 dataExtent = getExtent(seriesExtents, functionIdentity);
@@ -732,23 +732,23 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            this.yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
-            this.yAxis.scale = this.yScale;
+            this.#yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this.yAxis.scale = this.#yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this.xScale = this.pointScale(keys, yAxisBox.right, right);
-            this.xAxis.scale = this.xScale;
+            this.#xScale = this.pointScale(keys, yAxisBox.right, right);
+            this.xAxis.scale = this.#xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
-            this.yAxis.scale = this.yScale;
+            this.#yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this.yAxis.scale = this.#yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            const baseline = this.yScale(0);
+            const baseline = this.#yScale(0);
             const plot = {
                 x: yAxisBox.right,
                 y: top,
@@ -756,13 +756,13 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 height: xAxisBox.top - top,
             };
 
-            this.renderGrid([], this.yScale.ticks(10).map(tick => this.yScale(tick)), plot);
+            this.renderGrid([], this.#yScale.ticks(10).map(tick => this.#yScale(tick)), plot);
             this.setupCrosshair(plot);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this.drawAreas(baseline, plot),
+                this.#drawAreas(baseline, plot),
             ]);
         });
     }

@@ -37,23 +37,23 @@ const DEFAULT_LINE_DASH = [4, 4];
 /** A background grid component rendering horizontal and/or vertical dashed lines at tick positions. */
 export class Grid extends ChartComponent {
 
-    private group?: Group;
-    private horizontalLines: Line[] = [];
-    private verticalLines: Line[] = [];
-    private horizontal: boolean;
-    private vertical: boolean;
-    private stroke: string;
-    private lineWidth: number;
-    private lineDash: number[];
+    #group?: Group;
+    #horizontalLines: Line[] = [];
+    #verticalLines: Line[] = [];
+    #horizontal: boolean;
+    #vertical: boolean;
+    #stroke: string;
+    #lineWidth: number;
+    #lineDash: number[];
 
     constructor(options: GridOptions) {
         super(options);
 
-        this.horizontal = options.horizontal ?? true;
-        this.vertical = options.vertical ?? false;
-        this.stroke = options.stroke ?? DEFAULT_STROKE;
-        this.lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
-        this.lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
+        this.#horizontal = options.horizontal ?? true;
+        this.#vertical = options.vertical ?? false;
+        this.#stroke = options.stroke ?? DEFAULT_STROKE;
+        this.#lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
+        this.#lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
 
     public async render(
@@ -64,14 +64,14 @@ export class Grid extends ChartComponent {
         width: number,
         height: number
     ) {
-        if (!this.group) {
-            this.group = createGroup({
+        if (!this.#group) {
+            this.#group = createGroup({
                 id: 'grid',
                 class: 'chart-grid',
                 zIndex: 0,
             });
 
-            this.scene.add(this.group);
+            this.scene.add(this.#group);
         }
 
         // Drop grid lines that sit on the plot boundary — that's where the (solid) axis line lives,
@@ -82,12 +82,12 @@ export class Grid extends ChartComponent {
         const hTicks = yTicks.filter(tick => !onEdge(tick, y, y + height));
         const vTicks = xTicks.filter(tick => !onEdge(tick, x, x + width));
 
-        if (this.horizontal) {
+        if (this.#horizontal) {
             const {
                 left: hEntries,
                 inner: hUpdates,
                 right: hExits,
-            } = arrayJoin(hTicks, this.horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
+            } = arrayJoin(hTicks, this.#horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
 
             hExits.forEach(el => el.destroy());
 
@@ -98,12 +98,12 @@ export class Grid extends ChartComponent {
                     y1: tickY,
                     x2: x + width,
                     y2: tickY,
-                    stroke: this.stroke,
-                    lineWidth: this.lineWidth,
-                    lineDash: this.lineDash,
+                    stroke: this.#stroke,
+                    lineWidth: this.#lineWidth,
+                    lineDash: this.#lineDash,
                 });
 
-                this.group!.add(line);
+                this.#group!.add(line);
 
                 return line;
             });
@@ -117,18 +117,18 @@ export class Grid extends ChartComponent {
                 } as Partial<LineState>;
             });
 
-            this.horizontalLines = [
+            this.#horizontalLines = [
                 ...newLines,
                 ...hUpdates.map(([, line]) => line),
             ];
         }
 
-        if (this.vertical) {
+        if (this.#vertical) {
             const {
                 left: vEntries,
                 inner: vUpdates,
                 right: vExits,
-            } = arrayJoin(vTicks, this.verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
+            } = arrayJoin(vTicks, this.#verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
 
             vExits.forEach(el => el.destroy());
 
@@ -139,12 +139,12 @@ export class Grid extends ChartComponent {
                     y1: y,
                     x2: tickX,
                     y2: y + height,
-                    stroke: this.stroke,
-                    lineWidth: this.lineWidth,
-                    lineDash: this.lineDash,
+                    stroke: this.#stroke,
+                    lineWidth: this.#lineWidth,
+                    lineDash: this.#lineDash,
                 });
 
-                this.group!.add(line);
+                this.#group!.add(line);
 
                 return line;
             });
@@ -158,7 +158,7 @@ export class Grid extends ChartComponent {
                 } as Partial<LineState>;
             });
 
-            this.verticalLines = [
+            this.#verticalLines = [
                 ...newLines,
                 ...vUpdates.map(([, line]) => line),
             ];
@@ -166,8 +166,8 @@ export class Grid extends ChartComponent {
     }
 
     public destroy() {
-        if (this.group) {
-            this.group.destroy();
+        if (this.#group) {
+            this.#group.destroy();
         }
     }
 

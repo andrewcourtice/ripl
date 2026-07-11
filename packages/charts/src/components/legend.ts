@@ -85,76 +85,76 @@ interface LegendLayout {
  */
 export class Legend extends ChartComponent {
 
-    private group?: Group;
-    private items: LegendItem[] = [];
-    private position: LegendPosition;
-    private font: string;
-    private fontColor: string;
-    private itemPadding: number;
-    private highlight: boolean;
-    private onToggle?: (item: LegendItem, active: boolean) => void;
-    private onHighlight?: (id: string | null) => void;
-    private labelWidthCache = new Map<string, number>();
+    #group?: Group;
+    #items: LegendItem[] = [];
+    #position: LegendPosition;
+    #font: string;
+    #fontColor: string;
+    #itemPadding: number;
+    #highlight: boolean;
+    #onToggle?: (item: LegendItem, active: boolean) => void;
+    #onHighlight?: (id: string | null) => void;
+    #labelWidthCache = new Map<string, number>();
 
     constructor(options: LegendOptions) {
         super(options);
 
-        this.items = options.items;
-        this.position = options.position || 'top';
-        this.font = options.font ?? `${DEFAULT_FONT_SIZE}px sans-serif`;
-        this.fontColor = options.fontColor ?? '#333333';
-        this.itemPadding = options.itemPadding ?? DEFAULT_PADDING;
-        this.highlight = options.highlight ?? true;
-        this.onToggle = options.onToggle;
-        this.onHighlight = options.onHighlight;
+        this.#items = options.items;
+        this.#position = options.position || 'top';
+        this.#font = options.font ?? `${DEFAULT_FONT_SIZE}px sans-serif`;
+        this.#fontColor = options.fontColor ?? '#333333';
+        this.#itemPadding = options.itemPadding ?? DEFAULT_PADDING;
+        this.#highlight = options.highlight ?? true;
+        this.#onToggle = options.onToggle;
+        this.#onHighlight = options.onHighlight;
     }
 
-    private get isHorizontal() {
-        return this.position === 'top' || this.position === 'bottom';
+    get #isHorizontal() {
+        return this.#position === 'top' || this.#position === 'bottom';
     }
 
     /** Updates the legend items, replacing the previous set. */
     public update(items: LegendItem[]) {
-        this.items = items;
+        this.#items = items;
     }
 
-    private get fontHeight(): number {
-        const metrics = this.context.measureText('Mg', this.font);
+    get #fontHeight(): number {
+        const metrics = this.context.measureText('Mg', this.#font);
         return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
     }
 
-    private measureLabel(label: string): number {
-        let width = this.labelWidthCache.get(label);
+    #measureLabel(label: string): number {
+        let width = this.#labelWidthCache.get(label);
 
         if (width === undefined) {
-            width = this.context.measureText(label, this.font).width;
-            this.labelWidthCache.set(label, width);
+            width = this.context.measureText(label, this.#font).width;
+            this.#labelWidthCache.set(label, width);
         }
 
         return width;
     }
 
-    private itemWidth(item: LegendItem): number {
-        return SWATCH_SIZE + LABEL_GAP + this.measureLabel(item.label);
+    #itemWidth(item: LegendItem): number {
+        return SWATCH_SIZE + LABEL_GAP + this.#measureLabel(item.label);
     }
 
     /**
      * Computes item placements within the given region and the band thickness required.
      * Horizontal legends wrap across the available width; vertical legends stack in a column.
      */
-    private computeLayout(region: ChartArea): LegendLayout {
-        const rowHeight = Math.max(SWATCH_SIZE, this.fontHeight);
+    #computeLayout(region: ChartArea): LegendLayout {
+        const rowHeight = Math.max(SWATCH_SIZE, this.#fontHeight);
         const placements: ItemPlacement[] = [];
 
-        if (this.isHorizontal) {
-            const available = region.width - this.itemPadding * 2;
+        if (this.#isHorizontal) {
+            const available = region.width - this.#itemPadding * 2;
 
             // Group items into rows based on the available width.
             const rows: LegendItem[][] = [[]];
             let rowWidth = 0;
 
-            this.items.forEach(item => {
-                const width = this.itemWidth(item);
+            this.#items.forEach(item => {
+                const width = this.#itemWidth(item);
                 const currentRow = rows[rows.length - 1];
                 const additional = currentRow.length === 0 ? width : width + ITEM_GAP_X;
 
@@ -167,12 +167,12 @@ export class Legend extends ChartComponent {
                 }
             });
 
-            const thickness = rows.length * rowHeight + (rows.length - 1) * ROW_GAP + this.itemPadding * 2;
-            let y = region.y + this.itemPadding;
+            const thickness = rows.length * rowHeight + (rows.length - 1) * ROW_GAP + this.#itemPadding * 2;
+            let y = region.y + this.#itemPadding;
 
             rows.forEach(row => {
                 const totalWidth = row.reduce((sum, item, index) => {
-                    return sum + this.itemWidth(item) + (index > 0 ? ITEM_GAP_X : 0);
+                    return sum + this.#itemWidth(item) + (index > 0 ? ITEM_GAP_X : 0);
                 }, 0);
 
                 let x = region.x + (region.width - totalWidth) / 2;
@@ -186,7 +186,7 @@ export class Legend extends ChartComponent {
                         labelY: y + rowHeight / 2,
                     });
 
-                    x += this.itemWidth(item) + ITEM_GAP_X;
+                    x += this.#itemWidth(item) + ITEM_GAP_X;
                 });
 
                 y += rowHeight + ROW_GAP;
@@ -199,14 +199,14 @@ export class Legend extends ChartComponent {
         }
 
         // Vertical: single column stacked top to bottom, centred within the region height.
-        const maxItemWidth = this.items.reduce((max, item) => Math.max(max, this.itemWidth(item)), 0);
-        const thickness = maxItemWidth + this.itemPadding * 2;
-        const totalHeight = this.items.length * rowHeight + (this.items.length - 1) * ROW_GAP;
+        const maxItemWidth = this.#items.reduce((max, item) => Math.max(max, this.#itemWidth(item)), 0);
+        const thickness = maxItemWidth + this.#itemPadding * 2;
+        const totalHeight = this.#items.length * rowHeight + (this.#items.length - 1) * ROW_GAP;
 
-        let y = region.y + Math.max(this.itemPadding, (region.height - totalHeight) / 2);
-        const x = region.x + this.itemPadding;
+        let y = region.y + Math.max(this.#itemPadding, (region.height - totalHeight) / 2);
+        const x = region.x + this.#itemPadding;
 
-        this.items.forEach(item => {
+        this.#items.forEach(item => {
             placements.push({
                 item,
                 swatchX: x,
@@ -226,33 +226,33 @@ export class Legend extends ChartComponent {
 
     /** Measures the band thickness the legend needs within the given available area. */
     public measure(area: ChartArea): number {
-        if (this.items.length === 0) {
+        if (this.#items.length === 0) {
             return 0;
         }
 
-        return this.computeLayout(area).thickness;
+        return this.#computeLayout(area).thickness;
     }
 
     /** Renders (and reconciles) the legend within the given layout region. */
     public render(region: ChartArea, animation?: ResolvedAnimation): void {
-        this.draw(region, animation);
+        this.#draw(region, animation);
     }
 
-    private draw(region: ChartArea, animation?: ResolvedAnimation) {
-        if (!this.group) {
-            this.group = createGroup({
+    #draw(region: ChartArea, animation?: ResolvedAnimation) {
+        if (!this.#group) {
+            this.#group = createGroup({
                 id: 'legend',
                 class: 'chart-legend',
                 zIndex: 2000,
             });
 
-            this.scene.add(this.group);
+            this.scene.add(this.#group);
         }
 
-        const { placements } = this.computeLayout(region);
+        const { placements } = this.#computeLayout(region);
         const placementById = new Map(placements.map(placement => [placement.item.id, placement]));
 
-        const swatches = this.group.getElementsByType('rect') as Rect[];
+        const swatches = this.#group.getElementsByType('rect') as Rect[];
 
         const {
             left: entries,
@@ -263,7 +263,7 @@ export class Legend extends ChartComponent {
         // Exit removed items.
         exits.forEach(swatch => {
             const item = swatch.data as LegendItem;
-            const label = this.group?.query(`#legend-label-${item.id}`) as Text | undefined;
+            const label = this.#group?.query(`#legend-label-${item.id}`) as Text | undefined;
             swatch.destroy();
             label?.destroy();
         });
@@ -291,21 +291,21 @@ export class Legend extends ChartComponent {
                 x: placement.labelX,
                 y: placement.labelY,
                 content: item.label,
-                fill: isActive ? this.fontColor : INACTIVE_LABEL_COLOR,
-                font: this.font,
+                fill: isActive ? this.#fontColor : INACTIVE_LABEL_COLOR,
+                font: this.#font,
                 textBaseline: 'middle',
                 opacity: animation?.enabled ? 0 : 1,
                 data: item,
             });
 
-            if (this.highlight) {
-                const toggle = () => this.toggleItem(item);
+            if (this.#highlight) {
+                const toggle = () => this.#toggleItem(item);
                 swatch.on('click', toggle);
                 label.on('click', toggle);
 
-                if (this.onHighlight) {
-                    const enter = () => this.onHighlight?.(item.id);
-                    const leave = () => this.onHighlight?.(null);
+                if (this.#onHighlight) {
+                    const enter = () => this.#onHighlight?.(item.id);
+                    const leave = () => this.#onHighlight?.(null);
                     swatch.on('mouseenter', enter);
                     swatch.on('mouseleave', leave);
                     label.on('mouseenter', enter);
@@ -313,7 +313,7 @@ export class Legend extends ChartComponent {
                 }
             }
 
-            this.group!.add([swatch, label]);
+            this.#group!.add([swatch, label]);
 
             if (animation?.enabled) {
                 this.renderer.transition([swatch, label], element => ({
@@ -328,7 +328,7 @@ export class Legend extends ChartComponent {
         updates.forEach(([placement, swatch]) => {
             const { item } = placement;
             const isActive = item.active !== false;
-            const label = this.group?.query(`#legend-label-${item.id}`) as Text | undefined;
+            const label = this.#group?.query(`#legend-label-${item.id}`) as Text | undefined;
 
             swatch.data = item;
             swatch.fill = isActive ? item.color : INACTIVE_COLOR;
@@ -336,7 +336,7 @@ export class Legend extends ChartComponent {
             if (label) {
                 label.data = item;
                 label.content = item.label;
-                label.fill = isActive ? this.fontColor : INACTIVE_LABEL_COLOR;
+                label.fill = isActive ? this.#fontColor : INACTIVE_LABEL_COLOR;
             }
 
             const target = placementById.get(item.id)!;
@@ -376,16 +376,16 @@ export class Legend extends ChartComponent {
         });
     }
 
-    private toggleItem(item: LegendItem) {
+    #toggleItem(item: LegendItem) {
         const newActive = item.active === false;
         item.active = newActive;
-        this.onToggle?.(item, newActive);
+        this.#onToggle?.(item, newActive);
     }
 
     public destroy() {
-        if (this.group) {
-            this.scene.remove(this.group);
-            this.group = undefined;
+        if (this.#group) {
+            this.scene.remove(this.#group);
+            this.#group = undefined;
         }
     }
 

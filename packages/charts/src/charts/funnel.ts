@@ -96,13 +96,13 @@ export interface FunnelChartEventMap extends EventMap {
  */
 export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData>, FunnelChartEventMap> {
 
-    private groups: Group[] = [];
-    private tooltip: Tooltip;
+    #groups: Group[] = [];
+    #tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this.#tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -185,7 +185,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(calculations, this.groups, (item, group) => item.key === group.id);
+            } = arrayJoin(calculations, this.#groups, (item, group) => item.key === group.id);
 
             exits.forEach(el => el.destroy());
 
@@ -210,7 +210,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     } as RectState,
                 });
 
-                this.attachSegmentHover(rect, item, itemColor);
+                this.#attachSegmentHover(rect, item, itemColor);
 
                 const text = createSegmentLabel({
                     id: `${item.key}-label`,
@@ -241,7 +241,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                         fill: setColorAlpha(itemColor, REST_ALPHA),
                     } as RectState;
 
-                    this.attachSegmentHover(rect, item, itemColor);
+                    this.#attachSegmentHover(rect, item, itemColor);
                 }
 
                 // Re-centre the label on the resized/repositioned segment (was previously left stale).
@@ -259,7 +259,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             scene.add(entryGroups);
 
-            this.groups = [
+            this.#groups = [
                 ...entryGroups,
                 ...updateGroups,
             ];
@@ -307,7 +307,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
         });
     }
 
-    private attachSegmentHover(rect: Rect, item: { key: string;
+    #attachSegmentHover(rect: Rect, item: { key: string;
         value: number;
         label: string;
         x: number;
@@ -329,7 +329,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this.#tooltip,
             anchor: () => ({
                 x: item.x + item.width / 2,
                 y: item.y,

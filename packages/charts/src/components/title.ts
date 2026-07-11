@@ -42,58 +42,58 @@ export interface ChartTitleComponentOptions extends ChartComponentOptions {
  */
 export class ChartTitle extends ChartComponent {
 
-    private options: ChartTitleOptions;
-    private text?: Text;
+    #options: ChartTitleOptions;
+    #text?: Text;
 
     constructor({ scene, renderer, options }: ChartTitleComponentOptions) {
         super({
             scene,
             renderer,
         });
-        this.options = options;
+        this.#options = options;
     }
 
     /** Updates the resolved title options. */
     public setOptions(options: ChartTitleOptions) {
-        this.options = options;
+        this.#options = options;
     }
 
     /** The side of the chart the title occupies. */
     public get position() {
-        return this.options.position;
+        return this.#options.position;
     }
 
     /** Whether the title should render (visible and has text). */
     public get visible() {
-        return this.options.visible && !!this.options.text;
+        return this.#options.visible && !!this.#options.text;
     }
 
-    private get isVertical() {
-        return this.options.position === 'left' || this.options.position === 'right';
+    get #isVertical() {
+        return this.#options.position === 'left' || this.#options.position === 'right';
     }
 
     /** Lazily creates the title text element (added directly to the scene — no wrapping group). */
-    private ensureText(): Text {
-        if (!this.text) {
-            this.text = createText({
+    #ensureText(): Text {
+        if (!this.#text) {
+            this.#text = createText({
                 id: 'chart-title',
                 class: 'chart-title',
                 // Sit above the plot/axes but below the tooltip (1000) so tooltips near the
                 // top of the chart aren't occluded by the title.
                 zIndex: 500,
-                content: this.options.text,
+                content: this.#options.text,
                 x: 0,
                 y: 0,
                 textAlign: 'center',
                 textBaseline: 'middle',
-                fill: this.options.fontColor,
-                font: this.options.font,
+                fill: this.#options.fontColor,
+                font: this.#options.font,
             });
 
-            this.scene.add(this.text);
+            this.scene.add(this.#text);
         }
 
-        return this.text;
+        return this.#text;
     }
 
     /** The thickness of the band this title needs (height for top/bottom, width for left/right). */
@@ -104,19 +104,19 @@ export class ChartTitle extends ChartComponent {
 
         // The text element already measures itself via getBoundingBox, so reuse it rather than
         // re-deriving the metrics by hand.
-        const text = this.ensureText();
-        text.content = this.options.text;
-        text.font = this.options.font;
+        const text = this.#ensureText();
+        text.content = this.#options.text;
+        text.font = this.#options.font;
 
         const textHeight = text.getBoundingBox().height;
-        const padding = normalizePadding(this.options.padding) ?? {
+        const padding = normalizePadding(this.#options.padding) ?? {
             top: 0,
             right: 0,
             bottom: 0,
             left: 0,
         };
 
-        return this.isVertical
+        return this.#isVertical
             ? textHeight + padding.left + padding.right
             : textHeight + padding.top + padding.bottom;
     }
@@ -133,20 +133,20 @@ export class ChartTitle extends ChartComponent {
 
         let rotation = 0;
 
-        if (this.options.position === 'left') {
+        if (this.#options.position === 'left') {
             rotation = -Math.PI / 2;
-        } else if (this.options.position === 'right') {
+        } else if (this.#options.position === 'right') {
             rotation = Math.PI / 2;
         }
 
-        const isNew = !this.text;
-        const text = this.ensureText();
+        const isNew = !this.#text;
+        const text = this.#ensureText();
 
-        text.content = this.options.text;
+        text.content = this.#options.text;
         text.x = x;
         text.y = y;
-        text.fill = this.options.fontColor;
-        text.font = this.options.font;
+        text.fill = this.#options.fontColor;
+        text.font = this.#options.font;
         text.rotation = rotation;
         text.transformOriginX = x;
         text.transformOriginY = y;
@@ -166,9 +166,9 @@ export class ChartTitle extends ChartComponent {
 
     /** Removes the title from the scene. */
     public destroy() {
-        if (this.text) {
-            this.scene.remove(this.text);
-            this.text = undefined;
+        if (this.#text) {
+            this.scene.remove(this.#text);
+            this.#text = undefined;
         }
     }
 
