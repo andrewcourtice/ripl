@@ -4,6 +4,8 @@ export * from './continuous';
 export * from './discrete';
 export * from './diverging';
 export * from './logarithmic';
+export * from './ordinal';
+export * from './point';
 export * from './power';
 export * from './quantile';
 export * from './quantize';
