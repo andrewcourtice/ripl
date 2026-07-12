@@ -86,7 +86,7 @@ Every element follows this exact pattern:
 1. **State interface** extending `BaseElementState`
 2. **Class** extending `Shape<TState>` with getter/setter pairs using `getStateValue`/`setStateValue`
 3. **Constructor** calling `super(type, options)` with a string type name
-4. **`getBoundingBox()`** returning a `Box` instance
+4. **`getBoundingBox()`** returning a `Box` instance that **fully contains everything the element draws** (including curvature — e.g. an arc bulges to its radius at cardinal angles, not just its endpoints). Hit testing shortlists candidates by this box via the spatial index, so an under-sized box makes points on the shape un-hittable.
 5. **`render(context)`** calling `super.render(context, path => { ... })`
 6. **Factory function** `createX()`
 7. **Type guard** `elementIsX()`

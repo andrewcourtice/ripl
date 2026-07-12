@@ -58,11 +58,13 @@ export class SpatialIndex {
             return;
         }
 
+        // Normalise the edges so inverted boxes (negative width/height — e.g. bars drawn with a
+        // negative extent) still span the correct cells rather than collapsing to none.
         const size = this._cellSize;
-        const minColumn = Math.floor((box.left - padding) / size);
-        const maxColumn = Math.floor((box.right + padding) / size);
-        const minRow = Math.floor((box.top - padding) / size);
-        const maxRow = Math.floor((box.bottom + padding) / size);
+        const minColumn = Math.floor((Math.min(box.left, box.right) - padding) / size);
+        const maxColumn = Math.floor((Math.max(box.left, box.right) + padding) / size);
+        const minRow = Math.floor((Math.min(box.top, box.bottom) - padding) / size);
+        const maxRow = Math.floor((Math.max(box.top, box.bottom) + padding) / size);
 
         for (let column = minColumn; column <= maxColumn; column++) {
             for (let row = minRow; row <= maxRow; row++) {

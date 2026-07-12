@@ -18,6 +18,7 @@ import {
 
 import {
     Box,
+    createArc,
     createCircle,
     createScene,
     factory,
@@ -70,6 +71,16 @@ describe('SpatialIndex', () => {
         expect(index.query(10, 65)).toContain(line);
     });
 
+    test('Should index inverted (negative-extent) boxes correctly', () => {
+        const index = new SpatialIndex(64);
+        const inverted = stubElement('inverted');
+
+        // A box whose bottom/right are above/left of its top/left (negative height and width).
+        index.insert(inverted, new Box(120, 120, 20, 20));
+
+        expect(index.query(70, 70)).toContain(inverted);
+    });
+
     test('Should clear for reuse', () => {
         const index = new SpatialIndex(64);
         index.insert(stubElement('a'), new Box(0, 0, 10, 10));
@@ -84,10 +95,11 @@ describe('SpatialIndex', () => {
 describe('Context hit testing (spatial index)', () => {
 
     let target: HTMLDivElement;
+    let stub: ReturnType<typeof mockCanvasContext>;
 
     beforeEach(() => {
         polyfillPath2D();
-        mockCanvasContext();
+        stub = mockCanvasContext();
         factory.set({
             createContext,
         });
@@ -139,6 +151,43 @@ describe('Context hit testing (spatial index)', () => {
 
         expect(nearSpy).toHaveBeenCalled();
         expect(farSpy).not.toHaveBeenCalled();
+
+        scene.destroy();
+    });
+
+    test('Should shortlist an arc segment for a point on its curved body', () => {
+        // Regression: a 0→π sector's box previously collapsed to its endpoints (zero height), so the
+        // index never shortlisted it for hits on the bulge. The corrected box must place it in the
+        // cell under (200, 295), which sits on the arc's lower curve well away from either endpoint.
+        const context = createContext(target);
+
+        const arc = createArc({
+            cx: 200,
+            cy: 200,
+            radius: 100,
+            startAngle: 0,
+            endAngle: Math.PI,
+            fill: '#ffffff',
+        });
+
+        arc.on('click', () => undefined);
+
+        const scene = createScene(context, {
+            children: [
+                arc,
+            ],
+        });
+
+        scene.render();
+
+        // Simulate the point landing inside the arc's path so the full pipeline (index → path test)
+        // resolves to the arc rather than stopping at the shortlist.
+        stub.isPointInPath = () => true;
+
+        const hits = (context as unknown as { hitTest(events: string[], x: number, y: number): RenderElement[] })
+            .hitTest(['click'], 200, 295);
+
+        expect(hits).toContain(arc);
 
         scene.destroy();
     });

@@ -22,6 +22,23 @@ import {
     typeIsNil,
 } from '@ripl/utilities';
 
+const TAU = Math.PI * 2;
+
+// The four cardinal directions where a circle reaches its horizontal/vertical extremes.
+const CARDINAL_ANGLES = [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2];
+
+/**
+ * Whether the sweep between two angles passes through an angle equivalent (mod 2π) to `target`. Used
+ * to decide when an arc reaches the full radius along a cardinal axis, which the endpoints alone miss.
+ */
+function arcSweepsAngle(startAngle: number, endAngle: number, target: number): boolean {
+    const lo = Math.min(startAngle, endAngle);
+    const hi = Math.max(startAngle, endAngle);
+    const aligned = target + Math.ceil((lo - target) / TAU) * TAU;
+
+    return aligned <= hi;
+}
+
 /** State interface for an arc element, defining center, angles, radii, pad angle, and border radius. */
 export interface ArcState extends BaseElementState {
     cx: number;
@@ -140,26 +157,45 @@ export class Arc extends Shape2D<ArcState> {
             endAngle,
         } = this;
 
-        const [outerX1, outerY1] = getThetaPoint(startAngle, radius, cx, cy);
-        const [outerX2, outerY2] = getThetaPoint(endAngle, radius, cx, cy);
+        // Sample the outer edge at the endpoints and at every cardinal direction the sweep crosses —
+        // an arc bulges to the full radius at those cardinals (e.g. a 0→π sector reaches cy+radius at
+        // π/2), which the endpoints alone do not capture. Using `getThetaPoint` throughout keeps this
+        // independent of the angle→coordinate convention.
+        const outerAngles = [startAngle, endAngle];
 
-        if (typeIsNil(innerRadius)) {
-            return new Box(
-                min(cy, outerY1, outerY2),
-                min(cx, outerX1, outerX2),
-                max(cy, outerY1, outerY2),
-                max(cx, outerX1, outerX2)
-            );
+        for (const cardinal of CARDINAL_ANGLES) {
+            if (arcSweepsAngle(startAngle, endAngle, cardinal)) {
+                outerAngles.push(cardinal);
+            }
         }
 
-        const [innerX1, innerY1] = getThetaPoint(startAngle, innerRadius, cx, cy);
-        const [innerX2, innerY2] = getThetaPoint(endAngle, innerRadius, cx, cy);
+        const xs: number[] = [];
+        const ys: number[] = [];
+
+        for (const angle of outerAngles) {
+            const [x, y] = getThetaPoint(angle, radius, cx, cy);
+
+            xs.push(x);
+            ys.push(y);
+        }
+
+        if (typeIsNil(innerRadius)) {
+            // A pie sector's inner edge is the centre point.
+            xs.push(cx);
+            ys.push(cy);
+        } else {
+            const [innerX1, innerY1] = getThetaPoint(startAngle, innerRadius, cx, cy);
+            const [innerX2, innerY2] = getThetaPoint(endAngle, innerRadius, cx, cy);
+
+            xs.push(innerX1, innerX2);
+            ys.push(innerY1, innerY2);
+        }
 
         return new Box(
-            min(innerY1, innerY2, outerY1, outerY2),
-            min(innerX1, innerX2, outerX1, outerX2),
-            max(innerY1, innerY2, outerY1, outerY2),
-            max(innerX1, innerX2, outerX1, outerX2)
+            min(...ys),
+            min(...xs),
+            max(...ys),
+            max(...xs)
         );
     }
 
