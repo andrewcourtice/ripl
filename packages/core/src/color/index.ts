@@ -31,6 +31,8 @@ import type {
 export * from './parsers';
 export * from './serialisers';
 export * from './utilities';
+export * from './scales';
+export * from './schemes';
 export * from './types';
 
 const PARSER_MAP = [
