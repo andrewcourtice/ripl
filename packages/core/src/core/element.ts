@@ -291,6 +291,11 @@ export class Element<
     protected state: TState;
     protected context?: Context;
 
+    // Monotonic counter bumped on every state mutation — via `setStateValue` and via transition
+    // interpolation (which writes `state` directly). Geometry-derived caches (paths, bounding boxes)
+    // compare against it to rebuild only when something actually changed.
+    protected _version = 0;
+
     public id: string;
     public readonly type: string;
     public readonly classList: Set<string>;
@@ -547,6 +552,7 @@ export class Element<
     /** Sets a state value and emits an `updated` event. */
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this.state[key] = value;
+        this._version += 1;
         this.emit('updated', {
             key,
             value,
@@ -622,9 +628,15 @@ export class Element<
             return (output[key] = interpolator(currentValue, value as TState[keyof TState]), output);
         }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
-        return time => objectForEach(mappedIntpls, (key, value) => {
-            this.state[key] = value(time) as TState[keyof TState];
-        });
+        return time => {
+            objectForEach(mappedIntpls, (key, value) => {
+                this.state[key] = value(time) as TState[keyof TState];
+            });
+
+            // Transitions write `state` directly (bypassing `setStateValue`), so bump the version here
+            // too — otherwise geometry animations would reuse stale cached paths/boxes.
+            this._version += 1;
+        };
     }
 
     /** Renders this element by applying transforms and context state, then invoking the optional callback. */

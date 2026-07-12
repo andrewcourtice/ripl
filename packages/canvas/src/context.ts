@@ -105,6 +105,11 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
     private _fillCSS: string = '';
     private _strokeCSS: string = '';
 
+    /** Canvas is immediate-mode: a shape's `Path2D` can be retained and re-issued while its geometry is unchanged. */
+    public override get supportsPathCaching(): boolean {
+        return true;
+    }
+
     public get fill(): string {
         return this._fillCSS || this.context.fillStyle as string;
     }

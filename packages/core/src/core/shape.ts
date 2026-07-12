@@ -42,6 +42,10 @@ const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPa
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
 
+    private _pathCache?: ContextPath;
+    private _pathCacheContext?: Context;
+    private _pathCacheVersion = -1;
+
     protected path?: ContextPath;
 
     public autoStroke: boolean;
@@ -89,12 +93,40 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             : isAnyIntersecting();
     }
 
+    /**
+     * Resolves the shape's path, reusing a retained `ContextPath` when the backend supports caching
+     * (Canvas) and the geometry (tracked by `_version`) has not changed since it was last built. This
+     * skips per-frame `Path2D` allocation and geometry rebuilds for shapes that are drawn but static
+     * — the common case when a few elements animate within a large scene. SVG (and any backend that
+     * rebuilds its virtual path each frame) reports `supportsPathCaching === false` and always rebuilds.
+     */
+    private _resolvePath(context: Context, callback?: (path: ContextPath) => void): ContextPath {
+        const cacheable = context.supportsPathCaching;
+
+        if (cacheable
+            && this._pathCache
+            && this._pathCacheContext === context
+            && this._pathCacheVersion === this._version) {
+            return this._pathCache;
+        }
+
+        const path = context.createPath(this.id);
+
+        callback?.(path);
+
+        if (cacheable) {
+            this._pathCache = path;
+            this._pathCacheContext = context;
+            this._pathCacheVersion = this._version;
+        }
+
+        return path;
+    }
+
     /** Renders this shape by creating a path, invoking the callback, and automatically applying fill/stroke or clipping. */
     public render(context: Context, callback?: (path: ContextPath) => void) {
         return super.render(context, () => {
-            this.path = context.createPath(this.id);
-
-            callback?.(this.path);
+            this.path = this._resolvePath(context, callback);
 
             if (this.path && this.clip) {
                 context.applyClip(this.path);

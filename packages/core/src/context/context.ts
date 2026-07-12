@@ -113,6 +113,15 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     protected currentState: BaseState;
     protected renderDepth = 0;
 
+    /**
+     * Whether shapes may retain the `ContextPath` they build and reuse it across frames while their
+     * geometry is unchanged. Immediate-mode backends (Canvas) benefit; retained/diffing backends (SVG)
+     * rebuild their virtual path every frame for reconciliation, so they must opt out (the default).
+     */
+    public get supportsPathCaching(): boolean {
+        return false;
+    }
+
     public get currentRenderElement() {
         return this.renderElement;
     }
