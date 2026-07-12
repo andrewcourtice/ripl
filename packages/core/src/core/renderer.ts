@@ -153,6 +153,7 @@ export class Renderer extends EventBus<RendererEventMap> {
     private _transitionMap = new Map<string, Map<symbol, RendererTransition>>();
 
     private _running = false;
+    private _dirty = true;
     private _handle?: number;
     private _startTime = 0;
     private _currentTime = 0;
@@ -187,13 +188,32 @@ export class Renderer extends EventBus<RendererEventMap> {
             this.start();
         }
 
-        if (autoStop) {
-            this.retain(scene.context.on('mousemove', () => this.start()));
-            this.retain(scene.context.on('mouseleave', () => this._stopOnIdle()));
-        }
-
-        this.retain(scene.on('graph', () => this.start()));
+        // Any change to the scene graph, an element's state, or the surface size invalidates the
+        // last-painted frame and must trigger a redraw. Transitions drive their own redraws via
+        // `isBusy`, so they deliberately bypass `setStateValue` (and therefore `updated`). This
+        // supersedes the old `mousemove`/`mouseleave` wake/idle wiring: hover-driven visuals mutate
+        // element state (→ `updated`), and the loop now parks itself the moment it goes idle.
+        this.retain(scene.on('graph', () => this._invalidate()));
+        this.retain(scene.on('updated', () => this._invalidate()));
+        this.retain(scene.on('resize', () => this._invalidate()));
         scene.once('destroyed', () => this.destroy());
+    }
+
+    /** Marks the last-painted frame stale and (re)starts the loop so the change is drawn. */
+    private _invalidate() {
+        this._dirty = true;
+        this.start();
+    }
+
+    /** Whether a debug overlay needs the loop to keep ticking even when nothing else changes. */
+    private _hasLiveOverlay() {
+        const {
+            fps,
+            elementCount,
+            boundingBoxes,
+        } = this._debugOptions;
+
+        return fps || elementCount || boundingBoxes;
     }
 
     private _tick() {
@@ -202,24 +222,41 @@ export class Renderer extends EventBus<RendererEventMap> {
         }
 
         const context = this._scene.context;
+        const overlay = this._hasLiveOverlay();
 
-        let deltaTime = 0;
+        // Park the loop only when there is genuinely nothing to do: no active transition, no
+        // invalidated frame, no live debug overlay, and no external per-frame `tick` driver. An idle
+        // canvas then uses zero CPU; `_invalidate` (graph/updated/resize) or `transition` restarts it.
+        if (this.autoStop && !this.isBusy && !this._dirty && !overlay && !this.has('tick')) {
+            this.stop();
+            return;
+        }
 
-        context.batch(() => {
-            this._currentTime = factory.now();
+        this._currentTime = factory.now();
 
-            deltaTime = this._currentTime - this._previousTime;
+        const deltaTime = this._currentTime - this._previousTime;
 
-            this.emit('tick', {
-                time: this._currentTime,
-                deltaTime,
-            });
+        this._previousTime = this._currentTime;
 
-            this._previousTime = this._currentTime;
+        // Consume the dirty flag before notifying `tick` listeners so any element state they mutate
+        // to drive per-frame animation re-marks the frame and keeps the loop alive for the next one.
+        const wasDirty = this._dirty;
+        this._dirty = false;
 
-            this._renderBuffer();
-            this._renderDebugOverlay(deltaTime);
+        this.emit('tick', {
+            time: this._currentTime,
+            deltaTime,
         });
+
+        // Retained rendering: only clear-and-repaint when something actually changed this frame.
+        // A fully static scene costs zero redraws (canvas keeps the last frame) rather than
+        // repainting at 60fps forever.
+        if (this.isBusy || this._dirty || wasDirty || overlay) {
+            context.batch(() => {
+                this._renderBuffer();
+                this._renderDebugOverlay(deltaTime);
+            });
+        }
 
         this._handle = factory.requestAnimationFrame(() => this._tick());
     }

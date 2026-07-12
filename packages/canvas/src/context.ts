@@ -284,7 +284,13 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+
+        // `desynchronized` lets the browser bypass the DOM compositor's frame-sync for canvas paints,
+        // cutting input-to-paint latency for interactive/animated scenes. Hit testing here uses
+        // `Path2D` geometry (not pixel readback), so it is unaffected.
+        const context = canvas.getContext('2d', {
+            desynchronized: true,
+        });
 
         if (!context) {
             throw new Error();

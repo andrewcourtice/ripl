@@ -486,7 +486,9 @@ describe('Scale', () => {
 2. **Persistent path keys** — Always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames
 3. **Memory lifecycle** — Be mindful of object creation/disposal; call `destroy()` on elements, scenes, and renderers when done
 4. **Animation efficiency** — The `Renderer` uses `requestAnimationFrame` and auto-starts/stops based on activity; transitions are symbol-keyed per element to allow concurrent property animations
-5. **`autoStop`** — Renderer stops ticking when idle (no active transitions and mouse has left) to avoid unnecessary CPU usage
+5. **Retained rendering** — The `Renderer` only clears-and-repaints when something actually changed: an active transition (`isBusy`), an invalidated frame, or a live debug overlay. Mutating element state through `setStateValue` (the getter/setter path) emits `updated`, which bubbles to the `Scene` and invalidates the frame — so any public property change is drawn. Transitions deliberately bypass `setStateValue` and drive their own redraws via `isBusy`. A fully static scene costs **zero redraws**.
+6. **`autoStop`** — With `autoStop` (default on), the loop parks itself the moment it goes idle (no transition, no invalidated frame, no overlay, and no external `tick` listener), so an idle canvas uses no CPU. An external `renderer.on('tick', …)` driver keeps the loop alive for per-frame animation.
+7. **Benchmarks** — Run `yarn bench` (Vitest bench, `*.bench.ts`). Core suites cover full-scene render, hit-testing, interpolation, and scales at 1k/10k/50k elements. Add/refresh a benchmark when changing the render or hit-test hot path, and check it before/after.
 
 ## API Design Principles
 
