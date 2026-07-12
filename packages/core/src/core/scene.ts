@@ -32,9 +32,10 @@ import {
 } from '@ripl/utilities';
 
 
-/** Event map for the scene, adding a `resize` event to the standard element events. */
+/** Event map for the scene, adding `resize` and `buffered` events to the standard element events. */
 export interface SceneEventMap extends ElementEventMap {
     resize: null;
+    buffered: null;
 }
 
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
@@ -104,6 +105,12 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this.on('graph', () => requestFrame(() => {
             this._rebuffer();
             context.invalidateTrackedElements();
+
+            // The render buffer is rebuilt on a deferred frame (coalescing bursts of add/remove), so
+            // signal listeners — chiefly the `Renderer` — only once it is actually current. Invalidating
+            // on the synchronous `graph` event instead would let a retained-render loop repaint (and
+            // park on) the still-stale buffer before the new elements land.
+            this.emit('buffered', null);
         }));
 
         // this.on('updated', ({ data }) => requestFrame(() => {

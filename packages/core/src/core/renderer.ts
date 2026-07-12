@@ -188,12 +188,16 @@ export class Renderer extends EventBus<RendererEventMap> {
             this.start();
         }
 
-        // Any change to the scene graph, an element's state, or the surface size invalidates the
+        // Any change to the render buffer, an element's state, or the surface size invalidates the
         // last-painted frame and must trigger a redraw. Transitions drive their own redraws via
         // `isBusy`, so they deliberately bypass `setStateValue` (and therefore `updated`). This
         // supersedes the old `mousemove`/`mouseleave` wake/idle wiring: hover-driven visuals mutate
         // element state (→ `updated`), and the loop now parks itself the moment it goes idle.
-        this.retain(scene.on('graph', () => this._invalidate()));
+        //
+        // Buffer membership changes are signalled via `buffered` (emitted after the scene's deferred
+        // rebuffer), not the synchronous `graph`, so the repaint sees the populated buffer rather than
+        // parking on the stale one.
+        this.retain(scene.on('buffered', () => this._invalidate()));
         this.retain(scene.on('updated', () => this._invalidate()));
         this.retain(scene.on('resize', () => this._invalidate()));
         scene.once('destroyed', () => this.destroy());

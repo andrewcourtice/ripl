@@ -8,6 +8,7 @@ import {
 } from 'vitest';
 
 import {
+    createCircle,
     createRenderer,
 } from '../../src';
 
@@ -68,6 +69,35 @@ describe('Renderer idle pausing', () => {
         await vi.advanceTimersByTimeAsync(50);
 
         expect(batchSpy.mock.calls.length).toBeGreaterThan(0);
+
+        renderer.destroy();
+    });
+
+    test('Should paint elements added synchronously after the renderer is created', async () => {
+        // The playground pattern: scene + renderer + `scene.add(...)` all run synchronously before any
+        // frame. The scene rebuffers on a deferred frame, so the renderer must repaint once the buffer
+        // is actually populated rather than park on the initial empty frame and never wake. Asserting
+        // on the element's own render confirms the populated buffer — not just an empty frame — painted.
+        const { scene } = mountScene(0);
+        const renderer = createRenderer(scene, {
+            autoStart: true,
+            autoStop: true,
+        });
+
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+            fill: '#ffffff',
+        });
+        const renderSpy = vi.spyOn(circle, 'render');
+
+        scene.add(circle);
+
+        await vi.advanceTimersByTimeAsync(200);
+
+        expect(scene.buffer.length).toBe(1);
+        expect(renderSpy).toHaveBeenCalled();
 
         renderer.destroy();
     });
