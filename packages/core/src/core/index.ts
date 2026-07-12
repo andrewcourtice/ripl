@@ -8,3 +8,4 @@ export * from './query';
 export * from './renderer';
 export * from './scene';
 export * from './shape';
+export * from './spatial';

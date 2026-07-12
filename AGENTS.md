@@ -86,7 +86,7 @@ Every element follows this exact pattern:
 1. **State interface** extending `BaseElementState`
 2. **Class** extending `Shape<TState>` with getter/setter pairs using `getStateValue`/`setStateValue`
 3. **Constructor** calling `super(type, options)` with a string type name
-4. **`getBoundingBox()`** returning a `Box` instance
+4. **`getBoundingBox()`** returning a `Box` instance that **fully contains everything the element draws** (including curvature — e.g. an arc bulges to its radius at cardinal angles, not just its endpoints). Hit testing shortlists candidates by this box via the spatial index, so an under-sized box makes points on the shape un-hittable.
 5. **`render(context)`** calling `super.render(context, path => { ... })`
 6. **Factory function** `createX()`
 7. **Type guard** `elementIsX()`
@@ -486,7 +486,11 @@ describe('Scale', () => {
 2. **Persistent path keys** — Always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames
 3. **Memory lifecycle** — Be mindful of object creation/disposal; call `destroy()` on elements, scenes, and renderers when done
 4. **Animation efficiency** — The `Renderer` uses `requestAnimationFrame` and auto-starts/stops based on activity; transitions are symbol-keyed per element to allow concurrent property animations
-5. **`autoStop`** — Renderer stops ticking when idle (no active transitions and mouse has left) to avoid unnecessary CPU usage
+5. **Retained rendering** — The `Renderer` only clears-and-repaints when something actually changed: an active transition (`isBusy`), an invalidated frame, or a live debug overlay. Mutating element state through `setStateValue` (the getter/setter path) emits `updated`, which bubbles to the `Scene` and invalidates the frame — so any public property change is drawn. Transitions deliberately bypass `setStateValue` and drive their own redraws via `isBusy`. A fully static scene costs **zero redraws**.
+6. **`autoStop`** — With `autoStop` (default on), the loop parks itself the moment it goes idle (no transition, no invalidated frame, no overlay, and no external `tick` listener), so an idle canvas uses no CPU. An external `renderer.on('tick', …)` driver keeps the loop alive for per-frame animation.
+7. **Geometry caches keyed by `_version`** — Every element carries a monotonic `_version`, bumped by `setStateValue` and by transition interpolation. `Shape2D` retains its `ContextPath` and rebuilds it only when the version changes (Canvas only — gated on `context.supportsPathCaching`; SVG rebuilds each frame for reconciliation). `Element.getCachedBoundingBox()` caches the box the same way. When adding geometry-derived per-element caches, key them on `_version` and prefer the existing `functionCache`/`functionMemoize` helpers; bound any unbounded cache.
+8. **Hit testing** — `Context.hitTest` shortlists candidates through a `SpatialIndex` (uniform grid over element boxes, rebuilt lazily after each render pass, reused across pointer moves while the scene is static) before the native path test. It is invalidated by `markRenderStart` and `invalidateTrackedElements`.
+9. **Benchmarks** — Run `yarn bench` (Vitest bench, `*.bench.ts`). Core suites cover full-scene render, hit-testing, interpolation, and scales at 1k/10k/50k elements. The headless stub measures JS overhead, not native Canvas cost (so `Path2D` retention shows up in a real browser, not the bench). Add/refresh a benchmark when changing the render or hit-test hot path, and check it before/after.
 
 ## API Design Principles
 

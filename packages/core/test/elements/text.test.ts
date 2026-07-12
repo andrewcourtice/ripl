@@ -4,6 +4,11 @@ import {
     describe,
     expect,
     test,
+    vi,
+} from 'vitest';
+
+import type {
+    Mock,
 } from 'vitest';
 
 import {
@@ -194,6 +199,81 @@ describe('Text getBoundingBox', () => {
 
         expect(box.left).toBe(80);
         expect(box.right).toBe(100);
+    });
+
+});
+
+describe('Text getBoundingBox caching', () => {
+
+    let originalMeasureText: typeof factory.measureText;
+    let measureSpy: Mock<(text: string, options?: MeasureTextOptions) => TextMetrics>;
+
+    beforeEach(() => {
+        originalMeasureText = factory.measureText;
+        measureSpy = vi.fn(fakeMeasureText);
+        factory.set({
+            measureText: measureSpy,
+        });
+    });
+
+    afterEach(() => {
+        factory.set({
+            measureText: originalMeasureText,
+        });
+    });
+
+    test('Should measure once and reuse the measurement across repeated calls', () => {
+        const text = createText({
+            x: 10,
+            y: 20,
+            content: 'hello',
+        });
+
+        text.getBoundingBox();
+        text.getBoundingBox();
+        text.getBoundingBox();
+
+        expect(measureSpy).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should reposition the box on x/y change without re-measuring', () => {
+        const text = createText({
+            x: 0,
+            y: 100,
+            content: 'ab',
+        });
+
+        const before = text.getBoundingBox();
+        expect(before.left).toBe(0);
+        expect(before.right).toBe(20);
+
+        text.x = 50;
+        const after = text.getBoundingBox();
+
+        expect(measureSpy).toHaveBeenCalledTimes(1);
+        expect(after.left).toBe(50);
+        expect(after.right).toBe(70);
+    });
+
+    test('Should re-measure when content, font, or alignment change', () => {
+        const text = createText({
+            x: 0,
+            y: 0,
+            content: 'ab',
+        });
+
+        text.getBoundingBox();
+
+        text.content = 'abc';
+        text.getBoundingBox();
+
+        text.font = '20px serif';
+        text.getBoundingBox();
+
+        text.textAlign = 'center';
+        text.getBoundingBox();
+
+        expect(measureSpy).toHaveBeenCalledTimes(4);
     });
 
 });

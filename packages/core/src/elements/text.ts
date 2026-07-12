@@ -28,8 +28,19 @@ export interface TextState extends BaseElementState {
     startOffset?: number;
 }
 
+/** The subset of text metrics needed to build a text bounding box, cached to avoid re-measuring. */
+interface TextMeasurement {
+    ascent: number;
+    left: number;
+    descent: number;
+    right: number;
+}
+
 /** A text element that renders string or numeric content, with optional path-based text layout. */
 export class Text extends Element<TextState> {
+
+    private _measureKey?: string;
+    private _measurement?: TextMeasurement;
 
     public get x() {
         return this.getStateValue('x');
@@ -76,7 +87,41 @@ export class Text extends Element<TextState> {
     }
 
     public getBoundingBox(): Box {
+        const {
+            ascent,
+            left,
+            descent,
+            right,
+        } = this._measure();
+
+        // `x`/`y` only translate the box, so they stay out of the cache key — the box is rebuilt from
+        // the cached metrics on every call, while the expensive `measureText` runs only when the
+        // content, font, or alignment actually change.
+        return new Box(
+            this.y - ascent,
+            this.x - left,
+            this.y + descent,
+            this.x + right
+        );
+    }
+
+    /**
+     * Returns the anchor-relative text metrics, measuring only when the content, font, or alignment
+     * differ from the last measurement. `measureText` is one of the hottest calls in the pipeline
+     * (hit testing, transforms, and gradients all resolve bounding boxes), so caching a single
+     * measurement per element — invalidated purely by its own inputs — removes most of that cost
+     * for one negligible object.
+     */
+    private _measure(): TextMeasurement {
         const text = this.content.toString();
+        const font = this.font;
+        const textAlign = this.textAlign;
+        const textBaseline = this.textBaseline;
+        const key = `${text} ${font} ${textAlign} ${textBaseline}`;
+
+        if (this._measurement && this._measureKey === key) {
+            return this._measurement;
+        }
 
         // Measure with the element's alignment so the anchor-relative `actualBoundingBox*` metrics
         // position the box correctly for any `textAlign`/`textBaseline` (not just start/alphabetic).
@@ -86,17 +131,20 @@ export class Text extends Element<TextState> {
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
         } = measureText(text, {
-            font: this.font,
-            textAlign: this.textAlign,
-            textBaseline: this.textBaseline,
+            font,
+            textAlign,
+            textBaseline,
         });
 
-        return new Box(
-            this.y - actualBoundingBoxAscent,
-            this.x - actualBoundingBoxLeft,
-            this.y + actualBoundingBoxDescent,
-            this.x + actualBoundingBoxRight
-        );
+        this._measureKey = key;
+        this._measurement = {
+            ascent: actualBoundingBoxAscent,
+            left: actualBoundingBoxLeft,
+            descent: actualBoundingBoxDescent,
+            right: actualBoundingBoxRight,
+        };
+
+        return this._measurement;
     }
 
     public render(context: Context) {
