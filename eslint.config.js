@@ -24,6 +24,74 @@ const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
 const INDENT = 4;
 
+/**
+ * Require a blank line between two adjacent imports whenever a *member* import
+ * (a braced `import { … }` / `import type { … }`) is involved. Consecutive
+ * *non-member* imports — side-effect (`import 'x'`), default, or namespace
+ * imports, i.e. anything without braces — may sit directly adjacent with no
+ * blank line. Extra blank lines and non-member↔non-member pairs are never
+ * reported (this rule only ever adds separation, never removes it).
+ */
+const importMemberSpacing = {
+    meta: {
+        type: 'layout',
+        fixable: 'whitespace',
+        schema: [],
+        messages: {
+            missingBlank: 'Member imports ({ … }) must be separated from an adjacent import by a blank line.',
+        },
+    },
+    create(context) {
+        const sourceCode = context.sourceCode ?? context.getSourceCode();
+        const hasBraces = node => node.specifiers.some(specifier => specifier.type === 'ImportSpecifier');
+
+        return {
+            Program(program) {
+                const { body } = program;
+
+                for (let i = 1; i < body.length; i++) {
+                    const prev = body[i - 1];
+                    const next = body[i];
+
+                    if (prev.type !== 'ImportDeclaration' || next.type !== 'ImportDeclaration') {
+                        continue;
+                    }
+
+                    // Only member imports require the blank line; two non-member imports may abut.
+                    if (!hasBraces(prev) && !hasBraces(next)) {
+                        continue;
+                    }
+
+                    // A blank line exists when a whitespace-only source line sits between the two
+                    // declarations; a bare comment line does not count as blank.
+                    let hasBlankLine = false;
+
+                    for (let line = prev.loc.end.line + 1; line < next.loc.start.line; line++) {
+                        if (sourceCode.lines[line - 1].trim() === '') {
+                            hasBlankLine = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasBlankLine) {
+                        context.report({
+                            node: next,
+                            messageId: 'missingBlank',
+                            fix: fixer => fixer.insertTextAfter(prev, '\n'),
+                        });
+                    }
+                }
+            },
+        };
+    },
+};
+
+const riplPlugin = {
+    rules: {
+        'import-member-spacing': importMemberSpacing,
+    },
+};
+
 export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
@@ -32,6 +100,7 @@ export default tseslint.config(
         name: 'ripl/main',
         plugins: {
             '@stylistic': stylistic,
+            'ripl': riplPlugin,
         },
         languageOptions: {
             ecmaVersion: 2021,
@@ -157,11 +226,7 @@ export default tseslint.config(
                 'avoidEscape': true,
             }],
             '@stylistic/member-delimiter-style': 'error',
-            '@stylistic/padding-line-between-statements': ['error', {
-                'blankLine': 'always',
-                'prev': 'import',
-                'next': 'import',
-            }],
+            'ripl/import-member-spacing': 'error',
 
             // Typescript specific rules
             '@typescript-eslint/explicit-member-accessibility': ['warn', {
@@ -220,6 +285,7 @@ export default tseslint.config(
         files: ['**/*.md/*.ts', '**/*.md/*.js'],
         plugins: {
             '@stylistic': stylistic,
+            'ripl': riplPlugin,
         },
         rules: {
             'no-console': 'off',
@@ -251,11 +317,7 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
-            '@stylistic/padding-line-between-statements': ['error', {
-                'blankLine': 'always',
-                'prev': 'import',
-                'next': 'import',
-            }],
+            'ripl/import-member-spacing': 'error',
         },
     },
 
@@ -265,6 +327,7 @@ export default tseslint.config(
         files: ['app/**/*.md'],
         plugins: {
             vue,
+            'ripl': riplPlugin,
         },
         languageOptions: {
             parser: vueParser,
@@ -298,11 +361,7 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
-            '@stylistic/padding-line-between-statements': ['error', {
-                'blankLine': 'always',
-                'prev': 'import',
-                'next': 'import',
-            }],
+            'ripl/import-member-spacing': 'error',
         },
     },
 
