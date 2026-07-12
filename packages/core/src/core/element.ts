@@ -1,5 +1,5 @@
 import {
-    CONTEXT_OPERATIONS,
+    CONTEXT_OPERATION_ENTRIES,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
     TRANSFORM_INTERPOLATORS,
@@ -671,17 +671,21 @@ export class Element<
         context.save();
 
         try {
+            // Abstract elements (groups) carry no drawable state, so skip transforms and the whole
+            // context-state sweep for them entirely.
             if (!this.abstract) {
                 applyTransform(context, null, this as unknown as Element);
-            }
 
-            objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
-                const value = (this as unknown as Record<keyof BaseElementState, unknown>)[key];
+                const state = this as unknown as Record<keyof BaseElementState, unknown>;
 
-                if (!this.abstract && !typeIsNil(value)) {
-                    (operation as (ctx: Context, val: unknown) => void)(context, value);
+                for (const [key, operation] of CONTEXT_OPERATION_ENTRIES) {
+                    const value = state[key];
+
+                    if (!typeIsNil(value)) {
+                        operation(context, value);
+                    }
                 }
-            });
+            }
 
             callback?.();
         } finally {

@@ -64,6 +64,16 @@ export const CONTEXT_OPERATIONS = {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };
 
+/**
+ * The subset of {@link CONTEXT_OPERATIONS} that actually write to the context, precomputed as an
+ * array. Transform properties map to `noop` (they are applied via `applyTransform`), so excluding
+ * them lets element rendering skip reading those getters for every element on every frame.
+ */
+export const CONTEXT_OPERATION_ENTRIES = (Object.entries(CONTEXT_OPERATIONS) as [
+    keyof BaseElementState,
+    (context: Context, value: unknown) => void
+][]).filter(([, operation]) => operation !== noop);
+
 /** Interpolator factories for transform-related properties that require special interpolation (rotation, transform-origin). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TRANSFORM_INTERPOLATORS: Record<string, InterpolatorFactory<any>> = {
