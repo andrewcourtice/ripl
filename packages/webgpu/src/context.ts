@@ -55,6 +55,7 @@ export class WebGPUContext3D extends Context3D {
     private _depthTexture: GPUTexture | null = null;
     private _msaaTexture: GPUTexture | null = null;
     private _clearColor: [number, number, number, number];
+    private _destroyed = false;
 
     // Offscreen canvas for CPU-side hit testing
     private _hitCanvas: HTMLCanvasElement;
@@ -175,13 +176,17 @@ export class WebGPUContext3D extends Context3D {
 
     /** Submits a mesh for GPU rendering this frame. */
     public override submitMesh(submission: MeshSubmission): void {
+        if (this._destroyed) {
+            return;
+        }
+
         this._geometryManager.submit(submission);
     }
 
     public markRenderStart(): void {
         super.markRenderStart();
 
-        if (this.renderDepth === 1) {
+        if (!this._destroyed && this.renderDepth === 1) {
             this._geometryManager.beginFrame();
         }
     }
@@ -236,6 +241,12 @@ export class WebGPUContext3D extends Context3D {
     }
 
     private _executeRenderPass(): void {
+        // A renderer (rAF loop) can keep ticking a context after it has been destroyed — e.g. while a docs
+        // example swaps contexts. Bail out so we never write to, or submit, freed GPU resources.
+        if (this._destroyed) {
+            return;
+        }
+
         const device = this._pipelineState.device;
 
         if (!this._depthTexture || this.element.width <= 0 || this.element.height <= 0) {
@@ -317,6 +328,7 @@ export class WebGPUContext3D extends Context3D {
 
     /** Destroys the WebGPU context and releases GPU resources. */
     public override destroy(): void {
+        this._destroyed = true;
         this._geometryManager.destroy();
         this._sceneUniformBuffer.destroy();
         this._depthTexture?.destroy();

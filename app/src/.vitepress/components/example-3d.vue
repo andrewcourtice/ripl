@@ -26,7 +26,7 @@ import {
     onUnmounted,
     ref,
     shallowRef,
-    watchEffect,
+    watch,
 } from 'vue';
 
 import RiplButtonGroup from './ripl-button-group.vue';
@@ -80,9 +80,11 @@ const error = ref('');
 
 let generation = 0;
 
-watchEffect(async () => {
-    const element = root.value;
-    const currentType = type.value;
+// Driven by an explicit `watch` on `[root, type]` rather than `watchEffect`: the handler both reads
+// (`context.value?.destroy()`) and — in the WebGPU branch — writes `context.value` after an `await`, and a
+// `watchEffect` would track that read and re-trigger itself on the write, churning contexts forever. `watch`
+// tracks only its declared sources, so the post-await assignment settles state once.
+async function updateContext([element, currentType]: [HTMLElement | undefined, ContextType]) {
     const token = ++generation;
 
     context.value?.destroy();
@@ -127,7 +129,9 @@ watchEffect(async () => {
             loading.value = false;
         }
     }
-});
+}
+
+watch([root, type], updateContext, { immediate: true });
 
 onUnmounted(() => {
     context.value?.destroy();
