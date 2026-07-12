@@ -52,6 +52,7 @@ import {
     easeOutCubic,
     scaleBand,
     scaleContinuous,
+    scaleSequential,
 } from '@ripl/core';
 
 import {
@@ -67,7 +68,7 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     value: keyof TData | ((item: TData) => number);
     xCategories: string[];
     yCategories: string[];
-    colorRange?: [string, string];
+    colorRange?: string[];
     borderRadius?: number;
     tooltip?: ChartTooltipInput;
     axis?: ChartAxisInput<TData>;
@@ -89,28 +90,7 @@ export interface HeatmapChartEventMap extends EventMap {
     cellleave: HeatmapChartCellEvent;
 }
 
-const DEFAULT_LOW_COLOR = '#e0f2fe';
-const DEFAULT_HIGH_COLOR = '#0369a1';
-
-function interpolateHexColor(colorA: string, colorB: string, t: number): string {
-    const parseHex = (hex: string) => {
-        const h = hex.replace('#', '');
-        return [
-            parseInt(h.substring(0, 2), 16),
-            parseInt(h.substring(2, 4), 16),
-            parseInt(h.substring(4, 6), 16),
-        ];
-    };
-
-    const [r1, g1, b1] = parseHex(colorA);
-    const [r2, g2, b2] = parseHex(colorB);
-
-    const r = Math.round(r1 + (r2 - r1) * t);
-    const g = Math.round(g1 + (g2 - g1) * t);
-    const b = Math.round(b1 + (b2 - b1) * t);
-
-    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-}
+const DEFAULT_COLOR_RANGE = ['#e0f2fe', '#0369a1'];
 
 /**
  * Heatmap chart rendering a grid of colored cells on two categorical axes.
@@ -194,8 +174,6 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
 
 
-            const [lowColor, highColor] = colorRange ?? [DEFAULT_LOW_COLOR, DEFAULT_HIGH_COLOR];
-
             // Compute value extent
             let minVal = Infinity;
             let maxVal = -Infinity;
@@ -207,6 +185,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
 
             const valueRange = maxVal - minVal || 1;
+
+            // A sequential colour scale over the value extent. `colorRange` may be two colours (the
+            // default low→high pair) or any number of stops, including a built-in `SCHEME_*` palette.
+            const colorScale = scaleSequential(colorRange ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
@@ -321,8 +303,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 const xVal = getX(item);
                 const yVal = getY(item);
                 const value = getValue(item);
-                const t = (value - minVal) / valueRange;
-                const color = interpolateHexColor(lowColor, highColor, t);
+                const color = colorScale(value);
 
                 return {
                     id: `cell-${xVal}-${yVal}`,
