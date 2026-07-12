@@ -25,25 +25,68 @@ const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 const INDENT = 4;
 
 /**
- * Require a blank line between two adjacent imports whenever a *member* import
- * (a braced `import { … }` / `import type { … }`) is involved. Consecutive
- * *non-member* imports — side-effect (`import 'x'`), default, or namespace
- * imports, i.e. anything without braces — may sit directly adjacent with no
- * blank line. Extra blank lines and non-member↔non-member pairs are never
- * reported (this rule only ever adds separation, never removes it).
+ * Enforce the canonical import/export grouping: statements of the same *kind*
+ * may sit directly adjacent when that kind is groupable — consecutive
+ * side-effect imports (`import 'x'`), consecutive default imports, consecutive
+ * namespace imports, and consecutive `export * from` re-exports — while any two
+ * adjacent import/export statements of *different* kinds (and every braced
+ * `import { … }` / `import type { … }` / `export { … }`) must be separated by a
+ * blank line.
+ *
+ * The rule only ever *inserts* a blank line between statements that stay exactly
+ * where they are — it never reorders, sorts, merges or removes anything, so it
+ * cannot change module load order or introduce circular dependencies.
  */
-const importMemberSpacing = {
+const GROUPABLE_KINDS = new Set([
+    'side-effect',
+    'default',
+    'namespace',
+    'export-star',
+]);
+
+/** Classifies a top-level statement into an import/export grouping kind, or `null` when out of scope. */
+function importExportKind(node) {
+    if (node.type === 'ImportDeclaration') {
+        const { specifiers } = node;
+
+        if (!specifiers.length) {
+            return 'side-effect';
+        }
+
+        if (specifiers.some(specifier => specifier.type === 'ImportSpecifier')) {
+            return 'named';
+        }
+
+        if (specifiers.some(specifier => specifier.type === 'ImportNamespaceSpecifier')) {
+            return 'namespace';
+        }
+
+        return 'default';
+    }
+
+    if (node.type === 'ExportAllDeclaration') {
+        return 'export-star';
+    }
+
+    // `export { … }` / `export { … } from '…'` — braced re-exports (never a declaration export).
+    if (node.type === 'ExportNamedDeclaration' && !node.declaration && node.specifiers.length) {
+        return 'export-named';
+    }
+
+    return null;
+}
+
+const importExportSpacing = {
     meta: {
         type: 'layout',
         fixable: 'whitespace',
         schema: [],
         messages: {
-            missingBlank: 'Member imports ({ … }) must be separated from an adjacent import by a blank line.',
+            missingBlank: 'Imports/exports of different kinds must be separated by a blank line; only consecutive same-kind side-effect, default, namespace, or `export *` statements may be grouped.',
         },
     },
     create(context) {
         const sourceCode = context.sourceCode ?? context.getSourceCode();
-        const hasBraces = node => node.specifiers.some(specifier => specifier.type === 'ImportSpecifier');
 
         return {
             Program(program) {
@@ -53,17 +96,20 @@ const importMemberSpacing = {
                     const prev = body[i - 1];
                     const next = body[i];
 
-                    if (prev.type !== 'ImportDeclaration' || next.type !== 'ImportDeclaration') {
+                    const prevKind = importExportKind(prev);
+                    const nextKind = importExportKind(next);
+
+                    if (!prevKind || !nextKind) {
                         continue;
                     }
 
-                    // Only member imports require the blank line; two non-member imports may abut.
-                    if (!hasBraces(prev) && !hasBraces(next)) {
+                    // Same groupable kind may abut; everything else needs a blank line.
+                    if (prevKind === nextKind && GROUPABLE_KINDS.has(prevKind)) {
                         continue;
                     }
 
                     // A blank line exists when a whitespace-only source line sits between the two
-                    // declarations; a bare comment line does not count as blank.
+                    // statements; a bare comment line does not count as blank.
                     let hasBlankLine = false;
 
                     for (let line = prev.loc.end.line + 1; line < next.loc.start.line; line++) {
@@ -88,7 +134,7 @@ const importMemberSpacing = {
 
 const riplPlugin = {
     rules: {
-        'import-member-spacing': importMemberSpacing,
+        'import-export-spacing': importExportSpacing,
     },
 };
 
@@ -226,7 +272,7 @@ export default tseslint.config(
                 'avoidEscape': true,
             }],
             '@stylistic/member-delimiter-style': 'error',
-            'ripl/import-member-spacing': 'error',
+            'ripl/import-export-spacing': 'error',
 
             // Typescript specific rules
             '@typescript-eslint/explicit-member-accessibility': ['warn', {
@@ -317,7 +363,7 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
-            'ripl/import-member-spacing': 'error',
+            'ripl/import-export-spacing': 'error',
         },
     },
 
@@ -361,7 +407,7 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
-            'ripl/import-member-spacing': 'error',
+            'ripl/import-export-spacing': 'error',
         },
     },
 
