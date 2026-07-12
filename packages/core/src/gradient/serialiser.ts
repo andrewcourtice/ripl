@@ -2,6 +2,7 @@ import type {
     ConicGradient,
     Gradient,
     GradientColorStop,
+    GradientType,
     LinearGradient,
     RadialGradient,
 } from './types';
@@ -80,11 +81,14 @@ function serialiseConicGradient(gradient: ConicGradient): string {
     return `${prefix}conic-gradient(${parts.join(', ')})`;
 }
 
+/** Serialiser dispatch keyed by gradient type. */
+const GRADIENT_SERIALISERS: Record<GradientType, (gradient: Gradient) => string> = {
+    linear: gradient => serialiseLinearGradient(gradient as LinearGradient),
+    radial: gradient => serialiseRadialGradient(gradient as RadialGradient),
+    conic: gradient => serialiseConicGradient(gradient as ConicGradient),
+};
+
 /** Serialises a structured `Gradient` object back into a CSS gradient string. */
 export function serialiseGradient(gradient: Gradient): string {
-    switch (gradient.type) {
-        case 'linear': return serialiseLinearGradient(gradient);
-        case 'radial': return serialiseRadialGradient(gradient);
-        case 'conic': return serialiseConicGradient(gradient);
-    }
+    return GRADIENT_SERIALISERS[gradient.type](gradient);
 }

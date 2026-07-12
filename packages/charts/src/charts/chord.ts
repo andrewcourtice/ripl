@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -38,6 +39,7 @@ import type {
     Ribbon,
     RibbonState,
 } from '../elements';
+
 import {
     createRibbon,
 } from '../elements';
@@ -49,6 +51,7 @@ import type {
     EventMap,
     Group,
 } from '@ripl/core';
+
 import {
     createArc,
     createGroup,
@@ -249,14 +252,14 @@ function computeChordLayout(
  */
 export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
-    private arcGroups: Group[] = [];
-    private ribbonGroups: Group[] = [];
-    private tooltip: Tooltip;
+    private _arcGroups: Group[] = [];
+    private _ribbonGroups: Group[] = [];
+    private _tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: ChordChartOptions) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
             placement: 'center',
@@ -313,7 +316,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 left: arcEntries,
                 inner: arcUpdates,
                 right: arcExits,
-            } = arrayJoin(layout.arcs, this.arcGroups, (arc, group) => arc.id === group.id);
+            } = arrayJoin(layout.arcs, this._arcGroups, (arc, group) => arc.id === group.id);
 
             arcExits.forEach(el => el.destroy());
 
@@ -337,7 +340,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                     } as Partial<ArcState>,
                 });
 
-                this.attachArcHover(segment, arc);
+                this._attachArcHover(segment, arc);
 
                 return createGroup({
                     id: arc.id,
@@ -358,7 +361,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                         stroke: arc.color,
                     } as Partial<ArcState>;
 
-                    this.attachArcHover(segment, arc);
+                    this._attachArcHover(segment, arc);
                 }
 
                 return group;
@@ -366,20 +369,20 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
             scene.add(arcEntryGroups);
 
-            this.arcGroups = [
+            this._arcGroups = [
                 ...arcEntryGroups,
                 ...arcUpdateGroups,
             ];
 
             // Outer arcs map 1:1 to legend items (by id), so register them for legend hover-highlight.
-            this.registerHighlightGroups(this.arcGroups);
+            this.registerHighlightGroups(this._arcGroups);
 
             // Draw ribbons
             const {
                 left: ribbonEntries,
                 inner: ribbonUpdates,
                 right: ribbonExits,
-            } = arrayJoin(layout.ribbons, this.ribbonGroups, (ribbon, group) => ribbon.id === group.id);
+            } = arrayJoin(layout.ribbons, this._ribbonGroups, (ribbon, group) => ribbon.id === group.id);
 
             ribbonExits.forEach(el => el.destroy());
 
@@ -402,7 +405,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                     },
                 });
 
-                this.attachRibbonHover(ribbonEl, ribbon, cx, cy);
+                this._attachRibbonHover(ribbonEl, ribbon, cx, cy);
 
                 return createGroup({
                     id: ribbon.id,
@@ -430,7 +433,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                         opacity: 1,
                     } as Partial<RibbonState>;
 
-                    this.attachRibbonHover(ribbonEl, ribbon, cx, cy);
+                    this._attachRibbonHover(ribbonEl, ribbon, cx, cy);
                 }
 
                 return group;
@@ -438,7 +441,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
             scene.add(ribbonEntryGroups);
 
-            this.ribbonGroups = [
+            this._ribbonGroups = [
                 ...ribbonEntryGroups,
                 ...ribbonUpdateGroups,
             ];
@@ -485,7 +488,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         });
     }
 
-    private attachArcHover(segment: Arc, arc: ChordArc) {
+    private _attachArcHover(segment: Arc, arc: ChordArc) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
@@ -502,7 +505,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
                 return {
@@ -519,7 +522,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         });
     }
 
-    private attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
+    private _attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
@@ -537,7 +540,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: cx,
                 y: cy,

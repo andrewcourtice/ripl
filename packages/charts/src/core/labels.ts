@@ -11,6 +11,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     createText,
     getThetaPoint,
@@ -37,37 +38,47 @@ export interface DataLabelSpec {
     offset?: number;
 }
 
+/** Per-anchor offset direction (multiplied by `offset`) and text alignment for data labels. */
+const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
+    dx: number;
+    dy: number;
+    textAlign: TextState['textAlign'];
+    textBaseline: TextState['textBaseline'];
+}> = {
+    top: {
+        dx: 0,
+        dy: -1,
+        textAlign: 'center',
+        textBaseline: 'bottom',
+    },
+    bottom: {
+        dx: 0,
+        dy: 1,
+        textAlign: 'center',
+        textBaseline: 'top',
+    },
+    left: {
+        dx: -1,
+        dy: 0,
+        textAlign: 'right',
+        textBaseline: 'middle',
+    },
+    right: {
+        dx: 1,
+        dy: 0,
+        textAlign: 'left',
+        textBaseline: 'middle',
+    },
+};
+
 /** Resolves the anchored position and text alignment for a data label. */
 export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>) {
     const { x, y, anchor, offset = 8 } = spec;
-
-    let labelX = x;
-    let labelY = y;
-    let textAlign: TextState['textAlign'] = 'center';
-    let textBaseline: TextState['textBaseline'] = 'middle';
-
-    switch (anchor) {
-        case 'top':
-            labelY = y - offset;
-            textBaseline = 'bottom';
-            break;
-        case 'bottom':
-            labelY = y + offset;
-            textBaseline = 'top';
-            break;
-        case 'left':
-            labelX = x - offset;
-            textAlign = 'right';
-            break;
-        case 'right':
-            labelX = x + offset;
-            textAlign = 'left';
-            break;
-    }
+    const { dx, dy, textAlign, textBaseline } = DATA_LABEL_ANCHORS[anchor];
 
     return {
-        x: labelX,
-        y: labelY,
+        x: x + dx * offset,
+        y: y + dy * offset,
         textAlign,
         textBaseline,
     };

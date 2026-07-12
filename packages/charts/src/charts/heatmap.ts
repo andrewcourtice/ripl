@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -43,6 +44,7 @@ import type {
     Rect,
     RectState,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,
@@ -121,10 +123,10 @@ function interpolateHexColor(colorA: string, colorB: string, t: number): string 
  */
 export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TData>, HeatmapChartEventMap> {
 
-    private cellGroups: Group[] = [];
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
+    private _cellGroups: Group[] = [];
+    private _xAxis!: ChartXAxis;
+    private _yAxis!: ChartYAxis;
+    private _tooltip!: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
         super(target, options);
@@ -137,7 +139,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         const tooltipOpts = normalizeTooltip(options.tooltip);
 
         if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
+            this._tooltip = new Tooltip({
                 scene: this.scene,
                 renderer: this.renderer,
                 font: tooltipOpts.font,
@@ -146,7 +148,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
         }
 
-        this.xAxis = new ChartXAxis({
+        this._xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -157,7 +159,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             title: xAxis.title,
         });
 
-        this.yAxis = new ChartYAxis({
+        this._yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -220,7 +222,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 outerPadding: 0.05,
             });
 
-            this.yAxis.scale = Object.assign(
+            this._yAxis.scale = Object.assign(
                 (value: string) => initialYScale(value) + initialYScale.bandwidth / 2,
                 {
                     domain: yCategories,
@@ -229,16 +231,16 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     ticks: () => yCategories,
                     includes: (v: string) => yCategories.includes(v),
                 }
-            ) as unknown as typeof this.yAxis.scale;
+            ) as unknown as typeof this._yAxis.scale;
 
-            this.yAxis.bounds = new Box(
+            this._yAxis.bounds = new Box(
                 top,
                 left,
                 bottom,
                 right
             );
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBoundingBox = this._yAxis.getBoundingBox();
 
             // Initial x-axis setup to measure label height
             const initialXScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
@@ -246,7 +248,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 outerPadding: 0.05,
             });
 
-            this.xAxis.scale = Object.assign(
+            this._xAxis.scale = Object.assign(
                 (value: string) => initialXScale(value) + initialXScale.bandwidth / 2,
                 {
                     domain: xCategories,
@@ -255,16 +257,16 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     ticks: () => xCategories,
                     includes: (v: string) => xCategories.includes(v),
                 }
-            ) as unknown as typeof this.xAxis.scale;
+            ) as unknown as typeof this._xAxis.scale;
 
-            this.xAxis.bounds = new Box(
+            this._xAxis.bounds = new Box(
                 top,
                 yAxisBoundingBox.right,
                 bottom,
                 right
             );
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBoundingBox = this._xAxis.getBoundingBox();
 
             // Rebuild scales with correct chart area bounds
             const xScale = scaleBand(xCategories, [yAxisBoundingBox.right, right], {
@@ -278,7 +280,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
 
             // Update axes with final scales
-            this.xAxis.scale = Object.assign(
+            this._xAxis.scale = Object.assign(
                 (value: string) => xScale(value) + xScale.bandwidth / 2,
                 {
                     domain: xCategories,
@@ -287,16 +289,16 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     ticks: () => xCategories,
                     includes: (v: string) => xCategories.includes(v),
                 }
-            ) as unknown as typeof this.xAxis.scale;
+            ) as unknown as typeof this._xAxis.scale;
 
-            this.xAxis.bounds = new Box(
+            this._xAxis.bounds = new Box(
                 top,
                 yAxisBoundingBox.right,
                 bottom,
                 right
             );
 
-            this.yAxis.scale = Object.assign(
+            this._yAxis.scale = Object.assign(
                 (value: string) => yScale(value) + yScale.bandwidth / 2,
                 {
                     domain: yCategories,
@@ -305,9 +307,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     ticks: () => yCategories,
                     includes: (v: string) => yCategories.includes(v),
                 }
-            ) as unknown as typeof this.yAxis.scale;
+            ) as unknown as typeof this._yAxis.scale;
 
-            this.yAxis.bounds = new Box(
+            this._yAxis.bounds = new Box(
                 top,
                 left,
                 xAxisBoundingBox.top,
@@ -339,7 +341,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 left: cellEntries,
                 inner: cellUpdates,
                 right: cellExits,
-            } = arrayJoin(cellData, this.cellGroups, (item, group) => item.id === group.id);
+            } = arrayJoin(cellData, this._cellGroups, (item, group) => item.id === group.id);
 
             cellExits.forEach(el => el.destroy());
 
@@ -358,7 +360,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     },
                 });
 
-                this.attachCellHover(rect, cell);
+                this._attachCellHover(rect, cell);
 
                 return createGroup({
                     id: cell.id,
@@ -379,7 +381,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                         opacity: 1,
                     } as RectState;
 
-                    this.attachCellHover(rect, cell);
+                    this._attachCellHover(rect, cell);
                 }
 
                 return group;
@@ -387,7 +389,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             this.scene.add(entryGroups);
 
-            this.cellGroups = [
+            this._cellGroups = [
                 ...entryGroups,
                 ...updateGroups,
             ];
@@ -411,15 +413,15 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             }));
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
+                this._xAxis.render(),
+                this._yAxis.render(),
                 entriesTransition,
                 updatesTransition,
             ]);
         });
     }
 
-    private attachCellHover(rect: Rect, cell: { x: number;
+    private _attachCellHover(rect: Rect, cell: { x: number;
         y: number;
         width: number;
         value: number;
@@ -440,7 +442,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: cell.x + cell.width / 2,
                 y: cell.y,

@@ -32,8 +32,6 @@ describe('Group querying', () => {
 
         expect(group.getElementById('target')).toBe(target);
         expect(group.getElementById('missing')).toBeUndefined();
-        // deprecated alias still works
-        expect(group.getElementByID('target')).toBe(target);
     });
 
     test('id and type matching is case-sensitive', () => {

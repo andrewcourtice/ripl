@@ -229,6 +229,13 @@ function parseConicGradient(args: string[], repeating: boolean): ConicGradient {
     };
 }
 
+/** Parser dispatch keyed by gradient function name (`linear-gradient`, etc.). */
+const GRADIENT_PARSERS: Record<string, (args: string[], repeating: boolean) => Gradient> = {
+    linear: parseLinearGradient,
+    radial: parseRadialGradient,
+    conic: parseConicGradient,
+};
+
 /** Parses a CSS gradient string (linear, radial, or conic) into a structured `Gradient` object, or returns `undefined` if the string is not a recognised gradient. */
 export function parseGradient(value: string): Gradient | undefined {
     const match = GRADIENT_PATTERN.exec(value.trim());
@@ -240,13 +247,11 @@ export function parseGradient(value: string): Gradient | undefined {
     const repeating = !!match[1];
     const type = match[2].toLowerCase();
     const args = splitGradientArgs(match[3]);
+    const parse = GRADIENT_PARSERS[type];
 
-    switch (type) {
-        case 'linear': return parseLinearGradient(args, repeating);
-        case 'radial': return parseRadialGradient(args, repeating);
-        case 'conic': return parseConicGradient(args, repeating);
-        default: return undefined;
-    }
+    return parse
+        ? parse(args, repeating)
+        : undefined;
 }
 
 /** Tests whether a string looks like a CSS gradient (starts with a recognised gradient function name). */

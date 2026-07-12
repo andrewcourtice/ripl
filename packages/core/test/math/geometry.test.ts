@@ -4,9 +4,12 @@ import {
     test,
 } from 'vitest';
 
+import type {
+    Point,
+} from '../../src';
+
 import {
     arePointsEqual,
-    Point,
 } from '../../src';
 
 describe('Math', () => {

@@ -79,7 +79,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createFunnelChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'stage',
     value: 'value',
     label: 'stage',

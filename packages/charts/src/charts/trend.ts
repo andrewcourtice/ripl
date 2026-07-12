@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -63,6 +64,7 @@ import type {
     RectState,
     Scale,
 } from '@ripl/core';
+
 import {
     Box,
     createCircle,
@@ -161,17 +163,17 @@ export interface TrendChartEventMap extends EventMap {
  */
 export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>, TrendChartEventMap> {
 
-    private barGroups: Group[] = [];
-    private lineGroups: Group[] = [];
+    private _barGroups: Group[] = [];
+    private _lineGroups: Group[] = [];
     /** Previous ordered data keys per line series, used to key-reconcile the morph across add/remove. */
-    private morphKeys = new Map<string, string[]>();
-    private yScale!: Scale;
-    private xScaleBand!: BandScale<string>;
-    private xScalePoint!: Scale<string>;
-    private xAxis: ChartXAxis;
-    private yAxis: ChartYAxis;
-    private tooltip!: Tooltip;
-    private grid?: Grid;
+    private _morphKeys = new Map<string, string[]>();
+    private _yScale!: Scale;
+    private _xScaleBand!: BandScale<string>;
+    private _xScalePoint!: Scale<string>;
+    private _xAxis: ChartXAxis;
+    private _yAxis: ChartYAxis;
+    private _tooltip!: Tooltip;
+    private _grid?: Grid;
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 
@@ -183,22 +185,22 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
         const gridOpts = normalizeGrid(options.grid);
         const tooltipOpts = normalizeTooltip(options.tooltip);
 
-        this.xAxis = new ChartXAxis({
+        this._xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
-            scale: this.xScalePoint,
+            scale: this._xScalePoint,
             labelFont: xAxis.font,
             labelColor: xAxis.fontColor,
             formatLabel: resolveFormatLabel(xAxis.format),
             title: xAxis.title,
         });
 
-        this.yAxis = new ChartYAxis({
+        this._yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
-            scale: this.yScale,
+            scale: this._yScale,
             labelFont: yAxis.font,
             labelColor: yAxis.fontColor,
             formatLabel: resolveFormatLabel(yAxis.format),
@@ -206,7 +208,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
         });
 
         if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
+            this._tooltip = new Tooltip({
                 scene: this.scene,
                 renderer: this.renderer,
                 font: tooltipOpts.font,
@@ -216,7 +218,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
         }
 
         if (gridOpts.visible) {
-            this.grid = new Grid({
+            this._grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
@@ -234,7 +236,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
      * Wires hover highlight + tooltip onto a line marker. Uses {@link applyHoverHighlight} so
      * prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
-    private attachMarkerHover(marker: Circle, value: number, color: string) {
+    private _attachMarkerHover(marker: Circle, value: number, color: string) {
         const payload = (point: { x: number;
             y: number; }): TrendChartValueEvent => ({
             x: point.x,
@@ -246,7 +248,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             renderer: this.renderer,
             duration: this.getAnimationDuration(300),
             ease: easeOutQuart,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,
                 y: marker.cy,
@@ -270,7 +272,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
      * Wires hover highlight + tooltip onto a bar. Uses {@link applyHoverHighlight} so prior
      * listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
-    private attachBarHover(bar: Rect, value: number, fill: string) {
+    private _attachBarHover(bar: Rect, value: number, fill: string) {
         const payload = (point: { x: number;
             y: number; }): TrendChartValueEvent => ({
             x: point.x,
@@ -282,7 +284,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             renderer: this.renderer,
             duration: this.getAnimationDuration(300),
             ease: easeOutQuart,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: bar.x + bar.width / 2,
                 y: bar.y,
@@ -300,7 +302,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
         });
     }
 
-    private async drawLines() {
+    private async _drawLines() {
         const {
             data,
             series,
@@ -313,7 +315,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(lineSeries, this.lineGroups, 'id');
+        } = arrayJoin(lineSeries, this._lineGroups, 'id');
 
         seriesExits.forEach(el => el.destroy());
 
@@ -332,8 +334,8 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const label = getLabel(item);
 
-                const x = this.xScalePoint(key);
-                const y = this.yScale(value);
+                const x = this._xScalePoint(key);
+                const y = this._yScale(value);
 
                 return {
                     id: `${id}-${key}`,
@@ -367,7 +369,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     data: state,
                 });
 
-                this.attachMarkerHover(marker, value, state.stroke as string);
+                this._attachMarkerHover(marker, value, state.stroke as string);
 
                 return {
                     point,
@@ -383,7 +385,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                 renderer: series.lineType,
             });
 
-            this.morphKeys.set(series.id, data.map(getKey));
+            this._morphKeys.set(series.id, data.map(getKey));
 
             return createGroup({
                 id: series.id,
@@ -401,7 +403,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
             const targetPoints = data.map(item => getMarkerValues(item).point);
             const newKeys = data.map(getKey);
-            const prevKeys = this.morphKeys.get(series.id);
+            const prevKeys = this._morphKeys.get(series.id);
 
             // Apply the renderer directly (not via the transition, which would snap it at t=0.5),
             // and key-reconcile the point morph so curved lines stay curved across add/remove.
@@ -415,7 +417,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     : targetPoints,
             };
 
-            this.morphKeys.set(series.id, newKeys);
+            this._morphKeys.set(series.id, newKeys);
 
             const {
                 left: markerEntries,
@@ -437,7 +439,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     data: state,
                 });
 
-                this.attachMarkerHover(marker, getValue(item), state.stroke as string);
+                this._attachMarkerHover(marker, getValue(item), state.stroke as string);
 
                 group.add(marker);
             });
@@ -450,7 +452,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
                 marker.data = state;
 
-                this.attachMarkerHover(marker, value, state.stroke as string);
+                this._attachMarkerHover(marker, value, state.stroke as string);
             });
 
             return group;
@@ -458,7 +460,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
         this.scene.add(seriesEntryGroups);
 
-        this.lineGroups = [
+        this._lineGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
@@ -516,7 +518,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
         ].flat());
     }
 
-    private async drawBars() {
+    private async _drawBars() {
         const {
             data,
             series,
@@ -529,15 +531,15 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(barSeries, this.barGroups, 'id');
+        } = arrayJoin(barSeries, this._barGroups, 'id');
 
         seriesExits.forEach(el => el.destroy());
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-        const baseline = this.yScale(0);
+        const baseline = this._yScale(0);
 
-        const xScaleSeries = scaleBand(barSeries.map(srs => srs.id), [0, this.xScaleBand.bandwidth], {
+        const xScaleSeries = scaleBand(barSeries.map(srs => srs.id), [0, this._xScaleBand.bandwidth], {
             innerPadding: 0.25,
         });
 
@@ -553,10 +555,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const label = getLabel(item);
 
-                const x = this.xScaleBand(key) + xScaleSeries(id);
-                const y = this.yScale(max(0, value));
+                const x = this._xScaleBand(key) + xScaleSeries(id);
+                const y = this._yScale(max(0, value));
                 const width = xScaleSeries.bandwidth;
-                const height = Math.abs(baseline - this.yScale(value));
+                const height = Math.abs(baseline - this._yScale(value));
 
                 return {
                     id: `${id}-${key}`,
@@ -593,7 +595,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     },
                 });
 
-                this.attachBarHover(bar, value, state.fill as string);
+                this._attachBarHover(bar, value, state.fill as string);
 
                 return bar;
             });
@@ -629,7 +631,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     data: state,
                 });
 
-                this.attachBarHover(rect, getValue(item), state.fill as string);
+                this._attachBarHover(rect, getValue(item), state.fill as string);
 
                 group.add(rect);
             });
@@ -643,7 +645,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
                     fill: setColorAlpha(state.fill as string, 0.7),
                 };
 
-                this.attachBarHover(bar, value, state.fill as string);
+                this._attachBarHover(bar, value, state.fill as string);
             });
 
             return group;
@@ -651,7 +653,7 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
         this.scene.add(seriesEntryGroups);
 
-        this.barGroups = [
+        this._barGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
@@ -722,55 +724,55 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             const chartBottom = area.y + area.height;
             const chartRight = area.x + area.width;
 
-            this.yScale = scaleContinuous(dataExtent, [chartBottom, chartTop], {
+            this._yScale = scaleContinuous(dataExtent, [chartBottom, chartTop], {
                 padToTicks: 10,
             });
 
-            this.yAxis.scale = this.yScale;
-            this.yAxis.bounds = new Box(
+            this._yAxis.scale = this._yScale;
+            this._yAxis.bounds = new Box(
                 chartTop,
                 area.x,
                 chartBottom,
                 chartRight
             );
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBoundingBox = this._yAxis.getBoundingBox();
 
-            this.xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, chartRight], {
+            this._xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, chartRight], {
                 outerPadding: 0.25,
                 innerPadding: 0.25,
             });
 
-            this.xScalePoint = createScale({
-                domain: this.xScaleBand.domain,
-                range: this.xScaleBand.range,
-                convert: value => this.xScaleBand(value) + this.xScaleBand.bandwidth / 2,
-                invert: value => this.xScaleBand.inverse(value),
+            this._xScalePoint = createScale({
+                domain: this._xScaleBand.domain,
+                range: this._xScaleBand.range,
+                convert: value => this._xScaleBand(value) + this._xScaleBand.bandwidth / 2,
+                invert: value => this._xScaleBand.inverse(value),
             });
 
-            this.xAxis.scale = this.xScalePoint;
-            this.xAxis.bounds = new Box(
+            this._xAxis.scale = this._xScalePoint;
+            this._xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
                 chartBottom,
                 chartRight
             );
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBoundingBox = this._xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
+            this._yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
-            this.yAxis.scale = this.yScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this._yAxis.scale = this._yScale;
+            this._yAxis.bounds.bottom = xAxisBoundingBox.top;
 
             // Render grid
-            if (this.grid) {
-                const yTicks = this.yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this.yScale(tick));
+            if (this._grid) {
+                const yTicks = this._yScale.ticks(10);
+                const yTickPositions = yTicks.map(tick => this._yScale(tick));
 
-                this.grid.render(
+                this._grid.render(
                     [],
                     yTickPositions,
                     yAxisBoundingBox.right,
@@ -781,10 +783,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
             }
 
             return Promise.all([
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawBars(),
-                this.drawLines(),
+                this._xAxis.render(),
+                this._yAxis.render(),
+                this._drawBars(),
+                this._drawLines(),
             ]);
         });
     }

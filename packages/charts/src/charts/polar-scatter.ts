@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -45,6 +46,7 @@ import type {
     Scale,
     Text,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,
@@ -59,10 +61,7 @@ import {
 import {
     arrayJoin,
     functionIdentity,
-    typeIsFunction,
 } from '@ripl/utilities';
-
-const TAU = Math.PI * 2;
 
 /** Opacity applied to a marker's fill at rest (full opacity on hover). */
 const REST_ALPHA = 0.7;
@@ -125,15 +124,15 @@ export interface PolarScatterChartEventMap extends EventMap {
  */
 export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartOptions<TData>, PolarScatterChartEventMap> {
 
-    private seriesGroups: Group[] = [];
-    private gridGroup?: Group;
-    private tooltip: Tooltip;
-    private radialScale!: Scale;
+    private _seriesGroups: Group[] = [];
+    private _gridGroup?: Group;
+    private _tooltip: Tooltip;
+    private _radialScale!: Scale;
 
     constructor(target: string | HTMLElement | Context, options: PolarScatterChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -142,27 +141,27 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
     }
 
     /** Converts an angle in degrees (0° at top, clockwise) to a canvas point at the given radius. */
-    private point(cx: number, cy: number, angleDeg: number, radius: number): [number, number] {
+    private _point(cx: number, cy: number, angleDeg: number, radius: number): [number, number] {
         const theta = (angleDeg - 90) * (Math.PI / 180);
         return [cx + radius * Math.cos(theta), cy + radius * Math.sin(theta)];
     }
 
-    private drawGrid(cx: number, cy: number, gridRadius: number, levels: number, angleTicks: number) {
+    private _drawGrid(cx: number, cy: number, gridRadius: number, levels: number, angleTicks: number) {
         const formatValue = resolveValueFormat(this.options.format);
 
-        if (!this.gridGroup) {
-            this.gridGroup = createGroup({
+        if (!this._gridGroup) {
+            this._gridGroup = createGroup({
                 id: 'polar-scatter-grid',
                 class: 'polar-scatter-grid',
                 zIndex: 0,
             });
 
-            this.scene.add(this.gridGroup);
+            this.scene.add(this._gridGroup);
         }
 
         // Concentric value rings + a value label on each.
         const ringIndices = Array.from({ length: levels }).map((_, i) => i + 1);
-        const ringCircles = this.gridGroup.getElementsByType('circle') as Circle[];
+        const ringCircles = this._gridGroup.getElementsByType('circle') as Circle[];
 
         const {
             left: ringEntries,
@@ -183,7 +182,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 lineWidth: 1,
             });
 
-            this.gridGroup!.add(ring);
+            this._gridGroup!.add(ring);
         });
 
         ringUpdates.forEach(([level, ring]) => {
@@ -193,7 +192,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         });
 
         // Ring value labels (along the top spoke).
-        const ringLabels = this.gridGroup.getElementsByType<Text>('text').filter(text => text.id.startsWith('ring-label-'));
+        const ringLabels = this._gridGroup.getElementsByType<Text>('text').filter(text => text.id.startsWith('ring-label-'));
 
         const {
             left: labelEntries,
@@ -203,7 +202,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
         labelExits.forEach(el => el.destroy());
 
-        const ringValue = (level: number) => (this.radialScale.inverse ? this.radialScale.inverse((gridRadius / levels) * level) : 0);
+        const ringValue = (level: number) => (this._radialScale.inverse ? this._radialScale.inverse((gridRadius / levels) * level) : 0);
 
         labelEntries.forEach(level => {
             const label = createText({
@@ -217,7 +216,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 textBaseline: 'middle',
             });
 
-            this.gridGroup!.add(label);
+            this._gridGroup!.add(label);
         });
 
         labelUpdates.forEach(([level, label]) => {
@@ -229,7 +228,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         // Angular spokes + degree labels.
         const spokeIndices = Array.from({ length: angleTicks }).map((_, i) => i);
         const spokeStep = 360 / angleTicks;
-        const spokeLines = this.gridGroup.getElementsByType<Line>('line');
+        const spokeLines = this._gridGroup.getElementsByType<Line>('line');
 
         const {
             left: spokeEntries,
@@ -240,7 +239,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         spokeExits.forEach(el => el.destroy());
 
         spokeEntries.forEach(index => {
-            const [x2, y2] = this.point(cx, cy, index * spokeStep, gridRadius);
+            const [x2, y2] = this._point(cx, cy, index * spokeStep, gridRadius);
 
             const line = createLine({
                 id: `spoke-${index}`,
@@ -252,18 +251,18 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 lineWidth: 1,
             });
 
-            this.gridGroup!.add(line);
+            this._gridGroup!.add(line);
         });
 
         spokeUpdates.forEach(([index, line]) => {
-            const [x2, y2] = this.point(cx, cy, index * spokeStep, gridRadius);
+            const [x2, y2] = this._point(cx, cy, index * spokeStep, gridRadius);
             line.x1 = cx;
             line.y1 = cy;
             line.x2 = x2;
             line.y2 = y2;
         });
 
-        const angleLabels = this.gridGroup.getElementsByType<Text>('text').filter(text => text.id.startsWith('angle-label-'));
+        const angleLabels = this._gridGroup.getElementsByType<Text>('text').filter(text => text.id.startsWith('angle-label-'));
 
         const {
             left: angleEntries,
@@ -275,7 +274,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
         const angleLabelProps = (index: number) => {
             const deg = index * spokeStep;
-            const [x, y] = this.point(cx, cy, deg, gridRadius + 12);
+            const [x, y] = this._point(cx, cy, deg, gridRadius + 12);
             return {
                 x,
                 y,
@@ -297,7 +296,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 textBaseline: 'middle',
             });
 
-            this.gridGroup!.add(label);
+            this._gridGroup!.add(label);
         });
 
         angleUpdates.forEach(([index, label]) => {
@@ -308,7 +307,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         });
     }
 
-    private attachMarkerHover(marker: Circle, values: PolarScatterMarkerEvent, content: string, restFill: string, stroke: string, radius: number) {
+    private _attachMarkerHover(marker: Circle, values: PolarScatterMarkerEvent, content: string, restFill: string, stroke: string, radius: number) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -322,7 +321,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,
                 y: marker.cy,
@@ -379,9 +378,9 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const [, dataMax] = radiusValues.length ? getExtent(radiusValues, functionIdentity) : [0, 1];
             const maxRadiusValue = this.options.maxRadiusValue ?? (dataMax > 0 ? dataMax : 1);
 
-            this.radialScale = scaleContinuous([0, maxRadiusValue], [0, gridRadius], { clamp: true });
+            this._radialScale = scaleContinuous([0, maxRadiusValue], [0, gridRadius], { clamp: true });
 
-            this.drawGrid(cx, cy, gridRadius, levels, angleTicks);
+            this._drawGrid(cx, cy, gridRadius, levels, angleTicks);
 
             const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
 
@@ -389,7 +388,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 left: seriesEntries,
                 inner: seriesUpdates,
                 right: seriesExits,
-            } = arrayJoin(series, this.seriesGroups, 'id');
+            } = arrayJoin(series, this._seriesGroups, 'id');
 
             seriesExits.forEach(group => group.destroy());
 
@@ -403,7 +402,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
                 const angleValue = getAngle(item);
                 const radiusValue = getRadius(item);
-                const [px, py] = this.point(cx, cy, angleValue, this.radialScale(radiusValue));
+                const [px, py] = this._point(cx, cy, angleValue, this._radialScale(radiusValue));
 
                 let markerRadius = minRadius;
                 let sizeValue = 0;
@@ -454,7 +453,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     data: spec.state,
                 });
 
-                this.attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
+                this._attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
 
                 return marker;
             };
@@ -485,18 +484,18 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 markerUpdates.forEach(([item, marker]) => {
                     const spec = computeMarker(srs, item, data.indexOf(item));
                     marker.data = spec.state;
-                    this.attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
+                    this._attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
                 });
             });
 
             this.scene.add(entryGroups);
 
-            this.seriesGroups = [
+            this._seriesGroups = [
                 ...entryGroups,
                 ...seriesUpdates.map(([, group]) => group),
             ];
 
-            this.registerHighlightGroups(this.seriesGroups);
+            this.registerHighlightGroups(this._seriesGroups);
 
             const entryMarkers = entryGroups.flatMap(group => group.getElementsByType('circle') as Circle[]);
             const updateMarkers = seriesUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);

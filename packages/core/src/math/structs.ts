@@ -9,17 +9,17 @@ export class Box {
     ) {}
 
     /** Creates a zero-sized box at the origin. */
-    static empty() {
+    public static empty() {
         return new Box(0, 0, 0, 0);
     }
 
     /** The horizontal span of the box. */
-    get width() {
+    public get width() {
         return this.right - this.left;
     }
 
     /** The vertical span of the box. */
-    get height() {
+    public get height() {
         return this.bottom - this.top;
     }
 

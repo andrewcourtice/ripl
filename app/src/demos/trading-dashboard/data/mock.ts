@@ -56,7 +56,10 @@ export function withMovingAverage<T extends { close: number }>(data: T[], window
     return data.map((item, index) => {
         const slice = data.slice(Math.max(0, index - window + 1), index + 1);
         const avg = slice.reduce((sum, entry) => sum + entry.close, 0) / slice.length;
-        return { ...item, ma: Math.round(avg * 100) / 100 };
+        return {
+            ...item,
+            ma: Math.round(avg * 100) / 100,
+        };
     });
 }
 

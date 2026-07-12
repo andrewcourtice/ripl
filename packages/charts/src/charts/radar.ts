@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -44,6 +45,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,
@@ -110,16 +112,16 @@ const TAU = Math.PI * 2;
  */
 export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>, RadarChartEventMap> {
 
-    private seriesGroups: Group[] = [];
-    private gridGroup?: Group;
-    private gridLevels: Polyline[] = [];
-    private gridAxisLines: Line[] = [];
-    private gridLabels: Text[] = [];
-    private tooltip!: Tooltip;
+    private _seriesGroups: Group[] = [];
+    private _gridGroup?: Group;
+    private _gridLevels: Polyline[] = [];
+    private _gridAxisLines: Line[] = [];
+    private _gridLabels: Text[] = [];
+    private _tooltip!: Tooltip;
     constructor(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -127,19 +129,19 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         this.init();
     }
 
-    private drawGrid(cx: number, cy: number, radius: number, axes: string[], levels: number) {
-        const isEntry = !this.gridGroup;
+    private _drawGrid(cx: number, cy: number, radius: number, axes: string[], levels: number) {
+        const isEntry = !this._gridGroup;
         const animDuration = this.getAnimationDuration(800);
         const angleStep = TAU / axes.length;
 
         if (isEntry) {
-            this.gridGroup = createGroup({
+            this._gridGroup = createGroup({
                 id: 'radar-grid',
                 class: 'radar-grid',
                 zIndex: 0,
             });
 
-            this.scene.add(this.gridGroup);
+            this.scene.add(this._gridGroup);
         }
 
         const levelPoints = (level: number): Point[] => {
@@ -164,7 +166,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             left: levelEntries,
             inner: levelUpdates,
             right: levelExits,
-        } = arrayJoin(levelIndices, this.gridLevels, (level, poly) => poly.id === `radar-level-${level}`);
+        } = arrayJoin(levelIndices, this._gridLevels, (level, poly) => poly.id === `radar-level-${level}`);
 
         levelExits.forEach(el => el.destroy());
 
@@ -182,7 +184,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             });
 
             polygon.autoFill = false;
-            this.gridGroup!.add(polygon);
+            this._gridGroup!.add(polygon);
 
             return polygon;
         });
@@ -193,7 +195,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             } as PolylineState;
         });
 
-        this.gridLevels = [
+        this._gridLevels = [
             ...newLevels,
             ...levelUpdates.map(([, poly]) => poly),
         ];
@@ -210,7 +212,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             left: lineEntries,
             inner: lineUpdates,
             right: lineExits,
-        } = arrayJoin(axisIndices, this.gridAxisLines, (idx, line) => line.id === `radar-axis-${idx}`);
+        } = arrayJoin(axisIndices, this._gridAxisLines, (idx, line) => line.id === `radar-axis-${idx}`);
 
         lineExits.forEach(el => el.destroy());
 
@@ -231,7 +233,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 } as Partial<LineState>,
             });
 
-            this.gridGroup!.add(line);
+            this._gridGroup!.add(line);
 
             return line;
         });
@@ -247,7 +249,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             } as Partial<LineState>;
         });
 
-        this.gridAxisLines = [
+        this._gridAxisLines = [
             ...newLines,
             ...lineUpdates.map(([, line]) => line),
         ];
@@ -277,7 +279,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             left: labelEntries,
             inner: labelUpdates,
             right: labelExits,
-        } = arrayJoin(axisIndices, this.gridLabels, (idx, label) => label.id === `radar-label-${idx}`);
+        } = arrayJoin(axisIndices, this._gridLabels, (idx, label) => label.id === `radar-label-${idx}`);
 
         // Fade exiting axis labels out before destroying them (instead of removing instantly) so
         // removing an axis animates symmetrically with adding one.
@@ -314,7 +316,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 } as Partial<TextState>,
             });
 
-            this.gridGroup!.add(label);
+            this._gridGroup!.add(label);
 
             return label;
         });
@@ -330,14 +332,14 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             } as Partial<TextState>;
         });
 
-        this.gridLabels = [
+        this._gridLabels = [
             ...newLabels,
             ...labelUpdates.map(([, label]) => label),
         ];
 
         // Animate: staggered grow on entry, smooth morph on update. Exclude exiting labels — they
         // run their own fade-out transition above and are destroyed on completion.
-        const allElements = this.gridGroup!.children.filter(element => !exitLabels.has(element));
+        const allElements = this._gridGroup!.children.filter(element => !exitLabels.has(element));
 
         if (isEntry) {
             return this.renderer.transition(allElements, (element, index, length) => ({
@@ -355,7 +357,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         }));
     }
 
-    private async drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
+    private async _drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
         const {
             data,
             series,
@@ -368,7 +370,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(series, this.seriesGroups, 'id');
+        } = arrayJoin(series, this._seriesGroups, 'id');
 
         seriesExits.forEach(el => el.destroy());
 
@@ -428,7 +430,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                     },
                 });
 
-                this.attachPointHover(marker, pd, srs.id, color);
+                this._attachPointHover(marker, pd, srs.id, color);
 
                 return marker;
             });
@@ -463,7 +465,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                         radius: 3,
                     };
 
-                    this.attachPointHover(marker, pointsData[index], srs.id, updateColor);
+                    this._attachPointHover(marker, pointsData[index], srs.id, updateColor);
                 }
             });
 
@@ -472,13 +474,13 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         this.scene.add(seriesEntryGroups);
 
-        this.seriesGroups = [
+        this._seriesGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
 
         // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
-        this.registerHighlightGroups(this.seriesGroups);
+        this.registerHighlightGroups(this._seriesGroups);
 
         // Animate entries
         const entryTransitions = seriesEntryGroups.map(group => {
@@ -571,14 +573,14 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 });
             }
 
-            const gridTransition = this.drawGrid(cx, cy, radius, axes, levels);
-            const seriesTransition = this.drawSeries(cx, cy, radius, computedMax);
+            const gridTransition = this._drawGrid(cx, cy, radius, axes, levels);
+            const seriesTransition = this._drawSeries(cx, cy, radius, computedMax);
 
             return Promise.all([gridTransition, seriesTransition]);
         });
     }
 
-    private attachPointHover(marker: Circle, pd: { point: Point;
+    private _attachPointHover(marker: Circle, pd: { point: Point;
         axisLabel: string;
         value: number; }, seriesId: string, color: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
@@ -597,7 +599,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,
                 y: marker.cy,

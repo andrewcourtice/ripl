@@ -107,10 +107,10 @@ function buildTree() {
 function assertQueryApi() {
     const { root, inner, target, sibling } = buildTree();
 
-    // getElementById + deprecated alias
+    // getElementById
     expect(root.getElementById('target')).toBe(target);
     expect(root.getElementById('missing')).toBeUndefined();
-    expect(root.getElementByID('sibling')).toBe(sibling);
+    expect(root.getElementById('sibling')).toBe(sibling);
 
     // query / queryAll (type, id, class, compound, descendant, child, sibling)
     expect(root.query('#target')).toBe(target);

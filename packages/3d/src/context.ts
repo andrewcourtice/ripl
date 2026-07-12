@@ -24,6 +24,7 @@ import type {
 
 import {
     degreesToRadians,
+    isGradientString,
 } from '@ripl/core';
 
 import type {
@@ -232,8 +233,14 @@ export class CanvasContext3D extends Context3D {
 
     public set fill(value) {
         this._fillCSS = value;
-        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-        setCanvasFill(this.context, value, bounds);
+
+        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
+        if (isGradientString(value)) {
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            setCanvasFill(this.context, value, bounds);
+        } else {
+            this.context.fillStyle = value;
+        }
     }
 
     public get filter(): string {
@@ -370,8 +377,14 @@ export class CanvasContext3D extends Context3D {
 
     public set stroke(value) {
         this._strokeCSS = value;
-        const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-        setCanvasStroke(this.context, value, bounds);
+
+        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
+        if (isGradientString(value)) {
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            setCanvasStroke(this.context, value, bounds);
+        } else {
+            this.context.strokeStyle = value;
+        }
     }
 
     public get textAlign(): TextAlignment {
@@ -526,7 +539,7 @@ export class CanvasContext3D extends Context3D {
             let lastLineWidth = -1;
 
             for (const face of faces) {
-                this.drawFace(face, lastFill, lastStroke, lastLineWidth);
+                this._drawFace(face, lastFill, lastStroke, lastLineWidth);
 
                 lastFill = face.fillColor;
                 lastStroke = face.strokeStyle ?? '';
@@ -535,7 +548,7 @@ export class CanvasContext3D extends Context3D {
         });
     }
 
-    private drawFace(
+    private _drawFace(
         face: ProjectedFace3D,
         lastFill: string,
         lastStroke: string,

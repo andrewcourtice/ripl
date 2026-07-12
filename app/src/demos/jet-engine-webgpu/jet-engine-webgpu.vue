@@ -149,6 +149,27 @@ const ROTATING_PARTS = new Set([
 
 const ROTATION_SPEED = 1.5; // radians per second
 
+// Upper bound on WebGPU acquisition — a present-but-broken adapter can leave the request pending forever.
+const WEBGPU_TIMEOUT_MS = 10000;
+
+/** Rejects with `message` if `promise` has not settled within `ms`, so a hung device falls back to the unsupported panel. */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), ms);
+
+        promise.then(
+            value => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            reason => {
+                clearTimeout(timer);
+                reject(reason);
+            },
+        );
+    });
+}
+
 const SHAFT_LENGTH_EXPLODED = 3.0;
 const SHAFT_LENGTH_ASSEMBLED = 1.8;
 
@@ -287,7 +308,18 @@ onMounted(async () => {
         return;
     }
 
-    const context = await createContext(viewport.value);
+    let context: WebGPUContext3D;
+
+    try {
+        context = await withTimeout(
+            createContext(viewport.value),
+            WEBGPU_TIMEOUT_MS,
+            'WebGPU initialisation timed out.',
+        );
+    } catch {
+        supported.value = false;
+        return;
+    }
 
     scene = createScene(context) as Scene<WebGPUContext3D>;
 

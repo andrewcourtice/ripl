@@ -3,6 +3,7 @@ import type {
     ElementEventMap,
     ElementOptions,
 } from './element';
+
 import {
     Element,
 } from './element';
@@ -23,6 +24,7 @@ import {
 import type {
     OneOrMore,
 } from '@ripl/utilities';
+
 import {
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -49,11 +51,11 @@ export function createGroup(...options: ConstructorParameters<typeof Group>) {
 /** A container element that manages child elements, providing scenegraph traversal, CSS-like querying, and composite bounding boxes. */
 export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends Element<BaseElementState, TEventMap> implements Queryable {
 
-    #elements = new Set<Element>();
+    private _elements = new Set<Element>();
 
     /** Returns a snapshot array of this group's direct child elements. */
     public get children() {
-        return Array.from(this.#elements);
+        return Array.from(this._elements);
     }
 
     constructor({
@@ -91,7 +93,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
             }
 
             item.parent = this as unknown as Group;
-            this.#elements.add(item);
+            this._elements.add(item);
         });
 
         this.updateSceneGraph();
@@ -107,7 +109,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
 
         elements.forEach(item => {
             item.parent = undefined;
-            this.#elements.delete(item);
+            this._elements.delete(item);
         });
 
         this.updateSceneGraph();
@@ -147,11 +149,6 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return this.graph(true).find(element => element.id === id) as TElement | undefined;
     }
 
-    /** @deprecated Use {@link getElementById}. */
-    public getElementByID<TElement extends Element = Element>(id: string) {
-        return this.getElementById<TElement>(id);
-    }
-
     /** Returns all descendant elements whose type matches one of the given type names. */
     public getElementsByType<TElement extends Element = Element>(types: OneOrMore<string>) {
         const typeList = new Set(valueOneOrMore(types));
@@ -175,12 +172,17 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         super.destroy();
     }
 
-    /** Renders all child elements in order within a save/restore context. */
+    /** Renders all child elements in ascending z-index order within a save/restore context. */
     public render(context: Context): void {
         context.save();
         context.markRenderStart();
 
-        this.children.forEach(element => element.render(context));
+        // `children` returns a fresh array, so this sort is safe. Rendering scene-less (a group drawn
+        // directly to a context) must honour z-index just as `Scene` does with its sorted buffer; the
+        // sort is stable, so equal-z-index siblings keep insertion order.
+        this.children
+            .sort((ea, eb) => ea.zIndex - eb.zIndex)
+            .forEach(element => element.render(context));
 
         context.markRenderEnd();
         context.restore();

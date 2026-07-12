@@ -108,9 +108,12 @@ import {
 
 const chart = createPackedCircleChart('#container', {
     data: [
-        { name: 'Alpha', size: 82 },
-        { name: 'Bravo', size: 45 },
-        { name: 'Charlie', size: 26 },
+        { name: 'Alpha',
+            size: 82 },
+        { name: 'Bravo',
+            size: 45 },
+        { name: 'Charlie',
+            size: 26 },
     ],
     key: 'name',
     value: 'size',

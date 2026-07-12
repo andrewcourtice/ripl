@@ -168,7 +168,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createAreaChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'month',
     stacked: false,
     series: [

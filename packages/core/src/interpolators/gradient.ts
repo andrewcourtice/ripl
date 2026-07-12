@@ -5,8 +5,12 @@ import {
 } from '../gradient';
 
 import type {
+    ConicGradient,
     Gradient,
     GradientColorStop,
+    GradientType,
+    LinearGradient,
+    RadialGradient,
 } from '../gradient';
 
 import {
@@ -59,49 +63,61 @@ function interpolateStops(stopsA: GradientColorStop[], stopsB: GradientColorStop
     }));
 }
 
-function interpolateMatchingGradients(gradientA: Gradient, gradientB: Gradient) {
+type StopsInterpolator = (position: number) => GradientColorStop[];
+type GradientInterpolator = (position: number) => Gradient;
+
+/**
+ * Builds a per-type interpolator between two same-type gradients. Callers guarantee both gradients
+ * share a type (via {@link canInterpolateGradients}), so narrowing casts here are safe.
+ */
+const GRADIENT_INTERPOLATORS: Record<GradientType, (gradientA: Gradient, gradientB: Gradient, stops: StopsInterpolator) => GradientInterpolator> = {
+    linear: (gradientA, gradientB, stops) => {
+        const from = gradientA as LinearGradient;
+        const to = gradientB as LinearGradient;
+        const angleInterpolator = interpolateNumber(from.angle, to.angle);
+
+        return position => ({
+            type: 'linear',
+            repeating: from.repeating,
+            angle: angleInterpolator(position),
+            stops: stops(position),
+        });
+    },
+    radial: (gradientA, gradientB, stops) => {
+        const from = gradientA as RadialGradient;
+        const to = gradientB as RadialGradient;
+        const posXInterpolator = interpolateNumber(from.position[0], to.position[0]);
+        const posYInterpolator = interpolateNumber(from.position[1], to.position[1]);
+
+        return position => ({
+            type: 'radial',
+            repeating: from.repeating,
+            shape: from.shape,
+            position: [posXInterpolator(position), posYInterpolator(position)],
+            stops: stops(position),
+        });
+    },
+    conic: (gradientA, gradientB, stops) => {
+        const from = gradientA as ConicGradient;
+        const to = gradientB as ConicGradient;
+        const angleInterpolator = interpolateNumber(from.angle, to.angle);
+        const posXInterpolator = interpolateNumber(from.position[0], to.position[0]);
+        const posYInterpolator = interpolateNumber(from.position[1], to.position[1]);
+
+        return position => ({
+            type: 'conic',
+            repeating: from.repeating,
+            angle: angleInterpolator(position),
+            position: [posXInterpolator(position), posYInterpolator(position)],
+            stops: stops(position),
+        });
+    },
+};
+
+function interpolateMatchingGradients(gradientA: Gradient, gradientB: Gradient): GradientInterpolator {
     const stopsInterpolator = interpolateStops(gradientA.stops, gradientB.stops);
 
-    if (gradientA.type === 'linear' && gradientB.type === 'linear') {
-        const angleInterpolator = interpolateNumber(gradientA.angle, gradientB.angle);
-
-        return (position: number): Gradient => ({
-            type: 'linear',
-            repeating: gradientA.repeating,
-            angle: angleInterpolator(position),
-            stops: stopsInterpolator(position),
-        });
-    }
-
-    if (gradientA.type === 'radial' && gradientB.type === 'radial') {
-        const posXInterpolator = interpolateNumber(gradientA.position[0], gradientB.position[0]);
-        const posYInterpolator = interpolateNumber(gradientA.position[1], gradientB.position[1]);
-
-        return (position: number): Gradient => ({
-            type: 'radial',
-            repeating: gradientA.repeating,
-            shape: gradientA.shape,
-            position: [posXInterpolator(position), posYInterpolator(position)],
-            stops: stopsInterpolator(position),
-        });
-    }
-
-    if (gradientA.type === 'conic' && gradientB.type === 'conic') {
-        const angleInterpolator = interpolateNumber(gradientA.angle, gradientB.angle);
-        const posXInterpolator = interpolateNumber(gradientA.position[0], gradientB.position[0]);
-        const posYInterpolator = interpolateNumber(gradientA.position[1], gradientB.position[1]);
-
-        return (position: number): Gradient => ({
-            type: 'conic',
-            repeating: gradientA.repeating,
-            angle: angleInterpolator(position),
-            position: [posXInterpolator(position), posYInterpolator(position)],
-            stops: stopsInterpolator(position),
-        });
-    }
-
-    // Fallback (should not reach here if canInterpolateGradients is correct)
-    return (position: number) => position > 0.5 ? gradientB : gradientA;
+    return GRADIENT_INTERPOLATORS[gradientA.type](gradientA, gradientB, stopsInterpolator);
 }
 
 /** Interpolator factory that transitions between two CSS gradient strings by interpolating their stops, angles, and positions. */

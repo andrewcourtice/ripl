@@ -95,10 +95,10 @@ function resolveInteraction(option: CameraInteractionOption | undefined, fallbac
 /** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
 export class Camera extends Disposer {
 
-    private context: Context3D & { element: unknown };
-    private dirty = false;
-    private scheduled = false;
-    private previousTouchAction = '';
+    private _context: Context3D & { element: unknown };
+    private _dirty = false;
+    private _scheduled = false;
+    private _previousTouchAction = '';
 
     private _position: Vector3;
     private _target: Vector3;
@@ -114,7 +114,7 @@ export class Camera extends Disposer {
 
     public set position(value: Vector3) {
         this._position = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get target() {
@@ -123,7 +123,7 @@ export class Camera extends Disposer {
 
     public set target(value: Vector3) {
         this._target = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get up() {
@@ -132,7 +132,7 @@ export class Camera extends Disposer {
 
     public set up(value: Vector3) {
         this._up = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get fov() {
@@ -141,7 +141,7 @@ export class Camera extends Disposer {
 
     public set fov(value: number) {
         this._fov = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get near() {
@@ -150,7 +150,7 @@ export class Camera extends Disposer {
 
     public set near(value: number) {
         this._near = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get far() {
@@ -159,7 +159,7 @@ export class Camera extends Disposer {
 
     public set far(value: number) {
         this._far = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     public get projection() {
@@ -168,13 +168,13 @@ export class Camera extends Disposer {
 
     public set projection(value: 'perspective' | 'orthographic') {
         this._projection = value;
-        this.markDirty();
+        this._markDirty();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(scene: Scene<any>, options?: CameraOptions) {
         super();
-        this.context = scene.context as Context3D & { element: unknown };
+        this._context = scene.context as Context3D & { element: unknown };
 
         this._position = options?.position ?? [0, 0, 5] as Vector3;
         this._target = options?.target ?? [0, 0, 0] as Vector3;
@@ -185,44 +185,44 @@ export class Camera extends Disposer {
         this._projection = options?.projection ?? 'perspective' as 'perspective' | 'orthographic';
 
         // Initial flush synchronously so the context is ready before first render
-        this.dirty = true;
+        this._dirty = true;
         this.flush();
 
         if (options?.interactions) {
-            this.attachInteractions(options.interactions);
+            this._attachInteractions(options.interactions);
         }
     }
 
-    private markDirty(): void {
-        this.dirty = true;
+    private _markDirty(): void {
+        this._dirty = true;
 
-        if (!this.scheduled) {
-            this.scheduled = true;
+        if (!this._scheduled) {
+            this._scheduled = true;
             queueMicrotask(() => this.flush());
         }
     }
 
     /** Flushes pending camera changes to the 3D context's view and projection matrices. */
     public flush(): void {
-        if (!this.dirty) {
-            this.scheduled = false;
+        if (!this._dirty) {
+            this._scheduled = false;
             return;
         }
 
-        this.dirty = false;
-        this.scheduled = false;
+        this._dirty = false;
+        this._scheduled = false;
 
-        this.context.setCamera(this._position, this._target, this._up);
+        this._context.setCamera(this._position, this._target, this._up);
 
         if (this._projection === 'perspective') {
-            this.context.setPerspective(this._fov, this._near, this._far);
+            this._context.setPerspective(this._fov, this._near, this._far);
         } else {
             const dist = vec3Distance(this._position, this._target);
             const halfH = dist * Math.tan(degreesToRadians(this._fov) / 2);
-            const aspect = this.context.width / (this.context.height || 1);
+            const aspect = this._context.width / (this._context.height || 1);
             const halfW = halfH * aspect;
 
-            this.context.setOrthographic(
+            this._context.setOrthographic(
                 -halfW, halfW,
                 -halfH, halfH,
                 this._near, this._far
@@ -247,7 +247,7 @@ export class Camera extends Disposer {
             this._target[2] + dist * Math.sin(phi) * Math.cos(theta),
         ];
 
-        this.markDirty();
+        this._markDirty();
     }
 
     public pan(dx: number, dy: number): void {
@@ -263,7 +263,7 @@ export class Camera extends Disposer {
         this._position = vec3Add(this._position, offset);
         this._target = vec3Add(this._target, offset);
 
-        this.markDirty();
+        this._markDirty();
     }
 
     public zoom(delta: number): void {
@@ -273,15 +273,15 @@ export class Camera extends Disposer {
 
         this._position = vec3Add(this._position, vec3Scale(direction, clampedDelta));
 
-        this.markDirty();
+        this._markDirty();
     }
 
     public lookAt(target: Vector3): void {
         this._target = target;
-        this.markDirty();
+        this._markDirty();
     }
 
-    private attachInteractions(interactions: boolean | CameraInteractions): void {
+    private _attachInteractions(interactions: boolean | CameraInteractions): void {
         const isBoolean = typeIsBoolean(interactions);
         const config = isBoolean ? {} as CameraInteractions : interactions;
         const fallback = isBoolean ? interactions : false;
@@ -290,9 +290,9 @@ export class Camera extends Disposer {
         const pivotConfig = resolveInteraction(config.pivot, fallback);
         const panConfig = resolveInteraction(config.pan, fallback);
 
-        const element = this.context.element as unknown as HTMLElement;
+        const element = this._context.element as unknown as HTMLElement;
 
-        this.previousTouchAction = element.style.touchAction;
+        this._previousTouchAction = element.style.touchAction;
         element.style.touchAction = 'none';
 
         let dragging = false;
@@ -456,8 +456,8 @@ export class Camera extends Disposer {
     }
 
     public override dispose(): void {
-        const element = this.context.element as unknown as HTMLElement;
-        element.style.touchAction = this.previousTouchAction;
+        const element = this._context.element as unknown as HTMLElement;
+        element.style.touchAction = this._previousTouchAction;
 
         super.dispose();
     }

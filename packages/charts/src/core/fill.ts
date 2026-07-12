@@ -2,6 +2,7 @@ import type {
     PolylineRenderer,
     PolylineRenderFunc,
 } from '@ripl/core';
+
 import {
     resolvePolylineRenderer,
 } from '@ripl/core';

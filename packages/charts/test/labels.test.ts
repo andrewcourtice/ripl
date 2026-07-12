@@ -46,11 +46,19 @@ describe('resolveRadialLabel', () => {
     });
 
     it('flips outside textAlign by hemisphere', () => {
-        const right = resolveRadialLabel({ ...base, startAngle: 0, endAngle: Math.PI / 2 });
+        const right = resolveRadialLabel({
+            ...base,
+            startAngle: 0,
+            endAngle: Math.PI / 2,
+        });
         expect(right.outside.textAlign).toBe('left');
 
         // Mid-angle in the left hemisphere (cos < 0).
-        const left = resolveRadialLabel({ ...base, startAngle: Math.PI * 0.75, endAngle: Math.PI * 1.25 });
+        const left = resolveRadialLabel({
+            ...base,
+            startAngle: Math.PI * 0.75,
+            endAngle: Math.PI * 1.25,
+        });
         expect(left.outside.textAlign).toBe('right');
     });
 });
@@ -96,7 +104,10 @@ describe('resolveSegmentLabelLayout', () => {
     });
 
     it('respects the minimum-angle clutter guard', () => {
-        const narrow = { ...geometry, endAngle: 0.05 };
+        const narrow = {
+            ...geometry,
+            endAngle: 0.05,
+        };
         const layout = resolveSegmentLabelLayout(narrow, normalizeSegmentLabels(true), 'A', 0.15);
         expect(layout.visible).toBe(false);
         expect(layout.content).toBe('');
@@ -105,7 +116,11 @@ describe('resolveSegmentLabelLayout', () => {
 
 describe('createSegmentLabel', () => {
     it('sets explicit styling so Canvas and SVG render identically', () => {
-        const label = createSegmentLabel({ x: 1, y: 2, content: 'Hello' });
+        const label = createSegmentLabel({
+            x: 1,
+            y: 2,
+            content: 'Hello',
+        });
         expect(label.font).toBe(SEGMENT_LABEL_FONT);
         expect(label.fill).toBe(SEGMENT_LABEL_INSIDE_FILL);
         expect(label.textAlign).toBe('center');
@@ -114,7 +129,14 @@ describe('createSegmentLabel', () => {
     });
 
     it('applies overrides', () => {
-        const label = createSegmentLabel({ x: 0, y: 0, content: 'X', fill: '#000', font: '600 9px sans-serif', textAlign: 'left' });
+        const label = createSegmentLabel({
+            x: 0,
+            y: 0,
+            content: 'X',
+            fill: '#000',
+            font: '600 9px sans-serif',
+            textAlign: 'left',
+        });
         expect(label.fill).toBe('#000');
         expect(label.font).toBe('600 9px sans-serif');
         expect(label.textAlign).toBe('left');

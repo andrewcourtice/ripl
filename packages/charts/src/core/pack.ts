@@ -126,9 +126,12 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
         next: null!,
         previous: null!,
     };
-    nodeA.next = nodeC.previous = nodeB;
-    nodeB.next = nodeA.previous = nodeC;
-    nodeC.next = nodeB.previous = nodeA;
+    nodeA.next = nodeB;
+    nodeC.previous = nodeB;
+    nodeB.next = nodeC;
+    nodeA.previous = nodeC;
+    nodeC.next = nodeA;
+    nodeB.previous = nodeA;
 
     // Attempt to place each remaining circle.
     pack:
@@ -272,10 +275,10 @@ function encloseBasis3(a: PackCircle, b: PackCircle, c: PackCircle): PackCircle 
     const xb = (b3 * c2 - b2 * c3) / ab;
     const ya = (a3 * d2 - a2 * d3) / (ab * 2) - y1;
     const yb = (a2 * c3 - a3 * c2) / ab;
-    const A = xb * xb + yb * yb - 1;
-    const B = 2 * (r1 + xa * xb + ya * yb);
-    const C = xa * xa + ya * ya - r1 * r1;
-    const r = -(Math.abs(A) > 1e-6 ? (B + Math.sqrt(B * B - 4 * A * C)) / (2 * A) : C / B);
+    const coefA = xb * xb + yb * yb - 1;
+    const coefB = 2 * (r1 + xa * xb + ya * yb);
+    const coefC = xa * xa + ya * ya - r1 * r1;
+    const r = -(Math.abs(coefA) > 1e-6 ? (coefB + Math.sqrt(coefB * coefB - 4 * coefA * coefC)) / (2 * coefA) : coefC / coefB);
 
     return {
         x: x1 + xa + xb * r,

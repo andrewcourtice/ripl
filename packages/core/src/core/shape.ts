@@ -8,6 +8,7 @@ import type {
     ElementIntersectionOptions,
     ElementOptions,
 } from './element';
+
 import {
     Element,
 } from './element';
@@ -26,6 +27,16 @@ export type Shape2DOptions<TState extends BaseElementState = BaseElementState> =
     autoStroke?: boolean;
     autoFill?: boolean;
     clip?: boolean;
+};
+
+/**
+ * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
+ * to testing both fill and stroke.
+ */
+const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPath, x: number, y: number) => boolean> = {
+    none: () => false,
+    stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
+    fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
 };
 
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
@@ -71,19 +82,11 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             return isAnyIntersecting();
         }
 
-        if (this.pointerEvents === 'none') {
-            return false;
-        }
+        const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
 
-        if (this.pointerEvents === 'stroke') {
-            return !!this.context.isPointInStroke(this.path, x, y);
-        }
-
-        if (this.pointerEvents === 'fill') {
-            return !!this.context.isPointInPath(this.path, x, y);
-        }
-
-        return isAnyIntersecting();
+        return hitTest
+            ? hitTest(this.context, this.path, x, y)
+            : isAnyIntersecting();
     }
 
     /** Renders this shape by creating a path, invoking the callback, and automatically applying fill/stroke or clipping. */

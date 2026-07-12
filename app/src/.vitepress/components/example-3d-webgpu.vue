@@ -30,6 +30,27 @@ import type {
     Context3D,
 } from '@ripl/3d';
 
+/** Upper bound on WebGPU acquisition — a present-but-broken adapter can leave `requestAdapter()` pending forever. */
+const WEBGPU_TIMEOUT_MS = 10000;
+
+/** Rejects with `message` if `promise` has not settled within `ms`, so a hung device fails gracefully. */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(message)), ms);
+
+        promise.then(
+            value => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            reason => {
+                clearTimeout(timer);
+                reject(reason);
+            },
+        );
+    });
+}
+
 const emit = defineEmits<{
     'context-changed': [context: Context3D]
 }>();
@@ -42,9 +63,13 @@ watchEffect(async () => {
 
     if (root.value) {
         try {
-            context = await createContext(root.value, {
-                clearColor: [0.05, 0.05, 0.1, 1],
-            });
+            context = await withTimeout(
+                createContext(root.value, {
+                    clearColor: [0.05, 0.05, 0.1, 1],
+                }),
+                WEBGPU_TIMEOUT_MS,
+                'WebGPU initialisation timed out.',
+            );
 
             emit('context-changed', context);
         } catch (e) {

@@ -46,9 +46,9 @@ In Node, use [`@ripl/node`](https://www.npmjs.com/package/@ripl/node) to obtain 
 ## Exporting
 
 ```typescript
-const text = context.export().toString();       // plain braille art
-const image = await context.export().toImage();  // ImageData (rasterized)
-const url = context.export().toURL();            // PNG object URL (browser)
+const text = context.export().toString(); // plain braille art
+const image = await context.export().toImage(); // ImageData (rasterized)
+const url = context.export().toURL(); // PNG object URL (browser)
 ```
 
 ## Documentation

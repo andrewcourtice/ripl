@@ -37,6 +37,7 @@ import {
 import type {
     LegendItem,
 } from '../components/legend';
+
 import {
     Legend,
 } from '../components/legend';
@@ -45,6 +46,7 @@ import type {
     ChartArea,
     ChartPadding,
 } from './layout';
+
 import {
     ChartLayout,
 } from './layout';
@@ -52,6 +54,7 @@ import {
 import type {
     ResolvedAnimation,
 } from './animation';
+
 import {
     ANIMATION_REFERENCE,
     resolveAnimation,
@@ -106,12 +109,12 @@ export class Chart<
     protected title?: ChartTitle;
     protected legend?: Legend;
 
-    private hasRendered: boolean = false;
+    private _hasRendered: boolean = false;
 
     protected options: TOptions;
     protected colorGenerator = getColorGenerator();
-    private seriesColorMap: Map<string, string> = new Map();
-    private highlightGroups: Map<string, Group> = new Map();
+    private _seriesColorMap: Map<string, string> = new Map();
+    private _highlightGroups: Map<string, Group> = new Map();
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
@@ -134,7 +137,7 @@ export class Chart<
 
     protected init() {
         this.scene.on('resize', () => {
-            if (this.hasRendered) {
+            if (this._hasRendered) {
                 this.render();
             }
         });
@@ -255,7 +258,7 @@ export class Chart<
             console.error('failed', error);
             this.scene.context.clear();
         } finally {
-            this.hasRendered = true;
+            this._hasRendered = true;
         }
     }
 
@@ -286,18 +289,18 @@ export class Chart<
         color?: string;
     }[]) {
         series.forEach(srs => {
-            if (!this.seriesColorMap.has(srs.id)) {
-                this.seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
+            if (!this._seriesColorMap.has(srs.id)) {
+                this._seriesColorMap.set(srs.id, srs.color ?? this.colorGenerator.next().value!);
             }
 
             if (srs.color) {
-                this.seriesColorMap.set(srs.id, srs.color);
+                this._seriesColorMap.set(srs.id, srs.color);
             }
         });
     }
 
     protected getSeriesColor(seriesId: string): string {
-        return this.seriesColorMap.get(seriesId) ?? '#a1afc4';
+        return this._seriesColorMap.get(seriesId) ?? '#a1afc4';
     }
 
     /**
@@ -306,7 +309,7 @@ export class Chart<
      * dim the other series when a legend entry is hovered. Replaces any previously registered set.
      */
     protected registerHighlightGroups(groups: Group[]) {
-        this.highlightGroups = new Map(groups.map(group => [group.id, group]));
+        this._highlightGroups = new Map(groups.map(group => [group.id, group]));
     }
 
     /**
@@ -321,13 +324,13 @@ export class Chart<
      * hidden and restoring returns to the true value.
      */
     protected highlightSeries(id: string | null) {
-        if (this.highlightGroups.size === 0) {
+        if (this._highlightGroups.size === 0) {
             return;
         }
 
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
-        this.highlightGroups.forEach((group, groupId) => {
+        this._highlightGroups.forEach((group, groupId) => {
             const active = id === null || groupId === id;
 
             group.graph(false).forEach(element => {

@@ -15,6 +15,7 @@ import type {
 import type {
     Point,
 } from '../math';
+
 import {
     Box,
     getEuclideanDistance,

@@ -21,45 +21,45 @@ import type {
 /** Manages GPU buffer allocation and per-frame mesh accumulation. */
 export class GeometryManager {
 
-    private device: GPUDevice;
-    private pipelineState: PipelineState;
+    private _device: GPUDevice;
+    private _pipelineState: PipelineState;
 
-    private vertexBuffer: GPUBuffer | null = null;
-    private indexBuffer: GPUBuffer | null = null;
-    private vertexCapacity = 0;
-    private indexCapacity = 0;
+    private _vertexBuffer: GPUBuffer | null = null;
+    private _indexBuffer: GPUBuffer | null = null;
+    private _vertexCapacity = 0;
+    private _indexCapacity = 0;
 
-    private submissions: MeshSubmission[] = [];
-    private modelUniformBuffers: GPUBuffer[] = [];
-    private modelBindGroups: GPUBindGroup[] = [];
-    private poolIndex = 0;
+    private _submissions: MeshSubmission[] = [];
+    private _modelUniformBuffers: GPUBuffer[] = [];
+    private _modelBindGroups: GPUBindGroup[] = [];
+    private _poolIndex = 0;
 
     constructor(device: GPUDevice, pipelineState: PipelineState) {
-        this.device = device;
-        this.pipelineState = pipelineState;
+        this._device = device;
+        this._pipelineState = pipelineState;
     }
 
     /** Resets per-frame state for a new render pass. */
     public beginFrame(): void {
-        this.submissions.length = 0;
-        this.poolIndex = 0;
+        this._submissions.length = 0;
+        this._poolIndex = 0;
     }
 
     /** Queues a mesh for rendering this frame. */
     public submit(submission: MeshSubmission): void {
-        this.submissions.push(submission);
+        this._submissions.push(submission);
     }
 
     /** Uploads all queued meshes to GPU buffers and returns draw commands. */
     public flush(): FlushResult | null {
-        if (this.submissions.length === 0) {
+        if (this._submissions.length === 0) {
             return null;
         }
 
         let totalVertices = 0;
         let totalIndices = 0;
 
-        for (const sub of this.submissions) {
+        for (const sub of this._submissions) {
             totalVertices += sub.vertices.length / 10;
             totalIndices += sub.indices.length;
         }
@@ -67,8 +67,8 @@ export class GeometryManager {
         const vertexByteSize = totalVertices * VERTEX_STRIDE;
         const indexByteSize = totalIndices * 4;
 
-        this.ensureVertexBuffer(vertexByteSize);
-        this.ensureIndexBuffer(indexByteSize);
+        this._ensureVertexBuffer(vertexByteSize);
+        this._ensureIndexBuffer(indexByteSize);
 
         const vertexData = new Float32Array(totalVertices * 10);
         const indexData = new Uint32Array(totalIndices);
@@ -79,7 +79,7 @@ export class GeometryManager {
 
         const draws: DrawCommand[] = [];
 
-        for (const sub of this.submissions) {
+        for (const sub of this._submissions) {
             const vertCount = sub.vertices.length / 10;
 
             vertexData.set(sub.vertices, vertexOffset * 10);
@@ -88,7 +88,7 @@ export class GeometryManager {
                 indexData[indexOffset + i] = sub.indices[i] + baseVertex;
             }
 
-            const modelBindGroup = this.getModelBindGroup(sub.modelMatrix, sub.normalMatrix);
+            const modelBindGroup = this._getModelBindGroup(sub.modelMatrix, sub.normalMatrix);
 
             draws.push({
                 indexCount: sub.indices.length,
@@ -101,66 +101,66 @@ export class GeometryManager {
             baseVertex += vertCount;
         }
 
-        this.device.queue.writeBuffer(this.vertexBuffer!, 0, vertexData);
-        this.device.queue.writeBuffer(this.indexBuffer!, 0, indexData);
+        this._device.queue.writeBuffer(this._vertexBuffer!, 0, vertexData);
+        this._device.queue.writeBuffer(this._indexBuffer!, 0, indexData);
 
         return {
-            vertexBuffer: this.vertexBuffer!,
-            indexBuffer: this.indexBuffer!,
+            vertexBuffer: this._vertexBuffer!,
+            indexBuffer: this._indexBuffer!,
             draws,
         };
     }
 
     /** Releases all GPU buffers. */
     public destroy(): void {
-        this.vertexBuffer?.destroy();
-        this.indexBuffer?.destroy();
+        this._vertexBuffer?.destroy();
+        this._indexBuffer?.destroy();
 
-        for (const buffer of this.modelUniformBuffers) {
+        for (const buffer of this._modelUniformBuffers) {
             buffer.destroy();
         }
 
-        this.vertexBuffer = null;
-        this.indexBuffer = null;
-        this.modelUniformBuffers.length = 0;
-        this.modelBindGroups.length = 0;
+        this._vertexBuffer = null;
+        this._indexBuffer = null;
+        this._modelUniformBuffers.length = 0;
+        this._modelBindGroups.length = 0;
     }
 
-    private ensureVertexBuffer(byteSize: number): void {
-        if (this.vertexBuffer && this.vertexCapacity >= byteSize) {
+    private _ensureVertexBuffer(byteSize: number): void {
+        if (this._vertexBuffer && this._vertexCapacity >= byteSize) {
             return;
         }
 
-        this.vertexBuffer?.destroy();
-        this.vertexCapacity = Math.max(byteSize, this.vertexCapacity * 2);
-        this.vertexBuffer = this.device.createBuffer({
-            size: this.vertexCapacity,
+        this._vertexBuffer?.destroy();
+        this._vertexCapacity = Math.max(byteSize, this._vertexCapacity * 2);
+        this._vertexBuffer = this._device.createBuffer({
+            size: this._vertexCapacity,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
     }
 
-    private ensureIndexBuffer(byteSize: number): void {
-        if (this.indexBuffer && this.indexCapacity >= byteSize) {
+    private _ensureIndexBuffer(byteSize: number): void {
+        if (this._indexBuffer && this._indexCapacity >= byteSize) {
             return;
         }
 
-        this.indexBuffer?.destroy();
-        this.indexCapacity = Math.max(byteSize, this.indexCapacity * 2);
-        this.indexBuffer = this.device.createBuffer({
-            size: this.indexCapacity,
+        this._indexBuffer?.destroy();
+        this._indexCapacity = Math.max(byteSize, this._indexCapacity * 2);
+        this._indexBuffer = this._device.createBuffer({
+            size: this._indexCapacity,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
     }
 
-    private getModelBindGroup(modelMatrix: Matrix4, normalMatrix: Matrix4): GPUBindGroup {
-        if (this.poolIndex >= this.modelUniformBuffers.length) {
-            const buffer = this.device.createBuffer({
+    private _getModelBindGroup(modelMatrix: Matrix4, normalMatrix: Matrix4): GPUBindGroup {
+        if (this._poolIndex >= this._modelUniformBuffers.length) {
+            const buffer = this._device.createBuffer({
                 size: MODEL_UNIFORM_SIZE,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
             });
 
-            const bindGroup = this.device.createBindGroup({
-                layout: this.pipelineState.modelBindGroupLayout,
+            const bindGroup = this._device.createBindGroup({
+                layout: this._pipelineState.modelBindGroupLayout,
                 entries: [
                     {
                         binding: 0,
@@ -171,20 +171,20 @@ export class GeometryManager {
                 ],
             });
 
-            this.modelUniformBuffers.push(buffer);
-            this.modelBindGroups.push(bindGroup);
+            this._modelUniformBuffers.push(buffer);
+            this._modelBindGroups.push(bindGroup);
         }
 
-        const buffer = this.modelUniformBuffers[this.poolIndex];
+        const buffer = this._modelUniformBuffers[this._poolIndex];
         const data = new Float32Array(MODEL_UNIFORM_SIZE / 4);
 
         data.set(modelMatrix, 0);
         data.set(normalMatrix, 16);
 
-        this.device.queue.writeBuffer(buffer, 0, data);
+        this._device.queue.writeBuffer(buffer, 0, data);
 
-        const bindGroup = this.modelBindGroups[this.poolIndex];
-        this.poolIndex++;
+        const bindGroup = this._modelBindGroups[this._poolIndex];
+        this._poolIndex++;
 
         return bindGroup;
     }

@@ -128,8 +128,8 @@ describe('Group', () => {
         const el = createElement('rect', { id: 'target' });
         group.add(el);
 
-        expect(group.getElementByID('target')).toBe(el);
-        expect(group.getElementByID('missing')).toBeUndefined();
+        expect(group.getElementById('target')).toBe(el);
+        expect(group.getElementById('missing')).toBeUndefined();
     });
 
     test('Should find elements by type', () => {

@@ -20,6 +20,10 @@ import {
     TerminalPath,
 } from './path';
 
+import type {
+    TerminalPathCommandType,
+} from './path';
+
 import {
     fillPolygon,
     flattenArc,
@@ -134,15 +138,153 @@ export interface TerminalContextOptions extends ContextOptions {
     logicalHeight?: number;
 }
 
-/** Terminal rendering context that rasterizes Ripl elements into character-based output via a `TerminalOutput` adapter. */
+/** Coordinate mapping shared by both command passes: points via `sx`/`sy`, radii via `s`. */
+interface TerminalCommandScale {
+    sx(value: number): number;
+    sy(value: number): number;
+    s: number;
+}
+
+/** Contour-building state passed to a command's `toContour` handler. */
+interface ContourContext extends TerminalCommandScale {
+    contours: Vertex[][];
+    flush(): void;
+    append(point: Vertex): void;
+}
+
+/** Rasterization state passed to a command's `rasterize` handler. */
+interface RasterContext extends TerminalCommandScale {
+    plot: PixelCallback;
+}
+
+/** A path command's two rendering passes: contour flattening (for fills) and outline rasterization. */
+interface TerminalCommandHandler {
+    toContour(context: ContourContext, args: number[]): void;
+    rasterize(context: RasterContext, args: number[]): void;
+}
+
+/**
+ * Dispatch table keyed by path command type, replacing the parallel `switch` statements in
+ * {@link TerminalContext.buildContours} and {@link TerminalContext.executeCommands}.
+ */
+const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommandHandler> = {
+    moveTo: {
+        toContour({ sx, sy, flush, append }, args) {
+            flush();
+            append({
+                x: sx(args[0]),
+                y: sy(args[1]),
+            });
+        },
+        rasterize() {
+            // No pixels to draw for moveTo.
+        },
+    },
+    lineTo: {
+        toContour({ sx, sy, append }, args) {
+            append({
+                x: sx(args[0]),
+                y: sy(args[1]),
+            });
+            append({
+                x: sx(args[2]),
+                y: sy(args[3]),
+            });
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
+        },
+    },
+    arc: {
+        toContour({ sx, sy, s, append }, args) {
+            flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
+                rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
+            } else {
+                rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
+            }
+        },
+    },
+    ellipse: {
+        toContour({ sx, sy, s, contours, flush }, args) {
+            flush();
+            contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s));
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
+        },
+    },
+    bezierCurveTo: {
+        toContour({ sx, sy, append }, args) {
+            flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
+        },
+    },
+    quadraticCurveTo: {
+        toContour({ sx, sy, append }, args) {
+            flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
+        },
+    },
+    rect: {
+        toContour({ sx, sy, s, contours, flush }, args) {
+            flush();
+            contours.push([
+                {
+                    x: sx(args[0]),
+                    y: sy(args[1]),
+                },
+                {
+                    x: sx(args[0]) + args[2] * s,
+                    y: sy(args[1]),
+                },
+                {
+                    x: sx(args[0]) + args[2] * s,
+                    y: sy(args[1]) + args[3] * s,
+                },
+                {
+                    x: sx(args[0]),
+                    y: sy(args[1]) + args[3] * s,
+                },
+            ]);
+        },
+        rasterize({ sx, sy, s, plot }, args) {
+            rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
+        },
+    },
+    closePath: {
+        toContour({ flush }) {
+            flush();
+        },
+        rasterize({ sx, sy, plot }, args) {
+            rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
+        },
+    },
+};
+
+/**
+ * Terminal rendering context that rasterizes Ripl elements into character-based output via a
+ * `TerminalOutput` adapter.
+ *
+ * Unsupported operations (inherited as no-ops from {@link Context}): affine transforms
+ * (`rotate`/`scale`/`translate`/`setTransform`/`transform`), path clipping (`applyClip`), image
+ * drawing (`drawImage`) and pointer hit testing (`isPointInPath`/`isPointInStroke`). Elements are
+ * positioned through the context's own `scaleX`/`scaleY`/`rasterScale` mapping instead.
+ */
 export class TerminalContext extends Context<Element> {
 
-    private output: TerminalOutput;
-    private rasterizer: Rasterizer;
-    private logicalWidth?: number;
-    private logicalHeight?: number;
+    private _output: TerminalOutput;
+    private _rasterizer: Rasterizer;
+    private _logicalWidth?: number;
+    private _logicalHeight?: number;
     /** Uniform logical→raster scale factor (1 when no logical size is set). */
-    private rasterScale: number = 1;
+    private _rasterScale: number = 1;
 
     constructor(output: TerminalOutput, options?: TerminalContextOptions) {
         const {
@@ -156,20 +298,20 @@ export class TerminalContext extends Context<Element> {
         // Pass a dummy element — terminal has no DOM element
         super('terminal', {} as Element, options);
 
-        this.output = output;
-        this.logicalWidth = logicalWidth;
-        this.logicalHeight = logicalHeight;
-        this.rasterizer = rasterizer || new BrailleRasterizer(
+        this._output = output;
+        this._logicalWidth = logicalWidth;
+        this._logicalHeight = logicalHeight;
+        this._rasterizer = rasterizer || new BrailleRasterizer(
             width ?? output.columns,
             height ?? output.rows
         );
 
-        this.applyScaling();
+        this._applyScaling();
 
         if (output.onResize) {
             const dispose = output.onResize((cols, rows) => {
-                this.rasterizer.resize(cols, rows);
-                this.applyScaling();
+                this._rasterizer.resize(cols, rows);
+                this._applyScaling();
             });
 
             this.retain({
@@ -184,39 +326,39 @@ export class TerminalContext extends Context<Element> {
      * the logical size and `scaleX`/`scaleY` uniformly scale + centre (letterbox) it into the grid,
      * mirroring how the canvas context maps CSS pixels onto its device-pixel backing store.
      */
-    private applyScaling(): void {
-        const pixelWidth = this.rasterizer.pixelWidth;
-        const pixelHeight = this.rasterizer.pixelHeight;
+    private _applyScaling(): void {
+        const pixelWidth = this._rasterizer.pixelWidth;
+        const pixelHeight = this._rasterizer.pixelHeight;
 
-        if (!this.logicalWidth || !this.logicalHeight) {
-            this.rasterScale = 1;
+        if (!this._logicalWidth || !this._logicalHeight) {
+            this._rasterScale = 1;
             this.rescale(pixelWidth, pixelHeight);
             return;
         }
 
-        const scale = Math.min(pixelWidth / this.logicalWidth, pixelHeight / this.logicalHeight);
-        const offsetX = (pixelWidth - this.logicalWidth * scale) / 2;
-        const offsetY = (pixelHeight - this.logicalHeight * scale) / 2;
+        const scale = Math.min(pixelWidth / this._logicalWidth, pixelHeight / this._logicalHeight);
+        const offsetX = (pixelWidth - this._logicalWidth * scale) / 2;
+        const offsetY = (pixelHeight - this._logicalHeight * scale) / 2;
 
-        this.rasterScale = scale;
+        this._rasterScale = scale;
 
         // `rescale` resets scaleX/scaleY to identity (and emits `resize`), so set the letterbox
         // mapping immediately after it.
-        this.rescale(this.logicalWidth, this.logicalHeight);
-        this.scaleX = scaleContinuous([0, this.logicalWidth], [offsetX, offsetX + this.logicalWidth * scale]);
-        this.scaleY = scaleContinuous([0, this.logicalHeight], [offsetY, offsetY + this.logicalHeight * scale]);
+        this.rescale(this._logicalWidth, this._logicalHeight);
+        this.scaleX = scaleContinuous([0, this._logicalWidth], [offsetX, offsetX + this._logicalWidth * scale]);
+        this.scaleY = scaleContinuous([0, this._logicalHeight], [offsetY, offsetY + this._logicalHeight * scale]);
     }
 
     public clear(): void {
-        this.output.write('\x1b[H');
-        this.rasterizer.clear();
+        this._output.write('\x1b[H');
+        this._rasterizer.clear();
     }
 
     public markRenderEnd(): void {
         super.markRenderEnd();
 
         if (this.renderDepth === 0) {
-            this.flush();
+            this._flush();
         }
     }
 
@@ -228,14 +370,17 @@ export class TerminalContext extends Context<Element> {
         return new ContextText(options);
     }
 
+    // `fillRule` is intentionally ignored: the braille scanline rasterizer (`fillPolygon`) implements
+    // only the even-odd rule. Honouring non-zero winding would require tracking edge directions per
+    // crossing, which is out of scope for the character-grid renderer.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: ContextElement, fillRule?: FillRule): void {
         const color = colorToAnsiFg(this.fill);
 
         if (element instanceof TerminalPath) {
-            this.rasterizePath(element, color, true);
+            this._rasterizePath(element, color, true);
         } else if (element instanceof ContextText) {
-            this.rasterizeText(element, color);
+            this._rasterizeText(element, color);
         }
     }
 
@@ -243,14 +388,14 @@ export class TerminalContext extends Context<Element> {
         const color = colorToAnsiFg(this.stroke);
 
         if (element instanceof TerminalPath) {
-            this.rasterizePath(element, color, false);
+            this._rasterizePath(element, color, false);
         }
     }
 
     public measureText(text: string): TextMetrics {
         // Report metrics in logical units so layout code sizes text consistently with its space.
-        const charWidth = BRAILLE_CELL_WIDTH / this.rasterScale;
-        const charHeight = BRAILLE_CELL_HEIGHT / this.rasterScale;
+        const charWidth = BRAILLE_CELL_WIDTH / this._rasterScale;
+        const charHeight = BRAILLE_CELL_HEIGHT / this._rasterScale;
 
         return {
             width: text.length * charWidth,
@@ -269,10 +414,10 @@ export class TerminalContext extends Context<Element> {
     }
 
     public export(): ContextExport {
-        const text = this.rasterizer.serialize({
+        const text = this._rasterizer.serialize({
             ansi: false,
         });
-        const imageData = this.rasterizer.toImageData();
+        const imageData = this._rasterizer.toImageData();
 
         return {
             toString: () => text,
@@ -281,15 +426,15 @@ export class TerminalContext extends Context<Element> {
         };
     }
 
-    private flush(): void {
-        const data = this.rasterizer.serialize();
-        this.output.write(data);
+    private _flush(): void {
+        const data = this._rasterizer.serialize();
+        this._output.write(data);
     }
 
-    private rasterizeText(text: ContextText, color: string): void {
-        const rasterizer = this.rasterizer;
+    private _rasterizeText(text: ContextText, color: string): void {
+        const rasterizer = this._rasterizer;
         const content = text.maxWidth
-            ? text.content.slice(0, Math.floor((text.maxWidth * this.rasterScale) / BRAILLE_CELL_WIDTH))
+            ? text.content.slice(0, Math.floor((text.maxWidth * this._rasterScale) / BRAILLE_CELL_WIDTH))
             : text.content;
 
         // Position follows the logical space; glyphs stay cell-sized. Approximate textAlign/
@@ -305,19 +450,19 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
-    private rasterizePath(path: TerminalPath, color: string, fill: boolean): void {
-        const rasterizer = this.rasterizer;
+    private _rasterizePath(path: TerminalPath, color: string, fill: boolean): void {
+        const rasterizer = this._rasterizer;
 
         const plot: PixelCallback = (x, y) => {
             rasterizer.setPixel(x, y, color);
         };
 
         if (fill) {
-            fillPolygon(this.buildContours(path), plot);
+            fillPolygon(this._buildContours(path), plot);
         }
 
         // Always draw the outline
-        this.executeCommands(path, plot);
+        this._executeCommands(path, plot);
     }
 
     /**
@@ -325,10 +470,7 @@ export class TerminalContext extends Context<Element> {
      * semantics) so the interior can be filled with the even-odd rule. Mirrors the coordinate mapping
      * used by {@link executeCommands}: points via `scaleX`/`scaleY`, radii via `rasterScale`.
      */
-    private buildContours(path: TerminalPath): Vertex[][] {
-        const sx = this.scaleX;
-        const sy = this.scaleY;
-        const s = this.rasterScale;
+    private _buildContours(path: TerminalPath): Vertex[][] {
         const contours: Vertex[][] = [];
 
         let current: Vertex[] = [];
@@ -349,72 +491,17 @@ export class TerminalContext extends Context<Element> {
             }
         };
 
+        const context: ContourContext = {
+            sx: this.scaleX,
+            sy: this.scaleY,
+            s: this._rasterScale,
+            contours,
+            flush,
+            append,
+        };
+
         for (const cmd of path.commands) {
-            const args = cmd.args;
-
-            switch (cmd.type) {
-                case 'moveTo':
-                    flush();
-                    append({
-                        x: sx(args[0]),
-                        y: sy(args[1]),
-                    });
-                    break;
-
-                case 'lineTo':
-                    append({
-                        x: sx(args[0]),
-                        y: sy(args[1]),
-                    });
-                    append({
-                        x: sx(args[2]),
-                        y: sy(args[3]),
-                    });
-                    break;
-
-                case 'arc':
-                    flattenArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5]).forEach(append);
-                    break;
-
-                case 'ellipse':
-                    flush();
-                    contours.push(flattenEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s));
-                    break;
-
-                case 'bezierCurveTo':
-                    flattenCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7])).forEach(append);
-                    break;
-
-                case 'quadraticCurveTo':
-                    flattenQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5])).forEach(append);
-                    break;
-
-                case 'rect':
-                    flush();
-                    contours.push([
-                        {
-                            x: sx(args[0]),
-                            y: sy(args[1]),
-                        },
-                        {
-                            x: sx(args[0]) + args[2] * s,
-                            y: sy(args[1]),
-                        },
-                        {
-                            x: sx(args[0]) + args[2] * s,
-                            y: sy(args[1]) + args[3] * s,
-                        },
-                        {
-                            x: sx(args[0]),
-                            y: sy(args[1]) + args[3] * s,
-                        },
-                    ]);
-                    break;
-
-                case 'closePath':
-                    flush();
-                    break;
-            }
+            TERMINAL_COMMAND_HANDLERS[cmd.type].toContour(context, cmd.args);
         }
 
         flush();
@@ -422,52 +509,17 @@ export class TerminalContext extends Context<Element> {
         return contours;
     }
 
-    private executeCommands(path: TerminalPath, plot: PixelCallback): void {
+    private _executeCommands(path: TerminalPath, plot: PixelCallback): void {
         // Map logical coordinates into the raster (identity when no logical size is configured).
-        const sx = this.scaleX;
-        const sy = this.scaleY;
-        const s = this.rasterScale;
+        const context: RasterContext = {
+            sx: this.scaleX,
+            sy: this.scaleY,
+            s: this._rasterScale,
+            plot,
+        };
 
         for (const cmd of path.commands) {
-            const args = cmd.args;
-
-            switch (cmd.type) {
-                case 'moveTo':
-                    // No pixels to draw for moveTo
-                    break;
-
-                case 'lineTo':
-                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-                    break;
-
-                case 'arc':
-                    if (Math.abs(args[4] - args[3]) >= Math.PI * 2 - 0.001) {
-                        rasterizeCircle(sx(args[0]), sy(args[1]), args[2] * s, plot);
-                    } else {
-                        rasterizeArc(sx(args[0]), sy(args[1]), args[2] * s, args[3], args[4], !!args[5], plot);
-                    }
-                    break;
-
-                case 'ellipse':
-                    rasterizeEllipse(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
-                    break;
-
-                case 'bezierCurveTo':
-                    rasterizeCubicBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), sx(args[6]), sy(args[7]), plot);
-                    break;
-
-                case 'quadraticCurveTo':
-                    rasterizeQuadBezier(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), sx(args[4]), sy(args[5]), plot);
-                    break;
-
-                case 'rect':
-                    rasterizeRect(sx(args[0]), sy(args[1]), args[2] * s, args[3] * s, plot);
-                    break;
-
-                case 'closePath':
-                    rasterizeLine(sx(args[0]), sy(args[1]), sx(args[2]), sy(args[3]), plot);
-                    break;
-            }
+            TERMINAL_COMMAND_HANDLERS[cmd.type].rasterize(context, cmd.args);
         }
     }
 

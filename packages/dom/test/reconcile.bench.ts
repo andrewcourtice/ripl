@@ -3,11 +3,14 @@ import {
     describe,
 } from 'vitest';
 
+import type {
+    ReconcilerOptions,
+    VNode,
+} from '../src';
+
 import {
     ensureGroupPath,
     reconcileNode,
-    ReconcilerOptions,
-    VNode,
 } from '../src';
 
 interface BenchElement {

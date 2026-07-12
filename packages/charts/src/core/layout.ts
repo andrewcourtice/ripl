@@ -34,49 +34,49 @@ export type ChartSide = 'top' | 'bottom' | 'left' | 'right';
  */
 export class ChartLayout {
 
-    private topEdge: number;
-    private leftEdge: number;
-    private rightEdge: number;
-    private bottomEdge: number;
+    private _topEdge: number;
+    private _leftEdge: number;
+    private _rightEdge: number;
+    private _bottomEdge: number;
 
     constructor(width: number, height: number, padding: ChartPadding) {
-        this.topEdge = padding.top;
-        this.leftEdge = padding.left;
-        this.rightEdge = width - padding.right;
-        this.bottomEdge = height - padding.bottom;
+        this._topEdge = padding.top;
+        this._leftEdge = padding.left;
+        this._rightEdge = width - padding.right;
+        this._bottomEdge = height - padding.bottom;
     }
 
     /** The remaining free area after all reservations so far. */
     public get area(): ChartArea {
         return {
-            x: this.leftEdge,
-            y: this.topEdge,
-            width: Math.max(0, this.rightEdge - this.leftEdge),
-            height: Math.max(0, this.bottomEdge - this.topEdge),
+            x: this._leftEdge,
+            y: this._topEdge,
+            width: Math.max(0, this._rightEdge - this._leftEdge),
+            height: Math.max(0, this._bottomEdge - this._topEdge),
         };
     }
 
     /** Reserves a band of the given thickness from the top edge and returns it. */
     public reserveTop(amount: number): ChartArea {
         const region: ChartArea = {
-            x: this.leftEdge,
-            y: this.topEdge,
-            width: Math.max(0, this.rightEdge - this.leftEdge),
+            x: this._leftEdge,
+            y: this._topEdge,
+            width: Math.max(0, this._rightEdge - this._leftEdge),
             height: amount,
         };
 
-        this.topEdge += amount;
+        this._topEdge += amount;
         return region;
     }
 
     /** Reserves a band of the given thickness from the bottom edge and returns it. */
     public reserveBottom(amount: number): ChartArea {
-        this.bottomEdge -= amount;
+        this._bottomEdge -= amount;
 
         return {
-            x: this.leftEdge,
-            y: this.bottomEdge,
-            width: Math.max(0, this.rightEdge - this.leftEdge),
+            x: this._leftEdge,
+            y: this._bottomEdge,
+            width: Math.max(0, this._rightEdge - this._leftEdge),
             height: amount,
         };
     }
@@ -84,25 +84,25 @@ export class ChartLayout {
     /** Reserves a band of the given thickness from the left edge and returns it. */
     public reserveLeft(amount: number): ChartArea {
         const region: ChartArea = {
-            x: this.leftEdge,
-            y: this.topEdge,
+            x: this._leftEdge,
+            y: this._topEdge,
             width: amount,
-            height: Math.max(0, this.bottomEdge - this.topEdge),
+            height: Math.max(0, this._bottomEdge - this._topEdge),
         };
 
-        this.leftEdge += amount;
+        this._leftEdge += amount;
         return region;
     }
 
     /** Reserves a band of the given thickness from the right edge and returns it. */
     public reserveRight(amount: number): ChartArea {
-        this.rightEdge -= amount;
+        this._rightEdge -= amount;
 
         return {
-            x: this.rightEdge,
-            y: this.topEdge,
+            x: this._rightEdge,
+            y: this._topEdge,
             width: amount,
-            height: Math.max(0, this.bottomEdge - this.topEdge),
+            height: Math.max(0, this._bottomEdge - this._topEdge),
         };
     }
 

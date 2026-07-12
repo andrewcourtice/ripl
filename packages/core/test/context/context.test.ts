@@ -440,7 +440,7 @@ describe('Context', () => {
             canvasStub.save.mockClear();
             canvasStub.restore.mockClear();
 
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
+
             ctx.layer(() => {});
 
             expect(canvasStub.save).toHaveBeenCalledTimes(1);
@@ -509,7 +509,7 @@ describe('Context', () => {
 
             expect(ctx.renderedElements.length).toBe(1);
 
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
+
             ctx.batch(() => {});
 
             expect(ctx.renderedElements).toEqual([]);
@@ -1148,13 +1148,13 @@ describe('Context', () => {
             }
 
             ctx.markRenderEnd();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             (ctx as any).invalidateTrackedElements();
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         function callHitTest(ctx: ReturnType<typeof create>, events: string[], x: number, y: number): any[] {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
             return (ctx as any).hitTest(events, x, y);
         }
 

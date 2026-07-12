@@ -38,6 +38,7 @@ layouts), `pie.ts`/`radial-bar.ts` (arcs).
 
 ## Anatomy of a chart
 
+<!-- eslint-skip -->
 ```ts
 export interface <Name>ChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
@@ -95,7 +96,7 @@ Inside `super.render(async () => { ... })`:
    ```ts
    const { left: entries, inner: updates, right: exits } =
        arrayJoin(data, this.groups, (item, group) => group.id === getKey(item));
-   exits.forEach(group => group.destroy());          // or exitElement(...) to animate out
+   exits.forEach(group => group.destroy()); // or exitElement(...) to animate out
    ```
    `left` = entering (new), `inner` = `[data, element]` pairs to update, `right` = leaving. Persist the
    combined `[...entryGroups, ...updates.map(([, g]) => g)]` back onto `this.groups`.
@@ -109,9 +110,9 @@ Inside `super.render(async () => { ... })`:
    const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
    this.renderer.transition(entryCircles, (element, index, length) => ({
        duration: enter.duration,
-       delay: stagger(index, length, enter.duration),   // sequence the entry
+       delay: stagger(index, length, enter.duration), // sequence the entry
        ease: easeOutCubic,
-       state: element.data as CircleState,               // animate toward the stashed target
+       state: element.data as CircleState, // animate toward the stashed target
    }));
    ```
    Use `ANIMATION_REFERENCE.enter | update | hover` so `animation: false` and custom durations are
@@ -193,10 +194,23 @@ VitePress page with a live example. Copy an existing page (e.g. `radial-bar.md`)
 </ripl-example>
 
 <script setup lang="ts">
-import { useRiplChart } from '../../.vitepress/compositions/example';
-import { buildCommonOptions, useChartConfig } from '../../.vitepress/compositions/use-chart-config';
-import { create<Name>Chart } from '@ripl/charts';
-import { ref, watch } from 'vue';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
+    create<Name>Chart,
+} from '@ripl/charts';
+
+import {
+    ref,
+    watch,
+} from 'vue';
 
 const config = useChartConfig({ features: { title: true, legend: true, animation: true }, title: '…' });
 const { contextChanged, chart } = useRiplChart(context =>
@@ -216,6 +230,11 @@ Demo data rules (so transitions actually demonstrate):
 
 Then document Usage, Data Format, and an **Options** bullet list (one line per option, with defaults),
 and add the chart to the "Available Charts" table in `getting-started.md`.
+
+> **Imports follow the repo grouping convention** (`ripl/import-export-spacing`, see `AGENTS.md`):
+> each braced import on its own multi-line group with a trailing comma and alphabetised members;
+> side-effect and default imports group by kind; groups of differing kinds are blank-separated. Doc-page
+> `<script setup>` blocks are linted, so keep this format or `yarn lint` will fail.
 
 ## Gallery snapshot
 

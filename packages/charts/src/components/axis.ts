@@ -1,6 +1,7 @@
 import type {
     ChartComponentOptions,
 } from './_base';
+
 import {
     ChartComponent,
 } from './_base';
@@ -12,6 +13,7 @@ import {
 import type {
     ResolvedAnimation,
 } from '../core/animation';
+
 import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
@@ -23,6 +25,7 @@ import type {
     Scale,
     Text,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,
@@ -119,7 +122,7 @@ export class ChartAxis extends ChartComponent {
     protected group: Group;
     protected line: Line;
 
-    private labelDimension: LabelDimension;
+    private _labelDimension: LabelDimension;
     protected cachedTicks?: unknown[];
 
     protected get ticks() {
@@ -135,7 +138,7 @@ export class ChartAxis extends ChartComponent {
         ] = this.scale.range;
 
         const rangeSize = Math.abs(rangeMax - rangeMin);
-        const maxSize = this.measureLabels(ticks, LABEL_DIMENSION_MAP[this.labelDimension]);
+        const maxSize = this.measureLabels(ticks, LABEL_DIMENSION_MAP[this._labelDimension]);
         const tickRatio = rangeSize / (ticks.length * maxSize);
         const dropCount = Math.ceil(1 / tickRatio);
         const shouldDrop = tickRatio < 1;
@@ -177,7 +180,7 @@ export class ChartAxis extends ChartComponent {
         this.padding = padding;
         this.tickSize = tickSize;
         this.tickCount = tickCount;
-        this.labelDimension = labelDimension;
+        this._labelDimension = labelDimension;
         this.title = options.title;
         this.titleFont = options.titleFont ?? `bold ${labelFont}`;
         this.formatLabel = options.formatLabel;
@@ -256,7 +259,8 @@ export class ChartAxis extends ChartComponent {
     }
 
     public render() {
-
+        // No direct render pass: concrete axes draw through their tick/label
+        // helpers, so the base component render is intentionally a no-op.
     }
 
 }

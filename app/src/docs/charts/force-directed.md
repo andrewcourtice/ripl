@@ -131,13 +131,23 @@ import {
 
 const chart = createForceDirectedChart('#container', {
     nodes: [
-        { id: 'a', label: 'A', group: 'x' },
-        { id: 'b', label: 'B', group: 'x' },
-        { id: 'c', label: 'C', group: 'y' },
+        { id: 'a',
+            label: 'A',
+            group: 'x' },
+        { id: 'b',
+            label: 'B',
+            group: 'x' },
+        { id: 'c',
+            label: 'C',
+            group: 'y' },
     ],
     links: [
-        { source: 'a', target: 'b', value: 4 },
-        { source: 'b', target: 'c', value: 2 },
+        { source: 'a',
+            target: 'b',
+            value: 4 },
+        { source: 'b',
+            target: 'c',
+            value: 2 },
     ],
 });
 ```

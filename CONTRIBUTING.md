@@ -83,24 +83,36 @@ ESLint enforces most style rules automatically. Key points:
 - **Variables, functions** — `camelCase`
 - **Classes, interfaces, types** — `PascalCase`
 - **Constants** — `UPPER_SNAKE_CASE`
-- **Min 2-char identifiers** (exceptions: `_`, `i`, `x`, `y`, and single-letter math/color vars)
+- **Min 2-char identifiers** (exceptions: `_`, `i`, `j`, `k`, `x`, `y`, and single-letter math/color vars)
 
 ### Import Ordering
 
-Always use named imports/exports (no default exports). One import per line, trailing comma, alphabetical within each group, blank line between groups:
+Ripl's own packages use named imports/exports (no default exports); default imports come only from third-party modules. One import per line within braces, trailing comma, and members sorted alphabetically within each set of braces.
+
+Imports are **grouped by kind** (`ripl/import-export-spacing`): same-kind statements sit together with no blank line, and different kinds are separated by a blank line — side-effect imports group together, default imports group together, and each braced (`import { … }` / `import type { … }`) import is its own blank-separated group. The same applies to re-exports (`export * from` groups; braced `export { … }` is separated). The rule only inserts blank lines; it never reorders imports.
 
 ```typescript
-// 1. Internal (current package)
+import 'some-side-effect';
+import 'another-side-effect';
+
+import classNames from 'classnames';
+import mitt from 'mitt';
+
+// Internal (current package)
 import {
     CONTEXT_OPERATIONS,
     TRACKED_EVENTS,
 } from './constants';
 
-// 2. Other Ripl packages
+// Other Ripl packages
 import {
     typeIsArray,
     typeIsFunction,
 } from '@ripl/utilities';
+
+import type {
+    Context,
+} from '../context';
 ```
 
 Use `import type { ... }` for type-only imports.
@@ -110,7 +122,7 @@ Use `import type { ... }` for type-only imports.
 - **Strict mode** — `"strict": true`, no implicit any, strict null checks
 - **Interfaces over types** for object definitions
 - **Named exports only** — no default exports
-- **Explicit member accessibility** — every class member must have `private`, `protected`, `public`, or `static`
+- **Explicit member accessibility** — every class member must have `private`, `protected`, `public`, or `static`; `private` members carry a leading underscore (`private _name`)
 - **Generics** for reusable, type-safe code
 
 ## Architecture Quick Reference

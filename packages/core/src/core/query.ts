@@ -1,6 +1,7 @@
 import type {
     OneOrMore,
 } from '@ripl/utilities';
+
 import {
     typeIsBoolean,
     typeIsFunction,

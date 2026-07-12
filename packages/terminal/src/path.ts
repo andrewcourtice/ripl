@@ -29,10 +29,10 @@ export class TerminalPath extends ContextPath {
 
     public readonly commands: TerminalPathCommand[] = [];
 
-    private cursorX = 0;
-    private cursorY = 0;
-    private startX = 0;
-    private startY = 0;
+    private _cursorX = 0;
+    private _cursorY = 0;
+    private _startX = 0;
+    private _startY = 0;
 
     constructor(id?: string) {
         super(id);
@@ -44,8 +44,8 @@ export class TerminalPath extends ContextPath {
             args: [x, y, radius, startAngle, endAngle, counterclockwise ? 1 : 0],
         });
 
-        this.cursorX = x + radius * Math.cos(endAngle);
-        this.cursorY = y + radius * Math.sin(endAngle);
+        this._cursorX = x + radius * Math.cos(endAngle);
+        this._cursorY = y + radius * Math.sin(endAngle);
     }
 
     public circle(x: number, y: number, radius: number): void {
@@ -62,21 +62,21 @@ export class TerminalPath extends ContextPath {
     public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
         this.commands.push({
             type: 'bezierCurveTo',
-            args: [this.cursorX, this.cursorY, cp1x, cp1y, cp2x, cp2y, x, y],
+            args: [this._cursorX, this._cursorY, cp1x, cp1y, cp2x, cp2y, x, y],
         });
 
-        this.cursorX = x;
-        this.cursorY = y;
+        this._cursorX = x;
+        this._cursorY = y;
     }
 
     public closePath(): void {
         this.commands.push({
             type: 'closePath',
-            args: [this.cursorX, this.cursorY, this.startX, this.startY],
+            args: [this._cursorX, this._cursorY, this._startX, this._startY],
         });
 
-        this.cursorX = this.startX;
-        this.cursorY = this.startY;
+        this._cursorX = this._startX;
+        this._cursorY = this._startY;
     }
 
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
@@ -85,18 +85,18 @@ export class TerminalPath extends ContextPath {
             args: [x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise ? 1 : 0],
         });
 
-        this.cursorX = x + radiusX * Math.cos(endAngle);
-        this.cursorY = y + radiusY * Math.sin(endAngle);
+        this._cursorX = x + radiusX * Math.cos(endAngle);
+        this._cursorY = y + radiusY * Math.sin(endAngle);
     }
 
     public lineTo(x: number, y: number): void {
         this.commands.push({
             type: 'lineTo',
-            args: [this.cursorX, this.cursorY, x, y],
+            args: [this._cursorX, this._cursorY, x, y],
         });
 
-        this.cursorX = x;
-        this.cursorY = y;
+        this._cursorX = x;
+        this._cursorY = y;
     }
 
     public moveTo(x: number, y: number): void {
@@ -105,20 +105,20 @@ export class TerminalPath extends ContextPath {
             args: [x, y],
         });
 
-        this.cursorX = x;
-        this.cursorY = y;
-        this.startX = x;
-        this.startY = y;
+        this._cursorX = x;
+        this._cursorY = y;
+        this._startX = x;
+        this._startY = y;
     }
 
     public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
         this.commands.push({
             type: 'quadraticCurveTo',
-            args: [this.cursorX, this.cursorY, cpx, cpy, x, y],
+            args: [this._cursorX, this._cursorY, cpx, cpy, x, y],
         });
 
-        this.cursorX = x;
-        this.cursorY = y;
+        this._cursorX = x;
+        this._cursorY = y;
     }
 
     public rect(x: number, y: number, width: number, height: number): void {
@@ -127,10 +127,10 @@ export class TerminalPath extends ContextPath {
             args: [x, y, width, height],
         });
 
-        this.cursorX = x;
-        this.cursorY = y;
-        this.startX = x;
-        this.startY = y;
+        this._cursorX = x;
+        this._cursorY = y;
+        this._startX = x;
+        this._startY = y;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

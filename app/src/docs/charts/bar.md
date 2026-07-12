@@ -147,7 +147,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createBarChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'quarter',
     mode: 'grouped',        // 'grouped' | 'stacked'
     orientation: 'vertical', // 'vertical' | 'horizontal'

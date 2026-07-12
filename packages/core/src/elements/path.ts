@@ -30,7 +30,7 @@ export type PathRenderer = (path: ContextPath, state: PathState) => void;
 /** A general-purpose shape rendered by a user-supplied path renderer callback. */
 export class Path extends Shape2D<PathState> {
 
-    private pathRenderer?: PathRenderer;
+    private _pathRenderer?: PathRenderer;
 
     public get x() {
         return this.getStateValue('x');
@@ -72,12 +72,12 @@ export class Path extends Shape2D<PathState> {
 
         super('path', shapeOptions);
 
-        this.pathRenderer = pathRenderer;
+        this._pathRenderer = pathRenderer;
     }
 
     /** Replaces the current path renderer callback. */
     public setPathRenderer(renderer: PathRenderer) {
-        this.pathRenderer = renderer;
+        this._pathRenderer = renderer;
     }
 
     public getBoundingBox(): Box {
@@ -91,7 +91,7 @@ export class Path extends Shape2D<PathState> {
 
     public render(context: Context) {
         return super.render(context, path => {
-            this.pathRenderer?.(path, {
+            this._pathRenderer?.(path, {
                 x: this.x,
                 y: this.y,
                 width: this.width,

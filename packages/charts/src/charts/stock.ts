@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -54,6 +55,7 @@ import type {
     RectState,
     Scale,
 } from '@ripl/core';
+
 import {
     Box,
     createGroup,
@@ -135,16 +137,16 @@ const VOLUME_HEIGHT_RATIO = 0.2;
  */
 export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>, StockChartEventMap> {
 
-    private candlestickGroups: Group[] = [];
-    private volumeGroup?: Group;
-    private yScale!: Scale;
-    private xScale!: Scale<string>;
-    private volumeScale!: Scale;
-    private xAxis!: ChartXAxis;
-    private yAxis!: ChartYAxis;
-    private tooltip!: Tooltip;
-    private grid?: Grid;
-    private crosshair?: Crosshair;
+    private _candlestickGroups: Group[] = [];
+    private _volumeGroup?: Group;
+    private _yScale!: Scale;
+    private _xScale!: Scale<string>;
+    private _volumeScale!: Scale;
+    private _xAxis!: ChartXAxis;
+    private _yAxis!: ChartYAxis;
+    private _tooltip!: Tooltip;
+    private _grid?: Grid;
+    private _crosshair?: Crosshair;
 
     constructor(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
         super(target, options);
@@ -159,7 +161,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         const tooltipOpts = normalizeTooltip(options.tooltip);
 
         if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
+            this._tooltip = new Tooltip({
                 scene: this.scene,
                 renderer: this.renderer,
                 font: tooltipOpts.font,
@@ -168,7 +170,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             });
         }
 
-        this.xAxis = new ChartXAxis({
+        this._xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -179,7 +181,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             title: xAxis.title,
         });
 
-        this.yAxis = new ChartYAxis({
+        this._yAxis = new ChartYAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
@@ -191,7 +193,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         });
 
         if (gridOpts.visible) {
-            this.grid = new Grid({
+            this._grid = new Grid({
                 scene: this.scene,
                 renderer: this.renderer,
                 horizontal: true,
@@ -203,7 +205,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         }
 
         if (crosshairOpts.visible) {
-            this.crosshair = new Crosshair({
+            this._crosshair = new Crosshair({
                 scene: this.scene,
                 renderer: this.renderer,
                 vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
@@ -216,7 +218,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         this.init();
     }
 
-    private getAccessor<TReturn>(accessor: keyof TData | ((item: TData) => TReturn)): (item: TData) => TReturn {
+    private _getAccessor<TReturn>(accessor: keyof TData | ((item: TData) => TReturn)): (item: TData) => TReturn {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeIsFunction(accessor) ? accessor : (item: any) => item[accessor] as TReturn;
     }
@@ -225,7 +227,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
      * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
      * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
-    private attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
+    private _attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
         const label = `O: ${formatNumber(values.open)}  H: ${formatNumber(values.high)}  L: ${formatNumber(values.low)}  C: ${formatNumber(values.close)}`;
 
         const payload = (point: { x: number;
@@ -244,7 +246,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             renderer: this.renderer,
             duration: this.getAnimationDuration(200),
             ease: easeOutQuart,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: anchorX,
                 y: anchorY,
@@ -262,7 +264,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         });
     }
 
-    private getCandlestickValues(item: TData): CandlestickValues {
+    private _getCandlestickValues(item: TData): CandlestickValues {
         const {
             key: keyAccessor,
             open: openAccessor,
@@ -272,11 +274,11 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             volume: volumeAccessor,
         } = this.options;
 
-        const getKey = this.getAccessor<string>(keyAccessor);
-        const getOpen = this.getAccessor<number>(openAccessor);
-        const getHigh = this.getAccessor<number>(highAccessor);
-        const getLow = this.getAccessor<number>(lowAccessor);
-        const getClose = this.getAccessor<number>(closeAccessor);
+        const getKey = this._getAccessor<string>(keyAccessor);
+        const getOpen = this._getAccessor<number>(openAccessor);
+        const getHigh = this._getAccessor<number>(highAccessor);
+        const getLow = this._getAccessor<number>(lowAccessor);
+        const getClose = this._getAccessor<number>(closeAccessor);
 
         const open = getOpen(item);
         const close = getClose(item);
@@ -287,12 +289,12 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             high: getHigh(item),
             low: getLow(item),
             close,
-            volume: volumeAccessor ? this.getAccessor<number>(volumeAccessor)(item) : 0,
+            volume: volumeAccessor ? this._getAccessor<number>(volumeAccessor)(item) : 0,
             isUp: close >= open,
         };
     }
 
-    private async drawCandlesticks(chartLeft: number, chartRight: number) {
+    private async _drawCandlesticks(chartLeft: number, chartRight: number) {
         const {
             data,
             upColor = DEFAULT_UP_COLOR,
@@ -308,21 +310,21 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             right: exits,
         } = arrayJoin(
             data,
-            this.candlestickGroups,
-            (item, group) => group.id === `candle-${this.getCandlestickValues(item).key}`
+            this._candlestickGroups,
+            (item, group) => group.id === `candle-${this._getCandlestickValues(item).key}`
         );
 
         exits.forEach(el => el.destroy());
 
         const entryGroups = entries.map((item) => {
-            const values = this.getCandlestickValues(item);
+            const values = this._getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
 
-            const x = this.xScale(values.key);
-            const yOpen = this.yScale(values.open);
-            const yClose = this.yScale(values.close);
-            const yHigh = this.yScale(values.high);
-            const yLow = this.yScale(values.low);
+            const x = this._xScale(values.key);
+            const yOpen = this._yScale(values.open);
+            const yClose = this._yScale(values.close);
+            const yHigh = this._yScale(values.high);
+            const yLow = this._yScale(values.low);
 
             const bodyTop = Math.min(yOpen, yClose);
             const bodyHeight = Math.max(Math.abs(yOpen - yClose), 1);
@@ -371,20 +373,20 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 children: [wick, body],
             });
 
-            this.attachBodyHover(body, values, color, x, bodyTop);
+            this._attachBodyHover(body, values, color, x, bodyTop);
 
             return group;
         });
 
         const updateGroups = updates.map(([item, group]) => {
-            const values = this.getCandlestickValues(item);
+            const values = this._getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
 
-            const x = this.xScale(values.key);
-            const yOpen = this.yScale(values.open);
-            const yClose = this.yScale(values.close);
-            const yHigh = this.yScale(values.high);
-            const yLow = this.yScale(values.low);
+            const x = this._xScale(values.key);
+            const yOpen = this._yScale(values.open);
+            const yClose = this._yScale(values.close);
+            const yHigh = this._yScale(values.high);
+            const yLow = this._yScale(values.low);
 
             const bodyTop = Math.min(yOpen, yClose);
             const bodyHeight = Math.max(Math.abs(yOpen - yClose), 1);
@@ -402,7 +404,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                     borderRadius: 1,
                 } as RectState;
 
-                this.attachBodyHover(body, values, color, x, bodyTop);
+                this._attachBodyHover(body, values, color, x, bodyTop);
             }
 
             if (wick) {
@@ -421,7 +423,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
         this.scene.add(entryGroups);
 
-        this.candlestickGroups = [
+        this._candlestickGroups = [
             ...entryGroups,
             ...updateGroups,
         ];
@@ -472,7 +474,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         ].flat());
     }
 
-    private async drawVolume(
+    private async _drawVolume(
         chartLeft: number,
         chartRight: number,
         volumeTop: number,
@@ -491,13 +493,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
         const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
 
-        const volumes = data.map(item => this.getAccessor<number>(volumeAccessor)(item));
+        const volumes = data.map(item => this._getAccessor<number>(volumeAccessor)(item));
         const volumeExtent = getExtent(volumes.concat(0), functionIdentity);
 
-        this.volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
+        this._volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
 
-        if (this.volumeGroup) {
-            const existingBars = this.volumeGroup.getElementsByType('rect') as Rect[];
+        if (this._volumeGroup) {
+            const existingBars = this._volumeGroup.getElementsByType('rect') as Rect[];
 
             const {
                 left: barEntries,
@@ -506,16 +508,16 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             } = arrayJoin(
                 data,
                 existingBars,
-                (item, bar) => bar.id === `vol-${this.getCandlestickValues(item).key}`
+                (item, bar) => bar.id === `vol-${this._getCandlestickValues(item).key}`
             );
 
             barExits.forEach(el => el.destroy());
 
             barEntries.forEach(item => {
-                const values = this.getCandlestickValues(item);
+                const values = this._getCandlestickValues(item);
                 const color = values.isUp ? upColor : downColor;
-                const x = this.xScale(values.key);
-                const barHeight = Math.abs(volumeBottom - this.volumeScale(values.volume));
+                const x = this._xScale(values.key);
+                const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
 
                 const bar = createRect({
                     id: `vol-${values.key}`,
@@ -533,14 +535,14 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                     } as RectState,
                 });
 
-                this.volumeGroup!.add(bar);
+                this._volumeGroup!.add(bar);
             });
 
             barUpdates.forEach(([item, bar]) => {
-                const values = this.getCandlestickValues(item);
+                const values = this._getCandlestickValues(item);
                 const color = values.isUp ? upColor : downColor;
-                const x = this.xScale(values.key);
-                const barHeight = Math.abs(volumeBottom - this.volumeScale(values.volume));
+                const x = this._xScale(values.key);
+                const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
 
                 bar.data = {
                     fill: setColorAlpha(color, 0.3),
@@ -551,7 +553,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 } as RectState;
             });
 
-            const allBars = this.volumeGroup.getElementsByType('rect') as Rect[];
+            const allBars = this._volumeGroup.getElementsByType('rect') as Rect[];
 
             return this.renderer.transition(allBars, (element, index, length) => ({
                 duration: this.getAnimationDuration(800),
@@ -561,16 +563,16 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             }));
         }
 
-        this.volumeGroup = createGroup({
+        this._volumeGroup = createGroup({
             id: 'volume',
             zIndex: -1,
         });
 
         const bars = data.map(item => {
-            const values = this.getCandlestickValues(item);
+            const values = this._getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
-            const x = this.xScale(values.key);
-            const barHeight = Math.abs(volumeBottom - this.volumeScale(values.volume));
+            const x = this._xScale(values.key);
+            const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
 
             return createRect({
                 id: `vol-${values.key}`,
@@ -589,8 +591,8 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             });
         });
 
-        bars.forEach(bar => this.volumeGroup!.add(bar));
-        this.scene.add(this.volumeGroup);
+        bars.forEach(bar => this._volumeGroup!.add(bar));
+        this.scene.add(this._volumeGroup);
 
         return this.renderer.transition(bars, (element, index, length) => ({
             duration: this.getAnimationDuration(800),
@@ -608,7 +610,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 volume: volumeAccessor,
             } = this.options;
 
-            const allValues = data.map(item => this.getCandlestickValues(item));
+            const allValues = data.map(item => this._getCandlestickValues(item));
 
             const highs = allValues.map(v => v.high);
             const lows = allValues.map(v => v.low);
@@ -629,19 +631,19 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 ? area.height * VOLUME_HEIGHT_RATIO
                 : 0;
 
-            this.yScale = scaleContinuous(priceExtent, [bottom - volumeHeight, chartTop], {
+            this._yScale = scaleContinuous(priceExtent, [bottom - volumeHeight, chartTop], {
                 padToTicks: 10,
             });
 
-            this.yAxis.scale = this.yScale;
-            this.yAxis.bounds = new Box(
+            this._yAxis.scale = this._yScale;
+            this._yAxis.bounds = new Box(
                 chartTop,
                 left,
                 bottom - volumeHeight,
                 right
             );
 
-            const yAxisBoundingBox = this.yAxis.getBoundingBox();
+            const yAxisBoundingBox = this._yAxis.getBoundingBox();
 
             // Build x scale as callable with metadata
             const xConvert = (value: string) => {
@@ -658,7 +660,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 return keys[Math.max(0, Math.min(keys.length - 1, index))];
             };
 
-            this.xScale = Object.assign(
+            this._xScale = Object.assign(
                 (value: string) => xConvert(value),
                 {
                     domain: keys,
@@ -676,33 +678,33 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 }
             ) as unknown as Scale<string>;
 
-            this.xAxis.scale = this.xScale;
-            this.xAxis.bounds = new Box(
+            this._xAxis.scale = this._xScale;
+            this._xAxis.bounds = new Box(
                 chartTop,
                 yAxisBoundingBox.right,
                 bottom - volumeHeight,
                 right
             );
 
-            const xAxisBoundingBox = this.xAxis.getBoundingBox();
+            const xAxisBoundingBox = this._xAxis.getBoundingBox();
 
             // Recalculate y scale with final chart area
-            this.yScale = scaleContinuous(priceExtent, [xAxisBoundingBox.top, chartTop], {
+            this._yScale = scaleContinuous(priceExtent, [xAxisBoundingBox.top, chartTop], {
                 padToTicks: 10,
             });
 
-            this.yAxis.scale = this.yScale;
-            this.yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this._yAxis.scale = this._yScale;
+            this._yAxis.bounds.bottom = xAxisBoundingBox.top;
 
             const chartLeft = yAxisBoundingBox.right + 20;
             const chartRight = right;
 
             // Render grid
-            if (this.grid) {
-                const yTicks = this.yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this.yScale(tick));
+            if (this._grid) {
+                const yTicks = this._yScale.ticks(10);
+                const yTickPositions = yTicks.map(tick => this._yScale(tick));
 
-                this.grid.render(
+                this._grid.render(
                     [],
                     yTickPositions,
                     yAxisBoundingBox.right,
@@ -713,7 +715,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             }
 
             // Setup crosshair
-            this.crosshair?.setup(
+            this._crosshair?.setup(
                 yAxisBoundingBox.right,
                 chartTop,
                 right - yAxisBoundingBox.right,
@@ -725,13 +727,13 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             const volumeBottom = bottom;
 
             const promises: Promise<unknown>[] = [
-                this.xAxis.render(),
-                this.yAxis.render(),
-                this.drawCandlesticks(chartLeft, chartRight),
+                this._xAxis.render(),
+                this._yAxis.render(),
+                this._drawCandlesticks(chartLeft, chartRight),
             ];
 
             if (hasVolume) {
-                promises.push(this.drawVolume(chartLeft, chartRight, volumeTop, volumeBottom));
+                promises.push(this._drawVolume(chartLeft, chartRight, volumeTop, volumeBottom));
             }
 
             return Promise.all(promises);

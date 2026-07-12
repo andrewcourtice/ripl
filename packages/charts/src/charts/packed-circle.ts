@@ -1,6 +1,7 @@
 import type {
     BaseChartOptions,
 } from '../core/chart';
+
 import {
     Chart,
 } from '../core/chart';
@@ -33,6 +34,7 @@ import {
 import type {
     PackCircle,
 } from '../core/pack';
+
 import {
     enclosingCircle,
     packSiblings,
@@ -50,6 +52,7 @@ import type {
     Group,
     Text,
 } from '@ripl/core';
+
 import {
     createCircle,
     createGroup,
@@ -110,14 +113,14 @@ interface PackedNode {
  */
 export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartOptions<TData>, PackedCircleChartEventMap> {
 
-    private groups: Group[] = [];
-    private enclosing?: Circle;
-    private tooltip: Tooltip;
+    private _groups: Group[] = [];
+    private _enclosing?: Circle;
+    private _tooltip: Tooltip;
 
     constructor(target: string | HTMLElement | Context, options: PackedCircleChartOptions<TData>) {
         super(target, options);
 
-        this.tooltip = new Tooltip({
+        this._tooltip = new Tooltip({
             scene: this.scene,
             renderer: this.renderer,
         });
@@ -125,7 +128,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
         this.init();
     }
 
-    private attachCellHover(circle: Circle, node: PackedNode, content: string) {
+    private _attachCellHover(circle: Circle, node: PackedNode, content: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
@@ -141,7 +144,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             renderer: this.renderer,
             duration: hover.duration,
             ease: hover.ease,
-            tooltip: this.tooltip,
+            tooltip: this._tooltip,
             anchor: () => ({
                 x: node.x,
                 y: node.y - node.r,
@@ -188,10 +191,10 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
             // A single visible circle that contains the whole pack, drawn behind the cells. The pack
             // is scaled so its enclosing circle has radius `fitRadius`, so this exactly bounds it.
-            const enclosingIsNew = !this.enclosing;
+            const enclosingIsNew = !this._enclosing;
 
-            if (!this.enclosing) {
-                this.enclosing = createCircle({
+            if (!this._enclosing) {
+                this._enclosing = createCircle({
                     id: 'packed-circle__enclosing',
                     class: 'packed-circle__enclosing',
                     cx,
@@ -209,9 +212,9 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                     } as CircleState,
                 });
 
-                this.scene.add(this.enclosing);
+                this.scene.add(this._enclosing);
             } else {
-                this.enclosing.data = {
+                this._enclosing.data = {
                     cx,
                     cy,
                     radius: fitRadius,
@@ -246,7 +249,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(nodes, this.groups, (node, group) => node.key === group.id);
+            } = arrayJoin(nodes, this._groups, (node, group) => node.key === group.id);
 
             exits.forEach(group => group.destroy());
 
@@ -272,7 +275,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                     } as CircleState,
                 });
 
-                this.attachCellHover(circle, node, `${node.label}: ${formatValue(node.value)}`);
+                this._attachCellHover(circle, node, `${node.label}: ${formatValue(node.value)}`);
 
                 const children: (Circle | Text)[] = [circle];
 
@@ -310,7 +313,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                         fill: restFill,
                     } as CircleState;
 
-                    this.attachCellHover(circle, node, `${node.label}: ${formatValue(node.value)}`);
+                    this._attachCellHover(circle, node, `${node.label}: ${formatValue(node.value)}`);
                 }
 
                 let text = group.getElementsByType('text')[0] as Text | undefined;
@@ -342,7 +345,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
             this.scene.add(entryGroups);
 
-            this.groups = [
+            this._groups = [
                 ...entryGroups,
                 ...updates.map(([, group]) => group),
             ];
@@ -355,10 +358,10 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             const updateCircles = updates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             return Promise.all([
-                this.renderer.transition(this.enclosing, {
+                this.renderer.transition(this._enclosing, {
                     duration: (enclosingIsNew ? enter : update).duration,
                     ease: easeOutCubic,
-                    state: this.enclosing.data as CircleState,
+                    state: this._enclosing.data as CircleState,
                 }),
                 this.renderer.transition(entryCircles, (element, index, length) => ({
                     duration: enter.duration,

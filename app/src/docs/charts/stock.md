@@ -123,7 +123,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createStockChart('#container', {
-    data: [...],
+    data: [/* ... */],
     key: 'date',
     open: 'open',
     high: 'high',

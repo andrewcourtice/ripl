@@ -5,17 +5,138 @@ import {
 import {
     includeIgnoreFile,
 } from '@eslint/compat';
+
 import eslint from '@eslint/js';
+
 import markdown from '@eslint/markdown';
+
 import tseslint from 'typescript-eslint';
+
 import stylistic from '@stylistic/eslint-plugin';
+
 import vue from 'eslint-plugin-vue';
+
 import globals from 'globals';
+
 import vueParser from 'vue-eslint-parser';
 
 const gitignorePath = fileURLToPath(new URL('.gitignore', import.meta.url));
 
 const INDENT = 4;
+
+/**
+ * Enforce the canonical import/export grouping: statements of the same *kind*
+ * may sit directly adjacent when that kind is groupable — consecutive
+ * side-effect imports (`import 'x'`), consecutive default imports, consecutive
+ * namespace imports, and consecutive `export * from` re-exports — while any two
+ * adjacent import/export statements of *different* kinds (and every braced
+ * `import { … }` / `import type { … }` / `export { … }`) must be separated by a
+ * blank line.
+ *
+ * The rule only ever *inserts* a blank line between statements that stay exactly
+ * where they are — it never reorders, sorts, merges or removes anything, so it
+ * cannot change module load order or introduce circular dependencies.
+ */
+const GROUPABLE_KINDS = new Set([
+    'side-effect',
+    'default',
+    'namespace',
+    'export-star',
+]);
+
+/** Classifies a top-level statement into an import/export grouping kind, or `null` when out of scope. */
+function importExportKind(node) {
+    if (node.type === 'ImportDeclaration') {
+        const { specifiers } = node;
+
+        if (!specifiers.length) {
+            return 'side-effect';
+        }
+
+        if (specifiers.some(specifier => specifier.type === 'ImportSpecifier')) {
+            return 'named';
+        }
+
+        if (specifiers.some(specifier => specifier.type === 'ImportNamespaceSpecifier')) {
+            return 'namespace';
+        }
+
+        return 'default';
+    }
+
+    if (node.type === 'ExportAllDeclaration') {
+        return 'export-star';
+    }
+
+    // `export { … }` / `export { … } from '…'` — braced re-exports (never a declaration export).
+    if (node.type === 'ExportNamedDeclaration' && !node.declaration && node.specifiers.length) {
+        return 'export-named';
+    }
+
+    return null;
+}
+
+const importExportSpacing = {
+    meta: {
+        type: 'layout',
+        fixable: 'whitespace',
+        schema: [],
+        messages: {
+            missingBlank: 'Imports/exports of different kinds must be separated by a blank line; only consecutive same-kind side-effect, default, namespace, or `export *` statements may be grouped.',
+        },
+    },
+    create(context) {
+        const sourceCode = context.sourceCode ?? context.getSourceCode();
+
+        return {
+            Program(program) {
+                const { body } = program;
+
+                for (let i = 1; i < body.length; i++) {
+                    const prev = body[i - 1];
+                    const next = body[i];
+
+                    const prevKind = importExportKind(prev);
+                    const nextKind = importExportKind(next);
+
+                    if (!prevKind || !nextKind) {
+                        continue;
+                    }
+
+                    // Same groupable kind may abut; everything else needs a blank line.
+                    if (prevKind === nextKind && GROUPABLE_KINDS.has(prevKind)) {
+                        continue;
+                    }
+
+                    // A blank line exists when a whitespace-only source line sits between the two
+                    // statements; a bare comment line does not count as blank.
+                    let hasBlankLine = false;
+
+                    for (let line = prev.loc.end.line + 1; line < next.loc.start.line; line++) {
+                        if (sourceCode.lines[line - 1].trim() === '') {
+                            hasBlankLine = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasBlankLine) {
+                        context.report({
+                            node: next,
+                            messageId: 'missingBlank',
+                            fix: fixer => fixer.insertTextAfter(prev, '\n'),
+                        });
+                    }
+                }
+            },
+        };
+    },
+};
+
+const riplPlugin = {
+    rules: {
+        'import-export-spacing': importExportSpacing,
+    },
+};
 
 export default tseslint.config(
     eslint.configs.recommended,
@@ -25,6 +146,7 @@ export default tseslint.config(
         name: 'ripl/main',
         plugins: {
             '@stylistic': stylistic,
+            'ripl': riplPlugin,
         },
         languageOptions: {
             ecmaVersion: 2021,
@@ -64,6 +186,8 @@ export default tseslint.config(
                 'exceptions': [
                     '_',
                     'i',
+                    'j',
+                    'k',
                     'x',
                     'y',
                     // Color components (RGB, HSL, HSV)
@@ -148,6 +272,7 @@ export default tseslint.config(
                 'avoidEscape': true,
             }],
             '@stylistic/member-delimiter-style': 'error',
+            'ripl/import-export-spacing': 'error',
 
             // Typescript specific rules
             '@typescript-eslint/explicit-member-accessibility': ['warn', {
@@ -172,9 +297,23 @@ export default tseslint.config(
     // Relax nesting rules for test files (describe > describe > test > callback is standard)
     {
         name: 'ripl/tests',
-        files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.bench.ts'],
+        files: ['**/test/**/*.ts', '**/*.test.ts', '**/*.bench.ts', 'packages/test-utils/**/*.ts'],
         rules: {
             'max-nested-callbacks': ['error', 6],
+            // Test doubles, spies and edge-case casts legitimately use empty
+            // callbacks, `any`, and un-annotated members.
+            '@typescript-eslint/no-empty-function': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/explicit-member-accessibility': 'off',
+        },
+    },
+
+    // Build/tooling scripts may log progress to the console.
+    {
+        name: 'ripl/scripts',
+        files: ['app/scripts/**/*.mjs', 'app/scripts/**/*.js'],
+        rules: {
+            'no-console': 'off',
         },
     },
 
@@ -192,13 +331,24 @@ export default tseslint.config(
         files: ['**/*.md/*.ts', '**/*.md/*.js'],
         plugins: {
             '@stylistic': stylistic,
+            'ripl': riplPlugin,
         },
         rules: {
             'no-console': 'off',
             'no-undef': 'off',
             'no-unused-vars': 'off',
+            'no-unused-expressions': 'off',
+            // Documentation snippets favour compact, illustrative code over
+            // production-strictness rules, so relax those for fenced code blocks.
+            'id-length': 'off',
+            'no-multi-assign': 'off',
+            '@stylistic/object-property-newline': 'off',
+            '@stylistic/no-multi-spaces': 'off',
             '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-expressions': 'off',
             '@typescript-eslint/no-require-imports': 'off',
+            '@typescript-eslint/no-empty-function': 'off',
+            '@typescript-eslint/explicit-member-accessibility': 'off',
             '@stylistic/indent': ['error', INDENT],
             '@stylistic/semi': ['error', 'always'],
             '@stylistic/quotes': ['error', 'single', { 'avoidEscape': true }],
@@ -213,6 +363,7 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
+            'ripl/import-export-spacing': 'error',
         },
     },
 
@@ -222,6 +373,7 @@ export default tseslint.config(
         files: ['app/**/*.md'],
         plugins: {
             vue,
+            'ripl': riplPlugin,
         },
         languageOptions: {
             parser: vueParser,
@@ -255,6 +407,21 @@ export default tseslint.config(
             '@stylistic/object-curly-newline': ['error', {
                 'ImportDeclaration': 'always',
             }],
+            'ripl/import-export-spacing': 'error',
+        },
+    },
+
+    // Playground examples run inside the docs editor with `context`, `scene` and
+    // `renderer` injected into scope, so treat them as read-only globals.
+    {
+        name: 'ripl/playground-examples',
+        files: ['app/src/.vitepress/components/playground/examples/**/*.js'],
+        languageOptions: {
+            globals: {
+                context: 'readonly',
+                scene: 'readonly',
+                renderer: 'readonly',
+            },
         },
     }
 );

@@ -138,9 +138,9 @@ import {
 const svgContext = createContext('#chart-container');
 
 const chart = createBarChart(svgContext, {
-    data: [...],
+    data: [/* ... */],
     key: 'month',
-    series: [...],
+    series: [/* ... */],
 });
 ```
 

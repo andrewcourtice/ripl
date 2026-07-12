@@ -28,12 +28,13 @@ To create a custom context, extend the base `Context` class and implement all ab
 ```ts
 import {
     Context,
-    ContextPath,
-    ContextText,
 } from '@ripl/web';
 
 import type {
     BaseContextState,
+
+    ContextPath,
+    ContextText,
 } from '@ripl/web';
 
 class MyContext extends Context {

@@ -57,6 +57,7 @@ Since `@ripl/terminal` is runtime-agnostic, you can wire it to any output that i
 import {
     Terminal,
 } from '@xterm/xterm';
+
 import {
     BrailleRasterizer,
     TerminalContext,

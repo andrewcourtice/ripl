@@ -1,6 +1,7 @@
 import type {
     CartesianChartOptions,
 } from '../core/cartesian';
+
 import {
     CartesianChart,
 } from '../core/cartesian';
@@ -62,6 +63,7 @@ import type {
     Text,
     TextState,
 } from '@ripl/core';
+
 import {
     Box,
     createCircle,
@@ -142,11 +144,11 @@ export interface LineChartEventMap extends EventMap {
  */
 export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
-    private lineGroups: Group[] = [];
+    private _lineGroups: Group[] = [];
     /** Previous ordered data keys per series, used to key-reconcile the line morph across add/remove. */
-    private morphKeys = new Map<string, string[]>();
-    private yScale!: Scale;
-    private xScale!: Scale<string>;
+    private _morphKeys = new Map<string, string[]>();
+    private _yScale!: Scale;
+    private _xScale!: Scale<string>;
 
     constructor(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
         super(target, options);
@@ -159,15 +161,15 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.init();
     }
 
-    private seriesLabel(series: LineChartSeriesOptions<TData>, item: TData): string {
+    private _seriesLabel(series: LineChartSeriesOptions<TData>, item: TData): string {
         return typeIsFunction(series.label) ? series.label(item) : series.label;
     }
 
-    private markerState(series: LineChartSeriesOptions<TData>, item: TData, getKey: (item: TData) => string) {
+    private _markerState(series: LineChartSeriesOptions<TData>, item: TData, getKey: (item: TData) => string) {
         const value = resolveAccessor<TData, number>(series.value)(item);
         const key = getKey(item);
-        const x = this.xScale(key);
-        const y = this.yScale(value);
+        const x = this._xScale(key);
+        const y = this._yScale(value);
         const color = this.getSeriesColor(series.id);
         // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
         const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
@@ -187,7 +189,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
     }
 
-    private attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState, key: string) {
+    private _attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState, key: string) {
         if (series.markers === false) {
             marker.pointerEvents = 'none';
             return;
@@ -215,7 +217,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 x: marker.cx,
                 y: marker.cy,
             }),
-            content: () => `${this.seriesLabel(series, item)}: ${formatValue(value)}`,
+            content: () => `${this._seriesLabel(series, item)}: ${formatValue(value)}`,
             highlight: {
                 fill: state.stroke as string,
                 radius: radius + 2,
@@ -230,7 +232,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         });
     }
 
-    private async drawLines(getKey: (item: TData) => string) {
+    private async _drawLines(getKey: (item: TData) => string) {
         const { data, series } = this.options;
         const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
         const formatValue = resolveValueFormat(this.options.format);
@@ -239,7 +241,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             left: seriesEntries,
             inner: seriesUpdates,
             right: seriesExits,
-        } = arrayJoin(series, this.lineGroups, 'id');
+        } = arrayJoin(series, this._lineGroups, 'id');
 
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
@@ -247,7 +249,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         const labelOffset = (srs: LineChartSeriesOptions<TData>) => (srs.markerRadius ?? 3) + 4;
 
         const buildLabel = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
-            const { id, value, point } = this.markerState(srs, item, getKey);
+            const { id, value, point } = this._markerState(srs, item, getKey);
 
             return createDataLabel({
                 id: `${id}-label`,
@@ -262,7 +264,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
 
         const updateLabel = (srs: LineChartSeriesOptions<TData>, item: TData, label: Text) => {
-            const { value, point } = this.markerState(srs, item, getKey);
+            const { value, point } = this._markerState(srs, item, getKey);
             const layout = resolveDataLabelLayout({
                 x: point[0],
                 y: point[1],
@@ -287,7 +289,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         });
 
         const buildMarker = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
-            const { id, value, point, state } = this.markerState(srs, item, getKey);
+            const { id, value, point, state } = this._markerState(srs, item, getKey);
 
             const marker = createCircle({
                 id,
@@ -296,7 +298,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 data: state,
             });
 
-            this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
+            this._attachMarkerHover(marker, srs, item, value, state, getKey(item));
 
             return {
                 point,
@@ -317,7 +319,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 renderer: srs.lineType,
             });
 
-            this.morphKeys.set(srs.id, data.map(getKey));
+            this._morphKeys.set(srs.id, data.map(getKey));
 
             return createGroup({
                 id: srs.id,
@@ -341,8 +343,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             line.lineDash = resolveLineDash(srs.lineStyle);
 
             const newKeys = data.map(getKey);
-            const targetPoints = data.map(item => this.markerState(srs, item, getKey).point);
-            const prevKeys = this.morphKeys.get(srs.id);
+            const targetPoints = data.map(item => this._markerState(srs, item, getKey).point);
+            const prevKeys = this._morphKeys.get(srs.id);
 
             // When the set of keys changes (add/remove/reorder), match points by identity so the
             // curve renderer keeps its shape across the morph instead of drawing through the
@@ -355,7 +357,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                     : targetPoints,
             };
 
-            this.morphKeys.set(srs.id, newKeys);
+            this._morphKeys.set(srs.id, newKeys);
 
             const {
                 left: markerEntries,
@@ -371,9 +373,9 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             markerEntries.forEach(item => group.add(buildMarker(srs)(item).marker));
 
             markerUpdates.forEach(([item, marker]) => {
-                const { state, value } = this.markerState(srs, item, getKey);
+                const { state, value } = this._markerState(srs, item, getKey);
                 marker.data = state;
-                this.attachMarkerHover(marker, srs, item, value, state, getKey(item));
+                this._attachMarkerHover(marker, srs, item, value, state, getKey(item));
             });
 
             // Reconcile value labels alongside the markers.
@@ -407,13 +409,13 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
         this.scene.add(seriesEntryGroups);
 
-        this.lineGroups = [
+        this._lineGroups = [
             ...seriesEntryGroups,
             ...seriesUpdateGroups,
         ];
 
         // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
-        this.registerHighlightGroups(this.lineGroups);
+        this.registerHighlightGroups(this._lineGroups);
 
         const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
         const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
@@ -527,25 +529,25 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const bottom = area.y + area.height;
 
             // Provisional value scale to measure the y-axis width.
-            this.yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
-            this.yAxis.scale = this.yScale;
+            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this.xScale = this.pointScale(keys, yAxisBox.right, right);
-            this.xAxis.scale = this.xScale;
+            this._xScale = this.pointScale(keys, yAxisBox.right, right);
+            this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this.yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
-            this.yAxis.scale = this.yScale;
+            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
             this.renderGrid(
                 [],
-                this.yScale.ticks(10).map(tick => this.yScale(tick)),
+                this._yScale.ticks(10).map(tick => this._yScale(tick)),
                 {
                     x: yAxisBox.right,
                     y: top,
@@ -564,7 +566,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this.drawLines(getKey),
+                this._drawLines(getKey),
             ]);
         });
     }
