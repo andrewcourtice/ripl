@@ -49,8 +49,11 @@ import type {
 } from '../scales';
 
 import {
-    arrayDedupe,
-    functionMemoize,
+    SpatialIndex,
+} from '../core/spatial';
+
+import {
+    functionCache,
     typeIsNumber,
 } from '@ripl/utilities';
 
@@ -424,19 +427,16 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
-    /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
+    /** Invalidates the interaction hit-test index, forcing a rebuild on the next hit test. */
     public invalidateTrackedElements(event?: string): void {
-        if (event) {
-            this._getTrackedElements.cache.delete(event);
-        } else {
-            this._getTrackedElements.cache.clear();
-        }
+        this._getSpatialIndex.invalidate();
     }
 
-    /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */
+    /** Signals the start of a render pass; resets the rendered-elements list and hit-test index at depth 0. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this.renderedElements = [];
+            this._getSpatialIndex.invalidate();
         }
 
         this.renderDepth += 1;
@@ -531,14 +531,28 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return false;
     }
 
-    private _getTrackedElements = functionMemoize((event: string) => {
-        return this.renderedElements.filter(element => element.has(event));
+    // A uniform-grid index over the last render pass's element boxes, rebuilt lazily after each pass.
+    // While the scene is static (retained rendering ⇒ no repaint) the index is reused across pointer
+    // moves; during animation it is rebuilt once per frame. Padding each box by the stroke half-width
+    // keeps outline hits sound near cell boundaries.
+    private _getSpatialIndex = functionCache(() => {
+        const index = new SpatialIndex();
+
+        this.renderedElements.forEach(element => {
+            index.insert(element, element.getCachedBoundingBox?.(), (element.lineWidth ?? 0) / 2);
+        });
+
+        return index;
     });
 
-    /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
+    /**
+     * Tests which rendered elements intersect the given point for the given event types, returning
+     * them sorted by zIndex (highest first). The spatial index shortlists candidates by their cell so
+     * the expensive per-element path test runs only for elements near the point, not the whole scene.
+     */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        return arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
-            .filter(element => element.intersectsWith(x, y, {
+        return this._getSpatialIndex().query(x, y)
+            .filter(element => events.some(event => element.has(event)) && element.intersectsWith(x, y, {
                 isPointer: true,
             }))
             .sort((ea, eb) => {

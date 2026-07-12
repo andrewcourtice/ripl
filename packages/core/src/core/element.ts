@@ -296,6 +296,9 @@ export class Element<
     // compare against it to rebuild only when something actually changed.
     protected _version = 0;
 
+    private _boxCache?: Box;
+    private _boxCacheVersion = -1;
+
     public id: string;
     public readonly type: string;
     public readonly classList: Set<string>;
@@ -598,6 +601,26 @@ export class Element<
     /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */
     public getBoundingBox() {
         return new Box(0, 0, 0, 0);
+    }
+
+    /**
+     * Returns the bounding box, cached until the element's state changes. Hot paths that query many
+     * boxes per frame (the hit-test spatial index, and future viewport culling) use this to avoid
+     * recomputing — and re-allocating — a box for every element every frame. Callers that need a
+     * live box (e.g. one derived from mutable external data) should use {@link getBoundingBox}.
+     *
+     * Note: only sound for leaf elements whose box derives from their own state; `Group` boxes depend
+     * on their children, so they are excluded from those hot paths (the render buffer holds no groups).
+     */
+    public getCachedBoundingBox(): Box {
+        if (this._boxCache && this._boxCacheVersion === this._version) {
+            return this._boxCache;
+        }
+
+        this._boxCache = this.getBoundingBox();
+        this._boxCacheVersion = this._version;
+
+        return this._boxCache;
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */

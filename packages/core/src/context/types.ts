@@ -48,7 +48,9 @@ export interface RenderElement {
     abstract: boolean;
     pointerEvents: RenderElementPointerEvents;
     zIndex: number;
+    lineWidth?: number;
     getBoundingBox?(): Box;
+    getCachedBoundingBox?(): Box;
     has(event: string): boolean;
     intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
