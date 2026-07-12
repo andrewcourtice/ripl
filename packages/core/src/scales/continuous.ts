@@ -7,6 +7,8 @@ import {
     createScale,
     getLinearScaleMethod,
     getLinearTicks,
+    niceDomain,
+    resolveNiceCount,
 } from './_base';
 
 import type {
@@ -19,15 +21,19 @@ export function scaleContinuous(
     range: number[],
     options?: LinearScaleOptions
 ): Scale<number> {
-    const convert = getLinearScaleMethod(domain, range, options);
-    const invert = getLinearScaleMethod(range, domain, options);
+    // `nice` is resolved once here so the domain, mapping, inversion, and ticks are all consistent.
+    const niceCount = resolveNiceCount(options?.nice);
+    const resolvedDomain = niceCount ? niceDomain(domain, niceCount) : domain;
+
+    const convert = getLinearScaleMethod(resolvedDomain, range, options);
+    const invert = getLinearScaleMethod(range, resolvedDomain, options);
 
     return createScale({
-        domain,
+        domain: resolvedDomain,
         range,
         convert,
         invert,
-        includes: createNumericIncludesMethod(domain),
-        ticks: (count: number = 10) => getLinearTicks(domain, count),
+        includes: createNumericIncludesMethod(resolvedDomain),
+        ticks: (count: number = 10) => getLinearTicks(resolvedDomain, count),
     });
 }

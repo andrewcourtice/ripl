@@ -37,6 +37,24 @@ describe('Scale', () => {
             expect(scale.inverse(range[1])).toBe(domain[1]);
         });
 
+        test('Should nice the domain at construction when requested', () => {
+            const scale = scaleContinuous([2, 97], [0, 100], {
+                nice: true,
+            });
+
+            // Domain expands outward to round, tick-aligned boundaries.
+            expect(scale.domain[0]).toBe(0);
+            expect(scale.domain[1]).toBe(100);
+            expect(scale(0)).toBe(0);
+            expect(scale(100)).toBe(100);
+        });
+
+        test('Should leave the domain untouched without the nice option', () => {
+            const scale = scaleContinuous([2, 97], [0, 100]);
+
+            expect(scale.domain).toEqual([2, 97]);
+        });
+
     });
 
 });

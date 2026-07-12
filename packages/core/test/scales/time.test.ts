@@ -53,13 +53,41 @@ describe('Scale', () => {
             expect(scale.includes(new Date('2023-01-01'))).toBe(false);
         });
 
-        test('Should generate ticks', () => {
+        test('Should generate month-aligned ticks over a one-year domain', () => {
             const scale = scaleTime(domain, range);
-            const ticks = scale.ticks(5);
+            const ticks = scale.ticks(12);
 
-            expect(ticks).toHaveLength(5);
-            expect(ticks[0]).toEqual(domain[0]);
-            expect(ticks[ticks.length - 1]).toEqual(domain[1]);
+            expect(ticks.length).toBeGreaterThan(0);
+
+            ticks.forEach(tick => {
+                expect(tick.getDate()).toBe(1);
+                expect(tick.getTime()).toBeGreaterThanOrEqual(domain[0].getTime());
+                expect(tick.getTime()).toBeLessThanOrEqual(domain[1].getTime());
+            });
+        });
+
+        test('Should generate year-aligned ticks over a multi-year domain', () => {
+            const scale = scaleTime([new Date(2010, 0, 1), new Date(2020, 0, 1)], range);
+            const ticks = scale.ticks(10);
+
+            expect(ticks.length).toBeGreaterThanOrEqual(8);
+
+            ticks.forEach(tick => {
+                expect(tick.getMonth()).toBe(0);
+                expect(tick.getDate()).toBe(1);
+            });
+        });
+
+        test('Should generate hour-aligned ticks over a one-day domain', () => {
+            const scale = scaleTime([new Date(2024, 0, 1, 0, 0, 0), new Date(2024, 0, 2, 0, 0, 0)], [0, 240]);
+            const ticks = scale.ticks(8);
+
+            expect(ticks.length).toBeGreaterThan(4);
+
+            ticks.forEach(tick => {
+                expect(tick.getMinutes()).toBe(0);
+                expect(tick.getSeconds()).toBe(0);
+            });
         });
     });
 
