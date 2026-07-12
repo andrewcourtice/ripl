@@ -243,16 +243,28 @@ Charts should handle these complex animation paths between initial render and up
 
 ### Import/Export Conventions
 
-This is strictly enforced by ESLint:
+This is strictly enforced by ESLint (`ripl/import-export-spacing`, a repo-local rule):
 
-1. Always use **named imports/exports** (no default exports)
-2. Each import on its **own line** within braces
+1. Ripl's own packages use **named imports/exports** (no default exports); default imports come only from third-party modules
+2. Each named import on its **own line** within braces
 3. **Trailing comma** after the last import in a group
-4. Sort imports **alphabetically** within each group
-5. **Blank line** between **every** import statement — including a same-module `import type { … }` and its value `import { … }` (enforced by `@stylistic/padding-line-between-statements`)
+4. Sort imports **alphabetically** within each set of braces
+5. **Blank-line grouping by kind** — statements of the same *kind* group together with no blank line between them, and different kinds are separated by a blank line:
+   - **side-effect** imports (`import 'x'`) group together
+   - **default** imports (`import x from 'y'`) group together
+   - each **braced** import (`import { … }`, `import type { … }`) is its own group — always blank-line separated, including a same-module `import type { … }` / value `import { … }` pair
+   - `export * from '…'` re-exports group together; braced `export { … } [from]` re-exports are blank-line separated
 6. Group ordering: **internal (current package) → other Ripl packages → external**
 
+> The rule only ever *inserts* blank lines between statements that stay in place — it never reorders imports/exports (order is load-bearing).
+
 ```typescript
+import 'some-side-effect';
+import 'another-side-effect';
+
+import classNames from 'classnames';
+import mitt from 'mitt';
+
 import {
     CONTEXT_OPERATIONS,
     TRACKED_EVENTS,
@@ -269,6 +281,10 @@ import {
     typeIsFunction,
     typeIsNil,
 } from '@ripl/utilities';
+
+import type {
+    Context,
+} from '../context';
 ```
 
 ### Type-only Imports
@@ -298,7 +314,7 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 | Brace style | `1tbs` |
 | Object properties | One per line (`object-property-newline`) |
 | Object curlies in imports | Always on new lines |
-| Blank line between imports | Every import statement (`padding-line-between-statements`) |
+| Blank line between imports | Between import/export groups of differing kind; same-kind side-effect / default / `export *` runs may group (`ripl/import-export-spacing`) |
 | Line endings | Unix (LF) |
 
 ### Naming Conventions

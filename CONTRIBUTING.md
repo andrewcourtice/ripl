@@ -87,20 +87,32 @@ ESLint enforces most style rules automatically. Key points:
 
 ### Import Ordering
 
-Always use named imports/exports (no default exports). One import per line, trailing comma, alphabetical within each group, and a blank line between **every** import statement (including a same-module `import type` / value `import` pair):
+Ripl's own packages use named imports/exports (no default exports); default imports come only from third-party modules. One import per line within braces, trailing comma, and members sorted alphabetically within each set of braces.
+
+Imports are **grouped by kind** (`ripl/import-export-spacing`): same-kind statements sit together with no blank line, and different kinds are separated by a blank line — side-effect imports group together, default imports group together, and each braced (`import { … }` / `import type { … }`) import is its own blank-separated group. The same applies to re-exports (`export * from` groups; braced `export { … }` is separated). The rule only inserts blank lines; it never reorders imports.
 
 ```typescript
-// 1. Internal (current package)
+import 'some-side-effect';
+import 'another-side-effect';
+
+import classNames from 'classnames';
+import mitt from 'mitt';
+
+// Internal (current package)
 import {
     CONTEXT_OPERATIONS,
     TRACKED_EVENTS,
 } from './constants';
 
-// 2. Other Ripl packages
+// Other Ripl packages
 import {
     typeIsArray,
     typeIsFunction,
 } from '@ripl/utilities';
+
+import type {
+    Context,
+} from '../context';
 ```
 
 Use `import type { ... }` for type-only imports.

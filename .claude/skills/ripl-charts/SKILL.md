@@ -194,10 +194,23 @@ VitePress page with a live example. Copy an existing page (e.g. `radial-bar.md`)
 </ripl-example>
 
 <script setup lang="ts">
-import { useRiplChart } from '../../.vitepress/compositions/example';
-import { buildCommonOptions, useChartConfig } from '../../.vitepress/compositions/use-chart-config';
-import { create<Name>Chart } from '@ripl/charts';
-import { ref, watch } from 'vue';
+import {
+    useRiplChart,
+} from '../../.vitepress/compositions/example';
+
+import {
+    buildCommonOptions,
+    useChartConfig,
+} from '../../.vitepress/compositions/use-chart-config';
+
+import {
+    create<Name>Chart,
+} from '@ripl/charts';
+
+import {
+    ref,
+    watch,
+} from 'vue';
 
 const config = useChartConfig({ features: { title: true, legend: true, animation: true }, title: '…' });
 const { contextChanged, chart } = useRiplChart(context =>
@@ -217,6 +230,11 @@ Demo data rules (so transitions actually demonstrate):
 
 Then document Usage, Data Format, and an **Options** bullet list (one line per option, with defaults),
 and add the chart to the "Available Charts" table in `getting-started.md`.
+
+> **Imports follow the repo grouping convention** (`ripl/import-export-spacing`, see `AGENTS.md`):
+> each braced import on its own multi-line group with a trailing comma and alphabetised members;
+> side-effect and default imports group by kind; groups of differing kinds are blank-separated. Doc-page
+> `<script setup>` blocks are linted, so keep this format or `yarn lint` will fail.
 
 ## Gallery snapshot
 
