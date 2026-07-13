@@ -1,6 +1,6 @@
 import {
     typeIsDate,
-} from '@ripl/utilities';
+} from './type';
 
 /** Options for {@link formatTime}: any `Intl.DateTimeFormat` option plus a locale. */
 export interface TimeFormatOptions extends Intl.DateTimeFormatOptions {
@@ -14,16 +14,16 @@ const DEFAULT_DATE_OPTIONS: Intl.DateTimeFormatOptions = {
     day: 'numeric',
 };
 
-const FORMATTER_CACHE = new Map<string, Intl.DateTimeFormat>();
+const DATE_FORMATTER_CACHE = new Map<string, Intl.DateTimeFormat>();
 
 function getDateFormatter(locale: string | undefined, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
     const key = `${locale ?? ''}|${JSON.stringify(options)}`;
 
-    let formatter = FORMATTER_CACHE.get(key);
+    let formatter = DATE_FORMATTER_CACHE.get(key);
 
     if (!formatter) {
         formatter = new Intl.DateTimeFormat(locale, options);
-        FORMATTER_CACHE.set(key, formatter);
+        DATE_FORMATTER_CACHE.set(key, formatter);
     }
 
     return formatter;

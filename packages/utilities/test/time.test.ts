@@ -6,7 +6,7 @@ import {
 
 import {
     formatTime,
-} from '../../src';
+} from '../src/time';
 
 const LOCALE = 'en-US';
 

@@ -19,8 +19,11 @@ import {
     createGroup,
     createRect,
     createText,
-    formatNumber,
 } from '@ripl/core';
+
+import {
+    formatNumber,
+} from '@ripl/utilities';
 
 /** Orientation of the colour legend bar. */
 export type ColorLegendOrientation = 'horizontal' | 'vertical';

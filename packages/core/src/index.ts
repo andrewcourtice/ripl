@@ -4,7 +4,6 @@ export * from './gradient';
 export * from './context';
 export * from './core';
 export * from './elements';
-export * from './format';
 export * from './interpolators';
 export * from './math';
 export * from './scales';
