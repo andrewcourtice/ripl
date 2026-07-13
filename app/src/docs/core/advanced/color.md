@@ -236,6 +236,61 @@ lerp(1); // 'rgba(255, 0, 110, 1)'
 
 This happens automatically when transitioning `fill` or `stroke` between color values.
 
+## Color Schemes
+
+Ripl ships a set of perceptually-uniform palettes as arrays of colour stops, each prefixed `COLOR_SCHEME_`: `VIRIDIS`, `PLASMA`, `INFERNO`, `MAGMA`, `CIVIDIS`, `TURBO` (sequential) and `RDBU`, `BRBG` (diverging). Being plain arrays, they compose directly with the interpolation and scale helpers below.
+
+```ts
+import {
+    COLOR_SCHEME_VIRIDIS,
+    interpolateColors,
+} from '@ripl/web';
+
+// Build a 0–1 → colour interpolator from a scheme's stops.
+const viridis = interpolateColors(COLOR_SCHEME_VIRIDIS);
+
+viridis(0); // first stop
+viridis(0.5); // midpoint colour
+viridis(1); // last stop
+```
+
+`interpolateColors` accepts any array of colour stops, so you can pass your own palette just as easily.
+
+## Color Scales
+
+`scaleSequential` maps a **numeric** domain through a colour interpolator (or an array of stops, such as a `COLOR_SCHEME_*` palette). Values are clamped to the domain, and the returned scale exposes `domain`, `ticks()`, and the underlying `interpolator` (handy for rendering a legend gradient).
+
+```ts
+import {
+    COLOR_SCHEME_VIRIDIS,
+    scaleSequential,
+} from '@ripl/web';
+
+const color = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]);
+
+color(0); // first stop
+color(50); // midpoint colour
+color(100); // last stop
+color.ticks(5); // [0, 25, 50, 75, 100]
+```
+
+Passing a **three-element** domain `[min, neutral, max]` produces a diverging scale — `neutral` maps to the interpolator's midpoint, so signed data reads symmetrically around a reference value:
+
+```ts
+import {
+    COLOR_SCHEME_RDBU,
+    scaleSequential,
+} from '@ripl/web';
+
+const anomaly = scaleSequential(COLOR_SCHEME_RDBU, [-5, 0, 5]);
+
+anomaly(-5); // deep red
+anomaly(0); // neutral midpoint
+anomaly(5); // deep blue
+```
+
+This is exactly how the heatmap chart and its continuous-colour legend translate values into colour. Tick generation defers to an underlying continuous scale; formatting is always left to the caller and is never bound to the scale.
+
 ## Internal Representation
 
 All colors are internally represented as RGBA tuples:
