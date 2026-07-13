@@ -5,7 +5,6 @@ export * from './context';
 export * from './core';
 export * from './elements';
 export * from './format';
-export * from './interaction';
 export * from './interpolators';
 export * from './math';
 export * from './scales';
