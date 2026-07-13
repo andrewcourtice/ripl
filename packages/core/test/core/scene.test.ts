@@ -152,15 +152,23 @@ describe('Scene', () => {
         scene.destroy();
     });
 
-    test('Should emit resize event when context resizes', () => {
+    test('Should re-render on context resize when renderOnResize is enabled', async () => {
         const scene = createScene(el);
 
-        const resizeSpy = vi.fn();
-        scene.on('resize', resizeSpy);
+        scene.add(createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        }));
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const renderSpy = vi.spyOn(scene, 'render').mockImplementation(() => {});
 
         scene.context.emit('resize', null);
 
-        expect(resizeSpy).toHaveBeenCalledOnce();
+        expect(renderSpy).toHaveBeenCalledOnce();
 
         scene.destroy();
     });

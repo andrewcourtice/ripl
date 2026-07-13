@@ -145,14 +145,14 @@ The scene emits a `resize` event when the context resizes. Context-level pointer
 
 ## Automatic Resize
 
-By default (`renderOnResize: true`), the scene automatically re-renders when the context resizes. Disable this if you want to handle resize manually:
+By default (`renderOnResize: true`), the scene automatically re-renders when the context resizes. Disable this if you want to handle resize manually — listen for resize on the scene's `context`:
 
 ```ts
 const scene = createScene('.container', {
     renderOnResize: false,
 });
 
-scene.on('resize', () => {
+scene.context.on('resize', () => {
     // Custom resize handling
     scene.render();
 });
