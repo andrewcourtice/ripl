@@ -19,11 +19,6 @@ import {
     onDOMEvent,
 } from './dom';
 
-/** A navigator can be bound to a `Context`, a scene-like object exposing a `context`, or a raw element. */
-export type NavigatorTarget = Context | {
-    context: Context;
-} | HTMLElement;
-
 /** Options for constructing a {@link DOMNavigator}, adding interaction wiring to the base options. */
 export interface DOMNavigatorOptions extends NavigatorOptions {
     interactions?: boolean | NavigatorInteractions;
@@ -59,21 +54,6 @@ function resolveInteraction(option: NavigatorInteractionOption | undefined, fall
     };
 }
 
-function resolveElement(target: NavigatorTarget): HTMLElement {
-    // A `Context` exposes its DOM node as `element`; a scene exposes its context as `context`. Check
-    // `element` first: a concrete context (e.g. `CanvasContext`) carries both an `element` and a raw
-    // `context`, and only its `element` is the DOM node we want.
-    if ('element' in target) {
-        return target.element as unknown as HTMLElement;
-    }
-
-    if ('context' in target) {
-        return target.context.element as unknown as HTMLElement;
-    }
-
-    return target;
-}
-
 /**
  * DOM-bound {@link Navigator} that translates real wheel/pointer/touch gestures into the base
  * navigator's imperative commands — the pan/zoom/brush analogue of how `DOMContext` adds real event
@@ -102,10 +82,10 @@ export class DOMNavigator extends Navigator {
     private _panning = false;
     private _pinchDistance = 0;
 
-    constructor(target: NavigatorTarget, options?: DOMNavigatorOptions) {
+    constructor(context: Context, options?: DOMNavigatorOptions) {
         super(options);
 
-        this._element = resolveElement(target);
+        this._element = context.element as unknown as HTMLElement;
         this._syncViewport();
 
         this.retain(onDOMElementResize(this._element, () => this._syncViewport()), VIEWPORT_KEY);
@@ -302,7 +282,7 @@ export class DOMNavigator extends Navigator {
 
 }
 
-/** Factory that creates a DOM-bound {@link DOMNavigator} for the given context, scene, or element. */
-export function createNavigator(target: NavigatorTarget, options?: DOMNavigatorOptions): DOMNavigator {
-    return new DOMNavigator(target, options);
+/** Factory that creates a DOM-bound {@link DOMNavigator} for the given context. */
+export function createNavigator(context: Context, options?: DOMNavigatorOptions): DOMNavigator {
+    return new DOMNavigator(context, options);
 }

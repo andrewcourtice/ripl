@@ -12,7 +12,18 @@ import {
     DOMNavigator,
 } from '../src';
 
+import type {
+    Context,
+} from '@ripl/core';
+
 let element: HTMLDivElement;
+
+/** A minimal stand-in context exposing only the DOM element the navigator binds to. */
+function fakeContext(): Context {
+    return {
+        element,
+    } as unknown as Context;
+}
 
 /** Dispatches a DOM event with arbitrary properties, sidestepping jsdom constructor gaps. */
 function fire(type: string, props: Record<string, unknown>): void {
@@ -38,7 +49,7 @@ afterEach(() => {
 describe('DOMNavigator interactions', () => {
 
     test('Should zoom on wheel toward the pointer', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 zoom: true,
             },
@@ -60,7 +71,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should pan on a plain click-and-hold drag', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 pan: true,
             },
@@ -84,7 +95,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should pan on a ⌘/Ctrl click-and-hold drag', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 pan: true,
                 brush: true,
@@ -113,7 +124,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should not pan on a right-button drag', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 pan: true,
             },
@@ -138,7 +149,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should brush on shift-drag when pan is also enabled', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 pan: true,
                 brush: true,
@@ -171,7 +182,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should be a Navigator instance', () => {
-        const navigator = createNavigator(element);
+        const navigator = createNavigator(fakeContext());
 
         expect(navigator).toBeInstanceOf(DOMNavigator);
 
@@ -179,7 +190,7 @@ describe('DOMNavigator interactions', () => {
     });
 
     test('Should stop responding after destroy', () => {
-        const navigator = createNavigator(element, {
+        const navigator = createNavigator(fakeContext(), {
             interactions: {
                 pan: true,
             },

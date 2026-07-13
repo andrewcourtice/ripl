@@ -1,6 +1,6 @@
 import type {
     Vector3,
-} from './math/vector';
+} from '../math/vector';
 
 /** Pre-normalised light direction vectors for common light positions. */
 export const LIGHT_DIRECTION = {

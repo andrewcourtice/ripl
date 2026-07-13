@@ -41,7 +41,7 @@ export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Cam
             autoStop: false,
         });
 
-        const camera = createCamera(scene, {
+        const camera = createCamera(ctx, {
             position: [0, 1.5, 5],
             target: [0, 0, 0],
             fov: 50,
