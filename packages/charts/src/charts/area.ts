@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -119,7 +123,7 @@ function interpolateAreaReveal(top: Point[], bottom: Point[]): Interpolator<Poin
 export interface AreaChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData> | number;
     label: string;
     lineType?: PolylineRenderer;
     /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */

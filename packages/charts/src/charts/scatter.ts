@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -74,9 +78,9 @@ import {
 export interface ScatterChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    xBy: keyof TData | ((item: TData) => number);
-    yBy: keyof TData | ((item: TData) => number);
-    sizeBy?: keyof TData | number | ((item: TData) => number);
+    xBy: NumericAccessor<TData>;
+    yBy: NumericAccessor<TData>;
+    sizeBy?: NumericAccessor<TData> | number;
     label: string | ((item: TData) => string);
     minRadius?: number;
     maxRadius?: number;

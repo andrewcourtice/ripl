@@ -59,40 +59,44 @@ import {
 /** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
 const REST_ALPHA = 0.65;
 
-/** A node in a sunburst hierarchy with optional nested children. */
-export interface SunburstNode {
+/** A node in a sunburst hierarchy with optional nested children and an optional typed datum. */
+export interface SunburstNode<TData = unknown> {
     id: string;
     label: string;
     value: number;
     color?: string;
-    children?: SunburstNode[];
+    children?: SunburstNode<TData>[];
+    /** Arbitrary datum carried through to segment interaction events. */
+    data?: TData;
 }
 
 /** Options for configuring a {@link SunburstChart}. */
-export interface SunburstChartOptions extends BaseChartOptions {
-    data: SunburstNode[];
+export interface SunburstChartOptions<TData = unknown> extends BaseChartOptions {
+    data: SunburstNode<TData>[];
     legend?: ChartLegendInput;
     /** Format applied to node values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
 
 /** Payload emitted for sunburst segment interaction events. */
-export interface SunburstChartSegmentEvent {
+export interface SunburstChartSegmentEvent<TData = unknown> {
     x: number;
     y: number;
     value: number;
     label: string;
     id: string;
+    /** The datum from the source {@link SunburstNode}, if one was provided. */
+    data?: TData;
 }
 
 /** Events emitted by a {@link SunburstChart} that consumers can subscribe to via `chart.on(...)`. */
-export interface SunburstChartEventMap extends EventMap {
-    segmentclick: SunburstChartSegmentEvent;
-    segmententer: SunburstChartSegmentEvent;
-    segmentleave: SunburstChartSegmentEvent;
+export interface SunburstChartEventMap<TData = unknown> extends EventMap {
+    segmentclick: SunburstChartSegmentEvent<TData>;
+    segmententer: SunburstChartSegmentEvent<TData>;
+    segmentleave: SunburstChartSegmentEvent<TData>;
 }
 
-interface FlattenedArc {
+interface FlattenedArc<TData = unknown> {
     id: string;
     label: string;
     value: number;
@@ -100,17 +104,18 @@ interface FlattenedArc {
     depth: number;
     startAngle: number;
     endAngle: number;
+    data?: TData;
 }
 
-function flattenNodes(
-    nodes: SunburstNode[],
+function flattenNodes<TData = unknown>(
+    nodes: SunburstNode<TData>[],
     depth: number,
     startAngle: number,
     endAngle: number,
     colorGenerator: ReturnType<typeof getColorGenerator>,
     parentColor?: string,
     resolvedColors?: Map<string, string>
-): FlattenedArc[] {
+): FlattenedArc<TData>[] {
     const total = nodes.reduce((sum, node) => sum + node.value, 0);
 
     if (total === 0) return [];
@@ -120,7 +125,7 @@ function flattenNodes(
     });
 
     let currentAngle = startAngle;
-    const result: FlattenedArc[] = [];
+    const result: FlattenedArc<TData>[] = [];
 
     nodes.forEach(node => {
         const nodeEndAngle = currentAngle + (scale(node.value) - scale(0));
@@ -134,6 +139,7 @@ function flattenNodes(
             depth,
             startAngle: currentAngle,
             endAngle: nodeEndAngle,
+            data: node.data,
         });
 
         if (node.children && node.children.length > 0) {
@@ -161,12 +167,12 @@ function flattenNodes(
  * colors and are positioned within the parent's angular range. Supports
  * legend, tooltips, and staggered radial entry animations.
  */
-export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEventMap> {
+export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<TData>, SunburstChartEventMap<TData>> {
 
     private _groups: Group[] = [];
     private _tooltip: Tooltip;
 
-    constructor(target: string | HTMLElement | Context, options: SunburstChartOptions) {
+    constructor(target: string | HTMLElement | Context, options: SunburstChartOptions<TData>) {
         super(target, options);
 
         this._tooltip = new Tooltip({
@@ -320,17 +326,18 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
         });
     }
 
-    private _attachSegmentHover(segment: Arc, arc: FlattenedArc) {
+    private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): SunburstChartSegmentEvent => ({
+            y: number; }): SunburstChartSegmentEvent<TData> => ({
             x: point.x,
             y: point.y,
             value: arc.value,
             label: arc.label,
             id: arc.id,
+            data: arc.data,
         });
 
         applyHoverHighlight(segment, {
@@ -357,6 +364,6 @@ export class SunburstChart extends Chart<SunburstChartOptions, SunburstChartEven
 }
 
 /** Factory function that creates a new {@link SunburstChart} instance. */
-export function createSunburstChart(target: string | HTMLElement | Context, options: SunburstChartOptions) {
-    return new SunburstChart(target, options);
+export function createSunburstChart<TData = unknown>(target: string | HTMLElement | Context, options: SunburstChartOptions<TData>) {
+    return new SunburstChart<TData>(target, options);
 }

@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -65,7 +69,7 @@ const REST_ALPHA = 0.78;
 export interface HistogramChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     data: TData[];
     /** The numeric field (or accessor) to bin. */
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     /** Target number of bins (ignored when `thresholds` is given). Defaults to Sturges' rule. */
     bins?: number;
     /** Explicit bin boundaries; overrides `bins`. */

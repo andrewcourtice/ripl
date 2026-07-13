@@ -72,11 +72,13 @@ const AXIS_COLOR = '#cbd5e1';
 export type ArcDiagramOrientation = 'horizontal' | 'vertical';
 
 /** A node in an arc diagram. */
-export interface ArcDiagramNode {
+export interface ArcDiagramNode<TData = unknown> {
     id: string;
     label?: string;
     group?: string;
     color?: string;
+    /** Arbitrary datum carried through to node interaction events. */
+    data?: TData;
 }
 
 /** A link between two nodes. */
@@ -87,8 +89,8 @@ export interface ArcDiagramLink {
 }
 
 /** Options for configuring an {@link ArcDiagramChart}. */
-export interface ArcDiagramChartOptions extends BaseChartOptions {
-    nodes: ArcDiagramNode[];
+export interface ArcDiagramChartOptions<TData = unknown> extends BaseChartOptions {
+    nodes: ArcDiagramNode<TData>[];
     links: ArcDiagramLink[];
     /** Node dot radius (the max radius when `sizeByConnections` is on). Defaults to 6. */
     nodeRadius?: number;
@@ -101,11 +103,13 @@ export interface ArcDiagramChartOptions extends BaseChartOptions {
 }
 
 /** Payload emitted for arc diagram node interaction events. */
-export interface ArcDiagramNodeEvent {
+export interface ArcDiagramNodeEvent<TData = unknown> {
     x: number;
     y: number;
     id: string;
     label: string;
+    /** The datum from the source {@link ArcDiagramNode}, if one was provided. */
+    data?: TData;
 }
 
 /** Payload emitted for arc diagram link interaction events. */
@@ -118,10 +122,10 @@ export interface ArcDiagramLinkEvent {
 }
 
 /** Events emitted by an {@link ArcDiagramChart} that consumers can subscribe to via `chart.on(...)`. */
-export interface ArcDiagramChartEventMap extends EventMap {
-    nodeclick: ArcDiagramNodeEvent;
-    nodeenter: ArcDiagramNodeEvent;
-    nodeleave: ArcDiagramNodeEvent;
+export interface ArcDiagramChartEventMap<TData = unknown> extends EventMap {
+    nodeclick: ArcDiagramNodeEvent<TData>;
+    nodeenter: ArcDiagramNodeEvent<TData>;
+    nodeleave: ArcDiagramNodeEvent<TData>;
     linkclick: ArcDiagramLinkEvent;
     linkenter: ArcDiagramLinkEvent;
     linkleave: ArcDiagramLinkEvent;
@@ -135,7 +139,7 @@ export interface ArcDiagramChartEventMap extends EventMap {
  * updates animate arcs reshaping and nodes resizing. Supports labels, tooltips, and typed node/link
  * interaction events.
  */
-export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramChartEventMap> {
+export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptions<TData>, ArcDiagramChartEventMap<TData>> {
 
     private _axisGroup?: Group;
     private _axisLine?: Line;
@@ -145,7 +149,7 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
     private _nodeElements: Group[] = [];
     private _tooltip: Tooltip;
 
-    constructor(target: string | HTMLElement | Context, options: ArcDiagramChartOptions) {
+    constructor(target: string | HTMLElement | Context, options: ArcDiagramChartOptions<TData>) {
         super(target, options);
 
         this._tooltip = new Tooltip({
@@ -156,15 +160,16 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
         this.init();
     }
 
-    private _attachNodeHover(circle: Circle, node: ArcDiagramNode, color: string) {
+    private _attachNodeHover(circle: Circle, node: ArcDiagramNode<TData>, color: string) {
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
-            y: number; }): ArcDiagramNodeEvent => ({
+            y: number; }): ArcDiagramNodeEvent<TData> => ({
             x: point.x,
             y: point.y,
             id: node.id,
             label: node.label ?? node.id,
+            data: node.data,
         });
 
         applyHoverHighlight(circle, {
@@ -658,6 +663,6 @@ export class ArcDiagramChart extends Chart<ArcDiagramChartOptions, ArcDiagramCha
 }
 
 /** Factory function that creates a new {@link ArcDiagramChart} instance. */
-export function createArcDiagramChart(target: string | HTMLElement | Context, options: ArcDiagramChartOptions) {
-    return new ArcDiagramChart(target, options);
+export function createArcDiagramChart<TData = unknown>(target: string | HTMLElement | Context, options: ArcDiagramChartOptions<TData>) {
+    return new ArcDiagramChart<TData>(target, options);
 }

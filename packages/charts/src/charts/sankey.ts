@@ -68,16 +68,18 @@ export interface SankeyLink {
     value: number;
 }
 
-/** A node in a Sankey diagram. */
-export interface SankeyNode {
+/** A node in a Sankey diagram, with an optional typed datum carried through to node events. */
+export interface SankeyNode<TData = unknown> {
     id: string;
     label: string;
     color?: string;
+    /** Arbitrary datum carried through to node interaction events. */
+    data?: TData;
 }
 
 /** Options for configuring a {@link SankeyChart}. */
-export interface SankeyChartOptions extends BaseChartOptions {
-    nodes: SankeyNode[];
+export interface SankeyChartOptions<TData = unknown> extends BaseChartOptions {
+    nodes: SankeyNode<TData>[];
     links: SankeyLink[];
     nodeWidth?: number;
     nodePadding?: number;
@@ -85,12 +87,14 @@ export interface SankeyChartOptions extends BaseChartOptions {
 }
 
 /** Payload emitted for Sankey node interaction events. */
-export interface SankeyChartNodeEvent {
+export interface SankeyChartNodeEvent<TData = unknown> {
     x: number;
     y: number;
     id: string;
     label: string;
     value: number;
+    /** The datum from the source {@link SankeyNode}, if one was provided. */
+    data?: TData;
 }
 
 /** Payload emitted for Sankey link interaction events. */
@@ -104,10 +108,10 @@ export interface SankeyChartLinkEvent {
 }
 
 /** Events emitted by a {@link SankeyChart} that consumers can subscribe to via `chart.on(...)`. */
-export interface SankeyChartEventMap extends EventMap {
-    nodeclick: SankeyChartNodeEvent;
-    nodeenter: SankeyChartNodeEvent;
-    nodeleave: SankeyChartNodeEvent;
+export interface SankeyChartEventMap<TData = unknown> extends EventMap {
+    nodeclick: SankeyChartNodeEvent<TData>;
+    nodeenter: SankeyChartNodeEvent<TData>;
+    nodeleave: SankeyChartNodeEvent<TData>;
     linkclick: SankeyChartLinkEvent;
     linkenter: SankeyChartLinkEvent;
     linkleave: SankeyChartLinkEvent;
@@ -330,13 +334,13 @@ function computeSankeyLayout(
  * paths connecting source and target nodes. Supports tooltips and
  * staggered entry animations for nodes, labels, and links.
  */
-export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> {
+export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData>, SankeyChartEventMap<TData>> {
 
     private _nodeGroups: Group[] = [];
     private _linkGroups: Group[] = [];
     private _tooltip: Tooltip;
 
-    constructor(target: string | HTMLElement | Context, options: SankeyChartOptions) {
+    constructor(target: string | HTMLElement | Context, options: SankeyChartOptions<TData>) {
         super(target, options);
 
         this._tooltip = new Tooltip({
@@ -615,12 +619,13 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
-            y: number; }): SankeyChartNodeEvent => ({
+            y: number; }): SankeyChartNodeEvent<TData> => ({
             x: point.x,
             y: point.y,
             id: node.id,
             label: node.label,
             value: node.value,
+            data: this.options.nodes.find(candidate => candidate.id === node.id)?.data,
         });
 
         applyHoverHighlight(rect, {
@@ -644,6 +649,6 @@ export class SankeyChart extends Chart<SankeyChartOptions, SankeyChartEventMap> 
 }
 
 /** Factory function that creates a new {@link SankeyChart} instance. */
-export function createSankeyChart(target: string | HTMLElement | Context, options: SankeyChartOptions) {
-    return new SankeyChart(target, options);
+export function createSankeyChart<TData = unknown>(target: string | HTMLElement | Context, options: SankeyChartOptions<TData>) {
+    return new SankeyChart<TData>(target, options);
 }

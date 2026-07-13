@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -65,7 +69,7 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     xBy: keyof TData | ((item: TData) => string);
     yBy: keyof TData | ((item: TData) => string);
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     xCategories: string[];
     yCategories: string[];
     colorRange?: string[];

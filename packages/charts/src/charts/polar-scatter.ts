@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -72,11 +76,11 @@ export interface PolarScatterSeriesOptions<TData> {
     color?: string;
     label: string;
     /** Angular position in degrees (0° at the top, increasing clockwise). */
-    angle: keyof TData | ((item: TData) => number);
+    angle: NumericAccessor<TData>;
     /** Radial position (distance from the centre), on the radial value scale. */
-    radius: keyof TData | ((item: TData) => number);
+    radius: NumericAccessor<TData>;
     /** Optional accessor whose value scales each marker's size between `minRadius` and `maxRadius`. */
-    sizeBy?: keyof TData | number | ((item: TData) => number);
+    sizeBy?: NumericAccessor<TData> | number;
     minRadius?: number;
     maxRadius?: number;
 }

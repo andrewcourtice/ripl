@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -55,7 +59,7 @@ import {
 export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     label: keyof TData | ((item: TData) => string);
     color?: keyof TData | ((item: TData) => string);
     gap?: number;

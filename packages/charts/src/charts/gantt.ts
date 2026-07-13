@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -77,7 +81,7 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     start: keyof TData | ((item: TData) => Date);
     end: keyof TData | ((item: TData) => Date);
     color?: keyof TData | ((item: TData) => string);
-    progress?: keyof TData | ((item: TData) => number);
+    progress?: NumericAccessor<TData>;
     grid?: ChartGridInput;
     tooltip?: ChartTooltipInput;
     axis?: ChartAxisInput<TData>;

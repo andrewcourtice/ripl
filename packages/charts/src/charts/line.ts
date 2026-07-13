@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -90,7 +94,7 @@ import {
 export interface LineChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData> | number;
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;

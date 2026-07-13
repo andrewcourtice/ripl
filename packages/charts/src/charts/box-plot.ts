@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -72,7 +76,7 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     /** Accessor for the category each value belongs to. */
     group: keyof TData | ((item: TData) => string);
     /** Accessor for the numeric value to summarise. */
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
     categories?: string[];
     color?: string;

@@ -13,6 +13,19 @@ import {
 
 export type Accessor<TData, TValue> = keyof TData | TValue | ((item: TData) => TValue);
 
+/** The keys of `TData` whose values are `number`. Resolves to `never` for `unknown`/loose data. */
+export type NumericKey<TData> = {
+    [K in keyof TData]-?: TData[K] extends number ? K : never;
+}[keyof TData];
+
+/**
+ * A strongly-typed numeric accessor: a numeric-valued property key of `TData`, or a function
+ * returning a `number`. Using this (instead of a bare `keyof TData`) makes the compiler reject a key
+ * that points at a non-numeric field. Fields that also accept a fixed constant (e.g. a scatter
+ * `sizeBy`) widen this with `| number` at the option site.
+ */
+export type NumericAccessor<TData> = NumericKey<TData> | ((item: TData) => number);
+
 /**
  * Normalises an {@link Accessor} into a function. Property keys read the field, functions are
  * passed through, and any other value is treated as a constant.
