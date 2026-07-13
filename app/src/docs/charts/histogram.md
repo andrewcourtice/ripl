@@ -44,7 +44,7 @@ import {
 const bins = ref(10);
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: { title: true, animation: true, navigator: true },
     title: 'Response Time Distribution',
 });
 

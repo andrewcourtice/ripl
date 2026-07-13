@@ -166,6 +166,24 @@ export abstract class CartesianChart<
     }
 
     /**
+     * Merges options and re-renders (see {@link Chart.update}), additionally creating or destroying the
+     * navigator when the `navigator` option is toggled. The controller is otherwise a construction-time
+     * concern, so reconciling here keeps `chart.update({ navigator })` working at runtime.
+     */
+    public override update(options: Partial<TOptions>): void {
+        if (options.navigator !== undefined) {
+            this.options = {
+                ...this.options,
+                ...options,
+            };
+
+            this._reconcileNavigator();
+        }
+
+        super.update(options);
+    }
+
+    /**
      * Builds the cartesian components from the chart options. Call this from a subclass
      * constructor (after `super(...)`) and before `init()`.
      */
@@ -240,15 +258,40 @@ export abstract class CartesianChart<
             });
         }
 
-        this._setupNavigator();
+        this.retain({
+            dispose: () => this._destroyNavigator(),
+        });
+
+        this._reconcileNavigator();
     }
 
     /**
-     * Creates the pan/zoom/brush controller when the `navigator` option is enabled and wires its view
-     * changes to a coalesced, animation-free re-render (so panning/zooming snaps rather than tweens).
-     * Charts opt their scales into the view via {@link applyView}.
+     * Creates or destroys the pan/zoom/brush controller to match the current `navigator` option,
+     * returning `true` when the active state changed. Called on construction and whenever
+     * {@link update} receives a `navigator` option, so the controller can be toggled at runtime.
      */
-    private _setupNavigator(): void {
+    private _reconcileNavigator(): boolean {
+        const enabled = !!this.options.navigator;
+
+        if (enabled === !!this._navigator) {
+            return false;
+        }
+
+        if (enabled) {
+            this._createNavigator();
+        } else {
+            this._destroyNavigator();
+        }
+
+        return true;
+    }
+
+    /**
+     * Creates the controller and wires its view changes to a coalesced, animation-free re-render (so
+     * panning/zooming snaps rather than tweens). Charts opt their scales into the view via
+     * {@link applyView}.
+     */
+    private _createNavigator(): void {
         const config = this.options.navigator;
 
         if (!config) {
@@ -266,14 +309,25 @@ export abstract class CartesianChart<
             interactions,
         });
 
-        this.retain({
-            dispose: () => this._navigator?.destroy(),
-        });
-
         this._navigator.on('change', event => {
             this._view = event.data;
             this._scheduleNavigatorRender(() => this._renderFromNavigator());
         });
+    }
+
+    /** Destroys the controller (if any) and resets the view to the identity transform. */
+    private _destroyNavigator(): void {
+        if (!this._navigator) {
+            return;
+        }
+
+        this._navigator.destroy();
+        this._navigator = undefined;
+        this._view = {
+            k: 1,
+            x: 0,
+            y: 0,
+        };
     }
 
     private _renderFromNavigator(): void {

@@ -88,7 +88,7 @@ const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
 const markers = ref(false);
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
     title: 'Traffic by Device',
     axisX: 'Month',
     axisY: 'Sessions',

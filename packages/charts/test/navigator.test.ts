@@ -106,4 +106,48 @@ describe('CartesianChart navigator integration', () => {
         expect(() => navigator.panBy(10, 10)).not.toThrow();
     });
 
+    test('Should create the navigator when toggled on via update', () => {
+        mockCanvasContext();
+
+        const chart = createChart(false);
+
+        expect(chart.navigator).toBeUndefined();
+
+        chart.update({
+            navigator: true,
+        });
+
+        expect(chart.navigator).toBeDefined();
+
+        chart.destroy();
+    });
+
+    test('Should destroy the navigator (and reset the view) when toggled off via update', () => {
+        mockCanvasContext();
+
+        const chart = createChart(true);
+
+        chart.navigator?.panBy(40, -20);
+        expect(chart.navigator?.transform.x).toBe(40);
+
+        chart.update({
+            navigator: false,
+        });
+
+        expect(chart.navigator).toBeUndefined();
+
+        // Toggling back on starts from a fresh, identity view rather than the stale pan.
+        chart.update({
+            navigator: true,
+        });
+
+        expect(chart.navigator?.transform).toEqual({
+            k: 1,
+            x: 0,
+            y: 0,
+        });
+
+        chart.destroy();
+    });
+
 });

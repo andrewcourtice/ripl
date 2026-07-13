@@ -39,7 +39,7 @@ import {
 const REGIONS = ['US', 'EU', 'APAC', 'LATAM'];
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: { title: true, animation: true, navigator: true },
     title: 'Latency by Region',
 });
 

@@ -46,6 +46,8 @@ export interface ChartConfigFeatures {
     axes?: boolean;
     grid?: boolean;
     animation?: boolean;
+    /** Exposes a pan/zoom navigator toggle (cartesian charts only). */
+    navigator?: boolean;
 }
 
 /** Initial values for the shared chart config. */
@@ -60,6 +62,7 @@ export interface ChartConfigDefaults {
     axisY?: string;
     gridVisible?: boolean;
     animationEnabled?: boolean;
+    navigatorEnabled?: boolean;
     colors?: Record<string, string>;
 }
 
@@ -75,6 +78,7 @@ export interface ChartConfig {
     axisY: string;
     gridVisible: boolean;
     animationEnabled: boolean;
+    navigatorEnabled: boolean;
     colors: Record<string, string>;
 }
 
@@ -93,6 +97,7 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
             axes: features.axes ?? false,
             grid: features.grid ?? false,
             animation: features.animation ?? true,
+            navigator: features.navigator ?? false,
         },
         title: defaults.title ?? '',
         titleVisible: defaults.titleVisible ?? !!defaults.title,
@@ -103,6 +108,7 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
         axisY: defaults.axisY ?? '',
         gridVisible: defaults.gridVisible ?? true,
         animationEnabled: defaults.animationEnabled ?? true,
+        navigatorEnabled: defaults.navigatorEnabled ?? false,
         colors: {
             ...(defaults.colors ?? {}),
         },
@@ -157,6 +163,10 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
 
     if (features.animation) {
         options.animation = config.animationEnabled;
+    }
+
+    if (features.navigator) {
+        options.navigator = config.navigatorEnabled;
     }
 
     return options;

@@ -62,6 +62,13 @@
             <slot></slot>
         </section>
 
+        <section v-if="config.features.navigator" class="ripl-chart-config__section">
+            <h4 class="ripl-chart-config__heading">Navigation</h4>
+            <RiplField label="Pan &amp; zoom" inline>
+                <RiplSwitch v-model="config.navigatorEnabled" />
+            </RiplField>
+        </section>
+
         <section v-if="config.features.animation" class="ripl-chart-config__section">
             <h4 class="ripl-chart-config__heading">Animation</h4>
             <RiplField label="Animate" inline>

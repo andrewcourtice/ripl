@@ -57,7 +57,7 @@ const seriesMeta = [
 ];
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
     title: 'Channel Performance',
     axisX: 'X Value',
     axisY: 'Y Value',
