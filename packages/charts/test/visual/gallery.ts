@@ -22,6 +22,7 @@ import {
     createGanttChart,
     createGaugeChart,
     createHeatmapChart,
+    createHistogramChart,
     createLineChart,
     createPackedCircleChart,
     createPieChart,
@@ -166,6 +167,22 @@ createScatterChart(mount('scatter'), {
     axis: {
         x: { title: 'Cost' },
         y: { title: 'Revenue' },
+    },
+});
+
+createHistogramChart(mount('histogram'), {
+    animation: false,
+    title: 'Histogram — Revenue Distribution',
+    data: DATA,
+    value: 'revenue',
+    bins: 5,
+    axis: {
+        x: {
+            title: 'Revenue',
+        },
+        y: {
+            title: 'Frequency',
+        },
     },
 });
 

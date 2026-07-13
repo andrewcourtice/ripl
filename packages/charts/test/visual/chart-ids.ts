@@ -13,6 +13,7 @@ export const CHART_IDS = [
     'gantt',
     'gauge',
     'heatmap',
+    'histogram',
     'polar-area',
     'polar-scatter',
     'radial-bar',

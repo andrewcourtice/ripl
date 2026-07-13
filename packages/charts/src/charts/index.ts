@@ -7,6 +7,7 @@ export * from './funnel';
 export * from './gantt';
 export * from './gauge';
 export * from './heatmap';
+export * from './histogram';
 export * from './line';
 export * from './packed-circle';
 export * from './pie';
