@@ -187,7 +187,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             const valueRange = maxVal - minVal || 1;
 
             // A sequential colour scale over the value extent. `colorRange` may be two colours (the
-            // default low→high pair) or any number of stops, including a built-in `SCHEME_*` palette.
+            // default low→high pair) or any number of stops, including a built-in `COLOR_SCHEME_*` palette.
             const colorScale = scaleSequential(colorRange ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
             const layout = this.createLayout();

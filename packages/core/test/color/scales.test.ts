@@ -5,11 +5,11 @@ import {
 } from 'vitest';
 
 import {
+    COLOR_SCHEME_RDBU,
+    COLOR_SCHEME_VIRIDIS,
     interpolateColors,
     parseColor,
     scaleSequential,
-    SCHEME_RDBU,
-    SCHEME_VIRIDIS,
 } from '../../src';
 
 /**
@@ -71,17 +71,17 @@ describe('interpolateColors', () => {
 describe('scaleSequential', () => {
 
     test('Should map domain endpoints to the scheme endpoints', () => {
-        const scale = scaleSequential(SCHEME_VIRIDIS, [0, 100]);
+        const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]);
 
-        expect(rgb(scale(0))).toEqual(rgb(SCHEME_VIRIDIS[0]));
-        expect(rgb(scale(100))).toEqual(rgb(SCHEME_VIRIDIS[SCHEME_VIRIDIS.length - 1]));
+        expect(rgb(scale(0))).toEqual(rgb(COLOR_SCHEME_VIRIDIS[0]));
+        expect(rgb(scale(100))).toEqual(rgb(COLOR_SCHEME_VIRIDIS[COLOR_SCHEME_VIRIDIS.length - 1]));
     });
 
     test('Should clamp values outside the domain', () => {
-        const scale = scaleSequential(SCHEME_VIRIDIS, [0, 100]);
+        const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]);
 
-        expect(rgb(scale(-50))).toEqual(rgb(SCHEME_VIRIDIS[0]));
-        expect(rgb(scale(500))).toEqual(rgb(SCHEME_VIRIDIS[SCHEME_VIRIDIS.length - 1]));
+        expect(rgb(scale(-50))).toEqual(rgb(COLOR_SCHEME_VIRIDIS[0]));
+        expect(rgb(scale(500))).toEqual(rgb(COLOR_SCHEME_VIRIDIS[COLOR_SCHEME_VIRIDIS.length - 1]));
     });
 
     test('Should accept a custom interpolator function', () => {
@@ -91,7 +91,7 @@ describe('scaleSequential', () => {
     });
 
     test('Should expose ticks over the domain', () => {
-        const scale = scaleSequential(SCHEME_VIRIDIS, [0, 100]);
+        const scale = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]);
         const ticks = scale.ticks(5);
 
         expect(ticks[0]).toBe(0);
@@ -103,19 +103,19 @@ describe('scaleSequential', () => {
 describe('scaleSequential (diverging domain)', () => {
 
     test('Should centre the neutral value at the interpolator midpoint', () => {
-        const scale = scaleSequential(SCHEME_RDBU, [-10, 0, 10]);
+        const scale = scaleSequential(COLOR_SCHEME_RDBU, [-10, 0, 10]);
 
-        expect(rgb(scale(-10))).toEqual(rgb(SCHEME_RDBU[0]));
-        expect(rgb(scale(10))).toEqual(rgb(SCHEME_RDBU[SCHEME_RDBU.length - 1]));
-        expect(rgb(scale(0))).toEqual(rgb(SCHEME_RDBU[4]));
+        expect(rgb(scale(-10))).toEqual(rgb(COLOR_SCHEME_RDBU[0]));
+        expect(rgb(scale(10))).toEqual(rgb(COLOR_SCHEME_RDBU[COLOR_SCHEME_RDBU.length - 1]));
+        expect(rgb(scale(0))).toEqual(rgb(COLOR_SCHEME_RDBU[4]));
     });
 
     test('Should handle asymmetric domains around the neutral', () => {
-        const scale = scaleSequential(SCHEME_RDBU, [-5, 0, 20]);
+        const scale = scaleSequential(COLOR_SCHEME_RDBU, [-5, 0, 20]);
 
-        expect(rgb(scale(-5))).toEqual(rgb(SCHEME_RDBU[0]));
-        expect(rgb(scale(0))).toEqual(rgb(SCHEME_RDBU[4]));
-        expect(rgb(scale(20))).toEqual(rgb(SCHEME_RDBU[SCHEME_RDBU.length - 1]));
+        expect(rgb(scale(-5))).toEqual(rgb(COLOR_SCHEME_RDBU[0]));
+        expect(rgb(scale(0))).toEqual(rgb(COLOR_SCHEME_RDBU[4]));
+        expect(rgb(scale(20))).toEqual(rgb(COLOR_SCHEME_RDBU[COLOR_SCHEME_RDBU.length - 1]));
     });
 
 });

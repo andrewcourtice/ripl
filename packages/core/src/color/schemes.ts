@@ -8,7 +8,7 @@
  */
 
 /** Sequential — dark purple → blue → teal → green → yellow. The default perceptual scheme. */
-export const SCHEME_VIRIDIS = [
+export const COLOR_SCHEME_VIRIDIS = [
     '#440154',
     '#482878',
     '#3e4a89',
@@ -22,7 +22,7 @@ export const SCHEME_VIRIDIS = [
 ];
 
 /** Sequential — dark blue → purple → magenta → orange → yellow. */
-export const SCHEME_PLASMA = [
+export const COLOR_SCHEME_PLASMA = [
     '#0d0887',
     '#46039f',
     '#7201a8',
@@ -36,7 +36,7 @@ export const SCHEME_PLASMA = [
 ];
 
 /** Sequential — black → purple → red → orange → pale yellow. */
-export const SCHEME_INFERNO = [
+export const COLOR_SCHEME_INFERNO = [
     '#000004',
     '#1b0c41',
     '#4a0c6b',
@@ -50,7 +50,7 @@ export const SCHEME_INFERNO = [
 ];
 
 /** Sequential — black → purple → magenta → orange → cream. */
-export const SCHEME_MAGMA = [
+export const COLOR_SCHEME_MAGMA = [
     '#000004',
     '#180f3d',
     '#440f76',
@@ -64,7 +64,7 @@ export const SCHEME_MAGMA = [
 ];
 
 /** Sequential — dark blue → slate → tan → yellow. Colour-vision-deficiency friendly. */
-export const SCHEME_CIVIDIS = [
+export const COLOR_SCHEME_CIVIDIS = [
     '#00224e',
     '#123570',
     '#3b496c',
@@ -78,7 +78,7 @@ export const SCHEME_CIVIDIS = [
 ];
 
 /** Sequential rainbow — purple → blue → cyan → green → yellow → orange → red. High contrast. */
-export const SCHEME_TURBO = [
+export const COLOR_SCHEME_TURBO = [
     '#30123b',
     '#4145ab',
     '#4675ed',
@@ -94,7 +94,7 @@ export const SCHEME_TURBO = [
 ];
 
 /** Diverging — red → white → blue (ColorBrewer RdBu). */
-export const SCHEME_RDBU = [
+export const COLOR_SCHEME_RDBU = [
     '#b2182b',
     '#d6604d',
     '#f4a582',
@@ -107,7 +107,7 @@ export const SCHEME_RDBU = [
 ];
 
 /** Diverging — brown → white → teal (ColorBrewer BrBG). */
-export const SCHEME_BRBG = [
+export const COLOR_SCHEME_BRBG = [
     '#8c510a',
     '#bf812d',
     '#dfc27d',

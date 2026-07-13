@@ -74,7 +74,7 @@ function createColorScale(interpolate: ColorInterpolator, domain: number[], posi
 
 /**
  * Creates a colour scale mapping a numeric `domain` through a colour interpolator (or array of stops,
- * e.g. one of the built-in `SCHEME_*` palettes). Values are clamped to the domain.
+ * e.g. one of the built-in `COLOR_SCHEME_*` palettes). Values are clamped to the domain.
  *
  * - **Sequential** — a two-element domain `[min, max]` maps linearly across the whole interpolator.
  * - **Diverging** — a three-element domain `[min, neutral, max]` maps `neutral` to the interpolator's

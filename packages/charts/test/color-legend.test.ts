@@ -12,12 +12,12 @@ import {
 } from '@ripl/canvas';
 
 import {
+    COLOR_SCHEME_VIRIDIS,
     createRenderer,
     createScene,
     factory,
     parseColor,
     scaleSequential,
-    SCHEME_VIRIDIS,
 } from '@ripl/core';
 
 import {
@@ -89,7 +89,7 @@ describe('ColorLegend', () => {
         const legend = new ColorLegend({
             scene,
             renderer,
-            scale: scaleSequential(SCHEME_VIRIDIS, [0, 100]),
+            scale: scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]),
             options: {
                 segments: 16,
             },
@@ -109,8 +109,8 @@ describe('ColorLegend', () => {
         expect(texts.length).toBeGreaterThanOrEqual(2);
 
         // First and last segments track the scheme endpoints.
-        expect(rgb(rects[0].fill)).toEqual(rgb(SCHEME_VIRIDIS[0]));
-        expect(rgb(rects[rects.length - 1].fill)).toEqual(rgb(SCHEME_VIRIDIS[SCHEME_VIRIDIS.length - 1]));
+        expect(rgb(rects[0].fill)).toEqual(rgb(COLOR_SCHEME_VIRIDIS[0]));
+        expect(rgb(rects[rects.length - 1].fill)).toEqual(rgb(COLOR_SCHEME_VIRIDIS[COLOR_SCHEME_VIRIDIS.length - 1]));
 
         legend.destroy();
         scene.destroy();
@@ -126,7 +126,7 @@ describe('ColorLegend', () => {
         const legend = new ColorLegend({
             scene,
             renderer,
-            scale: scaleSequential(SCHEME_VIRIDIS, [0, 100]),
+            scale: scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]),
             options: {
                 segments: 8,
             },
