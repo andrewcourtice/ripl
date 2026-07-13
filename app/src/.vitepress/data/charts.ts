@@ -71,6 +71,11 @@ export const charts: ChartMeta[] = [
         description: 'The distribution of a numeric field, binned into bars over a continuous value axis.',
     },
     {
+        text: 'Box Plot',
+        link: '/docs/charts/box-plot',
+        description: 'Summarise a numeric field per category with an interquartile box, median, whiskers, and outliers.',
+    },
+    {
         text: 'Treemap',
         link: '/docs/charts/treemap',
         description: 'Hierarchical data as nested rectangles, where each rectangle\'s area is proportional to its value.',

@@ -1,6 +1,7 @@
 export * from './arc-diagram';
 export * from './area';
 export * from './bar';
+export * from './box-plot';
 export * from './chord';
 export * from './force-directed';
 export * from './funnel';

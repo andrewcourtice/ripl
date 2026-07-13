@@ -4,6 +4,7 @@
  */
 export const CHART_IDS = [
     'bar',
+    'box-plot',
     'line',
     'area',
     'scatter',
