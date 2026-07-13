@@ -554,6 +554,13 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const xAxisBox = this.xAxis.getBoundingBox();
 
             this._yScale = scaleContinuous(yExtent, [xAxisBox.top - maxRadius, top + maxRadius], { padToTicks: 10 });
+
+            // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
+            // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
+            // so both follow the view.
+            this._xScale = this.applyView(this._xScale, 'x');
+            this._yScale = this.applyView(this._yScale, 'y');
+            this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 

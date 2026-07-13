@@ -23,6 +23,11 @@ import type {
 
 import {
     ANIMATION_REFERENCE,
+    resolveAnimation,
+} from './animation';
+
+import type {
+    ResolvedAnimation,
 } from './animation';
 
 import type {
@@ -35,6 +40,7 @@ import type {
 } from './options';
 
 import {
+    normalizeAnimation,
     normalizeAxis,
     normalizeAxisItem,
     normalizeCrosshair,
@@ -73,13 +79,32 @@ import type {
 import type {
     Context,
     EventMap,
+    NavigatorInteractions,
+    NavigatorTransform,
     Scale,
 } from '@ripl/core';
 
 import {
     Box,
+    createFrameBuffer,
     scaleContinuous,
 } from '@ripl/core';
+
+import {
+    createNavigator,
+} from '@ripl/dom';
+
+import type {
+    DOMNavigator,
+} from '@ripl/dom';
+
+/** Resolved animation used to snap geometry into place during navigator-driven re-renders. */
+const NO_ANIMATION = normalizeAnimation(false);
+
+/** Whether a view transform is the identity (no pan, no zoom). */
+function isIdentityTransform(transform: NavigatorTransform): boolean {
+    return transform.k === 1 && transform.x === 0 && transform.y === 0;
+}
 
 /** Options shared by all cartesian charts. */
 export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions {
@@ -88,6 +113,14 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
     tooltip?: ChartTooltipInput;
     legend?: ChartLegendInput;
     crosshair?: ChartCrosshairInput;
+    /**
+     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
+     * click-drag pan; an object configures each interaction individually. The chart auto-creates a
+     * {@link DOMNavigator} on its context and rescales the axis domains as the view changes — no data
+     * rebuild. Access the underlying controller via `chart.navigator` for imperative framing
+     * (`centerOn`/`fitBounds`) or brush-and-link.
+     */
+    navigator?: boolean | NavigatorInteractions;
 }
 
 /** Declares which optional cartesian components a chart wants constructed. */
@@ -112,6 +145,25 @@ export abstract class CartesianChart<
     protected tooltip?: Tooltip;
     protected grid?: Grid;
     protected crosshair?: Crosshair;
+
+    private _navigator?: DOMNavigator;
+    private _view: NavigatorTransform = {
+        k: 1,
+        x: 0,
+        y: 0,
+    };
+
+    private _navigating = false;
+    private _scheduleNavigatorRender = createFrameBuffer();
+
+    /**
+     * The pan/zoom/brush controller for this chart, or `undefined` when the `navigator` option is off.
+     * Use it for imperative framing (`centerOn`, `fitBounds`, `reset`) and to subscribe to
+     * `brush`/`brushend` for brush-and-link.
+     */
+    public get navigator(): DOMNavigator | undefined {
+        return this._navigator;
+    }
 
     /**
      * Builds the cartesian components from the chart options. Call this from a subclass
@@ -187,6 +239,80 @@ export abstract class CartesianChart<
                 lineWidth: crosshairOpts.lineWidth,
             });
         }
+
+        this._setupNavigator();
+    }
+
+    /**
+     * Creates the pan/zoom/brush controller when the `navigator` option is enabled and wires its view
+     * changes to a coalesced, animation-free re-render (so panning/zooming snaps rather than tweens).
+     * Charts opt their scales into the view via {@link applyView}.
+     */
+    private _setupNavigator(): void {
+        const config = this.options.navigator;
+
+        if (!config) {
+            return;
+        }
+
+        const interactions = config === true
+            ? {
+                zoom: true,
+                pan: true,
+            }
+            : config;
+
+        this._navigator = createNavigator(this.scene.context, {
+            interactions,
+        });
+
+        this.retain({
+            dispose: () => this._navigator?.destroy(),
+        });
+
+        this._navigator.on('change', event => {
+            this._view = event.data;
+            this._scheduleNavigatorRender(() => this._renderFromNavigator());
+        });
+    }
+
+    private _renderFromNavigator(): void {
+        this._navigating = true;
+
+        void Promise.resolve(this.render()).finally(() => {
+            this._navigating = false;
+        });
+    }
+
+    /**
+     * Rescales a continuous axis scale to the window currently visible under the navigator's view
+     * transform, keeping the same pixel range. Returns the scale unchanged when no navigator is active
+     * or the view is at the identity. Subclasses pass their final x/y scales through this so pan/zoom
+     * rescales the axis domains (and repositions geometry) without a data rebuild.
+     */
+    protected applyView(scale: Scale<number>, axis: 'x' | 'y'): Scale<number> {
+        if (!this._navigator || isIdentityTransform(this._view)) {
+            return scale;
+        }
+
+        const range = scale.range as [number, number];
+        const translate = axis === 'x' ? this._view.x : this._view.y;
+        const factor = this._view.k;
+
+        const domain: [number, number] = [
+            scale.inverse((range[0] - translate) / factor),
+            scale.inverse((range[1] - translate) / factor),
+        ];
+
+        return scaleContinuous(domain, range);
+    }
+
+    protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {
+        if (this._navigating) {
+            return resolveAnimation(NO_ANIMATION, referenceDuration);
+        }
+
+        return super.resolveAnimation(referenceDuration);
     }
 
     /** Applies the chart's resolved animation to both axes ahead of rendering. */

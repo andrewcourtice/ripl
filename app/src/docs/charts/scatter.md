@@ -11,6 +11,7 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
             <RiplButton @click="addData">Add Data</RiplButton>
             <RiplButton @click="removeData">Remove Data</RiplButton>
             <RiplButton @click="randomise">Randomise</RiplButton>
+            <RiplButton @click="resetView">Reset View</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
@@ -85,6 +86,7 @@ const {
     data,
     key: 'id',
     series: getSeries(),
+    navigator: true,
     ...buildCommonOptions(config),
 }));
 
@@ -136,7 +138,15 @@ function randomise() {
 
     chart.value?.update({ data });
 }
+
+function resetView() {
+    chart.value?.navigator?.reset();
+}
 </script>
+
+> [!TIP]
+> This chart has the **navigator** enabled — scroll to zoom toward the cursor and click-and-hold to
+> pan (⌘/Ctrl-drag works too). Use **Reset View** to return to the default framing.
 
 ## Usage
 
@@ -227,6 +237,30 @@ createScatterChart('#container', {
 });
 ```
 
+### Pan & zoom (navigator)
+
+Set `navigator: true` to make the plot explorable — wheel-zoom toward the cursor and click-and-hold
+to pan, with the axis domains rescaling as the view changes (no data rebuild). Pass an object to tune
+which interactions are active:
+
+```ts
+const chart = createScatterChart('#container', {
+    data,
+    key: 'id',
+    series: [/* ... */],
+    navigator: {
+        zoom: true,
+        pan: true,
+        brush: true,
+    },
+});
+
+// The controller is available for imperative framing and brush-and-link:
+chart.navigator?.fitBounds({ x0: 0, y0: 0, x1: 200, y1: 200 });
+chart.navigator?.on('brushend', ({ data: extent }) => console.log(extent));
+chart.navigator?.reset();
+```
+
 ## Options
 
 - **`data`** — The data array
@@ -237,3 +271,4 @@ createScatterChart('#container', {
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes with optional titles
+- **`navigator`** — `boolean | NavigatorInteractions` — Enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`
