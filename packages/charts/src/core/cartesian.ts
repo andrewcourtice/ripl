@@ -147,6 +147,7 @@ export abstract class CartesianChart<
     protected crosshair?: Crosshair;
 
     private _navigator?: DOMNavigator;
+    private _navigatorConfigKey?: string;
     private _view: NavigatorTransform = {
         k: 1,
         x: 0,
@@ -266,21 +267,26 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Creates or destroys the pan/zoom/brush controller to match the current `navigator` option,
-     * returning `true` when the active state changed. Called on construction and whenever
-     * {@link update} receives a `navigator` option, so the controller can be toggled at runtime.
+     * Creates, destroys, or rebuilds the pan/zoom/brush controller to match the current `navigator`
+     * option, returning `true` when it changed. Called on construction and whenever {@link update}
+     * receives a `navigator` option, so the controller can be toggled — and its interaction config
+     * (e.g. zoom `sensitivity`) retuned — at runtime. A change to the config rebuilds the controller;
+     * an unchanged config (the common case on a data/style update) leaves the current view intact.
      */
     private _reconcileNavigator(): boolean {
-        const enabled = !!this.options.navigator;
+        const config = this.options.navigator;
+        const enabled = !!config;
+        const key = enabled ? JSON.stringify(config) : undefined;
 
-        if (enabled === !!this._navigator) {
+        if (enabled === !!this._navigator && key === this._navigatorConfigKey) {
             return false;
         }
 
+        this._destroyNavigator();
+        this._navigatorConfigKey = key;
+
         if (enabled) {
             this._createNavigator();
-        } else {
-            this._destroyNavigator();
         }
 
         return true;
@@ -359,6 +365,47 @@ export abstract class CartesianChart<
         ];
 
         return scaleContinuous(domain, range);
+    }
+
+    /**
+     * Transforms a scale's pixel *output* by the current view (`k·pos + t`) instead of rescaling its
+     * domain — for categorical axes (point/band scales) where domain rescaling is meaningless, so the
+     * category positions pan and zoom in lock-step with the continuous axis. Returns the scale
+     * unchanged when there is no navigator or the view is at rest. Band/point pixel spans
+     * (`bandwidth`/`step`) scale with the zoom so bars widen as you zoom in.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected applyViewToScale<TScale extends Scale<any, number>>(scale: TScale, axis: 'x' | 'y'): TScale {
+        if (!this._navigator || isIdentityTransform(this._view)) {
+            return scale;
+        }
+
+        const factor = this._view.k;
+        const translate = axis === 'x' ? this._view.x : this._view.y;
+
+        type Domain = Parameters<TScale>[0];
+        type ViewedScale = TScale & { bandwidth?: number;
+            step?: number; };
+
+        const source = scale as ViewedScale;
+        const viewed = ((value: Domain) => factor * scale(value) + translate) as unknown as ViewedScale;
+
+        viewed.domain = source.domain;
+        viewed.range = source.range;
+        viewed.ticks = (count?: number) => source.ticks(count);
+        viewed.includes = (value: Domain) => source.includes(value);
+        viewed.inverse = (position: number) => source.inverse((position - translate) / factor);
+
+        // Band/point scales expose pixel spans that must zoom with the view (bars widen on zoom-in).
+        if (typeof source.bandwidth === 'number') {
+            viewed.bandwidth = source.bandwidth * factor;
+        }
+
+        if (typeof source.step === 'number') {
+            viewed.step = source.step * factor;
+        }
+
+        return viewed;
     }
 
     protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {

@@ -549,6 +549,14 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
+            // Rescale to the navigator's pan/zoom window (no-op without a navigator or at rest):
+            // continuous y via domain rescale, categorical x via a pixel-space transform. Geometry
+            // and axes read the same scales, so both follow the view.
+            this._yScale = this.applyView(this._yScale, 'y');
+            this._xScale = this.applyViewToScale(this._xScale, 'x');
+            this.xAxis.scale = this._xScale;
+            this.yAxis.scale = this._yScale;
+
             this.renderGrid(
                 [],
                 this._yScale.ticks(10).map(tick => this._yScale(tick)),

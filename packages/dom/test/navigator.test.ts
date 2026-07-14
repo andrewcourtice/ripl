@@ -25,6 +25,13 @@ function fakeContext(): Context {
     } as unknown as Context;
 }
 
+/** A non-DOM context, mirroring how the terminal context carries a dummy `{}` element. */
+function fakeNonDOMContext(): Context {
+    return {
+        element: {},
+    } as unknown as Context;
+}
+
 /** Dispatches a DOM event with arbitrary properties, sidestepping jsdom constructor gaps. */
 function fire(type: string, props: Record<string, unknown>): void {
     const event = new Event(type, {
@@ -214,6 +221,69 @@ describe('DOMNavigator interactions', () => {
             x: 0,
             y: 0,
         });
+    });
+
+    test('Should zoom less with a lower zoom sensitivity', () => {
+        const gentle = createNavigator(fakeContext(), {
+            interactions: {
+                zoom: {
+                    sensitivity: 0.25,
+                },
+            },
+        });
+        const sharp = createNavigator(fakeContext(), {
+            interactions: {
+                zoom: {
+                    sensitivity: 2,
+                },
+            },
+        });
+
+        const wheel = {
+            deltaY: -100,
+            clientX: 50,
+            clientY: 50,
+        };
+
+        fire('wheel', wheel);
+
+        const gentleK = gentle.transform.k;
+        const sharpK = sharp.transform.k;
+
+        expect(gentleK).toBeGreaterThan(1);
+        expect(sharpK).toBeGreaterThan(gentleK);
+
+        gentle.destroy();
+        sharp.destroy();
+    });
+
+    test('Should warn and stay inert on a non-DOM context', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        // Must not throw (previously crashed in `getBoundingClientRect`).
+        const navigator = createNavigator(fakeNonDOMContext(), {
+            interactions: {
+                zoom: true,
+                pan: true,
+            },
+        });
+
+        expect(warn).toHaveBeenCalledOnce();
+
+        // No listeners were attached, so gestures on the real element are ignored.
+        fire('wheel', {
+            deltaY: -100,
+            clientX: 50,
+            clientY: 50,
+        });
+
+        expect(navigator.transform).toEqual({
+            k: 1,
+            x: 0,
+            y: 0,
+        });
+
+        navigator.destroy();
     });
 
 });

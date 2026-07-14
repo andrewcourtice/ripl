@@ -752,6 +752,13 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
+            // Rescale to the navigator's view (no-op at rest): continuous y via domain rescale,
+            // categorical x via a pixel-space transform, so geometry and axes track together.
+            this._yScale = this.applyView(this._yScale, 'y');
+            this._xScale = this.applyViewToScale(this._xScale, 'x');
+            this.xAxis.scale = this._xScale;
+            this.yAxis.scale = this._yScale;
+
             const baseline = this._yScale(0);
             const plot = {
                 x: yAxisBox.right,

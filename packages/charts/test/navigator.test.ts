@@ -10,6 +10,7 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    createLineChart,
     createScatterChart,
 } from '../src';
 
@@ -118,6 +119,46 @@ describe('CartesianChart navigator integration', () => {
         });
 
         expect(chart.navigator).toBeDefined();
+
+        chart.destroy();
+    });
+
+    test('Should pan a categorical (line) chart without throwing', async () => {
+        mockCanvasContext();
+
+        const chart = createLineChart<{ month: string;
+            value: number; }>(document.createElement('div'), {
+            autoRender: false,
+            navigator: true,
+            data: [
+                {
+                    month: 'a',
+                    value: 1,
+                },
+                {
+                    month: 'b',
+                    value: 2,
+                },
+                {
+                    month: 'c',
+                    value: 3,
+                },
+            ],
+            key: 'month',
+            series: [
+                {
+                    id: 'series',
+                    label: 'Series',
+                    value: 'value',
+                },
+            ],
+        });
+
+        // A non-identity view exercises applyView (continuous y) + applyViewToScale (categorical x).
+        chart.navigator!.panBy(30, -10);
+
+        await expect(chart.render()).resolves.not.toThrow();
+        expect(chart.navigator!.transform.x).toBe(30);
 
         chart.destroy();
     });

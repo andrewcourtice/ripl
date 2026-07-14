@@ -307,9 +307,16 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
+            // Rescale to the navigator view (no-op at rest): value (y) via domain rescale, category
+            // (x) via a pixel-space transform, so boxes and axes track the pan/zoom together.
+            const viewedValueScale = this.applyView(adjustedValueScale, 'y');
+            const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
+            this.yAxis.scale = viewedValueScale;
+            this.xAxis.scale = viewedCategoryScale;
+
             this.renderGrid(
                 [],
-                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
                 {
                     x: yAxisBox.right,
                     y: top,
@@ -319,14 +326,14 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             );
 
             const step = keys.length > 1
-                ? categoryScale(keys[1]) - categoryScale(keys[0])
+                ? viewedCategoryScale(keys[1]) - viewedCategoryScale(keys[0])
                 : right - yAxisBox.right;
             const boxWidth = Math.min(Math.abs(step) * 0.6, 60);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this._drawBoxes(keys, grouped, categoryScale, adjustedValueScale, boxWidth, color),
+                this._drawBoxes(keys, grouped, viewedCategoryScale, viewedValueScale, boxWidth, color),
             ]);
         });
     }

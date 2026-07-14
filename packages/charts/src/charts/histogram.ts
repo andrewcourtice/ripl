@@ -222,9 +222,16 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             this.yAxis.scale = adjustedCountScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
+            // Rescale both continuous axes to the navigator view (no-op at rest) so bins and axes pan
+            // and zoom in 2D together.
+            const viewedValueScale = this.applyView(valueScale, 'x');
+            const viewedCountScale = this.applyView(adjustedCountScale, 'y');
+            this.xAxis.scale = viewedValueScale;
+            this.yAxis.scale = viewedCountScale;
+
             this.renderGrid(
                 [],
-                adjustedCountScale.ticks(10).map(tick => adjustedCountScale(tick)),
+                viewedCountScale.ticks(10).map(tick => viewedCountScale(tick)),
                 {
                     x: yAxisBox.right,
                     y: top,
@@ -236,7 +243,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this._drawBins(histogram, valueScale, adjustedCountScale, color),
+                this._drawBins(histogram, viewedValueScale, viewedCountScale, color),
             ]);
         });
     }

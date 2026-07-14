@@ -189,7 +189,14 @@ const {
     navigator.on('brush', () => renderDemo(context, navigator));
 
     navigator.on('brushend', brush => {
-        if (brush && Math.abs(brush.x1 - brush.x0) > 12 && Math.abs(brush.y1 - brush.y0) > 12) {
+        // `clearBrush()` below re-emits `brushend` with `null`; return early on that pass so the
+        // handler doesn't recurse (emit is synchronous).
+        if (!brush) {
+            renderDemo(context, navigator);
+            return;
+        }
+
+        if (Math.abs(brush.x1 - brush.x0) > 12 && Math.abs(brush.y1 - brush.y0) > 12) {
             const [x0, y0] = navigator.invertPoint([brush.x0, brush.y0]);
             const [x1, y1] = navigator.invertPoint([brush.x1, brush.y1]);
 
@@ -197,7 +204,6 @@ const {
         }
 
         navigator.clearBrush();
-        renderDemo(context, navigator);
     });
 
     frameWorld(navigator);

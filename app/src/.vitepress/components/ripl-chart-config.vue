@@ -67,6 +67,9 @@
             <RiplField label="Pan &amp; zoom" inline>
                 <RiplSwitch v-model="config.navigatorEnabled" />
             </RiplField>
+            <RiplField v-if="config.navigatorEnabled" label="Zoom sensitivity">
+                <RiplInputRange v-model="config.navigatorSensitivity" :min="0.1" :max="2" :step="0.1" />
+            </RiplField>
         </section>
 
         <section v-if="config.features.animation" class="ripl-chart-config__section">
@@ -87,6 +90,7 @@ import RiplField from './ripl-field.vue';
 import RiplSwitch from './ripl-switch.vue';
 import RiplSelect from './ripl-select.vue';
 import RiplInputText from './ripl-input-text.vue';
+import RiplInputRange from './ripl-input-range.vue';
 import RiplColorInput from './ripl-color-input.vue';
 
 export interface ChartConfigSeriesMeta {

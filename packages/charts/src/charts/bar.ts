@@ -701,8 +701,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = adjustedValueScale;
                 this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
+                // Apply the navigator view (no-op at rest): values (x) via domain rescale, categories
+                // (y) via a pixel-space transform, so bars and both axes track the pan/zoom together.
+                const viewedValueScale = this.applyView(adjustedValueScale, 'x');
+                const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
+                this.xAxis.scale = viewedValueScale;
+                this.yAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
+
                 this.renderGrid(
-                    adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                    viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
                     [],
                     {
                         x: yAxisBox.right,
@@ -715,7 +722,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 return Promise.all([
                     this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                     this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                    this._drawBars(categoryScale, adjustedValueScale, getKey),
+                    this._drawBars(viewedCategoryScale, viewedValueScale, getKey),
                 ]);
             }
 
@@ -741,9 +748,16 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
+            // Apply the navigator view (no-op at rest): values (y) via domain rescale, categories (x)
+            // via a pixel-space transform, so bars and both axes track the pan/zoom together.
+            const viewedValueScale = this.applyView(adjustedValueScale, 'y');
+            const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
+            this.yAxis.scale = viewedValueScale;
+            this.xAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
+
             this.renderGrid(
                 [],
-                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
                 {
                     x: yAxisBox.right,
                     y: top,
@@ -755,7 +769,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this._drawBars(categoryScale, adjustedValueScale, getKey),
+                this._drawBars(viewedCategoryScale, viewedValueScale, getKey),
             ]);
         });
     }

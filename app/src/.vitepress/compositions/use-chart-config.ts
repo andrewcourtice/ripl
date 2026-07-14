@@ -63,6 +63,7 @@ export interface ChartConfigDefaults {
     gridVisible?: boolean;
     animationEnabled?: boolean;
     navigatorEnabled?: boolean;
+    navigatorSensitivity?: number;
     colors?: Record<string, string>;
 }
 
@@ -79,6 +80,7 @@ export interface ChartConfig {
     gridVisible: boolean;
     animationEnabled: boolean;
     navigatorEnabled: boolean;
+    navigatorSensitivity: number;
     colors: Record<string, string>;
 }
 
@@ -109,6 +111,7 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
         gridVisible: defaults.gridVisible ?? true,
         animationEnabled: defaults.animationEnabled ?? true,
         navigatorEnabled: defaults.navigatorEnabled ?? false,
+        navigatorSensitivity: defaults.navigatorSensitivity ?? 0.5,
         colors: {
             ...(defaults.colors ?? {}),
         },
@@ -166,7 +169,15 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.navigator) {
-        options.navigator = config.navigatorEnabled;
+        // Emit the object form so the demo can tune zoom sensitivity; `false` disables it.
+        options.navigator = config.navigatorEnabled
+            ? {
+                zoom: {
+                    sensitivity: config.navigatorSensitivity,
+                },
+                pan: true,
+            }
+            : false;
     }
 
     return options;

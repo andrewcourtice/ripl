@@ -33,6 +33,17 @@ const INTERACTION_KEY = Symbol('navigator-interaction');
 const VIEWPORT_KEY = Symbol('navigator-viewport');
 const WHEEL_SENSITIVITY = 0.002;
 
+/**
+ * Feature-detects whether an element can host the wheel/pointer interaction a {@link DOMNavigator}
+ * needs. Non-DOM contexts (e.g. the terminal context, which carries a dummy `{}` element) fail this,
+ * so the navigator can decline to attach instead of crashing on `getBoundingClientRect`.
+ */
+function isInteractiveElement(element: unknown): element is HTMLElement {
+    return !!element
+        && typeof (element as HTMLElement).getBoundingClientRect === 'function'
+        && typeof (element as HTMLElement).addEventListener === 'function';
+}
+
 function resolveInteraction(option: NavigatorInteractionOption | undefined, fallback: boolean): ResolvedInteraction {
     if (option === undefined) {
         return {
@@ -86,6 +97,17 @@ export class DOMNavigator extends Navigator {
         super(options);
 
         this._element = context.element as unknown as HTMLElement;
+
+        // A DOMNavigator drives real wheel/pointer gestures, so it needs a DOM-interactive element.
+        // Non-DOM contexts signal this by carrying a non-interactive element (e.g. the terminal
+        // context passes a dummy `{}`), so feature-detect the DOM APIs the navigator relies on rather
+        // than crashing on `getBoundingClientRect`. When unsupported, warn and stay inert — the
+        // navigator constructs but attaches nothing and its transform never leaves the identity.
+        if (!isInteractiveElement(this._element)) {
+            console.warn('createNavigator: the provided context is not DOM-interactive; navigation is disabled.');
+            return;
+        }
+
         this._syncViewport();
 
         this.retain(onDOMElementResize(this._element, () => this._syncViewport()), VIEWPORT_KEY);
