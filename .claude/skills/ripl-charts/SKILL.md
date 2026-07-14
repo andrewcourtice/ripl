@@ -3,7 +3,7 @@ name: ripl-charts
 description: >-
   Build production-ready charts in the Ripl monorepo (@ripl/charts) — a new chart type, or a fix/demo
   for an existing one — with correct animation, interaction, docs, and demos, first try. Use whenever
-  adding or changing a chart in packages/charts, its VitePress demo/docs under app/src/docs/charts, or
+  adding or changing a chart in packages/charts, its VitePress demo/docs under app/src/charts, or
   the shared chart infrastructure. Covers the factory+class pattern, the enter/update/exit render
   pipeline, tooltips/hover-highlight, labels, the element toolkit, demo authoring, gallery/docs
   registration, and how to verify in this sandbox.
@@ -33,8 +33,8 @@ layouts), `pie.ts`/`radial-bar.ts` (arcs).
 - `packages/charts/src/components/` — `tooltip.ts`, `legend.ts`, `axis.ts`, `grid.ts`, `crosshair.ts`.
 - `packages/charts/test/` — vitest unit tests; `test/visual/gallery.ts` + `chart-ids.ts` drive
   Playwright snapshots.
-- `app/src/docs/charts/<name>.md` — the VitePress demo + docs page.
-- `app/src/docs/charts/getting-started.md` — the "Available Charts" table (register new charts here).
+- `app/src/charts/<name>.md` — the VitePress demo + docs page.
+- `app/src/charts/getting-started.md` — the "Available Charts" table (register new charts here).
 
 ## Anatomy of a chart
 
@@ -175,7 +175,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
   reweights relax from the current layout (glide, not reshuffle). Spring nodes out from a root using
   BFS depth for the stagger and `easeOutBack`.
 
-## Authoring the demo (`app/src/docs/charts/<name>.md`)
+## Authoring the demo (`app/src/charts/<name>.md`)
 
 VitePress page with a live example. Copy an existing page (e.g. `radial-bar.md`). Essentials:
 

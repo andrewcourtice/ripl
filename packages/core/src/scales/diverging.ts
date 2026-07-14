@@ -18,6 +18,7 @@ import type {
 
 /** Options for a diverging scale, adding a midpoint to the base linear scale options. */
 export interface DivergingScaleOptions extends LinearScaleOptions {
+    /** The domain value that maps to the centre of the range. Defaults to the domain's midpoint. */
     midpoint?: number;
 };
 

@@ -14,12 +14,14 @@ import type {
 
 /** State interface for a cube, defining uniform edge size. */
 export interface CubeState extends Shape3DState {
+    /** The length of each edge of the cube, in world units. */
     size: number;
 }
 
 /** A 3D cube shape with uniform edge size. */
 export class Cube extends Shape3D<CubeState> {
 
+    /** The length of each edge of the cube, in world units. */
     public get size() {
         return this.getStateValue('size');
     }

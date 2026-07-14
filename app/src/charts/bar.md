@@ -30,13 +30,13 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createBarChart,

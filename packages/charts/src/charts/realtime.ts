@@ -73,27 +73,45 @@ import {
 
 /** Configuration for an individual realtime chart series. */
 export interface RealtimeChartSeriesOptions {
+    /** Unique identifier for the series, used as the key when pushing new values. */
     id: string;
+    /** Optional colour override for the series (otherwise a palette colour is generated). */
     color?: string;
+    /** Display label for the series (shown in the legend). Defaults to the series id. */
     label?: string;
+    /** Renderer controlling the line's shape (e.g. straight or curved). */
     lineType?: PolylineRenderer;
+    /** Width of the series line in pixels. Defaults to 2. */
     lineWidth?: number;
+    /** Fill the area beneath the line. Defaults to `true`. */
     showArea?: boolean;
+    /** Opacity of the area fill when `showArea` is enabled. Defaults to 0.2. */
     areaOpacity?: number;
 }
 
 /** Options for configuring a {@link RealtimeChart}. */
 export interface RealtimeChartOptions extends BaseChartOptions {
+    /** The series to stream, one line/area per entry. */
     series: RealtimeChartSeriesOptions[];
+    /** Number of samples kept in the sliding window before the oldest scrolls off. Defaults to 60. */
     windowSize?: number;
+    /** Background grid line configuration. */
     grid?: ChartGridInput;
+    /** Crosshair overlay configuration. */
     crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration. */
     tooltip?: ChartTooltipInput;
+    /** Series legend configuration. */
     legend?: ChartLegendInput;
+    /** Axis configuration (labels, ticks, title). */
     axis?: ChartAxisInput;
+    /** Show the y-axis. Defaults to `true`. */
     showYAxis?: boolean;
+    /** Fixed lower bound for the y-axis (otherwise derived from the windowed data). */
     yMin?: number;
+    /** Fixed upper bound for the y-axis (otherwise derived from the windowed data). */
     yMax?: number;
+    /** Duration in milliseconds of the transition applied on each push. Defaults to 300. */
     transitionDuration?: number;
 }
 
@@ -193,6 +211,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         return this._transitionDuration;
     }
 
+    /**
+     * Appends a new sample per series (keyed by series id) to the sliding window and re-renders.
+     * Values for series not present in the map are left unchanged for that step.
+     */
     public push(values: Record<string, number>): void {
         const maxLen = this._getWindowSize();
 
@@ -214,6 +236,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         this.render();
     }
 
+    /** Empties every series' window buffer, removes their rendered lines, and re-renders. */
     public clear(): void {
         this._buffers.forEach(buffer => buffer.length = 0);
         this._seriesGroups.forEach(group => group.destroy());
@@ -221,6 +244,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         this.render();
     }
 
+    /** Merges partial options and re-renders, also applying any changed `windowSize`/`transitionDuration`. */
     public override update(options: Partial<RealtimeChartOptions>): void {
         if (options.windowSize !== undefined) {
             this._windowSize = options.windowSize;
@@ -524,7 +548,21 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
 }
 
-/** Factory function that creates a new {@link RealtimeChart} instance. */
+/**
+ * Factory function that creates a new {@link RealtimeChart} instance.
+ *
+ * @example
+ * ```ts
+ * const chart = createRealtimeChart(target, {
+ *     series: [{ id: 'cpu', label: 'CPU %' }],
+ *     windowSize: 60,
+ *     yMin: 0,
+ *     yMax: 100,
+ * });
+ *
+ * setInterval(() => chart.push({ cpu: Math.random() * 100 }), 1000);
+ * ```
+ */
 export function createRealtimeChart(target: string | HTMLElement | Context, options: RealtimeChartOptions) {
     return new RealtimeChart(target, options);
 }

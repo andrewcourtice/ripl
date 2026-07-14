@@ -32,6 +32,7 @@ import {
 
 /** Options for constructing a {@link ChartTitle}. */
 export interface ChartTitleComponentOptions extends ChartComponentOptions {
+    /** Fully resolved title options controlling text, position, padding, and styling. */
     options: ChartTitleOptions;
 }
 

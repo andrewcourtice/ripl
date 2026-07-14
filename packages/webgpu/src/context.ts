@@ -40,7 +40,9 @@ import {
 
 /** Options for constructing a WebGPU 3D context. */
 export interface WebGPUContextOptions extends Context3DOptions {
+    /** MSAA sample count for the render pipeline. Defaults to 4. */
     sampleCount?: number;
+    /** RGBA clear color (0–1 per channel) applied at the start of each frame. Defaults to transparent. */
     clearColor?: [number, number, number, number];
 }
 
@@ -183,6 +185,7 @@ export class WebGPUContext3D extends Context3D {
         this._geometryManager.submit(submission);
     }
 
+    /** Begins a render pass, resetting per-frame geometry accumulation at the outermost depth. */
     public markRenderStart(): void {
         super.markRenderStart();
 
@@ -191,6 +194,7 @@ export class WebGPUContext3D extends Context3D {
         }
     }
 
+    /** Ends the render pass and, at the outermost depth, executes the queued GPU draw commands. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
@@ -201,14 +205,17 @@ export class WebGPUContext3D extends Context3D {
         this._executeRenderPass();
     }
 
+    /** No-op; the surface is cleared by the render pass via `loadOp: 'clear'`. */
     public clear(): void {
         // WebGPU clears as part of the render pass (loadOp: 'clear')
     }
 
+    /** Creates a {@link CanvasPath} used for CPU-side hit testing. */
     public createPath(id?: string): CanvasPath {
         return new CanvasPath(id);
     }
 
+    /** Tests whether (x, y) lies inside the given path's fill, using an offscreen 2D canvas. */
     public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
         const canvasPath = this._rebuildPath2D(path);
 
@@ -219,6 +226,7 @@ export class WebGPUContext3D extends Context3D {
         return this._hitContext.isPointInPath(canvasPath, x, y, fillRule);
     }
 
+    /** Tests whether (x, y) lies on the given path's stroke, using an offscreen 2D canvas. */
     public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
         const canvasPath = this._rebuildPath2D(path);
 
@@ -322,6 +330,7 @@ export class WebGPUContext3D extends Context3D {
         device.queue.submit([commandEncoder.finish()]);
     }
 
+    /** Measures text using the offscreen 2D canvas context. */
     public override measureText(text: string, font?: string): TextMetrics {
         return canvasMeasureText(this._hitContext, text, font);
     }

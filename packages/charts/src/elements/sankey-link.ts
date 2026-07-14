@@ -13,15 +13,20 @@ import {
 
 /** State interface for a Sankey link, defining source and target endpoint coordinates. */
 export interface SankeyLinkState extends BaseElementState {
+    /** Source endpoint x coordinate, in pixels. */
     sx: number;
+    /** Source endpoint y coordinate, in pixels. */
     sy: number;
+    /** Target endpoint x coordinate, in pixels. */
     tx: number;
+    /** Target endpoint y coordinate, in pixels. */
     ty: number;
 }
 
 /** A curved Sankey link shape rendered as a cubic Bézier curve between source and target points. */
 export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
 
+    /** Source endpoint x coordinate, in pixels. */
     public get sx() {
         return this.getStateValue('sx');
     }
@@ -30,6 +35,7 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         this.setStateValue('sx', value);
     }
 
+    /** Source endpoint y coordinate, in pixels. */
     public get sy() {
         return this.getStateValue('sy');
     }
@@ -38,6 +44,7 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         this.setStateValue('sy', value);
     }
 
+    /** Target endpoint x coordinate, in pixels. */
     public get tx() {
         return this.getStateValue('tx');
     }
@@ -46,6 +53,7 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         this.setStateValue('tx', value);
     }
 
+    /** Target endpoint y coordinate, in pixels. */
     public get ty() {
         return this.getStateValue('ty');
     }

@@ -42,5 +42,6 @@ export type GetMutableKeys<TValue extends object> = {
 
 /** A resource that can be disposed to release underlying subscriptions or handles. */
 export interface Disposable {
+    /** Releases any resources or subscriptions held by this object. */
     dispose: () => void;
 }

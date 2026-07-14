@@ -66,31 +66,49 @@ import {
 
 /** Options for configuring a {@link HeatmapChart}. */
 export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset rendered as a grid of cells. */
     data: TData[];
+    /** Accessor for each item's x-axis category. */
     xBy: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's y-axis category. */
     yBy: keyof TData | ((item: TData) => string);
+    /** Accessor for each cell's numeric value (drives its colour). */
     value: NumericAccessor<TData>;
+    /** Ordered list of categories along the x axis. */
     xCategories: string[];
+    /** Ordered list of categories along the y axis. */
     yCategories: string[];
+    /** Colour stops (low→high) interpolated across the value extent; also accepts a built-in palette. */
     colorRange?: string[];
+    /** Corner radius in pixels applied to each cell. Defaults to 2. */
     borderRadius?: number;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
 }
 
 /** Payload emitted for heatmap cell interaction events. */
 export interface HeatmapChartCellEvent {
+    /** The x coordinate (in chart pixels) of the cell's top-centre anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the cell's top-centre anchor. */
     y: number;
+    /** The value of the interacted cell. */
     value: number;
+    /** The x-axis category of the interacted cell. */
     xLabel: string;
+    /** The y-axis category of the interacted cell. */
     yLabel: string;
 }
 
 /** Events emitted by a {@link HeatmapChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface HeatmapChartEventMap extends EventMap {
+    /** Emitted when a cell is clicked. */
     cellclick: HeatmapChartCellEvent;
+    /** Emitted when the pointer enters a cell. */
     cellenter: HeatmapChartCellEvent;
+    /** Emitted when the pointer leaves a cell. */
     cellleave: HeatmapChartCellEvent;
 }
 
@@ -443,7 +461,25 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
 }
 
-/** Factory function that creates a new {@link HeatmapChart} instance. */
+/**
+ * Factory function that creates a new {@link HeatmapChart} instance.
+ *
+ * @example
+ * ```ts
+ * createHeatmapChart(target, {
+ *     data: [
+ *         { day: 'Mon', hour: '9', load: 12 },
+ *         { day: 'Mon', hour: '10', load: 30 },
+ *         { day: 'Tue', hour: '9', load: 18 },
+ *     ],
+ *     xBy: 'hour',
+ *     yBy: 'day',
+ *     value: 'load',
+ *     xCategories: ['9', '10'],
+ *     yCategories: ['Mon', 'Tue'],
+ * });
+ * ```
+ */
 export function createHeatmapChart<TData = unknown>(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
     return new HeatmapChart<TData>(target, options);
 }

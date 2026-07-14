@@ -28,12 +28,12 @@ The **Arc Diagram** is a cartesian axis whose points are nodes, connected by sem
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createArcDiagramChart,

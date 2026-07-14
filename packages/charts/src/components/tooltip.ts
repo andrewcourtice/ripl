@@ -24,14 +24,23 @@ export type TooltipPlacement = 'above' | 'center';
 
 /** Options for constructing a tooltip component. */
 export interface TooltipOptions extends ChartComponentOptions {
+    /** Inner padding between the tooltip text and its box, in pixels. */
     padding?: number;
+    /** CSS font shorthand for the tooltip text. */
     font?: string;
+    /** Colour of the tooltip text. */
     fontColor?: string;
+    /** Fill colour of the tooltip box. */
     backgroundColor?: string;
+    /** Stroke colour of the tooltip box border. */
     borderColor?: string;
+    /** Corner radius of the tooltip box, in pixels. */
     borderRadius?: number;
+    /** Maximum tooltip width before content wraps, in pixels. */
     maxWidth?: number;
+    /** Whether long content wraps onto multiple lines. */
     wrap?: boolean;
+    /** Transforms the raw content string before it is displayed. */
     formatContent?: (content: string) => string;
     /**
      * Where the box sits relative to the anchor point. `'above'` (default) floats it above the point

@@ -20,6 +20,7 @@ export interface PointScaleOptions {
 
 /** A point scale that positions discrete domain values at evenly spaced points, exposing the step. */
 export interface PointScale<TDomain = string> extends Scale<TDomain, number> {
+    /** The distance between adjacent points, in range units. */
     step: number;
 }
 

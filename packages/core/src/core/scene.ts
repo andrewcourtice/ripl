@@ -40,15 +40,19 @@ export type SceneEventMap = ElementEventMap;
 
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
+    /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
     renderOnResize?: boolean;
+    /** Whether the scene re-renders automatically when an element's state is updated. */
     renderOnUpdate?: boolean;
 }
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
+    /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
 
+    /** The hoisted flat buffer of all renderable descendants, kept sorted by z-index for O(n) rendering. */
     public buffer: Element[];
 
     /** The pixel width of the scene's rendering context. */

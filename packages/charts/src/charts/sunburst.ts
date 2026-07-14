@@ -61,10 +61,15 @@ const REST_ALPHA = 0.65;
 
 /** A node in a sunburst hierarchy with optional nested children and an optional typed datum. */
 export interface SunburstNode<TData = unknown> {
+    /** Unique identifier for the node. */
     id: string;
+    /** Display label shown in the legend and tooltips. */
     label: string;
+    /** The node's numeric value, which determines its angular extent. */
     value: number;
+    /** Optional colour override; child nodes inherit their parent's colour when omitted. */
     color?: string;
+    /** Child nodes rendered in the next ring outward, within this node's angular range. */
     children?: SunburstNode<TData>[];
     /** Arbitrary datum carried through to segment interaction events. */
     data?: TData;
@@ -72,7 +77,9 @@ export interface SunburstNode<TData = unknown> {
 
 /** Options for configuring a {@link SunburstChart}. */
 export interface SunburstChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The root nodes of the hierarchy to render as concentric rings. */
     data: SunburstNode<TData>[];
+    /** Legend configuration, listing the top-level nodes. */
     legend?: ChartLegendInput;
     /** Format applied to node values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -80,10 +87,15 @@ export interface SunburstChartOptions<TData = unknown> extends BaseChartOptions 
 
 /** Payload emitted for sunburst segment interaction events. */
 export interface SunburstChartSegmentEvent<TData = unknown> {
+    /** X position of the segment centroid, in canvas coordinates. */
     x: number;
+    /** Y position of the segment centroid, in canvas coordinates. */
     y: number;
+    /** The node's numeric value. */
     value: number;
+    /** The node's display label. */
     label: string;
+    /** The node's unique id. */
     id: string;
     /** The datum from the source {@link SunburstNode}, if one was provided. */
     data?: TData;
@@ -91,8 +103,11 @@ export interface SunburstChartSegmentEvent<TData = unknown> {
 
 /** Events emitted by a {@link SunburstChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface SunburstChartEventMap<TData = unknown> extends EventMap {
+    /** Emitted when a segment is clicked. */
     segmentclick: SunburstChartSegmentEvent<TData>;
+    /** Emitted when the pointer enters a segment. */
     segmententer: SunburstChartSegmentEvent<TData>;
+    /** Emitted when the pointer leaves a segment. */
     segmentleave: SunburstChartSegmentEvent<TData>;
 }
 
@@ -363,7 +378,24 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
 }
 
-/** Factory function that creates a new {@link SunburstChart} instance. */
+/**
+ * Factory function that creates a new {@link SunburstChart} instance.
+ *
+ * @example
+ * ```ts
+ * createSunburstChart(target, {
+ *     data: [{
+ *         id: 'root',
+ *         label: 'Budget',
+ *         value: 100,
+ *         children: [
+ *             { id: 'ops', label: 'Operations', value: 60 },
+ *             { id: 'rnd', label: 'R&D', value: 40 },
+ *         ],
+ *     }],
+ * });
+ * ```
+ */
 export function createSunburstChart<TData = unknown>(target: string | HTMLElement | Context, options: SunburstChartOptions<TData>) {
     return new SunburstChart<TData>(target, options);
 }

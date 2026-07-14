@@ -12,4 +12,5 @@ export const interpolateNumber: InterpolatorFactory<number> = (valueA, valueB) =
     return position => valueA + valueDelta * position;
 };
 
+/** Reports whether this factory can interpolate the given value (numbers only). */
 interpolateNumber.test = typeIsNumber;

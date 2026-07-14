@@ -3,7 +3,9 @@ export type PixelCallback = (x: number, y: number) => void;
 
 /** A 2D point in raster (pixel) space. */
 export interface Vertex {
+    /** X coordinate in raster (pixel) space. */
     x: number;
+    /** Y coordinate in raster (pixel) space. */
     y: number;
 }
 

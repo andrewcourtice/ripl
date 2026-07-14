@@ -19,15 +19,20 @@ import {
 
 /** State interface for a regular polygon element, defining center, radius, and number of sides. */
 export interface PolygonState extends BaseElementState {
+    /** The x-coordinate of the polygon's center. */
     cx: number;
+    /** The y-coordinate of the polygon's center. */
     cy: number;
+    /** The circumradius of the polygon, from center to vertex. */
     radius: number;
+    /** The number of sides of the polygon. */
     sides: number;
 }
 
 /** A regular polygon shape with a configurable number of sides. */
 export class Polygon extends Shape2D<PolygonState> {
 
+    /** The x-coordinate of the polygon's center. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -36,6 +41,7 @@ export class Polygon extends Shape2D<PolygonState> {
         this.setStateValue('cx', value);
     }
 
+    /** The y-coordinate of the polygon's center. */
     public get cy() {
         return this.getStateValue('cy');
     }
@@ -44,6 +50,7 @@ export class Polygon extends Shape2D<PolygonState> {
         this.setStateValue('cy', value);
     }
 
+    /** The circumradius of the polygon, from center to vertex. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -52,6 +59,7 @@ export class Polygon extends Shape2D<PolygonState> {
         this.setStateValue('radius', value);
     }
 
+    /** The number of sides of the polygon. */
     public get sides() {
         return this.getStateValue('sides');
     }
@@ -64,6 +72,7 @@ export class Polygon extends Shape2D<PolygonState> {
         super('polygon', options);
     }
 
+    /** Returns the axis-aligned bounding box of the polygon. */
     public getBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
@@ -73,6 +82,7 @@ export class Polygon extends Shape2D<PolygonState> {
         );
     }
 
+    /** Renders the polygon to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
             const points = getPolygonPoints(

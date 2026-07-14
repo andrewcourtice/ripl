@@ -10,17 +10,25 @@
 
 /** A rectangular region expressed as a top-left origin plus dimensions. */
 export interface ChartArea {
+    /** Left edge of the region, in chart pixels. */
     x: number;
+    /** Top edge of the region, in chart pixels. */
     y: number;
+    /** Width of the region, in pixels. */
     width: number;
+    /** Height of the region, in pixels. */
     height: number;
 }
 
 /** Padding with explicit top, right, bottom, and left values. */
 export interface ChartPadding {
+    /** Top padding, in pixels. */
     top: number;
+    /** Right padding, in pixels. */
     right: number;
+    /** Bottom padding, in pixels. */
     bottom: number;
+    /** Left padding, in pixels. */
     left: number;
 }
 

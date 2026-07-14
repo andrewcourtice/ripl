@@ -9,18 +9,21 @@ import type {
 /** A function wrapper that caches its result after the first invocation until explicitly invalidated. */
 export type CachedFunction<TValue extends AnyFunction> = {
     (...args: Parameters<TValue>): ReturnType<TValue>;
+    /** Clears the cached result so the next call recomputes it. */
     invalidate(): void;
 };
 
 /** A function wrapper that caches results per unique key, exposing the underlying cache `Map`. */
 export type MemoizedFunction<TValue extends AnyFunction, TKey> = {
     (...args: Parameters<TValue>): ReturnType<TValue>;
+    /** The underlying cache mapping each unique key to its memoized result. */
     cache: Map<TKey, ReturnType<TValue>>;
 };
 
 /** Derives a cache key from the arguments of a memoized function. */
 export type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;
 
+/** A do-nothing function, useful as a default callback or placeholder. */
 export function noop() {
     // noop
 }

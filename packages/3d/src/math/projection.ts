@@ -15,7 +15,9 @@ export type ProjectedPoint = [x: number, y: number, depth: number];
 
 /** Viewport dimensions used for projection. */
 export interface Viewport {
+    /** Width of the viewport, in pixels. */
     width: number;
+    /** Height of the viewport, in pixels. */
     height: number;
 }
 

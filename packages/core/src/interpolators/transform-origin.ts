@@ -30,6 +30,7 @@ export const interpolateTransformOrigin: InterpolatorFactory<number | string> = 
     };
 };
 
+/** Reports whether this factory can interpolate the given value (a number, or a numeric string with an optional `%` suffix). */
 interpolateTransformOrigin.test = (value: unknown) => {
     if (typeIsNumber(value)) {
         return true;

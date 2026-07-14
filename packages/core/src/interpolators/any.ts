@@ -11,4 +11,5 @@ export const interpolateAny: InterpolatorFactory<unknown> = (valueA, valueB) => 
     return time => time > 0.5 ? valueB : valueA;
 };
 
+/** Predicate used to detect whether this interpolator applies — always true, as it is the fallback. */
 interpolateAny.test = () => true;

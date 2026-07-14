@@ -1,7 +1,10 @@
 /** A callable ordinal scale mapping discrete domain values to a cycling range of output values. */
 export interface OrdinalScale<TDomain = string, TRange = string> {
+    /** Maps a domain value to its assigned range value, cycling through the range as needed. */
     (value: TDomain): TRange;
+    /** The distinct domain values seen so far, in first-encountered order. */
     domain: TDomain[];
+    /** The output values assigned to domain values in order, cycling when exhausted. */
     range: TRange[];
 }
 

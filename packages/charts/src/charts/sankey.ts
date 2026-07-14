@@ -63,15 +63,21 @@ import {
 
 /** A directional flow between two nodes in a Sankey diagram. */
 export interface SankeyLink {
+    /** Id of the node the flow originates from. */
     source: string;
+    /** Id of the node the flow terminates at. */
     target: string;
+    /** Magnitude of the flow, which determines the link's width. */
     value: number;
 }
 
 /** A node in a Sankey diagram, with an optional typed datum carried through to node events. */
 export interface SankeyNode<TData = unknown> {
+    /** Unique identifier for the node, referenced by link `source`/`target`. */
     id: string;
+    /** Display label shown beside the node. */
     label: string;
+    /** Optional colour override for the node (otherwise a palette colour is generated). */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -79,19 +85,29 @@ export interface SankeyNode<TData = unknown> {
 
 /** Options for configuring a {@link SankeyChart}. */
 export interface SankeyChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The nodes in the diagram. */
     nodes: SankeyNode<TData>[];
+    /** The directional flows connecting nodes. */
     links: SankeyLink[];
+    /** Width of each node rectangle in pixels. Defaults to 20. */
     nodeWidth?: number;
+    /** Vertical gap between stacked nodes in a column, in pixels. Defaults to 10. */
     nodePadding?: number;
+    /** Number of layout relaxation iterations (reserved for tuning node positioning). */
     iterations?: number;
 }
 
 /** Payload emitted for Sankey node interaction events. */
 export interface SankeyChartNodeEvent<TData = unknown> {
+    /** X position of the node's top-centre anchor, in canvas coordinates. */
     x: number;
+    /** Y position of the node's top-centre anchor, in canvas coordinates. */
     y: number;
+    /** The node's unique id. */
     id: string;
+    /** The node's display label. */
     label: string;
+    /** The node's total flow value. */
     value: number;
     /** The datum from the source {@link SankeyNode}, if one was provided. */
     data?: TData;
@@ -99,21 +115,33 @@ export interface SankeyChartNodeEvent<TData = unknown> {
 
 /** Payload emitted for Sankey link interaction events. */
 export interface SankeyChartLinkEvent {
+    /** X position of the link's mid-point anchor, in canvas coordinates. */
     x: number;
+    /** Y position of the link's mid-point anchor, in canvas coordinates. */
     y: number;
+    /** The link's unique id (`"<source>-<target>"`). */
     id: string;
+    /** Display label of the link's source node. */
     sourceLabel: string;
+    /** Display label of the link's target node. */
     targetLabel: string;
+    /** The link's flow value. */
     value: number;
 }
 
 /** Events emitted by a {@link SankeyChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface SankeyChartEventMap<TData = unknown> extends EventMap {
+    /** Emitted when a node is clicked. */
     nodeclick: SankeyChartNodeEvent<TData>;
+    /** Emitted when the pointer enters a node. */
     nodeenter: SankeyChartNodeEvent<TData>;
+    /** Emitted when the pointer leaves a node. */
     nodeleave: SankeyChartNodeEvent<TData>;
+    /** Emitted when a link is clicked. */
     linkclick: SankeyChartLinkEvent;
+    /** Emitted when the pointer enters a link. */
     linkenter: SankeyChartLinkEvent;
+    /** Emitted when the pointer leaves a link. */
     linkleave: SankeyChartLinkEvent;
 }
 
@@ -648,7 +676,24 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
 
 }
 
-/** Factory function that creates a new {@link SankeyChart} instance. */
+/**
+ * Factory function that creates a new {@link SankeyChart} instance.
+ *
+ * @example
+ * ```ts
+ * createSankeyChart(target, {
+ *     nodes: [
+ *         { id: 'a', label: 'Source' },
+ *         { id: 'b', label: 'Process' },
+ *         { id: 'c', label: 'Output' },
+ *     ],
+ *     links: [
+ *         { source: 'a', target: 'b', value: 10 },
+ *         { source: 'b', target: 'c', value: 6 },
+ *     ],
+ * });
+ * ```
+ */
 export function createSankeyChart<TData = unknown>(target: string | HTMLElement | Context, options: SankeyChartOptions<TData>) {
     return new SankeyChart<TData>(target, options);
 }

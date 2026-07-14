@@ -65,7 +65,9 @@ export type RenderStrategy = 'cpu' | 'gpu';
 
 /** Typed metadata for 3D contexts. */
 export interface Context3DMeta {
+    /** The rendering strategy (CPU painter's algorithm or GPU) used by the context. */
     renderStrategy: RenderStrategy;
+    /** Arbitrary additional metadata entries. */
     [key: string]: unknown;
 }
 
@@ -74,35 +76,51 @@ export type LightMode = 'world' | 'camera';
 
 /** A mesh submission queued for a single frame. */
 export interface MeshSubmission {
+    /** Interleaved vertex data (position, normal, and colour) for the mesh. */
     vertices: Float32Array;
+    /** Triangle indices into the vertex buffer. */
     indices: Uint32Array;
+    /** The model matrix transforming the mesh from local to world space. */
     modelMatrix: Matrix4;
+    /** The matrix transforming surface normals into world space. */
     normalMatrix: Matrix4;
 }
 
 /** Options for the 3D rendering context, extending the base context options with camera parameters. */
 export interface Context3DOptions extends ContextOptions<Context3DMeta> {
+    /** The vertical field of view in degrees. Defaults to `60`. */
     fov?: number;
+    /** The distance to the near clipping plane. Defaults to `0.1`. */
     near?: number;
+    /** The distance to the far clipping plane. Defaults to `1000`. */
     far?: number;
+    /** The directional light vector used for shading. Defaults to a top-left-front direction. */
     lightDirection?: Vector3;
+    /** Whether the light is fixed in world space or follows the camera. Defaults to `'world'`. */
     lightMode?: LightMode;
 }
 
 /** Base 3D rendering context providing view/projection matrices, camera, lighting, and projection. Subclassed by CanvasContext3D and WebGPUContext3D. */
 export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 
+    /** The view matrix transforming world space into camera (view) space. */
     public viewMatrix: Matrix4;
+    /** The projection matrix transforming view space into clip space. */
     public projectionMatrix: Matrix4;
+    /** The combined view-projection matrix, transforming world space directly into clip space. */
     public viewProjectionMatrix: Matrix4;
+    /** The directional light vector used for shading faces. */
     public lightDirection: Vector3;
+    /** Whether {@link lightDirection} is fixed in world space or follows the camera. */
     public lightMode: LightMode;
+    /** Faces accumulated during the current frame, sorted back-to-front before drawing (painter's algorithm). */
     public faceBuffer: ProjectedFace3D[] = [];
 
     protected fov: number;
     protected near: number;
     protected far: number;
 
+    /** The active rendering strategy (`cpu` or `gpu`) for this context. */
     public get renderStrategy(): RenderStrategy {
         return this.meta.renderStrategy;
     }

@@ -301,6 +301,46 @@ import {
 } from '../context';
 ```
 
+## Public API Documentation
+
+Every publicly exposed symbol **and every public member** must carry a JSDoc (`/** ... */`) comment so consumers get complete IDE intellisense. This is a hard requirement for all new and changed code — treat an undocumented public member as an incomplete change.
+
+### What must be documented
+
+- **Exported symbols** — functions, classes, interfaces, type aliases, enums, constants, factory functions (`createX`), and type guards (`elementIsX` / `isX`).
+- **Class members** — public getters, methods, and fields.
+- **Interface / type / options properties** — document **each property individually** (config/options interfaces such as `*Options`, `*State`, `*EventMap` are the highest-value surface; never leave option properties bare).
+- **Enum members** and object-literal constant members that consumers reference.
+
+### Rules
+
+- **Getter-only for accessor pairs** — put the JSDoc above the `get`; do **not** add a separate comment to the `set`. TypeScript surfaces the getter's doc for both read and write positions, so a setter comment is redundant.
+- **Mirror state ↔ accessor wording** — an element's `XState` field and the class getter of the same name describe the same value; write the description once and reuse it verbatim on both.
+- **Never document** `private` / `protected` members, `_`-prefixed backing fields, or `#` private fields (TypeDoc excludes them).
+- **Cross-reference with `{@link}`** — link only to *exported* symbols (`{@link Context}`, `{@link Class.member}`); unresolved links raise TypeDoc warnings. Do not `{@link}` a symbol from another package unless it is part of the generated API set.
+- Use `@param`, `@returns`, and `@typeParam` where the signature is non-trivial.
+- **`@example` on primary entry points** — every `createXChart` factory, `createContext`, `createScene`, `createRenderer`, and the base `Chart` class should carry a short, correct `@example`. Do not sprinkle `@example` on every property.
+
+### Style
+
+- Single-line `/** ... */` for simple members; multi-paragraph for rich classes/types.
+- Voice: concise present-tense noun phrases for values/properties ("The radius of the circle."); imperative for methods/functions ("Computes the bounding box.").
+- Match the existing exemplars: `packages/core/src/elements/arc.ts`, `packages/core/src/core/scene.ts`, and `packages/charts/src/charts/bar.ts`.
+
+### Verifying coverage
+
+TypeDoc's `notDocumented` validation is the source of truth (it respects the `excludePrivate/Protected/Internal` exclusions). Run it per package and confirm no warnings remain, ignoring `SetSignature` warnings (those are covered by the getter's doc):
+
+```bash
+cd app
+yarn typedoc --entryPointStrategy resolve \
+  --entryPoints ../packages/<pkg>/src/index.ts --tsconfig ../packages/<pkg>/tsconfig.json \
+  --validation.notDocumented --excludePrivate --excludeProtected --excludeInternal --emit none \
+  | grep 'does not have any documentation' | grep -v SetSignature
+```
+
+`@ripl/web` and `@ripl/node` are pure re-export shells — their intellisense flows from the upstream packages, so document the upstream symbol, not the barrel.
+
 ## Code Style & Formatting
 
 All enforced via ESLint + `@stylistic/eslint-plugin`:
@@ -546,5 +586,5 @@ The playground (`app/src/.vitepress/components/playground/`) provides a live cod
 3. Ensure linting passes (`yarn lint`)
 4. Follow the code style and patterns described in this document
 5. Keep changes focused and atomic
-6. Document public API with JSDoc comments (parameters, return values, examples)
+6. Document **every** public API member with JSDoc per [Public API Documentation](#public-api-documentation) — new or changed public methods, config options, properties, accessors, factories, and type-guards must all carry doc comments (verify with the TypeDoc `notDocumented` check). An undocumented public member is an incomplete change.
 7. Do not add runtime dependencies without explicit approval

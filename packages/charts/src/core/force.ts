@@ -9,28 +9,43 @@
 
 /** A node in the simulation; `x`/`y`/`vx`/`vy` are managed by {@link simulateForce}. */
 export interface ForceNode {
+    /** Stable identifier used to resolve links to this node. */
     id: string;
+    /** Current x position (seeded and then relaxed by {@link simulateForce}). */
     x: number;
+    /** Current y position (seeded and then relaxed by {@link simulateForce}). */
     y: number;
+    /** Current x velocity (managed by the simulation). */
     vx: number;
+    /** Current y velocity (managed by the simulation). */
     vy: number;
 }
 
 /** A link between two node ids. */
 export interface ForceLink {
+    /** Id of the source node. */
     source: string;
+    /** Id of the target node. */
     target: string;
 }
 
 /** Tunable strengths and iteration count for {@link simulateForce}. */
 export interface ForceOptions {
+    /** Many-body charge; negative repels, positive attracts. Defaults to `-240`. */
     charge?: number;
+    /** Rest length of the link springs, in pixels. Defaults to `60`. */
     linkDistance?: number;
+    /** Stiffness of the link springs (0–1). Defaults to `0.5`. */
     linkStrength?: number;
+    /** X coordinate of the centering pull. Defaults to `0`. */
     centerX?: number;
+    /** Y coordinate of the centering pull. Defaults to `0`. */
     centerY?: number;
+    /** Strength of the pull toward the centre point. Defaults to `0.05`. */
     centerStrength?: number;
+    /** Number of cooling iterations to run. Defaults to `300`. */
     iterations?: number;
+    /** Fraction of velocity shed each step (0–1). Defaults to `0.6`. */
     velocityDecay?: number;
 }
 

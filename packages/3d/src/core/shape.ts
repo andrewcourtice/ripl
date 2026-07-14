@@ -50,26 +50,39 @@ import type {
 
 /** A single face of a 3D mesh, defined by its vertices and an optional precomputed normal. */
 export interface Face3D {
+    /** The face's vertices in local (model) space, ordered counter-clockwise when viewed from the front. */
     vertices: Vector3[];
+    /** The precomputed surface normal. When omitted, it is derived from the first three vertices. */
     normal?: Vector3;
 }
 
 /** A projected face ready for 2D rendering with screen-space points, fill/stroke styles, and depth. */
 export interface ProjectedFace3D {
+    /** The face's screen-space points, each carrying a depth component. */
     points: ProjectedPoint[];
+    /** The shaded fill colour applied to the face. */
     fillColor: string;
+    /** The stroke style applied to the face edges, if any. */
     strokeStyle: string | undefined;
+    /** The stroke line width, if any. */
     lineWidth: number | undefined;
+    /** The average projected depth of the face, used for back-to-front sorting. */
     depth: number;
 }
 
 /** State interface for a 3D shape, defining position and rotation around each axis. */
 export interface Shape3DState extends BaseElementState {
+    /** The X position of the shape's origin in world space. */
     x: number;
+    /** The Y position of the shape's origin in world space. */
     y: number;
+    /** The Z position of the shape's origin in world space. */
     z: number;
+    /** The rotation around the X axis, in radians. */
     rotationX: number;
+    /** The rotation around the Y axis, in radians. */
     rotationY: number;
+    /** The rotation around the Z axis, in radians. */
     rotationZ: number;
 }
 
@@ -94,6 +107,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     private _depth = 0;
     private _getCachedFaces: CachedFunction<() => Face3D[]>;
 
+    /** The X position of the shape's origin in world space. */
     public get x() {
         return this.getStateValue('x');
     }
@@ -102,6 +116,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('x', value);
     }
 
+    /** The Y position of the shape's origin in world space. */
     public get y() {
         return this.getStateValue('y');
     }
@@ -110,6 +125,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('y', value);
     }
 
+    /** The Z position of the shape's origin in world space. */
     public get z() {
         return this.getStateValue('z');
     }
@@ -118,6 +134,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('z', value);
     }
 
+    /** The rotation around the X axis, in radians. */
     public get rotationX() {
         return this.getStateValue('rotationX');
     }
@@ -126,6 +143,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationX', value);
     }
 
+    /** The rotation around the Y axis, in radians. */
     public get rotationY() {
         return this.getStateValue('rotationY');
     }
@@ -134,6 +152,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationY', value);
     }
 
+    /** The rotation around the Z axis, in radians. */
     public get rotationZ() {
         return this.getStateValue('rotationZ');
     }
@@ -142,6 +161,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationZ', value);
     }
 
+    /** The stacking order, derived from the shape's projected depth (nearer shapes sort above farther ones). Not settable on 3D shapes. */
     public override get zIndex(): number {
         return -this._depth;
     }

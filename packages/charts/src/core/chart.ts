@@ -79,9 +79,13 @@ export { ChartLayout };
 
 /** Base options shared by all chart types. */
 export interface BaseChartOptions {
+    /** Whether the chart renders automatically on construction and after every {@link Chart.update}. Defaults to `true`. */
     autoRender?: boolean;
+    /** Space reserved around the chart, per edge, in pixels. */
     padding?: Partial<ChartPadding>;
+    /** Chart title as plain text, or a {@link ChartTitleOptions} object for full control. */
     title?: string | Partial<ChartTitleOptions>;
+    /** Animation configuration, or a boolean toggling all transitions. See {@link ChartAnimationOptions}. */
     animation?: boolean | Partial<ChartAnimationOptions>;
 }
 
@@ -95,7 +99,31 @@ interface HighlightHost {
     [HIGHLIGHT_REST]?: number;
 }
 
-/** Abstract base class for all chart types, providing scene, renderer, animation, color management, and lifecycle. */
+/**
+ * Abstract base class for all chart types, providing the scene, renderer, animation, colour
+ * management, title/legend layout, and the render/update lifecycle that every concrete chart
+ * builds on. Consumers never instantiate this directly — each chart exposes a `createXChart`
+ * factory (e.g. {@link createBarChart}) and this class supplies the shared behaviour behind it.
+ *
+ * @typeParam TOptions - The chart's options type, extending {@link BaseChartOptions}.
+ * @typeParam TEventMap - The map of events the chart emits.
+ *
+ * @example
+ * ```ts
+ * const chart = createBarChart(document.querySelector('#chart'), {
+ *     data,
+ *     series: [{ id: 'sales', label: 'Sales', value: 'amount' }],
+ *     key: 'month',
+ *     title: 'Monthly sales',
+ * });
+ *
+ * // Merge new data/options over the current ones and re-render.
+ * chart.update({ data: nextData });
+ *
+ * // Or trigger a render explicitly (e.g. when `autoRender` is disabled).
+ * await chart.render();
+ * ```
+ */
 export class Chart<
     TOptions extends BaseChartOptions,
     TEventMap extends EventMap = EventMap
@@ -250,6 +278,12 @@ export class Chart<
         this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
     }
 
+    /**
+     * Runs a render pass, invoking `callback` to draw into the scene and marking the chart as
+     * rendered. Concrete charts override this and delegate to `super.render(async () => { ... })`;
+     * any error thrown by the callback is caught and the context cleared, so a failed render never
+     * leaves a partially-drawn chart.
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public async render(callback?: (scene: Scene, renderer: Renderer) => Promise<any>) {
         try {

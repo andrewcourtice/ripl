@@ -99,27 +99,37 @@ export type SeriesType = 'bar' | 'line' | 'area';
 
 /** Base configuration shared by all trend chart series types. */
 export interface BaseTrendChartSeriesOptions<TData> {
+    /** Unique identifier for the series. */
     id: string;
+    /** Which visualization type to render this series as. */
     type: SeriesType;
+    /** Optional colour override for the series (otherwise a palette colour is generated). */
     color?: string;
+    /** Accessor for each item's numeric value. */
     value: NumericAccessor<TData>;
+    /** Display label for the series, or an accessor deriving a per-item label. */
     label: string | ((item: TData) => string);
 }
 
 /** Series options for bar-type series within a trend chart. */
 export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
+    /** Discriminant marking this as a bar series. */
     type: 'bar';
 }
 
 /** Series options for area-type series within a trend chart. */
 export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
+    /** Discriminant marking this as an area series. */
     type: 'area';
+    /** Whether the region beneath the line is filled. */
     filled: boolean;
 }
 
 /** Series options for line-type series within a trend chart. */
 export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
+    /** Discriminant marking this as a line series. */
     type: 'line';
+    /** Renderer controlling the line's shape (e.g. straight or curved). */
     lineType?: PolylineRenderer;
 }
 
@@ -130,29 +140,45 @@ export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
 
 /** Options for configuring a {@link TrendChart}. */
 export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset plotted across all series. */
     data: TData[];
+    /** The series to render, mixing bar, line, and area types on shared axes. */
     series: TrendChartSeriesOptions<TData>[];
+    /** Accessor for each item's unique key, used for the categorical x-axis and matching across updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Background grid line configuration. */
     grid?: ChartGridInput;
+    /** Hover tooltip configuration. */
     tooltip?: ChartTooltipInput;
+    /** Series legend configuration. */
     legend?: ChartLegendInput;
+    /** Axis configuration (labels, ticks, titles). */
     axis?: ChartAxisInput<TData>;
 }
 
 /** Payload emitted for trend bar/marker interaction events. */
 export interface TrendChartValueEvent {
+    /** X position of the bar/marker, in canvas coordinates. */
     x: number;
+    /** Y position of the bar/marker, in canvas coordinates. */
     y: number;
+    /** The bar/marker's numeric value. */
     value: number;
 }
 
 /** Events emitted by a {@link TrendChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface TrendChartEventMap extends EventMap {
+    /** Emitted when a bar is clicked. */
     barclick: TrendChartValueEvent;
+    /** Emitted when the pointer enters a bar. */
     barenter: TrendChartValueEvent;
+    /** Emitted when the pointer leaves a bar. */
     barleave: TrendChartValueEvent;
+    /** Emitted when a line marker is clicked. */
     markerclick: TrendChartValueEvent;
+    /** Emitted when the pointer enters a line marker. */
     markerenter: TrendChartValueEvent;
+    /** Emitted when the pointer leaves a line marker. */
     markerleave: TrendChartValueEvent;
 }
 
@@ -797,7 +823,24 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
 }
 
-/** Factory function that creates a new {@link TrendChart} instance. */
+/**
+ * Factory function that creates a new {@link TrendChart} instance.
+ *
+ * @example
+ * ```ts
+ * createTrendChart(target, {
+ *     data: [
+ *         { month: 'Jan', revenue: 120, target: 100 },
+ *         { month: 'Feb', revenue: 150, target: 130 },
+ *     ],
+ *     key: 'month',
+ *     series: [
+ *         { id: 'revenue', type: 'bar', label: 'Revenue', value: 'revenue' },
+ *         { id: 'target', type: 'line', label: 'Target', value: 'target' },
+ *     ],
+ * });
+ * ```
+ */
 export function createTrendChart<TData = unknown>(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
     return new TrendChart<TData>(target, options);
 }

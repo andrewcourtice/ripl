@@ -46,7 +46,9 @@ export type PolylineRenderFunc = (context: Context, path: ContextPath, points: P
 
 /** State interface for a polyline element, defining points and an optional curve renderer. */
 export interface PolylineState extends BaseElementState {
+    /** The ordered points that make up the polyline. */
     points: Point[];
+    /** The curve interpolation algorithm, or custom render function, used to draw the polyline. */
     renderer?: PolylineRenderer | PolylineRenderFunc;
 }
 
@@ -507,6 +509,7 @@ export function polylineStepAfterRenderer(): PolylineRenderFunc {
 /** A multi-point line shape supporting various curve interpolation algorithms. */
 export class Polyline extends Shape2D<PolylineState> {
 
+    /** The ordered points that make up the polyline. */
     public get points() {
         return this.getStateValue('points');
     }
@@ -515,6 +518,7 @@ export class Polyline extends Shape2D<PolylineState> {
         this.setStateValue('points', value);
     }
 
+    /** The curve interpolation algorithm, or custom render function, used to draw the polyline. */
     public get renderer() {
         return this.getStateValue('renderer');
     }
@@ -527,6 +531,7 @@ export class Polyline extends Shape2D<PolylineState> {
         super('polyline', options);
     }
 
+    /** Returns the axis-aligned bounding box of the polyline. */
     public getBoundingBox(): Box {
         const [left, right] = getExtent(this.points, point => point[0]);
         const [top, bottom] = getExtent(this.points, point => point[1]);
@@ -539,6 +544,7 @@ export class Polyline extends Shape2D<PolylineState> {
         );
     }
 
+    /** Renders the polyline to the provided {@link Context} using its resolved curve renderer. */
     public render(context: Context) {
         const renderer = resolvePolylineRenderer(this.renderer);
 

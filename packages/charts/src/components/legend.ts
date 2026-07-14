@@ -36,20 +36,31 @@ import {
 
 /** A single legend entry with id, label, color, and active state. */
 export interface LegendItem {
+    /** Unique id linking the entry to its series/segment (used for highlight and toggling). */
     id: string;
+    /** Text label shown next to the colour swatch. */
     label: string;
+    /** Swatch colour, typically the series/segment colour. */
     color: string;
+    /** Whether the entry is active; inactive entries render dimmed. Defaults to `true`. */
     active?: boolean;
 }
 
 /** Options for constructing a legend component. */
 export interface LegendOptions extends ChartComponentOptions {
+    /** The legend entries to render. */
     items: LegendItem[];
+    /** Which side of the chart the legend occupies. Defaults to `top`. */
     position?: LegendPosition;
+    /** CSS font shorthand for the entry labels. */
     font?: string;
+    /** Colour of the entry labels. */
     fontColor?: string;
+    /** Padding around the legend within its band, in pixels. */
     itemPadding?: number;
+    /** Whether entries are interactive (hover-highlight and click-to-toggle). Defaults to `true`. */
     highlight?: boolean;
+    /** Called when a legend entry is clicked, with the item and its new active state. */
     onToggle?: (item: LegendItem, active: boolean) => void;
     /** Called with an item id while its legend entry is hovered, and `null` when the pointer leaves. */
     onHighlight?: (id: string | null) => void;
@@ -382,6 +393,7 @@ export class Legend extends ChartComponent {
         this._onToggle?.(item, newActive);
     }
 
+    /** Removes the legend's elements from the scene. */
     public destroy() {
         if (this._group) {
             this.scene.remove(this._group);

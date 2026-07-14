@@ -31,12 +31,12 @@ The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KP
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createGaugeChart,

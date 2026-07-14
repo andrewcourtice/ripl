@@ -64,6 +64,7 @@ export const interpolateRotation: InterpolatorFactory<number | string> = (valueA
     };
 };
 
+/** Reports whether this factory can interpolate the given value (a number, or a numeric string with an optional `deg`/`rad` suffix). */
 interpolateRotation.test = (value: unknown) => {
     if (typeIsNumber(value)) {
         return true;

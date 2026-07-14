@@ -28,12 +28,12 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createHeatmapChart,

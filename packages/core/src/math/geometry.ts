@@ -133,8 +133,11 @@ export function typeIsPoint(value: unknown): value is Point {
 
 /** A sampled point on an SVG path with position and tangent angle. */
 export type PathPoint = {
+    /** The x-coordinate of the sampled point. */
     x: number;
+    /** The y-coordinate of the sampled point. */
     y: number;
+    /** The tangent angle of the path at the sampled point, in radians. */
     angle: number;
 };
 

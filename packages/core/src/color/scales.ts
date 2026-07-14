@@ -22,8 +22,11 @@ export type ColorInterpolatorInput = ColorInterpolator | string[];
 
 /** A callable colour scale mapping a numeric value to a CSS colour, with domain and tick access. */
 export interface ColorScale {
+    /** Maps a numeric value from the domain to its corresponding CSS colour. */
     (value: number): string;
+    /** The numeric input domain the scale maps from. */
     domain: number[];
+    /** Generates approximately `count` representative tick values across the domain. */
     ticks(count?: number): number[];
     /** The underlying position (0–1) → colour interpolator, e.g. for rendering a legend gradient. */
     interpolator: ColorInterpolator;

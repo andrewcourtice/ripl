@@ -121,28 +121,45 @@ function interpolateAreaReveal(top: Point[], bottom: Point[]): Interpolator<Poin
 
 /** Configuration for an individual area chart series. */
 export interface AreaChartSeriesOptions<TData> {
+    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
     id: string;
+    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
     color?: string;
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
+    /** Human-readable series name shown in the legend and tooltips. */
     label: string;
+    /** Renderer used to draw the line/area top edge (e.g. straight or curved); defaults to straight segments. */
     lineType?: PolylineRenderer;
     /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
     lineStyle?: LineStyle;
+    /** Width in pixels of the series line. */
     lineWidth?: number;
+    /** Fill opacity of the area band. Defaults to 0.3. */
     opacity?: number;
+    /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
 }
 
 /** Options for configuring an {@link AreaChart}. */
 export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset rendered by the chart. */
     data: TData[];
+    /** The series to draw from each data item. */
     series: AreaChartSeriesOptions<TData>[];
+    /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
+    /** Stack series cumulatively instead of overlaying them. Defaults to false. */
     stacked?: boolean;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
     crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
+    /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
     /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
@@ -152,17 +169,25 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
 
 /** Payload emitted for area marker interaction events. */
 export interface AreaChartMarkerEvent {
+    /** The x coordinate (in chart pixels) of the marker. */
     x: number;
+    /** The y coordinate (in chart pixels) of the marker. */
     y: number;
+    /** The category key of the interacted marker. */
     xValue: string;
+    /** The numeric value of the interacted marker. */
     yValue: number;
+    /** The id of the series the marker belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by an {@link AreaChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface AreaChartEventMap extends EventMap {
+    /** Emitted when a marker is clicked. */
     markerclick: AreaChartMarkerEvent;
+    /** Emitted when the pointer enters a marker. */
     markerenter: AreaChartMarkerEvent;
+    /** Emitted when the pointer leaves a marker. */
     markerleave: AreaChartMarkerEvent;
 }
 
@@ -781,7 +806,23 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
 }
 
-/** Factory function that creates a new {@link AreaChart} instance. */
+/**
+ * Factory function that creates a new {@link AreaChart} instance.
+ *
+ * @example
+ * ```ts
+ * createAreaChart(target, {
+ *     data: [
+ *         { month: 'Jan', visitors: 820 },
+ *         { month: 'Feb', visitors: 932 },
+ *     ],
+ *     key: 'month',
+ *     series: [
+ *         { id: 'visitors', label: 'Visitors', value: 'visitors' },
+ *     ],
+ * });
+ * ```
+ */
 export function createAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: AreaChartOptions<TData>) {
     return new AreaChart<TData>(target, options);
 }

@@ -21,6 +21,7 @@ import {
 
 /** Options for constructing a {@link DOMNavigator}, adding interaction wiring to the base options. */
 export interface DOMNavigatorOptions extends NavigatorOptions {
+    /** Enables all wheel/pointer/touch interactions, or configures pan, zoom, and brush individually. */
     interactions?: boolean | NavigatorInteractions;
 }
 

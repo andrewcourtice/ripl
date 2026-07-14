@@ -22,9 +22,13 @@ import type {
  * import cycles.
  */
 export interface Queryable {
+    /** The element's type name (e.g. `'circle'`, `'group'`). */
     type: string;
+    /** The element's unique id. */
     id: string;
+    /** The set of CSS-like class names assigned to the element. */
     classList: Set<string>;
+    /** The element's parent container, if attached. */
     parent?: Queryable;
     /** Present on container elements (e.g. `Group`): a snapshot of direct children. */
     children?: Queryable[];

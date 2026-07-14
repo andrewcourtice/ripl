@@ -23,10 +23,15 @@ import {
 
 /** Options for constructing a grid component. */
 export interface GridOptions extends ChartComponentOptions {
+    /** Whether to draw horizontal grid lines (at y-axis ticks). Defaults to `true`. */
     horizontal?: boolean;
+    /** Whether to draw vertical grid lines (at x-axis ticks). Defaults to `false`. */
     vertical?: boolean;
+    /** Stroke colour of the grid lines. */
     stroke?: string;
+    /** Stroke width of the grid lines, in pixels. */
     lineWidth?: number;
+    /** Canvas dash pattern for the grid lines. */
     lineDash?: number[];
 }
 
@@ -56,6 +61,17 @@ export class Grid extends ChartComponent {
         this._lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
     }
 
+    /**
+     * Renders (and reconciles) grid lines within the given plot rectangle, drawing lines at the
+     * supplied tick positions and destroying any that no longer apply.
+     *
+     * @param xTicks - X pixel positions for the vertical grid lines.
+     * @param yTicks - Y pixel positions for the horizontal grid lines.
+     * @param x - Left edge of the plot rectangle, in pixels.
+     * @param y - Top edge of the plot rectangle, in pixels.
+     * @param width - Width of the plot rectangle, in pixels.
+     * @param height - Height of the plot rectangle, in pixels.
+     */
     public async render(
         xTicks: number[],
         yTicks: number[],
@@ -165,6 +181,7 @@ export class Grid extends ChartComponent {
         }
     }
 
+    /** Removes the grid's elements from the scene. */
     public destroy() {
         if (this._group) {
             this._group.destroy();

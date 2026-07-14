@@ -21,16 +21,22 @@ import {
 
 /** State interface for a text element, defining position, content, and optional path-based text layout. */
 export interface TextState extends BaseElementState {
+    /** The x-coordinate of the text's anchor point. */
     x: number;
+    /** The y-coordinate of the text's anchor point. */
     y: number;
+    /** The string or numeric content rendered by the element. */
     content: string | number;
+    /** The SVG path data along which the text is laid out, if set. */
     pathData?: string;
+    /** The offset along the path at which the text begins. */
     startOffset?: number;
 }
 
 /** A text element that renders string or numeric content, with optional path-based text layout. */
 export class Text extends Element<TextState> {
 
+    /** The x-coordinate of the text's anchor point. */
     public get x() {
         return this.getStateValue('x');
     }
@@ -39,6 +45,7 @@ export class Text extends Element<TextState> {
         this.setStateValue('x', value);
     }
 
+    /** The y-coordinate of the text's anchor point. */
     public get y() {
         return this.getStateValue('y');
     }
@@ -47,6 +54,7 @@ export class Text extends Element<TextState> {
         this.setStateValue('y', value);
     }
 
+    /** The string or numeric content rendered by the element. */
     public get content() {
         return this.getStateValue('content');
     }
@@ -55,6 +63,7 @@ export class Text extends Element<TextState> {
         this.setStateValue('content', value);
     }
 
+    /** The SVG path data along which the text is laid out, if set. */
     public get pathData() {
         return this.getStateValue('pathData');
     }
@@ -63,6 +72,7 @@ export class Text extends Element<TextState> {
         this.setStateValue('pathData', value);
     }
 
+    /** The offset along the path at which the text begins. */
     public get startOffset() {
         return this.getStateValue('startOffset');
     }
@@ -75,6 +85,7 @@ export class Text extends Element<TextState> {
         super('text', options);
     }
 
+    /** Returns the axis-aligned bounding box of the text, measured with its current alignment. */
     public getBoundingBox(): Box {
         const text = this.content.toString();
 
@@ -99,6 +110,7 @@ export class Text extends Element<TextState> {
         );
     }
 
+    /** Renders the text to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, () => {
             const text = context.createText({

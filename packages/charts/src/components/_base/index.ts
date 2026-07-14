@@ -10,7 +10,9 @@ import {
 
 /** Base options for chart components, providing scene and renderer references. */
 export interface ChartComponentOptions {
+    /** Scene the component renders its elements into. */
     scene: Scene;
+    /** Renderer driving the component's animations. */
     renderer: Renderer;
 }
 

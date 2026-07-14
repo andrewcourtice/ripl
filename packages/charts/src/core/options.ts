@@ -101,9 +101,13 @@ export type PaddingInput = number | [number, number, number, number];
 
 /** Resolved padding with explicit top, right, bottom, and left values. */
 export interface Padding {
+    /** Top padding, in pixels. */
     top: number;
+    /** Right padding, in pixels. */
     right: number;
+    /** Bottom padding, in pixels. */
     bottom: number;
+    /** Left padding, in pixels. */
     left: number;
 }
 
@@ -139,11 +143,17 @@ export type TitlePosition = 'top' | 'bottom' | 'left' | 'right';
 
 /** Fully resolved chart title options. */
 export interface ChartTitleOptions {
+    /** Whether the title is rendered. */
     visible: boolean;
+    /** The title text to display. */
     text: string;
+    /** Space around the title text, uniform or per-edge, in pixels. */
     padding: PaddingInput;
+    /** CSS font shorthand for the title text. */
     font: string;
+    /** Colour of the title text. */
     fontColor: string;
+    /** Which side of the chart the title occupies. */
     position: TitlePosition;
 }
 
@@ -184,8 +194,11 @@ export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | und
 
 /** Fully resolved chart animation options. */
 export interface ChartAnimationOptions {
+    /** Whether entry/update/exit transitions are animated. */
     enabled: boolean;
+    /** Base animation duration in milliseconds; scales every transition kind. */
     duration: number;
+    /** Easing applied to transitions, as a named ease or a custom easing function. */
     ease: EaseName | Ease;
 }
 
@@ -228,9 +241,13 @@ export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Parti
 
 /** Fully resolved chart grid options. */
 export interface ChartGridOptions {
+    /** Whether grid lines are drawn. */
     visible: boolean;
+    /** Stroke colour of the grid lines. */
     lineColor: string;
+    /** Stroke width of the grid lines, in pixels. */
     lineWidth: number;
+    /** Canvas dash pattern for the grid lines (`[]` renders a solid line). */
     lineDash: number[];
 }
 
@@ -277,9 +294,13 @@ export type CrosshairAxis = 'x' | 'y' | 'both';
 
 /** Fully resolved chart crosshair options. */
 export interface ChartCrosshairOptions {
+    /** Whether the crosshair is shown while hovering the plot. */
     visible: boolean;
+    /** Which axis (or both) the crosshair tracks. */
     axis: CrosshairAxis;
+    /** Stroke colour of the crosshair lines. */
     lineColor: string;
+    /** Stroke width of the crosshair lines, in pixels. */
     lineWidth: number;
 }
 
@@ -326,13 +347,21 @@ export type BorderRadiusInput = number | [number, number, number, number];
 
 /** Fully resolved chart tooltip options. */
 export interface ChartTooltipOptions {
+    /** Whether tooltips are shown on hover. */
     visible: boolean;
+    /** Inner padding between the tooltip text and its box, in pixels. */
     padding: PaddingInput;
+    /** CSS font shorthand for the tooltip text. */
     font: string;
+    /** Colour of the tooltip text. */
     fontColor: string;
+    /** Fill colour of the tooltip box. */
     backgroundColor: string;
+    /** Corner radius of the tooltip box, uniform or per-corner. */
     borderRadius: BorderRadiusInput;
+    /** Maximum tooltip width before content wraps, in pixels. */
     maxWidth: number;
+    /** Whether long content wraps onto multiple lines. */
     wrap: boolean;
 }
 
@@ -383,11 +412,17 @@ export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
 
 /** Fully resolved chart legend options. */
 export interface ChartLegendOptions {
+    /** Whether the legend is rendered. */
     visible: boolean;
+    /** Which side of the chart the legend occupies. */
     position: LegendPosition;
+    /** Space around the legend, uniform or per-edge, in pixels. */
     padding: PaddingInput;
+    /** CSS font shorthand for the legend labels. */
     font: string;
+    /** Colour of the legend labels. */
     fontColor: string;
+    /** Whether hovering a legend entry highlights its series and clicking toggles its visibility. */
     highlight: boolean;
 }
 
@@ -446,24 +481,33 @@ export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
 /** Options for a single axis (x or y). */
 export interface ChartAxisItemOptions<TData = unknown> {
+    /** Whether the axis line, ticks, and labels are rendered. */
     visible: boolean;
+    /** CSS font shorthand for the tick labels. */
     font: string;
+    /** Colour of the tick labels. */
     fontColor: string;
+    /** Optional axis title drawn alongside the tick labels. */
     title?: string;
+    /** Accessor selecting the value this axis reads from each data item. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value?: keyof TData | ((item: TData) => any);
+    /** How tick values are formatted — a built-in {@link AxisFormatType} or a custom formatter. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     format?: AxisFormatType | ((value: any) => string);
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */
 export interface ChartYAxisItemOptions<TData = unknown> extends ChartAxisItemOptions<TData> {
+    /** Which side of the chart the y-axis is drawn on. */
     position: 'left' | 'right';
 }
 
 /** Combined x and y axis configuration. */
 export interface ChartAxisOptions<TData = unknown> {
+    /** X-axis configuration, or a boolean toggling its visibility. */
     x?: boolean | Partial<ChartAxisItemOptions<TData>>;
+    /** Y-axis configuration (an array configures multiple y-axes), or a boolean toggling visibility. */
     y?: boolean | Partial<ChartYAxisItemOptions<TData>> | Partial<ChartYAxisItemOptions<TData>>[];
 }
 
@@ -614,9 +658,13 @@ export type LabelAnchor = 'top' | 'left' | 'bottom' | 'right';
 
 /** Fully resolved data label options. */
 export interface ChartDataLabelsOptions {
+    /** Whether data labels are drawn. */
     visible: boolean;
+    /** Which side of each marker/bar the label sits on. */
     anchor: LabelAnchor;
+    /** CSS font shorthand for the label text. */
     font: string;
+    /** Colour of the label text. */
     fontColor: string;
 }
 
@@ -677,7 +725,9 @@ export type SegmentLabelPosition = 'inside' | 'outside';
 
 /** Fully resolved segment-label options for radial charts. */
 export interface ChartSegmentLabelsOptions {
+    /** Whether segment labels are drawn. */
     visible: boolean;
+    /** Whether labels sit inside each segment or outside with a leader line. */
     position: SegmentLabelPosition;
     /** Label font; when omitted the shared segment-label font is used. */
     font?: string;

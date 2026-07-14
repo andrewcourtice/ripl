@@ -82,12 +82,19 @@ const MIN_LABEL_ANGLE = 0.15;
 
 /** Options for configuring a {@link PieChart}. */
 export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset to render, one segment per item. */
     data: TData[];
+    /** Accessor for each item's unique key, used to match segments across data updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's numeric value, which determines its proportional arc angle. */
     value: NumericAccessor<TData>;
+    /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
+    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
     color?: keyof TData | ((item: TData) => string);
+    /** Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values are absolute pixels. Defaults to 0 (a solid pie). */
     innerRadius?: number;
+    /** Legend configuration. Shown by default; pass `false` to hide. */
     legend?: ChartLegendInput;
     /**
      * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
@@ -101,17 +108,25 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for pie segment interaction events. */
 export interface PieChartSegmentEvent {
+    /** X position of the segment centroid, in canvas coordinates. */
     x: number;
+    /** Y position of the segment centroid, in canvas coordinates. */
     y: number;
+    /** The segment's numeric value. */
     value: number;
+    /** The segment's display label. */
     label: string;
+    /** The segment's unique key. */
     key: string;
 }
 
 /** Events emitted by a {@link PieChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface PieChartEventMap extends EventMap {
+    /** Emitted when a segment is clicked. */
     segmentclick: PieChartSegmentEvent;
+    /** Emitted when the pointer enters a segment. */
     segmententer: PieChartSegmentEvent;
+    /** Emitted when the pointer leaves a segment. */
     segmentleave: PieChartSegmentEvent;
 }
 
@@ -495,7 +510,24 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
 }
 
-/** Factory function that creates a new {@link PieChart} instance. */
+/**
+ * Factory function that creates a new {@link PieChart} instance.
+ *
+ * @example
+ * ```ts
+ * createPieChart(target, {
+ *     data: [
+ *         { browser: 'Chrome', share: 64 },
+ *         { browser: 'Safari', share: 19 },
+ *         { browser: 'Edge', share: 5 },
+ *     ],
+ *     key: 'browser',
+ *     value: 'share',
+ *     label: 'browser',
+ *     innerRadius: 0.6,
+ * });
+ * ```
+ */
 export function createPieChart<TData = unknown>(target: string | HTMLElement | Context, options: PieChartOptions<TData>) {
     return new PieChart<TData>(target, options);
 }

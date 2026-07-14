@@ -85,10 +85,15 @@ const REST_ALPHA = 0.55;
 
 /** Options for configuring a {@link PolarAreaChart}. */
 export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset to render, one equal-angle segment per item. */
     data: TData[];
+    /** Accessor for each item's unique key, used to match segments across data updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's numeric value, which determines the segment's radial extent. */
     value: NumericAccessor<TData>;
+    /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
+    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
     color?: keyof TData | ((item: TData) => string);
     /** Inner radius ratio (0 - 1). Defaults to 0.15 */
     innerRadiusRatio?: number;
@@ -112,17 +117,25 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
 
 /** Payload emitted for polar-area segment interaction events. */
 export interface PolarAreaChartSegmentEvent {
+    /** X position of the segment centroid, in canvas coordinates. */
     x: number;
+    /** Y position of the segment centroid, in canvas coordinates. */
     y: number;
+    /** The segment's numeric value. */
     value: number;
+    /** The segment's display label. */
     label: string;
+    /** The segment's unique key. */
     key: string;
 }
 
 /** Events emitted by a {@link PolarAreaChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface PolarAreaChartEventMap extends EventMap {
+    /** Emitted when a segment is clicked. */
     segmentclick: PolarAreaChartSegmentEvent;
+    /** Emitted when the pointer enters a segment. */
     segmententer: PolarAreaChartSegmentEvent;
+    /** Emitted when the pointer leaves a segment. */
     segmentleave: PolarAreaChartSegmentEvent;
 }
 
@@ -725,7 +738,23 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
     }
 }
 
-/** Factory function that creates a new {@link PolarAreaChart} instance. */
+/**
+ * Factory function that creates a new {@link PolarAreaChart} instance.
+ *
+ * @example
+ * ```ts
+ * createPolarAreaChart(target, {
+ *     data: [
+ *         { day: 'Mon', sales: 42 },
+ *         { day: 'Tue', sales: 58 },
+ *         { day: 'Wed', sales: 31 },
+ *     ],
+ *     key: 'day',
+ *     value: 'sales',
+ *     label: 'day',
+ * });
+ * ```
+ */
 export function createPolarAreaChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarAreaChartOptions<TData>) {
     return new PolarAreaChart<TData>(target, options);
 }

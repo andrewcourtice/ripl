@@ -138,4 +138,5 @@ export const interpolateGradient: InterpolatorFactory<string> = (valueA, valueB)
     return position => serialiseGradient(gradientInterpolator(position));
 };
 
+/** Reports whether this factory can interpolate the given value (a CSS gradient string). */
 interpolateGradient.test = value => typeof value === 'string' && isGradientString(value);

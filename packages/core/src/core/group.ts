@@ -35,6 +35,7 @@ import type {
 
 /** Options for constructing a group, extending element options with an optional initial set of children. */
 export interface GroupOptions extends ElementOptions {
+    /** One or more child elements to add to the group on construction. */
     children?: OneOrMore<Element>;
 }
 

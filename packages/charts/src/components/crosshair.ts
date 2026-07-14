@@ -18,10 +18,15 @@ import {
 
 /** Options for constructing a crosshair component. */
 export interface CrosshairOptions extends ChartComponentOptions {
+    /** Whether to draw the vertical line that tracks the pointer's x position. Defaults to `true`. */
     vertical?: boolean;
+    /** Whether to draw the horizontal line that tracks the pointer's y position. Defaults to `false`. */
     horizontal?: boolean;
+    /** Stroke colour of the crosshair lines. */
     stroke?: string;
+    /** Stroke width of the crosshair lines, in pixels. */
     lineWidth?: number;
+    /** Canvas dash pattern for the crosshair lines. */
     lineDash?: number[];
 }
 

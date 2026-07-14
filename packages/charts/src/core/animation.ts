@@ -25,17 +25,25 @@ import {
 
 /** Reference durations (in ms, at the default animation speed) for each transition kind. */
 export const ANIMATION_REFERENCE = {
+    /** Reference duration, in milliseconds, for elements entering the chart. */
     enter: 1000,
+    /** Reference duration, in milliseconds, for elements transitioning to new values. */
     update: 1000,
+    /** Reference duration, in milliseconds, for elements leaving the chart. */
     exit: 450,
+    /** Reference duration, in milliseconds, for hover feedback. */
     hover: 300,
+    /** Reference duration, in milliseconds, for axis transitions. */
     axis: 500,
 } as const;
 
 /** A fully resolved animation ready to be applied to a transition. */
 export interface ResolvedAnimation {
+    /** Whether the transition animates (`false` snaps straight to the target state). */
     enabled: boolean;
+    /** Transition duration in milliseconds (`0` when animation is disabled). */
     duration: number;
+    /** The resolved easing function to apply. */
     ease: Ease;
 }
 

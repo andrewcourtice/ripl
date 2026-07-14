@@ -38,13 +38,13 @@ The **Trend Chart** is a composite chart that lets you mix bar, line, and area s
 <script lang="ts" setup>
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createTrendChart,

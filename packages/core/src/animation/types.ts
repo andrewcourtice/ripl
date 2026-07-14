@@ -12,9 +12,14 @@ export type TransitionLoopMode = boolean | 'alternate';
 
 /** Configuration for a transition animation. */
 export interface TransitionOptions {
+    /** The transition's duration in milliseconds. */
     duration: number;
+    /** The easing function applied to the transition's progress. */
     ease: Ease;
+    /** Whether and how the transition loops once complete. */
     loop: TransitionLoopMode;
+    /** The delay before the transition starts, in milliseconds. */
     delay: number;
+    /** The playback direction of the transition. */
     direction: TransitionDirection;
 }

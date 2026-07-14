@@ -70,11 +70,15 @@ const REST_ALPHA = 0.85;
 
 /** A node in a force-directed network. */
 export interface ForceNetworkNode<TData = unknown> {
+    /** Unique identifier for the node, referenced by links and used for data joins. */
     id: string;
+    /** Text shown beneath the node; defaults to the node's id. */
     label?: string;
+    /** Optional magnitude used to size the node; defaults to the node's link degree. */
     value?: number;
     /** Optional grouping — nodes in the same group share a color. */
     group?: string;
+    /** Explicit node colour; falls back to the group/palette colour when omitted. */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -82,22 +86,31 @@ export interface ForceNetworkNode<TData = unknown> {
 
 /** A link between two nodes. */
 export interface ForceNetworkLink {
+    /** Id of the node the link starts from. */
     source: string;
+    /** Id of the node the link connects to. */
     target: string;
+    /** Optional weight; scales the link's line width. */
     value?: number;
 }
 
 /** Options for configuring a {@link ForceDirectedChart}. */
 export interface ForceDirectedChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The nodes in the network. */
     nodes: ForceNetworkNode<TData>[];
+    /** The links (edges) connecting pairs of nodes. */
     links: ForceNetworkLink[];
     /** Base node radius (nodes with a `value` scale around this). Defaults to 8. */
     nodeRadius?: number;
     /** Force tuning. */
     charge?: number;
+    /** Target resting distance between two linked nodes. */
     linkDistance?: number;
+    /** Strength pulling linked nodes toward `linkDistance`. */
     linkStrength?: number;
+    /** Strength pulling all nodes toward the layout centre. */
     centerStrength?: number;
+    /** Number of simulation iterations run before the layout is drawn. */
     iterations?: number;
     /** Id of the node the layout springs out from on entry. Defaults to the highest-degree node. */
     root?: string;
@@ -107,10 +120,15 @@ export interface ForceDirectedChartOptions<TData = unknown> extends BaseChartOpt
 
 /** Payload emitted for force-directed node interaction events. */
 export interface ForceDirectedNodeEvent<TData = unknown> {
+    /** The x coordinate (in chart pixels) of the node. */
     x: number;
+    /** The y coordinate (in chart pixels) of the node. */
     y: number;
+    /** The id of the interacted node. */
     id: string;
+    /** The label of the interacted node. */
     label: string;
+    /** The node's size value (its `value`, or link degree when none was given). */
     value: number;
     /** The datum from the source {@link ForceNetworkNode}, if one was provided. */
     data?: TData;
@@ -118,20 +136,31 @@ export interface ForceDirectedNodeEvent<TData = unknown> {
 
 /** Payload emitted for force-directed link interaction events. */
 export interface ForceDirectedLinkEvent {
+    /** The x coordinate (in chart pixels) of the link's midpoint. */
     x: number;
+    /** The y coordinate (in chart pixels) of the link's midpoint. */
     y: number;
+    /** Id of the link's source node. */
     source: string;
+    /** Id of the link's target node. */
     target: string;
+    /** The link's weight (0 when none was provided). */
     value: number;
 }
 
 /** Events emitted by a {@link ForceDirectedChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface ForceDirectedChartEventMap<TData = unknown> extends EventMap {
+    /** Emitted when a node is clicked. */
     nodeclick: ForceDirectedNodeEvent<TData>;
+    /** Emitted when the pointer enters a node. */
     nodeenter: ForceDirectedNodeEvent<TData>;
+    /** Emitted when the pointer leaves a node. */
     nodeleave: ForceDirectedNodeEvent<TData>;
+    /** Emitted when a link is clicked. */
     linkclick: ForceDirectedLinkEvent;
+    /** Emitted when the pointer enters a link. */
     linkenter: ForceDirectedLinkEvent;
+    /** Emitted when the pointer leaves a link. */
     linkleave: ForceDirectedLinkEvent;
 }
 
@@ -632,7 +661,24 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
 }
 
-/** Factory function that creates a new {@link ForceDirectedChart} instance. */
+/**
+ * Factory function that creates a new {@link ForceDirectedChart} instance.
+ *
+ * @example
+ * ```ts
+ * createForceDirectedChart(target, {
+ *     nodes: [
+ *         { id: 'a', label: 'A' },
+ *         { id: 'b', label: 'B' },
+ *         { id: 'c', label: 'C' },
+ *     ],
+ *     links: [
+ *         { source: 'a', target: 'b' },
+ *         { source: 'a', target: 'c' },
+ *     ],
+ * });
+ * ```
+ */
 export function createForceDirectedChart<TData = unknown>(target: string | HTMLElement | Context, options: ForceDirectedChartOptions<TData>) {
     return new ForceDirectedChart<TData>(target, options);
 }

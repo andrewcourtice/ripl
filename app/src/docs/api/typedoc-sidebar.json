@@ -358,7 +358,102 @@
   },
   {
     "text": "@ripl/canvas",
-    "link": "/docs/api/@ripl/canvas/"
+    "link": "/docs/api/@ripl/canvas/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "CanvasContext",
+            "link": "/docs/api/@ripl/canvas/classes/CanvasContext.md"
+          },
+          {
+            "text": "CanvasPath",
+            "link": "/docs/api/@ripl/canvas/classes/CanvasPath.md"
+          }
+        ]
+      },
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "RescaleResult",
+            "link": "/docs/api/@ripl/canvas/interfaces/RescaleResult.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "GradientBounds",
+            "link": "/docs/api/@ripl/canvas/type-aliases/GradientBounds.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "applyCanvasFill",
+            "link": "/docs/api/@ripl/canvas/functions/applyCanvasFill.md"
+          },
+          {
+            "text": "applyCanvasStroke",
+            "link": "/docs/api/@ripl/canvas/functions/applyCanvasStroke.md"
+          },
+          {
+            "text": "canvasDrawImage",
+            "link": "/docs/api/@ripl/canvas/functions/canvasDrawImage.md"
+          },
+          {
+            "text": "canvasIsPointInPath",
+            "link": "/docs/api/@ripl/canvas/functions/canvasIsPointInPath.md"
+          },
+          {
+            "text": "canvasIsPointInStroke",
+            "link": "/docs/api/@ripl/canvas/functions/canvasIsPointInStroke.md"
+          },
+          {
+            "text": "canvasMeasureText",
+            "link": "/docs/api/@ripl/canvas/functions/canvasMeasureText.md"
+          },
+          {
+            "text": "createContext",
+            "link": "/docs/api/@ripl/canvas/functions/createContext.md"
+          },
+          {
+            "text": "getCanvasGradientBounds",
+            "link": "/docs/api/@ripl/canvas/functions/getCanvasGradientBounds.md"
+          },
+          {
+            "text": "renderTextAlongPath",
+            "link": "/docs/api/@ripl/canvas/functions/renderTextAlongPath.md"
+          },
+          {
+            "text": "rescaleCanvas",
+            "link": "/docs/api/@ripl/canvas/functions/rescaleCanvas.md"
+          },
+          {
+            "text": "setCanvasFill",
+            "link": "/docs/api/@ripl/canvas/functions/setCanvasFill.md"
+          },
+          {
+            "text": "setCanvasStroke",
+            "link": "/docs/api/@ripl/canvas/functions/setCanvasStroke.md"
+          },
+          {
+            "text": "toCanvasGradient",
+            "link": "/docs/api/@ripl/canvas/functions/toCanvasGradient.md"
+          }
+        ]
+      }
+    ]
   },
   {
     "text": "@ripl/charts",
@@ -382,6 +477,10 @@
             "link": "/docs/api/@ripl/charts/classes/BarChart.md"
           },
           {
+            "text": "BoxPlotChart",
+            "link": "/docs/api/@ripl/charts/classes/BoxPlotChart.md"
+          },
+          {
             "text": "CartesianChart",
             "link": "/docs/api/@ripl/charts/classes/CartesianChart.md"
           },
@@ -396,6 +495,10 @@
           {
             "text": "ChordChart",
             "link": "/docs/api/@ripl/charts/classes/ChordChart.md"
+          },
+          {
+            "text": "ColorLegend",
+            "link": "/docs/api/@ripl/charts/classes/ColorLegend.md"
           },
           {
             "text": "ForceDirectedChart",
@@ -416,6 +519,10 @@
           {
             "text": "HeatmapChart",
             "link": "/docs/api/@ripl/charts/classes/HeatmapChart.md"
+          },
+          {
+            "text": "HistogramChart",
+            "link": "/docs/api/@ripl/charts/classes/HistogramChart.md"
           },
           {
             "text": "LineChart",
@@ -552,6 +659,30 @@
             "link": "/docs/api/@ripl/charts/interfaces/BaseTrendChartSeriesOptions.md"
           },
           {
+            "text": "Bin",
+            "link": "/docs/api/@ripl/charts/interfaces/Bin.md"
+          },
+          {
+            "text": "BinOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/BinOptions.md"
+          },
+          {
+            "text": "BoxPlotBoxEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/BoxPlotBoxEvent.md"
+          },
+          {
+            "text": "BoxPlotChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/BoxPlotChartEventMap.md"
+          },
+          {
+            "text": "BoxPlotChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/BoxPlotChartOptions.md"
+          },
+          {
+            "text": "BoxplotStats",
+            "link": "/docs/api/@ripl/charts/interfaces/BoxplotStats.md"
+          },
+          {
             "text": "CartesianChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/CartesianChartOptions.md"
           },
@@ -626,6 +757,14 @@
           {
             "text": "ChordChartRibbonEvent",
             "link": "/docs/api/@ripl/charts/interfaces/ChordChartRibbonEvent.md"
+          },
+          {
+            "text": "ColorLegendComponentOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ColorLegendComponentOptions.md"
+          },
+          {
+            "text": "ColorLegendOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ColorLegendOptions.md"
           },
           {
             "text": "DataLabelSpec",
@@ -704,6 +843,18 @@
             "link": "/docs/api/@ripl/charts/interfaces/HeatmapChartOptions.md"
           },
           {
+            "text": "HistogramBinEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/HistogramBinEvent.md"
+          },
+          {
+            "text": "HistogramChartEventMap",
+            "link": "/docs/api/@ripl/charts/interfaces/HistogramChartEventMap.md"
+          },
+          {
+            "text": "HistogramChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/HistogramChartOptions.md"
+          },
+          {
             "text": "HoverHighlightOptions",
             "link": "/docs/api/@ripl/charts/interfaces/HoverHighlightOptions.md"
           },
@@ -714,6 +865,14 @@
           {
             "text": "InteractionPoint",
             "link": "/docs/api/@ripl/charts/interfaces/InteractionPoint.md"
+          },
+          {
+            "text": "KdeOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/KdeOptions.md"
+          },
+          {
+            "text": "LinearRegression",
+            "link": "/docs/api/@ripl/charts/interfaces/LinearRegression.md"
           },
           {
             "text": "LineChartEventMap",
@@ -1038,6 +1197,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/ChartTooltipInput.md"
           },
           {
+            "text": "ColorLegendOrientation",
+            "link": "/docs/api/@ripl/charts/type-aliases/ColorLegendOrientation.md"
+          },
+          {
             "text": "CrosshairAxis",
             "link": "/docs/api/@ripl/charts/type-aliases/CrosshairAxis.md"
           },
@@ -1056,6 +1219,14 @@
           {
             "text": "LineStyle",
             "link": "/docs/api/@ripl/charts/type-aliases/LineStyle.md"
+          },
+          {
+            "text": "NumericAccessor",
+            "link": "/docs/api/@ripl/charts/type-aliases/NumericAccessor.md"
+          },
+          {
+            "text": "NumericKey",
+            "link": "/docs/api/@ripl/charts/type-aliases/NumericKey.md"
           },
           {
             "text": "PaddingInput",
@@ -1118,6 +1289,14 @@
             "link": "/docs/api/@ripl/charts/functions/applyHoverHighlight.md"
           },
           {
+            "text": "bin",
+            "link": "/docs/api/@ripl/charts/functions/bin.md"
+          },
+          {
+            "text": "boxplotStats",
+            "link": "/docs/api/@ripl/charts/functions/boxplotStats.md"
+          },
+          {
             "text": "computeStackOffset",
             "link": "/docs/api/@ripl/charts/functions/computeStackOffset.md"
           },
@@ -1134,8 +1313,16 @@
             "link": "/docs/api/@ripl/charts/functions/createBarChart.md"
           },
           {
+            "text": "createBoxPlotChart",
+            "link": "/docs/api/@ripl/charts/functions/createBoxPlotChart.md"
+          },
+          {
             "text": "createChordChart",
             "link": "/docs/api/@ripl/charts/functions/createChordChart.md"
+          },
+          {
+            "text": "createColorLegend",
+            "link": "/docs/api/@ripl/charts/functions/createColorLegend.md"
           },
           {
             "text": "createDataLabel",
@@ -1160,6 +1347,10 @@
           {
             "text": "createHeatmapChart",
             "link": "/docs/api/@ripl/charts/functions/createHeatmapChart.md"
+          },
+          {
+            "text": "createHistogramChart",
+            "link": "/docs/api/@ripl/charts/functions/createHistogramChart.md"
           },
           {
             "text": "createLineChart",
@@ -1230,6 +1421,10 @@
             "link": "/docs/api/@ripl/charts/functions/createTrendChart.md"
           },
           {
+            "text": "deviation",
+            "link": "/docs/api/@ripl/charts/functions/deviation.md"
+          },
+          {
             "text": "elementIsRibbon",
             "link": "/docs/api/@ripl/charts/functions/elementIsRibbon.md"
           },
@@ -1244,6 +1439,18 @@
           {
             "text": "formatNumber",
             "link": "/docs/api/@ripl/charts/functions/formatNumber.md"
+          },
+          {
+            "text": "kde",
+            "link": "/docs/api/@ripl/charts/functions/kde.md"
+          },
+          {
+            "text": "linearRegression",
+            "link": "/docs/api/@ripl/charts/functions/linearRegression.md"
+          },
+          {
+            "text": "mean",
+            "link": "/docs/api/@ripl/charts/functions/mean.md"
           },
           {
             "text": "normalizeAnimation",
@@ -1294,6 +1501,10 @@
             "link": "/docs/api/@ripl/charts/functions/normalizeYAxisItem.md"
           },
           {
+            "text": "quantile",
+            "link": "/docs/api/@ripl/charts/functions/quantile.md"
+          },
+          {
             "text": "resolveAccessor",
             "link": "/docs/api/@ripl/charts/functions/resolveAccessor.md"
           },
@@ -1328,6 +1539,10 @@
           {
             "text": "resolveValueFormat",
             "link": "/docs/api/@ripl/charts/functions/resolveValueFormat.md"
+          },
+          {
+            "text": "rollup",
+            "link": "/docs/api/@ripl/charts/functions/rollup.md"
           },
           {
             "text": "stagger",
@@ -1566,6 +1781,10 @@
             "link": "/docs/api/@ripl/core/classes/Line.md"
           },
           {
+            "text": "Navigator",
+            "link": "/docs/api/@ripl/core/classes/Navigator.md"
+          },
+          {
             "text": "Path",
             "link": "/docs/api/@ripl/core/classes/Path.md"
           },
@@ -1638,6 +1857,10 @@
           {
             "text": "ColorParser",
             "link": "/docs/api/@ripl/core/interfaces/ColorParser.md"
+          },
+          {
+            "text": "ColorScale",
+            "link": "/docs/api/@ripl/core/interfaces/ColorScale.md"
           },
           {
             "text": "ConicGradient",
@@ -1716,8 +1939,48 @@
             "link": "/docs/api/@ripl/core/interfaces/LogarithmicScaleOptions.md"
           },
           {
+            "text": "NavigatorBrush",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorBrush.md"
+          },
+          {
+            "text": "NavigatorEventMap",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorEventMap.md"
+          },
+          {
+            "text": "NavigatorFitOptions",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorFitOptions.md"
+          },
+          {
+            "text": "NavigatorInteractions",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorInteractions.md"
+          },
+          {
+            "text": "NavigatorOptions",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorOptions.md"
+          },
+          {
+            "text": "NavigatorTransform",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorTransform.md"
+          },
+          {
+            "text": "NavigatorViewport",
+            "link": "/docs/api/@ripl/core/interfaces/NavigatorViewport.md"
+          },
+          {
+            "text": "OrdinalScale",
+            "link": "/docs/api/@ripl/core/interfaces/OrdinalScale.md"
+          },
+          {
             "text": "PathState",
             "link": "/docs/api/@ripl/core/interfaces/PathState.md"
+          },
+          {
+            "text": "PointScale",
+            "link": "/docs/api/@ripl/core/interfaces/PointScale.md"
+          },
+          {
+            "text": "PointScaleOptions",
+            "link": "/docs/api/@ripl/core/interfaces/PointScaleOptions.md"
           },
           {
             "text": "PolygonState",
@@ -1780,10 +2043,6 @@
             "link": "/docs/api/@ripl/core/interfaces/ScaleBindingOptions.md"
           },
           {
-            "text": "SceneEventMap",
-            "link": "/docs/api/@ripl/core/interfaces/SceneEventMap.md"
-          },
-          {
             "text": "SceneOptions",
             "link": "/docs/api/@ripl/core/interfaces/SceneOptions.md"
           },
@@ -1832,6 +2091,14 @@
           {
             "text": "ColorHSVA",
             "link": "/docs/api/@ripl/core/type-aliases/ColorHSVA.md"
+          },
+          {
+            "text": "ColorInterpolator",
+            "link": "/docs/api/@ripl/core/type-aliases/ColorInterpolator.md"
+          },
+          {
+            "text": "ColorInterpolatorInput",
+            "link": "/docs/api/@ripl/core/type-aliases/ColorInterpolatorInput.md"
           },
           {
             "text": "ColorRGBA",
@@ -1934,6 +2201,10 @@
             "link": "/docs/api/@ripl/core/type-aliases/MeasureTextOptions.md"
           },
           {
+            "text": "NavigatorInteractionOption",
+            "link": "/docs/api/@ripl/core/type-aliases/NavigatorInteractionOption.md"
+          },
+          {
             "text": "PathPoint",
             "link": "/docs/api/@ripl/core/type-aliases/PathPoint.md"
           },
@@ -1976,6 +2247,10 @@
           {
             "text": "ScaleMethod",
             "link": "/docs/api/@ripl/core/type-aliases/ScaleMethod.md"
+          },
+          {
+            "text": "SceneEventMap",
+            "link": "/docs/api/@ripl/core/type-aliases/SceneEventMap.md"
           },
           {
             "text": "Shape2DOptions",
@@ -2039,6 +2314,38 @@
         "text": "Variables",
         "collapsed": true,
         "items": [
+          {
+            "text": "COLOR_SCHEME_BRBG",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_BRBG.md"
+          },
+          {
+            "text": "COLOR_SCHEME_CIVIDIS",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_CIVIDIS.md"
+          },
+          {
+            "text": "COLOR_SCHEME_INFERNO",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_INFERNO.md"
+          },
+          {
+            "text": "COLOR_SCHEME_MAGMA",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_MAGMA.md"
+          },
+          {
+            "text": "COLOR_SCHEME_PLASMA",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_PLASMA.md"
+          },
+          {
+            "text": "COLOR_SCHEME_RDBU",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_RDBU.md"
+          },
+          {
+            "text": "COLOR_SCHEME_TURBO",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_TURBO.md"
+          },
+          {
+            "text": "COLOR_SCHEME_VIRIDIS",
+            "link": "/docs/api/@ripl/core/variables/COLOR_SCHEME_VIRIDIS.md"
+          },
           {
             "text": "CONTEXT_OPERATIONS",
             "link": "/docs/api/@ripl/core/variables/CONTEXT_OPERATIONS.md"
@@ -2146,6 +2453,10 @@
           {
             "text": "interpolateTransformOrigin",
             "link": "/docs/api/@ripl/core/variables/interpolateTransformOrigin.md"
+          },
+          {
+            "text": "scaleRGB",
+            "link": "/docs/api/@ripl/core/variables/scaleRGB.md"
           },
           {
             "text": "TAU",
@@ -2350,6 +2661,10 @@
             "link": "/docs/api/@ripl/core/functions/getThetaPoint.md"
           },
           {
+            "text": "getTimeTicks",
+            "link": "/docs/api/@ripl/core/functions/getTimeTicks.md"
+          },
+          {
             "text": "getTotal",
             "link": "/docs/api/@ripl/core/functions/getTotal.md"
           },
@@ -2368,6 +2683,10 @@
           {
             "text": "interpolateCirclePoint",
             "link": "/docs/api/@ripl/core/functions/interpolateCirclePoint.md"
+          },
+          {
+            "text": "interpolateColors",
+            "link": "/docs/api/@ripl/core/functions/interpolateColors.md"
           },
           {
             "text": "interpolatePath",
@@ -2420,6 +2739,10 @@
           {
             "text": "minOf",
             "link": "/docs/api/@ripl/core/functions/minOf.md"
+          },
+          {
+            "text": "niceDomain",
+            "link": "/docs/api/@ripl/core/functions/niceDomain.md"
           },
           {
             "text": "normaliseBorderRadius",
@@ -2530,6 +2853,14 @@
             "link": "/docs/api/@ripl/core/functions/radiansToDegrees.md"
           },
           {
+            "text": "rescaleDomain",
+            "link": "/docs/api/@ripl/core/functions/rescaleDomain.md"
+          },
+          {
+            "text": "resolveNiceCount",
+            "link": "/docs/api/@ripl/core/functions/resolveNiceCount.md"
+          },
+          {
             "text": "resolvePolylineRenderer",
             "link": "/docs/api/@ripl/core/functions/resolvePolylineRenderer.md"
           },
@@ -2582,6 +2913,14 @@
             "link": "/docs/api/@ripl/core/functions/scaleLogarithmic.md"
           },
           {
+            "text": "scaleOrdinal",
+            "link": "/docs/api/@ripl/core/functions/scaleOrdinal.md"
+          },
+          {
+            "text": "scalePoint",
+            "link": "/docs/api/@ripl/core/functions/scalePoint.md"
+          },
+          {
             "text": "scalePower",
             "link": "/docs/api/@ripl/core/functions/scalePower.md"
           },
@@ -2592,6 +2931,10 @@
           {
             "text": "scaleQuantize",
             "link": "/docs/api/@ripl/core/functions/scaleQuantize.md"
+          },
+          {
+            "text": "scaleSequential",
+            "link": "/docs/api/@ripl/core/functions/scaleSequential.md"
           },
           {
             "text": "scaleSqrt",
@@ -2662,6 +3005,119 @@
     ]
   },
   {
+    "text": "@ripl/dom",
+    "link": "/docs/api/@ripl/dom/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "DOMContext",
+            "link": "/docs/api/@ripl/dom/classes/DOMContext.md"
+          },
+          {
+            "text": "DOMNavigator",
+            "link": "/docs/api/@ripl/dom/classes/DOMNavigator.md"
+          }
+        ]
+      },
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "DOMElementResizeEvent",
+            "link": "/docs/api/@ripl/dom/interfaces/DOMElementResizeEvent.md"
+          },
+          {
+            "text": "DOMNavigatorOptions",
+            "link": "/docs/api/@ripl/dom/interfaces/DOMNavigatorOptions.md"
+          },
+          {
+            "text": "ParentRef",
+            "link": "/docs/api/@ripl/dom/interfaces/ParentRef.md"
+          },
+          {
+            "text": "ReconcilerOptions",
+            "link": "/docs/api/@ripl/dom/interfaces/ReconcilerOptions.md"
+          },
+          {
+            "text": "VNode",
+            "link": "/docs/api/@ripl/dom/interfaces/VNode.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "DOMElementEventMap",
+            "link": "/docs/api/@ripl/dom/type-aliases/DOMElementEventMap.md"
+          },
+          {
+            "text": "DOMElementResizeHandler",
+            "link": "/docs/api/@ripl/dom/type-aliases/DOMElementResizeHandler.md"
+          },
+          {
+            "text": "DOMEventHandler",
+            "link": "/docs/api/@ripl/dom/type-aliases/DOMEventHandler.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "hasWindow",
+            "link": "/docs/api/@ripl/dom/variables/hasWindow.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "createCanvasExport",
+            "link": "/docs/api/@ripl/dom/functions/createCanvasExport.md"
+          },
+          {
+            "text": "createNavigator",
+            "link": "/docs/api/@ripl/dom/functions/createNavigator.md"
+          },
+          {
+            "text": "createVNode",
+            "link": "/docs/api/@ripl/dom/functions/createVNode.md"
+          },
+          {
+            "text": "ensureGroupPath",
+            "link": "/docs/api/@ripl/dom/functions/ensureGroupPath.md"
+          },
+          {
+            "text": "getAncestorGroupIds",
+            "link": "/docs/api/@ripl/dom/functions/getAncestorGroupIds.md"
+          },
+          {
+            "text": "onDOMElementResize",
+            "link": "/docs/api/@ripl/dom/functions/onDOMElementResize.md"
+          },
+          {
+            "text": "onDOMEvent",
+            "link": "/docs/api/@ripl/dom/functions/onDOMEvent.md"
+          },
+          {
+            "text": "reconcileNode",
+            "link": "/docs/api/@ripl/dom/functions/reconcileNode.md"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "text": "@ripl/svg",
     "link": "/docs/api/@ripl/svg/",
     "collapsed": true,
@@ -2719,6 +3175,159 @@
     ]
   },
   {
+    "text": "@ripl/terminal",
+    "link": "/docs/api/@ripl/terminal/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "BrailleRasterizer",
+            "link": "/docs/api/@ripl/terminal/classes/BrailleRasterizer.md"
+          },
+          {
+            "text": "TerminalContext",
+            "link": "/docs/api/@ripl/terminal/classes/TerminalContext.md"
+          },
+          {
+            "text": "TerminalPath",
+            "link": "/docs/api/@ripl/terminal/classes/TerminalPath.md"
+          }
+        ]
+      },
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "Rasterizer",
+            "link": "/docs/api/@ripl/terminal/interfaces/Rasterizer.md"
+          },
+          {
+            "text": "SerializeOptions",
+            "link": "/docs/api/@ripl/terminal/interfaces/SerializeOptions.md"
+          },
+          {
+            "text": "TerminalContextOptions",
+            "link": "/docs/api/@ripl/terminal/interfaces/TerminalContextOptions.md"
+          },
+          {
+            "text": "TerminalOutput",
+            "link": "/docs/api/@ripl/terminal/interfaces/TerminalOutput.md"
+          },
+          {
+            "text": "TerminalPathCommand",
+            "link": "/docs/api/@ripl/terminal/interfaces/TerminalPathCommand.md"
+          },
+          {
+            "text": "Vertex",
+            "link": "/docs/api/@ripl/terminal/interfaces/Vertex.md"
+          }
+        ]
+      },
+      {
+        "text": "Type Aliases",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "PixelCallback",
+            "link": "/docs/api/@ripl/terminal/type-aliases/PixelCallback.md"
+          },
+          {
+            "text": "TerminalPathCommandType",
+            "link": "/docs/api/@ripl/terminal/type-aliases/TerminalPathCommandType.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "ANSI_RESET",
+            "link": "/docs/api/@ripl/terminal/variables/ANSI_RESET.md"
+          },
+          {
+            "text": "BRAILLE_CELL_HEIGHT",
+            "link": "/docs/api/@ripl/terminal/variables/BRAILLE_CELL_HEIGHT.md"
+          },
+          {
+            "text": "BRAILLE_CELL_WIDTH",
+            "link": "/docs/api/@ripl/terminal/variables/BRAILLE_CELL_WIDTH.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "colorToAnsiBg",
+            "link": "/docs/api/@ripl/terminal/functions/colorToAnsiBg.md"
+          },
+          {
+            "text": "colorToAnsiFg",
+            "link": "/docs/api/@ripl/terminal/functions/colorToAnsiFg.md"
+          },
+          {
+            "text": "createContext",
+            "link": "/docs/api/@ripl/terminal/functions/createContext.md"
+          },
+          {
+            "text": "fillPolygon",
+            "link": "/docs/api/@ripl/terminal/functions/fillPolygon.md"
+          },
+          {
+            "text": "flattenArc",
+            "link": "/docs/api/@ripl/terminal/functions/flattenArc.md"
+          },
+          {
+            "text": "flattenCubicBezier",
+            "link": "/docs/api/@ripl/terminal/functions/flattenCubicBezier.md"
+          },
+          {
+            "text": "flattenEllipse",
+            "link": "/docs/api/@ripl/terminal/functions/flattenEllipse.md"
+          },
+          {
+            "text": "flattenQuadBezier",
+            "link": "/docs/api/@ripl/terminal/functions/flattenQuadBezier.md"
+          },
+          {
+            "text": "rasterizeArc",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeArc.md"
+          },
+          {
+            "text": "rasterizeCircle",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeCircle.md"
+          },
+          {
+            "text": "rasterizeCubicBezier",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeCubicBezier.md"
+          },
+          {
+            "text": "rasterizeEllipse",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeEllipse.md"
+          },
+          {
+            "text": "rasterizeLine",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeLine.md"
+          },
+          {
+            "text": "rasterizeQuadBezier",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeQuadBezier.md"
+          },
+          {
+            "text": "rasterizeRect",
+            "link": "/docs/api/@ripl/terminal/functions/rasterizeRect.md"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "text": "@ripl/utilities",
     "link": "/docs/api/@ripl/utilities/",
     "collapsed": true,
@@ -2734,6 +3343,14 @@
           {
             "text": "Disposable",
             "link": "/docs/api/@ripl/utilities/interfaces/Disposable.md"
+          },
+          {
+            "text": "NumberFormatOptions",
+            "link": "/docs/api/@ripl/utilities/interfaces/NumberFormatOptions.md"
+          },
+          {
+            "text": "TimeFormatOptions",
+            "link": "/docs/api/@ripl/utilities/interfaces/TimeFormatOptions.md"
           }
         ]
       },
@@ -2862,6 +3479,14 @@
           {
             "text": "comparitorString",
             "link": "/docs/api/@ripl/utilities/functions/comparitorString.md"
+          },
+          {
+            "text": "formatNumber",
+            "link": "/docs/api/@ripl/utilities/functions/formatNumber.md"
+          },
+          {
+            "text": "formatTime",
+            "link": "/docs/api/@ripl/utilities/functions/formatTime.md"
           },
           {
             "text": "functionCache",
@@ -2994,5 +3619,112 @@
   {
     "text": "@ripl/web",
     "link": "/docs/api/@ripl/web/"
+  },
+  {
+    "text": "@ripl/webgpu",
+    "link": "/docs/api/@ripl/webgpu/",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "Classes",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "GeometryManager",
+            "link": "/docs/api/@ripl/webgpu/classes/GeometryManager.md"
+          },
+          {
+            "text": "WebGPUContext3D",
+            "link": "/docs/api/@ripl/webgpu/classes/WebGPUContext3D.md"
+          }
+        ]
+      },
+      {
+        "text": "Interfaces",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "DrawCommand",
+            "link": "/docs/api/@ripl/webgpu/interfaces/DrawCommand.md"
+          },
+          {
+            "text": "FlushResult",
+            "link": "/docs/api/@ripl/webgpu/interfaces/FlushResult.md"
+          },
+          {
+            "text": "PipelineOptions",
+            "link": "/docs/api/@ripl/webgpu/interfaces/PipelineOptions.md"
+          },
+          {
+            "text": "PipelineState",
+            "link": "/docs/api/@ripl/webgpu/interfaces/PipelineState.md"
+          },
+          {
+            "text": "WebGPUContextOptions",
+            "link": "/docs/api/@ripl/webgpu/interfaces/WebGPUContextOptions.md"
+          }
+        ]
+      },
+      {
+        "text": "Variables",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "FRAGMENT_SHADER",
+            "link": "/docs/api/@ripl/webgpu/variables/FRAGMENT_SHADER.md"
+          },
+          {
+            "text": "MODEL_BIND_GROUP_LAYOUT_ENTRIES",
+            "link": "/docs/api/@ripl/webgpu/variables/MODEL_BIND_GROUP_LAYOUT_ENTRIES.md"
+          },
+          {
+            "text": "MODEL_UNIFORM_SIZE",
+            "link": "/docs/api/@ripl/webgpu/variables/MODEL_UNIFORM_SIZE.md"
+          },
+          {
+            "text": "SCENE_BIND_GROUP_LAYOUT_ENTRIES",
+            "link": "/docs/api/@ripl/webgpu/variables/SCENE_BIND_GROUP_LAYOUT_ENTRIES.md"
+          },
+          {
+            "text": "SCENE_UNIFORM_SIZE",
+            "link": "/docs/api/@ripl/webgpu/variables/SCENE_UNIFORM_SIZE.md"
+          },
+          {
+            "text": "VERTEX_BUFFER_LAYOUT",
+            "link": "/docs/api/@ripl/webgpu/variables/VERTEX_BUFFER_LAYOUT.md"
+          },
+          {
+            "text": "VERTEX_SHADER",
+            "link": "/docs/api/@ripl/webgpu/variables/VERTEX_SHADER.md"
+          },
+          {
+            "text": "VERTEX_STRIDE",
+            "link": "/docs/api/@ripl/webgpu/variables/VERTEX_STRIDE.md"
+          }
+        ]
+      },
+      {
+        "text": "Functions",
+        "collapsed": true,
+        "items": [
+          {
+            "text": "createContext",
+            "link": "/docs/api/@ripl/webgpu/functions/createContext.md"
+          },
+          {
+            "text": "createPipeline",
+            "link": "/docs/api/@ripl/webgpu/functions/createPipeline.md"
+          },
+          {
+            "text": "requestDevice",
+            "link": "/docs/api/@ripl/webgpu/functions/requestDevice.md"
+          },
+          {
+            "text": "triangulatefaces",
+            "link": "/docs/api/@ripl/webgpu/functions/triangulatefaces.md"
+          }
+        ]
+      }
+    ]
   }
 ]

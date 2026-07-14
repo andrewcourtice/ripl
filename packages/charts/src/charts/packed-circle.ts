@@ -73,10 +73,15 @@ const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link PackedCircleChart}. */
 export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset rendered as packed circles. */
     data: TData[];
+    /** Accessor for each item's unique key (used for colour assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each circle's numeric value (its area encodes this). */
     value: NumericAccessor<TData>;
+    /** Accessor for each circle's display label; defaults to the item's key. */
     label?: keyof TData | ((item: TData) => string);
+    /** Accessor for an explicit per-circle colour; falls back to the generated palette. */
     color?: keyof TData | ((item: TData) => string);
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -84,17 +89,25 @@ export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOpti
 
 /** Payload emitted for packed circle interaction events. */
 export interface PackedCircleChartCellEvent {
+    /** The x coordinate (in chart pixels) of the circle's top anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the circle's top anchor. */
     y: number;
+    /** The value of the interacted circle. */
     value: number;
+    /** The label of the interacted circle. */
     label: string;
+    /** The key of the interacted circle. */
     key: string;
 }
 
 /** Events emitted by a {@link PackedCircleChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface PackedCircleChartEventMap extends EventMap {
+    /** Emitted when a circle is clicked. */
     cellclick: PackedCircleChartCellEvent;
+    /** Emitted when the pointer enters a circle. */
     cellenter: PackedCircleChartCellEvent;
+    /** Emitted when the pointer leaves a circle. */
     cellleave: PackedCircleChartCellEvent;
 }
 
@@ -394,7 +407,23 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
 }
 
-/** Factory function that creates a new {@link PackedCircleChart} instance. */
+/**
+ * Factory function that creates a new {@link PackedCircleChart} instance.
+ *
+ * @example
+ * ```ts
+ * createPackedCircleChart(target, {
+ *     data: [
+ *         { name: 'Alpha', size: 40 },
+ *         { name: 'Beta', size: 25 },
+ *         { name: 'Gamma', size: 15 },
+ *     ],
+ *     key: 'name',
+ *     value: 'size',
+ *     label: 'name',
+ * });
+ * ```
+ */
 export function createPackedCircleChart<TData = unknown>(target: string | HTMLElement | Context, options: PackedCircleChartOptions<TData>) {
     return new PackedCircleChart<TData>(target, options);
 }

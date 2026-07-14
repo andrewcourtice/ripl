@@ -25,12 +25,12 @@ The **Histogram Chart** bins a numeric field and draws each bin as a bar on a co
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createHistogramChart,

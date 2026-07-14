@@ -14,15 +14,20 @@ import type {
 
 /** State interface for a cylinder, defining top/bottom radii, height, and segment count. */
 export interface CylinderState extends Shape3DState {
+    /** The radius of the top cap, in world units. A value of `0` produces a cone-like point. */
     radiusTop: number;
+    /** The radius of the bottom cap, in world units. A value of `0` produces a cone-like point. */
     radiusBottom: number;
+    /** The height of the cylinder along the Y axis, in world units. */
     height: number;
+    /** The number of segments around the circumference. Defaults to `16`. */
     segments: number;
 }
 
 /** A 3D cylinder shape with independent top and bottom radii for truncated cones. */
 export class Cylinder extends Shape3D<CylinderState> {
 
+    /** The radius of the top cap, in world units. */
     public get radiusTop() {
         return this.getStateValue('radiusTop');
     }
@@ -31,6 +36,7 @@ export class Cylinder extends Shape3D<CylinderState> {
         this.setStateValue('radiusTop', value);
     }
 
+    /** The radius of the bottom cap, in world units. */
     public get radiusBottom() {
         return this.getStateValue('radiusBottom');
     }
@@ -39,6 +45,7 @@ export class Cylinder extends Shape3D<CylinderState> {
         this.setStateValue('radiusBottom', value);
     }
 
+    /** The height of the cylinder along the Y axis, in world units. */
     public get height() {
         return this.getStateValue('height');
     }
@@ -47,6 +54,7 @@ export class Cylinder extends Shape3D<CylinderState> {
         this.setStateValue('height', value);
     }
 
+    /** The number of segments around the circumference. */
     public get segments() {
         return this.getStateValue('segments');
     }

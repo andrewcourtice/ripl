@@ -18,9 +18,13 @@ import {
 
 /** State interface for a path element, defining bounding position and dimensions. */
 export interface PathState extends BaseElementState {
+    /** The x-coordinate of the path's bounding box top-left corner. */
     x: number;
+    /** The y-coordinate of the path's bounding box top-left corner. */
     y: number;
+    /** The width of the path's bounding box. */
     width: number;
+    /** The height of the path's bounding box. */
     height: number;
 }
 
@@ -32,6 +36,7 @@ export class Path extends Shape2D<PathState> {
 
     private _pathRenderer?: PathRenderer;
 
+    /** The x-coordinate of the path's bounding box top-left corner. */
     public get x() {
         return this.getStateValue('x');
     }
@@ -40,6 +45,7 @@ export class Path extends Shape2D<PathState> {
         this.setStateValue('x', value);
     }
 
+    /** The y-coordinate of the path's bounding box top-left corner. */
     public get y() {
         return this.getStateValue('y');
     }
@@ -48,6 +54,7 @@ export class Path extends Shape2D<PathState> {
         this.setStateValue('y', value);
     }
 
+    /** The width of the path's bounding box. */
     public get width() {
         return this.getStateValue('width');
     }
@@ -56,6 +63,7 @@ export class Path extends Shape2D<PathState> {
         this.setStateValue('width', value);
     }
 
+    /** The height of the path's bounding box. */
     public get height() {
         return this.getStateValue('height');
     }
@@ -80,6 +88,7 @@ export class Path extends Shape2D<PathState> {
         this._pathRenderer = renderer;
     }
 
+    /** Returns the axis-aligned bounding box of the path. */
     public getBoundingBox(): Box {
         return new Box(
             this.y,
@@ -89,6 +98,7 @@ export class Path extends Shape2D<PathState> {
         );
     }
 
+    /** Renders the path to the provided {@link Context} using its path renderer callback. */
     public render(context: Context) {
         return super.render(context, path => {
             this._pathRenderer?.(path, {

@@ -38,3 +38,6 @@ app/.vitepress/cache/
 app/src/.vitepress/cache/
 app/src/public/_playground/
 app/src/docs/api/
+
+# stray TypeDoc default output (real output goes to app/src/docs/api/)
+app/docs/

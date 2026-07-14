@@ -68,20 +68,31 @@ import {
 
 /** Configuration for an individual radar chart series. */
 export interface RadarChartSeriesOptions<TData> {
+    /** Unique identifier for the series. */
     id: string;
+    /** Optional colour override for the series (otherwise a palette colour is generated). */
     color?: string;
+    /** Display label for the series (shown in the legend and tooltips). */
     label: string;
+    /** Accessor for each data item's value on the series' axis. */
     value: NumericAccessor<TData>;
+    /** Fill opacity of the series' area polygon. Defaults to 0.25. */
     opacity?: number;
 }
 
 /** Options for configuring a {@link RadarChart}. */
 export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset, with one item per axis (in axis order). */
     data: TData[];
+    /** The series to overlay, each rendered as a filled polygon. */
     series: RadarChartSeriesOptions<TData>[];
+    /** Axis labels arranged clockwise around the chart, one per data item. */
     axes: string[];
+    /** Maximum value mapped to the outer ring (defaults to the largest value across all series). */
     maxValue?: number;
+    /** Number of concentric grid rings. Defaults to 5. */
     levels?: number;
+    /** Legend configuration. Shown by default when there is more than one series. */
     legend?: ChartLegendInput;
     /** Format applied to point values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -89,17 +100,25 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for radar point interaction events. */
 export interface RadarChartPointEvent {
+    /** X position of the point marker, in canvas coordinates. */
     x: number;
+    /** Y position of the point marker, in canvas coordinates. */
     y: number;
+    /** The point's value on its axis. */
     value: number;
+    /** The label of the axis the point sits on. */
     axisLabel: string;
+    /** The id of the series the point belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by a {@link RadarChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface RadarChartEventMap extends EventMap {
+    /** Emitted when a point marker is clicked. */
     pointclick: RadarChartPointEvent;
+    /** Emitted when the pointer enters a point marker. */
     pointenter: RadarChartPointEvent;
+    /** Emitted when the pointer leaves a point marker. */
     pointleave: RadarChartPointEvent;
 }
 
@@ -625,7 +644,27 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
 }
 
-/** Factory function that creates a new {@link RadarChart} instance. */
+/**
+ * Factory function that creates a new {@link RadarChart} instance.
+ *
+ * @example
+ * ```ts
+ * createRadarChart(target, {
+ *     axes: ['Speed', 'Power', 'Range', 'Agility'],
+ *     data: [
+ *         { axis: 'Speed', modelA: 80 },
+ *         { axis: 'Power', modelA: 60 },
+ *         { axis: 'Range', modelA: 90 },
+ *         { axis: 'Agility', modelA: 70 },
+ *     ],
+ *     series: [{
+ *         id: 'model-a',
+ *         label: 'Model A',
+ *         value: 'modelA',
+ *     }],
+ * });
+ * ```
+ */
 export function createRadarChart<TData = unknown>(target: string | HTMLElement | Context, options: RadarChartOptions<TData>) {
     return new RadarChart<TData>(target, options);
 }

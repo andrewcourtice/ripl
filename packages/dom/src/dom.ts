@@ -17,7 +17,9 @@ export type DOMElementEventMap<TElement> = TElement extends MediaQueryList ? Med
 
 /** Simplified resize event containing the new dimensions of the observed element. */
 export interface DOMElementResizeEvent {
+    /** New width of the observed element, in pixels. */
     width: number;
+    /** New height of the observed element, in pixels. */
     height: number;
 }
 

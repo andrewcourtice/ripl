@@ -26,6 +26,7 @@ export type TaskExecutor<TResult> = (
 /** Error thrown when a task is aborted, carrying the abort reason. */
 export class TaskAbortError extends Error {
 
+    /** The reason the task was aborted, as passed to {@link Task.abort}. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public reason: any;
 

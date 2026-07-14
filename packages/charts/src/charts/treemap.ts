@@ -57,12 +57,19 @@ import {
 
 /** Options for configuring a {@link TreemapChart}. */
 export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset to render, one cell per item. */
     data: TData[];
+    /** Accessor for each item's unique key, used to match cells across data updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's numeric value, which determines its cell area. */
     value: NumericAccessor<TData>;
+    /** Accessor for each item's display label (shown inside sufficiently large cells). */
     label: keyof TData | ((item: TData) => string);
+    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
     color?: keyof TData | ((item: TData) => string);
+    /** Gap in pixels between adjacent cells. Defaults to 3. */
     gap?: number;
+    /** Corner radius in pixels applied to each cell. Defaults to 4. */
     borderRadius?: number;
     /** Format applied to cell values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -70,17 +77,25 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for treemap cell interaction events. */
 export interface TreemapChartCellEvent {
+    /** X position of the cell's top-centre anchor, in canvas coordinates. */
     x: number;
+    /** Y position of the cell's top edge, in canvas coordinates. */
     y: number;
+    /** The cell's numeric value. */
     value: number;
+    /** The cell's display label. */
     label: string;
+    /** The cell's unique key. */
     key: string;
 }
 
 /** Events emitted by a {@link TreemapChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface TreemapChartEventMap extends EventMap {
+    /** Emitted when a cell is clicked. */
     cellclick: TreemapChartCellEvent;
+    /** Emitted when the pointer enters a cell. */
     cellenter: TreemapChartCellEvent;
+    /** Emitted when the pointer leaves a cell. */
     cellleave: TreemapChartCellEvent;
 }
 
@@ -445,7 +460,23 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
 }
 
-/** Factory function that creates a new {@link TreemapChart} instance. */
+/**
+ * Factory function that creates a new {@link TreemapChart} instance.
+ *
+ * @example
+ * ```ts
+ * createTreemapChart(target, {
+ *     data: [
+ *         { name: 'Rent', amount: 1200 },
+ *         { name: 'Food', amount: 600 },
+ *         { name: 'Transport', amount: 300 },
+ *     ],
+ *     key: 'name',
+ *     value: 'amount',
+ *     label: 'name',
+ * });
+ * ```
+ */
 export function createTreemapChart<TData = unknown>(target: string | HTMLElement | Context, options: TreemapChartOptions<TData>) {
     return new TreemapChart<TData>(target, options);
 }

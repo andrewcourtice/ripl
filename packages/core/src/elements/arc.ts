@@ -24,19 +24,28 @@ import {
 
 /** State interface for an arc element, defining center, angles, radii, pad angle, and border radius. */
 export interface ArcState extends BaseElementState {
+    /** The x-coordinate of the arc's center. */
     cx: number;
+    /** The y-coordinate of the arc's center. */
     cy: number;
+    /** The start angle of the arc, in radians. */
     startAngle: number;
+    /** The end angle of the arc, in radians. */
     endAngle: number;
+    /** The outer radius of the arc. */
     radius: number;
+    /** The inner radius of the arc, producing an annular sector when set. */
     innerRadius?: number;
+    /** The angular padding between the arc and its neighbours, in radians. */
     padAngle?: number;
+    /** The corner radius applied to the arc's corners. */
     borderRadius?: number;
 }
 
 /** An arc or annular sector shape supporting inner radius and pad angle. */
 export class Arc extends Shape2D<ArcState> {
 
+    /** The x-coordinate of the arc's center. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -45,6 +54,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('cx', value);
     }
 
+    /** The y-coordinate of the arc's center. */
     public get cy() {
         return this.getStateValue('cy');
     }
@@ -53,6 +63,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('cy', value);
     }
 
+    /** The start angle of the arc, in radians. */
     public get startAngle() {
         return this.getStateValue('startAngle');
     }
@@ -61,6 +72,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('startAngle', value);
     }
 
+    /** The end angle of the arc, in radians. */
     public get endAngle() {
         return this.getStateValue('endAngle');
     }
@@ -69,6 +81,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('endAngle', value);
     }
 
+    /** The outer radius of the arc. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -77,6 +90,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('radius', value);
     }
 
+    /** The inner radius of the arc, producing an annular sector when set. */
     public get innerRadius() {
         return this.getStateValue('innerRadius');
     }
@@ -85,6 +99,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('innerRadius', value);
     }
 
+    /** The angular padding between the arc and its neighbours, in radians. */
     public get padAngle() {
         return this.getStateValue('padAngle');
     }
@@ -93,6 +108,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('padAngle', value);
     }
 
+    /** The corner radius applied to the arc's corners. */
     public get borderRadius() {
         return this.getStateValue('borderRadius');
     }
@@ -130,6 +146,7 @@ export class Arc extends Shape2D<ArcState> {
         return getThetaPoint(angle, distance, cx, cy);
     }
 
+    /** Returns the axis-aligned bounding box of the arc. */
     public getBoundingBox(): Box {
         const {
             cx,
@@ -163,6 +180,7 @@ export class Arc extends Shape2D<ArcState> {
         );
     }
 
+    /** Renders the arc to the provided {@link Context}. */
     public render(context: Context) {
         let {
             cx,

@@ -26,6 +26,7 @@ import type {
 
 /** Options for a logarithmic scale, adding a configurable base to the base linear scale options. */
 export interface LogarithmicScaleOptions extends LinearScaleOptions {
+    /** The logarithm base used for the transformation. Defaults to 10. */
     base?: number;
 };
 
@@ -131,6 +132,7 @@ export function scaleLogarithmic(
     });
 }
 
+/** Shortcut for a base-10 logarithmic scale. */
 export function scaleLog(
     domain: number[],
     range: number[],

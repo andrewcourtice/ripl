@@ -14,18 +14,26 @@ import {
 
 /** State interface for a ribbon shape connecting two arc segments via quadratic curves. */
 export interface RibbonState extends BaseElementState {
+    /** Centre x of the arc the ribbon spans, in pixels. */
     cx: number;
+    /** Centre y of the arc the ribbon spans, in pixels. */
     cy: number;
+    /** Radius of the arc endpoints, in pixels. */
     radius: number;
+    /** Start angle of the source arc, in radians. */
     sourceStart: number;
+    /** End angle of the source arc, in radians. */
     sourceEnd: number;
+    /** Start angle of the target arc, in radians. */
     targetStart: number;
+    /** End angle of the target arc, in radians. */
     targetEnd: number;
 }
 
 /** A chord diagram ribbon connecting two arc segments with quadratic Bézier curves through the center. */
 export class Ribbon extends Shape2D<RibbonState> {
 
+    /** Centre x of the arc the ribbon spans, in pixels. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -34,6 +42,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('cx', value);
     }
 
+    /** Centre y of the arc the ribbon spans, in pixels. */
     public get cy() {
         return this.getStateValue('cy');
     }
@@ -42,6 +51,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('cy', value);
     }
 
+    /** Radius of the arc endpoints, in pixels. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -50,6 +60,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('radius', value);
     }
 
+    /** Start angle of the source arc, in radians. */
     public get sourceStart() {
         return this.getStateValue('sourceStart');
     }
@@ -58,6 +69,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('sourceStart', value);
     }
 
+    /** End angle of the source arc, in radians. */
     public get sourceEnd() {
         return this.getStateValue('sourceEnd');
     }
@@ -66,6 +78,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('sourceEnd', value);
     }
 
+    /** Start angle of the target arc, in radians. */
     public get targetStart() {
         return this.getStateValue('targetStart');
     }
@@ -74,6 +87,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('targetStart', value);
     }
 
+    /** End angle of the target arc, in radians. */
     public get targetEnd() {
         return this.getStateValue('targetEnd');
     }

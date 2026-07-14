@@ -61,12 +61,19 @@ const REST_ALPHA = 0.7;
 
 /** Options for configuring a {@link FunnelChart}. */
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset rendered as funnel segments, top to bottom. */
     data: TData[];
+    /** Accessor for each item's unique key (used for colour assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each segment's numeric value (drives its width). */
     value: NumericAccessor<TData>;
+    /** Accessor for each segment's display label. */
     label: keyof TData | ((item: TData) => string);
+    /** Accessor for an explicit per-segment colour; falls back to the generated palette. */
     color?: keyof TData | ((item: TData) => string);
+    /** Vertical gap in pixels between segments. Defaults to 4. */
     gap?: number;
+    /** Corner radius in pixels applied to each segment. Defaults to 4. */
     borderRadius?: number;
     /** Format applied to segment values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -74,17 +81,25 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for funnel segment interaction events. */
 export interface FunnelChartSegmentEvent {
+    /** The x coordinate (in chart pixels) of the segment's top-centre anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the segment's top-centre anchor. */
     y: number;
+    /** The value of the interacted segment. */
     value: number;
+    /** The label of the interacted segment. */
     label: string;
+    /** The key of the interacted segment. */
     key: string;
 }
 
 /** Events emitted by a {@link FunnelChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface FunnelChartEventMap extends EventMap {
+    /** Emitted when a segment is clicked. */
     segmentclick: FunnelChartSegmentEvent;
+    /** Emitted when the pointer enters a segment. */
     segmententer: FunnelChartSegmentEvent;
+    /** Emitted when the pointer leaves a segment. */
     segmentleave: FunnelChartSegmentEvent;
 }
 
@@ -349,7 +364,23 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
 }
 
-/** Factory function that creates a new {@link FunnelChart} instance. */
+/**
+ * Factory function that creates a new {@link FunnelChart} instance.
+ *
+ * @example
+ * ```ts
+ * createFunnelChart(target, {
+ *     data: [
+ *         { stage: 'Visited', users: 1000 },
+ *         { stage: 'Signed up', users: 420 },
+ *         { stage: 'Purchased', users: 130 },
+ *     ],
+ *     key: 'stage',
+ *     label: 'stage',
+ *     value: 'users',
+ * });
+ * ```
+ */
 export function createFunnelChart<TData = unknown>(target: string | HTMLElement | Context, options: FunnelChartOptions<TData>) {
     return new FunnelChart<TData>(target, options);
 }

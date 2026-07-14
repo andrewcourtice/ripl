@@ -17,18 +17,26 @@ import {
 
 /** State interface for an ellipse element, defining center, radii, rotation, and angle range. */
 export interface EllipseState extends BaseElementState {
+    /** The x-coordinate of the ellipse's center. */
     cx: number;
+    /** The y-coordinate of the ellipse's center. */
     cy: number;
+    /** The horizontal radius of the ellipse. */
     radiusX: number;
+    /** The vertical radius of the ellipse. */
     radiusY: number;
+    /** The rotation of the ellipse, in radians. */
     rotation: number;
+    /** The start angle of the ellipse's arc, in radians. */
     startAngle: number;
+    /** The end angle of the ellipse's arc, in radians. */
     endAngle: number;
 }
 
 /** An ellipse shape rendered at a center point with separate x/y radii, rotation, and angle range. */
 export class Ellipse extends Shape2D<EllipseState> {
 
+    /** The x-coordinate of the ellipse's center. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -37,6 +45,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('cx', value);
     }
 
+    /** The y-coordinate of the ellipse's center. */
     public get cy() {
         return this.getStateValue('cy');
     }
@@ -45,6 +54,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('cy', value);
     }
 
+    /** The horizontal radius of the ellipse. */
     public get radiusX() {
         return this.getStateValue('radiusX');
     }
@@ -53,6 +63,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('radiusX', value);
     }
 
+    /** The vertical radius of the ellipse. */
     public get radiusY() {
         return this.getStateValue('radiusY');
     }
@@ -61,6 +72,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('radiusY', value);
     }
 
+    /** The rotation of the ellipse, in radians. */
     public get rotation() {
         return this.getStateValue('rotation');
     }
@@ -69,6 +81,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('rotation', value);
     }
 
+    /** The start angle of the ellipse's arc, in radians. */
     public get startAngle() {
         return this.getStateValue('startAngle');
     }
@@ -77,6 +90,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('startAngle', value);
     }
 
+    /** The end angle of the ellipse's arc, in radians. */
     public get endAngle() {
         return this.getStateValue('endAngle');
     }
@@ -89,6 +103,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         super('ellipse', options);
     }
 
+    /** Returns the axis-aligned bounding box of the ellipse. */
     public getBoundingBox(): Box {
         return new Box(
             this.cy - this.radiusY,
@@ -98,6 +113,7 @@ export class Ellipse extends Shape2D<EllipseState> {
         );
     }
 
+    /** Renders the ellipse to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
             path.ellipse(

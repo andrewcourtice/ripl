@@ -92,28 +92,43 @@ import {
 
 /** Configuration for an individual line chart series. */
 export interface LineChartSeriesOptions<TData> {
+    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
     id: string;
+    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
     color?: string;
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
+    /** Series name shown in the legend and tooltips (or a per-item function). */
     label: string | ((item: TData) => string);
+    /** Renderer used to draw the line (e.g. straight or curved); defaults to straight segments. */
     lineType?: PolylineRenderer;
+    /** Width in pixels of the series line. */
     lineWidth?: number;
     /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
     lineStyle?: LineStyle;
     /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
+    /** Radius in pixels of each point marker. Defaults to 3. */
     markerRadius?: number;
 }
 
 /** Options for configuring a {@link LineChart}. */
 export interface LineChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset rendered by the chart. */
     data: TData[];
+    /** The series to draw from each data item. */
     series: LineChartSeriesOptions<TData>[];
+    /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
     crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
+    /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
     /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
@@ -123,17 +138,25 @@ export interface LineChartOptions<TData = unknown> extends CartesianChartOptions
 
 /** Payload emitted for line marker interaction events. */
 export interface LineChartMarkerEvent {
+    /** The x coordinate (in chart pixels) of the marker. */
     x: number;
+    /** The y coordinate (in chart pixels) of the marker. */
     y: number;
+    /** The category key of the interacted marker. */
     xValue: string;
+    /** The numeric value of the interacted marker. */
     yValue: number;
+    /** The id of the series the marker belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by a {@link LineChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface LineChartEventMap extends EventMap {
+    /** Emitted when a marker is clicked. */
     markerclick: LineChartMarkerEvent;
+    /** Emitted when the pointer enters a marker. */
     markerenter: LineChartMarkerEvent;
+    /** Emitted when the pointer leaves a marker. */
     markerleave: LineChartMarkerEvent;
 }
 
@@ -584,7 +607,23 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
 }
 
-/** Factory function that creates a new {@link LineChart} instance. */
+/**
+ * Factory function that creates a new {@link LineChart} instance.
+ *
+ * @example
+ * ```ts
+ * createLineChart(target, {
+ *     data: [
+ *         { month: 'Jan', sales: 30 },
+ *         { month: 'Feb', sales: 48 },
+ *     ],
+ *     key: 'month',
+ *     series: [
+ *         { id: 'sales', label: 'Sales', value: 'sales' },
+ *     ],
+ * });
+ * ```
+ */
 export function createLineChart<TData = unknown>(target: string | HTMLElement | Context, options: LineChartOptions<TData>) {
     return new LineChart<TData>(target, options);
 }

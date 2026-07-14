@@ -80,38 +80,63 @@ import {
 
 /** Options for configuring a {@link StockChart}. */
 export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset to render, one candlestick per item. */
     data: TData[];
+    /** Accessor for each item's unique key, used along the x-axis and to match candles across updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's opening price. */
     open: NumericAccessor<TData>;
+    /** Accessor for each item's high price. */
     high: NumericAccessor<TData>;
+    /** Accessor for each item's low price. */
     low: NumericAccessor<TData>;
+    /** Accessor for each item's closing price. */
     close: NumericAccessor<TData>;
+    /** Optional accessor for each item's traded volume, enabling the volume sub-chart. */
     volume?: NumericAccessor<TData>;
+    /** Show the volume sub-chart below the candlesticks. Defaults to `true` (requires `volume`). */
     showVolume?: boolean;
+    /** Background grid line configuration. */
     grid?: ChartGridInput;
+    /** Crosshair overlay configuration. */
     crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration. */
     tooltip?: ChartTooltipInput;
+    /** Axis configuration (labels, ticks, titles). */
     axis?: ChartAxisInput<TData>;
+    /** Colour for candles that close at or above their open (bullish). */
     upColor?: string;
+    /** Colour for candles that close below their open (bearish). */
     downColor?: string;
 }
 
 /** Payload emitted for stock candlestick interaction events. */
 export interface StockChartCandleEvent {
+    /** X position of the candle body, in canvas coordinates. */
     x: number;
+    /** Y position of the candle body's top, in canvas coordinates. */
     y: number;
+    /** The candle's unique key. */
     key: string;
+    /** The candle's opening price. */
     open: number;
+    /** The candle's high price. */
     high: number;
+    /** The candle's low price. */
     low: number;
+    /** The candle's closing price. */
     close: number;
+    /** The candle's traded volume (0 when no volume accessor is configured). */
     volume: number;
 }
 
 /** Events emitted by a {@link StockChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface StockChartEventMap extends EventMap {
+    /** Emitted when a candlestick is clicked. */
     candleclick: StockChartCandleEvent;
+    /** Emitted when the pointer enters a candlestick. */
     candleenter: StockChartCandleEvent;
+    /** Emitted when the pointer leaves a candlestick. */
     candleleave: StockChartCandleEvent;
 }
 
@@ -746,7 +771,25 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
 }
 
-/** Factory function that creates a new {@link StockChart} instance. */
+/**
+ * Factory function that creates a new {@link StockChart} instance.
+ *
+ * @example
+ * ```ts
+ * createStockChart(target, {
+ *     data: [
+ *         { date: '2026-01-02', o: 100, h: 108, l: 98, c: 105, v: 12000 },
+ *         { date: '2026-01-03', o: 105, h: 110, l: 103, c: 104, v: 9800 },
+ *     ],
+ *     key: 'date',
+ *     open: 'o',
+ *     high: 'h',
+ *     low: 'l',
+ *     close: 'c',
+ *     volume: 'v',
+ * });
+ * ```
+ */
 export function createStockChart<TData = unknown>(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
     return new StockChart<TData>(target, options);
 }

@@ -1,6 +1,6 @@
-# Line Chart
+# Area Chart
 
-The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly — points enter, exit, and reposition with configurable transitions.
+The **Area Chart** renders filled areas beneath lines, making it easy to compare cumulative totals or show how individual series contribute to a whole. It supports stacked mode (areas stacked on top of each other), per-series opacity and line interpolation, and includes crosshair, grid, tooltips, and a legend. On entry the area is revealed left-to-right as the line draws on, and it transitions smoothly between data states on update.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -16,7 +16,7 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line">
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area">
             <RiplField label="Line type">
                 <RiplSelect v-model="lineType">
                     <option value="linear">Linear</option>
@@ -41,6 +41,9 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
+            <RiplField label="Stacked" inline>
+                <RiplSwitch v-model="stacked" />
+            </RiplField>
             <RiplField label="Markers" inline>
                 <RiplSwitch v-model="markers" />
             </RiplField>
@@ -51,16 +54,16 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
 <script setup lang="ts">
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
-    createLineChart,
+    createAreaChart,
 } from '@ripl/charts';
 
 import type {
@@ -75,29 +78,28 @@ import {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const seriesMeta = [
-    { id: 'revenue', label: 'Revenue' },
-    { id: 'profit', label: 'Profit' },
-    { id: 'expenses', label: 'Expenses' },
+    { id: 'desktop', label: 'Desktop' },
+    { id: 'mobile', label: 'Mobile' },
 ];
 
+const stacked = ref(false);
 const lineType = ref<PolylineRenderer>('monotoneX');
 const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
-const markers = ref(true);
+const markers = ref(false);
 
 const config = useChartConfig({
     features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
-    title: 'Monthly Performance',
+    title: 'Traffic by Device',
     axisX: 'Month',
-    axisY: 'Amount ($)',
+    axisY: 'Sessions',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
-function generateData(count = 8) {
+function generateData(count = 6) {
     return MONTHS.slice(0, count).map(month => ({
         month,
-        revenue: Math.round(Math.random() * 800 + 200),
-        profit: Math.round(Math.random() * 800 - 400),
-        expenses: Math.round(Math.random() * 300 + 150),
+        desktop: Math.round(Math.random() * 600 + 200),
+        mobile: Math.round(Math.random() * 600 - 200),
     }));
 }
 
@@ -108,6 +110,7 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
+        opacity: 0.3,
         lineType: lineType.value,
         lineStyle: lineStyle.value,
         markers: markers.value,
@@ -116,9 +119,10 @@ function getSeries() {
 }
 
 const { contextChanged, chart } = useRiplChart(context => {
-    return createLineChart(context, {
+    return createAreaChart(context, {
         data,
         key: 'month',
+        stacked: stacked.value,
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: getSeries(),
         ...buildCommonOptions(config),
@@ -127,13 +131,14 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
+        stacked: stacked.value,
         series: getSeries(),
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch([lineType, lineStyle, markers], apply);
+watch([stacked, lineType, lineStyle, markers], apply);
 
 function randomize() {
     data = generateData(data.length);
@@ -159,24 +164,18 @@ function removePoint() {
 
 ```ts
 import {
-    createLineChart,
+    createAreaChart,
 } from '@ripl/charts';
 
-const chart = createLineChart('#container', {
+const chart = createAreaChart('#container', {
     data: [/* ... */],
     key: 'month',
+    stacked: false,
     series: [
-        {
-            id: 'revenue',
-            value: 'revenue',
-            label: 'Revenue',
-            lineType: 'monotone',
-        },
+        { id: 'desktop', value: 'desktop', label: 'Desktop' },
+        { id: 'mobile', value: 'mobile', label: 'Mobile' },
     ],
 });
-
-// Update data
-chart.update({ data: newData });
 ```
 
 ## Data Format
@@ -186,56 +185,57 @@ Each item should contain a key field and one or more numeric value fields:
 ```ts
 const data = [
     { month: 'Jan',
-        revenue: 620,
-        expenses: 340 },
+        desktop: 620,
+        mobile: 340 },
     { month: 'Feb',
-        revenue: 780,
-        expenses: 290 },
+        desktop: 780,
+        mobile: 290 },
     { month: 'Mar',
-        revenue: 550,
-        expenses: 410 },
+        desktop: 550,
+        mobile: 410 },
 ];
 ```
 
-The `key` option identifies the x-axis category (`'month'`), and each series references a numeric field via `value`.
-
 ## Variants
 
-### Multi-series with markers
+### Stacked
+
+Stack series to show cumulative totals:
 
 ```ts
-createLineChart('#container', {
+createAreaChart('#container', {
     data,
     key: 'month',
+    stacked: true,
     series: [
-        { id: 'revenue',
-            value: 'revenue',
-            label: 'Revenue',
-            markers: true },
-        { id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
-            markers: true },
+        { id: 'desktop',
+            value: 'desktop',
+            label: 'Desktop',
+            opacity: 0.4 },
+        { id: 'mobile',
+            value: 'mobile',
+            label: 'Mobile',
+            opacity: 0.4 },
     ],
 });
 ```
 
-### Custom line interpolation
-
-Each series can use a different polyline renderer:
+### Custom opacity and line type
 
 ```ts
-createLineChart('#container', {
+createAreaChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
-            value: 'revenue',
-            label: 'Revenue',
+        { id: 'desktop',
+            value: 'desktop',
+            label: 'Desktop',
+            opacity: 0.2,
             lineType: 'monotoneX' },
-        { id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+        { id: 'mobile',
+            value: 'mobile',
+            label: 'Mobile',
+            opacity: 0.6,
             lineType: 'step' },
     ],
 });
@@ -244,11 +244,11 @@ createLineChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `markerRadius`
-- **`key`** — Key accessor for each data point
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `opacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`
+- **`key`** — Key accessor for data points
+- **`stacked`** — Stack series on top of each other (default `false`)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
-- **`padding`** — Chart padding

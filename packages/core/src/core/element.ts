@@ -87,6 +87,7 @@ export type ElementValidationType = 'info' | 'warning' | 'error';
 
 /** Options for element intersection (hit) testing. */
 export type ElementIntersectionOptions = {
+    /** Whether the test originates from a pointer interaction rather than a programmatic query, enabling pointer-event region filtering. */
     isPointer: boolean;
 };
 
@@ -95,57 +96,95 @@ export type BaseElementState = Partial<BaseState>;
 
 /** Event map for elements, extending the base event map with lifecycle and interaction events. */
 export interface ElementEventMap extends EventMap {
+    /** Emitted when the element tree changes, notifying the scene to rebuild its graph; carries no payload. */
     graph: null;
+    /** Emitted when the element is attached to a parent {@link Group}, carrying that group. */
     attached: Group;
+    /** Emitted when the element is detached from a parent {@link Group}, carrying the former parent group. */
     detached: Group;
+    /** Emitted when a state value changes, carrying the affected key and its new value. */
     updated: {
+        /** State property key that changed. */
         key: PropertyKey;
+        /** New value assigned to the property. */
         value: unknown;
     };
+    /** Emitted when the pointer enters the element; carries no payload. */
     mouseenter: null;
+    /** Emitted when the pointer leaves the element; carries no payload. */
     mouseleave: null;
+    /** Emitted as the pointer moves over the element, carrying its position. */
     mousemove: {
+        /** X coordinate of the pointer, in element-local space. */
         x: number;
+        /** Y coordinate of the pointer, in element-local space. */
         y: number;
     };
+    /** Emitted when the element is clicked, carrying the pointer position. */
     click: {
+        /** X coordinate of the pointer, in element-local space. */
         x: number;
+        /** Y coordinate of the pointer, in element-local space. */
         y: number;
     };
+    /** Emitted when a drag gesture begins on the element, carrying the start position. */
     dragstart: {
+        /** X coordinate at which the drag started, in element-local space. */
         x: number;
+        /** Y coordinate at which the drag started, in element-local space. */
         y: number;
     };
+    /** Emitted continuously while dragging the element, carrying the current position, drag start, and delta from the start. */
     drag: {
+        /** Current X coordinate of the pointer, in element-local space. */
         x: number;
+        /** Current Y coordinate of the pointer, in element-local space. */
         y: number;
+        /** X coordinate at which the drag started, in element-local space. */
         startX: number;
+        /** Y coordinate at which the drag started, in element-local space. */
         startY: number;
+        /** Horizontal distance moved since the drag started, in pixels. */
         deltaX: number;
+        /** Vertical distance moved since the drag started, in pixels. */
         deltaY: number;
     };
+    /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and total delta. */
     dragend: {
+        /** Final X coordinate of the pointer, in element-local space. */
         x: number;
+        /** Final Y coordinate of the pointer, in element-local space. */
         y: number;
+        /** X coordinate at which the drag started, in element-local space. */
         startX: number;
+        /** Y coordinate at which the drag started, in element-local space. */
         startY: number;
+        /** Total horizontal distance moved over the drag, in pixels. */
         deltaX: number;
+        /** Total vertical distance moved over the drag, in pixels. */
         deltaY: number;
     };
+    /** Emitted when the element is destroyed; carries no payload. */
     destroyed: null;
 }
 
 /** Options for constructing an element, combining an optional id, CSS classes, data, pointer events, and initial state. */
 export type ElementOptions<TState extends BaseElementState = BaseElementState> = {
+    /** Optional stable id; a unique `type:uniqueId` id is generated when omitted. */
     id?: string;
+    /** One or more CSS-like class names used for querying and selection. */
     class?: OneOrMore<string>;
+    /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
     data?: unknown;
+    /** Which parts of the element respond to pointer hit testing. Defaults to `all`. */
     pointerEvents?: ElementPointerEvents;
 } & TState;
 
 /** A single keyframe in a multi-step interpolation, with an optional offset (0–1) and a target value. */
 export type ElementInterpolationKeyFrame<TValue = number> = {
+    /** Position of the keyframe along the transition, from 0 to 1; distributed evenly when omitted. */
     offset?: number;
+    /** Target value the state property holds at this keyframe. */
     value: TValue;
 };
 
@@ -166,7 +205,9 @@ export type ElementInterpolationState<TState extends BaseElementState> = {
 
 /** The result of validating an element, with a severity type and descriptive message. */
 export interface ElementValidationResult {
+    /** Severity of the result — `info`, `warning`, or `error`. */
     type: ElementValidationType;
+    /** Human-readable description of the validation result. */
     message: string;
 }
 
@@ -291,17 +332,25 @@ export class Element<
     protected state: TState;
     protected context?: Context;
 
+    /** Unique identifier for this element, defaulting to `type:uniqueId` when not supplied. */
     public id: string;
+    /** The element type name (e.g. `circle`, `rect`, `group`). */
     public readonly type: string;
+    /** Set of CSS-like class names used for querying and selection. */
     public readonly classList: Set<string>;
 
+    /** When `true`, the element skips transform and drawing-state application during {@link Element.render}; used by containers such as {@link Group}. */
     public abstract: boolean = false;
+    /** Controls which parts of the element respond to pointer hit testing. See {@link ElementPointerEvents}. */
     public pointerEvents: ElementPointerEvents = 'all';
+    /** The parent {@link Group} this element is attached to, or `undefined` when detached. */
     public declare parent?: Group<TEventMap>;
+    /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
     public data: unknown;
 
     // Props
 
+    /** Text directionality used when rendering text, mirroring the canvas `direction` drawing-state property (`inherit`, `ltr`, or `rtl`). */
     public get direction() {
         return this.getStateValue('direction');
     }
@@ -310,6 +359,7 @@ export class Element<
         this.setStateValue('direction', value);
     }
 
+    /** Fill style (colour or gradient) painted inside the element, mirroring the canvas `fillStyle` drawing-state property. */
     public get fill() {
         return this.getStateValue('fill');
     }
@@ -318,6 +368,7 @@ export class Element<
         this.setStateValue('fill', value);
     }
 
+    /** Filter effects applied to the element, mirroring the canvas `filter` drawing-state property. */
     public get filter() {
         return this.getStateValue('filter');
     }
@@ -326,6 +377,7 @@ export class Element<
         this.setStateValue('filter', value);
     }
 
+    /** Font used for text rendering, mirroring the canvas `font` drawing-state property. */
     public get font() {
         return this.getStateValue('font');
     }
@@ -334,6 +386,7 @@ export class Element<
         this.setStateValue('font', value);
     }
 
+    /** Opacity of the element from 0 (transparent) to 1 (opaque), mapping to the canvas `globalAlpha` drawing-state property. */
     public get opacity() {
         return this.getStateValue('opacity');
     }
@@ -342,6 +395,7 @@ export class Element<
         this.setStateValue('opacity', value);
     }
 
+    /** Compositing/blend mode used to draw the element, mirroring the canvas `globalCompositeOperation` drawing-state property. */
     public get globalCompositeOperation() {
         return this.getStateValue('globalCompositeOperation');
     }
@@ -350,6 +404,7 @@ export class Element<
         this.setStateValue('globalCompositeOperation', value);
     }
 
+    /** Cap style drawn at the ends of stroked lines, mirroring the canvas `lineCap` drawing-state property (`butt`, `round`, or `square`). */
     public get lineCap() {
         return this.getStateValue('lineCap');
     }
@@ -358,6 +413,7 @@ export class Element<
         this.setStateValue('lineCap', value);
     }
 
+    /** Dash pattern for stroked lines, mirroring the canvas line-dash array set via `setLineDash`. */
     public get lineDash() {
         return this.getStateValue('lineDash');
     }
@@ -366,6 +422,7 @@ export class Element<
         this.setStateValue('lineDash', value);
     }
 
+    /** Offset into the line-dash pattern, mirroring the canvas `lineDashOffset` drawing-state property. */
     public get lineDashOffset() {
         return this.getStateValue('lineDashOffset');
     }
@@ -374,6 +431,7 @@ export class Element<
         this.setStateValue('lineDashOffset', value);
     }
 
+    /** Join style drawn where stroked segments meet, mirroring the canvas `lineJoin` drawing-state property (`bevel`, `miter`, or `round`). */
     public get lineJoin() {
         return this.getStateValue('lineJoin');
     }
@@ -382,6 +440,7 @@ export class Element<
         this.setStateValue('lineJoin', value);
     }
 
+    /** Width of stroked lines in pixels, mirroring the canvas `lineWidth` drawing-state property. */
     public get lineWidth() {
         return this.getStateValue('lineWidth');
     }
@@ -390,6 +449,7 @@ export class Element<
         this.setStateValue('lineWidth', value);
     }
 
+    /** Miter length limit for `miter` line joins, mirroring the canvas `miterLimit` drawing-state property. */
     public get miterLimit() {
         return this.getStateValue('miterLimit');
     }
@@ -398,6 +458,7 @@ export class Element<
         this.setStateValue('miterLimit', value);
     }
 
+    /** Blur radius applied to the element's shadow, mirroring the canvas `shadowBlur` drawing-state property. */
     public get shadowBlur() {
         return this.getStateValue('shadowBlur');
     }
@@ -406,6 +467,7 @@ export class Element<
         this.setStateValue('shadowBlur', value);
     }
 
+    /** Colour of the element's shadow, mirroring the canvas `shadowColor` drawing-state property. */
     public get shadowColor() {
         return this.getStateValue('shadowColor');
     }
@@ -414,6 +476,7 @@ export class Element<
         this.setStateValue('shadowColor', value);
     }
 
+    /** Horizontal offset of the element's shadow, mirroring the canvas `shadowOffsetX` drawing-state property. */
     public get shadowOffsetX() {
         return this.getStateValue('shadowOffsetX');
     }
@@ -422,6 +485,7 @@ export class Element<
         this.setStateValue('shadowOffsetX', value);
     }
 
+    /** Vertical offset of the element's shadow, mirroring the canvas `shadowOffsetY` drawing-state property. */
     public get shadowOffsetY() {
         return this.getStateValue('shadowOffsetY');
     }
@@ -430,6 +494,7 @@ export class Element<
         this.setStateValue('shadowOffsetY', value);
     }
 
+    /** Stroke style (colour or gradient) painted along the element's outline, mirroring the canvas `strokeStyle` drawing-state property. */
     public get stroke() {
         return this.getStateValue('stroke');
     }
@@ -438,6 +503,7 @@ export class Element<
         this.setStateValue('stroke', value);
     }
 
+    /** Horizontal alignment of rendered text, mirroring the canvas `textAlign` drawing-state property. */
     public get textAlign() {
         return this.getStateValue('textAlign');
     }
@@ -446,6 +512,7 @@ export class Element<
         this.setStateValue('textAlign', value);
     }
 
+    /** Vertical baseline of rendered text, mirroring the canvas `textBaseline` drawing-state property. */
     public get textBaseline() {
         return this.getStateValue('textBaseline');
     }
@@ -454,6 +521,7 @@ export class Element<
         this.setStateValue('textBaseline', value);
     }
 
+    /** Effective stacking order of the element, combining its own z-index with its parent {@link Group}'s. Higher values render on top. */
     public get zIndex(): number {
         return (this.parent?.zIndex ?? 0) + (this.state.zIndex ?? 0);
     }
@@ -462,6 +530,7 @@ export class Element<
         this.setStateValue('zIndex', value);
     }
 
+    /** Horizontal translation applied to the element during rendering, in pixels. */
     public get translateX() {
         return this.getStateValue('translateX');
     }
@@ -470,6 +539,7 @@ export class Element<
         this.setStateValue('translateX', value);
     }
 
+    /** Vertical translation applied to the element during rendering, in pixels. */
     public get translateY() {
         return this.getStateValue('translateY');
     }
@@ -478,6 +548,7 @@ export class Element<
         this.setStateValue('translateY', value);
     }
 
+    /** Horizontal scale factor applied to the element during rendering (`1` is unscaled). */
     public get transformScaleX() {
         return this.getStateValue('transformScaleX');
     }
@@ -486,6 +557,7 @@ export class Element<
         this.setStateValue('transformScaleX', value);
     }
 
+    /** Vertical scale factor applied to the element during rendering (`1` is unscaled). */
     public get transformScaleY() {
         return this.getStateValue('transformScaleY');
     }
@@ -494,6 +566,7 @@ export class Element<
         this.setStateValue('transformScaleY', value);
     }
 
+    /** Rotation applied to the element during rendering, in radians or as a CSS-like angle string. */
     public get rotation() {
         return this.getStateValue('rotation');
     }
@@ -502,6 +575,7 @@ export class Element<
         this.setStateValue('rotation', value);
     }
 
+    /** Horizontal origin about which transforms are applied, as a pixel value or percentage string. */
     public get transformOriginX() {
         return this.getStateValue('transformOriginX');
     }
@@ -510,6 +584,7 @@ export class Element<
         this.setStateValue('transformOriginX', value);
     }
 
+    /** Vertical origin about which transforms are applied, as a pixel value or percentage string. */
     public get transformOriginY() {
         return this.getStateValue('transformOriginY');
     }
@@ -553,6 +628,17 @@ export class Element<
         });
     }
 
+    /**
+     * Subscribes a handler to an element event, returning a disposable subscription.
+     *
+     * Overrides {@link EventBus.on} to additionally invalidate the {@link Context}'s tracked-element
+     * cache for interaction events, keeping hit testing accurate as listeners are added and removed.
+     *
+     * @param event - The event name to listen for.
+     * @param handler - Callback invoked when the event is emitted.
+     * @param options - Optional subscription options (e.g. self-only filtering).
+     * @returns A disposable used to remove the subscription.
+     */
     public on<TEvent extends keyof TEventMap>(event: TEvent, handler: EventHandler<TEventMap[TEvent]>, options?: EventSubscriptionOptions) {
         const listener = super.on(event, handler, options);
 
@@ -658,6 +744,7 @@ export class Element<
         }
     }
 
+    /** Detaches the element from its parent {@link Group} and tears down its event subscriptions. */
     public destroy() {
         this.parent?.remove(this as unknown as Element);
         super.destroy();
