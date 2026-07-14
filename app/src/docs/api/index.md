@@ -31,6 +31,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
 - **CSS-like element querying** — `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll` with selector syntax
 - **Bounding box detection** via `getBoundingBox` on all shape elements
+- **Context exporting** — snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
 - **Transforms** — translate, scale, rotation, and transform-origin on every element
 - **Clipping** — path-based clipping via `Shape2D`
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
@@ -58,10 +59,10 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 | [`@ripl/svg`](@ripl/svg/index.md) | SVG rendering context |
 | [`@ripl/charts`](@ripl/charts/index.md) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
 | [`@ripl/3d`](@ripl/3d/index.md) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
-| [`@ripl/webgpu`](_media/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
-| [`@ripl/terminal`](_media/terminal) | Terminal rendering context — braille-character output with ANSI truecolor |
+| [`@ripl/webgpu`](@ripl/webgpu/index.md) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
+| [`@ripl/terminal`](@ripl/terminal/index.md) | Terminal rendering context — braille-character output with ANSI truecolor |
 | [`@ripl/node`](_media/node) | Node.js runtime bindings — configures the platform factory for headless environments |
-| [`@ripl/dom`](_media/dom) | DOM utilities used internally by browser contexts |
+| [`@ripl/dom`](@ripl/dom/index.md) | DOM utilities used internally by browser contexts |
 | [`@ripl/utilities`](@ripl/utilities/index.md) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
 
 The project is structured as a Yarn 4 monorepo:
@@ -335,6 +336,27 @@ const rect = createRect({
 ```
 
 Transforms can also be animated via `renderer.transition`.
+
+## Exporting
+
+Every context can capture a snapshot of what it has rendered and export it to an image, URL, or string via `export()`:
+
+```typescript
+const snapshot = context.export();
+
+const str = snapshot.toString(); // PNG data URL (SVG → markup, Terminal → braille text)
+const url = snapshot.toURL(); // openable Blob object URL
+const image = await snapshot.toImage(); // low-level ImageData (environment-agnostic)
+```
+
+The exact outputs depend on the context: Canvas, 3D, and WebGPU export raster images; SVG exports vector markup (and can rasterize to an image); Terminal exports braille text (and a rasterized image). Charts forward `export()` to their underlying context:
+
+```typescript
+const chart = createBarChart('.mount-element', options);
+
+// e.g. open the rendered chart in a new tab
+window.open(chart.export().toURL(), '_blank');
+```
 
 ## Charts
 

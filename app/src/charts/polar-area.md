@@ -31,12 +31,12 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
 <script lang="ts" setup>
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createPolarAreaChart,

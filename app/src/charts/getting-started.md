@@ -120,7 +120,7 @@ Most chart types also support these feature options:
 | `legend` | `boolean \| ChartLegendOptions` | auto | Show/configure series legend (shown by default for charts with more than one series/segment, at the bottom) |
 | `crosshair` | `boolean \| ChartCrosshairOptions` | varies | Show/configure crosshair tracking |
 
-See [Shared Options](/docs/charts/shared-options) for a complete reference on each of these.
+See [Shared Options](/charts/shared-options) for a complete reference on each of these.
 
 ## SVG Rendering
 
@@ -156,34 +156,34 @@ chart.destroy();
 
 | Chart | Factory | Key Features |
 | --- | --- | --- |
-| [Bar](/docs/charts/bar) | `createBarChart` | Grouped, stacked, horizontal |
-| [Line](/docs/charts/line) | `createLineChart` | 13 interpolation modes, markers |
-| [Area](/docs/charts/area) | `createAreaChart` | Stacked, gradient fills |
-| [Pie](/docs/charts/pie) | `createPieChart` | Donut mode, slice animations |
-| [Scatter](/docs/charts/scatter) | `createScatterChart` | Bubble sizing, multi-series |
-| [Radar](/docs/charts/radar) | `createRadarChart` | Multi-series overlay |
-| [Heatmap](/docs/charts/heatmap) | `createHeatmapChart` | Color-encoded matrix |
-| [Histogram](/docs/charts/histogram) | `createHistogramChart` | Distribution binning |
-| [Box Plot](/docs/charts/box-plot) | `createBoxPlotChart` | Distribution summary, whiskers, outliers |
-| [Treemap](/docs/charts/treemap) | `createTreemapChart` | Hierarchical proportions |
-| [Funnel](/docs/charts/funnel) | `createFunnelChart` | Conversion funnels |
-| [Gauge](/docs/charts/gauge) | `createGaugeChart` | Radial progress, tick marks |
-| [Polar Area](/docs/charts/polar-area) | `createPolarAreaChart` | Radial bar segments |
-| [Sankey](/docs/charts/sankey) | `createSankeyChart` | Flow diagrams |
-| [Chord](/docs/charts/chord) | `createChordChart` | Relationship matrices |
-| [Sunburst](/docs/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
-| [Trend](/docs/charts/trend) | `createTrendChart` | Sparkline-style |
-| [Stock](/docs/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
-| [Gantt](/docs/charts/gantt) | `createGanttChart` | Tasks over a time axis |
-| [Realtime](/docs/charts/realtime) | `createRealtimeChart` | Streaming sliding window |
-| [Polar Scatter](/docs/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
-| [Radial Bar](/docs/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
-| [Packed Circle](/docs/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
-| [Force-Directed](/docs/charts/force-directed) | `createForceDirectedChart` | Springy physics network |
-| [Arc Diagram](/docs/charts/arc-diagram) | `createArcDiagramChart` | Axis of nodes linked by arcs |
+| [Bar](/charts/bar) | `createBarChart` | Grouped, stacked, horizontal |
+| [Line](/charts/line) | `createLineChart` | 13 interpolation modes, markers |
+| [Area](/charts/area) | `createAreaChart` | Stacked, gradient fills |
+| [Pie](/charts/pie) | `createPieChart` | Donut mode, slice animations |
+| [Scatter](/charts/scatter) | `createScatterChart` | Bubble sizing, multi-series |
+| [Radar](/charts/radar) | `createRadarChart` | Multi-series overlay |
+| [Heatmap](/charts/heatmap) | `createHeatmapChart` | Color-encoded matrix |
+| [Histogram](/charts/histogram) | `createHistogramChart` | Distribution binning |
+| [Box Plot](/charts/box-plot) | `createBoxPlotChart` | Distribution summary, whiskers, outliers |
+| [Treemap](/charts/treemap) | `createTreemapChart` | Hierarchical proportions |
+| [Funnel](/charts/funnel) | `createFunnelChart` | Conversion funnels |
+| [Gauge](/charts/gauge) | `createGaugeChart` | Radial progress, tick marks |
+| [Polar Area](/charts/polar-area) | `createPolarAreaChart` | Radial bar segments |
+| [Sankey](/charts/sankey) | `createSankeyChart` | Flow diagrams |
+| [Chord](/charts/chord) | `createChordChart` | Relationship matrices |
+| [Sunburst](/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
+| [Trend](/charts/trend) | `createTrendChart` | Sparkline-style |
+| [Stock](/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
+| [Gantt](/charts/gantt) | `createGanttChart` | Tasks over a time axis |
+| [Realtime](/charts/realtime) | `createRealtimeChart` | Streaming sliding window |
+| [Polar Scatter](/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
+| [Radial Bar](/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
+| [Packed Circle](/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
+| [Force-Directed](/charts/force-directed) | `createForceDirectedChart` | Springy physics network |
+| [Arc Diagram](/charts/arc-diagram) | `createArcDiagramChart` | Axis of nodes linked by arcs |
 
 ## Next Steps
 
-- **[Shared Options](/docs/charts/shared-options)** — Deep dive into axis, legend, tooltip, grid, and crosshair configuration
-- **[Bar Chart](/docs/charts/bar)** — Start with the most versatile chart type
+- **[Shared Options](/charts/shared-options)** — Deep dive into axis, legend, tooltip, grid, and crosshair configuration
+- **[Bar Chart](/charts/bar)** — Start with the most versatile chart type
 - **[Charts API Reference](/docs/api/@ripl/charts/)** — Full TypeScript API documentation

@@ -149,22 +149,30 @@ export default defineConfig({
                 text: 'Docs',
                 items: [
                     {
-                        text: 'Core',
-                        link: '/docs/core/',
+                        items: [
+                            {
+                                text: 'Core (2D)',
+                                link: '/docs/core/',
+                            },
+                            {
+                                text: '3D',
+                                link: '/docs/3d/',
+                            },
+                        ],
                     },
                     {
-                        text: 'Charts',
-                        link: '/docs/charts/',
-                    },
-                    {
-                        text: '3D',
-                        link: '/docs/3d/',
+                        items: [
+                            {
+                                text: 'API Reference',
+                                link: '/docs/api/',
+                            },
+                        ],
                     },
                 ],
             },
             {
-                text: 'API',
-                link: '/docs/api/',
+                text: 'Charts',
+                link: '/charts/',
             },
             {
                 text: 'Demos',
@@ -421,18 +429,18 @@ export default defineConfig({
                 },
             ],
 
-            '/docs/charts': [
+            '/charts': [
                 {
                     text: 'Introduction',
-                    link: '/docs/charts/',
+                    link: '/charts/',
                 },
                 {
                     text: 'Getting Started',
-                    link: '/docs/charts/getting-started',
+                    link: '/charts/getting-started',
                 },
                 {
                     text: 'Shared Options',
-                    link: '/docs/charts/shared-options',
+                    link: '/charts/shared-options',
                 },
                 {
                     text: 'Charts',

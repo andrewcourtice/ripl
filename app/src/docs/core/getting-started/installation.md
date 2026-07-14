@@ -128,4 +128,4 @@ Ripl is written in TypeScript and ships with full type definitions out of the bo
 
 ## Next Steps
 
-Head over to the [Tutorial](/docs/core/getting-started/tutorial) to start drawing your first elements, or jump straight to [Charts](/docs/charts/) if you're building data visualizations.
+Head over to the [Tutorial](/docs/core/getting-started/tutorial) to start drawing your first elements, or jump straight to [Charts](/charts/) if you're building data visualizations.

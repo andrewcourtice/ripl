@@ -32,12 +32,12 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
 <script lang="ts" setup>
 import {
     useRiplChart,
-} from '../../.vitepress/compositions/example';
+} from '../.vitepress/compositions/example';
 
 import {
     buildCommonOptions,
     useChartConfig,
-} from '../../.vitepress/compositions/use-chart-config';
+} from '../.vitepress/compositions/use-chart-config';
 
 import {
     createPieChart,

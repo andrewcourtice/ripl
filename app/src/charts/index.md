@@ -27,7 +27,7 @@ The `@ripl/charts` package provides a comprehensive set of chart types for data 
 <script setup lang="ts">
 import {
     charts,
-} from '../../.vitepress/data/charts';
+} from '../.vitepress/data/charts';
 </script>
 
 <style>

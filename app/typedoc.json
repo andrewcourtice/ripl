@@ -7,6 +7,9 @@
         "../packages/svg",
         "../packages/web",
         "../packages/3d",
+        "../packages/webgpu",
+        "../packages/terminal",
+        "../packages/dom",
         "../packages/utilities"
     ],
     "out": "./src/docs/api",

@@ -12,7 +12,7 @@ hero:
       link: /docs/core/getting-started/installation
     - theme: alt
       text: Charts
-      link: /docs/charts/
+      link: /charts/
     - theme: alt
       text: 3D
       link: /docs/3d/
