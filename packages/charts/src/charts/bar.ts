@@ -535,7 +535,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._barGroups = [
             ...seriesEntryGroups,
@@ -708,15 +708,19 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = viewedValueScale;
                 this.yAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
 
+                const horizontalPlot = {
+                    x: yAxisBox.right,
+                    y: top,
+                    width: right - yAxisBox.right,
+                    height: xAxisBox.top - top,
+                };
+
+                this.clipPlot(horizontalPlot);
+
                 this.renderGrid(
                     viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
                     [],
-                    {
-                        x: yAxisBox.right,
-                        y: top,
-                        width: right - yAxisBox.right,
-                        height: xAxisBox.top - top,
-                    }
+                    horizontalPlot
                 );
 
                 return Promise.all([
@@ -755,15 +759,19 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.yAxis.scale = viewedValueScale;
             this.xAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
 
+            const verticalPlot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
+
+            this.clipPlot(verticalPlot);
+
             this.renderGrid(
                 [],
                 viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
+                verticalPlot
             );
 
             return Promise.all([

@@ -411,7 +411,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._lineGroups = [
             ...seriesEntryGroups,
@@ -557,23 +557,22 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
 
-            this.renderGrid(
-                [],
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
-            );
-
-            this.setupCrosshair({
+            const plot = {
                 x: yAxisBox.right,
                 y: top,
                 width: right - yAxisBox.right,
                 height: xAxisBox.top - top,
-            });
+            };
+
+            this.clipPlot(plot);
+
+            this.renderGrid(
+                [],
+                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                plot
+            );
+
+            this.setupCrosshair(plot);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

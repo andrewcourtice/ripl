@@ -433,7 +433,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._bubbleGroups = [
             ...seriesEntryGroups,
@@ -574,6 +574,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 width: right - yAxisBox.right,
                 height: xAxisBox.top - top,
             };
+
+            this.clipPlot(plot);
 
             this.renderGrid(
                 this._xScale.ticks(10).map(tick => this._xScale(tick)),

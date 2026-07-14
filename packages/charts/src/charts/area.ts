@@ -560,7 +560,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._areaGroups = [
             ...seriesEntryGroups,
@@ -767,6 +767,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 height: xAxisBox.top - top,
             };
 
+            this.clipPlot(plot);
             this.renderGrid([], this._yScale.ticks(10).map(tick => this._yScale(tick)), plot);
             this.setupCrosshair(plot);
 

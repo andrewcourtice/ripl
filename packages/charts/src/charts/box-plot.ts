@@ -314,15 +314,19 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             this.yAxis.scale = viewedValueScale;
             this.xAxis.scale = viewedCategoryScale;
 
+            const plot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
+
+            this.clipPlot(plot);
+
             this.renderGrid(
                 [],
                 viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
+                plot
             );
 
             const step = keys.length > 1
@@ -381,7 +385,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 child.opacity = 0;
             });
 
-            this.scene.add(group);
+            this.addPlotContent(group);
 
             return group;
         });

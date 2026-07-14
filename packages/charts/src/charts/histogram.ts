@@ -229,15 +229,19 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             this.xAxis.scale = viewedValueScale;
             this.yAxis.scale = viewedCountScale;
 
+            const plot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
+
+            this.clipPlot(plot);
+
             this.renderGrid(
                 [],
                 viewedCountScale.ticks(10).map(tick => viewedCountScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
+                plot
             );
 
             return Promise.all([
@@ -306,7 +310,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             });
 
             this._attachBinHover(rect, item.bin);
-            this.scene.add(rect);
+            this.addPlotContent(rect);
 
             return rect;
         });

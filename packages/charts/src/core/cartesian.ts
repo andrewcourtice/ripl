@@ -78,17 +78,26 @@ import type {
 
 import type {
     Context,
+    Element,
     EventMap,
+    Group,
     NavigatorInteractions,
     NavigatorTransform,
+    Rect,
     Scale,
 } from '@ripl/core';
 
 import {
     Box,
     createFrameBuffer,
+    createGroup,
+    createRect,
     scaleContinuous,
 } from '@ripl/core';
+
+import type {
+    OneOrMore,
+} from '@ripl/utilities';
 
 import {
     createNavigator,
@@ -156,6 +165,10 @@ export abstract class CartesianChart<
 
     private _navigating = false;
     private _scheduleNavigatorRender = createFrameBuffer();
+
+    /** Persistent container holding the plotted marks, clipped to the plot rect while navigating. */
+    private _plotContent?: Group;
+    private _plotClip?: Rect;
 
     /**
      * The pan/zoom/brush controller for this chart, or `undefined` when the `navigator` option is off.
@@ -406,6 +419,66 @@ export abstract class CartesianChart<
         }
 
         return viewed;
+    }
+
+    /**
+     * Adds plotted marks to a persistent, plot-clipped container instead of straight to the scene, so
+     * that panning/zooming can't smear marks over the axes, title or legend. Subclasses call this in
+     * place of `this.scene.add(...)` for their data marks (bars, bubbles, lines, …). The container sits
+     * just above the grid (z-index 1) and below the axes/title/legend, and its clip only bites while a
+     * navigator is active — see {@link clipPlot} — so non-navigator rendering is byte-for-byte
+     * unchanged.
+     */
+    protected addPlotContent(elements: OneOrMore<Element>): void {
+        this._ensurePlotContent().add(elements);
+    }
+
+    /** Lazily builds the plot-content container and its clip rect, adding it to the scene once. */
+    private _ensurePlotContent(): Group {
+        if (!this._plotContent) {
+            // A fill-less, stroke-less rect: when `clip` is on it masks its later siblings (the marks);
+            // when off it draws nothing. Lowest z-index so it applies before any mark renders.
+            this._plotClip = createRect({
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                clip: false,
+                // A pure visual mask: never intercept pointer events, or it would swallow hovers/clicks
+                // meant for the marks it covers (barclick, marker hover, etc.).
+                pointerEvents: 'none',
+                zIndex: Number.NEGATIVE_INFINITY,
+            });
+
+            this._plotContent = createGroup({
+                id: '__plot-content',
+                zIndex: 1,
+                children: [this._plotClip],
+            });
+
+            this.scene.add(this._plotContent);
+        }
+
+        return this._plotContent;
+    }
+
+    /**
+     * Points the plot-content clip at the current plot rectangle and enables it only while a navigator
+     * is active. Subclasses call this once per render after they know their plot area. With no
+     * navigator the clip stays inert, preserving the exact un-clipped rendering.
+     */
+    protected clipPlot(area: ChartArea): void {
+        this._ensurePlotContent();
+
+        if (!this._plotClip) {
+            return;
+        }
+
+        this._plotClip.x = area.x;
+        this._plotClip.y = area.y;
+        this._plotClip.width = area.width;
+        this._plotClip.height = area.height;
+        this._plotClip.clip = !!this._navigator;
     }
 
     protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {

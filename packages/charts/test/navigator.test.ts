@@ -163,6 +163,41 @@ describe('CartesianChart navigator integration', () => {
         chart.destroy();
     });
 
+    test('Should clip plotted marks to the plot area only while a navigator is active', async () => {
+        mockCanvasContext();
+
+        const withNav = createChart(true);
+        await withNav.render();
+
+        const scene = (withNav as any).scene;
+        const plotContent = scene.children.find((child: { id: string }) => child.id === '__plot-content');
+
+        expect(plotContent).toBeDefined();
+
+        const clip = plotContent.children.find((child: { clip?: boolean }) => child.clip !== undefined);
+
+        // The bubbles are parented under the clipped container, and the clip is engaged.
+        expect(plotContent.getElementsByType('circle').length).toBeGreaterThan(0);
+        expect(clip.clip).toBe(true);
+
+        // The clip rect must stay pointer-transparent so it can't swallow marker hovers/clicks.
+        expect(clip.pointerEvents).toBe('none');
+
+        withNav.destroy();
+
+        const withoutNav = createChart(false);
+        await withoutNav.render();
+
+        const plainScene = (withoutNav as any).scene;
+        const plainPlot = plainScene.children.find((child: { id: string }) => child.id === '__plot-content');
+        const plainClip = plainPlot.children.find((child: { clip?: boolean }) => child.clip !== undefined);
+
+        // Without a navigator the clip rect is inert, so rendering is unchanged.
+        expect(plainClip.clip).toBe(false);
+
+        withoutNav.destroy();
+    });
+
     test('Should destroy the navigator (and reset the view) when toggled off via update', () => {
         mockCanvasContext();
 
