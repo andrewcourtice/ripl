@@ -1,5 +1,5 @@
 <template>
-    <div class="playground-editor">
+    <div class="playground-editor" @keydown="onEditorKeydown">
         <div class="playground-editor__header">
             <RiplButtonGroup :modelValue="mode" @update:modelValue="$emit('update:mode', $event as PlaygroundMode)" :options="[
                 { label: '2D', value: '2d' },
@@ -125,6 +125,23 @@ let monacoModule: typeof import('monaco-editor') | null = null;
 function loadExample(example: PlaygroundExample) {
     emit('load-example', { mode: example.mode, code: example.code });
     examplesDropdown.value?.close();
+}
+
+/**
+ * VitePress registers global search hotkeys on `window` — `/` and Ctrl/Cmd+K —
+ * which `preventDefault()` the keystroke and open the search modal. Inside the
+ * Monaco editor that swallows the `/` character and hijacks Cmd+K chords, making
+ * the editor almost unusable. Stopping propagation here (before the event
+ * bubbles to `window`) lets Monaco handle the key while suppressing the hotkey;
+ * the editor is the only place these keys should not reach the site search.
+ */
+function onEditorKeydown(event: KeyboardEvent) {
+    const isSearchSlash = event.key === '/';
+    const isSearchHotkey = (event.key === 'k' || event.key === 'K') && (event.metaKey || event.ctrlKey);
+
+    if (isSearchSlash || isSearchHotkey) {
+        event.stopPropagation();
+    }
 }
 
 function formatImportMap(map: Record<string, string>): string {
