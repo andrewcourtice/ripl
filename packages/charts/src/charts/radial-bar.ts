@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -67,7 +71,7 @@ const REST_ALPHA = 0.85;
 export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     label?: keyof TData | ((item: TData) => string);
     color?: keyof TData | ((item: TData) => string);
     /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */

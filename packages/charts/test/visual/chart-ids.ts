@@ -4,6 +4,7 @@
  */
 export const CHART_IDS = [
     'bar',
+    'box-plot',
     'line',
     'area',
     'scatter',
@@ -13,6 +14,7 @@ export const CHART_IDS = [
     'gantt',
     'gauge',
     'heatmap',
+    'histogram',
     'polar-area',
     'polar-scatter',
     'radial-bar',

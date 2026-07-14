@@ -26,7 +26,7 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 1.5, 5],
     target: [0, 0, 0],
     interactions: true,
@@ -52,7 +52,7 @@ import {
     createCamera,
 } from '@ripl/3d';
 
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 2, 5],
     target: [0, 0, 0],
     fov: 60,
@@ -130,7 +130,7 @@ camera.fov = 90;
 The camera supports built-in mouse interactions for zoom, pivot (orbit), and pan. Enable them via the `interactions` option:
 
 ```ts
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     interactions: true, // enable all interactions with default sensitivity
 });
 ```
@@ -138,7 +138,7 @@ const camera = createCamera(scene, {
 For granular control, pass an object:
 
 ```ts
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     interactions: {
         zoom: {
             enabled: true,

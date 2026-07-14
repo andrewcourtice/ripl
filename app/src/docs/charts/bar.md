@@ -61,7 +61,7 @@ const horizontal = ref(false);
 let monthCount = 6;
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
     title: 'Monthly Breakdown',
     axisX: 'Month',
     axisY: 'Amount ($)',

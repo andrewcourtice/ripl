@@ -136,7 +136,7 @@ export class Chart<
     }
 
     protected init() {
-        this.scene.on('resize', () => {
+        this.scene.context.on('resize', () => {
             if (this._hasRendered) {
                 this.render();
             }

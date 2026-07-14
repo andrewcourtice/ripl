@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -90,7 +94,7 @@ import {
 export interface LineChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData> | number;
     label: string | ((item: TData) => string);
     lineType?: PolylineRenderer;
     lineWidth?: number;
@@ -407,7 +411,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._lineGroups = [
             ...seriesEntryGroups,
@@ -545,23 +549,30 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            this.renderGrid(
-                [],
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
-            );
+            // Rescale to the navigator's pan/zoom window (no-op without a navigator or at rest):
+            // continuous y via domain rescale, categorical x via a pixel-space transform. Geometry
+            // and axes read the same scales, so both follow the view.
+            this._yScale = this.applyView(this._yScale, 'y');
+            this._xScale = this.applyViewToScale(this._xScale, 'x');
+            this.xAxis.scale = this._xScale;
+            this.yAxis.scale = this._yScale;
 
-            this.setupCrosshair({
+            const plot = {
                 x: yAxisBox.right,
                 y: top,
                 width: right - yAxisBox.right,
                 height: xAxisBox.top - top,
-            });
+            };
+
+            this.clipPlot(plot);
+
+            this.renderGrid(
+                [],
+                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                plot
+            );
+
+            this.setupCrosshair(plot);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

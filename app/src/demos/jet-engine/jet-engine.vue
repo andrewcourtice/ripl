@@ -295,7 +295,7 @@ onMounted(() => {
 
     scene = createScene(context) as Scene<Context3D>;
 
-    const camera = createCamera(scene, {
+    const camera = createCamera(context, {
         position: [2.5, 1.8, 4],
         target: [0, 0, -0.1],
         fov: 45,

@@ -69,13 +69,15 @@ import {
 const REST_ALPHA = 0.85;
 
 /** A node in a force-directed network. */
-export interface ForceNetworkNode {
+export interface ForceNetworkNode<TData = unknown> {
     id: string;
     label?: string;
     value?: number;
     /** Optional grouping — nodes in the same group share a color. */
     group?: string;
     color?: string;
+    /** Arbitrary datum carried through to node interaction events. */
+    data?: TData;
 }
 
 /** A link between two nodes. */
@@ -86,8 +88,8 @@ export interface ForceNetworkLink {
 }
 
 /** Options for configuring a {@link ForceDirectedChart}. */
-export interface ForceDirectedChartOptions extends BaseChartOptions {
-    nodes: ForceNetworkNode[];
+export interface ForceDirectedChartOptions<TData = unknown> extends BaseChartOptions {
+    nodes: ForceNetworkNode<TData>[];
     links: ForceNetworkLink[];
     /** Base node radius (nodes with a `value` scale around this). Defaults to 8. */
     nodeRadius?: number;
@@ -104,12 +106,14 @@ export interface ForceDirectedChartOptions extends BaseChartOptions {
 }
 
 /** Payload emitted for force-directed node interaction events. */
-export interface ForceDirectedNodeEvent {
+export interface ForceDirectedNodeEvent<TData = unknown> {
     x: number;
     y: number;
     id: string;
     label: string;
     value: number;
+    /** The datum from the source {@link ForceNetworkNode}, if one was provided. */
+    data?: TData;
 }
 
 /** Payload emitted for force-directed link interaction events. */
@@ -122,10 +126,10 @@ export interface ForceDirectedLinkEvent {
 }
 
 /** Events emitted by a {@link ForceDirectedChart} that consumers can subscribe to via `chart.on(...)`. */
-export interface ForceDirectedChartEventMap extends EventMap {
-    nodeclick: ForceDirectedNodeEvent;
-    nodeenter: ForceDirectedNodeEvent;
-    nodeleave: ForceDirectedNodeEvent;
+export interface ForceDirectedChartEventMap<TData = unknown> extends EventMap {
+    nodeclick: ForceDirectedNodeEvent<TData>;
+    nodeenter: ForceDirectedNodeEvent<TData>;
+    nodeleave: ForceDirectedNodeEvent<TData>;
     linkclick: ForceDirectedLinkEvent;
     linkenter: ForceDirectedLinkEvent;
     linkleave: ForceDirectedLinkEvent;
@@ -148,7 +152,7 @@ interface PlacedNode {
  * the plot area. Nodes are circles (sized by value or degree), links are lines (width by value), with
  * labels, tooltips, typed node/link interaction events, and animated entry/update/exit transitions.
  */
-export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDirectedChartEventMap> {
+export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChartOptions<TData>, ForceDirectedChartEventMap<TData>> {
 
     private _nodesGroup?: Group;
     private _linksGroup?: Group;
@@ -159,7 +163,7 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
     private _positions = new Map<string, { x: number;
         y: number; }>();
 
-    constructor(target: string | HTMLElement | Context, options: ForceDirectedChartOptions) {
+    constructor(target: string | HTMLElement | Context, options: ForceDirectedChartOptions<TData>) {
         super(target, options);
 
         this._tooltip = new Tooltip({
@@ -174,12 +178,13 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
         const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
-            y: number; }): ForceDirectedNodeEvent => ({
+            y: number; }): ForceDirectedNodeEvent<TData> => ({
             x: point.x,
             y: point.y,
             id: node.id,
             label: node.label,
             value: node.value,
+            data: this.options.nodes.find(candidate => candidate.id === node.id)?.data,
         });
 
         applyHoverHighlight(circle, {
@@ -628,6 +633,6 @@ export class ForceDirectedChart extends Chart<ForceDirectedChartOptions, ForceDi
 }
 
 /** Factory function that creates a new {@link ForceDirectedChart} instance. */
-export function createForceDirectedChart(target: string | HTMLElement | Context, options: ForceDirectedChartOptions) {
-    return new ForceDirectedChart(target, options);
+export function createForceDirectedChart<TData = unknown>(target: string | HTMLElement | Context, options: ForceDirectedChartOptions<TData>) {
+    return new ForceDirectedChart<TData>(target, options);
 }

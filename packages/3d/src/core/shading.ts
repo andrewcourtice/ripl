@@ -3,11 +3,11 @@ import {
     vec3Dot,
     vec3Normalize,
     vec3Sub,
-} from './math/vector';
+} from '../math/vector';
 
 import type {
     Vector3,
-} from './math/vector';
+} from '../math/vector';
 
 import {
     parseColor,

@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -74,9 +78,9 @@ import {
 export interface ScatterChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    xBy: keyof TData | ((item: TData) => number);
-    yBy: keyof TData | ((item: TData) => number);
-    sizeBy?: keyof TData | number | ((item: TData) => number);
+    xBy: NumericAccessor<TData>;
+    yBy: NumericAccessor<TData>;
+    sizeBy?: NumericAccessor<TData> | number;
     label: string | ((item: TData) => string);
     minRadius?: number;
     maxRadius?: number;
@@ -429,7 +433,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._bubbleGroups = [
             ...seriesEntryGroups,
@@ -554,6 +558,13 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const xAxisBox = this.xAxis.getBoundingBox();
 
             this._yScale = scaleContinuous(yExtent, [xAxisBox.top - maxRadius, top + maxRadius], { padToTicks: 10 });
+
+            // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
+            // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
+            // so both follow the view.
+            this._xScale = this.applyView(this._xScale, 'x');
+            this._yScale = this.applyView(this._yScale, 'y');
+            this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
@@ -563,6 +574,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 width: right - yAxisBox.right,
                 height: xAxisBox.top - top,
             };
+
+            this.clipPlot(plot);
 
             this.renderGrid(
                 this._xScale.ticks(10).map(tick => this._xScale(tick)),

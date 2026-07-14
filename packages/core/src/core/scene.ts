@@ -32,10 +32,11 @@ import {
 } from '@ripl/utilities';
 
 
-/** Event map for the scene, adding a `resize` event to the standard element events. */
-export interface SceneEventMap extends ElementEventMap {
-    resize: null;
-}
+/**
+ * Event map for the scene. Resize is deliberately *not* re-emitted here — listen for it on the
+ * scene's `context` instead (`scene.context.on('resize', …)`), the single source of truth.
+ */
+export type SceneEventMap = ElementEventMap;
 
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
@@ -94,8 +95,6 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         const requestFrame = createFrameBuffer();
 
         this.retain(context.on('resize', () => {
-            this.emit('resize', null);
-
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }

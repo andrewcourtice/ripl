@@ -48,6 +48,14 @@ export default defineConfig({
                 'json-summary',
                 'json',
             ],
+            // A regression ratchet, set a few points below the current global coverage so genuine
+            // drops fail CI without tripping on normal churn. Raise these as coverage improves.
+            thresholds: {
+                lines: 70,
+                statements: 70,
+                functions: 62,
+                branches: 57,
+            },
         },
     },
 });

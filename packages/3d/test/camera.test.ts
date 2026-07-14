@@ -16,20 +16,12 @@ import type {
     Context3D,
 } from '../src';
 
-import type {
-    Scene,
-} from '@ripl/core';
-
 import {
     mockCanvasContext,
 } from '@ripl/test-utils';
 
-function createMockScene(): Scene {
-    const ctx = createContext(document.createElement('div'));
-
-    return {
-        context: ctx,
-    } as unknown as Scene;
+function createMockContext(): Context3D {
+    return createContext(document.createElement('div'));
 }
 
 describe('Camera', () => {
@@ -43,8 +35,8 @@ describe('Camera', () => {
     });
 
     test('Construction with defaults', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene);
+        const context = createMockContext();
+        const camera = createCamera(context);
 
         expect(camera.position).toEqual([0, 0, 5]);
         expect(camera.target).toEqual([0, 0, 0]);
@@ -56,8 +48,8 @@ describe('Camera', () => {
     });
 
     test('Construction with custom options', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene, {
+        const context = createMockContext();
+        const camera = createCamera(context, {
             position: [1, 2, 3],
             target: [4, 5, 6],
             fov: 90,
@@ -69,8 +61,8 @@ describe('Camera', () => {
     });
 
     test('orbit changes position but not target', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene);
+        const context = createMockContext();
+        const camera = createCamera(context);
         const originalTarget = [...camera.target];
 
         camera.orbit(0.1, 0);
@@ -82,8 +74,8 @@ describe('Camera', () => {
     });
 
     test('pan shifts both position and target', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene, {
+        const context = createMockContext();
+        const camera = createCamera(context, {
             position: [0, 0, 5],
             target: [0, 0, 0],
         });
@@ -100,8 +92,8 @@ describe('Camera', () => {
     });
 
     test('zoom moves position along eye-target vector', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene, {
+        const context = createMockContext();
+        const camera = createCamera(context, {
             position: [0, 0, 10],
             target: [0, 0, 0],
         });
@@ -114,8 +106,8 @@ describe('Camera', () => {
     });
 
     test('lookAt updates target', () => {
-        const scene = createMockScene();
-        const camera = createCamera(scene);
+        const context = createMockContext();
+        const camera = createCamera(context);
 
         camera.lookAt([5, 5, 5]);
         camera.flush();
@@ -124,11 +116,10 @@ describe('Camera', () => {
     });
 
     test('Reactive batching: multiple changes produce single flush', async () => {
-        const scene = createMockScene();
-        const ctx = scene.context as Context3D;
-        const camera = createCamera(scene);
+        const context = createMockContext();
+        const camera = createCamera(context);
 
-        const setCameraSpy = vi.spyOn(ctx, 'setCamera');
+        const setCameraSpy = vi.spyOn(context, 'setCamera');
 
         // Reset spy after initial construction flush
         setCameraSpy.mockClear();

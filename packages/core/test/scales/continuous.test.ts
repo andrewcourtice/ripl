@@ -37,6 +37,40 @@ describe('Scale', () => {
             expect(scale.inverse(range[1])).toBe(domain[1]);
         });
 
+        test('Should nice the domain at construction when requested', () => {
+            const scale = scaleContinuous([2, 97], [0, 100], {
+                nice: true,
+            });
+
+            // Domain expands outward to round, tick-aligned boundaries.
+            expect(scale.domain[0]).toBe(0);
+            expect(scale.domain[1]).toBe(100);
+            expect(scale(0)).toBe(0);
+            expect(scale(100)).toBe(100);
+        });
+
+        test('Should leave the domain untouched without the nice option', () => {
+            const scale = scaleContinuous([2, 97], [0, 100]);
+
+            expect(scale.domain).toEqual([2, 97]);
+        });
+
+        test('Should invert consistently with padToTicks over a descending range', () => {
+            // A y-axis maps data (ascending) to pixels (descending, top < bottom). `inverse` must be
+            // the true inverse of `convert` and must never return NaN — regression for a bug where the
+            // invert method re-padded the *range*, producing a negative step over a descending range.
+            const scale = scaleContinuous([0, 100], [560, 40], {
+                padToTicks: 10,
+            });
+
+            for (const value of [0, 25, 50, 75, 100]) {
+                const inverted = scale.inverse(scale(value));
+
+                expect(Number.isNaN(inverted)).toBe(false);
+                expect(inverted).toBeCloseTo(value, 6);
+            }
+        });
+
     });
 
 });

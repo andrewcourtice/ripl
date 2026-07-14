@@ -36,7 +36,7 @@ const context = await createContext('.mount-element');
 const scene = createScene(context);
 const renderer = createRenderer(scene, { autoStop: false });
 
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 1.5, 5],
     target: [0, 0, 0],
 });
@@ -86,7 +86,7 @@ const context = await createContext('#app');
 const scene = createScene(context);
 const renderer = createRenderer(scene);
 
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 2, 5],
     target: [0, 0, 0],
 });
@@ -193,7 +193,7 @@ const context = await createContext('#app');
 ### 3. Everything else stays the same
 
 - `createScene(context)` — works unchanged
-- `createCamera(scene, options)` — works unchanged
+- `createCamera(context, options)` — works unchanged
 - `createRenderer(scene)` — works unchanged
 - All `Shape3D` elements — work unchanged
 - Event handlers (`mouseenter`, `mouseleave`, etc.) — work unchanged
@@ -264,7 +264,7 @@ function contextChanged(ctx: Context3D) {
 
     const renderer = createRenderer(scene, { autoStop: false });
 
-    const camera = createCamera(scene, {
+    const camera = createCamera(context, {
         position: [0, 1.5, 5],
         target: [0, 0, 0],
         fov: 50,

@@ -9,19 +9,15 @@ import {
     vec3Normalize,
     vec3Scale,
     vec3Sub,
-} from './math/vector';
+} from '../math/vector';
 
 import type {
     Vector3,
-} from './math/vector';
+} from '../math/vector';
 
 import {
     degreesToRadians,
     Disposer,
-} from '@ripl/core';
-
-import type {
-    Scene,
 } from '@ripl/core';
 
 import {
@@ -95,7 +91,7 @@ function resolveInteraction(option: CameraInteractionOption | undefined, fallbac
 /** An interactive camera controlling the 3D context's view and projection, with mouse/touch orbit, pan, and zoom. */
 export class Camera extends Disposer {
 
-    private _context: Context3D & { element: unknown };
+    private _context: Context3D;
     private _dirty = false;
     private _scheduled = false;
     private _previousTouchAction = '';
@@ -171,10 +167,9 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    constructor(scene: Scene<any>, options?: CameraOptions) {
+    constructor(context: Context3D, options?: CameraOptions) {
         super();
-        this._context = scene.context as Context3D & { element: unknown };
+        this._context = context;
 
         this._position = options?.position ?? [0, 0, 5] as Vector3;
         this._target = options?.target ?? [0, 0, 0] as Vector3;
@@ -464,8 +459,7 @@ export class Camera extends Disposer {
 
 }
 
-/** Factory function that creates a new `Camera` bound to a 3D scene. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createCamera(scene: Scene<any>, options?: CameraOptions): Camera {
-    return new Camera(scene, options);
+/** Factory function that creates a new `Camera` bound to a 3D context. */
+export function createCamera(context: Context3D, options?: CameraOptions): Camera {
+    return new Camera(context, options);
 }

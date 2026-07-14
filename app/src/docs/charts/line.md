@@ -85,7 +85,7 @@ const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
 const markers = ref(true);
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
     title: 'Monthly Performance',
     axisX: 'Month',
     axisY: 'Amount ($)',

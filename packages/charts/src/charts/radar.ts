@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -67,7 +71,7 @@ export interface RadarChartSeriesOptions<TData> {
     id: string;
     color?: string;
     label: string;
-    value: keyof TData | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     opacity?: number;
 }
 

@@ -1,6 +1,6 @@
 import type {
     Context3D,
-} from '../context';
+} from './context';
 
 import {
     mat4Identity,
@@ -22,7 +22,7 @@ import {
     computeFaceBrightness,
     computeFaceNormal,
     shadeFaceColor,
-} from '../shading';
+} from './shading';
 
 import {
     Box,

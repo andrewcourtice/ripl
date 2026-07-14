@@ -30,6 +30,12 @@ export interface ScaleBindingOptions<TDomain, TRange> {
 export interface LinearScaleOptions {
     clamp?: boolean;
     padToTicks?: boolean | number;
+    /**
+     * Expand the domain to round, tick-aligned boundaries at construction. `true` uses ~10 ticks; a
+     * number sets the target tick count. This is a construction-time option by design — scales stay
+     * plain callable objects with no chained `.nice()` method.
+     */
+    nice?: boolean | number;
 }
 
 /** Expands a numeric domain to "nice" tick-aligned boundaries and returns `[min, max, step]`. */
@@ -49,6 +55,28 @@ export function padDomain(domain: number[], count: number = 10) {
         min,
         max,
         step,
+    ];
+}
+
+/** Resolves a `nice` option to a target tick count (defaults to 10 when `true`). */
+export function resolveNiceCount(nice: boolean | number | undefined): number | undefined {
+    if (!nice) {
+        return undefined;
+    }
+
+    return nice === true ? 10 : nice;
+}
+
+/** Returns the domain expanded to round, tick-aligned `[min, max]` boundaries. */
+export function niceDomain(domain: number[], count: number = 10): number[] {
+    const [
+        min,
+        max,
+    ] = padDomain(domain, count);
+
+    return [
+        min,
+        max,
     ];
 }
 

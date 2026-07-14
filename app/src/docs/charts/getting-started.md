@@ -163,6 +163,8 @@ chart.destroy();
 | [Scatter](/docs/charts/scatter) | `createScatterChart` | Bubble sizing, multi-series |
 | [Radar](/docs/charts/radar) | `createRadarChart` | Multi-series overlay |
 | [Heatmap](/docs/charts/heatmap) | `createHeatmapChart` | Color-encoded matrix |
+| [Histogram](/docs/charts/histogram) | `createHistogramChart` | Distribution binning |
+| [Box Plot](/docs/charts/box-plot) | `createBoxPlotChart` | Distribution summary, whiskers, outliers |
 | [Treemap](/docs/charts/treemap) | `createTreemapChart` | Hierarchical proportions |
 | [Funnel](/docs/charts/funnel) | `createFunnelChart` | Conversion funnels |
 | [Gauge](/docs/charts/gauge) | `createGaugeChart` | Radial progress, tick marks |

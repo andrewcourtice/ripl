@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -83,7 +87,7 @@ const REST_ALPHA = 0.78;
 export interface BarChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData> | number;
     label: string;
 }
 
@@ -531,7 +535,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._barGroups = [
             ...seriesEntryGroups,
@@ -697,21 +701,32 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = adjustedValueScale;
                 this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
+                // Apply the navigator view (no-op at rest): values (x) via domain rescale, categories
+                // (y) via a pixel-space transform, so bars and both axes track the pan/zoom together.
+                const viewedValueScale = this.applyView(adjustedValueScale, 'x');
+                const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
+                this.xAxis.scale = viewedValueScale;
+                this.yAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
+
+                const horizontalPlot = {
+                    x: yAxisBox.right,
+                    y: top,
+                    width: right - yAxisBox.right,
+                    height: xAxisBox.top - top,
+                };
+
+                this.clipPlot(horizontalPlot);
+
                 this.renderGrid(
-                    adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                    viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
                     [],
-                    {
-                        x: yAxisBox.right,
-                        y: top,
-                        width: right - yAxisBox.right,
-                        height: xAxisBox.top - top,
-                    }
+                    horizontalPlot
                 );
 
                 return Promise.all([
                     this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                     this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                    this._drawBars(categoryScale, adjustedValueScale, getKey),
+                    this._drawBars(viewedCategoryScale, viewedValueScale, getKey),
                 ]);
             }
 
@@ -737,21 +752,32 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
+            // Apply the navigator view (no-op at rest): values (y) via domain rescale, categories (x)
+            // via a pixel-space transform, so bars and both axes track the pan/zoom together.
+            const viewedValueScale = this.applyView(adjustedValueScale, 'y');
+            const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
+            this.yAxis.scale = viewedValueScale;
+            this.xAxis.scale = this._bandAxisScale(viewedCategoryScale, keys);
+
+            const verticalPlot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
+
+            this.clipPlot(verticalPlot);
+
             this.renderGrid(
                 [],
-                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
-                {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                }
+                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
+                verticalPlot
             );
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this._drawBars(categoryScale, adjustedValueScale, getKey),
+                this._drawBars(viewedCategoryScale, viewedValueScale, getKey),
             ]);
         });
     }

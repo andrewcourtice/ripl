@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -78,11 +82,11 @@ import {
 export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     data: TData[];
     key: keyof TData | ((item: TData) => string);
-    open: keyof TData | ((item: TData) => number);
-    high: keyof TData | ((item: TData) => number);
-    low: keyof TData | ((item: TData) => number);
-    close: keyof TData | ((item: TData) => number);
-    volume?: keyof TData | ((item: TData) => number);
+    open: NumericAccessor<TData>;
+    high: NumericAccessor<TData>;
+    low: NumericAccessor<TData>;
+    close: NumericAccessor<TData>;
+    volume?: NumericAccessor<TData>;
     showVolume?: boolean;
     grid?: ChartGridInput;
     crosshair?: ChartCrosshairInput;

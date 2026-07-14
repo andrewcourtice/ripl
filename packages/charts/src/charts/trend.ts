@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     BaseChartOptions,
 } from '../core/chart';
 
@@ -98,7 +102,7 @@ export interface BaseTrendChartSeriesOptions<TData> {
     id: string;
     type: SeriesType;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData>;
     label: string | ((item: TData) => string);
 }
 

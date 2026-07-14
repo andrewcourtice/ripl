@@ -16,12 +16,14 @@ import {
     createArcDiagramChart,
     createAreaChart,
     createBarChart,
+    createBoxPlotChart,
     createChordChart,
     createForceDirectedChart,
     createFunnelChart,
     createGanttChart,
     createGaugeChart,
     createHeatmapChart,
+    createHistogramChart,
     createLineChart,
     createPackedCircleChart,
     createPieChart,
@@ -166,6 +168,91 @@ createScatterChart(mount('scatter'), {
     axis: {
         x: { title: 'Cost' },
         y: { title: 'Revenue' },
+    },
+});
+
+createBoxPlotChart(mount('box-plot'), {
+    animation: false,
+    title: 'Box Plot — Latency by Region',
+    data: [
+        {
+            region: 'US',
+            latency: 40,
+        },
+        {
+            region: 'US',
+            latency: 55,
+        },
+        {
+            region: 'US',
+            latency: 60,
+        },
+        {
+            region: 'US',
+            latency: 62,
+        },
+        {
+            region: 'US',
+            latency: 120,
+        },
+        {
+            region: 'EU',
+            latency: 70,
+        },
+        {
+            region: 'EU',
+            latency: 82,
+        },
+        {
+            region: 'EU',
+            latency: 88,
+        },
+        {
+            region: 'EU',
+            latency: 95,
+        },
+        {
+            region: 'APAC',
+            latency: 110,
+        },
+        {
+            region: 'APAC',
+            latency: 130,
+        },
+        {
+            region: 'APAC',
+            latency: 145,
+        },
+        {
+            region: 'APAC',
+            latency: 160,
+        },
+    ],
+    group: 'region',
+    value: 'latency',
+    axis: {
+        x: {
+            title: 'Region',
+        },
+        y: {
+            title: 'Latency (ms)',
+        },
+    },
+});
+
+createHistogramChart(mount('histogram'), {
+    animation: false,
+    title: 'Histogram — Revenue Distribution',
+    data: DATA,
+    value: 'revenue',
+    bins: 5,
+    axis: {
+        x: {
+            title: 'Revenue',
+        },
+        y: {
+            title: 'Frequency',
+        },
     },
 });
 

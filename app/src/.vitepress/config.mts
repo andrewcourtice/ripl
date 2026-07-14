@@ -318,6 +318,10 @@ export default defineConfig({
                             link: '/docs/core/advanced/scales',
                         },
                         {
+                            text: 'Navigator',
+                            link: '/docs/core/advanced/navigator',
+                        },
+                        {
                             text: 'Color',
                             link: '/docs/core/advanced/color',
                         },

@@ -4,7 +4,7 @@ import {
 
 import type {
     ProjectedFace3D,
-} from './core/shape';
+} from './shape';
 
 import {
     mat4Identity,
@@ -14,13 +14,13 @@ import {
     mat4Perspective,
     mat4TransformDirection,
     mat4TransformPoint,
-} from './math/matrix';
+} from '../math/matrix';
 
 import type {
     Matrix4,
     ProjectedPoint,
     Vector3,
-} from './math';
+} from '../math';
 
 import {
     degreesToRadians,

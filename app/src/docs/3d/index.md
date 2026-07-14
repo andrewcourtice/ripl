@@ -31,7 +31,7 @@ const context = createContext('#app');
 const scene = createScene(context);
 const renderer = createRenderer(scene);
 
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 2, 5],
     target: [0, 0, 0],
 });

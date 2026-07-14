@@ -1,4 +1,8 @@
 import type {
+    NumericAccessor,
+} from '../core/data';
+
+import type {
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -119,7 +123,7 @@ function interpolateAreaReveal(top: Point[], bottom: Point[]): Interpolator<Poin
 export interface AreaChartSeriesOptions<TData> {
     id: string;
     color?: string;
-    value: keyof TData | number | ((item: TData) => number);
+    value: NumericAccessor<TData> | number;
     label: string;
     lineType?: PolylineRenderer;
     /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
@@ -556,7 +560,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             return group;
         });
 
-        this.scene.add(seriesEntryGroups);
+        this.addPlotContent(seriesEntryGroups);
 
         this._areaGroups = [
             ...seriesEntryGroups,
@@ -748,6 +752,13 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
+            // Rescale to the navigator's view (no-op at rest): continuous y via domain rescale,
+            // categorical x via a pixel-space transform, so geometry and axes track together.
+            this._yScale = this.applyView(this._yScale, 'y');
+            this._xScale = this.applyViewToScale(this._xScale, 'x');
+            this.xAxis.scale = this._xScale;
+            this.yAxis.scale = this._yScale;
+
             const baseline = this._yScale(0);
             const plot = {
                 x: yAxisBox.right,
@@ -756,6 +767,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 height: xAxisBox.top - top,
             };
 
+            this.clipPlot(plot);
             this.renderGrid([], this._yScale.ticks(10).map(tick => this._yScale(tick)), plot);
             this.setupCrosshair(plot);
 

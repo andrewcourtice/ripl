@@ -5,6 +5,7 @@ export * from './animation';
 export * from './interaction';
 export * from './labels';
 export * from './data';
+export * from './statistics';
 export * from './cartesian';
 
 // Alias used by factory helpers for readability & possible future augmentation.

@@ -24,7 +24,7 @@ import {
 } from '@ripl/3d';
 
 const context = createContext('.mount-element');
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 1.5, 5],
     target: [0, 0, 0],
 });

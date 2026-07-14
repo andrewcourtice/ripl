@@ -85,7 +85,7 @@ onMounted(() => {
         autoStop: false,
     });
 
-    scene.on('resize', () => renderFromSource());
+    scene.context.on('resize', () => renderFromSource());
 
     renderFromSource();
 });

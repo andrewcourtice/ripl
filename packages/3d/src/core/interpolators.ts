@@ -1,7 +1,7 @@
 import {
     typeIsVector3,
     vec3Lerp,
-} from './math/vector';
+} from '../math/vector';
 
 import type {
     InterpolatorFactory,
@@ -9,7 +9,7 @@ import type {
 
 import type {
     Vector3,
-} from './math/vector';
+} from '../math/vector';
 
 /** Interpolator factory for `Vector3` values, using component-wise linear interpolation. */
 export const interpolateVector3: InterpolatorFactory<Vector3> = Object.assign(
