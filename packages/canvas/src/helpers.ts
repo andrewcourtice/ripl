@@ -24,9 +24,13 @@ import type {
 
 /** Bounding rectangle used to resolve gradient coordinates. */
 export type GradientBounds = {
+    /** X coordinate of the rectangle's top-left corner. */
     x: number;
+    /** Y coordinate of the rectangle's top-left corner. */
     y: number;
+    /** Width of the bounding rectangle, in pixels. */
     width: number;
+    /** Height of the bounding rectangle, in pixels. */
     height: number;
 };
 
@@ -151,7 +155,9 @@ export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bo
 
 /** Result of a canvas rescale operation containing the updated coordinate scales. */
 export interface RescaleResult {
+    /** Scale mapping logical x coordinates to device pixels. */
     scaleX: Scale<number, number>;
+    /** Scale mapping logical y coordinates to device pixels. */
     scaleY: Scale<number, number>;
 }
 

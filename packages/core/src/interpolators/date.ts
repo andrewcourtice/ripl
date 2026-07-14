@@ -21,4 +21,5 @@ export const interpolateDate: InterpolatorFactory<Date> = (valueA, valueB) => {
     };
 };
 
+/** Predicate that matches when the value is a `Date` instance. */
 interpolateDate.test = typeIsDate;

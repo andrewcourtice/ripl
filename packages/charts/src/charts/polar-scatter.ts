@@ -72,8 +72,11 @@ const REST_ALPHA = 0.7;
 
 /** Configuration for an individual polar scatter series. */
 export interface PolarScatterSeriesOptions<TData> {
+    /** Unique identifier for the series. */
     id: string;
+    /** Optional colour override for the series (otherwise a palette colour is generated). */
     color?: string;
+    /** Display label for the series (shown in the legend and tooltips). */
     label: string;
     /** Angular position in degrees (0° at the top, increasing clockwise). */
     angle: NumericAccessor<TData>;
@@ -81,13 +84,17 @@ export interface PolarScatterSeriesOptions<TData> {
     radius: NumericAccessor<TData>;
     /** Optional accessor whose value scales each marker's size between `minRadius` and `maxRadius`. */
     sizeBy?: NumericAccessor<TData> | number;
+    /** Smallest marker radius in pixels when `sizeBy` is set. Defaults to 4. */
     minRadius?: number;
+    /** Largest marker radius in pixels when `sizeBy` is set. Defaults to 14. */
     maxRadius?: number;
 }
 
 /** Options for configuring a {@link PolarScatterChart}. */
 export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset plotted across all series. */
     data: TData[];
+    /** The series to render, each mapping the data to angle/radius positions. */
     series: PolarScatterSeriesOptions<TData>[];
     /** Maximum radial value (defaults to the largest radius value in the data). */
     maxRadiusValue?: number;
@@ -95,6 +102,7 @@ export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOpti
     levels?: number;
     /** Number of angular spokes/labels around the circle. Defaults to 8. */
     angleTicks?: number;
+    /** Legend configuration. Shown by default when there is more than one series. */
     legend?: ChartLegendInput;
     /** Format applied to radial values shown as text (tooltips + ring labels). */
     format?: ValueFormatInput;
@@ -102,18 +110,27 @@ export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOpti
 
 /** Payload emitted for polar scatter marker interaction events. */
 export interface PolarScatterMarkerEvent {
+    /** X position of the marker, in canvas coordinates. */
     x: number;
+    /** Y position of the marker, in canvas coordinates. */
     y: number;
+    /** The marker's angular value, in degrees. */
     angleValue: number;
+    /** The marker's radial value. */
     radiusValue: number;
+    /** The marker's size value (0 when the series has no `sizeBy` accessor). */
     sizeValue: number;
+    /** The id of the series the marker belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by a {@link PolarScatterChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface PolarScatterChartEventMap extends EventMap {
+    /** Emitted when a marker is clicked. */
     markerclick: PolarScatterMarkerEvent;
+    /** Emitted when the pointer enters a marker. */
     markerenter: PolarScatterMarkerEvent;
+    /** Emitted when the pointer leaves a marker. */
     markerleave: PolarScatterMarkerEvent;
 }
 
@@ -523,7 +540,26 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
 }
 
-/** Factory function that creates a new {@link PolarScatterChart} instance. */
+/**
+ * Factory function that creates a new {@link PolarScatterChart} instance.
+ *
+ * @example
+ * ```ts
+ * createPolarScatterChart(target, {
+ *     data: [
+ *         { bearing: 30, distance: 12, magnitude: 4 },
+ *         { bearing: 120, distance: 26, magnitude: 8 },
+ *     ],
+ *     series: [{
+ *         id: 'readings',
+ *         label: 'Readings',
+ *         angle: 'bearing',
+ *         radius: 'distance',
+ *         sizeBy: 'magnitude',
+ *     }],
+ * });
+ * ```
+ */
 export function createPolarScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: PolarScatterChartOptions<TData>) {
     return new PolarScatterChart<TData>(target, options);
 }

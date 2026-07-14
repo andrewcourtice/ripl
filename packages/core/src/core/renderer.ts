@@ -62,55 +62,86 @@ export type RendererTransitionDirection = TransitionDirection;
 
 /** Event map for the renderer, with start, stop, and per-frame tick events. */
 export interface RendererEventMap extends EventMap {
+    /** Emitted when the animation loop starts. */
     start: {
+        /** Timestamp at which the loop started, in milliseconds. */
         startTime: number;
     };
+    /** Emitted when the animation loop stops. */
     stop: {
+        /** Timestamp at which the loop originally started, in milliseconds. */
         startTime: number;
+        /** Timestamp at which the loop stopped, in milliseconds. */
         endTime: number;
     };
+    /** Emitted once per animation frame. */
     tick: {
+        /** Timestamp of the current frame, in milliseconds. */
         time: number;
+        /** Elapsed time since the previous frame, in milliseconds. */
         deltaTime: number;
     };
 }
 
 /** Internal representation of an active transition managed by the renderer. */
 export interface RendererTransition {
+    /** Timestamp at which the transition began, in milliseconds. */
     startTime: number;
+    /** Total duration of the transition, in milliseconds. */
     duration: number;
+    /** Easing function applied to the transition's progress. */
     ease: Ease;
+    /** Loop behaviour once the transition completes. */
     loop: TransitionLoopMode;
+    /** Playback direction of the transition. */
     direction: RendererTransitionDirection;
+    /** Interpolator advanced each frame to apply the transition to the element. */
     interpolator: Interpolator<void>;
+    /** Whether the transition is currently paused. */
     paused: boolean;
+    /** Elapsed offset, in milliseconds, captured when the transition was paused or seeked. */
     pauseOffset: number;
+    /** Invoked when the transition completes (a non-looping transition finishing). */
     callback(): void;
 }
 
 /** Options for scheduling a transition on one or more elements via the renderer. */
 export interface RendererTransitionOptions<TElement extends Element> {
+    /** Duration of the transition, in milliseconds. Defaults to `0`. */
     duration?: number;
+    /** Easing function applied to the transition's progress. Defaults to linear. */
     ease?: Ease;
+    /** Loop behaviour once the transition completes. Defaults to no looping. */
     loop?: TransitionLoopMode;
+    /** Delay, in milliseconds, before the transition begins. Defaults to `0`. */
     delay?: number;
+    /** Playback direction of the transition. Defaults to `forward`. */
     direction?: RendererTransitionDirection;
+    /** Target state (values, keyframes, or interpolators) the element transitions towards. */
     state: ElementInterpolationState<TElement extends Element<infer TState> ? TState : BaseElementState>;
+    /** Invoked with the element once its transition completes. */
     onComplete?(element: Element): void;
 }
 
 /** Options for enabling debug overlays on the renderer. */
 export interface RendererDebugOptions {
+    /** Whether to overlay the current frames-per-second reading. */
     fps?: boolean;
+    /** Whether to overlay the number of elements in the scene buffer. */
     elementCount?: boolean;
+    /** Whether to draw each element's bounding box. */
     boundingBoxes?: boolean;
 }
 
 /** Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays. */
 export interface RendererOptions {
+    /** Whether the renderer starts its animation loop automatically on construction. Defaults to `true`. */
     autoStart?: boolean;
+    /** Whether the renderer stops the loop when idle — no active transitions and the pointer has left. Defaults to `true`. */
     autoStop?: boolean;
+    /** Whether transitions apply their final state immediately rather than animating. */
     immediate?: boolean;
+    /** Enables debug overlays — `true` for all, or a {@link RendererDebugOptions} object to toggle individual overlays. */
     debug?: boolean | RendererDebugOptions;
 }
 
@@ -161,7 +192,9 @@ export class Renderer extends EventBus<RendererEventMap> {
     private _debugOptions: Required<RendererDebugOptions>;
     private _smoothedFps = 0;
 
+    /** Whether the renderer starts its animation loop automatically on construction. */
     public autoStart = true;
+    /** Whether the renderer stops the loop when idle — no active transitions and the pointer has left. */
     public autoStop = true;
 
     /** Whether there are any active transitions in progress. */

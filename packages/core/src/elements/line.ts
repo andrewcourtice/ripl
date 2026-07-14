@@ -19,15 +19,20 @@ import {
 
 /** State interface for a line element, defining start and end coordinates. */
 export interface LineState extends BaseElementState {
+    /** The x-coordinate of the line's start point. */
     x1: number;
+    /** The y-coordinate of the line's start point. */
     y1: number;
+    /** The x-coordinate of the line's end point. */
     x2: number;
+    /** The y-coordinate of the line's end point. */
     y2: number;
 }
 
 /** A straight line segment between two points. */
 export class Line extends Shape2D<LineState> {
 
+    /** The x-coordinate of the line's start point. */
     public get x1() {
         return this.getStateValue('x1');
     }
@@ -36,6 +41,7 @@ export class Line extends Shape2D<LineState> {
         this.setStateValue('x1', value);
     }
 
+    /** The y-coordinate of the line's start point. */
     public get y1() {
         return this.getStateValue('y1');
     }
@@ -44,6 +50,7 @@ export class Line extends Shape2D<LineState> {
         this.setStateValue('y1', value);
     }
 
+    /** The x-coordinate of the line's end point. */
     public get x2() {
         return this.getStateValue('x2');
     }
@@ -52,6 +59,7 @@ export class Line extends Shape2D<LineState> {
         this.setStateValue('x2', value);
     }
 
+    /** The y-coordinate of the line's end point. */
     public get y2() {
         return this.getStateValue('y2');
     }
@@ -64,6 +72,7 @@ export class Line extends Shape2D<LineState> {
         super('line', options);
     }
 
+    /** Returns the axis-aligned bounding box of the line. */
     public getBoundingBox(): Box {
         return new Box(
             min(this.y1, this.y2),
@@ -73,6 +82,7 @@ export class Line extends Shape2D<LineState> {
         );
     }
 
+    /** Renders the line to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
             path.moveTo(this.x1, this.y1);

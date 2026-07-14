@@ -14,8 +14,11 @@
 
 /** A circle to be packed; `x`/`y` are assigned by {@link packSiblings}. */
 export interface PackCircle {
+    /** Centre x, assigned by {@link packSiblings}. */
     x: number;
+    /** Centre y, assigned by {@link packSiblings}. */
     y: number;
+    /** Fixed radius of the circle (supplied by the caller). */
     r: number;
 }
 

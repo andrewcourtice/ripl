@@ -22,16 +22,22 @@ import type {
 
 /** State interface for a rectangle element, defining position, dimensions, and optional border radius. */
 export interface RectState extends BaseElementState {
+    /** The x-coordinate of the rectangle's top-left corner. */
     x: number;
+    /** The y-coordinate of the rectangle's top-left corner. */
     y: number;
+    /** The width of the rectangle. */
     width: number;
+    /** The height of the rectangle. */
     height: number;
+    /** The corner radius of the rectangle, uniform or per-corner. */
     borderRadius?: number | BorderRadius;
 }
 
 /** A rectangle shape with optional rounded corners via border radius. */
 export class Rect extends Shape2D<RectState> {
 
+    /** The x-coordinate of the rectangle's top-left corner. */
     public get x() {
         return this.getStateValue('x');
     }
@@ -40,6 +46,7 @@ export class Rect extends Shape2D<RectState> {
         this.setStateValue('x', value);
     }
 
+    /** The y-coordinate of the rectangle's top-left corner. */
     public get y() {
         return this.getStateValue('y');
     }
@@ -48,6 +55,7 @@ export class Rect extends Shape2D<RectState> {
         this.setStateValue('y', value);
     }
 
+    /** The width of the rectangle. */
     public get width() {
         return this.getStateValue('width');
     }
@@ -56,6 +64,7 @@ export class Rect extends Shape2D<RectState> {
         this.setStateValue('width', value);
     }
 
+    /** The height of the rectangle. */
     public get height() {
         return this.getStateValue('height');
     }
@@ -64,6 +73,7 @@ export class Rect extends Shape2D<RectState> {
         this.setStateValue('height', value);
     }
 
+    /** The corner radius of the rectangle, uniform or per-corner. */
     public get borderRadius() {
         return this.getStateValue('borderRadius');
     }
@@ -76,6 +86,7 @@ export class Rect extends Shape2D<RectState> {
         super('rect', options);
     }
 
+    /** Returns the axis-aligned bounding box of the rectangle. */
     public getBoundingBox(): Box {
         return new Box(
             this.y,
@@ -85,6 +96,7 @@ export class Rect extends Shape2D<RectState> {
         );
     }
 
+    /** Renders the rectangle to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
             const {

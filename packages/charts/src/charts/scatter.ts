@@ -76,25 +76,41 @@ import {
 
 /** Configuration for an individual scatter chart series. */
 export interface ScatterChartSeriesOptions<TData> {
+    /** Unique identifier for the series. */
     id: string;
+    /** Optional colour override for the series (otherwise a palette colour is generated). */
     color?: string;
+    /** Accessor for each item's value on the x-axis. */
     xBy: NumericAccessor<TData>;
+    /** Accessor for each item's value on the y-axis. */
     yBy: NumericAccessor<TData>;
+    /** Optional accessor whose value scales each bubble's size between `minRadius` and `maxRadius`. */
     sizeBy?: NumericAccessor<TData> | number;
+    /** Display label for the series, or an accessor deriving a per-item label. */
     label: string | ((item: TData) => string);
+    /** Smallest bubble radius in pixels. Defaults to 3. */
     minRadius?: number;
+    /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
 }
 
 /** Options for configuring a {@link ScatterChart}. */
 export interface ScatterChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset plotted across all series. */
     data: TData[];
+    /** The series to render, each mapping the data to x/y (and optional size) positions. */
     series: ScatterChartSeriesOptions<TData>[];
+    /** Accessor for each item's unique key, used to match bubbles across data updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Background grid line configuration. */
     grid?: ChartGridInput;
+    /** Crosshair overlay configuration. */
     crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration. */
     tooltip?: ChartTooltipInput;
+    /** Series legend configuration. */
     legend?: ChartLegendInput;
+    /** Axis configuration (labels, ticks, titles). */
     axis?: ChartAxisInput<TData>;
     /** Show value labels next to each bubble. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
@@ -104,18 +120,27 @@ export interface ScatterChartOptions<TData = unknown> extends CartesianChartOpti
 
 /** Payload emitted for scatter marker interaction events. */
 export interface ScatterChartMarkerEvent {
+    /** X position of the bubble, in canvas coordinates. */
     x: number;
+    /** Y position of the bubble, in canvas coordinates. */
     y: number;
+    /** The bubble's value on the x-axis. */
     xValue: number;
+    /** The bubble's value on the y-axis. */
     yValue: number;
+    /** The bubble's size value (equals the x/y position basis when the series has no `sizeBy`). */
     sizeValue: number;
+    /** The id of the series the bubble belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by a {@link ScatterChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface ScatterChartEventMap extends EventMap {
+    /** Emitted when a bubble is clicked. */
     markerclick: ScatterChartMarkerEvent;
+    /** Emitted when the pointer enters a bubble. */
     markerenter: ScatterChartMarkerEvent;
+    /** Emitted when the pointer leaves a bubble. */
     markerleave: ScatterChartMarkerEvent;
 }
 
@@ -595,7 +620,27 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
 }
 
-/** Factory function that creates a new {@link ScatterChart} instance. */
+/**
+ * Factory function that creates a new {@link ScatterChart} instance.
+ *
+ * @example
+ * ```ts
+ * createScatterChart(target, {
+ *     data: [
+ *         { id: 'a', weight: 70, height: 175, age: 30 },
+ *         { id: 'b', weight: 85, height: 182, age: 45 },
+ *     ],
+ *     key: 'id',
+ *     series: [{
+ *         id: 'people',
+ *         label: 'People',
+ *         xBy: 'height',
+ *         yBy: 'weight',
+ *         sizeBy: 'age',
+ *     }],
+ * });
+ * ```
+ */
 export function createScatterChart<TData = unknown>(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
     return new ScatterChart<TData>(target, options);
 }

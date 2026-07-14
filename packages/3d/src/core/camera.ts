@@ -33,26 +33,39 @@ export type CameraInteractionOption = boolean | CameraInteractionConfig;
 
 /** Fine-grained configuration for a single camera interaction. */
 export interface CameraInteractionConfig {
+    /** Whether the interaction is enabled. */
     enabled?: boolean;
+    /** A multiplier applied to the interaction's speed. Defaults to `1`. */
     sensitivity?: number;
 }
 
 /** Configures which camera interactions (zoom, pivot, pan) are enabled. */
 export interface CameraInteractions {
+    /** Zoom via mouse wheel and pinch gesture. */
     zoom?: CameraInteractionOption;
+    /** Orbit (pivot) around the target via drag and single-finger touch. */
     pivot?: CameraInteractionOption;
+    /** Pan the camera and target via middle/shift-drag and two-finger touch. */
     pan?: CameraInteractionOption;
 }
 
 /** Options for constructing a camera, including position, projection type, and interaction config. */
 export interface CameraOptions {
+    /** The camera's world-space position (eye point). Defaults to `[0, 0, 5]`. */
     position?: Vector3;
+    /** The world-space point the camera looks at. Defaults to `[0, 0, 0]`. */
     target?: Vector3;
+    /** The world-space up direction. Defaults to `[0, 1, 0]`. */
     up?: Vector3;
+    /** The vertical field of view in degrees. Defaults to `60`. */
     fov?: number;
+    /** The distance to the near clipping plane. Defaults to `0.1`. */
     near?: number;
+    /** The distance to the far clipping plane. Defaults to `1000`. */
     far?: number;
+    /** The projection type. Defaults to `'perspective'`. */
     projection?: 'perspective' | 'orthographic';
+    /** Enables camera interactions, either all at once with a boolean or individually via {@link CameraInteractions}. */
     interactions?: boolean | CameraInteractions;
 }
 
@@ -104,6 +117,7 @@ export class Camera extends Disposer {
     private _far: number;
     private _projection: 'perspective' | 'orthographic';
 
+    /** The camera's world-space position (eye point). */
     public get position() {
         return this._position;
     }
@@ -113,6 +127,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The world-space point the camera looks at. */
     public get target() {
         return this._target;
     }
@@ -122,6 +137,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The world-space up direction. */
     public get up() {
         return this._up;
     }
@@ -131,6 +147,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The vertical field of view in degrees. */
     public get fov() {
         return this._fov;
     }
@@ -140,6 +157,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The distance to the near clipping plane. */
     public get near() {
         return this._near;
     }
@@ -149,6 +167,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The distance to the far clipping plane. */
     public get far() {
         return this._far;
     }
@@ -158,6 +177,7 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /** The projection type, either `'perspective'` or `'orthographic'`. */
     public get projection() {
         return this._projection;
     }
@@ -225,6 +245,11 @@ export class Camera extends Disposer {
         }
     }
 
+    /**
+     * Orbits the camera around its target on a sphere.
+     * @param deltaTheta - The horizontal (azimuthal) rotation to apply, in radians.
+     * @param deltaPhi - The vertical (polar) rotation to apply, in radians. Clamped to avoid flipping over the poles.
+     */
     public orbit(deltaTheta: number, deltaPhi: number): void {
         const offset = vec3Sub(this._position, this._target);
         const dist = vec3Distance(this._position, this._target);
@@ -245,6 +270,11 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /**
+     * Pans the camera and its target together across the view plane.
+     * @param dx - The distance to move along the camera's right axis, in world units.
+     * @param dy - The distance to move along the camera's up axis, in world units.
+     */
     public pan(dx: number, dy: number): void {
         const forward = vec3Normalize(vec3Sub(this._target, this._position));
         const right = vec3Normalize(vec3Cross(forward, this._up));
@@ -261,6 +291,10 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /**
+     * Dollies the camera toward or away from its target along the view direction.
+     * @param delta - The distance to move toward the target, in world units. Clamped so the camera never passes the target.
+     */
     public zoom(delta: number): void {
         const direction = vec3Normalize(vec3Sub(this._target, this._position));
         const dist = vec3Distance(this._position, this._target);
@@ -271,6 +305,10 @@ export class Camera extends Disposer {
         this._markDirty();
     }
 
+    /**
+     * Points the camera at a new world-space target.
+     * @param target - The world-space point to look at.
+     */
     public lookAt(target: Vector3): void {
         this._target = target;
         this._markDirty();

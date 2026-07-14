@@ -72,6 +72,7 @@ const REST_ALPHA = 0.25;
 
 /** Options for configuring a {@link BoxPlotChart}. */
 export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset summarised by the chart. */
     data: TData[];
     /** Accessor for the category each value belongs to. */
     group: keyof TData | ((item: TData) => string);
@@ -79,9 +80,13 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
     categories?: string[];
+    /** Colour used for every box; falls back to the first palette colour when omitted. */
     color?: string;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Axis configuration for the category and value axes. */
     axis?: ChartAxisInput<TData>;
     /** Format applied to summary values shown in tooltips. */
     format?: ValueFormatInput;
@@ -89,16 +94,23 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
 
 /** Payload emitted for box interaction events. */
 export interface BoxPlotBoxEvent {
+    /** The x coordinate (in chart pixels) of the box's top-centre anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the box's top-centre anchor. */
     y: number;
+    /** The category the interacted box summarises. */
     category: string;
+    /** The computed five-number summary (quartiles, whiskers, outliers) for the box. */
     stats: BoxplotStats;
 }
 
 /** Events emitted by a {@link BoxPlotChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface BoxPlotChartEventMap extends EventMap {
+    /** Emitted when a box is clicked. */
     boxclick: BoxPlotBoxEvent;
+    /** Emitted when the pointer enters a box. */
     boxenter: BoxPlotBoxEvent;
+    /** Emitted when the pointer leaves a box. */
     boxleave: BoxPlotBoxEvent;
 }
 
@@ -416,7 +428,22 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
 }
 
-/** Factory function that creates a new {@link BoxPlotChart}. */
+/**
+ * Factory function that creates a new {@link BoxPlotChart}.
+ *
+ * @example
+ * ```ts
+ * createBoxPlotChart(target, {
+ *     data: [
+ *         { team: 'A', score: 82 },
+ *         { team: 'A', score: 91 },
+ *         { team: 'B', score: 74 },
+ *     ],
+ *     group: 'team',
+ *     value: 'score',
+ * });
+ * ```
+ */
 export function createBoxPlotChart<TData = unknown>(target: string | HTMLElement | Context, options: BoxPlotChartOptions<TData>) {
     return new BoxPlotChart<TData>(target, options);
 }

@@ -32,8 +32,11 @@ export type ArrayJoinPredicate<TLeft, TRight> = keyof (TLeft & TRight) | Predica
 
 /** Result of an array join containing unmatched left items, matched pairs, and unmatched right items. */
 export interface ArrayJoin<TLeft, TRight> {
+    /** Left items with no matching right item (entries). */
     left: TLeft[];
+    /** Matched pairs of left and right items (updates). */
     inner: [left: TLeft, right: TRight][];
+    /** Right items with no matching left item (exits). */
     right: TRight[];
 }
 

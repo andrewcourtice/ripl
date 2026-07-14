@@ -15,7 +15,9 @@ export type StringInterpolationFormatter = (value: number) => number;
 
 /** A tagged template result capturing the static fragments and dynamic numeric arguments. */
 export interface StringInterpolatorTag {
+    /** The static string fragments surrounding the interpolated values. */
     fragments: TemplateStringsArray;
+    /** The numeric values interpolated between the fragments. */
     args: number[];
 }
 

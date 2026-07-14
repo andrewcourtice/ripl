@@ -77,7 +77,9 @@ import {
     functionIdentity,
 } from '@ripl/utilities';
 
+/** Whether bars are laid out vertically (default) or horizontally. */
 export type BarChartOrientation = 'vertical' | 'horizontal';
+/** Whether multiple series are drawn side by side (`grouped`) or accumulated into one column (`stacked`). */
 export type BarChartMode = 'grouped' | 'stacked';
 
 /** The opacity applied to a bar's fill at rest (full opacity is used on hover). */
@@ -85,23 +87,37 @@ const REST_ALPHA = 0.78;
 
 /** Configuration for an individual bar chart series. */
 export interface BarChartSeriesOptions<TData> {
+    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
     id: string;
+    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
     color?: string;
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
+    /** Human-readable series name shown in the legend and tooltips. */
     label: string;
 }
 
 /** Options for configuring a {@link BarChart}. */
 export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset rendered by the chart. */
     data: TData[];
+    /** The series to draw from each data item. */
     series: BarChartSeriesOptions<TData>[];
+    /** Accessor for each item's category key (the value plotted along the categorical axis). */
     key: keyof TData | ((item: TData) => string);
+    /** Whether bars run vertically (default) or horizontally. */
     orientation?: BarChartOrientation;
+    /** Whether multiple series are grouped side by side (default) or stacked. */
     mode?: BarChartMode;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
+    /** Axis configuration for the categorical and value axes. */
     axis?: ChartAxisInput<TData>;
+    /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;
     /** Show value labels next to each bar. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
@@ -111,17 +127,25 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
 
 /** Payload emitted for bar interaction events. */
 export interface BarChartBarEvent {
+    /** The x coordinate (in chart pixels) of the bar's anchor point. */
     x: number;
+    /** The y coordinate (in chart pixels) of the bar's anchor point. */
     y: number;
+    /** The category key of the interacted bar. */
     xValue: string;
+    /** The numeric value of the interacted bar. */
     yValue: number;
+    /** The id of the series the bar belongs to. */
     seriesId: string;
 }
 
 /** Events emitted by a {@link BarChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface BarChartEventMap extends EventMap {
+    /** Emitted when a bar is clicked. */
     barclick: BarChartBarEvent;
+    /** Emitted when the pointer enters a bar. */
     barenter: BarChartBarEvent;
+    /** Emitted when the pointer leaves a bar. */
     barleave: BarChartBarEvent;
 }
 
@@ -798,7 +822,23 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
 }
 
-/** Factory function that creates a new {@link BarChart} instance. */
+/**
+ * Factory function that creates a new {@link BarChart} instance.
+ *
+ * @example
+ * ```ts
+ * createBarChart(target, {
+ *     data: [
+ *         { quarter: 'Q1', revenue: 120 },
+ *         { quarter: 'Q2', revenue: 155 },
+ *     ],
+ *     key: 'quarter',
+ *     series: [
+ *         { id: 'revenue', label: 'Revenue', value: 'revenue' },
+ *     ],
+ * });
+ * ```
+ */
 export function createBarChart<TData = unknown>(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
     return new BarChart<TData>(target, options);
 }

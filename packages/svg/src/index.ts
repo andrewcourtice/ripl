@@ -55,20 +55,26 @@ type SVGVNode = VNode<SVGContextElement>;
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
 type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
 
+/** The mutable subset of `CSSStyleDeclaration` properties that can be assigned as inline SVG element styles. */
 type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
 };
 
 /** Definition for an SVG context element, describing its tag, inline styles, and attributes. */
 export interface SVGContextElementDefinition {
+    /** The SVG element tag name to create. */
     tag: keyof SVGElementTagNameMap;
+    /** Inline styles applied to the element. */
     styles: Partial<Styles>;
+    /** Attributes set on the element. */
     attributes: Record<string, string>;
+    /** Optional text content rendered inside the element. */
     textContent?: string;
 }
 
 /** An SVG-specific context element carrying its rendering definition. */
 export interface SVGContextElement extends ContextElement {
+    /** The rendering definition describing how to build this element's SVG node. */
     definition: SVGContextElementDefinition;
 }
 
@@ -273,6 +279,7 @@ function svgMarkupToImageData(markup: string, width: number, height: number): Pr
 /** SVG-specific path implementation that builds an SVG `d` attribute string from drawing commands. */
 export class SVGPath extends ContextPath implements SVGContextElement {
 
+    /** The rendering definition describing this path's SVG `<path>` node. */
     public definition: SVGContextElementDefinition;
 
     constructor(id?: string) {
@@ -294,6 +301,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
     }
 
+    /** Adds an arc centred at `(x, y)` with the given radius to the path. */
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
         const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
@@ -304,25 +312,30 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this._appendElementData(`A ${radius} ${radius} 0 ${largeArcFlag} ${clockwiseFlag} ${x2},${y2}`);
     }
 
+    /** Adds an arc connecting two tangents defined by the given points to the path. */
     public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
         this.moveTo(x1, y1);
         this._appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
     }
 
+    /** Adds a full circle centred at `(x, y)` to the path. */
     public circle(x: number, y: number, radius: number): void {
         this.moveTo(x + radius, y);
         this._appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
         this._appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * 2},0`);
     }
 
+    /** Adds a cubic Bézier curve to the path. */
     public bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number): void {
         this._appendElementData(`C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x},${y}`);
     }
 
+    /** Closes the current sub-path with a straight line back to its start. */
     public closePath(): void {
         this._appendElementData('Z');
     }
 
+    /** Adds an elliptical arc centred at `(x, y)` to the path. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const rotDeg = rotation * 180 / Math.PI;
         const cos = Math.cos(rotation);
@@ -360,18 +373,22 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         }
     }
 
+    /** Adds a straight line from the current point to `(x, y)`. */
     public lineTo(x: number, y: number): void {
         this._appendElementData(`L ${x},${y}`);
     }
 
+    /** Moves the current point to `(x, y)` without adding a line. */
     public moveTo(x: number, y: number): void {
         this._appendElementData(`M ${x},${y}`);
     }
 
+    /** Adds a quadratic Bézier curve to the path. */
     public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
         this._appendElementData(`Q ${cpx},${cpy} ${x},${y}`);
     }
 
+    /** Adds a rectangle to the path. */
     public rect(x: number, y: number, width: number, height: number): void {
         this.moveTo(x, y);
         this.lineTo(x + width, y);
@@ -380,6 +397,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.lineTo(x, y);
     }
 
+    /** Adds a rounded rectangle to the path, using the given corner radii. */
     public roundRect(x: number, y: number, width: number, height: number, radii?: BorderRadius): void {
         if (!radii) {
             return this.rect(x, y, width, height);
@@ -409,6 +427,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
 /** SVG-specific text element mapping position and content to SVG `<text>` attributes. */
 export class SVGText extends ContextText implements SVGContextElement {
 
+    /** The rendering definition describing this text's SVG `<text>` node. */
     public definition: SVGContextElementDefinition;
 
     constructor(options: TextOptions) {
@@ -440,7 +459,9 @@ export class SVGText extends ContextText implements SVGContextElement {
 /** SVG-specific image element wrapping a `CanvasImageSource` as an SVG `<image>` tag. */
 export class SVGImage implements SVGContextElement {
 
+    /** Unique identifier for this element. */
     public readonly id: string;
+    /** The rendering definition describing this image's SVG `<image>` node. */
     public definition: SVGContextElementDefinition;
 
     constructor(id: string, href: string, x: number, y: number, width: number, height: number) {
@@ -464,7 +485,9 @@ export class SVGImage implements SVGContextElement {
 /** SVG `<textPath>` element for rendering text along a path defined in `<defs>`. */
 export class SVGTextPath implements SVGContextElement {
 
+    /** Unique identifier for this element, derived from the owning text element's id. */
     public readonly id: string;
+    /** The rendering definition describing this element's SVG `<textPath>` node. */
     public definition: SVGContextElementDefinition;
 
     constructor(textId: string, pathId: string, content: string, startOffset?: number) {
@@ -665,6 +688,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         reconcileNode(this.element, this._vtree, this._domCache, this._reconcilerOptions);
     }
 
+    /** Signals the start of a render pass; resets the virtual DOM tree at the outermost depth. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this._vtree = {
@@ -677,6 +701,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         super.markRenderStart();
     }
 
+    /** Signals the end of a render pass, reconciling the virtual DOM tree to the SVG surface at the outermost depth. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
@@ -691,6 +716,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         }
     }
 
+    /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
     public export(): ContextExport {
         // Rendering is deferred to rAF when buffering is enabled, so force a synchronous reconcile
         // to ensure the serialized markup reflects the latest scene.
@@ -709,6 +735,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         };
     }
 
+    /** Creates a new {@link SVGPath} and adds it to the virtual DOM tree. */
     public createPath(id?: string): SVGPath {
         const path = new SVGPath(id);
         this._addToVTree(path);
@@ -716,6 +743,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         return path;
     }
 
+    /** Creates a new {@link SVGText} element from the given options, wiring up text-on-a-path when path data is supplied. */
     public createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
         const renderElement = this.currentRenderElement;
@@ -770,6 +798,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         return text;
     }
 
+    /** Draws an image onto the SVG surface at the given position and optional size. */
     public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
         const [sourceWidth, sourceHeight] = getImageSourceSize(image);
         const imgWidth = width ?? sourceWidth;
@@ -786,40 +815,48 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._addToVTree(svgImage);
     }
 
+    /** Saves the current drawing state, transform, and clip onto their stacks. */
     public save(): void {
         this._transformStack.push([...this._currentTransforms]);
         this._clipStack.push(this._currentClipId);
         super.save();
     }
 
+    /** Restores the most recently saved drawing state, transform, and clip from their stacks. */
     public restore(): void {
         this._currentTransforms = this._transformStack.pop() || [];
         this._currentClipId = this._clipStack.pop();
         super.restore();
     }
 
+    /** Applies a rotation transformation, in radians. */
     public rotate(angle: number): void {
         this._currentTransforms.push(`rotate(${radiansToDegrees(angle)})`);
     }
 
+    /** Applies a scale transformation. */
     public scale(x: number, y: number): void {
         this._currentTransforms.push(`scale(${x},${y})`);
     }
 
+    /** Applies a translation transformation. */
     public translate(x: number, y: number): void {
         this._currentTransforms.push(`translate(${x},${y})`);
     }
 
+    /** Replaces the current transformation with the given matrix values. */
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         this._currentTransforms = [`matrix(${a},${b},${c},${d},${e},${f})`];
     }
 
+    /** Multiplies the current transformation by the given matrix values. */
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         this._currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
+    /** Clips subsequent drawing operations to the given path. */
     public applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
         let cached = this._clipCache.get(cacheKey);
@@ -856,6 +893,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentClipId = cached.clipId;
     }
 
+    /** Fills the given element using the current fill style, resolving gradients into `<defs>`. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this._setElementStyles(element, {
@@ -863,6 +901,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
+    /** Strokes the given element using the current stroke style and line properties. */
     public applyStroke(element: SVGContextElement): void {
         this._setElementStyles(element, {
             stroke: this._resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),
@@ -875,24 +914,35 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
+    /** Measures text dimensions using the context's current font or an optional override. */
     public measureText(text: string, font?: string): TextMetrics {
         return measureText(text, {
             font: font ?? this.currentState.font,
         });
     }
 
+    /** Tests whether a point lies inside the filled region of a path. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public isPointInPath(path: SVGPath, x: number, y: number, fillRule?: FillRule): boolean {
         return this._isPointIn('fill', path, x, y);
     }
 
+    /** Tests whether a point lies on the stroked outline of a path. */
     public isPointInStroke(path: SVGPath, x: number, y: number): boolean {
         return this._isPointIn('stroke', path, x, y);
     }
 
 }
 
-/** Creates an SVG rendering context attached to the given DOM target. */
+/**
+ * Creates an SVG rendering context (a concrete `Context`) attached to the given DOM target.
+ *
+ * @param target - A DOM element or CSS selector identifying the element to mount the SVG into.
+ * @param options - Optional context configuration such as interactivity and metadata.
+ * @returns The constructed {@link SVGContext}.
+ * @example
+ * const context = createContext(target);
+ */
 export function createContext(target: string | HTMLElement, options?: ContextOptions): SVGContext {
     return new SVGContext(target, options);
 }

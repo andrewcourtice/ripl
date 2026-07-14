@@ -27,12 +27,19 @@ export type { SegmentLabelPosition };
 
 /** Describes a single data label to render. */
 export interface DataLabelSpec {
+    /** Unique element id for the label. */
     id: string;
+    /** Anchor x coordinate, in chart pixels. */
     x: number;
+    /** Anchor y coordinate, in chart pixels. */
     y: number;
+    /** Which side of the anchor point the label sits on. */
     anchor: LabelAnchor;
+    /** The label text. */
     content: string;
+    /** CSS font shorthand for the label text. */
     font: string;
+    /** Colour of the label text. */
     fill: string;
     /** Distance in pixels between the anchor point and the label. */
     offset?: number;
@@ -102,12 +109,17 @@ export const SEGMENT_LABEL_OUTSIDE_FILL = '#333333';
 
 /** Describes a single segment label to render. */
 export interface SegmentLabelSpec {
+    /** Optional element id for the label. */
     id?: string;
+    /** Label x coordinate, in chart pixels. */
     x: number;
+    /** Label y coordinate, in chart pixels. */
     y: number;
+    /** The label text. */
     content: string;
     /** Defaults to the shared centered/middle alignment used for inside labels. */
     textAlign?: TextState['textAlign'];
+    /** Vertical text baseline; defaults to the shared middle alignment used for inside labels. */
     textBaseline?: TextState['textBaseline'];
     /** Defaults to {@link SEGMENT_LABEL_FONT}. */
     font?: string;
@@ -115,6 +127,7 @@ export interface SegmentLabelSpec {
     fill?: string;
     /** Initial opacity (defaults to 0 so callers can fade the label in). */
     opacity?: number;
+    /** Stacking order relative to sibling elements (defaults to 1). */
     zIndex?: number;
 }
 
@@ -140,9 +153,13 @@ export function createSegmentLabel(spec: SegmentLabelSpec): Text {
 
 /** Input geometry for placing a label around a radial (arc-based) segment. */
 export interface RadialLabelInput {
+    /** Centre x of the radial layout, in chart pixels. */
     cx: number;
+    /** Centre y of the radial layout, in chart pixels. */
     cy: number;
+    /** Start angle of the segment, in radians. */
     startAngle: number;
+    /** End angle of the segment, in radians. */
     endAngle: number;
     /** Outer radius of the segment. */
     radius: number;
@@ -160,9 +177,13 @@ export interface RadialLabelInput {
 
 /** A resolved anchor for a radial label, plus alignment. */
 export interface RadialLabelAnchor {
+    /** Anchor x coordinate, in chart pixels. */
     x: number;
+    /** Anchor y coordinate, in chart pixels. */
     y: number;
+    /** Horizontal text alignment for the label at this anchor. */
     textAlign: TextState['textAlign'];
+    /** Vertical text baseline for the label at this anchor. */
     textBaseline: TextState['textBaseline'];
 }
 
@@ -173,7 +194,10 @@ export interface RadialLabelPlacement {
     /** Centered anchor at the segment centroid. */
     inside: RadialLabelAnchor;
     /** Anchor beyond the outer edge, with a leader-line polyline from the arc to the label. */
-    outside: RadialLabelAnchor & { connector: Point[] };
+    outside: RadialLabelAnchor & {
+        /** Leader-line polyline points from the arc edge to the label. */
+        connector: Point[];
+    };
 }
 
 /**
@@ -234,11 +258,17 @@ export interface SegmentLabelLayout {
     visible: boolean;
     /** Text content, or `''` when hidden. */
     content: string;
+    /** Label anchor x coordinate, in chart pixels. */
     x: number;
+    /** Label anchor y coordinate, in chart pixels. */
     y: number;
+    /** Horizontal text alignment for the label. */
     textAlign: TextState['textAlign'];
+    /** Vertical text baseline for the label. */
     textBaseline: TextState['textBaseline'];
+    /** Colour of the label text. */
     fill: string;
+    /** CSS font shorthand for the label text (falls back to the shared segment-label font). */
     font?: string;
     /** Leader-line points; always ≥2 (a degenerate line at the anchor when hidden/inside). */
     connector: Point[];

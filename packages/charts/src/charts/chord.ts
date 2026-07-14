@@ -75,10 +75,15 @@ const RIBBON_STROKE_ALPHA = 0.4;
 
 /** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
+    /** Group labels, one per row/column of the matrix, rendered as outer arcs. */
     labels: string[];
+    /** Square flow matrix where `matrix[i][j]` is the flow from group `i` to group `j`. */
     matrix: number[][];
+    /** Explicit colour per group; falls back to the generated palette when omitted. */
     colors?: string[];
+    /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
     padAngle?: number;
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
     /** Format applied to flow values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -86,30 +91,47 @@ export interface ChordChartOptions extends BaseChartOptions {
 
 /** Payload emitted for chord outer-arc interaction events. */
 export interface ChordChartArcEvent {
+    /** The x coordinate (in chart pixels) of the arc's centroid. */
     x: number;
+    /** The y coordinate (in chart pixels) of the arc's centroid. */
     y: number;
+    /** The id of the interacted arc. */
     id: string;
+    /** The group label of the interacted arc. */
     label: string;
+    /** The group's total flow (sum of its matrix row). */
     value: number;
 }
 
 /** Payload emitted for chord ribbon interaction events. */
 export interface ChordChartRibbonEvent {
+    /** The x coordinate (in chart pixels) of the ribbon anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the ribbon anchor. */
     y: number;
+    /** The id of the interacted ribbon. */
     id: string;
+    /** The label of the ribbon's source group. */
     sourceLabel: string;
+    /** The label of the ribbon's target group. */
     targetLabel: string;
+    /** The flow value the ribbon represents. */
     value: number;
 }
 
 /** Events emitted by a {@link ChordChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface ChordChartEventMap extends EventMap {
+    /** Emitted when an outer arc is clicked. */
     arcclick: ChordChartArcEvent;
+    /** Emitted when the pointer enters an outer arc. */
     arcenter: ChordChartArcEvent;
+    /** Emitted when the pointer leaves an outer arc. */
     arcleave: ChordChartArcEvent;
+    /** Emitted when a ribbon is clicked. */
     ribbonclick: ChordChartRibbonEvent;
+    /** Emitted when the pointer enters a ribbon. */
     ribbonenter: ChordChartRibbonEvent;
+    /** Emitted when the pointer leaves a ribbon. */
     ribbonleave: ChordChartRibbonEvent;
 }
 
@@ -556,7 +578,21 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
 }
 
-/** Factory function that creates a new {@link ChordChart} instance. */
+/**
+ * Factory function that creates a new {@link ChordChart} instance.
+ *
+ * @example
+ * ```ts
+ * createChordChart(target, {
+ *     labels: ['A', 'B', 'C'],
+ *     matrix: [
+ *         [0, 5, 2],
+ *         [5, 0, 3],
+ *         [2, 3, 0],
+ *     ],
+ * });
+ * ```
+ */
 export function createChordChart(target: string | HTMLElement | Context, options: ChordChartOptions) {
     return new ChordChart(target, options);
 }

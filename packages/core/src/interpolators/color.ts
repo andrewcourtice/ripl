@@ -39,4 +39,5 @@ export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) =>
     );
 };
 
+/** Predicate that matches when the value is a parseable colour string. */
 interpolateColor.test = value => typeIsString(value) && !!getColorParser(value);

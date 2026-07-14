@@ -18,17 +18,25 @@ import type {
 
 /** Low-level options for constructing a scale, providing conversion, inversion, inclusion, and tick generation callbacks. */
 export interface ScaleBindingOptions<TDomain, TRange> {
+    /** The input domain the scale maps from. */
     readonly domain: TDomain[];
+    /** The output range the scale maps to. */
     readonly range: TRange[];
+    /** Maps a domain value to its corresponding range value. */
     convert: ScaleMethod<TDomain, TRange>;
+    /** Maps a range value back to its corresponding domain value. */
     invert: ScaleMethod<TRange, TDomain>;
+    /** Tests whether a value falls within the domain. Defaults to a strict `domain.includes` check. */
     includes?(value: TDomain): boolean;
+    /** Generates tick values across the domain. Defaults to returning a copy of the domain. */
     ticks?(count?: number): TDomain[];
 }
 
 /** Options shared by linear-based scales (continuous, logarithmic, power, etc.). */
 export interface LinearScaleOptions {
+    /** Constrains mapped values to the range bounds, so out-of-domain inputs never overshoot. */
     clamp?: boolean;
+    /** Expands the mapping domain to tick-aligned boundaries. `true` uses ~10 ticks; a number sets the target tick count. */
     padToTicks?: boolean | number;
     /**
      * Expand the domain to round, tick-aligned boundaries at construction. `true` uses ~10 ticks; a

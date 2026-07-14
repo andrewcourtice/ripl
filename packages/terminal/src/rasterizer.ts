@@ -10,12 +10,19 @@ export interface SerializeOptions {
 
 /** Abstract rasterizer interface for converting pixel data to terminal characters. */
 export interface Rasterizer {
+    /** Total width of the pixel grid the rasterizer renders into. */
     readonly pixelWidth: number;
+    /** Total height of the pixel grid the rasterizer renders into. */
     readonly pixelHeight: number;
+    /** Resizes the grid to the given number of terminal columns and rows, clearing its contents. */
     resize(cols: number, rows: number): void;
+    /** Sets the sub-cell pixel at (x, y) to the given color. */
     setPixel(x: number, y: number, color: string): void;
+    /** Places a literal character in the given cell with the given color. */
     setChar(col: number, row: number, char: string, color: string): void;
+    /** Clears all pixels, characters, and colors from the grid. */
     clear(): void;
+    /** Serializes the grid to a terminal-ready string (ANSI-colored by default). */
     serialize(options?: SerializeOptions): string;
     /** Rasterizes the current grid to environment-agnostic RGBA pixel data. */
     toImageData(): ImageData;
@@ -109,10 +116,12 @@ export class BrailleRasterizer implements Rasterizer {
     }>;
 
 
+    /** Total pixel width of the grid (columns times cell width). */
     public get pixelWidth() {
         return this._cols * BRAILLE_CELL_WIDTH;
     }
 
+    /** Total pixel height of the grid (rows times cell height). */
     public get pixelHeight() {
         return this._rows * BRAILLE_CELL_HEIGHT;
     }
@@ -128,6 +137,7 @@ export class BrailleRasterizer implements Rasterizer {
         this._chars = new Map();
     }
 
+    /** Resizes the grid to the given columns and rows, discarding all existing contents. */
     public resize(cols: number, rows: number): void {
         this._cols = cols;
         this._rows = rows;
@@ -139,6 +149,7 @@ export class BrailleRasterizer implements Rasterizer {
         this._chars = new Map();
     }
 
+    /** Sets the braille dot covering pixel (x, y) and stores its color; out-of-bounds pixels are ignored. */
     public setPixel(x: number, y: number, color: string): void {
         const px = Math.round(x);
         const py = Math.round(y);
@@ -160,6 +171,7 @@ export class BrailleRasterizer implements Rasterizer {
         }
     }
 
+    /** Places a literal character in the given cell, overriding its braille dots; out-of-bounds cells are ignored. */
     public setChar(col: number, row: number, char: string, color: string): void {
         if (col < 0 || row < 0 || col >= this._cols || row >= this._rows) {
             return;
@@ -171,6 +183,7 @@ export class BrailleRasterizer implements Rasterizer {
         });
     }
 
+    /** Clears all dots, characters, and colors from the grid. */
     public clear(): void {
         this._dots.fill(0);
         this._colors.fill('');
@@ -240,6 +253,7 @@ export class BrailleRasterizer implements Rasterizer {
         return output;
     }
 
+    /** Serializes the grid to a string, including ANSI color and cursor codes unless `ansi` is disabled. */
     public serialize(options?: SerializeOptions): string {
         const ansi = options?.ansi ?? true;
 
@@ -263,6 +277,7 @@ export class BrailleRasterizer implements Rasterizer {
         return output;
     }
 
+    /** Rasterizes the grid to environment-agnostic RGBA pixel data. */
     public toImageData(): ImageData {
         const width = this.pixelWidth;
         const height = this.pixelHeight;

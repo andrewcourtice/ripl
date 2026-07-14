@@ -193,15 +193,21 @@ export class GeometryManager {
 
 /** A single draw call within a flush result. */
 export interface DrawCommand {
+    /** Number of indices to draw for this mesh. */
     indexCount: number;
+    /** Offset into the shared index buffer where this mesh's indices begin. */
     indexOffset: number;
+    /** Bind group holding this mesh's model and normal matrices. */
     modelBindGroup: GPUBindGroup;
 }
 
 /** Result of flushing all queued meshes — buffers and per-mesh draw commands. */
 export interface FlushResult {
+    /** GPU buffer containing all uploaded vertex data for the frame. */
     vertexBuffer: GPUBuffer;
+    /** GPU buffer containing all uploaded index data for the frame. */
     indexBuffer: GPUBuffer;
+    /** Per-mesh draw commands into the shared vertex and index buffers. */
     draws: DrawCommand[];
 }
 
@@ -211,7 +217,9 @@ export function triangulatefaces(
     modelMatrix: Matrix4,
     color: ColorRGBA
 ): {
+    /** Interleaved vertex data (positions, normals, colours) for all triangles. */
     vertices: Float32Array;
+    /** Triangle vertex indices into {@link vertices}. */
     indices: Uint32Array;
 } {
     let vertexCount = 0;

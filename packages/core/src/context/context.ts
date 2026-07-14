@@ -96,23 +96,35 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
+    /** The context type identifier (e.g. `canvas`, `svg`). */
     public readonly type: string;
+    /** The underlying DOM element the context renders into. */
     public readonly element: TElement;
+    /** Arbitrary metadata attached to the context. */
     public readonly meta: TMeta;
 
+    /** Whether drawing is buffered rather than committed to the surface immediately. */
     public buffer = false;
+    /** Current width, in pixels, of the rendering surface. */
     public width: number;
+    /** Current height, in pixels, of the rendering surface. */
     public height: number;
+    /** {@link Scale} mapping domain x coordinates to surface x coordinates. */
     public scaleX: Scale<number, number>;
+    /** {@link Scale} mapping domain y coordinates to surface y coordinates. */
     public scaleY: Scale<number, number>;
+    /** {@link Scale} mapping logical pixels to device pixels using the device pixel ratio. */
     public scaleDPR: Scale<number, number>;
+    /** The element currently being rendered, if any. */
     public renderElement?: RenderElement;
+    /** Elements rendered during the current pass, used for hit testing. */
     public renderedElements: RenderElement[];
 
     protected states: BaseState[];
     protected currentState: BaseState;
     protected renderDepth = 0;
 
+    /** The element currently being rendered; setting a non-abstract element also records it in {@link Context.renderedElements}. */
     public get currentRenderElement() {
         return this.renderElement;
     }
@@ -125,6 +137,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         }
     }
 
+    /** Fill style (CSS colour, gradient, or pattern) used to paint filled regions. */
     public get fill(): string {
         return this.currentState.fill;
     }
@@ -133,6 +146,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.fill = value;
     }
 
+    /** CSS filter string applied to subsequent drawing operations (e.g. `blur(4px)`). */
     public get filter(): string {
         return this.currentState.filter;
     }
@@ -141,6 +155,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.filter = value;
     }
 
+    /** Directionality used when rendering text. */
     public get direction(): Direction {
         return this.currentState.direction;
     }
@@ -149,6 +164,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.direction = value;
     }
 
+    /** CSS font shorthand used when rendering text. */
     public get font(): string {
         return this.currentState.font;
     }
@@ -157,6 +173,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.font = value;
     }
 
+    /** Whether font kerning is applied when rendering text. */
     public get fontKerning(): FontKerning {
         return this.currentState.fontKerning;
     }
@@ -165,6 +182,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.fontKerning = value;
     }
 
+    /** Global alpha applied to everything drawn, from 0 to 1. */
     public get opacity(): number {
         return this.currentState.opacity;
     }
@@ -173,6 +191,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.opacity = value;
     }
 
+    /** Compositing operation controlling how new drawing is blended with existing content. */
     public get globalCompositeOperation(): unknown {
         return this.currentState.globalCompositeOperation;
     }
@@ -181,6 +200,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.globalCompositeOperation = value;
     }
 
+    /** Cap style drawn at the endpoints of stroked lines. */
     public get lineCap(): LineCap {
         return this.currentState.lineCap;
     }
@@ -189,6 +209,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.lineCap = value;
     }
 
+    /** Dash pattern as alternating stroke and gap lengths; empty for a solid line. */
     public get lineDash(): number[] {
         return this.currentState.lineDash;
     }
@@ -197,6 +218,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.lineDash = value;
     }
 
+    /** Distance into the line dash pattern at which dashing begins. */
     public get lineDashOffset(): number {
         return this.currentState.lineDashOffset;
     }
@@ -205,6 +227,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.lineDashOffset = value;
     }
 
+    /** Join style drawn where two stroked segments meet. */
     public get lineJoin(): LineJoin {
         return this.currentState.lineJoin;
     }
@@ -213,6 +236,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.lineJoin = value;
     }
 
+    /** Width, in pixels, of stroked lines. */
     public get lineWidth(): number {
         return this.currentState.lineWidth;
     }
@@ -221,6 +245,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.lineWidth = value;
     }
 
+    /** Miter length limit ratio applied to `miter` line joins. */
     public get miterLimit(): number {
         return this.currentState.miterLimit;
     }
@@ -229,6 +254,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.miterLimit = value;
     }
 
+    /** Gaussian blur radius applied to drawn shadows. */
     public get shadowBlur(): number {
         return this.currentState.shadowBlur;
     }
@@ -237,6 +263,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowBlur = value;
     }
 
+    /** Colour of drawn shadows. */
     public get shadowColor(): string {
         return this.currentState.shadowColor;
     }
@@ -245,6 +272,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowColor = value;
     }
 
+    /** Horizontal offset, in pixels, of drawn shadows. */
     public get shadowOffsetX(): number {
         return this.currentState.shadowOffsetX;
     }
@@ -253,6 +281,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowOffsetX = value;
     }
 
+    /** Vertical offset, in pixels, of drawn shadows. */
     public get shadowOffsetY(): number {
         return this.currentState.shadowOffsetY;
     }
@@ -261,6 +290,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowOffsetY = value;
     }
 
+    /** Stroke style (CSS colour, gradient, or pattern) used to paint outlines. */
     public get stroke(): string {
         return this.currentState.stroke;
     }
@@ -269,6 +299,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.stroke = value;
     }
 
+    /** Horizontal alignment of text relative to the drawing position. */
     public get textAlign(): TextAlignment {
         return this.currentState.textAlign;
     }
@@ -277,6 +308,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.textAlign = value;
     }
 
+    /** Vertical baseline used when positioning text. */
     public get textBaseline(): TextBaseline {
         return this.currentState.textBaseline;
     }
@@ -285,6 +317,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.textBaseline = value;
     }
 
+    /** Stacking order used to sort elements during rendering; higher values draw on top. */
     public get zIndex(): number {
         return this.currentState.zIndex;
     }
@@ -293,6 +326,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.zIndex = value;
     }
 
+    /** Horizontal translation, in pixels, applied to the element's transform. */
     public get translateX(): number {
         return this.currentState.translateX;
     }
@@ -301,6 +335,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.translateX = value;
     }
 
+    /** Vertical translation, in pixels, applied to the element's transform. */
     public get translateY(): number {
         return this.currentState.translateY;
     }
@@ -309,6 +344,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.translateY = value;
     }
 
+    /** Horizontal scale factor applied to the element's transform. */
     public get transformScaleX(): number {
         return this.currentState.transformScaleX;
     }
@@ -317,6 +353,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.transformScaleX = value;
     }
 
+    /** Vertical scale factor applied to the element's transform. */
     public get transformScaleY(): number {
         return this.currentState.transformScaleY;
     }
@@ -325,6 +362,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.transformScaleY = value;
     }
 
+    /** Rotation applied to the element's transform, as radians or a `deg`/`rad` string. */
     public get rotation(): Rotation {
         return this.currentState.rotation;
     }
@@ -333,6 +371,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.rotation = value;
     }
 
+    /** Horizontal origin about which rotation and scaling are applied. */
     public get transformOriginX(): TransformOrigin {
         return this.currentState.transformOriginX;
     }
@@ -341,6 +380,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.transformOriginX = value;
     }
 
+    /** Vertical origin about which rotation and scaling are applied. */
     public get transformOriginY(): TransformOrigin {
         return this.currentState.transformOriginY;
     }
@@ -467,11 +507,29 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
+    /**
+     * Replaces the current transformation matrix with `[a, b, c, d, e, f]`.
+     * @param a Horizontal scaling.
+     * @param b Vertical skewing.
+     * @param c Horizontal skewing.
+     * @param d Vertical scaling.
+     * @param e Horizontal translation.
+     * @param f Vertical translation.
+     */
     // eslint-disable-next-line id-length
     public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         // noop
     }
 
+    /**
+     * Multiplies the current transformation matrix by `[a, b, c, d, e, f]`.
+     * @param a Horizontal scaling.
+     * @param b Vertical skewing.
+     * @param c Horizontal skewing.
+     * @param d Vertical scaling.
+     * @param e Horizontal translation.
+     * @param f Vertical translation.
+     */
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         // noop

@@ -9,9 +9,13 @@ import {
 
 /** A histogram bin covering the half-open interval `[x0, x1)` (the last bin includes `x1`). */
 export interface Bin {
+    /** Inclusive lower boundary of the bin. */
     x0: number;
+    /** Upper boundary of the bin (exclusive, except for the last bin). */
     x1: number;
+    /** Number of values that fell into the bin. */
     count: number;
+    /** The values that fell into the bin. */
     values: number[];
 }
 
@@ -27,20 +31,31 @@ export interface BinOptions {
 
 /** Five-number summary plus IQR and outliers, as used by a box plot. */
 export interface BoxplotStats {
+    /** Smallest value within the lower whisker (excluding outliers). */
     min: number;
+    /** First quartile (25th percentile). */
     q1: number;
+    /** Median (50th percentile). */
     median: number;
+    /** Third quartile (75th percentile). */
     q3: number;
+    /** Largest value within the upper whisker (excluding outliers). */
     max: number;
+    /** Interquartile range (`q3 - q1`). */
     iqr: number;
+    /** Values beyond 1.5×IQR of the quartiles. */
     outliers: number[];
 }
 
 /** A fitted simple linear regression. */
 export interface LinearRegression {
+    /** Slope of the fitted line. */
     slope: number;
+    /** Y-intercept of the fitted line. */
     intercept: number;
+    /** Coefficient of determination (R²), measuring goodness of fit. */
     r2: number;
+    /** Predicts `y` for a given `x` from the fitted line. */
     predict(x: number): number;
 }
 

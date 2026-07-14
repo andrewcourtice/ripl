@@ -61,17 +61,25 @@ export const MODEL_BIND_GROUP_LAYOUT_ENTRIES: GPUBindGroupLayoutEntry[] = [
 
 /** Holds all GPU pipeline objects and layouts needed for rendering. */
 export interface PipelineState {
+    /** The GPU device that owns the pipeline and its resources. */
     device: GPUDevice;
+    /** The compiled render pipeline. */
     pipeline: GPURenderPipeline;
+    /** Bind group layout for scene-level uniforms (group 0). */
     sceneBindGroupLayout: GPUBindGroupLayout;
+    /** Bind group layout for per-model uniforms (group 1). */
     modelBindGroupLayout: GPUBindGroupLayout;
+    /** Texture format used for the depth buffer. */
     depthFormat: GPUTextureFormat;
+    /** Texture format of the canvas presentation surface. */
     presentationFormat: GPUTextureFormat;
+    /** MSAA sample count the pipeline was created with. */
     sampleCount: number;
 }
 
 /** Options for creating the render pipeline. */
 export interface PipelineOptions {
+    /** MSAA sample count for the pipeline. Defaults to 4. */
     sampleCount?: number;
 }
 

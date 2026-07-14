@@ -117,10 +117,15 @@ function isIdentityTransform(transform: NavigatorTransform): boolean {
 
 /** Options shared by all cartesian charts. */
 export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions {
+    /** X/y axis configuration, or a boolean toggling both axes. See {@link ChartAxisInput}. */
     axis?: ChartAxisInput<TData>;
+    /** Background grid configuration, or a boolean toggle. See {@link ChartGridInput}. */
     grid?: ChartGridInput;
+    /** Hover-tooltip configuration, or a boolean toggle. See {@link ChartTooltipInput}. */
     tooltip?: ChartTooltipInput;
+    /** Legend configuration, a position string, or a boolean toggle. See {@link ChartLegendInput}. */
     legend?: ChartLegendInput;
+    /** Crosshair configuration, or a boolean toggle. See {@link ChartCrosshairInput}. */
     crosshair?: ChartCrosshairInput;
     /**
      * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
@@ -134,11 +139,20 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
 
 /** Declares which optional cartesian components a chart wants constructed. */
 export interface CartesianSetup {
+    /** Which edge the x-axis is aligned to (`top` or `bottom`). */
     xAxisAlignment?: ChartXAxisAlignment;
+    /** Which edge the y-axis is aligned to (`left` or `right`). */
     yAxisAlignment?: ChartYAxisAlignment;
-    grid?: { horizontal?: boolean;
-        vertical?: boolean; };
+    /** Which grid-line directions to render (horizontal and/or vertical). */
+    grid?: {
+        /** Whether to draw horizontal grid lines. */
+        horizontal?: boolean;
+        /** Whether to draw vertical grid lines. */
+        vertical?: boolean;
+    };
+    /** Whether to construct a crosshair for this chart. */
     crosshair?: boolean;
+    /** Default axis the crosshair tracks when the consumer hasn't specified one. */
     crosshairAxisDefault?: CrosshairAxis;
 }
 

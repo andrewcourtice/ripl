@@ -24,8 +24,11 @@ export abstract class Shape<TState extends BaseElementState = BaseElementState> 
 
 /** Options for a 2D shape, adding automatic fill/stroke and clipping controls. */
 export type Shape2DOptions<TState extends BaseElementState = BaseElementState> = ElementOptions<TState> & {
+    /** Whether the shape automatically strokes its outline after rendering when a stroke is set. Defaults to `true`. */
     autoStroke?: boolean;
+    /** Whether the shape automatically fills its path after rendering when a fill is set. Defaults to `true`. */
     autoFill?: boolean;
+    /** Whether the shape's path is used as a clipping region for descendants instead of being filled or stroked. Defaults to `false`. */
     clip?: boolean;
 };
 
@@ -44,8 +47,11 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
 
     protected path?: ContextPath;
 
+    /** When `true`, the shape's outline is automatically stroked after rendering whenever {@link Element.stroke} is set. */
     public autoStroke: boolean;
+    /** When `true`, the shape is automatically filled after rendering whenever {@link Element.fill} is set. */
     public autoFill: boolean;
+    /** When `true`, the shape's path is used as a clipping region for descendants instead of being filled or stroked. */
     public clip: boolean;
 
     constructor(type: string, options: Shape2DOptions<TState>) {

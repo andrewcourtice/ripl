@@ -67,6 +67,7 @@ const REST_ALPHA = 0.78;
 
 /** Options for configuring a {@link HistogramChart}. */
 export interface HistogramChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
+    /** The dataset whose values are binned into the histogram. */
     data: TData[];
     /** The numeric field (or accessor) to bin. */
     value: NumericAccessor<TData>;
@@ -76,9 +77,13 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
     thresholds?: number[];
     /** Bar colour (defaults to the first palette colour). */
     color?: string;
+    /** Corner radius in pixels applied to the top of each bar. Defaults to 2. */
     borderRadius?: number;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Axis configuration for the value and frequency axes. */
     axis?: ChartAxisInput<TData>;
     /** Format applied to bin bounds shown in tooltips. */
     format?: ValueFormatInput;
@@ -86,17 +91,25 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
 
 /** Payload emitted for histogram bin interaction events. */
 export interface HistogramBinEvent {
+    /** The x coordinate (in chart pixels) of the bar's top-centre anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the bar's top-centre anchor. */
     y: number;
+    /** The lower bound of the interacted bin. */
     x0: number;
+    /** The upper bound of the interacted bin. */
     x1: number;
+    /** The number of values that fall in the interacted bin. */
     count: number;
 }
 
 /** Events emitted by a {@link HistogramChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface HistogramChartEventMap extends EventMap {
+    /** Emitted when a bin bar is clicked. */
     binclick: HistogramBinEvent;
+    /** Emitted when the pointer enters a bin bar. */
     binenter: HistogramBinEvent;
+    /** Emitted when the pointer leaves a bin bar. */
     binleave: HistogramBinEvent;
 }
 
@@ -352,7 +365,18 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
 }
 
-/** Factory function that creates a new {@link HistogramChart}. */
+/**
+ * Factory function that creates a new {@link HistogramChart}.
+ *
+ * @example
+ * ```ts
+ * createHistogramChart(target, {
+ *     data: [{ v: 1 }, { v: 2 }, { v: 2 }, { v: 5 }, { v: 8 }],
+ *     value: 'v',
+ *     bins: 5,
+ * });
+ * ```
+ */
 export function createHistogramChart<TData = unknown>(target: string | HTMLElement | Context, options: HistogramChartOptions<TData>) {
     return new HistogramChart<TData>(target, options);
 }

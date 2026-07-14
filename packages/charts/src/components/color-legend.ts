@@ -30,6 +30,7 @@ export type ColorLegendOrientation = 'horizontal' | 'vertical';
 
 /** Visual options for a {@link ColorLegend}. */
 export interface ColorLegendOptions {
+    /** Whether the colour bar runs horizontally or vertically. Defaults to `horizontal`. */
     orientation?: ColorLegendOrientation;
     /** Thickness of the colour bar in pixels (height when horizontal, width when vertical). */
     thickness?: number;
@@ -39,7 +40,9 @@ export interface ColorLegendOptions {
     tickCount?: number;
     /** Formats a domain value into a label (defaults to {@link formatNumber} at 2 dp). */
     format?: (value: number) => string;
+    /** CSS font shorthand for the value labels. */
     font?: string;
+    /** Colour of the value labels. */
     fontColor?: string;
     /** Gap between the bar and its labels in pixels. */
     labelGap?: number;
@@ -47,7 +50,9 @@ export interface ColorLegendOptions {
 
 /** Options for constructing a {@link ColorLegend}. */
 export interface ColorLegendComponentOptions extends ChartComponentOptions {
+    /** The colour scale the legend visualizes. */
     scale: ColorScale;
+    /** Visual options for the legend bar and labels. */
     options?: ColorLegendOptions;
 }
 

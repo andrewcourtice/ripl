@@ -50,12 +50,19 @@ import {
 
 /** Options for configuring a {@link GaugeChart}. */
 export interface GaugeChartOptions extends BaseChartOptions {
+    /** The value displayed by the gauge (clamped to `min`–`max`). */
     value: number;
+    /** Lower bound of the gauge scale. Defaults to 0. */
     min?: number;
+    /** Upper bound of the gauge scale. Defaults to 100. */
     max?: number;
+    /** Optional descriptive text shown below the value. */
     label?: string;
+    /** Colour of the value arc. */
     color?: string;
+    /** Colour of the background track arc. */
     trackColor?: string;
+    /** Format function for the central value display. */
     formatValue?: (value: number) => string;
     /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide. */
     tickCount?: number;
@@ -67,15 +74,21 @@ export interface GaugeChartOptions extends BaseChartOptions {
 
 /** Payload emitted for gauge value interaction events. */
 export interface GaugeChartValueEvent {
+    /** The x coordinate (in chart pixels) of the value arc's centroid. */
     x: number;
+    /** The y coordinate (in chart pixels) of the value arc's centroid. */
     y: number;
+    /** The gauge's current (clamped) value. */
     value: number;
 }
 
 /** Events emitted by a {@link GaugeChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface GaugeChartEventMap extends EventMap {
+    /** Emitted when the value arc is clicked. */
     valueclick: GaugeChartValueEvent;
+    /** Emitted when the pointer enters the value arc. */
     valueenter: GaugeChartValueEvent;
+    /** Emitted when the pointer leaves the value arc. */
     valueleave: GaugeChartValueEvent;
 }
 
@@ -500,7 +513,19 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
 }
 
-/** Factory function that creates a new {@link GaugeChart} instance. */
+/**
+ * Factory function that creates a new {@link GaugeChart} instance.
+ *
+ * @example
+ * ```ts
+ * createGaugeChart(target, {
+ *     value: 68,
+ *     min: 0,
+ *     max: 100,
+ *     label: 'CPU',
+ * });
+ * ```
+ */
 export function createGaugeChart(target: string | HTMLElement | Context, options: GaugeChartOptions) {
     return new GaugeChart(target, options);
 }

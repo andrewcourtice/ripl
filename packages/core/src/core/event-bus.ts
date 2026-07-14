@@ -17,17 +17,21 @@ import type {
 /** Base event map interface; all custom event maps should extend this. */
 export type EventMap = {
     [key: string]: unknown;
+    /** Emitted when the event bus is destroyed; carries no payload. */
     destroyed: null;
 };
 
 /** Options for emitting an event, controlling bubbling and attached data. */
 export type EventOptions<TData = undefined> = {
+    /** Whether the event propagates up the parent chain. Defaults to `true`. */
     bubbles?: boolean;
+    /** The payload attached to the event. */
     data?: TData;
 };
 
 /** Options for subscribing to an event, such as filtering to self-targeted events only. */
 export type EventSubscriptionOptions = {
+    /** When `true`, the handler only fires for events originally emitted on this bus, ignoring bubbled events. */
     self?: boolean;
 };
 
@@ -42,12 +46,17 @@ export class Event<TData = undefined> {
 
     private _bubbles = true;
 
+    /** The event type name. */
     public readonly type: string;
+    /** The payload carried by this event. */
     public readonly data: TData;
+    /** The high-resolution timestamp at which the event was created. */
     public readonly timestamp: number;
+    /** The {@link EventBus} on which the event was originally emitted. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public readonly target: EventBus<any>;
 
+    /** Whether this event will continue to bubble up the parent chain. */
     public get bubbles() {
         return this._bubbles;
     }
@@ -76,6 +85,7 @@ export class Event<TData = undefined> {
 /** A typed pub/sub event system with parent-chain bubbling, disposable subscriptions, and self-filtering. */
 export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
+    /** The parent event bus that emitted events bubble up to, if any. */
     public parent?: EventBus<TEventMap>;
 
     private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();

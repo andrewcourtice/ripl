@@ -123,8 +123,11 @@ const TEXT_BASELINE_FACTORS: Record<string, number> = {
 
 /** Options for constructing a terminal rendering context. */
 export interface TerminalContextOptions extends ContextOptions {
+    /** Grid width in terminal columns. Defaults to the output adapter's `columns`. */
     width?: number;
+    /** Grid height in terminal rows. Defaults to the output adapter's `rows`. */
     height?: number;
+    /** Custom rasterizer to use instead of the default {@link BrailleRasterizer}. */
     rasterizer?: Rasterizer;
     /**
      * Author the scene in this logical width (e.g. CSS pixels) instead of raw braille pixels.
@@ -349,11 +352,13 @@ export class TerminalContext extends Context<Element> {
         this.scaleY = scaleContinuous([0, this._logicalHeight], [offsetY, offsetY + this._logicalHeight * scale]);
     }
 
+    /** Homes the cursor and clears the rasterizer grid. */
     public clear(): void {
         this._output.write('\x1b[H');
         this._rasterizer.clear();
     }
 
+    /** Ends the render pass and, at the outermost depth, flushes the rasterized output to the terminal. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
@@ -362,14 +367,17 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
+    /** Creates a {@link TerminalPath} that records drawing commands for later rasterization. */
     public createPath(id?: string): TerminalPath {
         return new TerminalPath(id);
     }
 
+    /** Creates a text element from the given options. */
     public createText(options: TextOptions): ContextText {
         return new ContextText(options);
     }
 
+    /** Rasterizes and fills the given path or text element using the current fill color. */
     // `fillRule` is intentionally ignored: the braille scanline rasterizer (`fillPolygon`) implements
     // only the even-odd rule. Honouring non-zero winding would require tracking edge directions per
     // crossing, which is out of scope for the character-grid renderer.
@@ -384,6 +392,7 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
+    /** Rasterizes and strokes the given path element's outline using the current stroke color. */
     public applyStroke(element: ContextElement): void {
         const color = colorToAnsiFg(this.stroke);
 
@@ -392,6 +401,7 @@ export class TerminalContext extends Context<Element> {
         }
     }
 
+    /** Measures text in logical units, sizing each glyph to one braille cell. */
     public measureText(text: string): TextMetrics {
         // Report metrics in logical units so layout code sizes text consistently with its space.
         const charWidth = BRAILLE_CELL_WIDTH / this._rasterScale;
@@ -413,6 +423,7 @@ export class TerminalContext extends Context<Element> {
         } as TextMetrics;
     }
 
+    /** Captures the current grid as a plain-text string, an openable URL, and RGBA image data. */
     public export(): ContextExport {
         const text = this._rasterizer.serialize({
             ansi: false,

@@ -16,7 +16,9 @@ import type {
 
 /** Minimal tooltip surface required by the hover helper (decouples it from the Tooltip class). */
 export interface HoverTooltip {
+    /** Shows the tooltip at the given position with the given content. */
     show(x: number, y: number, content: string): void;
+    /** Hides the tooltip. */
     hide(): void;
 }
 
@@ -24,14 +26,19 @@ type StateOf<TElement extends Element> = ElementInterpolationState<TElement exte
 
 /** The pointer position passed to interaction callbacks. */
 export interface InteractionPoint {
+    /** Pointer x coordinate, in chart pixels. */
     x: number;
+    /** Pointer y coordinate, in chart pixels. */
     y: number;
 }
 
 /** Options describing how an element should respond to hover. */
 export interface HoverHighlightOptions<TElement extends Element> {
+    /** Renderer used to run the highlight/restore transitions. */
     renderer: Renderer;
+    /** Duration of the highlight/restore transition, in milliseconds. */
     duration: number;
+    /** Easing applied to the highlight/restore transition. */
     ease: Ease;
     /** Target state applied while hovered. */
     highlight: StateOf<TElement>;
@@ -40,8 +47,12 @@ export interface HoverHighlightOptions<TElement extends Element> {
     /** Optional tooltip to show/hide alongside the highlight. */
     tooltip?: HoverTooltip;
     /** Resolves the tooltip anchor point (called on enter). */
-    anchor?: () => { x: number;
-        y: number; };
+    anchor?: () => {
+        /** X coordinate of the tooltip anchor, in chart space. */
+        x: number;
+        /** Y coordinate of the tooltip anchor, in chart space. */
+        y: number;
+    };
     /** Resolves the tooltip content (called on enter). */
     content?: () => string;
     /** Called when the pointer enters the element, with the current pointer position. */

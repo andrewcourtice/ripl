@@ -2,9 +2,13 @@
 export class Box {
 
     constructor(
+        /** The y-coordinate of the box's top edge. */
         public top: number,
+        /** The x-coordinate of the box's left edge. */
         public left: number,
+        /** The y-coordinate of the box's bottom edge. */
         public bottom: number,
+        /** The x-coordinate of the box's right edge. */
         public right: number
     ) {}
 

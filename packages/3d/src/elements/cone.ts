@@ -14,14 +14,18 @@ import type {
 
 /** State interface for a cone, defining radius, height, and segment count. */
 export interface ConeState extends Shape3DState {
+    /** The radius of the base, in world units. */
     radius: number;
+    /** The height of the cone along the Y axis, in world units. */
     height: number;
+    /** The number of segments around the base. Defaults to `16`. */
     segments: number;
 }
 
 /** A 3D cone shape with configurable radius, height, and segment resolution. */
 export class Cone extends Shape3D<ConeState> {
 
+    /** The radius of the base, in world units. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -30,6 +34,7 @@ export class Cone extends Shape3D<ConeState> {
         this.setStateValue('radius', value);
     }
 
+    /** The height of the cone along the Y axis, in world units. */
     public get height() {
         return this.getStateValue('height');
     }
@@ -38,6 +43,7 @@ export class Cone extends Shape3D<ConeState> {
         this.setStateValue('height', value);
     }
 
+    /** The number of segments around the base. */
     public get segments() {
         return this.getStateValue('segments');
     }

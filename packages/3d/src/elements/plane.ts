@@ -10,13 +10,16 @@ import type {
 
 /** State interface for a plane, defining width and height. */
 export interface PlaneState extends Shape3DState {
+    /** The width of the plane along the X axis, in world units. */
     width: number;
+    /** The height of the plane along the Y axis, in world units. */
     height: number;
 }
 
 /** A flat rectangular 3D plane oriented along the XY plane. */
 export class Plane extends Shape3D<PlaneState> {
 
+    /** The width of the plane along the X axis, in world units. */
     public get width() {
         return this.getStateValue('width');
     }
@@ -25,6 +28,7 @@ export class Plane extends Shape3D<PlaneState> {
         this.setStateValue('width', value);
     }
 
+    /** The height of the plane along the Y axis, in world units. */
     public get height() {
         return this.getStateValue('height');
     }

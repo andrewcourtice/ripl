@@ -14,14 +14,18 @@ import type {
 
 /** State interface for a sphere, defining radius, longitudinal segments, and latitudinal rings. */
 export interface SphereState extends Shape3DState {
+    /** The radius of the sphere, in world units. */
     radius: number;
+    /** The number of longitudinal segments around the sphere. Defaults to `16`. */
     segments: number;
+    /** The number of latitudinal rings from pole to pole. Defaults to `12`. */
     rings: number;
 }
 
 /** A 3D sphere shape tessellated with configurable segments and rings. */
 export class Sphere extends Shape3D<SphereState> {
 
+    /** The radius of the sphere, in world units. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -30,6 +34,7 @@ export class Sphere extends Shape3D<SphereState> {
         this.setStateValue('radius', value);
     }
 
+    /** The number of longitudinal segments around the sphere. */
     public get segments() {
         return this.getStateValue('segments');
     }
@@ -38,6 +43,7 @@ export class Sphere extends Shape3D<SphereState> {
         this.setStateValue('segments', value);
     }
 
+    /** The number of latitudinal rings from pole to pole. */
     public get rings() {
         return this.getStateValue('rings');
     }

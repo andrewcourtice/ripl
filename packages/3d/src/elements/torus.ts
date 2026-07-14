@@ -14,15 +14,20 @@ import type {
 
 /** State interface for a torus, defining major radius, tube radius, and segment counts. */
 export interface TorusState extends Shape3DState {
+    /** The major radius from the center of the torus to the center of the tube, in world units. */
     radius: number;
+    /** The tube (minor) radius, in world units. */
     tube: number;
+    /** The number of segments around the tube's cross-section. Defaults to `12`. */
     radialSegments: number;
+    /** The number of segments around the major ring. Defaults to `24`. */
     tubularSegments: number;
 }
 
 /** A 3D torus (donut) shape with configurable major radius, tube radius, and tessellation. */
 export class Torus extends Shape3D<TorusState> {
 
+    /** The major radius from the center of the torus to the center of the tube, in world units. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -31,6 +36,7 @@ export class Torus extends Shape3D<TorusState> {
         this.setStateValue('radius', value);
     }
 
+    /** The tube (minor) radius, in world units. */
     public get tube() {
         return this.getStateValue('tube');
     }
@@ -39,6 +45,7 @@ export class Torus extends Shape3D<TorusState> {
         this.setStateValue('tube', value);
     }
 
+    /** The number of segments around the tube's cross-section. */
     public get radialSegments() {
         return this.getStateValue('radialSegments');
     }
@@ -47,6 +54,7 @@ export class Torus extends Shape3D<TorusState> {
         this.setStateValue('radialSegments', value);
     }
 
+    /** The number of segments around the major ring. */
     public get tubularSegments() {
         return this.getStateValue('tubularSegments');
     }

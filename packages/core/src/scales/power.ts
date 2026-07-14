@@ -24,6 +24,7 @@ import type {
 
 /** Options for a power scale, adding a configurable exponent to the base linear scale options. */
 export interface PowerScaleOptions extends LinearScaleOptions {
+    /** The exponent applied to the normalised domain position. Defaults to 1 (linear). */
     exponent?: number;
 };
 

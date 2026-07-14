@@ -16,35 +16,49 @@ import type {
 
 /** A 2D affine view transform: uniform scale `k` plus translation `[x, y]` (screen pixels). */
 export interface NavigatorTransform {
+    /** Uniform scale (zoom) factor. */
     k: number;
+    /** Horizontal translation, in screen pixels. */
     x: number;
+    /** Vertical translation, in screen pixels. */
     y: number;
 }
 
 /** A rectangular brush selection in the navigator's pixel space. */
 export interface NavigatorBrush {
+    /** X coordinate of the selection's first corner, in pixels. */
     x0: number;
+    /** Y coordinate of the selection's first corner, in pixels. */
     y0: number;
+    /** X coordinate of the selection's opposite corner, in pixels. */
     x1: number;
+    /** Y coordinate of the selection's opposite corner, in pixels. */
     y1: number;
 }
 
 /** The pixel dimensions of the surface the navigator drives (used to centre/fit content). */
 export interface NavigatorViewport {
+    /** Width of the surface, in pixels. */
     width: number;
+    /** Height of the surface, in pixels. */
     height: number;
 }
 
 /** Enable/disable a single interaction, optionally with a sensitivity multiplier. */
 export type NavigatorInteractionOption = boolean | {
+    /** Whether the interaction is enabled. */
     enabled?: boolean;
+    /** Multiplier applied to the interaction's input, scaling its responsiveness. */
     sensitivity?: number;
 };
 
 /** Configures which navigator interactions (zoom, pan, brush) are enabled. */
 export interface NavigatorInteractions {
+    /** Configuration for wheel/pinch zoom. */
     zoom?: NavigatorInteractionOption;
+    /** Configuration for drag panning. */
     pan?: NavigatorInteractionOption;
+    /** Configuration for rectangular brush selection. */
     brush?: NavigatorInteractionOption;
 }
 
@@ -66,10 +80,15 @@ export interface NavigatorFitOptions {
 
 /** Events emitted by a {@link Navigator}. */
 export interface NavigatorEventMap extends EventMap {
+    /** Emitted when the zoom factor changes, carrying the new transform. */
     zoom: NavigatorTransform;
+    /** Emitted when the view is panned, carrying the new transform. */
     pan: NavigatorTransform;
+    /** Emitted whenever the transform changes for any reason (zoom or pan), carrying the new transform. */
     change: NavigatorTransform;
+    /** Emitted as the brush selection changes, carrying the normalised selection. */
     brush: NavigatorBrush;
+    /** Emitted when a brush gesture ends, carrying the final selection or `null` when cleared. */
     brushend: NavigatorBrush | null;
 }
 

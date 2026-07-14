@@ -97,6 +97,7 @@ export interface InterpolatePointsOptions {
 
 /** The {@link interpolatePoints} factory: a point-array interpolator factory that also accepts {@link InterpolatePointsOptions}. */
 export interface InterpolatePointsFactory extends PredicatedFunction {
+    /** Creates an interpolator that morphs point array `setA` into `setB`, optionally keyed via {@link InterpolatePointsOptions}. */
     (setA: Point[], setB: Point[], options?: InterpolatePointsOptions): Interpolator<Point[]>;
 }
 
@@ -177,6 +178,7 @@ export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?
     };
 };
 
+/** Reports whether this factory can interpolate the given value (an array of {@link Point} tuples). */
 interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));
 
 /** Creates an interpolator that returns the point along a polyline at the given normalised position. */
@@ -247,6 +249,7 @@ export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number |
     return position => interpolators.map(ib => ib(position)) as BorderRadius;
 };
 
+/** Reports whether this factory can interpolate the given value (a number or a tuple of up to four corner radii). */
 interpolateBorderRadius.test = value => typeIsNumber(value) || (
     typeIsArray(value)
     && value.length <= 4

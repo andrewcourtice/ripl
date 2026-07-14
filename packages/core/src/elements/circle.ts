@@ -17,14 +17,18 @@ import {
 
 /** State interface for a circle element, defining center coordinates and radius. */
 export interface CircleState extends BaseElementState {
+    /** The x-coordinate of the circle's center. */
     cx: number;
+    /** The y-coordinate of the circle's center. */
     cy: number;
+    /** The radius of the circle. */
     radius: number;
 }
 
 /** A circle shape rendered at a center point with a given radius. */
 export class Circle extends Shape2D<CircleState> {
 
+    /** The x-coordinate of the circle's center. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -33,6 +37,7 @@ export class Circle extends Shape2D<CircleState> {
         this.setStateValue('cx', value);
     }
 
+    /** The y-coordinate of the circle's center. */
     public get cy() {
         return this.getStateValue('cy');
     }
@@ -41,6 +46,7 @@ export class Circle extends Shape2D<CircleState> {
         this.setStateValue('cy', value);
     }
 
+    /** The radius of the circle. */
     public get radius() {
         return this.getStateValue('radius');
     }
@@ -53,6 +59,7 @@ export class Circle extends Shape2D<CircleState> {
         super('circle', options);
     }
 
+    /** Returns the axis-aligned bounding box of the circle. */
     public getBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
@@ -62,6 +69,7 @@ export class Circle extends Shape2D<CircleState> {
         );
     }
 
+    /** Renders the circle to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
             path.circle(this.cx, this.cy, Math.max(0, this.radius));

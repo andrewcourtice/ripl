@@ -29,10 +29,15 @@ import {
 
 /** State interface for an image element, defining position, optional size, and image source. */
 export interface ImageState extends BaseElementState {
+    /** The image source drawn by the element. */
     image: CanvasImageSource;
+    /** The x-coordinate of the image's top-left corner. */
     x: number;
+    /** The y-coordinate of the image's top-left corner. */
     y: number;
+    /** The width to draw the image at, defaulting to the source width. */
     width?: number;
+    /** The height to draw the image at, defaulting to the source height. */
     height?: number;
 }
 
@@ -101,6 +106,7 @@ export const interpolateImage: InterpolatorFactory<CanvasImageSource> = (valueA,
 /** An image element that draws a `CanvasImageSource` at a given position and optional size. */
 export class ImageElement extends Element<ImageState> {
 
+    /** The image source drawn by the element. */
     public get image() {
         return this.getStateValue('image');
     }
@@ -109,6 +115,7 @@ export class ImageElement extends Element<ImageState> {
         this.setStateValue('image', value);
     }
 
+    /** The x-coordinate of the image's top-left corner. */
     public get x() {
         return this.getStateValue('x');
     }
@@ -117,6 +124,7 @@ export class ImageElement extends Element<ImageState> {
         this.setStateValue('x', value);
     }
 
+    /** The y-coordinate of the image's top-left corner. */
     public get y() {
         return this.getStateValue('y');
     }
@@ -125,6 +133,7 @@ export class ImageElement extends Element<ImageState> {
         this.setStateValue('y', value);
     }
 
+    /** The width to draw the image at, defaulting to the source width. */
     public get width() {
         return this.getStateValue('width');
     }
@@ -133,6 +142,7 @@ export class ImageElement extends Element<ImageState> {
         this.setStateValue('width', value);
     }
 
+    /** The height to draw the image at, defaulting to the source height. */
     public get height() {
         return this.getStateValue('height');
     }
@@ -145,6 +155,7 @@ export class ImageElement extends Element<ImageState> {
         super('image', options);
     }
 
+    /** Returns the axis-aligned bounding box of the image. */
     public getBoundingBox(): Box {
         const [sourceWidth, sourceHeight] = getSourceSize(this.image);
 
@@ -156,6 +167,7 @@ export class ImageElement extends Element<ImageState> {
         );
     }
 
+    /** Renders the image to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, () => {
             context.drawImage(this.image, this.x, this.y, this.width, this.height);

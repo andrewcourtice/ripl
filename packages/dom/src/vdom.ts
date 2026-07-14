@@ -1,23 +1,34 @@
 /** A virtual DOM node representing an element in the reconciled tree. */
 export interface VNode<TElement = unknown> {
+    /** Unique identifier used to match this node against a live DOM element. */
     id: string;
+    /** Tag name used when creating the backing DOM element. */
     tag: string;
+    /** Optional source element whose state is applied to the DOM node. */
     element?: TElement;
+    /** Child virtual nodes in render order. */
     children: VNode<TElement>[];
 }
 
 /** A linked-list reference to an element's parent chain, used to resolve ancestor group paths. */
 export interface ParentRef {
+    /** Identifier of this node within the parent chain. */
     id: string;
+    /** Reference to the parent node, or undefined at the root. */
     parent?: ParentRef;
 }
 
 /** Configuration for the DOM reconciler, providing element lifecycle callbacks and filtering. */
 export interface ReconcilerOptions<TElement = unknown> {
+    /** Creates a DOM element for the given tag and id. */
     createElement: (tag: string, id: string) => Element;
+    /** Applies a source element's state to its backing DOM node. */
     updateElement: (domNode: Element, element: TElement) => void;
+    /** Resolves the DOM tag name to use for a source element. */
     getElementTag: (element: TElement) => string;
+    /** CSS selectors for existing DOM children to leave untouched during reconciliation. */
     excludeSelectors?: string[];
+    /** Resolves the reconciliation id of a DOM child (defaults to its `id` attribute). */
     getChildId?: (domNode: Element) => string | null;
 }
 

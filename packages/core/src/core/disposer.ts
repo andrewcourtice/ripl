@@ -7,6 +7,7 @@ export abstract class Disposer {
 
     private _disposables = new Map<PropertyKey, Disposable[]>();
 
+    /** The key under which resources are retained when no explicit key is provided. */
     public static readonly defaultKey = Symbol('*');
 
     /** Registers a disposable resource under an optional key for later cleanup. */

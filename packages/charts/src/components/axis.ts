@@ -59,38 +59,60 @@ export type LabelDimension = 'width' | 'height';
 
 /** Options for constructing a chart axis component. */
 export interface ChartAxisOptions extends ChartComponentOptions {
+    /** Scale mapping domain values to pixel positions along the axis. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     scale: Scale<any, number>;
+    /** Bounding box the axis is laid out within. */
     bounds: Box;
+    /** Gap between the tick marks and their labels, in pixels. */
     padding?: number;
+    /** Target number of ticks to generate. */
     tickCount?: number;
+    /** Length of each tick mark, in pixels. */
     tickSize?: number;
+    /** Maximum width the axis may occupy, in pixels. */
     maxWidth?: number;
+    /** Maximum height the axis may occupy, in pixels. */
     maxHeight?: number;
+    /** Whether the axis emits grid lines at its tick positions. */
     gridLines?: boolean;
+    /** Which dimension (width or height) tick-label overflow is measured against. */
     labelDimension: LabelDimension;
+    /** Optional axis title. */
     title?: string;
+    /** CSS font shorthand for the axis title (defaults to a bold variant of the label font). */
     titleFont?: string;
+    /** Colour of the axis line and tick marks. */
     stroke?: string;
+    /** CSS font shorthand for the tick labels. */
     labelFont?: string;
+    /** Colour of the tick labels. */
     labelColor?: string;
+    /** Resolved animation used when tick labels and lines enter or update. */
     animation?: ResolvedAnimation;
+    /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatLabel?: (value: any) => string;
 }
 
 /** Options for an x-axis, omitting label dimension (always width). */
 export interface ChartXAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
+    /** Which edge the axis sits on (`top` or `bottom`). Defaults to `bottom`. */
     alignment?: ChartXAxisAlignment;
+    /** Optional axis title. */
     title?: string;
+    /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatLabel?: (value: any) => string;
 }
 
 /** Options for a y-axis, omitting label dimension (always height). */
 export interface ChartYAxisOptions extends Omit<ChartAxisOptions, 'labelDimension'> {
+    /** Which edge the axis sits on (`left` or `right`). Defaults to `left`. */
     alignment?: ChartYAxisAlignment;
+    /** Optional axis title. */
     title?: string;
+    /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     formatLabel?: (value: any) => string;
 }
@@ -103,19 +125,32 @@ const LABEL_DIMENSION_MAP = {
 /** Base axis component managing scale, ticks, labels, and an axis line. */
 export class ChartAxis extends ChartComponent {
 
+    /** Scale mapping domain values to pixel positions along the axis. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public scale: Scale<any, number>;
+    /** Bounding box the axis is laid out within. */
     public bounds: Box;
+    /** Gap between the tick marks and their labels, in pixels. */
     public padding: number;
+    /** Length of each tick mark, in pixels. */
     public tickSize: number;
+    /** Target number of ticks to generate. */
     public tickCount: number;
+    /** Optional axis title drawn alongside the ticks. */
     public title?: string;
+    /** CSS font shorthand for the axis title. */
     public titleFont: string;
+    /** Colour of the axis line and tick marks. */
     public stroke: string;
+    /** CSS font shorthand for the tick labels. */
     public labelFont: string;
+    /** Colour of the tick labels. */
     public labelColor: string;
+    /** Resolved animation applied when ticks and labels enter or update. */
     public animation: ResolvedAnimation;
+    /** Whether the axis renders and reserves layout space. */
     public visible: boolean = true;
+    /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public formatLabel?: (value: any) => string;
 
@@ -236,6 +271,7 @@ export class ChartAxis extends ChartComponent {
         return titleHeight + TITLE_GAP;
     }
 
+    /** Returns the box the axis occupies (its assigned bounds). */
     public getBoundingBox(): Box {
         return this.bounds;
     }
@@ -258,6 +294,7 @@ export class ChartAxis extends ChartComponent {
         }));
     }
 
+    /** No-op base render; concrete axes ({@link ChartXAxis}/{@link ChartYAxis}) draw through their own render pass. */
     public render() {
         // No direct render pass: concrete axes draw through their tick/label
         // helpers, so the base component render is intentionally a no-op.
@@ -268,6 +305,7 @@ export class ChartAxis extends ChartComponent {
 /** Horizontal (x) axis component with top/bottom alignment. */
 export class ChartXAxis extends ChartAxis {
 
+    /** Which edge the axis sits on (`top` or `bottom`). */
     public alignment: ChartXAxisAlignment;
 
     constructor(options: ChartXAxisOptions) {
@@ -283,6 +321,7 @@ export class ChartXAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
+    /** Computes the band the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
     public getBoundingBox(): Box {
         const isBottomAligned = this.alignment === 'bottom';
         // A hidden axis reserves no band so the plot can use the full area.
@@ -309,6 +348,7 @@ export class ChartXAxis extends ChartAxis {
         );
     }
 
+    /** Renders the x-axis line, tick marks, and labels, reconciling and animating against the previous render. */
     public async render() {
         this.cachedTicks = undefined;
         const ticks = this.ticks;
@@ -428,6 +468,7 @@ export class ChartXAxis extends ChartAxis {
 /** Vertical (y) axis component with left/right alignment. */
 export class ChartYAxis extends ChartAxis {
 
+    /** Which edge the axis sits on (`left` or `right`). */
     public alignment: ChartYAxisAlignment;
 
     constructor(options: ChartYAxisOptions) {
@@ -443,6 +484,7 @@ export class ChartYAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
+    /** Computes the band the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden). */
     public getBoundingBox(): Box {
         const isLeftAligned = this.alignment === 'left';
         // A hidden axis reserves no band so the plot can use the full area.
@@ -469,6 +511,7 @@ export class ChartYAxis extends ChartAxis {
         );
     }
 
+    /** Renders the y-axis line, tick marks, and labels, reconciling and animating against the previous render. */
     public async render() {
         this.cachedTicks = undefined;
         const ticks = this.ticks;

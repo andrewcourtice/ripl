@@ -41,6 +41,7 @@ interface InteractionState {
 /** DOM-aware rendering context that extends the base `Context` with element mounting, resize observation, and interaction handling. */
 export abstract class DOMContext<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends Context<TElement, TMeta> {
 
+    /** The host DOM element that the context's rendering surface is mounted into. */
     public readonly root: HTMLElement;
 
     private _interactive: boolean;

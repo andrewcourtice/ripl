@@ -75,33 +75,53 @@ import {
 
 /** Options for configuring a {@link GanttChart}. */
 export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The tasks rendered as time-spanning bars. */
     data: TData[];
+    /** Accessor for each task's unique key (used for colour assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each task's label shown on the category axis. */
     label: keyof TData | ((item: TData) => string);
+    /** Accessor for each task's start date. */
     start: keyof TData | ((item: TData) => Date);
+    /** Accessor for each task's end date. */
     end: keyof TData | ((item: TData) => Date);
+    /** Accessor for an explicit per-task colour; falls back to the generated palette. */
     color?: keyof TData | ((item: TData) => string);
+    /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
     progress?: NumericAccessor<TData>;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
+    /** Axis configuration for the category and time axes. */
     axis?: ChartAxisInput<TData>;
+    /** Draw a marker line at the current date. Defaults to true. */
     showToday?: boolean;
+    /** Colour of the "today" marker line. */
     todayColor?: string;
+    /** Corner radius in pixels applied to each task bar. Defaults to 3. */
     borderRadius?: number;
 }
 
 /** Payload emitted for gantt task interaction events. */
 export interface GanttChartTaskEvent {
+    /** The x coordinate (in chart pixels) of the task bar's top-centre anchor. */
     x: number;
+    /** The y coordinate (in chart pixels) of the task bar's top-centre anchor. */
     y: number;
+    /** The key of the interacted task. */
     id: string;
+    /** The label of the interacted task. */
     label: string;
 }
 
 /** Events emitted by a {@link GanttChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface GanttChartEventMap extends EventMap {
+    /** Emitted when a task bar is clicked. */
     taskclick: GanttChartTaskEvent;
+    /** Emitted when the pointer enters a task bar. */
     taskenter: GanttChartTaskEvent;
+    /** Emitted when the pointer leaves a task bar. */
     taskleave: GanttChartTaskEvent;
 }
 
@@ -608,7 +628,23 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
 }
 
-/** Factory function that creates a new {@link GanttChart} instance. */
+/**
+ * Factory function that creates a new {@link GanttChart} instance.
+ *
+ * @example
+ * ```ts
+ * createGanttChart(target, {
+ *     data: [
+ *         { id: 'design', name: 'Design', from: new Date('2026-01-01'), to: new Date('2026-01-10') },
+ *         { id: 'build', name: 'Build', from: new Date('2026-01-08'), to: new Date('2026-01-24') },
+ *     ],
+ *     key: 'id',
+ *     label: 'name',
+ *     start: 'from',
+ *     end: 'to',
+ * });
+ * ```
+ */
 export function createGanttChart<TData = unknown>(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
     return new GanttChart<TData>(target, options);
 }

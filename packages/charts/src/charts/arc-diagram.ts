@@ -73,9 +73,13 @@ export type ArcDiagramOrientation = 'horizontal' | 'vertical';
 
 /** A node in an arc diagram. */
 export interface ArcDiagramNode<TData = unknown> {
+    /** Unique identifier for the node, referenced by links and used for data joins. */
     id: string;
+    /** Text shown beside the node; defaults to the node's id. */
     label?: string;
+    /** Optional grouping — nodes in the same group share a colour. */
     group?: string;
+    /** Explicit node colour; falls back to the group/palette colour when omitted. */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -83,14 +87,19 @@ export interface ArcDiagramNode<TData = unknown> {
 
 /** A link between two nodes. */
 export interface ArcDiagramLink {
+    /** Id of the node the link starts from. */
     source: string;
+    /** Id of the node the link connects to. */
     target: string;
+    /** Optional flow magnitude; scales the arc's thickness. */
     value?: number;
 }
 
 /** Options for configuring an {@link ArcDiagramChart}. */
 export interface ArcDiagramChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The nodes laid out along the axis. */
     nodes: ArcDiagramNode<TData>[];
+    /** The links drawn as arcs between pairs of nodes. */
     links: ArcDiagramLink[];
     /** Node dot radius (the max radius when `sizeByConnections` is on). Defaults to 6. */
     nodeRadius?: number;
@@ -104,9 +113,13 @@ export interface ArcDiagramChartOptions<TData = unknown> extends BaseChartOption
 
 /** Payload emitted for arc diagram node interaction events. */
 export interface ArcDiagramNodeEvent<TData = unknown> {
+    /** The x coordinate (in chart pixels) of the node. */
     x: number;
+    /** The y coordinate (in chart pixels) of the node. */
     y: number;
+    /** The id of the interacted node. */
     id: string;
+    /** The label of the interacted node. */
     label: string;
     /** The datum from the source {@link ArcDiagramNode}, if one was provided. */
     data?: TData;
@@ -114,20 +127,31 @@ export interface ArcDiagramNodeEvent<TData = unknown> {
 
 /** Payload emitted for arc diagram link interaction events. */
 export interface ArcDiagramLinkEvent {
+    /** The x coordinate (in chart pixels) of the arc's midpoint. */
     x: number;
+    /** The y coordinate (in chart pixels) of the arc's midpoint. */
     y: number;
+    /** Id of the link's source node. */
     source: string;
+    /** Id of the link's target node. */
     target: string;
+    /** The link's flow value (0 when none was provided). */
     value: number;
 }
 
 /** Events emitted by an {@link ArcDiagramChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface ArcDiagramChartEventMap<TData = unknown> extends EventMap {
+    /** Emitted when a node is clicked. */
     nodeclick: ArcDiagramNodeEvent<TData>;
+    /** Emitted when the pointer enters a node. */
     nodeenter: ArcDiagramNodeEvent<TData>;
+    /** Emitted when the pointer leaves a node. */
     nodeleave: ArcDiagramNodeEvent<TData>;
+    /** Emitted when a link arc is clicked. */
     linkclick: ArcDiagramLinkEvent;
+    /** Emitted when the pointer enters a link arc. */
     linkenter: ArcDiagramLinkEvent;
+    /** Emitted when the pointer leaves a link arc. */
     linkleave: ArcDiagramLinkEvent;
 }
 
@@ -662,7 +686,24 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
 }
 
-/** Factory function that creates a new {@link ArcDiagramChart} instance. */
+/**
+ * Factory function that creates a new {@link ArcDiagramChart} instance.
+ *
+ * @example
+ * ```ts
+ * createArcDiagramChart(target, {
+ *     nodes: [
+ *         { id: 'a', label: 'Alice' },
+ *         { id: 'b', label: 'Bob' },
+ *         { id: 'c', label: 'Carol' },
+ *     ],
+ *     links: [
+ *         { source: 'a', target: 'b', value: 3 },
+ *         { source: 'b', target: 'c', value: 1 },
+ *     ],
+ * });
+ * ```
+ */
 export function createArcDiagramChart<TData = unknown>(target: string | HTMLElement | Context, options: ArcDiagramChartOptions<TData>) {
     return new ArcDiagramChart<TData>(target, options);
 }

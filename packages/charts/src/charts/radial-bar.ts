@@ -69,10 +69,15 @@ const REST_ALPHA = 0.85;
 
 /** Options for configuring a {@link RadialBarChart}. */
 export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions {
+    /** The dataset to render, one concentric ring per item. */
     data: TData[];
+    /** Accessor for each item's unique key, used to match rings across data updates. */
     key: keyof TData | ((item: TData) => string);
+    /** Accessor for each item's numeric value, which determines its arc length. */
     value: NumericAccessor<TData>;
+    /** Optional accessor for each item's display label (defaults to its key). */
     label?: keyof TData | ((item: TData) => string);
+    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
     color?: keyof TData | ((item: TData) => string);
     /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */
     maxValue?: number;
@@ -82,9 +87,11 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     range?: number;
     /** Gap between concentric rings as a ratio of the ring thickness (0–0.9). Defaults to 0.25. */
     gap?: number;
+    /** Colour of the faint full-length track drawn behind each value bar. Defaults to a light grey. */
     trackColor?: string;
     /** Round the ends of each value bar (and its track). Defaults to `false`. */
     rounded?: boolean;
+    /** Legend configuration. Shown by default when there is more than one ring. */
     legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
@@ -92,17 +99,25 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
 
 /** Payload emitted for radial bar interaction events. */
 export interface RadialBarChartBarEvent {
+    /** X position of the chart centre, in canvas coordinates. */
     x: number;
+    /** Y position of the chart centre, in canvas coordinates. */
     y: number;
+    /** The bar's numeric value. */
     value: number;
+    /** The bar's display label. */
     label: string;
+    /** The bar's unique key. */
     key: string;
 }
 
 /** Events emitted by a {@link RadialBarChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface RadialBarChartEventMap extends EventMap {
+    /** Emitted when a bar is clicked. */
     barclick: RadialBarChartBarEvent;
+    /** Emitted when the pointer enters a bar. */
     barenter: RadialBarChartBarEvent;
+    /** Emitted when the pointer leaves a bar. */
     barleave: RadialBarChartBarEvent;
 }
 
@@ -386,7 +401,25 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
 }
 
-/** Factory function that creates a new {@link RadialBarChart} instance. */
+/**
+ * Factory function that creates a new {@link RadialBarChart} instance.
+ *
+ * @example
+ * ```ts
+ * createRadialBarChart(target, {
+ *     data: [
+ *         { team: 'Design', progress: 82 },
+ *         { team: 'Engineering', progress: 64 },
+ *         { team: 'Sales', progress: 45 },
+ *     ],
+ *     key: 'team',
+ *     value: 'progress',
+ *     label: 'team',
+ *     maxValue: 100,
+ *     rounded: true,
+ * });
+ * ```
+ */
 export function createRadialBarChart<TData = unknown>(target: string | HTMLElement | Context, options: RadialBarChartOptions<TData>) {
     return new RadialBarChart<TData>(target, options);
 }
