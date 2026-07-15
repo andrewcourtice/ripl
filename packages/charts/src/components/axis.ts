@@ -22,6 +22,7 @@ import type {
     Element,
     Group,
     Line,
+    Rect,
     Scale,
     Text,
 } from '@ripl/core';
@@ -30,6 +31,7 @@ import {
     Box,
     createGroup,
     createLine,
+    createRect,
     createText,
     easeOutCubic,
 } from '@ripl/core';
@@ -158,6 +160,7 @@ export class ChartAxis extends ChartComponent {
     protected line: Line;
 
     private _labelDimension: LabelDimension;
+    private _clip?: Rect;
     protected cachedTicks?: unknown[];
 
     protected get ticks() {
@@ -243,6 +246,45 @@ export class ChartAxis extends ChartComponent {
         });
 
         scene.add(this.group);
+    }
+
+    /**
+     * Clips this axis's ticks, labels, and line to the plot's along-axis extent (the plot span
+     * on the axis's own direction × its reserved band), enabling the clip only while `enabled`.
+     * Mirrors the plot-content clip: with no navigator the clip stays inert, so tick labels that
+     * legitimately overhang the plot edge render in full. Called by the host chart per render.
+     *
+     * @param area - The current plot rectangle.
+     * @param enabled - Whether the clip should mask (typically `true` only while navigating).
+     */
+    public clipTo(area: { x: number;
+        y: number;
+        width: number;
+        height: number; }, enabled: boolean): void {
+        if (!this._clip) {
+            this._clip = createRect({
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                clip: false,
+                pointerEvents: 'none',
+                zIndex: Number.NEGATIVE_INFINITY,
+            });
+
+            this.group.add(this._clip);
+        }
+
+        const band = this.getBoundingBox();
+        // The x-axis measures labels by width; it slides horizontally, so clip its horizontal
+        // span to the plot and keep the full band height. The y-axis is the mirror image.
+        const horizontal = this._labelDimension === 'width';
+
+        this._clip.x = horizontal ? area.x : band.left;
+        this._clip.y = horizontal ? band.top : area.y;
+        this._clip.width = horizontal ? area.width : band.width;
+        this._clip.height = horizontal ? band.height : area.height;
+        this._clip.clip = enabled;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

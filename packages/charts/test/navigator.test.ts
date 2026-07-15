@@ -198,6 +198,41 @@ describe('CartesianChart navigator integration', () => {
         withoutNav.destroy();
     });
 
+    test('Should clip axis ticks/labels to the plot area only while a navigator is active', async () => {
+        mockCanvasContext();
+
+        const withNav = createChart(true);
+        await withNav.render();
+
+        const scene = (withNav as any).scene;
+        const axisGroups = scene.queryAll('.chart-axis');
+        expect(axisGroups.length).toBeGreaterThan(0);
+
+        // The clip rect is the pointer-transparent mask (distinct from the axis line, which also
+        // carries a `clip` flag). It's engaged while navigating.
+        const findClip = (group: { children: { clip?: boolean;
+            pointerEvents?: string; }[]; }) =>
+            group.children.find(child => child.clip !== undefined && child.pointerEvents === 'none');
+
+        for (const axisGroup of axisGroups) {
+            expect(findClip(axisGroup)?.clip).toBe(true);
+        }
+
+        withNav.destroy();
+
+        const withoutNav = createChart(false);
+        await withoutNav.render();
+
+        const plainScene = (withoutNav as any).scene;
+
+        // Without a navigator the axis clips stay inert, so tick labels overhang as before.
+        for (const axisGroup of plainScene.queryAll('.chart-axis')) {
+            expect(findClip(axisGroup)?.clip).toBe(false);
+        }
+
+        withoutNav.destroy();
+    });
+
     test('Should destroy the navigator (and reset the view) when toggled off via update', () => {
         mockCanvasContext();
 
