@@ -10,6 +10,8 @@ import '../../demos/jet-engine/styles/jet-engine.scss';
 
 import '../../demos/mermaid-diagram/styles/mermaid-diagram.scss';
 
+import '../../demos/freeform-drawing/styles/freeform-drawing.scss';
+
 import {
     createPinia,
 } from 'pinia';
