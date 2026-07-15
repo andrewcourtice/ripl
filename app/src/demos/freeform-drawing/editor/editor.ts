@@ -373,6 +373,36 @@ export class Editor extends EventBus<EditorEventMap> {
         return this.#document.filter(shape => this.#selection.has(shape.id));
     }
 
+    /**
+     * The style the properties panel should display: the primary (topmost) selected shape's style
+     * when there is a selection, otherwise the current drawing style used for new shapes.
+     */
+    public getActiveStyle(): ShapeStyle {
+        const selected = this.getSelectedShapes();
+
+        if (!selected.length) {
+            return this.style;
+        }
+
+        const primary = selected[selected.length - 1];
+
+        return {
+            stroke: primary.stroke,
+            fill: primary.fill,
+            strokeWidth: primary.strokeWidth,
+            opacity: primary.opacity,
+            dash: primary.dash,
+        };
+    }
+
+    /** The corner radius the properties panel should display: the topmost selected rectangle's, else the default. */
+    public getActiveCornerRadius(): number {
+        const rects = this.getSelectedShapes().filter(shape => shape.type === 'rect');
+        const primary = rects[rects.length - 1] as Extract<Shape, { type: 'rect' }> | undefined;
+
+        return primary ? primary.radius : this.#cornerRadius;
+    }
+
     /** Deletes the selected shapes (and any connectors bound to them) and commits. */
     public deleteSelection(): void {
         if (!this.#selection.size) {

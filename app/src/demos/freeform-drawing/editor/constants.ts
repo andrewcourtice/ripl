@@ -20,25 +20,25 @@ export const SCALE_EXTENT: [number, number] = [0.02, 64];
 
 /** Default drawing style applied to newly created shapes. */
 export const DEFAULT_STYLE: ShapeStyle = {
-    stroke: '#e6edf3',
+    stroke: '#1e1e1e',
     fill: null,
     strokeWidth: 4,
     opacity: 1,
     dash: false,
 };
 
-/** Curated colour swatches offered in the style panel. */
+/** Curated colour swatches offered in the style panel (tuned for the light canvas). */
 export const PALETTE: string[] = [
-    '#e6edf3',
-    '#f97583',
-    '#ffab70',
-    '#f2cc60',
-    '#7ee787',
-    '#79c0ff',
-    '#d2a8ff',
-    '#ff9bce',
-    '#8b949e',
-    '#161b22',
+    '#1e1e1e',
+    '#e03131',
+    '#f08c00',
+    '#f59f00',
+    '#2f9e44',
+    '#1971c2',
+    '#6741d9',
+    '#e64980',
+    '#868e96',
+    '#ffffff',
 ];
 
 /** Alpha applied to highlighter strokes so overlapping marks read as translucent ink. */

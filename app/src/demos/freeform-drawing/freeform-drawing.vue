@@ -97,8 +97,8 @@ function sync(): void {
     }
 
     activeTool.value = instance.activeToolId;
-    style.value = instance.style;
-    cornerRadius.value = instance.cornerRadius;
+    style.value = instance.getActiveStyle();
+    cornerRadius.value = instance.getActiveCornerRadius();
     zoom.value = instance.zoom;
     canUndo.value = instance.canUndo;
     canRedo.value = instance.canRedo;

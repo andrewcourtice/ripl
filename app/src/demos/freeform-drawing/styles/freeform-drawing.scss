@@ -3,8 +3,8 @@
     width: 100%;
     height: calc(100vh - var(--vp-nav-height));
     overflow: hidden;
-    background-color: #14161b;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-color: #f1f3f5;
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 26px 26px;
     touch-action: none;
     user-select: none;
@@ -50,7 +50,7 @@
     max-width: 320px;
     font-size: 0.75rem;
     line-height: 1.5;
-    color: rgba(230, 237, 243, 0.45);
+    color: rgba(0, 0, 0, 0.45);
     pointer-events: none;
 }
 
