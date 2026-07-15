@@ -801,6 +801,7 @@ export class Editor extends EventBus<EditorEventMap> {
         }
 
         if (event.key === 'Escape') {
+            this.setTool('select');
             this.clearSelection();
             return true;
         }

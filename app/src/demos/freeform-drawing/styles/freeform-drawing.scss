@@ -6,6 +6,8 @@
     background-color: #f1f3f5;
     background-image: radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
     background-size: 26px 26px;
+    border-left: 1px solid var(--vp-c-divider);
+    border-right: 1px solid var(--vp-c-divider);
     touch-action: none;
     user-select: none;
 }
