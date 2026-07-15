@@ -63,14 +63,13 @@ export interface SceneOptions extends GroupOptions {
     renderOnUpdate?: boolean;
 }
 
-/** The top-level group bound to a rendering context, maintaining a hoisted flat buffer for O(n) rendering. */
+/** The top-level group bound to a rendering context, maintaining a hoisted flat instruction stream for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
     /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
 
     private _instructions: RenderInstruction[] = [];
-    private _buffer: Element[] = [];
 
     /**
      * The flat, group-aware render instruction stream in paint order (stacking-context
@@ -84,7 +83,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
     /** The flat list of renderable leaf descendants in paint order — the `draw` targets of {@link Scene.instructions}. */
     public get buffer(): Element[] {
-        return this._buffer;
+        return this._instructions
+            .filter(instruction => instruction.type === 'draw')
+            .map(instruction => instruction.element);
     }
 
     /** The pixel width of the scene's rendering context. */
@@ -126,7 +127,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         });
 
         this.context = context;
-        this._rebuffer();
+        this._rebuild();
 
         const requestFrame = createFrameBuffer();
 
@@ -137,7 +138,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
 
         this.on('graph', () => requestFrame(() => {
-            this._rebuffer();
+            this._rebuild();
             context.invalidateTrackedElements();
         }));
 
@@ -150,20 +151,18 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             }
 
             requestFrame(() => {
-                this._rebuffer();
+                this._rebuild();
                 context.invalidateTrackedElements();
             });
         });
     }
 
-    private _rebuffer() {
+    private _rebuild() {
         const instructions: RenderInstruction[] = [];
-        const buffer: Element[] = [];
 
-        this._collectInstructions(this, instructions, buffer);
+        this._collectInstructions(this, instructions);
 
         this._instructions = instructions;
-        this._buffer = buffer;
     }
 
     /**
@@ -173,7 +172,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
      * equivalent to sorting by their own z-index, since they share the same parent offset.
      * Groups are emitted as a contiguous `push` … `pop` pair (stacking-context ordering).
      */
-    private _collectInstructions(group: Group, instructions: RenderInstruction[], buffer: Element[]) {
+    private _collectInstructions(group: Group, instructions: RenderInstruction[]) {
         group.children
             .sort((ea, eb) => ea.zIndex - eb.zIndex)
             .forEach(element => {
@@ -182,7 +181,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
                         type: 'push',
                         element,
                     });
-                    this._collectInstructions(element, instructions, buffer);
+                    this._collectInstructions(element, instructions);
                     instructions.push({
                         type: 'pop',
                         element,
@@ -194,7 +193,6 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
                     type: 'draw',
                     element,
                 });
-                buffer.push(element);
             });
     }
 
