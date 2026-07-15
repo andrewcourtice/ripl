@@ -24,6 +24,8 @@ function createMockScene() {
         markRenderEnd: vi.fn(),
         save: vi.fn(),
         restore: vi.fn(),
+        pushGroup: vi.fn(),
+        popGroup: vi.fn(),
         batch: vi.fn((fn: () => unknown) => fn()),
         layer: vi.fn((fn: () => unknown) => fn()),
         element: document.createElement('div'),
@@ -34,6 +36,13 @@ function createMockScene() {
     const scene = {
         context: mockContext,
         buffer: elements,
+        // Leaf-only mock: every element renders as a `draw` instruction (no group boundaries).
+        get instructions() {
+            return elements.map(element => ({
+                type: 'draw' as const,
+                element,
+            }));
+        },
         on: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         once: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         emit: vi.fn(),

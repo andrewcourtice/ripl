@@ -20,6 +20,7 @@ import type {
     FillRule,
     Gradient,
     GradientColorStop,
+    Element as RiplElement,
     TextAlignment,
     TextBaseline,
     TextOptions,
@@ -41,8 +42,6 @@ import type {
 } from '@ripl/utilities';
 
 import {
-    ensureGroupPath,
-    getAncestorGroupIds,
     reconcileNode,
 } from '@ripl/dom';
 
@@ -523,6 +522,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         element: SVGElement; }>;
     private _clipStack: (string | undefined)[];
     private _currentClipId: string | undefined;
+    private _currentParentVNode: SVGVNode;
+    private _vnodeStack: SVGVNode[];
 
     constructor(target: string | HTMLElement, options?: ContextOptions) {
         const svg = createSVGElement('svg');
@@ -534,11 +535,16 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         super('svg', target, svg, options);
 
         this.buffer = true;
+        // SVG hit testing runs against the live DOM geometry, which already composes ancestor
+        // <g> transforms, so no manual local-space point mapping is needed.
+        this.hitTestHonoursTransform = true;
         this._vtree = {
             id: '__root__',
             tag: 'svg',
             children: [],
         };
+        this._currentParentVNode = this._vtree;
+        this._vnodeStack = [];
 
         this._reconcilerOptions = {
             createElement: (tag, id) => {
@@ -661,11 +667,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     }
 
     private _addToVTree(contextElement: SVGContextElement): void {
-        const renderElement = this.currentRenderElement;
-        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this._vtree, groupIds);
-
-        parent.children.push({
+        this._currentParentVNode.children.push({
             id: contextElement.id,
             tag: contextElement.definition.tag,
             element: contextElement,
@@ -674,13 +676,10 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     }
 
     private _removeFromVTree(id: string): void {
-        const renderElement = this.currentRenderElement;
-        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this._vtree, groupIds);
-        const index = parent.children.findIndex(c => c.id === id);
+        const index = this._currentParentVNode.children.findIndex(c => c.id === id);
 
         if (index !== -1) {
-            parent.children.splice(index, 1);
+            this._currentParentVNode.children.splice(index, 1);
         }
     }
 
@@ -688,7 +687,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         reconcileNode(this.element, this._vtree, this._domCache, this._reconcilerOptions);
     }
 
-    /** Signals the start of a render pass; resets the virtual DOM tree at the outermost depth. */
+    /** Signals the start of a render pass; resets the virtual DOM tree and group-nesting pointer at the outermost depth. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this._vtree = {
@@ -696,6 +695,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
                 tag: 'svg',
                 children: [],
             };
+            this._currentParentVNode = this._vtree;
+            this._vnodeStack = [];
         }
 
         super.markRenderStart();
@@ -746,9 +747,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     /** Creates a new {@link SVGText} element from the given options, wiring up text-on-a-path when path data is supplied. */
     public createText(options: TextOptions): ContextText {
         const text = new SVGText(options);
-        const renderElement = this.currentRenderElement;
-        const groupIds = renderElement ? getAncestorGroupIds(renderElement) : [];
-        const parent = ensureGroupPath(this._vtree, groupIds);
+        const parent = this._currentParentVNode;
 
         const textNode: SVGVNode = {
             id: text.id,
@@ -813,6 +812,51 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
 
         this._addToVTree(svgImage);
+    }
+
+    /**
+     * Opens a group boundary as a nested `<g>` element: descends the reconciliation pointer
+     * into a `<g>` keyed by the group's id and stamps the group's own transform onto it, so
+     * descendants nest under the `<g>` and inherit the group transform via SVG's native
+     * cascade. Resets the accumulated transform afterwards so leaves carry only their own
+     * transform (avoiding a double application of the group transform).
+     */
+    public pushGroup(group: RiplElement): void {
+        const groupElement: SVGContextElement = {
+            id: group.id,
+            definition: {
+                tag: 'g',
+                styles: {},
+                attributes: {},
+            },
+        };
+
+        const groupVNode: SVGVNode = {
+            id: group.id,
+            tag: 'g',
+            element: groupElement,
+            children: [],
+        };
+
+        this._currentParentVNode.children.push(groupVNode);
+        this._vnodeStack.push(this._currentParentVNode);
+        this._currentParentVNode = groupVNode;
+
+        super.pushGroup(group);
+
+        const transform = this._currentTransforms.join(' ');
+
+        if (transform) {
+            groupElement.definition.attributes.transform = transform;
+        }
+
+        this._currentTransforms = [];
+    }
+
+    /** Closes the most recently opened group boundary, restoring state and ascending the `<g>` pointer. */
+    public popGroup(): void {
+        super.popGroup();
+        this._currentParentVNode = this._vnodeStack.pop() ?? this._vtree;
     }
 
     /** Saves the current drawing state, transform, and clip onto their stacks. */

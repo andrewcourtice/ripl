@@ -18,6 +18,16 @@ import type {
 import {
     Box,
     isPointInBox,
+    matrixIdentity,
+    matrixIsIdentity,
+    matrixMultiply,
+    matrixRotate,
+    matrixScale,
+    matrixTranslate,
+} from '../math';
+
+import type {
+    Matrix,
 } from '../math';
 
 import {
@@ -272,7 +282,29 @@ function getInterpolator<TValue>(value: TValue, key?: string) {
     return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
 }
 
-function applyTransform(context: Context, _value: unknown, element: Element) {
+/**
+ * The subset of {@link Context} transform operations required to apply an element's
+ * transform. Implemented by every {@link Context}, and by the internal matrix accumulator
+ * used to reconstruct an element's world transform for hit testing.
+ */
+export interface TransformTarget {
+    /** Applies a translation of `(x, y)`. */
+    translate(x: number, y: number): void;
+    /** Applies a rotation, in radians. */
+    rotate(angle: number): void;
+    /** Applies a scale with the given horizontal and vertical factors. */
+    scale(x: number, y: number): void;
+}
+
+/**
+ * Applies an element's transform (translate, rotate, scale about its transform-origin) to
+ * the given target. Used both to drive a {@link Context}'s transform during rendering and,
+ * via a matrix accumulator, to reconstruct an element's world transform for hit testing.
+ *
+ * @param target - The {@link Context} (or matrix accumulator) to apply the transform to.
+ * @param element - The element whose transform is applied.
+ */
+export function applyElementTransform(target: TransformTarget, element: Element) {
     const translateX = element.translateX ?? 0;
     const translateY = element.translateY ?? 0;
     const scaleX = element.transformScaleX ?? 1;
@@ -308,19 +340,65 @@ function applyTransform(context: Context, _value: unknown, element: Element) {
         }
     }
 
-    context.translate(originX + translateX, originY + translateY);
+    target.translate(originX + translateX, originY + translateY);
 
     if (hasRotation) {
-        context.rotate(rotation);
+        target.rotate(rotation);
     }
 
     if (hasScale) {
-        context.scale(scaleX, scaleY);
+        target.scale(scaleX, scaleY);
     }
 
     if (hasOrigin) {
-        context.translate(-originX, -originY);
+        target.translate(-originX, -originY);
     }
+}
+
+/** A {@link TransformTarget} that accumulates applied transforms into a single {@link Matrix}. */
+class MatrixTransformTarget implements TransformTarget {
+
+    public matrix: Matrix = matrixIdentity();
+
+    public translate(x: number, y: number): void {
+        this.matrix = matrixMultiply(this.matrix, matrixTranslate(x, y));
+    }
+
+    public rotate(angle: number): void {
+        this.matrix = matrixMultiply(this.matrix, matrixRotate(angle));
+    }
+
+    public scale(x: number, y: number): void {
+        this.matrix = matrixMultiply(this.matrix, matrixScale(x, y));
+    }
+
+}
+
+/**
+ * Reconstructs an element's world transform — the composition of its own transform and
+ * every ancestor group's transform, from the root down — for use in hit testing against
+ * backends (such as canvas) that do not natively account for element transforms.
+ *
+ * @param element - The element whose world transform to compute.
+ * @returns The composed {@link Matrix}, or `null` when the whole chain is the identity
+ * transform (the common case), letting callers skip any point remapping.
+ */
+export function getWorldTransform(element: Element): Matrix | null {
+    const chain: Element[] = [];
+    let current: Element | undefined = element;
+
+    while (current) {
+        chain.unshift(current);
+        current = current.parent as Element | undefined;
+    }
+
+    const target = new MatrixTransformTarget();
+
+    chain.forEach(node => applyElementTransform(target, node));
+
+    return matrixIsIdentity(target.matrix)
+        ? null
+        : target.matrix;
 }
 
 /** The base renderable element with state management, event handling, interpolation, transform support, and context rendering. */
@@ -723,7 +801,7 @@ export class Element<
 
         try {
             if (!this.abstract) {
-                applyTransform(context, null, this as unknown as Element);
+                applyElementTransform(context, this as unknown as Element);
             }
 
             objectForEach(CONTEXT_OPERATIONS, (key, operation) => {

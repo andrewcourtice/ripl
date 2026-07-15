@@ -21,6 +21,7 @@ import {
 
 import {
     Group,
+    isGroup,
 } from './group';
 
 import type {
@@ -38,6 +39,22 @@ import {
  */
 export type SceneEventMap = ElementEventMap;
 
+/** The kind of a {@link RenderInstruction}: enter a group boundary, draw a leaf, or exit a group boundary. */
+export type RenderInstructionType = 'push' | 'draw' | 'pop';
+
+/**
+ * A single entry in a {@link Scene}'s flat render instruction stream. `push`/`pop` bracket a
+ * group so its transform and any group-scoped clip apply to the leaves drawn between them;
+ * `draw` renders a leaf element. Groups are contiguous (stacking-context ordering), so each
+ * group contributes exactly one `push`/`pop` pair.
+ */
+export interface RenderInstruction {
+    /** Whether this instruction opens a group, draws a leaf, or closes a group. */
+    type: RenderInstructionType;
+    /** The group element for `push`/`pop`, or the leaf element for `draw`. */
+    element: Element;
+}
+
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
     /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
@@ -52,8 +69,23 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
 
-    /** The hoisted flat buffer of all renderable descendants, kept sorted by z-index for O(n) rendering. */
-    public buffer: Element[];
+    private _instructions: RenderInstruction[] = [];
+    private _buffer: Element[] = [];
+
+    /**
+     * The flat, group-aware render instruction stream in paint order (stacking-context
+     * z-ordering), driving the {@link Renderer} and {@link Scene.render}. Each entry is a
+     * `push`/`draw`/`pop` {@link RenderInstruction}; groups are bracketed by `push`/`pop` so
+     * their transform and any group-scoped clip apply to the leaves drawn between them.
+     */
+    public get instructions(): RenderInstruction[] {
+        return this._instructions;
+    }
+
+    /** The flat list of renderable leaf descendants in paint order — the `draw` targets of {@link Scene.instructions}. */
+    public get buffer(): Element[] {
+        return this._buffer;
+    }
 
     /** The pixel width of the scene's rendering context. */
     public get width() {
@@ -94,7 +126,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         });
 
         this.context = context;
-        this.buffer = this.graph();
+        this._rebuffer();
 
         const requestFrame = createFrameBuffer();
 
@@ -109,17 +141,61 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             context.invalidateTrackedElements();
         }));
 
-        // this.on('updated', ({ data }) => requestFrame(() => {
-        //     if (data.key === 'zIndex') {
-        //         this.rebuffer();
-        //     }
+        // A z-index change reorders the instruction stream, so re-sort. Interpolated
+        // animations write state directly (no `updated` event), so this only fires on explicit
+        // z-index assignments — and the rebuild is debounced to once per frame.
+        this.on('updated', event => {
+            if (event.data.key !== 'zIndex') {
+                return;
+            }
 
-        //     this.render();
-        // }));
+            requestFrame(() => {
+                this._rebuffer();
+                context.invalidateTrackedElements();
+            });
+        });
     }
 
     private _rebuffer() {
-        this.buffer = this.graph().sort((ea, eb) => ea.zIndex - eb.zIndex);
+        const instructions: RenderInstruction[] = [];
+        const buffer: Element[] = [];
+
+        this._collectInstructions(this, instructions, buffer);
+
+        this._instructions = instructions;
+        this._buffer = buffer;
+    }
+
+    /**
+     * Depth-first walk that flattens the scene graph into the render instruction stream.
+     * Each group's direct children are sorted by z-index (stable, so equal-z-index siblings
+     * keep insertion order) — sorting siblings by the additive {@link Element.zIndex} is
+     * equivalent to sorting by their own z-index, since they share the same parent offset.
+     * Groups are emitted as a contiguous `push` … `pop` pair (stacking-context ordering).
+     */
+    private _collectInstructions(group: Group, instructions: RenderInstruction[], buffer: Element[]) {
+        group.children
+            .sort((ea, eb) => ea.zIndex - eb.zIndex)
+            .forEach(element => {
+                if (isGroup(element)) {
+                    instructions.push({
+                        type: 'push',
+                        element,
+                    });
+                    this._collectInstructions(element, instructions, buffer);
+                    instructions.push({
+                        type: 'pop',
+                        element,
+                    });
+                    return;
+                }
+
+                instructions.push({
+                    type: 'draw',
+                    element,
+                });
+                buffer.push(element);
+            });
     }
 
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */
@@ -133,10 +209,23 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         super.destroy();
     }
 
-    /** Clears the context and renders the entire element buffer in z-index order. */
+    /** Clears the context and renders the entire instruction stream in paint order, honouring group boundaries. */
     public render(): void {
-        this.context.batch(() => {
-            this.buffer.forEach(element => element.render(this.context));
+        const context = this.context;
+
+        context.batch(() => {
+            this._instructions.forEach(({ type, element }) => {
+                switch (type) {
+                    case 'push':
+                        context.pushGroup(element);
+                        break;
+                    case 'pop':
+                        context.popGroup();
+                        break;
+                    default:
+                        element.render(context);
+                }
+            });
         });
     }
 

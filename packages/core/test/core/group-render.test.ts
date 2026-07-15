@@ -14,11 +14,13 @@ import {
     createGroup,
 } from '../../src';
 
-/** Minimal context that records the save/render bracketing without a real backend. */
+/** Minimal context that records the group/render bracketing without a real backend. */
 function fakeContext() {
     return {
         save: vi.fn(),
         restore: vi.fn(),
+        pushGroup: vi.fn(),
+        popGroup: vi.fn(),
         markRenderStart: vi.fn(),
         markRenderEnd: vi.fn(),
     } as unknown as Context;
@@ -73,7 +75,7 @@ describe('Group.render (scene-less)', () => {
         expect(order).toEqual(['first', 'second', 'third']);
     });
 
-    test('brackets the render pass in save/markRenderStart/markRenderEnd/restore', () => {
+    test('brackets the render pass in markRenderStart/pushGroup/popGroup/markRenderEnd', () => {
         const context = fakeContext();
         const child = createElement('rect', {});
 
@@ -83,9 +85,10 @@ describe('Group.render (scene-less)', () => {
 
         group.render(context);
 
-        expect(context.save).toHaveBeenCalledTimes(1);
-        expect(context.restore).toHaveBeenCalledTimes(1);
         expect(context.markRenderStart).toHaveBeenCalledTimes(1);
+        expect(context.pushGroup).toHaveBeenCalledTimes(1);
+        expect(context.pushGroup).toHaveBeenCalledWith(group);
+        expect(context.popGroup).toHaveBeenCalledTimes(1);
         expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
     });
 

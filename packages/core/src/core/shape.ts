@@ -11,7 +11,13 @@ import type {
 
 import {
     Element,
+    getWorldTransform,
 } from './element';
+
+import {
+    matrixApplyToPoint,
+    matrixInvert,
+} from '../math';
 
 /** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
 export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
@@ -73,6 +79,19 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
         if (!this.context || !this.path) {
             return super.intersectsWith(x, y, options);
+        }
+
+        // The stored path is in this element's local space, but its transform (and any ancestor
+        // group transform) is applied to the context during rendering. Backends that don't
+        // natively account for that during hit testing (e.g. canvas) need the point mapped back
+        // into local space; the identity case (no transforms) is skipped for free.
+        if (!this.context.hitTestHonoursTransform) {
+            const worldTransform = getWorldTransform(this as unknown as Element);
+            const inverse = worldTransform && matrixInvert(worldTransform);
+
+            if (inverse) {
+                [x, y] = matrixApplyToPoint(inverse, [x, y]);
+            }
         }
 
         const {
