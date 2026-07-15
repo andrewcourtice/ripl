@@ -24,7 +24,7 @@ const GRADIENT = 'linear-gradient(90deg, #ff0000, #0000ff)';
 
 function createFakeRenderElement() {
     return {
-        getBoundingBox: vi.fn(() => ({
+        getLocalBoundingBox: vi.fn(() => ({
             left: 0,
             top: 0,
             right: 10,
@@ -70,7 +70,7 @@ describe('CanvasContext', () => {
         (ctx as { currentRenderElement: unknown }).currentRenderElement = element;
         ctx.fill = '#ff0000';
 
-        expect(element.getBoundingBox).not.toHaveBeenCalled();
+        expect(element.getLocalBoundingBox).not.toHaveBeenCalled();
         expect(ctx.fill).toBe('#ff0000');
     });
 
@@ -81,7 +81,7 @@ describe('CanvasContext', () => {
         (ctx as { currentRenderElement: unknown }).currentRenderElement = element;
         ctx.stroke = '#00ff00';
 
-        expect(element.getBoundingBox).not.toHaveBeenCalled();
+        expect(element.getLocalBoundingBox).not.toHaveBeenCalled();
         expect(ctx.stroke).toBe('#00ff00');
     });
 
@@ -92,7 +92,7 @@ describe('CanvasContext', () => {
         (ctx as { currentRenderElement: unknown }).currentRenderElement = element;
         ctx.fill = GRADIENT;
 
-        expect(element.getBoundingBox).toHaveBeenCalled();
+        expect(element.getLocalBoundingBox).toHaveBeenCalled();
     });
 
     test('createPath returns a CanvasPath', () => {

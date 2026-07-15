@@ -49,6 +49,10 @@ import type {
 } from '../core/element';
 
 import {
+    CONTEXT_OPERATIONS,
+} from '../core/constants';
+
+import {
     scaleContinuous,
 } from '../scales';
 
@@ -59,6 +63,8 @@ import type {
 import {
     arrayDedupe,
     functionMemoize,
+    objectForEach,
+    typeIsNil,
     typeIsNumber,
 } from '@ripl/utilities';
 
@@ -439,10 +445,14 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return { ...factory.getDefaultState() };
     }
 
-    /** Pushes the current state onto the stack and resets to defaults. */
+    /**
+     * Pushes the current state onto the stack and continues with a copy of it, so nested scopes
+     * inherit the enclosing drawing state (matching native canvas). This is what lets a group's
+     * paint, applied once at its boundary via {@link Context.pushGroup}, cascade to descendants.
+     */
     public save(): void {
         this.states.push(this.currentState);
-        this.currentState = this.getDefaultState();
+        this.currentState = { ...this.currentState };
         this.saveDepth += 1;
     }
 
@@ -516,11 +526,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Opens a group boundary: saves the current drawing state and applies the group's own
-     * transform, so that descendant elements render within the group's coordinate system
-     * and any group-scoped clip is confined to the group. Every {@link Context.pushGroup}
-     * must be balanced by a matching {@link Context.popGroup}. Backends that render
-     * hierarchy structurally (such as SVG) override this to nest descendants under a
-     * group node.
+     * transform, inherited paint, and opacity, so that descendant elements render within the
+     * group's coordinate system, inherit its paint through the copied state (the render-tree
+     * cascade), and composite under its opacity. Any group-scoped clip is confined to the group.
+     * Every {@link Context.pushGroup} must be balanced by a matching {@link Context.popGroup}.
+     * Backends that render hierarchy structurally (such as SVG) override this to nest descendants
+     * under a group node.
      *
      * @param group - The group element whose boundary is being entered.
      */
@@ -528,6 +539,34 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this._groupDepthStack.push(this.saveDepth);
         this.save();
         applyElementTransform(this, group);
+        this.applyGroupPaint(group);
+
+        // Opacity composites the group as a unit (multiplicative), rather than inheriting as a
+        // per-element value. Nested groups compound because each `save()` re-copies the state.
+        const opacity = group.opacity;
+
+        if (!typeIsNil(opacity) && opacity !== 1) {
+            this.opacity *= opacity;
+        }
+    }
+
+    /**
+     * Applies a group's own inherited paint (fill, stroke, font, line, shadow, text) to the
+     * context so descendants pick it up from the copied state. Transforms are applied separately
+     * and opacity is composited at the boundary, so both are skipped here.
+     */
+    protected applyGroupPaint(group: RiplElement): void {
+        objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
+            if (key === 'opacity') {
+                return;
+            }
+
+            const value = (group as unknown as Record<string, unknown>)[key];
+
+            if (!typeIsNil(value)) {
+                (operation as (context: Context, val: unknown) => void)(this, value);
+            }
+        });
     }
 
     /**

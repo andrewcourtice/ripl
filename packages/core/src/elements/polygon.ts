@@ -73,7 +73,7 @@ export class Polygon extends Shape2D<PolygonState> {
     }
 
     /** Returns the axis-aligned bounding box of the polygon. */
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
             this.cx - this.radius,

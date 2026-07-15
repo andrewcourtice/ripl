@@ -129,7 +129,7 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
         // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely,
         // which otherwise ran for every element on every frame.
         if (isGradientString(value)) {
-            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getLocalBoundingBox?.(), this.width, this.height);
             setCanvasFill(this.context, value, bounds);
         } else {
             this.context.fillStyle = value;
@@ -290,7 +290,7 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
         // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
         if (isGradientString(value)) {
-            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
+            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getLocalBoundingBox?.(), this.width, this.height);
             setCanvasStroke(this.context, value, bounds);
         } else {
             this.context.strokeStyle = value;

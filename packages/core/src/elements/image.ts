@@ -156,7 +156,7 @@ export class ImageElement extends Element<ImageState> {
     }
 
     /** Returns the axis-aligned bounding box of the image. */
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         const [sourceWidth, sourceHeight] = getSourceSize(this.image);
 
         return new Box(

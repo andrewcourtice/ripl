@@ -147,7 +147,7 @@ export class Arc extends Shape2D<ArcState> {
     }
 
     /** Returns the axis-aligned bounding box of the arc. */
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         const {
             cx,
             cy,

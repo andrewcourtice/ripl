@@ -54,8 +54,10 @@ export interface RenderElement {
     pointerEvents: RenderElementPointerEvents;
     /** Stacking order used when sorting hit-test results; higher values are prioritised. */
     zIndex: number;
-    /** Returns the element's axis-aligned bounding box, when one is defined. */
+    /** Returns the element's on-screen (transformed) axis-aligned bounding box, when one is defined. */
     getBoundingBox?(): Box;
+    /** Returns the element's untransformed, local-space bounding box, when one is defined. */
+    getLocalBoundingBox?(): Box;
     /** Returns whether the element has any listeners registered for the given event. */
     has(event: string): boolean;
     /** Tests whether the point `(x, y)` lies within the element, honouring its pointer-event region. */

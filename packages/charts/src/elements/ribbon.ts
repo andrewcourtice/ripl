@@ -100,7 +100,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         super('ribbon', options);
     }
 
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         const {
             cx,
             cy,

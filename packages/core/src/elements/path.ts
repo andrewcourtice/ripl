@@ -89,7 +89,7 @@ export class Path extends Shape2D<PathState> {
     }
 
     /** Returns the axis-aligned bounding box of the path. */
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         return new Box(
             this.y,
             this.x,

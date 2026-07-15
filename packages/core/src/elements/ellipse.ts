@@ -104,7 +104,7 @@ export class Ellipse extends Shape2D<EllipseState> {
     }
 
     /** Returns the axis-aligned bounding box of the ellipse. */
-    public getBoundingBox(): Box {
+    public getLocalBoundingBox(): Box {
         return new Box(
             this.cy - this.radiusY,
             this.cx - this.radiusX,

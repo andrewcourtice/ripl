@@ -7,6 +7,14 @@ import {
 } from './structs';
 
 import {
+    matrixApplyToPoint,
+} from './matrix';
+
+import type {
+    Matrix,
+} from './matrix';
+
+import {
     factory,
 } from '../core/factory';
 
@@ -101,6 +109,40 @@ export function getContainingBox<TValue>(value: TValue[], identity: (value: TVal
         left = Math.min(left, box.left);
         bottom = Math.max(bottom, box.bottom);
         right = Math.max(right, box.right);
+    });
+
+    return new Box(top, left, bottom, right);
+}
+
+/**
+ * Transforms a box by an affine matrix and returns the axis-aligned bounding box of the result.
+ * Returns the box unchanged when `matrix` is `null` (the identity case). Because it re-fits an AABB
+ * around the transformed corners, a rotated box yields a conservative (enlarged) bounding box.
+ */
+export function transformBox(box: Box, matrix: Matrix | null): Box {
+    if (!matrix) {
+        return box;
+    }
+
+    const corners: Point[] = [
+        [box.left, box.top],
+        [box.right, box.top],
+        [box.right, box.bottom],
+        [box.left, box.bottom],
+    ];
+
+    let top = Infinity,
+        left = Infinity,
+        bottom = -Infinity,
+        right = -Infinity;
+
+    corners.forEach(corner => {
+        const [x, y] = matrixApplyToPoint(matrix, corner);
+
+        top = Math.min(top, y);
+        left = Math.min(left, x);
+        bottom = Math.max(bottom, y);
+        right = Math.max(right, x);
     });
 
     return new Box(top, left, bottom, right);
