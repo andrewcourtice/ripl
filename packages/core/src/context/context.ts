@@ -41,6 +41,14 @@ import {
 } from '../core/factory';
 
 import {
+    applyElementTransform,
+} from '../core/element';
+
+import type {
+    Element as RiplElement,
+} from '../core/element';
+
+import {
     scaleContinuous,
 } from '../scales';
 
@@ -105,6 +113,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Whether drawing is buffered rather than committed to the surface immediately. */
     public buffer = false;
+    /**
+     * Whether this context's hit testing natively accounts for element and ancestor group
+     * transforms (as SVG does, via the DOM). When `false` (e.g. canvas), callers map the hit
+     * point into the element's local space before testing. See {@link getWorldTransform}.
+     */
+    public hitTestHonoursTransform = false;
     /** Current width, in pixels, of the rendering surface. */
     public width: number;
     /** Current height, in pixels, of the rendering surface. */
@@ -123,6 +137,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     protected states: BaseState[];
     protected currentState: BaseState;
     protected renderDepth = 0;
+    protected saveDepth = 0;
+    private _groupDepthStack: number[] = [];
 
     /** The element currently being rendered; setting a non-abstract element also records it in {@link Context.renderedElements}. */
     public get currentRenderElement() {
@@ -427,11 +443,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public save(): void {
         this.states.push(this.currentState);
         this.currentState = this.getDefaultState();
+        this.saveDepth += 1;
     }
 
     /** Restores the most recently saved state from the stack. */
     public restore(): void {
+        if (this.saveDepth === 0) {
+            return;
+        }
+
         this.currentState = this.states.pop() || this.getDefaultState();
+        this.saveDepth -= 1;
     }
 
     /** Executes a callback within a save/restore pair, returning the callback's result. */
@@ -488,6 +510,36 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return body();
         } finally {
             this.markRenderEnd();
+            this.restore();
+        }
+    }
+
+    /**
+     * Opens a group boundary: saves the current drawing state and applies the group's own
+     * transform, so that descendant elements render within the group's coordinate system
+     * and any group-scoped clip is confined to the group. Every {@link Context.pushGroup}
+     * must be balanced by a matching {@link Context.popGroup}. Backends that render
+     * hierarchy structurally (such as SVG) override this to nest descendants under a
+     * group node.
+     *
+     * @param group - The group element whose boundary is being entered.
+     */
+    public pushGroup(group: RiplElement): void {
+        this._groupDepthStack.push(this.saveDepth);
+        this.save();
+        applyElementTransform(this, group);
+    }
+
+    /**
+     * Closes the most recently opened group boundary, unwinding the state stack back to the
+     * depth captured at {@link Context.pushGroup}. This absorbs any dangling `save()` left by
+     * a group-scoped clip (which deliberately skips its own `restore` so the clip persists to
+     * later siblings), confining the clip to the group rather than leaking it to the scene.
+     */
+    public popGroup(): void {
+        const depth = this._groupDepthStack.pop() ?? Math.max(0, this.saveDepth - 1);
+
+        while (this.saveDepth > depth) {
             this.restore();
         }
     }

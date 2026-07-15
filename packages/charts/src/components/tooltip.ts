@@ -125,7 +125,9 @@ export class Tooltip extends ChartComponent {
             this._group = createGroup({
                 id: 'tooltip',
                 opacity: 0,
-                zIndex: 1000,
+                // Above every other overlay (crosshair 1500, legend 2000): the tooltip is
+                // transient focused info and must never be occluded.
+                zIndex: 2500,
                 pointerEvents: 'none',
                 children: [background, textElement],
             });

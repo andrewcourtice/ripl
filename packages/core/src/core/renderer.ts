@@ -307,14 +307,26 @@ export class Renderer extends EventBus<RendererEventMap> {
     }
 
     private _renderBuffer() {
-        const buffer = this._scene.buffer;
+        const context = this._scene.context;
 
-        buffer.forEach(element => {
+        this._scene.instructions.forEach(({ type, element }) => {
+            // A group boundary closes here — its transitions were already advanced at the
+            // matching `push`, so restore and move on without re-processing them.
+            if (type === 'pop') {
+                context.popGroup();
+                return;
+            }
+
             this._transitionMap.get(element.id)?.forEach(entry => {
                 this._processTransition(entry);
             });
 
-            element.render(this._scene.context);
+            if (type === 'push') {
+                context.pushGroup(element);
+                return;
+            }
+
+            element.render(context);
 
             if (this._debugOptions.boundingBoxes) {
                 this._renderBoundingBoxes(element);

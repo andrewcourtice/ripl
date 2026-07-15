@@ -23,6 +23,10 @@ import {
     mockCanvasContext,
 } from '@ripl/test-utils';
 
+import {
+    createGroup,
+} from '@ripl/core';
+
 describe('SVG', () => {
 
     // ── SVGPath ──────────────────────────────────────────────────
@@ -562,6 +566,83 @@ describe('SVG', () => {
             // We can't easily inspect vtree directly, but we can verify the context works
             expect(ctx.element).toBeDefined();
 
+            ctx.destroy();
+        });
+
+        // ── Group boundaries (pushGroup / popGroup) ──────────────
+
+        test('pushGroup stamps the group transform on a <g>, not on the leaf', () => {
+            const ctx = create();
+            const group = createGroup({});
+            group.translateX = 50;
+
+            ctx.markRenderStart();
+            ctx.pushGroup(group);
+            const leaf = ctx.createPath('leaf');
+            ctx.applyFill(leaf);
+            ctx.popGroup();
+            ctx.markRenderEnd();
+
+            // The leaf must NOT carry the group transform (it is supplied once by the <g>).
+            expect(leaf.definition.attributes.transform).toBeUndefined();
+
+            // Force a synchronous reconcile and inspect the DOM.
+            ctx.export();
+
+            const groupEl = ctx.element.querySelector('g');
+            expect(groupEl).not.toBeNull();
+            expect(groupEl?.getAttribute('id')).toBe(group.id);
+            expect(groupEl?.getAttribute('transform')).toContain('translate(50,0)');
+            expect(groupEl?.querySelector('path')).not.toBeNull();
+
+            ctx.destroy();
+        });
+
+        test('a leaf keeps only its own transform under a transformed group', () => {
+            const ctx = create();
+            const group = createGroup({});
+            group.translateX = 50;
+
+            ctx.markRenderStart();
+            ctx.pushGroup(group);
+            ctx.translate(5, 0); // the leaf's own transform
+            const leaf = ctx.createPath('leaf');
+            ctx.applyFill(leaf);
+            ctx.popGroup();
+            ctx.markRenderEnd();
+
+            // Only the leaf's own translate — the group's translate lives on the <g>.
+            expect(leaf.definition.attributes.transform).toBe('translate(5,0)');
+
+            ctx.destroy();
+        });
+
+        test('a group-scoped clip does not leak past the group boundary', () => {
+            const ctx = create();
+            const group = createGroup({});
+
+            ctx.markRenderStart();
+            ctx.pushGroup(group);
+
+            // Simulate a clip child: it saves, installs a clip, and (like a real clip element)
+            // deliberately does not restore, so the clip applies to later siblings in the group.
+            ctx.save();
+            const clipPath = ctx.createPath('clip');
+            clipPath.rect(0, 0, 10, 10);
+            ctx.applyClip(clipPath);
+
+            const inside = ctx.createPath('inside');
+            ctx.applyFill(inside);
+            expect(inside.definition.attributes['clip-path']).toBeDefined();
+
+            ctx.popGroup();
+
+            // After the boundary, the dangling clip save is unwound — later elements are unclipped.
+            const outside = ctx.createPath('outside');
+            ctx.applyFill(outside);
+            expect(outside.definition.attributes['clip-path']).toBeUndefined();
+
+            ctx.markRenderEnd();
             ctx.destroy();
         });
 

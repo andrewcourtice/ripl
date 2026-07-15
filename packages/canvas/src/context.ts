@@ -348,11 +348,17 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
 
     /** Saves the current drawing state onto the state stack. */
     public save(): void {
+        this.saveDepth += 1;
         return this.context.save();
     }
 
     /** Restores the most recently saved drawing state from the stack. */
     public restore(): void {
+        if (this.saveDepth === 0) {
+            return;
+        }
+
+        this.saveDepth -= 1;
         return this.context.restore();
     }
 

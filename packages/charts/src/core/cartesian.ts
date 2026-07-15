@@ -484,15 +484,23 @@ export abstract class CartesianChart<
     protected clipPlot(area: ChartArea): void {
         this._ensurePlotContent();
 
-        if (!this._plotClip) {
-            return;
+        // Everything positioned by the (navigator-rescaled) scales — marks, grid, and axis
+        // ticks/labels — must stay within the plot while navigating. The marks live in
+        // `_plotContent` (masked by `_plotClip`); the grid and axes live in their own scene-root
+        // groups, so they get their own clips here. All are inert without a navigator.
+        const navigating = !!this._navigator;
+
+        if (this._plotClip) {
+            this._plotClip.x = area.x;
+            this._plotClip.y = area.y;
+            this._plotClip.width = area.width;
+            this._plotClip.height = area.height;
+            this._plotClip.clip = navigating;
         }
 
-        this._plotClip.x = area.x;
-        this._plotClip.y = area.y;
-        this._plotClip.width = area.width;
-        this._plotClip.height = area.height;
-        this._plotClip.clip = !!this._navigator;
+        this.xAxis.clipTo(area, navigating);
+        this.yAxis.clipTo(area, navigating);
+        this.grid?.clipTo(area, navigating);
     }
 
     protected resolveAnimation(referenceDuration: number = ANIMATION_REFERENCE.update): ResolvedAnimation {

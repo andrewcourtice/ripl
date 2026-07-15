@@ -10,11 +10,13 @@ import type {
     Group,
     Line,
     LineState,
+    Rect,
 } from '@ripl/core';
 
 import {
     createGroup,
     createLine,
+    createRect,
 } from '@ripl/core';
 
 import {
@@ -43,6 +45,7 @@ const DEFAULT_LINE_DASH = [4, 4];
 export class Grid extends ChartComponent {
 
     private _group?: Group;
+    private _clip?: Rect;
     private _horizontalLines: Line[] = [];
     private _verticalLines: Line[] = [];
     private _horizontal: boolean;
@@ -59,6 +62,56 @@ export class Grid extends ChartComponent {
         this._stroke = options.stroke ?? DEFAULT_STROKE;
         this._lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
         this._lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
+    }
+
+    /** Lazily creates the grid group and adds it to the scene once. */
+    private _ensureGroup(): Group {
+        if (!this._group) {
+            this._group = createGroup({
+                id: 'grid',
+                class: 'chart-grid',
+                zIndex: 0,
+            });
+
+            this.scene.add(this._group);
+        }
+
+        return this._group;
+    }
+
+    /**
+     * Clips the grid lines to the plot rectangle, enabling the clip only while `enabled` (typically
+     * while a navigator is active). Mirrors the plot-content clip so grid lines positioned by a
+     * zoomed scale cannot bleed past the plot into the axis gutters.
+     *
+     * @param area - The current plot rectangle.
+     * @param enabled - Whether the clip should mask.
+     */
+    public clipTo(area: { x: number;
+        y: number;
+        width: number;
+        height: number; }, enabled: boolean): void {
+        const group = this._ensureGroup();
+
+        if (!this._clip) {
+            this._clip = createRect({
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                clip: false,
+                pointerEvents: 'none',
+                zIndex: Number.NEGATIVE_INFINITY,
+            });
+
+            group.add(this._clip);
+        }
+
+        this._clip.x = area.x;
+        this._clip.y = area.y;
+        this._clip.width = area.width;
+        this._clip.height = area.height;
+        this._clip.clip = enabled;
     }
 
     /**
@@ -80,15 +133,7 @@ export class Grid extends ChartComponent {
         width: number,
         height: number
     ) {
-        if (!this._group) {
-            this._group = createGroup({
-                id: 'grid',
-                class: 'chart-grid',
-                zIndex: 0,
-            });
-
-            this.scene.add(this._group);
-        }
+        this._ensureGroup();
 
         // Drop grid lines that sit on the plot boundary — that's where the (solid) axis line lives,
         // so a dotted grid line there would draw right on top of it.
