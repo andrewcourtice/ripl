@@ -55,6 +55,13 @@ export interface RenderInstruction {
     element: Element;
 }
 
+/** Render-instruction dispatch keyed by instruction type: open a group boundary, draw a leaf, or close a group boundary. */
+const RENDER_OPERATIONS: Record<RenderInstructionType, (context: Context, element: Element) => void> = {
+    push: (context, element) => context.pushGroup(element),
+    pop: context => context.popGroup(),
+    draw: (context, element) => element.render(context),
+};
+
 /** Options for constructing a scene, extending group options with an optional auto-render-on-resize flag. */
 export interface SceneOptions extends GroupOptions {
     /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
@@ -213,16 +220,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         context.batch(() => {
             this._instructions.forEach(({ type, element }) => {
-                switch (type) {
-                    case 'push':
-                        context.pushGroup(element);
-                        break;
-                    case 'pop':
-                        context.popGroup();
-                        break;
-                    default:
-                        element.render(context);
-                }
+                RENDER_OPERATIONS[type](context, element);
             });
         });
     }
