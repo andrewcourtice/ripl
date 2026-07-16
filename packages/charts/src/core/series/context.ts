@@ -34,8 +34,8 @@ import type {
     BandScale,
     Element,
     PolylineRenderer,
-    Scale,
     Renderer,
+    Scale,
 } from '@ripl/core';
 
 import type {

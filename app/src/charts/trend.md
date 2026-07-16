@@ -63,16 +63,12 @@ import type {
 } from '@ripl/web';
 
 import {
-    stringUniqueId,
-} from '@ripl/utilities';
-
-import {
     ref,
     watch,
 } from 'vue';
 
 interface SalesRow {
-    id: string;
+    month: string;
     revenue: number;
     expenses: number;
     orders: number;
@@ -109,14 +105,16 @@ function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
     })) as TrendChartSeriesOptions<SalesRow>[];
 }
 
-let data = Array.from({ length: 12 }, getDataItem);
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+let data = Array.from({ length: MONTHS.length }, (_, index) => getDataItem(index));
 
 const {
     chart,
     contextChanged,
 } = useRiplChart(context => createTrendChart(context, {
     data,
-    key: 'id',
+    key: 'month',
     series: getSeries(),
     stacked: stacked.value,
     overview: overview.value,
@@ -135,13 +133,17 @@ function apply() {
 watch(config, apply, { deep: true });
 watch([stacked, overview, lineType], apply);
 
+function monthLabel(index: number): string {
+    const year = 24 + Math.floor(index / MONTHS.length);
+    return `${MONTHS[index % MONTHS.length]} '${year}`;
+}
+
 function getValue(min: number, max: number) {
     return Math.round(min + Math.random() * (max - min));
 }
 
-function getDataItem(): SalesRow {
+function rollValues() {
     return {
-        id: stringUniqueId(),
         revenue: getValue(400, 1000),
         expenses: getValue(120, 420),
         orders: getValue(60, 320),
@@ -149,15 +151,22 @@ function getDataItem(): SalesRow {
     };
 }
 
+function getDataItem(index: number): SalesRow {
+    return {
+        month: monthLabel(index),
+        ...rollValues(),
+    };
+}
+
 function addData() {
-    data.push(getDataItem());
+    data.push(getDataItem(data.length));
     chart.value?.update({ data });
 }
 
 function randomise() {
     data = data.map(item => ({
-        ...getDataItem(),
-        id: item.id,
+        month: item.month,
+        ...rollValues(),
     }));
 
     chart.value?.update({ data });

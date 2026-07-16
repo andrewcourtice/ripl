@@ -27,6 +27,10 @@ import {
     stagger,
 } from '../core/animation';
 
+import type {
+    ResolvedAnimation,
+} from '../core/animation';
+
 import {
     applyHoverHighlight,
 } from '../core/interaction';
@@ -45,10 +49,16 @@ import type {
 } from '../core/statistics';
 
 import type {
+    Circle,
+    CircleState,
     Context,
+    Ease,
     EventMap,
     Group,
+    Line,
+    LineState,
     Rect,
+    RectState,
     Scale,
 } from '@ripl/core';
 
@@ -173,79 +183,150 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         });
     }
 
-    private _createBox(category: string, stats: BoxplotStats, centre: number, boxWidth: number, valueScale: Scale<number>, color: string): Group {
+    /** Computes the final geometry of every box element (the target the entry/update transitions animate to). */
+    private _boxTargets(stats: BoxplotStats, centre: number, boxWidth: number, valueScale: Scale<number>) {
         const left = centre - boxWidth / 2;
         const capWidth = boxWidth * 0.5;
+        const yQ3 = valueScale(stats.q3);
+        const yQ1 = valueScale(stats.q1);
+        const yMedian = valueScale(stats.median);
+        const yMax = valueScale(stats.max);
+        const yMin = valueScale(stats.min);
+
+        return {
+            centre,
+            yMedian,
+            box: {
+                x: left,
+                y: yQ3,
+                width: boxWidth,
+                height: Math.max(0, yQ1 - yQ3),
+            } as RectState,
+            median: {
+                x1: left,
+                y1: yMedian,
+                x2: left + boxWidth,
+                y2: yMedian,
+            } as LineState,
+            whiskerHigh: {
+                x1: centre,
+                y1: yQ3,
+                x2: centre,
+                y2: yMax,
+            } as LineState,
+            whiskerLow: {
+                x1: centre,
+                y1: yQ1,
+                x2: centre,
+                y2: yMin,
+            } as LineState,
+            capHigh: {
+                x1: centre - capWidth / 2,
+                y1: yMax,
+                x2: centre + capWidth / 2,
+                y2: yMax,
+            } as LineState,
+            capLow: {
+                x1: centre - capWidth / 2,
+                y1: yMin,
+                x2: centre + capWidth / 2,
+                y2: yMin,
+            } as LineState,
+        };
+    }
+
+    /**
+     * Builds a box group with every element **collapsed toward the median** (box height 0 at the
+     * median line, whiskers/caps collapsed at their box edge/centre, outliers at radius 0) and its
+     * final geometry stashed on `data`, so the entry transition grows it out like a candlestick.
+     */
+    private _createBox(category: string, stats: BoxplotStats, centre: number, boxWidth: number, valueScale: Scale<number>, color: string): Group {
+        const target = this._boxTargets(stats, centre, boxWidth, valueScale);
+        const restFill = setColorAlpha(color, REST_ALPHA);
 
         const box = createRect({
             id: `${category}-box`,
-            x: left,
-            y: valueScale(stats.q3),
-            width: boxWidth,
-            height: Math.max(0, valueScale(stats.q1) - valueScale(stats.q3)),
-            fill: setColorAlpha(color, REST_ALPHA),
+            x: target.box.x,
+            y: target.yMedian,
+            width: target.box.width,
+            height: 0,
+            fill: restFill,
             stroke: color,
             lineWidth: 1.5,
+            data: {
+                ...target.box,
+                fill: restFill,
+            } as RectState,
         });
 
         this._attachBoxHover(box, category, stats);
 
         const median = createLine({
             id: `${category}-median`,
-            x1: left,
-            y1: valueScale(stats.median),
-            x2: left + boxWidth,
-            y2: valueScale(stats.median),
+            x1: centre,
+            y1: target.yMedian,
+            x2: centre,
+            y2: target.yMedian,
             stroke: color,
             lineWidth: 2,
+            data: target.median,
         });
 
         const whiskerHigh = createLine({
             id: `${category}-whisker-high`,
             x1: centre,
-            y1: valueScale(stats.q3),
+            y1: target.whiskerHigh.y1,
             x2: centre,
-            y2: valueScale(stats.max),
+            y2: target.whiskerHigh.y1,
             stroke: color,
             lineWidth: 1,
+            data: target.whiskerHigh,
         });
 
         const whiskerLow = createLine({
             id: `${category}-whisker-low`,
             x1: centre,
-            y1: valueScale(stats.q1),
+            y1: target.whiskerLow.y1,
             x2: centre,
-            y2: valueScale(stats.min),
+            y2: target.whiskerLow.y1,
             stroke: color,
             lineWidth: 1,
+            data: target.whiskerLow,
         });
 
         const capHigh = createLine({
             id: `${category}-cap-high`,
-            x1: centre - capWidth / 2,
-            y1: valueScale(stats.max),
-            x2: centre + capWidth / 2,
-            y2: valueScale(stats.max),
+            x1: centre,
+            y1: target.capHigh.y1,
+            x2: centre,
+            y2: target.capHigh.y2,
             stroke: color,
             lineWidth: 1,
+            data: target.capHigh,
         });
 
         const capLow = createLine({
             id: `${category}-cap-low`,
-            x1: centre - capWidth / 2,
-            y1: valueScale(stats.min),
-            x2: centre + capWidth / 2,
-            y2: valueScale(stats.min),
+            x1: centre,
+            y1: target.capLow.y1,
+            x2: centre,
+            y2: target.capLow.y2,
             stroke: color,
             lineWidth: 1,
+            data: target.capLow,
         });
 
         const outliers = stats.outliers.map((outlier, index) => createCircle({
             id: `${category}-outlier-${index}`,
             cx: centre,
             cy: valueScale(outlier),
-            radius: 2.5,
+            radius: 0,
             fill: color,
+            data: {
+                cx: centre,
+                cy: valueScale(outlier),
+                radius: 2.5,
+            } as CircleState,
         }));
 
         return createGroup({
@@ -375,53 +456,195 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         } = arrayJoin(items, this._groups, (item, group) => group.id === item.id);
 
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+        const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
+        // Exit: fade the box's marks out, then destroy the group.
         exits.forEach(group => {
             void Promise.all(group.children.map(child => exitElement(this.renderer, child, exitAnimation, {
                 opacity: 0,
             }))).then(() => group.destroy());
         });
 
-        // Updated categories are rebuilt in place at their new positions (composite geometry).
-        updates.forEach(([item, group]) => {
-            group.clear();
-            group.add(this._createBox(item.id, item.stats, item.centre, boxWidth, valueScale, color).children);
-        });
-
         const entryGroups = entries.map(item => {
             const group = this._createBox(item.id, item.stats, item.centre, boxWidth, valueScale, color);
-
-            group.children.forEach(child => {
-                child.opacity = 0;
-            });
-
             this.addPlotContent(group);
-
             return group;
         });
 
+        // Update: reconcile geometry in place and transition to it — rather than clearing + rebuilding,
+        // which teleported the boxes to their new positions with no animation.
+        const updateResults = updates.map(([item, group]) => ({
+            group,
+            marks: this._reconcileBox(item, group, boxWidth, valueScale, color, exitAnimation),
+        }));
+
         this._groups = [
             ...entryGroups,
-            ...updates.map(([, group]) => group),
+            ...updateResults.map(result => result.group),
         ];
 
-        const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
+        const categoryCount = Math.max(1, entryGroups.length);
 
-        const entryChildren = entryGroups.flatMap(group => group.children);
+        // Entry: grow each box out from the median (like a candlestick body), staggered left-to-right.
+        const entryTransitions = entryGroups.flatMap((group, index) => {
+            const box = group.getElementsByType('rect')[0] as Rect | undefined;
+            const lines = group.getElementsByType('line') as Line[];
+            const circles = group.getElementsByType('circle') as Circle[];
+            const delay = stagger(index, categoryCount, enter.duration, 0.6);
 
-        const entriesTransition = entryChildren.length
-            ? this.renderer.transition(entryChildren, (element, index, length) => ({
-                duration: enter.duration,
-                delay: stagger(index, length, enter.duration, 0.3),
-                state: {
-                    opacity: 1,
-                },
-            }))
-            : Promise.resolve();
+            return this._transitionMarks(box, lines, circles, enter.duration, delay, enter.ease);
+        });
+
+        const updateTransitions = updateResults.flatMap(result =>
+            this._transitionMarks(result.marks.box, result.marks.lines, result.marks.circles, update.duration, 0, update.ease));
 
         return Promise.all([
-            entriesTransition,
+            ...entryTransitions,
+            ...updateTransitions,
         ]);
+    }
+
+    /** Sets each box element's target `data` for an update, reconciling outliers by id, and returns the living marks to transition. */
+    private _reconcileBox(
+        item: {
+            id: string;
+            stats: BoxplotStats;
+            centre: number;
+        },
+        group: Group,
+        boxWidth: number,
+        valueScale: Scale<number>,
+        color: string,
+        exitAnimation: ResolvedAnimation
+    ): {
+        box?: Rect;
+        lines: Line[];
+        circles: Circle[];
+    } {
+        const target = this._boxTargets(item.stats, item.centre, boxWidth, valueScale);
+        const restFill = setColorAlpha(color, REST_ALPHA);
+
+        const box = group.getElementById(`${item.id}-box`) as Rect | undefined;
+
+        if (box) {
+            box.data = {
+                ...target.box,
+                fill: restFill,
+            } as RectState;
+            this._attachBoxHover(box, item.id, item.stats);
+        }
+
+        const lineTargets: Record<string, LineState> = {
+            [`${item.id}-median`]: target.median,
+            [`${item.id}-whisker-high`]: target.whiskerHigh,
+            [`${item.id}-whisker-low`]: target.whiskerLow,
+            [`${item.id}-cap-high`]: target.capHigh,
+            [`${item.id}-cap-low`]: target.capLow,
+        };
+
+        const lines = group.getElementsByType('line') as Line[];
+        lines.forEach(line => {
+            const lineTarget = lineTargets[line.id];
+
+            if (lineTarget) {
+                line.data = lineTarget;
+            }
+        });
+
+        // Reconcile outliers by id: exit removed points, grow in new ones, move existing ones.
+        const existing = group.getElementsByType('circle') as Circle[];
+        const outlierItems = item.stats.outliers.map((value, index) => ({
+            id: `${item.id}-outlier-${index}`,
+            value,
+        }));
+
+        const {
+            left: outlierEntries,
+            inner: outlierUpdates,
+            right: outlierExits,
+        } = arrayJoin(outlierItems, existing, (outlier, circle) => circle.id === outlier.id);
+
+        outlierExits.forEach(circle => exitElement(this.renderer, circle, exitAnimation, {
+            radius: 0,
+            opacity: 0,
+        }));
+
+        const circles: Circle[] = [];
+
+        outlierEntries.forEach(outlier => {
+            const circle = createCircle({
+                id: outlier.id,
+                cx: item.centre,
+                cy: valueScale(outlier.value),
+                radius: 0,
+                fill: color,
+                data: {
+                    cx: item.centre,
+                    cy: valueScale(outlier.value),
+                    radius: 2.5,
+                } as CircleState,
+            });
+
+            group.add(circle);
+            circles.push(circle);
+        });
+
+        outlierUpdates.forEach(([outlier, circle]) => {
+            circle.data = {
+                cx: item.centre,
+                cy: valueScale(outlier.value),
+                radius: 2.5,
+            } as CircleState;
+            circles.push(circle);
+        });
+
+        return {
+            box,
+            lines,
+            circles,
+        };
+    }
+
+    /** Transitions a box's rect + lines + circles to the target geometry stashed on their `data`. */
+    private _transitionMarks(
+        box: Rect | undefined,
+        lines: Line[],
+        circles: Circle[],
+        duration: number,
+        delay: number,
+        ease: Ease
+    ): Promise<unknown>[] {
+        const transitions: Promise<unknown>[] = [];
+
+        if (box) {
+            transitions.push(this.renderer.transition(box, {
+                duration,
+                delay,
+                ease,
+                state: box.data as RectState,
+            }));
+        }
+
+        if (lines.length > 0) {
+            transitions.push(this.renderer.transition(lines, element => ({
+                duration,
+                delay,
+                ease,
+                state: element.data as LineState,
+            })));
+        }
+
+        if (circles.length > 0) {
+            transitions.push(this.renderer.transition(circles, element => ({
+                duration,
+                delay,
+                ease,
+                state: element.data as CircleState,
+            })));
+        }
+
+        return transitions;
     }
 
 }

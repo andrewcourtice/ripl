@@ -10,7 +10,6 @@
  */
 
 import type {
-    SeriesEventPhase,
     SeriesInteractionEvent,
     SeriesRenderContext,
 } from './context';
@@ -126,7 +125,7 @@ export abstract class SeriesRenderer<
     }
 
     /** Computes per-render precompute shared by all hooks. Defaults to nothing. */
-    protected prepare(series: TSeries[], ctx: TContext): TPrepared {
+    protected prepare(_series: TSeries[], _ctx: TContext): TPrepared {
         return undefined as TPrepared;
     }
 
@@ -143,7 +142,7 @@ export abstract class SeriesRenderer<
     protected abstract updateTransitions(groups: Group[], ctx: TContext, update: ResolvedAnimation, prepared: TPrepared): Promise<unknown>[];
 
     /** Animates a removed series' marks out and destroys the group. Overridable for type-specific collapse. */
-    protected exitSeries(group: Group, ctx: TContext, exitAnimation: ResolvedAnimation, prepared: TPrepared): void {
+    protected exitSeries(group: Group, ctx: TContext, exitAnimation: ResolvedAnimation, _prepared: TPrepared): void {
         const exits = group.graph(false).map(element => exitElement(ctx.renderer, element, exitAnimation));
         void Promise.all(exits).then(() => group.destroy());
     }
@@ -153,7 +152,7 @@ export abstract class SeriesRenderer<
      * can layer this renderer's series between other types. No-op for standalone charts (no base set),
      * which keep their natural insertion order.
      */
-    protected orderGroups(series: TSeries[], ctx: TContext, prepared: TPrepared): void {
+    protected orderGroups(series: TSeries[], ctx: TContext, _prepared: TPrepared): void {
         if (ctx.zIndexBase === undefined) {
             return;
         }

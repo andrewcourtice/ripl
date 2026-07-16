@@ -765,6 +765,11 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
             if (hasVolume) {
                 promises.push(this._drawVolume(chartLeft, chartRight, volumeTop, volumeBottom));
+            } else if (this._volumeGroup) {
+                // Volume was toggled off — tear down the orphaned group so the reclaimed space
+                // (the candlesticks now expand into it) doesn't paint over stale bars.
+                this._volumeGroup.destroy();
+                this._volumeGroup = undefined;
             }
 
             return Promise.all(promises);
