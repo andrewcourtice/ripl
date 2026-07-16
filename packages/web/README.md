@@ -1,6 +1,6 @@
 # @ripl/web
 
-The main browser entry point for [Ripl](https://www.ripl.rocks) — a unified, zero-dependency API for drawing and animating 2D graphics and data visualizations.
+The main browser entry point for [Ripl](https://www.ripl.run) — a unified, zero-dependency API for drawing and animating 2D graphics and data visualizations.
 
 ## Installation
 
@@ -55,7 +55,7 @@ To render the same scene to SVG, import `createContext` from [`@ripl/svg`](https
 
 ## Documentation
 
-Full documentation and interactive demos are available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation and interactive demos are available at [ripl.run](https://www.ripl.run).
 
 ## License
 

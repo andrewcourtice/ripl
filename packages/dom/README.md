@@ -1,6 +1,6 @@
 # @ripl/dom
 
-DOM utilities for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+DOM utilities for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -32,7 +32,7 @@ Creates a new virtual node.
 
 ## Documentation
 
-Full documentation is available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation is available at [ripl.run](https://www.ripl.run).
 
 ## License
 

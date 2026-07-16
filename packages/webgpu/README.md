@@ -1,6 +1,6 @@
 # @ripl/webgpu
 
-WebGPU 3D rendering context for [Ripl](https://www.ripl.rocks). Replaces the Canvas 2D painter's algorithm in `@ripl/3d` with a true GPU rasterization pipeline featuring hardware depth testing, WGSL shaders, and Lambertian shading.
+WebGPU 3D rendering context for [Ripl](https://www.ripl.run). Replaces the Canvas 2D painter's algorithm in `@ripl/3d` with a true GPU rasterization pipeline featuring hardware depth testing, WGSL shaders, and Lambertian shading.
 
 ## Installation
 

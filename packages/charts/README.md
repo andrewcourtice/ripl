@@ -1,6 +1,6 @@
 # @ripl/charts
 
-Pre-built, animated chart components for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+Pre-built, animated chart components for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -51,7 +51,7 @@ const chart = new BarChart('#chart', {
 
 ## Documentation
 
-Full documentation, options reference, and interactive demos are available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation, options reference, and interactive demos are available at [ripl.run](https://www.ripl.run).
 
 ## License
 

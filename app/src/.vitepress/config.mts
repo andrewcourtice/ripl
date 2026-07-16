@@ -52,11 +52,11 @@ export default defineConfig({
         }],
         ['meta', {
             property: 'og:image',
-            content: 'https://www.ripl.rocks/og-image.png',
+            content: 'https://www.ripl.run/og-image.png',
         }],
         ['meta', {
             property: 'og:url',
-            content: 'https://www.ripl.rocks/',
+            content: 'https://www.ripl.run/',
         }],
         ['meta', {
             name: 'twitter:card',
@@ -72,11 +72,11 @@ export default defineConfig({
         }],
         ['meta', {
             name: 'twitter:image',
-            content: 'https://www.ripl.rocks/og-image.png',
+            content: 'https://www.ripl.run/og-image.png',
         }],
         ['link', {
             rel: 'canonical',
-            href: 'https://www.ripl.rocks/',
+            href: 'https://www.ripl.run/',
         }],
     ],
 

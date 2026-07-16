@@ -43,7 +43,7 @@ const navigator = createNavigator(context, {
 });
 
 // Re-render the scene whenever the view transform changes.
-navigator.on('change', ({ k, x, y }) => redraw());
+navigator.on('change', () => redraw());
 
 // Frame a content-space box — even one that sits entirely off-screen.
 navigator.fitBounds({ x0: 0, y0: 0, x1: 1800, y1: 1100 }, { padding: 24 });
@@ -188,7 +188,9 @@ const {
     navigator.on('change', () => renderDemo(context, navigator));
     navigator.on('brush', () => renderDemo(context, navigator));
 
-    navigator.on('brushend', brush => {
+    navigator.on('brushend', event => {
+        const brush = event.data;
+
         // `clearBrush()` below re-emits `brushend` with `null`; return early on that pass so the
         // handler doesn't recurse (emit is synchronous).
         if (!brush) {
@@ -298,8 +300,8 @@ navigator.fitBounds({ x0: 40, y0: 40, x1: 520, y1: 300 }, { padding: 24 });
 Subscribe to `change` for the common "repaint on any view change" case; use `zoom` / `pan` when you need to react to just one.
 
 ```ts
-navigator.on('change', transform => scene.update(transform));
-navigator.on('brushend', selection => selection && zoomToSelection(selection));
+navigator.on('change', event => scene.update(event.data));
+navigator.on('brushend', event => event.data && zoomToSelection(event.data));
 ```
 
 ## Rescaling chart axes

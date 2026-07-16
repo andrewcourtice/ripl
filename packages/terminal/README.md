@@ -1,6 +1,6 @@
 # @ripl/terminal
 
-Terminal rendering context for [Ripl](https://www.ripl.rocks) — draw the same 2D graphics and charts to a terminal as braille-character output with ANSI truecolor.
+Terminal rendering context for [Ripl](https://www.ripl.run) — draw the same 2D graphics and charts to a terminal as braille-character output with ANSI truecolor.
 
 ## Installation
 
@@ -53,7 +53,7 @@ const url = context.export().toURL(); // PNG object URL (browser)
 
 ## Documentation
 
-Full documentation and interactive demos are available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation and interactive demos are available at [ripl.run](https://www.ripl.run).
 
 ## License
 
