@@ -194,7 +194,6 @@ const {
 });
 
 watch(elementCount, (newCount, oldCount) => {
-    console.log(scene.value);
     if (!scene.value) return;
 
     const w = scene.value.width;
