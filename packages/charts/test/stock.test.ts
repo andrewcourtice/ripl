@@ -47,37 +47,37 @@ function sceneOf(chart: unknown): Group {
 
 interface Candle {
     date: string;
-    o: number;
-    h: number;
-    l: number;
-    c: number;
-    v: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    volume: number;
 }
 
 const CANDLES: Candle[] = [
     {
         date: 'd1',
-        o: 100,
-        h: 108,
-        l: 98,
-        c: 105,
-        v: 12000,
+        open: 100,
+        high: 108,
+        low: 98,
+        close: 105,
+        volume: 12000,
     },
     {
         date: 'd2',
-        o: 105,
-        h: 110,
-        l: 103,
-        c: 104,
-        v: 9800,
+        open: 105,
+        high: 110,
+        low: 103,
+        close: 104,
+        volume: 9800,
     },
     {
         date: 'd3',
-        o: 104,
-        h: 112,
-        l: 102,
-        c: 111,
-        v: 15000,
+        open: 104,
+        high: 112,
+        low: 102,
+        close: 111,
+        volume: 15000,
     },
 ];
 
@@ -92,11 +92,11 @@ describe('StockChart volume toggle', () => {
             animation: false,
             data: CANDLES,
             key: 'date',
-            open: 'o',
-            high: 'h',
-            low: 'l',
-            close: 'c',
-            volume: 'v',
+            open: 'open',
+            high: 'high',
+            low: 'low',
+            close: 'close',
+            volume: 'volume',
             showVolume: true,
         });
 
@@ -116,11 +116,11 @@ describe('StockChart volume toggle', () => {
             animation: false,
             data: CANDLES,
             key: 'date',
-            open: 'o',
-            high: 'h',
-            low: 'l',
-            close: 'c',
-            volume: 'v',
+            open: 'open',
+            high: 'high',
+            low: 'low',
+            close: 'close',
+            volume: 'volume',
             showVolume: true,
         });
 

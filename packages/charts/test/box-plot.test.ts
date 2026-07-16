@@ -78,7 +78,7 @@ describe('BoxPlotChart animations', () => {
 
         await chart.render();
 
-        const box = sceneOf(chart).getElementById('A-box') as unknown as { data?: { height: number; }; };
+        const box = sceneOf(chart).getElementById('A-box') as unknown as { data?: { height: number } };
 
         // The box carries a `data` snapshot of its full geometry — the candlestick-style entry grows
         // from a collapsed median toward this stashed height.
