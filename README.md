@@ -1,4 +1,8 @@
-# Ripl
+<div align="center">
+  <img src="./assets/logo/Ripl%20512.svg" width="120" alt="Ripl logo"/>
+</div>
+
+<h1 align="center">Ripl</h1>
 
 Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes an experimental 3D rendering package.
 
