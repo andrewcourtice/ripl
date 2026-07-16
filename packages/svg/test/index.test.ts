@@ -335,6 +335,12 @@ describe('SVG', () => {
             ctx.destroy();
         });
 
+        test('reports supportsPathCaching as false', () => {
+            const ctx = create();
+            expect(ctx.supportsPathCaching).toBe(false);
+            ctx.destroy();
+        });
+
         // ── createText ───────────────────────────────────────────
 
         test('createText should return SVGText', () => {

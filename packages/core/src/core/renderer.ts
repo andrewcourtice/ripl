@@ -311,6 +311,7 @@ export class Renderer extends EventBus<RendererEventMap> {
             // matching `push`, so restore and move on without re-processing them.
             if (type === 'pop') {
                 context.popGroup();
+                element.$reset();
                 return;
             }
 
@@ -329,6 +330,9 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this._renderBoundingBoxes(element);
             }
         });
+
+        // Leaves reset themselves in `Element.render` and groups at their `pop`; reset the root.
+        this._scene.$reset();
     }
 
     private _renderDebugOverlay(deltaTime: number) {

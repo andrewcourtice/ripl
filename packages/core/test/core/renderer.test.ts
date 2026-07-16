@@ -59,6 +59,7 @@ function createMockScene() {
         add(el: ReturnType<typeof createElement>) {
             elements.push(el);
         },
+        $reset: vi.fn(),
     } as unknown as Scene;
 
     return {
@@ -108,6 +109,30 @@ describe('Renderer', () => {
         await t;
 
         expect(el.opacity).toBeCloseTo(1, 1);
+
+        renderer.destroy();
+    });
+
+    test('Should reset element flags after each rendered tick', async () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        const el = createElement('rect', { opacity: 0 });
+        scene.add(el);
+
+        const t = renderer.transition(el, {
+            duration: 100,
+            state: { opacity: 1 },
+        });
+
+        await vi.advanceTimersByTimeAsync(200);
+        await t;
+
+        // The renderer resets the scene root each tick; leaves self-reset in Element.render.
+        expect(scene.$reset).toHaveBeenCalled();
 
         renderer.destroy();
     });

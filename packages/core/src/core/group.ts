@@ -197,6 +197,10 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
 
         context.popGroup();
         context.markRenderEnd();
+
+        // The subtree has rendered and each child cleared its own flags (scene-less path); reset
+        // this group itself.
+        this.$reset();
     }
 
 }

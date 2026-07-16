@@ -631,6 +631,16 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return measureText(text, { font });
     }
 
+    /**
+     * Whether cached {@link ContextPath}s may be safely reused across render cycles. `false` by
+     * default; backends whose {@link Context.createPath} is free of per-frame side effects (e.g.
+     * canvas) override this to `true`. SVG, for example, returns `false` because `createPath`
+     * registers the path into a per-frame virtual DOM tree.
+     */
+    public get supportsPathCaching(): boolean {
+        return false;
+    }
+
     /** Creates a new path element, optionally reusing an id for SVG diffing efficiency. */
     public createPath(id?: string): ContextPath {
         return new ContextPath(id);

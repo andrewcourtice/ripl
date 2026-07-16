@@ -428,6 +428,24 @@ export class Element<
     /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
     public data: unknown;
 
+    private _dirty = false;
+    private _touched = false;
+
+    /** Whether an own state value has changed since the last render cycle. Drives per-element path-cache invalidation and is reset after each render cycle. */
+    public get $dirty(): boolean {
+        return this._dirty;
+    }
+
+    /** Whether a state value was set since the last render cycle (the element was addressed), whether or not the value changed — so a real change also sets this. Reset after each render cycle. */
+    public get $touched(): boolean {
+        return this._touched;
+    }
+
+    /** Whether this element or any ancestor {@link Group} is dirty. Provided for subtree-level render skipping; the path cache uses {@link Element.$dirty} (own) because paths are authored in local space. */
+    public get $anyDirty(): boolean {
+        return this._dirty || (this.parent?.$anyDirty ?? false);
+    }
+
     // Props
 
     /** Text directionality used when rendering text, mirroring the canvas `direction` drawing-state property (`inherit`, `ltr`, or `rtl`). */
@@ -721,9 +739,21 @@ export class Element<
         return (this.parent as unknown as Element<TState> | undefined)?.getComputedStateValue(key) as TState[TKey];
     }
 
-    /** Sets a state value and emits an `updated` event. */
+    /**
+     * Sets a state value, marking the element {@link Element.$touched}. When the value differs
+     * from the current one it is written, the element is marked {@link Element.$dirty}, and an
+     * `updated` event is emitted; setting a value equal to the current one is a no-op beyond
+     * `$touched` (no write, no `$dirty`, no event).
+     */
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
+        this._touched = true;
+
+        if (this.state[key] === value) {
+            return;
+        }
+
         this.state[key] = value;
+        this._dirty = true;
         this.emit('updated', {
             key,
             value,
@@ -830,9 +860,15 @@ export class Element<
             return (output[key] = interpolator(currentValue, value as TState[keyof TState]), output);
         }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
-        return time => objectForEach(mappedIntpls, (key, value) => {
-            this.state[key] = value(time) as TState[keyof TState];
-        });
+        return time => {
+            // The tick writes state directly (bypassing setStateValue), so mark dirty here or
+            // an animating shape would keep serving a stale cached path.
+            this._dirty = true;
+
+            objectForEach(mappedIntpls, (key, value) => {
+                this.state[key] = value(time) as TState[keyof TState];
+            });
+        };
     }
 
     /** Renders this element by applying transforms and context state, then invoking the optional callback. */
@@ -863,7 +899,22 @@ export class Element<
             }
 
             context.markRenderEnd();
+
+            // Every leaf (and any directly-rendered element) clears its own per-cycle flags here.
+            // Groups override `render`, so the scene/renderer reset them at their `pop` instead.
+            this.$reset();
         }
+    }
+
+    /**
+     * Resets this element's per-render-cycle change flags ({@link Element.$dirty} and
+     * {@link Element.$touched}). Called automatically at the end of each render cycle — by an
+     * element's own {@link Element.render} for leaves, and by the scene/renderer at each group
+     * `pop` and for the root. Consumers do not normally call this directly.
+     */
+    public $reset(): void {
+        this._dirty = false;
+        this._touched = false;
     }
 
     /** Detaches the element from its parent {@link Group} and tears down its event subscriptions. */

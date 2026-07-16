@@ -58,7 +58,10 @@ export interface RenderInstruction {
 /** Render-instruction dispatch keyed by instruction type: open a group boundary, draw a leaf, or close a group boundary. */
 const RENDER_OPERATIONS: Record<RenderInstructionType, (context: Context, element: Element) => void> = {
     push: (context, element) => context.pushGroup(element),
-    pop: context => context.popGroup(),
+    pop: (context, element) => {
+        context.popGroup();
+        element.$reset();
+    },
     draw: (context, element) => element.render(context),
 };
 
@@ -223,6 +226,10 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
                 RENDER_OPERATIONS[type](context, element);
             });
         });
+
+        // Leaves clear their own flags in `Element.render` and groups at their `pop`; the root is
+        // not part of its own instruction stream, so reset it explicitly here.
+        this.$reset();
     }
 
 }
