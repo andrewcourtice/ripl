@@ -18,11 +18,11 @@
 
 <script lang="ts" setup>
 import {
-    ref,
     computed,
-    onMounted,
-    onBeforeUnmount,
     nextTick,
+    onBeforeUnmount,
+    onMounted,
+    ref,
 } from 'vue';
 
 export type DropdownAlign = 'left' | 'right';

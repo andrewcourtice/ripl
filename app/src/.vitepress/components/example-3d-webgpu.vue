@@ -17,9 +17,9 @@
 
 <script lang="ts" setup>
 import {
+    onUnmounted,
     ref,
     watchEffect,
-    onUnmounted,
 } from 'vue';
 
 import {
@@ -46,13 +46,13 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
             reason => {
                 clearTimeout(timer);
                 reject(reason);
-            },
+            }
         );
     });
 }
 
 const emit = defineEmits<{
-    'context-changed': [context: Context3D]
+    'context-changed': [context: Context3D];
 }>();
 
 const root = ref<HTMLElement>();
@@ -68,11 +68,11 @@ watchEffect(async () => {
                     clearColor: [0.05, 0.05, 0.1, 1],
                 }),
                 WEBGPU_TIMEOUT_MS,
-                'WebGPU initialisation timed out.',
+                'WebGPU initialisation timed out.'
             );
 
             emit('context-changed', context);
-        } catch (e) {
+        } catch {
             if (root.value) {
                 root.value.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--vp-c-text-2);font-size:14px;padding:2rem;text-align:center;">WebGPU is not supported in this browser. Try Chrome 113+ or Edge 113+.</div>';
             }

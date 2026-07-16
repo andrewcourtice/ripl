@@ -80,9 +80,18 @@ const THROW_RADIUS = 0.15;
 const CON_ROD_LENGTH = 0.4;
 const CRANKSHAFT_SPEED = 1.5;
 
-const CRANKSHAFT_COLOR = { default: '#EF9A9A', hover: '#E57373' };
-const CON_ROD_COLOR = { default: '#A5D6A7', hover: '#81C784' };
-const PISTON_COLOR = { default: '#FFCC80', hover: '#FFB74D' };
+const CRANKSHAFT_COLOR = {
+    default: '#EF9A9A',
+    hover: '#E57373',
+};
+const CON_ROD_COLOR = {
+    default: '#A5D6A7',
+    hover: '#81C784',
+};
+const PISTON_COLOR = {
+    default: '#FFCC80',
+    hover: '#FFB74D',
+};
 
 interface PartColors {
     default: string;
@@ -99,7 +108,10 @@ interface PartEntry {
 const viewport = ref<HTMLElement>();
 const hoveredPart = ref<string | null>(null);
 const animating = ref(true);
-const mousePos = reactive({ x: 0, y: 0 });
+const mousePos = reactive({
+    x: 0,
+    y: 0,
+});
 const partEntries = reactive<PartEntry[]>([]);
 
 const tooltipStyle = computed(() => ({

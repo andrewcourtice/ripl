@@ -73,10 +73,10 @@
 
 <script lang="ts" setup>
 import {
+    onBeforeUnmount,
+    onMounted,
     ref,
     watch,
-    onMounted,
-    onBeforeUnmount,
 } from 'vue';
 
 import {
@@ -114,7 +114,10 @@ const error = ref('');
 const settingsDropdown = ref<InstanceType<typeof RiplDropdown>>();
 
 function updateSetting<K extends keyof PlaygroundSettings>(key: K, value: PlaygroundSettings[K]) {
-    emit('update:settings', { ...props.settings, [key]: value });
+    emit('update:settings', {
+        ...props.settings,
+        [key]: value,
+    });
 }
 
 watch(() => props.srcdoc, () => {

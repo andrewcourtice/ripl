@@ -81,7 +81,8 @@ onMounted(async () => {
             return state.rows;
         },
         onResize(callback: (c: number, r: number) => void) {
-            const disposable = term.onResize(({ cols: nc, rows: nr }: { cols: number; rows: number }) => callback(nc, nr));
+            const disposable = term.onResize(({ cols: nc, rows: nr }: { cols: number;
+                rows: number; }) => callback(nc, nr));
 
             return () => disposable.dispose();
         },

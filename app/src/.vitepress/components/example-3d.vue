@@ -63,13 +63,13 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
             reason => {
                 clearTimeout(timer);
                 reject(reason);
-            },
+            }
         );
     });
 }
 
 const emit = defineEmits<{
-    'context-changed': [context: Context3D]
+    'context-changed': [context: Context3D];
 }>();
 
 const type = ref<ContextType>('canvas');
@@ -110,7 +110,7 @@ async function updateContext([element, currentType]: [HTMLElement | undefined, C
         const created = await withTimeout(
             createWebGPUContext(element),
             WEBGPU_TIMEOUT_MS,
-            'WebGPU initialisation timed out.',
+            'WebGPU initialisation timed out.'
         );
 
         if (token !== generation) {

@@ -50,8 +50,11 @@ import RiplConfigDrawer from './ripl-config-drawer.vue';
 import RiplExportButton from './ripl-export-button.vue';
 import RiplSpinner from './ripl-spinner.vue';
 
-import {
+import type {
     Context,
+} from '@ripl/web';
+
+import {
     createContext as createCanvasContext,
 } from '@ripl/web';
 
@@ -75,8 +78,8 @@ const CONTEXT_MAP = {
 } as Record<'canvas' | 'svg', typeof createCanvasContext | typeof createSVGContext>;
 
 const emit = defineEmits<{
-    'ready': [context: Context]
-    'context-changed': [context: Context]
+    'ready': [context: Context];
+    'context-changed': [context: Context];
 }>();
 
 const type = ref<ContextType>('canvas');
@@ -91,7 +94,8 @@ let terminalDispose: (() => void) | undefined;
 let generation = 0;
 
 /** Loads xterm.js, mounts it into the demo root, and builds a Ripl terminal context bound to it. */
-async function createTerminal(element: HTMLElement): Promise<{ context: Context; dispose: () => void }> {
+async function createTerminal(element: HTMLElement): Promise<{ context: Context;
+    dispose: () => void; }> {
     const [{ Terminal }, { FitAddon }] = await Promise.all([
         import('@xterm/xterm'),
         import('@xterm/addon-fit'),

@@ -17,8 +17,14 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useAnalyticsStore } from '../store/analytics';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
 
 const store = useAnalyticsStore();
 const chartEl = ref<HTMLElement>();
@@ -75,7 +81,10 @@ watch(context, () => buildChart());
 watch(() => store.sankeyData, () => {
     if (chart) {
         const { nodes, links } = store.sankeyData;
-        chart.update({ nodes, links });
+        chart.update({
+            nodes,
+            links,
+        });
     } else {
         buildChart();
     }

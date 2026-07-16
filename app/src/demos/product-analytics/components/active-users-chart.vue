@@ -17,9 +17,18 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useAnalyticsStore } from '../store/analytics';
-import type { DailyActiveUsersPoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
+
+import type {
+    DailyActiveUsersPoint,
+} from '../data/mock';
 
 type ActiveUsersDatum = DailyActiveUsersPoint & { ma: number };
 
@@ -39,7 +48,10 @@ function withMovingAverage(data: DailyActiveUsersPoint[], window = 7): ActiveUse
     return data.map((item, index) => {
         const slice = data.slice(Math.max(0, index - window + 1), index + 1);
         const avg = slice.reduce((sum, entry) => sum + entry.users, 0) / slice.length;
-        return { ...item, ma: Math.round(avg) };
+        return {
+            ...item,
+            ma: Math.round(avg),
+        };
     });
 }
 

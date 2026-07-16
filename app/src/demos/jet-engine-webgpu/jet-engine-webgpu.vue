@@ -42,11 +42,11 @@
 
 <script lang="ts" setup>
 import {
-    ref,
-    reactive,
     computed,
     onMounted,
     onUnmounted,
+    reactive,
+    ref,
 } from 'vue';
 
 import RiplSwitch from '../../.vitepress/components/ripl-switch.vue';
@@ -56,8 +56,8 @@ import {
 } from '@ripl/3d';
 
 import {
-    createScene,
     createRenderer,
+    createScene,
     easeInOutCubic,
 } from '@ripl/web';
 
@@ -70,8 +70,8 @@ import type {
 } from '@ripl/webgpu';
 
 import type {
-    Scene,
     Renderer,
+    Scene,
 } from '@ripl/web';
 
 import type {
@@ -79,15 +79,15 @@ import type {
 } from '@ripl/3d';
 
 import {
+    createCentralShaft,
+    createCombustionChamber,
+    createExhaustNozzle,
     createFan,
     createFanCase,
-    createLPCompressor,
     createHPCompressor,
-    createCombustionChamber,
     createHPTurbine,
+    createLPCompressor,
     createLPTurbine,
-    createExhaustNozzle,
-    createCentralShaft,
 } from '../jet-engine/elements';
 
 const DEFAULT_COLOR = '#C8C8C8';
@@ -113,23 +113,23 @@ const PASTEL_COLORS = [
 
 // Exploded offsets along z-axis (front to back)
 const EXPLODED_OFFSETS = [
-    1.8,   // Fan
-    1.8,   // Fan Case
-    1.0,   // LP Compressor
-    0.3,   // HP Compressor
+    1.8, // Fan
+    1.8, // Fan Case
+    1.0, // LP Compressor
+    0.3, // HP Compressor
     -0.35, // Combustion Chamber
     -0.95, // HP Turbine
     -1.35, // LP Turbine
     -1.85, // Exhaust Nozzle
-    -0.1,  // Central Shaft (centered)
+    -0.1, // Central Shaft (centered)
 ];
 
 // Assembled offsets — parts packed together along shaft
 const ASSEMBLED_OFFSETS = [
-    0.55,  // Fan
-    0.55,  // Fan Case
-    0.30,  // LP Compressor
-    0.05,  // HP Compressor
+    0.55, // Fan
+    0.55, // Fan Case
+    0.30, // LP Compressor
+    0.05, // HP Compressor
     -0.25, // Combustion Chamber
     -0.55, // HP Turbine
     -0.70, // LP Turbine
@@ -165,7 +165,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
             reason => {
                 clearTimeout(timer);
                 reject(reason);
-            },
+            }
         );
     });
 }
@@ -178,7 +178,10 @@ const hoveredPart = ref<string | null>(null);
 const rotating = ref(true);
 const exploded = ref(true);
 const supported = ref(true);
-const mousePos = reactive({ x: 0, y: 0 });
+const mousePos = reactive({
+    x: 0,
+    y: 0,
+});
 
 const tooltipStyle = computed(() => ({
     left: `${mousePos.x + 16}px`,
@@ -192,7 +195,9 @@ const partEntries = reactive<PartEntry[]>([]);
 
 function createParts(): PartEntry[] {
     const offsets = exploded.value ? EXPLODED_OFFSETS : ASSEMBLED_OFFSETS;
-    const parts: { name: string; element: Shape3D; hoverColor: string }[] = [
+    const parts: { name: string;
+        element: Shape3D;
+        hoverColor: string; }[] = [
         {
             name: 'Fan',
             element: createFan({
@@ -314,7 +319,7 @@ onMounted(async () => {
         context = await withTimeout(
             createContext(viewport.value),
             WEBGPU_TIMEOUT_MS,
-            'WebGPU initialisation timed out.',
+            'WebGPU initialisation timed out.'
         );
     } catch {
         supported.value = false;
@@ -359,8 +364,8 @@ onMounted(async () => {
         autoStart: true,
         autoStop: false,
         debug: {
-            fps: true
-        }
+            fps: true,
+        },
     });
 
     renderer.on('tick', (event) => {
