@@ -255,7 +255,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     private _renderBoundingBoxes(element: Element) {
         // Drawn within the element's current transform context, so use the local (untransformed) box.
-        const box = element.getLocalBoundingBox();
+        const box = element._getLocalBoundingBox();
         const context = this._scene.context;
         const path = context.createPath();
 

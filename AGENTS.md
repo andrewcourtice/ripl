@@ -86,7 +86,7 @@ Every element follows this exact pattern:
 1. **State interface** extending `BaseElementState`
 2. **Class** extending `Shape<TState>` with getter/setter pairs using `getStateValue`/`setStateValue`
 3. **Constructor** calling `super(type, options)` with a string type name
-4. **`getBoundingBox()`** returning a `Box` instance
+4. **`_getLocalBoundingBox()`** returning the element's raw (untransformed) local-space `Box` — the base `Element` composes the public `getBoundingBox(local?)` (world box by default, local when `local` is `true`) from it
 5. **`render(context)`** calling `super.render(context, path => { ... })`
 6. **Factory function** `createX()`
 7. **Type guard** `elementIsX()`
@@ -116,7 +116,7 @@ export class Circle extends Shape<CircleState> {
         super('circle', options);
     }
 
-    public getBoundingBox(): Box {
+    public _getLocalBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
             this.cx - this.radius,

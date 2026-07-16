@@ -72,8 +72,8 @@ export class Line extends Shape2D<LineState> {
         super('line', options);
     }
 
-    /** Returns the axis-aligned bounding box of the line. */
-    public getLocalBoundingBox(): Box {
+    /** @internal Local-space bounding box of the line. */
+    public _getLocalBoundingBox(): Box {
         return new Box(
             min(this.y1, this.y2),
             min(this.x1, this.x2),

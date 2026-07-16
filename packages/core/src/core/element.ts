@@ -331,7 +331,7 @@ export function applyElementTransform(target: TransformTarget, element: Element)
     if (hasOrigin) {
         const needsBBox = typeIsString(rawOriginX) || typeIsString(rawOriginY);
         // Origins resolve against the element's own (pre-transform) geometry, not its on-screen box.
-        const box = needsBBox ? element.getLocalBoundingBox() : null;
+        const box = needsBBox ? element._getLocalBoundingBox() : null;
 
         originX = resolveTransformOrigin(rawOriginX, box?.width ?? 0);
         originY = resolveTransformOrigin(rawOriginY, box?.height ?? 0);
@@ -777,18 +777,27 @@ export class Element<
         return closest<TElement>(this, selector);
     }
 
-    /** Returns the element's untransformed, authored bounding box in its own local coordinate space. Override in subclasses for accurate geometry. */
-    public getLocalBoundingBox(): Box {
+    /**
+     * @internal Raw local-space geometry hook. Override per element to return the untransformed,
+     * authored bounding box in the element's own coordinate space. Consumers should call
+     * {@link Element.getBoundingBox} instead.
+     */
+    public _getLocalBoundingBox(): Box {
         return new Box(0, 0, 0, 0);
     }
 
     /**
-     * Returns the element's on-screen bounding box — its {@link Element.getLocalBoundingBox} with
-     * its own and every ancestor group's transform applied (mirroring the DOM's
-     * `getBoundingClientRect`). A rotated element yields a conservative axis-aligned box.
+     * Returns this element's bounding box: the on-screen (world) box by default, or the raw local
+     * box when `local` is `true`. The world box applies this element's own and every ancestor
+     * group's transform (mirroring the DOM's `getBoundingClientRect`); a rotated element yields a
+     * conservative axis-aligned box.
+     * @param local - when `true`, returns the untransformed authored geometry instead of the world box.
      */
-    public getBoundingBox(): Box {
-        return transformBox(this.getLocalBoundingBox(), getWorldTransform(this as unknown as Element));
+    public getBoundingBox(local = false): Box {
+        const box = this._getLocalBoundingBox();
+        return local
+            ? box
+            : transformBox(box, getWorldTransform(this as unknown as Element));
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */

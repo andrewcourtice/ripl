@@ -59,8 +59,8 @@ export class Circle extends Shape2D<CircleState> {
         super('circle', options);
     }
 
-    /** Returns the axis-aligned bounding box of the circle. */
-    public getLocalBoundingBox(): Box {
+    /** @internal Local-space bounding box of the circle. */
+    public _getLocalBoundingBox(): Box {
         return new Box(
             this.cy - this.radius,
             this.cx - this.radius,

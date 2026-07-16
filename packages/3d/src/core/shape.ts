@@ -215,7 +215,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return context.project([this.x, this.y, this.z])[2];
     }
 
-    public getLocalBoundingBox(): Box {
+    public _getLocalBoundingBox(): Box {
         const context = this.context as Context3D | undefined;
 
         if (!context) {

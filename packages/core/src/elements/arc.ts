@@ -146,8 +146,8 @@ export class Arc extends Shape2D<ArcState> {
         return getThetaPoint(angle, distance, cx, cy);
     }
 
-    /** Returns the axis-aligned bounding box of the arc. */
-    public getLocalBoundingBox(): Box {
+    /** @internal Local-space bounding box of the arc. */
+    public _getLocalBoundingBox(): Box {
         const {
             cx,
             cy,

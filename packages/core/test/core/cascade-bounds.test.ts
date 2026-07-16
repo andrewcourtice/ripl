@@ -53,14 +53,14 @@ describe('Transform-aware bounding boxes', () => {
             height: 40,
         });
 
-        const local = rect.getLocalBoundingBox();
+        const local = rect.getBoundingBox(true);
         const world = rect.getBoundingBox();
 
         expect([local.left, local.top, local.right, local.bottom]).toEqual([10, 20, 40, 60]);
         expect([world.left, world.top, world.right, world.bottom]).toEqual([10, 20, 40, 60]);
     });
 
-    test('getBoundingBox reflects the element\'s own translation; getLocalBoundingBox stays raw', () => {
+    test('getBoundingBox reflects the element\'s own translation; getBoundingBox(true) stays raw', () => {
         const rect = createRect({
             x: 10,
             y: 20,
@@ -70,7 +70,7 @@ describe('Transform-aware bounding boxes', () => {
         rect.translateX = 100;
         rect.translateY = 5;
 
-        expect(rect.getLocalBoundingBox().left).toBe(10);
+        expect(rect.getBoundingBox(true).left).toBe(10);
         expect(rect.getBoundingBox().left).toBe(110);
         expect(rect.getBoundingBox().top).toBe(25);
     });
@@ -91,7 +91,9 @@ describe('Transform-aware bounding boxes', () => {
         expect(world.left).toBe(70);
         expect(world.right).toBe(130);
         // Local is untouched by ancestor transforms.
-        expect(rect.getLocalBoundingBox().left).toBe(10);
+        expect(rect.getBoundingBox(true).left).toBe(10);
+        // The group's own local box unions the children's untransformed geometry.
+        expect(group.getBoundingBox(true).left).toBe(10);
     });
 
     test('a group\'s bounding box encloses its children on screen', () => {

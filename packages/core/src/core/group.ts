@@ -162,14 +162,18 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         return this.graph(true).filter(element => classList.every(cls => element.classList.has(cls))) as TElement[];
     }
 
-    /** Returns the composite on-screen bounding box enclosing all children (each child's world box). */
-    public getBoundingBox() {
-        return getContainingBox(this.children, element => element.getBoundingBox());
+    /**
+     * Returns the composite bounding box enclosing all children: their on-screen (world) boxes by
+     * default, or their raw local boxes when `local` is `true`.
+     * @param local - when `true`, unions the children's untransformed local geometry instead of their world boxes.
+     */
+    public getBoundingBox(local = false) {
+        return getContainingBox(this.children, element => element.getBoundingBox(local));
     }
 
-    /** Returns the composite untransformed bounding box enclosing all children's local geometry. */
-    public getLocalBoundingBox() {
-        return getContainingBox(this.children, element => element.getLocalBoundingBox());
+    /** @internal Composite raw local-space box enclosing all children's untransformed geometry. */
+    public _getLocalBoundingBox() {
+        return getContainingBox(this.children, element => element._getLocalBoundingBox());
     }
 
     /** Detaches all children (clearing their parent), then destroys this group. */
