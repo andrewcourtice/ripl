@@ -6,6 +6,11 @@ export interface DemoMeta {
 
 export const demos: DemoMeta[] = [
     {
+        text: 'Freeform Drawing',
+        link: '/demos/freeform-drawing/',
+        description: 'An Excalidraw-style freeform drawing canvas — pencil, pen, highlighter, shapes, smart connectors and text, with pan/zoom via the Ripl navigator, selection, undo/redo and PNG/SVG export over a retained scene graph.',
+    },
+    {
         text: 'Trading Dashboard',
         link: '/demos/trading-dashboard/',
         description: 'A live stock trading dashboard featuring market indices, commodities, symbol search, candlestick charts, and historical performance — all powered by the Alpha Vantage API.',

@@ -1,0 +1,79 @@
+.freeform {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - var(--vp-nav-height));
+    overflow: hidden;
+    background-color: #f1f3f5;
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    background-size: 26px 26px;
+    border-left: 1px solid var(--vp-c-divider);
+    border-right: 1px solid var(--vp-c-divider);
+    touch-action: none;
+    user-select: none;
+}
+
+.freeform__canvas {
+    position: absolute;
+    inset: 0;
+}
+
+.freeform__canvas canvas {
+    display: block;
+}
+
+.freeform__toolbar {
+    position: absolute;
+    top: 50%;
+    left: 16px;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.freeform__style {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 10;
+}
+
+.freeform__zoom {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.freeform__hint {
+    position: absolute;
+    bottom: 20px;
+    left: 16px;
+    z-index: 10;
+    max-width: 320px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+}
+
+.freeform-text-input {
+    position: absolute;
+    z-index: 20;
+    min-width: 80px;
+    padding: 2px 6px;
+    color: var(--vp-c-text-1);
+    background: var(--vp-c-bg);
+    border: 1px solid var(--vp-c-brand-1);
+    border-radius: 4px;
+    outline: none;
+}
+
+@media (max-width: 720px) {
+    .freeform__style {
+        display: none;
+    }
+
+    .freeform__hint {
+        display: none;
+    }
+}
