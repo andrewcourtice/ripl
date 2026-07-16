@@ -1,5 +1,5 @@
-/** Generates a cryptographically random hexadecimal string of the specified length. */
-export function stringUniqueId(length: number = 6): string {
+/** Generates a cryptographically random hexadecimal string of the specified length (default 8 characters / 32 bits). */
+export function stringUniqueId(length: number = 8): string {
     const container = new Uint8Array(length / 2);
     globalThis.crypto.getRandomValues(container);
 
