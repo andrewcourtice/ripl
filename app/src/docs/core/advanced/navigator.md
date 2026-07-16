@@ -32,7 +32,7 @@ Drag to pan, use the wheel (or pinch) to zoom toward the pointer, and **shift-dr
 ```ts
 import {
     createNavigator,
-} from '@ripl/dom';
+} from '@ripl/web';
 
 const navigator = createNavigator(context, {
     interactions: {
@@ -58,6 +58,7 @@ import {
 import {
     COLOR_SCHEME_VIRIDIS,
     createCircle,
+    createNavigator,
     createRect,
     createText,
     scaleSequential,
@@ -66,15 +67,8 @@ import {
 
 import type {
     Context,
-} from '@ripl/web';
-
-import {
-    createNavigator,
-} from '@ripl/dom';
-
-import type {
     DOMNavigator,
-} from '@ripl/dom';
+} from '@ripl/web';
 
 import {
     onUnmounted,
@@ -234,7 +228,7 @@ onUnmounted(() => currentNavigator?.destroy());
 ```ts
 import {
     createNavigator,
-} from '@ripl/dom';
+} from '@ripl/web';
 
 const navigator = createNavigator(context, {
     // Clamp zoom between 0.5× and 20×.
