@@ -81,6 +81,7 @@ import {
 } from '../components/navigator';
 
 import type {
+    ChartNavigatorCategoryLayout,
     ChartNavigatorSeries,
     ChartNavigatorWindow,
 } from '../components/navigator';
@@ -472,6 +473,15 @@ export abstract class CartesianChart<
         return 'both';
     }
 
+    /**
+     * How the overview strip positions category marks: `'band'` (bar/trend — padded category bands with
+     * marks at band centres, so bars sit fully inside the strip) or `'point'` (line/area — marks spread
+     * edge-to-edge). Defaults to `'point'`; category-band charts override it.
+     */
+    protected navigatorCategoryLayout(): ChartNavigatorCategoryLayout {
+        return 'point';
+    }
+
     /** Whether the overview strip is enabled and applicable (a category-axis chart with `overview` on). */
     private _overviewEnabled(): boolean {
         return !!this.options.overview && this.navigationAxis() !== 'both';
@@ -552,9 +562,10 @@ export abstract class CartesianChart<
 
     /**
      * Renders the overview strip into the reserved `band` from the given series and value extent, or
-     * clears it when the strip is off. Call after the plot rect is known (i.e. after `clipPlot`).
+     * clears it when the strip is off. Call after the plot rect is known (i.e. after `clipPlot`). Pass
+     * `stacked` so the strip stacks same-type bar/area series rather than grouping/overlaying them.
      */
-    protected renderNavigator(band: ChartArea | undefined, series: ChartNavigatorSeries[], valueExtent: [number, number]): void {
+    protected renderNavigator(band: ChartArea | undefined, series: ChartNavigatorSeries[], valueExtent: [number, number], stacked = false): void {
         if (!band || !this._overviewEnabled() || !this._navPlot) {
             this._navigatorStrip.clear();
             return;
@@ -582,6 +593,8 @@ export abstract class CartesianChart<
             area,
             series,
             valueExtent,
+            stacked,
+            categoryLayout: this.navigatorCategoryLayout(),
             window: this._currentWindow(),
             onWindow: window => this._onNavigatorWindow(window),
         });

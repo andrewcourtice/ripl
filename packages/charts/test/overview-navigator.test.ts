@@ -62,6 +62,28 @@ function plotOf(chart: unknown): { x: number;
         height: number; }; })._navPlot;
 }
 
+/** The geometry of a rendered rect element. */
+interface RectBox {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+/** Reads a rect element's geometry by id (asserting it exists). */
+function rectOf(chart: unknown, id: string): RectBox {
+    const rect = sceneOf(chart).getElementById(id) as unknown as RectBox | undefined;
+    expect(rect).toBeDefined();
+    return rect!;
+}
+
+/** Reads a polyline element's points by id (asserting it exists). */
+function pointsOf(chart: unknown, id: string): [number, number][] {
+    const element = sceneOf(chart).getElementById(id) as unknown as { points: [number, number][] } | undefined;
+    expect(element).toBeDefined();
+    return element!.points;
+}
+
 interface Row {
     month: string;
     a: number;
@@ -424,6 +446,227 @@ describe('Overview navigator strip', () => {
         expect(chart.navigator).toBeDefined();
 
         chart.destroy();
+    });
+
+    test('Grouped bars stay inside the strip and sit side by side', async () => {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const chart = createBarChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        const strip = rectOf(chart, 'navigator-strip');
+        const last = DATA.length - 1;
+
+        // No bleed: the leftmost sub-bar of the first category and the rightmost of the last category
+        // both sit inside the strip rectangle.
+        const first = rectOf(chart, 'navigator-overview-a-bar-0');
+        const lastBar = rectOf(chart, `navigator-overview-b-bar-${last}`);
+
+        expect(first.x).toBeGreaterThanOrEqual(strip.x - 1e-6);
+        expect(lastBar.x + lastBar.width).toBeLessThanOrEqual(strip.x + strip.width + 1e-6);
+
+        // Grouped: the two series sit side by side in category 0 — disjoint, equal width, not overlapping.
+        const aBar = rectOf(chart, 'navigator-overview-a-bar-0');
+        const bBar = rectOf(chart, 'navigator-overview-b-bar-0');
+
+        expect(aBar.x).not.toBe(bBar.x);
+        expect(aBar.x + aBar.width).toBeLessThanOrEqual(bBar.x + 1e-6);
+        expect(Math.abs(aBar.width - bBar.width)).toBeLessThan(1e-6);
+
+        chart.destroy();
+    });
+
+    test('Stacked bars share a column and stack rather than group', async () => {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const chart = createBarChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            mode: 'stacked',
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        const aBar = rectOf(chart, 'navigator-overview-a-bar-0');
+        const bBar = rectOf(chart, 'navigator-overview-b-bar-0');
+
+        // Same main position and full band width — one stacked column, not side-by-side.
+        expect(aBar.x).toBeCloseTo(bBar.x, 6);
+        expect(aBar.width).toBeCloseTo(bBar.width, 6);
+
+        // Bottom strip: values grow upward, so `b` sits on top of `a` — b's lower edge meets a's upper
+        // edge, and `a` (anchored at the baseline) extends lower than `b`.
+        expect(Math.abs((bBar.y + bBar.height) - aBar.y)).toBeLessThan(1e-6);
+        expect(aBar.y + aBar.height).toBeGreaterThan(bBar.y + bBar.height);
+
+        chart.destroy();
+    });
+
+    test('Trend line marks are centred over the bars in the band layout', async () => {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const trend = createTrendChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'bar',
+                    type: 'bar',
+                    label: 'Bar',
+                    value: 'a',
+                },
+                {
+                    id: 'line',
+                    type: 'line',
+                    label: 'Line',
+                    value: 'b',
+                },
+            ],
+        });
+
+        await trend.render();
+
+        const bar0 = rectOf(trend, 'navigator-overview-bar-bar-0');
+        const linePoints = pointsOf(trend, 'navigator-overview-line');
+
+        // The line's first vertex sits at the first category's band centre — directly over the bar.
+        expect(linePoints[0][0]).toBeCloseTo(bar0.x + bar0.width / 2, 6);
+
+        trend.destroy();
+
+        // A standalone line chart keeps edge-to-edge marks: its first vertex is at the strip's start.
+        const line = createLineChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: DATA,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+            ],
+        });
+
+        await line.render();
+
+        const strip = rectOf(line, 'navigator-strip');
+
+        expect(pointsOf(line, 'navigator-overview-a')[0][0]).toBeCloseTo(strip.x, 6);
+
+        line.destroy();
+    });
+
+    test('Stacked area series accumulate; unstacked areas overlap', async () => {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        // `b` < `a`, so a stacked `b` (a + b) sits ABOVE `a`, but an unstacked `b` sits below it.
+        const data: Row[] = MONTHS.map(month => ({
+            month,
+            a: 100,
+            b: 50,
+        }));
+
+        const stacked = createAreaChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            stacked: true,
+            data,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                },
+            ],
+        });
+
+        await stacked.render();
+
+        // Bottom strip: values grow upward (smaller y = higher). Stacked `b` (150) is above `a` (100).
+        expect(pointsOf(stacked, 'navigator-overview-b-line')[0][1])
+            .toBeLessThan(pointsOf(stacked, 'navigator-overview-a-line')[0][1]);
+
+        stacked.destroy();
+
+        const overlapping = createAreaChart<Row>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            stacked: false,
+            data,
+            key: 'month',
+            overview: true,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                },
+            ],
+        });
+
+        await overlapping.render();
+
+        // Unstacked: each area is drawn from the baseline, so `b` (50) is below `a` (100).
+        expect(pointsOf(overlapping, 'navigator-overview-b-line')[0][1])
+            .toBeGreaterThan(pointsOf(overlapping, 'navigator-overview-a-line')[0][1]);
+
+        overlapping.destroy();
     });
 
 });

@@ -265,6 +265,11 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         return 'x';
     }
 
+    /** Trend marks (bars, plus line/area markers at band centres) are laid out in category bands. */
+    protected override navigatorCategoryLayout(): 'band' {
+        return 'band';
+    }
+
     private _seriesValue(series: TrendChartSeriesOptions<TData>, item: TData): number {
         return resolveAccessor<TData, number>(series.value)(item);
     }
@@ -485,7 +490,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
                 ...this._lineRenderer.groups,
             ]);
 
-            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

@@ -321,7 +321,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const seriesRender = this._series.render(series, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);
 
-            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked ?? false);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

@@ -23,7 +23,12 @@ import type {
     ChartArea,
 } from '../core/layout';
 
+import {
+    computeStackOffset,
+} from '../core/data';
+
 import type {
+    BandScale,
     Element,
     Group,
     Point,
@@ -33,6 +38,7 @@ import {
     createGroup,
     createPolyline,
     createRect,
+    scaleBand,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -64,6 +70,9 @@ export type ChartNavigatorOrientation = 'horizontal' | 'vertical';
 /** How a single overview series is drawn in the strip. */
 export type ChartNavigatorSeriesType = 'line' | 'bar' | 'area';
 
+/** How the category axis positions overview marks: padded bands (bars/trend) or edge-to-edge points (line/area). */
+export type ChartNavigatorCategoryLayout = 'band' | 'point';
+
 /** A single series' values across the categories, for the overview mini-render. */
 export interface ChartNavigatorSeries {
     /** The series id (used for the overview element ids). */
@@ -94,6 +103,18 @@ export interface ChartNavigatorRenderOptions {
     series: ChartNavigatorSeries[];
     /** The value extent `[min, max]` used to scale the overview across the cross axis. */
     valueExtent: [number, number];
+    /**
+     * Whether same-type series are stacked: bar series stack cumulatively (positive/negative
+     * independently) and area series stack as running cumulative bands. Defaults to `false` — bars are
+     * drawn grouped side-by-side and areas as independent baseline bands.
+     */
+    stacked?: boolean;
+    /**
+     * How the category axis positions marks. `'band'` (bar/trend charts) centres each category in a
+     * padded band so bars sit fully inside the strip and line/area marks align to band centres;
+     * `'point'` (line/area charts) spreads marks edge-to-edge. Defaults to `'point'`.
+     */
+    categoryLayout?: ChartNavigatorCategoryLayout;
     /** The currently visible window (derived by the host from the navigator transform). */
     window: ChartNavigatorWindow;
     /** Called with the new window whenever the user drags a handle or the window body. */
@@ -152,7 +173,7 @@ export class ChartNavigator extends ChartComponent {
 
     /** Draws the overview, mask, and window for the current state. */
     public render(options: ChartNavigatorRenderOptions): void {
-        const { orientation, area, series, valueExtent, window, onWindow } = options;
+        const { orientation, area, series, valueExtent, window, onWindow, stacked = false, categoryLayout = 'point' } = options;
 
         this._orientation = orientation;
         this._area = area;
@@ -175,7 +196,7 @@ export class ChartNavigator extends ChartComponent {
                 borderRadius: 3,
                 pointerEvents: 'none',
             }),
-            ...this._overviewElements(series, valueExtent),
+            ...this._overviewElements(series, valueExtent, stacked, categoryLayout),
             ...this._windowElements(window),
         ]);
     }
@@ -241,30 +262,46 @@ export class ChartNavigator extends ChartComponent {
         return this._horizontal ? [main, cross] : [cross, main];
     }
 
-    private _overviewElements(series: ChartNavigatorSeries[], valueExtent: [number, number]): Element[] {
+    private _overviewElements(series: ChartNavigatorSeries[], valueExtent: [number, number], stacked: boolean, categoryLayout: ChartNavigatorCategoryLayout): Element[] {
         const [min, max] = valueExtent;
         const span = max - min || 1;
         // Values ≥ 0 sit on the strip floor; a diverging series anchors at 0.
         const baseline = clamp(0, min, max);
 
-        return series
-            .filter(srs => srs.values.length > 0)
-            .flatMap(srs => {
-                if (srs.type === 'area') {
-                    return this._areaOverview(srs, min, span, baseline);
-                }
+        const active = series.filter(srs => srs.values.length > 0);
+        const areaSeries = active.filter(srs => srs.type === 'area');
+        const barSeries = active.filter(srs => srs.type === 'bar');
+        const lineSeries = active.filter(srs => srs.type === 'line');
 
-                if (srs.type === 'bar') {
-                    return this._barOverview(srs, min, span, baseline);
-                }
+        // A band host (bar/trend) positions marks in padded category bands so bars stay inside the strip
+        // and line/area marks align to band centres; a point host (line/area) spreads marks edge-to-edge.
+        const count = Math.max(1, ...active.map(srs => srs.values.length));
+        const band = categoryLayout === 'band' ? this._categoryScale(count) : undefined;
+        const mainFor: (index: number, seriesCount: number) => number = band
+            ? index => band(index) + band.bandwidth / 2
+            : (index, seriesCount) => this._mainForIndex(index, seriesCount);
 
-                return this._lineOverview(srs, min, span);
-            });
+        // Back-to-front: areas, then bars, then lines/markers on top (mirrors the plot's paint order).
+        return [
+            ...this._areaGroupOverview(areaSeries, min, span, baseline, stacked, mainFor),
+            ...(band ? this._barGroupOverview(barSeries, min, span, baseline, stacked, band) : []),
+            ...lineSeries.flatMap(srs => this._lineOverview(srs, min, span, mainFor)),
+        ];
     }
 
-    private _lineOverview(srs: ChartNavigatorSeries, min: number, span: number): Element[] {
+    /** A band scale over category indices `[0, count)` spanning the main axis, matching the chart's padded bars. */
+    private _categoryScale(count: number): BandScale<number> {
+        const domain = Array.from({ length: count }, (_, index) => index);
+
+        return scaleBand(domain, [this._mainStart(), this._mainStart() + this._mainSize()], {
+            outerPadding: 0.15,
+            innerPadding: 0.2,
+        });
+    }
+
+    private _lineOverview(srs: ChartNavigatorSeries, min: number, span: number, mainFor: (index: number, count: number) => number): Element[] {
         const count = srs.values.length;
-        const points = srs.values.map((value, index) => this._point(this._mainForIndex(index, count), this._crossForValue(value, min, span)));
+        const points = srs.values.map((value, index) => this._point(mainFor(index, count), this._crossForValue(value, min, span)));
 
         return [
             createPolyline({
@@ -278,16 +315,13 @@ export class ChartNavigator extends ChartComponent {
         ];
     }
 
-    private _areaOverview(srs: ChartNavigatorSeries, min: number, span: number, baseline: number): Element[] {
-        const count = srs.values.length;
-        const top = srs.values.map((value, index) => this._point(this._mainForIndex(index, count), this._crossForValue(value, min, span)));
-        const bottom = srs.values.map((_, index) => this._point(this._mainForIndex(index, count), this._crossForValue(baseline, min, span)));
-
+    /** Builds the filled band polygon + top line for one area series from precomputed top/bottom points. */
+    private _areaBand(srs: ChartNavigatorSeries, top: Point[], bottom: Point[]): Element[] {
         const fill = createPolyline({
             id: `navigator-overview-${srs.id}-fill`,
             points: [
                 ...top,
-                ...bottom.reverse(),
+                ...bottom.slice().reverse(),
             ],
             fill: setColorAlpha(srs.color, AREA_FILL_ALPHA),
             pointerEvents: 'none',
@@ -308,38 +342,91 @@ export class ChartNavigator extends ChartComponent {
         ];
     }
 
-    private _barOverview(srs: ChartNavigatorSeries, min: number, span: number, baseline: number): Element[] {
-        const count = srs.values.length;
-        const baseCross = this._crossForValue(baseline, min, span);
-        const thickness = Math.max(1, this._mainSize() / (count * 1.5));
-        const fill = setColorAlpha(srs.color, BAR_FILL_ALPHA);
+    /**
+     * Draws area series. Unstacked areas are independent baseline bands (correct for overlapping
+     * areas); stacked areas are running cumulative bands — each series stacked on the sum of the
+     * previous ones — mirroring the area renderer's plain cumulative accumulation.
+     */
+    private _areaGroupOverview(areaSeries: ChartNavigatorSeries[], min: number, span: number, baseline: number, stacked: boolean, mainFor: (index: number, count: number) => number): Element[] {
+        if (areaSeries.length === 0) {
+            return [];
+        }
 
-        return srs.values.map((value, index) => {
-            const mainCentre = this._mainForIndex(index, count);
-            const valueCross = this._crossForValue(value, min, span);
-            const mainLo = mainCentre - thickness / 2;
-            const crossLo = Math.min(baseCross, valueCross);
-            const crossHi = Math.max(baseCross, valueCross);
+        if (!stacked) {
+            return areaSeries.flatMap(srs => {
+                const count = srs.values.length;
+                const top = srs.values.map((value, index) => this._point(mainFor(index, count), this._crossForValue(value, min, span)));
+                const bottom = srs.values.map((_, index) => this._point(mainFor(index, count), this._crossForValue(baseline, min, span)));
 
-            const rect = this._horizontal
-                ? {
-                    x: mainLo,
-                    y: crossLo,
-                    width: thickness,
-                    height: crossHi - crossLo,
-                }
-                : {
-                    x: crossLo,
-                    y: mainLo,
-                    width: crossHi - crossLo,
-                    height: thickness,
-                };
+                return this._areaBand(srs, top, bottom);
+            });
+        }
 
-            return createRect({
-                id: `navigator-overview-${srs.id}-bar-${index}`,
-                ...rect,
-                fill,
-                pointerEvents: 'none',
+        return areaSeries.flatMap((srs, seriesIndex) => {
+            const count = srs.values.length;
+            const top: Point[] = [];
+            const bottom: Point[] = [];
+
+            srs.values.forEach((value, index) => {
+                const lower = areaSeries.slice(0, seriesIndex).reduce((sum, previous) => sum + (previous.values[index] ?? 0), 0);
+                const main = mainFor(index, count);
+
+                top.push(this._point(main, this._crossForValue(lower + value, min, span)));
+                bottom.push(this._point(main, this._crossForValue(lower, min, span)));
+            });
+
+            return this._areaBand(srs, top, bottom);
+        });
+    }
+
+    /**
+     * Draws bar series as a group in padded category bands: grouped side-by-side (a nested per-series
+     * band) by default, or stacked cumulatively (positive/negative independent) when `stacked`. Band
+     * positioning keeps every bar fully inside the strip.
+     */
+    private _barGroupOverview(barSeries: ChartNavigatorSeries[], min: number, span: number, baseline: number, stacked: boolean, band: BandScale<number>): Element[] {
+        if (barSeries.length === 0) {
+            return [];
+        }
+
+        const seriesScale = stacked
+            ? undefined
+            : scaleBand(barSeries.map((_, index) => index), [0, band.bandwidth], { innerPadding: 0.1 });
+
+        return barSeries.flatMap((srs, seriesIndex) => {
+            const fill = setColorAlpha(srs.color, BAR_FILL_ALPHA);
+
+            return srs.values.map((value, index) => {
+                const offset = stacked
+                    ? computeStackOffset(barSeries, srs, index, (entry, dataIndex) => entry.values[dataIndex] ?? 0)
+                    : 0;
+                const lowerCross = this._crossForValue(stacked ? offset : baseline, min, span);
+                const upperCross = this._crossForValue(value + offset, min, span);
+                const crossLo = Math.min(lowerCross, upperCross);
+                const crossHi = Math.max(lowerCross, upperCross);
+                const mainPos = stacked ? band(index) : band(index) + seriesScale!(seriesIndex);
+                const thickness = stacked ? band.bandwidth : seriesScale!.bandwidth;
+
+                const rect = this._horizontal
+                    ? {
+                        x: mainPos,
+                        y: crossLo,
+                        width: thickness,
+                        height: crossHi - crossLo,
+                    }
+                    : {
+                        x: crossLo,
+                        y: mainPos,
+                        width: crossHi - crossLo,
+                        height: thickness,
+                    };
+
+                return createRect({
+                    id: `navigator-overview-${srs.id}-bar-${index}`,
+                    ...rect,
+                    fill,
+                    pointerEvents: 'none',
+                });
             });
         });
     }

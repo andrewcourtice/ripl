@@ -185,6 +185,11 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return this._isHorizontal ? 'y' : 'x';
     }
 
+    /** Bars are laid out in padded category bands, so the overview strip mirrors that band placement. */
+    protected override navigatorCategoryLayout(): 'band' {
+        return 'band';
+    }
+
     private _seriesValue(series: BarChartSeriesOptions<TData>, item: TData): number {
         return resolveAccessor<TData, number>(series.value)(item);
     }
@@ -337,7 +342,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, horizontalPlot));
                 this.registerHighlightGroups(this._series.groups);
 
-                this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+                this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], this._isStacked);
 
                 return Promise.all([
                     this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
@@ -391,7 +396,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, verticalPlot));
             this.registerHighlightGroups(this._series.groups);
 
-            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], this._isStacked);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
