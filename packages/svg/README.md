@@ -1,6 +1,6 @@
 # @ripl/svg
 
-SVG rendering context for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+SVG rendering context for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -44,7 +44,7 @@ circle.render(context);
 
 ## Documentation
 
-Full documentation and interactive demos are available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation and interactive demos are available at [ripl.run](https://www.ripl.run).
 
 ## License
 

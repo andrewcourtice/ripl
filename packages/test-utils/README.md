@@ -1,6 +1,6 @@
 # @ripl/test-utils
 
-Internal test utilities for [Ripl](https://www.ripl.rocks).
+Internal test utilities for [Ripl](https://www.ripl.run).
 
 ## Overview
 

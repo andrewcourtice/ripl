@@ -1,6 +1,6 @@
 # @ripl/node
 
-Node.js runtime bindings for [Ripl](https://www.ripl.rocks) — render Ripl graphics in headless environments.
+Node.js runtime bindings for [Ripl](https://www.ripl.run) — render Ripl graphics in headless environments.
 
 ## Installation
 
@@ -40,7 +40,7 @@ createCircle({
 
 ## Documentation
 
-Full documentation and interactive demos are available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation and interactive demos are available at [ripl.run](https://www.ripl.run).
 
 ## License
 

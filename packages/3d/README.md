@@ -1,6 +1,6 @@
 # @ripl/3d
 
-Experimental 3D rendering for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+Experimental 3D rendering for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 > **Note:** This package is experimental and its API may change between releases.
 
@@ -41,7 +41,7 @@ const cube = createCube({ /* options */ });
 
 ## Documentation
 
-Full documentation is available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation is available at [ripl.run](https://www.ripl.run).
 
 ## License
 

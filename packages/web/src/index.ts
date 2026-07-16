@@ -94,3 +94,10 @@ if (hasWindow) {
 
 export * from '@ripl/core';
 export * from '@ripl/canvas';
+
+export {
+    DOMNavigator,
+    createNavigator,
+} from '@ripl/dom';
+
+export type { DOMNavigatorOptions } from '@ripl/dom';

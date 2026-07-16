@@ -1,6 +1,6 @@
 # @ripl/utilities
 
-Shared typed utility functions for [Ripl](https://www.ripl.rocks) — a unified API for 2D graphics rendering in the browser.
+Shared typed utility functions for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -66,7 +66,7 @@ valueOrDefault(value, fallback); // nullish coalescing with defaults
 
 ## Documentation
 
-Full documentation is available at [ripl.rocks](https://www.ripl.rocks).
+Full documentation is available at [ripl.run](https://www.ripl.run).
 
 ## License
 
