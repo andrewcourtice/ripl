@@ -198,10 +198,9 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         context.popGroup();
         context.markRenderEnd();
 
-        // Clear the per-cycle change flags now the whole subtree has rendered (scene-less path;
-        // the Scene/Renderer paths reset via the instruction stream instead).
-        this.children.forEach(element => element._resetFlags());
-        this._resetFlags();
+        // The subtree has rendered and each child cleared its own flags (scene-less path); reset
+        // this group itself.
+        this.$reset();
     }
 
 }

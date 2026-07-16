@@ -899,16 +899,20 @@ export class Element<
             }
 
             context.markRenderEnd();
+
+            // Every leaf (and any directly-rendered element) clears its own per-cycle flags here.
+            // Groups override `render`, so the scene/renderer reset them at their `pop` instead.
+            this.$reset();
         }
     }
 
     /**
-     * Resets the per-render-cycle change flags ({@link Element.$dirty} and {@link Element.$touched}).
-     * Called by the scene/renderer at the end of each render cycle.
-     *
-     * @internal
+     * Resets this element's per-render-cycle change flags ({@link Element.$dirty} and
+     * {@link Element.$touched}). Called automatically at the end of each render cycle — by an
+     * element's own {@link Element.render} for leaves, and by the scene/renderer at each group
+     * `pop` and for the root. Consumers do not normally call this directly.
      */
-    public _resetFlags(): void {
+    public $reset(): void {
         this._dirty = false;
         this._touched = false;
     }

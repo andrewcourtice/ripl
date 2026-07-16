@@ -117,13 +117,13 @@ describe('Element', () => {
         expect(el.translateX).toBe(10);
     });
 
-    test('Should clear $dirty and $touched via _resetFlags', () => {
+    test('Should clear $dirty and $touched via $reset', () => {
         const el = createElement('rect', {});
         el.fill = '#ff0000';
         expect(el.$dirty).toBe(true);
         expect(el.$touched).toBe(true);
 
-        el._resetFlags();
+        el.$reset();
 
         expect(el.$dirty).toBe(false);
         expect(el.$touched).toBe(false);
