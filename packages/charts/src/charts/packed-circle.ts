@@ -146,7 +146,6 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
     }
 
     private _attachCellHover(circle: Circle, node: PackedNode, content: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): PackedCircleChartCellEvent => ({
@@ -159,8 +158,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
         applyHoverHighlight(circle, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: node.x,

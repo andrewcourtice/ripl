@@ -86,8 +86,8 @@ export class Rect extends Shape2D<RectState> {
         super('rect', options);
     }
 
-    /** Returns the axis-aligned bounding box of the rectangle. */
-    public getBoundingBox(): Box {
+    /** @internal Local-space bounding box of the rectangle. */
+    public _getLocalBoundingBox(): Box {
         return new Box(
             this.y,
             this.x,

@@ -332,7 +332,6 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
         x: number;
         y: number;
         width: number; }, color: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -346,8 +345,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: item.x + item.width / 2,

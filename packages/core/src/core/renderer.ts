@@ -14,10 +14,6 @@ import type {
     Group,
 } from './group';
 
-import {
-    isGroup,
-} from './group';
-
 import type {
     Interpolator,
 } from '../interpolators';
@@ -258,7 +254,8 @@ export class Renderer extends EventBus<RendererEventMap> {
     }
 
     private _renderBoundingBoxes(element: Element) {
-        const box = element.getBoundingBox();
+        // Drawn within the element's current transform context, so use the local (untransformed) box.
+        const box = element._getLocalBoundingBox();
         const context = this._scene.context;
         const path = context.createPath();
 
@@ -483,9 +480,10 @@ export class Renderer extends EventBus<RendererEventMap> {
         };
 
         const instance = new Transition((resolve, _reject, onAbort) => {
-            const elements = valueOneOrMore(element).flatMap(element => {
-                return isGroup(element) ? element.graph(false) : [element];
-            });
+            // Targets animate their own state — including groups, which the render loop advances at
+            // their `push` op so a group transitions as a unit (transform about its origin, opacity
+            // composited at the boundary) rather than fanning out to per-leaf animations.
+            const elements = valueOneOrMore(element);
 
             if (!elements.length) {
                 resolve();

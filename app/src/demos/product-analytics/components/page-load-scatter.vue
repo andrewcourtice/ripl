@@ -17,9 +17,18 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useAnalyticsStore } from '../store/analytics';
-import type { PageLoadPoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
+
+import type {
+    PageLoadPoint,
+} from '../data/mock';
 
 const store = useAnalyticsStore();
 const chartEl = ref<HTMLElement>();
@@ -46,8 +55,14 @@ function buildChart() {
         crosshair: true,
         format: 'number' as const,
         axis: {
-            x: { title: 'Load Time (ms)', format: (v: number) => `${Math.round(v)}ms` },
-            y: { title: 'Page Views', format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)) },
+            x: {
+                title: 'Load Time (ms)',
+                format: (v: number) => `${Math.round(v)}ms`,
+            },
+            y: {
+                title: 'Page Views',
+                format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)),
+            },
         },
         padding: {
             top: 16,

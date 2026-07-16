@@ -60,7 +60,7 @@ const scene = createScene('.mount-element', {
 
 const renderer = createRenderer(scene);
 
-await renderer.transition(scene, (el, i) => ({
+await renderer.transition(scene.graph(false), (el, i) => ({
     duration: 600,
     delay: i * 150,
     ease: easeOutCubic,
@@ -255,7 +255,7 @@ await renderer.transition(circle, {
 
 ### Animating Multiple Elements
 
-Pass an array of elements or a group to animate them all with the same options:
+Pass an array of elements to animate them all with the same options:
 
 ```ts
 await renderer.transition([circle, rect], {
@@ -270,13 +270,17 @@ await renderer.transition([circle, rect], {
 Pass a function instead of an options object to customize the transition per element. This is useful for staggered animations:
 
 ```ts
-await renderer.transition(group, (element, index, total) => ({
+await renderer.transition(group.graph(false), (element, index, total) => ({
     duration: 500,
     delay: index * 100, // stagger by 100ms
     ease: easeOutCubic,
     state: { fill: '#ff006e' },
 }));
 ```
+
+Passing a **group** directly to `transition` animates the group itself as a single unit — its own
+transform and opacity, composited at the group boundary — not its children. To animate a group's
+descendants (for example, to stagger across them), flatten it first with `group.graph(false)`.
 
 ## Manual Control
 

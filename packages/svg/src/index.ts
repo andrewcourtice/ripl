@@ -850,6 +850,18 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             groupElement.definition.attributes.transform = transform;
         }
 
+        // Opacity composites the subtree as a unit: stamp it on the <g> and reset the inheritable
+        // state so descendants don't also stamp it (which would double-apply). Paint (fill, stroke,
+        // …) stays in the state so leaves inherit and stamp their resolved value.
+        const opacity = this.currentState.opacity;
+
+        if (opacity !== 1) {
+            groupElement.definition.styles.opacity = opacity.toString();
+        }
+
+        this.currentState.opacity = 1;
+
+        // Children carry only their own transform; the native <g> supplies the group transform once.
         this._currentTransforms = [];
     }
 

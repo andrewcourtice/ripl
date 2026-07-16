@@ -511,7 +511,6 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
     }
 
     private _attachArcHover(segment: Arc, arc: ChordArc) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -525,8 +524,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
         applyHoverHighlight(segment, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
@@ -545,7 +543,6 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
     }
 
     private _attachRibbonHover(ribbonEl: Ribbon, ribbon: ChordRibbon, cx: number, cy: number) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -560,8 +557,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
         applyHoverHighlight(ribbonEl, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: cx,

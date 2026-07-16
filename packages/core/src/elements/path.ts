@@ -88,8 +88,8 @@ export class Path extends Shape2D<PathState> {
         this._pathRenderer = renderer;
     }
 
-    /** Returns the axis-aligned bounding box of the path. */
-    public getBoundingBox(): Box {
+    /** @internal Local-space bounding box of the path. */
+    public _getLocalBoundingBox(): Box {
         return new Box(
             this.y,
             this.x,

@@ -411,6 +411,59 @@ export default tseslint.config(
         },
     },
 
+    // Lint <script> blocks in Vue single-file components (demos + app SFCs)
+    {
+        name: 'ripl/vue-sfc',
+        files: ['**/*.vue'],
+        plugins: {
+            vue,
+            'ripl': riplPlugin,
+        },
+        languageOptions: {
+            parser: vueParser,
+            parserOptions: {
+                parser: tseslint.parser,
+                ecmaVersion: 2021,
+                sourceType: 'module',
+                extraFileExtensions: ['.vue'],
+            },
+        },
+        rules: {
+            // Relax rules that don't apply cleanly to SFC <script setup> (template-only refs, auto-imports)
+            'no-console': 'off',
+            'no-undef': 'off',
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+
+            // Enforce stylistic rules
+            '@stylistic/indent': ['error', INDENT],
+            '@stylistic/semi': ['error', 'always'],
+            '@stylistic/quotes': ['error', 'single', { 'avoidEscape': true }],
+            '@stylistic/comma-dangle': ['error', {
+                'arrays': 'always-multiline',
+                'objects': 'always-multiline',
+                'imports': 'always-multiline',
+                'exports': 'always-multiline',
+                'functions': 'never',
+            }],
+            '@stylistic/object-curly-spacing': ['error', 'always'],
+            '@stylistic/object-curly-newline': ['error', {
+                'ObjectExpression': {
+                    'minProperties': 2,
+                    'multiline': true,
+                    'consistent': true,
+                },
+                'ImportDeclaration': 'always',
+                'ExportDeclaration': {
+                    'minProperties': 2,
+                },
+            }],
+            '@stylistic/member-delimiter-style': 'error',
+            'ripl/import-export-spacing': 'error',
+        },
+    },
+
     // Playground examples run inside the docs editor with `context`, `scene` and
     // `renderer` injected into scope, so treat them as read-only globals.
     {

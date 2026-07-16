@@ -69,7 +69,7 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         });
     }
 
-    public getBoundingBox(): Box {
+    public _getLocalBoundingBox(): Box {
         const {
             sx,
             sy,

@@ -29,10 +29,10 @@
 
 <script lang="ts" setup>
 import {
+    onBeforeUnmount,
+    onMounted,
     ref,
     watch,
-    onMounted,
-    onBeforeUnmount,
 } from 'vue';
 
 import {
@@ -44,8 +44,8 @@ import PlaygroundPreview from './playground-preview.vue';
 
 import {
     buildSrcdoc,
-    encodeState,
     decodeState,
+    encodeState,
 } from './sandbox';
 
 import {
@@ -53,8 +53,8 @@ import {
 } from './examples';
 
 import type {
-    PlaygroundMode,
     ContextType,
+    PlaygroundMode,
     PlaygroundSettings,
     PlaygroundState,
 } from './sandbox';
@@ -82,7 +82,7 @@ let manifestKeys = new Set<string>();
 let pendingState: PlaygroundState | null = null;
 
 function getDefaultCode(m: PlaygroundMode): string {
-    return EXAMPLES.find(e => e.mode === m)!.code;
+    return EXAMPLES.find(example => example.mode === m)!.code;
 }
 
 function loadStateFromHash(): PlaygroundState | null {
@@ -174,7 +174,8 @@ watch(mode, (newMode) => {
     debouncedSave();
 });
 
-function onLoadExample(example: { mode: string; code: string }) {
+function onLoadExample(example: { mode: string;
+    code: string; }) {
     loadingExample = true;
     mode.value = example.mode as PlaygroundMode;
     code.value = example.code;

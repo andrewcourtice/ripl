@@ -329,7 +329,6 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
     }
 
     private _attachMarkerHover(marker: Circle, values: PolarScatterMarkerEvent, content: string, restFill: string, stroke: string, radius: number) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): PolarScatterMarkerEvent => ({
@@ -340,8 +339,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,

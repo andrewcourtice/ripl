@@ -25,8 +25,8 @@ import {
     Highlighter,
     Minus,
     MousePointer2,
-    PenTool,
     Pencil,
+    PenTool,
     Spline,
     Square,
     Type,
@@ -52,17 +52,72 @@ defineEmits<{
 }>();
 
 const tools: ToolButton[] = [
-    { id: 'select', label: 'Select', key: 'V', icon: MousePointer2 },
-    { id: 'hand', label: 'Pan', key: 'H', icon: Hand },
-    { id: 'pencil', label: 'Pencil', key: 'P', icon: Pencil },
-    { id: 'pen', label: 'Pen', key: 'N', icon: PenTool },
-    { id: 'highlighter', label: 'Highlighter', key: 'I', icon: Highlighter },
-    { id: 'rect', label: 'Rectangle', key: 'R', icon: Square },
-    { id: 'ellipse', label: 'Ellipse', key: 'O', icon: Circle },
-    { id: 'line', label: 'Line', key: 'L', icon: Minus },
-    { id: 'connector', label: 'Connector', key: 'C', icon: Spline },
-    { id: 'text', label: 'Text', key: 'T', icon: Type },
-    { id: 'eraser', label: 'Eraser', key: 'E', icon: Eraser },
+    {
+        id: 'select',
+        label: 'Select',
+        key: 'V',
+        icon: MousePointer2,
+    },
+    {
+        id: 'hand',
+        label: 'Pan',
+        key: 'H',
+        icon: Hand,
+    },
+    {
+        id: 'pencil',
+        label: 'Pencil',
+        key: 'P',
+        icon: Pencil,
+    },
+    {
+        id: 'pen',
+        label: 'Pen',
+        key: 'N',
+        icon: PenTool,
+    },
+    {
+        id: 'highlighter',
+        label: 'Highlighter',
+        key: 'I',
+        icon: Highlighter,
+    },
+    {
+        id: 'rect',
+        label: 'Rectangle',
+        key: 'R',
+        icon: Square,
+    },
+    {
+        id: 'ellipse',
+        label: 'Ellipse',
+        key: 'O',
+        icon: Circle,
+    },
+    {
+        id: 'line',
+        label: 'Line',
+        key: 'L',
+        icon: Minus,
+    },
+    {
+        id: 'connector',
+        label: 'Connector',
+        key: 'C',
+        icon: Spline,
+    },
+    {
+        id: 'text',
+        label: 'Text',
+        key: 'T',
+        icon: Type,
+    },
+    {
+        id: 'eraser',
+        label: 'Eraser',
+        key: 'E',
+        icon: Eraser,
+    },
 ];
 </script>
 

@@ -259,7 +259,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         xValue: number;
         yValue: number;
         sizeValue: number; }, content: string, state: CircleState) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const stroke = state.stroke as string;
 
         const payload = (point: { x: number;
@@ -274,8 +273,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
         applyHoverHighlight(bubble, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor: () => ({
                 x: bubble.cx,

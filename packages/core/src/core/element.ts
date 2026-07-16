@@ -24,6 +24,7 @@ import {
     matrixRotate,
     matrixScale,
     matrixTranslate,
+    transformBox,
 } from '../math';
 
 import type {
@@ -329,7 +330,8 @@ export function applyElementTransform(target: TransformTarget, element: Element)
 
     if (hasOrigin) {
         const needsBBox = typeIsString(rawOriginX) || typeIsString(rawOriginY);
-        const box = needsBBox ? element.getBoundingBox() : null;
+        // Origins resolve against the element's own (pre-transform) geometry, not its on-screen box.
+        const box = needsBBox ? element._getLocalBoundingBox() : null;
 
         originX = resolveTransformOrigin(rawOriginX, box?.width ?? 0);
         originY = resolveTransformOrigin(rawOriginY, box?.height ?? 0);
@@ -692,9 +694,31 @@ export class Element<
         } as unknown as TState;
     }
 
-    /** Reads a state value, falling back to the parent’s value if the local value is nil (property inheritance). */
+    /**
+     * Reads this element's own state value (no inheritance). Inherited paint now cascades through
+     * the render tree — a group applies its paint at its boundary ({@link Context.pushGroup}) and
+     * descendants pick it up from the context's copied state — so property getters return own
+     * values only, mirroring how the browser resolves computed style at paint time. Use
+     * {@link Element.getComputedStateValue} when the effective (inheritance-resolved) value is
+     * required outside a render pass (e.g. animation start values).
+     */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
-        return this.state[key] ?? (this.parent as unknown as TState)?.[key];
+        return this.state[key];
+    }
+
+    /**
+     * Resolves a state value against the parent chain (own value, else the nearest ancestor's) —
+     * the effective value an element renders with. Used where the resolved value is needed without
+     * a live context, such as computing a transition's start value.
+     */
+    protected getComputedStateValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
+        const own = this.state[key];
+
+        if (own !== undefined && own !== null) {
+            return own;
+        }
+
+        return (this.parent as unknown as Element<TState> | undefined)?.getComputedStateValue(key) as TState[TKey];
     }
 
     /** Sets a state value and emits an `updated` event. */
@@ -753,9 +777,27 @@ export class Element<
         return closest<TElement>(this, selector);
     }
 
-    /** Returns the axis-aligned bounding box for this element. Override in subclasses for accurate geometry. */
-    public getBoundingBox() {
+    /**
+     * @internal Raw local-space geometry hook. Override per element to return the untransformed,
+     * authored bounding box in the element's own coordinate space. Consumers should call
+     * {@link Element.getBoundingBox} instead.
+     */
+    public _getLocalBoundingBox(): Box {
         return new Box(0, 0, 0, 0);
+    }
+
+    /**
+     * Returns this element's bounding box: the on-screen (world) box by default, or the raw local
+     * box when `local` is `true`. The world box applies this element's own and every ancestor
+     * group's transform (mirroring the DOM's `getBoundingClientRect`); a rotated element yields a
+     * conservative axis-aligned box.
+     * @param local - when `true`, returns the untransformed authored geometry instead of the world box.
+     */
+    public getBoundingBox(local = false): Box {
+        const box = this._getLocalBoundingBox();
+        return local
+            ? box
+            : transformBox(box, getWorldTransform(this as unknown as Element));
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
@@ -767,7 +809,9 @@ export class Element<
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */
     public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
-            const currentValue = this.getStateValue(key);
+            // Start from the element's *effective* value (own, else inherited) so a transition on
+            // an inherited property animates from what's actually on screen.
+            const currentValue = this.getComputedStateValue(key);
 
             if (typeIsNil(currentValue)) {
                 return output;

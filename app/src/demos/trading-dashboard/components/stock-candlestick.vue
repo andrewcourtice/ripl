@@ -15,9 +15,18 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useDashboardStore } from '../store/dashboard';
-import type { MockIntradayPoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useDashboardStore,
+} from '../store/dashboard';
+
+import type {
+    MockIntradayPoint,
+} from '../data/mock';
 
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();

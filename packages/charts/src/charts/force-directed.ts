@@ -204,7 +204,6 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
     }
 
     private _attachNodeHover(circle: Circle, node: PlacedNode, content: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): ForceDirectedNodeEvent<TData> => ({
@@ -218,8 +217,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
         applyHoverHighlight(circle, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: circle.cx,
@@ -235,7 +233,6 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
     }
 
     private _attachLinkHover(line: Line, link: ForceNetworkLink, content: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): ForceDirectedLinkEvent => ({
@@ -248,8 +245,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
         applyHoverHighlight(line, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: (line.x1 + line.x2) / 2,

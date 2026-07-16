@@ -43,8 +43,13 @@
 </template>
 
 <script lang="ts" setup>
-import { PERIODS } from './data/mock';
-import { useAnalyticsStore } from './store/analytics';
+import {
+    PERIODS,
+} from './data/mock';
+
+import {
+    useAnalyticsStore,
+} from './store/analytics';
 
 import ActiveUsersChart from './components/active-users-chart.vue';
 import BrowserShareChart from './components/browser-share-chart.vue';

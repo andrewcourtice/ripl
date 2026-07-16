@@ -46,11 +46,11 @@
 
 <script lang="ts" setup>
 import {
-    ref,
-    onMounted,
     onBeforeUnmount,
-    watch,
+    onMounted,
+    ref,
     shallowRef,
+    watch,
 } from 'vue';
 
 import {
@@ -103,7 +103,8 @@ const emit = defineEmits<{
     'update:mode': [value: PlaygroundMode];
     'update:importMap': [value: Record<string, string>];
     'reset': [];
-    'load-example': [example: { mode: PlaygroundMode; code: string }];
+    'load-example': [example: { mode: PlaygroundMode;
+        code: string; }];
 }>();
 
 const activeTab = ref<EditorTab>('code');
@@ -115,15 +116,19 @@ const editorInstance = shallowRef<any>();
 const importMapEditorInstance = shallowRef<any>();
 const typeLibDisposables = new Map<string, { dispose: () => void }>();
 
-const examples2d = EXAMPLES.filter(e => e.mode === '2d');
-const examples3d = EXAMPLES.filter(e => e.mode === '3d');
+const examples2d = EXAMPLES.filter(example => example.mode === '2d');
+const examples3d = EXAMPLES.filter(example => example.mode === '3d');
 
 const { isDark } = useData();
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- the whole lazily-imported module type has no top-level `import type` equivalent
 let monacoModule: typeof import('monaco-editor') | null = null;
 
 function loadExample(example: PlaygroundExample) {
-    emit('load-example', { mode: example.mode, code: example.code });
+    emit('load-example', {
+        mode: example.mode,
+        code: example.code,
+    });
     examplesDropdown.value?.close();
 }
 
@@ -286,6 +291,7 @@ async function initMonaco() {
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- the whole lazily-imported module type has no top-level `import type` equivalent
 function initImportMapEditor(monaco: typeof import('monaco-editor')) {
     if (!importMapContainer.value) {
         return;

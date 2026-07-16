@@ -606,7 +606,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
     private _attachPointHover(marker: Circle, pd: { point: Point;
         axisLabel: string;
         value: number; }, seriesId: string, color: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -620,8 +619,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,

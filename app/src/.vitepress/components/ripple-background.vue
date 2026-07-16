@@ -4,8 +4,8 @@
 
 <script lang="ts" setup>
 import {
-    onMounted,
     onBeforeUnmount,
+    onMounted,
     ref,
 } from 'vue';
 
@@ -14,12 +14,13 @@ import {
     createContext,
     createRenderer,
     createScene,
-    Scene,
 } from '@ripl/web';
 
 import type {
     Circle,
     Renderer,
+
+    Scene,
 } from '@ripl/web';
 
 const container = ref<HTMLElement>();

@@ -85,8 +85,8 @@ export class Text extends Element<TextState> {
         super('text', options);
     }
 
-    /** Returns the axis-aligned bounding box of the text, measured with its current alignment. */
-    public getBoundingBox(): Box {
+    /** @internal Local-space bounding box of the text, measured with its current alignment. */
+    public _getLocalBoundingBox(): Box {
         const text = this.content.toString();
 
         // Measure with the element's alignment so the anchor-relative `actualBoundingBox*` metrics

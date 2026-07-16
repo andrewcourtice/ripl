@@ -16,8 +16,14 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useAnalyticsStore } from '../store/analytics';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
 
 const store = useAnalyticsStore();
 const chartEl = ref<HTMLElement>();
@@ -26,6 +32,18 @@ let chart: ReturnType<typeof createGaugeChart> | undefined;
 
 const DEFAULT_READOUT = 'Hover the gauge for the current rate';
 const readout = ref(DEFAULT_READOUT);
+
+function errorColor(rate: number): string {
+    if (rate > 3) {
+        return '#dc2626';
+    }
+
+    if (rate > 1.5) {
+        return '#f59e0b';
+    }
+
+    return '#16a34a';
+}
 
 function buildChart() {
     const value = store.errorRate;
@@ -36,7 +54,7 @@ function buildChart() {
         min: 0,
         max: 5,
         label: 'Error Rate',
-        color: value > 3 ? '#dc2626' : value > 1.5 ? '#f59e0b' : '#16a34a',
+        color: errorColor(value),
         formatValue: (v: number) => `${v.toFixed(2)}%`,
         tickCount: 5,
         showTickLabels: true,
@@ -70,7 +88,7 @@ watch(() => store.errorRate, () => {
         const value = store.errorRate;
         chart.update({
             value,
-            color: value > 3 ? '#dc2626' : value > 1.5 ? '#f59e0b' : '#16a34a',
+            color: errorColor(value),
         });
     } else {
         buildChart();

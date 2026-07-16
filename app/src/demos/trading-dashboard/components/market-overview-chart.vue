@@ -28,10 +28,22 @@ import {
 import RiplSelect from '../../../.vitepress/components/ripl-select.vue';
 import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useDashboardStore } from '../store/dashboard';
-import { withMovingAverage } from '../data/mock';
-import type { MockDailyPoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useDashboardStore,
+} from '../store/dashboard';
+
+import {
+    withMovingAverage,
+} from '../data/mock';
+
+import type {
+    MockDailyPoint,
+} from '../data/mock';
 
 import type {
     TimeRange,
@@ -40,7 +52,10 @@ import type {
 type MarketDatum = MockDailyPoint & { ma: number };
 
 const ranges: TimeRange[] = ['7D', '1M', '3M', '6M', '1Y'];
-const rangeOptions = ranges.map(r => ({ label: r, value: r }));
+const rangeOptions = ranges.map(r => ({
+    label: r,
+    value: r,
+}));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);

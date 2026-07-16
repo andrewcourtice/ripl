@@ -481,7 +481,6 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
     }
 
     private _attachValueHover(arc: Arc, value: number, color: string, formatDisplay: (value: number) => string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): GaugeChartValueEvent => ({
@@ -492,8 +491,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
         applyHoverHighlight(arc, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);

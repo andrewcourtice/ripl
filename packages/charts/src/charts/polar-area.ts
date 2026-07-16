@@ -674,7 +674,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             async function transitionUpdates() {
-                return renderer.transition(updates, element => ({
+                // Segments are grouped, but transitions animate their own state — drive the leaf
+                // children (arc/label/connector) to their stashed `.data`, not the inert group.
+                return renderer.transition(updates.flatMap(group => group.children), element => ({
                     duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
@@ -682,12 +684,15 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             async function transitionExits() {
-                return renderer.transition(exits, element => ({
+                await renderer.transition(exits.flatMap(group => group.children), element => ({
                     duration: animDuration * 0.8,
                     ease: easeOutQuint,
                     state: element.data as Partial<BaseElementState>,
-                    onComplete: element => element.destroy(),
                 }));
+
+                // Destroy the whole segment group once its leaves have collapsed (destroying leaves
+                // individually would leave empty group nodes behind).
+                exits.forEach(group => group.destroy());
             }
 
             return Promise.all([
@@ -704,7 +709,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         label: string;
         key: string; }) {
         const { color, value, label, key } = segment;
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -718,8 +722,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         applyHoverHighlight(arc, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = arc.getCentroid(arc.data as Partial<ArcState>);

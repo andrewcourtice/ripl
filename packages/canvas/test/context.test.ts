@@ -92,7 +92,8 @@ describe('CanvasContext', () => {
         (ctx as { currentRenderElement: unknown }).currentRenderElement = element;
         ctx.fill = GRADIENT;
 
-        expect(element.getBoundingBox).toHaveBeenCalled();
+        // Gradient bounds are the element's local (untransformed) box.
+        expect(element.getBoundingBox).toHaveBeenCalledWith(true);
     });
 
     test('createPath returns a CanvasPath', () => {

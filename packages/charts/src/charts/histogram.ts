@@ -140,7 +140,6 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
     /** Wires hover highlight + tooltip + interaction events onto a bin bar. */
     private _attachBinHover(rect: Rect, current: Bin): void {
         const restFill = rect.fill as string;
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: {
@@ -156,8 +155,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor: () => ({
                 x: rect.x + rect.width / 2,

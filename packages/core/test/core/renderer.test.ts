@@ -9,6 +9,8 @@ import {
 
 import {
     createElement,
+    createGroup,
+    isGroup,
     Renderer,
     TaskAbortError,
 } from '../../src';
@@ -36,12 +38,20 @@ function createMockScene() {
     const scene = {
         context: mockContext,
         buffer: elements,
-        // Leaf-only mock: every element renders as a `draw` instruction (no group boundaries).
+        // Groups bracket their subtree with push/pop; leaves are bare draw instructions.
         get instructions() {
-            return elements.map(element => ({
-                type: 'draw' as const,
-                element,
-            }));
+            return elements.flatMap(element => isGroup(element)
+                ? [{
+                    type: 'push' as const,
+                    element,
+                }, {
+                    type: 'pop' as const,
+                    element,
+                }]
+                : [{
+                    type: 'draw' as const,
+                    element,
+                }]);
         },
         on: vi.fn().mockReturnValue({ dispose: vi.fn() }),
         once: vi.fn().mockReturnValue({ dispose: vi.fn() }),
@@ -240,6 +250,33 @@ describe('Renderer', () => {
 
         expect(el1.opacity).toBeCloseTo(1, 1);
         expect(el2.opacity).toBeCloseTo(1, 1);
+
+        renderer.destroy();
+    });
+
+    test('Should animate a group\'s own state as a unit (no fan-out to leaves)', async () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        const child = createElement('rect', {});
+        const group = createGroup({ children: [child] });
+        scene.add(group);
+
+        const t = renderer.transition(group, {
+            duration: 100,
+            state: { transformScaleX: 2 },
+        });
+
+        await vi.advanceTimersByTimeAsync(200);
+        await t;
+
+        // The group's OWN state animated (advanced at its push op)...
+        expect(group.transformScaleX).toBeCloseTo(2, 1);
+        // ...and the leaf child was never touched (proving no fan-out).
+        expect(child.transformScaleX).toBe(1);
 
         renderer.destroy();
     });

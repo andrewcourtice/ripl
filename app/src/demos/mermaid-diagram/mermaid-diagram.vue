@@ -21,25 +21,34 @@
 
 <script lang="ts" setup>
 import {
-    ref,
     onMounted,
     onUnmounted,
+    ref,
 } from 'vue';
 
 import {
     createContext,
-    createScene,
     createRenderer,
-    Scene,
+    createScene,
 } from '@ripl/web';
 
 import type {
     Renderer,
+
+    Scene,
 } from '@ripl/web';
 
-import { parseMermaid } from './parser';
-import { computeLayout } from './layout';
-import { renderDiagram } from './renderer';
+import {
+    parseMermaid,
+} from './parser';
+
+import {
+    computeLayout,
+} from './layout';
+
+import {
+    renderDiagram,
+} from './renderer';
 
 const EXAMPLE_SOURCE = `graph TD
     A[Start] --> B{Is it working?}
@@ -66,8 +75,8 @@ function renderFromSource() {
         const ir = parseMermaid(source.value);
         const layout = computeLayout(ir);
         renderDiagram(scene, renderer, layout);
-    } catch (e) {
-        console.warn('Mermaid parse error:', e);
+    } catch (error) {
+        console.warn('Mermaid parse error:', error);
     }
 }
 

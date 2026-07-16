@@ -531,8 +531,8 @@ export class Polyline extends Shape2D<PolylineState> {
         super('polyline', options);
     }
 
-    /** Returns the axis-aligned bounding box of the polyline. */
-    public getBoundingBox(): Box {
+    /** @internal Local-space bounding box of the polyline. */
+    public _getLocalBoundingBox(): Box {
         const [left, right] = getExtent(this.points, point => point[0]);
         const [top, bottom] = getExtent(this.points, point => point[1]);
 

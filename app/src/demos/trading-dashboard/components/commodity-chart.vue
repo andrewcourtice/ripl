@@ -27,9 +27,18 @@ import {
 import RiplSelect from '../../../.vitepress/components/ripl-select.vue';
 import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useDashboardStore } from '../store/dashboard';
-import type { MockCommodityPoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useDashboardStore,
+} from '../store/dashboard';
+
+import type {
+    MockCommodityPoint,
+} from '../data/mock';
 
 import type {
     CommodityType,
@@ -37,7 +46,10 @@ import type {
 } from '../store/dashboard';
 
 const ranges: TimeRange[] = ['1M', '3M', '6M', '1Y'];
-const rangeOptions = ranges.map(r => ({ label: r, value: r }));
+const rangeOptions = ranges.map(r => ({
+    label: r,
+    value: r,
+}));
 const store = useDashboardStore();
 const chartEl = ref<HTMLElement>();
 const context = useChartContext(chartEl);
@@ -60,7 +72,10 @@ function buildChart() {
     ];
 
     if (chart) {
-        chart.update({ data, series });
+        chart.update({
+            data,
+            series,
+        });
         return;
     }
 

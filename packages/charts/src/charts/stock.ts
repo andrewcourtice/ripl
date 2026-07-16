@@ -273,8 +273,10 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
         applyHoverHighlight(body, {
             renderer: this.renderer,
-            duration: this.getAnimationDuration(200),
-            ease: easeOutQuart,
+            animation: () => ({
+                duration: this.getAnimationDuration(200),
+                ease: easeOutQuart,
+            }),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: anchorX,

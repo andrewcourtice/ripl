@@ -140,7 +140,6 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
     private _attachBoxHover(rect: Rect, category: string, stats: BoxplotStats): void {
         const restFill = rect.fill as string;
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: {
@@ -155,8 +154,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor: () => ({
                 x: rect.x + rect.width / 2,

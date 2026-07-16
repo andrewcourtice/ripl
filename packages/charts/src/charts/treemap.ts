@@ -428,7 +428,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
     }
 
     private _attachCellHover(rect: Rect, node: TreemapNode, color: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -442,8 +441,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: node.x + node.width / 2,

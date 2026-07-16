@@ -155,8 +155,8 @@ export class ImageElement extends Element<ImageState> {
         super('image', options);
     }
 
-    /** Returns the axis-aligned bounding box of the image. */
-    public getBoundingBox(): Box {
+    /** @internal Local-space bounding box of the image. */
+    public _getLocalBoundingBox(): Box {
         const [sourceWidth, sourceHeight] = getSourceSize(this.image);
 
         return new Box(

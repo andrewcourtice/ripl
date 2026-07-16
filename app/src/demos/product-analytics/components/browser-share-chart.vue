@@ -16,9 +16,18 @@ import {
 } from '@ripl/charts';
 
 import DashboardCard from './dashboard-card.vue';
-import { useChartContext } from '../composables/use-chart-context';
-import { useAnalyticsStore } from '../store/analytics';
-import type { BrowserSharePoint } from '../data/mock';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
+
+import type {
+    BrowserSharePoint,
+} from '../data/mock';
 
 const store = useAnalyticsStore();
 const chartEl = ref<HTMLElement>();

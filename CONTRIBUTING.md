@@ -134,7 +134,7 @@ Every built-in element follows this pattern:
 1. **State interface** extending `BaseElementState`
 2. **Class** extending `Shape<TState>` with getter/setter pairs via `getStateValue`/`setStateValue`
 3. **Constructor** calling `super(type, options)`
-4. **`getBoundingBox()`** returning a `Box`
+4. **`_getLocalBoundingBox()`** returning the element's raw local-space `Box` (the base composes the public `getBoundingBox(local?)` from it)
 5. **`render(context)`** calling `super.render(context, path => { ... })`
 6. **Factory function** — `createX()`
 7. **Type guard** — `elementIsX()`
