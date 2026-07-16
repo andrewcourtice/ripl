@@ -44,6 +44,9 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
             <RiplField label="Markers" inline>
                 <RiplSwitch v-model="markers" />
             </RiplField>
+            <RiplField label="Navigator" inline>
+                <RiplSwitch v-model="overview" />
+            </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -83,9 +86,10 @@ const seriesMeta = [
 const lineType = ref<PolylineRenderer>('monotoneX');
 const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
 const markers = ref(true);
+const overview = ref(false);
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
     title: 'Monthly Performance',
     axisX: 'Month',
     axisY: 'Amount ($)',
@@ -121,6 +125,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'month',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 });
@@ -128,12 +133,13 @@ const { contextChanged, chart } = useRiplChart(context => {
 function apply() {
     chart.value?.update({
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch([lineType, lineStyle, markers], apply);
+watch([lineType, lineStyle, markers, overview], apply);
 
 function randomize() {
     data = generateData(data.length);
@@ -251,4 +257,5 @@ createLineChart('#container', {
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
 - **`padding`** — Chart padding

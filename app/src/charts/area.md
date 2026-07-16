@@ -47,6 +47,9 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
             <RiplField label="Markers" inline>
                 <RiplSwitch v-model="markers" />
             </RiplField>
+            <RiplField label="Navigator" inline>
+                <RiplSwitch v-model="overview" />
+            </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -86,9 +89,10 @@ const stacked = ref(false);
 const lineType = ref<PolylineRenderer>('monotoneX');
 const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
 const markers = ref(false);
+const overview = ref(false);
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
     title: 'Traffic by Device',
     axisX: 'Month',
     axisY: 'Sessions',
@@ -125,6 +129,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         stacked: stacked.value,
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 });
@@ -133,12 +138,13 @@ function apply() {
     chart.value?.update({
         stacked: stacked.value,
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch([stacked, lineType, lineStyle, markers], apply);
+watch([stacked, lineType, lineStyle, markers, overview], apply);
 
 function randomize() {
     data = generateData(data.length);
@@ -252,3 +258,4 @@ createAreaChart('#container', {
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot

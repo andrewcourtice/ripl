@@ -76,6 +76,15 @@ import type {
     LegendItem,
 } from '../components/legend';
 
+import {
+    ChartNavigator,
+} from '../components/navigator';
+
+import type {
+    ChartNavigatorSeries,
+    ChartNavigatorWindow,
+} from '../components/navigator';
+
 import type {
     BandScale,
     Context,
@@ -111,9 +120,35 @@ import type {
 /** Resolved animation used to snap geometry into place during navigator-driven re-renders. */
 const NO_ANIMATION = normalizeAnimation(false);
 
+/** Default size (height for a bottom strip, width for a side strip) of the overview navigator, in pixels. */
+const DEFAULT_OVERVIEW_SIZE = 48;
+/** Gap between the plot/axis and the overview strip, in pixels. */
+const OVERVIEW_GAP = 14;
+/** Minimum visible window width, as a fraction of the domain (bounds the maximum zoom). */
+const MIN_WINDOW = 0.02;
+/** Maximum zoom factor `k` — you can zoom in to this, and out only to the full-data identity view (`k = 1`). */
+const NAV_MAX_ZOOM = 50;
+
 /** Whether a view transform is the identity (no pan, no zoom). */
 function isIdentityTransform(transform: NavigatorTransform): boolean {
     return transform.k === 1 && transform.x === 0 && transform.y === 0;
+}
+
+/** Whether two view transforms are exactly equal. */
+function isSameTransform(a: NavigatorTransform, b: NavigatorTransform): boolean {
+    return a.k === b.k && a.x === b.x && a.y === b.y;
+}
+
+function clampValue(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
+}
+
+/**
+ * Clamps a view translation so the visible window stays within the full domain: given the axis plot
+ * `origin`/`size` and zoom `k`, the translate must lie in `[(origin+size)(1-k), origin(1-k)]`.
+ */
+function clampTranslate(translate: number, origin: number, size: number, k: number): number {
+    return clampValue(translate, (origin + size) * (1 - k), origin * (1 - k));
 }
 
 /** Options shared by all cartesian charts. */
@@ -136,6 +171,20 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
      * (`centerOn`/`fitBounds`) or brush-and-link.
      */
     navigator?: boolean | NavigatorInteractions;
+    /**
+     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects the
+     * visible range of the **category** axis (a bottom bar for category-on-x charts, a side bar for a
+     * horizontal bar chart). `true` uses the default size; an object sets it. Enabling the strip also
+     * turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator` is explicitly `false`.
+     * Only category-axis charts (line, area, bar, trend) render the strip.
+     */
+    overview?: boolean | ChartOverviewOptions;
+}
+
+/** Configuration for the overview navigator strip. */
+export interface ChartOverviewOptions {
+    /** Size of the strip (height for a bottom strip, width for a side strip), in pixels. Defaults to 48. */
+    size?: number;
 }
 
 /** Declares which optional cartesian components a chart wants constructed. */
@@ -185,6 +234,11 @@ export abstract class CartesianChart<
     private _plotContent?: Group;
     private _plotClip?: Rect;
 
+    /** The overview "scrub bar" strip (created in `setupCartesian`; only rendered by category-axis charts). */
+    private _navigatorStrip!: ChartNavigator;
+    /** The plot rectangle from the most recent render, used to bound pan and window the category axis. */
+    private _navPlot?: ChartArea;
+
     /**
      * The pan/zoom/brush controller for this chart, or `undefined` when the `navigator` option is off.
      * Use it for imperative framing (`centerOn`, `fitBounds`, `reset`) and to subscribe to
@@ -196,15 +250,22 @@ export abstract class CartesianChart<
 
     /**
      * Merges options and re-renders (see {@link Chart.update}), additionally creating or destroying the
-     * navigator when the `navigator` option is toggled. The controller is otherwise a construction-time
-     * concern, so reconciling here keeps `chart.update({ navigator })` working at runtime.
+     * navigator when the `navigator` or `overview` option is toggled. The controller is otherwise a
+     * construction-time concern, so reconciling here keeps `chart.update({ navigator })` /
+     * `chart.update({ overview })` working at runtime.
      */
     public override update(options: Partial<TOptions>): void {
-        if (options.navigator !== undefined) {
+        if (options.navigator !== undefined || options.overview !== undefined) {
             this.options = {
                 ...this.options,
                 ...options,
             };
+
+            this.options.navigator = this._resolveNavigator();
+
+            if (this._overviewEnabled()) {
+                this._navigatorStrip.attach();
+            }
 
             this._reconcileNavigator();
         }
@@ -217,6 +278,20 @@ export abstract class CartesianChart<
      * constructor (after `super(...)`) and before `init()`.
      */
     protected setupCartesian(setup: CartesianSetup = {}) {
+        // Build the overview strip and attach its listeners before the in-plot navigator is created, so
+        // a pointerdown inside the strip band is claimed by the strip and never also pans the plot.
+        this._navigatorStrip = new ChartNavigator({
+            scene: this.scene,
+            renderer: this.renderer,
+        });
+
+        if (this._overviewEnabled()) {
+            this._navigatorStrip.attach();
+        }
+
+        // Enabling the overview implies a navigator for the strip to drive.
+        this.options.navigator = this._resolveNavigator();
+
         const axisOpts = normalizeAxis(this.options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y);
@@ -288,7 +363,10 @@ export abstract class CartesianChart<
         }
 
         this.retain({
-            dispose: () => this._destroyNavigator(),
+            dispose: () => {
+                this._destroyNavigator();
+                this._navigatorStrip.destroy();
+            },
         });
 
         this._reconcileNavigator();
@@ -341,10 +419,22 @@ export abstract class CartesianChart<
 
         this._navigator = createNavigator(this.scene.context, {
             interactions,
+            // You can zoom in up to NAV_MAX_ZOOM, but only out to the full-data identity view (k = 1) —
+            // never past the extent of the dataset.
+            scaleExtent: [1, NAV_MAX_ZOOM],
         });
 
         this._navigator.on('change', event => {
-            this._view = event.data;
+            // Bound the transform so pan/zoom can't scroll past the data edges. Clamping is a fixpoint,
+            // so re-applying the clamped transform re-enters once and then settles.
+            const clamped = this._clampView(event.data);
+
+            if (!isSameTransform(clamped, event.data)) {
+                this._navigator?.setTransform(clamped);
+                return;
+            }
+
+            this._view = clamped;
             this._scheduleNavigatorRender(() => this._renderFromNavigator());
         });
     }
@@ -369,6 +459,186 @@ export abstract class CartesianChart<
 
         void Promise.resolve(this.render()).finally(() => {
             this._navigating = false;
+        });
+    }
+
+    /**
+     * Which axis the navigator windows: `'x'` (category on x — line/area/vertical bar/trend), `'y'`
+     * (category on y — horizontal bar), or `'both'` (2-D charts like scatter). Category-axis charts get
+     * the overview strip and hold the value axis fixed; `'both'` charts zoom both axes uniformly. Only
+     * `'x'`/`'y'` charts render the strip. Defaults to `'both'`.
+     */
+    protected navigationAxis(): 'x' | 'y' | 'both' {
+        return 'both';
+    }
+
+    /** Whether the overview strip is enabled and applicable (a category-axis chart with `overview` on). */
+    private _overviewEnabled(): boolean {
+        return !!this.options.overview && this.navigationAxis() !== 'both';
+    }
+
+    /** The strip's size (height for a bottom strip, width for a side strip), in pixels. */
+    private _overviewSize(): number {
+        const overview = this.options.overview;
+
+        if (overview && typeof overview === 'object') {
+            return overview.size ?? DEFAULT_OVERVIEW_SIZE;
+        }
+
+        return DEFAULT_OVERVIEW_SIZE;
+    }
+
+    /** Resolves the effective in-plot navigator config, ensuring a controller exists when the strip is on. */
+    private _resolveNavigator(): boolean | NavigatorInteractions | undefined {
+        const navigator = this.options.navigator;
+
+        if (!this._overviewEnabled()) {
+            return navigator;
+        }
+
+        // Strip on but in-plot gestures explicitly off — still create an inert controller for the strip.
+        if (navigator === false) {
+            return {
+                zoom: false,
+                pan: false,
+                brush: false,
+            };
+        }
+
+        return navigator ?? true;
+    }
+
+    /** Clamps a transform's category-axis translation so the visible window stays within the full domain. */
+    private _clampView(transform: NavigatorTransform): NavigatorTransform {
+        if (!this._navPlot || isIdentityTransform(transform)) {
+            return transform;
+        }
+
+        const axis = this.navigationAxis();
+        const { k } = transform;
+        let { x, y } = transform;
+
+        if (axis === 'x' || axis === 'both') {
+            x = clampTranslate(x, this._navPlot.x, this._navPlot.width, k);
+        }
+
+        if (axis === 'y' || axis === 'both') {
+            y = clampTranslate(y, this._navPlot.y, this._navPlot.height, k);
+        }
+
+        return {
+            k,
+            x,
+            y,
+        };
+    }
+
+    /**
+     * Reserves the strip band from the layout (a bottom band for a category-on-x chart, a right band for
+     * a horizontal bar chart). Call after `reserveTitle`/`reserveLegend` and before measuring the axes.
+     * Returns `undefined` when the strip is off.
+     */
+    protected reserveNavigatorBand(layout: ChartLayout): ChartArea | undefined {
+        if (!this._overviewEnabled()) {
+            return undefined;
+        }
+
+        const size = this._overviewSize() + OVERVIEW_GAP;
+
+        return this.navigationAxis() === 'y'
+            ? layout.reserveRight(size)
+            : layout.reserveBottom(size);
+    }
+
+    /**
+     * Renders the overview strip into the reserved `band` from the given series and value extent, or
+     * clears it when the strip is off. Call after the plot rect is known (i.e. after `clipPlot`).
+     */
+    protected renderNavigator(band: ChartArea | undefined, series: ChartNavigatorSeries[], valueExtent: [number, number]): void {
+        if (!band || !this._overviewEnabled() || !this._navPlot) {
+            this._navigatorStrip.clear();
+            return;
+        }
+
+        const plot = this._navPlot;
+        const vertical = this.navigationAxis() === 'y';
+
+        const area = vertical
+            ? {
+                x: band.x + OVERVIEW_GAP,
+                y: plot.y,
+                width: this._overviewSize(),
+                height: plot.height,
+            }
+            : {
+                x: plot.x,
+                y: band.y + OVERVIEW_GAP,
+                width: plot.width,
+                height: this._overviewSize(),
+            };
+
+        this._navigatorStrip.render({
+            orientation: vertical ? 'vertical' : 'horizontal',
+            area,
+            series,
+            valueExtent,
+            window: this._currentWindow(),
+            onWindow: window => this._onNavigatorWindow(window),
+        });
+    }
+
+    /** The visible window `[start, end]` (category-domain fractions) derived from the current transform. */
+    private _currentWindow(): ChartNavigatorWindow {
+        const transform = this._navigator?.transform;
+
+        if (!this._navPlot || !transform) {
+            return {
+                start: 0,
+                end: 1,
+            };
+        }
+
+        const vertical = this.navigationAxis() === 'y';
+        const origin = vertical ? this._navPlot.y : this._navPlot.x;
+        const size = Math.max(1, vertical ? this._navPlot.height : this._navPlot.width);
+        const translate = vertical ? transform.y : transform.x;
+        const start = ((origin - translate) / transform.k - origin) / size;
+        const end = ((origin + size - translate) / transform.k - origin) / size;
+
+        return {
+            start: clampValue(start, 0, 1),
+            end: clampValue(end, 0, 1),
+        };
+    }
+
+    /** Converts a strip window into a navigator transform, windowing the category axis (value axis fixed). */
+    private _onNavigatorWindow(window: ChartNavigatorWindow): void {
+        if (!this._navPlot || !this._navigator) {
+            return;
+        }
+
+        const vertical = this.navigationAxis() === 'y';
+        const origin = vertical ? this._navPlot.y : this._navPlot.x;
+        const size = Math.max(1, vertical ? this._navPlot.height : this._navPlot.width);
+
+        let start = window.start;
+        let end = window.end;
+
+        if (end - start < MIN_WINDOW) {
+            end = start + MIN_WINDOW;
+        }
+
+        start = clampValue(start, 0, 1 - MIN_WINDOW);
+        end = clampValue(end, start + MIN_WINDOW, 1);
+
+        const k = 1 / (end - start);
+        const translate = origin - k * (origin + start * size);
+        const current = this._navigator.transform;
+
+        this._navigator.setTransform({
+            k,
+            x: vertical ? current.x : translate,
+            y: vertical ? translate : current.y,
         });
     }
 
@@ -483,13 +753,16 @@ export abstract class CartesianChart<
      * navigator the clip stays inert, preserving the exact un-clipped rendering.
      */
     protected clipPlot(area: ChartArea): void {
+        this._navPlot = area;
         this._ensurePlotContent();
 
-        // Everything positioned by the (navigator-rescaled) scales — marks, grid, and axis
-        // ticks/labels — must stay within the plot while navigating. The marks live in
-        // `_plotContent` (masked by `_plotClip`); the grid and axes live in their own scene-root
-        // groups, so they get their own clips here. All are inert without a navigator.
+        // Marks + grid must stay within the plot while navigating; they live in `_plotContent` (masked by
+        // `_plotClip`) and the grid's own clip. Axis labels only need clipping along the axis they
+        // actually slide: the category axis slides under the window, so clip it; the value axis is held
+        // at the full extent, so leave it unclipped (clipping it bisected its min/max labels). 2-D charts
+        // (`both`) slide both axes.
         const navigating = !!this._navigator;
+        const axis = this.navigationAxis();
 
         if (this._plotClip) {
             this._plotClip.x = area.x;
@@ -499,8 +772,8 @@ export abstract class CartesianChart<
             this._plotClip.clip = navigating;
         }
 
-        this.xAxis.clipTo(area, navigating);
-        this.yAxis.clipTo(area, navigating);
+        this.xAxis.clipTo(area, navigating && (axis === 'x' || axis === 'both'));
+        this.yAxis.clipTo(area, navigating && (axis === 'y' || axis === 'both'));
         this.grid?.clipTo(area, navigating);
     }
 

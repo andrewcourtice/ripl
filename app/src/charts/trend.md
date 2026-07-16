@@ -257,7 +257,7 @@ createTrendChart('#container', {
 - **`key`** — Key accessor for the categorical x-axis
 - **`stacked`** — Stack same-type series (default `false`)
 - **`borderRadius`** — Corner radius applied to bars (default `2`)
-- **`overview`** — `boolean | { height }` — Show the navigator strip; enabling it also turns on in-plot pan/zoom
+- **`overview`** — `boolean | { size }` — Show the navigator strip; enabling it also turns on in-plot pan/zoom
 - **`navigator`** — `boolean | NavigatorInteractions` — Configure in-plot pan/zoom/brush directly
 - **`labels`** — `boolean | anchor` — Show value labels next to marks
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines

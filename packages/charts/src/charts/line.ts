@@ -44,6 +44,10 @@ import type {
 } from '../core/series/context';
 
 import type {
+    ChartNavigatorSeries,
+} from '../components/navigator';
+
+import type {
     ChartArea,
 } from '../core/layout';
 
@@ -172,8 +176,25 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.init();
     }
 
+    /** Line charts are category-on-x, so the navigator windows the x axis (bottom scrub bar). */
+    protected override navigationAxis(): 'x' {
+        return 'x';
+    }
+
     private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
         this.emit(MARKER_EVENTS[phase], event);
+    }
+
+    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
+        const { data, series } = this.options;
+
+        return series.map(srs => ({
+            id: srs.id,
+            color: this.getSeriesColor(srs.id),
+            type: 'line' as const,
+            values: data.map(resolveAccessor<TData, number>(srs.value)),
+        }));
     }
 
     private _seriesContext(plot: ChartArea): LineSeriesContext<TData> {
@@ -225,6 +246,9 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.reserveLegend(layout, legendItems);
 
+            // Reserve the overview strip band from the bottom before the axes are measured.
+            const navBand = this.reserveNavigatorBand(layout);
+
             const area = layout.area;
             const left = area.x;
             const top = area.y;
@@ -248,13 +272,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // Rescale to the navigator's pan/zoom window (no-op without a navigator or at rest):
-            // continuous y via domain rescale, categorical x via a pixel-space transform. Geometry
-            // and axes read the same scales, so both follow the view.
-            this._yScale = this.applyView(this._yScale, 'y');
+            // The navigator windows the x (category) axis only — the value axis stays at the full
+            // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
-            this.yAxis.scale = this._yScale;
 
             const plot = {
                 x: yAxisBox.right,
@@ -275,6 +296,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             const seriesRender = this._series.render(series, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);
+
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

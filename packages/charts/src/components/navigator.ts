@@ -1,18 +1,18 @@
 /**
  * Overview navigator strip.
  *
- * Renders a compressed, non-interactive overview of the full series beneath the plot, with a
- * draggable window (two edge handles + a movable body) that selects the visible x-range. The strip
- * owns none of the transform maths — it reports the selected window as fractions `[start, end]` of
- * the domain via `onWindow`, and the host chart converts that to a navigator transform. On each
- * render the host feeds back the current window (derived from the transform) so in-plot pan/zoom and
- * the strip stay in lock-step.
+ * Renders a compressed overview of the full series with a draggable window (two edge handles + a
+ * movable body) that selects the visible range of the **category** axis. The strip is
+ * orientation-aware: a `horizontal` strip (category on x) is a bottom bar whose window slides
+ * left↔right; a `vertical` strip (category on y, e.g. a horizontal bar chart) is a side bar whose
+ * window slides up↕down. It reports the window as fractions `[start, end]` of the category domain via
+ * `onWindow`; the host converts that to a navigator transform. The overview draws each series by
+ * type — lines as polylines, areas as filled bands, bars as silhouettes — along the **main** (category)
+ * axis, scaled along the **cross** (value) axis.
  *
- * Dragging is wired with DOM pointer listeners on the render context so a drag keeps tracking outside
- * the strip (pointer capture). A `pointerdown` inside the strip band calls
- * `stopImmediatePropagation` so the in-plot navigator — whose listeners are attached *after* the
- * strip's — never also pans; a `pointerdown` outside the band is left untouched so in-plot pan/zoom
- * still works over the plot.
+ * Dragging is wired with DOM pointer listeners on the render context (pointer capture keeps a drag
+ * tracking outside the strip). A `pointerdown` inside the strip band calls `stopImmediatePropagation`
+ * so the in-plot navigator — whose listeners attach after the strip's — never also pans.
  */
 
 import {
@@ -33,6 +33,7 @@ import {
     createGroup,
     createPolyline,
     createRect,
+    setColorAlpha,
 } from '@ripl/core';
 
 import {
@@ -43,7 +44,7 @@ import {
 const LISTENER_KEY = Symbol('navigator-strip-listeners');
 /** Pixel slop for grabbing an edge handle. */
 const HANDLE_SLOP = 10;
-/** Visible width of an edge handle, in pixels. */
+/** Thickness of an edge handle along the main axis, in pixels. */
 const HANDLE_WIDTH = 8;
 /** Minimum window width as a fraction of the domain (bounds the maximum zoom). */
 const MIN_WINDOW = 0.02;
@@ -54,6 +55,14 @@ const MASK_FILL = 'rgba(148, 163, 184, 0.32)';
 const WINDOW_BORDER = 'rgba(100, 116, 139, 0.9)';
 const HANDLE_FILL = 'rgba(100, 116, 139, 0.95)';
 const OVERVIEW_OPACITY = 0.7;
+const AREA_FILL_ALPHA = 0.25;
+const BAR_FILL_ALPHA = 0.55;
+
+/** Which screen axis the strip's window slides along (matching the host's category axis). */
+export type ChartNavigatorOrientation = 'horizontal' | 'vertical';
+
+/** How a single overview series is drawn in the strip. */
+export type ChartNavigatorSeriesType = 'line' | 'bar' | 'area';
 
 /** A single series' values across the categories, for the overview mini-render. */
 export interface ChartNavigatorSeries {
@@ -61,25 +70,29 @@ export interface ChartNavigatorSeries {
     id: string;
     /** The series colour. */
     color: string;
+    /** How the series is drawn in the overview. */
+    type: ChartNavigatorSeriesType;
     /** The series' value at each category, in key order. */
     values: number[];
 }
 
-/** The selected window, as fractions `[0, 1]` of the domain. */
+/** The selected window, as fractions `[0, 1]` of the category domain. */
 export interface ChartNavigatorWindow {
-    /** The left edge of the window (`0` = domain start). */
+    /** The start edge of the window (`0` = domain start). */
     start: number;
-    /** The right edge of the window (`1` = domain end). */
+    /** The end edge of the window (`1` = domain end). */
     end: number;
 }
 
 /** Inputs for one render of the {@link ChartNavigator} strip. */
 export interface ChartNavigatorRenderOptions {
-    /** The rectangle the overview draws into (aligned to the main plot's x-range). */
+    /** Which axis the window slides along. */
+    orientation: ChartNavigatorOrientation;
+    /** The rectangle the overview draws into (aligned to the main plot's category range). */
     area: ChartArea;
     /** The overview series to draw. */
     series: ChartNavigatorSeries[];
-    /** The value extent `[min, max]` used to scale the overview vertically. */
+    /** The value extent `[min, max]` used to scale the overview across the cross axis. */
     valueExtent: [number, number];
     /** The currently visible window (derived by the host from the navigator transform). */
     window: ChartNavigatorWindow;
@@ -94,11 +107,12 @@ function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
 }
 
-/** The overview strip component that drives the chart's visible x-window. */
+/** The overview strip component that drives the chart's visible category-axis window. */
 export class ChartNavigator extends ChartComponent {
 
     private _group?: Group;
     private _element?: HTMLElement;
+    private _orientation: ChartNavigatorOrientation = 'horizontal';
     private _area?: ChartArea;
     private _window: ChartNavigatorWindow = {
         start: 0,
@@ -108,7 +122,7 @@ export class ChartNavigator extends ChartComponent {
     private _attached = false;
     private _drag?: {
         mode: DragMode;
-        startX: number;
+        startMain: number;
         startWindow: ChartNavigatorWindow;
     };
 
@@ -138,8 +152,9 @@ export class ChartNavigator extends ChartComponent {
 
     /** Draws the overview, mask, and window for the current state. */
     public render(options: ChartNavigatorRenderOptions): void {
-        const { area, series, valueExtent, window, onWindow } = options;
+        const { orientation, area, series, valueExtent, window, onWindow } = options;
 
+        this._orientation = orientation;
         this._area = area;
         this._window = window;
         this._onWindow = onWindow;
@@ -147,7 +162,7 @@ export class ChartNavigator extends ChartComponent {
         const group = this._ensureGroup();
         group.clear();
 
-        const children: Element[] = [
+        group.add([
             createRect({
                 id: 'navigator-strip',
                 x: area.x,
@@ -160,11 +175,9 @@ export class ChartNavigator extends ChartComponent {
                 borderRadius: 3,
                 pointerEvents: 'none',
             }),
-            ...this._overviewElements(area, series, valueExtent),
-            ...this._windowElements(area, window),
-        ];
-
-        group.add(children);
+            ...this._overviewElements(series, valueExtent),
+            ...this._windowElements(window),
+        ]);
     }
 
     /** Removes the strip's drawn elements (e.g. when the overview is toggled off), leaving listeners inert. */
@@ -184,6 +197,231 @@ export class ChartNavigator extends ChartComponent {
         super.destroy();
     }
 
+    private get _horizontal(): boolean {
+        return this._orientation === 'horizontal';
+    }
+
+    private _mainStart(): number {
+        return this._horizontal ? this._area!.x : this._area!.y;
+    }
+
+    private _mainSize(): number {
+        return this._horizontal ? this._area!.width : this._area!.height;
+    }
+
+    private _crossStart(): number {
+        return this._horizontal ? this._area!.y : this._area!.x;
+    }
+
+    private _crossSize(): number {
+        return this._horizontal ? this._area!.height : this._area!.width;
+    }
+
+    /** The main-axis pixel position for a data index across `count` categories. */
+    private _mainForIndex(index: number, count: number): number {
+        const fraction = count <= 1 ? 0.5 : index / (count - 1);
+        return this._mainStart() + fraction * this._mainSize();
+    }
+
+    /** The main-axis pixel position for a `[0, 1]` window fraction. */
+    private _mainForFraction(fraction: number): number {
+        return this._mainStart() + clamp(fraction, 0, 1) * this._mainSize();
+    }
+
+    /** The cross-axis pixel position for a value (values grow up for horizontal, right for vertical). */
+    private _crossForValue(value: number, min: number, span: number): number {
+        const fraction = (value - min) / span;
+        return this._horizontal
+            ? this._crossStart() + this._crossSize() - fraction * this._crossSize()
+            : this._crossStart() + fraction * this._crossSize();
+    }
+
+    /** Maps a (main, cross) coordinate pair to an (x, y) point for the current orientation. */
+    private _point(main: number, cross: number): Point {
+        return this._horizontal ? [main, cross] : [cross, main];
+    }
+
+    private _overviewElements(series: ChartNavigatorSeries[], valueExtent: [number, number]): Element[] {
+        const [min, max] = valueExtent;
+        const span = max - min || 1;
+        // Values ≥ 0 sit on the strip floor; a diverging series anchors at 0.
+        const baseline = clamp(0, min, max);
+
+        return series
+            .filter(srs => srs.values.length > 0)
+            .flatMap(srs => {
+                if (srs.type === 'area') {
+                    return this._areaOverview(srs, min, span, baseline);
+                }
+
+                if (srs.type === 'bar') {
+                    return this._barOverview(srs, min, span, baseline);
+                }
+
+                return this._lineOverview(srs, min, span);
+            });
+    }
+
+    private _lineOverview(srs: ChartNavigatorSeries, min: number, span: number): Element[] {
+        const count = srs.values.length;
+        const points = srs.values.map((value, index) => this._point(this._mainForIndex(index, count), this._crossForValue(value, min, span)));
+
+        return [
+            createPolyline({
+                id: `navigator-overview-${srs.id}`,
+                points,
+                stroke: srs.color,
+                lineWidth: 1,
+                opacity: OVERVIEW_OPACITY,
+                pointerEvents: 'none',
+            }),
+        ];
+    }
+
+    private _areaOverview(srs: ChartNavigatorSeries, min: number, span: number, baseline: number): Element[] {
+        const count = srs.values.length;
+        const top = srs.values.map((value, index) => this._point(this._mainForIndex(index, count), this._crossForValue(value, min, span)));
+        const bottom = srs.values.map((_, index) => this._point(this._mainForIndex(index, count), this._crossForValue(baseline, min, span)));
+
+        const fill = createPolyline({
+            id: `navigator-overview-${srs.id}-fill`,
+            points: [
+                ...top,
+                ...bottom.reverse(),
+            ],
+            fill: setColorAlpha(srs.color, AREA_FILL_ALPHA),
+            pointerEvents: 'none',
+        });
+
+        fill.autoStroke = false;
+
+        return [
+            fill,
+            createPolyline({
+                id: `navigator-overview-${srs.id}-line`,
+                points: top,
+                stroke: srs.color,
+                lineWidth: 1,
+                opacity: OVERVIEW_OPACITY,
+                pointerEvents: 'none',
+            }),
+        ];
+    }
+
+    private _barOverview(srs: ChartNavigatorSeries, min: number, span: number, baseline: number): Element[] {
+        const count = srs.values.length;
+        const baseCross = this._crossForValue(baseline, min, span);
+        const thickness = Math.max(1, this._mainSize() / (count * 1.5));
+        const fill = setColorAlpha(srs.color, BAR_FILL_ALPHA);
+
+        return srs.values.map((value, index) => {
+            const mainCentre = this._mainForIndex(index, count);
+            const valueCross = this._crossForValue(value, min, span);
+            const mainLo = mainCentre - thickness / 2;
+            const crossLo = Math.min(baseCross, valueCross);
+            const crossHi = Math.max(baseCross, valueCross);
+
+            const rect = this._horizontal
+                ? {
+                    x: mainLo,
+                    y: crossLo,
+                    width: thickness,
+                    height: crossHi - crossLo,
+                }
+                : {
+                    x: crossLo,
+                    y: mainLo,
+                    width: crossHi - crossLo,
+                    height: thickness,
+                };
+
+            return createRect({
+                id: `navigator-overview-${srs.id}-bar-${index}`,
+                ...rect,
+                fill,
+                pointerEvents: 'none',
+            });
+        });
+    }
+
+    private _windowElements(window: ChartNavigatorWindow): Element[] {
+        const wStart = this._mainForFraction(window.start);
+        const wEnd = this._mainForFraction(window.end);
+        const mainLo = this._mainStart();
+        const mainHi = this._mainStart() + this._mainSize();
+
+        return [
+            // Dim the unselected regions on each side of the window.
+            this._spanRect('navigator-mask-start', mainLo, wStart, {
+                fill: MASK_FILL,
+            }),
+            this._spanRect('navigator-mask-end', wEnd, mainHi, {
+                fill: MASK_FILL,
+            }),
+            // The window outline.
+            this._spanRect('navigator-window', wStart, wEnd, {
+                fill: 'transparent',
+                stroke: WINDOW_BORDER,
+                lineWidth: 1,
+            }),
+            // The two draggable edge handles.
+            this._handle('navigator-handle-start', wStart),
+            this._handle('navigator-handle-end', wEnd),
+        ];
+    }
+
+    /** A rect spanning `[mainLo, mainHi]` along the main axis and the full cross extent. */
+    private _spanRect(id: string, mainLo: number, mainHi: number, style: { fill: string;
+        stroke?: string;
+        lineWidth?: number; }): Element {
+        const size = Math.max(0, mainHi - mainLo);
+        const rect = this._horizontal
+            ? {
+                x: mainLo,
+                y: this._crossStart(),
+                width: size,
+                height: this._crossSize(),
+            }
+            : {
+                x: this._crossStart(),
+                y: mainLo,
+                width: this._crossSize(),
+                height: size,
+            };
+
+        return createRect({
+            id,
+            ...rect,
+            ...style,
+            pointerEvents: 'none',
+        });
+    }
+
+    private _handle(id: string, mainCoord: number): Element {
+        const crossInset = this._crossSize() / 4;
+        const rect = this._horizontal
+            ? {
+                x: mainCoord - HANDLE_WIDTH / 2,
+                y: this._crossStart() + crossInset,
+                width: HANDLE_WIDTH,
+                height: this._crossSize() / 2,
+            }
+            : {
+                x: this._crossStart() + crossInset,
+                y: mainCoord - HANDLE_WIDTH / 2,
+                width: this._crossSize() / 2,
+                height: HANDLE_WIDTH,
+            };
+
+        return createRect({
+            id,
+            ...rect,
+            fill: HANDLE_FILL,
+            borderRadius: 2,
+            pointerEvents: 'none',
+        });
+    }
+
     private _ensureGroup(): Group {
         if (!this._group) {
             this._group = createGroup({
@@ -198,88 +436,6 @@ export class ChartNavigator extends ChartComponent {
         return this._group;
     }
 
-    private _overviewElements(area: ChartArea, series: ChartNavigatorSeries[], valueExtent: [number, number]): Element[] {
-        const [min, max] = valueExtent;
-        const span = max - min || 1;
-
-        const xAt = (index: number, count: number) => {
-            const t = count <= 1 ? 0.5 : index / (count - 1);
-            return area.x + t * area.width;
-        };
-
-        const yAt = (value: number) => area.y + area.height - ((value - min) / span) * area.height;
-
-        return series
-            .filter(srs => srs.values.length > 0)
-            .map(srs => {
-                const points: Point[] = srs.values.map((value, index) => [xAt(index, srs.values.length), yAt(value)]);
-
-                return createPolyline({
-                    id: `navigator-overview-${srs.id}`,
-                    points,
-                    stroke: srs.color,
-                    lineWidth: 1,
-                    opacity: OVERVIEW_OPACITY,
-                    pointerEvents: 'none',
-                });
-            });
-    }
-
-    private _windowElements(area: ChartArea, window: ChartNavigatorWindow): Element[] {
-        const wx0 = area.x + clamp(window.start, 0, 1) * area.width;
-        const wx1 = area.x + clamp(window.end, 0, 1) * area.width;
-
-        return [
-            // Dim the unselected regions on each side of the window.
-            createRect({
-                id: 'navigator-mask-left',
-                x: area.x,
-                y: area.y,
-                width: Math.max(0, wx0 - area.x),
-                height: area.height,
-                fill: MASK_FILL,
-                pointerEvents: 'none',
-            }),
-            createRect({
-                id: 'navigator-mask-right',
-                x: wx1,
-                y: area.y,
-                width: Math.max(0, area.x + area.width - wx1),
-                height: area.height,
-                fill: MASK_FILL,
-                pointerEvents: 'none',
-            }),
-            // The window outline.
-            createRect({
-                id: 'navigator-window',
-                x: wx0,
-                y: area.y,
-                width: Math.max(0, wx1 - wx0),
-                height: area.height,
-                fill: 'transparent',
-                stroke: WINDOW_BORDER,
-                lineWidth: 1,
-                pointerEvents: 'none',
-            }),
-            // The two draggable edge handles.
-            this._handle('navigator-handle-start', wx0, area),
-            this._handle('navigator-handle-end', wx1, area),
-        ];
-    }
-
-    private _handle(id: string, x: number, area: ChartArea): Element {
-        return createRect({
-            id,
-            x: x - HANDLE_WIDTH / 2,
-            y: area.y + area.height / 2 - area.height / 4,
-            width: HANDLE_WIDTH,
-            height: area.height / 2,
-            fill: HANDLE_FILL,
-            borderRadius: 2,
-            pointerEvents: 'none',
-        });
-    }
-
     private _localPoint(event: PointerEvent): Point {
         const rect = this._element!.getBoundingClientRect();
 
@@ -289,23 +445,29 @@ export class ChartNavigator extends ChartComponent {
         ];
     }
 
-    private _hitTest(x: number): DragMode | null {
-        if (!this._area) {
-            return null;
-        }
+    /** The pointer coordinate along the main (window) axis. */
+    private _mainCoord(point: Point): number {
+        return this._horizontal ? point[0] : point[1];
+    }
 
-        const wx0 = this._area.x + this._window.start * this._area.width;
-        const wx1 = this._area.x + this._window.end * this._area.width;
+    /** The pointer coordinate along the cross axis (used for the band hit test). */
+    private _crossCoord(point: Point): number {
+        return this._horizontal ? point[1] : point[0];
+    }
 
-        if (Math.abs(x - wx0) <= HANDLE_SLOP) {
+    private _hitTest(main: number): DragMode | null {
+        const wStart = this._mainForFraction(this._window.start);
+        const wEnd = this._mainForFraction(this._window.end);
+
+        if (Math.abs(main - wStart) <= HANDLE_SLOP) {
             return 'resize-start';
         }
 
-        if (Math.abs(x - wx1) <= HANDLE_SLOP) {
+        if (Math.abs(main - wEnd) <= HANDLE_SLOP) {
             return 'resize-end';
         }
 
-        if (x >= wx0 && x <= wx1) {
+        if (main >= wStart && main <= wEnd) {
             return 'move';
         }
 
@@ -317,10 +479,11 @@ export class ChartNavigator extends ChartComponent {
             return;
         }
 
-        const [x, y] = this._localPoint(event);
+        const point = this._localPoint(event);
+        const cross = this._crossCoord(point);
 
         // Only claim pointers that land inside the strip band; leave the rest to the in-plot navigator.
-        if (y < this._area.y || y > this._area.y + this._area.height) {
+        if (cross < this._crossStart() || cross > this._crossStart() + this._crossSize()) {
             return;
         }
 
@@ -328,7 +491,8 @@ export class ChartNavigator extends ChartComponent {
         event.stopImmediatePropagation();
         event.preventDefault();
 
-        const mode = this._hitTest(x);
+        const main = this._mainCoord(point);
+        const mode = this._hitTest(main);
 
         if (!mode) {
             return;
@@ -336,7 +500,7 @@ export class ChartNavigator extends ChartComponent {
 
         this._drag = {
             mode,
-            startX: x,
+            startMain: main,
             startWindow: { ...this._window },
         };
 
@@ -348,8 +512,8 @@ export class ChartNavigator extends ChartComponent {
             return;
         }
 
-        const [x] = this._localPoint(event);
-        const delta = (x - this._drag.startX) / Math.max(1, this._area.width);
+        const main = this._mainCoord(this._localPoint(event));
+        const delta = (main - this._drag.startMain) / Math.max(1, this._mainSize());
         const { mode, startWindow } = this._drag;
 
         let start = startWindow.start;

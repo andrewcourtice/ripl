@@ -51,12 +51,8 @@ import type {
     SeriesRenderContext,
 } from '../core/series/context';
 
-import {
-    ChartNavigator,
-} from '../components/navigator';
-
 import type {
-    ChartNavigatorWindow,
+    ChartNavigatorSeries,
 } from '../components/navigator';
 
 import type {
@@ -70,7 +66,6 @@ import type {
 import type {
     Context,
     EventMap,
-    NavigatorInteractions,
     PolylineRenderer,
     Scale,
 } from '@ripl/core';
@@ -100,17 +95,6 @@ const BAR_EVENTS = {
     leave: 'barleave',
     click: 'barclick',
 } as const;
-
-/** Default height of the overview strip, in pixels. */
-const DEFAULT_OVERVIEW_HEIGHT = 48;
-/** Gap between the x-axis and the overview strip, in pixels. */
-const OVERVIEW_GAP = 8;
-/** Minimum visible window width, as a fraction of the domain (bounds the maximum zoom). */
-const MIN_WINDOW = 0.02;
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-}
 
 /** Supported series visualization types within a trend chart. */
 export type TrendSeriesType = 'line' | 'bar' | 'area';
@@ -172,12 +156,6 @@ export type TrendChartSeriesOptions<TData> = TrendChartLineSeriesOptions<TData>
 | TrendChartAreaSeriesOptions<TData>
 | TrendChartBarSeriesOptions<TData>;
 
-/** Configuration for the trend chart's overview navigator strip. */
-export interface TrendNavigatorOptions {
-    /** Height of the overview strip, in pixels. Defaults to 48. */
-    height?: number;
-}
-
 /** Options for configuring a {@link TrendChart}. */
 export interface TrendChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     /** The dataset plotted across all series. */
@@ -190,12 +168,6 @@ export interface TrendChartOptions<TData = unknown> extends CartesianChartOption
     stacked?: boolean;
     /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;
-    /**
-     * Overview navigator strip beneath the plot with a draggable window that selects the visible
-     * x-range. `true` enables it with defaults; an object sets its height. Enabling the strip also
-     * enables in-plot wheel/drag pan-zoom unless `navigator` is explicitly `false`.
-     */
-    overview?: boolean | TrendNavigatorOptions;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
@@ -263,8 +235,9 @@ export interface TrendChartEventMap extends EventMap {
  * options specific to that type, and the chart reuses the same renderers as the standalone line,
  * bar, and area charts. Series paint back-to-front as area → bar → line so lines never hide behind
  * fills or bars, and overlaid areas are drawn largest-first so smaller areas stay visible. Same-type
- * series can be stacked, an optional overview strip windows the visible x-range, and every cartesian
- * feature (axes, grid, legend, crosshair, tooltip, navigator) is inherited from {@link CartesianChart}.
+ * series can be stacked, the optional {@link CartesianChartOptions.overview} strip windows the visible
+ * x-range, and every cartesian feature (axes, grid, legend, crosshair, tooltip, navigator) is
+ * inherited from {@link CartesianChart}.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
@@ -273,26 +246,11 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
     private _areaRenderer = new AreaSeriesRenderer<TData>();
     private _barRenderer = new BarSeriesRenderer<TData>();
     private _lineRenderer = new LineSeriesRenderer<TData>();
-    private _navigatorStrip!: ChartNavigator;
     private _yScale!: Scale;
     private _xCenter!: Scale<string>;
-    private _plot?: ChartArea;
 
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
-
-        this._navigatorStrip = new ChartNavigator({
-            scene: this.scene,
-            renderer: this.renderer,
-        });
-
-        // Attach the strip's listeners before setupCartesian creates the in-plot navigator, so a
-        // pointerdown in the strip band is claimed by the strip and never also pans the plot.
-        if (this.options.overview) {
-            this._navigatorStrip.attach();
-        }
-
-        this.options.navigator = this._resolveNavigator(this.options);
 
         this.setupCartesian({
             grid: { horizontal: true },
@@ -302,60 +260,9 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         this.init();
     }
 
-    /**
-     * Merges options and re-renders, resolving the effective in-plot navigator from the `overview` and
-     * `navigator` options (enabling the strip implies a navigator to drive).
-     */
-    public override update(options: Partial<TrendChartOptions<TData>>): void {
-        const next = {
-            ...this.options,
-            ...options,
-        } as TrendChartOptions<TData>;
-
-        if (next.overview) {
-            this._navigatorStrip.attach();
-        }
-
-        super.update({
-            ...options,
-            navigator: this._resolveNavigator(next),
-        });
-    }
-
-    /** Destroys the chart and detaches the overview strip's listeners. */
-    public override destroy(): void {
-        this._navigatorStrip.destroy();
-        super.destroy();
-    }
-
-    private _resolveNavigator(options: TrendChartOptions<TData>): boolean | NavigatorInteractions {
-        const navigator = options.navigator;
-
-        if (!options.overview) {
-            return navigator ?? false;
-        }
-
-        // With the strip on but in-plot gestures explicitly off, still create an inert navigator so
-        // the strip has a transform to drive.
-        if (navigator === false) {
-            return {
-                zoom: false,
-                pan: false,
-                brush: false,
-            };
-        }
-
-        return navigator ?? true;
-    }
-
-    private _overviewHeight(): number {
-        const overview = this.options.overview;
-
-        if (overview && typeof overview === 'object') {
-            return overview.height ?? DEFAULT_OVERVIEW_HEIGHT;
-        }
-
-        return DEFAULT_OVERVIEW_HEIGHT;
+    /** The trend chart is category-on-x, so the navigator windows the x axis (bottom scrub bar). */
+    protected override navigationAxis(): 'x' {
+        return 'x';
     }
 
     private _seriesValue(series: TrendChartSeriesOptions<TData>, item: TData): number {
@@ -419,55 +326,16 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         this.emit(BAR_EVENTS[phase], event);
     }
 
-    /** The visible window `[start, end]` (domain fractions) derived from the current navigator transform. */
-    private _currentWindow(): ChartNavigatorWindow {
-        const transform = this.navigator?.transform;
+    /** Builds the per-type overview series (id, colour, type, values) for the navigator strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
+        const { data, series } = this.options;
 
-        if (!this._plot || !transform) {
-            return {
-                start: 0,
-                end: 1,
-            };
-        }
-
-        const width = Math.max(1, this._plot.width);
-        const origin = this._plot.x;
-        const start = ((origin - transform.x) / transform.k - origin) / width;
-        const end = ((origin + width - transform.x) / transform.k - origin) / width;
-
-        return {
-            start: clamp(start, 0, 1),
-            end: clamp(end, 0, 1),
-        };
-    }
-
-    /** Converts a strip window into a navigator transform, windowing the x-axis only (y stays fixed). */
-    private _onNavigatorWindow(window: ChartNavigatorWindow): void {
-        if (!this._plot || !this.navigator) {
-            return;
-        }
-
-        const width = Math.max(1, this._plot.width);
-        const origin = this._plot.x;
-
-        let start = window.start;
-        let end = window.end;
-
-        if (end - start < MIN_WINDOW) {
-            end = start + MIN_WINDOW;
-        }
-
-        start = clamp(start, 0, 1 - MIN_WINDOW);
-        end = clamp(end, start + MIN_WINDOW, 1);
-
-        const factor = 1 / (end - start);
-        const translate = origin - factor * (origin + start * width);
-
-        this.navigator.setTransform({
-            k: factor,
-            x: translate,
-            y: this.navigator.transform.y,
-        });
+        return series.map(srs => ({
+            id: srs.id,
+            color: this.getSeriesColor(srs.id),
+            type: srs.type,
+            values: data.map(item => this._seriesValue(srs, item)),
+        }));
     }
 
     private _commonContext(plot: ChartArea, emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void): SeriesRenderContext<TData> {
@@ -488,32 +356,10 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         };
     }
 
-    private _renderOverview(band: ChartArea, plot: ChartArea, dataExtent: number[]): void {
-        const { data, series } = this.options;
-
-        this._navigatorStrip.render({
-            area: {
-                x: plot.x,
-                y: band.y + OVERVIEW_GAP,
-                width: plot.width,
-                height: this._overviewHeight(),
-            },
-            series: series.map(srs => ({
-                id: srs.id,
-                color: this.getSeriesColor(srs.id),
-                values: data.map(item => this._seriesValue(srs, item)),
-            })),
-            valueExtent: [dataExtent[0], dataExtent[1]],
-            window: this._currentWindow(),
-            onWindow: window => this._onNavigatorWindow(window),
-        });
-    }
-
     public async render() {
         return super.render(async () => {
             const { data, series, key } = this.options;
             const stacked = this.options.stacked ?? false;
-            const overviewEnabled = !!this.options.overview;
 
             this.resolveSeriesColors(series);
             this.prepareAxes();
@@ -559,9 +405,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.reserveLegend(layout, legendItems);
 
             // Reserve the overview strip band from the bottom before the axes are measured.
-            const navBand = overviewEnabled
-                ? layout.reserveBottom(this._overviewHeight() + OVERVIEW_GAP)
-                : undefined;
+            const navBand = this.reserveNavigatorBand(layout);
 
             const area = layout.area;
             const left = area.x;
@@ -591,8 +435,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // The navigator windows the x (category) axis only — a single uniform transform can't zoom
-            // x without also zooming y, so the value axis stays at the full extent (trend/stock style).
+            // The navigator windows the x (category) axis only — the value axis stays at the full extent.
             const viewedBand = this.applyViewToScale(xBand, 'x');
             this._xCenter = this.bandCenterScale(viewedBand, keys);
             this.xAxis.scale = this._xCenter;
@@ -603,8 +446,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
                 width: right - yAxisBox.right,
                 height: xAxisBox.top - top,
             };
-
-            this._plot = plot;
 
             this.clipPlot(plot);
             this.renderGrid([], this._yScale.ticks(10).map(tick => this._yScale(tick)), plot);
@@ -644,11 +485,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
                 ...this._lineRenderer.groups,
             ]);
 
-            if (overviewEnabled && navBand) {
-                this._renderOverview(navBand, plot, dataExtent);
-            } else {
-                this._navigatorStrip.clear();
-            }
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

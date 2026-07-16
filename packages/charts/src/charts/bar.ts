@@ -39,6 +39,10 @@ import type {
 } from '../core/series/context';
 
 import type {
+    ChartNavigatorSeries,
+} from '../components/navigator';
+
+import type {
     ChartArea,
 } from '../core/layout';
 
@@ -176,12 +180,29 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return this.options.mode === 'stacked';
     }
 
+    /** Bar charts window their category axis: y when horizontal (side strip), x otherwise (bottom strip). */
+    protected override navigationAxis(): 'x' | 'y' {
+        return this._isHorizontal ? 'y' : 'x';
+    }
+
     private _seriesValue(series: BarChartSeriesOptions<TData>, item: TData): number {
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
     private _emitBar(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
         this.emit(BAR_EVENTS[phase], event);
+    }
+
+    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
+        const { data, series } = this.options;
+
+        return series.map(srs => ({
+            id: srs.id,
+            color: this.getSeriesColor(srs.id),
+            type: 'bar' as const,
+            values: data.map(item => this._seriesValue(srs, item)),
+        }));
     }
 
     private _seriesContext(categoryScale: BandScale<string>, valueScale: Scale, plot: ChartArea): BarSeriesContext<TData> {
@@ -260,6 +281,10 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.reserveLegend(layout, legendItems);
 
+            // Reserve the overview strip band before the axes are measured (a side band for a horizontal
+            // bar chart, a bottom band for a vertical one).
+            const navBand = this.reserveNavigatorBand(layout);
+
             const area = layout.area;
             const left = area.x;
             const top = area.y;
@@ -289,11 +314,9 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = adjustedValueScale;
                 this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-                // Apply the navigator view (no-op at rest): values (x) via domain rescale, categories
-                // (y) via a pixel-space transform, so bars and both axes track the pan/zoom together.
-                const viewedValueScale = this.applyView(adjustedValueScale, 'x');
+                // The navigator windows the y (category) axis only — the value axis (x) stays at the full
+                // extent, so the side strip scrubs vertically without rescaling the value domain.
                 const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
-                this.xAxis.scale = viewedValueScale;
                 this.yAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
 
                 const horizontalPlot = {
@@ -306,13 +329,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.clipPlot(horizontalPlot);
 
                 this.renderGrid(
-                    viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
+                    adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
                     [],
                     horizontalPlot
                 );
 
-                const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, viewedValueScale, horizontalPlot));
+                const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, horizontalPlot));
                 this.registerHighlightGroups(this._series.groups);
+
+                this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
                 return Promise.all([
                     this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
@@ -343,11 +368,9 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
-            // Apply the navigator view (no-op at rest): values (y) via domain rescale, categories (x)
-            // via a pixel-space transform, so bars and both axes track the pan/zoom together.
-            const viewedValueScale = this.applyView(adjustedValueScale, 'y');
+            // The navigator windows the x (category) axis only — the value axis (y) stays at the full
+            // extent, so the bottom strip scrubs horizontally without rescaling the value domain.
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
-            this.yAxis.scale = viewedValueScale;
             this.xAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
 
             const verticalPlot = {
@@ -361,12 +384,14 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.renderGrid(
                 [],
-                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
+                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
                 verticalPlot
             );
 
-            const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, viewedValueScale, verticalPlot));
+            const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, verticalPlot));
             this.registerHighlightGroups(this._series.groups);
+
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

@@ -23,6 +23,9 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
             <RiplField label="Horizontal" inline>
                 <RiplSwitch v-model="horizontal" />
             </RiplField>
+            <RiplField label="Navigator" inline>
+                <RiplSwitch v-model="overview" />
+            </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -58,10 +61,11 @@ const seriesMeta = [
 
 const stacked = ref(false);
 const horizontal = ref(false);
+const overview = ref(false);
 let monthCount = 6;
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
+    features: { title: true, legend: true, axes: true, grid: true, animation: true },
     title: 'Monthly Breakdown',
     axisX: 'Month',
     axisY: 'Amount ($)',
@@ -101,6 +105,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 });
@@ -110,12 +115,13 @@ function apply() {
         mode: stacked.value ? 'stacked' : 'grouped',
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         series: getSeries(),
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch([stacked, horizontal], apply);
+watch([stacked, horizontal, overview], apply);
 
 function randomize() {
     data = generateData();
@@ -248,4 +254,5 @@ createBarChart('#container', {
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`overview`** — `boolean | { size }` — Show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
 - **`borderRadius`** — Bar corner radius (default `2`)

@@ -276,14 +276,17 @@ export class ChartAxis extends ChartComponent {
         }
 
         const band = this.getBoundingBox();
-        // The x-axis measures labels by width; it slides horizontally, so clip its horizontal
-        // span to the plot and keep the full band height. The y-axis is the mirror image.
+        // The x-axis measures labels by width; it slides horizontally, so clip its horizontal span to
+        // the plot. Across the axis (its label thickness) it needs breathing room so a label's
+        // ascent/descent isn't shaved at the plot/strip edge — pad the cross extent generously. The
+        // y-axis is the mirror image.
         const horizontal = this._labelDimension === 'width';
+        const crossPad = 20;
 
-        this._clip.x = horizontal ? area.x : band.left;
-        this._clip.y = horizontal ? band.top : area.y;
-        this._clip.width = horizontal ? area.width : band.width;
-        this._clip.height = horizontal ? band.height : area.height;
+        this._clip.x = horizontal ? area.x : band.left - crossPad;
+        this._clip.y = horizontal ? band.top - crossPad : area.y;
+        this._clip.width = horizontal ? area.width : band.width + crossPad * 2;
+        this._clip.height = horizontal ? band.height + crossPad * 2 : area.height;
         this._clip.clip = enabled;
     }
 
