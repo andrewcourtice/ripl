@@ -50,7 +50,7 @@ function spawnRipple() {
             cy,
             radius: 0,
             autoFill: false,
-            stroke: 'rgba(40, 120, 220, 0.2)',
+            stroke: 'rgba(69, 162, 255, 0.22)',
             lineWidth: 1.5,
             opacity: 1,
         });
