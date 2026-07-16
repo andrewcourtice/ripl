@@ -16,6 +16,7 @@
     "scripts": {
         "build": "lerna run build",
         "test": "vitest",
+        "test:bench": "vitest bench",
         "lint": "eslint .",
         "publish": "lerna run build && lerna publish from-package"
     },
