@@ -66,6 +66,69 @@ describe('Element', () => {
         expect(handler).toHaveBeenCalledTimes(1);
     });
 
+    test('Should not emit updated when set to an equal value', () => {
+        const el = createElement('rect', { fill: '#ff0000' });
+        const handler = vi.fn();
+        el.on('updated', handler);
+
+        el.fill = '#ff0000';
+        expect(handler).not.toHaveBeenCalled();
+    });
+
+    test('Should set $dirty and $touched when a state value changes', () => {
+        const el = createElement('rect', {});
+        expect(el.$dirty).toBe(false);
+        expect(el.$touched).toBe(false);
+
+        el.fill = '#ff0000';
+        expect(el.$dirty).toBe(true);
+        expect(el.$touched).toBe(true);
+    });
+
+    test('Should set $touched but not $dirty when set to an equal value', () => {
+        const el = createElement('rect', { fill: '#ff0000' });
+        expect(el.$dirty).toBe(false);
+
+        el.fill = '#ff0000';
+        expect(el.$touched).toBe(true);
+        expect(el.$dirty).toBe(false);
+    });
+
+    test('Should compute $anyDirty from the parent chain', () => {
+        const parent = createGroup();
+        const child = createElement('rect', {});
+        parent.add(child);
+
+        expect(child.$anyDirty).toBe(false);
+
+        parent.translateX = 10;
+        expect(parent.$dirty).toBe(true);
+        expect(child.$dirty).toBe(false);
+        expect(child.$anyDirty).toBe(true);
+    });
+
+    test('Should mark $dirty when an interpolator tick runs', () => {
+        const el = createElement('rect', { translateX: 0 });
+        expect(el.$dirty).toBe(false);
+
+        el.interpolate({ translateX: 10 })(1);
+
+        expect(el.$dirty).toBe(true);
+        expect(el.translateX).toBe(10);
+    });
+
+    test('Should clear $dirty and $touched via _resetFlags', () => {
+        const el = createElement('rect', {});
+        el.fill = '#ff0000';
+        expect(el.$dirty).toBe(true);
+        expect(el.$touched).toBe(true);
+
+        el._resetFlags();
+
+        expect(el.$dirty).toBe(false);
+        expect(el.$touched).toBe(false);
+    });
+
     test('Should clone an element', () => {
         const el = createElement('rect', {
             id: 'original',

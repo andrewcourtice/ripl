@@ -20,7 +20,10 @@ import {
 
 import {
     mockCanvasContext,
+    polyfillPath2D,
 } from '@ripl/test-utils';
+
+polyfillPath2D();
 
 describe('Scene', () => {
 
@@ -197,6 +200,31 @@ describe('Scene', () => {
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         expect(scene.buffer).toContain(rect);
+
+        scene.destroy();
+    });
+
+    test('Should clear $dirty and $touched on elements after render', async () => {
+        const scene = createScene(el);
+        const rect = createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        });
+
+        scene.add(rect);
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        rect.fill = '#ff0000';
+        expect(rect.$dirty).toBe(true);
+        expect(rect.$touched).toBe(true);
+
+        scene.render();
+
+        expect(rect.$dirty).toBe(false);
+        expect(rect.$touched).toBe(false);
 
         scene.destroy();
     });

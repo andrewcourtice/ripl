@@ -404,6 +404,11 @@ export class CanvasContext extends DOMContext<HTMLCanvasElement> {
         return canvasMeasureText(this.context, text, font);
     }
 
+    /** Canvas path creation is a side-effect-free `new CanvasPath()`, so cached paths may be reused across render cycles. */
+    public get supportsPathCaching(): boolean {
+        return true;
+    }
+
     /** Creates a new {@link CanvasPath}, optionally reusing an id for diffing efficiency. */
     public createPath(id?: string): CanvasPath {
         return new CanvasPath(id);

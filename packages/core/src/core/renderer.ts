@@ -329,6 +329,8 @@ export class Renderer extends EventBus<RendererEventMap> {
                 this._renderBoundingBoxes(element);
             }
         });
+
+        this._scene._resetRenderFlags();
     }
 
     private _renderDebugOverlay(deltaTime: number) {

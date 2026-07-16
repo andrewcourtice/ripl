@@ -223,6 +223,21 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
                 RENDER_OPERATIONS[type](context, element);
             });
         });
+
+        this._resetRenderFlags();
+    }
+
+    /**
+     * Clears the per-render-cycle change flags ({@link Element.$dirty} / {@link Element.$touched})
+     * on every element in the instruction stream and on the scene root, after a render pass. Groups
+     * appear in the stream via their `push`/`pop` instructions, so this covers groups and leaves;
+     * the root is not part of its own stream and is reset explicitly.
+     *
+     * @internal
+     */
+    public _resetRenderFlags(): void {
+        this._instructions.forEach(({ element }) => element._resetFlags());
+        this._resetFlags();
     }
 
 }

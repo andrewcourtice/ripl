@@ -1,14 +1,30 @@
 import {
+    afterEach,
+    beforeEach,
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
+    createCircle,
+    createGroup,
     createRect,
     createShape,
     elementIsShape,
 } from '../../src';
+
+import {
+    createContext,
+} from '@ripl/canvas';
+
+import {
+    mockCanvasContext,
+    polyfillPath2D,
+} from '@ripl/test-utils';
+
+polyfillPath2D();
 
 describe('Shape2D', () => {
 
@@ -149,6 +165,163 @@ describe('elementIsShape', () => {
         expect(elementIsShape(null)).toBe(false);
         expect(elementIsShape(42)).toBe(false);
         expect(elementIsShape('rect')).toBe(false);
+    });
+
+});
+
+describe('Shape2D path caching', () => {
+
+    beforeEach(() => mockCanvasContext());
+    afterEach(() => vi.restoreAllMocks());
+
+    function context() {
+        return createContext(document.createElement('div'));
+    }
+
+    test('Should trace a path on first render', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        circle.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should reuse the cached path on an unchanged re-render', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        circle.render(ctx);
+        const cachedPath = (circle as unknown as { path: unknown }).path;
+        circle.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect((circle as unknown as { path: unknown }).path).toBe(cachedPath);
+    });
+
+    test('Should re-trace after a geometry change', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        circle.render(ctx);
+        circle.render(ctx);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        circle.radius = 20;
+        circle.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    test('Should re-trace after an interpolator tick with no setStateValue', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        circle.render(ctx);
+        circle.render(ctx);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        circle.interpolate({ radius: 20 })(1);
+        circle.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
+    test('Should trace on every render when cachePath is false', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+            cachePath: false,
+        });
+
+        circle.render(ctx);
+        circle.render(ctx);
+        circle.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(3);
+    });
+
+    test('Should re-trace when rendered to a different context instance', () => {
+        const ctxA = context();
+        const ctxB = context();
+        const spyA = vi.spyOn(ctxA, 'createPath');
+        const spyB = vi.spyOn(ctxB, 'createPath');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        circle.render(ctxA);
+        circle.render(ctxB);
+
+        expect(spyA).toHaveBeenCalledTimes(1);
+        expect(spyB).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should still apply fill on a cache-hit render', () => {
+        const ctx = context();
+        const createSpy = vi.spyOn(ctx, 'createPath');
+        const fillSpy = vi.spyOn(ctx, 'applyFill');
+        const circle = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+            fill: '#ff0000',
+        });
+
+        circle.render(ctx);
+        circle.render(ctx);
+
+        expect(createSpy).toHaveBeenCalledTimes(1);
+        expect(fillSpy).toHaveBeenCalledTimes(2);
+    });
+
+    test('Should keep a clean child path cached while its parent group is dirty', () => {
+        const ctx = context();
+        const spy = vi.spyOn(ctx, 'createPath');
+        const child = createCircle({
+            cx: 10,
+            cy: 10,
+            radius: 5,
+        });
+
+        createGroup({ children: [child] });
+
+        child.render(ctx);
+        child.render(ctx);
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        child.parent!.translateX = 100;
+        expect(child.$anyDirty).toBe(true);
+        expect(child.$dirty).toBe(false);
+
+        child.render(ctx);
+
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 
 });

@@ -102,6 +102,12 @@ describe('CanvasContext', () => {
         expect(ctx.createPath('shape')).toBeInstanceOf(CanvasPath);
     });
 
+    test('reports supportsPathCaching as true', () => {
+        const ctx = context();
+
+        expect(ctx.supportsPathCaching).toBe(true);
+    });
+
     test('save and restore delegate without throwing', () => {
         const ctx = context();
 
