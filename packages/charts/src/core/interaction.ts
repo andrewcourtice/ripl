@@ -36,10 +36,17 @@ export interface InteractionPoint {
 export interface HoverHighlightOptions<TElement extends Element> {
     /** Renderer used to run the highlight/restore transitions. */
     renderer: Renderer;
-    /** Duration of the highlight/restore transition, in milliseconds. */
-    duration: number;
-    /** Easing applied to the highlight/restore transition. */
-    ease: Ease;
+    /**
+     * Resolves the highlight/restore transition timing lazily, at hover time. Resolving on each
+     * hover (rather than baking a value in when the handler is bound) keeps navigator-driven
+     * animation suppression from freezing the hover into an instant snap.
+     */
+    animation: () => {
+        /** Duration of the highlight/restore transition, in milliseconds. */
+        duration: number;
+        /** Easing applied to the highlight/restore transition. */
+        ease: Ease;
+    };
     /** Target state applied while hovered. */
     highlight: StateOf<TElement>;
     /** Target state applied when the pointer leaves. */
@@ -84,8 +91,7 @@ export function applyHoverHighlight<TElement extends Element>(
 
     const {
         renderer,
-        duration,
-        ease,
+        animation,
         highlight,
         restore,
         tooltip,
@@ -125,6 +131,8 @@ export function applyHoverHighlight<TElement extends Element>(
 
         onEnter?.({ ...pointer });
 
+        const { duration, ease } = animation();
+
         renderer.transition(element, {
             duration,
             ease,
@@ -136,6 +144,8 @@ export function applyHoverHighlight<TElement extends Element>(
         tooltip?.hide();
 
         onLeave?.({ ...pointer });
+
+        const { duration, ease } = animation();
 
         renderer.transition(element, {
             duration,

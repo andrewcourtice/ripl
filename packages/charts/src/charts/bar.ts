@@ -201,7 +201,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     private _attachBarHover(bar: Rect, srs: BarChartSeriesOptions<TData>, key: string, value: number, anchor: () => { x: number;
         y: number; }) {
         const restFill = bar.fill as string;
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -215,8 +214,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
         applyHoverHighlight(bar, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor,
             content: () => `${srs.label}: ${formatValue(value)}`,

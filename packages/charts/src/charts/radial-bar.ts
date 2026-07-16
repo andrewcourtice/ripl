@@ -147,7 +147,6 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
     }
 
     private _attachBarHover(arc: Arc, values: RadialBarChartBarEvent, color: string, content: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): RadialBarChartBarEvent => ({
@@ -158,8 +157,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
         applyHoverHighlight(arc, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 // Bars are stroked open arcs (no inner radius), so `getCentroid` (which assumes an

@@ -276,8 +276,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
-            duration: this.getAnimationDuration(300),
-            ease: easeOutQuart,
+            animation: () => ({
+                duration: this.getAnimationDuration(300),
+                ease: easeOutQuart,
+            }),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: marker.cx,
@@ -312,8 +314,10 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
 
         applyHoverHighlight(bar, {
             renderer: this.renderer,
-            duration: this.getAnimationDuration(300),
-            ease: easeOutQuart,
+            animation: () => ({
+                duration: this.getAnimationDuration(300),
+                ease: easeOutQuart,
+            }),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: bar.x + bar.width / 2,

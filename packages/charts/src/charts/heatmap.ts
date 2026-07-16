@@ -430,7 +430,6 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         value: number;
         xLabel: string;
         yLabel: string; }) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): HeatmapChartCellEvent => ({
@@ -443,8 +442,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: cell.x + cell.width / 2,

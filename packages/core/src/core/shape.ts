@@ -90,7 +90,14 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
-                [x, y] = matrixApplyToPoint(inverse, [x, y]);
+                // The point arrives in device pixels (scaled by the device pixel ratio) but the world
+                // transform is composed in logical space. Map device → logical, apply the inverse, then
+                // map back to device so the native path test (which works in device pixels) stays correct.
+                const dpr = this.context.scaleDPR(1);
+                const [localX, localY] = matrixApplyToPoint(inverse, [x / dpr, y / dpr]);
+
+                x = localX * dpr;
+                y = localY * dpr;
             }
         }
 

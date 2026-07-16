@@ -69,6 +69,39 @@ describe('Shape2D', () => {
         expect(rect.intersectsWith(200, 200)).toBe(false);
     });
 
+    test('Should map a device-space hit point into local space using the device pixel ratio', () => {
+        const rect = createRect({
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+        });
+
+        rect.translateX = 50; // logical-space world transform
+
+        const recorded: [number, number][] = [];
+
+        // dpr = 2: scaleDPR maps logical → device (×2); invert maps device → logical (÷2).
+        const scaleDPR = Object.assign((value: number) => value * 2, { invert: (value: number) => value / 2 });
+
+        (rect as unknown as { context: unknown }).context = {
+            hitTestHonoursTransform: false,
+            scaleDPR,
+            isPointInStroke: () => false,
+            isPointInPath: (_path: unknown, x: number, y: number) => {
+                recorded.push([x, y]);
+                return true;
+            },
+        };
+        (rect as unknown as { path: unknown }).path = {};
+
+        // Device point for logical (60, 20) at dpr 2 → (120, 40).
+        rect.intersectsWith(120, 40);
+
+        // device (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → device (20,40).
+        expect(recorded.at(-1)).toEqual([20, 40]);
+    });
+
     test('Should return false for pointerEvents "none" with isPointer', () => {
         const rect = createRect({
             x: 0,

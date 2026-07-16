@@ -224,7 +224,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     }
 
     private _attachMarkerHover(marker: Circle, srs: AreaChartSeriesOptions<TData>, key: string, value: number, color: string, x: number, y: number) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -238,8 +237,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor: () => ({
                 x,

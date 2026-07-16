@@ -223,7 +223,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         }
 
         const radius = series.markerRadius ?? 3;
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -237,8 +236,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
         applyHoverHighlight(marker, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this.tooltip,
             anchor: () => ({
                 x: marker.cx,

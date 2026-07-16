@@ -596,7 +596,6 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         color: string;
         progress?: number;
         state: RectState; }) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const progressStr = task.progress !== undefined ? ` (${Math.round(task.progress * 100)}%)` : '';
         const tooltipText = `${task.label}: ${this._formatDate(task.start)} – ${this._formatDate(task.end)}${progressStr}`;
 
@@ -610,8 +609,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
         applyHoverHighlight(bar, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: (task.state.x as number) + (task.state.width as number) / 2,

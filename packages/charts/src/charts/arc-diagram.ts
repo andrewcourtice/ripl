@@ -185,7 +185,6 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
     }
 
     private _attachNodeHover(circle: Circle, node: ArcDiagramNode<TData>, color: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): ArcDiagramNodeEvent<TData> => ({
@@ -198,8 +197,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
         applyHoverHighlight(circle, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: circle.cx,
@@ -215,7 +213,6 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
     }
 
     private _attachLinkHover(arc: Polyline, link: ArcDiagramLink, content: string, color: string) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): ArcDiagramLinkEvent => ({
@@ -228,8 +225,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
         applyHoverHighlight(arc, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 const points = arc.points;

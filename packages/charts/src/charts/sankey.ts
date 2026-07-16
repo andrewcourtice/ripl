@@ -613,7 +613,6 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
     }
 
     private _attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): SankeyChartLinkEvent => ({
@@ -627,8 +626,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
 
         applyHoverHighlight(linkEl, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: anchorX,
@@ -644,7 +642,6 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
     }
 
     private _attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         const payload = (point: { x: number;
             y: number; }): SankeyChartNodeEvent<TData> => ({
@@ -658,8 +655,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
 
         applyHoverHighlight(rect, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => ({
                 x: anchorX,

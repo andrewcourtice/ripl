@@ -342,7 +342,6 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
     }
 
     private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
-        const hover = this.resolveAnimation(ANIMATION_REFERENCE.hover);
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
@@ -357,8 +356,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
         applyHoverHighlight(segment, {
             renderer: this.renderer,
-            duration: hover.duration,
-            ease: hover.ease,
+            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
                 const [x, y] = segment.getCentroid(segment.data as Partial<ArcState>);
