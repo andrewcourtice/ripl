@@ -77,6 +77,7 @@ import type {
 } from '../components/legend';
 
 import type {
+    BandScale,
     Context,
     Element,
     EventMap,
@@ -559,6 +560,24 @@ export abstract class CartesianChart<
             ticks: () => keys,
             includes: (value: string) => keys.includes(value),
         }) as unknown as Scale<string>;
+    }
+
+    /**
+     * Wraps a band scale as a point scale positioned at each band's centre, rendering one centred
+     * tick per category. Shared by the bar chart (its categorical axis) and the trend chart (which
+     * places line/area markers at the centre of each category slot).
+     */
+    protected bandCenterScale(band: BandScale<string>, keys: string[]): Scale<string> {
+        return Object.assign(
+            (value: string) => band(value) + band.bandwidth / 2,
+            {
+                domain: keys,
+                range: band.range,
+                inverse: band.inverse,
+                ticks: () => keys,
+                includes: (value: string) => keys.includes(value),
+            }
+        ) as unknown as Scale<string>;
     }
 
 }
