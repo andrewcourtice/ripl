@@ -35,6 +35,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createArc,
     createGroup,
     createLine,
@@ -154,7 +155,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const startAngle = Math.PI * 0.75;
             const endAngle = Math.PI * 2.25;
             const range = max - min;
-            const clampedValue = Math.max(min, Math.min(max, value));
+            const clampedValue = clamp(value, min, max);
             const valueAngle = startAngle + ((clampedValue - min) / range) * (endAngle - startAngle);
 
             const isEntry = !this._group;

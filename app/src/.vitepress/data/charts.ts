@@ -23,7 +23,7 @@ export const charts: ChartMeta[] = [
     {
         text: 'Trend',
         link: '/charts/trend',
-        description: 'Combine x/y series such as bar, line, or area into a single composite chart.',
+        description: 'Mix line, bar, and area series on shared axes with stacking and a windowing navigator strip.',
     },
     {
         text: 'Pie/Donut',

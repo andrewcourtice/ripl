@@ -62,6 +62,7 @@ import type {
 
 import {
     Box,
+    clamp,
     createGroup,
     createLine,
     createRect,
@@ -688,7 +689,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 const rangeStart = yAxisBoundingBox.right + 20;
                 const rangeEnd = right;
                 const index = Math.round(((value - rangeStart) / (rangeEnd - rangeStart)) * keys.length - 0.5);
-                return keys[Math.max(0, Math.min(keys.length - 1, index))];
+                return keys[clamp(index, 0, keys.length - 1)];
             };
 
             this._xScale = Object.assign(
@@ -765,6 +766,11 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
             if (hasVolume) {
                 promises.push(this._drawVolume(chartLeft, chartRight, volumeTop, volumeBottom));
+            } else if (this._volumeGroup) {
+                // Volume was toggled off — tear down the orphaned group so the reclaimed space
+                // (the candlesticks now expand into it) doesn't paint over stale bars.
+                this._volumeGroup.destroy();
+                this._volumeGroup = undefined;
             }
 
             return Promise.all(promises);

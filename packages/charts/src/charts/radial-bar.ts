@@ -49,6 +49,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createArc,
     createGroup,
     easeOutCubic,
@@ -247,7 +248,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 const ringOuter = outerRadius - i * band;
                 const thickness = band * (1 - gap);
                 const centre = ringOuter - thickness / 2;
-                const endAngle = TOP_ANGLE + Math.max(0, Math.min(1, itemValue / maxValue)) * sweep;
+                const endAngle = TOP_ANGLE + clamp(itemValue / maxValue, 0, 1) * sweep;
 
                 return {
                     centre,

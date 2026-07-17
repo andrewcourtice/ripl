@@ -22,7 +22,6 @@ import type {
 
 import {
     normalizeDataLabels,
-    resolveLineDash,
     resolveValueFormat,
 } from '../core/options';
 
@@ -31,64 +30,55 @@ import type {
 } from '../core/options';
 
 import {
-    createDataLabel,
-    resolveDataLabelLayout,
-} from '../core/labels';
-
-import {
-    ANIMATION_REFERENCE,
-    exitElement,
-    stagger,
-} from '../core/animation';
-
-import {
-    applyHoverHighlight,
-} from '../core/interaction';
-
-import {
     resolveAccessor,
 } from '../core/data';
+
+import {
+    LineSeriesRenderer,
+} from '../core/series/line-series';
+
+import type {
+    LineSeriesContext,
+    SeriesEventPhase,
+    SeriesInteractionEvent,
+} from '../core/series/context';
+
+import type {
+    ChartNavigatorSeries,
+} from '../components/navigator';
+
+import type {
+    ChartArea,
+} from '../core/layout';
 
 import type {
     LegendItem,
 } from '../components/legend';
 
 import type {
-    Circle,
-    CircleState,
     Context,
     EventMap,
-    Group,
-    Point,
-    Polyline,
     PolylineRenderer,
-    PolylineState,
     Scale,
-    Text,
-    TextState,
 } from '@ripl/core';
 
 import {
     Box,
-    createCircle,
-    createGroup,
-    createPolyline,
     getExtent,
-    interpolatePath,
-    interpolatePoints,
     scaleContinuous,
 } from '@ripl/core';
 
 import {
-    correspondence,
-    keysDiffer,
-} from '../core/morph';
-
-import {
-    arrayJoin,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
+
+/** Maps a pointer interaction phase to the corresponding line-chart marker event name. */
+const MARKER_EVENTS = {
+    enter: 'markerenter',
+    leave: 'markerleave',
+    click: 'markerclick',
+} as const;
 
 /** Configuration for an individual line chart series. */
 export interface LineChartSeriesOptions<TData> {
@@ -171,9 +161,7 @@ export interface LineChartEventMap extends EventMap {
  */
 export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
-    private _lineGroups: Group[] = [];
-    /** Previous ordered data keys per series, used to key-reconcile the line morph across add/remove. */
-    private _morphKeys = new Map<string, string[]>();
+    private _series = new LineSeriesRenderer<TData>();
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
@@ -188,333 +176,39 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.init();
     }
 
-    private _seriesLabel(series: LineChartSeriesOptions<TData>, item: TData): string {
-        return typeIsFunction(series.label) ? series.label(item) : series.label;
+    /** Line charts are category-on-x, so the navigator windows the x axis (bottom scrub bar). */
+    protected override navigationAxis(): 'x' {
+        return 'x';
     }
 
-    private _markerState(series: LineChartSeriesOptions<TData>, item: TData, getKey: (item: TData) => string) {
-        const value = resolveAccessor<TData, number>(series.value)(item);
-        const key = getKey(item);
-        const x = this._xScale(key);
-        const y = this._yScale(value);
-        const color = this.getSeriesColor(series.id);
-        // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
-        const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
-
-        return {
-            id: `${series.id}-${key}`,
-            value,
-            point: [x, y] as Point,
-            state: {
-                fill: '#FFFFFF',
-                stroke: color,
-                lineWidth: 2,
-                cx: x,
-                cy: y,
-                radius,
-            } as CircleState,
-        };
+    private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
+        this.emit(MARKER_EVENTS[phase], event);
     }
 
-    private _attachMarkerHover(marker: Circle, series: LineChartSeriesOptions<TData>, item: TData, value: number, state: CircleState, key: string) {
-        if (series.markers === false) {
-            marker.pointerEvents = 'none';
-            return;
-        }
-
-        const radius = series.markerRadius ?? 3;
-        const formatValue = resolveValueFormat(this.options.format);
-
-        const payload = (point: { x: number;
-            y: number; }): LineChartMarkerEvent => ({
-            x: point.x,
-            y: point.y,
-            xValue: key,
-            yValue: value,
-            seriesId: series.id,
-        });
-
-        applyHoverHighlight(marker, {
-            renderer: this.renderer,
-            animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
-            tooltip: this.tooltip,
-            anchor: () => ({
-                x: marker.cx,
-                y: marker.cy,
-            }),
-            content: () => `${this._seriesLabel(series, item)}: ${formatValue(value)}`,
-            highlight: {
-                fill: state.stroke as string,
-                radius: radius + 2,
-            },
-            restore: {
-                fill: '#FFFFFF',
-                radius,
-            },
-            onEnter: point => this.emit('markerenter', payload(point)),
-            onLeave: point => this.emit('markerleave', payload(point)),
-            onClick: point => this.emit('markerclick', payload(point)),
-        });
-    }
-
-    private async _drawLines(getKey: (item: TData) => string) {
+    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
-        const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
-        const formatValue = resolveValueFormat(this.options.format);
 
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(series, this._lineGroups, 'id');
+        return this.buildOverviewSeries(series, data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
+    }
 
-        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
-
-        // Builds/updates the value label for a marker, offset clear of the marker radius.
-        const labelOffset = (srs: LineChartSeriesOptions<TData>) => (srs.markerRadius ?? 3) + 4;
-
-        const buildLabel = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
-            const { id, value, point } = this._markerState(srs, item, getKey);
-
-            return createDataLabel({
-                id: `${id}-label`,
-                x: point[0],
-                y: point[1],
-                anchor: dataLabels.anchor,
-                content: formatValue(value),
-                font: dataLabels.font,
-                fill: dataLabels.fontColor,
-                offset: labelOffset(srs),
-            });
+    private _seriesContext(plot: ChartArea): LineSeriesContext<TData> {
+        return {
+            data: this.options.data,
+            getKey: resolveAccessor<TData, string>(this.options.key),
+            yScale: this._yScale,
+            xScale: this._xScale,
+            plot,
+            baseline: this._yScale(0),
+            renderer: this.renderer,
+            tooltip: this.tooltip,
+            getColor: id => this.getSeriesColor(id),
+            resolveAnimation: reference => this.resolveAnimation(reference),
+            formatValue: resolveValueFormat(this.options.format),
+            dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
+            addContent: elements => this.addPlotContent(elements),
+            emit: (phase, event) => this._emitMarker(phase, event),
         };
-
-        const updateLabel = (srs: LineChartSeriesOptions<TData>, item: TData, label: Text) => {
-            const { value, point } = this._markerState(srs, item, getKey);
-            const layout = resolveDataLabelLayout({
-                x: point[0],
-                y: point[1],
-                anchor: dataLabels.anchor,
-                offset: labelOffset(srs),
-            });
-
-            label.content = formatValue(value);
-            label.data = {
-                x: layout.x,
-                y: layout.y,
-                opacity: 1,
-            } as Partial<TextState>;
-        };
-
-        const enteringLabels: Text[] = [];
-        const updatingLabels: Text[] = [];
-
-        seriesExits.forEach(group => {
-            const exits = group.graph(false).map(element => exitElement(this.renderer, element, exitAnimation));
-            void Promise.all(exits).then(() => group.destroy());
-        });
-
-        const buildMarker = (srs: LineChartSeriesOptions<TData>) => (item: TData) => {
-            const { id, value, point, state } = this._markerState(srs, item, getKey);
-
-            const marker = createCircle({
-                id,
-                ...state,
-                radius: 0,
-                data: state,
-            });
-
-            this._attachMarkerHover(marker, srs, item, value, state, getKey(item));
-
-            return {
-                point,
-                marker,
-            };
-        };
-
-        const seriesEntryGroups = seriesEntries.map(srs => {
-            const color = this.getSeriesColor(srs.id);
-            const items = data.map(buildMarker(srs));
-
-            const line = createPolyline({
-                id: `${srs.id}-line`,
-                lineWidth: srs.lineWidth ?? 2,
-                stroke: color,
-                lineDash: resolveLineDash(srs.lineStyle),
-                points: items.map(item => item.point),
-                renderer: srs.lineType,
-            });
-
-            this._morphKeys.set(srs.id, data.map(getKey));
-
-            return createGroup({
-                id: srs.id,
-                children: [
-                    line,
-                    ...items.map(item => item.marker),
-                    ...(dataLabels.visible ? data.map(buildLabel(srs)) : []),
-                ],
-            });
-        });
-
-        const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
-            const line = group.getElementsByType('polyline')[0] as Polyline;
-            const markers = group.getElementsByType('circle') as Circle[];
-
-            // Apply the curve renderer directly (not via the transition). The renderer is a
-            // discrete curve-function selector, not an interpolatable value — routing it through
-            // the transition made it snap to the `linear` fallback mid-animation (see interpolateAny).
-            line.renderer = srs.lineType;
-            // Dash pattern is a static style (not tweened) — apply it directly.
-            line.lineDash = resolveLineDash(srs.lineStyle);
-
-            const newKeys = data.map(getKey);
-            const targetPoints = data.map(item => this._markerState(srs, item, getKey).point);
-            const prevKeys = this._morphKeys.get(srs.id);
-
-            // When the set of keys changes (add/remove/reorder), match points by identity so the
-            // curve renderer keeps its shape across the morph instead of drawing through the
-            // straight-line points the default extrapolation would insert (which looks linear).
-            line.data = {
-                points: prevKeys && keysDiffer(prevKeys, newKeys)
-                    ? interpolatePoints(line.points, targetPoints, {
-                        resolveKeys: () => correspondence(prevKeys, newKeys),
-                    })
-                    : targetPoints,
-            };
-
-            this._morphKeys.set(srs.id, newKeys);
-
-            const {
-                left: markerEntries,
-                inner: markerUpdates,
-                right: markerExits,
-            } = arrayJoin(data, markers, (item, marker) => marker.id === `${srs.id}-${getKey(item)}`);
-
-            markerExits.forEach(marker => exitElement(this.renderer, marker, exitAnimation, {
-                radius: 0,
-                opacity: 0,
-            }));
-
-            markerEntries.forEach(item => group.add(buildMarker(srs)(item).marker));
-
-            markerUpdates.forEach(([item, marker]) => {
-                const { state, value } = this._markerState(srs, item, getKey);
-                marker.data = state;
-                this._attachMarkerHover(marker, srs, item, value, state, getKey(item));
-            });
-
-            // Reconcile value labels alongside the markers.
-            const labels = group.getElementsByType('text') as Text[];
-
-            if (dataLabels.visible) {
-                const {
-                    left: labelEntries,
-                    inner: labelUpdates,
-                    right: labelExits,
-                } = arrayJoin(data, labels, (item, label) => label.id === `${srs.id}-${getKey(item)}-label`);
-
-                labelExits.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
-
-                labelEntries.forEach(item => {
-                    const label = buildLabel(srs)(item);
-                    group.add(label);
-                    enteringLabels.push(label);
-                });
-
-                labelUpdates.forEach(([item, label]) => {
-                    updateLabel(srs, item, label);
-                    updatingLabels.push(label);
-                });
-            } else {
-                labels.forEach(label => exitElement(this.renderer, label, exitAnimation, { opacity: 0 }));
-            }
-
-            return group;
-        });
-
-        this.addPlotContent(seriesEntryGroups);
-
-        this._lineGroups = [
-            ...seriesEntryGroups,
-            ...seriesUpdateGroups,
-        ];
-
-        // Series groups map 1:1 to legend items (by id); register them for legend hover-highlight.
-        this.registerHighlightGroups(this._lineGroups);
-
-        const enterAnimation = this.resolveAnimation(ANIMATION_REFERENCE.enter);
-        const updateAnimation = this.resolveAnimation(ANIMATION_REFERENCE.update);
-
-        const entryTransitions = seriesEntryGroups.flatMap(group => {
-            const markers = group.getElementsByType('circle') as Circle[];
-            const line = group.getElementsByType('polyline')[0] as Polyline;
-
-            return [
-                this.renderer.transition(line, {
-                    duration: enterAnimation.duration,
-                    ease: enterAnimation.ease,
-                    state: { points: interpolatePath(line.points) },
-                }),
-                this.renderer.transition(markers, (element, index, length) => ({
-                    duration: enterAnimation.duration,
-                    delay: stagger(index, length, enterAnimation.duration),
-                    ease: enterAnimation.ease,
-                    state: element.data as CircleState,
-                })),
-            ];
-        });
-
-        const updateTransitions = seriesUpdateGroups.flatMap(group => {
-            const markers = group.getElementsByType('circle') as Circle[];
-            const line = group.getElementsByType('polyline')[0] as Polyline;
-
-            return [
-                this.renderer.transition(line, {
-                    duration: updateAnimation.duration,
-                    ease: updateAnimation.ease,
-                    state: line.data as PolylineState,
-                }),
-                this.renderer.transition(markers, element => ({
-                    duration: updateAnimation.duration,
-                    ease: updateAnimation.ease,
-                    state: element.data as CircleState,
-                })),
-            ];
-        });
-
-        // Value labels: entry labels fade in; updated labels animate to their refreshed position.
-        const entryLabels = seriesEntryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
-        const labelTransitions: Promise<unknown>[] = [];
-
-        if (entryLabels.length > 0) {
-            labelTransitions.push(this.renderer.transition(entryLabels, {
-                duration: enterAnimation.duration,
-                ease: enterAnimation.ease,
-                state: { opacity: 1 },
-            }));
-        }
-
-        if (enteringLabels.length > 0) {
-            labelTransitions.push(this.renderer.transition(enteringLabels, {
-                duration: updateAnimation.duration,
-                ease: updateAnimation.ease,
-                state: { opacity: 1 },
-            }));
-        }
-
-        if (updatingLabels.length > 0) {
-            labelTransitions.push(this.renderer.transition(updatingLabels, element => ({
-                duration: updateAnimation.duration,
-                ease: updateAnimation.ease,
-                state: element.data as Partial<TextState>,
-            })));
-        }
-
-        return Promise.all([
-            ...entryTransitions,
-            ...updateTransitions,
-            ...labelTransitions,
-        ]);
     }
 
     public async render() {
@@ -547,6 +241,9 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.reserveLegend(layout, legendItems);
 
+            // Reserve the overview strip band from the bottom before the axes are measured.
+            const navBand = this.reserveNavigatorBand(layout);
+
             const area = layout.area;
             const left = area.x;
             const top = area.y;
@@ -570,13 +267,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // Rescale to the navigator's pan/zoom window (no-op without a navigator or at rest):
-            // continuous y via domain rescale, categorical x via a pixel-space transform. Geometry
-            // and axes read the same scales, so both follow the view.
-            this._yScale = this.applyView(this._yScale, 'y');
+            // The navigator windows the x (category) axis only — the value axis stays at the full
+            // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
-            this.yAxis.scale = this._yScale;
 
             const plot = {
                 x: yAxisBox.right,
@@ -595,10 +289,15 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.setupCrosshair(plot);
 
+            const seriesRender = this._series.render(series, this._seriesContext(plot));
+            this.registerHighlightGroups(this._series.groups);
+
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
-                this._drawLines(getKey),
+                seriesRender,
             ]);
         });
     }

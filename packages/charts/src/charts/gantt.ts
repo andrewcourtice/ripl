@@ -58,6 +58,7 @@ import type {
 
 import {
     Box,
+    clamp,
     createGroup,
     createLine,
     createRect,
@@ -248,7 +249,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const y = categoryScale(label);
             const height = categoryScale.bandwidth;
 
-            const progress = getProgress ? Math.max(0, Math.min(1, getProgress(item))) : undefined;
+            const progress = getProgress ? clamp(getProgress(item), 0, 1) : undefined;
 
             return {
                 id: key,

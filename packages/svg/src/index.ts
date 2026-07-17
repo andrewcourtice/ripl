@@ -88,6 +88,14 @@ const SVG_STYLE_MAP = {
         middle: 'middle',
         bottom: 'text-after-edge',
     } as Record<TextBaseline, string>,
+    // `dominant-baseline` is the property browsers actually honour on a <text> element (unlike
+    // `alignment-baseline`, which only applies to <tspan>/<textPath>). Without it, SVG text falls
+    // back to the alphabetic baseline, mispositioning every label and clipping rotated titles.
+    dominantBaseline: {
+        top: 'text-before-edge',
+        middle: 'central',
+        bottom: 'text-after-edge',
+    } as Record<TextBaseline, string>,
 } as Record<keyof Styles, Record<string, string>>;
 
 function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
@@ -634,6 +642,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
             alignmentBaseline: this.currentState.textBaseline,
+            dominantBaseline: this.currentState.textBaseline,
             opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
             // Shadow properties (shadowBlur/Color/OffsetX/OffsetY) are intentionally not mapped: SVG

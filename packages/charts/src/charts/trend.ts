@@ -3,824 +3,449 @@ import type {
 } from '../core/data';
 
 import type {
-    BaseChartOptions,
-} from '../core/chart';
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import {
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
+    ChartCrosshairInput,
+    ChartDataLabelsInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    LineStyle,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
-    formatNumber,
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeGrid,
-    normalizeTooltip,
-    normalizeYAxisItem,
-    resolveFormatLabel,
+    normalizeDataLabels,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
+    cumulativeExtent,
+    positiveNegativeExtent,
+    resolveAccessor,
+} from '../core/data';
 
 import {
-    Tooltip,
-} from '../components/tooltip';
+    AreaSeriesRenderer,
+} from '../core/series/area-series';
 
 import {
-    applyHoverHighlight,
-} from '../core/interaction';
+    BarSeriesRenderer,
+} from '../core/series/bar-series';
 
 import {
-    correspondence,
-    keysDiffer,
-} from '../core/morph';
+    LineSeriesRenderer,
+} from '../core/series/line-series';
+
+import type {
+    AreaSeriesContext,
+    BarSeriesContext,
+    LineSeriesContext,
+    SeriesEventPhase,
+    SeriesInteractionEvent,
+    SeriesRenderContext,
+} from '../core/series/context';
+
+import type {
+    ChartNavigatorSeries,
+} from '../components/navigator';
+
+import type {
+    ChartArea,
+} from '../core/layout';
 
 import type {
     LegendItem,
 } from '../components/legend';
 
-import {
-    Grid,
-} from '../components/grid';
-
 import type {
-    BandScale,
-    Circle,
-    CircleState,
     Context,
     EventMap,
-    Group,
-    Point,
-    Polyline,
     PolylineRenderer,
-    PolylineState,
-    Rect,
-    RectState,
     Scale,
 } from '@ripl/core';
 
 import {
     Box,
-    createCircle,
-    createGroup,
-    createPolyline,
-    createRect,
-    createScale,
-    easeOutCubic,
-    easeOutQuart,
     getExtent,
-    interpolatePath,
-    interpolatePoints,
-    max,
-    queryAll,
     scaleBand,
     scaleContinuous,
-    setColorAlpha,
 } from '@ripl/core';
 
 import {
-    arrayJoin,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
 
-/** Supported series visualization types within a trend chart. */
-export type SeriesType = 'bar' | 'line' | 'area';
+/** Maps a pointer interaction phase to the corresponding trend-chart marker event name. */
+const MARKER_EVENTS = {
+    enter: 'markerenter',
+    leave: 'markerleave',
+    click: 'markerclick',
+} as const;
 
-/** Base configuration shared by all trend chart series types. */
-export interface BaseTrendChartSeriesOptions<TData> {
-    /** Unique identifier for the series. */
+/** Maps a pointer interaction phase to the corresponding trend-chart bar event name. */
+const BAR_EVENTS = {
+    enter: 'barenter',
+    leave: 'barleave',
+    click: 'barclick',
+} as const;
+
+/** Supported series visualization types within a trend chart. */
+export type TrendSeriesType = 'line' | 'bar' | 'area';
+
+/** Configuration shared by every trend chart series type. */
+export interface TrendChartBaseSeriesOptions<TData> {
+    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
     id: string;
     /** Which visualization type to render this series as. */
-    type: SeriesType;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    type: TrendSeriesType;
+    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
     color?: string;
-    /** Accessor for each item's numeric value. */
-    value: NumericAccessor<TData>;
-    /** Display label for the series, or an accessor deriving a per-item label. */
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+    /** Series name shown in the legend and tooltips (or a per-item function). */
     label: string | ((item: TData) => string);
 }
 
-/** Series options for bar-type series within a trend chart. */
-export interface TrendChartBarSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
+/** Series options for a line-type series within a trend chart. */
+export interface TrendChartLineSeriesOptions<TData> extends TrendChartBaseSeriesOptions<TData> {
+    /** Discriminant marking this as a line series. */
+    type: 'line';
+    /** Renderer used to draw the line (e.g. straight or curved); defaults to straight segments. */
+    lineType?: PolylineRenderer;
+    /** Width in pixels of the series line. */
+    lineWidth?: number;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
+    /** Show point markers along the line. Defaults to `true`. */
+    markers?: boolean;
+    /** Radius in pixels of each point marker. Defaults to 3. */
+    markerRadius?: number;
+}
+
+/** Series options for an area-type series within a trend chart. */
+export interface TrendChartAreaSeriesOptions<TData> extends TrendChartBaseSeriesOptions<TData> {
+    /** Discriminant marking this as an area series. */
+    type: 'area';
+    /** Renderer used to draw the area top edge (e.g. straight or curved); defaults to straight segments. */
+    lineType?: PolylineRenderer;
+    /** Width in pixels of the series line. */
+    lineWidth?: number;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
+    /** Fill opacity of the area band. Defaults to 0.3. */
+    opacity?: number;
+    /** Show point markers at each data value. Defaults to `true`. */
+    markers?: boolean;
+}
+
+/** Series options for a bar-type series within a trend chart. */
+export interface TrendChartBarSeriesOptions<TData> extends TrendChartBaseSeriesOptions<TData> {
     /** Discriminant marking this as a bar series. */
     type: 'bar';
 }
 
-/** Series options for area-type series within a trend chart. */
-export interface TrendChartAreaSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
-    /** Discriminant marking this as an area series. */
-    type: 'area';
-    /** Whether the region beneath the line is filled. */
-    filled: boolean;
-}
-
-/** Series options for line-type series within a trend chart. */
-export interface TrendChartLineSeriesOptions<TData> extends BaseTrendChartSeriesOptions<TData> {
-    /** Discriminant marking this as a line series. */
-    type: 'line';
-    /** Renderer controlling the line's shape (e.g. straight or curved). */
-    lineType?: PolylineRenderer;
-}
-
 /** Discriminated union of all trend chart series option types. */
-export type TrendChartSeriesOptions<TData> = TrendChartBarSeriesOptions<TData>
+export type TrendChartSeriesOptions<TData> = TrendChartLineSeriesOptions<TData>
 | TrendChartAreaSeriesOptions<TData>
-| TrendChartLineSeriesOptions<TData>;
+| TrendChartBarSeriesOptions<TData>;
 
 /** Options for configuring a {@link TrendChart}. */
-export interface TrendChartOptions<TData = unknown> extends BaseChartOptions {
+export interface TrendChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     /** The dataset plotted across all series. */
     data: TData[];
-    /** The series to render, mixing bar, line, and area types on shared axes. */
+    /** The series to render, mixing line, bar, and area types on shared axes. */
     series: TrendChartSeriesOptions<TData>[];
-    /** Accessor for each item's unique key, used for the categorical x-axis and matching across updates. */
+    /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Background grid line configuration. */
+    /** Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false. */
+    stacked?: boolean;
+    /** Corner radius in pixels applied to each bar. Defaults to 2. */
+    borderRadius?: number;
+    /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
-    /** Hover tooltip configuration. */
+    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
+    crosshair?: ChartCrosshairInput;
+    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
-    /** Series legend configuration. */
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
     legend?: ChartLegendInput;
-    /** Axis configuration (labels, ticks, titles). */
+    /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
+    /** Show value labels next to each mark. `true` uses the default anchor; a string sets the anchor side. */
+    labels?: ChartDataLabelsInput;
+    /** Format applied to values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
 }
 
-/** Payload emitted for trend bar/marker interaction events. */
-export interface TrendChartValueEvent {
-    /** X position of the bar/marker, in canvas coordinates. */
+/** Payload emitted for trend bar interaction events. */
+export interface TrendChartBarEvent {
+    /** The x coordinate (in chart pixels) of the bar's anchor point. */
     x: number;
-    /** Y position of the bar/marker, in canvas coordinates. */
+    /** The y coordinate (in chart pixels) of the bar's anchor point. */
     y: number;
-    /** The bar/marker's numeric value. */
-    value: number;
+    /** The category key of the interacted bar. */
+    xValue: string;
+    /** The numeric value of the interacted bar. */
+    yValue: number;
+    /** The id of the series the bar belongs to. */
+    seriesId: string;
+}
+
+/** Payload emitted for trend line/area marker interaction events. */
+export interface TrendChartMarkerEvent {
+    /** The x coordinate (in chart pixels) of the marker. */
+    x: number;
+    /** The y coordinate (in chart pixels) of the marker. */
+    y: number;
+    /** The category key of the interacted marker. */
+    xValue: string;
+    /** The numeric value of the interacted marker. */
+    yValue: number;
+    /** The id of the series the marker belongs to. */
+    seriesId: string;
 }
 
 /** Events emitted by a {@link TrendChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface TrendChartEventMap extends EventMap {
     /** Emitted when a bar is clicked. */
-    barclick: TrendChartValueEvent;
+    barclick: TrendChartBarEvent;
     /** Emitted when the pointer enters a bar. */
-    barenter: TrendChartValueEvent;
+    barenter: TrendChartBarEvent;
     /** Emitted when the pointer leaves a bar. */
-    barleave: TrendChartValueEvent;
-    /** Emitted when a line marker is clicked. */
-    markerclick: TrendChartValueEvent;
-    /** Emitted when the pointer enters a line marker. */
-    markerenter: TrendChartValueEvent;
-    /** Emitted when the pointer leaves a line marker. */
-    markerleave: TrendChartValueEvent;
+    barleave: TrendChartBarEvent;
+    /** Emitted when a line/area marker is clicked. */
+    markerclick: TrendChartMarkerEvent;
+    /** Emitted when the pointer enters a line/area marker. */
+    markerenter: TrendChartMarkerEvent;
+    /** Emitted when the pointer leaves a line/area marker. */
+    markerleave: TrendChartMarkerEvent;
 }
 
 /**
- * Trend chart combining bar and line series on shared categorical/value axes.
+ * Trend chart combining line, bar, and area series on shared categorical/value axes.
  *
- * Renders bar series as grouped rectangles and line series as polylines with
- * markers on the same chart area. Supports tooltips, legend, grid, and
- * animated entry/update/exit transitions for both series types.
+ * A true mixed cartesian chart: each series declares a `type` (`line`, `bar`, or `area`) plus the
+ * options specific to that type, and the chart reuses the same renderers as the standalone line,
+ * bar, and area charts. Series paint back-to-front as area → bar → line so lines never hide behind
+ * fills or bars, and overlaid areas are drawn largest-first so smaller areas stay visible. Same-type
+ * series can be stacked, the optional {@link CartesianChartOptions.overview} strip windows the visible
+ * x-range, and every cartesian feature (axes, grid, legend, crosshair, tooltip, navigator) is
+ * inherited from {@link CartesianChart}.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>, TrendChartEventMap> {
+export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOptions<TData>, TData, TrendChartEventMap> {
 
-    private _barGroups: Group[] = [];
-    private _lineGroups: Group[] = [];
-    /** Previous ordered data keys per line series, used to key-reconcile the morph across add/remove. */
-    private _morphKeys = new Map<string, string[]>();
+    private _areaRenderer = new AreaSeriesRenderer<TData>();
+    private _barRenderer = new BarSeriesRenderer<TData>();
+    private _lineRenderer = new LineSeriesRenderer<TData>();
     private _yScale!: Scale;
-    private _xScaleBand!: BandScale<string>;
-    private _xScalePoint!: Scale<string>;
-    private _xAxis: ChartXAxis;
-    private _yAxis: ChartYAxis;
-    private _tooltip!: Tooltip;
-    private _grid?: Grid;
+    private _xCenter!: Scale<string>;
+
     constructor(target: string | HTMLElement | Context, options: TrendChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        this._xAxis = new ChartXAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: this._xScalePoint,
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+        this.setupCartesian({
+            grid: { horizontal: true },
+            crosshair: true,
         });
-
-        this._yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: this._yScale,
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
-
-        if (gridOpts.visible) {
-            this._grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: true,
-                vertical: false,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
 
         this.init();
     }
 
-    /**
-     * Wires hover highlight + tooltip onto a line marker. Uses {@link applyHoverHighlight} so
-     * prior listeners are disposed on re-apply — calling this on every update no longer leaks.
-     */
-    private _attachMarkerHover(marker: Circle, value: number, color: string) {
-        const payload = (point: { x: number;
-            y: number; }): TrendChartValueEvent => ({
-            x: point.x,
-            y: point.y,
-            value,
-        });
+    /** The trend chart is category-on-x, so the navigator windows the x axis (bottom scrub bar). */
+    protected override navigationAxis(): 'x' {
+        return 'x';
+    }
 
-        applyHoverHighlight(marker, {
+    /** Trend marks (bars, plus line/area markers at band centres) are laid out in category bands. */
+    protected override navigatorCategoryLayout(): 'band' {
+        return 'band';
+    }
+
+    private _seriesValue(series: TrendChartSeriesOptions<TData>, item: TData): number {
+        return resolveAccessor<TData, number>(series.value)(item);
+    }
+
+    private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
+        this.emit(MARKER_EVENTS[phase], event);
+    }
+
+    private _emitBar(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
+        this.emit(BAR_EVENTS[phase], event);
+    }
+
+    /** Builds the per-type overview series (id, colour, type, values) for the navigator strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
+        const { data, series } = this.options;
+
+        return this.buildOverviewSeries(series, data, srs => srs.type, (srs, item) => this._seriesValue(srs, item));
+    }
+
+    private _commonContext(plot: ChartArea, emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void): SeriesRenderContext<TData> {
+        return {
+            data: this.options.data,
+            getKey: resolveAccessor<TData, string>(this.options.key),
+            yScale: this._yScale,
+            plot,
+            baseline: this._yScale(0),
             renderer: this.renderer,
-            animation: () => ({
-                duration: this.getAnimationDuration(300),
-                ease: easeOutQuart,
-            }),
-            tooltip: this._tooltip,
-            anchor: () => ({
-                x: marker.cx,
-                y: marker.cy,
-            }),
-            content: () => formatNumber(value),
-            onEnter: point => this.emit('markerenter', payload(point)),
-            onLeave: point => this.emit('markerleave', payload(point)),
-            onClick: point => this.emit('markerclick', payload(point)),
-            highlight: {
-                fill: color,
-                radius: 5,
-            },
-            restore: {
-                fill: '#FFFFFF',
-                radius: 3,
-            },
-        });
-    }
-
-    /**
-     * Wires hover highlight + tooltip onto a bar. Uses {@link applyHoverHighlight} so prior
-     * listeners are disposed on re-apply — calling this on every update no longer leaks.
-     */
-    private _attachBarHover(bar: Rect, value: number, fill: string) {
-        const payload = (point: { x: number;
-            y: number; }): TrendChartValueEvent => ({
-            x: point.x,
-            y: point.y,
-            value,
-        });
-
-        applyHoverHighlight(bar, {
-            renderer: this.renderer,
-            animation: () => ({
-                duration: this.getAnimationDuration(300),
-                ease: easeOutQuart,
-            }),
-            tooltip: this._tooltip,
-            anchor: () => ({
-                x: bar.x + bar.width / 2,
-                y: bar.y,
-            }),
-            content: () => formatNumber(value),
-            onEnter: point => this.emit('barenter', payload(point)),
-            onLeave: point => this.emit('barleave', payload(point)),
-            onClick: point => this.emit('barclick', payload(point)),
-            highlight: {
-                fill,
-            },
-            restore: {
-                fill: setColorAlpha(fill, 0.7),
-            },
-        });
-    }
-
-    private async _drawLines() {
-        const {
-            data,
-            series,
-            key,
-        } = this.options;
-
-        const lineSeries = series.filter(srs => srs.type === 'line') as TrendChartLineSeriesOptions<TData>[];
-
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(lineSeries, this._lineGroups, 'id');
-
-        seriesExits.forEach(el => el.destroy());
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-
-        const seriesLineValueProducer = ({ id, value: valueBy, label: labelBy }: TrendChartLineSeriesOptions<TData>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
-            const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
-            const color = this.getSeriesColor(id);
-
-            return (item: TData) => {
-                const key = getKey(item);
-                const value = getValue(item);
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const label = getLabel(item);
-
-                const x = this._xScalePoint(key);
-                const y = this._yScale(value);
-
-                return {
-                    id: `${id}-${key}`,
-                    point: [x, y] as Point,
-                    state: {
-                        fill: '#FFFFFF',
-                        stroke: color,
-                        lineWidth: 2,
-                        cx: x,
-                        cy: y,
-                        radius: 3,
-                    } as CircleState,
-                };
-            };
+            tooltip: this.tooltip,
+            getColor: id => this.getSeriesColor(id),
+            resolveAnimation: reference => this.resolveAnimation(reference),
+            formatValue: resolveValueFormat(this.options.format),
+            dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
+            addContent: elements => this.addPlotContent(elements),
+            emit,
         };
-
-        const seriesEntryGroups = seriesEntries.map(series => {
-
-            const getMarkerValues = seriesLineValueProducer(series);
-
-            const items = data.map(item => {
-                const { id, point, state } = getMarkerValues(item);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
-                const value = getValue(item);
-
-                const marker = createCircle({
-                    id,
-                    ...state,
-                    radius: 0,
-                    data: state,
-                });
-
-                this._attachMarkerHover(marker, value, state.stroke as string);
-
-                return {
-                    point,
-                    marker,
-                };
-            });
-
-            const line = createPolyline({
-                id: `${series.id}-line`,
-                lineWidth: 2,
-                stroke: this.getSeriesColor(series.id),
-                points: items.map(item => item.point),
-                renderer: series.lineType,
-            });
-
-            this._morphKeys.set(series.id, data.map(getKey));
-
-            return createGroup({
-                id: series.id,
-                children: [
-                    line,
-                    ...items.map(item => item.marker),
-                ],
-            });
-        });
-
-        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
-            const getMarkerValues = seriesLineValueProducer(series);
-            const line = group.getElementsByType('polyline')[0] as Polyline;
-            const markers = group.getElementsByType('circle') as Circle[];
-
-            const targetPoints = data.map(item => getMarkerValues(item).point);
-            const newKeys = data.map(getKey);
-            const prevKeys = this._morphKeys.get(series.id);
-
-            // Apply the renderer directly (not via the transition, which would snap it at t=0.5),
-            // and key-reconcile the point morph so curved lines stay curved across add/remove.
-            line.renderer = series.lineType;
-
-            line.data = {
-                points: prevKeys && keysDiffer(prevKeys, newKeys)
-                    ? interpolatePoints(line.points, targetPoints, {
-                        resolveKeys: () => correspondence(prevKeys, newKeys),
-                    })
-                    : targetPoints,
-            };
-
-            this._morphKeys.set(series.id, newKeys);
-
-            const {
-                left: markerEntries,
-                inner: markerUpdates,
-                right: markerExits,
-            } = arrayJoin(data, markers, (item, marker) => marker.id === `${series.id}-${getKey(item)}`);
-
-            markerExits.forEach(el => el.destroy());
-
-            markerEntries.map(item => {
-                const { id, state } = getMarkerValues(item);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
-
-                const marker = createCircle({
-                    id,
-                    ...state,
-                    radius: 0,
-                    data: state,
-                });
-
-                this._attachMarkerHover(marker, getValue(item), state.stroke as string);
-
-                group.add(marker);
-            });
-
-            markerUpdates.forEach(([item, marker]) => {
-                const { state } = getMarkerValues(item);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
-                const value = getValue(item);
-
-                marker.data = state;
-
-                this._attachMarkerHover(marker, value, state.stroke as string);
-            });
-
-            return group;
-        });
-
-        this.scene.add(seriesEntryGroups);
-
-        this._lineGroups = [
-            ...seriesEntryGroups,
-            ...seriesUpdateGroups,
-        ];
-
-        const entryTransitions = seriesEntryGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
-            const line = group.query('polyline') as Polyline;
-
-            const lineTransition = this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: {
-                    points: interpolatePath(line.points),
-                },
-            });
-
-            const markersTransition = this.renderer.transition(markers, (element, index, length) => ({
-                duration: this.getAnimationDuration(1000),
-                delay: index * (this.getAnimationDuration(1000) / length),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            }));
-
-            return [
-                lineTransition,
-                markersTransition,
-            ];
-        });
-
-        const updateTransitions = seriesUpdateGroups.map(group => {
-            const markers = group.queryAll('circle') as Circle[];
-            const line = group.query('polyline') as Polyline;
-
-            const lineTransition = this.renderer.transition(line, {
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: line.data as PolylineState,
-            });
-
-            const markersTransition = this.renderer.transition(markers, (element) => ({
-                duration: this.getAnimationDuration(1000),
-                ease: easeOutCubic,
-                state: element.data as CircleState,
-            }));
-
-            return [
-                lineTransition,
-                markersTransition,
-            ];
-        });
-
-        return Promise.all([
-            ...entryTransitions,
-            ...updateTransitions,
-        ].flat());
-    }
-
-    private async _drawBars() {
-        const {
-            data,
-            series,
-            key,
-        } = this.options;
-
-        const barSeries = series.filter(srs => srs.type === 'bar') as TrendChartBarSeriesOptions<TData>[];
-
-        const {
-            left: seriesEntries,
-            inner: seriesUpdates,
-            right: seriesExits,
-        } = arrayJoin(barSeries, this._barGroups, 'id');
-
-        seriesExits.forEach(el => el.destroy());
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
-        const baseline = this._yScale(0);
-
-        const xScaleSeries = scaleBand(barSeries.map(srs => srs.id), [0, this._xScaleBand.bandwidth], {
-            innerPadding: 0.25,
-        });
-
-        const seriesBarValueProducer = ({ id, value: valueBy, label: labelBy }: TrendChartBarSeriesOptions<TData>) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
-            const getLabel = typeIsFunction(labelBy) ? labelBy : () => labelBy;
-            const color = this.getSeriesColor(id);
-
-            return (item: TData) => {
-                const key = getKey(item);
-                const value = getValue(item);
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const label = getLabel(item);
-
-                const x = this._xScaleBand(key) + xScaleSeries(id);
-                const y = this._yScale(max(0, value));
-                const width = xScaleSeries.bandwidth;
-                const height = Math.abs(baseline - this._yScale(value));
-
-                return {
-                    id: `${id}-${key}`,
-                    state: {
-                        fill: color,
-                        x,
-                        y,
-                        width,
-                        height,
-                    } as RectState,
-                };
-            };
-        };
-
-        const seriesEntryGroups = seriesEntries.map((series) => {
-
-            const getBarValues = seriesBarValueProducer(series);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
-
-            const children = data.map(item => {
-                const { id, state } = getBarValues(item);
-                const value = getValue(item);
-
-                const bar = createRect({
-                    id,
-                    ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
-                    y: baseline,
-                    height: 0,
-                    data: {
-                        ...state,
-                        fill: setColorAlpha(state.fill as string, 0.7),
-                    },
-                });
-
-                this._attachBarHover(bar, value, state.fill as string);
-
-                return bar;
-            });
-
-            return createGroup({
-                id: series.id,
-                children,
-            });
-        });
-
-        const seriesUpdateGroups = seriesUpdates.map(([series, group]) => {
-            const getBarValues = seriesBarValueProducer(series);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getValue = typeIsFunction(series.value) ? series.value : (item: any) => item[series.value] as number;
-            const bars = group.getElementsByType('rect') as Rect[];
-
-            const {
-                left: barEntries,
-                inner: barUpdates,
-                right: barExits,
-            } = arrayJoin(data, bars, (item, bar) => bar.id === `${series.id}-${getKey(item)}`);
-
-            barExits.forEach(el => el.destroy());
-
-            barEntries.map(item => {
-                const { id, state } = getBarValues(item);
-
-                const rect = createRect({
-                    id,
-                    ...state,
-                    y: baseline,
-                    height: 0,
-                    data: state,
-                });
-
-                this._attachBarHover(rect, getValue(item), state.fill as string);
-
-                group.add(rect);
-            });
-
-            barUpdates.forEach(([item, bar]) => {
-                const { state } = getBarValues(item);
-                const value = getValue(item);
-
-                bar.data = {
-                    ...state,
-                    fill: setColorAlpha(state.fill as string, 0.7),
-                };
-
-                this._attachBarHover(bar, value, state.fill as string);
-            });
-
-            return group;
-        });
-
-        this.scene.add(seriesEntryGroups);
-
-        this._barGroups = [
-            ...seriesEntryGroups,
-            ...seriesUpdateGroups,
-        ];
-
-        const barEntries = (queryAll(seriesEntryGroups, 'rect') as Rect[]).sort((a, b) => a.x - b.x);
-
-        const entriesTransition = this.renderer.transition(barEntries, (element, index, length) => ({
-            duration: this.getAnimationDuration(1000),
-            delay: index * (this.getAnimationDuration(1000) / length),
-            ease: easeOutCubic,
-            state: element.data as RectState,
-        }));
-
-        const updatesTransition = this.renderer.transition(queryAll(seriesUpdateGroups, 'rect') as Rect[], element => ({
-            duration: this.getAnimationDuration(1000),
-            ease: easeOutCubic,
-            state: element.data as RectState,
-        }));
-
-        return Promise.all([
-            entriesTransition,
-            updatesTransition,
-        ]);
     }
 
     public async render() {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        return super.render((scene, renderer) => {
-            const {
-                data,
-                series,
-                key,
-            } = this.options;
+        return super.render(async () => {
+            const { data, series, key } = this.options;
+            const stacked = this.options.stacked ?? false;
 
             this.resolveSeriesColors(series);
+            this.prepareAxes();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getKey = typeIsFunction(key) ? key : (item: any) => item[key] as string;
+            const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
-            const seriesExtents = series.flatMap(({ value: valueAccessor }) => {
-                const getValue = typeIsFunction(valueAccessor)
-                    ? valueAccessor
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    : (item: any) => item[valueAccessor] as number;
 
-                return getExtent(data, getValue);
-            }).concat(0);
+            const areaSeries = series.filter((srs): srs is TrendChartAreaSeriesOptions<TData> => srs.type === 'area');
+            const barSeries = series.filter((srs): srs is TrendChartBarSeriesOptions<TData> => srs.type === 'bar');
+            const lineSeries = series.filter((srs): srs is TrendChartLineSeriesOptions<TData> => srs.type === 'line');
 
-            const dataExtent = getExtent(seriesExtents, functionIdentity);
+            // The value domain must cover every series, respecting per-type stacking.
+            const extents: number[] = [0];
 
-            // Shared layout pass: reserve title and legend bands.
+            if (stacked && barSeries.length > 0) {
+                extents.push(...positiveNegativeExtent(barSeries, data, (srs, item) => this._seriesValue(srs, item)));
+            } else {
+                barSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+            }
+
+            if (stacked && areaSeries.length > 0) {
+                extents.push(...cumulativeExtent(areaSeries, data, (srs, item) => this._seriesValue(srs, item)));
+            } else {
+                areaSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+            }
+
+            lineSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+
+            const dataExtent = getExtent(extents, functionIdentity);
+
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
             const legendItems: LegendItem[] = series.length > 1
                 ? series.map(srs => ({
                     id: srs.id,
-                    label: typeIsFunction(srs.label) ? srs.id : srs.label as string,
+                    label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
                     active: true,
                 }))
                 : [];
 
-            this.reserveLegend(layout, legendItems, this.options.legend);
+            this.reserveLegend(layout, legendItems);
+
+            // Reserve the overview strip band from the bottom before the axes are measured.
+            const navBand = this.reserveNavigatorBand(layout);
 
             const area = layout.area;
-            const chartTop = area.y;
-            const chartBottom = area.y + area.height;
-            const chartRight = area.x + area.width;
+            const left = area.x;
+            const top = area.y;
+            const right = area.x + area.width;
+            const bottom = area.y + area.height;
 
-            this._yScale = scaleContinuous(dataExtent, [chartBottom, chartTop], {
-                padToTicks: 10,
+            // Provisional value scale to measure the y-axis width.
+            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this.yAxis.scale = this._yScale;
+            this.yAxis.bounds = new Box(top, left, bottom, right);
+
+            const yAxisBox = this.yAxis.getBoundingBox();
+
+            // A band scale positions bars; its centres position line/area markers and the x-axis ticks.
+            const xBand = scaleBand(keys, [yAxisBox.right, right], {
+                outerPadding: 0.15,
+                innerPadding: 0.2,
             });
 
-            this._yAxis.scale = this._yScale;
-            this._yAxis.bounds = new Box(
-                chartTop,
-                area.x,
-                chartBottom,
-                chartRight
-            );
+            this.xAxis.scale = this.bandCenterScale(xBand, keys);
+            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-            const yAxisBoundingBox = this._yAxis.getBoundingBox();
+            const xAxisBox = this.xAxis.getBoundingBox();
 
-            this._xScaleBand = scaleBand(keys, [yAxisBoundingBox.right, chartRight], {
-                outerPadding: 0.25,
-                innerPadding: 0.25,
-            });
+            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this.yAxis.scale = this._yScale;
+            this.yAxis.bounds.bottom = xAxisBox.top;
 
-            this._xScalePoint = createScale({
-                domain: this._xScaleBand.domain,
-                range: this._xScaleBand.range,
-                convert: value => this._xScaleBand(value) + this._xScaleBand.bandwidth / 2,
-                invert: value => this._xScaleBand.inverse(value),
-            });
+            // The navigator windows the x (category) axis only — the value axis stays at the full extent.
+            const viewedBand = this.applyViewToScale(xBand, 'x');
+            this._xCenter = this.bandCenterScale(viewedBand, keys);
+            this.xAxis.scale = this._xCenter;
 
-            this._xAxis.scale = this._xScalePoint;
-            this._xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                chartBottom,
-                chartRight
-            );
+            const plot = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
 
-            const xAxisBoundingBox = this._xAxis.getBoundingBox();
+            this.clipPlot(plot);
+            this.renderGrid([], this._yScale.ticks(10).map(tick => this._yScale(tick)), plot);
+            this.setupCrosshair(plot);
 
-            this._yScale = scaleContinuous(dataExtent, [xAxisBoundingBox.top, chartTop], {
-                padToTicks: 10,
-            });
+            // Draw back-to-front: areas (largest first), then bars, then lines/markers on top.
+            const areaContext: AreaSeriesContext<TData> = {
+                ...this._commonContext(plot, (phase, event) => this._emitMarker(phase, event)),
+                xScale: this._xCenter,
+                stacked,
+                zIndexBase: 0,
+            };
 
-            this._yAxis.scale = this._yScale;
-            this._yAxis.bounds.bottom = xAxisBoundingBox.top;
+            const barContext: BarSeriesContext<TData> = {
+                ...this._commonContext(plot, (phase, event) => this._emitBar(phase, event)),
+                categoryScale: viewedBand,
+                valueScale: this._yScale,
+                orientation: 'vertical',
+                stacked,
+                borderRadius: this.options.borderRadius ?? 2,
+                zIndexBase: areaSeries.length,
+            };
 
-            // Render grid
-            if (this._grid) {
-                const yTicks = this._yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this._yScale(tick));
+            const lineContext: LineSeriesContext<TData> = {
+                ...this._commonContext(plot, (phase, event) => this._emitMarker(phase, event)),
+                xScale: this._xCenter,
+                zIndexBase: areaSeries.length + barSeries.length,
+            };
 
-                this._grid.render(
-                    [],
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    chartRight - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
+            const areaRender = this._areaRenderer.render(areaSeries, areaContext);
+            const barRender = this._barRenderer.render(barSeries, barContext);
+            const lineRender = this._lineRenderer.render(lineSeries, lineContext);
+
+            this.registerHighlightGroups([
+                ...this._areaRenderer.groups,
+                ...this._barRenderer.groups,
+                ...this._lineRenderer.groups,
+            ]);
+
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
 
             return Promise.all([
-                this._xAxis.render(),
-                this._yAxis.render(),
-                this._drawBars(),
-                this._drawLines(),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                areaRender,
+                barRender,
+                lineRender,
             ]);
         });
     }
@@ -834,14 +459,16 @@ export class TrendChart<TData = unknown> extends Chart<TrendChartOptions<TData>,
  * ```ts
  * createTrendChart(target, {
  *     data: [
- *         { month: 'Jan', revenue: 120, target: 100 },
- *         { month: 'Feb', revenue: 150, target: 130 },
+ *         { month: 'Jan', revenue: 120, profit: 40, target: 100 },
+ *         { month: 'Feb', revenue: 150, profit: 55, target: 130 },
  *     ],
  *     key: 'month',
  *     series: [
- *         { id: 'revenue', type: 'bar', label: 'Revenue', value: 'revenue' },
+ *         { id: 'revenue', type: 'area', label: 'Revenue', value: 'revenue' },
+ *         { id: 'profit', type: 'bar', label: 'Profit', value: 'profit' },
  *         { id: 'target', type: 'line', label: 'Target', value: 'target' },
  *     ],
+ *     overview: true,
  * });
  * ```
  */

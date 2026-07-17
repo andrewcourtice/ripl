@@ -285,6 +285,13 @@ export default tseslint.config(
             '@typescript-eslint/no-inferrable-types': 'off',
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-empty-function': 'warn',
+            // Allow `_`-prefixed arguments (and caught errors) that are intentionally unused — e.g. a
+            // base hook whose default ignores a parameter that overrides consume. Unused local
+            // variables are still reported (delete them rather than prefixing).
+            '@typescript-eslint/no-unused-vars': ['error', {
+                'argsIgnorePattern': '^_',
+                'caughtErrorsIgnorePattern': '^_',
+            }],
             // Enforce `import type` for type-only imports so the codebase stays compatible with
             // `verbatimModuleSyntax` and the future TypeScript 7 compiler.
             '@typescript-eslint/consistent-type-imports': ['error', {

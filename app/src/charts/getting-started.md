@@ -172,7 +172,7 @@ chart.destroy();
 | [Sankey](/charts/sankey) | `createSankeyChart` | Flow diagrams |
 | [Chord](/charts/chord) | `createChordChart` | Relationship matrices |
 | [Sunburst](/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
-| [Trend](/charts/trend) | `createTrendChart` | Sparkline-style |
+| [Trend](/charts/trend) | `createTrendChart` | Mixed line/bar/area, stacking, navigator |
 | [Stock](/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
 | [Gantt](/charts/gantt) | `createGanttChart` | Tasks over a time axis |
 | [Realtime](/charts/realtime) | `createRealtimeChart` | Streaming sliding window |

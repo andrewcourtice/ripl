@@ -722,6 +722,7 @@ interface TrendRow {
     id: string;
     australia: number;
     sweden: number;
+    norway: number;
     greatBritain: number;
 }
 
@@ -729,31 +730,36 @@ const TREND_DATA: TrendRow[] = [
     {
         id: '2018',
         australia: 30,
-        sweden: 20,
+        sweden: 48,
+        norway: 18,
         greatBritain: 45,
     },
     {
         id: '2019',
         australia: 45,
-        sweden: 35,
+        sweden: 62,
+        norway: 22,
         greatBritain: 50,
     },
     {
         id: '2020',
         australia: 25,
-        sweden: 40,
+        sweden: 55,
+        norway: 15,
         greatBritain: 38,
     },
     {
         id: '2021',
         australia: 55,
-        sweden: 30,
+        sweden: 70,
+        norway: 26,
         greatBritain: 60,
     },
     {
         id: '2022',
         australia: 40,
-        sweden: 50,
+        sweden: 66,
+        norway: 20,
         greatBritain: 52,
     },
 ];
@@ -762,20 +768,27 @@ createTrendChart(mount('trend'), {
     animation: false,
     title: 'Trend — Mixed series',
     legend: true,
+    overview: true,
     data: TREND_DATA,
     key: 'id',
     series: [
+        {
+            type: 'area',
+            id: 'sweden',
+            label: 'Sweden',
+            value: 'sweden',
+        },
+        {
+            type: 'area',
+            id: 'norway',
+            label: 'Norway',
+            value: 'norway',
+        },
         {
             type: 'bar',
             id: 'australia',
             label: 'Australia',
             value: 'australia',
-        },
-        {
-            type: 'bar',
-            id: 'sweden',
-            label: 'Sweden',
-            value: 'sweden',
         },
         {
             type: 'line',

@@ -1,9 +1,11 @@
 # Trend Chart
 
-The **Trend Chart** is a composite chart that lets you mix bar, line, and area series on the same axes. This makes it ideal for dashboards where you want to overlay a trend line on top of bar data, or combine multiple visualization types in a single view. Each series specifies its `type` (`'bar'`, `'line'`, or `'area'`), and all share common features like grid, legend, and animated transitions.
+The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and area series on shared axes. Each series declares its `type` (`'line'`, `'bar'`, or `'area'`) plus the options specific to that type, and the chart reuses the same renderers as the standalone line, bar, and area charts. Series paint back-to-front as **area → bar → line** so lines never hide behind fills or bars, and overlaid areas are drawn largest-first so smaller areas stay visible. Same-type series can be stacked, and an optional **navigator** strip beneath the plot lets you window the visible x-range (with wheel/drag pan-zoom on the plot itself).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
+
+## Example
 
 <ripl-example @context-changed="contextChanged">
     <template #footer>
@@ -14,28 +16,30 @@ The **Trend Chart** is a composite chart that lets you mix bar, line, and area s
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Trend">
+            <RiplField label="Stacked" inline>
+                <RiplSwitch v-model="stacked" />
+            </RiplField>
+            <RiplField label="Navigator" inline>
+                <RiplSwitch v-model="overview" />
+            </RiplField>
             <RiplField label="Line type">
-                <RiplSelect v-model="lineRenderer">
+                <RiplSelect v-model="lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
                     <option value="basis">Basis</option>
                     <option value="bumpX">Bump X</option>
-                    <option value="bumpY">Bump Y</option>
                     <option value="cardinal">Cardinal</option>
                     <option value="catmullRom">Catmull-Rom</option>
                     <option value="monotoneX">Monotone X</option>
-                    <option value="monotoneY">Monotone Y</option>
                     <option value="natural">Natural</option>
                     <option value="step">Step</option>
-                    <option value="stepBefore">Step Before</option>
-                    <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
     useRiplChart,
 } from '../.vitepress/compositions/example';
@@ -50,129 +54,226 @@ import {
     createTrendChart,
 } from '@ripl/charts';
 
-import {
-    scaleContinuous,
-} from '@ripl/web';
+import type {
+    TrendChartSeriesOptions,
+} from '@ripl/charts';
 
-import {
-    stringUniqueId,
-} from '@ripl/utilities';
+import type {
+    PolylineRenderer,
+} from '@ripl/web';
 
 import {
     ref,
     watch,
 } from 'vue';
 
-const dataScale = scaleContinuous([0, 1], [-500, 1200]);
-const lineRenderer = ref('linear');
+interface SalesRow {
+    month: string;
+    revenue: number;
+    expenses: number;
+    orders: number;
+    target: number;
+}
 
 const seriesMeta = [
-    { type: 'bar', id: 'australia', label: 'Australia', value: 'australia' },
-    { type: 'bar', id: 'new-zealand', label: 'New Zealand', value: 'newZealand' },
-    { type: 'bar', id: 'sweden', label: 'Sweden', value: 'sweden' },
-    { type: 'bar', id: 'united-states', label: 'United States', value: 'unitedStates' },
-    { type: 'line', id: 'great-britain', label: 'Great Britain', value: 'greatBritain' },
+    { type: 'area' as const, id: 'revenue', label: 'Revenue', value: 'revenue' },
+    { type: 'area' as const, id: 'expenses', label: 'Expenses', value: 'expenses' },
+    { type: 'bar' as const, id: 'orders', label: 'Orders', value: 'orders' },
+    { type: 'line' as const, id: 'target', label: 'Target', value: 'target' },
 ];
+
+const stacked = ref(false);
+const overview = ref(false);
+const lineType = ref<PolylineRenderer>('monotoneX');
 
 const config = useChartConfig({
     features: { title: true, legend: true, axes: true, grid: true, animation: true },
-    title: 'Medal Trend',
-    axisY: 'Count',
+    title: 'Sales Trend',
+    axisY: 'Value',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
-function getSeries() {
+function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
     return seriesMeta.map(s => ({
         type: s.type,
         id: s.id,
         label: s.label,
         value: s.value,
         color: config.colors[s.id],
-        ...(s.type === 'line' ? { lineType: lineRenderer.value } : {}),
-    }));
+        ...(s.type === 'area' ? { opacity: 0.25 } : {}),
+        ...(s.type === 'bar' ? {} : { lineType: lineType.value }),
+    })) as TrendChartSeriesOptions<SalesRow>[];
 }
 
-let data = Array.from({ length: 15 }, getDataItem);
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+let data = Array.from({ length: MONTHS.length }, (_, index) => getDataItem(index));
 
 const {
     chart,
-    contextChanged
+    contextChanged,
 } = useRiplChart(context => createTrendChart(context, {
     data,
-    key: 'id',
+    key: 'month',
     series: getSeries(),
+    stacked: stacked.value,
+    overview: overview.value,
     ...buildCommonOptions(config),
 }));
 
 function apply() {
     chart.value?.update({
         series: getSeries(),
+        stacked: stacked.value,
+        overview: overview.value,
         ...buildCommonOptions(config),
     });
 }
 
 watch(config, apply, { deep: true });
-watch(lineRenderer, apply);
+watch([stacked, overview, lineType], apply);
 
-function getDataItem() {
-    return {
-        id: stringUniqueId(),
-        australia: getValue(),
-        newZealand: getValue(),
-        sweden: getValue(),
-        unitedStates: getValue(),
-        greatBritain: getValue(),
-    }
+function monthLabel(index: number): string {
+    const year = 24 + Math.floor(index / MONTHS.length);
+    return `${MONTHS[index % MONTHS.length]} '${year}`;
 }
 
-function getValue() {
-    return Math.round(dataScale(Math.random()));
+function getValue(min: number, max: number) {
+    return Math.round(min + Math.random() * (max - min));
+}
+
+function rollValues() {
+    return {
+        revenue: getValue(400, 1000),
+        expenses: getValue(120, 420),
+        orders: getValue(60, 320),
+        target: getValue(520, 900),
+    };
+}
+
+function getDataItem(index: number): SalesRow {
+    return {
+        month: monthLabel(index),
+        ...rollValues(),
+    };
 }
 
 function addData() {
-    data.push(getDataItem());
+    data.push(getDataItem(data.length));
     chart.value?.update({ data });
 }
 
 function randomise() {
-    data = data.map(value => ({
-        ...getDataItem(),
-        id: value.id
+    data = data.map(item => ({
+        month: item.month,
+        ...rollValues(),
     }));
 
     chart.value?.update({ data });
 }
 </script>
 
-```typescript
-const chart = createTrendChart(context, {
-    data,
-    key: 'id',
+## Usage
+
+```ts
+import {
+    createTrendChart,
+} from '@ripl/charts';
+
+const chart = createTrendChart('#container', {
+    data: [/* ... */],
+    key: 'month',
     series: [
-        {
-            type: 'bar',
-            id: 'australia',
-            label: 'Australia',
-            value: 'australia',
-        },
-        {
-            type: 'bar',
-            id: 'new-zealand',
-            label: 'New Zealand',
-            value: 'newZealand',
-        },
-        {
-            type: 'bar',
-            id: 'sweden',
-            label: 'Sweden',
-            value: 'sweden',
-        },
-        {
-            type: 'line',
-            id: 'united-states',
-            label: 'United States',
-            value: 'unitedStates',
-        },
+        { type: 'area', id: 'revenue', label: 'Revenue', value: 'revenue' },
+        { type: 'bar', id: 'orders', label: 'Orders', value: 'orders' },
+        { type: 'line', id: 'target', label: 'Target', value: 'target' },
     ],
+});
+```
+
+## Data Format
+
+A single flat dataset is shared by every series; each series reads its own numeric field via `value`, and `key` gives the category plotted along the x axis:
+
+```ts
+const data = [
+    { month: 'Jan',
+        revenue: 620,
+        orders: 140,
+        target: 700 },
+    { month: 'Feb',
+        revenue: 780,
+        orders: 190,
+        target: 720 },
+    { month: 'Mar',
+        revenue: 550,
+        orders: 120,
+        target: 680 },
+];
+```
+
+## Variants
+
+### Stacked
+
+Same-type series stack independently — bars stack among bar series, areas among area series:
+
+```ts
+createTrendChart('#container', {
+    data,
+    key: 'month',
+    stacked: true,
+    series: [
+        { type: 'area', id: 'revenue', label: 'Revenue', value: 'revenue' },
+        { type: 'area', id: 'expenses', label: 'Expenses', value: 'expenses' },
+        { type: 'line', id: 'target', label: 'Target', value: 'target' },
+    ],
+});
+```
+
+### Navigator
+
+Enable the overview strip to window the visible x-range (and pan/zoom on the plot):
+
+```ts
+createTrendChart('#container', {
+    data,
+    key: 'month',
+    overview: true,
+    series: [
+        { type: 'bar', id: 'orders', label: 'Orders', value: 'orders' },
+        { type: 'line', id: 'target', label: 'Target', value: 'target' },
+    ],
+});
+```
+
+## Options
+
+- **`data`** — The data array shared by all series
+- **`series`** — Array of series, each a discriminated union on `type`:
+  - **`type: 'line'`** — `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
+  - **`type: 'area'`** — as line, plus `opacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
+  - **`type: 'bar'`** — `id`, `value`, `label`, optional `color`
+- **`key`** — Key accessor for the categorical x-axis
+- **`stacked`** — Stack same-type series (default `false`)
+- **`borderRadius`** — Corner radius applied to bars (default `2`)
+- **`overview`** — `boolean | { size }` — Show the navigator strip; enabling it also turns on in-plot pan/zoom
+- **`navigator`** — `boolean | NavigatorInteractions` — Configure in-plot pan/zoom/brush directly
+- **`labels`** — `boolean | anchor` — Show value labels next to marks
+- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair
+- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
+- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`format`** — Format applied to values in tooltips and labels
+
+## Events
+
+Bar series emit `barclick` / `barenter` / `barleave`, and line/area markers emit `markerclick` / `markerenter` / `markerleave`. Each payload carries `{ x, y, xValue, yValue, seriesId }`:
+
+```ts
+chart.on('markerclick', event => {
+    const { seriesId, xValue, yValue } = event.data;
+    console.log(`${seriesId} @ ${xValue}: ${yValue}`);
 });
 ```
