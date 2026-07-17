@@ -639,6 +639,12 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 ...nodeUpdates.map(([, group]) => group),
             ];
 
+            // Legend hover highlights the hovered cluster's nodes (legend id = node.group ?? node.id;
+            // node group ids are `node-<id>`), dimming the other clusters.
+            const nodeClusterOf = new Map<string, string>();
+            nodes.forEach(node => nodeClusterOf.set(`node-${node.id}`, node.group ?? node.id));
+            this.registerHighlightGroups(this._nodeElements, group => nodeClusterOf.get(group.id) ?? group.id);
+
             const entryCircles = entryNodeGroups.flatMap(group => group.getElementsByType('circle') as Circle[]);
             const entryLabels = entryNodeGroups.flatMap(group => group.getElementsByType('text') as Text[]);
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);

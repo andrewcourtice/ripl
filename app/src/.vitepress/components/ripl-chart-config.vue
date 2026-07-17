@@ -126,7 +126,7 @@
         </RiplConfigSection>
 
         <RiplConfigSection v-if="config.features.navigator" title="Navigation" :default-open="false">
-            <RiplField label="Pan &amp; zoom" inline>
+            <RiplField label="Navigator" inline>
                 <RiplSwitch v-model="config.navigatorEnabled" />
             </RiplField>
             <RiplField v-if="config.navigatorEnabled" label="Zoom sensitivity">

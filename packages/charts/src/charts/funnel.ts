@@ -302,6 +302,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 ...updateGroups,
             ];
 
+            // Legend hover dims the other segments (group id == legend item id == item key).
+            this.registerHighlightGroups(this._groups);
+
             // Animate entries
             const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
             const entryTexts = entryGroups.flatMap(g => g.getElementsByType('text'));

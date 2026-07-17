@@ -594,6 +594,15 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 ...nodeUpdateGroups,
             ];
 
+            // Legend hover highlights the node plus its incident links, dimming the rest. Node group
+            // ids equal the node id; link group ids are `${source}-${target}`, owned by both ends.
+            const linkOwners = new Map<string, string[]>();
+            links.forEach(link => linkOwners.set(`${link.source}-${link.target}`, [link.source, link.target]));
+            this.registerHighlightGroups(
+                [...this._nodeGroups, ...this._linkGroups],
+                group => linkOwners.get(group.id) ?? group.id
+            );
+
             // Animate
             const linkPaths = linkEntryGroups.flatMap(g => g.getElementsByType('sankey-link')) as SankeyLinkPath[];
 

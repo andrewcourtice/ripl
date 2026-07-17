@@ -401,6 +401,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 ...updateGroups,
             ];
 
+            // Legend hover dims the other cells (group id == legend item id == node key).
+            this.registerHighlightGroups(this._groups);
+
             // Animate entries
             const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
 

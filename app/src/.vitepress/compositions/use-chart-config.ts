@@ -321,7 +321,10 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.navigator) {
-        // Emit the object form so the demo can tune zoom sensitivity; `false` disables it.
+        // Emit both `overview` (the scrub-bar strip, on category-axis charts — inert elsewhere)
+        // and `navigator` (in-plot pan/zoom, with the tuned sensitivity). `overview: true` implies
+        // a navigator, but passing the object too keeps the sensitivity; `false` disables both.
+        options.overview = config.navigatorEnabled;
         options.navigator = config.navigatorEnabled
             ? {
                 zoom: {

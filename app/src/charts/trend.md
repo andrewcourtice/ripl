@@ -19,9 +19,6 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
             <RiplField label="Stacked" inline>
                 <RiplSwitch v-model="extras.stacked" />
             </RiplField>
-            <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="extras.overview" />
-            </RiplField>
             <RiplField label="Line type">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
@@ -95,7 +92,6 @@ const seriesMeta = [
 
 const { extras, reset } = useChartExtras({
     stacked: false,
-    overview: false,
     lineType: 'monotoneX' as PolylineRenderer,
     borderRadius: 2,
     fillOpacity: 0.25,
@@ -113,6 +109,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        navigator: true,
     },
     title: 'Sales Trend',
     axisY: 'Value',
@@ -134,7 +131,6 @@ function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
 function buildOptions() {
     return {
         stacked: extras.stacked,
-        overview: extras.overview,
         borderRadius: extras.borderRadius,
         series: getSeries(),
         ...buildCommonOptions(config),

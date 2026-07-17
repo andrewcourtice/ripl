@@ -26,9 +26,6 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
             <RiplField label="Corner radius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="extras.overview" />
-            </RiplField>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -69,7 +66,6 @@ const { extras, reset } = useChartExtras({
     stacked: false,
     horizontal: false,
     borderRadius: 2,
-    overview: false,
 });
 
 const config = useChartConfig({
@@ -83,6 +79,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        navigator: true,
         annotations: true,
     },
     title: 'Monthly Breakdown',
@@ -122,7 +119,6 @@ function buildOptions() {
         orientation: extras.horizontal ? 'horizontal' : 'vertical',
         borderRadius: extras.borderRadius,
         series: getSeries(),
-        overview: extras.overview,
         ...buildCommonOptions(config),
     };
 

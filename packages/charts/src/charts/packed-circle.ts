@@ -390,6 +390,9 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 ...updates.map(([, group]) => group),
             ];
 
+            // Legend hover dims the other circles (group id == legend item id == node key).
+            this.registerHighlightGroups(this._groups);
+
             const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
