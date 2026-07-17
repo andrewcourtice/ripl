@@ -19,10 +19,10 @@ import type {
 import {
     Box,
     getEuclideanDistance,
-    getExtent,
 } from '../math';
 
 import {
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -533,8 +533,8 @@ export class Polyline extends Shape2D<PolylineState> {
 
     /** @internal Local-space bounding box of the polyline. */
     public _getLocalBoundingBox(): Box {
-        const [left, right] = getExtent(this.points, point => point[0]);
-        const [top, bottom] = getExtent(this.points, point => point[1]);
+        const [left, right] = numberExtent(this.points, point => point[0]);
+        const [top, bottom] = numberExtent(this.points, point => point[1]);
 
         return new Box(
             top,

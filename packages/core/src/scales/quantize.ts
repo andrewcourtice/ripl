@@ -5,6 +5,7 @@ import {
 
 import {
     arrayMapRange,
+    numberClamp,
 } from '@ripl/utilities';
 
 import type {
@@ -30,7 +31,7 @@ export function scaleQuantize<TRange>(
         range,
         convert: value => {
             const position = (value - domainMin) / domainLength;
-            const index = Math.min(rangeLength - 1, Math.max(0, Math.floor(position * rangeLength)));
+            const index = numberClamp(Math.floor(position * rangeLength), 0, rangeLength - 1);
 
             return range[index];
         },

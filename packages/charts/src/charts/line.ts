@@ -64,12 +64,12 @@ import type {
 
 import {
     Box,
-    getExtent,
     scaleContinuous,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -222,10 +222,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const keys = data.map(getKey);
 
             const seriesExtents = series
-                .flatMap(srs => getExtent(data, resolveAccessor<TData, number>(srs.value)))
+                .flatMap(srs => numberExtent(data, resolveAccessor<TData, number>(srs.value)))
                 .concat(0);
 
-            const dataExtent = getExtent(seriesExtents, functionIdentity);
+            const dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);

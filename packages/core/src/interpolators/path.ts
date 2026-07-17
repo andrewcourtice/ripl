@@ -1,5 +1,4 @@
 import {
-    fractional,
     getPolygonPoints,
     getWaypoint,
     normaliseBorderRadius,
@@ -17,6 +16,7 @@ import {
 } from './number';
 
 import {
+    numberFractional,
     typeIsArray,
     typeIsNil,
     typeIsNumber,
@@ -194,7 +194,7 @@ export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
         const lowerBound = Math.floor(offset);
         const upperBound = Math.ceil(offset);
 
-        return getWaypoint(points[lowerBound], points[upperBound], fractional(offset));
+        return getWaypoint(points[lowerBound], points[upperBound], numberFractional(offset));
     };
 }
 

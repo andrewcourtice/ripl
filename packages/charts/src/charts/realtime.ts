@@ -62,13 +62,13 @@ import {
     createGroup,
     createPolyline,
     easeOutCubic,
-    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Configuration for an individual realtime chart series. */
@@ -455,7 +455,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 allValues.push(0, 1);
             }
 
-            let [yMin, yMax] = getExtent(allValues, functionIdentity);
+            let [yMin, yMax] = numberExtent(allValues, functionIdentity);
 
             // Apply fixed bounds if provided
             if (this.options.yMin !== undefined) {

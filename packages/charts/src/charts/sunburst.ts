@@ -6,6 +6,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -47,7 +51,6 @@ import {
     createArc,
     createGroup,
     easeOutQuint,
-    getTotal,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -55,6 +58,7 @@ import {
 
 import {
     arrayJoin,
+    numberSum,
 } from '@ripl/utilities';
 
 /** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
@@ -132,7 +136,7 @@ function flattenNodes<TData = unknown>(
     parentColor?: string,
     resolvedColors?: Map<string, string>
 ): FlattenedArc<TData>[] {
-    const total = getTotal(nodes, node => node.value);
+    const total = numberSum(nodes, node => node.value);
 
     if (total === 0) return [];
 
@@ -232,9 +236,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const size = Math.min(area.width, area.height);
+            const { cx, cy, size } = areaCenter(area);
 
             const offset = TAU / 4;
             const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);

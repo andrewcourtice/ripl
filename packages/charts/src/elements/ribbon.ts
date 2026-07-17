@@ -7,8 +7,6 @@ import type {
 import {
     Box,
     getThetaPoint,
-    max,
-    min,
     Shape2D,
 } from '@ripl/core';
 
@@ -117,10 +115,10 @@ export class Ribbon extends Shape2D<RibbonState> {
         const [tx2, ty2] = getThetaPoint(targetEnd, radius, cx, cy);
 
         return new Box(
-            min(sy1, sy2, ty1, ty2, cy),
-            min(sx1, sx2, tx1, tx2, cx),
-            max(sy1, sy2, ty1, ty2, cy),
-            max(sx1, sx2, tx1, tx2, cx)
+            Math.min(sy1, sy2, ty1, ty2, cy),
+            Math.min(sx1, sx2, tx1, tx2, cx),
+            Math.max(sy1, sy2, ty1, ty2, cy),
+            Math.max(sx1, sx2, tx1, tx2, cx)
         );
     }
 

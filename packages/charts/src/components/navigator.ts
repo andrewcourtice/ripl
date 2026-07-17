@@ -35,13 +35,17 @@ import type {
 } from '@ripl/core';
 
 import {
-    clamp,
     createGroup,
     createPolyline,
     createRect,
     scaleBand,
     setColorAlpha,
 } from '@ripl/core';
+
+import {
+    numberClamp,
+    numberSum,
+} from '@ripl/utilities';
 
 import {
     onDOMEvent,
@@ -243,7 +247,7 @@ export class ChartNavigator extends ChartComponent {
 
     /** The main-axis pixel position for a `[0, 1]` window fraction. */
     private _mainForFraction(fraction: number): number {
-        return this._mainStart() + clamp(fraction, 0, 1) * this._mainSize();
+        return this._mainStart() + numberClamp(fraction, 0, 1) * this._mainSize();
     }
 
     /** The cross-axis pixel position for a value (values grow up for horizontal, right for vertical). */
@@ -263,7 +267,7 @@ export class ChartNavigator extends ChartComponent {
         const [min, max] = valueExtent;
         const span = max - min || 1;
         // Values ≥ 0 sit on the strip floor; a diverging series anchors at 0.
-        const baseline = clamp(0, min, max);
+        const baseline = numberClamp(0, min, max);
 
         const active = series.filter(srs => srs.values.length > 0);
         const areaSeries = active.filter(srs => srs.type === 'area');
@@ -365,7 +369,7 @@ export class ChartNavigator extends ChartComponent {
             const bottom: Point[] = [];
 
             srs.values.forEach((value, index) => {
-                const lower = areaSeries.slice(0, seriesIndex).reduce((sum, previous) => sum + (previous.values[index] ?? 0), 0);
+                const lower = numberSum(areaSeries.slice(0, seriesIndex), previous => previous.values[index] ?? 0);
                 const main = mainFor(index, count);
 
                 top.push(this._point(main, this._crossForValue(lower + value, min, span)));
@@ -605,12 +609,12 @@ export class ChartNavigator extends ChartComponent {
 
         if (mode === 'move') {
             const width = end - start;
-            start = clamp(startWindow.start + delta, 0, 1 - width);
+            start = numberClamp(startWindow.start + delta, 0, 1 - width);
             end = start + width;
         } else if (mode === 'resize-start') {
-            start = clamp(startWindow.start + delta, 0, end - MIN_WINDOW);
+            start = numberClamp(startWindow.start + delta, 0, end - MIN_WINDOW);
         } else {
-            end = clamp(startWindow.end + delta, start + MIN_WINDOW, 1);
+            end = numberClamp(startWindow.end + delta, start + MIN_WINDOW, 1);
         }
 
         this._onWindow({

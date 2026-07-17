@@ -1,14 +1,14 @@
 import {
-    clamp,
-} from '../math';
-
-import {
     createScale,
 } from './_base';
 
 import type {
     Scale,
 } from './types';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 /** Options for a point scale, controlling outer padding and alignment within the range. */
 export interface PointScaleOptions {
@@ -60,7 +60,7 @@ export function scalePoint<TDomain = string>(
         range,
         convert: value => positions.get(value) ?? NaN,
         invert: value => {
-            const index = clamp(Math.round((value - start) / step), 0, Math.max(0, count - 1));
+            const index = numberClamp(Math.round((value - start) / step), 0, Math.max(0, count - 1));
 
             return domain[index];
         },

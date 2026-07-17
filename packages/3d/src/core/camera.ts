@@ -21,6 +21,7 @@ import {
 } from '@ripl/core';
 
 import {
+    numberClamp,
     typeIsBoolean,
 } from '@ripl/utilities';
 
@@ -256,10 +257,10 @@ export class Camera extends Disposer {
 
         // Convert to spherical coordinates
         const theta = Math.atan2(offset[0], offset[2]) + deltaTheta;
-        let phi = Math.acos(Math.max(-1, Math.min(1, offset[1] / dist))) + deltaPhi;
+        let phi = Math.acos(numberClamp(offset[1] / dist, -1, 1)) + deltaPhi;
 
         // Clamp phi to avoid flipping
-        phi = Math.max(0.01, Math.min(Math.PI - 0.01, phi));
+        phi = numberClamp(phi, 0.01, Math.PI - 0.01);
 
         this._position = [
             this._target[0] + dist * Math.sin(phi) * Math.sin(theta),

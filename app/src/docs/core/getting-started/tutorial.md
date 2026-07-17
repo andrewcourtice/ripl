@@ -431,8 +431,11 @@ import {
 } from '../../../.vitepress/compositions/example';
 
 import {
+    numberClamp,
+} from '@ripl/utilities';
+
+import {
     Circle,
-    clamp,
     createCircle,
     createGroup,
     createRect,
@@ -534,7 +537,7 @@ watch(changePropsRadius, (radius) => {
         return;
     }
 
-    changeCircle.radius = clamp(radius, changePropsMin.value, changePropsMax.value);
+    changeCircle.radius = numberClamp(radius, changePropsMin.value, changePropsMax.value);
 
     changeContext.value.clear();
     changeCircle.render(changeContext.value);

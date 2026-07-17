@@ -5,6 +5,7 @@
 
 import {
     numberNice,
+    numberSum,
 } from '@ripl/utilities';
 
 /** A histogram bin covering the half-open interval `[x0, x1)` (the last bin includes `x1`). */
@@ -65,7 +66,7 @@ export function mean(values: number[]): number {
         return NaN;
     }
 
-    return values.reduce((sum, value) => sum + value, 0) / values.length;
+    return numberSum(values) / values.length;
 }
 
 /** The population standard deviation of the values. */

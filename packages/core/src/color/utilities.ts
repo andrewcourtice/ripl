@@ -3,15 +3,15 @@ import {
     serialiseRGBA,
 } from '.';
 
-import {
-    clamp,
-} from '../math';
-
 import type {
     ColorHSLA,
     ColorHSVA,
     ColorRGBA,
 } from './types';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 /** Returns a new color string with the alpha channel replaced by the given value. */
 export function setColorAlpha(color: string, alpha: number) {
@@ -70,9 +70,9 @@ export function rgbaToHSL(red: number, green: number, blue: number, alpha: numbe
 
 /** Converts HSLA values to an RGBA tuple. */
 export function hslToRGBA(hue: number, saturation: number, lightness: number, alpha: number = 1): ColorRGBA {
-    const h = clamp(hue, 0, 360) / 360;
-    const s = clamp(saturation, 0, 100) / 100;
-    const l = clamp(lightness, 0, 100) / 100;
+    const h = numberClamp(hue, 0, 360) / 360;
+    const s = numberClamp(saturation, 0, 100) / 100;
+    const l = numberClamp(lightness, 0, 100) / 100;
 
     const hueToRGB = (p: number, q: number, t: number): number => {
         if (t < 0) t += 1;
@@ -103,7 +103,7 @@ export function hslToRGBA(hue: number, saturation: number, lightness: number, al
         Math.round(r * 255),
         Math.round(g * 255),
         Math.round(b * 255),
-        clamp(alpha, 0, 1),
+        numberClamp(alpha, 0, 1),
     ];
 }
 
@@ -145,9 +145,9 @@ export function rgbaToHSV(red: number, green: number, blue: number, alpha: numbe
 
 /** Converts HSVA values to an RGBA tuple. */
 export function hsvToRGBA(hue: number, saturation: number, value: number, alpha: number = 1): ColorRGBA {
-    const h = clamp(hue, 0, 360) / 60;
-    const s = clamp(saturation, 0, 100) / 100;
-    const v = clamp(value, 0, 100) / 100;
+    const h = numberClamp(hue, 0, 360) / 60;
+    const s = numberClamp(saturation, 0, 100) / 100;
+    const v = numberClamp(value, 0, 100) / 100;
 
     const c = v * s;
     const x = c * (1 - Math.abs((h % 2) - 1));
@@ -173,6 +173,6 @@ export function hsvToRGBA(hue: number, saturation: number, value: number, alpha:
         Math.round((r + m) * 255),
         Math.round((g + m) * 255),
         Math.round((b + m) * 255),
-        clamp(alpha, 0, 1),
+        numberClamp(alpha, 0, 1),
     ];
 }

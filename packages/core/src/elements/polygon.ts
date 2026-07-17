@@ -14,7 +14,6 @@ import type {
 import {
     Box,
     getPolygonPoints,
-    max,
 } from '../math';
 
 /** State interface for a regular polygon element, defining center, radius, and number of sides. */
@@ -65,7 +64,7 @@ export class Polygon extends Shape2D<PolygonState> {
     }
 
     public set sides(value) {
-        this.setStateValue('sides', max(value, 3));
+        this.setStateValue('sides', Math.max(value, 3));
     }
 
     constructor(options: Shape2DOptions<PolygonState>) {

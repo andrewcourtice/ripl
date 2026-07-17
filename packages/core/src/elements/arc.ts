@@ -14,8 +14,6 @@ import type {
 import {
     Box,
     getThetaPoint,
-    max,
-    min,
 } from '../math';
 
 import {
@@ -162,10 +160,10 @@ export class Arc extends Shape2D<ArcState> {
 
         if (typeIsNil(innerRadius)) {
             return new Box(
-                min(cy, outerY1, outerY2),
-                min(cx, outerX1, outerX2),
-                max(cy, outerY1, outerY2),
-                max(cx, outerX1, outerX2)
+                Math.min(cy, outerY1, outerY2),
+                Math.min(cx, outerX1, outerX2),
+                Math.max(cy, outerY1, outerY2),
+                Math.max(cx, outerX1, outerX2)
             );
         }
 
@@ -173,10 +171,10 @@ export class Arc extends Shape2D<ArcState> {
         const [innerX2, innerY2] = getThetaPoint(endAngle, innerRadius, cx, cy);
 
         return new Box(
-            min(innerY1, innerY2, outerY1, outerY2),
-            min(innerX1, innerX2, outerX1, outerX2),
-            max(innerY1, innerY2, outerY1, outerY2),
-            max(innerX1, innerX2, outerX1, outerX2)
+            Math.min(innerY1, innerY2, outerY1, outerY2),
+            Math.min(innerX1, innerX2, outerX1, outerX2),
+            Math.max(innerY1, innerY2, outerY1, outerY2),
+            Math.max(innerX1, innerX2, outerX1, outerX2)
         );
     }
 

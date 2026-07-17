@@ -62,13 +62,11 @@ import type {
 
 import {
     Box,
-    clamp,
     createGroup,
     createLine,
     createRect,
     easeOutCubic,
     easeOutQuart,
-    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
@@ -76,6 +74,8 @@ import {
 import {
     arrayJoin,
     functionIdentity,
+    numberClamp,
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -526,7 +526,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
 
         const volumes = data.map(item => this._getAccessor<number>(volumeAccessor)(item));
-        const volumeExtent = getExtent(volumes.concat(0), functionIdentity);
+        const volumeExtent = numberExtent(volumes.concat(0), functionIdentity);
 
         this._volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
 
@@ -646,7 +646,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
             const highs = allValues.map(v => v.high);
             const lows = allValues.map(v => v.low);
-            const priceExtent = getExtent(highs.concat(lows), functionIdentity);
+            const priceExtent = numberExtent(highs.concat(lows), functionIdentity);
 
             const keys = allValues.map(v => v.key);
 
@@ -689,7 +689,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 const rangeStart = yAxisBoundingBox.right + 20;
                 const rangeEnd = right;
                 const index = Math.round(((value - rangeStart) / (rangeEnd - rangeStart)) * keys.length - 0.5);
-                return keys[clamp(index, 0, keys.length - 1)];
+                return keys[numberClamp(index, 0, keys.length - 1)];
             };
 
             this._xScale = Object.assign(

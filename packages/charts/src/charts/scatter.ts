@@ -63,7 +63,6 @@ import {
     Box,
     createCircle,
     createGroup,
-    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
@@ -71,6 +70,7 @@ import {
 import {
     arrayJoin,
     functionIdentity,
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -190,7 +190,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             data.forEach(item => sizes.push(getSize(item)));
         });
 
-        return sizes.length > 0 ? getExtent(sizes, functionIdentity) : [1, 1];
+        return sizes.length > 0 ? numberExtent(sizes, functionIdentity) : [1, 1];
     }
 
     /**
@@ -535,11 +535,11 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const getKey = resolveAccessor<TData, string>(key);
 
-            const xExtents = series.flatMap(({ xBy }) => getExtent(data, resolveAccessor<TData, number>(xBy)));
-            const yExtents = series.flatMap(({ yBy }) => getExtent(data, resolveAccessor<TData, number>(yBy)));
+            const xExtents = series.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
+            const yExtents = series.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
 
-            const xExtent = getExtent(xExtents, functionIdentity);
-            const yExtent = getExtent(yExtents, functionIdentity);
+            const xExtent = numberExtent(xExtents, functionIdentity);
+            const yExtent = numberExtent(yExtents, functionIdentity);
             this._sizeScale = scaleContinuous(this._getSizeExtent(), [0, 1]);
 
             const layout = this.createLayout();
