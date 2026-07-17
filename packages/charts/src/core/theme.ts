@@ -77,9 +77,29 @@ export const darkTheme: Theme = {
     tooltipColor: '#0b0f1a',
 };
 
+/**
+ * A colourblind-safe theme using the Okabe–Ito qualitative palette and a CVD-friendly sequential
+ * scale, for accessible categorical encoding. Pair with data labels for the strongest accessibility.
+ */
+export const colorBlindTheme: Theme = {
+    ...lightTheme,
+    palette: [
+        '#e69f00',
+        '#56b4e9',
+        '#009e73',
+        '#f0e442',
+        '#0072b2',
+        '#d55e00',
+        '#cc79a7',
+        '#999999',
+    ],
+    sequentialScheme: ['#00204d', '#ffe945'],
+};
+
 const THEME_REGISTRY = new Map<string, Theme>([
     ['light', lightTheme],
     ['dark', darkTheme],
+    ['colorblind', colorBlindTheme],
 ]);
 
 let defaultTheme: Theme = lightTheme;

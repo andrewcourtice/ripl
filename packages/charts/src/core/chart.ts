@@ -97,6 +97,8 @@ export interface BaseChartOptions {
     animation?: boolean | Partial<ChartAnimationOptions>;
     /** Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a {@link Theme}. Falls back to the module default (see `setDefaultTheme`). */
     theme?: string | Theme;
+    /** Accessible description announced by screen readers (sets the rendering element's ARIA label). Defaults to the title text. */
+    description?: string;
 }
 
 /** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
@@ -179,6 +181,8 @@ export class Chart<
     }
 
     protected init() {
+        this._applyAccessibility();
+
         this.scene.context.on('resize', () => {
             if (this._hasRendered) {
                 this.render();
@@ -188,6 +192,24 @@ export class Chart<
         if (this.autoRender) {
             this.render();
         }
+    }
+
+    /**
+     * Applies ARIA metadata to the rendering element so screen readers announce the chart as a
+     * labelled image. The label is the chart's `description`, falling back to the title text, then a
+     * generic "Chart". No-ops when the context's element does not support attributes (e.g. terminal).
+     */
+    private _applyAccessibility() {
+        const element = this.scene.context.element as unknown as { setAttribute?: (name: string, value: string) => void };
+
+        if (!element || typeof element.setAttribute !== 'function') {
+            return;
+        }
+
+        const label = this.options.description ?? this.titleOptions?.text ?? 'Chart';
+
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', label);
     }
 
     /** Merges partial options into the current options and re-renders if `autoRender` is enabled. */
@@ -204,6 +226,10 @@ export class Chart<
             ...this.options,
             ...options,
         };
+
+        if (options.title !== undefined || options.description !== undefined) {
+            this._applyAccessibility();
+        }
 
         if (this.autoRender) {
             this.render();
