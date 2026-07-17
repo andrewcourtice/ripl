@@ -34,6 +34,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     LineSeriesRenderer,
 } from '../core/series/line-series';
 
@@ -65,7 +70,6 @@ import type {
 import {
     Box,
     getExtent,
-    scaleContinuous,
 } from '@ripl/core';
 
 import {
@@ -251,7 +255,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const bottom = area.y + area.height;
 
             // Provisional value scale to measure the y-axis width.
-            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
@@ -263,7 +267,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
@@ -283,7 +287,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.renderGrid(
                 [],
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
                 plot
             );
 

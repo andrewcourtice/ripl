@@ -32,10 +32,12 @@ import type {
 
 import type {
     ChartAxisInput,
+    ChartAxisItemOptions,
     ChartCrosshairInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ChartYAxisItemOptions,
     CrosshairAxis,
 } from './options';
 
@@ -49,6 +51,10 @@ import {
     normalizeYAxisItem,
     resolveFormatLabel,
 } from './options';
+
+import {
+    axisTickCount,
+} from './scales';
 
 import type {
     ChartXAxisAlignment,
@@ -214,6 +220,10 @@ export abstract class CartesianChart<
 
     protected xAxis!: ChartXAxis;
     protected yAxis!: ChartYAxis;
+    /** Resolved x-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    protected xAxisOptions!: ChartAxisItemOptions<TData>;
+    /** Resolved y-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    protected yAxisOptions!: ChartYAxisItemOptions<TData>;
     protected tooltip?: Tooltip;
     protected grid?: Grid;
     protected crosshair?: Crosshair;
@@ -294,6 +304,9 @@ export abstract class CartesianChart<
         const axisOpts = normalizeAxis(this.options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y);
+
+        this.xAxisOptions = xAxis;
+        this.yAxisOptions = yAxis;
         const gridOpts = normalizeGrid(this.options.grid);
         const tooltipOpts = normalizeTooltip(this.options.tooltip);
         const crosshairOpts = normalizeCrosshair(this.options.crosshair, setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : undefined);
@@ -337,6 +350,9 @@ export abstract class CartesianChart<
         });
 
         this.yAxis.visible = yAxis.visible;
+
+        this.xAxis.tickCount = axisTickCount(xAxis);
+        this.yAxis.tickCount = axisTickCount(yAxis);
 
         if (gridOpts.visible) {
             this.grid = new Grid({

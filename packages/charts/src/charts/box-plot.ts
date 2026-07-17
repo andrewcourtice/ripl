@@ -40,6 +40,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     boxplotStats,
     rollup,
 } from '../core/statistics';
@@ -69,7 +74,6 @@ import {
     createLine,
     createRect,
     getExtent,
-    scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -377,9 +381,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            const valueScale = scaleContinuous(valueExtent, [bottom, top], {
-                nice: true,
-            });
+            const valueScale = createValueScale(this.yAxisOptions, valueExtent, [bottom, top]);
 
             this.yAxis.scale = valueScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
@@ -392,9 +394,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            const adjustedValueScale = scaleContinuous(valueExtent, [xAxisBox.top, top], {
-                nice: true,
-            });
+            const adjustedValueScale = createValueScale(this.yAxisOptions, valueExtent, [xAxisBox.top, top]);
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
@@ -416,7 +416,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             this.renderGrid(
                 [],
-                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
+                viewedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => viewedValueScale(tick)),
                 plot
             );
 

@@ -30,6 +30,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     BarSeriesRenderer,
 } from '../core/series/bar-series';
 
@@ -62,7 +67,6 @@ import {
     Box,
     getExtent,
     scaleBand,
-    scaleContinuous,
 } from '@ripl/core';
 
 import {
@@ -271,7 +275,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             if (this._isHorizontal) {
                 // Categories on Y, values on X.
-                const valueScale = scaleContinuous(dataExtent, [left, right], { padToTicks: 10 });
+                const valueScale = createValueScale(this.xAxisOptions, dataExtent, [left, right]);
 
                 this.xAxis.scale = valueScale;
                 this.xAxis.bounds = new Box(top, left, bottom, right);
@@ -288,7 +292,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
                 const yAxisBox = this.yAxis.getBoundingBox();
 
-                const adjustedValueScale = scaleContinuous(dataExtent, [yAxisBox.right, right], { padToTicks: 10 });
+                const adjustedValueScale = createValueScale(this.xAxisOptions, dataExtent, [yAxisBox.right, right]);
                 this.xAxis.scale = adjustedValueScale;
                 this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
@@ -307,7 +311,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.clipPlot(horizontalPlot);
 
                 this.renderGrid(
-                    adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                    adjustedValueScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => adjustedValueScale(tick)),
                     [],
                     horizontalPlot
                 );
@@ -325,7 +329,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             }
 
             // Categories on X, values on Y.
-            const valueScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            const valueScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
 
             this.yAxis.scale = valueScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
@@ -342,7 +346,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            const adjustedValueScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            const adjustedValueScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
@@ -362,7 +366,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.renderGrid(
                 [],
-                adjustedValueScale.ticks(10).map(tick => adjustedValueScale(tick)),
+                adjustedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => adjustedValueScale(tick)),
                 verticalPlot
             );
 

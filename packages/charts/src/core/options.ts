@@ -464,7 +464,12 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
 /** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
+/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`; category and time axes are selected by the chart. */
+export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'time' | 'band' | 'point';
+
 /** Options for a single axis (x or y). */
+// `TData` is retained for symmetry across the axis option family (ChartYAxisItemOptions, ChartAxisInput, etc.).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface ChartAxisItemOptions<TData = unknown> {
     /** Whether the axis line, ticks, and labels are rendered. */
     visible: boolean;
@@ -474,11 +479,22 @@ export interface ChartAxisItemOptions<TData = unknown> {
     fontColor: string;
     /** Optional axis title drawn alongside the tick labels. */
     title?: string;
-    /** Accessor selecting the value this axis reads from each data item. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value?: keyof TData | ((item: TData) => any);
     /** How tick values are formatted — a built-in {@link AxisFormatType}, an Intl number-format options object, or a custom formatter. */
     format?: ValueFormatInput;
+    /** Scale family for this axis. Value axes default to `'linear'`. See {@link AxisScaleType}. */
+    scale?: AxisScaleType;
+    /** Expands the value domain to round, tick-aligned bounds. `true` (default) nices to the tick count, a number nices to that many segments, `false` disables it. */
+    nice?: boolean | number;
+    /** Target number of ticks and grid lines along the axis. Defaults to 10. */
+    ticks?: number;
+    /** Explicit lower bound of the value domain (overrides the data extent). */
+    min?: number;
+    /** Explicit upper bound of the value domain (overrides the data extent). */
+    max?: number;
+    /** Logarithm base for a `'log'` scale. Defaults to 10. */
+    base?: number;
+    /** Exponent for a `'pow'` scale. Defaults to 1. */
+    exponent?: number;
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */
