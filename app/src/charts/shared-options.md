@@ -142,8 +142,28 @@ axis: {
 }
 ```
 
+Line charts render a **secondary (right-hand) y-axis** when a second entry is supplied; bind a series to it with the series `axis` option (an index or the axis `id`):
+
+<!-- eslint-skip -->
+```ts
+createLineChart('#container', {
+    // …
+    series: [
+        { id: 'revenue', label: 'Revenue', value: 'revenue' },
+        { id: 'growth', label: 'Growth %', value: 'growth', axis: 1 },
+    ],
+    axis: {
+        y: [
+            { title: 'Revenue ($)' },
+            { position: 'right', title: 'Growth %' },
+        ],
+    },
+});
+```
+
 > [!NOTE]
-> A secondary y-axis is on the 1.0 roadmap — today only the first y-axis in the array is rendered.
+> A secondary y-axis is currently rendered by line charts; area/bar/scatter follow the same
+> `axis.y` array + series `axis` pattern and are on the roadmap.
 
 ### Format Types
 

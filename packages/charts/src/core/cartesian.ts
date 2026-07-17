@@ -231,6 +231,10 @@ export abstract class CartesianChart<
 
     protected xAxis!: ChartXAxis;
     protected yAxis!: ChartYAxis;
+    /** All y-axes (primary plus any secondary). {@link CartesianChart.yAxis} is the primary (`yAxes[0]`). */
+    protected yAxes: ChartYAxis[] = [];
+    /** Resolved options for every y-axis, parallel to {@link CartesianChart.yAxes}. */
+    protected yAxesOptions: ChartYAxisItemOptions<TData>[] = [];
     /** Resolved x-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
     protected xAxisOptions!: ChartAxisItemOptions<TData>;
     /** Resolved y-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
@@ -322,10 +326,15 @@ export abstract class CartesianChart<
 
         const axisOpts = normalizeAxis(this.options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x, axisDefaults);
-        const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y, axisDefaults);
+        const yAxisInputs = Array.isArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
+        const yAxisOptionsList = yAxisInputs.map((input, index) => normalizeYAxisItem(input, {
+            ...axisDefaults,
+            position: index === 0 ? 'left' : 'right',
+        }));
 
         this.xAxisOptions = xAxis;
-        this.yAxisOptions = yAxis;
+        this.yAxesOptions = yAxisOptionsList;
+        this.yAxisOptions = yAxisOptionsList[0];
         const gridOpts = normalizeGrid(this.options.grid, { lineColor: this.theme.gridColor });
         const tooltipOpts = normalizeTooltip(this.options.tooltip, {
             fontColor: this.theme.tooltipColor,
@@ -362,22 +371,30 @@ export abstract class CartesianChart<
 
         this.xAxis.visible = xAxis.visible;
 
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            alignment: setup.yAxisAlignment ?? (yAxis.position === 'right' ? 'right' : 'left'),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
+        this.yAxes = yAxisOptionsList.map((yOpts, index) => {
+            const axis = new ChartYAxis({
+                scene: this.scene,
+                renderer: this.renderer,
+                bounds: Box.empty(),
+                scale: scaleContinuous([0, 1], [0, 1]),
+                alignment: index === 0
+                    ? (setup.yAxisAlignment ?? (yOpts.position === 'right' ? 'right' : 'left'))
+                    : yOpts.position,
+                labelFont: yOpts.font,
+                labelColor: yOpts.fontColor,
+                formatLabel: resolveFormatLabel(yOpts.format),
+                title: yOpts.title,
+            });
+
+            axis.visible = yOpts.visible;
+            axis.tickCount = axisTickCount(yOpts);
+
+            return axis;
         });
 
-        this.yAxis.visible = yAxis.visible;
+        this.yAxis = this.yAxes[0];
 
         this.xAxis.tickCount = axisTickCount(xAxis);
-        this.yAxis.tickCount = axisTickCount(yAxis);
 
         if (gridOpts.visible) {
             this.grid = new Grid({
@@ -906,6 +923,27 @@ export abstract class CartesianChart<
         }
 
         this._annotations.render(annotations, scales, plot);
+    }
+
+    /**
+     * Resolves a series `axis` binding — a y-axis index or a y-axis `id` — to an index into
+     * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
+     *
+     * @param axis - The series' `axis` option (index, id, or undefined).
+     * @returns The resolved y-axis index.
+     */
+    protected resolveSeriesAxisIndex(axis?: number | string): number {
+        if (axis === undefined) {
+            return 0;
+        }
+
+        if (typeof axis === 'number') {
+            return Math.max(0, Math.min(axis, this.yAxes.length - 1));
+        }
+
+        const byId = this.yAxesOptions.findIndex((opts, index) => (opts.id ?? String(index)) === axis);
+
+        return byId >= 0 ? byId : 0;
     }
 
     /** Sets up the crosshair to track within the given plot area. */

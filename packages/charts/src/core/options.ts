@@ -516,6 +516,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
 export interface ChartYAxisItemOptions<TData = unknown> extends ChartAxisItemOptions<TData> {
     /** Which side of the chart the y-axis is drawn on. */
     position: 'left' | 'right';
+    /** Stable identifier a series can bind to via its `axis` option. Defaults to the axis index. */
+    id?: string;
 }
 
 /** Combined x and y axis configuration. */
