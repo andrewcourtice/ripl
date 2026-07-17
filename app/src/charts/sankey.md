@@ -7,14 +7,21 @@ The **Sankey Chart** visualizes flow between nodes using weighted links. It's id
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Layout" :extras-reset="reset">
+            <RiplField label="Node width">
+                <RiplInputRange v-model="extras.nodeWidth" :min="8" :max="40" :step="1" />
+            </RiplField>
+            <RiplField label="Node padding">
+                <RiplInputRange v-model="extras.nodePadding" :min="0" :max="30" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +33,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,11 +41,23 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
+const { extras, reset } = useChartExtras({
+    nodeWidth: 20,
+    nodePadding: 10,
+});
+
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Budget Flow',
 });
 
@@ -55,6 +75,16 @@ function generateLinks() {
 
 let links = generateLinks();
 
+function buildOptions() {
+    return {
+        nodeWidth: extras.nodeWidth,
+        nodePadding: extras.nodePadding,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createSankeyChart(context, {
         nodes: [
@@ -69,11 +99,12 @@ const { contextChanged, chart } = useRiplChart(context => {
         ],
         links,
         padding: { top: 20, right: 80, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     links = generateLinks();

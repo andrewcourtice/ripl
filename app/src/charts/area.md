@@ -7,7 +7,7 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,9 +16,12 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area">
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area" :extras-reset="reset">
+            <RiplField label="Stacked" inline>
+                <RiplSwitch v-model="extras.stacked" />
+            </RiplField>
             <RiplField label="Line type">
-                <RiplSelect v-model="lineType">
+                <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
                     <option value="basis">Basis</option>
@@ -35,20 +38,17 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
                 </RiplSelect>
             </RiplField>
             <RiplField label="Line style">
-                <RiplSelect v-model="lineStyle">
+                <RiplSelect v-model="extras.lineStyle">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Stacked" inline>
-                <RiplSwitch v-model="stacked" />
+            <RiplField label="Fill opacity">
+                <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
             <RiplField label="Markers" inline>
-                <RiplSwitch v-model="markers" />
-            </RiplField>
-            <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="overview" />
+                <RiplSwitch v-model="extras.markers" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -63,6 +63,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -85,14 +86,28 @@ const seriesMeta = [
     { id: 'mobile', label: 'Mobile' },
 ];
 
-const stacked = ref(false);
-const lineType = ref<PolylineRenderer>('monotoneX');
-const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
-const markers = ref(false);
-const overview = ref(false);
+const { extras, reset } = useChartExtras({
+    stacked: false,
+    lineType: 'monotoneX' as PolylineRenderer,
+    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    fillOpacity: 0.3,
+    markers: false,
+});
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        axes: true,
+        grid: true,
+        tooltip: true,
+        crosshair: true,
+        format: true,
+        animation: true,
+        theme: true,
+        navigator: true,
+        annotations: true,
+    },
     title: 'Traffic by Device',
     axisX: 'Month',
     axisY: 'Sessions',
@@ -103,7 +118,7 @@ function generateData(count = 6) {
     return MONTHS.slice(0, count).map(month => ({
         month,
         desktop: Math.round(Math.random() * 600 + 200),
-        mobile: Math.round(Math.random() * 600 - 200),
+        mobile: Math.round(Math.random() * 400 + 100),
     }));
 }
 
@@ -114,37 +129,56 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
-        fillOpacity: 0.3,
-        lineType: lineType.value,
-        lineStyle: lineStyle.value,
-        markers: markers.value,
+        fillOpacity: extras.fillOpacity,
+        lineType: extras.lineType,
+        lineStyle: extras.lineStyle,
+        markers: extras.markers,
         color: config.colors[s.id],
     }));
 }
+
+function buildOptions() {
+    const options = {
+        stacked: extras.stacked,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
+
+    // Sample reference line + shaded band, drawn through the y scale.
+    options.annotations = config.annotationsVisible
+        ? [
+            {
+                axis: 'y',
+                value: 500,
+                label: 'Target',
+            },
+            {
+                type: 'band',
+                axis: 'y',
+                from: 0,
+                to: 200,
+                label: 'Baseline',
+            },
+        ]
+        : [];
+
+    return options;
+}
+
+const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createAreaChart(context, {
         data,
         key: 'month',
-        stacked: stacked.value,
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        stacked: stacked.value,
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([stacked, lineType, lineStyle, markers, overview], apply);
+// Furniture options (axes, grid, tooltip, crosshair, legend, theme, navigator) are only read when a
+// chart is constructed, so rebuild the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData(data.length);

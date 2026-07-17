@@ -7,7 +7,7 @@ The **Packed Circle Chart** renders each datum as a circle whose **area** encode
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,7 +16,7 @@ The **Packed Circle Chart** renders each datum as a circle whose **area** encode
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Packed Circle" />
+        <RiplChartConfig :config="config" />
     </template>
 </ripl-example>
 
@@ -42,7 +42,13 @@ import {
 const NAMES = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliet', 'Kilo', 'Lima'];
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Team Sizes',
 });
 
@@ -54,6 +60,8 @@ function makeItem(name: string) {
 }
 
 let data = NAMES.slice(0, 8).map(makeItem);
+
+const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createPackedCircleChart(context, {
@@ -67,26 +75,20 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-function apply() {
-    chart.value?.update({
-        data: [...data],
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch(config, () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     // Re-roll every circle's value, keeping the same members, so the pack reflows smoothly.
     data = data.map(item => makeItem(item.name));
-    apply();
+    chart.value?.update({ data: [...data] });
 }
 
 function addItem() {
     if (data.length < NAMES.length) {
         // Append one new circle; existing circles keep their values and animate to new positions.
         data = [...data, makeItem(NAMES[data.length])];
-        apply();
+        chart.value?.update({ data: [...data] });
     }
 }
 
@@ -94,7 +96,7 @@ function removeItem() {
     if (data.length > 3) {
         // Remove one circle; the rest re-pack inside the containing circle.
         data = data.slice(0, -1);
-        apply();
+        chart.value?.update({ data: [...data] });
     }
 }
 </script>

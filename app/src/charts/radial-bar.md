@@ -7,19 +7,31 @@ The **Radial Bar Chart** lays each category out as a concentric ring whose arc l
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Radial Bar">
+        <RiplChartConfig :config="config" extra-title="Rings" :extras-reset="reset">
+            <RiplField label="Max value">
+                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+            </RiplField>
+            <RiplField label="Inner radius">
+                <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.6" :step="0.05" />
+            </RiplField>
             <RiplField label="Range (°)">
-                <RiplInputRange v-model="range" :min="180" :max="360" :step="10" />
+                <RiplInputRange v-model="extras.range" :min="180" :max="360" :step="10" />
+            </RiplField>
+            <RiplField label="Ring gap">
+                <RiplInputRange v-model="extras.gap" :min="0" :max="0.9" :step="0.05" />
             </RiplField>
             <RiplField label="Rounded" inline>
-                <RiplSwitch v-model="rounded" />
+                <RiplSwitch v-model="extras.rounded" />
+            </RiplField>
+            <RiplField label="Track colour" inline>
+                <RiplColorInput v-model="extras.trackColor" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -33,6 +45,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -46,13 +59,27 @@ import {
 
 const LANGUAGES = ['JavaScript', 'Python', 'Rust', 'Go', 'TypeScript'];
 
-const range = ref(300);
-const rounded = ref(true);
+const { extras, reset } = useChartExtras({
+    maxValue: 100 as number | undefined,
+    innerRadius: 0.25,
+    range: 300,
+    gap: 0.25,
+    rounded: true,
+    trackColor: '#eceff3',
+});
 
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Language Popularity',
 });
+
+const example = ref();
 
 function generateData() {
     return LANGUAGES.map(language => ({
@@ -63,31 +90,31 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        maxValue: extras.maxValue,
+        innerRadius: extras.innerRadius,
+        range: extras.range,
+        gap: extras.gap,
+        rounded: extras.rounded,
+        trackColor: extras.trackColor,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createRadialBarChart(context, {
         data,
         key: 'language',
         value: 'share',
-        maxValue: 100,
-        innerRadius: 0.25,
-        range: range.value,
-        rounded: rounded.value,
         format: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        range: range.value,
-        rounded: rounded.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([range, rounded], apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

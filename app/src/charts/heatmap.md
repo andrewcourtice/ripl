@@ -7,19 +7,34 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Colour scale">
+        <RiplChartConfig :config="config" extra-title="Heatmap" :extras-reset="reset">
             <RiplField label="Low colour" inline>
-                <RiplColorInput v-model="lowColor" />
+                <RiplColorInput v-model="extras.lowColor" />
             </RiplField>
             <RiplField label="High colour" inline>
-                <RiplColorInput v-model="highColor" />
+                <RiplColorInput v-model="extras.highColor" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Legend orientation">
+                <RiplSelect v-model="extras.legendOrientation">
+                    <option value="horizontal">Horizontal</option>
+                    <option value="vertical">Vertical</option>
+                </RiplSelect>
+            </RiplField>
+            <RiplField label="Legend thickness">
+                <RiplInputRange v-model="extras.legendThickness" :min="6" :max="24" :step="1" />
+            </RiplField>
+            <RiplField label="Legend segments">
+                <RiplInputRange v-model="extras.legendSegments" :min="0" :max="12" :step="1" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -33,6 +48,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -47,11 +63,23 @@ import {
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const HOURS = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
 
-const lowColor = ref('#e0f2fe');
-const highColor = ref('#0369a1');
+const { extras, reset } = useChartExtras({
+    lowColor: '#e0f2fe',
+    highColor: '#0369a1',
+    borderRadius: 2,
+    legendOrientation: 'horizontal' as 'horizontal' | 'vertical',
+    legendThickness: 12,
+    legendSegments: 12,
+});
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Activity by Hour',
 });
 
@@ -67,6 +95,21 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        colors: [extras.lowColor, extras.highColor],
+        borderRadius: extras.borderRadius,
+        legend: {
+            orientation: extras.legendOrientation,
+            thickness: extras.legendThickness,
+            segments: extras.legendSegments,
+        },
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createHeatmapChart(context, {
         data,
@@ -75,21 +118,14 @@ const { contextChanged, chart } = useRiplChart(context => {
         value: 'value',
         xCategories: HOURS,
         yCategories: DAYS,
-        colors: [lowColor.value, highColor.value],
         padding: { top: 20, right: 20, bottom: 40, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        colors: [lowColor.value, highColor.value],
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([lowColor, highColor], apply);
+// Furniture options (legend, tooltip, theme) are read only at construction, so rebuild the chart on
+// any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

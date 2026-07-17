@@ -7,14 +7,21 @@ The **Treemap Chart** displays hierarchical data as nested rectangles, where eac
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Treemap" :extras-reset="reset">
+            <RiplField label="Cell gap">
+                <RiplInputRange v-model="extras.gap" :min="0" :max="12" :step="1" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="12" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +33,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,13 +41,25 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
 const CATEGORIES = ['Electronics', 'Clothing', 'Food', 'Books', 'Sports', 'Home', 'Toys', 'Health'];
 
+const { extras, reset } = useChartExtras({
+    gap: 3,
+    borderRadius: 4,
+});
+
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Revenue by Category',
 });
 
@@ -52,6 +72,16 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        gap: extras.gap,
+        borderRadius: extras.borderRadius,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createTreemapChart(context, {
         data,
@@ -59,11 +89,12 @@ const { contextChanged, chart } = useRiplChart(context => {
         value: 'value',
         label: 'name',
         padding: { top: 10, right: 10, bottom: 10, left: 10 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

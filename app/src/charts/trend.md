@@ -7,7 +7,7 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
@@ -15,25 +15,35 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Trend">
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Trend" :extras-reset="reset">
             <RiplField label="Stacked" inline>
-                <RiplSwitch v-model="stacked" />
+                <RiplSwitch v-model="extras.stacked" />
             </RiplField>
             <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="overview" />
+                <RiplSwitch v-model="extras.overview" />
             </RiplField>
             <RiplField label="Line type">
-                <RiplSelect v-model="lineType">
+                <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
                     <option value="basis">Basis</option>
-                    <option value="bumpX">Bump X</option>
                     <option value="cardinal">Cardinal</option>
                     <option value="catmullRom">Catmull-Rom</option>
-                    <option value="monotoneX">Monotone X</option>
                     <option value="natural">Natural</option>
+                    <option value="monotoneX">Monotone X</option>
+                    <option value="monotoneY">Monotone Y</option>
+                    <option value="bumpX">Bump X</option>
+                    <option value="bumpY">Bump Y</option>
                     <option value="step">Step</option>
+                    <option value="stepBefore">Step Before</option>
+                    <option value="stepAfter">Step After</option>
                 </RiplSelect>
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Fill opacity">
+                <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -48,6 +58,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -82,12 +93,27 @@ const seriesMeta = [
     { type: 'line' as const, id: 'target', label: 'Target', value: 'target' },
 ];
 
-const stacked = ref(false);
-const overview = ref(false);
-const lineType = ref<PolylineRenderer>('monotoneX');
+const { extras, reset } = useChartExtras({
+    stacked: false,
+    overview: false,
+    lineType: 'monotoneX' as PolylineRenderer,
+    borderRadius: 2,
+    fillOpacity: 0.25,
+});
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        axes: true,
+        grid: true,
+        tooltip: true,
+        crosshair: true,
+        dataLabels: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Sales Trend',
     axisY: 'Value',
     colors: seedColors(seriesMeta.map(s => s.id)),
@@ -100,14 +126,26 @@ function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
         label: s.label,
         value: s.value,
         color: config.colors[s.id],
-        ...(s.type === 'area' ? { fillOpacity: 0.25 } : {}),
-        ...(s.type === 'bar' ? {} : { lineType: lineType.value }),
+        ...(s.type === 'area' ? { fillOpacity: extras.fillOpacity } : {}),
+        ...(s.type === 'bar' ? {} : { lineType: extras.lineType }),
     })) as TrendChartSeriesOptions<SalesRow>[];
+}
+
+function buildOptions() {
+    return {
+        stacked: extras.stacked,
+        overview: extras.overview,
+        borderRadius: extras.borderRadius,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 let data = Array.from({ length: MONTHS.length }, (_, index) => getDataItem(index));
+
+const example = ref();
 
 const {
     chart,
@@ -115,23 +153,12 @@ const {
 } = useRiplChart(context => createTrendChart(context, {
     data,
     key: 'month',
-    series: getSeries(),
-    stacked: stacked.value,
-    overview: overview.value,
-    ...buildCommonOptions(config),
+    ...buildOptions(),
 }));
 
-function apply() {
-    chart.value?.update({
-        series: getSeries(),
-        stacked: stacked.value,
-        overview: overview.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([stacked, overview, lineType], apply);
+// Furniture options (axes, grid, tooltip, crosshair, legend, theme) are only read when a chart is
+// constructed, so rebuild the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function monthLabel(index: number): string {
     const year = 24 + Math.floor(index / MONTHS.length);

@@ -5,7 +5,7 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
@@ -15,11 +15,21 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" />
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bubbles" :extras-reset="reset">
+            <RiplField label="Size by value" inline>
+                <RiplSwitch v-model="extras.sizeBy" />
+            </RiplField>
+            <RiplField label="Min radius">
+                <RiplInputRange v-model="extras.minRadius" :min="2" :max="20" :step="1" />
+            </RiplField>
+            <RiplField v-if="extras.sizeBy" label="Max radius">
+                <RiplInputRange v-model="extras.maxRadius" :min="5" :max="40" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
     useRiplChart,
 } from '../.vitepress/compositions/example';
@@ -28,6 +38,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -35,20 +46,13 @@ import {
 } from '@ripl/charts';
 
 import {
-    scaleContinuous,
-} from '@ripl/web';
-
-import {
     stringUniqueId,
 } from '@ripl/utilities';
 
 import {
+    ref,
     watch,
 } from 'vue';
-
-const xScale = scaleContinuous([0, 1], [0, 100]);
-const yScale = scaleContinuous([0, 1], [0, 100]);
-const sizeScale = scaleContinuous([0, 1], [5, 50]);
 
 const seriesMeta = [
     { id: 'sales', label: 'Sales', xBy: 'sales', yBy: 'profit', sizeBy: 'volume' },
@@ -56,11 +60,32 @@ const seriesMeta = [
     { id: 'support', label: 'Support', xBy: 'support', yBy: 'satisfaction', sizeBy: 'tickets' },
 ];
 
+const { extras, reset } = useChartExtras({
+    sizeBy: true,
+    minRadius: 5,
+    maxRadius: 25,
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true, navigator: true },
+    features: {
+        title: true,
+        legend: true,
+        axes: true,
+        axisScale: true,
+        grid: true,
+        tooltip: true,
+        crosshair: true,
+        format: true,
+        animation: true,
+        theme: true,
+        navigator: true,
+        annotations: true,
+    },
     title: 'Channel Performance',
     axisX: 'X Value',
     axisY: 'Y Value',
+    crosshairAxis: 'both',
+    navigatorEnabled: true,
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
@@ -72,12 +97,41 @@ function getSeries() {
         label: s.label,
         xBy: s.xBy,
         yBy: s.yBy,
-        sizeBy: s.sizeBy,
-        minRadius: 5,
-        maxRadius: 25,
+        sizeBy: extras.sizeBy ? s.sizeBy : undefined,
+        minRadius: extras.minRadius,
+        maxRadius: extras.maxRadius,
         color: config.colors[s.id],
     }));
 }
+
+function buildOptions() {
+    const options = {
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
+
+    // Sample reference line + shaded band, drawn through the y scale.
+    options.annotations = config.annotationsVisible
+        ? [
+            {
+                axis: 'y',
+                value: 50,
+                label: 'Median',
+            },
+            {
+                type: 'band',
+                axis: 'y',
+                from: 70,
+                to: 100,
+                label: 'High',
+            },
+        ]
+        : [];
+
+    return options;
+}
+
+const example = ref();
 
 const {
     chart,
@@ -85,37 +139,30 @@ const {
 } = useRiplChart(context => createScatterChart(context, {
     data,
     key: 'id',
-    series: getSeries(),
-    navigator: true,
-    ...buildCommonOptions(config),
+    ...buildOptions(),
 }));
 
-function apply() {
-    chart.value?.update({
-        series: getSeries(),
-        ...buildCommonOptions(config),
-    });
-}
+// Furniture options (axes, grid, tooltip, crosshair, legend, theme, navigator) are only read when a
+// chart is constructed, so rebuild the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
-watch(config, apply, { deep: true });
+function getValue(min: number, max: number) {
+    return Math.round((min + Math.random() * (max - min)) * 100) / 100;
+}
 
 function getDataItem() {
     return {
         id: stringUniqueId(),
-        sales: getValue(xScale),
-        profit: getValue(yScale),
-        volume: getValue(sizeScale),
-        marketing: getValue(xScale),
-        engagement: getValue(yScale),
-        reach: getValue(sizeScale),
-        support: getValue(xScale),
-        satisfaction: getValue(yScale),
-        tickets: getValue(sizeScale),
+        sales: getValue(10, 100),
+        profit: getValue(10, 100),
+        volume: getValue(5, 50),
+        marketing: getValue(10, 100),
+        engagement: getValue(10, 100),
+        reach: getValue(5, 50),
+        support: getValue(10, 100),
+        satisfaction: getValue(10, 100),
+        tickets: getValue(5, 50),
     };
-}
-
-function getValue(scale: any) {
-    return Math.round(scale(Math.random()) * 100) / 100;
 }
 
 function addData() {

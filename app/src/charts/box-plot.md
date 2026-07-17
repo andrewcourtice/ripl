@@ -7,14 +7,18 @@ The **Box Plot Chart** summarises the distribution of a numeric field per catego
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Box Plot" />
+        <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
+            <RiplField label="Box colour" inline>
+                <RiplColorInput v-model="extras.color" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +30,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,15 +38,29 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
 const REGIONS = ['US', 'EU', 'APAC', 'LATAM'];
 
+const { extras, reset } = useChartExtras({
+    color: '#7cacf8',
+});
+
 const config = useChartConfig({
-    features: { title: true, animation: true, navigator: true },
+    features: {
+        title: true,
+        grid: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Latency by Region',
 });
+
+const example = ref();
 
 function generateData() {
     return REGIONS.flatMap((region, index) => {
@@ -56,6 +75,13 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        color: extras.color,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createBoxPlotChart(context, {
         data,
@@ -67,15 +93,12 @@ const { contextChanged, chart } = useRiplChart(context => {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },
         },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({ ...buildCommonOptions(config) });
-}
-
-watch(config, apply, { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

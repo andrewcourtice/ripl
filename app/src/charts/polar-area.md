@@ -7,7 +7,7 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
@@ -16,9 +16,21 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Polar Area">
+        <RiplChartConfig :config="config" extra-title="Polar Area" :extras-reset="reset">
+            <RiplField label="Inner radius">
+                <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.4" :step="0.05" />
+            </RiplField>
+            <RiplField label="Max radius">
+                <RiplInputRange v-model="extras.maxRadiusRatio" :min="0.2" :max="0.5" :step="0.05" />
+            </RiplField>
+            <RiplField label="Segment gap">
+                <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.1" :step="0.01" />
+            </RiplField>
+            <RiplField label="Grid rings">
+                <RiplInputRange v-model="extras.levels" :min="2" :max="8" :step="1" />
+            </RiplField>
             <RiplField label="Labels">
-                <RiplSelect v-model="labels">
+                <RiplSelect v-model="extras.labels">
                     <option value="off">Off</option>
                     <option value="inside">Inside</option>
                     <option value="outside">Outside</option>
@@ -28,7 +40,7 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
     </template>
 </ripl-example>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
     useRiplChart,
 } from '../.vitepress/compositions/example';
@@ -36,6 +48,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -53,14 +66,26 @@ import {
 
 const LABELS = ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility', 'Stamina', 'Wisdom'];
 
-const labels = ref<'off' | 'inside' | 'outside'>('off');
+const { extras, reset } = useChartExtras({
+    innerRadius: 0.15,
+    maxRadiusRatio: 0.45,
+    padAngle: 0.02,
+    levels: 4,
+    labels: 'off' as 'off' | 'inside' | 'outside',
+});
 
 function labelsOption() {
-    return labels.value === 'off' ? false : labels.value;
+    return extras.labels === 'off' ? false : extras.labels;
 }
 
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Attribute Spread',
 });
 
@@ -78,6 +103,19 @@ function getDataItem(label: string = LABELS[Math.floor(Math.random() * LABELS.le
 
 let data = LABELS.slice(0, 6).map(label => getDataItem(label));
 
+function buildOptions() {
+    return {
+        innerRadius: extras.innerRadius,
+        maxRadiusRatio: extras.maxRadiusRatio,
+        padAngle: extras.padAngle,
+        levels: extras.levels,
+        labels: labelsOption(),
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const {
     contextChanged,
     chart,
@@ -86,23 +124,15 @@ const {
     value: 'value',
     label: 'label',
     data,
-    labels: labelsOption(),
-    ...buildCommonOptions(config),
+    ...buildOptions(),
 }));
+
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function update() {
     chart.value?.update({ data });
 }
-
-function apply() {
-    chart.value?.update({
-        labels: labelsOption(),
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch(labels, apply);
 
 function addData() {
     const unusedLabels = LABELS.filter(l => !data.some(d => d.label === l));

@@ -7,7 +7,7 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,9 +16,15 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Gantt">
+        <RiplChartConfig :config="config" extra-title="Gantt" :extras-reset="reset">
             <RiplField label="Today marker" inline>
-                <RiplSwitch v-model="showToday" />
+                <RiplSwitch v-model="extras.showToday" />
+            </RiplField>
+            <RiplField v-if="extras.showToday" label="Marker colour" inline>
+                <RiplColorInput v-model="extras.todayColor" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -32,6 +38,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -43,8 +50,21 @@ import {
     watch,
 } from 'vue';
 
+const { extras, reset } = useChartExtras({
+    showToday: true,
+    todayColor: '#ef4444',
+    borderRadius: 3,
+});
+
 const config = useChartConfig({
-    features: { title: true, grid: true, animation: true },
+    features: {
+        title: true,
+        grid: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Project Schedule',
 });
 
@@ -63,7 +83,6 @@ const TASKS = [
     'Launch',
 ];
 
-const showToday = ref(true);
 let taskCount = 8;
 
 function generateTask(name: string, index: number) {
@@ -89,6 +108,17 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        showToday: extras.showToday,
+        todayColor: extras.todayColor,
+        borderRadius: extras.borderRadius,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createGanttChart(context, {
         data,
@@ -98,21 +128,14 @@ const { contextChanged, chart } = useRiplChart(context => {
         end: 'end',
         progress: 'progress',
         format: v => `${Math.round(v * 100)}% complete`,
-        showToday: showToday.value,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        showToday: showToday.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch(showToday, apply);
+// Furniture options (grid, tooltip, theme, today marker) are read only at construction, so rebuild
+// the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -134,7 +157,6 @@ function removeTask() {
         chart.value?.update({ data });
     }
 }
-
 </script>
 
 ## Usage

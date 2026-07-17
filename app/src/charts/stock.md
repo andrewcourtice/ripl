@@ -7,22 +7,22 @@ The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with 
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Candles">
+        <RiplChartConfig :config="config" extra-title="Candles" :extras-reset="reset">
             <RiplField label="Volume" inline>
-                <RiplSwitch v-model="showVolume" />
+                <RiplSwitch v-model="extras.showVolume" />
             </RiplField>
             <RiplField label="Up colour" inline>
-                <RiplColorInput v-model="upColor" />
+                <RiplColorInput v-model="extras.upColor" />
             </RiplField>
             <RiplField label="Down colour" inline>
-                <RiplColorInput v-model="downColor" />
+                <RiplColorInput v-model="extras.downColor" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -36,6 +36,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -47,12 +48,23 @@ import {
     watch,
 } from 'vue';
 
-const showVolume = ref(true);
-const upColor = ref('#6dd5b1');
-const downColor = ref('#f4a0b9');
+const { extras, reset } = useChartExtras({
+    showVolume: true,
+    upColor: '#6dd5b1',
+    downColor: '#f4a0b9',
+});
 
 const config = useChartConfig({
-    features: { title: true, axes: true, grid: true, animation: true },
+    features: {
+        title: true,
+        axes: true,
+        grid: true,
+        tooltip: true,
+        crosshair: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Daily Prices',
     axisX: 'Date',
     axisY: 'Price ($)',
@@ -81,6 +93,17 @@ function generateData(count = 30) {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        showVolume: extras.showVolume,
+        upColor: extras.upColor,
+        downColor: extras.downColor,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createStockChart(context, {
         data,
@@ -90,25 +113,15 @@ const { contextChanged, chart } = useRiplChart(context => {
         low: 'low',
         close: 'close',
         volume: 'volume',
-        showVolume: showVolume.value,
-        upColor: upColor.value,
-        downColor: downColor.value,
         format: v => `$${v.toFixed(2)}`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        showVolume: showVolume.value,
-        upColor: upColor.value,
-        downColor: downColor.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([showVolume, upColor, downColor], apply);
+// Furniture options (axes, grid, tooltip, crosshair, theme) are read only at construction, so rebuild
+// the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
