@@ -2,6 +2,7 @@ import {
     ContextPath,
     ContextText,
     createFrameBuffer,
+    degreesToRadians,
     getThetaPoint,
     isGradientString,
     measureText,
@@ -119,7 +120,7 @@ function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) 
 }
 
 function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient): void {
-    const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
+    const angleRad = degreesToRadians((gradient as { angle: number }).angle - 90);
     const x1 = 0.5 - Math.cos(angleRad) * 0.5;
     const y1 = 0.5 - Math.sin(angleRad) * 0.5;
     const x2 = 0.5 + Math.cos(angleRad) * 0.5;
@@ -344,7 +345,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
 
     /** Adds an elliptical arc centred at `(x, y)` to the path. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
-        const rotDeg = rotation * 180 / Math.PI;
+        const rotDeg = radiansToDegrees(rotation);
         const cos = Math.cos(rotation);
         const sin = Math.sin(rotation);
 

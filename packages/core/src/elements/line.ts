@@ -13,8 +13,6 @@ import type {
 
 import {
     Box,
-    max,
-    min,
 } from '../math';
 
 /** State interface for a line element, defining start and end coordinates. */
@@ -75,10 +73,10 @@ export class Line extends Shape2D<LineState> {
     /** @internal Local-space bounding box of the line. */
     public _getLocalBoundingBox(): Box {
         return new Box(
-            min(this.y1, this.y2),
-            min(this.x1, this.x2),
-            max(this.y1, this.y2),
-            max(this.x1, this.x2)
+            Math.min(this.y1, this.y2),
+            Math.min(this.x1, this.x2),
+            Math.max(this.y1, this.y2),
+            Math.max(this.x1, this.x2)
         );
     }
 

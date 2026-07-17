@@ -19,7 +19,7 @@ import {
 } from '@ripl/core';
 
 import {
-    roundTo,
+    numberRoundTo,
     typeIsBoolean,
     typeIsNumber,
     typeIsString,
@@ -40,7 +40,7 @@ export function formatNumber(value: unknown, precision: number = DEFAULT_NUMBER_
         return String(value);
     }
 
-    return roundTo(value, precision).toLocaleString();
+    return numberRoundTo(value, precision).toLocaleString();
 }
 
 // ---------------------------------------------------------------------------

@@ -48,7 +48,7 @@ import type {
 } from '@ripl/utilities';
 
 import {
-    noop,
+    functionNoop,
     typeIsFunction,
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -502,7 +502,7 @@ export class Renderer extends EventBus<RendererEventMap> {
                     delay = 0,
                     loop = false,
                     ease = easeLinear,
-                    onComplete = noop,
+                    onComplete = functionNoop,
                     direction = 'forward',
                     state,
                 } = getOptions(element as TElement extends Group ? Element : TElement, index, totalCount);

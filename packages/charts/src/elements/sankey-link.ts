@@ -6,8 +6,6 @@ import type {
 
 import {
     Box,
-    max,
-    min,
     Shape2D,
 } from '@ripl/core';
 
@@ -80,10 +78,10 @@ export class SankeyLinkPath extends Shape2D<SankeyLinkState> {
         const midX = (sx + tx) / 2;
 
         return new Box(
-            min(sy, ty),
-            min(sx, midX, tx),
-            max(sy, ty),
-            max(sx, midX, tx)
+            Math.min(sy, ty),
+            Math.min(sx, midX, tx),
+            Math.max(sy, ty),
+            Math.max(sx, midX, tx)
         );
     }
 

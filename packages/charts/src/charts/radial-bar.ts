@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -49,11 +53,9 @@ import type {
 } from '@ripl/core';
 
 import {
-    clamp,
     createArc,
     createGroup,
     easeOutCubic,
-    getExtent,
     getThetaPoint,
     setColorAlpha,
 } from '@ripl/core';
@@ -61,6 +63,8 @@ import {
 import {
     arrayJoin,
     functionIdentity,
+    numberClamp,
+    numberExtent,
 } from '@ripl/utilities';
 
 const TOP_ANGLE = -Math.PI / 2;
@@ -228,13 +232,12 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const outerRadius = (Math.min(area.width, area.height) / 2) * 0.92;
+            const { cx, cy, size } = areaCenter(area);
+            const outerRadius = (size / 2) * 0.92;
             const holeRadius = outerRadius * innerRadius;
 
             const values = data.map(getValue);
-            const [, dataMax] = values.length ? getExtent(values, functionIdentity) : [0, 1];
+            const [, dataMax] = values.length ? numberExtent(values, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
             const sweep = (range * Math.PI) / 180;
 
@@ -248,7 +251,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 const ringOuter = outerRadius - i * band;
                 const thickness = band * (1 - gap);
                 const centre = ringOuter - thickness / 2;
-                const endAngle = TOP_ANGLE + clamp(itemValue / maxValue, 0, 1) * sweep;
+                const endAngle = TOP_ANGLE + numberClamp(itemValue / maxValue, 0, 1) * sweep;
 
                 return {
                     centre,

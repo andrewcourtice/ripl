@@ -1,7 +1,6 @@
 import {
     Box,
     getContainingBox,
-    getExtent,
 } from '@ripl/web';
 
 import type {
@@ -9,6 +8,7 @@ import type {
 } from '@ripl/web';
 
 import {
+    numberExtent,
     stringUniqueId,
 } from '@ripl/utilities';
 
@@ -187,8 +187,8 @@ export function shapeHasPoints(shape: Shape): shape is FreehandShape | PathShape
  */
 export function getShapeBounds(shape: Shape): Box {
     if (shapeHasPoints(shape)) {
-        const [left, right] = getExtent(shape.points, point => point[0]);
-        const [top, bottom] = getExtent(shape.points, point => point[1]);
+        const [left, right] = numberExtent(shape.points, point => point[0]);
+        const [top, bottom] = numberExtent(shape.points, point => point[1]);
 
         return new Box(top, left, bottom, right);
     }

@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ChartSegmentLabelsInput,
@@ -69,7 +73,6 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
-    maxOf,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -77,6 +80,7 @@ import {
 
 import {
     arrayJoin,
+    numberMaxOf,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -420,11 +424,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const size = Math.min(area.width, area.height);
-            const centerX = area.x + area.width / 2;
-            const centerY = area.y + area.height / 2;
+            const { cx: centerX, cy: centerY, size } = areaCenter(area);
 
-            const maxValue = maxOf(data, getValue) ?? 0;
+            const maxValue = numberMaxOf(data, getValue) ?? 0;
             const valueScale = scaleContinuous([0, maxValue], [size * innerRadiusRatio, size * maxRadiusRatio], { clamp: true });
 
             const angleStep = TAU / data.length;

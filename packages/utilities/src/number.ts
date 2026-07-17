@@ -2,7 +2,7 @@ import {
     typeIsNumber,
 } from './type';
 
-/** Options for {@link formatNumber}: any `Intl.NumberFormat` option plus a locale and a precision shorthand. */
+/** Options for {@link numberFormat}: any `Intl.NumberFormat` option plus a locale and a precision shorthand. */
 export interface NumberFormatOptions extends Intl.NumberFormatOptions {
     /** BCP 47 locale tag (defaults to the runtime locale). */
     locale?: string;
@@ -27,30 +27,45 @@ function getNumberFormatter(locale: string | undefined, options: Intl.NumberForm
     return formatter;
 }
 
-/**
- * Formats a number as a locale-aware string. Supports decimal, `percent`, and `currency` styles;
- * `compact`/`scientific`/`engineering` notation; grouping; and fraction-digit control (with
- * `precision` as a shorthand for `maximumFractionDigits`). Non-numeric values fall back to `String`.
- *
- * This is a standalone utility — it is passed values explicitly by axes, legends, and tooltips, and
- * is intentionally never bound to a scale.
- */
-export function formatNumber(value: unknown, options: NumberFormatOptions = {}): string {
-    if (!typeIsNumber(value)) {
-        return String(value);
-    }
+/** Constrains a value to the inclusive range between lower and upper bounds. */
+export function numberClamp(value: number, lower: number, upper: number): number {
+    const trueLower = Math.min(lower, upper);
+    const trueUpper = Math.max(lower, upper);
 
-    const {
-        locale,
-        precision,
-        ...intlOptions
-    } = options;
+    return Math.min(trueUpper, Math.max(trueLower, value));
+}
 
-    if (precision !== undefined && intlOptions.maximumFractionDigits === undefined) {
-        intlOptions.maximumFractionDigits = precision;
-    }
+/** Returns the minimum numeric value extracted from an array via the accessor. */
+export function numberMinOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
+    return Math.min(...values.map(accessor));
+}
 
-    return getNumberFormatter(locale, intlOptions).format(value);
+/** Returns the maximum numeric value extracted from an array via the accessor. */
+export function numberMaxOf<TValue>(values: TValue[], accessor: (value: TValue) => number) {
+    return Math.max(...values.map(accessor));
+}
+
+/** Returns the fractional part of a number (e.g. `numberFractional(3.7)` → `0.7`). */
+export function numberFractional(value: number): number {
+    return value - Math.floor(value);
+}
+
+/** Computes the `[min, max]` extent of an array using the given numeric accessor. */
+export function numberExtent<TValue>(values: TValue[], accessor: (value: TValue) => number): [min: number, max: number] {
+    let min = accessor(values[0]);
+    let max = accessor(values[0]);
+
+    values.forEach(item => {
+        const value = accessor(item);
+
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+    });
+
+    return [
+        min,
+        max,
+    ];
 }
 
 /** Computes the sum of an array of numbers, or of values mapped through an optional iteratee. */
@@ -64,27 +79,15 @@ export function numberSum<TValue = number>(values: TValue[], iteratee?: (value: 
     }, 0);
 }
 
-/** Computes the greatest common divisor of two integers using the Euclidean algorithm. */
-export function numberGCD(valueA: number, valueB: number) {
-    while (valueB !== 0) {
-        const temp = valueB;
-
-        valueB = valueA % valueB;
-        valueA = temp;
-    }
-
-    return valueA;
-}
-
 /**
  * Rounds a number to at most `precision` decimal places, stripping any trailing zeros.
  *
  * Unlike `Number.prototype.toFixed` (which returns a fixed-width string), this returns a `number`
- * so integers stay integers (`roundTo(5, 2) === 5`) and fractional values are capped
- * (`roundTo(1.005, 2) === 1.01`, `roundTo(3.14159, 2) === 3.14`). Non-finite values pass through
- * unchanged. Used as the default precision cap for chart labels, axes, and tooltips.
+ * so integers stay integers (`numberRoundTo(5, 2) === 5`) and fractional values are capped
+ * (`numberRoundTo(1.005, 2) === 1.01`, `numberRoundTo(3.14159, 2) === 3.14`). Non-finite values pass
+ * through unchanged. Used as the default precision cap for chart labels, axes, and tooltips.
  */
-export function roundTo(value: number, precision: number = 2): number {
+export function numberRoundTo(value: number, precision: number = 2): number {
     if (!Number.isFinite(value)) {
         return value;
     }
@@ -118,4 +121,30 @@ export function numberNice(value: number, round: boolean = false) {
     }
 
     return niceFraction * factor;
+}
+
+/**
+ * Formats a number as a locale-aware string. Supports decimal, `percent`, and `currency` styles;
+ * `compact`/`scientific`/`engineering` notation; grouping; and fraction-digit control (with
+ * `precision` as a shorthand for `maximumFractionDigits`). Non-numeric values fall back to `String`.
+ *
+ * This is a standalone utility — it is passed values explicitly by axes, legends, and tooltips, and
+ * is intentionally never bound to a scale.
+ */
+export function numberFormat(value: unknown, options: NumberFormatOptions = {}): string {
+    if (!typeIsNumber(value)) {
+        return String(value);
+    }
+
+    const {
+        locale,
+        precision,
+        ...intlOptions
+    } = options;
+
+    if (precision !== undefined && intlOptions.maximumFractionDigits === undefined) {
+        intlOptions.maximumFractionDigits = precision;
+    }
+
+    return getNumberFormatter(locale, intlOptions).format(value);
 }

@@ -2,10 +2,6 @@ import {
     createScale,
 } from './_base';
 
-import {
-    max,
-} from '../math';
-
 import type {
     Scale,
 } from './types';
@@ -51,7 +47,7 @@ export function scaleBand<TDomain = string>(
 
     const rangeLength = rangeMax - rangeMin;
     const domainLength = domain.length - innerPadding;
-    const step = rangeLength / max(1, domainLength + outerPadding * 2);
+    const step = rangeLength / Math.max(1, domainLength + outerPadding * 2);
     const bandwidth = step * (1 - innerPadding);
     const adjustedMin = rangeMin + (rangeLength - step * domainLength) * alignment;
 

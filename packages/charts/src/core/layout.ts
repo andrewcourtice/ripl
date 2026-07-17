@@ -8,6 +8,16 @@
  * titles to overlap or clip the plotting area.
  */
 
+/** The centre point and inscribed size of a rectangular {@link ChartArea}. */
+export interface AreaCenter {
+    /** The horizontal centre of the area, in chart pixels. */
+    cx: number;
+    /** The vertical centre of the area, in chart pixels. */
+    cy: number;
+    /** The inscribed size — the smaller of the area's width and height. */
+    size: number;
+}
+
 /** A rectangular region expressed as a top-left origin plus dimensions. */
 export interface ChartArea {
     /** Left edge of the region, in chart pixels. */
@@ -128,4 +138,13 @@ export class ChartLayout {
         }
     }
 
+}
+
+/** Computes the centre point and inscribed size (the smaller of width and height) of a rectangular area — the shared basis for laying out radial and polar charts. */
+export function areaCenter(area: ChartArea): AreaCenter {
+    return {
+        cx: area.x + area.width / 2,
+        cy: area.y + area.height / 2,
+        size: Math.min(area.width, area.height),
+    };
 }

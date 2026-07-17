@@ -22,7 +22,7 @@ import {
 } from '@ripl/core';
 
 import {
-    formatNumber,
+    numberFormat,
 } from '@ripl/utilities';
 
 /** Orientation of the colour legend bar. */
@@ -38,7 +38,7 @@ export interface ColorLegendOptions {
     segments?: number;
     /** Number of value labels to render. */
     tickCount?: number;
-    /** Formats a domain value into a label (defaults to {@link formatNumber} at 2 dp). */
+    /** Formats a domain value into a label (defaults to {@link numberFormat} at 2 dp). */
     format?: (value: number) => string;
     /** CSS font shorthand for the value labels. */
     font?: string;
@@ -61,7 +61,7 @@ const DEFAULT_OPTIONS: Required<ColorLegendOptions> = {
     thickness: 12,
     segments: 32,
     tickCount: 5,
-    format: value => formatNumber(value, {
+    format: value => numberFormat(value, {
         precision: 2,
     }),
     font: '12px sans-serif',

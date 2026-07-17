@@ -21,7 +21,7 @@ import type {
 } from '@ripl/utilities';
 
 import {
-    noop,
+    functionNoop,
 } from '@ripl/utilities';
 
 function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
@@ -53,13 +53,13 @@ export const CONTEXT_OPERATIONS = {
     textAlign: basicContextSetter('textAlign'),
     textBaseline: basicContextSetter('textBaseline'),
     zIndex: basicContextSetter('zIndex'),
-    translateX: noop,
-    translateY: noop,
-    transformScaleX: noop,
-    transformScaleY: noop,
-    rotation: noop,
-    transformOriginX: noop,
-    transformOriginY: noop,
+    translateX: functionNoop,
+    translateY: functionNoop,
+    transformScaleX: functionNoop,
+    transformScaleY: functionNoop,
+    rotation: functionNoop,
+    transformOriginX: functionNoop,
+    transformOriginY: functionNoop,
 } as {
     [P in keyof BaseElementState]-?: (context: Context, value: NonNullable<BaseElementState[P]>) => void;
 };

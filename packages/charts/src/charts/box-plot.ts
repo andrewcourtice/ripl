@@ -68,13 +68,13 @@ import {
     createGroup,
     createLine,
     createRect,
-    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
 
 import {
     arrayJoin,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** The opacity applied to a box's fill at rest (full opacity on hover). */
@@ -366,7 +366,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             const grouped = rollup(data, getGroup, items => boxplotStats(items.map(getValue)));
             const keys = categories ?? [...new Set(data.map(getGroup))];
-            const valueExtent = getExtent(data, getValue);
+            const valueExtent = numberExtent(data, getValue);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);

@@ -65,11 +65,9 @@ import type {
 } from '@ripl/core';
 
 import {
-    clamp,
     createCircle,
     createGroup,
     createPolyline,
-    getTotal,
     interpolatePath,
     interpolatePoints,
     interpolateWaypoint,
@@ -78,6 +76,8 @@ import {
 
 import {
     arrayJoin,
+    numberClamp,
+    numberSum,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -275,7 +275,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const sized = series.map((srs, index) => ({
             id: srs.id,
             index,
-            size: getTotal(ctx.data, item => Math.abs(this._rawValue(srs, item))),
+            size: numberSum(ctx.data, item => Math.abs(this._rawValue(srs, item))),
         }));
 
         // Largest first; ties keep the original series order (stable).
@@ -465,7 +465,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
                 ...(markers.length > 0
                     ? [ctx.renderer.transition(markers, element => {
                         const fraction = ctx.plot.width > 0
-                            ? clamp(((element as Circle).cx - ctx.plot.x) / ctx.plot.width, 0, 1)
+                            ? numberClamp(((element as Circle).cx - ctx.plot.x) / ctx.plot.width, 0, 1)
                             : 0;
 
                         return {

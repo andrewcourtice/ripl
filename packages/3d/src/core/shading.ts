@@ -19,6 +19,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    numberClamp,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -35,7 +36,7 @@ export function computeFaceBrightness(normal: Vector3, lightDirection: Vector3, 
     const light = normalized ? lightDirection : vec3Normalize(lightDirection);
     const dot = -vec3Dot(normal, light);
 
-    return Math.max(0, Math.min(1, dot));
+    return numberClamp(dot, 0, 1);
 }
 
 /** Shades a color by a brightness factor (0–1), darkening or lightening the RGB channels. */
