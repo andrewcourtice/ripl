@@ -13,6 +13,7 @@ import {
 import type {
     ChartAxisInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -21,7 +22,12 @@ import {
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
+
+import type {
+    ChartArea,
+} from '../core/layout';
 
 import {
     applyHoverHighlight,
@@ -39,6 +45,14 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    ColorLegendOptions,
+} from '../components/color-legend';
+
+import {
+    ColorLegend,
+} from '../components/color-legend';
 
 import type {
     Context,
@@ -60,7 +74,6 @@ import {
 
 import {
     arrayJoin,
-    formatNumber,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -82,6 +95,10 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     colors?: string[];
     /** Corner radius in pixels applied to each cell. Defaults to 2. */
     borderRadius?: number;
+    /** Gradient colour legend showing the value→colour scale. Shown by default; pass `false` to hide, or an options object to customise. */
+    legend?: boolean | ColorLegendOptions;
+    /** How cell values are formatted in the tooltip and legend — a built-in format type, Intl options, or a custom function. */
+    format?: ValueFormatInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
     /** Axis configuration for the x and y axes. */
@@ -129,6 +146,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
     private _tooltip!: Tooltip;
+    private _colorLegend?: ColorLegend;
 
     constructor(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
         super(target, options);
@@ -214,6 +232,32 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            const legendOption = this.options.legend;
+
+            let legendRegion: ChartArea | undefined;
+
+            if (legendOption !== false) {
+                const legendOptions: ColorLegendOptions = {
+                    format: resolveValueFormat(this.options.format),
+                    ...(typeof legendOption === 'object' ? legendOption : {}),
+                };
+
+                if (this._colorLegend) {
+                    this._colorLegend.setScale(colorScale);
+                    this._colorLegend.setOptions(legendOptions);
+                } else {
+                    this._colorLegend = new ColorLegend({
+                        scene: this.scene,
+                        renderer: this.renderer,
+                        scale: colorScale,
+                        options: legendOptions,
+                    });
+                }
+
+                legendRegion = layout.reserveBottom(this._colorLegend.measure());
+            }
+
             const area = layout.area;
             const top = area.y;
             const left = area.x;
@@ -415,6 +459,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
+            if (legendRegion) {
+                this._colorLegend?.render(legendRegion);
+            }
+
             return Promise.all([
                 this._xAxis.render(),
                 this._yAxis.render(),
@@ -448,7 +496,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 x: cell.x + cell.width / 2,
                 y: cell.y,
             }),
-            content: () => `${cell.xLabel}, ${cell.yLabel}: ${formatNumber(cell.value, { precision: 2 })}`,
+            content: () => `${cell.xLabel}, ${cell.yLabel}: ${resolveValueFormat(this.options.format)(cell.value)}`,
             highlight: { opacity: 0.8 },
             restore: { opacity: 1 },
             onEnter: point => this.emit('cellenter', payload(point)),
