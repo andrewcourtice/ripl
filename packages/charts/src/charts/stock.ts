@@ -15,6 +15,7 @@ import type {
     ChartCrosshairInput,
     ChartGridInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -25,6 +26,7 @@ import {
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -74,7 +76,6 @@ import {
 
 import {
     arrayJoin,
-    formatNumber,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -105,6 +106,8 @@ export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     tooltip?: ChartTooltipInput;
     /** Axis configuration (labels, ticks, titles). */
     axis?: ChartAxisInput<TData>;
+    /** Format applied to the open/high/low/close values shown in the candle tooltip. */
+    format?: ValueFormatInput;
     /** Colour for candles that close at or above their open (bullish). */
     upColor?: string;
     /** Colour for candles that close below their open (bearish). */
@@ -258,7 +261,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
      * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
     private _attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
-        const label = `O: ${formatNumber(values.open, { precision: 2 })}  H: ${formatNumber(values.high, { precision: 2 })}  L: ${formatNumber(values.low, { precision: 2 })}  C: ${formatNumber(values.close, { precision: 2 })}`;
+        const formatValue = resolveValueFormat(this.options.format);
+
+        const label = `O: ${formatValue(values.open)}  H: ${formatValue(values.high)}  L: ${formatValue(values.low)}  C: ${formatValue(values.close)}`;
 
         const payload = (point: { x: number;
             y: number; }): StockChartCandleEvent => ({

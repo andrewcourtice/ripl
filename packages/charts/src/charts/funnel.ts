@@ -11,6 +11,7 @@ import {
 } from '../core/chart';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -37,6 +38,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Context,
@@ -75,6 +80,8 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     label: keyof TData | ((item: TData) => string);
     /** Optional per-item colour accessor; falls back to the generated palette. */
     colorBy?: keyof TData | ((item: TData) => string);
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Vertical gap in pixels between segments. Defaults to 4. */
     gap?: number;
     /** Corner radius in pixels applied to each segment. Defaults to 4. */
@@ -161,21 +168,37 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
-            const layout = this.createLayout();
-            this.reserveTitle(layout);
-            const area = layout.area;
-
-            const availableWidth = area.width;
-            const availableHeight = area.height;
-            const centerX = area.x + area.width / 2;
-            const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
-
             // Resolve colours through the shared id-keyed map so they stay stable across data
             // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),
             })));
+
+            const colorFor = (item: { key: string;
+                color?: string; }) => item.color ?? this.getSeriesColor(item.key);
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = data.map(item => ({
+                id: getKey(item),
+                label: getLabel(item),
+                color: colorFor({
+                    key: getKey(item),
+                    color: getColor(item),
+                }),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
+
+            const availableWidth = area.width;
+            const availableHeight = area.height;
+            const centerX = area.x + area.width / 2;
+            const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
 
             const calculations = data.map((item, index) => {
                 const itemKey = getKey(item);
@@ -206,9 +229,6 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             } = arrayJoin(calculations, this._groups, (item, group) => item.key === group.id);
 
             exits.forEach(el => el.destroy());
-
-            const colorFor = (item: { key: string;
-                color?: string; }) => item.color ?? this.getSeriesColor(item.key);
 
             const entryGroups = entries.map(item => {
                 const itemColor = colorFor(item);

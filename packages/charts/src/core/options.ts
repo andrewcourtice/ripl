@@ -1,3 +1,7 @@
+import {
+    getDefaultTheme,
+} from './theme';
+
 import type {
     Ease,
 } from '@ripl/core';
@@ -160,15 +164,19 @@ export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | und
         return undefined;
     }
 
+    const theme = getDefaultTheme();
+
     if (typeIsString(input)) {
         return {
             ...TITLE_DEFAULTS,
+            fontColor: theme.textColor,
             text: input,
         };
     }
 
     return {
         ...TITLE_DEFAULTS,
+        fontColor: theme.textColor,
         ...input,
     };
 }
@@ -250,6 +258,7 @@ const GRID_DEFAULTS: ChartGridOptions = {
 export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions {
     const base = {
         ...GRID_DEFAULTS,
+        lineColor: getDefaultTheme().gridColor,
         ...defaults,
     };
 
@@ -303,6 +312,7 @@ const CROSSHAIR_DEFAULTS: ChartCrosshairOptions = {
 export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions {
     const base = {
         ...CROSSHAIR_DEFAULTS,
+        lineColor: getDefaultTheme().crosshairColor,
         ...defaults,
     };
 
@@ -366,8 +376,12 @@ const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
 
 /** Normalizes tooltip input into fully resolved `ChartTooltipOptions`. */
 export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions {
+    const theme = getDefaultTheme();
+
     const base = {
         ...TOOLTIP_DEFAULTS,
+        fontColor: theme.tooltipColor,
+        backgroundColor: theme.tooltipBackground,
         ...defaults,
     };
 
@@ -427,6 +441,7 @@ const LEGEND_DEFAULTS: ChartLegendOptions = {
 export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions {
     const base = {
         ...LEGEND_DEFAULTS,
+        fontColor: getDefaultTheme().legendColor,
         ...defaults,
     };
 
@@ -530,8 +545,12 @@ export function normalizeAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartAxisItemOptions<TData>>,
     defaults?: Partial<ChartAxisItemOptions<TData>>
 ): ChartAxisItemOptions<TData> {
+    const theme = getDefaultTheme();
+
     const base = {
         ...AXIS_ITEM_DEFAULTS,
+        font: theme.font,
+        fontColor: theme.axisColor,
         ...defaults,
     };
 
@@ -557,8 +576,12 @@ export function normalizeYAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartYAxisItemOptions<TData>>,
     defaults?: Partial<ChartYAxisItemOptions<TData>>
 ): ChartYAxisItemOptions<TData> {
+    const theme = getDefaultTheme();
+
     const base = {
         ...Y_AXIS_ITEM_DEFAULTS,
+        font: theme.font,
+        fontColor: theme.axisColor,
         ...defaults,
     };
 
@@ -581,23 +604,19 @@ export function normalizeYAxisItem<TData = unknown>(
 
 /** Normalizes axis input into a full `ChartAxisOptions` object with both x and y. */
 export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData> {
+    // Return minimal partials (no colours) so the per-item normalizers apply the active theme's
+    // colours; pre-filling here would shadow the theme for the default/boolean cases.
     if (input === undefined) {
         return {
-            x: { ...AXIS_ITEM_DEFAULTS } as ChartAxisItemOptions<TData>,
-            y: { ...Y_AXIS_ITEM_DEFAULTS } as ChartYAxisItemOptions<TData>,
+            x: {},
+            y: {},
         };
     }
 
     if (typeIsBoolean(input)) {
         return {
-            x: {
-                ...AXIS_ITEM_DEFAULTS,
-                visible: input,
-            } as ChartAxisItemOptions<TData>,
-            y: {
-                ...Y_AXIS_ITEM_DEFAULTS,
-                visible: input,
-            } as ChartYAxisItemOptions<TData>,
+            x: { visible: input },
+            y: { visible: input },
         };
     }
 
@@ -688,6 +707,7 @@ const LABEL_ANCHORS: LabelAnchor[] = ['top', 'left', 'bottom', 'right'];
 export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Partial<ChartDataLabelsOptions>): ChartDataLabelsOptions {
     const base = {
         ...DATA_LABELS_DEFAULTS,
+        fontColor: getDefaultTheme().textColor,
         ...defaults,
     };
 

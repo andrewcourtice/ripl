@@ -93,5 +93,6 @@ const chart = createFunnelChart('#container', {
 - **`value`** — Value accessor (determines bar width)
 - **`label`** — Label accessor (displayed inside bars)
 - **`colorBy`** — Optional per-item color accessor
+- **`legend`** — Legend configuration; shown by default, pass `false` to hide
 - **`gap`** — Gap between segments in pixels (default `4`)
 - **`borderRadius`** — Segment corner radius (default `4`)

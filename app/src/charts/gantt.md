@@ -97,6 +97,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         start: 'start',
         end: 'end',
         progress: 'progress',
+        format: v => `${Math.round(v * 100)}% complete`,
         showToday: showToday.value,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
         ...buildCommonOptions(config),
@@ -169,6 +170,7 @@ chart.update({ data: newData });
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`axis`** — `boolean | ChartAxisOptions` — Configure axes
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the numeric progress value in the task tooltip (defaults to a percentage)
 - **`showToday`** — Show a vertical "today" marker line (default `true`)
 - **`todayColor`** — Color for the today marker (default `#ef4444`)
 - **`borderRadius`** — Bar corner radius (default `3`)

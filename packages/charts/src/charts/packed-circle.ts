@@ -11,6 +11,7 @@ import {
 } from '../core/chart';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -53,6 +54,10 @@ import {
 } from '../components/tooltip';
 
 import type {
+    LegendItem,
+} from '../components/legend';
+
+import type {
     Circle,
     CircleState,
     Context,
@@ -88,6 +93,8 @@ export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOpti
     label?: keyof TData | ((item: TData) => string);
     /** Optional per-item colour accessor; falls back to the generated palette. */
     colorBy?: keyof TData | ((item: TData) => string);
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -203,6 +210,16 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = data.map(item => ({
+                id: getKey(item),
+                label: getLabel(item),
+                color: colorFor(item),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
             const area = layout.area;
 
             const cx = area.x + area.width / 2;

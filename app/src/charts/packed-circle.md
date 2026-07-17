@@ -141,5 +141,6 @@ const data = [
 - **`value`** — Numeric value accessor; encoded as the circle's area
 - **`label`** — Optional label accessor (defaults to `key`)
 - **`colorBy`** — Optional per-circle color accessor
+- **`legend`** — Legend configuration; shown by default, pass `false` to hide
 - **`format`** — Value formatter for tooltips
 - **`padding`**, **`title`**, **`animation`** — Standard chart options

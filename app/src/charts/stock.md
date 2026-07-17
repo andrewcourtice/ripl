@@ -93,6 +93,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         showVolume: showVolume.value,
         upColor: upColor.value,
         downColor: downColor.value,
+        format: v => `$${v.toFixed(2)}`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
     });
 });
@@ -147,6 +148,7 @@ chart.update({ data: newData });
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the OHLC values shown in the candle tooltip
 - **`upColor`** — Color for bullish candles (default `#6dd5b1`)
 - **`downColor`** — Color for bearish candles (default `#f4a0b9`)
 - **`padding`** — Chart padding

@@ -11,6 +11,7 @@ import {
 } from '../core/chart';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -37,6 +38,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Context,
@@ -73,6 +78,8 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     label: keyof TData | ((item: TData) => string);
     /** Optional per-item colour accessor; falls back to a generated palette colour. */
     colorBy?: keyof TData | ((item: TData) => string);
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Gap in pixels between adjacent cells. Defaults to 3. */
     gap?: number;
     /** Corner radius in pixels applied to each cell. Defaults to 4. */
@@ -231,10 +238,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const getColor = resolveColorBy<TData>(colorBy);
 
-            const layout = this.createLayout();
-            this.reserveTitle(layout);
-            const area = layout.area;
-
             const items = data.map(item => ({
                 key: getKey(item),
                 value: getValue(item),
@@ -251,6 +254,20 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const colorFor = (node: { key: string;
                 color?: string; }) => node.color ?? this.getSeriesColor(node.key);
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = items.map(item => ({
+                id: item.key,
+                label: item.label,
+                color: colorFor(item),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
 
             const nodes = layoutTreemap(
                 items,

@@ -12,6 +12,7 @@ import type {
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -21,6 +22,7 @@ import {
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -105,6 +107,8 @@ export interface RealtimeChartOptions extends BaseChartOptions {
     legend?: ChartLegendInput;
     /** Axis configuration (labels, ticks, title). */
     axis?: ChartAxisInput;
+    /** Format applied to the y-axis tick labels (a per-axis `axis.y.format` takes precedence). */
+    format?: ValueFormatInput;
     /** Show the y-axis. Defaults to `true`. */
     showYAxis?: boolean;
     /** Fixed lower bound for the y-axis (otherwise derived from the windowed data). */
@@ -168,7 +172,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             scale: scaleContinuous([0, 1], [0, 1]),
             labelFont: yAxis.font,
             labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
+            formatLabel: resolveFormatLabel(yAxis.format) ?? resolveValueFormat(this.options.format),
             title: yAxis.title,
         });
 

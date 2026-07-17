@@ -301,15 +301,28 @@ export abstract class CartesianChart<
         // Enabling the overview implies a navigator for the strip to drive.
         this.options.navigator = this._resolveNavigator();
 
+        // Per-chart theme colours are passed as normalizer defaults so a chart-level `theme`
+        // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
+        const axisDefaults = {
+            font: this.theme.font,
+            fontColor: this.theme.axisColor,
+        };
+
         const axisOpts = normalizeAxis(this.options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y);
+        const xAxis = normalizeAxisItem(axisOpts.x, axisDefaults);
+        const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y, axisDefaults);
 
         this.xAxisOptions = xAxis;
         this.yAxisOptions = yAxis;
-        const gridOpts = normalizeGrid(this.options.grid);
-        const tooltipOpts = normalizeTooltip(this.options.tooltip);
-        const crosshairOpts = normalizeCrosshair(this.options.crosshair, setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : undefined);
+        const gridOpts = normalizeGrid(this.options.grid, { lineColor: this.theme.gridColor });
+        const tooltipOpts = normalizeTooltip(this.options.tooltip, {
+            fontColor: this.theme.tooltipColor,
+            backgroundColor: this.theme.tooltipBackground,
+        });
+        const crosshairOpts = normalizeCrosshair(this.options.crosshair, {
+            ...(setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : {}),
+            lineColor: this.theme.crosshairColor,
+        });
 
         if (tooltipOpts.visible) {
             this.tooltip = new Tooltip({

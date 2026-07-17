@@ -35,6 +35,14 @@ import {
 } from './options';
 
 import type {
+    Theme,
+} from './theme';
+
+import {
+    resolveTheme,
+} from './theme';
+
+import type {
     LegendItem,
 } from '../components/legend';
 
@@ -87,6 +95,8 @@ export interface BaseChartOptions {
     title?: string | Partial<ChartTitleOptions>;
     /** Animation configuration, or a boolean toggling all transitions. See {@link ChartAnimationOptions}. */
     animation?: boolean | Partial<ChartAnimationOptions>;
+    /** Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a {@link Theme}. Falls back to the module default (see `setDefaultTheme`). */
+    theme?: string | Theme;
 }
 
 /** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
@@ -140,7 +150,9 @@ export class Chart<
     private _hasRendered: boolean = false;
 
     protected options: TOptions;
-    protected colorGenerator = getColorGenerator();
+    /** The resolved theme (palette + furniture colours) this chart renders with. */
+    protected theme: Theme;
+    protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
     private _highlightGroups: Map<string, Group> = new Map();
 
@@ -149,11 +161,14 @@ export class Chart<
             autoRender = true,
             animation,
             title,
+            theme,
             ...opts
         } = options || {};
 
         super();
 
+        this.theme = resolveTheme(theme);
+        this.colorGenerator = getColorGenerator(this.theme.palette);
         this.autoRender = autoRender;
         this.animationOptions = normalizeAnimation(animation);
         this.titleOptions = normalizeTitle(title);

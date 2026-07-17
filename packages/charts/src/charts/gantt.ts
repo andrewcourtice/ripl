@@ -14,6 +14,7 @@ import type {
     ChartAxisInput,
     ChartGridInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -23,6 +24,7 @@ import {
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -100,6 +102,8 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     tooltip?: ChartTooltipInput;
     /** Axis configuration for the category and time axes. */
     axis?: ChartAxisInput<TData>;
+    /** Format applied to the numeric progress value shown in the task tooltip. Defaults to a percentage. */
+    format?: ValueFormatInput;
     /** Draw a marker line at the current date. Defaults to true. */
     showToday?: boolean;
     /** Colour of the "today" marker line. */
@@ -599,7 +603,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         color: string;
         progress?: number;
         state: RectState; }) {
-        const progressStr = task.progress !== undefined ? ` (${Math.round(task.progress * 100)}%)` : '';
+        const formatValue = resolveValueFormat(this.options.format ?? 'percentage');
+
+        const progressStr = task.progress !== undefined ? ` (${formatValue(task.progress)})` : '';
         const tooltipText = `${task.label}: ${this._formatDate(task.start)} – ${this._formatDate(task.end)}${progressStr}`;
 
         const payload = (point: { x: number;

@@ -2,6 +2,7 @@ export * from './chart';
 export * from './options';
 export * from './color';
 export * from './scales';
+export * from './theme';
 export * from './layout';
 export * from './animation';
 export * from './interaction';

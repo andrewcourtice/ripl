@@ -88,6 +88,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         padding: { top: 30, right: 20, bottom: 20, left: 20 },
         windowSize: 60,
         transitionDuration: 200,
+        format: v => `${Math.round(v)}%`,
         series: getSeries(),
         ...buildCommonOptions(config),
     });
@@ -190,6 +191,7 @@ chart.clear();
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure axes (default `true`)
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the y-axis tick labels
 - **`yMin`** / **`yMax`** — Fixed Y axis bounds (auto-computed if omitted)
 - **`padding`** — Chart padding
 
