@@ -142,7 +142,7 @@ export interface TrendChartAreaSeriesOptions<TData> extends TrendChartBaseSeries
     /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
     lineStyle?: LineStyle;
     /** Fill opacity of the area band. Defaults to 0.3. */
-    opacity?: number;
+    fillOpacity?: number;
     /** Show point markers at each data value. Defaults to `true`. */
     markers?: boolean;
 }

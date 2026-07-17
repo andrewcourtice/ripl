@@ -228,7 +228,7 @@ createBoxPlotChart(mount('box-plot'), {
             latency: 160,
         },
     ],
-    group: 'region',
+    key: 'region',
     value: 'latency',
     axis: {
         x: {
@@ -354,11 +354,11 @@ createGaugeChart(mount('gauge'), {
     animation: false,
     title: 'Gauge — Performance',
     value: 72,
-    min: 0,
-    max: 100,
+    minValue: 0,
+    maxValue: 100,
     label: 'Performance',
-    formatValue: v => `${v}%`,
-    formatTickLabel: v => `${v}%`,
+    format: v => `${v}%`,
+    formatTick: v => `${v}%`,
 });
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -373,8 +373,8 @@ createHeatmapChart(mount('heatmap'), {
         // Deterministic, varied surface so colour intensity is visible.
         value: ((di * 7 + hi * 13) % 100),
     }))),
-    xBy: 'hour',
-    yBy: 'day',
+    keyX: 'hour',
+    keyY: 'day',
     value: 'value',
     xCategories: HOURS,
     yCategories: DAYS,
@@ -426,7 +426,7 @@ createRadarChart(mount('radar'), {
     animation: false,
     title: 'Radar — Player profiles',
     legend: true,
-    axes: RADAR_AXES,
+    categories: RADAR_AXES,
     data: [
         {
             axis: 'Speed',
@@ -484,13 +484,13 @@ const realtime = createRealtimeChart(mount('realtime'), {
             id: 'cpu',
             label: 'CPU %',
             showArea: true,
-            areaOpacity: 0.15,
+            fillOpacity: 0.15,
         },
         {
             id: 'memory',
             label: 'Memory %',
             showArea: true,
-            areaOpacity: 0.15,
+            fillOpacity: 0.15,
         },
         {
             id: 'network',
@@ -838,7 +838,7 @@ createPolarScatterChart(mount('polar-scatter'), {
             sizeBy: 'gust',
         },
     ],
-    maxRadiusValue: 100,
+    maxValue: 100,
 });
 
 createRadialBarChart(mount('radial-bar'), {

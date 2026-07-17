@@ -85,7 +85,7 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     /** The dataset summarised by the chart. */
     data: TData[];
     /** Accessor for the category each value belongs to. */
-    group: keyof TData | ((item: TData) => string);
+    key: keyof TData | ((item: TData) => string);
     /** Accessor for the numeric value to summarise. */
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
@@ -347,7 +347,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         return super.render(async () => {
             const {
                 data,
-                group,
+                key,
                 value,
                 categories,
             } = this.options;
@@ -360,7 +360,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             ]);
             this.prepareAxes();
 
-            const getGroup = resolveAccessor<TData, string>(group);
+            const getGroup = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const color = this.getSeriesColor('boxplot');
 
@@ -660,7 +660,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
  *         { team: 'A', score: 91 },
  *         { team: 'B', score: 74 },
  *     ],
- *     group: 'team',
+ *     key: 'team',
  *     value: 'score',
  * });
  * ```

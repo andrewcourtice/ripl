@@ -114,7 +114,7 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
-        opacity: 0.3,
+        fillOpacity: 0.3,
         lineType: lineType.value,
         lineStyle: lineStyle.value,
         markers: markers.value,
@@ -217,11 +217,11 @@ createAreaChart('#container', {
         { id: 'desktop',
             value: 'desktop',
             label: 'Desktop',
-            opacity: 0.4 },
+            fillOpacity: 0.4 },
         { id: 'mobile',
             value: 'mobile',
             label: 'Mobile',
-            opacity: 0.4 },
+            fillOpacity: 0.4 },
     ],
 });
 ```
@@ -236,12 +236,12 @@ createAreaChart('#container', {
         { id: 'desktop',
             value: 'desktop',
             label: 'Desktop',
-            opacity: 0.2,
+            fillOpacity: 0.2,
             lineType: 'monotoneX' },
         { id: 'mobile',
             value: 'mobile',
             label: 'Mobile',
-            opacity: 0.6,
+            fillOpacity: 0.6,
             lineType: 'step' },
     ],
 });
@@ -250,7 +250,7 @@ createAreaChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `opacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`
 - **`key`** — Key accessor for data points
 - **`stacked`** — Stack series on top of each other (default `false`)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)

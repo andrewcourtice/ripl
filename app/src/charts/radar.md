@@ -79,7 +79,7 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
-        opacity: 0.25,
+        fillOpacity: 0.25,
         color: config.colors[s.id],
     }));
 }
@@ -87,7 +87,7 @@ function getSeries() {
 const { contextChanged, chart } = useRiplChart(context => {
     return createRadarChart(context, {
         data,
-        axes: currentAxes(),
+        categories: currentAxes(),
         levels: levels.value,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
         series: getSeries(),
@@ -97,7 +97,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
-        axes: currentAxes(),
+        categories: currentAxes(),
         data,
         levels: levels.value,
         series: getSeries(),
@@ -117,7 +117,7 @@ function addAxis() {
     if (axisCount < AXIS_POOL.length) {
         axisCount++;
         data = generateData();
-        chart.value?.update({ axes: currentAxes(), data });
+        chart.value?.update({ categories: currentAxes(), data });
     }
 }
 
@@ -125,7 +125,7 @@ function removeAxis() {
     if (axisCount > 3) {
         axisCount--;
         data = generateData();
-        chart.value?.update({ axes: currentAxes(), data });
+        chart.value?.update({ categories: currentAxes(), data });
     }
 }
 </script>
@@ -139,7 +139,7 @@ import {
 
 const chart = createRadarChart('#container', {
     data: [/* ... */],
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
     series: [
         { id: 'player1', value: 'player1', label: 'Player 1' },
     ],
@@ -164,7 +164,7 @@ const data = [
 ];
 ```
 
-The `axes` option lists axis labels, and each series references a numeric field via `value`.
+The `categories` option lists axis labels, and each series references a numeric field via `value`.
 
 ## Variants
 
@@ -173,7 +173,7 @@ The `axes` option lists axis labels, and each series references a numeric field 
 ```ts
 createRadarChart('#container', {
     data,
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     series: [
         { id: 'player1',
             value: 'player1',
@@ -187,18 +187,18 @@ createRadarChart('#container', {
 ```ts
 createRadarChart('#container', {
     data,
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     levels: 10,
     maxValue: 100,
     series: [
         { id: 'player1',
             value: 'player1',
             label: 'Player 1',
-            opacity: 0.3 },
+            fillOpacity: 0.3 },
         { id: 'player2',
             value: 'player2',
             label: 'Player 2',
-            opacity: 0.3 },
+            fillOpacity: 0.3 },
     ],
 });
 ```
@@ -206,8 +206,8 @@ createRadarChart('#container', {
 ## Options
 
 - **`data`** — The data array (one item per axis)
-- **`axes`** — Array of axis labels
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `opacity`
+- **`categories`** — Array of axis labels
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
 - **`maxValue`** — Maximum value for the scale (auto-computed if omitted)
 - **`levels`** — Number of concentric grid levels (default `5`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

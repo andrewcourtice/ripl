@@ -39,6 +39,10 @@ import {
 } from '../core/data';
 
 import {
+    resolveColorBy,
+} from '../core/color';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -91,7 +95,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
     /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
-    color?: keyof TData | ((item: TData) => string);
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values are absolute pixels. Defaults to 0 (a solid pie). */
     innerRadius?: number;
     /** Legend configuration. Shown by default; pass `false` to hide. */
@@ -158,12 +162,12 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
     public async render() {
         return super.render((scene, renderer) => {
-            const { data, key, value, label, color } = this.options;
+            const { data, key, value, label, colorBy } = this.options;
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const getLabel = resolveAccessor<TData, string>(label);
-            const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
+            const getColor = resolveColorBy<TData>(colorBy);
 
             const labels = normalizeSegmentLabels(this.options.labels);
 

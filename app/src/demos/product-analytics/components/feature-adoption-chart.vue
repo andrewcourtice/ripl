@@ -63,7 +63,7 @@ function buildChart() {
         },
         grid: true,
         legend: true,
-        mode: 'grouped' as const,
+        stacked: false,
         borderRadius: 4,
         // Show the count on top of each bar, and format axis/tooltip values as whole numbers.
         labels: true,

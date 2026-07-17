@@ -79,7 +79,7 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     /** Optional accessor for each item's display label (defaults to its key). */
     label?: keyof TData | ((item: TData) => string);
     /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
-    color?: keyof TData | ((item: TData) => string);
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */
     maxValue?: number;
     /** Inner hole radius as a ratio of the chart size (0–1). Defaults to 0.2. */
@@ -190,7 +190,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 key,
                 value,
                 label,
-                color,
+                colorBy,
                 innerRadius = 0.2,
                 range = 360,
                 gap = 0.25,
@@ -203,7 +203,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const getLabel = label !== undefined ? resolveAccessor<TData, string>(label) : getKey;
-            const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
+            const getColor = (item: TData): string | undefined => (colorBy ? resolveAccessor<TData, string>(colorBy)(item) : undefined);
 
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),

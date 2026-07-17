@@ -92,6 +92,6 @@ const chart = createFunnelChart('#container', {
 - **`key`** — Unique key accessor
 - **`value`** — Value accessor (determines bar width)
 - **`label`** — Label accessor (displayed inside bars)
-- **`color`** — Optional color accessor
+- **`colorBy`** — Optional per-item color accessor
 - **`gap`** — Gap between segments in pixels (default `4`)
 - **`borderRadius`** — Segment corner radius (default `4`)

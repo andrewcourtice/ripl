@@ -8,7 +8,6 @@
             ]" />
             <slot name="header"></slot>
             <div class="ripl-example__actions">
-                <RiplExportButton v-if="context" :context="context" />
                 <button
                     v-if="$slots.config"
                     class="ripl-example__config-button"
@@ -22,6 +21,7 @@
                     </svg>
                     <span>Customize</span>
                 </button>
+                <RiplExportButton v-if="context" :context="context" />
             </div>
         </div>
         <div class="ripl-example__root">
@@ -265,7 +265,13 @@ onUnmounted(cleanup);
 
     .ripl-example__root {
         position: relative;
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 4 / 3;
+    }
+
+    @media (min-width: 640px) {
+        .ripl-example__root {
+            aspect-ratio: 16 / 9;
+        }
     }
 
     .ripl-example__mount {

@@ -16,7 +16,6 @@ import type {
 } from '../core/options';
 
 import {
-    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeTooltip,
@@ -61,6 +60,7 @@ import {
 
 import {
     arrayJoin,
+    formatNumber,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -69,9 +69,9 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     /** The dataset rendered as a grid of cells. */
     data: TData[];
     /** Accessor for each item's x-axis category. */
-    xBy: keyof TData | ((item: TData) => string);
+    keyX: keyof TData | ((item: TData) => string);
     /** Accessor for each item's y-axis category. */
-    yBy: keyof TData | ((item: TData) => string);
+    keyY: keyof TData | ((item: TData) => string);
     /** Accessor for each cell's numeric value (drives its colour). */
     value: NumericAccessor<TData>;
     /** Ordered list of categories along the x axis. */
@@ -79,7 +79,7 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     /** Ordered list of categories along the y axis. */
     yCategories: string[];
     /** Colour stops (low→high) interpolated across the value extent; also accepts a built-in palette. */
-    colorRange?: string[];
+    colors?: string[];
     /** Corner radius in pixels applied to each cell. Defaults to 2. */
     borderRadius?: number;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
@@ -179,19 +179,19 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         return super.render(async () => {
             const {
                 data,
-                xBy,
-                yBy,
+                keyX,
+                keyY,
                 value: valueBy,
                 xCategories,
                 yCategories,
-                colorRange,
+                colors,
                 borderRadius = 2,
             } = this.options;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getX = typeIsFunction(xBy) ? xBy : (item: any) => item[xBy] as string;
+            const getX = typeIsFunction(keyX) ? keyX : (item: any) => item[keyX] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getY = typeIsFunction(yBy) ? yBy : (item: any) => item[yBy] as string;
+            const getY = typeIsFunction(keyY) ? keyY : (item: any) => item[keyY] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(valueBy) ? valueBy : (item: any) => item[valueBy] as number;
 
@@ -208,9 +208,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             const valueRange = maxVal - minVal || 1;
 
-            // A sequential colour scale over the value extent. `colorRange` may be two colours (the
+            // A sequential colour scale over the value extent. `colors` may be two colours (the
             // default low→high pair) or any number of stops, including a built-in `COLOR_SCHEME_*` palette.
-            const colorScale = scaleSequential(colorRange ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
+            const colorScale = scaleSequential(colors ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
@@ -448,7 +448,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 x: cell.x + cell.width / 2,
                 y: cell.y,
             }),
-            content: () => `${cell.xLabel}, ${cell.yLabel}: ${formatNumber(cell.value)}`,
+            content: () => `${cell.xLabel}, ${cell.yLabel}: ${formatNumber(cell.value, { precision: 2 })}`,
             highlight: { opacity: 0.8 },
             restore: { opacity: 1 },
             onEnter: point => this.emit('cellenter', payload(point)),
@@ -470,8 +470,8 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
  *         { day: 'Mon', hour: '10', load: 30 },
  *         { day: 'Tue', hour: '9', load: 18 },
  *     ],
- *     xBy: 'hour',
- *     yBy: 'day',
+ *     keyX: 'hour',
+ *     keyY: 'day',
  *     value: 'load',
  *     xCategories: ['9', '10'],
  *     yCategories: ['Mon', 'Tue'],

@@ -18,7 +18,6 @@ import type {
 } from '../core/options';
 
 import {
-    formatNumber,
     normalizeAxis,
     normalizeAxisItem,
     normalizeCrosshair,
@@ -75,6 +74,7 @@ import {
 
 import {
     arrayJoin,
+    formatNumber,
     functionIdentity,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -258,7 +258,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
      * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
      */
     private _attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
-        const label = `O: ${formatNumber(values.open)}  H: ${formatNumber(values.high)}  L: ${formatNumber(values.low)}  C: ${formatNumber(values.close)}`;
+        const label = `O: ${formatNumber(values.open, { precision: 2 })}  H: ${formatNumber(values.high, { precision: 2 })}  L: ${formatNumber(values.low, { precision: 2 })}  C: ${formatNumber(values.close, { precision: 2 })}`;
 
         const payload = (point: { x: number;
             y: number; }): StockChartCandleEvent => ({

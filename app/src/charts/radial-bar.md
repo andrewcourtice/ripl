@@ -137,7 +137,7 @@ const data = [
 - **`key`** — Category accessor (a field name or a function)
 - **`value`** — Numeric value accessor; encoded as the arc length
 - **`label`** — Optional label accessor (defaults to `key`)
-- **`color`** — Optional per-category color accessor
+- **`colorBy`** — Optional per-category color accessor
 - **`maxValue`** — Value mapped to a full sweep (defaults to the data maximum)
 - **`innerRadius`** — Inner hole radius as a ratio of the chart size (default `0.2`)
 - **`range`** — Angular sweep of a full-value bar in degrees (default `360`)

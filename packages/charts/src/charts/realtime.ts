@@ -86,7 +86,7 @@ export interface RealtimeChartSeriesOptions {
     /** Fill the area beneath the line. Defaults to `true`. */
     showArea?: boolean;
     /** Opacity of the area fill when `showArea` is enabled. Defaults to 0.2. */
-    areaOpacity?: number;
+    fillOpacity?: number;
 }
 
 /** Options for configuring a {@link RealtimeChart}. */
@@ -279,7 +279,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const buffer = this._buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
-            const areaOpacity = srs.areaOpacity ?? 0.2;
+            const fillOpacity = srs.fillOpacity ?? 0.2;
 
             // Need at least 2 points for a renderable line
             const pointCount = buffer.length;
@@ -362,7 +362,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 if (showArea) {
                     const areaFill = createPolyline({
                         id: `${srs.id}-area`,
-                        fill: setColorAlpha(color, areaOpacity),
+                        fill: setColorAlpha(color, fillOpacity),
                         stroke: undefined,
                         points: areaPoints,
                         // Curve only the interior line points; the two baseline anchors join with

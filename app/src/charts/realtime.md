@@ -51,8 +51,8 @@ const speed = ref('300');
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
 const seriesMeta = [
-    { id: 'cpu', label: 'CPU %', showArea: true, areaOpacity: 0.15 },
-    { id: 'memory', label: 'Memory %', showArea: true, areaOpacity: 0.15 },
+    { id: 'cpu', label: 'CPU %', showArea: true, fillOpacity: 0.15 },
+    { id: 'memory', label: 'Memory %', showArea: true, fillOpacity: 0.15 },
     { id: 'network', label: 'Network MB/s', showArea: false, lineWidth: 1.5 },
 ];
 
@@ -77,7 +77,7 @@ function getSeries() {
         id: s.id,
         label: s.label,
         showArea: s.showArea,
-        areaOpacity: s.areaOpacity,
+        fillOpacity: s.fillOpacity,
         lineWidth: s.lineWidth,
         color: config.colors[s.id],
     }));
@@ -182,7 +182,7 @@ chart.clear();
 
 ## Options
 
-- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `areaOpacity`
+- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `fillOpacity`
 - **`windowSize`** — Maximum visible data points (default `60`)
 - **`transitionDuration`** — Transition duration per update in ms (default `300`)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)

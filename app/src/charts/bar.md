@@ -101,7 +101,7 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createBarChart(context, {
         data,
         key: 'month',
-        mode: stacked.value ? 'stacked' : 'grouped',
+        stacked: stacked.value,
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         series: getSeries(),
@@ -112,7 +112,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
-        mode: stacked.value ? 'stacked' : 'grouped',
+        stacked: stacked.value,
         orientation: horizontal.value ? 'horizontal' : 'vertical',
         series: getSeries(),
         overview: overview.value,
@@ -155,7 +155,7 @@ import {
 const chart = createBarChart('#container', {
     data: [/* ... */],
     key: 'quarter',
-    mode: 'grouped',        // 'grouped' | 'stacked'
+    stacked: false,          // set true to stack series
     orientation: 'vertical', // 'vertical' | 'horizontal'
     series: [
         { id: 'sales', value: 'sales', label: 'Sales' },
@@ -194,7 +194,7 @@ Bars for each series sit side-by-side within each category:
 createBarChart('#container', {
     data,
     key: 'month',
-    mode: 'grouped',
+    stacked: false,
     series: [
         { id: 'sales',
             value: 'sales',
@@ -214,7 +214,7 @@ Bars stack on top of each other, showing cumulative totals:
 createBarChart('#container', {
     data,
     key: 'month',
-    mode: 'stacked',
+    stacked: true,
     series: [
         { id: 'sales',
             value: 'sales',
@@ -248,7 +248,7 @@ createBarChart('#container', {
 - **`data`** — The data array
 - **`series`** — Array of series with `id`, `value`, `label`, and optional `color`
 - **`key`** — Key accessor for categories
-- **`mode`** — `'grouped'` (default) or `'stacked'`
+- **`stacked`** — `false` (grouped, default) or `true` (stacked)
 - **`orientation`** — `'vertical'` (default) or `'horizontal'`
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

@@ -18,30 +18,15 @@ import {
     easeOutQuint,
 } from '@ripl/core';
 
-import {
-    roundTo,
-    typeIsBoolean,
-    typeIsNumber,
-    typeIsString,
+import type {
+    NumberFormatOptions,
 } from '@ripl/utilities';
 
-/** Default maximum number of decimal places applied when rendering numeric values as text. */
-export const DEFAULT_NUMBER_PRECISION = 2;
-
-/**
- * Formats a numeric value as a localized string, capping the precision at `precision` decimal
- * places (default {@link DEFAULT_NUMBER_PRECISION}). Integers render without decimals; fractional
- * values are rounded to at most `precision` places with trailing zeros stripped. Non-numeric values
- * fall back to `String(value)`. This is the shared entry point every chart uses so labels, axes,
- * tooltips, and tick marks share one consistent precision cap.
- */
-export function formatNumber(value: unknown, precision: number = DEFAULT_NUMBER_PRECISION): string {
-    if (!typeIsNumber(value)) {
-        return String(value);
-    }
-
-    return roundTo(value, precision).toLocaleString();
-}
+import {
+    formatNumber,
+    typeIsBoolean,
+    typeIsString,
+} from '@ripl/utilities';
 
 // ---------------------------------------------------------------------------
 // Ease
@@ -492,9 +477,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
     /** Accessor selecting the value this axis reads from each data item. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value?: keyof TData | ((item: TData) => any);
-    /** How tick values are formatted — a built-in {@link AxisFormatType} or a custom formatter. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    format?: AxisFormatType | ((value: any) => string);
+    /** How tick values are formatted — a built-in {@link AxisFormatType}, an Intl number-format options object, or a custom formatter. */
+    format?: ValueFormatInput;
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */
@@ -610,10 +594,11 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 
 /**
  * A value formatter accepted anywhere a chart renders a raw value as text (tooltips, data
- * labels, pie segment labels). Either a built-in format type or a custom callback.
+ * labels, pie segment labels, axis ticks). Either a built-in {@link AxisFormatType}, an Intl
+ * number-format options object (e.g. `{ style: 'currency', currency: 'USD' }`), or a custom callback.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ValueFormatInput = AxisFormatType | ((value: any) => string);
+export type ValueFormatInput = AxisFormatType | NumberFormatOptions | ((value: any) => string);
 
 /**
  * Resolves a value formatter into a function, always returning a usable formatter (falling back
@@ -624,7 +609,7 @@ export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) 
     const resolved = resolveFormatLabel(format);
     // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
     // untyped numeric values still respect the default 2-decimal cap.
-    return resolved ?? (value => formatNumber(value));
+    return resolved ?? (value => formatNumber(value, { precision: 2 }));
 }
 
 // ---------------------------------------------------------------------------
@@ -790,15 +775,22 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
 /** Built-in value formatters keyed by {@link AxisFormatType}. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VALUE_FORMATTERS: Record<AxisFormatType, (value: any) => string> = {
-    number: (value: number) => formatNumber(value),
-    percentage: (value: number) => `${formatNumber(value * 100)}%`,
+    number: (value: number) => formatNumber(value, { precision: 2 }),
+    percentage: (value: number) => formatNumber(value, {
+        style: 'percent',
+        maximumFractionDigits: 2,
+    }),
     date: (value: Date | number) => new Date(value).toLocaleDateString(),
     string: (value: unknown) => String(value),
 };
 
-/** Resolves an axis format type or custom formatter into a label formatting function. */
+/**
+ * Resolves a {@link ValueFormatInput} into a label formatting function. A built-in
+ * {@link AxisFormatType} maps to a preset formatter, an Intl number-format options object binds
+ * {@link formatNumber} to those options, and a function is returned as-is.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
+export function resolveFormatLabel(format?: ValueFormatInput): ((value: any) => string) | undefined {
     if (!format) {
         return undefined;
     }
@@ -807,5 +799,9 @@ export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => st
         return format;
     }
 
-    return VALUE_FORMATTERS[format];
+    if (typeof format === 'string') {
+        return VALUE_FORMATTERS[format];
+    }
+
+    return value => formatNumber(value, format);
 }

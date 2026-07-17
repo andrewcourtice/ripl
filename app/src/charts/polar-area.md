@@ -186,8 +186,8 @@ Every segment spans the same angle — only the radius varies with `value`.
 - **`key`** — Key accessor for each segment (a field name or a function)
 - **`value`** — Numeric value accessor; encoded as the segment radius
 - **`label`** — Label accessor for each segment
-- **`color`** — Optional per-segment color accessor (otherwise a palette color is assigned)
-- **`innerRadiusRatio`** — Inner radius as a ratio of the chart size (`0`–`1`, default `0.15`)
+- **`colorBy`** — Optional per-segment color accessor (otherwise a palette color is assigned)
+- **`innerRadius`** — Inner radius as a fraction of the chart size (`0`–`1`, default `0.15`)
 - **`maxRadiusRatio`** — Maximum outer radius as a ratio of the chart size (`0`–`0.5`, default `0.45`)
 - **`padAngle`** — Padding angle between segments in radians (default `0.02`)
 - **`levels`** — Number of concentric grid rings (default `4`)

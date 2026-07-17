@@ -71,8 +71,6 @@ import {
 
 /** Whether bars are laid out vertically (default) or horizontally. */
 export type BarChartOrientation = 'vertical' | 'horizontal';
-/** Whether multiple series are drawn side by side (`grouped`) or accumulated into one column (`stacked`). */
-export type BarChartMode = 'grouped' | 'stacked';
 
 /** Maps a pointer interaction phase to the corresponding bar-chart event name. */
 const BAR_EVENTS = {
@@ -103,8 +101,8 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
     key: keyof TData | ((item: TData) => string);
     /** Whether bars run vertically (default) or horizontally. */
     orientation?: BarChartOrientation;
-    /** Whether multiple series are grouped side by side (default) or stacked. */
-    mode?: BarChartMode;
+    /** Whether multiple series are stacked into a single bar per category (`true`) or grouped side by side (default `false`). */
+    stacked?: boolean;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
@@ -178,7 +176,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     }
 
     private get _isStacked() {
-        return this.options.mode === 'stacked';
+        return this.options.stacked === true;
     }
 
     /** Bar charts window their category axis: y when horizontal (side strip), x otherwise (bottom strip). */

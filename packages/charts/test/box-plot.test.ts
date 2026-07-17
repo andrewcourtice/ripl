@@ -72,7 +72,7 @@ describe('BoxPlotChart animations', () => {
             autoRender: false,
             animation: false,
             data: SCORES,
-            group: 'group',
+            key: 'group',
             value: 'score',
         });
 
@@ -96,7 +96,7 @@ describe('BoxPlotChart animations', () => {
             autoRender: false,
             animation: false,
             data: SCORES,
-            group: 'group',
+            key: 'group',
             value: 'score',
         });
 

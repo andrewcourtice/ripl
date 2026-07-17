@@ -31,6 +31,10 @@ import {
 } from '../core/animation';
 
 import {
+    resolveColorBy,
+} from '../core/color';
+
+import {
     Tooltip,
 } from '../components/tooltip';
 
@@ -69,8 +73,8 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     value: NumericAccessor<TData>;
     /** Accessor for each segment's display label. */
     label: keyof TData | ((item: TData) => string);
-    /** Accessor for an explicit per-segment colour; falls back to the generated palette. */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to the generated palette. */
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Vertical gap in pixels between segments. Defaults to 4. */
     gap?: number;
     /** Corner radius in pixels applied to each segment. Defaults to 4. */
@@ -136,7 +140,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 key,
                 value,
                 label,
-                color,
+                colorBy,
                 gap = 4,
                 borderRadius = 4,
             } = this.options;
@@ -148,12 +152,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
 
-            let getColor: ((item: TData) => string) | undefined;
-
-            if (color) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
-            }
+            const getColor = resolveColorBy<TData>(colorBy);
 
             // Find max value for width scaling
             let maxValue = 0;
@@ -175,14 +174,14 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
-                color: getColor ? getColor(item) : undefined,
+                color: getColor(item),
             })));
 
             const calculations = data.map((item, index) => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
                 const itemLabel = getLabel(item);
-                const itemColor = getColor ? getColor(item) : undefined;
+                const itemColor = getColor(item);
                 const widthRatio = itemValue / (maxValue || 1);
                 const segmentWidth = availableWidth * widthRatio;
                 const x = area.x + (availableWidth - segmentWidth) / 2;

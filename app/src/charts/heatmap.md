@@ -70,12 +70,12 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createHeatmapChart(context, {
         data,
-        xBy: 'hour',
-        yBy: 'day',
+        keyX: 'hour',
+        keyY: 'day',
         value: 'value',
         xCategories: HOURS,
         yCategories: DAYS,
-        colorRange: [lowColor.value, highColor.value],
+        colors: [lowColor.value, highColor.value],
         padding: { top: 20, right: 20, bottom: 40, left: 20 },
         ...buildCommonOptions(config),
     });
@@ -83,7 +83,7 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 function apply() {
     chart.value?.update({
-        colorRange: [lowColor.value, highColor.value],
+        colors: [lowColor.value, highColor.value],
         ...buildCommonOptions(config),
     });
 }
@@ -106,8 +106,8 @@ import {
 
 const chart = createHeatmapChart('#container', {
     data: [/* ... */],
-    xBy: 'hour',
-    yBy: 'day',
+    keyX: 'hour',
+    keyY: 'day',
     value: 'value',
     xCategories: ['9am', '10am', '11am'],
     yCategories: ['Mon', 'Tue', 'Wed'],
@@ -117,10 +117,10 @@ const chart = createHeatmapChart('#container', {
 ## Options
 
 - **`data`** — The data array (one item per cell)
-- **`xBy`** — Accessor for the x-axis category
-- **`yBy`** — Accessor for the y-axis category
+- **`keyX`** — Accessor for the x-axis category
+- **`keyY`** — Accessor for the y-axis category
 - **`value`** — Accessor for the cell value
 - **`xCategories`** — Ordered list of x-axis categories
 - **`yCategories`** — Ordered list of y-axis categories
-- **`colorRange`** — Tuple of `[lowColor, highColor]` hex strings
+- **`colors`** — Tuple of `[lowColor, highColor]` hex strings
 - **`borderRadius`** — Cell corner radius (default `2`)

@@ -92,6 +92,6 @@ const chart = createTreemapChart('#container', {
 - **`key`** — Unique key accessor
 - **`value`** — Value accessor (determines rectangle area)
 - **`label`** — Label accessor (displayed inside cells)
-- **`color`** — Optional color accessor
+- **`colorBy`** — Optional per-item color accessor
 - **`gap`** — Gap between cells in pixels (default `3`)
 - **`borderRadius`** — Cell corner radius (default `4`)

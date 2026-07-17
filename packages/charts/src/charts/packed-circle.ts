@@ -35,6 +35,10 @@ import {
     resolveAccessor,
 } from '../core/data';
 
+import {
+    resolveColorBy,
+} from '../core/color';
+
 import type {
     PackCircle,
 } from '../core/pack';
@@ -82,8 +86,8 @@ export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOpti
     value: NumericAccessor<TData>;
     /** Accessor for each circle's display label; defaults to the item's key. */
     label?: keyof TData | ((item: TData) => string);
-    /** Accessor for an explicit per-circle colour; falls back to the generated palette. */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to the generated palette. */
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -181,13 +185,13 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 key,
                 value,
                 label,
-                color,
+                colorBy,
             } = this.options;
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const getLabel = label !== undefined ? resolveAccessor<TData, string>(label) : getKey;
-            const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
+            const getColor = resolveColorBy<TData>(colorBy);
 
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),

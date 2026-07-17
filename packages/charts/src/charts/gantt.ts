@@ -34,6 +34,10 @@ import {
 } from '../core/animation';
 
 import {
+    resolveColorBy,
+} from '../core/color';
+
+import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
@@ -86,8 +90,8 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     start: keyof TData | ((item: TData) => Date);
     /** Accessor for each task's end date. */
     end: keyof TData | ((item: TData) => Date);
-    /** Accessor for an explicit per-task colour; falls back to the generated palette. */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to the generated palette. */
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
     progress?: NumericAccessor<TData>;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
@@ -224,13 +228,13 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             data,
             start: startAccessor,
             end: endAccessor,
-            color: colorAccessor,
+            colorBy,
             progress: progressAccessor,
         } = this.options;
 
         const getStart = this._getAccessor<Date>(startAccessor);
         const getEnd = this._getAccessor<Date>(endAccessor);
-        const getColor = colorAccessor ? this._getAccessor<string>(colorAccessor) : undefined;
+        const getColor = resolveColorBy<TData>(colorBy);
         const getProgress = progressAccessor ? this._getAccessor<number>(progressAccessor) : undefined;
         const borderRadius = this.options.borderRadius ?? 3;
 
@@ -240,9 +244,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const start = getStart(item);
             const end = getEnd(item);
 
-            const color = getColor
-                ? getColor(item)
-                : this.getSeriesColor(key);
+            const color = getColor(item) ?? this.getSeriesColor(key);
 
             const x = timeScale(start);
             const width = Math.max(timeScale(end) - timeScale(start), 2);

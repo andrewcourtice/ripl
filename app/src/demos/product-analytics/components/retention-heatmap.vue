@@ -50,12 +50,12 @@ function buildChart() {
 
     const options = {
         data,
-        xBy: 'week' as const,
-        yBy: 'cohort' as const,
+        keyX: 'week' as const,
+        keyY: 'cohort' as const,
         value: 'retention' as const,
         xCategories: weeks,
         yCategories: cohorts,
-        colorRange: ['#dbeafe', '#1d4ed8'] as [string, string],
+        colors: ['#dbeafe', '#1d4ed8'] as [string, string],
         borderRadius: 4,
         axis: {
             x: { title: 'Weeks Since Signup' },

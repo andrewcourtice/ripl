@@ -140,6 +140,6 @@ const data = [
 - **`key`** — Unique key accessor for each circle
 - **`value`** — Numeric value accessor; encoded as the circle's area
 - **`label`** — Optional label accessor (defaults to `key`)
-- **`color`** — Optional per-circle color accessor
+- **`colorBy`** — Optional per-circle color accessor
 - **`format`** — Value formatter for tooltips
 - **`padding`**, **`title`**, **`animation`** — Standard chart options

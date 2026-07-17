@@ -60,14 +60,14 @@ const config = useChartConfig({
 const { contextChanged, chart } = useRiplChart(context => {
     return createGaugeChart(context, {
         value: value.value,
-        min: 0,
-        max: 100,
+        minValue: 0,
+        maxValue: 100,
         label: 'Performance',
         color: color.value,
-        formatValue: v => `${v}%`,
+        format: v => `${v}%`,
         tickCount: tickCount.value,
         showTickLabels: true,
-        formatTickLabel: v => `${v}%`,
+        formatTick: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildCommonOptions(config),
     });
@@ -99,10 +99,10 @@ import {
 
 const chart = createGaugeChart('#container', {
     value: 72,
-    min: 0,
-    max: 100,
+    minValue: 0,
+    maxValue: 100,
     label: 'Performance',
-    formatValue: v => `${v}%`,
+    format: v => `${v}%`,
 });
 
 // Update value
@@ -117,7 +117,7 @@ chart.update({ value: 85 });
 - **`label`** — Label displayed below the value
 - **`color`** — Gauge fill color (default pastel blue)
 - **`trackColor`** — Background track color (default `#e5e7eb`)
-- **`formatValue`** — Custom value formatter function
+- **`format`** — Custom value formatter function
 - **`tickCount`** — Number of tick marks along the arc (default `5`, set to `0` to hide)
 - **`showTickLabels`** — Whether to show value labels at each tick (default `true`)
-- **`formatTickLabel`** — Custom formatter for tick labels
+- **`formatTick`** — Custom formatter for tick labels

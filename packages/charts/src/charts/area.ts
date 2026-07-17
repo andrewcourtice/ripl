@@ -97,7 +97,7 @@ export interface AreaChartSeriesOptions<TData> {
     /** Width in pixels of the series line. */
     lineWidth?: number;
     /** Fill opacity of the area band. Defaults to 0.3. */
-    opacity?: number;
+    fillOpacity?: number;
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
 }

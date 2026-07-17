@@ -100,7 +100,7 @@ function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
         label: s.label,
         value: s.value,
         color: config.colors[s.id],
-        ...(s.type === 'area' ? { opacity: 0.25 } : {}),
+        ...(s.type === 'area' ? { fillOpacity: 0.25 } : {}),
         ...(s.type === 'bar' ? {} : { lineType: lineType.value }),
     })) as TrendChartSeriesOptions<SalesRow>[];
 }
@@ -252,7 +252,7 @@ createTrendChart('#container', {
 - **`data`** — The data array shared by all series
 - **`series`** — Array of series, each a discriminated union on `type`:
   - **`type: 'line'`** — `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
-  - **`type: 'area'`** — as line, plus `opacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
+  - **`type: 'area'`** — as line, plus `fillOpacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
   - **`type: 'bar'`** — `id`, `value`, `label`, optional `color`
 - **`key`** — Key accessor for the categorical x-axis
 - **`stacked`** — Stack same-type series (default `false`)

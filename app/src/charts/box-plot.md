@@ -59,7 +59,7 @@ let data = generateData();
 const { contextChanged, chart } = useRiplChart(context => {
     return createBoxPlotChart(context, {
         data,
-        group: 'region',
+        key: 'region',
         value: 'latency',
         categories: REGIONS,
         padding: { top: 20, right: 20, bottom: 40, left: 40 },
@@ -92,20 +92,20 @@ import {
 
 const chart = createBoxPlotChart('#container', {
     data: [/* ... */],
-    group: 'region',
+    key: 'region',
     value: 'latency',
 });
 ```
 
 ## Data Format
 
-Each item contributes one numeric value to a category. The chart groups items by the `group`
+Each item contributes one numeric value to a category. The chart groups items by the `key`
 accessor and summarises the `value` accessor per group — no pre-aggregation required.
 
 ## Options
 
 - **`data`** — The data array
-- **`group`** — Accessor for the category (field name or function)
+- **`key`** — Accessor for the category (field name or function)
 - **`value`** — Accessor for the numeric value (field name or function)
 - **`categories`** — Explicit category order (default: first-seen order)
 - **`color`** — Box colour (default: first palette colour)

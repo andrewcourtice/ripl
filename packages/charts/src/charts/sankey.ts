@@ -7,10 +7,6 @@ import {
 } from '../core/chart';
 
 import {
-    formatNumber,
-} from '../core/options';
-
-import {
     applyHoverHighlight,
 } from '../core/interaction';
 
@@ -60,6 +56,7 @@ import {
 
 import {
     arrayJoin,
+    formatNumber,
 } from '@ripl/utilities';
 
 /** A directional flow between two nodes in a Sankey diagram. */
@@ -633,7 +630,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 x: anchorX,
                 y: anchorY,
             }),
-            content: () => `${link.source.label} → ${link.target.label}: ${formatNumber(link.value)}`,
+            content: () => `${link.source.label} → ${link.target.label}: ${formatNumber(link.value, { precision: 2 })}`,
             highlight: { stroke: setColorAlpha(link.color, 0.6) },
             restore: { stroke: setColorAlpha(link.color, 0.3) },
             onEnter: point => this.emit('linkenter', payload(point)),
@@ -662,7 +659,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 x: anchorX,
                 y: anchorY,
             }),
-            content: () => `${node.label}: ${formatNumber(node.value)}`,
+            content: () => `${node.label}: ${formatNumber(node.value, { precision: 2 })}`,
             highlight: { fill: node.color },
             restore: { fill: setColorAlpha(node.color, 0.8) },
             onEnter: point => this.emit('nodeenter', payload(point)),

@@ -164,7 +164,7 @@ chart.update({ data: newData });
 - **`label`** — Label accessor for y-axis task names
 - **`start`** — Start date accessor
 - **`end`** — End date accessor
-- **`color`** — Optional color accessor per task
+- **`colorBy`** — Optional color accessor per task
 - **`progress`** — Optional progress accessor (0–1)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips

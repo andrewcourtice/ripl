@@ -94,7 +94,7 @@ chart.update({
 You can update any option — not just data:
 
 ```ts
-chart.update({ mode: 'stacked' });
+chart.update({ stacked: true });
 chart.update({ orientation: 'horizontal' });
 chart.update({ legend: true });
 ```

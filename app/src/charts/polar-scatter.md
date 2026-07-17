@@ -76,7 +76,7 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createPolarScatterChart(context, {
         data: samples,
         series: getSeries(),
-        maxRadiusValue: 100,
+        maxValue: 100,
         format: v => `${v} km/h`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildCommonOptions(config),
@@ -140,7 +140,7 @@ const chart = createPolarScatterChart('#container', {
             radius: 'speed',
             sizeBy: 'gust' },
     ],
-    maxRadiusValue: 100,
+    maxValue: 100,
 });
 ```
 
@@ -186,7 +186,7 @@ const series = [
 
 - **`data`** — The data array
 - **`series`** — Array of series with `id`, `label`, `angle` (degrees accessor), `radius` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
-- **`maxRadiusValue`** — Value mapped to the outer ring (defaults to the data maximum)
+- **`maxValue`** — Value mapped to the outer ring (defaults to the data maximum)
 - **`levels`** — Number of concentric value rings (default `4`)
 - **`angleTicks`** — Number of angular spokes/labels (default `8`)
 - **`legend`** — `boolean | ChartLegendOptions` — Series legend (shown by default for multiple series)
