@@ -62,6 +62,7 @@ import type {
 
 import {
     Box,
+    clamp,
     createGroup,
     createLine,
     createRect,
@@ -688,7 +689,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 const rangeStart = yAxisBoundingBox.right + 20;
                 const rangeEnd = right;
                 const index = Math.round(((value - rangeStart) / (rangeEnd - rangeStart)) * keys.length - 0.5);
-                return keys[Math.max(0, Math.min(keys.length - 1, index))];
+                return keys[clamp(index, 0, keys.length - 1)];
             };
 
             this._xScale = Object.assign(

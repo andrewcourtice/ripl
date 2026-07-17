@@ -44,9 +44,11 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createGroup,
     createRect,
     easeOutCubic,
+    getTotal,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -125,7 +127,7 @@ function layoutTreemap(
     height: number,
     gap: number
 ): TreemapNode[] {
-    const total = items.reduce((sum, item) => sum + item.value, 0);
+    const total = getTotal(items, item => item.value);
 
     if (items.length === 0 || total === 0) return [];
 
@@ -272,7 +274,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             // the cell width. Shared by the entry and update branches so both stay in sync.
             const showLabelFor = (node: { width: number;
                 height: number; }) => node.width > 40 && node.height > 20;
-            const labelFont = (width: number) => `600 ${Math.min(12, Math.max(9, width / 8))}px sans-serif`;
+            const labelFont = (width: number) => `600 ${clamp(width / 8, 9, 12)}px sans-serif`;
 
             const entryGroups = entries.map(node => {
                 const nodeColor = colorFor(node);

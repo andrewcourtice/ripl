@@ -47,6 +47,7 @@ import {
     createArc,
     createGroup,
     easeOutQuint,
+    getTotal,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -131,7 +132,7 @@ function flattenNodes<TData = unknown>(
     parentColor?: string,
     resolvedColors?: Map<string, string>
 ): FlattenedArc<TData>[] {
-    const total = nodes.reduce((sum, node) => sum + node.value, 0);
+    const total = getTotal(nodes, node => node.value);
 
     if (total === 0) return [];
 

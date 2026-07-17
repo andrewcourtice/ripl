@@ -65,9 +65,11 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createCircle,
     createGroup,
     createPolyline,
+    getTotal,
     interpolatePath,
     interpolatePoints,
     interpolateWaypoint,
@@ -273,7 +275,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const sized = series.map((srs, index) => ({
             id: srs.id,
             index,
-            size: ctx.data.reduce((sum, item) => sum + Math.abs(this._rawValue(srs, item)), 0),
+            size: getTotal(ctx.data, item => Math.abs(this._rawValue(srs, item))),
         }));
 
         // Largest first; ties keep the original series order (stable).
@@ -463,7 +465,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
                 ...(markers.length > 0
                     ? [ctx.renderer.transition(markers, element => {
                         const fraction = ctx.plot.width > 0
-                            ? Math.min(Math.max(((element as Circle).cx - ctx.plot.x) / ctx.plot.width, 0), 1)
+                            ? clamp(((element as Circle).cx - ctx.plot.x) / ctx.plot.width, 0, 1)
                             : 0;
 
                         return {

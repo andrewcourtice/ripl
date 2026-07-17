@@ -30,6 +30,7 @@ import type {
 } from '../core/options';
 
 import {
+    cumulativeExtent,
     resolveAccessor,
 } from '../core/data';
 
@@ -195,12 +196,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return series.map(srs => ({
-            id: srs.id,
-            color: this.getSeriesColor(srs.id),
-            type: 'area' as const,
-            values: data.map(item => this._seriesValue(srs, item)),
-        }));
+        return this.buildOverviewSeries(series, data, () => 'area', (srs, item) => this._seriesValue(srs, item));
     }
 
     private _seriesContext(plot: ChartArea): AreaSeriesContext<TData> {
@@ -236,25 +232,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             let dataExtent: number[];
 
             if (stacked) {
-                let stackedMax = 0;
-                let stackedMin = 0;
-
-                data.forEach(item => {
-                    let cumulative = 0;
-                    let cumulativeMax = 0;
-                    let cumulativeMin = 0;
-
-                    series.forEach(srs => {
-                        cumulative += this._seriesValue(srs, item);
-                        cumulativeMax = Math.max(cumulativeMax, cumulative);
-                        cumulativeMin = Math.min(cumulativeMin, cumulative);
-                    });
-
-                    stackedMax = Math.max(stackedMax, cumulativeMax);
-                    stackedMin = Math.min(stackedMin, cumulativeMin);
-                });
-
-                dataExtent = [stackedMin, stackedMax];
+                dataExtent = cumulativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
             } else {
                 const seriesExtents = series
                     .flatMap(srs => getExtent(data, item => this._seriesValue(srs, item)))

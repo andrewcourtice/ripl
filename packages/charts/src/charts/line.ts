@@ -189,12 +189,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return series.map(srs => ({
-            id: srs.id,
-            color: this.getSeriesColor(srs.id),
-            type: 'line' as const,
-            values: data.map(resolveAccessor<TData, number>(srs.value)),
-        }));
+        return this.buildOverviewSeries(series, data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
     }
 
     private _seriesContext(plot: ChartArea): LineSeriesContext<TData> {

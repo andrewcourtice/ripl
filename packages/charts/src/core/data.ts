@@ -72,3 +72,83 @@ export function computeStackOffset<TSeries, TData>(
         return sum;
     }, 0);
 }
+
+/**
+ * Computes the value extent `[min, max]` of independently stacked positive and negative totals — the
+ * span a stacked bar chart covers when, per item, positive and negative values accumulate from the
+ * baseline in opposite directions. Both bounds seed at `0`, so an all-positive (or all-negative)
+ * dataset keeps a zero baseline.
+ *
+ * @typeParam TSeries - The series type.
+ * @typeParam TData - The data-item type.
+ * @param series - The series that stack together.
+ * @param data - The dataset iterated per item.
+ * @param getValue - Resolves a series' numeric value at a data item.
+ * @returns The `[min, max]` extent covering every item's positive and negative stacked totals.
+ */
+export function positiveNegativeExtent<TSeries, TData>(
+    series: TSeries[],
+    data: TData[],
+    getValue: (series: TSeries, item: TData) => number
+): [number, number] {
+    let max = 0;
+    let min = 0;
+
+    data.forEach(item => {
+        let positive = 0;
+        let negative = 0;
+
+        series.forEach(srs => {
+            const value = getValue(srs, item);
+
+            if (value >= 0) {
+                positive += value;
+            } else {
+                negative += value;
+            }
+        });
+
+        max = Math.max(max, positive);
+        min = Math.min(min, negative);
+    });
+
+    return [min, max];
+}
+
+/**
+ * Computes the value extent `[min, max]` of the running cumulative total across series — the span a
+ * stacked area chart covers as each series accumulates on top of the previous ones. Both bounds seed
+ * at `0`, so a single-sign dataset keeps a zero baseline.
+ *
+ * @typeParam TSeries - The series type.
+ * @typeParam TData - The data-item type.
+ * @param series - The series that stack together, in stacking order.
+ * @param data - The dataset iterated per item.
+ * @param getValue - Resolves a series' numeric value at a data item.
+ * @returns The `[min, max]` extent covering the cumulative running total across every item.
+ */
+export function cumulativeExtent<TSeries, TData>(
+    series: TSeries[],
+    data: TData[],
+    getValue: (series: TSeries, item: TData) => number
+): [number, number] {
+    let max = 0;
+    let min = 0;
+
+    data.forEach(item => {
+        let cumulative = 0;
+        let cumulativeMax = 0;
+        let cumulativeMin = 0;
+
+        series.forEach(srs => {
+            cumulative += getValue(srs, item);
+            cumulativeMax = Math.max(cumulativeMax, cumulative);
+            cumulativeMin = Math.min(cumulativeMin, cumulative);
+        });
+
+        max = Math.max(max, cumulativeMax);
+        min = Math.min(min, cumulativeMin);
+    });
+
+    return [min, max];
+}

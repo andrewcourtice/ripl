@@ -83,6 +83,7 @@ import {
 import type {
     ChartNavigatorCategoryLayout,
     ChartNavigatorSeries,
+    ChartNavigatorSeriesType,
     ChartNavigatorWindow,
 } from '../components/navigator';
 
@@ -100,6 +101,7 @@ import type {
 
 import {
     Box,
+    clamp,
     createFrameBuffer,
     createGroup,
     createRect,
@@ -140,16 +142,12 @@ function isSameTransform(a: NavigatorTransform, b: NavigatorTransform): boolean 
     return a.k === b.k && a.x === b.x && a.y === b.y;
 }
 
-function clampValue(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-}
-
 /**
  * Clamps a view translation so the visible window stays within the full domain: given the axis plot
  * `origin`/`size` and zoom `k`, the translate must lie in `[(origin+size)(1-k), origin(1-k)]`.
  */
 function clampTranslate(translate: number, origin: number, size: number, k: number): number {
-    return clampValue(translate, (origin + size) * (1 - k), origin * (1 - k));
+    return clamp(translate, (origin + size) * (1 - k), origin * (1 - k));
 }
 
 /** Options shared by all cartesian charts. */
@@ -482,6 +480,33 @@ export abstract class CartesianChart<
         return 'point';
     }
 
+    /**
+     * Builds the per-series overview data ({@link ChartNavigatorSeries}) the strip renders — id,
+     * palette colour, draw type, and per-category values — from a series list and per-series
+     * `type`/`value` resolvers. Shared by the line, area, bar, and trend charts so each only supplies
+     * how to resolve its own type and values.
+     *
+     * @typeParam TSeries - The chart's series-options type (must carry an `id`).
+     * @param series - The series to describe.
+     * @param data - The dataset each series is sampled over.
+     * @param getType - Resolves how a series is drawn in the strip (`line`/`bar`/`area`).
+     * @param getValue - Resolves a series' numeric value at a data item.
+     * @returns One {@link ChartNavigatorSeries} per input series, in order.
+     */
+    protected buildOverviewSeries<TSeries extends { id: string }>(
+        series: TSeries[],
+        data: TData[],
+        getType: (series: TSeries) => ChartNavigatorSeriesType,
+        getValue: (series: TSeries, item: TData) => number
+    ): ChartNavigatorSeries[] {
+        return series.map(srs => ({
+            id: srs.id,
+            color: this.getSeriesColor(srs.id),
+            type: getType(srs),
+            values: data.map(item => getValue(srs, item)),
+        }));
+    }
+
     /** Whether the overview strip is enabled and applicable (a category-axis chart with `overview` on). */
     private _overviewEnabled(): boolean {
         return !!this.options.overview && this.navigationAxis() !== 'both';
@@ -619,8 +644,8 @@ export abstract class CartesianChart<
         const end = ((origin + size - translate) / transform.k - origin) / size;
 
         return {
-            start: clampValue(start, 0, 1),
-            end: clampValue(end, 0, 1),
+            start: clamp(start, 0, 1),
+            end: clamp(end, 0, 1),
         };
     }
 
@@ -641,8 +666,8 @@ export abstract class CartesianChart<
             end = start + MIN_WINDOW;
         }
 
-        start = clampValue(start, 0, 1 - MIN_WINDOW);
-        end = clampValue(end, start + MIN_WINDOW, 1);
+        start = clamp(start, 0, 1 - MIN_WINDOW);
+        end = clamp(end, start + MIN_WINDOW, 1);
 
         const k = 1 / (end - start);
         const translate = origin - k * (origin + start * size);
@@ -836,7 +861,7 @@ export abstract class CartesianChart<
         const invert = (position: number) => {
             const t = (position - left) / Math.max(1, right - left);
             const index = Math.round(t * span);
-            return keys[Math.max(0, Math.min(keys.length - 1, index))];
+            return keys[clamp(index, 0, keys.length - 1)];
         };
 
         return Object.assign(convert, {

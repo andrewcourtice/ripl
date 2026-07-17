@@ -58,6 +58,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createCircle,
     createGroup,
     easeOutCubic,
@@ -269,7 +270,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             exits.forEach(group => group.destroy());
 
             const showLabel = (node: PackedNode) => node.r > 16;
-            const labelFont = (r: number) => `600 ${Math.min(14, Math.max(9, r / 3))}px sans-serif`;
+            const labelFont = (r: number) => `600 ${clamp(r / 3, 9, 14)}px sans-serif`;
 
             const entryGroups = entries.map(node => {
                 const restFill = setColorAlpha(node.color, REST_ALPHA);

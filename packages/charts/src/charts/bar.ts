@@ -25,6 +25,7 @@ import {
 } from '../core/options';
 
 import {
+    positiveNegativeExtent,
     resolveAccessor,
 } from '../core/data';
 
@@ -202,12 +203,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return series.map(srs => ({
-            id: srs.id,
-            color: this.getSeriesColor(srs.id),
-            type: 'bar' as const,
-            values: data.map(item => this._seriesValue(srs, item)),
-        }));
+        return this.buildOverviewSeries(series, data, () => 'bar', (srs, item) => this._seriesValue(srs, item));
     }
 
     private _seriesContext(categoryScale: BandScale<string>, valueScale: Scale, plot: ChartArea): BarSeriesContext<TData> {
@@ -247,28 +243,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             let dataExtent = getExtent(seriesExtents, functionIdentity);
 
             if (this._isStacked) {
-                let stackedMax = 0;
-                let stackedMin = 0;
-
-                data.forEach(item => {
-                    let positiveTotal = 0;
-                    let negativeTotal = 0;
-
-                    series.forEach(srs => {
-                        const value = this._seriesValue(srs, item);
-
-                        if (value >= 0) {
-                            positiveTotal += value;
-                        } else {
-                            negativeTotal += value;
-                        }
-                    });
-
-                    stackedMax = Math.max(stackedMax, positiveTotal);
-                    stackedMin = Math.min(stackedMin, negativeTotal);
-                });
-
-                dataExtent = [stackedMin, stackedMax];
+                dataExtent = positiveNegativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
             }
 
             // Shared layout pass: title and legend reserve their bands first.

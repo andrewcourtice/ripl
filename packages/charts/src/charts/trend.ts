@@ -27,6 +27,8 @@ import {
 } from '../core/options';
 
 import {
+    cumulativeExtent,
+    positiveNegativeExtent,
     resolveAccessor,
 } from '../core/data';
 
@@ -274,55 +276,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
-    /** Value extent of independently stacked positive/negative totals (bar stacking). */
-    private _positiveNegativeExtent(series: TrendChartSeriesOptions<TData>[], data: TData[]): [number, number] {
-        let max = 0;
-        let min = 0;
-
-        data.forEach(item => {
-            let positive = 0;
-            let negative = 0;
-
-            series.forEach(srs => {
-                const value = this._seriesValue(srs, item);
-
-                if (value >= 0) {
-                    positive += value;
-                } else {
-                    negative += value;
-                }
-            });
-
-            max = Math.max(max, positive);
-            min = Math.min(min, negative);
-        });
-
-        return [min, max];
-    }
-
-    /** Value extent of the running cumulative total (area stacking). */
-    private _cumulativeExtent(series: TrendChartSeriesOptions<TData>[], data: TData[]): [number, number] {
-        let max = 0;
-        let min = 0;
-
-        data.forEach(item => {
-            let cumulative = 0;
-            let cumulativeMax = 0;
-            let cumulativeMin = 0;
-
-            series.forEach(srs => {
-                cumulative += this._seriesValue(srs, item);
-                cumulativeMax = Math.max(cumulativeMax, cumulative);
-                cumulativeMin = Math.min(cumulativeMin, cumulative);
-            });
-
-            max = Math.max(max, cumulativeMax);
-            min = Math.min(min, cumulativeMin);
-        });
-
-        return [min, max];
-    }
-
     private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
         this.emit(MARKER_EVENTS[phase], event);
     }
@@ -335,12 +288,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return series.map(srs => ({
-            id: srs.id,
-            color: this.getSeriesColor(srs.id),
-            type: srs.type,
-            values: data.map(item => this._seriesValue(srs, item)),
-        }));
+        return this.buildOverviewSeries(series, data, srs => srs.type, (srs, item) => this._seriesValue(srs, item));
     }
 
     private _commonContext(plot: ChartArea, emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void): SeriesRenderContext<TData> {
@@ -380,13 +328,13 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             const extents: number[] = [0];
 
             if (stacked && barSeries.length > 0) {
-                extents.push(...this._positiveNegativeExtent(barSeries, data));
+                extents.push(...positiveNegativeExtent(barSeries, data, (srs, item) => this._seriesValue(srs, item)));
             } else {
                 barSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
             }
 
             if (stacked && areaSeries.length > 0) {
-                extents.push(...this._cumulativeExtent(areaSeries, data));
+                extents.push(...cumulativeExtent(areaSeries, data, (srs, item) => this._seriesValue(srs, item)));
             } else {
                 areaSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
             }

@@ -35,6 +35,7 @@ import type {
 } from '@ripl/core';
 
 import {
+    clamp,
     createGroup,
     createPolyline,
     createRect,
@@ -123,10 +124,6 @@ export interface ChartNavigatorRenderOptions {
 
 /** Which part of the window a drag is manipulating. */
 type DragMode = 'move' | 'resize-start' | 'resize-end';
-
-function clamp(value: number, min: number, max: number): number {
-    return Math.min(Math.max(value, min), max);
-}
 
 /** The overview strip component that drives the chart's visible category-axis window. */
 export class ChartNavigator extends ChartComponent {
