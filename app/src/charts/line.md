@@ -7,7 +7,7 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,9 +16,9 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line">
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line" :extras-reset="reset">
             <RiplField label="Line type">
-                <RiplSelect v-model="lineType">
+                <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
                     <option value="basis">Basis</option>
@@ -35,17 +35,20 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                 </RiplSelect>
             </RiplField>
             <RiplField label="Line style">
-                <RiplSelect v-model="lineStyle">
+                <RiplSelect v-model="extras.lineStyle">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Markers" inline>
-                <RiplSwitch v-model="markers" />
+            <RiplField label="Line width">
+                <RiplInputRange v-model="extras.lineWidth" :min="1" :max="5" :step="0.5" />
             </RiplField>
-            <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="overview" />
+            <RiplField label="Markers" inline>
+                <RiplSwitch v-model="extras.markers" />
+            </RiplField>
+            <RiplField v-if="extras.markers" label="Marker radius">
+                <RiplInputRange v-model="extras.markerRadius" :min="1" :max="8" :step="1" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -60,6 +63,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -83,13 +87,28 @@ const seriesMeta = [
     { id: 'expenses', label: 'Expenses' },
 ];
 
-const lineType = ref<PolylineRenderer>('monotoneX');
-const lineStyle = ref<'solid' | 'dashed' | 'dotted'>('solid');
-const markers = ref(true);
-const overview = ref(false);
+const { extras, reset } = useChartExtras({
+    lineType: 'monotoneX' as PolylineRenderer,
+    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    lineWidth: 2,
+    markers: true,
+    markerRadius: 3,
+});
 
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        axes: true,
+        grid: true,
+        tooltip: true,
+        crosshair: true,
+        format: true,
+        animation: true,
+        theme: true,
+        navigator: true,
+        annotations: true,
+    },
     title: 'Monthly Performance',
     axisX: 'Month',
     axisY: 'Amount ($)',
@@ -100,7 +119,7 @@ function generateData(count = 8) {
     return MONTHS.slice(0, count).map(month => ({
         month,
         revenue: Math.round(Math.random() * 800 + 200),
-        profit: Math.round(Math.random() * 800 - 400),
+        profit: Math.round(Math.random() * 450 + 100),
         expenses: Math.round(Math.random() * 300 + 150),
     }));
 }
@@ -112,34 +131,56 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
-        lineType: lineType.value,
-        lineStyle: lineStyle.value,
-        markers: markers.value,
+        lineType: extras.lineType,
+        lineStyle: extras.lineStyle,
+        lineWidth: extras.lineWidth,
+        markers: extras.markers,
+        markerRadius: extras.markerRadius,
         color: config.colors[s.id],
     }));
 }
+
+function buildOptions() {
+    const options = {
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
+
+    // Sample reference line + shaded band, drawn through the y scale.
+    options.annotations = config.annotationsVisible
+        ? [
+            {
+                axis: 'y',
+                value: 600,
+                label: 'Target',
+            },
+            {
+                type: 'band',
+                axis: 'y',
+                from: 0,
+                to: 300,
+                label: 'Baseline',
+            },
+        ]
+        : [];
+
+    return options;
+}
+
+const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createLineChart(context, {
         data,
         key: 'month',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([lineType, lineStyle, markers, overview], apply);
+// Most furniture options (axes, grid, tooltip, crosshair, legend, theme) are only read when a chart
+// is constructed, so rebuild the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData(data.length);

@@ -201,11 +201,37 @@ async function initContext(): Promise<void> {
     }
 }
 
+let recreateTimer: ReturnType<typeof setTimeout> | undefined;
+
+// Rebuilds the rendering context (and, via `context-changed`, the demo's chart) so demos can apply
+// options a chart only reads at construction time — axes, grid, tooltip, crosshair, legend, theme.
+// Debounced so dragging a slider coalesces into a single rebuild.
+function recreate(): void {
+    if (recreateTimer) {
+        clearTimeout(recreateTimer);
+    }
+
+    recreateTimer = setTimeout(() => {
+        recreateTimer = undefined;
+        initContext();
+    }, 100);
+}
+
+defineExpose({
+    recreate,
+});
+
 watch([type, root], initContext, {
     immediate: true,
 });
 
-onUnmounted(cleanup);
+onUnmounted(() => {
+    if (recreateTimer) {
+        clearTimeout(recreateTimer);
+    }
+
+    cleanup();
+});
 </script>
 
 <style lang="scss">
