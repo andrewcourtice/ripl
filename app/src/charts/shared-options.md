@@ -292,3 +292,49 @@ Every feature option accepts three input forms:
 ```
 
 Internally, each input is normalized into a fully resolved options object using the defaults listed above. Unspecified properties always fall back to their defaults.
+
+## Theme
+
+Every chart accepts a `theme` — a registered name (`'light'`, `'dark'`, `'colorblind'`, `'auto'`) or a `Theme` object. `'auto'` follows the OS `prefers-color-scheme`. Set a global default for all charts with `setDefaultTheme`.
+
+<!-- eslint-skip -->
+```ts
+import { createLineChart, setDefaultTheme } from '@ripl/charts';
+
+// Per chart
+createLineChart('#container', { theme: 'dark', /* … */ });
+
+// Or globally — restyles every chart's palette and furniture
+setDefaultTheme('dark');
+```
+
+A `Theme` bundles the series `palette`, the sequential colour scheme, and the furniture colours (text/axis/grid/crosshair/legend/tooltip). The built-in `lightTheme` matches Ripl's historical defaults, `darkTheme` is tuned for a dark background, and `colorBlindTheme` uses the Okabe–Ito palette.
+
+## Annotations
+
+Cartesian charts (line, area, bar, scatter) accept `annotations` — reference lines, shaded bands, and point markers drawn over the plot and resolved through the axis scales:
+
+<!-- eslint-skip -->
+```ts
+createLineChart('#container', {
+    // …
+    annotations: [
+        { axis: 'y', value: 80, label: 'Target' },        // reference line
+        { type: 'band', axis: 'y', from: 60, to: 80 },    // shaded band
+        { type: 'point', x: 10, y: 42, label: 'Peak' },   // marker
+    ],
+});
+```
+
+## Accessibility
+
+Set `description` for an accessible label — it applies `role="img"` and `aria-label` to the chart's rendering element (falling back to the title text). Use the `'colorblind'` theme for a colourblind-safe palette.
+
+<!-- eslint-skip -->
+```ts
+createBarChart('#container', {
+    description: 'Quarterly revenue by region',
+    theme: 'colorblind',
+    // …
+});
+```

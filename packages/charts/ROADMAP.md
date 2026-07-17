@@ -39,13 +39,13 @@ notes where this repo now stands after the 1.0 consistency work (see
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
 | Multiple / secondary axes | ❌ typed, unimplemented | ✅ | ✅ | ✅ | ⏳ A6 |
 | Stacking / **100%-stacked** | ✅ / ❌ | ✅/✅ | ✅/✅ | ✅/✅ | ⏳ B4 |
-| Legends (present + interactive toggle) | 🟡 | ✅ | ✅ | ✅ | ⏳ A7 |
+| Legends (present + interactive toggle) | 🟡→✅ present | ✅ | ✅ | ✅ | ✅ done (A7); toggle ⏳ |
 | Shared axis-pointer tooltip | 🟡 per-element | 🟡 | ✅ | ✅ | ⏳ B4 |
-| Data labels | 🟡 uneven | 🟡 (plugin) | ✅ | ✅ | ⏳ A7/B4 |
-| **Annotations** (reference lines / bands / markers) | ❌ | 🟡 (plugin) | ✅ | ✅ | ⏳ B2 |
+| Data labels | 🟡 uneven | 🟡 (plugin) | ✅ | ✅ | ⏳ B4 |
+| **Annotations** (reference lines / bands / markers) | ❌→✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done (B2) |
 | Zoom / pan / data-zoom | ✅ Navigator | 🟡 (plugin) | ✅ | ✅ | ✅ done |
-| **Theming / dark mode** | ❌ (docs only) | 🟡 | ✅ built-in | ✅ | ⏳ B1 |
-| **Accessibility** (ARIA / keyboard / patterns) | ❌ | 🟡 | ✅ | ✅ module | ⏳ B3 |
+| **Theming / dark mode** | ❌→✅ | 🟡 | ✅ built-in | ✅ | ✅ done (B1) |
+| **Accessibility** (ARIA / keyboard / patterns) | ❌→🟡 | 🟡 | ✅ | ✅ module | 🟡 ARIA+CVD done (B3); keyboard/patterns ⏳ |
 | Export (png / svg / …) | ✅ | 🟡 | ✅ | ✅ | ✅ done |
 | Animation | ✅ path-morphing | ✅ | ✅ | ✅ | ✅ done |
 | Formatting / i18n | 🟡→✅ Intl | 🟡 | ✅ | ✅ | ✅ mostly (A2) |
@@ -73,9 +73,26 @@ Landed on `claude/ripl-chart-gap-analysis-rmiuy1`:
   (`linear`/`log`/`pow`/`sqrt`), `nice`, `ticks`, `min`, `max`, `base`, `exponent`
   via `core/scales.ts` (`createValueScale`, `axisTickCount`). The hard-coded
   `ticks(10)` is gone from bar/line/area/scatter/box-plot.
-- **A7 (partial) — ColorLegend.** The previously-orphaned `ColorLegend` is wired
-  into `heatmap` (gradient legend, `legend?` toggle) and heatmap gained a
-  `format?` hook.
+- **A7 — Legends.** The previously-orphaned `ColorLegend` is wired into `heatmap`
+  (gradient legend); category legends added to funnel/treemap/packed-circle and
+  node/group legends to sankey/arc-diagram/force-directed.
+
+Landed on `claude/ripl-chart-1.0-remaining` (this branch, on top of the above):
+
+- **Formatting completeness.** `format?: ValueFormatInput` added to stock, gantt,
+  realtime, sankey, and heatmap (every chart now exposes a value formatter).
+- **B1 — Theming + dark mode.** `core/theme.ts`: `Theme` + `lightTheme`/`darkTheme`
+  + a colourblind-safe theme, a registry, `resolveTheme`/`setDefaultTheme`
+  (`'auto'` follows `prefers-color-scheme`). Charts take a `theme` option; the
+  colour generator is seeded from the palette and the furniture normalizers read
+  the active theme, so `setDefaultTheme('dark')` restyles everything. The light
+  theme equals the historical colours, so default output is unchanged.
+- **B2 — Annotations.** `components/annotation.ts` (reference lines, shaded bands,
+  point markers) exposed as `annotations?` on `CartesianChartOptions`, resolved
+  through the axis scales and clipped to the plot (line/area/bar/scatter).
+- **B3 — Accessibility (partial).** Charts set `role="img"` + `aria-label` (from
+  `description`, else title) on the rendering element; a colourblind-safe
+  (Okabe–Ito) theme ships as `'colorblind'`.
 
 ## Migration — breaking changes
 
@@ -134,51 +151,28 @@ and formatting for free.
 - **Risk:** layout collision between a right-side second axis and a right-positioned
   legend; per-axis extent isolation. Land `line` first, then area/bar/scatter.
 
-### A7 (remaining) — Legend completeness
+> **Why A5/A6 remain:** both change rendering that needs visual verification a
+> headless test run can't provide. A5 moves candle/task-bar drawing under
+> `addPlotContent`; A6 requires the **shared** line/area/trend series renderer to
+> resolve a y-scale *per series* (not one plot-wide `yScale`), which touches every
+> cartesian chart. Both are specified above and ready to implement with a human in
+> the loop to eyeball the result, rather than rushed blind.
 
-Add a `legend?` option where it's missing and meaningful:
+### Interactive legends
 
-- Category `Legend` (via `Chart.reserveLegend`, mirroring `pie`) on **funnel**,
-  **treemap**, **packed-circle**, and node-group legends on **sankey**,
-  **arc-diagram**, **force-directed**.
-- Single-value / single-distribution charts (gauge, histogram, box-plot, stock,
-  gantt) legitimately omit a categorical legend.
-- Consider **interactive legends** (click to toggle a series) — currently only
-  hover-dim highlighting is supported.
+Legends now render across the chart families, but toggling a legend entry only
+hover-dims; wire the `Legend` `onToggle`/`active` state to actually hide/show a
+series (the plumbing — `onToggle` re-render — is already in place).
 
-### Formatting completeness
+### B3 (remaining) — keyboard navigation + pattern fills
 
-Add a `format?: ValueFormatInput` hook (as done for heatmap) to **stock**,
-**gantt**, **sankey**, and **realtime**, routing their value/tooltip/axis text
-through `resolveValueFormat(options.format)` instead of the current fixed
-2-decimal formatting.
+ARIA labelling (`role="img"` + `aria-label` from `description`/title) and a
+colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 
-### B1 — Theming + dark mode (1.0 must-have)
-
-- New `core/theme.ts`: a `Theme` (categorical palette; sequential/diverging schemes;
-  background; text/axis/grid/tick colours; tooltip styling; font) + registry, with
-  built-in `lightTheme`/`darkTheme` (reuse `core/color/schemes.ts`).
-- `createXChart(target, { theme: 'light' | 'dark' | 'auto' | Theme })`; the base
-  `Chart` threads the theme into the *currently hardcoded* defaults (axis
-  `fontColor: '#777'`, tooltip colours, grid colour, the 12-colour palette).
-- Global `setDefaultTheme(theme)`; `'auto'` follows `prefers-color-scheme`.
-
-### B2 — Annotations layer (1.0 must-have)
-
-- New `components/annotation.ts`: **reference line** (value on x/y + label),
-  **band/region** (`from`/`to` on an axis — threshold/target zones), **point marker**.
-- Expose `annotations?: ChartAnnotation[]` on `CartesianChartOptions`; resolve through
-  axis scales, clip to the plot, animate on update, track pan/zoom via the Navigator.
-- Parity with ECharts `markLine`/`markArea`/`markPoint` and Highcharts
-  `plotLines`/`plotBands`.
-
-### B3 — Accessibility (post-1.0; largest objective gap)
-
-- ARIA: root `role="img"`/`figure` + `aria-label`/description; optional
-  visually-hidden data-table fallback for screen readers.
-- Keyboard nav: focusable series/points, arrow traversal, Enter → existing `click`.
-- Colorblind: pattern/decal fill generator + CVD-safe default palette (cividis/viridis
-  are already available).
+- **Keyboard navigation:** a hidden, focusable DOM layer synced to data points
+  (canvas has no native focus targets), arrow traversal, Enter → existing `click`.
+- **Pattern/decal fills:** a canvas/SVG pattern generator so series are
+  distinguishable without colour; an optional visually-hidden data-table fallback.
 
 ### B4 — Smaller primitive gaps (opportunistic)
 
