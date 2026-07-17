@@ -113,8 +113,14 @@ createLineChart('#container', {
 | `font` | `string` | `'12px sans-serif'` | Label font |
 | `fontColor` | `string` | `'#777777'` | Label color |
 | `title` | `string` | — | Axis title text |
-| `value` | `keyof TData \| (item: TData) => any` | — | Custom value accessor |
-| `format` | `'number' \| 'percentage' \| 'date' \| 'string' \| (value) => string` | — | Label formatter |
+| `format` | `'number' \| 'percentage' \| 'date' \| 'string' \| Intl.NumberFormat options \| (value) => string` | — | Label formatter |
+| `scale` | `'linear' \| 'log' \| 'pow' \| 'sqrt'` | `'linear'` | Value-axis scale family |
+| `nice` | `boolean \| number` | `true` | Expand the domain to tick-aligned bounds |
+| `ticks` | `number` | `10` | Target number of ticks and grid lines |
+| `min` | `number` | — | Explicit lower bound (overrides the data extent) |
+| `max` | `number` | — | Explicit upper bound (overrides the data extent) |
+| `base` | `number` | `10` | Log base (when `scale: 'log'`) |
+| `exponent` | `number` | `1` | Power exponent (when `scale: 'pow'`) |
 
 ### Y-Axis Options
 
@@ -135,6 +141,9 @@ axis: {
     ],
 }
 ```
+
+> [!NOTE]
+> A secondary y-axis is on the 1.0 roadmap — today only the first y-axis in the array is rendered.
 
 ### Format Types
 
