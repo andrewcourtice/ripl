@@ -37,7 +37,7 @@ notes where this repo now stands after the 1.0 consistency work (see
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
 | Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
-| Multiple / secondary axes | ❌ typed, unimplemented | ✅ | ✅ | ✅ | ⏳ A6 |
+| Multiple / secondary axes | 🟡→✅ line | ✅ | ✅ | ✅ | ✅ done (A6, line); area/bar/scatter ⏳ |
 | Stacking / **100%-stacked** | ✅ / ❌ | ✅/✅ | ✅/✅ | ✅/✅ | ⏳ B4 |
 | Legends (present + interactive toggle) | 🟡→✅ present | ✅ | ✅ | ✅ | ✅ done (A7); toggle ⏳ |
 | Shared axis-pointer tooltip | 🟡 per-element | 🟡 | ✅ | ✅ | ⏳ B4 |
@@ -54,8 +54,9 @@ notes where this repo now stands after the 1.0 consistency work (see
 | **API consistency across chart types** | ❌→✅ | ✅ | ✅ | ✅ | ✅ done (A3) |
 
 **Headline 1.0 gaps:** cross-chart consistency (done), configurable axes (done),
-theming/dark mode (B1), annotations (B2), multiple axes (A6), and accessibility
-(B3 — objectively the largest gap; scoped post-1.0).
+theming/dark mode (done, B1), annotations (done, B2), secondary axes (done for
+line, A6; area/bar/scatter follow), and accessibility (B3 — ARIA + colourblind
+palette done; keyboard nav and pattern fills remain the largest post-1.0 gap).
 
 ## Completed 1.0 consistency work
 
@@ -94,6 +95,20 @@ Landed on `claude/ripl-chart-1.0-remaining` (this branch, on top of the above):
   `description`, else title) on the rendering element; a colourblind-safe
   (Okabe–Ito) theme ships as `'colorblind'`.
 
+Landed on `claude/ripl-chart-axes-a5-a6` (this branch, on top of the above):
+
+- **A6 — Secondary y-axis (line).** `ChartYAxisItemOptions` gains `id?`; line series
+  gain `axis?: number | string`. `CartesianChart` holds `yAxes: ChartYAxis[]` behind a
+  `get yAxis()` shim (single-axis charts stay byte-for-byte inert), and line charts
+  render a right-hand secondary axis with an independent per-axis extent + scale when a
+  second `axis.y` entry is supplied. Area/bar/scatter follow the same pattern (roadmap).
+- **A5 — `createChartAxes` extraction + dedup.** A shared `createChartAxes` factory in
+  `components/axis.ts` replaces the duplicated inline `ChartXAxis`/`ChartYAxis`
+  construction in the three non-`CartesianChart` charts (stock, gantt, heatmap); they
+  also pick up A4's configurable `ticks` for free. Verified as a pixel-perfect no-op
+  against the visual-regression baselines. The full stock/gantt migration *onto*
+  `CartesianChart` is deferred (see remaining work below).
+
 ## Migration — breaking changes
 
 Ripl is pre-1.0, so option naming was unified with a **clean break** (no aliases).
@@ -123,40 +138,34 @@ and node `id`/`group`; hierarchical node `color` fields; `upColor`/`downColor`
 Ordered by priority. Each item's detailed design lives in the implementation plan;
 this is the executable summary.
 
-### A5 — Class-hierarchy consolidation (stock / gantt / realtime)
+### A5 (remaining) — stock / gantt onto `CartesianChart`
 
-Only 7 of the axis charts extend `CartesianChart`; **stock**, **gantt**, and
-**realtime** extend `Chart` and hand-roll axis/grid/crosshair/tooltip wiring, so
-they miss the navigator, overview strip, plot clipping, configurable scales (A4),
-and formatting for free.
+The shared-axis extraction landed: `createChartAxes` now backs stock, gantt, and
+heatmap (see [Completed](#completed-1.0-consistency-work)). What remains is migrating
+**stock** and **gantt** to actually *extend* `CartesianChart` so they inherit the
+navigator, overview strip, plot clipping, and annotation layer rather than
+hand-rolling axis/grid/crosshair/tooltip wiring.
 
-- Extract `createChartAxes(scene, renderer, axis, setup)` from `setupCartesian`
-  (a no-op refactor first, as a regression guard).
-- Migrate **stock** and **gantt** onto `CartesianChart` (candles/wicks/volume and
-  task-bars/today-marker move into `addPlotContent`; bespoke scales retained).
-- Helper-share for **realtime** (sliding-window) and **heatmap** (dual categorical)
-  — they call `createChartAxes` directly rather than fully inheriting.
-- **Risk:** regressions in bespoke rendering — verify candles/task-bars visually.
+- Move candles/wicks/volume (stock) and task-bars/today-marker (gantt) into
+  `addPlotContent`.
+- **Why deferred:** the axis model is inverted from `CartesianChart`'s
+  category-x / value-y assumption — gantt is band-**y** / time-**x**, and stock adds a
+  volume sub-chart that reshapes the plot band. Both need the value/category axis roles
+  to be parameterised on `CartesianChart` first, and visual verification of the bespoke
+  candle/task-bar rendering, rather than a rushed blind port. **realtime** (sliding
+  window) and **heatmap** (dual categorical) stay on `Chart` by design and already
+  share `createChartAxes`.
 
-### A6 — Multiple / secondary axes
+### A6 (remaining) — secondary axis for area / bar / scatter
 
-`ChartAxisOptions.y` is already typed as an array but every consumer collapses to
-`y[0]`. Implement a real secondary y-axis:
+The secondary y-axis is implemented for **line** (see
+[Completed](#completed-1.0-consistency-work)): `yAxes: ChartYAxis[]` behind a
+`get yAxis()` shim, series `axis?: number | string` binding, per-axis extent + scale,
+right-hand axis band. Extending it to **area**, **bar**, and **scatter** requires their
+shared series renderer to resolve a y-scale *per series* (not one plot-wide `yScale`).
 
-- `ChartYAxisItemOptions` gains `id?`; bar/line/area/scatter series gain
-  `axis?: number | string`.
-- `CartesianChart` holds `yAxes: ChartYAxis[]` with a `get yAxis()` shim (single-axis
-  charts stay inert), groups series by axis, computes a per-axis extent + scale, and
-  reserves a right-hand band for the secondary axis.
 - **Risk:** layout collision between a right-side second axis and a right-positioned
-  legend; per-axis extent isolation. Land `line` first, then area/bar/scatter.
-
-> **Why A5/A6 remain:** both change rendering that needs visual verification a
-> headless test run can't provide. A5 moves candle/task-bar drawing under
-> `addPlotContent`; A6 requires the **shared** line/area/trend series renderer to
-> resolve a y-scale *per series* (not one plot-wide `yScale`), which touches every
-> cartesian chart. Both are specified above and ready to implement with a human in
-> the loop to eyeball the result, rather than rushed blind.
+  legend; per-axis extent isolation. Reuse line's `_renderSecondaryAxes` partitioning.
 
 ### Interactive legends
 
