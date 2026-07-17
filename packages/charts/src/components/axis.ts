@@ -15,11 +15,26 @@ import {
 } from '../core/animation';
 
 import type {
+    ChartAxisItemOptions,
+    ChartYAxisItemOptions,
+} from '../core/options';
+
+import {
+    resolveFormatLabel,
+} from '../core/options';
+
+import {
+    axisTickCount,
+} from '../core/scales';
+
+import type {
     Element,
     Group,
     Line,
     Rect,
+    Renderer,
     Scale,
+    Scene,
     Text,
 } from '@ripl/core';
 
@@ -30,6 +45,7 @@ import {
     createRect,
     createText,
     easeOutCubic,
+    scaleContinuous,
 } from '@ripl/core';
 
 import {
@@ -673,4 +689,72 @@ export class ChartYAxis extends ChartAxis {
         return Promise.resolve();
     }
 
+}
+
+/**
+ * Builds an x/y axis pair from resolved axis options, wiring styling, tick formatter, tick count,
+ * and alignment. Charts that render their own axes (rather than extending `CartesianChart`) share
+ * this so the axis construction lives in one place.
+ *
+ * @param options - Scene/renderer plus the resolved x and y axis options and optional alignments.
+ * @returns The constructed {@link ChartXAxis} and {@link ChartYAxis}.
+ */
+export function createChartAxes(options: {
+    /** Scene the axes render into. */
+    scene: Scene;
+    /** Renderer driving the axes' animations. */
+    renderer: Renderer;
+    /** Resolved x-axis options. */
+    xAxis: ChartAxisItemOptions;
+    /** Resolved y-axis options. */
+    yAxis: ChartYAxisItemOptions;
+    /** X-axis edge (defaults to the {@link ChartXAxis} default). */
+    xAlignment?: ChartXAxisAlignment;
+    /** Y-axis edge (defaults to the y option's `position`). */
+    yAlignment?: ChartYAxisAlignment;
+}): { xAxis: ChartXAxis;
+    yAxis: ChartYAxis; } {
+    const {
+        scene,
+        renderer,
+        xAxis,
+        yAxis,
+        xAlignment,
+        yAlignment,
+    } = options;
+
+    const x = new ChartXAxis({
+        scene,
+        renderer,
+        bounds: Box.empty(),
+        scale: scaleContinuous([0, 1], [0, 1]),
+        alignment: xAlignment,
+        labelFont: xAxis.font,
+        labelColor: xAxis.fontColor,
+        formatLabel: resolveFormatLabel(xAxis.format),
+        title: xAxis.title,
+    });
+
+    x.visible = xAxis.visible;
+    x.tickCount = axisTickCount(xAxis);
+
+    const y = new ChartYAxis({
+        scene,
+        renderer,
+        bounds: Box.empty(),
+        scale: scaleContinuous([0, 1], [0, 1]),
+        alignment: yAlignment ?? (yAxis.position === 'right' ? 'right' : 'left'),
+        labelFont: yAxis.font,
+        labelColor: yAxis.fontColor,
+        formatLabel: resolveFormatLabel(yAxis.format),
+        title: yAxis.title,
+    });
+
+    y.visible = yAxis.visible;
+    y.tickCount = axisTickCount(yAxis);
+
+    return {
+        xAxis: x,
+        yAxis: y,
+    };
 }

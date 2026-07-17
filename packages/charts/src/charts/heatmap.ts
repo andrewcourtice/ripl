@@ -21,7 +21,6 @@ import {
     normalizeAxisItem,
     normalizeTooltip,
     normalizeYAxisItem,
-    resolveFormatLabel,
     resolveValueFormat,
 } from '../core/options';
 
@@ -37,9 +36,13 @@ import {
     ANIMATION_REFERENCE,
 } from '../core/animation';
 
-import {
+import type {
     ChartXAxis,
     ChartYAxis,
+} from '../components/axis';
+
+import {
+    createChartAxes,
 } from '../components/axis';
 
 import {
@@ -68,7 +71,6 @@ import {
     createRect,
     easeOutCubic,
     scaleBand,
-    scaleContinuous,
     scaleSequential,
 } from '@ripl/core';
 
@@ -168,27 +170,15 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             });
         }
 
-        this._xAxis = new ChartXAxis({
+        const axes = createChartAxes({
             scene: this.scene,
             renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+            xAxis,
+            yAxis,
         });
 
-        this._yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
+        this._xAxis = axes.xAxis;
+        this._yAxis = axes.yAxis;
 
         this.init();
     }
