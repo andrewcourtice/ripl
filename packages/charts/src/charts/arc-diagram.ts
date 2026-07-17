@@ -54,7 +54,6 @@ import {
     createPolyline,
     createText,
     easeOutCubic,
-    getExtent,
     interpolatePath,
     setColorAlpha,
 } from '@ripl/core';
@@ -62,6 +61,7 @@ import {
 import {
     arrayJoin,
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
@@ -279,7 +279,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             });
 
             const degrees = nodes.map(node => degree.get(node.id) ?? 0);
-            const [degreeMin, degreeMax] = degrees.length ? getExtent(degrees, functionIdentity) : [0, 1];
+            const [degreeMin, degreeMax] = degrees.length ? numberExtent(degrees, functionIdentity) : [0, 1];
             const minRadius = Math.max(2, nodeRadius * 0.45);
             const radiusFor = (node: ArcDiagramNode) => {
                 if (!sizeByConnections) {
@@ -431,7 +431,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             }
 
             const linkValues = links.map(link => link.value ?? 1);
-            const [, linkMax] = linkValues.length ? getExtent(linkValues, functionIdentity) : [0, 1];
+            const [, linkMax] = linkValues.length ? numberExtent(linkValues, functionIdentity) : [0, 1];
             const linkWidth = (link: ArcDiagramLink) => 1 + ((link.value ?? 1) / (linkMax || 1)) * 5;
             const linkId = (link: ArcDiagramLink) => `arc-${link.source}~${link.target}`;
 

@@ -6,6 +6,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -61,13 +65,13 @@ import {
     createLine,
     easeOutBack,
     easeOutCubic,
-    getExtent,
     setColorAlpha,
 } from '@ripl/core';
 
 import {
     arrayJoin,
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Opacity applied to a node's fill at rest (full opacity on hover). */
@@ -327,7 +331,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const sizeValue = (node: ForceNetworkNode) => node.value ?? (degree.get(node.id) ?? 1);
             const sizes = nodes.map(sizeValue);
-            const [sMin, sMax] = sizes.length ? getExtent(sizes, functionIdentity) : [1, 1];
+            const [sMin, sMax] = sizes.length ? numberExtent(sizes, functionIdentity) : [1, 1];
             const nodeRadiusFor = (node: ForceNetworkNode) => {
                 const ratio = sMax > sMin ? (sizeValue(node) - sMin) / (sMax - sMin) : 0.5;
                 return nodeRadius * (0.7 + ratio * 0.9);
@@ -371,15 +375,14 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const xs = simNodes.map(node => node.x);
             const ys = simNodes.map(node => node.y);
-            const [minX, maxX] = xs.length ? getExtent(xs, functionIdentity) : [-1, 1];
-            const [minY, maxY] = ys.length ? getExtent(ys, functionIdentity) : [-1, 1];
+            const [minX, maxX] = xs.length ? numberExtent(xs, functionIdentity) : [-1, 1];
+            const [minY, maxY] = ys.length ? numberExtent(ys, functionIdentity) : [-1, 1];
             const maxNodeR = Math.max(nodeRadius, ...nodes.map(nodeRadiusFor));
             const spanX = Math.max(1e-3, maxX - minX);
             const spanY = Math.max(1e-3, maxY - minY);
             const pad = maxNodeR + 12;
             const scale = Math.min((area.width - 2 * pad) / spanX, (area.height - 2 * pad) / spanY);
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
+            const { cx, cy } = areaCenter(area);
             const midX = (minX + maxX) / 2;
             const midY = (minY + maxY) / 2;
 
@@ -454,7 +457,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             }
 
             const linkValues = links.map(link => link.value ?? 1);
-            const [, linkMax] = linkValues.length ? getExtent(linkValues, functionIdentity) : [0, 1];
+            const [, linkMax] = linkValues.length ? numberExtent(linkValues, functionIdentity) : [0, 1];
             const linkWidth = (link: ForceNetworkLink) => 1 + ((link.value ?? 1) / (linkMax || 1)) * 3;
             const linkId = (link: ForceNetworkLink) => `link-${link.source}~${link.target}`;
 

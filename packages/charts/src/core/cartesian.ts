@@ -116,7 +116,6 @@ import type {
 
 import {
     Box,
-    clamp,
     createFrameBuffer,
     createGroup,
     createRect,
@@ -125,6 +124,10 @@ import {
 
 import type {
     OneOrMore,
+} from '@ripl/utilities';
+
+import {
+    numberClamp,
 } from '@ripl/utilities';
 
 import {
@@ -162,7 +165,7 @@ function isSameTransform(a: NavigatorTransform, b: NavigatorTransform): boolean 
  * `origin`/`size` and zoom `k`, the translate must lie in `[(origin+size)(1-k), origin(1-k)]`.
  */
 function clampTranslate(translate: number, origin: number, size: number, k: number): number {
-    return clamp(translate, (origin + size) * (1 - k), origin * (1 - k));
+    return numberClamp(translate, (origin + size) * (1 - k), origin * (1 - k));
 }
 
 /** Options shared by all cartesian charts. */
@@ -702,8 +705,8 @@ export abstract class CartesianChart<
         const end = ((origin + size - translate) / transform.k - origin) / size;
 
         return {
-            start: clamp(start, 0, 1),
-            end: clamp(end, 0, 1),
+            start: numberClamp(start, 0, 1),
+            end: numberClamp(end, 0, 1),
         };
     }
 
@@ -724,8 +727,8 @@ export abstract class CartesianChart<
             end = start + MIN_WINDOW;
         }
 
-        start = clamp(start, 0, 1 - MIN_WINDOW);
-        end = clamp(end, start + MIN_WINDOW, 1);
+        start = numberClamp(start, 0, 1 - MIN_WINDOW);
+        end = numberClamp(end, start + MIN_WINDOW, 1);
 
         const k = 1 / (end - start);
         const translate = origin - k * (origin + start * size);
@@ -967,7 +970,7 @@ export abstract class CartesianChart<
         const invert = (position: number) => {
             const t = (position - left) / Math.max(1, right - left);
             const index = Math.round(t * span);
-            return keys[clamp(index, 0, keys.length - 1)];
+            return keys[numberClamp(index, 0, keys.length - 1)];
         };
 
         return Object.assign(convert, {

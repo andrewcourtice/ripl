@@ -1,3 +1,7 @@
+import {
+    TAU,
+} from '@ripl/core';
+
 /** Callback invoked for each pixel in a rasterization pass. */
 export type PixelCallback = (x: number, y: number) => void;
 
@@ -8,8 +12,6 @@ export interface Vertex {
     /** Y coordinate in raster (pixel) space. */
     y: number;
 }
-
-const TAU = Math.PI * 2;
 
 /** Rasterizes a line segment from (x0,y0) to (x1,y1) using Bresenham's algorithm. */
 export function rasterizeLine(x0: number, y0: number, x1: number, y1: number, plot: PixelCallback): void {

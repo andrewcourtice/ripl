@@ -1,13 +1,10 @@
 import {
-    clamp as numberClamp,
-} from '../../math';
-
-import {
     interpolateNumber,
 } from '../../interpolators';
 
 import {
     arrayMapRange,
+    numberClamp,
     numberNice,
 } from '@ripl/utilities';
 

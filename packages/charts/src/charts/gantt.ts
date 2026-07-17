@@ -67,7 +67,6 @@ import type {
 
 import {
     Box,
-    clamp,
     createGroup,
     createLine,
     createRect,
@@ -79,6 +78,7 @@ import {
 
 import {
     arrayJoin,
+    numberClamp,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -245,7 +245,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const y = categoryScale(label);
             const height = categoryScale.bandwidth;
 
-            const progress = getProgress ? clamp(getProgress(item), 0, 1) : undefined;
+            const progress = getProgress ? numberClamp(getProgress(item), 0, 1) : undefined;
 
             return {
                 id: key,

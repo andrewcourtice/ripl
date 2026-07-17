@@ -5,15 +5,96 @@ import {
 } from 'vitest';
 
 import {
-    formatNumber,
-    numberGCD,
+    numberClamp,
+    numberExtent,
+    numberFormat,
+    numberFractional,
+    numberMaxOf,
+    numberMinOf,
     numberNice,
+    numberRoundTo,
     numberSum,
-    roundTo,
 } from '../src/number';
 
 // Explicit en-US locale keeps assertions deterministic across environments.
 const LOCALE = 'en-US';
+
+describe('numberClamp', () => {
+
+    test('Should clamp a value to the upper bound', () => {
+        expect(numberClamp(10, 5, 8)).toBe(8);
+    });
+
+    test('Should clamp a value to the lower bound', () => {
+        expect(numberClamp(-10, -5, 8)).toBe(-5);
+    });
+
+    test('Should leave an in-range value unchanged', () => {
+        expect(numberClamp(6, 0, 10)).toBe(6);
+    });
+
+    test('Should handle reversed bounds', () => {
+        expect(numberClamp(6, 10, 0)).toBe(6);
+        expect(numberClamp(20, 10, 0)).toBe(10);
+    });
+
+});
+
+describe('numberMinOf', () => {
+
+    test('Should return the minimum extracted value', () => {
+        const data = [
+            { v: 10 },
+            { v: 50 },
+            { v: 30 },
+        ];
+
+        expect(numberMinOf(data, d => d.v)).toBe(10);
+    });
+
+});
+
+describe('numberMaxOf', () => {
+
+    test('Should return the maximum extracted value', () => {
+        const data = [
+            { v: 10 },
+            { v: 50 },
+            { v: 30 },
+        ];
+
+        expect(numberMaxOf(data, d => d.v)).toBe(50);
+    });
+
+});
+
+describe('numberExtent', () => {
+
+    test('Should return the [min, max] extent', () => {
+        const data = [
+            { v: 10 },
+            { v: 50 },
+            { v: 30 },
+        ];
+
+        expect(numberExtent(data, d => d.v)).toEqual([10, 50]);
+    });
+
+});
+
+describe('numberFractional', () => {
+
+    test('Should return the fractional part of a float', () => {
+        const value = 31.257;
+
+        expect(numberFractional(value)).toBe(value - Math.floor(value));
+    });
+
+    test('Should return 0 for an integer', () => {
+        expect(numberFractional(5)).toBe(0);
+    });
+
+});
 
 describe('numberSum', () => {
 
@@ -41,52 +122,31 @@ describe('numberSum', () => {
 
 });
 
-describe('numberGCD', () => {
-
-    test('Should compute GCD of two numbers', () => {
-        expect(numberGCD(12, 8)).toBe(4);
-    });
-
-    test('Should return the non-zero value when one is 0', () => {
-        expect(numberGCD(0, 5)).toBe(5);
-        expect(numberGCD(7, 0)).toBe(7);
-    });
-
-    test('Should handle equal numbers', () => {
-        expect(numberGCD(6, 6)).toBe(6);
-    });
-
-    test('Should handle coprime numbers', () => {
-        expect(numberGCD(7, 13)).toBe(1);
-    });
-
-});
-
-describe('roundTo', () => {
+describe('numberRoundTo', () => {
 
     test('Should default to at most 2 decimal places', () => {
-        expect(roundTo(3.14159)).toBe(3.14);
-        expect(roundTo(1.236)).toBe(1.24);
+        expect(numberRoundTo(3.14159)).toBe(3.14);
+        expect(numberRoundTo(1.236)).toBe(1.24);
     });
 
     test('Should leave integers unchanged and strip trailing zeros', () => {
-        expect(roundTo(5)).toBe(5);
-        expect(roundTo(5.10)).toBe(5.1);
-        expect(roundTo(5.001)).toBe(5);
+        expect(numberRoundTo(5)).toBe(5);
+        expect(numberRoundTo(5.10)).toBe(5.1);
+        expect(numberRoundTo(5.001)).toBe(5);
     });
 
     test('Should respect a custom precision', () => {
-        expect(roundTo(3.14159, 3)).toBe(3.142);
-        expect(roundTo(3.14159, 0)).toBe(3);
+        expect(numberRoundTo(3.14159, 3)).toBe(3.142);
+        expect(numberRoundTo(3.14159, 0)).toBe(3);
     });
 
     test('Should handle negative numbers', () => {
-        expect(roundTo(-1.239, 2)).toBe(-1.24);
+        expect(numberRoundTo(-1.239, 2)).toBe(-1.24);
     });
 
     test('Should pass non-finite values through unchanged', () => {
-        expect(roundTo(Infinity)).toBe(Infinity);
-        expect(Number.isNaN(roundTo(NaN))).toBe(true);
+        expect(numberRoundTo(Infinity)).toBe(Infinity);
+        expect(Number.isNaN(numberRoundTo(NaN))).toBe(true);
     });
 
 });
@@ -115,40 +175,40 @@ describe('numberNice', () => {
 
 });
 
-describe('formatNumber', () => {
+describe('numberFormat', () => {
 
     test('Should group thousands by default', () => {
-        expect(formatNumber(1234567, {
+        expect(numberFormat(1234567, {
             locale: LOCALE,
         })).toBe('1,234,567');
     });
 
     test('Should cap fraction digits via precision and strip trailing zeros', () => {
-        expect(formatNumber(1234.5, {
+        expect(numberFormat(1234.5, {
             locale: LOCALE,
             precision: 2,
         })).toBe('1,234.5');
 
-        expect(formatNumber(1234.567, {
+        expect(numberFormat(1234.567, {
             locale: LOCALE,
             precision: 2,
         })).toBe('1,234.57');
 
-        expect(formatNumber(1234, {
+        expect(numberFormat(1234, {
             locale: LOCALE,
             precision: 2,
         })).toBe('1,234');
     });
 
     test('Should format percentages', () => {
-        expect(formatNumber(0.25, {
+        expect(numberFormat(0.25, {
             locale: LOCALE,
             style: 'percent',
         })).toBe('25%');
     });
 
     test('Should format currency', () => {
-        expect(formatNumber(1999.9, {
+        expect(numberFormat(1999.9, {
             locale: LOCALE,
             style: 'currency',
             currency: 'USD',
@@ -156,15 +216,15 @@ describe('formatNumber', () => {
     });
 
     test('Should format compact/SI notation', () => {
-        expect(formatNumber(1200000, {
+        expect(numberFormat(1200000, {
             locale: LOCALE,
             notation: 'compact',
         })).toBe('1.2M');
     });
 
     test('Should fall back to String for non-numeric values', () => {
-        expect(formatNumber('n/a')).toBe('n/a');
-        expect(formatNumber(null)).toBe('null');
+        expect(numberFormat('n/a')).toBe('n/a');
+        expect(numberFormat(null)).toBe('null');
     });
 
 });

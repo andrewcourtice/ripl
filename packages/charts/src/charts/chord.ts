@@ -6,6 +6,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -325,9 +329,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             this.reserveLegend(chartLayout, legendItems, this.options.legend);
 
             const area = chartLayout.area;
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const size = Math.min(area.width, area.height);
+            const { cx, cy, size } = areaCenter(area);
             const outerRadius = size * 0.42;
             const innerRadius = outerRadius - 15;
 

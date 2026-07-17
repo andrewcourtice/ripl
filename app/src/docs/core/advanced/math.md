@@ -4,7 +4,7 @@ outline: "deep"
 
 # Math & Geometry
 
-Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, SVG path sampling, and common numeric helpers like `clamp`, `min`/`max`, and extent calculation.
+Ripl ships with a focused set of math and geometry utilities used throughout the rendering engine. These cover angle conversion, point operations, bounding boxes, polygon generation, and SVG path sampling. Generic numeric helpers like `numberClamp`, `numberExtent`, and `numberSum` are provided by the [`@ripl/utilities`](/docs/api/@ripl/utilities/) package.
 
 > [!NOTE]
 > For the full API, see the [Math & Geometry API Reference](/docs/api/@ripl/core/).
@@ -284,30 +284,30 @@ const container = getContainingBox(boxes, box => box);
 
 ## Numeric Helpers
 
+Generic numeric helpers live in `@ripl/utilities`. The plain `min`/`max` wrappers have been removed in favour of the native `Math.min`/`Math.max`.
+
 ```ts
 import {
-    clamp,
-    fractional,
-    getExtent,
-    getTotal,
-    max,
-    maxOf,
-    min,
-    minOf,
-} from '@ripl/web';
+    numberClamp,
+    numberExtent,
+    numberFractional,
+    numberMaxOf,
+    numberMinOf,
+    numberSum,
+} from '@ripl/utilities';
 
-clamp(150, 0, 100); // 100
-clamp(-5, 0, 100); // 0
-fractional(3.7); // 0.7
+numberClamp(150, 0, 100); // 100
+numberClamp(-5, 0, 100); // 0
+numberFractional(3.7); // 0.7
 
-min(10, 20, 5); // 5
-max(10, 20, 5); // 20
+Math.min(10, 20, 5); // 5
+Math.max(10, 20, 5); // 20
 
 const data = [{ v: 10 }, { v: 50 }, { v: 30 }];
-minOf(data, d => d.v); // 10
-maxOf(data, d => d.v); // 50
-getExtent(data, d => d.v); // [10, 50]
-getTotal(data, d => d.v); // 90
+numberMinOf(data, d => d.v); // 10
+numberMaxOf(data, d => d.v); // 50
+numberExtent(data, d => d.v); // [10, 50]
+numberSum(data, d => d.v); // 90
 ```
 
 ## SVG Path Utilities

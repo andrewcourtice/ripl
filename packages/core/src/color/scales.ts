@@ -3,14 +3,11 @@ import {
 } from '../scales';
 
 import {
-    clamp,
-} from '../math';
-
-import {
     interpolateColor,
 } from '../interpolators';
 
 import {
+    numberClamp,
     typeIsArray,
 } from '@ripl/utilities';
 
@@ -54,7 +51,7 @@ export function interpolateColors(colors: string[]): ColorInterpolator {
     const interpolators = colors.slice(0, -1).map((color, index) => interpolateColor(color, colors[index + 1]));
 
     return position => {
-        const scaled = clamp(position, 0, 1) * segments;
+        const scaled = numberClamp(position, 0, 1) * segments;
         const index = Math.min(Math.floor(scaled), segments - 1);
 
         return interpolators[index](scaled - index);

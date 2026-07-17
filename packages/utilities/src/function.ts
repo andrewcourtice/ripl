@@ -24,7 +24,7 @@ export type MemoizedFunction<TValue extends AnyFunction, TKey> = {
 export type MemoizeResolver<TValue extends AnyFunction, TKey> = (...args: Parameters<TValue>) => TKey;
 
 /** A do-nothing function, useful as a default callback or placeholder. */
-export function noop() {
+export function functionNoop() {
     // noop
 }
 

@@ -63,12 +63,12 @@ import {
     createGroup,
     createRect,
     easeOutCubic,
-    getTotal,
     setColorAlpha,
 } from '@ripl/core';
 
 import {
     arrayJoin,
+    numberSum,
 } from '@ripl/utilities';
 
 /** A directional flow between two nodes in a Sankey diagram. */
@@ -257,8 +257,8 @@ function computeSankeyLayout(
     const nodeValueMap = new Map<string, number>();
 
     nodes.forEach(node => {
-        const outgoing = links.filter(l => l.source === node.id).reduce((s, l) => s + l.value, 0);
-        const incoming = links.filter(l => l.target === node.id).reduce((s, l) => s + l.value, 0);
+        const outgoing = numberSum(links.filter(l => l.source === node.id), l => l.value);
+        const incoming = numberSum(links.filter(l => l.target === node.id), l => l.value);
         nodeValueMap.set(node.id, Math.max(outgoing, incoming));
     });
 
@@ -281,7 +281,7 @@ function computeSankeyLayout(
     let scale = Infinity;
 
     depthGroups.forEach(nodeIds => {
-        const columnValue = getTotal(nodeIds, id => nodeValueMap.get(id) ?? 0);
+        const columnValue = numberSum(nodeIds, id => nodeValueMap.get(id) ?? 0);
         const availableHeight = height - nodePadding * (nodeIds.length - 1);
 
         if (columnValue > 0 && availableHeight > 0) {
@@ -294,7 +294,7 @@ function computeSankeyLayout(
     }
 
     depthGroups.forEach((nodeIds, depth) => {
-        const columnValue = getTotal(nodeIds, id => nodeValueMap.get(id) ?? 0);
+        const columnValue = numberSum(nodeIds, id => nodeValueMap.get(id) ?? 0);
         const columnHeight = columnValue * scale + nodePadding * Math.max(nodeIds.length - 1, 0);
         // Centre each column's stack vertically within the plot area.
         let currentY = Math.max(0, (height - columnHeight) / 2);

@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -67,7 +71,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    clamp,
     createCircle,
     createGroup,
     easeOutCubic,
@@ -76,6 +79,7 @@ import {
 
 import {
     arrayJoin,
+    numberClamp,
 } from '@ripl/utilities';
 
 /** Opacity applied to a circle's fill at rest (full opacity on hover). */
@@ -222,9 +226,8 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
             const area = layout.area;
 
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const fitRadius = (Math.min(area.width, area.height) / 2) * 0.96;
+            const { cx, cy, size } = areaCenter(area);
+            const fitRadius = (size / 2) * 0.96;
 
             // A single visible circle that contains the whole pack, drawn behind the cells. The pack
             // is scaled so its enclosing circle has radius `fitRadius`, so this exactly bounds it.
@@ -291,7 +294,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             exits.forEach(group => group.destroy());
 
             const showLabel = (node: PackedNode) => node.r > 16;
-            const labelFont = (r: number) => `600 ${clamp(r / 3, 9, 14)}px sans-serif`;
+            const labelFont = (r: number) => `600 ${numberClamp(r / 3, 9, 14)}px sans-serif`;
 
             const entryGroups = entries.map(node => {
                 const restFill = setColorAlpha(node.color, REST_ALPHA);

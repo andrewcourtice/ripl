@@ -70,11 +70,11 @@ import type {
 
 import {
     Box,
-    getExtent,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Maps a pointer interaction phase to the corresponding area-chart marker event name. */
@@ -239,10 +239,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 dataExtent = cumulativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
             } else {
                 const seriesExtents = series
-                    .flatMap(srs => getExtent(data, item => this._seriesValue(srs, item)))
+                    .flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item)))
                     .concat(0);
 
-                dataExtent = getExtent(seriesExtents, functionIdentity);
+                dataExtent = numberExtent(seriesExtents, functionIdentity);
             }
 
             const layout = this.createLayout();

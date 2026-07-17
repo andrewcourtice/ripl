@@ -69,11 +69,11 @@ import type {
 
 import {
     Box,
-    getExtent,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -229,10 +229,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const keys = data.map(getKey);
 
             const seriesExtents = series
-                .flatMap(srs => getExtent(data, resolveAccessor<TData, number>(srs.value)))
+                .flatMap(srs => numberExtent(data, resolveAccessor<TData, number>(srs.value)))
                 .concat(0);
 
-            const dataExtent = getExtent(seriesExtents, functionIdentity);
+            const dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
@@ -354,8 +354,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
 
         // Independent value extent per axis.
-        const extents = seriesByAxis.map(group => getExtent(group
-            .flatMap(srs => getExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
+        const extents = seriesByAxis.map(group => numberExtent(group
+            .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
             .concat(0), functionIdentity));
 
         // Provisional scales so each axis can measure its label band. Both bounds span the full width

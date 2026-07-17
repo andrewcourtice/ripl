@@ -1,5 +1,6 @@
 import {
     ContextText,
+    degreesToRadians,
     factory,
     getPathLength,
     isGradientString,
@@ -17,6 +18,10 @@ import type {
     Gradient,
     Scale,
 } from '@ripl/core';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 import type {
     CanvasPath,
@@ -38,7 +43,7 @@ type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradi
 
 const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
     linear: (context, gradient, { x, y, width, height }) => {
-        const angleRad = ((gradient as { angle: number }).angle - 90) * (Math.PI / 180);
+        const angleRad = degreesToRadians((gradient as { angle: number }).angle - 90);
         const cos = Math.cos(angleRad);
         const sin = Math.sin(angleRad);
         const halfW = width / 2;
@@ -62,7 +67,7 @@ const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
     conic: (context, gradient, { x, y, width, height }) => {
         const cx = x + ((gradient as { position: [number, number] }).position[0] / 100) * width;
         const cy = y + ((gradient as { position: [number, number] }).position[1] / 100) * height;
-        const startAngle = (gradient as { angle: number }).angle * (Math.PI / 180);
+        const startAngle = degreesToRadians((gradient as { angle: number }).angle);
 
         return context.createConicGradient(startAngle, cx, cy);
     },
@@ -74,7 +79,7 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     const canvasGradient = factory(context, gradient, bounds);
 
     gradient.stops.forEach((stop) => {
-        const offset = Math.min(Math.max(stop.offset ?? 0, 0), 1);
+        const offset = numberClamp(stop.offset ?? 0, 0, 1);
         const rgba = parseColor(stop.color);
         const color = rgba ? serialiseRGBA(...rgba) : stop.color;
 

@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ChartSegmentLabelsInput,
@@ -68,7 +72,6 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
-    maxOf,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -76,7 +79,8 @@ import {
 
 import {
     arrayJoin,
-    formatNumber,
+    numberFormat,
+    numberMaxOf,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -253,7 +257,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         const newLabels = labelEntries.map(level => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = formatNumber((maxValue / levels) * level, { precision: 2 });
+            const levelValue = numberFormat((maxValue / levels) * level, { precision: 2 });
 
             const label = createText({
                 id: `polar-ring-label-${level}`,
@@ -277,7 +281,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         labelUpdates.forEach(([level, label]) => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = formatNumber((maxValue / levels) * level, { precision: 2 });
+            const levelValue = numberFormat((maxValue / levels) * level, { precision: 2 });
 
             label.content = levelValue;
             label.data = {
@@ -420,11 +424,9 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const size = Math.min(area.width, area.height);
-            const centerX = area.x + area.width / 2;
-            const centerY = area.y + area.height / 2;
+            const { cx: centerX, cy: centerY, size } = areaCenter(area);
 
-            const maxValue = maxOf(data, getValue) ?? 0;
+            const maxValue = numberMaxOf(data, getValue) ?? 0;
             const valueScale = scaleContinuous([0, maxValue], [size * innerRadius, size * maxRadiusRatio], { clamp: true });
 
             const angleStep = TAU / data.length;

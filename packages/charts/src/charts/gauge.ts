@@ -11,6 +11,10 @@ import type {
 } from '../core/options';
 
 import {
+    areaCenter,
+} from '../core/layout';
+
+import {
     resolveValueFormat,
 } from '../core/options';
 
@@ -39,7 +43,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    clamp,
     createArc,
     createGroup,
     createLine,
@@ -50,7 +53,8 @@ import {
 
 import {
     arrayJoin,
-    roundTo,
+    numberClamp,
+    numberRoundTo,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link GaugeChart}. */
@@ -149,9 +153,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             this.reserveTitle(layout);
             const area = layout.area;
 
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2 + 20;
-            const size = Math.min(area.width, area.height);
+            const { cx, cy: baseCy, size } = areaCenter(area);
+            const cy = baseCy + 20;
             const radius = size * 0.4;
             const innerRadius = radius * 0.7;
 
@@ -159,7 +162,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const startAngle = Math.PI * 0.75;
             const endAngle = Math.PI * 2.25;
             const range = maxValue - minValue;
-            const clampedValue = clamp(value, minValue, maxValue);
+            const clampedValue = numberClamp(value, minValue, maxValue);
             const valueAngle = startAngle + ((clampedValue - minValue) / range) * (endAngle - startAngle);
 
             const isEntry = !this._group;
@@ -231,7 +234,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             // --- Value text ---
             // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
             const resolveDisplay = resolveValueFormat(format);
-            const formatDisplay = (v: number) => resolveDisplay(roundTo(v, 2));
+            const formatDisplay = (v: number) => resolveDisplay(numberRoundTo(v, 2));
             // The value the text counts up/down *from* on a data update (the previously shown value).
             const displayFrom = this._currentValue ?? clampedValue;
             const displayValue = formatDisplay(clampedValue);

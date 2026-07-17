@@ -2,8 +2,6 @@ import type {
     ColorSpace,
 } from './types';
 
-//const RGB_FRAGMENT = Array.from({ length: 3 }, () => '(0|255|25[0-4]|2[0-4]\\d|1\\d\\d|0?\\d?\\d)').join(',\\s*');
-
 /** Validation patterns for each supported color space, keyed by {@link ColorSpace}. */
 export const PATTERNS = {
     hex: /^#?([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})([a-fA-F\d]{2})?$/i,

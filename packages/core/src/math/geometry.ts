@@ -20,6 +20,7 @@ import {
 
 import {
     functionCache,
+    numberClamp,
     typeIsArray,
 } from '@ripl/utilities';
 
@@ -202,7 +203,7 @@ export function samplePathPoint(pathData: string, distance: number): PathPoint {
     pathEl.setAttribute('d', pathData);
 
     const totalLength = pathEl.getTotalLength();
-    const clampedDistance = Math.max(0, Math.min(distance, totalLength));
+    const clampedDistance = numberClamp(distance, 0, totalLength);
     const point = pathEl.getPointAtLength(clampedDistance);
 
     const delta = 0.5;

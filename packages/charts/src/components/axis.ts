@@ -50,7 +50,7 @@ import {
 
 import {
     arrayJoin,
-    formatNumber,
+    numberFormat,
 } from '@ripl/utilities';
 
 /** Gap (px) between axis tick labels and the axis title. */
@@ -306,7 +306,7 @@ export class ChartAxis extends ChartComponent {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected measureLabels(values: any[], producer: (metrics: TextMetrics) => number) {
         return values.reduce((output, value) => {
-            const label = this.formatLabel ? this.formatLabel(value) : formatNumber(value, { precision: 2 });
+            const label = this.formatLabel ? this.formatLabel(value) : numberFormat(value, { precision: 2 });
             const metrics = this.context.measureText(label, this.labelFont);
             return Math.max(output, producer(metrics));
         }, 0);
@@ -314,7 +314,7 @@ export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected formatTickLabel(value: any): string {
-        return this.formatLabel ? this.formatLabel(value) : formatNumber(value, { precision: 2 });
+        return this.formatLabel ? this.formatLabel(value) : numberFormat(value, { precision: 2 });
     }
 
     /** The thickness reserved for the axis title (0 when there is no title). */

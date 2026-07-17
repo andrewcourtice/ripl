@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ChartSegmentLabelsInput,
@@ -68,7 +72,6 @@ import {
     createGroup,
     createPolyline,
     elementIsArc,
-    getTotal,
     scaleContinuous,
     setColorAlpha,
     TAU,
@@ -76,6 +79,7 @@ import {
 
 import {
     arrayJoin,
+    numberSum,
 } from '@ripl/utilities';
 
 /** The opacity applied to a segment's fill at rest (full opacity is used on hover). */
@@ -194,11 +198,9 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const size = Math.min(area.width, area.height);
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
+            const { cx, cy, size } = areaCenter(area);
 
-            const total = getTotal(data, getValue);
+            const total = numberSum(data, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
             const offset = TAU / 4;
             const padAngle = data.length === 1 ? 0 : 0.1 / data.length;

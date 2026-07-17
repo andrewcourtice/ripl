@@ -9,11 +9,8 @@ import {
 
 import {
     arrayMapRange,
+    numberClamp,
 } from '@ripl/utilities';
-
-import {
-    clamp as numberClamp,
-} from '../math';
 
 import {
     interpolateNumber,

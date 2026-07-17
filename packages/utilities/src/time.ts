@@ -2,7 +2,7 @@ import {
     typeIsDate,
 } from './type';
 
-/** Options for {@link formatTime}: any `Intl.DateTimeFormat` option plus a locale. */
+/** Options for {@link timeFormat}: any `Intl.DateTimeFormat` option plus a locale. */
 export interface TimeFormatOptions extends Intl.DateTimeFormatOptions {
     /** BCP 47 locale tag (defaults to the runtime locale). */
     locale?: string;
@@ -34,7 +34,7 @@ function getDateFormatter(locale: string | undefined, options: Intl.DateTimeForm
  * With no field options a short year/month/day format is used. Passed values explicitly by axes and
  * tooltips; never bound to a scale.
  */
-export function formatTime(value: Date | number, options: TimeFormatOptions = {}): string {
+export function timeFormat(value: Date | number, options: TimeFormatOptions = {}): string {
     const date = typeIsDate(value) ? value : new Date(value);
 
     const {

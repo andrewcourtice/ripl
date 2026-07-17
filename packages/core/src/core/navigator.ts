@@ -6,13 +6,13 @@ import type {
     EventMap,
 } from './event-bus';
 
-import {
-    clamp,
-} from '../math';
-
 import type {
     Point,
 } from '../math';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 /** A 2D affine view transform: uniform scale `k` plus translation `[x, y]` (screen pixels). */
 export interface NavigatorTransform {
@@ -212,7 +212,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
     /** Replaces the view transform outright (clamping `k` to the scale extent). */
     public setTransform(transform: NavigatorTransform): void {
         this._transform = {
-            k: clamp(transform.k, this._scaleExtent[0], this._scaleExtent[1]),
+            k: numberClamp(transform.k, this._scaleExtent[0], this._scaleExtent[1]),
             x: transform.x,
             y: transform.y,
         };
@@ -244,7 +244,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
 
     /** Multiplies the zoom by `factor`, keeping `center` (screen pixels, defaults to the origin) fixed. */
     public zoomBy(factor: number, center: Point = [0, 0]): void {
-        const nextK = clamp(this._transform.k * factor, this._scaleExtent[0], this._scaleExtent[1]);
+        const nextK = numberClamp(this._transform.k * factor, this._scaleExtent[0], this._scaleExtent[1]);
         const ratio = nextK / this._transform.k;
 
         this._transform = {
@@ -291,7 +291,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         const availableWidth = Math.max(0, viewport.width - padding * 2);
         const availableHeight = Math.max(0, viewport.height - padding * 2);
 
-        const k = clamp(
+        const k = numberClamp(
             Math.min(availableWidth / boxWidth, availableHeight / boxHeight),
             this._scaleExtent[0],
             this._scaleExtent[1]

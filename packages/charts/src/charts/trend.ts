@@ -74,13 +74,13 @@ import type {
 
 import {
     Box,
-    getExtent,
     scaleBand,
     scaleContinuous,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -330,18 +330,18 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             if (stacked && barSeries.length > 0) {
                 extents.push(...positiveNegativeExtent(barSeries, data, (srs, item) => this._seriesValue(srs, item)));
             } else {
-                barSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+                barSeries.forEach(srs => extents.push(...numberExtent(data, item => this._seriesValue(srs, item))));
             }
 
             if (stacked && areaSeries.length > 0) {
                 extents.push(...cumulativeExtent(areaSeries, data, (srs, item) => this._seriesValue(srs, item)));
             } else {
-                areaSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+                areaSeries.forEach(srs => extents.push(...numberExtent(data, item => this._seriesValue(srs, item))));
             }
 
-            lineSeries.forEach(srs => extents.push(...getExtent(data, item => this._seriesValue(srs, item))));
+            lineSeries.forEach(srs => extents.push(...numberExtent(data, item => this._seriesValue(srs, item))));
 
-            const dataExtent = getExtent(extents, functionIdentity);
+            const dataExtent = numberExtent(extents, functionIdentity);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);

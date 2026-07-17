@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -59,6 +63,7 @@ import {
     easeOutCubic,
     easeOutQuart,
     setColorAlpha,
+    TAU,
 } from '@ripl/core';
 
 import {
@@ -122,7 +127,6 @@ export interface RadarChartEventMap extends EventMap {
     pointleave: RadarChartPointEvent;
 }
 
-const TAU = Math.PI * 2;
 
 /**
  * Radar (spider) chart plotting multi-axis data as filled polygonal areas.
@@ -578,9 +582,8 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const radius = Math.min(area.width, area.height) / 2 - 30;
+            const { cx, cy, size } = areaCenter(area);
+            const radius = size / 2 - 30;
 
             // Compute max value from data if not provided
             let computedMax = maxValue ?? 0;

@@ -10,10 +10,6 @@ import {
 } from './_base';
 
 import {
-    clamp as numberClamp,
-} from '../math';
-
-import {
     interpolateNumber,
 } from '../interpolators';
 
@@ -21,6 +17,10 @@ import type {
     Scale,
     ScaleMethod,
 } from './types';
+
+import {
+    numberClamp,
+} from '@ripl/utilities';
 
 /** Options for a power scale, adding a configurable exponent to the base linear scale options. */
 export interface PowerScaleOptions extends LinearScaleOptions {

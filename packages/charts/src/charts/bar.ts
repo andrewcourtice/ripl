@@ -65,12 +65,12 @@ import type {
 
 import {
     Box,
-    getExtent,
     scaleBand,
 } from '@ripl/core';
 
 import {
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Whether bars are laid out vertically (default) or horizontally. */
@@ -241,8 +241,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series.flatMap(srs => getExtent(data, item => this._seriesValue(srs, item))).concat(0);
-            let dataExtent = getExtent(seriesExtents, functionIdentity);
+            const seriesExtents = series.flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item))).concat(0);
+            let dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             if (this._isStacked) {
                 dataExtent = positiveNegativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));

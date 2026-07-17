@@ -27,7 +27,7 @@ import type {
 } from '@ripl/utilities';
 
 import {
-    formatNumber,
+    numberFormat,
     typeIsBoolean,
     typeIsString,
 } from '@ripl/utilities';
@@ -646,7 +646,7 @@ export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) 
     const resolved = resolveFormatLabel(format);
     // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
     // untyped numeric values still respect the default 2-decimal cap.
-    return resolved ?? (value => formatNumber(value, { precision: 2 }));
+    return resolved ?? (value => numberFormat(value, { precision: 2 }));
 }
 
 // ---------------------------------------------------------------------------
@@ -813,8 +813,8 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
 /** Built-in value formatters keyed by {@link AxisFormatType}. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VALUE_FORMATTERS: Record<AxisFormatType, (value: any) => string> = {
-    number: (value: number) => formatNumber(value, { precision: 2 }),
-    percentage: (value: number) => formatNumber(value, {
+    number: (value: number) => numberFormat(value, { precision: 2 }),
+    percentage: (value: number) => numberFormat(value, {
         style: 'percent',
         maximumFractionDigits: 2,
     }),
@@ -825,7 +825,7 @@ const VALUE_FORMATTERS: Record<AxisFormatType, (value: any) => string> = {
 /**
  * Resolves a {@link ValueFormatInput} into a label formatting function. A built-in
  * {@link AxisFormatType} maps to a preset formatter, an Intl number-format options object binds
- * {@link formatNumber} to those options, and a function is returned as-is.
+ * {@link numberFormat} to those options, and a function is returned as-is.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function resolveFormatLabel(format?: ValueFormatInput): ((value: any) => string) | undefined {
@@ -841,5 +841,5 @@ export function resolveFormatLabel(format?: ValueFormatInput): ((value: any) => 
         return VALUE_FORMATTERS[format];
     }
 
-    return value => formatNumber(value, format);
+    return value => numberFormat(value, format);
 }

@@ -10,6 +10,10 @@ import {
     Chart,
 } from '../core/chart';
 
+import {
+    areaCenter,
+} from '../core/layout';
+
 import type {
     ChartLegendInput,
     ValueFormatInput,
@@ -56,8 +60,8 @@ import {
     createGroup,
     createLine,
     createText,
+    degreesToRadians,
     easeOutCubic,
-    getExtent,
     scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
@@ -65,6 +69,7 @@ import {
 import {
     arrayJoin,
     functionIdentity,
+    numberExtent,
 } from '@ripl/utilities';
 
 /** Opacity applied to a marker's fill at rest (full opacity on hover). */
@@ -163,7 +168,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
     /** Converts an angle in degrees (0° at top, clockwise) to a canvas point at the given radius. */
     private _point(cx: number, cy: number, angleDeg: number, radius: number): [number, number] {
-        const theta = (angleDeg - 90) * (Math.PI / 180);
+        const theta = degreesToRadians(angleDeg - 90);
         return [cx + radius * Math.cos(theta), cy + radius * Math.sin(theta)];
     }
 
@@ -388,13 +393,12 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
-            const cx = area.x + area.width / 2;
-            const cy = area.y + area.height / 2;
-            const gridRadius = (Math.min(area.width, area.height) / 2) * 0.82;
+            const { cx, cy, size } = areaCenter(area);
+            const gridRadius = (size / 2) * 0.82;
 
             // Radial value scale: 0 at the centre, the data max (or override) at the outer ring.
             const radiusValues = series.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
-            const [, dataMax] = radiusValues.length ? getExtent(radiusValues, functionIdentity) : [0, 1];
+            const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
 
             this._radialScale = scaleContinuous([0, maxValue], [0, gridRadius], { clamp: true });
@@ -430,7 +434,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     const getSize = resolveAccessor<TData, number>(srs.sizeBy);
                     sizeValue = getSize(item);
                     const sizes = data.map(getSize);
-                    const [sMin, sMax] = getExtent(sizes, functionIdentity);
+                    const [sMin, sMax] = numberExtent(sizes, functionIdentity);
                     const ratio = sMax > sMin ? (sizeValue - sMin) / (sMax - sMin) : 0.5;
                     markerRadius = minRadius + ratio * (maxRadius - minRadius);
                 }
