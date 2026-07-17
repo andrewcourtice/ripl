@@ -68,7 +68,7 @@ defineEmits<{
     bottom: 0;
     display: flex;
     flex-direction: column;
-    width: min(300px, 85%);
+    width: min(340px, 92%);
     background-color: var(--vp-c-bg);
     border-left: 1px solid var(--vp-c-divider);
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
@@ -92,7 +92,7 @@ defineEmits<{
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem 1rem;
+    padding: 12px var(--ripl-panel-pad, 16px);
     border-bottom: 1px solid var(--vp-c-divider);
 }
 
@@ -123,6 +123,7 @@ defineEmits<{
 .ripl-config-drawer__body {
     flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    overflow-x: hidden;
+    padding: 0;
 }
 </style>

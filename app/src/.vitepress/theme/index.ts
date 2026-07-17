@@ -52,7 +52,11 @@ import RiplInputText from '../components/ripl-input-text.vue';
 
 import RiplColorInput from '../components/ripl-color-input.vue';
 
+import RiplInputNumber from '../components/ripl-input-number.vue';
+
 import RiplField from '../components/ripl-field.vue';
+
+import RiplConfigSection from '../components/ripl-config-section.vue';
 
 import RiplChartConfig from '../components/ripl-chart-config.vue';
 
@@ -100,8 +104,10 @@ export default {
         app.component('RiplSelect', RiplSelect);
         app.component('RiplInputRange', RiplInputRange);
         app.component('RiplInputText', RiplInputText);
+        app.component('RiplInputNumber', RiplInputNumber);
         app.component('RiplColorInput', RiplColorInput);
         app.component('RiplField', RiplField);
+        app.component('RiplConfigSection', RiplConfigSection);
         app.component('RiplChartConfig', RiplChartConfig);
         app.component('RiplDropdown', RiplDropdown);
         app.component('RiplDropdownItem', RiplDropdownItem);

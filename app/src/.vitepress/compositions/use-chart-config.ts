@@ -84,6 +84,22 @@ export interface ChartConfig {
     colors: Record<string, string>;
 }
 
+/** Remembers each config's resolved defaults so {@link resetChartConfig} can restore them. */
+const CONFIG_DEFAULTS = new WeakMap<ChartConfig, ChartConfig>();
+
+/** Deep-enough clone of a config's values (features + colours are the only nested objects). */
+function snapshotConfig(config: ChartConfig): ChartConfig {
+    return {
+        ...config,
+        features: {
+            ...config.features,
+        },
+        colors: {
+            ...config.colors,
+        },
+    };
+}
+
 /**
  * Creates a reactive config object backing a chart demo's customization drawer. Pair it with
  * {@link buildCommonOptions} to translate the config into chart options, and a deep `watch` that
@@ -92,7 +108,7 @@ export interface ChartConfig {
 export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig {
     const features = defaults.features ?? {};
 
-    return reactive<ChartConfig>({
+    const config = reactive<ChartConfig>({
         features: {
             title: features.title ?? false,
             legend: features.legend ?? false,
@@ -116,6 +132,25 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
             ...(defaults.colors ?? {}),
         },
     });
+
+    CONFIG_DEFAULTS.set(config, snapshotConfig(config));
+
+    return config;
+}
+
+/**
+ * Restores a config created by {@link useChartConfig} to the defaults it was created with. Backs
+ * the drawer's "Reset" button; chart-specific state (managed by {@link useChartExtras}) is reset
+ * separately.
+ */
+export function resetChartConfig(config: ChartConfig): void {
+    const defaults = CONFIG_DEFAULTS.get(config);
+
+    if (!defaults) {
+        return;
+    }
+
+    Object.assign(config, snapshotConfig(defaults));
 }
 
 /**

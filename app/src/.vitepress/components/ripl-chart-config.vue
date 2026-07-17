@@ -1,17 +1,31 @@
 <template>
     <div class="ripl-chart-config">
-        <section v-if="config.features.title" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Title</h4>
-            <RiplField label="Show title" inline>
-                <RiplSwitch v-model="config.titleVisible" />
-            </RiplField>
-            <RiplField v-if="config.titleVisible" label="Title text">
-                <RiplInputText v-model="config.title" placeholder="Chart title" />
-            </RiplField>
-        </section>
+        <div class="ripl-chart-config__toolbar">
+            <button
+                class="ripl-chart-config__reset"
+                type="button"
+                @click="onReset"
+            >
+                Reset
+            </button>
+        </div>
 
-        <section v-if="config.features.legend" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Legend</h4>
+        <RiplConfigSection v-if="$slots.default" :title="extraTitle" :default-open="true">
+            <slot></slot>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="series && series.length" title="Colours" :default-open="true">
+            <RiplField
+                v-for="item in series"
+                :key="item.id"
+                :label="item.label"
+                inline
+            >
+                <RiplColorInput v-model="config.colors[item.id]" />
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.legend" title="Legend" :default-open="true">
             <RiplField label="Show legend" inline>
                 <RiplSwitch v-model="config.legendVisible" />
             </RiplField>
@@ -23,10 +37,18 @@
                     <option value="right">Right</option>
                 </RiplSelect>
             </RiplField>
-        </section>
+        </RiplConfigSection>
 
-        <section v-if="config.features.axes" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Axes</h4>
+        <RiplConfigSection v-if="config.features.title" title="Title" :default-open="!hasLeadSection">
+            <RiplField label="Show title" inline>
+                <RiplSwitch v-model="config.titleVisible" />
+            </RiplField>
+            <RiplField v-if="config.titleVisible" label="Title text">
+                <RiplInputText v-model="config.title" placeholder="Chart title" />
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.axes" title="Axes" :default-open="false">
             <RiplField label="Show axes" inline>
                 <RiplSwitch v-model="config.axesVisible" />
             </RiplField>
@@ -36,56 +58,46 @@
             <RiplField label="Y axis title">
                 <RiplInputText v-model="config.axisY" placeholder="e.g. Value" />
             </RiplField>
-        </section>
+        </RiplConfigSection>
 
-        <section v-if="config.features.grid" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Grid</h4>
+        <RiplConfigSection v-if="config.features.grid" title="Grid" :default-open="false">
             <RiplField label="Show grid" inline>
                 <RiplSwitch v-model="config.gridVisible" />
             </RiplField>
-        </section>
+        </RiplConfigSection>
 
-        <section v-if="series && series.length" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Colours</h4>
-            <RiplField
-                v-for="item in series"
-                :key="item.id"
-                :label="item.label"
-                inline
-            >
-                <RiplColorInput v-model="config.colors[item.id]" />
-            </RiplField>
-        </section>
-
-        <section v-if="$slots.default" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">{{ extraTitle }}</h4>
-            <slot></slot>
-        </section>
-
-        <section v-if="config.features.navigator" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Navigation</h4>
+        <RiplConfigSection v-if="config.features.navigator" title="Navigation" :default-open="false">
             <RiplField label="Pan &amp; zoom" inline>
                 <RiplSwitch v-model="config.navigatorEnabled" />
             </RiplField>
             <RiplField v-if="config.navigatorEnabled" label="Zoom sensitivity">
                 <RiplInputRange v-model="config.navigatorSensitivity" :min="0.1" :max="2" :step="0.1" />
             </RiplField>
-        </section>
+        </RiplConfigSection>
 
-        <section v-if="config.features.animation" class="ripl-chart-config__section">
-            <h4 class="ripl-chart-config__heading">Animation</h4>
+        <RiplConfigSection v-if="config.features.animation" title="Animation" :default-open="false">
             <RiplField label="Animate" inline>
                 <RiplSwitch v-model="config.animationEnabled" />
             </RiplField>
-        </section>
+        </RiplConfigSection>
     </div>
 </template>
 
 <script lang="ts" setup>
+import {
+    computed,
+    useSlots,
+} from 'vue';
+
 import type {
     ChartConfig,
 } from '../compositions/use-chart-config';
 
+import {
+    resetChartConfig,
+} from '../compositions/use-chart-config';
+
+import RiplConfigSection from './ripl-config-section.vue';
 import RiplField from './ripl-field.vue';
 import RiplSwitch from './ripl-switch.vue';
 import RiplSelect from './ripl-select.vue';
@@ -98,37 +110,60 @@ export interface ChartConfigSeriesMeta {
     label: string;
 }
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
     config: ChartConfig;
     /** Per-series / per-segment entries to render colour pickers for. */
     series?: ChartConfigSeriesMeta[];
     /** Heading for the chart-specific controls passed via the default slot. */
     extraTitle?: string;
+    /** Optional reset for a demo's chart-specific state (from {@link useChartExtras}). */
+    extrasReset?: () => void;
 }>(), {
     series: () => [],
     extraTitle: 'Options',
+    extrasReset: undefined,
 });
+
+const slots = useSlots();
+
+// The lead (default-open) sections are Options / Colours / Legend. When a chart has none of
+// them, open Title instead so the panel never opens fully collapsed.
+const hasLeadSection = computed(() => !!slots.default
+    || (props.series?.length ?? 0) > 0
+    || props.config.features.legend);
+
+function onReset(): void {
+    resetChartConfig(props.config);
+    props.extrasReset?.();
+}
 </script>
 
 <style scoped>
 .ripl-chart-config {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
 }
 
-.ripl-chart-config__section {
+.ripl-chart-config__toolbar {
     display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
+    justify-content: flex-end;
+    padding: 8px var(--ripl-panel-pad, 16px);
+    border-bottom: 1px solid var(--ripl-panel-rule, var(--vp-c-divider));
 }
 
-.ripl-chart-config__heading {
-    margin: 0;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.ripl-chart-config__reset {
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
     color: var(--vp-c-text-3);
+    border: none;
+    border-radius: 0.25rem;
+    background: none;
+    cursor: pointer;
+    transition: color 150ms ease-out;
+}
+
+.ripl-chart-config__reset:hover {
+    color: var(--vp-c-brand-1);
 }
 </style>
