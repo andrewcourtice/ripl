@@ -293,6 +293,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.setupCrosshair(plot);
 
+            this.renderAnnotations({ y: this._yScale }, plot);
+
             const seriesRender = this._series.render(series, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);
 

@@ -70,6 +70,15 @@ import {
     Grid,
 } from '../components/grid';
 
+import type {
+    AnnotationScales,
+    ChartAnnotation,
+} from '../components/annotation';
+
+import {
+    ChartAnnotations,
+} from '../components/annotation';
+
 import {
     Crosshair,
 } from '../components/crosshair';
@@ -168,6 +177,8 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
     legend?: ChartLegendInput;
     /** Crosshair configuration, or a boolean toggle. See {@link ChartCrosshairInput}. */
     crosshair?: ChartCrosshairInput;
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See {@link ChartAnnotation}. */
+    annotations?: ChartAnnotation[];
     /**
      * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
      * click-drag pan; an object configures each interaction individually. The chart auto-creates a
@@ -227,6 +238,7 @@ export abstract class CartesianChart<
     protected tooltip?: Tooltip;
     protected grid?: Grid;
     protected crosshair?: Crosshair;
+    private _annotations?: ChartAnnotations;
 
     private _navigator?: DOMNavigator;
     private _navigatorConfigKey?: string;
@@ -867,6 +879,33 @@ export abstract class CartesianChart<
     /** Renders the grid within the given plot area at the supplied tick positions. */
     protected renderGrid(xTicks: number[], yTicks: number[], area: ChartArea) {
         this.grid?.render(xTicks, yTicks, area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Renders the chart's {@link CartesianChartOptions.annotations} over the plot, resolving each
+     * annotation's value(s) through the supplied x/y scales. Call after drawing the series so
+     * annotations sit on top. Annotations that cannot map to the given scales are skipped.
+     *
+     * @param scales - The x/y value scales annotations resolve against.
+     * @param plot - The plot rectangle annotations are drawn within.
+     */
+    protected renderAnnotations(scales: AnnotationScales, plot: ChartArea) {
+        const annotations = this.options.annotations;
+
+        if (!annotations || annotations.length === 0) {
+            this._annotations?.destroy();
+            this._annotations = undefined;
+            return;
+        }
+
+        if (!this._annotations) {
+            this._annotations = new ChartAnnotations({
+                scene: this.scene,
+                renderer: this.renderer,
+            });
+        }
+
+        this._annotations.render(annotations, scales, plot);
     }
 
     /** Sets up the crosshair to track within the given plot area. */

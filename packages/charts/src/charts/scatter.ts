@@ -613,6 +613,11 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             this.setupCrosshair(plot);
 
+            this.renderAnnotations({
+                x: this._xScale,
+                y: this._yScale,
+            }, plot);
+
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),

@@ -316,6 +316,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     horizontalPlot
                 );
 
+                this.renderAnnotations({ x: adjustedValueScale }, horizontalPlot);
+
                 const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, horizontalPlot));
                 this.registerHighlightGroups(this._series.groups);
 
@@ -369,6 +371,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 adjustedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => adjustedValueScale(tick)),
                 verticalPlot
             );
+
+            this.renderAnnotations({ y: adjustedValueScale }, verticalPlot);
 
             const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, verticalPlot));
             this.registerHighlightGroups(this._series.groups);
