@@ -25,6 +25,12 @@
             </RiplField>
         </RiplConfigSection>
 
+        <RiplConfigSection v-if="config.features.dataLabels" title="Data labels" :default-open="false">
+            <RiplField label="Show labels" inline>
+                <RiplSwitch v-model="config.dataLabelsVisible" />
+            </RiplField>
+        </RiplConfigSection>
+
         <RiplConfigSection v-if="config.features.legend" title="Legend" :default-open="true">
             <RiplField label="Show legend" inline>
                 <RiplSwitch v-model="config.legendVisible" />
@@ -58,11 +64,64 @@
             <RiplField label="Y axis title">
                 <RiplInputText v-model="config.axisY" placeholder="e.g. Value" />
             </RiplField>
+            <template v-if="config.features.axisScale">
+                <RiplField label="Y scale">
+                    <RiplSelect v-model="config.axisScale">
+                        <option value="linear">Linear</option>
+                        <option value="log">Logarithmic</option>
+                        <option value="pow">Power</option>
+                        <option value="sqrt">Square root</option>
+                    </RiplSelect>
+                </RiplField>
+                <RiplField label="Y ticks">
+                    <RiplInputRange v-model="config.axisTicks" :min="2" :max="20" :step="1" />
+                </RiplField>
+                <RiplField label="Y min">
+                    <RiplInputNumber v-model="config.axisMin" placeholder="auto" />
+                </RiplField>
+                <RiplField label="Y max">
+                    <RiplInputNumber v-model="config.axisMax" placeholder="auto" />
+                </RiplField>
+                <RiplField label="Y format">
+                    <RiplSelect v-model="config.axisYFormat">
+                        <option value="none">Default</option>
+                        <option value="number">Number</option>
+                        <option value="percentage">Percentage</option>
+                        <option value="date">Date</option>
+                        <option value="string">String</option>
+                    </RiplSelect>
+                </RiplField>
+            </template>
         </RiplConfigSection>
 
         <RiplConfigSection v-if="config.features.grid" title="Grid" :default-open="false">
             <RiplField label="Show grid" inline>
                 <RiplSwitch v-model="config.gridVisible" />
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.tooltip" title="Tooltip" :default-open="false">
+            <RiplField label="Show tooltip" inline>
+                <RiplSwitch v-model="config.tooltipVisible" />
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.crosshair" title="Crosshair" :default-open="false">
+            <RiplField label="Show crosshair" inline>
+                <RiplSwitch v-model="config.crosshairVisible" />
+            </RiplField>
+            <RiplField v-if="config.crosshairVisible" label="Track axis">
+                <RiplSelect v-model="config.crosshairAxis">
+                    <option value="x">X</option>
+                    <option value="y">Y</option>
+                    <option value="both">Both</option>
+                </RiplSelect>
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.annotations" title="Annotations" :default-open="false">
+            <RiplField label="Sample annotations" inline>
+                <RiplSwitch v-model="config.annotationsVisible" />
             </RiplField>
         </RiplConfigSection>
 
@@ -72,6 +131,29 @@
             </RiplField>
             <RiplField v-if="config.navigatorEnabled" label="Zoom sensitivity">
                 <RiplInputRange v-model="config.navigatorSensitivity" :min="0.1" :max="2" :step="0.1" />
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.format" title="Value format" :default-open="false">
+            <RiplField label="Format">
+                <RiplSelect v-model="config.valueFormat">
+                    <option value="none">Default</option>
+                    <option value="number">Number</option>
+                    <option value="percentage">Percentage</option>
+                    <option value="date">Date</option>
+                    <option value="string">String</option>
+                </RiplSelect>
+            </RiplField>
+        </RiplConfigSection>
+
+        <RiplConfigSection v-if="config.features.theme" title="Theme" :default-open="false">
+            <RiplField label="Theme">
+                <RiplSelect v-model="config.theme">
+                    <option value="auto">Auto</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="colorblind">Colourblind</option>
+                </RiplSelect>
             </RiplField>
         </RiplConfigSection>
 
@@ -102,6 +184,7 @@ import RiplField from './ripl-field.vue';
 import RiplSwitch from './ripl-switch.vue';
 import RiplSelect from './ripl-select.vue';
 import RiplInputText from './ripl-input-text.vue';
+import RiplInputNumber from './ripl-input-number.vue';
 import RiplInputRange from './ripl-input-range.vue';
 import RiplColorInput from './ripl-color-input.vue';
 
