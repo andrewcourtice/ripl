@@ -12,6 +12,7 @@ import type {
 
 import {
     ANIMATION_REFERENCE,
+    exitElement,
 } from '../core/animation';
 
 import type {
@@ -52,6 +53,7 @@ import {
 import {
     arrayJoin,
     numberFormat,
+    stringUniqueId,
 } from '@ripl/utilities';
 
 /** Gap (px) between axis tick labels and the axis title. */
@@ -373,6 +375,18 @@ export class ChartAxis extends ChartComponent {
         }));
     }
 
+    /** Fades exiting tick groups out before destroying them (immediate when animation is disabled). */
+    protected animateExits(groups: Group[]) {
+        groups.forEach(exitGroup => {
+            // Retag the group first so it can't collide with a re-entering tick of the same value
+            // while it fades — the reconcile join and the SVG DOM cache both key on class and id.
+            exitGroup.classList.delete('chart-axis__tick-group');
+            exitGroup.id = `${exitGroup.id}:exit:${stringUniqueId()}`;
+
+            void exitElement(this.renderer, exitGroup, this.animation);
+        });
+    }
+
     /** No-op base render; concrete axes ({@link ChartXAxis}/{@link ChartYAxis}) draw through their own render pass. */
     public render() {
         // No direct render pass: concrete axes draw through their tick/label
@@ -528,7 +542,7 @@ export class ChartXAxis extends ChartAxis {
         });
 
         this.group.add(labelEntryTexts);
-        this.group.remove(groupExits);
+        this.animateExits(groupExits);
 
         // Animate entries
         const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
@@ -702,7 +716,7 @@ export class ChartYAxis extends ChartAxis {
         });
 
         this.group.add(labelEntryTexts);
-        this.group.remove(groupExits);
+        this.animateExits(groupExits);
 
         // Animate entries
         const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
