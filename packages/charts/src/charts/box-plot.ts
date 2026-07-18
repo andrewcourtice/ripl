@@ -416,7 +416,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             this.renderGrid(
                 [],
-                viewedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => viewedValueScale(tick)),
+                this.gridTicks(viewedValueScale, axisTickCount(this.yAxisOptions)),
                 plot
             );
 

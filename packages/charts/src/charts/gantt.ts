@@ -646,9 +646,10 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
             // Render grid
             if (this._grid) {
-                const yTickPositions = labels.map(label =>
-                    adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2
-                );
+                const yTickPositions = labels.map(label => ({
+                    value: label,
+                    position: adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2,
+                }));
 
                 this._grid.render(
                     [],

@@ -516,7 +516,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Render grid
             if (this._grid) {
                 const yTicks = this._yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this._yScale(tick));
+                const yTickPositions = yTicks.map(tick => ({
+                    value: tick,
+                    position: this._yScale(tick),
+                }));
 
                 this._grid.render(
                     [],

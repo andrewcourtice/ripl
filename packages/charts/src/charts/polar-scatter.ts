@@ -15,13 +15,20 @@ import {
 } from '../core/layout';
 
 import type {
+    ChartDataLabelsInput,
     ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
 import {
+    normalizeDataLabels,
     resolveValueFormat,
 } from '../core/options';
+
+import {
+    createDataLabel,
+    resolveDataLabelLayout,
+} from '../core/labels';
 
 import {
     applyHoverHighlight,
@@ -29,6 +36,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    exitElement,
     stagger,
 } from '../core/animation';
 
@@ -53,6 +61,7 @@ import type {
     Line,
     Scale,
     Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -111,6 +120,8 @@ export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOpti
     legend?: ChartLegendInput;
     /** Format applied to radial values shown as text (tooltips + ring labels). */
     format?: ValueFormatInput;
+    /** Show each marker's radial value beside it, just above by default (`true`/`false`, an anchor, or detailed label options). Off by default. */
+    labels?: ChartDataLabelsInput;
 }
 
 /** Payload emitted for polar scatter marker interaction events. */
@@ -377,6 +388,8 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             this.resolveSeriesColors(series);
 
             const formatValue = resolveValueFormat(this.options.format);
+            const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
+            const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
@@ -485,15 +498,37 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 return marker;
             };
 
+            // Builds the value label spec for a marker, anchored clear of the marker's radius.
+            const labelSpec = (srs: PolarScatterSeriesOptions<TData>, item: TData, index: number) => {
+                const spec = computeMarker(srs, item, index);
+
+                return {
+                    id: `${spec.id}-label`,
+                    x: spec.state.cx,
+                    y: spec.state.cy,
+                    anchor: dataLabels.anchor,
+                    content: formatValue(spec.values.radiusValue),
+                    font: dataLabels.font,
+                    fill: dataLabels.fontColor,
+                    offset: spec.markerRadius + 4,
+                };
+            };
+
             const entryGroups = seriesEntries.map(srs => {
                 const markers = data.map((item, index) => createMarker(srs, item, index));
 
                 return createGroup({
                     id: srs.id,
                     class: 'polar-scatter-series',
-                    children: markers,
+                    children: [
+                        ...markers,
+                        ...(dataLabels.visible ? data.map((item, index) => createDataLabel(labelSpec(srs, item, index))) : []),
+                    ],
                 });
             });
+
+            const enteringLabels: Text[] = [];
+            const updatingLabels: Text[] = [];
 
             seriesUpdates.forEach(([srs, group]) => {
                 const markers = group.getElementsByType('circle') as Circle[];
@@ -513,6 +548,52 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     marker.data = spec.state;
                     this._attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
                 });
+
+                // Reconcile the value labels against the current `labels` option so they can be
+                // toggled and restyled at runtime, and follow their markers as values change.
+                const valueLabels = group.getElementsByType('text') as Text[];
+
+                if (!dataLabels.visible) {
+                    valueLabels.forEach(label => {
+                        void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
+                    });
+
+                    return;
+                }
+
+                const {
+                    left: labelEntries,
+                    inner: labelUpdates,
+                    right: labelExits,
+                } = arrayJoin(data, valueLabels, (item, label) => label.id === `${srs.id}-${data.indexOf(item)}-label`);
+
+                labelExits.forEach(label => {
+                    void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
+                });
+
+                labelEntries.forEach(item => {
+                    const label = createDataLabel(labelSpec(srs, item, data.indexOf(item)));
+
+                    group.add(label);
+                    enteringLabels.push(label);
+                });
+
+                labelUpdates.forEach(([item, label]) => {
+                    const spec = labelSpec(srs, item, data.indexOf(item));
+                    const layout = resolveDataLabelLayout(spec);
+
+                    // Text content isn't tweenable — apply it directly.
+                    label.content = spec.content;
+                    label.font = spec.font;
+                    label.data = {
+                        x: layout.x,
+                        y: layout.y,
+                        fill: spec.fill,
+                        opacity: 1,
+                    } as Partial<TextState>;
+
+                    updatingLabels.push(label);
+                });
             });
 
             this.scene.add(entryGroups);
@@ -528,6 +609,10 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const updateMarkers = seriesUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
+            // Entry-series labels fade in with their markers; entering/updating labels on update
+            // fade in or glide to their refreshed marker. Exiting labels fade via `exitElement`.
+            const entryLabels = entryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
+
             return Promise.all([
                 this.renderer.transition(entryMarkers, (element, index, length) => ({
                     duration: enter.duration,
@@ -539,6 +624,26 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as CircleState,
+                })),
+                this.renderer.transition(entryLabels, (element, index, length) => ({
+                    duration: enter.duration,
+                    delay: stagger(index, length, enter.duration),
+                    ease: easeOutCubic,
+                    state: {
+                        opacity: 1,
+                    },
+                })),
+                this.renderer.transition(enteringLabels, {
+                    duration: update.duration,
+                    ease: easeOutCubic,
+                    state: {
+                        opacity: 1,
+                    },
+                }),
+                this.renderer.transition(updatingLabels, element => ({
+                    duration: update.duration,
+                    ease: easeOutCubic,
+                    state: element.data as Partial<TextState>,
                 })),
             ]);
         });

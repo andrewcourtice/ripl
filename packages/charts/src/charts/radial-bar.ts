@@ -15,11 +15,13 @@ import {
 } from '../core/layout';
 
 import type {
+    ChartDataLabelsInput,
     ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
 import {
+    normalizeDataLabels,
     resolveValueFormat,
 } from '../core/options';
 
@@ -29,6 +31,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    exitElement,
     stagger,
 } from '../core/animation';
 
@@ -50,11 +53,14 @@ import type {
     Context,
     EventMap,
     Group,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
     createArc,
     createGroup,
+    createText,
     easeOutCubic,
     getThetaPoint,
     setColorAlpha,
@@ -100,6 +106,8 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
+    /** Show each ring's value just past the end of its bar, at the ring's mid-radius (`true`/`false` or detailed label options). Off by default. */
+    labels?: ChartDataLabelsInput;
 }
 
 /** Payload emitted for radial bar interaction events. */
@@ -264,6 +272,43 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 };
             };
 
+            const dataLabels = normalizeDataLabels(this.options.labels);
+            const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+
+            // The value label sits just past the bar's sweep end, on the ring's centreline. The
+            // angular clearance covers half the stroke thickness (a rounded cap extends that far
+            // beyond `endAngle`) plus a small pixel gap, converted to radians at the ring's radius.
+            const labelPoint = (geometry: ReturnType<typeof ringGeometry>) => {
+                const clearance = geometry.centre > 0 ? (geometry.thickness / 2 + 6) / geometry.centre : 0;
+                const [x, y] = getThetaPoint(geometry.endAngle + clearance, geometry.centre, cx, cy);
+
+                return {
+                    x,
+                    y,
+                };
+            };
+
+            const buildLabel = (item: TData, geometry: ReturnType<typeof ringGeometry>): Text => {
+                const { x, y } = labelPoint(geometry);
+
+                return createText({
+                    id: `${getKey(item)}-label`,
+                    class: 'radial-bar__label',
+                    content: formatValue(getValue(item)),
+                    x,
+                    y,
+                    textAlign: 'center',
+                    textBaseline: 'middle',
+                    font: dataLabels.font,
+                    fill: dataLabels.fontColor,
+                    pointerEvents: 'none',
+                    opacity: 0,
+                    data: {
+                        opacity: 1,
+                    } as Partial<TextState>,
+                });
+            };
+
             const {
                 left: entries,
                 inner: updates,
@@ -322,9 +367,20 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 return createGroup({
                     id: getKey(item),
                     class: 'radial-bar__segment',
-                    children: [track, bar],
+                    children: [
+                        track,
+                        bar,
+                        ...(dataLabels.visible ? [buildLabel(item, {
+                            centre,
+                            thickness,
+                            endAngle,
+                        })] : []),
+                    ],
                 });
             });
+
+            const enteringLabels: Text[] = [];
+            const updatingLabels: Text[] = [];
 
             updates.forEach(([item, group]) => {
                 const i = activeData.indexOf(item);
@@ -369,6 +425,47 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                         key: getKey(item),
                     }, itemColor, `${getLabel(item)}: ${formatValue(getValue(item))}`);
                 }
+
+                // Reconcile the value label against the current `labels` option so it can be
+                // toggled and restyled at runtime, tracking the bar's sweep end as values change.
+                const valueLabel = group.query('.radial-bar__label') as Text | null;
+
+                if (!dataLabels.visible) {
+                    if (valueLabel) {
+                        void exitElement(this.renderer, valueLabel, exitAnimation, { opacity: 0 });
+                    }
+
+                    return;
+                }
+
+                const geometry = {
+                    centre,
+                    thickness,
+                    endAngle,
+                };
+
+                if (!valueLabel) {
+                    const entering = buildLabel(item, geometry);
+
+                    group.add(entering);
+                    enteringLabels.push(entering);
+
+                    return;
+                }
+
+                const { x, y } = labelPoint(geometry);
+
+                // Text content isn't tweenable — apply it directly.
+                valueLabel.content = formatValue(getValue(item));
+                valueLabel.font = dataLabels.font;
+                valueLabel.data = {
+                    x,
+                    y,
+                    fill: dataLabels.fontColor,
+                    opacity: 1,
+                } as Partial<TextState>;
+
+                updatingLabels.push(valueLabel);
             });
 
             this.scene.add(entryGroups);
@@ -389,6 +486,10 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 ...updates.flatMap(([, group]) => [group.query('.radial-bar__track') as Arc, group.query('.radial-bar__bar') as Arc]).filter(Boolean),
             ];
 
+            // Entry labels fade in alongside the sweeping bars; entering/updating labels on update
+            // fade in or glide to the refreshed sweep end. Exiting labels fade via `exitElement`.
+            const entryLabels = entryGroups.map(group => group.query('.radial-bar__label') as Text).filter(Boolean);
+
             return Promise.all([
                 this.renderer.transition(entryBars, (element, index, length) => ({
                     duration: enter.duration,
@@ -400,6 +501,17 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     duration: update.duration,
                     ease: easeOutCubic,
                     state: element.data as Partial<ArcState>,
+                })),
+                this.renderer.transition(entryLabels, (element, index, length) => ({
+                    duration: enter.duration,
+                    delay: stagger(index, length, enter.duration),
+                    ease: easeOutCubic,
+                    state: element.data as Partial<TextState>,
+                })),
+                this.renderer.transition([...enteringLabels, ...updatingLabels], element => ({
+                    duration: update.duration,
+                    ease: easeOutCubic,
+                    state: element.data as Partial<TextState>,
                 })),
             ]);
         });

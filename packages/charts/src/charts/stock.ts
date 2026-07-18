@@ -724,7 +724,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
 
             this.renderGrid(
                 [],
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                this.gridTicks(this._yScale, 10),
                 plot
             );
 

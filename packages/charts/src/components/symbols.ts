@@ -19,7 +19,7 @@ import {
 } from '@ripl/core';
 
 import type {
-    ShapeOptions,
+    Shape2DOptions,
 } from '@ripl/core';
 
 /** The available marker symbol shapes. */
@@ -96,7 +96,7 @@ export function positionSymbol(element: SymbolElement, cx: number, cy: number): 
  * });
  * ```
  */
-export function createSymbol(type: SymbolType, options: ShapeOptions<CircleState>): SymbolElement {
+export function createSymbol(type: SymbolType, options: Shape2DOptions<CircleState>): SymbolElement {
     if (type === 'circle') {
         return createCircle(options);
     }

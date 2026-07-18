@@ -187,7 +187,7 @@ export class Grid extends ChartComponent {
         ticks: GridTick[],
         lines: Line[],
         prefix: string,
-        lineState: (position: number) => Partial<LineState>
+        lineState: (position: number) => Pick<LineState, 'x1' | 'y1' | 'x2' | 'y2'>
     ): Line[] {
         const animated = this.animation.enabled && this.animation.duration > 0;
 
