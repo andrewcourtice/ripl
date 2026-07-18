@@ -10,6 +10,7 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    createAreaChart,
     createBarChart,
 } from '../src';
 
@@ -131,6 +132,54 @@ describe('100%-stacked bars', () => {
 
         // The remaining series is now 100% of every category.
         expect(barHeight(chart, 'one-a')).toBeCloseTo(stackedTotal, 5);
+    });
+
+});
+
+describe('100%-stacked areas', () => {
+
+    it('fixes the value axis domain to [0, 1] and formats it as percentages', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createAreaChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            stacked: 'percent',
+            data: [
+                {
+                    m: 'a',
+                    one: 25,
+                    other: 75,
+                },
+                {
+                    m: 'b',
+                    one: 60,
+                    other: 140,
+                },
+            ],
+            key: 'm',
+            series: [
+                {
+                    id: 'one',
+                    label: 'One',
+                    value: 'one',
+                },
+                {
+                    id: 'other',
+                    label: 'Other',
+                    value: 'other',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        const domain = internals(chart).yAxis.scale.domain;
+
+        expect(domain[0]).toBe(0);
+        expect(domain[domain.length - 1]).toBe(1);
+        expect(internals(chart).yAxis.formatLabel?.(0.5)).toContain('%');
     });
 
 });

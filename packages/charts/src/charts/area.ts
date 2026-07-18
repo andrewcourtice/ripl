@@ -22,6 +22,7 @@ import type {
 
 import {
     normalizeDataLabels,
+    resolveFormatLabel,
     resolveValueFormat,
 } from '../core/options';
 
@@ -124,8 +125,13 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
      * Stack series cumulatively instead of overlaying them. Defaults to false. With multiple
      * y-axes, stacking applies per axis group — series stack only with the other series bound to
      * the same axis, and each axis's extent covers its own group's cumulative total.
+     *
+     * Pass `'percent'` for a 100%-stacked chart: each category's values are normalized to their
+     * share of the category's positive total across all active series (negative values contribute
+     * zero), the value axis is fixed to 0–100%, and values default to percentage formatting.
+     * Intended for single-axis charts.
      */
-    stacked?: boolean;
+    stacked?: boolean | 'percent';
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
@@ -203,6 +209,34 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
+    private get _isPercent() {
+        return this.options.stacked === 'percent';
+    }
+
+    // Wraps each series' value accessor to return its share of the category's positive total,
+    // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
+    private _percentSeries(series: AreaChartSeriesOptions<TData>[], data: TData[]): AreaChartSeriesOptions<TData>[] {
+        const totals = new Map<TData, number>(data.map(item => [
+            item,
+            series.reduce((total, srs) => total + Math.max(0, this._seriesValue(srs, item)), 0),
+        ]));
+
+        return series.map(srs => {
+            const rawValue = resolveAccessor<TData, number>(srs.value);
+
+            return {
+                ...srs,
+                value: (item: TData) => {
+                    const total = totals.get(item) ?? 0;
+
+                    return total > 0
+                        ? Math.max(0, rawValue(item)) / total
+                        : 0;
+                },
+            };
+        });
+    }
+
     private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
         this.emit(MARKER_EVENTS[phase], event);
     }
@@ -220,14 +254,14 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             getKey: resolveAccessor<TData, string>(this.options.key),
             yScale,
             xScale: this._xScale,
-            stacked: this.options.stacked ?? false,
+            stacked: !!this.options.stacked,
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
             tooltip: this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
-            formatValue: resolveValueFormat(this.options.format),
+            formatValue: resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined)),
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit: (phase, event) => this._emitMarker(phase, event),
@@ -246,12 +280,18 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             // Legend-hidden series are excluded from extents, stacking, and rendering, so toggling a
             // series rescales the value axis (and restacks the remainder) while the hidden series
-            // animates out through the standard exit join.
-            const activeSeries = this.filterActive(series);
+            // animates out through the standard exit join. Percent mode additionally wraps the
+            // active series' value accessors in share space.
+            const activeSeries = this._isPercent
+                ? this._percentSeries(this.filterActive(series), data)
+                : this.filterActive(series);
 
             let dataExtent: number[];
 
-            if (stacked) {
+            if (this._isPercent) {
+                dataExtent = [0, 1];
+                this.yAxis.formatLabel ??= resolveFormatLabel('percentage');
+            } else if (stacked) {
                 dataExtent = cumulativeExtent(activeSeries, data, (srs, item) => this._seriesValue(srs, item));
             } else {
                 const seriesExtents = activeSeries
@@ -341,7 +381,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             this.registerHighlightGroups(this._series.groups);
 
-            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked ?? false);
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], !!stacked);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
@@ -380,7 +420,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             bottom,
         } = ctx;
 
-        const stacked = this.options.stacked ?? false;
+        const stacked = !!this.options.stacked;
 
         // Partition series by the y-axis they bind to.
         const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
