@@ -215,7 +215,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return this.buildOverviewSeries(series, data, () => 'bar', (srs, item) => this._seriesValue(srs, item));
+        return this.buildOverviewSeries(this.filterActive(series), data, () => 'bar', (srs, item) => this._seriesValue(srs, item));
     }
 
     private _seriesContext(categoryScale: BandScale<string>, valueScale: Scale, plot: ChartArea): BarSeriesContext<TData> {
@@ -251,11 +251,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series.flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item))).concat(0);
+            // Legend-hidden series are excluded from extents and rendering, so toggling a series
+            // rescales the value axis and animates the series out through the standard exit join.
+            const activeSeries = this.filterActive(series);
+
+            const seriesExtents = activeSeries.flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item))).concat(0);
             let dataExtent = numberExtent(seriesExtents, functionIdentity);
 
             if (this._isStacked) {
-                dataExtent = positiveNegativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
+                dataExtent = positiveNegativeExtent(activeSeries, data, (srs, item) => this._seriesValue(srs, item));
             }
 
             // Shared layout pass: title and legend reserve their bands first.
@@ -267,7 +271,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -328,7 +332,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
                 this.renderAnnotations({ x: adjustedValueScale }, horizontalPlot);
 
-                const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, horizontalPlot));
+                const seriesRender = this._series.render(activeSeries, this._seriesContext(viewedCategoryScale, adjustedValueScale, horizontalPlot));
                 this.registerHighlightGroups(this._series.groups);
 
                 this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], this._isStacked);
@@ -384,7 +388,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.renderAnnotations({ y: adjustedValueScale }, verticalPlot);
 
-            const seriesRender = this._series.render(series, this._seriesContext(viewedCategoryScale, adjustedValueScale, verticalPlot));
+            const seriesRender = this._series.render(activeSeries, this._seriesContext(viewedCategoryScale, adjustedValueScale, verticalPlot));
             this.registerHighlightGroups(this._series.groups);
 
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], this._isStacked);

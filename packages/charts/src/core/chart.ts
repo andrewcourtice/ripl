@@ -166,6 +166,7 @@ export class Chart<
     protected theme: Theme;
     protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
+    private _hiddenItems: Set<string> = new Set();
     private _highlightGroups: Array<{ group: Group;
         owners: string | string[]; }> = [];
 
@@ -314,6 +315,37 @@ export class Chart<
     }
 
     /**
+     * Whether the series or segment behind a legend item id is currently shown. Legend clicks
+     * toggle this via {@link Chart.setItemActive}; charts read it when building legend items and
+     * filtering their rendered series.
+     */
+    protected isItemActive(id: string): boolean {
+        return !this._hiddenItems.has(id);
+    }
+
+    /**
+     * Filters series or segments down to the ones whose legend item is active. The id defaults to
+     * each item's `id` property; pass an accessor for keyed data items.
+     */
+    protected filterActive<T>(items: T[], getId: (item: T) => string = item => (item as { id: string }).id): T[] {
+        return items.filter(item => this.isItemActive(getId(item)));
+    }
+
+    /**
+     * Shows or hides the series/segment behind a legend item and re-renders, so the existing
+     * enter/exit joins animate it out of or back into the chart.
+     */
+    protected setItemActive(id: string, active: boolean): void {
+        if (active) {
+            this._hiddenItems.delete(id);
+        } else {
+            this._hiddenItems.add(id);
+        }
+
+        this.render();
+    }
+
+    /**
      * Reserves a band for the legend (when visible and given items) at its configured position
      * and renders it into that band, reconciling against the previous render.
      */
@@ -337,7 +369,7 @@ export class Chart<
                 font: legendOpts.font,
                 fontColor: legendOpts.fontColor,
                 highlight: legendOpts.highlight,
-                onToggle: () => this.render(),
+                onToggle: (item, active) => this.setItemActive(item.id, active),
                 onHighlight: id => this.highlightSeries(id),
             });
         } else {
