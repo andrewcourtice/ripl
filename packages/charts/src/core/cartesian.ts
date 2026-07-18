@@ -363,6 +363,7 @@ export abstract class CartesianChart<
         axis.formatLabel = resolveFormatLabel(options.format);
         axis.labelFont = options.font;
         axis.labelColor = options.fontColor;
+        axis.labelRotation = options.labelRotation;
         axis.titleFont = `bold ${options.font}`;
         axis.title = options.title;
     }

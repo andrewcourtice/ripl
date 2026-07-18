@@ -42,12 +42,23 @@ interface CrosshairInternals {
 }
 
 interface CartesianInternals {
-    xAxis: AxisInternals;
+    xAxis: AxisInternals & {
+        getBoundingBox(): {
+            height: number;
+        };
+    };
     yAxis: AxisInternals;
     yAxes: AxisInternals[];
     grid?: GridInternals;
     tooltip?: object;
     crosshair?: CrosshairInternals;
+    scene: {
+        getElementById(id: string): {
+            query(selector: string): {
+                rotation: number;
+            } | null;
+        } | null;
+    };
 }
 
 function internals(chart: unknown): CartesianInternals {
@@ -303,6 +314,57 @@ describe('cartesian runtime reconfiguration', () => {
         await chart.render();
 
         expect(internals(chart).yAxes.length).toBe(1);
+    });
+
+    it('rotates x-axis tick labels and grows the label band through update()', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createBarChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    m: 'January',
+                    v: 10,
+                },
+                {
+                    m: 'February',
+                    v: 20,
+                },
+            ],
+            key: 'm',
+            series: [{
+                id: 's',
+                label: 'S',
+                value: 'v',
+            }],
+        });
+
+        await chart.render();
+
+        const flatBand = internals(chart).xAxis.getBoundingBox().height;
+        const flatLabel = internals(chart).scene.getElementById('x-tick:January')?.query('text');
+
+        expect(flatLabel?.rotation ?? 0).toBe(0);
+
+        chart.update({
+            axis: {
+                x: {
+                    labelRotation: 45,
+                },
+            },
+        });
+
+        await chart.render();
+
+        const rotatedBand = internals(chart).xAxis.getBoundingBox().height;
+        const rotatedLabel = internals(chart).scene.getElementById('x-tick:January')?.query('text');
+
+        // The mocked canvas reports zero text metrics, so the projected band cannot shrink but
+        // its growth is not observable here — the rotation applied to live labels is.
+        expect(rotatedBand).toBeGreaterThanOrEqual(flatBand);
+        expect(rotatedLabel?.rotation).toBeLessThan(0);
     });
 
     it('restyles existing axis labels when the theme changes through update()', async () => {

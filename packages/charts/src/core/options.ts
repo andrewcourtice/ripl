@@ -502,6 +502,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
     nice?: boolean | number;
     /** Target number of ticks and grid lines along the axis. Defaults to 10. */
     ticks?: number;
+    /** Tick label rotation in degrees — positive tilts labels counterclockwise (like `rotate(45)` slanting labels up to the right). Applied to the x-axis; the label band grows to fit and fewer labels are dropped on overflow. */
+    labelRotation?: number;
     /** Explicit lower bound of the value domain (overrides the data extent). */
     min?: number;
     /** Explicit upper bound of the value domain (overrides the data extent). */

@@ -44,6 +44,7 @@ import {
     createLine,
     createRect,
     createText,
+    degreesToRadians,
     easeOutCubic,
     scaleContinuous,
 } from '@ripl/core';
@@ -55,6 +56,16 @@ import {
 
 /** Gap (px) between axis tick labels and the axis title. */
 const TITLE_GAP = 6;
+
+// Rotated x-axis labels anchor their trailing edge at the tick so the slanted text hangs clear of
+// the plot; flat labels centre under it.
+function tickLabelAlignment(rotationRad: number): 'center' | 'left' | 'right' {
+    if (rotationRad === 0) {
+        return 'center';
+    }
+
+    return rotationRad < 0 ? 'right' : 'left';
+}
 
 /** Fallback animation used when an axis is not given one by its host chart. */
 const DEFAULT_AXIS_ANIMATION: ResolvedAnimation = {
@@ -168,6 +179,8 @@ export class ChartAxis extends ChartComponent {
     /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public formatLabel?: (value: any) => string;
+    /** Tick label rotation in degrees — positive tilts labels counterclockwise. Consumed by the x-axis; the label band and overflow handling account for the rotated extent. */
+    public labelRotation?: number;
 
     protected group: Group;
     protected line: Line;
@@ -189,13 +202,21 @@ export class ChartAxis extends ChartComponent {
         ] = this.scale.range;
 
         const rangeSize = Math.abs(rangeMax - rangeMin);
-        const maxSize = this.measureLabels(ticks, LABEL_DIMENSION_MAP[this._labelDimension]);
+        const maxSize = this.measureTickFootprint(ticks);
         const tickRatio = rangeSize / (ticks.length * maxSize);
         const dropCount = Math.ceil(1 / tickRatio);
         const shouldDrop = tickRatio < 1;
 
         this.cachedTicks = ticks.filter((_, index) => !shouldDrop || index % dropCount === 0);
         return this.cachedTicks;
+    }
+
+    /**
+     * The footprint one tick label occupies along the axis direction, used by the overflow-drop
+     * logic. The x-axis overrides this to account for label rotation.
+     */
+    protected measureTickFootprint(ticks: unknown[]): number {
+        return this.measureLabels(ticks, LABEL_DIMENSION_MAP[this._labelDimension]);
     }
 
     protected get maxLabelWidth() {
@@ -385,12 +406,41 @@ export class ChartXAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
+    /** The canvas-space rotation applied to tick labels — degrees are authored counterclockwise-positive. */
+    private get _labelRotationRad(): number {
+        return this.labelRotation ? -degreesToRadians(this.labelRotation) : 0;
+    }
+
+    /** The vertical extent of one tick label, projecting the rotated text box when labels are rotated. */
+    private get _labelBandHeight(): number {
+        if (!this.labelRotation) {
+            return this.maxLabelHeight;
+        }
+
+        const theta = degreesToRadians(this.labelRotation);
+
+        return Math.abs(this.maxLabelWidth * Math.sin(theta)) + Math.abs(this.maxLabelHeight * Math.cos(theta));
+    }
+
+    /** Rotated labels occupy a narrower footprint along the axis, so fewer are dropped on overflow. */
+    protected override measureTickFootprint(ticks: unknown[]): number {
+        if (!this.labelRotation) {
+            return super.measureTickFootprint(ticks);
+        }
+
+        const theta = degreesToRadians(this.labelRotation);
+        const width = this.measureLabels(ticks, LABEL_DIMENSION_MAP.width);
+        const height = this.measureLabels(ticks, LABEL_DIMENSION_MAP.height);
+
+        return Math.abs(width * Math.cos(theta)) + Math.abs(height * Math.sin(theta));
+    }
+
     /** Computes the band the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
     public getBoundingBox(): Box {
         const isBottomAligned = this.alignment === 'bottom';
         // A hidden axis reserves no band so the plot can use the full area.
         const clearance = this.visible
-            ? this.maxLabelHeight
+            ? this._labelBandHeight
                 + this.padding
                 + this.tickSize
                 + 1 // 1 for line width
@@ -432,6 +482,9 @@ export class ChartXAxis extends ChartAxis {
             right: groupExits,
         } = arrayJoin(ticks, groups, (value, group) => group.id === `x-tick:${value}`);
 
+        const rotationRad = this._labelRotationRad;
+        const labelY = boundingBox.top + this.padding + this.tickSize + 1;
+
         const labelEntryTexts = groupEntries.map(value => {
             const x = this.scale(value);
             const label = this.formatTickLabel(value);
@@ -450,9 +503,12 @@ export class ChartXAxis extends ChartAxis {
                     createText({
                         content: label,
                         x,
-                        y: boundingBox.top + this.padding + this.tickSize + 1,
-                        textAlign: 'center',
-                        textBaseline: 'top',
+                        y: labelY,
+                        textAlign: tickLabelAlignment(rotationRad),
+                        textBaseline: rotationRad === 0 ? 'top' : 'middle',
+                        rotation: rotationRad,
+                        transformOriginX: x,
+                        transformOriginY: labelY,
                         fill: this.labelColor,
                         font: this.labelFont,
                         opacity: 0,
@@ -495,7 +551,12 @@ export class ChartXAxis extends ChartAxis {
             if (label) {
                 label.content = this.formatTickLabel(value);
                 label.x = x;
-                label.y = boundingBox.top + this.padding + this.tickSize + 1;
+                label.y = labelY;
+                label.textAlign = tickLabelAlignment(rotationRad);
+                label.textBaseline = rotationRad === 0 ? 'top' : 'middle';
+                label.rotation = rotationRad;
+                label.transformOriginX = x;
+                label.transformOriginY = labelY;
                 label.fill = this.labelColor;
                 label.font = this.labelFont;
             }
