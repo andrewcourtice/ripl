@@ -279,7 +279,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = this.pointScale(keys, yAxisBox.right, right);
+            this._xScale = this.categoryScale(keys, yAxisBox.right, right);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 

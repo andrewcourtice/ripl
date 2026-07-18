@@ -281,7 +281,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = this.pointScale(keys, yAxisBox.right, right);
+            this._xScale = this.categoryScale(keys, yAxisBox.right, right);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
@@ -381,7 +381,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         const plotLeft = this.yAxes[0].getBoundingBox().right;
         const plotRight = this.yAxes[1].getBoundingBox().left;
 
-        this._xScale = this.pointScale(keys, plotLeft, plotRight);
+        this._xScale = this.categoryScale(keys, plotLeft, plotRight);
         this.xAxis.scale = this._xScale;
         this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
 

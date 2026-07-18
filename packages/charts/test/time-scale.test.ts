@@ -5,6 +5,11 @@ import {
 } from 'vitest';
 
 import {
+    mockCanvasContext,
+    polyfillPath2D,
+} from '@ripl/test-utils';
+
+import {
     createTimeAxisScale,
     isTimeAxis,
 } from '../src/core/scales';
@@ -13,6 +18,55 @@ import {
     formatTimeLabel,
     normalizeAxisItem,
 } from '../src/core/options';
+
+import {
+    createLineChart,
+} from '../src';
+
+interface TimeChartInternals {
+    _xScale: (value: string) => number;
+}
+
+function timeInternals(chart: unknown): TimeChartInternals {
+    return chart as TimeChartInternals;
+}
+
+function createTimeLineChart(scale?: 'time') {
+    polyfillPath2D();
+    mockCanvasContext();
+
+    return createLineChart(document.createElement('div'), {
+        autoRender: false,
+        animation: false,
+        axis: scale
+            ? {
+                x: {
+                    scale,
+                },
+            }
+            : undefined,
+        data: [
+            {
+                d: '2024-01-01',
+                v: 1,
+            },
+            {
+                d: '2024-01-02',
+                v: 2,
+            },
+            {
+                d: '2024-01-11',
+                v: 3,
+            },
+        ],
+        key: 'd',
+        series: [{
+            id: 's',
+            label: 'S',
+            value: 'v',
+        }],
+    });
+}
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -54,6 +108,36 @@ describe('Time axis scale', () => {
 
         expect(ticks.length).toBeGreaterThan(1);
         ticks.forEach(tick => expect(tick).toBeInstanceOf(Date));
+    });
+
+});
+
+describe('Line chart time axis', () => {
+
+    it('Should position unevenly spaced dates proportionally with scale: time', async () => {
+        const chart = createTimeLineChart('time');
+
+        await chart.render();
+
+        const xScale = timeInternals(chart)._xScale;
+        const first = xScale('2024-01-01');
+        const second = xScale('2024-01-02');
+        const last = xScale('2024-01-11');
+
+        expect((second - first) / (last - first)).toBeCloseTo(0.1, 2);
+    });
+
+    it('Should keep even point spacing without scale: time', async () => {
+        const chart = createTimeLineChart();
+
+        await chart.render();
+
+        const xScale = timeInternals(chart)._xScale;
+        const first = xScale('2024-01-01');
+        const second = xScale('2024-01-02');
+        const last = xScale('2024-01-11');
+
+        expect((second - first) / (last - first)).toBeCloseTo(0.5, 2);
     });
 
 });

@@ -53,6 +53,9 @@ import {
 
 import {
     axisTickCount,
+    createTimeAxisScale,
+    createValueScale,
+    isTimeAxis,
 } from './scales';
 
 import type {
@@ -1045,6 +1048,61 @@ export abstract class CartesianChart<
             inverse: invert,
             ticks: () => keys,
             includes: (value: string) => keys.includes(value),
+        }) as unknown as Scale<string>;
+    }
+
+    /**
+     * Builds the x scale for category-keyed charts: a continuous time scale when the x-axis is
+     * configured with `scale: 'time'` (keys parsed as dates — `Date` objects, epoch milliseconds,
+     * or ISO strings), otherwise the standard evenly spaced point scale. The time facade accepts
+     * raw keys, `Date`s, and epoch values interchangeably, so series renderers (string keys) and
+     * axis ticks (`Date` values) share one scale, and unevenly spaced samples position
+     * proportionally to their timestamps.
+     */
+    protected categoryScale(keys: string[], left: number, right: number): Scale<string> {
+        if (!isTimeAxis(this.xAxisOptions)) {
+            return this.pointScale(keys, left, right);
+        }
+
+        const times = keys.map(key => new Date(key).getTime()).filter(Number.isFinite);
+        const min = times.length > 0 ? Math.min(...times) : 0;
+        const max = times.length > 0 ? Math.max(...times) : 1;
+
+        return this._timeScaleFacade([min, max], left, right);
+    }
+
+    /**
+     * The continuous x scale for numeric-x charts (e.g. scatter): a time scale with
+     * calendar-aligned ticks when the x-axis is configured with `scale: 'time'` (values treated as
+     * epoch milliseconds or dates), otherwise the standard value scale.
+     */
+    protected continuousXScale(extent: number[], left: number, right: number): Scale {
+        if (!isTimeAxis(this.xAxisOptions)) {
+            return createValueScale(this.xAxisOptions, extent, [left, right]);
+        }
+
+        return this._timeScaleFacade([extent[0], extent[1]], left, right) as unknown as Scale;
+    }
+
+    // Wraps the core time scale so string keys, epoch numbers, and Dates are all accepted as
+    // input — series renderers pass raw keys/values while axis ticks are calendar-aligned Dates.
+    private _timeScaleFacade(domainMs: [number, number], left: number, right: number): Scale<string> {
+        const [min, rawMax] = domainMs;
+        const max = rawMax === min ? min + 1 : rawMax;
+        const timeScale = createTimeAxisScale(this.xAxisOptions, [min, max], [left, right]);
+
+        const toDate = (value: string | number | Date) => value instanceof Date ? value : new Date(value);
+        const convert = (value: string | number | Date) => timeScale(toDate(value));
+
+        return Object.assign(convert, {
+            domain: timeScale.domain,
+            range: timeScale.range,
+            inverse: (position: number) => String(timeScale.inverse(position)),
+            ticks: (count?: number) => timeScale.ticks(count),
+            includes: (value: string | number | Date) => {
+                const time = toDate(value).getTime();
+                return time >= min && time <= max;
+            },
         }) as unknown as Scale<string>;
     }
 

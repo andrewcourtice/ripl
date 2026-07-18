@@ -47,6 +47,7 @@ import {
 import {
     axisTickCount,
     createValueScale,
+    isTimeAxis,
 } from '../core/scales';
 
 import type {
@@ -585,7 +586,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = createValueScale(this.xAxisOptions, xExtent, [yAxisBox.right + maxRadius, right - maxRadius]);
+            this._xScale = this.continuousXScale(xExtent, yAxisBox.right + maxRadius, right - maxRadius);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
@@ -595,8 +596,11 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
             // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
-            // so both follow the view.
-            this._xScale = this.applyView(this._xScale, 'x');
+            // so both follow the view. A time x-axis pans/zooms in pixel space instead — its Date
+            // domain cannot round-trip through the numeric domain rescale.
+            this._xScale = isTimeAxis(this.xAxisOptions)
+                ? this.applyViewToScale(this._xScale, 'x')
+                : this.applyView(this._xScale, 'x');
             this._yScale = this.applyView(this._yScale, 'y');
             this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
