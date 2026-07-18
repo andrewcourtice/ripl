@@ -22,6 +22,7 @@ import type {
 
 import {
     normalizeDataLabels,
+    resolveFormatLabel,
     resolveValueFormat,
 } from '../core/options';
 
@@ -106,8 +107,13 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
     key: keyof TData | ((item: TData) => string);
     /** Whether bars run vertically (default) or horizontally. */
     orientation?: BarChartOrientation;
-    /** Whether multiple series are stacked into a single bar per category (`true`) or grouped side by side (default `false`). */
-    stacked?: boolean;
+    /**
+     * Whether multiple series are stacked into a single bar per category (`true`) or grouped side
+     * by side (default `false`). Pass `'percent'` for a 100%-stacked chart: each category's values
+     * are normalized to their share of the category's positive total (negative values contribute
+     * zero), the value axis is fixed to 0–100%, and values default to percentage formatting.
+     */
+    stacked?: boolean | 'percent';
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
@@ -176,7 +182,35 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     }
 
     private get _isStacked() {
-        return this.options.stacked === true;
+        return this.options.stacked === true || this._isPercent;
+    }
+
+    private get _isPercent() {
+        return this.options.stacked === 'percent';
+    }
+
+    // Wraps each series' value accessor to return its share of the category's positive total,
+    // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
+    private _percentSeries(series: BarChartSeriesOptions<TData>[], data: TData[]): BarChartSeriesOptions<TData>[] {
+        const totals = new Map<TData, number>(data.map(item => [
+            item,
+            series.reduce((total, srs) => total + Math.max(0, this._seriesValue(srs, item)), 0),
+        ]));
+
+        return series.map(srs => {
+            const rawValue = resolveAccessor<TData, number>(srs.value);
+
+            return {
+                ...srs,
+                value: (item: TData) => {
+                    const total = totals.get(item) ?? 0;
+
+                    return total > 0
+                        ? Math.max(0, rawValue(item)) / total
+                        : 0;
+                },
+            };
+        });
     }
 
     /**
@@ -234,7 +268,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             tooltip: this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
-            formatValue: resolveValueFormat(this.options.format),
+            formatValue: resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined)),
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: this._isHorizontal ? 'right' : 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit: (phase, event) => this._emitBar(phase, event),
@@ -253,13 +287,24 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             // Legend-hidden series are excluded from extents and rendering, so toggling a series
             // rescales the value axis and animates the series out through the standard exit join.
-            const activeSeries = this.filterActive(series);
+            // Percent mode additionally wraps the active series' value accessors in share space.
+            const activeSeries = this._isPercent
+                ? this._percentSeries(this.filterActive(series), data)
+                : this.filterActive(series);
 
             const seriesExtents = activeSeries.flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item))).concat(0);
             let dataExtent = numberExtent(seriesExtents, functionIdentity);
 
-            if (this._isStacked) {
+            if (this._isPercent) {
+                dataExtent = [0, 1];
+            } else if (this._isStacked) {
                 dataExtent = positiveNegativeExtent(activeSeries, data, (srs, item) => this._seriesValue(srs, item));
+            }
+
+            if (this._isPercent) {
+                const valueAxis = this._isHorizontal ? this.xAxis : this.yAxis;
+
+                valueAxis.formatLabel ??= resolveFormatLabel('percentage');
             }
 
             // Shared layout pass: title and legend reserve their bands first.
