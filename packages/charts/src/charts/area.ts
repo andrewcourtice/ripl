@@ -104,6 +104,12 @@ export interface AreaChartSeriesOptions<TData> {
     fillOpacity?: number;
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
+    /**
+     * Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the
+     * primary axis. When the chart is stacked, series stack only with other series bound to the
+     * same axis.
+     */
+    axis?: number | string;
 }
 
 /** Options for configuring an {@link AreaChart}. */
@@ -114,7 +120,11 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
     series: AreaChartSeriesOptions<TData>[];
     /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Stack series cumulatively instead of overlaying them. Defaults to false. */
+    /**
+     * Stack series cumulatively instead of overlaying them. Defaults to false. With multiple
+     * y-axes, stacking applies per axis group — series stack only with the other series bound to
+     * the same axis, and each axis's extent covers its own group's cumulative total.
+     */
     stacked?: boolean;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
@@ -169,6 +179,7 @@ export interface AreaChartEventMap extends EventMap {
 export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<TData>, TData, AreaChartEventMap> {
 
     private _series = new AreaSeriesRenderer<TData>();
+    private _series2 = new AreaSeriesRenderer<TData>();
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
@@ -203,15 +214,15 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return this.buildOverviewSeries(this.filterActive(series), data, () => 'area', (srs, item) => this._seriesValue(srs, item));
     }
 
-    private _seriesContext(plot: ChartArea): AreaSeriesContext<TData> {
+    private _seriesContext(plot: ChartArea, yScale: Scale = this._yScale): AreaSeriesContext<TData> {
         return {
             data: this.options.data,
             getKey: resolveAccessor<TData, string>(this.options.key),
-            yScale: this._yScale,
+            yScale,
             xScale: this._xScale,
             stacked: this.options.stacked ?? false,
             plot,
-            baseline: this._yScale(0),
+            baseline: yScale(0),
             renderer: this.renderer,
             tooltip: this.tooltip,
             getColor: id => this.getSeriesColor(id),
@@ -273,6 +284,19 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            if (this.yAxes.length > 1) {
+                return this._renderSecondaryAxes({
+                    series: activeSeries,
+                    keys,
+                    dataExtent,
+                    navBand,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
+
             this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
@@ -308,6 +332,13 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.renderAnnotations({ y: this._yScale }, plot);
 
             const seriesRender = this._series.render(activeSeries, this._seriesContext(plot));
+
+            // A previous render may have drawn series against a since-removed secondary axis —
+            // rendering the secondary renderer empty exits those groups.
+            const secondaryExit = this._series2.groups.length > 0
+                ? this._series2.render([], this._seriesContext(plot))
+                : Promise.resolve();
+
             this.registerHighlightGroups(this._series.groups);
 
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked ?? false);
@@ -316,8 +347,114 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
                 seriesRender,
+                secondaryExit,
             ]);
         });
+    }
+
+    /**
+     * Renders the chart with a secondary (right-hand) y-axis. The (legend-active) series are
+     * partitioned by their `axis` binding; each axis gets an independent value extent and scale
+     * computed over the active series bound to it (stacking cumulates within each axis group only),
+     * the plot sits between the two axis label bands, and each series group is drawn against its
+     * bound axis's scale.
+     */
+    private _renderSecondaryAxes(ctx: {
+        series: AreaChartSeriesOptions<TData>[];
+        keys: string[];
+        dataExtent: number[];
+        navBand: ChartArea | undefined;
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const {
+            series,
+            keys,
+            dataExtent,
+            navBand,
+            left,
+            top,
+            right,
+            bottom,
+        } = ctx;
+
+        const stacked = this.options.stacked ?? false;
+
+        // Partition series by the y-axis they bind to.
+        const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
+
+        // Independent value extent per axis; stacked series cumulate within their axis group only.
+        const extents = seriesByAxis.map(group => {
+            if (stacked) {
+                return cumulativeExtent(group, this.options.data, (srs, item) => this._seriesValue(srs, item));
+            }
+
+            return numberExtent(group
+                .flatMap(srs => numberExtent(this.options.data, item => this._seriesValue(srs, item)))
+                .concat(0), functionIdentity);
+        });
+
+        // Provisional scales so each axis can measure its label band. Both bounds span the full width
+        // so the left axis reserves from the left edge and the right axis from the right edge.
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
+            axis.bounds = new Box(top, left, bottom, right);
+        });
+
+        const plotLeft = this.yAxes[0].getBoundingBox().right;
+        const plotRight = this.yAxes[1].getBoundingBox().left;
+
+        this._xScale = this.categoryScale(keys, plotLeft, plotRight);
+        this.xAxis.scale = this._xScale;
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        // Final scales over the plot height; clamp each axis band above the x-axis labels.
+        const scales = this.yAxes.map((axis, index) => {
+            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+
+            axis.scale = scale;
+            axis.bounds.bottom = xAxisBox.top;
+
+            return scale;
+        });
+
+        this._xScale = this.applyViewToScale(this._xScale, 'x');
+        this.xAxis.scale = this._xScale;
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        this.clipPlot(plot);
+        this.renderGrid([], scales[0].ticks(axisTickCount(this.yAxesOptions[0])).map(tick => scales[0](tick)), plot);
+        this.setupCrosshair(plot);
+        this.renderAnnotations({ y: scales[0] }, plot);
+
+        this._yScale = scales[0];
+
+        const primaryRender = this._series.render(seriesByAxis[0], this._seriesContext(plot, scales[0]));
+        const secondaryRender = this._series2.render(seriesByAxis[1], this._seriesContext(plot, scales[1]));
+
+        this.registerHighlightGroups([
+            ...this._series.groups,
+            ...this._series2.groups,
+        ]);
+
+        this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            primaryRender,
+            secondaryRender,
+        ]);
     }
 
 }

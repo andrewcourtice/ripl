@@ -98,6 +98,8 @@ export interface ScatterChartSeriesOptions<TData> {
     minRadius?: number;
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
+    /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
+    axis?: number | string;
 }
 
 /** Options for configuring a {@link ScatterChart}. */
@@ -166,6 +168,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
     private _bubbleGroups: Group[] = [];
     private _xScale!: Scale;
     private _yScale!: Scale;
+    private _yScales: Scale[] = [];
     private _sizeScale!: Scale;
 
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
@@ -211,6 +214,11 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         return largest + 2;
     }
 
+    // The y scale of the axis a series binds to (the primary scale when no secondary axis exists).
+    private _seriesYScale(series: ScatterChartSeriesOptions<TData>): Scale {
+        return this._yScales[this.resolveSeriesAxisIndex(series.axis)] ?? this._yScale;
+    }
+
     private _bubbleValueProducer(series: ScatterChartSeriesOptions<TData>, getKey: (item: TData) => string) {
         const {
             id,
@@ -228,6 +236,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const getSize = sizeBy === undefined ? () => minRadius : resolveAccessor<TData, number>(sizeBy);
         const getLabel = typeIsFunction(label) ? label : () => label;
         const resolvedColor = color ?? this.getSeriesColor(id);
+        const yScale = this._seriesYScale(series);
 
         return (item: TData) => {
             const xValue = getX(item);
@@ -254,7 +263,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     stroke: resolvedColor,
                     lineWidth: 2,
                     cx: this._xScale(xValue),
-                    cy: this._yScale(yValue),
+                    cy: yScale(yValue),
                     radius,
                 } as CircleState,
             };
@@ -574,6 +583,18 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            if (this.yAxes.length > 1) {
+                return this._renderSecondaryAxes({
+                    series: activeSeries,
+                    getKey,
+                    xExtent,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
+
             // Inset the data range by the largest possible bubble radius so a point sitting on the
             // edge of the data extent keeps its whole circle inside the plot area instead of
             // drawing past the boundary. The axis bounds/grid still span the full plot.
@@ -602,6 +623,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 ? this.applyViewToScale(this._xScale, 'x')
                 : this.applyView(this._xScale, 'x');
             this._yScale = this.applyView(this._yScale, 'y');
+            this._yScales = [this._yScale];
             this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
@@ -634,6 +656,113 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 this._drawBubbles(getKey),
             ]);
         });
+    }
+
+    /**
+     * Renders the chart with a secondary (right-hand) y-axis. The (legend-active) series are
+     * partitioned by their `axis` binding; each axis gets an independent y extent and scale
+     * computed over the active series bound to it, the plot sits between the two axis label bands,
+     * and each series' bubbles are positioned against its bound axis's scale. The bubble-radius
+     * inset applies inside both axis bands (and to both y scales) so edge bubbles stay within the
+     * plot.
+     */
+    private _renderSecondaryAxes(ctx: {
+        series: ScatterChartSeriesOptions<TData>[];
+        getKey: (item: TData) => string;
+        xExtent: number[];
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const {
+            series,
+            getKey,
+            xExtent,
+            left,
+            top,
+            right,
+            bottom,
+        } = ctx;
+
+        const { data } = this.options;
+
+        // Partition series by the y-axis they bind to.
+        const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
+
+        // Independent y extent per axis, computed over the active series bound to it.
+        const extents = seriesByAxis.map(group => {
+            const yExtents = group.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+
+            return yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];
+        });
+
+        // Inset the data ranges by the largest possible bubble radius (see the single-axis path);
+        // horizontally the inset sits just inside the two axis label bands.
+        const maxRadius = this._getMaxBubbleRadius();
+
+        // Provisional scales so each axis can measure its label band. Both bounds span the full width
+        // so the left axis reserves from the left edge and the right axis from the right edge.
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom - maxRadius, top + maxRadius]);
+            axis.bounds = new Box(top, left, bottom, right);
+        });
+
+        const plotLeft = this.yAxes[0].getBoundingBox().right;
+        const plotRight = this.yAxes[1].getBoundingBox().left;
+
+        this._xScale = this.continuousXScale(xExtent, plotLeft + maxRadius, plotRight - maxRadius);
+        this.xAxis.scale = this._xScale;
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        // Final scales over the plot height; clamp each axis band above the x-axis labels.
+        const scales = this.yAxes.map((axis, index) => {
+            axis.bounds.bottom = xAxisBox.top;
+
+            return createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top - maxRadius, top + maxRadius]);
+        });
+
+        // Rescale to the navigator's current pan/zoom window (see the single-axis path); each y
+        // axis follows the view independently. A time x-axis pans/zooms in pixel space instead.
+        this._xScale = isTimeAxis(this.xAxisOptions)
+            ? this.applyViewToScale(this._xScale, 'x')
+            : this.applyView(this._xScale, 'x');
+        this._yScales = scales.map(scale => this.applyView(scale, 'y'));
+        this._yScale = this._yScales[0];
+        this.xAxis.scale = this._xScale;
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = this._yScales[index];
+        });
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        this.clipPlot(plot);
+
+        this.renderGrid(
+            this._xScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => this._xScale(tick)),
+            this._yScale.ticks(axisTickCount(this.yAxesOptions[0])).map(tick => this._yScale(tick)),
+            plot
+        );
+
+        this.setupCrosshair(plot);
+
+        this.renderAnnotations({
+            x: this._xScale,
+            y: this._yScale,
+        }, plot);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this._drawBubbles(getKey),
+        ]);
     }
 
 }
