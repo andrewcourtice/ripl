@@ -4,6 +4,7 @@ import type {
 
 import type {
     CartesianChartOptions,
+    CartesianSetup,
 } from '../core/cartesian';
 
 import {
@@ -165,12 +166,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
     constructor(target: string | HTMLElement | Context, options: BarChartOptions<TData>) {
         super(target, options);
 
-        this.setupCartesian({
-            grid: {
-                horizontal: !this._isHorizontal,
-                vertical: this._isHorizontal,
-            },
-        });
+        this.setupCartesian();
 
         this.init();
     }
@@ -181,6 +177,20 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
     private get _isStacked() {
         return this.options.stacked === true;
+    }
+
+    /**
+     * Derives the cartesian setup from the current `orientation` so grid lines run across the bars
+     * (horizontal lines for vertical bars, vertical lines for horizontal bars) — re-resolved each
+     * render so `chart.update({ orientation })` flips the grid direction too.
+     */
+    protected override resolveCartesianSetup(): CartesianSetup {
+        return {
+            grid: {
+                horizontal: !this._isHorizontal,
+                vertical: this._isHorizontal,
+            },
+        };
     }
 
     /** Bar charts window their category axis: y when horizontal (side strip), x otherwise (bottom strip). */

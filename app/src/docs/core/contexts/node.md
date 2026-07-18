@@ -21,15 +21,15 @@ import '@ripl/node';
 
 import {
     createCircle,
-    createNodeOutput,
+    createContext,
     createRenderer,
     createScene,
-    createTerminalContext,
+    createTerminalOutput,
 } from '@ripl/node';
 
 // Create a terminal context bound to process.stdout
-const output = createNodeOutput();
-const context = createTerminalContext(output);
+const output = createTerminalOutput();
+const context = createContext(output);
 
 // Use the scene and renderer as normal
 const scene = createScene(context);
@@ -55,11 +55,11 @@ createCircle({
 | `cancelAnimationFrame` | `clearTimeout` |
 | `now` | `performance.now()` |
 | `devicePixelRatio` | `1` |
-| `createContext` | Creates a `TerminalContext` with `createNodeOutput()` |
+| `createContext` | Creates a `TerminalContext` with `createTerminalOutput()` |
 | `measureText` | Monospace approximation (8px per character) |
 | `getDefaultState` | Sensible defaults for terminal rendering |
 
-## `createNodeOutput()`
+## `createTerminalOutput()`
 
 Creates a `TerminalOutput` adapter backed by `process.stdout`:
 
@@ -79,17 +79,6 @@ Creates a `TerminalOutput` adapter backed by `process.stdout`:
 | **Gradients** | CSS gradient strings | Solid colors only |
 | **Output** | DOM element | `process.stdout` / any `TerminalOutput` |
 
-## Running Demos
+## Rendering Charts
 
-See `apps/node-demo/` in the repository for working examples:
-
-```bash
-# Static scene
-npx tsx apps/node-demo/static.ts
-
-# Animated shapes
-npx tsx apps/node-demo/animated.ts
-
-# Bar chart
-npx tsx apps/node-demo/chart.ts
-```
+Charts from `@ripl/charts` accept a terminal context as their target like any other context — see [Server-Side Rendering](/charts/advanced/server-side-rendering) for a complete headless charting example.

@@ -21,7 +21,6 @@ import {
     normalizeAxis,
     normalizeAxisItem,
     normalizeGrid,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveValueFormat,
 } from '../core/options';
@@ -47,7 +46,7 @@ import {
     createChartAxes,
 } from '../components/axis';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -161,7 +160,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
     private _todayLine?: Line;
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
+    private _tooltip?: Tooltip;
     private _grid?: Grid;
 
     constructor(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
@@ -173,17 +172,6 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
 
         const axes = createChartAxes({
             scene: this.scene,
@@ -557,6 +545,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const getLabel = this._getAccessor<string>(labelAccessor);
             const getStart = this._getAccessor<Date>(startAccessor);
             const getEnd = this._getAccessor<Date>(endAccessor);
+
+            // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
+            this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
             const labels = data.map(getLabel);
 

@@ -1,6 +1,6 @@
 ---
 title: Charts
-description: "@ripl/charts — 23 animated, interactive chart types for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
+description: "@ripl/charts — 25 animated, interactive chart types for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, histogram, box plot, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
 ---
 
 # Charts
@@ -12,20 +12,24 @@ The `@ripl/charts` package provides a comprehensive set of chart types for data 
 
 ## Available Charts
 
-<div class="chart-grid">
-    <a
-        v-for="chart in charts"
-        :key="chart.link"
-        :href="chart.link"
-        class="chart-card"
-    >
-        <span class="chart-card__title">{{ chart.text }}</span>
-        <span class="chart-card__desc">{{ chart.description }}</span>
-    </a>
-</div>
+<template v-for="category in chartCategories" :key="category">
+    <h3>{{ category }}</h3>
+    <div class="chart-grid">
+        <a
+            v-for="chart in charts.filter(chart => chart.category === category)"
+            :key="chart.link"
+            :href="chart.link"
+            class="chart-card"
+        >
+            <span class="chart-card__title">{{ chart.text }}</span>
+            <span class="chart-card__desc">{{ chart.description }}</span>
+        </a>
+    </div>
+</template>
 
 <script setup lang="ts">
 import {
+    chartCategories,
     charts,
 } from '../.vitepress/data/charts';
 </script>

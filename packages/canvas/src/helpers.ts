@@ -25,7 +25,7 @@ import {
 
 import type {
     CanvasPath,
-} from './context';
+} from './path';
 
 /** Bounding rectangle used to resolve gradient coordinates. */
 export type GradientBounds = {

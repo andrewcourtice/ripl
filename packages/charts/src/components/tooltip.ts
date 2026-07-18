@@ -50,6 +50,9 @@ export interface TooltipOptions extends ChartComponentOptions {
     placement?: TooltipPlacement;
 }
 
+/** Restyleable tooltip options accepted by {@link Tooltip.setOptions} (everything but the scene/renderer wiring). */
+export type TooltipStyleOptions = Partial<Omit<TooltipOptions, 'scene' | 'renderer'>>;
+
 /** A boundary-aware tooltip component that shows text content near the mouse pointer with animated transitions. */
 export class Tooltip extends ChartComponent {
 
@@ -224,6 +227,41 @@ export class Tooltip extends ChartComponent {
         }
     }
 
+    /**
+     * Restyles the tooltip in place, updating both the stored options (used for future shows) and
+     * any currently rendered tooltip elements. Lets a host chart apply runtime `tooltip` option
+     * changes without destroying and recreating the component.
+     *
+     * @param options - The style options to apply; omitted properties keep their current values.
+     */
+    public setOptions(options: TooltipStyleOptions): void {
+        this._padding = options.padding ?? this._padding;
+        this._font = options.font ?? this._font;
+        this._fontColor = options.fontColor ?? this._fontColor;
+        this._backgroundColor = options.backgroundColor ?? this._backgroundColor;
+        this._borderColor = options.borderColor ?? this._borderColor;
+        this._borderRadiusValue = options.borderRadius ?? this._borderRadiusValue;
+        this._placement = options.placement ?? this._placement;
+
+        if (!this._group) {
+            return;
+        }
+
+        const textElement = this._group.query('#tooltip-text') as Text | null;
+        const background = this._group.query('#tooltip-bg') as Rect | null;
+
+        if (textElement) {
+            textElement.fill = this._fontColor;
+            textElement.font = this._font;
+        }
+
+        if (background) {
+            background.fill = this._backgroundColor;
+            background.stroke = this._borderColor;
+            background.borderRadius = this._borderRadiusValue;
+        }
+    }
+
     /** Hides the tooltip with a short delay and fade-out animation. */
     public hide() {
         if (!this._group) {
@@ -248,6 +286,19 @@ export class Tooltip extends ChartComponent {
             }
             this._hideTimeout = null;
         }, 150) as unknown as number;
+    }
+
+    /** Destroys the tooltip, cancelling any pending hide and removing its elements from the scene. */
+    public destroy() {
+        if (this._hideTimeout !== null) {
+            clearTimeout(this._hideTimeout);
+            this._hideTimeout = null;
+        }
+
+        this._group?.destroy();
+        this._group = null;
+
+        super.destroy();
     }
 
 }

@@ -358,6 +358,12 @@ export class ChartAxis extends ChartComponent {
         // helpers, so the base component render is intentionally a no-op.
     }
 
+    /** Destroys the axis, removing its group (line, ticks, labels, and title) from the scene. */
+    public destroy() {
+        this.group.destroy();
+        super.destroy();
+    }
+
 }
 
 /** Horizontal (x) axis component with top/bottom alignment. */
@@ -416,6 +422,7 @@ export class ChartXAxis extends ChartAxis {
         this.line.y1 = boundingBox.top;
         this.line.x2 = boundingBox.right;
         this.line.y2 = boundingBox.top;
+        this.line.stroke = this.stroke;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 
@@ -482,40 +489,49 @@ export class ChartXAxis extends ChartAxis {
                 line.y1 = boundingBox.top;
                 line.x2 = x;
                 line.y2 = boundingBox.top + this.tickSize;
+                line.stroke = this.stroke;
             }
 
             if (label) {
                 label.content = this.formatTickLabel(value);
                 label.x = x;
                 label.y = boundingBox.top + this.padding + this.tickSize + 1;
+                label.fill = this.labelColor;
+                label.font = this.labelFont;
             }
         });
 
-        // Render title in its own band below the tick labels.
-        if (this.title) {
-            const titleId = 'chart-axis__x-title';
-            const titleX = (boundingBox.left + boundingBox.right) / 2;
-            const titleY = boundingBox.bottom;
-            let titleText = this.group.query<Text>(`#${titleId}`);
+        // Render title in its own band below the tick labels (removing it when the title was cleared).
+        const titleId = 'chart-axis__x-title';
+        let titleText = this.group.query<Text>(`#${titleId}`);
 
-            if (!titleText) {
-                titleText = createText({
-                    id: titleId,
-                    content: this.title,
-                    x: titleX,
-                    y: titleY,
-                    textAlign: 'center',
-                    textBaseline: 'bottom',
-                    fill: this.labelColor,
-                    font: this.titleFont,
-                });
+        if (!this.title) {
+            titleText?.destroy();
+            return Promise.resolve();
+        }
 
-                this.group.add(titleText);
-            } else {
-                titleText.content = this.title;
-                titleText.x = titleX;
-                titleText.y = titleY;
-            }
+        const titleX = (boundingBox.left + boundingBox.right) / 2;
+        const titleY = boundingBox.bottom;
+
+        if (!titleText) {
+            titleText = createText({
+                id: titleId,
+                content: this.title,
+                x: titleX,
+                y: titleY,
+                textAlign: 'center',
+                textBaseline: 'bottom',
+                fill: this.labelColor,
+                font: this.titleFont,
+            });
+
+            this.group.add(titleText);
+        } else {
+            titleText.content = this.title;
+            titleText.x = titleX;
+            titleText.y = titleY;
+            titleText.fill = this.labelColor;
+            titleText.font = this.titleFont;
         }
 
         return Promise.resolve();
@@ -579,6 +595,7 @@ export class ChartYAxis extends ChartAxis {
         this.line.x2 = boundingBox.right;
         this.line.y1 = boundingBox.top;
         this.line.y2 = boundingBox.bottom;
+        this.line.stroke = this.stroke;
 
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
 
@@ -637,57 +654,68 @@ export class ChartYAxis extends ChartAxis {
             const y = this.scale(value);
 
             if (line) {
+                line.x1 = boundingBox.right;
                 line.y1 = y;
+                line.x2 = boundingBox.right - this.tickSize;
                 line.y2 = y;
+                line.stroke = this.stroke;
             }
 
             if (label) {
                 label.content = this.formatTickLabel(value);
+                label.x = boundingBox.right - this.padding - this.tickSize - 1;
                 label.y = y;
+                label.fill = this.labelColor;
+                label.font = this.labelFont;
             }
         });
 
         // Render the title rotated vertically in its own band at the far edge of the axis,
-        // outside the tick labels so the two never overlap or clip.
-        if (this.title) {
-            const isLeftAligned = this.alignment === 'left';
-            const titleId = 'chart-axis__y-title';
-            // Anchor the rotated title to the outer edge of its band (not centred) so the full
-            // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
-            // widening the reserved band, so the plot margins are unchanged.
-            const titleThickness = this.titleBand - TITLE_GAP;
-            const titleX = isLeftAligned
-                ? boundingBox.left + titleThickness / 2
-                : boundingBox.right - titleThickness / 2;
-            const titleY = (boundingBox.top + boundingBox.bottom) / 2;
-            const rotation = isLeftAligned ? -Math.PI / 2 : Math.PI / 2;
+        // outside the tick labels so the two never overlap or clip (removing it when cleared).
+        const titleId = 'chart-axis__y-title';
+        let titleText = this.group.query<Text>(`#${titleId}`);
 
-            let titleText = this.group.query<Text>(`#${titleId}`);
+        if (!this.title) {
+            titleText?.destroy();
+            return Promise.resolve();
+        }
 
-            if (!titleText) {
-                titleText = createText({
-                    id: titleId,
-                    content: this.title,
-                    x: titleX,
-                    y: titleY,
-                    textAlign: 'center',
-                    textBaseline: 'middle',
-                    fill: this.labelColor,
-                    font: this.titleFont,
-                    rotation,
-                    transformOriginX: titleX,
-                    transformOriginY: titleY,
-                });
+        const isLeftAligned = this.alignment === 'left';
+        // Anchor the rotated title to the outer edge of its band (not centred) so the full
+        // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
+        // widening the reserved band, so the plot margins are unchanged.
+        const titleThickness = this.titleBand - TITLE_GAP;
+        const titleX = isLeftAligned
+            ? boundingBox.left + titleThickness / 2
+            : boundingBox.right - titleThickness / 2;
+        const titleY = (boundingBox.top + boundingBox.bottom) / 2;
+        const rotation = isLeftAligned ? -Math.PI / 2 : Math.PI / 2;
 
-                this.group.add(titleText);
-            } else {
-                titleText.content = this.title;
-                titleText.x = titleX;
-                titleText.y = titleY;
-                titleText.rotation = rotation;
-                titleText.transformOriginX = titleX;
-                titleText.transformOriginY = titleY;
-            }
+        if (!titleText) {
+            titleText = createText({
+                id: titleId,
+                content: this.title,
+                x: titleX,
+                y: titleY,
+                textAlign: 'center',
+                textBaseline: 'middle',
+                fill: this.labelColor,
+                font: this.titleFont,
+                rotation,
+                transformOriginX: titleX,
+                transformOriginY: titleY,
+            });
+
+            this.group.add(titleText);
+        } else {
+            titleText.content = this.title;
+            titleText.x = titleX;
+            titleText.y = titleY;
+            titleText.fill = this.labelColor;
+            titleText.font = this.titleFont;
+            titleText.rotation = rotation;
+            titleText.transformOriginX = titleX;
+            titleText.transformOriginY = titleY;
         }
 
         return Promise.resolve();

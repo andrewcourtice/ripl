@@ -19,7 +19,6 @@ import {
     normalizeAxis,
     normalizeCrosshair,
     normalizeGrid,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
     resolveValueFormat,
@@ -29,7 +28,7 @@ import {
     ChartYAxis,
 } from '../components/axis';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -135,7 +134,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     private _seriesGroups: Group[] = [];
     private _yScale!: Scale;
     private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
+    private _tooltip?: Tooltip;
     private _grid?: Grid;
     private _crosshair?: Crosshair;
     private _windowSize: number;
@@ -153,17 +152,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         );
         const gridOpts = normalizeGrid(options.grid);
         const crosshairOpts = normalizeCrosshair(options.crosshair);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
 
         this._yAxis = new ChartYAxis({
             scene: this.scene,
@@ -446,6 +434,9 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             } = this.options;
 
             this.resolveSeriesColors(series);
+
+            // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
+            this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
             // Compute y extent from all buffers
             const allValues: number[] = [];

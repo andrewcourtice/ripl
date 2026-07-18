@@ -30,6 +30,9 @@ export interface CrosshairOptions extends ChartComponentOptions {
     lineDash?: number[];
 }
 
+/** Reconfigurable crosshair options accepted by {@link Crosshair.setOptions} (everything but the scene/renderer wiring). */
+export type CrosshairStyleOptions = Partial<Omit<CrosshairOptions, 'scene' | 'renderer'>>;
+
 const EVENTS_KEY = Symbol('events');
 const DEFAULT_STROKE = '#94a3b8';
 const DEFAULT_LINE_WIDTH = 1;
@@ -62,6 +65,32 @@ export class Crosshair extends ChartComponent {
         this._stroke = options.stroke ?? DEFAULT_STROKE;
         this._lineWidth = options.lineWidth ?? DEFAULT_LINE_WIDTH;
         this._lineDash = options.lineDash ?? DEFAULT_LINE_DASH;
+    }
+
+    /**
+     * Reconfigures the crosshair in place, updating the stored options and restyling any existing
+     * lines. Direction (`vertical`/`horizontal`) changes take full effect on the next
+     * {@link Crosshair.setup} call, which rebuilds the lines; hosts call `setup` every render.
+     *
+     * @param options - The options to apply; omitted properties keep their current values.
+     */
+    public setOptions(options: CrosshairStyleOptions): void {
+        this._showVertical = options.vertical ?? this._showVertical;
+        this._showHorizontal = options.horizontal ?? this._showHorizontal;
+        this._stroke = options.stroke ?? this._stroke;
+        this._lineWidth = options.lineWidth ?? this._lineWidth;
+        this._lineDash = options.lineDash ?? this._lineDash;
+
+        [
+            this._verticalLine,
+            this._horizontalLine,
+        ].forEach(line => {
+            if (line) {
+                line.stroke = this._stroke;
+                line.lineWidth = this._lineWidth;
+                line.lineDash = this._lineDash;
+            }
+        });
     }
 
     /** Initializes the crosshair lines and attaches mouse event listeners within the given bounds. */
@@ -165,11 +194,18 @@ export class Crosshair extends ChartComponent {
 
     /** Destroys the crosshair, removing event listeners and scene elements. */
     public destroy() {
+        // Disposes every retained subscription — including the pointer (mousemove/mouseleave)
+        // listeners registered under the events key in `setup` — so a destroyed crosshair never
+        // keeps tracking the pointer.
         this.dispose();
 
         if (this._group) {
             this.scene.remove(this._group);
         }
+
+        this._group = undefined;
+        this._verticalLine = undefined;
+        this._horizontalLine = undefined;
     }
 
 }

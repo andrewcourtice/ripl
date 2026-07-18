@@ -11,6 +11,7 @@ import {
 } from 'vitepress-plugin-tabs';
 
 import {
+    chartCategories,
     charts,
 } from './data/charts';
 
@@ -254,6 +255,10 @@ export default defineConfig({
                             text: 'Renderer',
                             link: '/docs/core/essentials/renderer',
                         },
+                        {
+                            text: 'Transforms',
+                            link: '/docs/core/essentials/transforms',
+                        },
                     ],
                 },
                 {
@@ -270,6 +275,10 @@ export default defineConfig({
                         {
                             text: 'Terminal (experimental)',
                             link: '/docs/core/contexts/terminal',
+                        },
+                        {
+                            text: 'Node',
+                            link: '/docs/core/contexts/node',
                         },
                     ],
                 },
@@ -332,10 +341,6 @@ export default defineConfig({
                         {
                             text: 'Gradients',
                             link: '/docs/core/advanced/gradients',
-                        },
-                        {
-                            text: 'Transforms',
-                            link: '/docs/core/essentials/transforms',
                         },
                         {
                             text: 'Interpolators',
@@ -455,23 +460,63 @@ export default defineConfig({
 
             '/charts': [
                 {
-                    text: 'Introduction',
-                    link: '/charts/',
-                },
-                {
                     text: 'Getting Started',
-                    link: '/charts/getting-started',
-                },
-                {
-                    text: 'Shared Options',
-                    link: '/charts/shared-options',
+                    items: [
+                        {
+                            text: 'Introduction',
+                            link: '/charts/',
+                        },
+                        {
+                            text: 'Getting Started',
+                            link: '/charts/getting-started',
+                        },
+                        {
+                            text: 'Shared Options',
+                            link: '/charts/shared-options',
+                        },
+                    ],
                 },
                 {
                     text: 'Charts',
-                    items: charts.map(({ text, link }) => ({
-                        text,
-                        link,
+                    items: chartCategories.map(category => ({
+                        text: category,
+                        collapsed: false,
+                        items: charts
+                            .filter(chart => chart.category === category)
+                            .map(({ text, link }) => ({
+                                text,
+                                link,
+                            })),
                     })),
+                },
+                {
+                    text: 'Advanced',
+                    items: [
+                        {
+                            text: 'Annotations',
+                            link: '/charts/advanced/annotations',
+                        },
+                        {
+                            text: 'Panning & Zooming',
+                            link: '/charts/advanced/panning-and-zooming',
+                        },
+                        {
+                            text: 'Rendering Targets',
+                            link: '/charts/advanced/rendering-targets',
+                        },
+                        {
+                            text: 'Server-Side Rendering',
+                            link: '/charts/advanced/server-side-rendering',
+                        },
+                        {
+                            text: 'Custom Charts',
+                            link: '/charts/advanced/custom-charts',
+                        },
+                        {
+                            text: 'Theming',
+                            link: '/charts/advanced/theming',
+                        },
+                    ],
                 },
             ],
 

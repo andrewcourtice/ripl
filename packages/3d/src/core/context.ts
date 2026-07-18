@@ -24,21 +24,13 @@ import type {
 
 import {
     degreesToRadians,
-    isGradientString,
 } from '@ripl/core';
 
 import type {
+    Box,
     ContextExport,
+    ContextFactory,
     ContextOptions,
-    ContextPath,
-    ContextText,
-    Direction,
-    FillRule,
-    FontKerning,
-    LineCap,
-    LineJoin,
-    TextAlignment,
-    TextBaseline,
 } from '@ripl/core';
 
 import {
@@ -47,17 +39,8 @@ import {
 } from '@ripl/dom';
 
 import {
-    applyCanvasFill,
-    applyCanvasStroke,
-    canvasDrawImage,
-    canvasIsPointInPath,
-    canvasIsPointInStroke,
-    canvasMeasureText,
-    CanvasPath,
-    getCanvasGradientBounds,
+    canvas2DStateMixin,
     rescaleCanvas,
-    setCanvasFill,
-    setCanvasStroke,
 } from '@ripl/canvas';
 
 /** The rendering strategy used by a 3D context. */
@@ -239,194 +222,16 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 }
 
 /** Canvas 2D–backed 3D rendering context with face buffer and painter's algorithm sorting. */
-export class CanvasContext3D extends Context3D {
+export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
-    protected context: CanvasRenderingContext2D;
-    private _fillCSS: string = '';
-    private _strokeCSS: string = '';
-
-    public get fill(): string {
-        return this._fillCSS || this.context.fillStyle as string;
-    }
-
-    public set fill(value) {
-        this._fillCSS = value;
-
-        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
-        if (isGradientString(value)) {
-            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-            setCanvasFill(this.context, value, bounds);
-        } else {
-            this.context.fillStyle = value;
-        }
-    }
-
-    public get filter(): string {
-        return this.context.filter;
-    }
-
-    public set filter(value) {
-        this.context.filter = value;
-    }
-
-    public get direction(): Direction {
-        return this.context.direction;
-    }
-
-    public set direction(value) {
-        this.context.direction = value;
-    }
-
-    public get font(): string {
-        return this.context.font;
-    }
-
-    public set font(value) {
-        this.context.font = value;
-    }
-
-    public get fontKerning(): FontKerning {
-        return this.context.fontKerning;
-    }
-
-    public set fontKerning(value) {
-        this.context.fontKerning = value;
-    }
-
-    public get opacity(): number {
-        return this.context.globalAlpha;
-    }
-
-    public set opacity(value) {
-        this.context.globalAlpha = value;
-    }
-
-    public get globalCompositeOperation(): unknown {
-        return this.context.globalCompositeOperation;
-    }
-
-    public set globalCompositeOperation(value) {
-        this.context.globalCompositeOperation = value as GlobalCompositeOperation;
-    }
-
-    public get lineCap(): LineCap {
-        return this.context.lineCap;
-    }
-
-    public set lineCap(value) {
-        this.context.lineCap = value;
-    }
-
-    public get lineDash(): number[] {
-        return this.context.getLineDash();
-    }
-
-    public set lineDash(value) {
-        this.context.setLineDash(value);
-    }
-
-    public get lineDashOffset(): number {
-        return this.context.lineDashOffset;
-    }
-
-    public set lineDashOffset(value) {
-        this.context.lineDashOffset = value;
-    }
-
-    public get lineJoin(): LineJoin {
-        return this.context.lineJoin;
-    }
-
-    public set lineJoin(value) {
-        this.context.lineJoin = value;
-    }
-
-    public get lineWidth(): number {
-        return this.context.lineWidth;
-    }
-
-    public set lineWidth(value) {
-        this.context.lineWidth = value;
-    }
-
-    public get miterLimit(): number {
-        return this.context.miterLimit;
-    }
-
-    public set miterLimit(value) {
-        this.context.miterLimit = value;
-    }
-
-    public get shadowBlur(): number {
-        return this.context.shadowBlur;
-    }
-
-    public set shadowBlur(value) {
-        this.context.shadowBlur = value;
-    }
-
-    public get shadowColor(): string {
-        return this.context.shadowColor;
-    }
-
-    public set shadowColor(value) {
-        this.context.shadowColor = value;
-    }
-
-    public get shadowOffsetX(): number {
-        return this.context.shadowOffsetX;
-    }
-
-    public set shadowOffsetX(value) {
-        this.context.shadowOffsetX = value;
-    }
-
-    public get shadowOffsetY(): number {
-        return this.context.shadowOffsetY;
-    }
-
-    public set shadowOffsetY(value) {
-        this.context.shadowOffsetY = value;
-    }
-
-    public get stroke(): string {
-        return this._strokeCSS || this.context.strokeStyle as string;
-    }
-
-    public set stroke(value) {
-        this._strokeCSS = value;
-
-        // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
-        if (isGradientString(value)) {
-            const bounds = getCanvasGradientBounds(this.currentRenderElement?.getBoundingBox?.(), this.width, this.height);
-            setCanvasStroke(this.context, value, bounds);
-        } else {
-            this.context.strokeStyle = value;
-        }
-    }
-
-    public get textAlign(): TextAlignment {
-        return this.context.textAlign;
-    }
-
-    public set textAlign(value) {
-        this.context.textAlign = value;
-    }
-
-    public get textBaseline(): TextBaseline {
-        return this.context.textBaseline;
-    }
-
-    public set textBaseline(value) {
-        this.context.textBaseline = value;
-    }
+    declare protected context: CanvasRenderingContext2D;
 
     constructor(target: string | HTMLElement, options?: Context3DOptions) {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
 
         if (!context) {
-            throw new Error();
+            throw new Error('Failed to acquire a 2D canvas rendering context — the environment does not support the Canvas API');
         }
 
         super('canvas3d', target, canvas, options);
@@ -434,6 +239,12 @@ export class CanvasContext3D extends Context3D {
         this.context = context;
         this.updateProjectionMatrix();
         this.init();
+    }
+
+    // 3D faces are projected into screen space before painting, so gradients resolve against the
+    // element's world box rather than the local box the 2D canvas context uses.
+    protected gradientBounds(): Box | undefined {
+        return this.currentRenderElement?.getBoundingBox?.();
     }
 
     protected rescale(width: number, height: number) {
@@ -453,84 +264,7 @@ export class CanvasContext3D extends Context3D {
         }
     }
 
-    public save(): void {
-        return this.context.save();
-    }
-
-    public restore(): void {
-        return this.context.restore();
-    }
-
-    public clear(): void {
-        return this.context.clearRect(0, 0, this.width, this.height);
-    }
-
-    public reset(): void {
-        return this.context.reset();
-    }
-
-    public rotate(angle: number): void {
-        return this.context.rotate(angle);
-    }
-
-    public scale(x: number, y: number): void {
-        return this.context.scale(x, y);
-    }
-
-    public translate(x: number, y: number): void {
-        return this.context.translate(x, y);
-    }
-
-    // eslint-disable-next-line id-length
-    public setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        return this.context.setTransform(a, b, c, d, e, f);
-    }
-
-    // eslint-disable-next-line id-length
-    public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
-        return this.context.transform(a, b, c, d, e, f);
-    }
-
-    public measureText(text: string, font?: string): TextMetrics {
-        return canvasMeasureText(this.context, text, font);
-    }
-
-    public createPath(id?: string): CanvasPath {
-        return new CanvasPath(id);
-    }
-
-    public applyClip(path: CanvasPath, fillRule?: FillRule): void {
-        return this.context.clip(path.ref, fillRule);
-    }
-
-    public drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
-        return canvasDrawImage(this.context, image, x, y, width, height);
-    }
-
-    public applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
-        return applyCanvasFill(this.context, element, fillRule);
-    }
-
-    public applyStroke(element: CanvasPath | ContextText): void {
-        return applyCanvasStroke(this.context, element);
-    }
-
-    public isPointInPath(path: ContextPath, x: number, y: number, fillRule?: FillRule): boolean {
-        if (path instanceof CanvasPath) {
-            return canvasIsPointInPath(this.context, path, x, y, fillRule);
-        }
-
-        return false;
-    }
-
-    public isPointInStroke(path: ContextPath, x: number, y: number): boolean {
-        if (path instanceof CanvasPath) {
-            return canvasIsPointInStroke(this.context, path, x, y);
-        }
-
-        return false;
-    }
-
+    /** Begins a render pass, resetting the frame's face buffer at the outermost depth. */
     public markRenderStart(): void {
         super.markRenderStart();
 
@@ -539,6 +273,7 @@ export class CanvasContext3D extends Context3D {
         }
     }
 
+    /** Ends the render pass and, at the outermost depth, sorts and draws the accumulated faces back-to-front. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
@@ -611,3 +346,6 @@ export class CanvasContext3D extends Context3D {
 export function createContext(target: string | HTMLElement, options?: Context3DOptions): CanvasContext3D {
     return new CanvasContext3D(target, options);
 }
+
+// Compile-time conformance: the 3D canvas backend factory matches the shared `ContextFactory` contract.
+createContext satisfies ContextFactory<string | HTMLElement, Context3DOptions, CanvasContext3D>;

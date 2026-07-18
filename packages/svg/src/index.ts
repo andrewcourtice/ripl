@@ -55,6 +55,40 @@ type SVGVNode = VNode<SVGContextElement>;
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
 type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
 
+const APPLIED_DEFINITION = Symbol('applied-definition');
+
+interface AppliedDefinition {
+    attributes: Record<string, string>;
+    styleKeys: string[];
+    textContent?: string;
+}
+
+type TrackedSVGElement = SVGElement & {
+    [APPLIED_DEFINITION]?: AppliedDefinition;
+};
+
+interface GradientCacheEntry {
+    gradientId: string;
+    element: SVGElement;
+}
+
+interface TextPathCacheEntry {
+    pathId: string;
+    element: SVGElement;
+}
+
+interface ClipCacheEntry {
+    clipId: string;
+    clipPathElement: SVGElement;
+    pathElement: SVGElement;
+}
+
+interface ShadowCacheEntry {
+    filterId: string;
+    filterElement: SVGElement;
+    shadowElement: SVGElement;
+}
+
 /** The mutable subset of `CSSStyleDeclaration` properties that can be assigned as inline SVG element styles. */
 type Styles = {
     [TKey in GetMutableKeys<CSSStyleDeclaration>]: CSSStyleDeclaration[TKey];
@@ -106,6 +140,24 @@ function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: TTag) {
 function normaliseGradientColor(color: string): string {
     const rgba = parseColor(color);
     return rgba ? serialiseRGBA(...rgba) : color;
+}
+
+function isTransparentColor(color: string): boolean {
+    const rgba = parseColor(color);
+
+    if (rgba) {
+        return rgba[3] === 0;
+    }
+
+    const trimmed = color.trim().toLowerCase();
+
+    if (trimmed === 'transparent') {
+        return true;
+    }
+
+    // The core rgba/hsla parser doesn't accept a bare `0` alpha (e.g. the canvas default
+    // shadow color `rgba(0, 0, 0, 0)`), so detect a zero alpha component directly.
+    return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(trimmed);
 }
 
 function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
@@ -180,6 +232,48 @@ function updateSVGGradientElement(element: SVGElement, gradient: Gradient): void
     applyGradientStops(element, gradient.stops);
 }
 
+function resolveConicGradientFallback(gradient: Gradient): string {
+    const stops = gradient.stops;
+
+    if (stops.length === 0) {
+        return 'none';
+    }
+
+    let nearest = stops[0];
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    stops.forEach((stop, index) => {
+        const inferredOffset = stops.length === 1 ? 0.5 : index / (stops.length - 1);
+        const offset = stop.offset ?? inferredOffset;
+        const distance = Math.abs(offset - 0.5);
+
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearest = stop;
+        }
+    });
+
+    return normaliseGradientColor(nearest.color);
+}
+
+function removeStaleAttributes(svgElement: SVGElement, previous: Record<string, string>, current: Record<string, string>): void {
+    for (const key of Object.keys(previous)) {
+        if (key !== 'id' && !(key in current)) {
+            svgElement.removeAttribute(key);
+        }
+    }
+}
+
+function resetStaleStyles(svgElement: SVGElement, previousKeys: string[], current: Partial<Styles>): void {
+    const style = svgElement.style as unknown as Record<string, string>;
+
+    for (const key of previousKeys) {
+        if (!(key in current)) {
+            style[key] = '';
+        }
+    }
+}
+
 function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContextElement) {
     const {
         styles,
@@ -187,13 +281,27 @@ function updateSVGElement(svgElement: SVGElement, { id, definition }: SVGContext
         textContent,
     } = definition;
 
+    const trackedElement = svgElement as TrackedSVGElement;
+    const applied = trackedElement[APPLIED_DEFINITION];
+
     svgElement.setAttribute('id', id);
     Object.assign(svgElement.style, styles);
     objectForEach(attributes, (key, value) => svgElement.setAttribute(key.toString(), value));
 
-    if (textContent !== undefined) {
-        svgElement.textContent = textContent;
+    if (applied) {
+        removeStaleAttributes(svgElement, applied.attributes, attributes);
+        resetStaleStyles(svgElement, applied.styleKeys, styles);
     }
+
+    if (textContent !== applied?.textContent) {
+        svgElement.textContent = textContent ?? '';
+    }
+
+    trackedElement[APPLIED_DEFINITION] = {
+        attributes,
+        styleKeys: Object.keys(styles),
+        textContent,
+    };
 }
 
 function mapSVGStyles(styles: Partial<Styles>) {
@@ -521,14 +629,13 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _reconcilerOptions: ReconcilerOptions<SVGContextElement>;
     private _requestFrame: (callback: AnyFunction) => void;
     private _defs: SVGDefsElement;
-    private _gradientCache: Map<string, { gradientId: string;
-        element: SVGElement; }>;
-    private _textPathCache: Map<string, { pathId: string;
-        element: SVGElement; }>;
+    private _gradientCache: Map<string, GradientCacheEntry>;
+    private _textPathCache: Map<string, TextPathCacheEntry>;
     private _transformStack: string[][];
     private _currentTransforms: string[];
-    private _clipCache: Map<string, { clipId: string;
-        element: SVGElement; }>;
+    private _clipCache: Map<string, ClipCacheEntry>;
+    private _shadowCache: Map<string, ShadowCacheEntry>;
+    private _usedDefs: Set<string>;
     private _clipStack: (string | undefined)[];
     private _currentClipId: string | undefined;
     private _currentParentVNode: SVGVNode;
@@ -574,6 +681,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._transformStack = [];
         this._currentTransforms = [];
         this._clipCache = new Map();
+        this._shadowCache = new Map();
+        this._usedDefs = new Set();
         this._clipStack = [];
         this._currentClipId = undefined;
         this._defs = createSVGElement('defs');
@@ -583,20 +692,8 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this.init();
     }
 
-    private _removeGradientDef(cacheKey: string): void {
-        const existing = this._gradientCache.get(cacheKey);
-
-        if (!existing) {
-            return;
-        }
-
-        this._defs.removeChild(existing.element);
-        this._gradientCache.delete(cacheKey);
-    }
-
     private _resolveGradientStyle(value: string, cacheKey: string): string {
         if (!isGradientString(value)) {
-            this._removeGradientDef(cacheKey);
             return value;
         }
 
@@ -605,6 +702,15 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         if (!gradient) {
             return value;
         }
+
+        if (!GRADIENT_ELEMENT_FACTORIES[gradient.type]) {
+            // SVG has no native conic gradient primitive, so conic gradients degrade to a
+            // solid paint using the color stop nearest the middle of the gradient rather
+            // than leaking the raw CSS gradient string through as an invalid paint value.
+            return resolveConicGradientFallback(gradient);
+        }
+
+        this._usedDefs.add(`gradient:${cacheKey}`);
 
         const cached = this._gradientCache.get(cacheKey);
 
@@ -617,7 +723,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         const gradientEl = createSVGGradientElement(gradient, gradientId);
 
         if (!gradientEl) {
-            // Conic gradients fall back to CSS string
             return value;
         }
 
@@ -630,6 +735,96 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         return `url(#${gradientId})`;
     }
 
+    private _resolveShadowFilter(element: SVGContextElement): string | undefined {
+        const {
+            shadowBlur,
+            shadowColor,
+            shadowOffsetX,
+            shadowOffsetY,
+        } = this.currentState;
+
+        if (shadowBlur <= 0 && shadowOffsetX === 0 && shadowOffsetY === 0) {
+            return;
+        }
+
+        if (isTransparentColor(shadowColor)) {
+            return;
+        }
+
+        const cacheKey = element.id;
+
+        this._usedDefs.add(`shadow:${cacheKey}`);
+
+        let cached = this._shadowCache.get(cacheKey);
+
+        if (!cached) {
+            const filterId = `shadow-${stringUniqueId()}`;
+            const filterElement = createSVGElement('filter');
+            const shadowElement = createSVGElement('feDropShadow');
+
+            filterElement.setAttribute('id', filterId);
+            // Widen the filter region beyond the default 10% margins so large blurs and
+            // offsets aren't clipped at the element's bounding box.
+            filterElement.setAttribute('x', '-50%');
+            filterElement.setAttribute('y', '-50%');
+            filterElement.setAttribute('width', '200%');
+            filterElement.setAttribute('height', '200%');
+            filterElement.appendChild(shadowElement);
+            this._defs.appendChild(filterElement);
+
+            cached = {
+                filterId,
+                filterElement,
+                shadowElement,
+            };
+            this._shadowCache.set(cacheKey, cached);
+        }
+
+        cached.shadowElement.setAttribute('dx', shadowOffsetX.toString());
+        cached.shadowElement.setAttribute('dy', shadowOffsetY.toString());
+        // stdDeviation of blur/2 closely matches canvas shadow rendering.
+        cached.shadowElement.setAttribute('stdDeviation', (shadowBlur / 2).toString());
+        cached.shadowElement.setAttribute('flood-color', normaliseGradientColor(shadowColor));
+
+        return `url(#${cached.filterId})`;
+    }
+
+    private _resolveElementFilter(element: SVGContextElement): string | undefined {
+        const cssFilter = this.currentState.filter;
+        const shadowFilter = this._resolveShadowFilter(element);
+        const parts: string[] = [];
+
+        if (shadowFilter) {
+            parts.push(shadowFilter);
+        }
+
+        if (cssFilter && cssFilter !== 'none') {
+            parts.push(cssFilter);
+        }
+
+        if (parts.length > 0) {
+            return parts.join(' ');
+        }
+    }
+
+    private _sweepDefsCache<TEntry>(cache: Map<string, TEntry>, namespace: string, getDefsNode: (entry: TEntry) => SVGElement): void {
+        cache.forEach((entry, key) => {
+            if (this._usedDefs.has(`${namespace}:${key}`)) {
+                return;
+            }
+
+            getDefsNode(entry).remove();
+            cache.delete(key);
+        });
+    }
+
+    private _sweepDefs(): void {
+        this._sweepDefsCache(this._gradientCache, 'gradient', entry => entry.element);
+        this._sweepDefsCache(this._clipCache, 'clip', entry => entry.clipPathElement);
+        this._sweepDefsCache(this._textPathCache, 'textpath', entry => entry.element);
+        this._sweepDefsCache(this._shadowCache, 'shadow', entry => entry.filterElement);
+    }
+
     protected rescale(width: number, height: number) {
         this.element.setAttribute('viewBox', `0 0 ${width} ${height}`);
         super.rescale(width, height);
@@ -637,7 +832,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
     private _setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
         Object.assign(element.definition.styles, mapSVGStyles({
-            filter: this.currentState.filter,
             direction: this.currentState.direction,
             font: this.currentState.font,
             fontKerning: this.currentState.fontKerning,
@@ -646,13 +840,18 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             dominantBaseline: this.currentState.textBaseline,
             opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
-            // Shadow properties (shadowBlur/Color/OffsetX/OffsetY) are intentionally not mapped: SVG
-            // has no direct equivalent (it needs an <feDropShadow> filter in <defs>), so they are
-            // silently dropped rather than approximated.
             ...styles,
         }));
 
+        // Filter, transform, and clip-path are stamped onto the definition only when they carry
+        // a value; omitted members are removed from the live DOM node by the write-through diff
+        // in updateSVGElement, so no stale attribute survives a state change between frames.
+        const filter = this._resolveElementFilter(element);
         const transformStr = this._currentTransforms.join(' ');
+
+        if (filter) {
+            element.definition.attributes.filter = filter;
+        }
 
         if (transformStr) {
             element.definition.attributes.transform = transformStr;
@@ -697,7 +896,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         reconcileNode(this.element, this._vtree, this._domCache, this._reconcilerOptions);
     }
 
-    /** Signals the start of a render pass; resets the virtual DOM tree and group-nesting pointer at the outermost depth. */
+    /** Signals the start of a render pass; resets the virtual DOM tree, group-nesting pointer, and `<defs>` usage tracking at the outermost depth. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
             this._vtree = {
@@ -707,18 +906,21 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             };
             this._currentParentVNode = this._vtree;
             this._vnodeStack = [];
+            this._usedDefs.clear();
         }
 
         super.markRenderStart();
     }
 
-    /** Signals the end of a render pass, reconciling the virtual DOM tree to the SVG surface at the outermost depth. */
+    /** Signals the end of a render pass, sweeping `<defs>` entries unused during the pass and reconciling the virtual DOM tree to the SVG surface at the outermost depth. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
         if (this.renderDepth !== 0) {
             return;
         }
+
+        this._sweepDefs();
 
         if (this.buffer) {
             this._requestFrame(() => this._render());
@@ -768,6 +970,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         if (options.pathData) {
             const cacheKey = text.id;
+
+            this._usedDefs.add(`textpath:${cacheKey}`);
+
             let cached = this._textPathCache.get(cacheKey);
 
             if (!cached) {
@@ -792,14 +997,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
                 element: textPathEl,
                 children: [],
             });
-        } else {
-            const cacheKey = text.id;
-            const cached = this._textPathCache.get(cacheKey);
-
-            if (cached) {
-                this._defs.removeChild(cached.element);
-                this._textPathCache.delete(cacheKey);
-            }
         }
 
         parent.children.push(textNode);
@@ -922,44 +1119,52 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentTransforms.push(`matrix(${a},${b},${c},${d},${e},${f})`);
     }
 
-    /** Clips subsequent drawing operations to the given path. */
+    /** Clips subsequent drawing operations to the given path. The backing `<clipPath>` def is swept once no render pass uses it. */
     public applyClip(path: SVGPath, fillRule?: FillRule): void {
         const cacheKey = path.id;
+
+        this._usedDefs.add(`clip:${cacheKey}`);
+
         let cached = this._clipCache.get(cacheKey);
 
         if (!cached) {
             const clipId = `clip-${stringUniqueId()}`;
-            const clipPathEl = createSVGElement('clipPath');
-            clipPathEl.setAttribute('id', clipId);
+            const clipPathElement = createSVGElement('clipPath');
+            clipPathElement.setAttribute('id', clipId);
 
-            const useEl = createSVGElement('path');
-            clipPathEl.appendChild(useEl);
-            this._defs.appendChild(clipPathEl);
+            const pathElement = createSVGElement('path');
+            clipPathElement.appendChild(pathElement);
+            this._defs.appendChild(clipPathElement);
 
             cached = {
                 clipId,
-                element: useEl,
+                clipPathElement,
+                pathElement,
             };
             this._clipCache.set(cacheKey, cached);
         }
 
-        cached.element.setAttribute('d', path.definition.attributes.d);
+        cached.pathElement.setAttribute('d', path.definition.attributes.d);
 
         if (this._currentTransforms.length > 0) {
-            cached.element.setAttribute('transform', this._currentTransforms.join(' '));
+            cached.pathElement.setAttribute('transform', this._currentTransforms.join(' '));
         } else {
-            cached.element.removeAttribute('transform');
+            cached.pathElement.removeAttribute('transform');
         }
 
         if (fillRule) {
-            cached.element.setAttribute('clip-rule', fillRule);
+            cached.pathElement.setAttribute('clip-rule', fillRule);
         }
 
         this._removeFromVTree(path.id);
         this._currentClipId = cached.clipId;
     }
 
-    /** Fills the given element using the current fill style, resolving gradients into `<defs>`. */
+    /**
+     * Fills the given element using the current fill style, resolving linear and radial
+     * gradients into `<defs>`. Conic gradients have no SVG equivalent and degrade to a solid
+     * fill using the color stop nearest the middle of the gradient.
+     */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this._setElementStyles(element, {
@@ -967,7 +1172,11 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
-    /** Strokes the given element using the current stroke style and line properties. */
+    /**
+     * Strokes the given element using the current stroke style and line properties, resolving
+     * linear and radial gradients into `<defs>`. Conic gradients have no SVG equivalent and
+     * degrade to a solid stroke using the color stop nearest the middle of the gradient.
+     */
     public applyStroke(element: SVGContextElement): void {
         this._setElementStyles(element, {
             stroke: this._resolveGradientStyle(this.currentState.stroke, `${element.id}:stroke`),

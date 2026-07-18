@@ -312,6 +312,13 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.renderAnnotations({ y: this._yScale }, plot);
 
             const seriesRender = this._series.render(series, this._seriesContext(plot));
+
+            // A previous render may have drawn series against a since-removed secondary axis —
+            // rendering the secondary renderer empty exits those groups.
+            const secondaryExit = this._series2.groups.length > 0
+                ? this._series2.render([], this._seriesContext(plot))
+                : Promise.resolve();
+
             this.registerHighlightGroups(this._series.groups);
 
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
@@ -320,6 +327,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
                 seriesRender,
+                secondaryExit,
             ]);
         });
     }

@@ -26,12 +26,14 @@ import type {
     ChartAnimationOptions,
     ChartLegendInput,
     ChartTitleOptions,
+    ChartTooltipInput,
 } from './options';
 
 import {
     normalizeAnimation,
     normalizeLegend,
     normalizeTitle,
+    normalizeTooltip,
 } from './options';
 
 import type {
@@ -71,6 +73,14 @@ import {
 import {
     ChartTitle,
 } from '../components/title';
+
+import type {
+    TooltipPlacement,
+} from '../components/tooltip';
+
+import {
+    Tooltip,
+} from '../components/tooltip';
 
 if (!factory.createContext) {
     factory.set({ createContext });
@@ -213,7 +223,19 @@ export class Chart<
         element.setAttribute('aria-label', label);
     }
 
-    /** Merges partial options into the current options and re-renders if `autoRender` is enabled. */
+    /**
+     * Merges partial options into the current options and re-renders if `autoRender` is enabled.
+     *
+     * The merge is a **shallow, top-level** merge: passing a key replaces that option wholesale
+     * (it is then re-normalized against the chart defaults), so e.g. `update({ axis: { y: { ticks: 5 } } })`
+     * replaces the whole `axis` option rather than deep-merging into the previous one. Furniture
+     * options (axis, grid, tooltip, crosshair, legend, title) are re-applied to the live components
+     * on the next render, so they can be reconfigured at runtime without recreating the chart.
+     *
+     * Passing `theme` re-resolves the chart theme: the series palette generator is re-seeded and
+     * generated series colours are re-assigned from the new palette on the next render (explicit
+     * per-series colours are kept), and furniture colours follow the new theme automatically.
+     */
     public update(options: Partial<TOptions>) {
         if (options.animation !== undefined) {
             this.animationOptions = normalizeAnimation(options.animation);
@@ -221,6 +243,14 @@ export class Chart<
 
         if (options.title !== undefined) {
             this.titleOptions = normalizeTitle(options.title);
+        }
+
+        if (options.theme !== undefined) {
+            this.theme = resolveTheme(options.theme);
+            this.colorGenerator = getColorGenerator(this.theme.palette);
+            // Drop the generated series colours so the next render re-seeds them from the new
+            // palette (explicit per-series colours are re-applied by `resolveSeriesColors`).
+            this._seriesColorMap.clear();
         }
 
         this.options = {
@@ -318,6 +348,50 @@ export class Chart<
         const region = layout.reserve(legendOpts.position, thickness);
 
         this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
+    }
+
+    /**
+     * Reconciles a hover tooltip against the chart's current `tooltip` option so it can be
+     * reconfigured (or toggled) at runtime. Call once per render with the previous instance and
+     * keep the returned one: the tooltip is created when it should be visible and none exists,
+     * destroyed (returning `undefined`) when hidden, and restyled in place otherwise.
+     *
+     * @param tooltip - The chart's current tooltip instance, if any.
+     * @param input - The chart's raw `tooltip` option.
+     * @param placement - Where the tooltip box sits relative to its anchor (see {@link Tooltip}).
+     * @returns The tooltip to use for this render, or `undefined` when tooltips are disabled.
+     */
+    protected syncTooltip(tooltip: Tooltip | undefined, input?: ChartTooltipInput, placement?: TooltipPlacement): Tooltip | undefined {
+        const opts = normalizeTooltip(input, {
+            fontColor: this.theme.tooltipColor,
+            backgroundColor: this.theme.tooltipBackground,
+        });
+
+        if (!opts.visible) {
+            tooltip?.destroy();
+            return undefined;
+        }
+
+        const style = {
+            padding: typeof opts.padding === 'number' ? opts.padding : 8,
+            font: opts.font,
+            fontColor: opts.fontColor,
+            backgroundColor: opts.backgroundColor,
+            borderRadius: typeof opts.borderRadius === 'number' ? opts.borderRadius : 6,
+        };
+
+        if (!tooltip) {
+            return new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                placement,
+                ...style,
+            });
+        }
+
+        tooltip.setOptions(style);
+
+        return tooltip;
     }
 
     /**

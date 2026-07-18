@@ -37,8 +37,8 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
 - **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
-- **11 scale types** — continuous, discrete, band, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3)
-- **23 pre-built chart types** via `@ripl/charts`
+- **12 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
+- **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives** (experimental) — cube, sphere, cylinder, cone, plane, torus
 - **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
@@ -360,19 +360,21 @@ window.open(chart.export().toURL(), '_blank');
 
 ## Charts
 
-`@ripl/charts` provides 23 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+`@ripl/charts` provides 25 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
 
 | Chart | Factory |
 |-------|---------|
 | Arc Diagram | `createArcDiagramChart` |
 | Area | `createAreaChart` |
 | Bar | `createBarChart` |
+| Box Plot | `createBoxPlotChart` |
 | Chord | `createChordChart` |
 | Force-Directed | `createForceDirectedChart` |
 | Funnel | `createFunnelChart` |
 | Gantt | `createGanttChart` |
 | Gauge | `createGaugeChart` |
 | Heatmap | `createHeatmapChart` |
+| Histogram | `createHistogramChart` |
 | Line | `createLineChart` |
 | Packed Circle | `createPackedCircleChart` |
 | Pie / Donut | `createPieChart` |
@@ -404,10 +406,11 @@ const chart = createBarChart('.mount-element', {
         { category: 'C',
             value: 45 },
     ],
-    keyBy: 'category',
+    key: 'category',
     series: [
-        { label: 'Values',
-            valueBy: item => item.value },
+        { id: 'values',
+            label: 'Values',
+            value: 'value' },
     ],
 });
 
@@ -428,7 +431,7 @@ Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Toolti
 
 ## Scales
 
-Ripl provides 11 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). All scales expose `inverse`, `ticks`, and `includes` methods.
+Ripl provides 12 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). Scales expose `inverse`, `ticks`, and `includes` methods (the categorical `scaleOrdinal` maps value → value and exposes just its `domain` and `range`).
 
 ```typescript
 import {
@@ -437,6 +440,8 @@ import {
     scaleDiscrete,
     scaleDiverging,
     scaleLogarithmic,
+    scaleOrdinal,
+    scalePoint,
     scalePower,
     scaleQuantile,
     scaleQuantize,
@@ -444,6 +449,8 @@ import {
     scaleTime,
 } from '@ripl/web';
 ```
+
+`scaleLog` and `scaleSqrt` are also exported as shortcuts for a base-10 logarithmic scale and a power scale with exponent 0.5.
 
 ### Continuous (Linear)
 
@@ -478,8 +485,10 @@ scale.bandwidth; // width of each band
 ### Additional Scales
 
 - **`scaleDiverging`** — maps values below and above a midpoint to separate sub-ranges
-- **`scaleLogarithmic`** — logarithmic mapping with configurable base
-- **`scalePower`** — polynomial mapping with configurable exponent
+- **`scaleLogarithmic`** — logarithmic mapping with configurable base (`scaleLog` is the base-10 shortcut)
+- **`scaleOrdinal`** — maps discrete domain values to discrete range values, cycling the range
+- **`scalePoint`** — positions discrete values at evenly spaced points along a range
+- **`scalePower`** — polynomial mapping with configurable exponent (`scaleSqrt` is the exponent-0.5 shortcut)
 - **`scaleQuantile`** — maps continuous data to discrete quantile bins
 - **`scaleQuantize`** — maps a continuous domain to discrete range values
 - **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries

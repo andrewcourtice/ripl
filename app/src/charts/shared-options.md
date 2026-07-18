@@ -328,7 +328,7 @@ createLineChart('#container', { theme: 'dark', /* … */ });
 setDefaultTheme('dark');
 ```
 
-A `Theme` bundles the series `palette`, the sequential colour scheme, and the furniture colours (text/axis/grid/crosshair/legend/tooltip). The built-in `lightTheme` matches Ripl's historical defaults, `darkTheme` is tuned for a dark background, and `colorBlindTheme` uses the Okabe–Ito palette.
+A `Theme` bundles the series `palette`, the sequential colour scheme, and the furniture colours (text/axis/grid/crosshair/legend/tooltip). The built-in `lightTheme` matches Ripl's historical defaults, `darkTheme` is tuned for a dark background, and `colorBlindTheme` uses the Okabe–Ito palette. See [Theming](/charts/advanced/theming) for custom themes and the theme registry.
 
 ## Annotations
 
@@ -343,6 +343,21 @@ createLineChart('#container', {
         { type: 'band', axis: 'y', from: 60, to: 80 },    // shaded band
         { type: 'point', x: 10, y: 42, label: 'Peak' },   // marker
     ],
+});
+```
+
+See [Annotations](/charts/advanced/annotations) for the full reference.
+
+## Panning & Zooming
+
+Cartesian charts also accept `navigator` (in-plot wheel-zoom and drag-pan) and `overview` (a draggable scrub-bar strip beside the plot). See [Panning & Zooming](/charts/advanced/panning-and-zooming).
+
+<!-- eslint-skip -->
+```ts
+createLineChart('#container', {
+    // …
+    navigator: true,
+    overview: true,
 });
 ```
 

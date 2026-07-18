@@ -19,7 +19,6 @@ import type {
 import {
     normalizeAxis,
     normalizeAxisItem,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveValueFormat,
 } from '../core/options';
@@ -45,7 +44,7 @@ import {
     createChartAxes,
 } from '../components/axis';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -147,7 +146,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
     private _cellGroups: Group[] = [];
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
+    private _tooltip?: Tooltip;
     private _colorLegend?: ColorLegend;
 
     constructor(target: string | HTMLElement | Context, options: HeatmapChartOptions<TData>) {
@@ -158,17 +157,6 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         const yAxis = normalizeYAxisItem(
             Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
 
         const axes = createChartAxes({
             scene: this.scene,
@@ -195,6 +183,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 colors,
                 borderRadius = 2,
             } = this.options;
+
+            // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
+            this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getX = typeIsFunction(keyX) ? keyX : (item: any) => item[keyX] as string;

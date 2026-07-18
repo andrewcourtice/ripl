@@ -37,6 +37,9 @@ export interface GridOptions extends ChartComponentOptions {
     lineDash?: number[];
 }
 
+/** Reconfigurable grid options accepted by {@link Grid.setOptions} (everything but the scene/renderer wiring). */
+export type GridStyleOptions = Partial<Omit<GridOptions, 'scene' | 'renderer'>>;
+
 const DEFAULT_STROKE = '#e5e7eb';
 const DEFAULT_LINE_WIDTH = 1;
 const DEFAULT_LINE_DASH = [4, 4];
@@ -112,6 +115,40 @@ export class Grid extends ChartComponent {
         this._clip.width = area.width;
         this._clip.height = area.height;
         this._clip.clip = enabled;
+    }
+
+    /**
+     * Reconfigures the grid in place, updating the stored options (used by the next render) and
+     * restyling any existing grid lines so runtime option changes apply without recreating the
+     * component. Disabling a direction destroys that direction's existing lines immediately.
+     *
+     * @param options - The options to apply; omitted properties keep their current values.
+     */
+    public setOptions(options: GridStyleOptions): void {
+        this._horizontal = options.horizontal ?? this._horizontal;
+        this._vertical = options.vertical ?? this._vertical;
+        this._stroke = options.stroke ?? this._stroke;
+        this._lineWidth = options.lineWidth ?? this._lineWidth;
+        this._lineDash = options.lineDash ?? this._lineDash;
+
+        if (!this._horizontal && this._horizontalLines.length > 0) {
+            this._horizontalLines.forEach(line => line.destroy());
+            this._horizontalLines = [];
+        }
+
+        if (!this._vertical && this._verticalLines.length > 0) {
+            this._verticalLines.forEach(line => line.destroy());
+            this._verticalLines = [];
+        }
+
+        [
+            ...this._horizontalLines,
+            ...this._verticalLines,
+        ].forEach(line => {
+            line.stroke = this._stroke;
+            line.lineWidth = this._lineWidth;
+            line.lineDash = this._lineDash;
+        });
     }
 
     /**

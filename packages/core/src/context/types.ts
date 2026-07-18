@@ -1,4 +1,8 @@
 import type {
+    Context,
+} from './context';
+
+import type {
     EventMap,
 } from '../core';
 
@@ -135,6 +139,21 @@ export interface ContextOptions<TMeta extends Record<string, unknown> = Record<s
     /** Arbitrary metadata attached to the context. */
     meta?: TMeta;
 }
+
+/**
+ * The factory shape every rendering backend exports as `createContext`: target-first, with a
+ * backend-specific target and options type. Backends legitimately diverge on `TTarget` — DOM
+ * backends (canvas, SVG, 3D) accept a `string | HTMLElement` mount target while non-DOM backends
+ * accept their own output adapter (e.g. the terminal backend's `TerminalOutput`). Synchronous
+ * backends return the constructed context directly and should conformance-check their factory
+ * against this type; asynchronous backends (e.g. WebGPU, which must await device acquisition)
+ * export the same target-first shape but return a `Promise` of the context instead.
+ *
+ * @typeParam TTarget - The backend-specific target the context is created against.
+ * @typeParam TOptions - The backend-specific options accepted by the factory.
+ * @typeParam TContext - The concrete {@link Context} subclass the factory constructs.
+ */
+export type ContextFactory<TTarget, TOptions extends ContextOptions, TContext extends Context> = (target: TTarget, options?: TOptions) => TContext;
 
 /**
  * Snapshot exporter returned by {@link Context.export}. Each method serializes the snapshot that

@@ -230,25 +230,36 @@ export class Renderer extends EventBus<RendererEventMap> {
             return;
         }
 
-        const context = this._scene.context;
+        this._currentTime = factory.now();
 
-        let deltaTime = 0;
+        const deltaTime = this._currentTime - this._previousTime;
 
-        context.batch(() => {
-            this._currentTime = factory.now();
+        // Tick fires every frame — even ones whose paint is skipped — so time-based consumers
+        // stay live. A tick handler that mutates element state invalidates the scene (via the
+        // bubbled `updated` event), so its change is painted this same frame.
+        this.emit('tick', {
+            time: this._currentTime,
+            deltaTime,
+        });
 
-            deltaTime = this._currentTime - this._previousTime;
+        this._previousTime = this._currentTime;
 
-            this.emit('tick', {
-                time: this._currentTime,
-                deltaTime,
-            });
+        // Skip the paint (but keep the loop) when nothing changed: the scene is clean, no
+        // transition is advancing state, and no per-frame debug overlay (fps) is requested.
+        // The context is left untouched — no clear, no batch — so the previous frame persists
+        // (and vtree/terminal backends see no churn). A transition's completion frame still
+        // paints: its entry is only removed from the map during that frame's render.
+        if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
+            this._handle = factory.requestAnimationFrame(() => this._tick());
+            return;
+        }
 
-            this._previousTime = this._currentTime;
-
+        this._scene.context.batch(() => {
             this._renderBuffer();
             this._renderDebugOverlay(deltaTime);
         });
+
+        this._scene.$consumeRender();
 
         this._handle = factory.requestAnimationFrame(() => this._tick());
     }
