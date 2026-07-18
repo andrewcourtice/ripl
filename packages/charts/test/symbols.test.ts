@@ -26,6 +26,7 @@ import type {
 
 import {
     createLineChart,
+    createScatterChart,
 } from '../src';
 
 function polygonArea(sides: number, radius: number): number {
@@ -181,6 +182,41 @@ describe('Line chart marker symbols', () => {
 
         expect(markerElements(chart, 'circle')).toHaveLength(0);
         expect(markerElements(chart, 'polygon')).toHaveLength(3);
+    });
+
+    it('Should render polygon bubbles for a scatter series with a symbol', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createScatterChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    id: 'p1',
+                    x: 1,
+                    y: 2,
+                },
+                {
+                    id: 'p2',
+                    x: 3,
+                    y: 4,
+                },
+            ],
+            key: 'id',
+            series: [{
+                id: 's',
+                label: 'S',
+                xBy: 'x',
+                yBy: 'y',
+                marker: 'diamond',
+            }],
+        });
+
+        await chart.render();
+
+        expect(markerElements(chart, 'polygon')).toHaveLength(2);
+        expect(markerElements(chart, 'circle')).toHaveLength(0);
     });
 
     it('Should reconcile polygon markers across a data update', async () => {

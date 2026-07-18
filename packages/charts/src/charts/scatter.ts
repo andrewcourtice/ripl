@@ -55,6 +55,16 @@ import type {
 } from '../components/legend';
 
 import type {
+    SymbolElement,
+    SymbolType,
+} from '../components/symbols';
+
+import {
+    createSymbol,
+    symbolRadius,
+} from '../components/symbols';
+
+import type {
     Circle,
     CircleState,
     Context,
@@ -67,7 +77,6 @@ import type {
 
 import {
     Box,
-    createCircle,
     createGroup,
     scaleContinuous,
     setColorAlpha,
@@ -100,6 +109,8 @@ export interface ScatterChartSeriesOptions<TData> {
     maxRadius?: number;
     /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
     axis?: number | string;
+    /** Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
+    marker?: SymbolType;
 }
 
 /** Options for configuring a {@link ScatterChart}. */
@@ -153,6 +164,14 @@ export interface ScatterChartEventMap extends EventMap {
 }
 
 const REST_ALPHA = 0.7;
+
+// All bubble symbols expose cx/cy/radius, so circles and polygon symbols animate identically.
+function seriesBubbles(group: Group): SymbolElement[] {
+    return [
+        ...group.getElementsByType('circle'),
+        ...group.getElementsByType('polygon'),
+    ] as SymbolElement[];
+}
 
 /**
  * Scatter chart (bubble chart) plotting data points as circles on two continuous axes.
@@ -237,6 +256,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const getLabel = typeIsFunction(label) ? label : () => label;
         const resolvedColor = color ?? this.getSeriesColor(id);
         const yScale = this._seriesYScale(series);
+        const marker = series.marker ?? 'circle';
 
         return (item: TData) => {
             const xValue = getX(item);
@@ -264,7 +284,14 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     lineWidth: 2,
                     cx: this._xScale(xValue),
                     cy: yScale(yValue),
-                    radius,
+                    // Non-circle symbols use the circumradius matching the circle's visual area,
+                    // so sized bubbles stay comparable across symbol shapes.
+                    radius: symbolRadius(marker, radius),
+                    // A square is a rotated quad — its transform origin must track its centre.
+                    ...(marker === 'square' ? {
+                        transformOriginX: this._xScale(xValue),
+                        transformOriginY: yScale(yValue),
+                    } : {}),
                 } as CircleState,
             };
         };
@@ -379,7 +406,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const updatingLabels: Text[] = [];
 
         seriesExits.forEach(group => {
-            const exits = (group.getElementsByType('circle') as Circle[]).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
+            const exits = seriesBubbles(group).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
                 radius: 0,
                 fill: setColorAlpha(bubble.fill as string, 0),
                 stroke: setColorAlpha(bubble.stroke as string, 0),
@@ -395,7 +422,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 const values = getValues(item);
                 const { id, state } = values;
 
-                const bubble = createCircle({
+                const bubble = createSymbol(srs.marker ?? 'circle', {
                     id,
                     ...state,
                     radius: 0,
@@ -404,7 +431,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     data: state,
                 });
 
-                this._attachBubbleHover(bubble, values, this._tooltipText(values), state);
+                this._attachBubbleHover(bubble as Circle, values, this._tooltipText(values), state);
 
                 return bubble;
             };
@@ -422,7 +449,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const getValues = this._bubbleValueProducer(srs, getKey);
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             const {
                 left: bubbleEntries,
@@ -487,7 +514,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
         const entryTransitions = seriesEntryGroups.map(group => {
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
                 duration: enter.duration,
@@ -498,7 +525,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         });
 
         const updateTransitions = seriesUpdateGroups.map(group => {
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             return this.renderer.transition(bubbles, element => ({
                 duration: update.duration,
