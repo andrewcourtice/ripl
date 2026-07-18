@@ -27,6 +27,10 @@ import type {
 } from '../options';
 
 import type {
+    SymbolType,
+} from '../../components/symbols';
+
+import type {
     Tooltip,
 } from '../../components/tooltip';
 
@@ -148,6 +152,8 @@ export interface LineSeriesLike<TData> {
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
     markerRadius?: number;
+    /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
+    marker?: SymbolType;
 }
 
 /** The area series fields the area renderer reads (line fields plus a fill opacity). */

@@ -47,6 +47,16 @@ import {
 } from '../data';
 
 import type {
+    SymbolElement,
+    SymbolType,
+} from '../../components/symbols';
+
+import {
+    createSymbol,
+    symbolRadius,
+} from '../../components/symbols';
+
+import type {
     Circle,
     CircleState,
     Group,
@@ -56,7 +66,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    createCircle,
     createGroup,
     createPolyline,
     interpolatePath,
@@ -80,6 +89,14 @@ interface MarkerState {
     state: CircleState;
 }
 
+// All marker symbols expose cx/cy/radius, so circles and polygon symbols animate identically.
+function seriesMarkers(group: Group): SymbolElement[] {
+    return [
+        ...group.getElementsByType('circle'),
+        ...group.getElementsByType('polygon'),
+    ] as SymbolElement[];
+}
+
 /** Renders line series (polyline + markers) for a host chart. */
 export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TData>, TData, LineSeriesContext<TData>> {
 
@@ -90,14 +107,20 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         return typeIsFunction(series.label) ? series.label(item) : series.label;
     }
 
+    private _markerType(series: LineSeriesLike<TData>): SymbolType {
+        return series.marker ?? 'circle';
+    }
+
     private _markerState(series: LineSeriesLike<TData>, item: TData, ctx: LineSeriesContext<TData>): MarkerState {
         const value = resolveAccessor<TData, number>(series.value)(item);
         const key = ctx.getKey(item);
         const x = ctx.xScale(key);
         const y = ctx.yScale(value);
         const color = ctx.getColor(series.id);
-        // A hidden marker rests at radius 0 (the toggle animates it in/out on update).
-        const radius = series.markers === false ? 0 : (series.markerRadius ?? 3);
+        const markerType = this._markerType(series);
+        // A hidden marker rests at radius 0 (the toggle animates it in/out on update). Non-circle
+        // symbols rest at the circumradius matching the circle's visual area.
+        const radius = series.markers === false ? 0 : symbolRadius(markerType, series.markerRadius ?? 3);
 
         return {
             id: `${series.id}-${key}`,
@@ -110,31 +133,39 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
                 cx: x,
                 cy: y,
                 radius,
+                // A square is a rotated quad — its transform origin must track its centre through
+                // position transitions, so the origin interpolates in lockstep with cx/cy.
+                ...(markerType === 'square' ? {
+                    transformOriginX: x,
+                    transformOriginY: y,
+                } : {}),
             },
         };
     }
 
-    private _attachHover(marker: Circle, series: LineSeriesLike<TData>, item: TData, value: number, state: CircleState, key: string, ctx: LineSeriesContext<TData>): void {
+    private _attachHover(marker: SymbolElement, series: LineSeriesLike<TData>, item: TData, value: number, state: CircleState, key: string, ctx: LineSeriesContext<TData>): void {
         if (series.markers === false) {
             marker.pointerEvents = 'none';
             return;
         }
 
-        this.attachMarkerHover(marker, ctx, {
+        // Polygon symbols share the circle's cx/cy/radius surface, so the hover helper's radius
+        // bump applies uniformly.
+        this.attachMarkerHover(marker as Circle, ctx, {
             seriesId: series.id,
             key,
             value,
             label: this._seriesLabel(series, item),
-            radius: series.markerRadius ?? 3,
+            radius: symbolRadius(this._markerType(series), series.markerRadius ?? 3),
             highlightColor: state.stroke as string,
         });
     }
 
     private _buildMarker(series: LineSeriesLike<TData>, item: TData, ctx: LineSeriesContext<TData>): { point: Point;
-        marker: Circle; } {
+        marker: SymbolElement; } {
         const { id, value, point, state } = this._markerState(series, item, ctx);
 
-        const marker = createCircle({
+        const marker = createSymbol(this._markerType(series), {
             id,
             ...state,
             radius: 0,
@@ -191,7 +222,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
 
     protected updateSeriesGroup(series: LineSeriesLike<TData>, group: Group, ctx: LineSeriesContext<TData>, _prepared: void, batch: SeriesLabelBatch): Group {
         const line = group.getElementsByType('polyline')[0] as Polyline;
-        const markers = group.getElementsByType('circle') as Circle[];
+        const markers = seriesMarkers(group);
 
         // Apply the curve renderer + dash directly (not via the transition, which would snap them).
         line.renderer = series.lineType;
@@ -247,7 +278,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
 
     protected entryTransitions(groups: Group[], ctx: LineSeriesContext<TData>, enter: ResolvedAnimation): Promise<unknown>[] {
         return groups.flatMap(group => {
-            const markers = group.getElementsByType('circle') as Circle[];
+            const markers = seriesMarkers(group);
             const line = group.getElementsByType('polyline')[0] as Polyline;
 
             return [
@@ -268,7 +299,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
 
     protected updateTransitions(groups: Group[], ctx: LineSeriesContext<TData>, update: ResolvedAnimation): Promise<unknown>[] {
         return groups.flatMap(group => {
-            const markers = group.getElementsByType('circle') as Circle[];
+            const markers = seriesMarkers(group);
             const line = group.getElementsByType('polyline')[0] as Polyline;
 
             return [

@@ -5,6 +5,11 @@ import {
 } from 'vitest';
 
 import {
+    mockCanvasContext,
+    polyfillPath2D,
+} from '@ripl/test-utils';
+
+import {
     elementIsCircle,
     elementIsPolygon,
 } from '@ripl/core';
@@ -18,6 +23,10 @@ import {
 import type {
     SymbolType,
 } from '../src/components/symbols';
+
+import {
+    createLineChart,
+} from '../src';
 
 function polygonArea(sides: number, radius: number): number {
     return (sides / 2) * radius * radius * Math.sin((2 * Math.PI) / sides);
@@ -110,6 +119,101 @@ describe('Marker symbols', () => {
 
         expect(circle.cx).toBe(15);
         expect(circle.cy).toBe(25);
+    });
+
+});
+
+describe('Line chart marker symbols', () => {
+
+    function createChart(marker?: SymbolType) {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        return createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    m: 'a',
+                    v: 1,
+                },
+                {
+                    m: 'b',
+                    v: 2,
+                },
+                {
+                    m: 'c',
+                    v: 3,
+                },
+            ],
+            key: 'm',
+            series: [{
+                id: 's',
+                label: 'S',
+                value: 'v',
+                marker,
+            }],
+        });
+    }
+
+    function markerElements(chart: unknown, type: string): unknown[] {
+        const scene = (chart as { scene: { getElementById(id: string): { getElementsByType(type: string): unknown[] } | null } }).scene;
+        const group = scene.getElementById('s');
+
+        expect(group).toBeTruthy();
+
+        return group ? group.getElementsByType(type) : [];
+    }
+
+    it('Should render circle markers by default', async () => {
+        const chart = createChart();
+
+        await chart.render();
+
+        expect(markerElements(chart, 'circle')).toHaveLength(3);
+        expect(markerElements(chart, 'polygon')).toHaveLength(0);
+    });
+
+    it('Should render polygon markers for a triangle series', async () => {
+        const chart = createChart('triangle');
+
+        await chart.render();
+
+        expect(markerElements(chart, 'circle')).toHaveLength(0);
+        expect(markerElements(chart, 'polygon')).toHaveLength(3);
+    });
+
+    it('Should reconcile polygon markers across a data update', async () => {
+        const chart = createChart('diamond');
+
+        await chart.render();
+
+        expect(markerElements(chart, 'polygon')).toHaveLength(3);
+
+        chart.update({
+            data: [
+                {
+                    m: 'a',
+                    v: 2,
+                },
+                {
+                    m: 'b',
+                    v: 4,
+                },
+                {
+                    m: 'c',
+                    v: 6,
+                },
+                {
+                    m: 'd',
+                    v: 8,
+                },
+            ],
+        });
+
+        await chart.render();
+
+        expect(markerElements(chart, 'polygon')).toHaveLength(4);
     });
 
 });

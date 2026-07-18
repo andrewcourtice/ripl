@@ -61,6 +61,10 @@ import type {
 } from '../components/legend';
 
 import type {
+    SymbolType,
+} from '../components/symbols';
+
+import type {
     Context,
     EventMap,
     PolylineRenderer,
@@ -104,6 +108,8 @@ export interface LineChartSeriesOptions<TData> {
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
     markerRadius?: number;
+    /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
+    marker?: SymbolType;
     /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
     axis?: number | string;
 }
