@@ -639,6 +639,38 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValueFormatInput = AxisFormatType | NumberFormatOptions | ((value: any) => string);
 
+const TIME_SPAN_DAY = 24 * 60 * 60 * 1000;
+const TIME_SPAN_MONTH = 30 * TIME_SPAN_DAY;
+const TIME_SPAN_YEAR = 365 * TIME_SPAN_DAY;
+
+/**
+ * Formats a time-axis tick for display, adapting the format to the domain span — multi-year spans
+ * show the year, month-scale spans show abbreviated month and year, day-scale spans show dates,
+ * and anything shorter shows times. An explicit axis `format` always wins over this default.
+ *
+ * @param value - The tick's date value.
+ * @param spanMs - The axis domain span in milliseconds.
+ * @returns The formatted label.
+ */
+export function formatTimeLabel(value: Date, spanMs: number): string {
+    if (spanMs >= TIME_SPAN_YEAR * 3) {
+        return String(value.getFullYear());
+    }
+
+    if (spanMs >= TIME_SPAN_MONTH * 2) {
+        return value.toLocaleDateString(undefined, {
+            month: 'short',
+            year: 'numeric',
+        });
+    }
+
+    if (spanMs >= TIME_SPAN_DAY * 2) {
+        return value.toLocaleDateString();
+    }
+
+    return value.toLocaleTimeString();
+}
+
 /**
  * Resolves a value formatter into a function, always returning a usable formatter (falling back
  * to `String` when no custom format is supplied). Convenience wrapper over {@link resolveFormatLabel}

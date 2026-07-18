@@ -19,6 +19,7 @@ import {
     scaleContinuous,
     scaleLogarithmic,
     scalePower,
+    scaleTime,
 } from '@ripl/core';
 
 /**
@@ -29,6 +30,41 @@ import {
  */
 export function axisTickCount(options: ChartAxisItemOptions): number {
     return options.ticks ?? 10;
+}
+
+/**
+ * Whether the resolved axis options select the time scale family (a continuous axis over `Date`
+ * values with calendar-aligned ticks).
+ *
+ * @param options - The resolved axis options.
+ * @returns `true` when the axis is configured with `scale: 'time'`.
+ */
+export function isTimeAxis(options: ChartAxisItemOptions): boolean {
+    return options.scale === 'time';
+}
+
+/**
+ * Builds a time-axis {@link Scale} from resolved axis options over a millisecond extent and pixel
+ * range. An explicit numeric `min`/`max` (epoch milliseconds) overrides the corresponding end of
+ * the data extent. Ticks are calendar-aligned `Date` values from the core time scale.
+ *
+ * @param options - The resolved axis options (min/max in epoch milliseconds where set).
+ * @param domain - The data extent `[min, max]` in epoch milliseconds.
+ * @param range - The pixel range `[start, end]` the scale maps onto.
+ * @returns A scale mapping `Date` values to pixels.
+ */
+export function createTimeAxisScale(
+    options: ChartAxisItemOptions,
+    domain: number[],
+    range: number[]
+): Scale<Date, number> {
+    const min = typeof options.min === 'number' ? options.min : domain[0];
+    const max = typeof options.max === 'number' ? options.max : domain[1];
+
+    return scaleTime([
+        new Date(min),
+        new Date(max),
+    ], range);
 }
 
 /**

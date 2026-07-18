@@ -21,6 +21,7 @@ import type {
 } from '../core/options';
 
 import {
+    formatTimeLabel,
     resolveFormatLabel,
 } from '../core/options';
 
@@ -54,6 +55,7 @@ import {
     arrayJoin,
     numberFormat,
     stringUniqueId,
+    typeIsDate,
 } from '@ripl/utilities';
 
 /** Gap (px) between axis tick labels and the axis title. */
@@ -337,7 +339,18 @@ export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected formatTickLabel(value: any): string {
-        return this.formatLabel ? this.formatLabel(value) : numberFormat(value, { precision: 2 });
+        if (this.formatLabel) {
+            return this.formatLabel(value);
+        }
+
+        if (typeIsDate(value)) {
+            const domain = this.scale.domain;
+            const spanMs = Math.abs(Number(domain[domain.length - 1]) - Number(domain[0]));
+
+            return formatTimeLabel(value, spanMs);
+        }
+
+        return numberFormat(value, { precision: 2 });
     }
 
     /** The thickness reserved for the axis title (0 when there is no title). */
