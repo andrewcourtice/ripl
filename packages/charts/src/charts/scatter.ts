@@ -638,8 +638,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this.clipPlot(plot);
 
             this.renderGrid(
-                this._xScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => this._xScale(tick)),
-                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
+                this.gridTicks(this._xScale, axisTickCount(this.xAxisOptions)),
+                this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)),
                 plot
             );
 
@@ -746,8 +746,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         this.clipPlot(plot);
 
         this.renderGrid(
-            this._xScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => this._xScale(tick)),
-            this._yScale.ticks(axisTickCount(this.yAxesOptions[0])).map(tick => this._yScale(tick)),
+            this.gridTicks(this._xScale, axisTickCount(this.xAxisOptions)),
+            this.gridTicks(this._yScale, axisTickCount(this.yAxesOptions[0])),
             plot
         );
 

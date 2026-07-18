@@ -370,7 +370,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.clipPlot(horizontalPlot);
 
                 this.renderGrid(
-                    adjustedValueScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => adjustedValueScale(tick)),
+                    this.gridTicks(adjustedValueScale, axisTickCount(this.xAxisOptions)),
                     [],
                     horizontalPlot
                 );
@@ -427,7 +427,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.renderGrid(
                 [],
-                adjustedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => adjustedValueScale(tick)),
+                this.gridTicks(adjustedValueScale, axisTickCount(this.yAxisOptions)),
                 verticalPlot
             );
 

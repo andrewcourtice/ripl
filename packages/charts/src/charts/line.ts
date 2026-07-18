@@ -313,7 +313,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.renderGrid(
                 [],
-                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
+                this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)),
                 plot
             );
 
@@ -414,7 +414,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
 
         this.clipPlot(plot);
-        this.renderGrid([], scales[0].ticks(axisTickCount(this.yAxesOptions[0])).map(tick => scales[0](tick)), plot);
+        this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
         this.setupCrosshair(plot);
         this.renderAnnotations({ y: scales[0] }, plot);
 

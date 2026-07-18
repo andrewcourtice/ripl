@@ -54,6 +54,7 @@ interface CartesianInternals {
     crosshair?: CrosshairInternals;
     scene: {
         getElementById(id: string): {
+            y1?: number;
             query(selector: string): {
                 rotation: number;
             } | null;
@@ -365,6 +366,44 @@ describe('cartesian runtime reconfiguration', () => {
         // its growth is not observable here — the rotation applied to live labels is.
         expect(rotatedBand).toBeGreaterThanOrEqual(flatBand);
         expect(rotatedLabel?.rotation).toBeLessThan(0);
+    });
+
+    it('transitions grid lines by tick value across a domain change', async () => {
+        const chart = createChart();
+
+        chart.update({
+            axis: {
+                y: {
+                    min: 0,
+                    max: 100,
+                },
+            },
+        });
+
+        await chart.render();
+
+        const before = internals(chart).scene.getElementById('grid-h-40');
+
+        expect(before).toBeTruthy();
+
+        const positionBefore = before?.y1;
+
+        chart.update({
+            axis: {
+                y: {
+                    min: 0,
+                    max: 160,
+                },
+            },
+        });
+
+        await chart.render();
+
+        const after = internals(chart).scene.getElementById('grid-h-40');
+
+        // The persisting tick keeps its element (repositioned) instead of being redrawn.
+        expect(after).toBe(before);
+        expect(after?.y1).not.toBe(positionBefore);
     });
 
     it('restyles existing axis labels when the theme changes through update()', async () => {

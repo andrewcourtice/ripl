@@ -7,6 +7,15 @@ import {
 } from './_base';
 
 import type {
+    ResolvedAnimation,
+} from '../core/animation';
+
+import {
+    ANIMATION_REFERENCE,
+    exitElement,
+} from '../core/animation';
+
+import type {
     Group,
     Line,
     LineState,
@@ -17,11 +26,21 @@ import {
     createGroup,
     createLine,
     createRect,
+    easeOutCubic,
 } from '@ripl/core';
 
 import {
     arrayJoin,
+    stringUniqueId,
 } from '@ripl/utilities';
+
+/** One grid line to draw: the tick value it represents (a stable join key across rescales) and its pixel position. */
+export interface GridTick {
+    /** The tick's domain value — grid lines are keyed by it, so a persisting tick transitions instead of redrawing. */
+    value: unknown;
+    /** The tick's pixel position along the relevant axis. */
+    position: number;
+}
 
 /** Options for constructing a grid component. */
 export interface GridOptions extends ChartComponentOptions {
@@ -44,6 +63,13 @@ const DEFAULT_STROKE = '#e5e7eb';
 const DEFAULT_LINE_WIDTH = 1;
 const DEFAULT_LINE_DASH = [4, 4];
 
+/** Fallback animation used when the grid is not given one by its host chart. */
+const DEFAULT_GRID_ANIMATION: ResolvedAnimation = {
+    enabled: true,
+    duration: ANIMATION_REFERENCE.axis,
+    ease: easeOutCubic,
+};
+
 /** A background grid component rendering horizontal and/or vertical dashed lines at tick positions. */
 export class Grid extends ChartComponent {
 
@@ -51,6 +77,9 @@ export class Grid extends ChartComponent {
     private _clip?: Rect;
     private _horizontalLines: Line[] = [];
     private _verticalLines: Line[] = [];
+
+    /** Resolved animation grid-line transitions run with; assigned by the host chart each render. */
+    public animation: ResolvedAnimation = DEFAULT_GRID_ANIMATION;
     private _horizontal: boolean;
     private _vertical: boolean;
     private _stroke: string;
@@ -151,20 +180,94 @@ export class Grid extends ChartComponent {
         });
     }
 
+    // Joins one direction's lines against the new ticks by tick VALUE, so a persisting tick's
+    // line transitions to its new position, entries fade in, and exits fade out — instead of the
+    // whole grid redrawing on every rescale.
+    private _reconcileLines(
+        ticks: GridTick[],
+        lines: Line[],
+        prefix: string,
+        lineState: (position: number) => Partial<LineState>
+    ): Line[] {
+        const animated = this.animation.enabled && this.animation.duration > 0;
+
+        const {
+            left: entries,
+            inner: updates,
+            right: exits,
+        } = arrayJoin(ticks, lines, (tick, line) => line.id === `${prefix}${String(tick.value)}`);
+
+        exits.forEach(line => {
+            // Retag first so a re-entering tick value can't collide with the fading line.
+            line.id = `${line.id}:exit:${stringUniqueId()}`;
+            void exitElement(this.renderer, line, this.animation);
+        });
+
+        const newLines = entries.map(tick => {
+            const line = createLine({
+                id: `${prefix}${String(tick.value)}`,
+                ...lineState(tick.position),
+                stroke: this._stroke,
+                lineWidth: this._lineWidth,
+                lineDash: this._lineDash,
+                opacity: animated ? 0 : 1,
+            });
+
+            this._group!.add(line);
+
+            if (animated) {
+                void this.renderer.transition(line, {
+                    duration: this.animation.duration,
+                    ease: this.animation.ease,
+                    state: {
+                        opacity: 1,
+                    },
+                });
+            }
+
+            return line;
+        });
+
+        updates.forEach(([tick, line]) => {
+            line.stroke = this._stroke;
+            line.lineWidth = this._lineWidth;
+            line.lineDash = this._lineDash;
+
+            const state = lineState(tick.position);
+
+            if (!animated) {
+                Object.assign(line, state);
+                return;
+            }
+
+            void this.renderer.transition(line, {
+                duration: this.animation.duration,
+                ease: this.animation.ease,
+                state,
+            });
+        });
+
+        return [
+            ...newLines,
+            ...updates.map(([, line]) => line),
+        ];
+    }
+
     /**
-     * Renders (and reconciles) grid lines within the given plot rectangle, drawing lines at the
-     * supplied tick positions and destroying any that no longer apply.
+     * Renders (and reconciles) grid lines within the given plot rectangle. Lines are keyed by
+     * tick value: persisting ticks transition to their new positions, new ticks fade in, and
+     * removed ticks fade out.
      *
-     * @param xTicks - X pixel positions for the vertical grid lines.
-     * @param yTicks - Y pixel positions for the horizontal grid lines.
+     * @param xTicks - Ticks (value + x pixel position) for the vertical grid lines.
+     * @param yTicks - Ticks (value + y pixel position) for the horizontal grid lines.
      * @param x - Left edge of the plot rectangle, in pixels.
      * @param y - Top edge of the plot rectangle, in pixels.
      * @param width - Width of the plot rectangle, in pixels.
      * @param height - Height of the plot rectangle, in pixels.
      */
     public async render(
-        xTicks: number[],
-        yTicks: number[],
+        xTicks: GridTick[],
+        yTicks: GridTick[],
         x: number,
         y: number,
         width: number,
@@ -177,89 +280,25 @@ export class Grid extends ChartComponent {
         const EDGE_EPSILON = 0.5;
         const onEdge = (value: number, min: number, max: number) => Math.abs(value - min) < EDGE_EPSILON || Math.abs(value - max) < EDGE_EPSILON;
 
-        const hTicks = yTicks.filter(tick => !onEdge(tick, y, y + height));
-        const vTicks = xTicks.filter(tick => !onEdge(tick, x, x + width));
+        const hTicks = yTicks.filter(tick => !onEdge(tick.position, y, y + height));
+        const vTicks = xTicks.filter(tick => !onEdge(tick.position, x, x + width));
 
         if (this._horizontal) {
-            const {
-                left: hEntries,
-                inner: hUpdates,
-                right: hExits,
-            } = arrayJoin(hTicks, this._horizontalLines, (tick, line) => line.id === `grid-h-${tick}`);
-
-            hExits.forEach(el => el.destroy());
-
-            const newLines = hEntries.map(tickY => {
-                const line = createLine({
-                    id: `grid-h-${tickY}`,
-                    x1: x,
-                    y1: tickY,
-                    x2: x + width,
-                    y2: tickY,
-                    stroke: this._stroke,
-                    lineWidth: this._lineWidth,
-                    lineDash: this._lineDash,
-                });
-
-                this._group!.add(line);
-
-                return line;
-            });
-
-            hUpdates.forEach(([tickY, line]) => {
-                line.data = {
-                    x1: x,
-                    y1: tickY,
-                    x2: x + width,
-                    y2: tickY,
-                } as Partial<LineState>;
-            });
-
-            this._horizontalLines = [
-                ...newLines,
-                ...hUpdates.map(([, line]) => line),
-            ];
+            this._horizontalLines = this._reconcileLines(hTicks, this._horizontalLines, 'grid-h-', position => ({
+                x1: x,
+                y1: position,
+                x2: x + width,
+                y2: position,
+            }));
         }
 
         if (this._vertical) {
-            const {
-                left: vEntries,
-                inner: vUpdates,
-                right: vExits,
-            } = arrayJoin(vTicks, this._verticalLines, (tick, line) => line.id === `grid-v-${tick}`);
-
-            vExits.forEach(el => el.destroy());
-
-            const newLines = vEntries.map(tickX => {
-                const line = createLine({
-                    id: `grid-v-${tickX}`,
-                    x1: tickX,
-                    y1: y,
-                    x2: tickX,
-                    y2: y + height,
-                    stroke: this._stroke,
-                    lineWidth: this._lineWidth,
-                    lineDash: this._lineDash,
-                });
-
-                this._group!.add(line);
-
-                return line;
-            });
-
-            vUpdates.forEach(([tickX, line]) => {
-                line.data = {
-                    x1: tickX,
-                    y1: y,
-                    x2: tickX,
-                    y2: y + height,
-                } as Partial<LineState>;
-            });
-
-            this._verticalLines = [
-                ...newLines,
-                ...vUpdates.map(([, line]) => line),
-            ];
+            this._verticalLines = this._reconcileLines(vTicks, this._verticalLines, 'grid-v-', position => ({
+                x1: position,
+                y1: y,
+                x2: position,
+                y2: y + height,
+            }));
         }
     }
 

@@ -69,6 +69,10 @@ import {
     ChartYAxis,
 } from '../components/axis';
 
+import type {
+    GridTick,
+} from '../components/grid';
+
 import {
     Grid,
 } from '../components/grid';
@@ -955,6 +959,10 @@ export abstract class CartesianChart<
         this.yAxes.forEach(axis => {
             axis.animation = animation;
         });
+
+        if (this.grid) {
+            this.grid.animation = animation;
+        }
     }
 
     /** Reserves and renders the legend using the chart's `legend` option. */
@@ -963,8 +971,24 @@ export abstract class CartesianChart<
     }
 
     /** Renders the grid within the given plot area at the supplied tick positions. */
-    protected renderGrid(xTicks: number[], yTicks: number[], area: ChartArea) {
+    protected renderGrid(xTicks: GridTick[], yTicks: GridTick[], area: ChartArea) {
         this.grid?.render(xTicks, yTicks, area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Maps a scale's ticks into value-keyed {@link GridTick}s for {@link CartesianChart.renderGrid},
+     * so grid lines join by tick value and transition across rescales.
+     *
+     * @param scale - The scale producing tick values and positions.
+     * @param count - The target tick count (the axis `ticks` option).
+     * @returns The grid ticks (value + pixel position).
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected gridTicks(scale: Scale<any, number>, count: number): GridTick[] {
+        return scale.ticks(count).map(tick => ({
+            value: tick,
+            position: scale(tick),
+        }));
     }
 
     /**

@@ -251,7 +251,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
 
             this.renderGrid(
                 [],
-                viewedCountScale.ticks(10).map(tick => viewedCountScale(tick)),
+                this.gridTicks(viewedCountScale, 10),
                 plot
             );
 
