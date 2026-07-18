@@ -556,17 +556,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * and opacity is composited at the boundary, so both are skipped here.
      */
     protected applyGroupPaint(group: RiplElement): void {
-        objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
+        for (const key of group.$paintKeys) {
             if (key === 'opacity') {
-                return;
+                continue;
             }
 
             const value = (group as unknown as Record<string, unknown>)[key];
 
             if (!typeIsNil(value)) {
-                (operation as (context: Context, val: unknown) => void)(this, value);
+                (CONTEXT_OPERATIONS[key as keyof typeof CONTEXT_OPERATIONS] as (context: Context, val: unknown) => void)(this, value);
             }
-        });
+        }
     }
 
     /**
@@ -687,17 +687,26 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        return arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
+        const hits = arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
             .filter(element => element.intersectsWith(x, y, {
                 isPointer: true,
-            }))
-            .sort((ea, eb) => {
-                const zDiff = eb.zIndex - ea.zIndex;
+            }));
 
-                return zDiff !== 0
-                    ? zDiff
-                    : this.renderedElements.indexOf(eb) - this.renderedElements.indexOf(ea);
-            });
+        if (hits.length < 2) {
+            return hits;
+        }
+
+        // Paint-order tiebreak via a one-pass index map — an `indexOf` inside the comparator
+        // would rescan the rendered-element list for every comparison.
+        const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
+
+        return hits.sort((ea, eb) => {
+            const zDiff = eb.zIndex - ea.zIndex;
+
+            return zDiff !== 0
+                ? zDiff
+                : (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1);
+        });
     }
 
     /**

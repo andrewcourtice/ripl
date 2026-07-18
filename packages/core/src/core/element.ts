@@ -74,6 +74,7 @@ import type {
 } from '../context';
 
 import {
+    functionNoop,
     objectForEach,
     objectReduce,
     stringUniqueId,
@@ -430,6 +431,21 @@ export class Element<
 
     private _dirty = false;
     private _touched = false;
+    private _paintKeys?: (keyof BaseElementState)[];
+
+    /**
+     * The element's own state keys that map to a context paint operation, cached so render-time
+     * paint loops visit only the values this element actually sets (state keys are fixed after
+     * construction in practice; the cache drops when a new key appears). No-op transform
+     * operations are excluded — transforms are applied separately.
+     */
+    public get $paintKeys(): readonly (keyof BaseElementState)[] {
+        return this._paintKeys ??= Object.keys(this.state).filter(key => {
+            const operation = CONTEXT_OPERATIONS[key as keyof typeof CONTEXT_OPERATIONS];
+
+            return !!operation && operation !== functionNoop;
+        }) as (keyof BaseElementState)[];
+    }
 
     /** Whether an own state value has changed since the last render cycle. Drives per-element path-cache invalidation and is reset after each render cycle. */
     public get $dirty(): boolean {
@@ -752,6 +768,10 @@ export class Element<
             return;
         }
 
+        if (!(key in this.state)) {
+            this._paintKeys = undefined;
+        }
+
         this.state[key] = value;
         this._dirty = true;
         this.emit('updated', {
@@ -860,6 +880,10 @@ export class Element<
             return (output[key] = interpolator(currentValue, value as TState[keyof TState]), output);
         }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
+        // The tick writes state directly, so a transition targeting a not-yet-set paint key must
+        // drop the cached paint-key list up front for the new key to be painted.
+        this._paintKeys = undefined;
+
         return time => {
             // The tick writes state directly (bypassing setStateValue), so mark dirty here or
             // an animating shape would keep serving a stale cached path.
@@ -882,15 +906,15 @@ export class Element<
         try {
             if (!this.abstract) {
                 applyElementTransform(context, this as unknown as Element);
-            }
 
-            objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
-                const value = (this as unknown as Record<keyof BaseElementState, unknown>)[key];
+                for (const key of this.$paintKeys) {
+                    const value = (this as unknown as Record<keyof BaseElementState, unknown>)[key];
 
-                if (!this.abstract && !typeIsNil(value)) {
-                    (operation as (ctx: Context, val: unknown) => void)(context, value);
+                    if (!typeIsNil(value)) {
+                        (CONTEXT_OPERATIONS[key as keyof typeof CONTEXT_OPERATIONS] as (ctx: Context, val: unknown) => void)(context, value);
+                    }
                 }
-            });
+            }
 
             callback?.();
         } finally {
