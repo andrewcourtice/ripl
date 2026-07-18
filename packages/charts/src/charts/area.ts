@@ -200,7 +200,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return this.buildOverviewSeries(series, data, () => 'area', (srs, item) => this._seriesValue(srs, item));
+        return this.buildOverviewSeries(this.filterActive(series), data, () => 'area', (srs, item) => this._seriesValue(srs, item));
     }
 
     private _seriesContext(plot: ChartArea): AreaSeriesContext<TData> {
@@ -233,12 +233,17 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
+            // Legend-hidden series are excluded from extents, stacking, and rendering, so toggling a
+            // series rescales the value axis (and restacks the remainder) while the hidden series
+            // animates out through the standard exit join.
+            const activeSeries = this.filterActive(series);
+
             let dataExtent: number[];
 
             if (stacked) {
-                dataExtent = cumulativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
+                dataExtent = cumulativeExtent(activeSeries, data, (srs, item) => this._seriesValue(srs, item));
             } else {
-                const seriesExtents = series
+                const seriesExtents = activeSeries
                     .flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item)))
                     .concat(0);
 
@@ -253,7 +258,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -302,7 +307,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
-            const seriesRender = this._series.render(series, this._seriesContext(plot));
+            const seriesRender = this._series.render(activeSeries, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);
 
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked ?? false);

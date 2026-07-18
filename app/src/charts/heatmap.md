@@ -123,9 +123,7 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-// Furniture options (legend, tooltip, theme) are read only at construction, so rebuild the chart on
-// any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     data = generateData();

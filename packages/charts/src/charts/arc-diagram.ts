@@ -271,14 +271,20 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
             const colorFor = (node: ArcDiagramNode) => node.color ?? this.getSeriesColor(node.group ?? node.id);
 
+            // Legend-hidden groups are excluded from the axis layout and rendering; links keep only
+            // active endpoints, so the remaining nodes re-space to fill the axis.
+            const activeNodes = this.filterActive(nodes, node => node.group ?? node.id);
+            const activeNodeIds = new Set(activeNodes.map(node => node.id));
+            const activeLinks = links.filter(link => activeNodeIds.has(link.source) && activeNodeIds.has(link.target));
+
             // Node degree drives optional connection-based sizing (bubble vs scatter).
             const degree = new Map<string, number>();
-            links.forEach(link => {
+            activeLinks.forEach(link => {
                 degree.set(link.source, (degree.get(link.source) ?? 0) + 1);
                 degree.set(link.target, (degree.get(link.target) ?? 0) + 1);
             });
 
-            const degrees = nodes.map(node => degree.get(node.id) ?? 0);
+            const degrees = activeNodes.map(node => degree.get(node.id) ?? 0);
             const [degreeMin, degreeMax] = degrees.length ? numberExtent(degrees, functionIdentity) : [0, 1];
             const minRadius = Math.max(2, nodeRadius * 0.45);
             const radiusFor = (node: ArcDiagramNode) => {
@@ -291,7 +297,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 return minRadius + ratio * (nodeRadius - minRadius);
             };
 
-            const maxRadius = nodes.length ? Math.max(nodeRadius, ...nodes.map(radiusFor)) : nodeRadius;
+            const maxRadius = activeNodes.length ? Math.max(nodeRadius, ...activeNodes.map(radiusFor)) : nodeRadius;
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
@@ -313,7 +319,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                     id: legendId,
                     label: node.group ?? node.label ?? node.id,
                     color: this.getSeriesColor(legendId),
-                    active: true,
+                    active: this.isItemActive(legendId),
                 });
             });
 
@@ -337,14 +343,14 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 ? baseCross - area.y - 4
                 : area.x + area.width - baseCross - 4;
 
-            const span = Math.max(1, nodes.length - 1);
-            const alongOf = (index: number) => nodes.length === 1
+            const span = Math.max(1, activeNodes.length - 1);
+            const alongOf = (index: number) => activeNodes.length === 1
                 ? (alongStart + alongEnd) / 2
                 : alongStart + (index / span) * (alongEnd - alongStart);
 
             const nodeInfo = new Map<string, { along: number;
                 index: number; }>();
-            nodes.forEach((node, index) => nodeInfo.set(node.id, {
+            activeNodes.forEach((node, index) => nodeInfo.set(node.id, {
                 along: alongOf(index),
                 index,
             }));
@@ -430,7 +436,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 this.scene.add(this._linksGroup);
             }
 
-            const linkValues = links.map(link => link.value ?? 1);
+            const linkValues = activeLinks.map(link => link.value ?? 1);
             const [, linkMax] = linkValues.length ? numberExtent(linkValues, functionIdentity) : [0, 1];
             const linkWidth = (link: ArcDiagramLink) => 1 + ((link.value ?? 1) / (linkMax || 1)) * 5;
             const linkId = (link: ArcDiagramLink) => `arc-${link.source}~${link.target}`;
@@ -446,7 +452,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 left: linkEntries,
                 inner: linkUpdates,
                 right: linkExits,
-            } = arrayJoin(links, this._linkElements, (link, poly) => poly.id === linkId(link));
+            } = arrayJoin(activeLinks, this._linkElements, (link, poly) => poly.id === linkId(link));
 
             linkExits.forEach(el => el.destroy());
 
@@ -470,7 +476,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 });
 
                 arc.autoFill = false;
-                arcEntryDelays.set(arc.id, stagger(linkOrderIndex(link), nodes.length, enter.duration, 0.6));
+                arcEntryDelays.set(arc.id, stagger(linkOrderIndex(link), activeNodes.length, enter.duration, 0.6));
                 this._attachLinkHover(arc, link, linkContent(link), color);
                 this._linksGroup!.add(arc);
 

@@ -387,9 +387,11 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
     private async _drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
         const {
             data,
-            series,
             categories,
         } = this.options;
+
+        // Legend-hidden series fall into the series-exit join below and are removed.
+        const series = this.filterActive(this.options.series);
 
         const angleStep = TAU / categories.length;
 
@@ -575,7 +577,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -585,11 +587,12 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             const { cx, cy, size } = areaCenter(area);
             const radius = size / 2 - 30;
 
-            // Compute max value from data if not provided
+            // Compute max value from the legend-active series if not provided, so hiding a series
+            // re-fits the radial scale to the remaining ones.
             let computedMax = maxValue ?? 0;
 
             if (!maxValue) {
-                series.forEach(srs => {
+                this.filterActive(series).forEach(srs => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 

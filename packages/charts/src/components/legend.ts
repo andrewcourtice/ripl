@@ -124,6 +124,25 @@ export class Legend extends ChartComponent {
         return this._position === 'top' || this._position === 'bottom';
     }
 
+    /**
+     * Reconfigures the legend in place — position, label styling, and interactivity — so
+     * `chart.update({ legend })` restyles and relocates the live legend without recreating it.
+     * A font change invalidates the label measurement cache.
+     *
+     * @param options - The options to apply; omitted properties keep their current values.
+     */
+    public setOptions(options: Pick<LegendOptions, 'position' | 'font' | 'fontColor' | 'itemPadding' | 'highlight'>): void {
+        if (options.font !== undefined && options.font !== this._font) {
+            this._labelWidthCache.clear();
+        }
+
+        this._position = options.position ?? this._position;
+        this._font = options.font ?? this._font;
+        this._fontColor = options.fontColor ?? this._fontColor;
+        this._itemPadding = options.itemPadding ?? this._itemPadding;
+        this._highlight = options.highlight ?? this._highlight;
+    }
+
     /** Updates the legend items, replacing the previous set. */
     public update(items: LegendItem[]) {
         this._items = items;

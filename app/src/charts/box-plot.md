@@ -97,8 +97,7 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     data = generateData();

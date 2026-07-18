@@ -414,11 +414,14 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
+            // The legend lists flow nodes, not toggleable series — hiding a node would orphan its
+            // links and break the flow layout, so legend clicks only dim the entry (real `active`
+            // state) without filtering the rendered graph.
             const legendItems: LegendItem[] = nodes.map(node => ({
                 id: node.id,
                 label: node.label,
                 color: nodeColors.get(node.id)!,
-                active: true,
+                active: this.isItemActive(node.id),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);

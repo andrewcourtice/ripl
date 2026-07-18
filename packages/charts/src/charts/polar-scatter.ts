@@ -386,7 +386,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -396,8 +396,12 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const { cx, cy, size } = areaCenter(area);
             const gridRadius = (size / 2) * 0.82;
 
+            // Legend-hidden series are excluded from the radial extent and rendering, so toggling a
+            // series re-fits the value rings and animates its markers out through the exit join.
+            const activeSeries = this.filterActive(series);
+
             // Radial value scale: 0 at the centre, the data max (or override) at the outer ring.
-            const radiusValues = series.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
+            const radiusValues = activeSeries.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
             const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
 
@@ -411,7 +415,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 left: seriesEntries,
                 inner: seriesUpdates,
                 right: seriesExits,
-            } = arrayJoin(series, this._seriesGroups, 'id');
+            } = arrayJoin(activeSeries, this._seriesGroups, 'id');
 
             seriesExits.forEach(group => group.destroy());
 

@@ -418,7 +418,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 id: getKey(item),
                 label: getLabel(item),
                 color: colorFor(item),
-                active: true,
+                active: this.isItemActive(getKey(item)),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
@@ -426,10 +426,14 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const area = layout.area;
             const { cx: centerX, cy: centerY, size } = areaCenter(area);
 
-            const maxValue = numberMaxOf(data, getValue) ?? 0;
+            // Legend-hidden segments are excluded from the layout, so the remaining equal-angle
+            // slices widen to fill the circle and the radial scale re-fits the visible values.
+            const activeData = this.filterActive(data, getKey);
+
+            const maxValue = activeData.length ? (numberMaxOf(activeData, getValue) ?? 0) : 0;
             const valueScale = scaleContinuous([0, maxValue], [size * innerRadius, size * maxRadiusRatio], { clamp: true });
 
-            const angleStep = TAU / data.length;
+            const angleStep = TAU / Math.max(1, activeData.length);
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
 
             const gridTransition = this._drawGrid(
@@ -441,10 +445,10 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 levels,
                 angleStep,
                 startOffset,
-                data.length
+                activeData.length
             );
 
-            const calculations = data.map((item, index) => {
+            const calculations = activeData.map((item, index) => {
                 const key = getKey(item);
                 const v = getValue(item);
                 const color = colorFor(item);

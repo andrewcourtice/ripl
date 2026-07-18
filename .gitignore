@@ -36,6 +36,7 @@ tsconfig.tsbuildinfo
 
 app/.vitepress/cache/
 app/src/.vitepress/cache/
+app/src/.vitepress/.temp/
 app/src/public/_playground/
 app/src/docs/api/
 

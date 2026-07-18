@@ -380,6 +380,10 @@
         "collapsed": true,
         "items": [
           {
+            "text": "Canvas2DState",
+            "link": "/docs/api/@ripl/canvas/interfaces/Canvas2DState.md"
+          },
+          {
             "text": "RescaleResult",
             "link": "/docs/api/@ripl/canvas/interfaces/RescaleResult.md"
           }
@@ -389,6 +393,10 @@
         "text": "Type Aliases",
         "collapsed": true,
         "items": [
+          {
+            "text": "AbstractConstructor",
+            "link": "/docs/api/@ripl/canvas/type-aliases/AbstractConstructor.md"
+          },
           {
             "text": "GradientBounds",
             "link": "/docs/api/@ripl/canvas/type-aliases/GradientBounds.md"
@@ -406,6 +414,10 @@
           {
             "text": "applyCanvasStroke",
             "link": "/docs/api/@ripl/canvas/functions/applyCanvasStroke.md"
+          },
+          {
+            "text": "canvas2DStateMixin",
+            "link": "/docs/api/@ripl/canvas/functions/canvas2DStateMixin.md"
           },
           {
             "text": "canvasDrawImage",
@@ -487,6 +499,10 @@
           {
             "text": "Chart",
             "link": "/docs/api/@ripl/charts/classes/Chart.md"
+          },
+          {
+            "text": "ChartAnnotations",
+            "link": "/docs/api/@ripl/charts/classes/ChartAnnotations.md"
           },
           {
             "text": "ChartLayout",
@@ -595,6 +611,14 @@
         "collapsed": true,
         "items": [
           {
+            "text": "AnnotationPlot",
+            "link": "/docs/api/@ripl/charts/interfaces/AnnotationPlot.md"
+          },
+          {
+            "text": "AnnotationScales",
+            "link": "/docs/api/@ripl/charts/interfaces/AnnotationScales.md"
+          },
+          {
             "text": "ArcDiagramChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramChartEventMap.md"
           },
@@ -617,6 +641,10 @@
           {
             "text": "ArcDiagramNodeEvent",
             "link": "/docs/api/@ripl/charts/interfaces/ArcDiagramNodeEvent.md"
+          },
+          {
+            "text": "AreaCenter",
+            "link": "/docs/api/@ripl/charts/interfaces/AreaCenter.md"
           },
           {
             "text": "AreaChartEventMap",
@@ -653,10 +681,6 @@
           {
             "text": "BaseChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/BaseChartOptions.md"
-          },
-          {
-            "text": "BaseTrendChartSeriesOptions",
-            "link": "/docs/api/@ripl/charts/interfaces/BaseTrendChartSeriesOptions.md"
           },
           {
             "text": "Bin",
@@ -707,6 +731,10 @@
             "link": "/docs/api/@ripl/charts/interfaces/ChartAxisOptions.md"
           },
           {
+            "text": "ChartBandAnnotation",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartBandAnnotation.md"
+          },
+          {
             "text": "ChartCrosshairOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ChartCrosshairOptions.md"
           },
@@ -723,8 +751,20 @@
             "link": "/docs/api/@ripl/charts/interfaces/ChartLegendOptions.md"
           },
           {
+            "text": "ChartLineAnnotation",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartLineAnnotation.md"
+          },
+          {
+            "text": "ChartOverviewOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartOverviewOptions.md"
+          },
+          {
             "text": "ChartPadding",
             "link": "/docs/api/@ripl/charts/interfaces/ChartPadding.md"
+          },
+          {
+            "text": "ChartPointAnnotation",
+            "link": "/docs/api/@ripl/charts/interfaces/ChartPointAnnotation.md"
           },
           {
             "text": "ChartSegmentLabelsOptions",
@@ -1083,6 +1123,10 @@
             "link": "/docs/api/@ripl/charts/interfaces/SunburstNode.md"
           },
           {
+            "text": "Theme",
+            "link": "/docs/api/@ripl/charts/interfaces/Theme.md"
+          },
+          {
             "text": "TreemapChartCellEvent",
             "link": "/docs/api/@ripl/charts/interfaces/TreemapChartCellEvent.md"
           },
@@ -1099,8 +1143,16 @@
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartAreaSeriesOptions.md"
           },
           {
+            "text": "TrendChartBarEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartBarEvent.md"
+          },
+          {
             "text": "TrendChartBarSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartBarSeriesOptions.md"
+          },
+          {
+            "text": "TrendChartBaseSeriesOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartBaseSeriesOptions.md"
           },
           {
             "text": "TrendChartEventMap",
@@ -1111,12 +1163,12 @@
             "link": "/docs/api/@ripl/charts/interfaces/TrendChartLineSeriesOptions.md"
           },
           {
-            "text": "TrendChartOptions",
-            "link": "/docs/api/@ripl/charts/interfaces/TrendChartOptions.md"
+            "text": "TrendChartMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartMarkerEvent.md"
           },
           {
-            "text": "TrendChartValueEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/TrendChartValueEvent.md"
+            "text": "TrendChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/TrendChartOptions.md"
           }
         ]
       },
@@ -1129,6 +1181,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/Accessor.md"
           },
           {
+            "text": "AnnotationAxis",
+            "link": "/docs/api/@ripl/charts/type-aliases/AnnotationAxis.md"
+          },
+          {
             "text": "ArcDiagramOrientation",
             "link": "/docs/api/@ripl/charts/type-aliases/ArcDiagramOrientation.md"
           },
@@ -1137,8 +1193,8 @@
             "link": "/docs/api/@ripl/charts/type-aliases/AxisFormatType.md"
           },
           {
-            "text": "BarChartMode",
-            "link": "/docs/api/@ripl/charts/type-aliases/BarChartMode.md"
+            "text": "AxisScaleType",
+            "link": "/docs/api/@ripl/charts/type-aliases/AxisScaleType.md"
           },
           {
             "text": "BarChartOrientation",
@@ -1155,6 +1211,10 @@
           {
             "text": "ChartAnimationInput",
             "link": "/docs/api/@ripl/charts/type-aliases/ChartAnimationInput.md"
+          },
+          {
+            "text": "ChartAnnotation",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartAnnotation.md"
           },
           {
             "text": "ChartAxisInput",
@@ -1237,16 +1297,16 @@
             "link": "/docs/api/@ripl/charts/type-aliases/SegmentLabelPosition.md"
           },
           {
-            "text": "SeriesType",
-            "link": "/docs/api/@ripl/charts/type-aliases/SeriesType.md"
-          },
-          {
             "text": "TitlePosition",
             "link": "/docs/api/@ripl/charts/type-aliases/TitlePosition.md"
           },
           {
             "text": "TrendChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/type-aliases/TrendChartSeriesOptions.md"
+          },
+          {
+            "text": "TrendSeriesType",
+            "link": "/docs/api/@ripl/charts/type-aliases/TrendSeriesType.md"
           },
           {
             "text": "ValueFormatInput",
@@ -1263,8 +1323,16 @@
             "link": "/docs/api/@ripl/charts/variables/ANIMATION_REFERENCE.md"
           },
           {
-            "text": "DEFAULT_NUMBER_PRECISION",
-            "link": "/docs/api/@ripl/charts/variables/DEFAULT_NUMBER_PRECISION.md"
+            "text": "colorBlindTheme",
+            "link": "/docs/api/@ripl/charts/variables/colorBlindTheme.md"
+          },
+          {
+            "text": "darkTheme",
+            "link": "/docs/api/@ripl/charts/variables/darkTheme.md"
+          },
+          {
+            "text": "lightTheme",
+            "link": "/docs/api/@ripl/charts/variables/lightTheme.md"
           },
           {
             "text": "SEGMENT_LABEL_FONT",
@@ -1287,6 +1355,14 @@
           {
             "text": "applyHoverHighlight",
             "link": "/docs/api/@ripl/charts/functions/applyHoverHighlight.md"
+          },
+          {
+            "text": "areaCenter",
+            "link": "/docs/api/@ripl/charts/functions/areaCenter.md"
+          },
+          {
+            "text": "axisTickCount",
+            "link": "/docs/api/@ripl/charts/functions/axisTickCount.md"
           },
           {
             "text": "bin",
@@ -1315,6 +1391,10 @@
           {
             "text": "createBoxPlotChart",
             "link": "/docs/api/@ripl/charts/functions/createBoxPlotChart.md"
+          },
+          {
+            "text": "createChartAnnotations",
+            "link": "/docs/api/@ripl/charts/functions/createChartAnnotations.md"
           },
           {
             "text": "createChordChart",
@@ -1421,6 +1501,14 @@
             "link": "/docs/api/@ripl/charts/functions/createTrendChart.md"
           },
           {
+            "text": "createValueScale",
+            "link": "/docs/api/@ripl/charts/functions/createValueScale.md"
+          },
+          {
+            "text": "cumulativeExtent",
+            "link": "/docs/api/@ripl/charts/functions/cumulativeExtent.md"
+          },
+          {
             "text": "deviation",
             "link": "/docs/api/@ripl/charts/functions/deviation.md"
           },
@@ -1437,8 +1525,8 @@
             "link": "/docs/api/@ripl/charts/functions/exitElement.md"
           },
           {
-            "text": "formatNumber",
-            "link": "/docs/api/@ripl/charts/functions/formatNumber.md"
+            "text": "getDefaultTheme",
+            "link": "/docs/api/@ripl/charts/functions/getDefaultTheme.md"
           },
           {
             "text": "kde",
@@ -1501,8 +1589,16 @@
             "link": "/docs/api/@ripl/charts/functions/normalizeYAxisItem.md"
           },
           {
+            "text": "positiveNegativeExtent",
+            "link": "/docs/api/@ripl/charts/functions/positiveNegativeExtent.md"
+          },
+          {
             "text": "quantile",
             "link": "/docs/api/@ripl/charts/functions/quantile.md"
+          },
+          {
+            "text": "registerTheme",
+            "link": "/docs/api/@ripl/charts/functions/registerTheme.md"
           },
           {
             "text": "resolveAccessor",
@@ -1511,6 +1607,10 @@
           {
             "text": "resolveAnimation",
             "link": "/docs/api/@ripl/charts/functions/resolveAnimation.md"
+          },
+          {
+            "text": "resolveColorBy",
+            "link": "/docs/api/@ripl/charts/functions/resolveColorBy.md"
           },
           {
             "text": "resolveDataLabelLayout",
@@ -1537,12 +1637,20 @@
             "link": "/docs/api/@ripl/charts/functions/resolveSegmentLabelLayout.md"
           },
           {
+            "text": "resolveTheme",
+            "link": "/docs/api/@ripl/charts/functions/resolveTheme.md"
+          },
+          {
             "text": "resolveValueFormat",
             "link": "/docs/api/@ripl/charts/functions/resolveValueFormat.md"
           },
           {
             "text": "rollup",
             "link": "/docs/api/@ripl/charts/functions/rollup.md"
+          },
+          {
+            "text": "setDefaultTheme",
+            "link": "/docs/api/@ripl/charts/functions/setDefaultTheme.md"
           },
           {
             "text": "stagger",
@@ -2035,6 +2143,10 @@
             "link": "/docs/api/@ripl/core/interfaces/RendererTransitionOptions.md"
           },
           {
+            "text": "RenderInstruction",
+            "link": "/docs/api/@ripl/core/interfaces/RenderInstruction.md"
+          },
+          {
             "text": "Scale",
             "link": "/docs/api/@ripl/core/interfaces/Scale.md"
           },
@@ -2053,6 +2165,10 @@
           {
             "text": "TextState",
             "link": "/docs/api/@ripl/core/interfaces/TextState.md"
+          },
+          {
+            "text": "TransformTarget",
+            "link": "/docs/api/@ripl/core/interfaces/TransformTarget.md"
           },
           {
             "text": "TransitionOptions",
@@ -2107,6 +2223,10 @@
           {
             "text": "ColorSpace",
             "link": "/docs/api/@ripl/core/type-aliases/ColorSpace.md"
+          },
+          {
+            "text": "ContextFactory",
+            "link": "/docs/api/@ripl/core/type-aliases/ContextFactory.md"
           },
           {
             "text": "Direction",
@@ -2197,6 +2317,10 @@
             "link": "/docs/api/@ripl/core/type-aliases/LineJoin.md"
           },
           {
+            "text": "Matrix",
+            "link": "/docs/api/@ripl/core/type-aliases/Matrix.md"
+          },
+          {
             "text": "MeasureTextOptions",
             "link": "/docs/api/@ripl/core/type-aliases/MeasureTextOptions.md"
           },
@@ -2239,6 +2363,10 @@
           {
             "text": "RendererTransitionOptionsArg",
             "link": "/docs/api/@ripl/core/type-aliases/RendererTransitionOptionsArg.md"
+          },
+          {
+            "text": "RenderInstructionType",
+            "link": "/docs/api/@ripl/core/type-aliases/RenderInstructionType.md"
           },
           {
             "text": "Rotation",
@@ -2481,12 +2609,12 @@
         "collapsed": true,
         "items": [
           {
-            "text": "arePointsEqual",
-            "link": "/docs/api/@ripl/core/functions/arePointsEqual.md"
+            "text": "applyElementTransform",
+            "link": "/docs/api/@ripl/core/functions/applyElementTransform.md"
           },
           {
-            "text": "clamp",
-            "link": "/docs/api/@ripl/core/functions/clamp.md"
+            "text": "arePointsEqual",
+            "link": "/docs/api/@ripl/core/functions/arePointsEqual.md"
           },
           {
             "text": "closest",
@@ -2617,10 +2745,6 @@
             "link": "/docs/api/@ripl/core/functions/elementIsText.md"
           },
           {
-            "text": "fractional",
-            "link": "/docs/api/@ripl/core/functions/fractional.md"
-          },
-          {
             "text": "getColorParser",
             "link": "/docs/api/@ripl/core/functions/getColorParser.md"
           },
@@ -2631,10 +2755,6 @@
           {
             "text": "getEuclideanDistance",
             "link": "/docs/api/@ripl/core/functions/getEuclideanDistance.md"
-          },
-          {
-            "text": "getExtent",
-            "link": "/docs/api/@ripl/core/functions/getExtent.md"
           },
           {
             "text": "getLinearScaleMethod",
@@ -2665,12 +2785,12 @@
             "link": "/docs/api/@ripl/core/functions/getTimeTicks.md"
           },
           {
-            "text": "getTotal",
-            "link": "/docs/api/@ripl/core/functions/getTotal.md"
-          },
-          {
             "text": "getWaypoint",
             "link": "/docs/api/@ripl/core/functions/getWaypoint.md"
+          },
+          {
+            "text": "getWorldTransform",
+            "link": "/docs/api/@ripl/core/functions/getWorldTransform.md"
           },
           {
             "text": "hslToRGBA",
@@ -2721,24 +2841,40 @@
             "link": "/docs/api/@ripl/core/functions/matches.md"
           },
           {
-            "text": "max",
-            "link": "/docs/api/@ripl/core/functions/max.md"
+            "text": "matrixApplyToPoint",
+            "link": "/docs/api/@ripl/core/functions/matrixApplyToPoint.md"
           },
           {
-            "text": "maxOf",
-            "link": "/docs/api/@ripl/core/functions/maxOf.md"
+            "text": "matrixIdentity",
+            "link": "/docs/api/@ripl/core/functions/matrixIdentity.md"
+          },
+          {
+            "text": "matrixInvert",
+            "link": "/docs/api/@ripl/core/functions/matrixInvert.md"
+          },
+          {
+            "text": "matrixIsIdentity",
+            "link": "/docs/api/@ripl/core/functions/matrixIsIdentity.md"
+          },
+          {
+            "text": "matrixMultiply",
+            "link": "/docs/api/@ripl/core/functions/matrixMultiply.md"
+          },
+          {
+            "text": "matrixRotate",
+            "link": "/docs/api/@ripl/core/functions/matrixRotate.md"
+          },
+          {
+            "text": "matrixScale",
+            "link": "/docs/api/@ripl/core/functions/matrixScale.md"
+          },
+          {
+            "text": "matrixTranslate",
+            "link": "/docs/api/@ripl/core/functions/matrixTranslate.md"
           },
           {
             "text": "measureText",
             "link": "/docs/api/@ripl/core/functions/measureText.md"
-          },
-          {
-            "text": "min",
-            "link": "/docs/api/@ripl/core/functions/min.md"
-          },
-          {
-            "text": "minOf",
-            "link": "/docs/api/@ripl/core/functions/minOf.md"
           },
           {
             "text": "niceDomain",
@@ -2983,6 +3119,10 @@
           {
             "text": "setColorAlpha",
             "link": "/docs/api/@ripl/core/functions/setColorAlpha.md"
+          },
+          {
+            "text": "transformBox",
+            "link": "/docs/api/@ripl/core/functions/transformBox.md"
           },
           {
             "text": "transition",
@@ -3481,14 +3621,6 @@
             "link": "/docs/api/@ripl/utilities/functions/comparitorString.md"
           },
           {
-            "text": "formatNumber",
-            "link": "/docs/api/@ripl/utilities/functions/formatNumber.md"
-          },
-          {
-            "text": "formatTime",
-            "link": "/docs/api/@ripl/utilities/functions/formatTime.md"
-          },
-          {
             "text": "functionCache",
             "link": "/docs/api/@ripl/utilities/functions/functionCache.md"
           },
@@ -3501,20 +3633,44 @@
             "link": "/docs/api/@ripl/utilities/functions/functionMemoize.md"
           },
           {
+            "text": "functionNoop",
+            "link": "/docs/api/@ripl/utilities/functions/functionNoop.md"
+          },
+          {
             "text": "functionProduce",
             "link": "/docs/api/@ripl/utilities/functions/functionProduce.md"
           },
           {
-            "text": "noop",
-            "link": "/docs/api/@ripl/utilities/functions/noop.md"
+            "text": "numberClamp",
+            "link": "/docs/api/@ripl/utilities/functions/numberClamp.md"
           },
           {
-            "text": "numberGCD",
-            "link": "/docs/api/@ripl/utilities/functions/numberGCD.md"
+            "text": "numberExtent",
+            "link": "/docs/api/@ripl/utilities/functions/numberExtent.md"
+          },
+          {
+            "text": "numberFormat",
+            "link": "/docs/api/@ripl/utilities/functions/numberFormat.md"
+          },
+          {
+            "text": "numberFractional",
+            "link": "/docs/api/@ripl/utilities/functions/numberFractional.md"
+          },
+          {
+            "text": "numberMaxOf",
+            "link": "/docs/api/@ripl/utilities/functions/numberMaxOf.md"
+          },
+          {
+            "text": "numberMinOf",
+            "link": "/docs/api/@ripl/utilities/functions/numberMinOf.md"
           },
           {
             "text": "numberNice",
             "link": "/docs/api/@ripl/utilities/functions/numberNice.md"
+          },
+          {
+            "text": "numberRoundTo",
+            "link": "/docs/api/@ripl/utilities/functions/numberRoundTo.md"
           },
           {
             "text": "numberSum",
@@ -3545,10 +3701,6 @@
             "link": "/docs/api/@ripl/utilities/functions/predicateKey.md"
           },
           {
-            "text": "roundTo",
-            "link": "/docs/api/@ripl/utilities/functions/roundTo.md"
-          },
-          {
             "text": "setFilter",
             "link": "/docs/api/@ripl/utilities/functions/setFilter.md"
           },
@@ -3575,6 +3727,10 @@
           {
             "text": "stringUniqueId",
             "link": "/docs/api/@ripl/utilities/functions/stringUniqueId.md"
+          },
+          {
+            "text": "timeFormat",
+            "link": "/docs/api/@ripl/utilities/functions/timeFormat.md"
           },
           {
             "text": "typeIsArray",

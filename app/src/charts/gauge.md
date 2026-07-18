@@ -84,7 +84,7 @@ const config = useChartConfig({
 const example = ref();
 
 function buildOptions() {
-    return {
+    const options = {
         value: extras.value,
         minValue: extras.minValue,
         maxValue: extras.maxValue,
@@ -94,19 +94,22 @@ function buildOptions() {
         showTickLabels: extras.showTickLabels,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v}%`;
+
+    return options;
 }
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createGaugeChart(context, {
         label: 'Performance',
-        format: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     const min = extras.minValue ?? 0;

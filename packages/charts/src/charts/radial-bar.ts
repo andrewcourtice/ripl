@@ -225,7 +225,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     id: getKey(item),
                     label: getLabel(item),
                     color: colorFor(item),
-                    active: true,
+                    active: this.isItemActive(getKey(item)),
                 }))
                 : [];
 
@@ -236,12 +236,16 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const outerRadius = (size / 2) * 0.92;
             const holeRadius = outerRadius * innerRadius;
 
-            const values = data.map(getValue);
+            // Legend-hidden rings are excluded from the banding, so the remaining rings thicken to
+            // fill the radial range and the sweep scale re-fits the visible values.
+            const activeData = this.filterActive(data, getKey);
+
+            const values = activeData.map(getValue);
             const [, dataMax] = values.length ? numberExtent(values, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
             const sweep = (range * Math.PI) / 180;
 
-            const bandCount = Math.max(1, data.length);
+            const bandCount = Math.max(1, activeData.length);
             const band = (outerRadius - holeRadius) / bandCount;
 
             // Geometry for the ring at data index `i` (first category outermost). Bars are stroked
@@ -264,12 +268,12 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 left: entries,
                 inner: updates,
                 right: exits,
-            } = arrayJoin(data, this._groups, (item, group) => group.id === getKey(item));
+            } = arrayJoin(activeData, this._groups, (item, group) => group.id === getKey(item));
 
             exits.forEach(group => group.destroy());
 
             const entryGroups = entries.map(item => {
-                const i = data.indexOf(item);
+                const i = activeData.indexOf(item);
                 const itemColor = colorFor(item);
                 const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
 
@@ -323,7 +327,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             });
 
             updates.forEach(([item, group]) => {
-                const i = data.indexOf(item);
+                const i = activeData.indexOf(item);
                 const itemColor = colorFor(item);
                 const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
 

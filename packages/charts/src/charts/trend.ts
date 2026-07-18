@@ -288,7 +288,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return this.buildOverviewSeries(series, data, srs => srs.type, (srs, item) => this._seriesValue(srs, item));
+        return this.buildOverviewSeries(this.filterActive(series), data, srs => srs.type, (srs, item) => this._seriesValue(srs, item));
     }
 
     private _commonContext(plot: ChartArea, emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void): SeriesRenderContext<TData> {
@@ -320,9 +320,14 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const areaSeries = series.filter((srs): srs is TrendChartAreaSeriesOptions<TData> => srs.type === 'area');
-            const barSeries = series.filter((srs): srs is TrendChartBarSeriesOptions<TData> => srs.type === 'bar');
-            const lineSeries = series.filter((srs): srs is TrendChartLineSeriesOptions<TData> => srs.type === 'line');
+            // Legend-hidden series are excluded from extents, per-type stacking, and rendering, so
+            // toggling a series rescales the value axis (and restacks its type group) while the
+            // hidden series animates out through the standard exit join.
+            const activeSeries = this.filterActive(series);
+
+            const areaSeries = activeSeries.filter((srs): srs is TrendChartAreaSeriesOptions<TData> => srs.type === 'area');
+            const barSeries = activeSeries.filter((srs): srs is TrendChartBarSeriesOptions<TData> => srs.type === 'bar');
+            const lineSeries = activeSeries.filter((srs): srs is TrendChartLineSeriesOptions<TData> => srs.type === 'line');
 
             // The value domain must cover every series, respecting per-type stacking.
             const extents: number[] = [0];
@@ -351,7 +356,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 

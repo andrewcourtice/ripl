@@ -111,7 +111,7 @@ function makeLinks() {
 let links = makeLinks();
 
 function buildOptions() {
-    return {
+    const options = {
         nodeRadius: extras.nodeRadius,
         charge: extras.charge,
         linkDistance: extras.linkDistance,
@@ -119,6 +119,11 @@ function buildOptions() {
         centerStrength: extras.centerStrength,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v} threads`;
+
+    return options;
 }
 
 const example = ref();
@@ -128,14 +133,13 @@ const { contextChanged, chart } = useRiplChart(context => {
         nodes,
         links,
         root: 'eng-hub',
-        format: v => `${v} threads`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     // Re-roll link weights; the layout re-runs from its current positions and glides to the new one.

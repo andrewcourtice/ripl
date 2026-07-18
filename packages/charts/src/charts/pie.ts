@@ -192,7 +192,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 id: getKey(item),
                 label: getLabel(item),
                 color: colorFor(item),
-                active: true,
+                active: this.isItemActive(getKey(item)),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
@@ -200,14 +200,18 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             const area = layout.area;
             const { cx, cy, size } = areaCenter(area);
 
-            const total = numberSum(data, getValue);
+            // Legend-hidden segments are excluded from the layout, so the remaining segments'
+            // angles expand to fill the circle and hidden ones exit through the standard join.
+            const activeData = this.filterActive(data, getKey);
+
+            const total = numberSum(activeData, getValue);
             const scale = scaleContinuous([0, total], [0, TAU], { clamp: true });
             const offset = TAU / 4;
-            const padAngle = data.length === 1 ? 0 : 0.1 / data.length;
+            const padAngle = activeData.length <= 1 ? 0 : 0.1 / activeData.length;
 
             let startAngle = -offset;
 
-            const calculations = data.map(item => {
+            const calculations = activeData.map(item => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
                 const itemColor = colorFor(item);

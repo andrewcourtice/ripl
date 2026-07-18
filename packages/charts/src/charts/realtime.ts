@@ -267,7 +267,9 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         const newGroups: Group[] = [];
         const updatedGroups: Group[] = [];
 
-        series.forEach(srs => {
+        // Legend-hidden series are skipped, so their groups fall through to the leftover cleanup
+        // below and are removed (their buffers keep streaming, ready for re-show).
+        this.filterActive(series).forEach(srs => {
             const buffer = this._buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
@@ -438,10 +440,15 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
             this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
-            // Compute y extent from all buffers
+            // Compute the y extent from the legend-active buffers only, so hiding a series
+            // rescales the axis to the remaining ones.
             const allValues: number[] = [];
 
-            this._buffers.forEach(buffer => {
+            this._buffers.forEach((buffer, seriesId) => {
+                if (!this.isItemActive(seriesId)) {
+                    return;
+                }
+
                 buffer.forEach(value => allValues.push(value));
             });
 
@@ -476,7 +483,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                     id: srs.id,
                     label: srs.label ?? srs.id,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 

@@ -142,9 +142,8 @@ const {
     ...buildOptions(),
 }));
 
-// Furniture options (axes, grid, tooltip, crosshair, legend, theme, navigator) are only read when a
-// chart is constructed, so rebuild the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function getValue(min: number, max: number) {
     return Math.round((min + Math.random() * (max - min)) * 100) / 100;

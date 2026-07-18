@@ -196,7 +196,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return this.buildOverviewSeries(series, data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
+        return this.buildOverviewSeries(this.filterActive(series), data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
     }
 
     private _seriesContext(plot: ChartArea, yScale: Scale = this._yScale): LineSeriesContext<TData> {
@@ -228,7 +228,11 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            const seriesExtents = series
+            // Legend-hidden series are excluded from extents and rendering, so toggling a series
+            // rescales the value axis and animates the series out through the standard exit join.
+            const activeSeries = this.filterActive(series);
+
+            const seriesExtents = activeSeries
                 .flatMap(srs => numberExtent(data, resolveAccessor<TData, number>(srs.value)))
                 .concat(0);
 
@@ -242,7 +246,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -259,7 +263,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             if (this.yAxes.length > 1) {
                 return this._renderSecondaryAxes({
-                    series,
+                    series: activeSeries,
                     keys,
                     dataExtent,
                     navBand,
@@ -311,7 +315,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
-            const seriesRender = this._series.render(series, this._seriesContext(plot));
+            const seriesRender = this._series.render(activeSeries, this._seriesContext(plot));
 
             // A previous render may have drawn series against a since-removed secondary axis —
             // rendering the secondary renderer empty exits those groups.
@@ -333,9 +337,10 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
     }
 
     /**
-     * Renders the chart with a secondary (right-hand) y-axis. Series are partitioned by their `axis`
-     * binding; each axis gets an independent value extent and scale, the plot sits between the two
-     * axis label bands, and each series group is drawn against its bound axis's scale.
+     * Renders the chart with a secondary (right-hand) y-axis. The (legend-active) series are
+     * partitioned by their `axis` binding; each axis gets an independent value extent and scale
+     * computed over the active series bound to it, the plot sits between the two axis label bands,
+     * and each series group is drawn against its bound axis's scale.
      */
     private _renderSecondaryAxes(ctx: {
         series: LineChartSeriesOptions<TData>[];

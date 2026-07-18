@@ -373,6 +373,12 @@ export class Chart<
                 onHighlight: id => this.highlightSeries(id),
             });
         } else {
+            this.legend.setOptions({
+                position: legendOpts.position,
+                font: legendOpts.font,
+                fontColor: legendOpts.fontColor,
+                highlight: legendOpts.highlight,
+            });
             this.legend.update(items);
         }
 

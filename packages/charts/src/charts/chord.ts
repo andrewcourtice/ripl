@@ -323,7 +323,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 id: `arc-${label}`,
                 label,
                 color: resolvedColors[index],
-                active: true,
+                active: this.isItemActive(`arc-${label}`),
             }));
 
             this.reserveLegend(chartLayout, legendItems, this.options.legend);
@@ -333,7 +333,17 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             const outerRadius = size * 0.42;
             const innerRadius = outerRadius - 15;
 
-            const layout = computeChordLayout(labels, matrix, padAngle, colorGenerator, resolvedColors);
+            // Legend-hidden groups are dropped from the layout (their matrix row/column excluded),
+            // so the remaining arcs and ribbons expand to fill the circle. Arc/ribbon ids are
+            // label-based, so the joins still match and hidden elements exit cleanly.
+            const activeIndices = labels
+                .map((_, index) => index)
+                .filter(index => this.isItemActive(`arc-${labels[index]}`));
+            const activeLabels = activeIndices.map(index => labels[index]);
+            const activeMatrix = activeIndices.map(row => activeIndices.map(col => matrix[row]?.[col] ?? 0));
+            const activeColors = activeIndices.map(index => resolvedColors[index]);
+
+            const layout = computeChordLayout(activeLabels, activeMatrix, padAngle, colorGenerator, activeColors);
 
             // Draw arcs
             const {

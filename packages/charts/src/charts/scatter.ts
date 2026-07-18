@@ -186,7 +186,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const { data, series } = this.options;
         const sizes: number[] = [];
 
-        series.forEach(({ sizeBy }) => {
+        this.filterActive(series).forEach(({ sizeBy }) => {
             if (sizeBy === undefined) {
                 return;
             }
@@ -204,7 +204,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
      */
     private _getMaxBubbleRadius(): number {
         const { series } = this.options;
-        const radii = series.map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
+        const radii = this.filterActive(series).map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
         const largest = radii.length > 0 ? Math.max(...radii) : 3;
 
         return largest + 2;
@@ -313,7 +313,9 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
     }
 
     private async _drawBubbles(getKey: (item: TData) => string) {
-        const { data, series } = this.options;
+        const { data } = this.options;
+        // Legend-hidden series fall into the series-exit join below, so their bubbles shrink out.
+        const series = this.filterActive(this.options.series);
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
         const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
         const formatValue = resolveValueFormat(this.options.format);
@@ -540,11 +542,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const getKey = resolveAccessor<TData, string>(key);
 
-            const xExtents = series.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
-            const yExtents = series.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+            // Legend-hidden series are excluded from the axis extents and rendering, so toggling a
+            // series rescales both axes; with every series hidden the extents fall back to [0, 1].
+            const activeSeries = this.filterActive(series);
 
-            const xExtent = numberExtent(xExtents, functionIdentity);
-            const yExtent = numberExtent(yExtents, functionIdentity);
+            const xExtents = activeSeries.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
+            const yExtents = activeSeries.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+
+            const xExtent = xExtents.length ? numberExtent(xExtents, functionIdentity) : [0, 1];
+            const yExtent = yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];
             this._sizeScale = scaleContinuous(this._getSizeExtent(), [0, 1]);
 
             const layout = this.createLayout();
@@ -555,7 +561,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 

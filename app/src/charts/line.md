@@ -178,9 +178,8 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-// Most furniture options (axes, grid, tooltip, crosshair, legend, theme) are only read when a chart
-// is constructed, so rebuild the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     data = generateData(data.length);
