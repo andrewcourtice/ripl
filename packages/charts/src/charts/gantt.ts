@@ -69,6 +69,7 @@ import {
     Box,
     createGroup,
     createLine,
+    createPolyline,
     createRect,
     easeOutCubic,
     scaleBand,
@@ -98,6 +99,12 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     colorBy?: keyof TData | ((item: TData) => string);
     /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
     progress?: NumericAccessor<TData>;
+    /**
+     * Accessor for the keys of the tasks each task depends on. When provided, a curved connector is
+     * drawn from every predecessor task's end to this task's start (finish-to-start). Return an empty
+     * array — or omit the option entirely — for a task with no dependencies.
+     */
+    dependencies?: keyof TData | ((item: TData) => string[]);
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
@@ -150,6 +157,7 @@ const DEFAULT_TODAY_COLOR = '#ef4444';
 export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>, GanttChartEventMap> {
 
     private _barGroups: Group[] = [];
+    private _connectorsGroup?: Group;
     private _todayLine?: Line;
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
@@ -393,6 +401,92 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         ]);
     }
 
+    /**
+     * Draws curved finish-to-start connectors between dependent tasks. For each task with a
+     * `dependencies` entry, a `bumpX` link runs from every predecessor's end to this task's start,
+     * capped with an arrowhead. Rebuilt each render (cheap); missing predecessors are skipped, and the
+     * whole layer is torn down when no `dependencies` accessor is configured.
+     */
+    private _drawConnectors(
+        data: TData[],
+        getKey: (item: TData) => string,
+        geometryByKey: Map<string, { startX: number;
+            endX: number;
+            centerY: number; }>
+    ) {
+        const dependenciesAccessor = this.options.dependencies;
+
+        if (!dependenciesAccessor) {
+            if (this._connectorsGroup) {
+                this._connectorsGroup.destroy();
+                this._connectorsGroup = undefined;
+            }
+
+            return;
+        }
+
+        const getDependencies = this._getAccessor<string[]>(dependenciesAccessor);
+
+        if (!this._connectorsGroup) {
+            // Above the bars but below the today marker (zIndex 500), so links read as structure.
+            this._connectorsGroup = createGroup({
+                id: 'connectors',
+                zIndex: 450,
+            });
+
+            this.scene.add(this._connectorsGroup);
+        }
+
+        const group = this._connectorsGroup;
+        group.clear();
+
+        const color = setColorAlpha(this.theme.axisColor, 0.9);
+        const arrowSize = 6;
+
+        data.forEach(item => {
+            const target = geometryByKey.get(getKey(item));
+
+            if (!target) {
+                return;
+            }
+
+            const dependencies = getDependencies(item) ?? [];
+
+            dependencies.forEach(dependencyKey => {
+                const source = geometryByKey.get(dependencyKey);
+
+                if (!source) {
+                    return;
+                }
+
+                // Curved link: predecessor end → this task's start (stopping short for the arrowhead).
+                const link = createPolyline({
+                    points: [
+                        [source.endX, source.centerY],
+                        [target.startX - arrowSize, target.centerY],
+                    ],
+                    renderer: 'bumpX',
+                    stroke: color,
+                    lineWidth: 1.5,
+                });
+
+                link.autoFill = false;
+
+                // Filled arrowhead pointing into the dependent task's start.
+                const arrow = createPolyline({
+                    points: [
+                        [target.startX - arrowSize, target.centerY - arrowSize * 0.55],
+                        [target.startX, target.centerY],
+                        [target.startX - arrowSize, target.centerY + arrowSize * 0.55],
+                    ],
+                    fill: color,
+                });
+
+                group.add([link, arrow]);
+            });
+        });
+    }
+
     private _drawTodayMarker(
         timeScale: ReturnType<typeof scaleTime>,
         chartTop: number,
@@ -577,6 +671,26 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
             // Draw today marker
             this._drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
+
+            // Dependency connectors — resolve each task's bar geometry (finish/start x, row centre y)
+            // so links can be drawn from a predecessor's end to a dependent's start.
+            const geometryByKey = new Map<string, { startX: number;
+                endX: number;
+                centerY: number; }>();
+
+            data.forEach(item => {
+                const startX = timeScale(getStart(item));
+                const endX = Math.max(timeScale(getEnd(item)), startX + 2);
+                const centerY = adjustedCategoryScale(getLabel(item)) + adjustedCategoryScale.bandwidth / 2;
+
+                geometryByKey.set(getKey(item), {
+                    startX,
+                    endX,
+                    centerY,
+                });
+            });
+
+            this._drawConnectors(data, getKey, geometryByKey);
 
             return Promise.all([
                 this._xAxis.render(),

@@ -652,9 +652,13 @@ export class ChartYAxis extends ChartAxis {
         if (this.title) {
             const isLeftAligned = this.alignment === 'left';
             const titleId = 'chart-axis__y-title';
+            // Anchor the rotated title to the outer edge of its band (not centred) so the full
+            // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
+            // widening the reserved band, so the plot margins are unchanged.
+            const titleThickness = this.titleBand - TITLE_GAP;
             const titleX = isLeftAligned
-                ? boundingBox.left + this.titleBand / 2
-                : boundingBox.right - this.titleBand / 2;
+                ? boundingBox.left + titleThickness / 2
+                : boundingBox.right - titleThickness / 2;
             const titleY = (boundingBox.top + boundingBox.bottom) / 2;
             const rotation = isLeftAligned ? -Math.PI / 2 : Math.PI / 2;
 

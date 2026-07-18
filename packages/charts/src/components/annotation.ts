@@ -8,6 +8,7 @@ import {
 
 import type {
     Group,
+    Rect,
     Scale,
 } from '@ripl/core';
 
@@ -116,6 +117,7 @@ const DEFAULT_FONT = '11px sans-serif';
 export class ChartAnnotations extends ChartComponent {
 
     private _group?: Group;
+    private _clip?: Rect;
 
     constructor(options: ChartComponentOptions) {
         super(options);
@@ -141,10 +143,40 @@ export class ChartAnnotations extends ChartComponent {
      * @param annotations - The annotations to render.
      * @param scales - The x/y value scales used to position them.
      * @param plot - The plot rectangle they are drawn within.
+     * @param clip - When `true`, mask the annotations to `plot` so they don't bleed past the plot
+     *   edges while a navigator pans/zooms (which rescales the axes). Defaults to `false`.
      */
-    public render(annotations: ChartAnnotation[], scales: AnnotationScales, plot: AnnotationPlot): void {
+    public render(annotations: ChartAnnotation[], scales: AnnotationScales, plot: AnnotationPlot, clip = false): void {
         const group = this._ensureGroup();
         group.clear();
+
+        if (clip) {
+            // Re-establish the clip mask as the group's first child (clear() detached it): a
+            // fill-less rect with `clip` set masks every later sibling to the plot rectangle — the
+            // same sibling-mask the series/grid/axes use — so annotations stay inside the plot when
+            // the navigator rescales the axes. Added only while clipping, so non-navigator rendering
+            // is byte-identical.
+            if (!this._clip) {
+                this._clip = createRect({
+                    id: 'chart-annotations__clip',
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                    clip: false,
+                    pointerEvents: 'none',
+                    zIndex: Number.NEGATIVE_INFINITY,
+                });
+            }
+
+            this._clip.x = plot.x;
+            this._clip.y = plot.y;
+            this._clip.width = plot.width;
+            this._clip.height = plot.height;
+            this._clip.clip = true;
+
+            group.add(this._clip);
+        }
 
         annotations.forEach((annotation, index) => {
             if (annotation.type === 'band') {

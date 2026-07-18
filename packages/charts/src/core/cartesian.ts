@@ -277,6 +277,15 @@ export abstract class CartesianChart<
     }
 
     /**
+     * Whether a navigator pan/zoom gesture is currently in flight. Subclasses can gate entry/update
+     * animations on this so marks snap to the new view each frame instead of tweening (which would lag
+     * behind the pointer). Mirrors the animation suppression in {@link CartesianChart.resolveAnimation}.
+     */
+    protected get isNavigating(): boolean {
+        return this._navigating;
+    }
+
+    /**
      * Merges options and re-renders (see {@link Chart.update}), additionally creating or destroying the
      * navigator when the `navigator` or `overview` option is toggled. The controller is otherwise a
      * construction-time concern, so reconciling here keeps `chart.update({ navigator })` /
@@ -925,7 +934,10 @@ export abstract class CartesianChart<
             });
         }
 
-        this._annotations.render(annotations, scales, plot);
+        // Clip the annotations to the plot only while a navigator is active — the pan/zoom rescales
+        // the axes, so unclipped annotations would otherwise slide into the axis gutters. Matches the
+        // series/grid/axis clip gate in `clipPlot`.
+        this._annotations.render(annotations, scales, plot, !!this._navigator);
     }
 
     /**

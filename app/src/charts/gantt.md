@@ -1,6 +1,6 @@
 # Gantt Chart
 
-The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
+The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. Curved dependency connectors can be drawn between dependent tasks (finish-to-start). It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -25,6 +25,9 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
             </RiplField>
             <RiplField label="Corner radius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Dependencies" inline>
+                <RiplSwitch v-model="extras.showConnectors" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -54,6 +57,7 @@ const { extras, reset } = useChartExtras({
     showToday: true,
     todayColor: '#ef4444',
     borderRadius: 3,
+    showConnectors: true,
 });
 
 const config = useChartConfig({
@@ -85,6 +89,23 @@ const TASKS = [
 
 let taskCount = 8;
 
+const toId = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+
+// Finish-to-start dependencies between tasks (by name), drawn as curved connectors.
+const DEPENDENCIES: Record<string, string[]> = {
+    Design: ['Research'],
+    Prototyping: ['Design'],
+    'Frontend Dev': ['Prototyping'],
+    'Backend Dev': ['Prototyping'],
+    'API Integration': ['Frontend Dev', 'Backend Dev'],
+    Testing: ['API Integration'],
+    Documentation: ['Testing'],
+    'Code Review': ['Testing'],
+    Deployment: ['Code Review'],
+    Marketing: ['Deployment'],
+    Launch: ['Deployment', 'Marketing'],
+};
+
 function generateTask(name: string, index: number) {
     const baseDate = new Date();
     const startOffset = Math.floor(index * 5 + Math.random() * 10) - 15;
@@ -94,11 +115,12 @@ function generateTask(name: string, index: number) {
     const progress = Math.round(Math.random() * 100) / 100;
 
     return {
-        id: name.toLowerCase().replace(/\s+/g, '-'),
+        id: toId(name),
         name,
         start,
         end,
         progress,
+        dependsOn: (DEPENDENCIES[name] ?? []).map(toId),
     };
 }
 
@@ -113,6 +135,7 @@ function buildOptions() {
         showToday: extras.showToday,
         todayColor: extras.todayColor,
         borderRadius: extras.borderRadius,
+        dependencies: extras.showConnectors ? 'dependsOn' : undefined,
         ...buildCommonOptions(config),
     };
 }
@@ -189,6 +212,7 @@ chart.update({ data: newData });
 - **`end`** — End date accessor
 - **`colorBy`** — Optional color accessor per task
 - **`progress`** — Optional progress accessor (0–1)
+- **`dependencies`** — Optional accessor returning the keys of each task's predecessors; draws curved finish-to-start connectors between dependent tasks
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`axis`** — `boolean | ChartAxisOptions` — Configure axes

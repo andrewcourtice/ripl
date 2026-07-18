@@ -3,12 +3,12 @@ import type {
 } from '../core/data';
 
 import type {
-    BaseChartOptions,
-} from '../core/chart';
+    CartesianChartOptions,
+} from '../core/cartesian';
 
 import {
-    Chart,
-} from '../core/chart';
+    CartesianChart,
+} from '../core/cartesian';
 
 import type {
     ChartAxisInput,
@@ -19,39 +19,20 @@ import type {
 } from '../core/options';
 
 import {
-    normalizeAxis,
-    normalizeAxisItem,
-    normalizeCrosshair,
-    normalizeGrid,
-    normalizeTooltip,
-    normalizeYAxisItem,
     resolveValueFormat,
 } from '../core/options';
-
-import type {
-    ChartXAxis,
-    ChartYAxis,
-} from '../components/axis';
-
-import {
-    createChartAxes,
-} from '../components/axis';
-
-import {
-    Tooltip,
-} from '../components/tooltip';
 
 import {
     applyHoverHighlight,
 } from '../core/interaction';
 
-import {
-    Grid,
-} from '../components/grid';
+import type {
+    ChartNavigatorSeries,
+} from '../components/navigator';
 
-import {
-    Crosshair,
-} from '../components/crosshair';
+import type {
+    ChartArea,
+} from '../core/layout';
 
 import type {
     Context,
@@ -62,6 +43,7 @@ import type {
     Rect,
     RectState,
     Scale,
+    Text,
 } from '@ripl/core';
 
 import {
@@ -69,6 +51,7 @@ import {
     createGroup,
     createLine,
     createRect,
+    createText,
     easeOutCubic,
     easeOutQuart,
     scaleContinuous,
@@ -84,7 +67,7 @@ import {
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link StockChart}. */
-export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
+export interface StockChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     /** The dataset to render, one candlestick per item. */
     data: TData[];
     /** Accessor for each item's unique key, used along the x-axis and to match candles across updates. */
@@ -101,9 +84,9 @@ export interface StockChartOptions<TData = unknown> extends BaseChartOptions {
     volume?: NumericAccessor<TData>;
     /** Show the volume sub-chart below the candlesticks. Defaults to `true` (requires `volume`). */
     showVolume?: boolean;
-    /** Background grid line configuration. */
+    /** Background grid configuration. */
     grid?: ChartGridInput;
-    /** Crosshair overlay configuration. */
+    /** Crosshair overlay configuration. Both axes are tracked by default. */
     crosshair?: ChartCrosshairInput;
     /** Hover tooltip configuration. */
     tooltip?: ChartTooltipInput;
@@ -166,85 +149,92 @@ const VOLUME_HEIGHT_RATIO = 0.2;
  *
  * Each data point is rendered as a candlestick with a body (open-close range)
  * and wick (high-low range), colored by direction. Supports an optional
- * volume sub-chart, crosshair, tooltips, grid, and animated entry/update
- * transitions.
+ * volume sub-chart, both-axis crosshair (by default), pan/zoom navigation,
+ * annotations, tooltips, grid, and animated entry/update transitions.
  *
  * @typeParam TData - The type of each data item in the dataset.
  */
-export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>, StockChartEventMap> {
+export class StockChart<TData = unknown> extends CartesianChart<StockChartOptions<TData>, TData, StockChartEventMap> {
 
     private _candlestickGroups: Group[] = [];
     private _volumeGroup?: Group;
+    private _volumeClip?: Rect;
+    private _volumeLabel?: Text;
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
     private _volumeScale!: Scale;
-    private _xAxis!: ChartXAxis;
-    private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
-    private _grid?: Grid;
-    private _crosshair?: Crosshair;
 
     constructor(target: string | HTMLElement | Context, options: StockChartOptions<TData>) {
         super(target, options);
 
-        const axisOpts = normalizeAxis(options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
-        );
-        const gridOpts = normalizeGrid(options.grid);
-        const crosshairOpts = normalizeCrosshair(options.crosshair, { axis: 'both' });
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
-
-        const axes = createChartAxes({
-            scene: this.scene,
-            renderer: this.renderer,
-            xAxis,
-            yAxis,
+        // Stock defaults the crosshair to both axes; grid draws horizontal price lines only.
+        this.setupCartesian({
+            grid: { horizontal: true },
+            crosshair: true,
+            crosshairAxisDefault: 'both',
         });
 
-        this._xAxis = axes.xAxis;
-        this._yAxis = axes.yAxis;
-
-        if (gridOpts.visible) {
-            this._grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: true,
-                vertical: false,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
-
-        if (crosshairOpts.visible) {
-            this._crosshair = new Crosshair({
-                scene: this.scene,
-                renderer: this.renderer,
-                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
-                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                stroke: crosshairOpts.lineColor,
-                lineWidth: crosshairOpts.lineWidth,
-            });
-        }
-
         this.init();
+    }
+
+    /** Stock charts are category-on-x (dates), so the navigator windows the x axis (bottom scrub bar). */
+    protected override navigationAxis(): 'x' {
+        return 'x';
     }
 
     private _getAccessor<TReturn>(accessor: keyof TData | ((item: TData) => TReturn)): (item: TData) => TReturn {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeIsFunction(accessor) ? accessor : (item: any) => item[accessor] as TReturn;
+    }
+
+    /** Builds the single-series overview data (close-price line) shown in the navigator scrub strip. */
+    private _overviewSeries(): ChartNavigatorSeries[] {
+        const getClose = this._getAccessor<number>(this.options.close);
+
+        return [
+            {
+                id: 'close',
+                color: this.getSeriesColor('close'),
+                type: 'line',
+                values: this.options.data.map(getClose),
+            },
+        ];
+    }
+
+    /**
+     * Builds a centred category scale mapping each key to the centre of its equal-width band across
+     * `[left, right]`, exposing the metadata {@link CartesianChart.applyViewToScale} needs. Candles and
+     * volume bars centre on these positions, so they stay inside the plot (unlike an endpoint point
+     * scale, whose first/last marks would overhang the axes).
+     */
+    private _createCategoryScale(keys: string[], left: number, right: number): Scale<string> {
+        const convert = (value: string) => {
+            const index = keys.indexOf(value);
+            return left + ((index + 0.5) / Math.max(1, keys.length)) * (right - left);
+        };
+
+        const invert = (value: number) => {
+            const index = Math.round(((value - left) / (right - left)) * keys.length - 0.5);
+            return keys[numberClamp(index, 0, keys.length - 1)];
+        };
+
+        return Object.assign(
+            convert,
+            {
+                domain: keys,
+                range: [left, right] as number[],
+                inverse: invert,
+                ticks: (count?: number) => {
+                    if (!count || count >= keys.length) {
+                        return keys;
+                    }
+
+                    const step = Math.ceil(keys.length / count);
+                    return keys.filter((_, i) => i % step === 0);
+                },
+                includes: (value: string) => keys.includes(value),
+            }
+        ) as unknown as Scale<string>;
     }
 
     /**
@@ -274,7 +264,7 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 duration: this.getAnimationDuration(200),
                 ease: easeOutQuart,
             }),
-            tooltip: this._tooltip,
+            tooltip: this.tooltip,
             anchor: () => ({
                 x: anchorX,
                 y: anchorY,
@@ -322,15 +312,16 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
         };
     }
 
-    private async _drawCandlesticks(chartLeft: number, chartRight: number) {
+    private async _drawCandlesticks(candleWidth: number) {
         const {
             data,
             upColor = DEFAULT_UP_COLOR,
             downColor = DEFAULT_DOWN_COLOR,
         } = this.options;
 
-        const candleWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
         const wickWidth = 1;
+        // While the navigator pans/zooms, snap candles to the new view each frame instead of tweening.
+        const instant = this.isNavigating;
 
         const {
             left: entries,
@@ -449,7 +440,8 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             return group;
         });
 
-        this.scene.add(entryGroups);
+        // Candles live in the plot-clipped container so they can't smear over the axes while panning.
+        this.addPlotContent(entryGroups);
 
         this._candlestickGroups = [
             ...entryGroups,
@@ -460,16 +452,19 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             const body = group.getElementsByType('rect')[0] as Rect;
             const wick = group.getElementsByType('line')[0] as Line;
 
+            const duration = instant ? 0 : this.getAnimationDuration(800);
+            const delay = instant ? 0 : index * (this.getAnimationDuration(400) / Math.max(1, entryGroups.length));
+
             const bodyTransition = body ? this.renderer.transition(body, {
-                duration: this.getAnimationDuration(800),
-                delay: index * (this.getAnimationDuration(400) / Math.max(1, entryGroups.length)),
+                duration,
+                delay,
                 ease: easeOutCubic,
                 state: body.data as RectState,
             }) : Promise.resolve();
 
             const wickTransition = wick ? this.renderer.transition(wick, {
-                duration: this.getAnimationDuration(800),
-                delay: index * (this.getAnimationDuration(400) / Math.max(1, entryGroups.length)),
+                duration,
+                delay,
                 ease: easeOutCubic,
                 state: wick.data as LineState,
             }) : Promise.resolve();
@@ -481,14 +476,16 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             const body = group.getElementsByType('rect')[0] as Rect;
             const wick = group.getElementsByType('line')[0] as Line;
 
+            const duration = instant ? 0 : this.getAnimationDuration(800);
+
             const bodyTransition = body ? this.renderer.transition(body, {
-                duration: this.getAnimationDuration(800),
+                duration,
                 ease: easeOutCubic,
                 state: body.data as RectState,
             }) : Promise.resolve();
 
             const wickTransition = wick ? this.renderer.transition(wick, {
-                duration: this.getAnimationDuration(800),
+                duration,
                 ease: easeOutCubic,
                 state: wick.data as LineState,
             }) : Promise.resolve();
@@ -503,10 +500,10 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
     }
 
     private async _drawVolume(
-        chartLeft: number,
-        chartRight: number,
+        candleWidth: number,
         volumeTop: number,
-        volumeBottom: number
+        volumeBottom: number,
+        plot: ChartArea
     ) {
         const {
             data,
@@ -519,112 +516,128 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
             return;
         }
 
-        const barWidth = Math.max(1, ((chartRight - chartLeft) / data.length) * 0.6);
+        const instant = this.isNavigating;
 
         const volumes = data.map(item => this._getAccessor<number>(volumeAccessor)(item));
         const volumeExtent = numberExtent(volumes.concat(0), functionIdentity);
 
         this._volumeScale = scaleContinuous(volumeExtent, [volumeBottom, volumeTop]);
 
-        if (this._volumeGroup) {
-            const existingBars = this._volumeGroup.getElementsByType('rect') as Rect[];
-
-            const {
-                left: barEntries,
-                inner: barUpdates,
-                right: barExits,
-            } = arrayJoin(
-                data,
-                existingBars,
-                (item, bar) => bar.id === `vol-${this._getCandlestickValues(item).key}`
-            );
-
-            barExits.forEach(el => el.destroy());
-
-            barEntries.forEach(item => {
-                const values = this._getCandlestickValues(item);
-                const color = values.isUp ? upColor : downColor;
-                const x = this._xScale(values.key);
-                const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
-
-                const bar = createRect({
-                    id: `vol-${values.key}`,
-                    fill: setColorAlpha(color, 0.3),
-                    x: x - barWidth / 2,
-                    y: volumeBottom,
-                    width: barWidth,
-                    height: 0,
-                    data: {
-                        fill: setColorAlpha(color, 0.3),
-                        x: x - barWidth / 2,
-                        y: volumeBottom - barHeight,
-                        width: barWidth,
-                        height: barHeight,
-                    } as RectState,
-                });
-
-                this._volumeGroup!.add(bar);
+        if (!this._volumeGroup) {
+            this._volumeGroup = createGroup({
+                id: 'volume',
+                zIndex: -1,
             });
 
-            barUpdates.forEach(([item, bar]) => {
-                const values = this._getCandlestickValues(item);
-                const color = values.isUp ? upColor : downColor;
-                const x = this._xScale(values.key);
-                const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
-
-                bar.data = {
-                    fill: setColorAlpha(color, 0.3),
-                    x: x - barWidth / 2,
-                    y: volumeBottom - barHeight,
-                    width: barWidth,
-                    height: barHeight,
-                } as RectState;
-            });
-
-            const allBars = this._volumeGroup.getElementsByType('rect') as Rect[];
-
-            return this.renderer.transition(allBars, (element, index, length) => ({
-                duration: this.getAnimationDuration(800),
-                delay: index * (this.getAnimationDuration(400) / Math.max(1, length)),
-                ease: easeOutCubic,
-                state: element.data as RectState,
-            }));
+            this.scene.add(this._volumeGroup);
+            this._volumeClip = undefined;
+            this._volumeLabel = undefined;
         }
 
-        this._volumeGroup = createGroup({
-            id: 'volume',
-            zIndex: -1,
-        });
+        const group = this._volumeGroup;
 
-        const bars = data.map(item => {
+        // Clip mask (first child) so volume bars stay within their band while the navigator pans/zooms.
+        if (!this._volumeClip) {
+            this._volumeClip = createRect({
+                id: 'volume-clip',
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0,
+                clip: false,
+                pointerEvents: 'none',
+                zIndex: Number.NEGATIVE_INFINITY,
+            });
+
+            group.add(this._volumeClip);
+        }
+
+        this._volumeClip.x = plot.x;
+        this._volumeClip.y = volumeTop;
+        this._volumeClip.width = plot.width;
+        this._volumeClip.height = Math.max(0, volumeBottom - volumeTop);
+        this._volumeClip.clip = !!this.navigator;
+
+        // "Volume" caption at the top-left of the volume band.
+        if (!this._volumeLabel) {
+            this._volumeLabel = createText({
+                id: 'volume-label',
+                content: 'Volume',
+                x: 0,
+                y: 0,
+                textAlign: 'left',
+                textBaseline: 'top',
+                fill: setColorAlpha(this.theme.axisColor, 0.9),
+                font: this.theme.font,
+                zIndex: 5,
+            });
+
+            group.add(this._volumeLabel);
+        }
+
+        this._volumeLabel.x = plot.x + 2;
+        this._volumeLabel.y = volumeTop + 2;
+
+        // Exclude the clip rect (also a rect) from the bar data-join.
+        const existingBars = (group.getElementsByType('rect') as Rect[]).filter(bar => bar.id !== 'volume-clip');
+
+        const {
+            left: barEntries,
+            inner: barUpdates,
+            right: barExits,
+        } = arrayJoin(
+            data,
+            existingBars,
+            (item, bar) => bar.id === `vol-${this._getCandlestickValues(item).key}`
+        );
+
+        barExits.forEach(el => el.destroy());
+
+        barEntries.forEach(item => {
             const values = this._getCandlestickValues(item);
             const color = values.isUp ? upColor : downColor;
             const x = this._xScale(values.key);
             const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
 
-            return createRect({
+            const bar = createRect({
                 id: `vol-${values.key}`,
                 fill: setColorAlpha(color, 0.3),
-                x: x - barWidth / 2,
+                x: x - candleWidth / 2,
                 y: volumeBottom,
-                width: barWidth,
+                width: candleWidth,
                 height: 0,
                 data: {
                     fill: setColorAlpha(color, 0.3),
-                    x: x - barWidth / 2,
+                    x: x - candleWidth / 2,
                     y: volumeBottom - barHeight,
-                    width: barWidth,
+                    width: candleWidth,
                     height: barHeight,
                 } as RectState,
             });
+
+            group.add(bar);
         });
 
-        bars.forEach(bar => this._volumeGroup!.add(bar));
-        this.scene.add(this._volumeGroup);
+        barUpdates.forEach(([item, bar]) => {
+            const values = this._getCandlestickValues(item);
+            const color = values.isUp ? upColor : downColor;
+            const x = this._xScale(values.key);
+            const barHeight = Math.abs(volumeBottom - this._volumeScale(values.volume));
 
-        return this.renderer.transition(bars, (element, index, length) => ({
-            duration: this.getAnimationDuration(800),
-            delay: index * (this.getAnimationDuration(400) / Math.max(1, length)),
+            bar.data = {
+                fill: setColorAlpha(color, 0.3),
+                x: x - candleWidth / 2,
+                y: volumeBottom - barHeight,
+                width: candleWidth,
+                height: barHeight,
+            } as RectState;
+        });
+
+        const allBars = (group.getElementsByType('rect') as Rect[]).filter(bar => bar.id !== 'volume-clip');
+
+        return this.renderer.transition(allBars, (element, index, length) => ({
+            duration: instant ? 0 : this.getAnimationDuration(800),
+            delay: instant ? 0 : index * (this.getAnimationDuration(400) / Math.max(1, length)),
             ease: easeOutCubic,
             state: element.data as RectState,
         }));
@@ -638,6 +651,9 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
                 volume: volumeAccessor,
             } = this.options;
 
+            this.resolveSeriesColors([{ id: 'close' }]);
+            this.prepareAxes();
+
             const allValues = data.map(item => this._getCandlestickValues(item));
 
             const highs = allValues.map(v => v.high);
@@ -648,126 +664,96 @@ export class StockChart<TData = unknown> extends Chart<StockChartOptions<TData>,
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            // Reserve the overview strip band from the bottom before the axes are measured.
+            const navBand = this.reserveNavigatorBand(layout);
+
             const area = layout.area;
             const left = area.x;
+            const top = area.y;
             const right = area.x + area.width;
             const bottom = area.y + area.height;
-            const chartTop = area.y;
 
             const hasVolume = showVolume && !!volumeAccessor;
             const volumeHeight = hasVolume
                 ? area.height * VOLUME_HEIGHT_RATIO
                 : 0;
 
-            this._yScale = scaleContinuous(priceExtent, [bottom - volumeHeight, chartTop], {
+            // The candle + axis region ends above the volume band (which sits below the x-axis labels).
+            const axisRegionBottom = bottom - volumeHeight;
+
+            // Provisional y (price) scale to measure the y-axis label width.
+            this._yScale = scaleContinuous(priceExtent, [axisRegionBottom, top], {
                 padToTicks: 10,
             });
 
-            this._yAxis.scale = this._yScale;
-            this._yAxis.bounds = new Box(
-                chartTop,
-                left,
-                bottom - volumeHeight,
-                right
-            );
+            this.yAxis.scale = this._yScale;
+            this.yAxis.bounds = new Box(top, left, axisRegionBottom, right);
 
-            const yAxisBoundingBox = this._yAxis.getBoundingBox();
+            const yAxisBox = this.yAxis.getBoundingBox();
 
-            // Build x scale as callable with metadata
-            const xConvert = (value: string) => {
-                const index = keys.indexOf(value);
-                const rangeStart = yAxisBoundingBox.right + 20;
-                const rangeEnd = right;
-                return rangeStart + ((index + 0.5) / Math.max(1, keys.length)) * (rangeEnd - rangeStart);
-            };
+            // Candlesticks centre in equal bands across the plot width, so they stay inside the plot.
+            const candleWidth = Math.max(1, ((right - yAxisBox.right) / Math.max(1, data.length)) * 0.6);
 
-            const xInvert = (value: number) => {
-                const rangeStart = yAxisBoundingBox.right + 20;
-                const rangeEnd = right;
-                const index = Math.round(((value - rangeStart) / (rangeEnd - rangeStart)) * keys.length - 0.5);
-                return keys[numberClamp(index, 0, keys.length - 1)];
-            };
+            this._xScale = this._createCategoryScale(keys, yAxisBox.right, right);
+            this.xAxis.scale = this._xScale;
+            this.xAxis.bounds = new Box(top, yAxisBox.right, axisRegionBottom, right);
 
-            this._xScale = Object.assign(
-                (value: string) => xConvert(value),
-                {
-                    domain: keys,
-                    range: [yAxisBoundingBox.right + 20, right] as number[],
-                    inverse: xInvert,
-                    ticks: (count?: number) => {
-                        if (!count || count >= keys.length) {
-                            return keys;
-                        }
+            const xAxisBox = this.xAxis.getBoundingBox();
 
-                        const step = Math.ceil(keys.length / count);
-                        return keys.filter((_, i) => i % step === 0);
-                    },
-                    includes: (value: string) => keys.includes(value),
-                }
-            ) as unknown as Scale<string>;
-
-            this._xAxis.scale = this._xScale;
-            this._xAxis.bounds = new Box(
-                chartTop,
-                yAxisBoundingBox.right,
-                bottom - volumeHeight,
-                right
-            );
-
-            const xAxisBoundingBox = this._xAxis.getBoundingBox();
-
-            // Recalculate y scale with final chart area
-            this._yScale = scaleContinuous(priceExtent, [xAxisBoundingBox.top, chartTop], {
+            // Final y scale over the candle plot height.
+            this._yScale = scaleContinuous(priceExtent, [xAxisBox.top, top], {
                 padToTicks: 10,
             });
 
-            this._yAxis.scale = this._yScale;
-            this._yAxis.bounds.bottom = xAxisBoundingBox.top;
+            this.yAxis.scale = this._yScale;
+            this.yAxis.bounds.bottom = xAxisBox.top;
 
-            const chartLeft = yAxisBoundingBox.right + 20;
-            const chartRight = right;
+            // The navigator windows the x (category) axis only; the price axis stays at the full extent.
+            this._xScale = this.applyViewToScale(this._xScale, 'x');
+            this.xAxis.scale = this._xScale;
 
-            // Render grid
-            if (this._grid) {
-                const yTicks = this._yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this._yScale(tick));
+            const plot: ChartArea = {
+                x: yAxisBox.right,
+                y: top,
+                width: right - yAxisBox.right,
+                height: xAxisBox.top - top,
+            };
 
-                this._grid.render(
-                    [],
-                    yTickPositions,
-                    yAxisBoundingBox.right,
-                    chartTop,
-                    right - yAxisBoundingBox.right,
-                    xAxisBoundingBox.top - chartTop
-                );
-            }
+            this.clipPlot(plot);
 
-            // Setup crosshair
-            this._crosshair?.setup(
-                yAxisBoundingBox.right,
-                chartTop,
-                right - yAxisBoundingBox.right,
-                xAxisBoundingBox.top - chartTop
+            this.renderGrid(
+                [],
+                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                plot
             );
 
-            // Volume area sits below the x axis
-            const volumeTop = xAxisBoundingBox.bottom + 5;
+            this.setupCrosshair(plot);
+
+            this.renderAnnotations({ y: this._yScale }, plot);
+
+            // Volume band sits below the x-axis labels.
+            const volumeTop = xAxisBox.bottom + 5;
             const volumeBottom = bottom;
 
             const promises: Promise<unknown>[] = [
-                this._xAxis.render(),
-                this._yAxis.render(),
-                this._drawCandlesticks(chartLeft, chartRight),
+                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this._drawCandlesticks(candleWidth),
             ];
 
             if (hasVolume) {
-                promises.push(this._drawVolume(chartLeft, chartRight, volumeTop, volumeBottom));
+                promises.push(this._drawVolume(candleWidth, volumeTop, volumeBottom, plot));
             } else if (this._volumeGroup) {
                 // Volume was toggled off — tear down the orphaned group so the reclaimed space
                 // (the candlesticks now expand into it) doesn't paint over stale bars.
                 this._volumeGroup.destroy();
                 this._volumeGroup = undefined;
+                this._volumeClip = undefined;
+                this._volumeLabel = undefined;
             }
+
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [priceExtent[0], priceExtent[1]]);
 
             return Promise.all(promises);
         });

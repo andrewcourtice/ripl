@@ -1,6 +1,6 @@
 # Stock Chart
 
-The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with optional volume bars beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes crosshair tracking, grid lines, and tooltips. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
+The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with an optional, labelled volume sub-chart beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes both-axis crosshair tracking, grid lines, tooltips, annotations, and pan/zoom navigation. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -61,6 +61,8 @@ const config = useChartConfig({
         grid: true,
         tooltip: true,
         crosshair: true,
+        navigator: true,
+        annotations: true,
         format: true,
         animation: true,
         theme: true,
@@ -68,6 +70,7 @@ const config = useChartConfig({
     title: 'Daily Prices',
     axisX: 'Date',
     axisY: 'Price ($)',
+    crosshairAxis: 'both',
 });
 
 function generateData(count = 30) {
@@ -98,6 +101,11 @@ function buildOptions() {
         showVolume: extras.showVolume,
         upColor: extras.upColor,
         downColor: extras.downColor,
+        annotations: config.annotationsVisible
+            ? [
+                { type: 'line', axis: 'y', value: 150, label: 'Support', color: '#f59e0b' },
+            ]
+            : [],
         ...buildCommonOptions(config),
     };
 }
@@ -158,9 +166,12 @@ chart.update({ data: newData });
 - **`volume`** — Volume accessor (optional)
 - **`showVolume`** — Show volume bars below the chart (default `true`)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair
+- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (tracks **both** axes by default)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`navigator`** — `boolean | NavigatorInteractions` — Enable in-plot pan/zoom navigation
+- **`overview`** — `boolean | ChartOverviewOptions` — Show the overview scrub-bar strip that windows the date axis
+- **`annotations`** — `ChartAnnotation[]` — Reference lines, shaded bands, and point markers drawn over the plot
 - **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the OHLC values shown in the candle tooltip
 - **`upColor`** — Color for bullish candles (default `#6dd5b1`)
 - **`downColor`** — Color for bearish candles (default `#f4a0b9`)

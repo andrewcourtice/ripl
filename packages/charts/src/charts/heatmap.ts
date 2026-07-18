@@ -450,7 +450,14 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             }));
 
             if (legendRegion) {
-                this._colorLegend?.render(legendRegion);
+                // The bottom band is reserved at full width (before the y-axis inset is known), so
+                // realign the gradient bar to the plot's x-range — under the columns, not the
+                // y-axis label band. Mirrors CartesianChart.renderNavigator's band realignment.
+                this._colorLegend?.render({
+                    ...legendRegion,
+                    x: yAxisBoundingBox.right,
+                    width: right - yAxisBoundingBox.right,
+                });
             }
 
             return Promise.all([
