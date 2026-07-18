@@ -1493,6 +1493,10 @@
             "link": "/docs/api/@ripl/charts/functions/createSunburstChart.md"
           },
           {
+            "text": "createTimeAxisScale",
+            "link": "/docs/api/@ripl/charts/functions/createTimeAxisScale.md"
+          },
+          {
             "text": "createTreemapChart",
             "link": "/docs/api/@ripl/charts/functions/createTreemapChart.md"
           },
@@ -1525,8 +1529,16 @@
             "link": "/docs/api/@ripl/charts/functions/exitElement.md"
           },
           {
+            "text": "formatTimeLabel",
+            "link": "/docs/api/@ripl/charts/functions/formatTimeLabel.md"
+          },
+          {
             "text": "getDefaultTheme",
             "link": "/docs/api/@ripl/charts/functions/getDefaultTheme.md"
+          },
+          {
+            "text": "isTimeAxis",
+            "link": "/docs/api/@ripl/charts/functions/isTimeAxis.md"
           },
           {
             "text": "kde",
