@@ -37,11 +37,11 @@ notes where this repo now stands after the 1.0 consistency work (see
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
 | Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
-| Multiple / secondary axes | 🟡→✅ line | ✅ | ✅ | ✅ | ✅ done (A6, line); area/bar/scatter ⏳ |
-| Stacking / **100%-stacked** | ✅ / ❌ | ✅/✅ | ✅/✅ | ✅/✅ | ⏳ B4 |
-| Legends (present + interactive toggle) | 🟡→✅ present | ✅ | ✅ | ✅ | ✅ done (A7); toggle ⏳ |
+| Multiple / secondary axes | ✅ line/area/scatter | ✅ | ✅ | ✅ | ✅ done (A6); bar deferred |
+| Stacking / **100%-stacked** | ✅ / ✅ | ✅/✅ | ✅/✅ | ✅/✅ | ✅ done (`stacked: 'percent'`) |
+| Legends (present + interactive toggle) | ✅ | ✅ | ✅ | ✅ | ✅ done (A7 + toggle) |
 | Shared axis-pointer tooltip | 🟡 per-element | 🟡 | ✅ | ✅ | ⏳ B4 |
-| Data labels | 🟡 uneven | 🟡 (plugin) | ✅ | ✅ | ⏳ B4 |
+| Data labels | ✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Annotations** (reference lines / bands / markers) | ❌→✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done (B2) |
 | Zoom / pan / data-zoom | ✅ Navigator | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Theming / dark mode** | ❌→✅ | 🟡 | ✅ built-in | ✅ | ✅ done (B1) |
@@ -55,7 +55,7 @@ notes where this repo now stands after the 1.0 consistency work (see
 
 **Headline 1.0 gaps:** cross-chart consistency (done), configurable axes (done),
 theming/dark mode (done, B1), annotations (done, B2), secondary axes (done for
-line, A6; area/bar/scatter follow), and accessibility (B3 — ARIA + colourblind
+line/area/scatter, A6; bar deferred), and accessibility (B3 — ARIA + colourblind
 palette done; keyboard nav and pattern fills remain the largest post-1.0 gap).
 
 ## Completed 1.0 consistency work
@@ -127,6 +127,19 @@ Landed in the 1.0 hardening pass (this branch):
 - **Multi-line tooltips** — newline-separated lines plus greedy word wrap honouring
   `maxWidth`/`wrap`, reconfigurable at runtime.
 - **Animated axis tick exits** (fade-out via `exitElement`) instead of instant removal.
+- **A6 — Secondary y-axes for area and scatter** (mirroring the line pattern): per-series
+  `axis` binding, per-axis extents over the active series, per-axis-group stacking for area.
+- **100%-stacked mode** for bar and area (`stacked: 'percent'`) — share-space value
+  accessors, a fixed 0–100% axis, percentage formatting defaults, and legend-toggle
+  renormalization.
+- **Marker symbol set** for line-family series and scatter bubbles
+  (`marker: 'circle' | 'square' | 'diamond' | 'triangle'`) — equal-visual-area sizing and
+  uniform radius animation (star/cross/wye remain below).
+- **Value-keyed grid lines** — persisting ticks transition position, entries fade in,
+  exits fade out (previously pixel-keyed destroy/recreate).
+- **Data labels** for the remaining charts — heatmap (contrast-aware cell values), radar
+  (vertex labels), radial-bar (sweep-end labels), polar-scatter (marker labels) — all off
+  by default and runtime-toggleable.
 
 ## Migration — breaking changes
 
@@ -175,28 +188,11 @@ hand-rolling axis/grid/crosshair/tooltip wiring.
   window) and **heatmap** (dual categorical) stay on `Chart` by design and already
   share `createChartAxes`.
 
-### A6 (remaining) — secondary axis for area / bar / scatter
+### A6 (remaining) — secondary axis for bar
 
-The secondary y-axis is implemented for **line** (see
-[Completed](#completed-1.0-consistency-work)): `yAxes: ChartYAxis[]` behind a
-`get yAxis()` shim, series `axis?: number | string` binding, per-axis extent + scale,
-right-hand axis band. Extending it to **area**, **bar**, and **scatter** requires their
-shared series renderer to resolve a y-scale *per series* (not one plot-wide `yScale`).
-
-- **Risk:** layout collision between a right-side second axis and a right-positioned
-  legend; per-axis extent isolation. Reuse line's `_renderSecondaryAxes` partitioning.
-
-### Grid line transitions
-
-Grid lines are keyed by pixel position, so a domain change destroys and recreates
-them instantly. Key them by tick value instead (pass value + position pairs through
-`renderGrid`) so persisting ticks transition and exiting lines fade, matching the
-axis tick behaviour.
-
-### Data labels for the remaining charts
-
-Radar, radial-bar, polar-scatter, and heatmap have no value labels; wire them into
-the shared data-labels pipeline (heatmap needs contrast-aware label colour).
+Secondary y-axes now ship for line, area, and scatter (see the hardening-pass list
+above). Bar remains single-axis — a dual-axis grouped bar needs the shared bar renderer
+to resolve a value scale per series and is deliberately deferred.
 
 ### B3 (remaining) — keyboard navigation + pattern fills
 
@@ -211,8 +207,8 @@ colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 ### B4 — Smaller primitive gaps (opportunistic)
 
 Radial/angular scale (`scaleRadial`) so polar charts stop hand-rolling; `scaleSymlog`
-and a UTC time scale; an optional d3-format specifier parser; a marker-symbol set
-(star/cross/triangle/diamond/wye) beyond `Circle`; a **100%-stacked** helper
-(extend `computeStackOffset`); time-series **downsampling** (LTTB) for realtime/large
-data; an expanded easing set (sine/expo/circ/bounce); a moving-average/smoothing data
-transform; a shared/synced axis-pointer tooltip.
+and a UTC time scale; an optional d3-format specifier parser; the remaining marker
+symbols (star/cross/wye — circle/square/diamond/triangle shipped); time-series
+**downsampling** (LTTB) for realtime/large data; an expanded easing set
+(sine/expo/circ/bounce); a moving-average/smoothing data transform; a shared/synced
+axis-pointer tooltip.
