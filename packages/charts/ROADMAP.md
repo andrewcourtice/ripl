@@ -18,7 +18,7 @@ Ripl ships an unusually broad surface for a pre-1.0 library:
   threshold, time — plus sequential/diverging **colour** scales with perceptual
   schemes (viridis/plasma/inferno/magma/cividis/turbo, RdBu, BrBG).
 - **Multi-backend rendering** behind one `Context` — Canvas, SVG, Terminal, and
-  experimental WebGL/WebGPU. This exceeds Chart.js (canvas-only) and matches or
+  WebGPU. This exceeds Chart.js (canvas-only) and matches or
   edges ECharts (canvas+svg) and Highcharts (svg).
 - **Path-morphing animation**, a pan/zoom/brush `Navigator`, and a statistics
   layer (binning, box-plot stats, linear regression, KDE, rollup, stacking).
@@ -109,6 +109,25 @@ Landed on `claude/ripl-chart-axes-a5-a6` (this branch, on top of the above):
   against the visual-regression baselines. The full stock/gantt migration *onto*
   `CartesianChart` is deferred (see remaining work below).
 
+Landed in the 1.0 hardening pass (this branch):
+
+- **Runtime reconfiguration.** `update()` now reconciles all furniture at runtime —
+  axis scale/ticks/min/max/format/title/visibility, grid, tooltip, crosshair, legend
+  position/styling, navigator, and theme — via a per-render `_syncCartesianOptions`
+  pass; the docs demos drive live `update()` instead of recreating charts.
+- **Interactive legends.** Legend clicks hide/show series and segments across every
+  chart family, with animated exits, extent/stack/angle/layout recomputation over the
+  active set, and hidden state that survives data updates (sankey deliberately
+  dims only — hiding a flow node would orphan its links).
+- **Continuous time x-axis** for line, area, and scatter (`axis.x.scale: 'time'`) —
+  calendar-aligned `Date` ticks and span-adaptive default labels; unevenly spaced
+  samples position proportionally to their timestamps.
+- **X-axis tick label rotation** (`labelRotation`, degrees) with rotated band sizing
+  and a narrower overflow-drop footprint.
+- **Multi-line tooltips** — newline-separated lines plus greedy word wrap honouring
+  `maxWidth`/`wrap`, reconfigurable at runtime.
+- **Animated axis tick exits** (fade-out via `exitElement`) instead of instant removal.
+
 ## Migration — breaking changes
 
 Ripl is pre-1.0, so option naming was unified with a **clean break** (no aliases).
@@ -167,11 +186,17 @@ shared series renderer to resolve a y-scale *per series* (not one plot-wide `ySc
 - **Risk:** layout collision between a right-side second axis and a right-positioned
   legend; per-axis extent isolation. Reuse line's `_renderSecondaryAxes` partitioning.
 
-### Interactive legends
+### Grid line transitions
 
-Legends now render across the chart families, but toggling a legend entry only
-hover-dims; wire the `Legend` `onToggle`/`active` state to actually hide/show a
-series (the plumbing — `onToggle` re-render — is already in place).
+Grid lines are keyed by pixel position, so a domain change destroys and recreates
+them instantly. Key them by tick value instead (pass value + position pairs through
+`renderGrid`) so persisting ticks transition and exiting lines fade, matching the
+axis tick behaviour.
+
+### Data labels for the remaining charts
+
+Radar, radial-bar, polar-scatter, and heatmap have no value labels; wire them into
+the shared data-labels pipeline (heatmap needs contrast-aware label colour).
 
 ### B3 (remaining) — keyboard navigation + pattern fills
 

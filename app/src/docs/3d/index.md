@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: "@ripl/3d — experimental 3D rendering for Ripl with an interactive orbit/pan/zoom camera, flat shading, and six primitives (cube, sphere, cylinder, cone, plane, torus), projected onto Canvas or hardware-accelerated with WebGPU."
+description: "@ripl/3d — 3D rendering for Ripl with an interactive orbit/pan/zoom camera, flat shading, and six primitives (cube, sphere, cylinder, cone, plane, torus), projected onto Canvas or hardware-accelerated with WebGPU."
 ---
 
 # 3D

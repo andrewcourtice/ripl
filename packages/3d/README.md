@@ -1,8 +1,6 @@
 # @ripl/3d
 
-Experimental 3D rendering for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
-
-> **Note:** This package is experimental and its API may change between releases.
+3D rendering for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 

@@ -71,7 +71,7 @@ export default defineConfig({
         }],
         ['meta', {
             property: 'og:description',
-            content: 'A unified, high-performance TypeScript API for drawing and animating 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and experimental WebGPU 3D. Write once, render in any context.',
+            content: 'A unified, high-performance TypeScript API for drawing and animating 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU 3D. Write once, render in any context.',
         }],
         ['meta', {
             property: 'og:image',
@@ -273,7 +273,7 @@ export default defineConfig({
                             link: '/docs/core/contexts/svg',
                         },
                         {
-                            text: 'Terminal (experimental)',
+                            text: 'Terminal',
                             link: '/docs/core/contexts/terminal',
                         },
                         {

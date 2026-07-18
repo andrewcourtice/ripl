@@ -4,12 +4,9 @@
 
 <h1 align="center">Ripl</h1>
 
-Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes an experimental 3D rendering package.
+Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes a 3D rendering package.
 
 Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
-
-> [!IMPORTANT]
-> Ripl is currently in beta.
 
 <div align="center">
   <table>
@@ -29,7 +26,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 ## Features
 
-- **Unified rendering API** across Canvas, SVG, and experimental 3D contexts
+- **Unified rendering API** across Canvas, SVG, and 3D contexts
 - **Grouping and property inheritance** — CSS-like cascading of visual properties through the element tree
 - **Scene and renderer management** — hoisted scenegraph with O(n) rendering and an automatic `requestAnimationFrame` loop
 - **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
@@ -44,7 +41,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **12 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
 - **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
-- **3D primitives** (experimental) — cube, sphere, cylinder, cone, plane, torus
+- **3D primitives** — cube, sphere, cylinder, cone, plane, torus
 - **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
 - **Color utilities** — parsing, serialisation, and color scales
 - **Math & geometry** — degree/radian conversion, point operations, border radius normalisation, polygon extrapolation
@@ -62,7 +59,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 | [`@ripl/canvas`](packages/canvas) | Canvas 2D rendering context |
 | [`@ripl/svg`](packages/svg) | SVG rendering context |
 | [`@ripl/charts`](packages/charts) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
-| [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
+| [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes |
 | [`@ripl/webgpu`](packages/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
 | [`@ripl/terminal`](packages/terminal) | Terminal rendering context — braille-character output with ANSI truecolor |
 | [`@ripl/node`](packages/node) | Node.js runtime bindings — configures the platform factory for headless environments |
@@ -77,7 +74,7 @@ packages/
 ├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
 ├── charts/       # Pre-built chart components
-├── 3d/           # 3D rendering (experimental)
+├── 3d/           # 3D rendering
 ├── webgpu/       # WebGPU 3D rendering context
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings
@@ -498,7 +495,7 @@ scale.bandwidth; // width of each band
 - **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries
 - **`scaleTime`** — maps `Date` domains to numeric ranges
 
-## 3D Rendering (Experimental)
+## 3D Rendering
 
 `@ripl/3d` extends the Canvas context with perspective/orthographic projection, camera controls, and flat shading.
 

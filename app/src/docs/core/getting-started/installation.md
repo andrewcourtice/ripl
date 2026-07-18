@@ -65,7 +65,7 @@ npm install @ripl/svg
 # Charts
 npm install @ripl/charts
 
-# 3D (experimental)
+# 3D
 npm install @ripl/3d
 ```
 == yarn
@@ -76,7 +76,7 @@ yarn add @ripl/svg
 # Charts
 yarn add @ripl/charts
 
-# 3D (experimental)
+# 3D
 yarn add @ripl/3d
 ```
 == pnpm
@@ -87,7 +87,7 @@ pnpm add @ripl/svg
 # Charts
 pnpm add @ripl/charts
 
-# 3D (experimental)
+# 3D
 pnpm add @ripl/3d
 ```
 :::
