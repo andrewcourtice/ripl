@@ -11,6 +11,7 @@ import {
 } from '../core/layout';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -42,6 +43,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Circle,
@@ -118,6 +123,8 @@ export interface ForceDirectedChartOptions<TData = unknown> extends BaseChartOpt
     iterations?: number;
     /** Id of the node the layout springs out from on entry. Defaults to the highest-degree node. */
     root?: string;
+    /** Legend configuration. Shown automatically when there is more than one node group; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Format applied to node/link values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -289,6 +296,30 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            // One legend entry per distinct node group (or per node when ungrouped), using the
+            // group's/node's resolved colour.
+            const legendSeen = new Set<string>();
+            const legendItems: LegendItem[] = [];
+
+            nodes.forEach(node => {
+                const legendId = node.group ?? node.id;
+
+                if (legendSeen.has(legendId)) {
+                    return;
+                }
+
+                legendSeen.add(legendId);
+                legendItems.push({
+                    id: legendId,
+                    label: node.group ?? node.label ?? node.id,
+                    color: this.getSeriesColor(legendId),
+                    active: true,
+                });
+            });
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
             const area = layout.area;
 
             // Node degree (for sizing when no value is given).
@@ -607,6 +638,12 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 ...entryNodeGroups,
                 ...nodeUpdates.map(([, group]) => group),
             ];
+
+            // Legend hover highlights the hovered cluster's nodes (legend id = node.group ?? node.id;
+            // node group ids are `node-<id>`), dimming the other clusters.
+            const nodeClusterOf = new Map<string, string>();
+            nodes.forEach(node => nodeClusterOf.set(`node-${node.id}`, node.group ?? node.id));
+            this.registerHighlightGroups(this._nodeElements, group => nodeClusterOf.get(group.id) ?? group.id);
 
             const entryCircles = entryNodeGroups.flatMap(group => group.getElementsByType('circle') as Circle[]);
             const entryLabels = entryNodeGroups.flatMap(group => group.getElementsByType('text') as Text[]);

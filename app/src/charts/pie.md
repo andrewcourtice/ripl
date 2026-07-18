@@ -1,11 +1,11 @@
 # Pie Chart
 
-The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Hover any slice to see a tooltip, and toggle the donut mode in the demo below.
+The **Pie Chart** illustrates numerical proportions as angular slices of a circle. It supports animated entry, exit, and reorder transitions when data changes, and can switch to a donut layout by setting an `innerRadius`. Hover any slice to see a tooltip, and adjust the inner radius in the demo below.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
@@ -14,12 +14,12 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Pie">
-            <RiplField label="Donut" inline>
-                <RiplSwitch v-model="donut" />
+        <RiplChartConfig :config="config" extra-title="Pie" :extras-reset="reset">
+            <RiplField label="Inner radius">
+                <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.9" :step="0.05" />
             </RiplField>
             <RiplField label="Labels">
-                <RiplSelect v-model="labels">
+                <RiplSelect v-model="extras.labels">
                     <option value="off">Off</option>
                     <option value="inside">Inside</option>
                     <option value="outside">Outside</option>
@@ -29,7 +29,7 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
     </template>
 </ripl-example>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import {
     useRiplChart,
 } from '../.vitepress/compositions/example';
@@ -37,6 +37,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -58,15 +59,23 @@ const COUNTRIES = [
     'France', 'Switzerland',
 ];
 
-const donut = ref(false);
-const labels = ref<'off' | 'inside' | 'outside'>('off');
+const { extras, reset } = useChartExtras({
+    innerRadius: 0,
+    labels: 'off' as 'off' | 'inside' | 'outside',
+});
 
 function labelsOption() {
-    return labels.value === 'off' ? false : labels.value;
+    return extras.labels === 'off' ? false : extras.labels;
 }
 
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Sales by Country',
 });
 
@@ -84,6 +93,16 @@ function getDataItem(label: string = stringUniqueId()) {
 
 let data = COUNTRIES.map(label => getDataItem(label));
 
+function buildOptions() {
+    return {
+        innerRadius: extras.innerRadius,
+        labels: labelsOption(),
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const {
     contextChanged,
     chart,
@@ -92,25 +111,15 @@ const {
     value: 'value',
     label: 'label',
     data,
-    innerRadius: donut.value ? 0.5 : 0,
-    labels: labelsOption(),
-    ...buildCommonOptions(config),
+    ...buildOptions(),
 }));
+
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function update() {
     chart.value?.update({ data });
 }
-
-function apply() {
-    chart.value?.update({
-        innerRadius: donut.value ? 0.25 : 0,
-        labels: labelsOption(),
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([donut, labels], apply);
 
 function editData(body: (index: number) => void) {
     const index = Math.floor(Math.random() * data.length);

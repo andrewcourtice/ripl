@@ -34,6 +34,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     LineSeriesRenderer,
 } from '../core/series/line-series';
 
@@ -64,7 +69,6 @@ import type {
 
 import {
     Box,
-    scaleContinuous,
 } from '@ripl/core';
 
 import {
@@ -100,6 +104,8 @@ export interface LineChartSeriesOptions<TData> {
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
     markerRadius?: number;
+    /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
+    axis?: number | string;
 }
 
 /** Options for configuring a {@link LineChart}. */
@@ -162,6 +168,7 @@ export interface LineChartEventMap extends EventMap {
 export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
     private _series = new LineSeriesRenderer<TData>();
+    private _series2 = new LineSeriesRenderer<TData>();
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
@@ -192,14 +199,14 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         return this.buildOverviewSeries(series, data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
     }
 
-    private _seriesContext(plot: ChartArea): LineSeriesContext<TData> {
+    private _seriesContext(plot: ChartArea, yScale: Scale = this._yScale): LineSeriesContext<TData> {
         return {
             data: this.options.data,
             getKey: resolveAccessor<TData, string>(this.options.key),
-            yScale: this._yScale,
+            yScale,
             xScale: this._xScale,
             plot,
-            baseline: this._yScale(0),
+            baseline: yScale(0),
             renderer: this.renderer,
             tooltip: this.tooltip,
             getColor: id => this.getSeriesColor(id),
@@ -250,8 +257,21 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            if (this.yAxes.length > 1) {
+                return this._renderSecondaryAxes({
+                    series,
+                    keys,
+                    dataExtent,
+                    navBand,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
+
             // Provisional value scale to measure the y-axis width.
-            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
@@ -263,7 +283,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
@@ -283,11 +303,13 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             this.renderGrid(
                 [],
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
                 plot
             );
 
             this.setupCrosshair(plot);
+
+            this.renderAnnotations({ y: this._yScale }, plot);
 
             const seriesRender = this._series.render(series, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);
@@ -300,6 +322,101 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 seriesRender,
             ]);
         });
+    }
+
+    /**
+     * Renders the chart with a secondary (right-hand) y-axis. Series are partitioned by their `axis`
+     * binding; each axis gets an independent value extent and scale, the plot sits between the two
+     * axis label bands, and each series group is drawn against its bound axis's scale.
+     */
+    private _renderSecondaryAxes(ctx: {
+        series: LineChartSeriesOptions<TData>[];
+        keys: string[];
+        dataExtent: number[];
+        navBand: ChartArea | undefined;
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const {
+            series,
+            keys,
+            dataExtent,
+            navBand,
+            left,
+            top,
+            right,
+            bottom,
+        } = ctx;
+
+        // Partition series by the y-axis they bind to.
+        const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
+
+        // Independent value extent per axis.
+        const extents = seriesByAxis.map(group => numberExtent(group
+            .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
+            .concat(0), functionIdentity));
+
+        // Provisional scales so each axis can measure its label band. Both bounds span the full width
+        // so the left axis reserves from the left edge and the right axis from the right edge.
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
+            axis.bounds = new Box(top, left, bottom, right);
+        });
+
+        const plotLeft = this.yAxes[0].getBoundingBox().right;
+        const plotRight = this.yAxes[1].getBoundingBox().left;
+
+        this._xScale = this.pointScale(keys, plotLeft, plotRight);
+        this.xAxis.scale = this._xScale;
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        // Final scales over the plot height; clamp each axis band above the x-axis labels.
+        const scales = this.yAxes.map((axis, index) => {
+            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+
+            axis.scale = scale;
+            axis.bounds.bottom = xAxisBox.top;
+
+            return scale;
+        });
+
+        this._xScale = this.applyViewToScale(this._xScale, 'x');
+        this.xAxis.scale = this._xScale;
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        this.clipPlot(plot);
+        this.renderGrid([], scales[0].ticks(axisTickCount(this.yAxesOptions[0])).map(tick => scales[0](tick)), plot);
+        this.setupCrosshair(plot);
+        this.renderAnnotations({ y: scales[0] }, plot);
+
+        this._yScale = scales[0];
+
+        const primaryRender = this._series.render(seriesByAxis[0], this._seriesContext(plot, scales[0]));
+        const secondaryRender = this._series2.render(seriesByAxis[1], this._seriesContext(plot, scales[1]));
+
+        this.registerHighlightGroups([
+            ...this._series.groups,
+            ...this._series2.groups,
+        ]);
+
+        this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            primaryRender,
+            secondaryRender,
+        ]);
     }
 
 }

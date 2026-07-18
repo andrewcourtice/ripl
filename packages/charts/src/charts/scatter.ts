@@ -44,6 +44,11 @@ import {
     resolveAccessor,
 } from '../core/data';
 
+import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
 import type {
     LegendItem,
 } from '../components/legend';
@@ -568,19 +573,19 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const maxRadius = this._getMaxBubbleRadius();
 
             // Provisional Y scale to measure the y-axis width.
-            this._yScale = scaleContinuous(yExtent, [bottom - maxRadius, top + maxRadius], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, yExtent, [bottom - maxRadius, top + maxRadius]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = scaleContinuous(xExtent, [yAxisBox.right + maxRadius, right - maxRadius], { padToTicks: 10 });
+            this._xScale = createValueScale(this.xAxisOptions, xExtent, [yAxisBox.right + maxRadius, right - maxRadius]);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this._yScale = scaleContinuous(yExtent, [xAxisBox.top - maxRadius, top + maxRadius], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, yExtent, [xAxisBox.top - maxRadius, top + maxRadius]);
 
             // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
             // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
@@ -601,12 +606,17 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this.clipPlot(plot);
 
             this.renderGrid(
-                this._xScale.ticks(10).map(tick => this._xScale(tick)),
-                this._yScale.ticks(10).map(tick => this._yScale(tick)),
+                this._xScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => this._xScale(tick)),
+                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
                 plot
             );
 
             this.setupCrosshair(plot);
+
+            this.renderAnnotations({
+                x: this._xScale,
+                y: this._yScale,
+            }, plot);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),

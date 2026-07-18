@@ -11,6 +11,7 @@ import {
 } from '../core/chart';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -31,8 +32,16 @@ import {
 } from '../core/animation';
 
 import {
+    resolveColorBy,
+} from '../core/color';
+
+import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Context,
@@ -67,8 +76,10 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     value: NumericAccessor<TData>;
     /** Accessor for each item's display label (shown inside sufficiently large cells). */
     label: keyof TData | ((item: TData) => string);
-    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to a generated palette colour. */
+    colorBy?: keyof TData | ((item: TData) => string);
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Gap in pixels between adjacent cells. Defaults to 3. */
     gap?: number;
     /** Corner radius in pixels applied to each cell. Defaults to 4. */
@@ -213,7 +224,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 key,
                 value,
                 label,
-                color,
+                colorBy,
                 gap = 3,
                 borderRadius = 4,
             } = this.options;
@@ -225,22 +236,13 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
 
-            let getColor: ((item: TData) => string) | undefined;
-
-            if (color) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
-            }
-
-            const layout = this.createLayout();
-            this.reserveTitle(layout);
-            const area = layout.area;
+            const getColor = resolveColorBy<TData>(colorBy);
 
             const items = data.map(item => ({
                 key: getKey(item),
                 value: getValue(item),
                 label: getLabel(item),
-                color: getColor ? getColor(item) : undefined,
+                color: getColor(item),
             }));
 
             // Resolve colours through the shared id-keyed map so they stay stable across data
@@ -252,6 +254,20 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const colorFor = (node: { key: string;
                 color?: string; }) => node.color ?? this.getSeriesColor(node.key);
+
+            const layout = this.createLayout();
+            this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = items.map(item => ({
+                id: item.key,
+                label: item.label,
+                color: colorFor(item),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
+            const area = layout.area;
 
             const nodes = layoutTreemap(
                 items,
@@ -384,6 +400,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 ...entryGroups,
                 ...updateGroups,
             ];
+
+            // Legend hover dims the other cells (group id == legend item id == node key).
+            this.registerHighlightGroups(this._groups);
 
             // Animate entries
             const entryRects = entryGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];

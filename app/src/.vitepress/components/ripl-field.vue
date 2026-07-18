@@ -1,6 +1,6 @@
 <template>
     <label class="ripl-field" :class="{ 'ripl-field--inline': inline }">
-        <span class="ripl-field__label">{{ label }}</span>
+        <span class="ripl-field__label" :title="label">{{ label }}</span>
         <span class="ripl-field__control">
             <slot></slot>
         </span>
@@ -21,26 +21,35 @@ defineProps<{
     flex-direction: column;
     gap: 0.375rem;
     font-size: 0.8125rem;
-    color: var(--vp-c-text-2);
+    color: var(--ripl-panel-label, var(--vp-c-text-2));
 }
 
 .ripl-field--inline {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: var(--ripl-panel-label-col, auto) minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
+    gap: var(--ripl-panel-gap, 0.75rem);
+    min-height: var(--ripl-panel-row-min-h, 30px);
 }
 
 .ripl-field__label {
     font-weight: 500;
+    overflow-wrap: break-word;
 }
 
+/* Inline: full-width controls (select/text/number/range) fill the value column; fixed-size
+   controls (switch/colour swatch) sit at the right edge. */
 .ripl-field--inline .ripl-field__control {
-    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
 }
 
 .ripl-field__control :deep(.ripl-select),
-.ripl-field__control :deep(.ripl-input-text) {
+.ripl-field__control :deep(.ripl-input-text),
+.ripl-field__control :deep(.ripl-input-number),
+.ripl-field__control :deep(.ripl-input-range) {
     width: 100%;
 }
 </style>

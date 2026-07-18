@@ -153,7 +153,7 @@ export interface LineSeriesLike<TData> {
 /** The area series fields the area renderer reads (line fields plus a fill opacity). */
 export interface AreaSeriesLike<TData> extends LineSeriesLike<TData> {
     /** Fill opacity of the area band. Defaults to 0.3. */
-    opacity?: number;
+    fillOpacity?: number;
 }
 
 /** The bar series fields the bar renderer reads. */

@@ -506,7 +506,7 @@ describe('Overview navigator strip', () => {
             data: DATA,
             key: 'month',
             overview: true,
-            mode: 'stacked',
+            stacked: true,
             series: [
                 {
                     id: 'a',

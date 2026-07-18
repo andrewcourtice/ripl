@@ -6,8 +6,13 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ChartLegendInput,
+    ValueFormatInput,
+} from '../core/options';
+
 import {
-    formatNumber,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -30,6 +35,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     SankeyLinkPath,
@@ -96,6 +105,10 @@ export interface SankeyChartOptions<TData = unknown> extends BaseChartOptions {
     nodePadding?: number;
     /** Number of layout relaxation iterations (reserved for tuning node positioning). */
     iterations?: number;
+    /** Legend configuration. Shown automatically when there is more than one node; pass `false` to hide. */
+    legend?: ChartLegendInput;
+    /** Format applied to node and link values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
 }
 
 /** Payload emitted for Sankey node interaction events. */
@@ -183,7 +196,7 @@ function computeSankeyLayout(
     height: number,
     nodeWidth: number,
     nodePadding: number,
-    colorGenerator: ReturnType<typeof getColorGenerator>
+    nodeColors: Map<string, string>
 ): SankeyLayoutResult {
     // Assign depths via BFS
     const depthMap = new Map<string, number>();
@@ -290,7 +303,7 @@ function computeSankeyLayout(
             const nodeConfig = nodes.find(n => n.id === nodeId);
             const value = nodeValueMap.get(nodeId) ?? 0;
             const nodeHeight = Math.max(value * scale, 2);
-            const color = nodeConfig?.color ?? colorGenerator.next().value!;
+            const color = nodeColors.get(nodeId) ?? '#a1afc4';
 
             layoutNodeMap.set(nodeId, {
                 id: nodeId,
@@ -390,9 +403,26 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             } = this.options;
 
             const colorGenerator = getColorGenerator();
+            const nodeColors = new Map<string, string>();
+
+            // Resolve a stable colour per node up-front so the legend swatches match the rendered
+            // nodes (and honour any explicit per-node colour).
+            nodes.forEach(node => {
+                nodeColors.set(node.id, node.color ?? colorGenerator.next().value!);
+            });
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = nodes.map(node => ({
+                id: node.id,
+                label: node.label,
+                color: nodeColors.get(node.id)!,
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
             const area = layout.area;
             const offsetX = area.x;
             const offsetY = area.y;
@@ -406,7 +436,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 chartHeight,
                 nodeWidth,
                 nodePadding,
-                colorGenerator
+                nodeColors
             );
 
             // Draw links
@@ -564,6 +594,15 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 ...nodeUpdateGroups,
             ];
 
+            // Legend hover highlights the node plus its incident links, dimming the rest. Node group
+            // ids equal the node id; link group ids are `${source}-${target}`, owned by both ends.
+            const linkOwners = new Map<string, string[]>();
+            links.forEach(link => linkOwners.set(`${link.source}-${link.target}`, [link.source, link.target]));
+            this.registerHighlightGroups(
+                [...this._nodeGroups, ...this._linkGroups],
+                group => linkOwners.get(group.id) ?? group.id
+            );
+
             // Animate
             const linkPaths = linkEntryGroups.flatMap(g => g.getElementsByType('sankey-link')) as SankeyLinkPath[];
 
@@ -614,6 +653,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
     }
 
     private _attachLinkHover(linkEl: SankeyLinkPath, link: LayoutLink, anchorX: number, anchorY: number) {
+        const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
             y: number; }): SankeyChartLinkEvent => ({
@@ -633,7 +673,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 x: anchorX,
                 y: anchorY,
             }),
-            content: () => `${link.source.label} → ${link.target.label}: ${formatNumber(link.value)}`,
+            content: () => `${link.source.label} → ${link.target.label}: ${formatValue(link.value)}`,
             highlight: { stroke: setColorAlpha(link.color, 0.6) },
             restore: { stroke: setColorAlpha(link.color, 0.3) },
             onEnter: point => this.emit('linkenter', payload(point)),
@@ -643,6 +683,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
     }
 
     private _attachNodeHover(rect: Rect, node: LayoutNode, anchorX: number, anchorY: number) {
+        const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
             y: number; }): SankeyChartNodeEvent<TData> => ({
@@ -662,7 +703,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 x: anchorX,
                 y: anchorY,
             }),
-            content: () => `${node.label}: ${formatNumber(node.value)}`,
+            content: () => `${node.label}: ${formatValue(node.value)}`,
             highlight: { fill: node.color },
             restore: { fill: setColorAlpha(node.color, 0.8) },
             onEnter: point => this.emit('nodeenter', payload(point)),

@@ -32,10 +32,12 @@ import type {
 
 import type {
     ChartAxisInput,
+    ChartAxisItemOptions,
     ChartCrosshairInput,
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ChartYAxisItemOptions,
     CrosshairAxis,
 } from './options';
 
@@ -50,6 +52,10 @@ import {
     resolveFormatLabel,
 } from './options';
 
+import {
+    axisTickCount,
+} from './scales';
+
 import type {
     ChartXAxisAlignment,
     ChartYAxisAlignment,
@@ -63,6 +69,15 @@ import {
 import {
     Grid,
 } from '../components/grid';
+
+import type {
+    AnnotationScales,
+    ChartAnnotation,
+} from '../components/annotation';
+
+import {
+    ChartAnnotations,
+} from '../components/annotation';
 
 import {
     Crosshair,
@@ -165,6 +180,8 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
     legend?: ChartLegendInput;
     /** Crosshair configuration, or a boolean toggle. See {@link ChartCrosshairInput}. */
     crosshair?: ChartCrosshairInput;
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See {@link ChartAnnotation}. */
+    annotations?: ChartAnnotation[];
     /**
      * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
      * click-drag pan; an object configures each interaction individually. The chart auto-creates a
@@ -217,9 +234,18 @@ export abstract class CartesianChart<
 
     protected xAxis!: ChartXAxis;
     protected yAxis!: ChartYAxis;
+    /** All y-axes (primary plus any secondary). {@link CartesianChart.yAxis} is the primary (`yAxes[0]`). */
+    protected yAxes: ChartYAxis[] = [];
+    /** Resolved options for every y-axis, parallel to {@link CartesianChart.yAxes}. */
+    protected yAxesOptions: ChartYAxisItemOptions<TData>[] = [];
+    /** Resolved x-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    protected xAxisOptions!: ChartAxisItemOptions<TData>;
+    /** Resolved y-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    protected yAxisOptions!: ChartYAxisItemOptions<TData>;
     protected tooltip?: Tooltip;
     protected grid?: Grid;
     protected crosshair?: Crosshair;
+    private _annotations?: ChartAnnotations;
 
     private _navigator?: DOMNavigator;
     private _navigatorConfigKey?: string;
@@ -248,6 +274,15 @@ export abstract class CartesianChart<
      */
     public get navigator(): DOMNavigator | undefined {
         return this._navigator;
+    }
+
+    /**
+     * Whether a navigator pan/zoom gesture is currently in flight. Subclasses can gate entry/update
+     * animations on this so marks snap to the new view each frame instead of tweening (which would lag
+     * behind the pointer). Mirrors the animation suppression in {@link CartesianChart.resolveAnimation}.
+     */
+    protected get isNavigating(): boolean {
+        return this._navigating;
     }
 
     /**
@@ -294,12 +329,33 @@ export abstract class CartesianChart<
         // Enabling the overview implies a navigator for the strip to drive.
         this.options.navigator = this._resolveNavigator();
 
+        // Per-chart theme colours are passed as normalizer defaults so a chart-level `theme`
+        // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
+        const axisDefaults = {
+            font: this.theme.font,
+            fontColor: this.theme.axisColor,
+        };
+
         const axisOpts = normalizeAxis(this.options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x);
-        const yAxis = normalizeYAxisItem(Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y);
-        const gridOpts = normalizeGrid(this.options.grid);
-        const tooltipOpts = normalizeTooltip(this.options.tooltip);
-        const crosshairOpts = normalizeCrosshair(this.options.crosshair, setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : undefined);
+        const xAxis = normalizeAxisItem(axisOpts.x, axisDefaults);
+        const yAxisInputs = Array.isArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
+        const yAxisOptionsList = yAxisInputs.map((input, index) => normalizeYAxisItem(input, {
+            ...axisDefaults,
+            position: index === 0 ? 'left' : 'right',
+        }));
+
+        this.xAxisOptions = xAxis;
+        this.yAxesOptions = yAxisOptionsList;
+        this.yAxisOptions = yAxisOptionsList[0];
+        const gridOpts = normalizeGrid(this.options.grid, { lineColor: this.theme.gridColor });
+        const tooltipOpts = normalizeTooltip(this.options.tooltip, {
+            fontColor: this.theme.tooltipColor,
+            backgroundColor: this.theme.tooltipBackground,
+        });
+        const crosshairOpts = normalizeCrosshair(this.options.crosshair, {
+            ...(setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : {}),
+            lineColor: this.theme.crosshairColor,
+        });
 
         if (tooltipOpts.visible) {
             this.tooltip = new Tooltip({
@@ -327,19 +383,30 @@ export abstract class CartesianChart<
 
         this.xAxis.visible = xAxis.visible;
 
-        this.yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            alignment: setup.yAxisAlignment ?? (yAxis.position === 'right' ? 'right' : 'left'),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
+        this.yAxes = yAxisOptionsList.map((yOpts, index) => {
+            const axis = new ChartYAxis({
+                scene: this.scene,
+                renderer: this.renderer,
+                bounds: Box.empty(),
+                scale: scaleContinuous([0, 1], [0, 1]),
+                alignment: index === 0
+                    ? (setup.yAxisAlignment ?? (yOpts.position === 'right' ? 'right' : 'left'))
+                    : yOpts.position,
+                labelFont: yOpts.font,
+                labelColor: yOpts.fontColor,
+                formatLabel: resolveFormatLabel(yOpts.format),
+                title: yOpts.title,
+            });
+
+            axis.visible = yOpts.visible;
+            axis.tickCount = axisTickCount(yOpts);
+
+            return axis;
         });
 
-        this.yAxis.visible = yAxis.visible;
+        this.yAxis = this.yAxes[0];
+
+        this.xAxis.tickCount = axisTickCount(xAxis);
 
         if (gridOpts.visible) {
             this.grid = new Grid({
@@ -841,6 +908,57 @@ export abstract class CartesianChart<
     /** Renders the grid within the given plot area at the supplied tick positions. */
     protected renderGrid(xTicks: number[], yTicks: number[], area: ChartArea) {
         this.grid?.render(xTicks, yTicks, area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Renders the chart's {@link CartesianChartOptions.annotations} over the plot, resolving each
+     * annotation's value(s) through the supplied x/y scales. Call after drawing the series so
+     * annotations sit on top. Annotations that cannot map to the given scales are skipped.
+     *
+     * @param scales - The x/y value scales annotations resolve against.
+     * @param plot - The plot rectangle annotations are drawn within.
+     */
+    protected renderAnnotations(scales: AnnotationScales, plot: ChartArea) {
+        const annotations = this.options.annotations;
+
+        if (!annotations || annotations.length === 0) {
+            this._annotations?.destroy();
+            this._annotations = undefined;
+            return;
+        }
+
+        if (!this._annotations) {
+            this._annotations = new ChartAnnotations({
+                scene: this.scene,
+                renderer: this.renderer,
+            });
+        }
+
+        // Clip the annotations to the plot only while a navigator is active — the pan/zoom rescales
+        // the axes, so unclipped annotations would otherwise slide into the axis gutters. Matches the
+        // series/grid/axis clip gate in `clipPlot`.
+        this._annotations.render(annotations, scales, plot, !!this._navigator);
+    }
+
+    /**
+     * Resolves a series `axis` binding — a y-axis index or a y-axis `id` — to an index into
+     * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
+     *
+     * @param axis - The series' `axis` option (index, id, or undefined).
+     * @returns The resolved y-axis index.
+     */
+    protected resolveSeriesAxisIndex(axis?: number | string): number {
+        if (axis === undefined) {
+            return 0;
+        }
+
+        if (typeof axis === 'number') {
+            return Math.max(0, Math.min(axis, this.yAxes.length - 1));
+        }
+
+        const byId = this.yAxesOptions.findIndex((opts, index) => (opts.id ?? String(index)) === axis);
+
+        return byId >= 0 ? byId : 0;
     }
 
     /** Sets up the crosshair to track within the given plot area. */

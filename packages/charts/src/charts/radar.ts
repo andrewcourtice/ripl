@@ -82,7 +82,7 @@ export interface RadarChartSeriesOptions<TData> {
     /** Accessor for each data item's value on the series' axis. */
     value: NumericAccessor<TData>;
     /** Fill opacity of the series' area polygon. Defaults to 0.25. */
-    opacity?: number;
+    fillOpacity?: number;
 }
 
 /** Options for configuring a {@link RadarChart}. */
@@ -92,7 +92,7 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     /** The series to overlay, each rendered as a filled polygon. */
     series: RadarChartSeriesOptions<TData>[];
     /** Axis labels arranged clockwise around the chart, one per data item. */
-    axes: string[];
+    categories: string[];
     /** Maximum value mapped to the outer ring (defaults to the largest value across all series). */
     maxValue?: number;
     /** Number of concentric grid rings. Defaults to 5. */
@@ -156,10 +156,10 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         this.init();
     }
 
-    private _drawGrid(cx: number, cy: number, radius: number, axes: string[], levels: number) {
+    private _drawGrid(cx: number, cy: number, radius: number, categories: string[], levels: number) {
         const isEntry = !this._gridGroup;
         const animDuration = this.getAnimationDuration(800);
-        const angleStep = TAU / axes.length;
+        const angleStep = TAU / categories.length;
 
         if (isEntry) {
             this._gridGroup = createGroup({
@@ -175,7 +175,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             const levelRadius = (radius / levels) * level;
             const points: Point[] = [];
 
-            for (let i = 0; i <= axes.length; i++) {
+            for (let i = 0; i <= categories.length; i++) {
                 const angle = i * angleStep - TAU / 4;
                 points.push([
                     cx + levelRadius * Math.cos(angle),
@@ -228,7 +228,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         ];
 
         // --- Radial axis lines ---
-        const axisIndices = axes.map((_, i) => i);
+        const axisIndices = categories.map((_, i) => i);
 
         const axisEnd = (index: number): Point => {
             const angle = index * angleStep - TAU / 4;
@@ -330,7 +330,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 id: `radar-label-${idx}`,
                 x: labelX,
                 y: labelY,
-                content: axes[idx] ?? '',
+                content: categories[idx] ?? '',
                 fill: '#6b7280',
                 font: '11px sans-serif',
                 textAlign,
@@ -351,7 +351,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         labelUpdates.forEach(([idx, label]) => {
             const { labelX, labelY, textAlign } = labelProps(idx);
 
-            label.content = axes[idx] ?? '';
+            label.content = categories[idx] ?? '';
             label.textAlign = textAlign;
             label.data = {
                 x: labelX,
@@ -388,10 +388,10 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         const {
             data,
             series,
-            axes,
+            categories,
         } = this.options;
 
-        const angleStep = TAU / axes.length;
+        const angleStep = TAU / categories.length;
 
         const {
             left: seriesEntries,
@@ -415,14 +415,14 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 return {
                     point: [x, y] as Point,
                     value,
-                    axisLabel: axes[index] ?? '',
+                    axisLabel: categories[index] ?? '',
                 };
             });
         };
 
         const seriesEntryGroups = seriesEntries.map(srs => {
             const color = this.getSeriesColor(srs.id);
-            const opacity = srs.opacity ?? 0.25;
+            const fillOpacity = srs.fillOpacity ?? 0.25;
             const pointsData = getSeriesPoints(srs);
 
             const closedPoints = [
@@ -432,7 +432,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             const area = createPolyline({
                 id: `${srs.id}-area`,
-                fill: setColorAlpha(color, opacity),
+                fill: setColorAlpha(color, fillOpacity),
                 stroke: color,
                 lineWidth: 2,
                 points: closedPoints.map(() => [cx, cy] as Point),
@@ -558,7 +558,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
     public async render() {
         return super.render(async () => {
             const {
-                axes,
+                categories,
                 series,
                 maxValue,
                 levels = 5,
@@ -599,7 +599,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 });
             }
 
-            const gridTransition = this._drawGrid(cx, cy, radius, axes, levels);
+            const gridTransition = this._drawGrid(cx, cy, radius, categories, levels);
             const seriesTransition = this._drawSeries(cx, cy, radius, computedMax);
 
             return Promise.all([gridTransition, seriesTransition]);
@@ -651,7 +651,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
  * @example
  * ```ts
  * createRadarChart(target, {
- *     axes: ['Speed', 'Power', 'Range', 'Agility'],
+ *     categories: ['Speed', 'Power', 'Range', 'Agility'],
  *     data: [
  *         { axis: 'Speed', modelA: 80 },
  *         { axis: 'Power', modelA: 60 },

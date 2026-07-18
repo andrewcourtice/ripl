@@ -101,8 +101,8 @@ export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOpti
     data: TData[];
     /** The series to render, each mapping the data to angle/radius positions. */
     series: PolarScatterSeriesOptions<TData>[];
-    /** Maximum radial value (defaults to the largest radius value in the data). */
-    maxRadiusValue?: number;
+    /** The value mapped to the outer radius (defaults to the largest radius value in the data). */
+    maxValue?: number;
     /** Number of concentric value rings. Defaults to 4. */
     levels?: number;
     /** Number of angular spokes/labels around the circle. Defaults to 8. */
@@ -399,9 +399,9 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             // Radial value scale: 0 at the centre, the data max (or override) at the outer ring.
             const radiusValues = series.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
             const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
-            const maxRadiusValue = this.options.maxRadiusValue ?? (dataMax > 0 ? dataMax : 1);
+            const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
 
-            this._radialScale = scaleContinuous([0, maxRadiusValue], [0, gridRadius], { clamp: true });
+            this._radialScale = scaleContinuous([0, maxValue], [0, gridRadius], { clamp: true });
 
             this._drawGrid(cx, cy, gridRadius, levels, angleTicks);
 

@@ -137,6 +137,33 @@
 }
 
 /**
+ * Component: Chart config drawer
+ *
+ * Design tokens for the customise drawer's "properties panel" look. Defined on the
+ * panel so they cascade to every RiplConfigSection / RiplField inside it; each consumer
+ * also supplies a `var(--token, fallback)` so the controls still work outside the drawer.
+ * All reference `--vp-*` so light/dark mode is automatic.
+ * -------------------------------------------------------------------------- */
+
+.ripl-config-drawer__panel {
+    --ripl-panel-pad: 16px;          /* header + section horizontal inset */
+    --ripl-panel-body-pad-y: 14px;   /* vertical padding of an open section */
+    --ripl-panel-gap: 8px;           /* row gap between fields */
+    --ripl-panel-label-col: 128px;   /* fixed label column → 2-col rhythm */
+    --ripl-panel-rule: var(--vp-c-divider);
+    --ripl-panel-heading: var(--vp-c-text-3);
+    --ripl-panel-label: var(--vp-c-text-2);
+    --ripl-panel-radius: 6px;
+}
+
+@media (max-width: 640px) {
+    .ripl-config-drawer__panel {
+        --ripl-panel-label-col: 104px;
+        --ripl-panel-pad: 12px;
+    }
+}
+
+/**
  * Component: Algolia
  * -------------------------------------------------------------------------- */
 

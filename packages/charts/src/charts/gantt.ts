@@ -14,6 +14,7 @@ import type {
     ChartAxisInput,
     ChartGridInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -22,7 +23,7 @@ import {
     normalizeGrid,
     normalizeTooltip,
     normalizeYAxisItem,
-    resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -34,8 +35,16 @@ import {
 } from '../core/animation';
 
 import {
+    resolveColorBy,
+} from '../core/color';
+
+import type {
     ChartXAxis,
     ChartYAxis,
+} from '../components/axis';
+
+import {
+    createChartAxes,
 } from '../components/axis';
 
 import {
@@ -60,10 +69,10 @@ import {
     Box,
     createGroup,
     createLine,
+    createPolyline,
     createRect,
     easeOutCubic,
     scaleBand,
-    scaleContinuous,
     scaleTime,
     setColorAlpha,
 } from '@ripl/core';
@@ -86,16 +95,24 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     start: keyof TData | ((item: TData) => Date);
     /** Accessor for each task's end date. */
     end: keyof TData | ((item: TData) => Date);
-    /** Accessor for an explicit per-task colour; falls back to the generated palette. */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to the generated palette. */
+    colorBy?: keyof TData | ((item: TData) => string);
     /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
     progress?: NumericAccessor<TData>;
+    /**
+     * Accessor for the keys of the tasks each task depends on. When provided, a curved connector is
+     * drawn from every predecessor task's end to this task's start (finish-to-start). Return an empty
+     * array — or omit the option entirely — for a task with no dependencies.
+     */
+    dependencies?: keyof TData | ((item: TData) => string[]);
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
     /** Axis configuration for the category and time axes. */
     axis?: ChartAxisInput<TData>;
+    /** Format applied to the numeric progress value shown in the task tooltip. Defaults to a percentage. */
+    format?: ValueFormatInput;
     /** Draw a marker line at the current date. Defaults to true. */
     showToday?: boolean;
     /** Colour of the "today" marker line. */
@@ -140,6 +157,7 @@ const DEFAULT_TODAY_COLOR = '#ef4444';
 export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>, GanttChartEventMap> {
 
     private _barGroups: Group[] = [];
+    private _connectorsGroup?: Group;
     private _todayLine?: Line;
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
@@ -167,27 +185,15 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             });
         }
 
-        this._xAxis = new ChartXAxis({
+        const axes = createChartAxes({
             scene: this.scene,
             renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
+            xAxis,
+            yAxis,
         });
 
-        this._yAxis = new ChartYAxis({
-            scene: this.scene,
-            renderer: this.renderer,
-            bounds: Box.empty(),
-            scale: scaleContinuous([0, 1], [0, 1]),
-            labelFont: yAxis.font,
-            labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
-            title: yAxis.title,
-        });
+        this._xAxis = axes.xAxis;
+        this._yAxis = axes.yAxis;
 
         if (gridOpts.visible) {
             this._grid = new Grid({
@@ -224,13 +230,13 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             data,
             start: startAccessor,
             end: endAccessor,
-            color: colorAccessor,
+            colorBy,
             progress: progressAccessor,
         } = this.options;
 
         const getStart = this._getAccessor<Date>(startAccessor);
         const getEnd = this._getAccessor<Date>(endAccessor);
-        const getColor = colorAccessor ? this._getAccessor<string>(colorAccessor) : undefined;
+        const getColor = resolveColorBy<TData>(colorBy);
         const getProgress = progressAccessor ? this._getAccessor<number>(progressAccessor) : undefined;
         const borderRadius = this.options.borderRadius ?? 3;
 
@@ -240,9 +246,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const start = getStart(item);
             const end = getEnd(item);
 
-            const color = getColor
-                ? getColor(item)
-                : this.getSeriesColor(key);
+            const color = getColor(item) ?? this.getSeriesColor(key);
 
             const x = timeScale(start);
             const width = Math.max(timeScale(end) - timeScale(start), 2);
@@ -395,6 +399,92 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             entriesTransition,
             updatesTransition,
         ]);
+    }
+
+    /**
+     * Draws curved finish-to-start connectors between dependent tasks. For each task with a
+     * `dependencies` entry, a `bumpX` link runs from every predecessor's end to this task's start,
+     * capped with an arrowhead. Rebuilt each render (cheap); missing predecessors are skipped, and the
+     * whole layer is torn down when no `dependencies` accessor is configured.
+     */
+    private _drawConnectors(
+        data: TData[],
+        getKey: (item: TData) => string,
+        geometryByKey: Map<string, { startX: number;
+            endX: number;
+            centerY: number; }>
+    ) {
+        const dependenciesAccessor = this.options.dependencies;
+
+        if (!dependenciesAccessor) {
+            if (this._connectorsGroup) {
+                this._connectorsGroup.destroy();
+                this._connectorsGroup = undefined;
+            }
+
+            return;
+        }
+
+        const getDependencies = this._getAccessor<string[]>(dependenciesAccessor);
+
+        if (!this._connectorsGroup) {
+            // Above the bars but below the today marker (zIndex 500), so links read as structure.
+            this._connectorsGroup = createGroup({
+                id: 'connectors',
+                zIndex: 450,
+            });
+
+            this.scene.add(this._connectorsGroup);
+        }
+
+        const group = this._connectorsGroup;
+        group.clear();
+
+        const color = setColorAlpha(this.theme.axisColor, 0.9);
+        const arrowSize = 6;
+
+        data.forEach(item => {
+            const target = geometryByKey.get(getKey(item));
+
+            if (!target) {
+                return;
+            }
+
+            const dependencies = getDependencies(item) ?? [];
+
+            dependencies.forEach(dependencyKey => {
+                const source = geometryByKey.get(dependencyKey);
+
+                if (!source) {
+                    return;
+                }
+
+                // Curved link: predecessor end → this task's start (stopping short for the arrowhead).
+                const link = createPolyline({
+                    points: [
+                        [source.endX, source.centerY],
+                        [target.startX - arrowSize, target.centerY],
+                    ],
+                    renderer: 'bumpX',
+                    stroke: color,
+                    lineWidth: 1.5,
+                });
+
+                link.autoFill = false;
+
+                // Filled arrowhead pointing into the dependent task's start.
+                const arrow = createPolyline({
+                    points: [
+                        [target.startX - arrowSize, target.centerY - arrowSize * 0.55],
+                        [target.startX, target.centerY],
+                        [target.startX - arrowSize, target.centerY + arrowSize * 0.55],
+                    ],
+                    fill: color,
+                });
+
+                group.add([link, arrow]);
+            });
+        });
     }
 
     private _drawTodayMarker(
@@ -582,6 +672,26 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             // Draw today marker
             this._drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
 
+            // Dependency connectors — resolve each task's bar geometry (finish/start x, row centre y)
+            // so links can be drawn from a predecessor's end to a dependent's start.
+            const geometryByKey = new Map<string, { startX: number;
+                endX: number;
+                centerY: number; }>();
+
+            data.forEach(item => {
+                const startX = timeScale(getStart(item));
+                const endX = Math.max(timeScale(getEnd(item)), startX + 2);
+                const centerY = adjustedCategoryScale(getLabel(item)) + adjustedCategoryScale.bandwidth / 2;
+
+                geometryByKey.set(getKey(item), {
+                    startX,
+                    endX,
+                    centerY,
+                });
+            });
+
+            this._drawConnectors(data, getKey, geometryByKey);
+
             return Promise.all([
                 this._xAxis.render(),
                 this._yAxis.render(),
@@ -597,7 +707,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         color: string;
         progress?: number;
         state: RectState; }) {
-        const progressStr = task.progress !== undefined ? ` (${Math.round(task.progress * 100)}%)` : '';
+        const formatValue = resolveValueFormat(this.options.format ?? 'percentage');
+
+        const progressStr = task.progress !== undefined ? ` (${formatValue(task.progress)})` : '';
         const tooltipText = `${task.label}: ${this._formatDate(task.start)} – ${this._formatDate(task.end)}${progressStr}`;
 
         const payload = (point: { x: number;

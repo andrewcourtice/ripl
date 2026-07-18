@@ -7,19 +7,22 @@ The **Arc Diagram** is a cartesian axis whose points are nodes, connected by sem
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Reweight</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Arc Diagram">
+        <RiplChartConfig :config="config" extra-title="Arc Diagram" :extras-reset="reset">
             <RiplField label="Vertical" inline>
-                <RiplSwitch v-model="vertical" />
+                <RiplSwitch v-model="extras.orientation" />
             </RiplField>
             <RiplField label="Size by connections" inline>
-                <RiplSwitch v-model="sizeByConnections" />
+                <RiplSwitch v-model="extras.sizeByConnections" />
+            </RiplField>
+            <RiplField label="Node radius">
+                <RiplInputRange v-model="extras.nodeRadius" :min="4" :max="16" :step="1" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -33,6 +36,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -44,11 +48,20 @@ import {
     watch,
 } from 'vue';
 
-const vertical = ref(false);
-const sizeByConnections = ref(true);
+const { extras, reset } = useChartExtras({
+    orientation: false,
+    sizeByConnections: true,
+    nodeRadius: 8,
+});
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Character Co-occurrence',
 });
 
@@ -93,34 +106,33 @@ function makeLinks() {
 
 let links = makeLinks();
 
+function buildOptions() {
+    return {
+        nodeRadius: extras.nodeRadius,
+        orientation: extras.orientation ? 'vertical' : 'horizontal',
+        sizeByConnections: extras.sizeByConnections,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createArcDiagramChart(context, {
         nodes,
         links,
-        nodeRadius: 8,
-        orientation: vertical.value ? 'vertical' : 'horizontal',
-        sizeByConnections: sizeByConnections.value,
         format: v => `${v} scenes`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        links,
-        orientation: vertical.value ? 'vertical' : 'horizontal',
-        sizeByConnections: sizeByConnections.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([vertical, sizeByConnections], apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     links = makeLinks();
-    apply();
+    chart.value?.update({ links });
 }
 </script>
 

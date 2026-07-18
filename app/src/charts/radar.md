@@ -7,7 +7,7 @@ The **Radar Chart** displays multivariate data on a radial grid, ideal for compa
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,9 +16,15 @@ The **Radar Chart** displays multivariate data on a radial grid, ideal for compa
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Radar">
-            <RiplField label="Levels">
-                <RiplInputRange v-model="levels" :min="3" :max="8" :step="1" />
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Radar" :extras-reset="reset">
+            <RiplField label="Grid levels">
+                <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Max value">
+                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+            </RiplField>
+            <RiplField label="Fill opacity">
+                <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -33,6 +39,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -51,11 +58,22 @@ const seriesMeta = [
     { id: 'player2', label: 'Player 2' },
 ];
 
-const levels = ref(5);
 let axisCount = 6;
 
+const { extras, reset } = useChartExtras({
+    levels: 5,
+    maxValue: undefined as number | undefined,
+    fillOpacity: 0.25,
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Player Comparison',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
@@ -79,34 +97,39 @@ function getSeries() {
         id: s.id,
         value: s.id,
         label: s.label,
-        opacity: 0.25,
+        fillOpacity: extras.fillOpacity,
         color: config.colors[s.id],
     }));
 }
 
+function buildOptions() {
+    const options = {
+        categories: currentAxes(),
+        levels: extras.levels,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
+
+    // maxValue is optional (blank = auto-computed from the data); only pass it when set.
+    if (extras.maxValue !== undefined) {
+        options.maxValue = extras.maxValue;
+    }
+
+    return options;
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createRadarChart(context, {
         data,
-        axes: currentAxes(),
-        levels: levels.value,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
-        series: getSeries(),
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        axes: currentAxes(),
-        data,
-        levels: levels.value,
-        series: getSeries(),
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch(levels, apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -117,7 +140,7 @@ function addAxis() {
     if (axisCount < AXIS_POOL.length) {
         axisCount++;
         data = generateData();
-        chart.value?.update({ axes: currentAxes(), data });
+        chart.value?.update({ categories: currentAxes(), data });
     }
 }
 
@@ -125,7 +148,7 @@ function removeAxis() {
     if (axisCount > 3) {
         axisCount--;
         data = generateData();
-        chart.value?.update({ axes: currentAxes(), data });
+        chart.value?.update({ categories: currentAxes(), data });
     }
 }
 </script>
@@ -139,7 +162,7 @@ import {
 
 const chart = createRadarChart('#container', {
     data: [/* ... */],
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck', 'Agility'],
     series: [
         { id: 'player1', value: 'player1', label: 'Player 1' },
     ],
@@ -164,7 +187,7 @@ const data = [
 ];
 ```
 
-The `axes` option lists axis labels, and each series references a numeric field via `value`.
+The `categories` option lists axis labels, and each series references a numeric field via `value`.
 
 ## Variants
 
@@ -173,7 +196,7 @@ The `axes` option lists axis labels, and each series references a numeric field 
 ```ts
 createRadarChart('#container', {
     data,
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     series: [
         { id: 'player1',
             value: 'player1',
@@ -187,18 +210,18 @@ createRadarChart('#container', {
 ```ts
 createRadarChart('#container', {
     data,
-    axes: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
+    categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     levels: 10,
     maxValue: 100,
     series: [
         { id: 'player1',
             value: 'player1',
             label: 'Player 1',
-            opacity: 0.3 },
+            fillOpacity: 0.3 },
         { id: 'player2',
             value: 'player2',
             label: 'Player 2',
-            opacity: 0.3 },
+            fillOpacity: 0.3 },
     ],
 });
 ```
@@ -206,8 +229,8 @@ createRadarChart('#container', {
 ## Options
 
 - **`data`** — The data array (one item per axis)
-- **`axes`** — Array of axis labels
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `opacity`
+- **`categories`** — Array of axis labels
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
 - **`maxValue`** — Maximum value for the scale (auto-computed if omitted)
 - **`levels`** — Number of concentric grid levels (default `5`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

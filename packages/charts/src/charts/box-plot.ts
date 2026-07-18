@@ -40,6 +40,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     boxplotStats,
     rollup,
 } from '../core/statistics';
@@ -68,7 +73,6 @@ import {
     createGroup,
     createLine,
     createRect,
-    scaleContinuous,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -85,7 +89,7 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     /** The dataset summarised by the chart. */
     data: TData[];
     /** Accessor for the category each value belongs to. */
-    group: keyof TData | ((item: TData) => string);
+    key: keyof TData | ((item: TData) => string);
     /** Accessor for the numeric value to summarise. */
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
@@ -347,7 +351,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         return super.render(async () => {
             const {
                 data,
-                group,
+                key,
                 value,
                 categories,
             } = this.options;
@@ -360,7 +364,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             ]);
             this.prepareAxes();
 
-            const getGroup = resolveAccessor<TData, string>(group);
+            const getGroup = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const color = this.getSeriesColor('boxplot');
 
@@ -377,9 +381,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            const valueScale = scaleContinuous(valueExtent, [bottom, top], {
-                nice: true,
-            });
+            const valueScale = createValueScale(this.yAxisOptions, valueExtent, [bottom, top]);
 
             this.yAxis.scale = valueScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
@@ -392,9 +394,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            const adjustedValueScale = scaleContinuous(valueExtent, [xAxisBox.top, top], {
-                nice: true,
-            });
+            const adjustedValueScale = createValueScale(this.yAxisOptions, valueExtent, [xAxisBox.top, top]);
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
@@ -416,7 +416,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
             this.renderGrid(
                 [],
-                viewedValueScale.ticks(10).map(tick => viewedValueScale(tick)),
+                viewedValueScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => viewedValueScale(tick)),
                 plot
             );
 
@@ -660,7 +660,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
  *         { team: 'A', score: 91 },
  *         { team: 'B', score: 74 },
  *     ],
- *     group: 'team',
+ *     key: 'team',
  *     value: 'score',
  * });
  * ```

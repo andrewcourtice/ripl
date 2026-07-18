@@ -7,6 +7,7 @@ import {
 } from '../core/chart';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -26,6 +27,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Circle,
@@ -107,6 +112,8 @@ export interface ArcDiagramChartOptions<TData = unknown> extends BaseChartOption
     orientation?: ArcDiagramOrientation;
     /** Scale each node's dot by its connection count (degree), like a bubble chart. Defaults to false. */
     sizeByConnections?: boolean;
+    /** Legend configuration. Shown automatically when there is more than one node group; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Format applied to link values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -288,6 +295,30 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            // One legend entry per distinct node group (or per node when ungrouped), using the
+            // group's/node's resolved colour.
+            const legendSeen = new Set<string>();
+            const legendItems: LegendItem[] = [];
+
+            nodes.forEach(node => {
+                const legendId = node.group ?? node.id;
+
+                if (legendSeen.has(legendId)) {
+                    return;
+                }
+
+                legendSeen.add(legendId);
+                legendItems.push({
+                    id: legendId,
+                    label: node.group ?? node.label ?? node.id,
+                    color: this.getSeriesColor(legendId),
+                    active: true,
+                });
+            });
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
             const area = layout.area;
 
             // --- Axis geometry, parameterised by orientation ---
@@ -611,6 +642,12 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 ...entryNodeGroups,
                 ...nodeUpdates.map(([, group]) => group),
             ];
+
+            // Legend hover highlights the hovered cluster's nodes (legend id = node.group ?? node.id;
+            // node group ids are `arc-node-<id>`), dimming the other clusters.
+            const nodeClusterOf = new Map<string, string>();
+            nodes.forEach(node => nodeClusterOf.set(`arc-node-${node.id}`, node.group ?? node.id));
+            this.registerHighlightGroups(this._nodeElements, group => nodeClusterOf.get(group.id) ?? group.id);
 
             const entryCircles = entryNodeGroups.flatMap(group => group.getElementsByType('circle') as Circle[]);
             const entryTicks = entryNodeGroups.flatMap(group => group.getElementsByType('line') as Line[]);

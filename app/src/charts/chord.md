@@ -7,14 +7,29 @@ The **Chord Chart** visualizes relationships between groups using arcs and ribbo
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Groups" :extras-reset="reset">
+            <RiplField label="Pad angle">
+                <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.2" :step="0.01" />
+            </RiplField>
+            <RiplField
+                v-for="(label, index) in LABELS"
+                :key="label"
+                :label="label"
+                inline
+            >
+                <RiplColorInput
+                    :model-value="extras.colors[index]"
+                    @update:model-value="setColor(index, $event)"
+                />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -25,7 +40,9 @@ import {
 
 import {
     buildCommonOptions,
+    paletteColor,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,16 +50,33 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
+const LABELS = ['Engineering', 'Design', 'Marketing', 'Sales'];
+
+const { extras, reset } = useChartExtras({
+    padAngle: 0.04,
+    colors: LABELS.map((_, index) => paletteColor(index)),
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Team Collaboration',
 });
 
+function setColor(index: number, value: string) {
+    extras.colors = extras.colors.map((color, i) => (i === index ? value : color));
+}
+
 function generateMatrix() {
-    const size = 4;
+    const size = LABELS.length;
     return Array.from({ length: size }, () =>
         Array.from({ length: size }, () => Math.round(Math.random() * 50))
     );
@@ -50,16 +84,27 @@ function generateMatrix() {
 
 let matrix = generateMatrix();
 
+function buildOptions() {
+    return {
+        colors: extras.colors,
+        padAngle: extras.padAngle,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createChordChart(context, {
-        labels: ['Engineering', 'Design', 'Marketing', 'Sales'],
+        labels: LABELS,
         matrix,
         padding: { top: 30, right: 30, bottom: 30, left: 30 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     matrix = generateMatrix();

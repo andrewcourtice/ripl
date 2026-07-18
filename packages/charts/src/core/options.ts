@@ -1,3 +1,7 @@
+import {
+    getDefaultTheme,
+} from './theme';
+
 import type {
     Ease,
 } from '@ripl/core';
@@ -18,30 +22,15 @@ import {
     easeOutQuint,
 } from '@ripl/core';
 
-import {
-    numberRoundTo,
-    typeIsBoolean,
-    typeIsNumber,
-    typeIsString,
+import type {
+    NumberFormatOptions,
 } from '@ripl/utilities';
 
-/** Default maximum number of decimal places applied when rendering numeric values as text. */
-export const DEFAULT_NUMBER_PRECISION = 2;
-
-/**
- * Formats a numeric value as a localized string, capping the precision at `precision` decimal
- * places (default {@link DEFAULT_NUMBER_PRECISION}). Integers render without decimals; fractional
- * values are rounded to at most `precision` places with trailing zeros stripped. Non-numeric values
- * fall back to `String(value)`. This is the shared entry point every chart uses so labels, axes,
- * tooltips, and tick marks share one consistent precision cap.
- */
-export function formatNumber(value: unknown, precision: number = DEFAULT_NUMBER_PRECISION): string {
-    if (!typeIsNumber(value)) {
-        return String(value);
-    }
-
-    return numberRoundTo(value, precision).toLocaleString();
-}
+import {
+    numberFormat,
+    typeIsBoolean,
+    typeIsString,
+} from '@ripl/utilities';
 
 // ---------------------------------------------------------------------------
 // Ease
@@ -175,15 +164,19 @@ export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | und
         return undefined;
     }
 
+    const theme = getDefaultTheme();
+
     if (typeIsString(input)) {
         return {
             ...TITLE_DEFAULTS,
+            fontColor: theme.textColor,
             text: input,
         };
     }
 
     return {
         ...TITLE_DEFAULTS,
+        fontColor: theme.textColor,
         ...input,
     };
 }
@@ -265,6 +258,7 @@ const GRID_DEFAULTS: ChartGridOptions = {
 export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGridOptions>): ChartGridOptions {
     const base = {
         ...GRID_DEFAULTS,
+        lineColor: getDefaultTheme().gridColor,
         ...defaults,
     };
 
@@ -318,6 +312,7 @@ const CROSSHAIR_DEFAULTS: ChartCrosshairOptions = {
 export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Partial<ChartCrosshairOptions>): ChartCrosshairOptions {
     const base = {
         ...CROSSHAIR_DEFAULTS,
+        lineColor: getDefaultTheme().crosshairColor,
         ...defaults,
     };
 
@@ -381,8 +376,12 @@ const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
 
 /** Normalizes tooltip input into fully resolved `ChartTooltipOptions`. */
 export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<ChartTooltipOptions>): ChartTooltipOptions {
+    const theme = getDefaultTheme();
+
     const base = {
         ...TOOLTIP_DEFAULTS,
+        fontColor: theme.tooltipColor,
+        backgroundColor: theme.tooltipBackground,
         ...defaults,
     };
 
@@ -442,6 +441,7 @@ const LEGEND_DEFAULTS: ChartLegendOptions = {
 export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<ChartLegendOptions>): ChartLegendOptions {
     const base = {
         ...LEGEND_DEFAULTS,
+        fontColor: getDefaultTheme().legendColor,
         ...defaults,
     };
 
@@ -479,7 +479,12 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
 /** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
+/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`; category and time axes are selected by the chart. */
+export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'time' | 'band' | 'point';
+
 /** Options for a single axis (x or y). */
+// `TData` is retained for symmetry across the axis option family (ChartYAxisItemOptions, ChartAxisInput, etc.).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface ChartAxisItemOptions<TData = unknown> {
     /** Whether the axis line, ticks, and labels are rendered. */
     visible: boolean;
@@ -489,18 +494,30 @@ export interface ChartAxisItemOptions<TData = unknown> {
     fontColor: string;
     /** Optional axis title drawn alongside the tick labels. */
     title?: string;
-    /** Accessor selecting the value this axis reads from each data item. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value?: keyof TData | ((item: TData) => any);
-    /** How tick values are formatted — a built-in {@link AxisFormatType} or a custom formatter. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    format?: AxisFormatType | ((value: any) => string);
+    /** How tick values are formatted — a built-in {@link AxisFormatType}, an Intl number-format options object, or a custom formatter. */
+    format?: ValueFormatInput;
+    /** Scale family for this axis. Value axes default to `'linear'`. See {@link AxisScaleType}. */
+    scale?: AxisScaleType;
+    /** Expands the value domain to round, tick-aligned bounds. `true` (default) nices to the tick count, a number nices to that many segments, `false` disables it. */
+    nice?: boolean | number;
+    /** Target number of ticks and grid lines along the axis. Defaults to 10. */
+    ticks?: number;
+    /** Explicit lower bound of the value domain (overrides the data extent). */
+    min?: number;
+    /** Explicit upper bound of the value domain (overrides the data extent). */
+    max?: number;
+    /** Logarithm base for a `'log'` scale. Defaults to 10. */
+    base?: number;
+    /** Exponent for a `'pow'` scale. Defaults to 1. */
+    exponent?: number;
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */
 export interface ChartYAxisItemOptions<TData = unknown> extends ChartAxisItemOptions<TData> {
     /** Which side of the chart the y-axis is drawn on. */
     position: 'left' | 'right';
+    /** Stable identifier a series can bind to via its `axis` option. Defaults to the axis index. */
+    id?: string;
 }
 
 /** Combined x and y axis configuration. */
@@ -530,8 +547,12 @@ export function normalizeAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartAxisItemOptions<TData>>,
     defaults?: Partial<ChartAxisItemOptions<TData>>
 ): ChartAxisItemOptions<TData> {
+    const theme = getDefaultTheme();
+
     const base = {
         ...AXIS_ITEM_DEFAULTS,
+        font: theme.font,
+        fontColor: theme.axisColor,
         ...defaults,
     };
 
@@ -557,8 +578,12 @@ export function normalizeYAxisItem<TData = unknown>(
     input?: boolean | Partial<ChartYAxisItemOptions<TData>>,
     defaults?: Partial<ChartYAxisItemOptions<TData>>
 ): ChartYAxisItemOptions<TData> {
+    const theme = getDefaultTheme();
+
     const base = {
         ...Y_AXIS_ITEM_DEFAULTS,
+        font: theme.font,
+        fontColor: theme.axisColor,
         ...defaults,
     };
 
@@ -581,23 +606,19 @@ export function normalizeYAxisItem<TData = unknown>(
 
 /** Normalizes axis input into a full `ChartAxisOptions` object with both x and y. */
 export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData> {
+    // Return minimal partials (no colours) so the per-item normalizers apply the active theme's
+    // colours; pre-filling here would shadow the theme for the default/boolean cases.
     if (input === undefined) {
         return {
-            x: { ...AXIS_ITEM_DEFAULTS } as ChartAxisItemOptions<TData>,
-            y: { ...Y_AXIS_ITEM_DEFAULTS } as ChartYAxisItemOptions<TData>,
+            x: {},
+            y: {},
         };
     }
 
     if (typeIsBoolean(input)) {
         return {
-            x: {
-                ...AXIS_ITEM_DEFAULTS,
-                visible: input,
-            } as ChartAxisItemOptions<TData>,
-            y: {
-                ...Y_AXIS_ITEM_DEFAULTS,
-                visible: input,
-            } as ChartYAxisItemOptions<TData>,
+            x: { visible: input },
+            y: { visible: input },
         };
     }
 
@@ -610,10 +631,11 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
 
 /**
  * A value formatter accepted anywhere a chart renders a raw value as text (tooltips, data
- * labels, pie segment labels). Either a built-in format type or a custom callback.
+ * labels, pie segment labels, axis ticks). Either a built-in {@link AxisFormatType}, an Intl
+ * number-format options object (e.g. `{ style: 'currency', currency: 'USD' }`), or a custom callback.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type ValueFormatInput = AxisFormatType | ((value: any) => string);
+export type ValueFormatInput = AxisFormatType | NumberFormatOptions | ((value: any) => string);
 
 /**
  * Resolves a value formatter into a function, always returning a usable formatter (falling back
@@ -624,7 +646,7 @@ export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) 
     const resolved = resolveFormatLabel(format);
     // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
     // untyped numeric values still respect the default 2-decimal cap.
-    return resolved ?? (value => formatNumber(value));
+    return resolved ?? (value => numberFormat(value, { precision: 2 }));
 }
 
 // ---------------------------------------------------------------------------
@@ -687,6 +709,7 @@ const LABEL_ANCHORS: LabelAnchor[] = ['top', 'left', 'bottom', 'right'];
 export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Partial<ChartDataLabelsOptions>): ChartDataLabelsOptions {
     const base = {
         ...DATA_LABELS_DEFAULTS,
+        fontColor: getDefaultTheme().textColor,
         ...defaults,
     };
 
@@ -790,15 +813,22 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
 /** Built-in value formatters keyed by {@link AxisFormatType}. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VALUE_FORMATTERS: Record<AxisFormatType, (value: any) => string> = {
-    number: (value: number) => formatNumber(value),
-    percentage: (value: number) => `${formatNumber(value * 100)}%`,
+    number: (value: number) => numberFormat(value, { precision: 2 }),
+    percentage: (value: number) => numberFormat(value, {
+        style: 'percent',
+        maximumFractionDigits: 2,
+    }),
     date: (value: Date | number) => new Date(value).toLocaleDateString(),
     string: (value: unknown) => String(value),
 };
 
-/** Resolves an axis format type or custom formatter into a label formatting function. */
+/**
+ * Resolves a {@link ValueFormatInput} into a label formatting function. A built-in
+ * {@link AxisFormatType} maps to a preset formatter, an Intl number-format options object binds
+ * {@link numberFormat} to those options, and a function is returned as-is.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => string)): ((value: any) => string) | undefined {
+export function resolveFormatLabel(format?: ValueFormatInput): ((value: any) => string) | undefined {
     if (!format) {
         return undefined;
     }
@@ -807,5 +837,9 @@ export function resolveFormatLabel(format?: AxisFormatType | ((value: any) => st
         return format;
     }
 
-    return VALUE_FORMATTERS[format];
+    if (typeof format === 'string') {
+        return VALUE_FORMATTERS[format];
+    }
+
+    return value => numberFormat(value, format);
 }

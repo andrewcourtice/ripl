@@ -46,6 +46,9 @@ export interface ColorLegendOptions {
     fontColor?: string;
     /** Gap between the bar and its labels in pixels. */
     labelGap?: number;
+    /** Padding inset (px) between the reserved band's leading edge and the bar, so the legend
+     * doesn't sit flush against the adjacent axis. Defaults to `8`. */
+    padding?: number;
 }
 
 /** Options for constructing a {@link ColorLegend}. */
@@ -67,6 +70,7 @@ const DEFAULT_OPTIONS: Required<ColorLegendOptions> = {
     font: '12px sans-serif',
     fontColor: '#333333',
     labelGap: 4,
+    padding: 8,
 };
 
 const LABEL_ALLOWANCE = 16;
@@ -137,9 +141,9 @@ export class ColorLegend extends ChartComponent {
         };
     }
 
-    /** The thickness of the band this legend needs (bar plus labels). */
+    /** The thickness of the band this legend needs (padding inset plus bar plus labels). */
     public measure(): number {
-        return this._options.thickness + this._options.labelGap + LABEL_ALLOWANCE;
+        return this._options.padding + this._options.thickness + this._options.labelGap + LABEL_ALLOWANCE;
     }
 
     /** Draws (or redraws) the legend within the reserved region. */
@@ -156,6 +160,7 @@ export class ColorLegend extends ChartComponent {
             font,
             fontColor,
             labelGap,
+            padding,
         } = this._options;
 
         const [
@@ -165,7 +170,10 @@ export class ColorLegend extends ChartComponent {
 
         const span = max - min || 1;
         const vertical = orientation === 'vertical';
-        const length = vertical ? region.height : region.width;
+        // Inset the content by `padding` from the band's leading edge so the bar doesn't sit flush
+        // against the adjacent axis (the standard Legend does the same via itemPadding).
+        const top = region.y + padding;
+        const length = vertical ? region.height - padding : region.width;
 
         for (let index = 0; index < segments; index++) {
             const position = segments === 1 ? 0 : index / (segments - 1);
@@ -176,7 +184,7 @@ export class ColorLegend extends ChartComponent {
             group.add(createRect({
                 fill: color,
                 x: vertical ? region.x : region.x + offset,
-                y: vertical ? region.y + (length - offset - size) : region.y,
+                y: vertical ? top + (length - offset - size) : top,
                 width: vertical ? thickness : size,
                 height: vertical ? size : thickness,
             }));
@@ -193,8 +201,8 @@ export class ColorLegend extends ChartComponent {
                     ? region.x + thickness + labelGap
                     : region.x + fraction * length,
                 y: vertical
-                    ? region.y + (1 - fraction) * length
-                    : region.y + thickness + labelGap,
+                    ? top + (1 - fraction) * length
+                    : top + thickness + labelGap,
                 textAlign: vertical ? 'left' : 'center',
                 textBaseline: vertical ? 'middle' : 'top',
             }));

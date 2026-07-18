@@ -7,12 +7,12 @@ The **Realtime Chart** smoothly visualizes data streaming in over time. It maint
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="toggle">{{ streaming ? 'Stop' : 'Start' }}</RiplButton>
             <RiplButton @click="reset">Reset</RiplButton>
-            <RiplSelect v-model="speed" @change="restart">
+            <RiplSelect v-model="speed" @change="startStreaming">
                 <option value="100">Fast (100ms)</option>
                 <option value="300">Normal (300ms)</option>
                 <option value="1000">Slow (1s)</option>
@@ -20,7 +20,32 @@ The **Realtime Chart** smoothly visualizes data streaming in over time. It maint
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" />
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Stream" :extras-reset="resetExtras">
+            <RiplField label="Window size">
+                <RiplInputRange v-model="extras.windowSize" :min="20" :max="120" :step="5" />
+            </RiplField>
+            <RiplField label="Transition (ms)">
+                <RiplInputRange v-model="extras.transitionDuration" :min="100" :max="1000" :step="50" />
+            </RiplField>
+            <RiplField label="CPU area" inline>
+                <RiplSwitch v-model="extras.cpuArea" />
+            </RiplField>
+            <RiplField v-if="extras.cpuArea" label="CPU fill">
+                <RiplInputRange v-model="extras.cpuOpacity" :min="0" :max="1" :step="0.05" />
+            </RiplField>
+            <RiplField label="Memory area" inline>
+                <RiplSwitch v-model="extras.memoryArea" />
+            </RiplField>
+            <RiplField v-if="extras.memoryArea" label="Memory fill">
+                <RiplInputRange v-model="extras.memoryOpacity" :min="0" :max="1" :step="0.05" />
+            </RiplField>
+            <RiplField label="Network area" inline>
+                <RiplSwitch v-model="extras.networkArea" />
+            </RiplField>
+            <RiplField v-if="extras.networkArea" label="Network fill">
+                <RiplInputRange v-model="extras.networkOpacity" :min="0" :max="1" :step="0.05" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -33,11 +58,11 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
     createRealtimeChart,
-    RealtimeChart,
 } from '@ripl/charts';
 
 import {
@@ -51,13 +76,32 @@ const speed = ref('300');
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
 const seriesMeta = [
-    { id: 'cpu', label: 'CPU %', showArea: true, areaOpacity: 0.15 },
-    { id: 'memory', label: 'Memory %', showArea: true, areaOpacity: 0.15 },
-    { id: 'network', label: 'Network MB/s', showArea: false, lineWidth: 1.5 },
+    { id: 'cpu', label: 'CPU %' },
+    { id: 'memory', label: 'Memory %' },
+    { id: 'network', label: 'Network MB/s' },
 ];
 
+const { extras, reset: resetExtras } = useChartExtras({
+    windowSize: 60,
+    transitionDuration: 200,
+    cpuArea: true,
+    cpuOpacity: 0.15,
+    memoryArea: true,
+    memoryOpacity: 0.15,
+    networkArea: false,
+    networkOpacity: 0.15,
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        tooltip: true,
+        crosshair: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'System Metrics',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
@@ -73,47 +117,79 @@ function nextValue(base: number, volatility: number, min: number, max: number): 
 }
 
 function getSeries() {
-    return seriesMeta.map(s => ({
-        id: s.id,
-        label: s.label,
-        showArea: s.showArea,
-        areaOpacity: s.areaOpacity,
-        lineWidth: s.lineWidth,
-        color: config.colors[s.id],
-    }));
+    return [
+        {
+            id: 'cpu',
+            label: 'CPU %',
+            showArea: extras.cpuArea,
+            fillOpacity: extras.cpuOpacity,
+            color: config.colors.cpu,
+        },
+        {
+            id: 'memory',
+            label: 'Memory %',
+            showArea: extras.memoryArea,
+            fillOpacity: extras.memoryOpacity,
+            color: config.colors.memory,
+        },
+        {
+            id: 'network',
+            label: 'Network MB/s',
+            showArea: extras.networkArea,
+            fillOpacity: extras.networkOpacity,
+            lineWidth: 1.5,
+            color: config.colors.network,
+        },
+    ];
 }
 
-const { contextChanged, chart } = useRiplChart(context => {
-    const c = createRealtimeChart(context, {
-        padding: { top: 30, right: 20, bottom: 20, left: 20 },
-        windowSize: 60,
-        transitionDuration: 200,
+function buildOptions() {
+    return {
+        windowSize: extras.windowSize,
+        transitionDuration: extras.transitionDuration,
         series: getSeries(),
         ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
+const { contextChanged, chart } = useRiplChart(context => {
+    const instance = createRealtimeChart(context, {
+        padding: { top: 30, right: 20, bottom: 20, left: 20 },
+        format: v => `${Math.round(v)}%`,
+        ...buildOptions(),
     });
 
-    startStreaming(c);
-    return c;
+    startStreaming();
+    return instance;
 });
 
-watch(config, () => chart.value?.update({ series: getSeries(), ...buildCommonOptions(config) }), { deep: true });
+// Furniture (legend, tooltip, crosshair, format, theme) is construction-time, so rebuild the chart on
+// any customization change. The stream loop below always feeds the current chart via `chart.value`, so
+// it keeps running after a rebuild; the sliding window restarts empty and refills as data arrives.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
-function startStreaming(c?: RealtimeChart) {
+function pushSample() {
+    cpuBase = nextValue(cpuBase, 8, 5, 95);
+    memBase = nextValue(memBase, 4, 20, 90);
+    netBase = nextValue(netBase, 12, 0, 100);
+
+    chart.value?.push({
+        cpu: Math.round(cpuBase * 10) / 10,
+        memory: Math.round(memBase * 10) / 10,
+        network: Math.round(netBase * 10) / 10,
+    });
+}
+
+function startStreaming() {
     stopStreaming();
-    const target = c ?? chart.value;
-    if (!target) return;
 
-    intervalId = setInterval(() => {
-        cpuBase = nextValue(cpuBase, 8, 5, 95);
-        memBase = nextValue(memBase, 4, 20, 90);
-        netBase = nextValue(netBase, 12, 0, 100);
+    if (!streaming.value) {
+        return;
+    }
 
-        target.push({
-            cpu: Math.round(cpuBase * 10) / 10,
-            memory: Math.round(memBase * 10) / 10,
-            network: Math.round(netBase * 10) / 10,
-        });
-    }, Number(speed.value));
+    intervalId = setInterval(pushSample, Number(speed.value));
 }
 
 function stopStreaming() {
@@ -124,12 +200,13 @@ function stopStreaming() {
 }
 
 function toggle() {
-    if (streaming.value) {
-        stopStreaming();
-    } else {
-        startStreaming();
-    }
     streaming.value = !streaming.value;
+
+    if (streaming.value) {
+        startStreaming();
+    } else {
+        stopStreaming();
+    }
 }
 
 function reset() {
@@ -137,12 +214,6 @@ function reset() {
     cpuBase = 45;
     memBase = 60;
     netBase = 25;
-}
-
-function restart() {
-    if (streaming.value) {
-        startStreaming();
-    }
 }
 
 onUnmounted(() => stopStreaming());
@@ -182,7 +253,7 @@ chart.clear();
 
 ## Options
 
-- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `areaOpacity`
+- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `fillOpacity`
 - **`windowSize`** — Maximum visible data points (default `60`)
 - **`transitionDuration`** — Transition duration per update in ms (default `300`)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
@@ -190,6 +261,7 @@ chart.clear();
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (default `true`)
 - **`axis`** — `boolean | ChartAxisOptions` — Configure axes (default `true`)
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the y-axis tick labels
 - **`yMin`** / **`yMax`** — Fixed Y axis bounds (auto-computed if omitted)
 - **`padding`** — Chart padding
 

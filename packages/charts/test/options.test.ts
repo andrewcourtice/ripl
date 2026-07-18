@@ -10,7 +10,6 @@ import {
 } from '@ripl/core';
 
 import {
-    formatNumber,
     normalizeAnimation,
     normalizeDataLabels,
     normalizeLegend,
@@ -150,19 +149,51 @@ describe('resolveFormatLabel', () => {
     });
 });
 
-describe('formatNumber', () => {
-    it('caps at 2 decimals by default and strips trailing zeros', () => {
-        expect(formatNumber(3.14159)).toBe('3.14');
-        expect(formatNumber(5)).toBe('5');
-        expect(formatNumber(5.5)).toBe('5.5');
+describe('resolveFormatLabel', () => {
+    it('returns undefined when no format is supplied', () => {
+        expect(resolveFormatLabel()).toBeUndefined();
     });
 
-    it('respects a custom precision', () => {
-        expect(formatNumber(3.14159, 3)).toBe('3.142');
+    it('resolves the built-in number format at 2 decimals', () => {
+        const format = resolveFormatLabel('number')!;
+
+        expect(format(3.14159)).toBe('3.14');
     });
 
-    it('stringifies non-numeric values', () => {
-        expect(formatNumber('abc')).toBe('abc');
+    it('resolves the built-in percentage format', () => {
+        const format = resolveFormatLabel('percentage')!;
+
+        expect(format(0.5)).toBe('50%');
+    });
+
+    it('binds an Intl number-format options object', () => {
+        const format = resolveFormatLabel({
+            locale: 'en-US',
+            style: 'currency',
+            currency: 'USD',
+        })!;
+
+        expect(format(1234)).toBe('$1,234.00');
+    });
+
+    it('returns a custom formatter as-is', () => {
+        const custom = (value: number) => `#${value}`;
+
+        expect(resolveFormatLabel(custom)).toBe(custom);
+    });
+});
+
+describe('resolveValueFormat', () => {
+    it('falls back to a 2-decimal number formatter', () => {
+        const format = resolveValueFormat();
+
+        expect(format(3.14159)).toBe('3.14');
+    });
+
+    it('applies a supplied Intl options object', () => {
+        const format = resolveValueFormat({ style: 'percent' });
+
+        expect(format(0.25)).toBe('25%');
     });
 });
 

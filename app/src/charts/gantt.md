@@ -1,13 +1,13 @@
 # Gantt Chart
 
-The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
+The **Gantt Chart** displays tasks as horizontal bars along a time axis, with task names on the y-axis. Each bar can show a progress overlay, and a configurable "today" marker highlights the current date. Curved dependency connectors can be drawn between dependent tasks (finish-to-start). It supports animated transitions when tasks are added, removed, or rescheduled, plus tooltips and grid lines.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,9 +16,18 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Gantt">
+        <RiplChartConfig :config="config" extra-title="Gantt" :extras-reset="reset">
             <RiplField label="Today marker" inline>
-                <RiplSwitch v-model="showToday" />
+                <RiplSwitch v-model="extras.showToday" />
+            </RiplField>
+            <RiplField v-if="extras.showToday" label="Marker colour" inline>
+                <RiplColorInput v-model="extras.todayColor" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Dependencies" inline>
+                <RiplSwitch v-model="extras.showConnectors" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -32,6 +41,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -43,8 +53,22 @@ import {
     watch,
 } from 'vue';
 
+const { extras, reset } = useChartExtras({
+    showToday: true,
+    todayColor: '#ef4444',
+    borderRadius: 3,
+    showConnectors: true,
+});
+
 const config = useChartConfig({
-    features: { title: true, grid: true, animation: true },
+    features: {
+        title: true,
+        grid: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Project Schedule',
 });
 
@@ -63,8 +87,24 @@ const TASKS = [
     'Launch',
 ];
 
-const showToday = ref(true);
 let taskCount = 8;
+
+const toId = (name: string) => name.toLowerCase().replace(/\s+/g, '-');
+
+// Finish-to-start dependencies between tasks (by name), drawn as curved connectors.
+const DEPENDENCIES: Record<string, string[]> = {
+    Design: ['Research'],
+    Prototyping: ['Design'],
+    'Frontend Dev': ['Prototyping'],
+    'Backend Dev': ['Prototyping'],
+    'API Integration': ['Frontend Dev', 'Backend Dev'],
+    Testing: ['API Integration'],
+    Documentation: ['Testing'],
+    'Code Review': ['Testing'],
+    Deployment: ['Code Review'],
+    Marketing: ['Deployment'],
+    Launch: ['Deployment', 'Marketing'],
+};
 
 function generateTask(name: string, index: number) {
     const baseDate = new Date();
@@ -75,11 +115,12 @@ function generateTask(name: string, index: number) {
     const progress = Math.round(Math.random() * 100) / 100;
 
     return {
-        id: name.toLowerCase().replace(/\s+/g, '-'),
+        id: toId(name),
         name,
         start,
         end,
         progress,
+        dependsOn: (DEPENDENCIES[name] ?? []).map(toId),
     };
 }
 
@@ -89,6 +130,18 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        showToday: extras.showToday,
+        todayColor: extras.todayColor,
+        borderRadius: extras.borderRadius,
+        dependencies: extras.showConnectors ? 'dependsOn' : undefined,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createGanttChart(context, {
         data,
@@ -97,21 +150,15 @@ const { contextChanged, chart } = useRiplChart(context => {
         start: 'start',
         end: 'end',
         progress: 'progress',
-        showToday: showToday.value,
+        format: v => `${Math.round(v * 100)}% complete`,
         padding: { top: 20, right: 20, bottom: 30, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        showToday: showToday.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch(showToday, apply);
+// Furniture options (grid, tooltip, theme, today marker) are read only at construction, so rebuild
+// the chart on any customization change; data edits animate in place.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -133,7 +180,6 @@ function removeTask() {
         chart.value?.update({ data });
     }
 }
-
 </script>
 
 ## Usage
@@ -164,11 +210,13 @@ chart.update({ data: newData });
 - **`label`** — Label accessor for y-axis task names
 - **`start`** — Start date accessor
 - **`end`** — End date accessor
-- **`color`** — Optional color accessor per task
+- **`colorBy`** — Optional color accessor per task
 - **`progress`** — Optional progress accessor (0–1)
+- **`dependencies`** — Optional accessor returning the keys of each task's predecessors; draws curved finish-to-start connectors between dependent tasks
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
 - **`axis`** — `boolean | ChartAxisOptions` — Configure axes
+- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the numeric progress value in the task tooltip (defaults to a percentage)
 - **`showToday`** — Show a vertical "today" marker line (default `true`)
 - **`todayColor`** — Color for the today marker (default `#ef4444`)
 - **`borderRadius`** — Bar corner radius (default `3`)

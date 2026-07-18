@@ -7,22 +7,34 @@ The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KP
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Gauge">
+        <RiplChartConfig :config="config" extra-title="Gauge" :extras-reset="reset">
             <RiplField label="Value">
-                <RiplInputRange v-model="value" :min="0" :max="100" :step="1" />
+                <RiplInputRange v-model="extras.value" :min="0" :max="100" :step="1" />
+            </RiplField>
+            <RiplField label="Min value">
+                <RiplInputNumber v-model="extras.minValue" placeholder="0" />
+            </RiplField>
+            <RiplField label="Max value">
+                <RiplInputNumber v-model="extras.maxValue" placeholder="100" />
             </RiplField>
             <RiplField label="Ticks">
-                <RiplInputRange v-model="tickCount" :min="0" :max="12" :step="1" />
+                <RiplInputRange v-model="extras.tickCount" :min="0" :max="12" :step="1" />
+            </RiplField>
+            <RiplField label="Tick labels" inline>
+                <RiplSwitch v-model="extras.showTickLabels" />
             </RiplField>
             <RiplField label="Fill colour" inline>
-                <RiplColorInput v-model="color" />
+                <RiplColorInput v-model="extras.color" />
+            </RiplField>
+            <RiplField label="Track colour" inline>
+                <RiplColorInput v-model="extras.trackColor" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -36,6 +48,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -47,46 +60,58 @@ import {
     watch,
 } from 'vue';
 
-const value = ref(72);
-const tickCount = ref(10);
-const color = ref('#7cacf8');
+const { extras, reset } = useChartExtras({
+    value: 72,
+    minValue: 0 as number | undefined,
+    maxValue: 100 as number | undefined,
+    tickCount: 10,
+    showTickLabels: true,
+    color: '#7cacf8',
+    trackColor: '#e5e7eb',
+});
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Performance',
     titleVisible: false,
 });
 
+const example = ref();
+
+function buildOptions() {
+    return {
+        value: extras.value,
+        minValue: extras.minValue,
+        maxValue: extras.maxValue,
+        color: extras.color,
+        trackColor: extras.trackColor,
+        tickCount: extras.tickCount,
+        showTickLabels: extras.showTickLabels,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createGaugeChart(context, {
-        value: value.value,
-        min: 0,
-        max: 100,
         label: 'Performance',
-        color: color.value,
-        formatValue: v => `${v}%`,
-        tickCount: tickCount.value,
-        showTickLabels: true,
-        formatTickLabel: v => `${v}%`,
+        format: v => `${v}%`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        value: value.value,
-        color: color.value,
-        tickCount: tickCount.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([value, tickCount, color], apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
-    value.value = Math.round(Math.random() * 100);
+    const min = extras.minValue ?? 0;
+    const max = extras.maxValue ?? 100;
+    extras.value = Math.round(min + Math.random() * (max - min));
 }
 </script>
 
@@ -99,10 +124,10 @@ import {
 
 const chart = createGaugeChart('#container', {
     value: 72,
-    min: 0,
-    max: 100,
+    minValue: 0,
+    maxValue: 100,
     label: 'Performance',
-    formatValue: v => `${v}%`,
+    format: v => `${v}%`,
 });
 
 // Update value
@@ -117,7 +142,7 @@ chart.update({ value: 85 });
 - **`label`** — Label displayed below the value
 - **`color`** — Gauge fill color (default pastel blue)
 - **`trackColor`** — Background track color (default `#e5e7eb`)
-- **`formatValue`** — Custom value formatter function
+- **`format`** — Custom value formatter function
 - **`tickCount`** — Number of tick marks along the arc (default `5`, set to `0` to hide)
 - **`showTickLabels`** — Whether to show value labels at each tick (default `true`)
-- **`formatTickLabel`** — Custom formatter for tick labels
+- **`formatTick`** — Custom formatter for tick labels

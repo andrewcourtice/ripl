@@ -8,7 +8,6 @@
             ]" />
             <slot name="header"></slot>
             <div class="ripl-example__actions">
-                <RiplExportButton v-if="context" :context="context" />
                 <button
                     v-if="$slots.config"
                     class="ripl-example__config-button"
@@ -22,6 +21,7 @@
                     </svg>
                     <span>Customize</span>
                 </button>
+                <RiplExportButton v-if="context" :context="context" />
             </div>
         </div>
         <div class="ripl-example__root">
@@ -201,11 +201,37 @@ async function initContext(): Promise<void> {
     }
 }
 
+let recreateTimer: ReturnType<typeof setTimeout> | undefined;
+
+// Rebuilds the rendering context (and, via `context-changed`, the demo's chart) so demos can apply
+// options a chart only reads at construction time — axes, grid, tooltip, crosshair, legend, theme.
+// Debounced so dragging a slider coalesces into a single rebuild.
+function recreate(): void {
+    if (recreateTimer) {
+        clearTimeout(recreateTimer);
+    }
+
+    recreateTimer = setTimeout(() => {
+        recreateTimer = undefined;
+        initContext();
+    }, 100);
+}
+
+defineExpose({
+    recreate,
+});
+
 watch([type, root], initContext, {
     immediate: true,
 });
 
-onUnmounted(cleanup);
+onUnmounted(() => {
+    if (recreateTimer) {
+        clearTimeout(recreateTimer);
+    }
+
+    cleanup();
+});
 </script>
 
 <style lang="scss">
@@ -265,7 +291,13 @@ onUnmounted(cleanup);
 
     .ripl-example__root {
         position: relative;
-        aspect-ratio: 16 / 9;
+        aspect-ratio: 4 / 3;
+    }
+
+    @media (min-width: 640px) {
+        .ripl-example__root {
+            aspect-ratio: 16 / 9;
+        }
     }
 
     .ripl-example__mount {

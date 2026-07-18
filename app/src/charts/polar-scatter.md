@@ -7,7 +7,7 @@ The **Polar Scatter Chart** plots points on a circular grid, where each point's 
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,7 +16,23 @@ The **Polar Scatter Chart** plots points on a circular grid, where each point's 
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Polar Scatter" />
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Polar Scatter" :extras-reset="reset">
+            <RiplField label="Max value">
+                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+            </RiplField>
+            <RiplField label="Value rings">
+                <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Angle spokes">
+                <RiplInputRange v-model="extras.angleTicks" :min="4" :max="16" :step="1" />
+            </RiplField>
+            <RiplField label="Min marker">
+                <RiplInputRange v-model="extras.minRadius" :min="2" :max="12" :step="1" />
+            </RiplField>
+            <RiplField label="Max marker">
+                <RiplInputRange v-model="extras.maxRadius" :min="8" :max="30" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -29,6 +45,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -36,6 +53,7 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
@@ -44,8 +62,22 @@ const seriesMeta = [
     { id: 'evening', label: 'Evening' },
 ];
 
+const { extras, reset } = useChartExtras({
+    maxValue: 100 as number | undefined,
+    levels: 4,
+    angleTicks: 8,
+    minRadius: 4,
+    maxRadius: 14,
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Wind Samples',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
@@ -67,49 +99,52 @@ let samples = Array.from({ length: 12 }, makeSample);
 
 function getSeries() {
     return [
-        { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed', sizeBy: 'morningGust', color: config.colors.morning },
-        { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed', sizeBy: 'eveningGust', color: config.colors.evening },
+        { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed', sizeBy: 'morningGust', minRadius: extras.minRadius, maxRadius: extras.maxRadius, color: config.colors.morning },
+        { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed', sizeBy: 'eveningGust', minRadius: extras.minRadius, maxRadius: extras.maxRadius, color: config.colors.evening },
     ];
 }
+
+function buildOptions() {
+    return {
+        series: getSeries(),
+        maxValue: extras.maxValue,
+        levels: extras.levels,
+        angleTicks: extras.angleTicks,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createPolarScatterChart(context, {
         data: samples,
-        series: getSeries(),
-        maxRadiusValue: 100,
         format: v => `${v} km/h`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        data: [...samples],
-        series: getSeries(),
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     // Re-roll every sample's values but keep the count, so points morph in place.
     samples = samples.map(makeSample);
-    apply();
+    chart.value?.update({ data: samples });
 }
 
 function addPoint() {
     // Append a single new sample — existing points stay put while the new one animates in.
     samples = [...samples, makeSample()];
-    apply();
+    chart.value?.update({ data: samples });
 }
 
 function removePoint() {
     if (samples.length > 3) {
         // Drop only the newest sample so exactly one point exits.
         samples = samples.slice(0, -1);
-        apply();
+        chart.value?.update({ data: samples });
     }
 }
 </script>
@@ -140,7 +175,7 @@ const chart = createPolarScatterChart('#container', {
             radius: 'speed',
             sizeBy: 'gust' },
     ],
-    maxRadiusValue: 100,
+    maxValue: 100,
 });
 ```
 
@@ -186,7 +221,7 @@ const series = [
 
 - **`data`** — The data array
 - **`series`** — Array of series with `id`, `label`, `angle` (degrees accessor), `radius` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
-- **`maxRadiusValue`** — Value mapped to the outer ring (defaults to the data maximum)
+- **`maxValue`** — Value mapped to the outer ring (defaults to the data maximum)
 - **`levels`** — Number of concentric value rings (default `4`)
 - **`angleTicks`** — Number of angular spokes/labels (default `8`)
 - **`legend`** — `boolean | ChartLegendOptions` — Series legend (shown by default for multiple series)

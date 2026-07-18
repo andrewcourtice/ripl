@@ -321,6 +321,16 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 ...updateGroups,
             ];
 
+            // The legend covers only top-level nodes, so hovering one highlights its whole subtree:
+            // map every node id to its top-level ancestor and dim arcs outside that tree.
+            const rootOf = new Map<string, string>();
+            const assignRoot = (node: SunburstNode<TData>, rootId: string) => {
+                rootOf.set(node.id, rootId);
+                node.children?.forEach(child => assignRoot(child, rootId));
+            };
+            data.forEach(node => assignRoot(node, node.id));
+            this.registerHighlightGroups(this._groups, group => rootOf.get(group.id) ?? group.id);
+
             // Animate entries
             const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
 

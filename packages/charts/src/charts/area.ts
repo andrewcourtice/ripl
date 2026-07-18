@@ -35,6 +35,11 @@ import {
 } from '../core/data';
 
 import {
+    axisTickCount,
+    createValueScale,
+} from '../core/scales';
+
+import {
     AreaSeriesRenderer,
 } from '../core/series/area-series';
 
@@ -65,7 +70,6 @@ import type {
 
 import {
     Box,
-    scaleContinuous,
 } from '@ripl/core';
 
 import {
@@ -97,7 +101,7 @@ export interface AreaChartSeriesOptions<TData> {
     /** Width in pixels of the series line. */
     lineWidth?: number;
     /** Fill opacity of the area band. Defaults to 0.3. */
-    opacity?: number;
+    fillOpacity?: number;
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
 }
@@ -264,7 +268,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
@@ -276,7 +280,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
             const xAxisBox = this.xAxis.getBoundingBox();
 
-            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
+            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
@@ -293,8 +297,10 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             };
 
             this.clipPlot(plot);
-            this.renderGrid([], this._yScale.ticks(10).map(tick => this._yScale(tick)), plot);
+            this.renderGrid([], this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)), plot);
             this.setupCrosshair(plot);
+
+            this.renderAnnotations({ y: this._yScale }, plot);
 
             const seriesRender = this._series.render(series, this._seriesContext(plot));
             this.registerHighlightGroups(this._series.groups);

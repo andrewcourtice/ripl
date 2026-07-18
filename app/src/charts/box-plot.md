@@ -7,14 +7,18 @@ The **Box Plot Chart** summarises the distribution of a numeric field per catego
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Box Plot" />
+        <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
+            <RiplField label="Box colour" inline>
+                <RiplColorInput v-model="extras.color" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +30,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,15 +38,29 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
 const REGIONS = ['US', 'EU', 'APAC', 'LATAM'];
 
+const { extras, reset } = useChartExtras({
+    color: '#7cacf8',
+});
+
 const config = useChartConfig({
-    features: { title: true, animation: true, navigator: true },
+    features: {
+        title: true,
+        grid: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Latency by Region',
 });
+
+const example = ref();
 
 function generateData() {
     return REGIONS.flatMap((region, index) => {
@@ -56,10 +75,17 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        color: extras.color,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createBoxPlotChart(context, {
         data,
-        group: 'region',
+        key: 'region',
         value: 'latency',
         categories: REGIONS,
         padding: { top: 20, right: 20, bottom: 40, left: 40 },
@@ -67,15 +93,12 @@ const { contextChanged, chart } = useRiplChart(context => {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },
         },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({ ...buildCommonOptions(config) });
-}
-
-watch(config, apply, { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -92,20 +115,20 @@ import {
 
 const chart = createBoxPlotChart('#container', {
     data: [/* ... */],
-    group: 'region',
+    key: 'region',
     value: 'latency',
 });
 ```
 
 ## Data Format
 
-Each item contributes one numeric value to a category. The chart groups items by the `group`
+Each item contributes one numeric value to a category. The chart groups items by the `key`
 accessor and summarises the `value` accessor per group — no pre-aggregation required.
 
 ## Options
 
 - **`data`** — The data array
-- **`group`** — Accessor for the category (field name or function)
+- **`key`** — Accessor for the category (field name or function)
 - **`value`** — Accessor for the numeric value (field name or function)
 - **`categories`** — Explicit category order (default: first-seen order)
 - **`color`** — Box colour (default: first palette colour)

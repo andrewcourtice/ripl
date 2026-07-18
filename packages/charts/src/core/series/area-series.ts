@@ -287,7 +287,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
 
     protected buildSeriesGroup(series: AreaSeriesLike<TData>, ctx: AreaSeriesContext<TData>, prepared: AreaPrepared<TData>): Group {
         const color = ctx.getColor(series.id);
-        const opacity = series.opacity ?? 0.3;
+        const opacity = series.fillOpacity ?? 0.3;
         const showMarkers = series.markers !== false;
         const { linePoints, bottomPoints, areaPoints } = this._buildPoints(series, ctx, prepared);
 

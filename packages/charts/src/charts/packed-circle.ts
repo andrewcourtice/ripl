@@ -15,6 +15,7 @@ import {
 } from '../core/layout';
 
 import type {
+    ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -39,6 +40,10 @@ import {
     resolveAccessor,
 } from '../core/data';
 
+import {
+    resolveColorBy,
+} from '../core/color';
+
 import type {
     PackCircle,
 } from '../core/pack';
@@ -51,6 +56,10 @@ import {
 import {
     Tooltip,
 } from '../components/tooltip';
+
+import type {
+    LegendItem,
+} from '../components/legend';
 
 import type {
     Circle,
@@ -86,8 +95,10 @@ export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOpti
     value: NumericAccessor<TData>;
     /** Accessor for each circle's display label; defaults to the item's key. */
     label?: keyof TData | ((item: TData) => string);
-    /** Accessor for an explicit per-circle colour; falls back to the generated palette. */
-    color?: keyof TData | ((item: TData) => string);
+    /** Optional per-item colour accessor; falls back to the generated palette. */
+    colorBy?: keyof TData | ((item: TData) => string);
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
     /** Format applied to values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
 }
@@ -185,13 +196,13 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 key,
                 value,
                 label,
-                color,
+                colorBy,
             } = this.options;
 
             const getKey = resolveAccessor<TData, string>(key);
             const getValue = resolveAccessor<TData, number>(value);
             const getLabel = label !== undefined ? resolveAccessor<TData, string>(label) : getKey;
-            const getColor = (item: TData): string | undefined => (color ? resolveAccessor<TData, string>(color)(item) : undefined);
+            const getColor = resolveColorBy<TData>(colorBy);
 
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
@@ -203,6 +214,16 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
+
+            const legendItems: LegendItem[] = data.map(item => ({
+                id: getKey(item),
+                label: getLabel(item),
+                color: colorFor(item),
+                active: true,
+            }));
+
+            this.reserveLegend(layout, legendItems, this.options.legend);
+
             const area = layout.area;
 
             const { cx, cy, size } = areaCenter(area);
@@ -368,6 +389,9 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 ...entryGroups,
                 ...updates.map(([, group]) => group),
             ];
+
+            // Legend hover dims the other circles (group id == legend item id == node key).
+            this.registerHighlightGroups(this._groups);
 
             const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);

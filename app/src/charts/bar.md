@@ -7,7 +7,7 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -16,15 +16,15 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bars">
+        <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bars" :extras-reset="reset">
             <RiplField label="Stacked" inline>
-                <RiplSwitch v-model="stacked" />
+                <RiplSwitch v-model="extras.stacked" />
             </RiplField>
             <RiplField label="Horizontal" inline>
-                <RiplSwitch v-model="horizontal" />
+                <RiplSwitch v-model="extras.horizontal" />
             </RiplField>
-            <RiplField label="Navigator" inline>
-                <RiplSwitch v-model="overview" />
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -39,6 +39,7 @@ import {
     buildCommonOptions,
     seedColors,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -59,13 +60,28 @@ const seriesMeta = [
     { id: 'returns', label: 'Returns' },
 ];
 
-const stacked = ref(false);
-const horizontal = ref(false);
-const overview = ref(false);
 let monthCount = 6;
 
+const { extras, reset } = useChartExtras({
+    stacked: false,
+    horizontal: false,
+    borderRadius: 2,
+});
+
 const config = useChartConfig({
-    features: { title: true, legend: true, axes: true, grid: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        axes: true,
+        grid: true,
+        tooltip: true,
+        dataLabels: true,
+        format: true,
+        animation: true,
+        theme: true,
+        navigator: true,
+        annotations: true,
+    },
     title: 'Monthly Breakdown',
     axisX: 'Month',
     axisY: 'Amount ($)',
@@ -97,31 +113,41 @@ function getSeries() {
     }));
 }
 
+function buildOptions() {
+    const options = {
+        stacked: extras.stacked,
+        orientation: extras.horizontal ? 'horizontal' : 'vertical',
+        borderRadius: extras.borderRadius,
+        series: getSeries(),
+        ...buildCommonOptions(config),
+    };
+
+    options.annotations = config.annotationsVisible
+        ? [
+            {
+                axis: 'y',
+                value: 500,
+                label: 'Target',
+            },
+        ]
+        : [];
+
+    return options;
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createBarChart(context, {
         data,
         key: 'month',
-        mode: stacked.value ? 'stacked' : 'grouped',
-        orientation: horizontal.value ? 'horizontal' : 'vertical',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        mode: stacked.value ? 'stacked' : 'grouped',
-        orientation: horizontal.value ? 'horizontal' : 'vertical',
-        series: getSeries(),
-        overview: overview.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([stacked, horizontal, overview], apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -155,7 +181,7 @@ import {
 const chart = createBarChart('#container', {
     data: [/* ... */],
     key: 'quarter',
-    mode: 'grouped',        // 'grouped' | 'stacked'
+    stacked: false,          // set true to stack series
     orientation: 'vertical', // 'vertical' | 'horizontal'
     series: [
         { id: 'sales', value: 'sales', label: 'Sales' },
@@ -194,7 +220,7 @@ Bars for each series sit side-by-side within each category:
 createBarChart('#container', {
     data,
     key: 'month',
-    mode: 'grouped',
+    stacked: false,
     series: [
         { id: 'sales',
             value: 'sales',
@@ -214,7 +240,7 @@ Bars stack on top of each other, showing cumulative totals:
 createBarChart('#container', {
     data,
     key: 'month',
-    mode: 'stacked',
+    stacked: true,
     series: [
         { id: 'sales',
             value: 'sales',
@@ -248,7 +274,7 @@ createBarChart('#container', {
 - **`data`** — The data array
 - **`series`** — Array of series with `id`, `value`, `label`, and optional `color`
 - **`key`** — Key accessor for categories
-- **`mode`** — `'grouped'` (default) or `'stacked'`
+- **`stacked`** — `false` (grouped, default) or `true` (stacked)
 - **`orientation`** — `'vertical'` (default) or `'horizontal'`
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend

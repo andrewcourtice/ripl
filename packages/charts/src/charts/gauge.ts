@@ -6,12 +6,16 @@ import {
     Chart,
 } from '../core/chart';
 
+import type {
+    ValueFormatInput,
+} from '../core/options';
+
 import {
     areaCenter,
 } from '../core/layout';
 
 import {
-    formatNumber,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -55,26 +59,26 @@ import {
 
 /** Options for configuring a {@link GaugeChart}. */
 export interface GaugeChartOptions extends BaseChartOptions {
-    /** The value displayed by the gauge (clamped to `min`–`max`). */
+    /** The value displayed by the gauge (clamped to `minValue`–`maxValue`). */
     value: number;
     /** Lower bound of the gauge scale. Defaults to 0. */
-    min?: number;
+    minValue?: number;
     /** Upper bound of the gauge scale. Defaults to 100. */
-    max?: number;
+    maxValue?: number;
     /** Optional descriptive text shown below the value. */
     label?: string;
     /** Colour of the value arc. */
     color?: string;
     /** Colour of the background track arc. */
     trackColor?: string;
-    /** Format function for the central value display. */
-    formatValue?: (value: number) => string;
+    /** How the central value display is formatted — a built-in format type, Intl number-format options, or a custom function. */
+    format?: ValueFormatInput;
     /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide. */
     tickCount?: number;
     /** Whether to show value labels at each tick. Defaults to true. */
     showTickLabels?: boolean;
-    /** Format function for tick labels */
-    formatTickLabel?: (value: number) => string;
+    /** How tick labels are formatted. Defaults to {@link GaugeChartOptions.format}. */
+    formatTick?: ValueFormatInput;
 }
 
 /** Payload emitted for gauge value interaction events. */
@@ -137,12 +141,12 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
         return super.render(async (scene, renderer) => {
             const {
                 value,
-                min = 0,
-                max = 100,
+                minValue = 0,
+                maxValue = 100,
                 label,
                 color = DEFAULT_COLOR,
                 trackColor = DEFAULT_TRACK_COLOR,
-                formatValue,
+                format,
             } = this.options;
 
             const layout = this.createLayout();
@@ -157,9 +161,9 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             // Gauge spans from -135deg to +135deg (270 degrees total)
             const startAngle = Math.PI * 0.75;
             const endAngle = Math.PI * 2.25;
-            const range = max - min;
-            const clampedValue = numberClamp(value, min, max);
-            const valueAngle = startAngle + ((clampedValue - min) / range) * (endAngle - startAngle);
+            const range = maxValue - minValue;
+            const clampedValue = numberClamp(value, minValue, maxValue);
+            const valueAngle = startAngle + ((clampedValue - minValue) / range) * (endAngle - startAngle);
 
             const isEntry = !this._group;
 
@@ -229,7 +233,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
             // --- Value text ---
             // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
-            const formatDisplay = (v: number) => (formatValue ? formatValue(numberRoundTo(v, 2)) : formatNumber(v));
+            const resolveDisplay = resolveValueFormat(format);
+            const formatDisplay = (v: number) => resolveDisplay(numberRoundTo(v, 2));
             // The value the text counts up/down *from* on a data update (the previously shown value).
             const displayFrom = this._currentValue ?? clampedValue;
             const displayValue = formatDisplay(clampedValue);
@@ -301,7 +306,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             // --- Tick marks and labels --- reconciled via arrayJoin so tick count can change.
             const tickCount = this.options.tickCount ?? 5;
             const showTickLabels = this.options.showTickLabels !== false;
-            const formatTickLabel = this.options.formatTickLabel;
+            const formatTick = resolveValueFormat(this.options.formatTick ?? this.options.format);
 
             // Ticks only move when the centre/radius/count/label-visibility changes — not on a plain
             // value update — so a value change animates only the arc and the centre number.
@@ -320,7 +325,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const tickGeometry = (i: number) => {
                 const t = i / tickCount;
                 const tickAngle = startAngle + t * (endAngle - startAngle);
-                const tickValue = min + t * range;
+                const tickValue = minValue + t * range;
 
                 return {
                     tickAngle,
@@ -393,7 +398,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     x: cx + labelRadius * Math.cos(tickAngle),
                     y: cy + labelRadius * Math.sin(tickAngle),
                     textAlign,
-                    content: formatTickLabel ? formatTickLabel(tickValue) : formatNumber(tickValue),
+                    content: formatTick(tickValue),
                 };
             };
 
@@ -522,8 +527,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
  * ```ts
  * createGaugeChart(target, {
  *     value: 68,
- *     min: 0,
- *     max: 100,
+ *     minValue: 0,
+ *     maxValue: 100,
  *     label: 'CPU',
  * });
  * ```

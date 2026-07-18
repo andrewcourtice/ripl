@@ -7,7 +7,7 @@ The **Sunburst Chart** displays hierarchical data as concentric rings, where eac
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
@@ -33,11 +33,18 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
 const config = useChartConfig({
-    features: { title: true, legend: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Sector Breakdown',
 });
 
@@ -72,6 +79,8 @@ function generateData() {
 
 let data = generateData();
 
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createSunburstChart(context, {
         data,
@@ -80,7 +89,8 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch(config, () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

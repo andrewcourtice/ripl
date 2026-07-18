@@ -12,6 +12,7 @@ import type {
     ChartGridInput,
     ChartLegendInput,
     ChartTooltipInput,
+    ValueFormatInput,
 } from '../core/options';
 
 import {
@@ -21,6 +22,7 @@ import {
     normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
+    resolveValueFormat,
 } from '../core/options';
 
 import {
@@ -86,7 +88,7 @@ export interface RealtimeChartSeriesOptions {
     /** Fill the area beneath the line. Defaults to `true`. */
     showArea?: boolean;
     /** Opacity of the area fill when `showArea` is enabled. Defaults to 0.2. */
-    areaOpacity?: number;
+    fillOpacity?: number;
 }
 
 /** Options for configuring a {@link RealtimeChart}. */
@@ -105,6 +107,8 @@ export interface RealtimeChartOptions extends BaseChartOptions {
     legend?: ChartLegendInput;
     /** Axis configuration (labels, ticks, title). */
     axis?: ChartAxisInput;
+    /** Format applied to the y-axis tick labels (a per-axis `axis.y.format` takes precedence). */
+    format?: ValueFormatInput;
     /** Show the y-axis. Defaults to `true`. */
     showYAxis?: boolean;
     /** Fixed lower bound for the y-axis (otherwise derived from the windowed data). */
@@ -168,7 +172,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             scale: scaleContinuous([0, 1], [0, 1]),
             labelFont: yAxis.font,
             labelColor: yAxis.fontColor,
-            formatLabel: resolveFormatLabel(yAxis.format),
+            formatLabel: resolveFormatLabel(yAxis.format) ?? resolveValueFormat(this.options.format),
             title: yAxis.title,
         });
 
@@ -279,7 +283,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const buffer = this._buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
-            const areaOpacity = srs.areaOpacity ?? 0.2;
+            const fillOpacity = srs.fillOpacity ?? 0.2;
 
             // Need at least 2 points for a renderable line
             const pointCount = buffer.length;
@@ -362,7 +366,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 if (showArea) {
                     const areaFill = createPolyline({
                         id: `${srs.id}-area`,
-                        fill: setColorAlpha(color, areaOpacity),
+                        fill: setColorAlpha(color, fillOpacity),
                         stroke: undefined,
                         points: areaPoints,
                         // Curve only the interior line points; the two baseline anchors join with

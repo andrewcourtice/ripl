@@ -35,6 +35,14 @@ import {
 } from './options';
 
 import type {
+    Theme,
+} from './theme';
+
+import {
+    resolveTheme,
+} from './theme';
+
+import type {
     LegendItem,
 } from '../components/legend';
 
@@ -87,6 +95,10 @@ export interface BaseChartOptions {
     title?: string | Partial<ChartTitleOptions>;
     /** Animation configuration, or a boolean toggling all transitions. See {@link ChartAnimationOptions}. */
     animation?: boolean | Partial<ChartAnimationOptions>;
+    /** Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a {@link Theme}. Falls back to the module default (see `setDefaultTheme`). */
+    theme?: string | Theme;
+    /** Accessible description announced by screen readers (sets the rendering element's ARIA label). Defaults to the title text. */
+    description?: string;
 }
 
 /** Opacity applied to non-highlighted series/segments while a legend item is hovered. */
@@ -140,20 +152,26 @@ export class Chart<
     private _hasRendered: boolean = false;
 
     protected options: TOptions;
-    protected colorGenerator = getColorGenerator();
+    /** The resolved theme (palette + furniture colours) this chart renders with. */
+    protected theme: Theme;
+    protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
-    private _highlightGroups: Map<string, Group> = new Map();
+    private _highlightGroups: Array<{ group: Group;
+        owners: string | string[]; }> = [];
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {
             autoRender = true,
             animation,
             title,
+            theme,
             ...opts
         } = options || {};
 
         super();
 
+        this.theme = resolveTheme(theme);
+        this.colorGenerator = getColorGenerator(this.theme.palette);
         this.autoRender = autoRender;
         this.animationOptions = normalizeAnimation(animation);
         this.titleOptions = normalizeTitle(title);
@@ -164,6 +182,8 @@ export class Chart<
     }
 
     protected init() {
+        this._applyAccessibility();
+
         this.scene.context.on('resize', () => {
             if (this._hasRendered) {
                 this.render();
@@ -173,6 +193,24 @@ export class Chart<
         if (this.autoRender) {
             this.render();
         }
+    }
+
+    /**
+     * Applies ARIA metadata to the rendering element so screen readers announce the chart as a
+     * labelled image. The label is the chart's `description`, falling back to the title text, then a
+     * generic "Chart". No-ops when the context's element does not support attributes (e.g. terminal).
+     */
+    private _applyAccessibility() {
+        const element = this.scene.context.element as unknown as { setAttribute?: (name: string, value: string) => void };
+
+        if (!element || typeof element.setAttribute !== 'function') {
+            return;
+        }
+
+        const label = this.options.description ?? this.titleOptions?.text ?? 'Chart';
+
+        element.setAttribute('role', 'img');
+        element.setAttribute('aria-label', label);
     }
 
     /** Merges partial options into the current options and re-renders if `autoRender` is enabled. */
@@ -189,6 +227,10 @@ export class Chart<
             ...this.options,
             ...options,
         };
+
+        if (options.title !== undefined || options.description !== undefined) {
+            this._applyAccessibility();
+        }
 
         if (this.autoRender) {
             this.render();
@@ -338,12 +380,20 @@ export class Chart<
     }
 
     /**
-     * Registers the top-level series/segment groups that map one-to-one to legend items (by matching
-     * `group.id` to the legend item id). Charts call this each render so {@link highlightSeries} can
-     * dim the other series when a legend entry is hovered. Replaces any previously registered set.
+     * Registers the groups that {@link highlightSeries} dims when a legend entry is hovered. Charts
+     * call this each render. By default a group belongs to the legend item whose id equals its
+     * `group.id` (one-to-one). Pass `resolveId` when a group belongs to a different legend item — or
+     * to several — e.g. a cluster legend (many node groups per legend item) or a connector that is
+     * incident to two legend items (return an array of owner ids). Replaces any previous set.
+     *
+     * @param groups - The element groups eligible for dimming.
+     * @param resolveId - Maps a group to the legend item id(s) it belongs to. Defaults to `group.id`.
      */
-    protected registerHighlightGroups(groups: Group[]) {
-        this._highlightGroups = new Map(groups.map(group => [group.id, group]));
+    protected registerHighlightGroups(groups: Group[], resolveId: (group: Group) => string | string[] = group => group.id) {
+        this._highlightGroups = groups.map(group => ({
+            group,
+            owners: resolveId(group),
+        }));
     }
 
     /**
@@ -358,14 +408,14 @@ export class Chart<
      * hidden and restoring returns to the true value.
      */
     protected highlightSeries(id: string | null) {
-        if (this._highlightGroups.size === 0) {
+        if (this._highlightGroups.length === 0) {
             return;
         }
 
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
-        this._highlightGroups.forEach((group, groupId) => {
-            const active = id === null || groupId === id;
+        this._highlightGroups.forEach(({ group, owners }) => {
+            const active = id === null || (Array.isArray(owners) ? owners.includes(id) : owners === id);
 
             group.graph(false).forEach(element => {
                 const host = element as unknown as HighlightHost;

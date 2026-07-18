@@ -21,7 +21,6 @@ import type {
 } from '../core/options';
 
 import {
-    formatNumber,
     normalizeSegmentLabels,
     resolveValueFormat,
 } from '../core/options';
@@ -80,6 +79,7 @@ import {
 
 import {
     arrayJoin,
+    numberFormat,
     numberMaxOf,
     typeIsFunction,
 } from '@ripl/utilities';
@@ -98,9 +98,9 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
     /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
-    color?: keyof TData | ((item: TData) => string);
-    /** Inner radius ratio (0 - 1). Defaults to 0.15 */
-    innerRadiusRatio?: number;
+    colorBy?: keyof TData | ((item: TData) => string);
+    /** Inner radius as a fraction of the chart size (0 - 1). Defaults to 0.15 */
+    innerRadius?: number;
     /** Maximum radius ratio (0 - 0.5). Defaults to 0.45 (similar to pie chart). */
     maxRadiusRatio?: number;
     /** Padding angle between segments in radians. Defaults to 0.02 */
@@ -257,7 +257,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         const newLabels = labelEntries.map(level => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = formatNumber((maxValue / levels) * level);
+            const levelValue = numberFormat((maxValue / levels) * level, { precision: 2 });
 
             const label = createText({
                 id: `polar-ring-label-${level}`,
@@ -281,7 +281,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
 
         labelUpdates.forEach(([level, label]) => {
             const levelRadius = innerRadius + radiusStep * level;
-            const levelValue = formatNumber((maxValue / levels) * level);
+            const levelValue = numberFormat((maxValue / levels) * level, { precision: 2 });
 
             label.content = levelValue;
             label.data = {
@@ -378,8 +378,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 key,
                 value,
                 label,
-                color,
-                innerRadiusRatio = 0.15,
+                colorBy,
+                innerRadius = 0.15,
                 maxRadiusRatio = 0.45,
                 padAngle = 0.02,
                 levels = 4,
@@ -398,7 +398,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getLabel = typeIsFunction(label) ? label : (item: any) => item[label] as string;
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const getColor = typeIsFunction(color) ? color : (item: any) => item[color] as string;
+            const getColor = typeIsFunction(colorBy) ? colorBy : (item: any) => item[colorBy] as string;
 
             // Register each segment in the shared colour map so legend swatches and segments share
             // stable palette colours (honouring any explicit per-item colour).
@@ -427,7 +427,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const { cx: centerX, cy: centerY, size } = areaCenter(area);
 
             const maxValue = numberMaxOf(data, getValue) ?? 0;
-            const valueScale = scaleContinuous([0, maxValue], [size * innerRadiusRatio, size * maxRadiusRatio], { clamp: true });
+            const valueScale = scaleContinuous([0, maxValue], [size * innerRadius, size * maxRadiusRatio], { clamp: true });
 
             const angleStep = TAU / data.length;
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart
@@ -435,7 +435,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const gridTransition = this._drawGrid(
                 centerX,
                 centerY,
-                size * innerRadiusRatio,
+                size * innerRadius,
                 size * maxRadiusRatio,
                 maxValue,
                 levels,
@@ -453,7 +453,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                 const cy = centerY;
                 const startAngle = startOffset + index * angleStep;
                 const endAngle = startAngle + angleStep;
-                const innerRadius = size * innerRadiusRatio;
                 const radius = valueScale(v);
 
                 return {
@@ -467,7 +466,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     endAngle,
                     padAngle,
                     radius,
-                    innerRadius,
+                    innerRadius: size * innerRadius,
                     item,
                 };
             });

@@ -7,19 +7,28 @@ The **Force-Directed Network** lays out a graph of nodes and links using a physi
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Reweight</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Force-Directed">
-            <RiplField label="Link distance">
-                <RiplInputRange v-model="linkDistance" :min="30" :max="120" :step="5" />
+        <RiplChartConfig :config="config" extra-title="Force-Directed" :extras-reset="reset">
+            <RiplField label="Node radius">
+                <RiplInputRange v-model="extras.nodeRadius" :min="4" :max="16" :step="1" />
             </RiplField>
             <RiplField label="Charge">
-                <RiplInputRange v-model="charge" :min="-500" :max="-60" :step="20" />
+                <RiplInputRange v-model="extras.charge" :min="-500" :max="-60" :step="10" />
+            </RiplField>
+            <RiplField label="Link distance">
+                <RiplInputRange v-model="extras.linkDistance" :min="30" :max="120" :step="5" />
+            </RiplField>
+            <RiplField label="Link strength">
+                <RiplInputRange v-model="extras.linkStrength" :min="0" :max="1" :step="0.05" />
+            </RiplField>
+            <RiplField label="Center strength">
+                <RiplInputRange v-model="extras.centerStrength" :min="0" :max="0.3" :step="0.01" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -33,6 +42,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -44,11 +54,22 @@ import {
     watch,
 } from 'vue';
 
-const linkDistance = ref(34);
-const charge = ref(-140);
+const { extras, reset } = useChartExtras({
+    nodeRadius: 7,
+    charge: -140,
+    linkDistance: 34,
+    linkStrength: 0.5,
+    centerStrength: 0.05,
+});
 
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Organisation Network',
 });
 
@@ -89,36 +110,37 @@ function makeLinks() {
 
 let links = makeLinks();
 
+function buildOptions() {
+    return {
+        nodeRadius: extras.nodeRadius,
+        charge: extras.charge,
+        linkDistance: extras.linkDistance,
+        linkStrength: extras.linkStrength,
+        centerStrength: extras.centerStrength,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createForceDirectedChart(context, {
         nodes,
         links,
         root: 'eng-hub',
-        nodeRadius: 7,
-        linkDistance: linkDistance.value,
-        charge: charge.value,
         format: v => `${v} threads`,
         padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        links,
-        linkDistance: linkDistance.value,
-        charge: charge.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch([linkDistance, charge], apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     // Re-roll link weights; the layout re-runs from its current positions and glides to the new one.
     links = makeLinks();
-    apply();
+    chart.value?.update({ links });
 }
 </script>
 

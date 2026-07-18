@@ -7,16 +7,22 @@ The **Histogram Chart** bins a numeric field and draws each bin as a bar on a co
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Bins">
-            <RiplField label="Bin count" inline>
-                <RiplInputRange v-model="bins" :min="4" :max="20" :step="1" />
+        <RiplChartConfig :config="config" extra-title="Bins" :extras-reset="reset">
+            <RiplField label="Bin count">
+                <RiplInputRange v-model="extras.bins" :min="4" :max="20" :step="1" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="Bar colour" inline>
+                <RiplColorInput v-model="extras.color" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -30,6 +36,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -41,12 +48,25 @@ import {
     watch,
 } from 'vue';
 
-const bins = ref(10);
+const { extras, reset } = useChartExtras({
+    bins: 10,
+    borderRadius: 2,
+    color: '#7cacf8',
+});
 
 const config = useChartConfig({
-    features: { title: true, animation: true, navigator: true },
+    features: {
+        title: true,
+        grid: true,
+        tooltip: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Response Time Distribution',
 });
+
+const example = ref();
 
 function generateData() {
     // A roughly normal distribution via the central-limit trick.
@@ -59,29 +79,30 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        bins: extras.bins,
+        borderRadius: extras.borderRadius,
+        color: extras.color,
+        ...buildCommonOptions(config),
+    };
+}
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createHistogramChart(context, {
         data,
         value: 'value',
-        bins: bins.value,
         padding: { top: 20, right: 20, bottom: 40, left: 40 },
         axis: {
             x: { title: 'Response time (ms)' },
             y: { title: 'Frequency' },
         },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-function apply() {
-    chart.value?.update({
-        bins: bins.value,
-        ...buildCommonOptions(config),
-    });
-}
-
-watch(config, apply, { deep: true });
-watch(bins, apply);
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();

@@ -7,14 +7,21 @@ The **Funnel Chart** displays data as progressively narrowing horizontal bars, i
 
 ## Example
 
-<ripl-example @context-changed="contextChanged">
+<ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" />
+        <RiplChartConfig :config="config" extra-title="Funnel" :extras-reset="reset">
+            <RiplField label="Segment gap">
+                <RiplInputRange v-model="extras.gap" :min="0" :max="16" :step="1" />
+            </RiplField>
+            <RiplField label="Corner radius">
+                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="12" :step="1" />
+            </RiplField>
+        </RiplChartConfig>
     </template>
 </ripl-example>
 
@@ -26,6 +33,7 @@ import {
 import {
     buildCommonOptions,
     useChartConfig,
+    useChartExtras,
 } from '../.vitepress/compositions/use-chart-config';
 
 import {
@@ -33,11 +41,23 @@ import {
 } from '@ripl/charts';
 
 import {
+    ref,
     watch,
 } from 'vue';
 
+const { extras, reset } = useChartExtras({
+    gap: 4,
+    borderRadius: 4,
+});
+
 const config = useChartConfig({
-    features: { title: true, animation: true },
+    features: {
+        title: true,
+        legend: true,
+        format: true,
+        animation: true,
+        theme: true,
+    },
     title: 'Conversion Funnel',
 });
 
@@ -52,6 +72,16 @@ function generateData() {
 
 let data = generateData();
 
+function buildOptions() {
+    return {
+        gap: extras.gap,
+        borderRadius: extras.borderRadius,
+        ...buildCommonOptions(config),
+    };
+}
+
+const example = ref();
+
 const { contextChanged, chart } = useRiplChart(context => {
     return createFunnelChart(context, {
         data,
@@ -59,11 +89,12 @@ const { contextChanged, chart } = useRiplChart(context => {
         value: 'value',
         label: 'stage',
         padding: { top: 20, right: 40, bottom: 20, left: 40 },
-        ...buildCommonOptions(config),
+        ...buildOptions(),
     });
 });
 
-watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+// Furniture options are read only at construction, so rebuild on any customization change.
+watch([config, extras], () => example.value?.recreate(), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -92,6 +123,7 @@ const chart = createFunnelChart('#container', {
 - **`key`** — Unique key accessor
 - **`value`** — Value accessor (determines bar width)
 - **`label`** — Label accessor (displayed inside bars)
-- **`color`** — Optional color accessor
+- **`colorBy`** — Optional per-item color accessor
+- **`legend`** — Legend configuration; shown by default, pass `false` to hide
 - **`gap`** — Gap between segments in pixels (default `4`)
 - **`borderRadius`** — Segment corner radius (default `4`)
