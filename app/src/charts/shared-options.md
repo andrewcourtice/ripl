@@ -142,7 +142,7 @@ axis: {
 }
 ```
 
-Line charts render a **secondary (right-hand) y-axis** when a second entry is supplied; bind a series to it with the series `axis` option (an index or the axis `id`):
+Line, area, and scatter charts render a **secondary (right-hand) y-axis** when a second entry is supplied; bind a series to it with the series `axis` option (an index or the axis `id`):
 
 <!-- eslint-skip -->
 ```ts
@@ -162,8 +162,8 @@ createLineChart('#container', {
 ```
 
 > [!NOTE]
-> A secondary y-axis is currently rendered by line charts; area/bar/scatter follow the same
-> `axis.y` array + series `axis` pattern and are on the roadmap.
+> A secondary y-axis is currently rendered by line, area, and scatter charts; bar follows the
+> same `axis.y` array + series `axis` pattern and is on the roadmap.
 
 ### Format Types
 

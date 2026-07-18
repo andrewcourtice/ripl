@@ -1297,6 +1297,14 @@
             "link": "/docs/api/@ripl/charts/type-aliases/SegmentLabelPosition.md"
           },
           {
+            "text": "SymbolElement",
+            "link": "/docs/api/@ripl/charts/type-aliases/SymbolElement.md"
+          },
+          {
+            "text": "SymbolType",
+            "link": "/docs/api/@ripl/charts/type-aliases/SymbolType.md"
+          },
+          {
             "text": "TitlePosition",
             "link": "/docs/api/@ripl/charts/type-aliases/TitlePosition.md"
           },
@@ -1493,6 +1501,10 @@
             "link": "/docs/api/@ripl/charts/functions/createSunburstChart.md"
           },
           {
+            "text": "createSymbol",
+            "link": "/docs/api/@ripl/charts/functions/createSymbol.md"
+          },
+          {
             "text": "createTimeAxisScale",
             "link": "/docs/api/@ripl/charts/functions/createTimeAxisScale.md"
           },
@@ -1601,6 +1613,10 @@
             "link": "/docs/api/@ripl/charts/functions/normalizeYAxisItem.md"
           },
           {
+            "text": "positionSymbol",
+            "link": "/docs/api/@ripl/charts/functions/positionSymbol.md"
+          },
+          {
             "text": "positiveNegativeExtent",
             "link": "/docs/api/@ripl/charts/functions/positiveNegativeExtent.md"
           },
@@ -1667,6 +1683,10 @@
           {
             "text": "stagger",
             "link": "/docs/api/@ripl/charts/functions/stagger.md"
+          },
+          {
+            "text": "symbolRadius",
+            "link": "/docs/api/@ripl/charts/functions/symbolRadius.md"
           }
         ]
       }

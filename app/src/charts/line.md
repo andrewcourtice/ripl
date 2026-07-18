@@ -17,6 +17,9 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line" :extras-reset="reset">
+            <RiplField label="Time axis" inline>
+                <RiplSwitch v-model="extras.timeAxis" />
+            </RiplField>
             <RiplField label="Line type">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
@@ -46,6 +49,15 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
             </RiplField>
             <RiplField label="Markers" inline>
                 <RiplSwitch v-model="extras.markers" />
+            </RiplField>
+            <RiplField v-if="extras.markers" label="Marker symbol">
+                <RiplSelect v-model="extras.markerSymbol">
+                    <option value="mixed">Mixed (per series)</option>
+                    <option value="circle">Circle</option>
+                    <option value="square">Square</option>
+                    <option value="diamond">Diamond</option>
+                    <option value="triangle">Triangle</option>
+                </RiplSelect>
             </RiplField>
             <RiplField v-if="extras.markers" label="Marker radius">
                 <RiplInputRange v-model="extras.markerRadius" :min="1" :max="8" :step="1" />
@@ -81,6 +93,26 @@ import {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+// Deliberately irregular sample dates (clusters and gaps) so the time axis visibly repositions
+// points by timestamp instead of spacing them evenly.
+const TIME_POINTS = [
+    '2024-01-02',
+    '2024-01-04',
+    '2024-01-05',
+    '2024-01-26',
+    '2024-02-14',
+    '2024-02-17',
+    '2024-03-08',
+    '2024-03-30',
+    '2024-04-02',
+    '2024-04-03',
+    '2024-04-27',
+    '2024-05-19',
+];
+
+// Distinct per-series symbols used by the "Mixed" marker option.
+const SERIES_SYMBOLS = ['circle', 'diamond', 'triangle'];
+
 const seriesMeta = [
     { id: 'revenue', label: 'Revenue' },
     { id: 'profit', label: 'Profit' },
@@ -88,10 +120,12 @@ const seriesMeta = [
 ];
 
 const { extras, reset } = useChartExtras({
+    timeAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
     lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
     lineWidth: 2,
     markers: true,
+    markerSymbol: 'mixed' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
     markerRadius: 3,
 });
 
@@ -115,19 +149,59 @@ const config = useChartConfig({
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
-function generateData(count = 8) {
-    return MONTHS.slice(0, count).map(month => ({
-        month,
+function generateValues() {
+    return {
         revenue: Math.round(Math.random() * 800 + 200),
         profit: Math.round(Math.random() * 450 + 100),
         expenses: Math.round(Math.random() * 300 + 150),
+    };
+}
+
+function generateData(count = 8) {
+    return MONTHS.slice(0, count).map(month => ({
+        month,
+        ...generateValues(),
     }));
 }
 
-let data = generateData();
+function generateTimeData(count = 8) {
+    return TIME_POINTS.slice(0, count).map(date => ({
+        date,
+        ...generateValues(),
+    }));
+}
+
+let monthData = generateData();
+let timeData = generateTimeData();
+
+function activeData() {
+    return extras.timeAxis ? timeData : monthData;
+}
+
+function activeKey() {
+    return extras.timeAxis ? 'date' : 'month';
+}
+
+function regenerate(count: number) {
+    if (extras.timeAxis) {
+        timeData = generateTimeData(count);
+        return timeData;
+    }
+
+    monthData = generateData(count);
+    return monthData;
+}
+
+function resolveMarker(index: number) {
+    if (extras.markerSymbol === 'mixed') {
+        return SERIES_SYMBOLS[index % SERIES_SYMBOLS.length];
+    }
+
+    return extras.markerSymbol;
+}
 
 function getSeries() {
-    return seriesMeta.map(s => ({
+    return seriesMeta.map((s, index) => ({
         id: s.id,
         value: s.id,
         label: s.label,
@@ -135,6 +209,7 @@ function getSeries() {
         lineStyle: extras.lineStyle,
         lineWidth: extras.lineWidth,
         markers: extras.markers,
+        marker: resolveMarker(index),
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
     }));
@@ -142,9 +217,23 @@ function getSeries() {
 
 function buildOptions() {
     const options = {
+        data: activeData(),
+        key: activeKey(),
         series: getSeries(),
         ...buildCommonOptions(config),
     };
+
+    // Continuous time positioning: date keys place each point proportionally to its timestamp
+    // (the irregular gaps in TIME_POINTS make this obvious) with calendar-aligned Date ticks.
+    if (extras.timeAxis) {
+        options.axis = {
+            ...options.axis,
+            x: {
+                ...options.axis.x,
+                scale: 'time',
+            },
+        };
+    }
 
     // Sample reference line + shaded band, drawn through the y scale.
     options.annotations = config.annotationsVisible
@@ -171,8 +260,6 @@ const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createLineChart(context, {
-        data,
-        key: 'month',
         padding: { top: 30, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
@@ -182,21 +269,23 @@ watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true 
 
 
 function randomize() {
-    data = generateData(data.length);
-    chart.value?.update({ data });
+    chart.value?.update({ data: regenerate(activeData().length) });
 }
 
 function addPoint() {
-    if (data.length < MONTHS.length) {
-        data = generateData(data.length + 1);
-        chart.value?.update({ data });
+    const limit = extras.timeAxis ? TIME_POINTS.length : MONTHS.length;
+    const count = activeData().length;
+
+    if (count < limit) {
+        chart.value?.update({ data: regenerate(count + 1) });
     }
 }
 
 function removePoint() {
-    if (data.length > 2) {
-        data = generateData(data.length - 1);
-        chart.value?.update({ data });
+    const count = activeData().length;
+
+    if (count > 2) {
+        chart.value?.update({ data: regenerate(count - 1) });
     }
 }
 </script>
@@ -287,15 +376,62 @@ createLineChart('#container', {
 });
 ```
 
+### Time x-axis
+
+Set `axis.x.scale` to `'time'` to treat keys as dates: points are positioned continuously by timestamp (unevenly spaced samples sit proportionally to their dates, not evenly), and ticks are calendar-aligned `Date` values:
+
+```ts
+createLineChart('#container', {
+    data: [
+        { date: '2024-01-02',
+            value: 34 },
+        { date: '2024-01-05',
+            value: 41 },
+        { date: '2024-02-19',
+            value: 28 },
+    ],
+    key: 'date',
+    series: [
+        { id: 'value',
+            value: 'value',
+            label: 'Value' },
+    ],
+    axis: {
+        x: { scale: 'time' },
+    },
+});
+```
+
+### Marker symbols
+
+Each series can render its markers with a distinct symbol shape (`'circle'`, `'square'`, `'diamond'`, or `'triangle'` — non-circle symbols are sized to the same visual area as the circle):
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            marker: 'circle' },
+        { id: 'expenses',
+            value: 'expenses',
+            label: 'Expenses',
+            marker: 'diamond' },
+    ],
+});
+```
+
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `markerRadius`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `marker` (symbol shape: `'circle'` \| `'square'` \| `'diamond'` \| `'triangle'`), `markerRadius`, `axis` (y-axis index/id binding)
 - **`key`** — Key accessor for each data point
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
 - **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
 - **`padding`** — Chart padding
