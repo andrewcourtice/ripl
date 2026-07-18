@@ -12,6 +12,7 @@ import {
 
 import type {
     ChartAxisInput,
+    ChartDataLabelsInput,
     ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
@@ -19,6 +20,7 @@ import type {
 import {
     normalizeAxis,
     normalizeAxisItem,
+    normalizeDataLabels,
     normalizeYAxisItem,
     resolveValueFormat,
 } from '../core/options';
@@ -33,6 +35,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    exitElement,
 } from '../core/animation';
 
 import type {
@@ -62,13 +65,17 @@ import type {
     Group,
     Rect,
     RectState,
+    Text,
+    TextState,
 } from '@ripl/core';
 
 import {
     Box,
     createGroup,
     createRect,
+    createText,
     easeOutCubic,
+    parseColor,
     scaleBand,
     scaleSequential,
 } from '@ripl/core';
@@ -104,6 +111,8 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     tooltip?: ChartTooltipInput;
     /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
+    /** Show each cell's value centred in the cell (`true`/`false` or detailed label options). Label colour auto-contrasts against the cell colour. Off by default. */
+    labels?: ChartDataLabelsInput;
 }
 
 /** Payload emitted for heatmap cell interaction events. */
@@ -131,6 +140,20 @@ export interface HeatmapChartEventMap extends EventMap {
 }
 
 const DEFAULT_COLOR_RANGE = ['#e0f2fe', '#0369a1'];
+
+// Picks a light or dark label colour for legibility against the cell fill (perceived luminance).
+function cellLabelColor(color: string): string {
+    const parsed = parseColor(color);
+
+    if (!parsed) {
+        return '#1a1a1a';
+    }
+
+    const [red, green, blue] = parsed;
+    const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+
+    return luminance > 0.55 ? '#1a1a1a' : '#ffffff';
+}
 
 /**
  * Heatmap chart rendering a grid of colored cells on two categorical axes.
@@ -365,13 +388,36 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 };
             });
 
+            const dataLabels = normalizeDataLabels(this.options.labels);
+            const formatValue = resolveValueFormat(this.options.format);
+
+            const cellLabelText = (cell: typeof cellData[number]): Text => createText({
+                id: `${cell.id}-label`,
+                content: formatValue(cell.value),
+                x: cell.x + cell.width / 2,
+                y: cell.y + cell.height / 2,
+                textAlign: 'center',
+                textBaseline: 'middle',
+                font: dataLabels.font,
+                fill: cellLabelColor(cell.color),
+                pointerEvents: 'none',
+                opacity: 0,
+                data: {
+                    opacity: 1,
+                },
+            });
+
             const {
                 left: cellEntries,
                 inner: cellUpdates,
                 right: cellExits,
             } = arrayJoin(cellData, this._cellGroups, (item, group) => item.id === group.id);
 
-            cellExits.forEach(el => el.destroy());
+            // Fade exiting cells out through the shared exit animation rather than snapping away.
+            const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
+            cellExits.forEach(el => {
+                void exitElement(this.renderer, el, exitAnimation);
+            });
 
             const entryGroups = cellEntries.map(cell => {
                 const rect = createRect({
@@ -392,7 +438,10 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
                 return createGroup({
                     id: cell.id,
-                    children: [rect],
+                    children: [
+                        rect,
+                        ...(dataLabels.visible ? [cellLabelText(cell)] : []),
+                    ],
                 });
             });
 
@@ -410,6 +459,28 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     } as RectState;
 
                     this._attachCellHover(rect, cell);
+                }
+
+                // Reconcile the cell label against the current `labels` option so it can be
+                // toggled and restyled at runtime.
+                let label = group.getElementsByType('text')[0] as Text | undefined;
+
+                if (!dataLabels.visible && label) {
+                    label.destroy();
+                    label = undefined;
+                }
+
+                if (dataLabels.visible && !label) {
+                    group.add(cellLabelText(cell));
+                } else if (label) {
+                    label.content = formatValue(cell.value);
+                    label.font = dataLabels.font;
+                    label.data = {
+                        x: cell.x + cell.width / 2,
+                        y: cell.y + cell.height / 2,
+                        fill: cellLabelColor(cell.color),
+                        opacity: 1,
+                    } as Partial<TextState>;
                 }
 
                 return group;
@@ -440,6 +511,17 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
+            const cellLabels = [
+                ...entryGroups,
+                ...updateGroups,
+            ].flatMap(g => g.getElementsByType('text')) as Text[];
+
+            const labelsTransition = this.renderer.transition(cellLabels, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: element.data as Partial<TextState>,
+            }));
+
             if (legendRegion) {
                 // The bottom band is reserved at full width (before the y-axis inset is known), so
                 // realign the gradient bar to the plot's x-range — under the columns, not the
@@ -456,6 +538,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 this._yAxis.render(),
                 entriesTransition,
                 updatesTransition,
+                labelsTransition,
             ]);
         });
     }
