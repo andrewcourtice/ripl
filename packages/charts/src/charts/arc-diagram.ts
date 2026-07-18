@@ -528,7 +528,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 left: nodeEntries,
                 inner: nodeUpdates,
                 right: nodeExits,
-            } = arrayJoin(nodes, this._nodeElements, (node, group) => group.id === `arc-node-${node.id}`);
+            } = arrayJoin(activeNodes, this._nodeElements, (node, group) => group.id === `arc-node-${node.id}`);
 
             nodeExits.forEach(group => group.destroy());
 
@@ -541,7 +541,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 const radius = radiusFor(node);
                 const label = labelState(point);
                 const tip = tickEnd(point);
-                const delay = stagger(nodeInfo.get(node.id)?.index ?? 0, nodes.length, enter.duration, 0.6);
+                const delay = stagger(nodeInfo.get(node.id)?.index ?? 0, activeNodes.length, enter.duration, 0.6);
 
                 const tick = createLine({
                     id: `arc-node-${node.id}-tick`,

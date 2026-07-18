@@ -416,6 +416,8 @@ export class Chart<
             fontColor: opts.fontColor,
             backgroundColor: opts.backgroundColor,
             borderRadius: typeof opts.borderRadius === 'number' ? opts.borderRadius : 6,
+            maxWidth: opts.maxWidth,
+            wrap: opts.wrap,
         };
 
         if (!tooltip) {
