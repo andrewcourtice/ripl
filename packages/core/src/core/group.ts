@@ -167,6 +167,14 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
      * default, or their raw local boxes when `local` is `true`.
      * @param local - when `true`, unions the children's untransformed local geometry instead of their world boxes.
      */
+    /**
+     * Group boxes compose from children, whose changes are invisible to the group's own state —
+     * they are never cached (see {@link Element.getBoundingBox}).
+     */
+    protected get _boundsCacheable(): boolean {
+        return false;
+    }
+
     public getBoundingBox(local = false) {
         return getContainingBox(this.children, element => element.getBoundingBox(local));
     }

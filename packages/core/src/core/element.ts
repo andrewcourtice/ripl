@@ -387,21 +387,7 @@ class MatrixTransformTarget implements TransformTarget {
  * transform (the common case), letting callers skip any point remapping.
  */
 export function getWorldTransform(element: Element): Matrix | null {
-    const chain: Element[] = [];
-    let current: Element | undefined = element;
-
-    while (current) {
-        chain.unshift(current);
-        current = current.parent as Element | undefined;
-    }
-
-    const target = new MatrixTransformTarget();
-
-    chain.forEach(node => applyElementTransform(target, node));
-
-    return matrixIsIdentity(target.matrix)
-        ? null
-        : target.matrix;
+    return element.$getWorldTransform();
 }
 
 /** The base renderable element with state management, event handling, interpolation, transform support, and context rendering. */
@@ -432,6 +418,24 @@ export class Element<
     private _dirty = false;
     private _touched = false;
     private _paintKeys?: (keyof BaseElementState)[];
+    private _stateVersion = 0;
+
+    private _worldTransformCache?: {
+        matrix: Matrix | null;
+        chain: Element[];
+        versions: number[];
+    };
+
+    private _localBoxCache?: {
+        box: Box;
+        version: number;
+    };
+
+    private _worldBoxCache?: {
+        box: Box;
+        version: number;
+        matrix: Matrix | null;
+    };
 
     /**
      * The element's own state keys that map to a context paint operation, cached so render-time
@@ -773,6 +777,7 @@ export class Element<
         }
 
         this.state[key] = value;
+        this._stateVersion++;
         this._dirty = true;
         this.emit('updated', {
             key,
@@ -837,6 +842,81 @@ export class Element<
     }
 
     /**
+     * Whether this element's bounding boxes may be cached against its own state version. Groups
+     * opt out — their box composes from children whose changes are not visible in the group's own
+     * state.
+     */
+    protected get _boundsCacheable(): boolean {
+        return true;
+    }
+
+    /**
+     * The element's world transform (own and every ancestor's transform composed root-first), or
+     * `null` when the composition is the identity. Cached against the parent chain's state
+     * versions, so static scenes skip the matrix rebuild; any state change (or reparent) along the
+     * chain recomputes. A chain node whose transform origin resolves against an uncacheable box
+     * (a group with a string origin) bypasses the cache entirely.
+     */
+    public $getWorldTransform(): Matrix | null {
+        const cache = this._worldTransformCache;
+        const node = this as unknown as Element;
+
+        let cacheable = true;
+        let valid = !!cache;
+        let index = 0;
+
+        let current: Element | undefined = node;
+
+        while (current) {
+            if (!current._boundsCacheable && (typeIsString(current.transformOriginX) || typeIsString(current.transformOriginY))) {
+                cacheable = false;
+            }
+
+            if (valid && cache && (cache.chain[index] !== current || cache.versions[index] !== current._stateVersion)) {
+                valid = false;
+            }
+
+            index++;
+            current = current.parent as Element | undefined;
+        }
+
+        if (cacheable && valid && cache && cache.chain.length === index) {
+            return cache.matrix;
+        }
+
+        const chain: Element[] = [];
+        const versions: number[] = [];
+
+        current = node;
+
+        while (current) {
+            chain.push(current);
+            versions.push(current._stateVersion);
+            current = current.parent as Element | undefined;
+        }
+
+        const target = new MatrixTransformTarget();
+
+        for (let position = chain.length - 1; position >= 0; position--) {
+            applyElementTransform(target, chain[position]);
+        }
+
+        const matrix = matrixIsIdentity(target.matrix)
+            ? null
+            : target.matrix;
+
+        if (cacheable) {
+            this._worldTransformCache = {
+                matrix,
+                chain,
+                versions,
+            };
+        }
+
+        return matrix;
+    }
+
+    /**
      * Returns this element's bounding box: the on-screen (world) box by default, or the raw local
      * box when `local` is `true`. The world box applies this element's own and every ancestor
      * group's transform (mirroring the DOM's `getBoundingClientRect`); a rotated element yields a
@@ -844,10 +924,48 @@ export class Element<
      * @param local - when `true`, returns the untransformed authored geometry instead of the world box.
      */
     public getBoundingBox(local = false): Box {
-        const box = this._getLocalBoundingBox();
-        return local
-            ? box
-            : transformBox(box, getWorldTransform(this as unknown as Element));
+        const cacheable = this._boundsCacheable;
+        const localCache = this._localBoxCache;
+
+        let box: Box;
+
+        if (cacheable && localCache && localCache.version === this._stateVersion) {
+            box = localCache.box;
+        } else {
+            box = this._getLocalBoundingBox();
+
+            if (cacheable) {
+                this._localBoxCache = {
+                    box,
+                    version: this._stateVersion,
+                };
+            }
+        }
+
+        if (local) {
+            return new Box(box.top, box.left, box.bottom, box.right);
+        }
+
+        const matrix = this.$getWorldTransform();
+        const worldCache = this._worldBoxCache;
+
+        if (cacheable && worldCache && worldCache.version === this._stateVersion && worldCache.matrix === matrix) {
+            const cached = worldCache.box;
+
+            return new Box(cached.top, cached.left, cached.bottom, cached.right);
+        }
+
+        const world = transformBox(box, matrix);
+
+        if (cacheable) {
+            this._worldBoxCache = {
+                box: world,
+                version: this._stateVersion,
+                matrix,
+            };
+        }
+
+        return new Box(world.top, world.left, world.bottom, world.right);
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
@@ -888,6 +1006,7 @@ export class Element<
             // The tick writes state directly (bypassing setStateValue), so mark dirty here or
             // an animating shape would keep serving a stale cached path.
             this._dirty = true;
+            this._stateVersion++;
 
             objectForEach(mappedIntpls, (key, value) => {
                 this.state[key] = value(time) as TState[keyof TState];
