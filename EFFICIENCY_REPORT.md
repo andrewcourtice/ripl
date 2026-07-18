@@ -4,7 +4,7 @@ This report documents several places in the codebase where performance could be 
 
 ## 1. ~~arrayMap uses undefined length~~ ✅ FIXED
 
-**Status:** Resolved. `arrayMap` and all generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`, `arrayDedupe`) have been removed in favour of native array methods. All consumers refactored.
+**Status:** Resolved. `arrayMap` and the generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`) have been removed in favour of native array methods. All consumers refactored. `arrayDedupe` remains (`packages/utilities/src/collection.ts`) — it wraps a `Set` round-trip that has no terser native equivalent and is used by `Context` event tracking.
 
 ---
 
