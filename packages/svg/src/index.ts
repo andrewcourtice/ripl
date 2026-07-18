@@ -17,6 +17,7 @@ import type {
     BorderRadius,
     ContextElement,
     ContextExport,
+    ContextFactory,
     ContextOptions,
     FillRule,
     Gradient,
@@ -1221,3 +1222,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 export function createContext(target: string | HTMLElement, options?: ContextOptions): SVGContext {
     return new SVGContext(target, options);
 }
+
+// Compile-time conformance: the SVG backend factory matches the shared `ContextFactory` contract.
+createContext satisfies ContextFactory<string | HTMLElement, ContextOptions, SVGContext>;

@@ -550,3 +550,6 @@ export class TerminalContext extends Context<Element> {
 export function createContext(output: TerminalOutput, options?: TerminalContextOptions): TerminalContext {
     return new TerminalContext(output, options);
 }
+
+// Compile-time conformance: the terminal backend factory matches the shared `ContextFactory` contract.
+createContext satisfies ContextFactory<TerminalOutput, TerminalContextOptions, TerminalContext>;

@@ -105,7 +105,6 @@ export interface Canvas2DState {
      * @param e Horizontal translation.
      * @param f Vertical translation.
      */
-    // eslint-disable-next-line id-length
     setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void;
     /**
      * Multiplies the current transformation matrix by `[a, b, c, d, e, f]`.
@@ -116,7 +115,6 @@ export interface Canvas2DState {
      * @param e Horizontal translation.
      * @param f Vertical translation.
      */
-    // eslint-disable-next-line id-length
     transform(a: number, b: number, c: number, d: number, e: number, f: number): void;
     /** Measures text dimensions using the canvas context's current font or an optional override. */
     measureText(text: string, font?: string): TextMetrics;
