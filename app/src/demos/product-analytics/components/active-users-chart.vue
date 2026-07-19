@@ -16,6 +16,10 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -96,6 +100,10 @@ function buildChart() {
                 markers: false,
             },
         ],
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Active users chart',
     });
 
     chart.on('markerenter', event => {

@@ -12,6 +12,7 @@
         "@ripl/canvas": "1.0.0-beta.0",
         "@ripl/charts": "1.0.0-beta.0",
         "@ripl/core": "1.0.0-beta.0",
+        "@ripl/devtools": "1.0.0-beta.0",
         "@ripl/node": "1.0.0-beta.0",
         "@ripl/svg": "1.0.0-beta.0",
         "@ripl/terminal": "1.0.0-beta.0",

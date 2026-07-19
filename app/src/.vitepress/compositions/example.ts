@@ -20,6 +20,10 @@ import {
 } from '@vue/reactivity';
 
 import {
+    createDevtools,
+} from '@ripl/devtools';
+
+import {
     createRenderer,
     createScene,
 } from '@ripl/web';
@@ -35,12 +39,18 @@ type AdvancedExampleState = {
     renderer: Renderer;
 };
 
-export function useRiplExample(onContextChanged?: (context: Context) => void) {
+export function useRiplExample(onContextChanged?: (context: Context) => void, bindDevtools: boolean = true) {
     const context = shallowRef<Context>();
 
     function contextChanged(ctx: Context) {
         context.value?.destroy();
         context.value = ctx;
+
+        // Bindings self-dispose when their context is destroyed above. Callers that
+        // create a richer binding themselves (scene/renderer) opt out here.
+        if (bindDevtools) {
+            createDevtools(ctx);
+        }
 
         pauseTracking();
         onContextChanged?.(context.value);
@@ -67,12 +77,14 @@ export function useAdvRiplExample(onContextChanged?: (state: AdvancedExampleStat
         scene.value = scn;
         renderer.value = rdr;
 
+        createDevtools(context, scn, rdr);
+
         onContextChanged?.({
             context,
             scene: scn,
             renderer: rdr,
         });
-    });
+    }, false);
 
     return {
         ...output,
@@ -86,7 +98,11 @@ export function useRiplChart<TChart extends Chart<any>>(onContextChanged: (conte
     const chart = shallowRef<TChart>();
 
     function contextChanged(context: Context) {
-        chart.value = (chart.value?.destroy(), onContextChanged(context));
+        const created = (chart.value?.destroy(), onContextChanged(context));
+
+        createDevtools(created.context, created.scene, created.renderer);
+
+        chart.value = created;
     }
 
     return {

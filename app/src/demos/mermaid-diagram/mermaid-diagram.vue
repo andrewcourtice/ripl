@@ -32,6 +32,10 @@ import {
     createScene,
 } from '@ripl/web';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import type {
     Renderer,
 
@@ -92,6 +96,10 @@ onMounted(() => {
     renderer = createRenderer(scene, {
         autoStart: true,
         autoStop: false,
+    });
+
+    createDevtools(scene.context, scene, renderer, {
+        label: 'Mermaid diagram',
     });
 
     scene.context.on('resize', () => renderFromSource());

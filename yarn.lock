@@ -2335,7 +2335,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@ripl/devtools@workspace:^, @ripl/devtools@workspace:packages/devtools":
+"@ripl/devtools@npm:1.0.0-beta.0, @ripl/devtools@workspace:^, @ripl/devtools@workspace:packages/devtools":
   version: 0.0.0-use.local
   resolution: "@ripl/devtools@workspace:packages/devtools"
   dependencies:
@@ -3925,6 +3925,7 @@ __metadata:
     "@ripl/canvas": "npm:1.0.0-beta.0"
     "@ripl/charts": "npm:1.0.0-beta.0"
     "@ripl/core": "npm:1.0.0-beta.0"
+    "@ripl/devtools": "npm:1.0.0-beta.0"
     "@ripl/node": "npm:1.0.0-beta.0"
     "@ripl/svg": "npm:1.0.0-beta.0"
     "@ripl/terminal": "npm:1.0.0-beta.0"

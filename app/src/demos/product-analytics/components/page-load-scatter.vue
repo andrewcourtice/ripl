@@ -16,6 +16,10 @@ import {
     createScatterChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -93,6 +97,10 @@ function buildChart() {
 
     chart.on('markerenter', event => {
         hovered.value = describe(event.data.xValue, event.data.yValue, event.data.sizeValue);
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Page load scatter',
     });
     chart.on('markerleave', () => {
         hovered.value = '';

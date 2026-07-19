@@ -15,6 +15,10 @@ import {
     createPieChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -70,6 +74,10 @@ function buildChart() {
 
     chart.on('segmententer', event => {
         readout.value = `${event.data.label}: ${event.data.value}% of sessions`;
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Browser share chart',
     });
     chart.on('segmentleave', () => {
         readout.value = DEFAULT_READOUT;

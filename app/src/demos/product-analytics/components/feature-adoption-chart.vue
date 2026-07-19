@@ -16,6 +16,10 @@ import {
     createBarChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -91,6 +95,10 @@ function buildChart() {
 
     chart.on('barenter', event => {
         hovered.value = describe(event.data.xValue, event.data.seriesId, event.data.yValue);
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Feature adoption chart',
     });
     chart.on('barleave', () => {
         hovered.value = '';

@@ -16,6 +16,10 @@ import {
     createSankeyChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -62,6 +66,10 @@ function buildChart() {
 
     chart.on('nodeenter', event => {
         hovered.value = `${event.data.label}: ${event.data.value.toLocaleString()} users`;
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'User journey sankey',
     });
     chart.on('nodeleave', () => {
         hovered.value = '';
