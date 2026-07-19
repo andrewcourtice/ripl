@@ -37,15 +37,15 @@ notes where this repo now stands after the 1.0 consistency work (see
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
 | Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
-| Multiple / secondary axes | ✅ line/area/scatter | ✅ | ✅ | ✅ | ✅ done (A6); bar deferred |
+| Multiple / secondary axes | ✅ line/area/scatter/bar | ✅ | ✅ | ✅ | ✅ done (A6; bar = vertical grouped) |
 | Stacking / **100%-stacked** | ✅ / ✅ | ✅/✅ | ✅/✅ | ✅/✅ | ✅ done (`stacked: 'percent'`) |
 | Legends (present + interactive toggle) | ✅ | ✅ | ✅ | ✅ | ✅ done (A7 + toggle) |
-| Shared axis-pointer tooltip | 🟡 per-element | 🟡 | ✅ | ✅ | ⏳ B4 |
+| Shared axis-pointer tooltip | ✅ `tooltip.trigger: 'axis'` | 🟡 | ✅ | ✅ | ✅ done (line/area) |
 | Data labels | ✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Annotations** (reference lines / bands / markers) | ❌→✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done (B2) |
 | Zoom / pan / data-zoom | ✅ Navigator | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Theming / dark mode** | ❌→✅ | 🟡 | ✅ built-in | ✅ | ✅ done (B1) |
-| **Accessibility** (ARIA / keyboard / patterns) | ❌→🟡 | 🟡 | ✅ | ✅ module | 🟡 ARIA+CVD done (B3); keyboard/patterns ⏳ |
+| **Accessibility** (ARIA / keyboard / patterns) | ❌→🟡 | 🟡 | ✅ | ✅ module | 🟡 ARIA+CVD+pattern paint done (B3); keyboard ⏳ |
 | Export (png / svg / …) | ✅ | 🟡 | ✅ | ✅ | ✅ done |
 | Animation | ✅ path-morphing | ✅ | ✅ | ✅ | ✅ done |
 | Formatting / i18n | 🟡→✅ Intl | 🟡 | ✅ | ✅ | ✅ mostly (A2) |
@@ -55,8 +55,8 @@ notes where this repo now stands after the 1.0 consistency work (see
 
 **Headline 1.0 gaps:** cross-chart consistency (done), configurable axes (done),
 theming/dark mode (done, B1), annotations (done, B2), secondary axes (done for
-line/area/scatter, A6; bar deferred), and accessibility (B3 — ARIA + colourblind
-palette done; keyboard nav and pattern fills remain the largest post-1.0 gap).
+line/area/scatter/bar, A6), and accessibility (B3 — ARIA, colourblind palette, and
+pattern-fill paint done; keyboard navigation remains the largest post-1.0 gap).
 
 ## Completed 1.0 consistency work
 
@@ -140,6 +140,12 @@ Landed in the 1.0 hardening pass (this branch):
 - **Data labels** for the remaining charts — heatmap (contrast-aware cell values), radar
   (vertex labels), radial-bar (sweep-end labels), polar-scatter (marker labels) — all off
   by default and runtime-toggleable.
+- **A6 — Secondary y-axis for bar** (vertical grouped): per-series scale resolution in
+  the bar renderer; stacked/percent modes and horizontal orientation stay primary-axis.
+- **Shared axis-pointer tooltip** (`tooltip.trigger: 'axis'`) for line and area — the
+  hovered category's title plus one row per active series, runtime-switchable.
+- **Pattern (decal) paint** — `pattern(...)` strings render across canvas and SVG (see
+  B3 note below).
 
 ## Migration — breaking changes
 
@@ -188,12 +194,6 @@ hand-rolling axis/grid/crosshair/tooltip wiring.
   window) and **heatmap** (dual categorical) stay on `Chart` by design and already
   share `createChartAxes`.
 
-### A6 (remaining) — secondary axis for bar
-
-Secondary y-axes now ship for line, area, and scatter (see the hardening-pass list
-above). Bar remains single-axis — a dual-axis grouped bar needs the shared bar renderer
-to resolve a value scale per series and is deliberately deferred.
-
 ### B3 (remaining) — keyboard navigation + pattern fills
 
 ARIA labelling (`role="img"` + `aria-label` from `description`/title) and a
@@ -213,5 +213,5 @@ Radial/angular scale (`scaleRadial`) so polar charts stop hand-rolling; `scaleSy
 and a UTC time scale; an optional d3-format specifier parser; the remaining marker
 symbols (star/cross/wye — circle/square/diamond/triangle shipped); time-series
 **downsampling** (LTTB) for realtime/large data; an expanded easing set
-(sine/expo/circ/bounce); a moving-average/smoothing data transform; a shared/synced
-axis-pointer tooltip.
+(sine/expo/circ/bounce); a moving-average/smoothing data transform;
+extending the shared axis-pointer tooltip to bar/scatter.
