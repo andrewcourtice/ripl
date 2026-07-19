@@ -57,6 +57,21 @@ describe('Element', () => {
         expect(el.fill).toBe('#00ff00');
     });
 
+    test('Should return a shallow copy of set state', () => {
+        const el = createElement('rect', {
+            fill: '#ff0000',
+            opacity: 0.5,
+        });
+
+        const state = el.$state;
+
+        expect(state.fill).toBe('#ff0000');
+        expect(state.opacity).toBe(0.5);
+
+        (state as Record<string, unknown>).fill = '#00ff00';
+        expect(el.fill).toBe('#ff0000');
+    });
+
     test('Should emit updated event on state change', () => {
         const el = createElement('rect', {});
         const handler = vi.fn();

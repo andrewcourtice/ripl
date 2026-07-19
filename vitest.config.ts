@@ -16,6 +16,7 @@ export default defineConfig({
             '@ripl/svg': resolve('svg'),
             '@ripl/web': resolve('web'),
             '@ripl/charts': resolve('charts'),
+            '@ripl/devtools': resolve('devtools'),
             '@ripl/3d': resolve('3d'),
             '@ripl/webgpu': resolve('webgpu'),
             '@ripl/terminal': resolve('terminal'),

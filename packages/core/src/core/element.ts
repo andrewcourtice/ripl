@@ -446,6 +446,11 @@ export class Element<
         return this._dirty || (this.parent?.$anyDirty ?? false);
     }
 
+    /** A shallow copy of the element's own set state values, without inherited or computed resolution. Intended for inspection and serialization (e.g. devtools); mutating the returned object has no effect on the element. */
+    public get $state(): Readonly<TState> {
+        return { ...this.state };
+    }
+
     // Props
 
     /** Text directionality used when rendering text, mirroring the canvas `direction` drawing-state property (`inherit`, `ltr`, or `rtl`). */

@@ -198,6 +198,21 @@ export class Renderer extends EventBus<RendererEventMap> {
         return !!this._transitionMap.size;
     }
 
+    /**
+     * The resolved debug overlay options currently in effect. Assigning a new value
+     * (`true` for all overlays, `false` for none, or a partial {@link RendererDebugOptions}
+     * object) replaces the full set — unspecified flags reset to their defaults, matching
+     * the constructor's `debug` option semantics.
+     */
+    public get debug(): Required<RendererDebugOptions> {
+        return { ...this._debugOptions };
+    }
+
+    public set debug(value: boolean | RendererDebugOptions) {
+        this._debugOptions = resolveDebugOptions(value);
+        this.start();
+    }
+
     constructor(scene: Scene, options?: RendererOptions) {
         super();
 

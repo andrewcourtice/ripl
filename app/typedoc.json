@@ -4,6 +4,7 @@
         "../packages/canvas",
         "../packages/core",
         "../packages/charts",
+        "../packages/devtools",
         "../packages/svg",
         "../packages/web",
         "../packages/3d",
