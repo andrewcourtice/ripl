@@ -2,7 +2,6 @@ import {
     CONTEXT_OPERATIONS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
-    TRANSFORM_INTERPOLATORS,
 } from './constants';
 
 import {
@@ -18,32 +17,13 @@ import type {
 import {
     Box,
     isPointInBox,
-    matrixIdentity,
     matrixIsIdentity,
-    matrixMultiply,
-    matrixRotate,
-    matrixScale,
-    matrixTranslate,
     transformBox,
 } from '../math';
 
 import type {
     Matrix,
 } from '../math';
-
-import {
-    scaleContinuous,
-} from '../scales';
-
-import {
-    interpolateAny,
-    interpolateBorderRadius,
-    interpolateColor,
-    interpolateDate,
-    interpolateGradient,
-    interpolateNumber,
-    interpolatePoints,
-} from '../interpolators';
 
 import type {
     Interpolator,
@@ -63,11 +43,6 @@ import type {
     Queryable,
 } from './query';
 
-import {
-    resolveRotation,
-    resolveTransformOrigin,
-} from '../context';
-
 import type {
     BaseState,
     Context,
@@ -78,10 +53,8 @@ import {
     objectForEach,
     objectReduce,
     stringUniqueId,
-    typeIsArray,
     typeIsFunction,
     typeIsNil,
-    typeIsObject,
     typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -90,6 +63,21 @@ import type {
     AnyFunction,
     OneOrMore,
 } from '@ripl/utilities';
+
+import {
+    getInterpolator,
+    getKeyframeInterpolator,
+    isElementValueKeyFrame,
+} from './element-interpolation';
+
+import {
+    applyElementTransform,
+    MatrixTransformTarget,
+} from './element-transform';
+
+export type { TransformTarget } from './element-transform';
+
+export { applyElementTransform } from './element-transform';
 
 /** Controls which pointer events an element responds to during hit testing. */
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
@@ -221,160 +209,6 @@ export interface ElementValidationResult {
     type: ElementValidationType;
     /** Human-readable description of the validation result. */
     message: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
-    return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
-}
-
-function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementInterpolationKeyFrame<TValue>[], interpolator: InterpolatorFactory<TValue>): Interpolator<TValue | undefined> {
-    let keyframes = ([{
-        offset: 0,
-        value: currentValue,
-    }] as { offset: number;
-        value: TValue; }[]).concat(
-        frames.map(frame => ({
-            offset: frame.offset ?? 0,
-            value: frame.value,
-        }))
-    );
-
-    keyframes = frames.map(({ offset, value }, index) => ({
-        value,
-        offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
-    }));
-
-    if (keyframes.at(-1)?.offset !== 1) {
-        keyframes.push({
-            offset: 1,
-            value: keyframes.at(-1)?.value ?? currentValue,
-        });
-    }
-
-    keyframes.sort(({ offset: oa }, { offset: ob }) => oa - ob);
-
-    const frameScale = scaleContinuous([0, 1], [0, keyframes.length - 1], { clamp: true });
-    const interpolators = Array.from({ length: keyframes.length - 1 }, (_, index) => {
-        const frameA = keyframes[index];
-        const frameB = keyframes[index + 1];
-        const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);
-        const interpolate = interpolator(frameA.value, frameB.value);
-
-        return (time: number) => interpolate(scale(time));
-    });
-
-    return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
-}
-
-function getInterpolator<TValue>(value: TValue, key?: string) {
-    if (key && TRANSFORM_INTERPOLATORS[key]) {
-        return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
-    }
-
-    const interpolator = [
-        interpolateNumber,
-        interpolateGradient,
-        interpolateColor,
-        interpolateDate,
-        interpolatePoints,
-        interpolateBorderRadius,
-    ].find(({ test }) => !!test?.(value));
-
-    return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
-}
-
-/**
- * The subset of {@link Context} transform operations required to apply an element's
- * transform. Implemented by every {@link Context}, and by the internal matrix accumulator
- * used to reconstruct an element's world transform for hit testing.
- */
-export interface TransformTarget {
-    /** Applies a translation of `(x, y)`. */
-    translate(x: number, y: number): void;
-    /** Applies a rotation, in radians. */
-    rotate(angle: number): void;
-    /** Applies a scale with the given horizontal and vertical factors. */
-    scale(x: number, y: number): void;
-}
-
-/**
- * Applies an element's transform (translate, rotate, scale about its transform-origin) to
- * the given target. Used both to drive a {@link Context}'s transform during rendering and,
- * via a matrix accumulator, to reconstruct an element's world transform for hit testing.
- *
- * @param target - The {@link Context} (or matrix accumulator) to apply the transform to.
- * @param element - The element whose transform is applied.
- */
-export function applyElementTransform(target: TransformTarget, element: Element) {
-    const translateX = element.translateX ?? 0;
-    const translateY = element.translateY ?? 0;
-    const scaleX = element.transformScaleX ?? 1;
-    const scaleY = element.transformScaleY ?? 1;
-    const rawRotation = element.rotation ?? 0;
-    const rawOriginX = element.transformOriginX ?? 0;
-    const rawOriginY = element.transformOriginY ?? 0;
-
-    const rotation = resolveRotation(rawRotation);
-
-    const hasTranslate = translateX !== 0 || translateY !== 0;
-    const hasScale = scaleX !== 1 || scaleY !== 1;
-    const hasRotation = rotation !== 0;
-    const hasOrigin = rawOriginX !== 0 || rawOriginY !== 0;
-
-    if (!hasTranslate && !hasScale && !hasRotation) {
-        return;
-    }
-
-    let originX = 0;
-    let originY = 0;
-
-    if (hasOrigin) {
-        const needsBBox = typeIsString(rawOriginX) || typeIsString(rawOriginY);
-        // Origins resolve against the element's own (pre-transform) geometry, not its on-screen box.
-        const box = needsBBox ? element._getLocalBoundingBox() : null;
-
-        originX = resolveTransformOrigin(rawOriginX, box?.width ?? 0);
-        originY = resolveTransformOrigin(rawOriginY, box?.height ?? 0);
-
-        if (needsBBox && box) {
-            originX += box.left;
-            originY += box.top;
-        }
-    }
-
-    target.translate(originX + translateX, originY + translateY);
-
-    if (hasRotation) {
-        target.rotate(rotation);
-    }
-
-    if (hasScale) {
-        target.scale(scaleX, scaleY);
-    }
-
-    if (hasOrigin) {
-        target.translate(-originX, -originY);
-    }
-}
-
-/** A {@link TransformTarget} that accumulates applied transforms into a single {@link Matrix}. */
-class MatrixTransformTarget implements TransformTarget {
-
-    public matrix: Matrix = matrixIdentity();
-
-    public translate(x: number, y: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixTranslate(x, y));
-    }
-
-    public rotate(angle: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixRotate(angle));
-    }
-
-    public scale(x: number, y: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixScale(x, y));
-    }
-
 }
 
 /**
