@@ -55,3 +55,12 @@ window.addEventListener('message', event => {
         getPort()?.postMessage(event.data.payload);
     }
 });
+
+// One-off messages arrive when the background has no live port to this tab —
+// typically after a service worker restart while the page's bridge sat idle.
+// Relay the message into the page and re-establish the port so the bridge's
+// replies flow back over the port-based route.
+chrome.runtime.onMessage.addListener((message: ExtensionMessage) => {
+    getPort();
+    window.postMessage(createExtensionEnvelope(message), '*');
+});

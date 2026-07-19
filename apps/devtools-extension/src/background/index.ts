@@ -61,8 +61,18 @@ function updateAction(tabId: number): void {
     });
 }
 
-function sendToContent(state: TabState, message: ExtensionMessage): void {
-    state.contentPort?.postMessage(message);
+function sendToContent(tabId: number, state: TabState, message: ExtensionMessage): void {
+    if (state.contentPort) {
+        state.contentPort.postMessage(message);
+        return;
+    }
+
+    // No live content port — the service worker (and its ports) may have been
+    // restarted while the page sat idle. Deliver via a one-off tab message; the
+    // content script relays it into the page and re-establishes its port.
+    chrome.tabs.sendMessage(tabId, message).catch(() => {
+        // No content script in this tab (e.g. chrome:// pages) — nothing to do.
+    });
 }
 
 function broadcast(ports: Set<chrome.runtime.Port>, message: BridgeMessage): void {
@@ -143,7 +153,7 @@ function connectContentPort(port: chrome.runtime.Port): void {
 
     // A panel opened before the page's bridge connected — let it start streaming now.
     if (state.panelPorts.size > 0) {
-        sendToContent(state, {
+        sendToContent(tabId, state, {
             kind: 'panel:connected',
         });
     }
@@ -165,20 +175,20 @@ function connectPanelPort(port: chrome.runtime.Port, tabId: number): void {
     state.panelPorts.add(port);
 
     if (state.panelPorts.size === 1) {
-        sendToContent(state, {
+        sendToContent(tabId, state, {
             kind: 'panel:connected',
         });
     }
 
     replayContexts(state, port);
 
-    port.onMessage.addListener(message => sendToContent(state, message as ExtensionMessage));
+    port.onMessage.addListener(message => sendToContent(tabId, state, message as ExtensionMessage));
 
     port.onDisconnect.addListener(() => {
         state.panelPorts.delete(port);
 
         if (state.panelPorts.size === 0) {
-            sendToContent(state, {
+            sendToContent(tabId, state, {
                 kind: 'panel:disconnected',
             });
         }
@@ -193,11 +203,11 @@ function connectPopupPort(port: chrome.runtime.Port, tabId: number): void {
     replayContexts(state, port);
 
     // Ask the page for a fresh replay in case the registry is stale.
-    sendToContent(state, {
+    sendToContent(tabId, state, {
         kind: 'state:request',
     });
 
-    port.onMessage.addListener(message => sendToContent(state, message as ExtensionMessage));
+    port.onMessage.addListener(message => sendToContent(tabId, state, message as ExtensionMessage));
 
     port.onDisconnect.addListener(() => state.popupPorts.delete(port));
 }
