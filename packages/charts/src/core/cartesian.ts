@@ -157,6 +157,29 @@ const MIN_WINDOW = 0.02;
 /** Maximum zoom factor `k` — you can zoom in to this, and out only to the full-data identity view (`k = 1`). */
 const NAV_MAX_ZOOM = 50;
 
+/** Disposer key scoping the shared axis-tooltip pointer listeners so each render re-wires them cleanly. */
+const AXIS_TOOLTIP_EVENTS_KEY = Symbol('axis-tooltip-events');
+
+/** One row of a shared axis tooltip: a series' display label and its formatted value at the hovered category. */
+export interface AxisTooltipRow {
+    /** The series' display label. */
+    label: string;
+    /** The series' formatted value at the hovered category. */
+    value: string;
+}
+
+/** The shared axis-tooltip content at a hovered plot position. */
+export interface AxisTooltipSnapshot {
+    /** The hovered category's display title (the tooltip's first line). */
+    title: string;
+    /** One row per active series at the hovered category. */
+    rows: AxisTooltipRow[];
+    /** X coordinate the tooltip anchors to, in chart pixels. */
+    x: number;
+    /** Y coordinate the tooltip anchors to, in chart pixels. */
+    y: number;
+}
+
 /** Whether a view transform is the identity (no pan, no zoom). */
 function isIdentityTransform(transform: NavigatorTransform): boolean {
     return transform.k === 1 && transform.x === 0 && transform.y === 0;
@@ -1045,6 +1068,56 @@ export abstract class CartesianChart<
     /** Sets up the crosshair to track within the given plot area. */
     protected setupCrosshair(area: ChartArea) {
         this.crosshair?.setup(area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Wires the shared axis tooltip (`tooltip.trigger: 'axis'`) for the current render: while the
+     * pointer is inside the plot, the resolver maps its position to the hovered category and the
+     * tooltip shows the title plus one row per active series, anchored at the snapshot point.
+     * A no-op (and listener teardown) when the trigger is `'item'` or the tooltip is hidden, so
+     * charts can call it unconditionally each render and the mode reconfigures at runtime.
+     *
+     * @param plot - The plot rectangle pointer positions are tested against.
+     * @param resolve - Maps a plot position to the tooltip content, or `null` for no tooltip.
+     */
+    protected setupAxisTooltip(plot: ChartArea, resolve: (plotX: number, plotY: number) => AxisTooltipSnapshot | null): void {
+        this.dispose(AXIS_TOOLTIP_EVENTS_KEY);
+
+        if (this.tooltipTrigger !== 'axis' || !this.tooltip) {
+            return;
+        }
+
+        const contains = (x: number, y: number) => x >= plot.x
+            && x <= plot.x + plot.width
+            && y >= plot.y
+            && y <= plot.y + plot.height;
+
+        this.retain(this.scene.context.on('mousemove', event => {
+            const { x, y } = event.data;
+
+            if (!contains(x, y)) {
+                this.tooltip?.hide();
+                return;
+            }
+
+            const snapshot = resolve(x, y);
+
+            if (!snapshot) {
+                this.tooltip?.hide();
+                return;
+            }
+
+            const content = [
+                snapshot.title,
+                ...snapshot.rows.map(row => `${row.label}: ${row.value}`),
+            ].join('\n');
+
+            this.tooltip?.show(snapshot.x, snapshot.y, content);
+        }), AXIS_TOOLTIP_EVENTS_KEY);
+
+        this.retain(this.scene.context.on('mouseleave', () => {
+            this.tooltip?.hide();
+        }), AXIS_TOOLTIP_EVENTS_KEY);
     }
 
     /**

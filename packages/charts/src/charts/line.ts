@@ -3,6 +3,7 @@ import type {
 } from '../core/data';
 
 import type {
+    AxisTooltipSnapshot,
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -205,6 +206,55 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         return this.buildOverviewSeries(this.filterActive(series), data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
     }
 
+    // Resolves the shared axis-tooltip content for the hovered plot x: the nearest category, one
+    // row per active series, anchored above the topmost marker at that category.
+    private _axisTooltipSnapshot(
+        plotX: number,
+        keys: string[],
+        series: LineChartSeriesOptions<TData>[],
+        scaleFor: (srs: LineChartSeriesOptions<TData>) => Scale
+    ): AxisTooltipSnapshot | null {
+        if (keys.length === 0 || series.length === 0) {
+            return null;
+        }
+
+        let nearest = 0;
+        let best = Number.POSITIVE_INFINITY;
+
+        keys.forEach((key, index) => {
+            const distance = Math.abs(this._xScale(key) - plotX);
+
+            if (distance < best) {
+                best = distance;
+                nearest = index;
+            }
+        });
+
+        const item = this.options.data[nearest];
+        const key = keys[nearest];
+        const formatValue = resolveValueFormat(this.options.format);
+
+        let anchorY = Number.POSITIVE_INFINITY;
+
+        const rows = series.map(srs => {
+            const value = resolveAccessor<TData, number>(srs.value)(item);
+
+            anchorY = Math.min(anchorY, scaleFor(srs)(value));
+
+            return {
+                label: typeIsFunction(srs.label) ? srs.id : srs.label,
+                value: formatValue(value),
+            };
+        });
+
+        return {
+            title: key,
+            rows,
+            x: this._xScale(key),
+            y: Number.isFinite(anchorY) ? anchorY : 0,
+        };
+    }
+
     private _seriesContext(plot: ChartArea, yScale: Scale = this._yScale): LineSeriesContext<TData> {
         return {
             data: this.options.data,
@@ -214,7 +264,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
-            tooltip: this.tooltip,
+            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
             formatValue: resolveValueFormat(this.options.format),
@@ -318,6 +369,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             );
 
             this.setupCrosshair(plot);
+            this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, activeSeries, () => this._yScale));
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
@@ -416,6 +468,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.clipPlot(plot);
         this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
         this.setupCrosshair(plot);
+        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, srs => scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]));
         this.renderAnnotations({ y: scales[0] }, plot);
 
         this._yScale = scales[0];

@@ -3,6 +3,7 @@ import type {
 } from '../core/data';
 
 import type {
+    AxisTooltipSnapshot,
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -213,6 +214,55 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return this.options.stacked === 'percent';
     }
 
+    // Resolves the shared axis-tooltip content for the hovered plot x: the nearest category, one
+    // row per active series (share values in percent mode), anchored above the topmost value.
+    private _axisTooltipSnapshot(
+        plotX: number,
+        keys: string[],
+        series: AreaChartSeriesOptions<TData>[],
+        scaleFor: (srs: AreaChartSeriesOptions<TData>) => Scale
+    ): AxisTooltipSnapshot | null {
+        if (keys.length === 0 || series.length === 0) {
+            return null;
+        }
+
+        let nearest = 0;
+        let best = Number.POSITIVE_INFINITY;
+
+        keys.forEach((key, index) => {
+            const distance = Math.abs(this._xScale(key) - plotX);
+
+            if (distance < best) {
+                best = distance;
+                nearest = index;
+            }
+        });
+
+        const item = this.options.data[nearest];
+        const key = keys[nearest];
+        const formatValue = resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined));
+
+        let anchorY = Number.POSITIVE_INFINITY;
+
+        const rows = series.map(srs => {
+            const value = this._seriesValue(srs, item);
+
+            anchorY = Math.min(anchorY, scaleFor(srs)(value));
+
+            return {
+                label: srs.label,
+                value: formatValue(value),
+            };
+        });
+
+        return {
+            title: key,
+            rows,
+            x: this._xScale(key),
+            y: Number.isFinite(anchorY) ? anchorY : 0,
+        };
+    }
+
     // Wraps each series' value accessor to return its share of the category's positive total,
     // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
     private _percentSeries(series: AreaChartSeriesOptions<TData>[], data: TData[]): AreaChartSeriesOptions<TData>[] {
@@ -258,7 +308,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
-            tooltip: this.tooltip,
+            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
             formatValue: resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined)),
@@ -368,6 +419,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.clipPlot(plot);
             this.renderGrid([], this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)), plot);
             this.setupCrosshair(plot);
+            this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, activeSeries, () => this._yScale));
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
@@ -475,6 +527,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         this.clipPlot(plot);
         this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
         this.setupCrosshair(plot);
+        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, srs => scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]));
         this.renderAnnotations({ y: scales[0] }, plot);
 
         this._yScale = scales[0];

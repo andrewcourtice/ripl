@@ -340,10 +340,15 @@ export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Parti
 /** Border radius expressed as a uniform number or a per-corner tuple. */
 export type BorderRadiusInput = number | [number, number, number, number];
 
+/** What causes a tooltip to show. */
+export type ChartTooltipTrigger = 'item' | 'axis';
+
 /** Fully resolved chart tooltip options. */
 export interface ChartTooltipOptions {
     /** Whether tooltips are shown on hover. */
     visible: boolean;
+    /** What triggers the tooltip: `'item'` (default) shows it when hovering an individual mark; `'axis'` shows a shared tooltip listing every active series' value at the hovered category (cartesian charts). */
+    trigger: ChartTooltipTrigger;
     /** Inner padding between the tooltip text and its box, in pixels. */
     padding: PaddingInput;
     /** CSS font shorthand for the tooltip text. */
@@ -365,6 +370,7 @@ export type ChartTooltipInput = boolean | Partial<ChartTooltipOptions>;
 
 const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
     visible: true,
+    trigger: 'item',
     padding: 8,
     font: '12px sans-serif',
     fontColor: '#FFFFFF',

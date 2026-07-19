@@ -27,6 +27,7 @@ import type {
     ChartLegendInput,
     ChartTitleOptions,
     ChartTooltipInput,
+    ChartTooltipTrigger,
 } from './options';
 
 import {
@@ -164,6 +165,9 @@ export class Chart<
     protected options: TOptions;
     /** The resolved theme (palette + furniture colours) this chart renders with. */
     protected theme: Theme;
+
+    /** The resolved tooltip trigger mode (`'item'` per-mark, `'axis'` shared) — kept in sync by {@link Chart.syncTooltip}. */
+    protected tooltipTrigger: ChartTooltipTrigger = 'item';
     protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
     private _hiddenItems: Set<string> = new Set();
@@ -404,6 +408,8 @@ export class Chart<
             fontColor: this.theme.tooltipColor,
             backgroundColor: this.theme.tooltipBackground,
         });
+
+        this.tooltipTrigger = opts.trigger;
 
         if (!opts.visible) {
             tooltip?.destroy();
