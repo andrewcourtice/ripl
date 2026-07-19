@@ -201,8 +201,11 @@ colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 
 - **Keyboard navigation:** a hidden, focusable DOM layer synced to data points
   (canvas has no native focus targets), arrow traversal, Enter → existing `click`.
-- **Pattern/decal fills:** a canvas/SVG pattern generator so series are
-  distinguishable without colour; an optional visually-hidden data-table fallback.
+- **Pattern/decal fills:** the paint layer now ships them — `pattern(...)` strings
+  (diagonal/cross-hatch/dots/horizontal/vertical) render as `CanvasPattern`s on canvas
+  and swept `<pattern>` defs in SVG. Remaining: a chart-level series option applying
+  decals automatically (e.g. with the colourblind theme) and an optional
+  visually-hidden data-table fallback.
 
 ### B4 — Smaller primitive gaps (opportunistic)
 
