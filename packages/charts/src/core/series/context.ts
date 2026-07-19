@@ -124,6 +124,8 @@ export interface BarSeriesContext<TData> extends SeriesRenderContext<TData> {
     categoryScale: BandScale<string>;
     /** The continuous scale mapping a value to its position along the value axis (y for vertical bars, x for horizontal). */
     valueScale: Scale;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `valueScale` when omitted. */
+    resolveScale?: (series: BarSeriesLike<TData>) => Scale;
     /** Whether bars run vertically (default) or horizontally. */
     orientation: 'vertical' | 'horizontal';
     /** Whether bar series are stacked into a single column instead of grouped side by side. */

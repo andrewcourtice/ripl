@@ -95,6 +95,12 @@ export interface BarChartSeriesOptions<TData> {
     value: NumericAccessor<TData> | number;
     /** Human-readable series name shown in the legend and tooltips. */
     label: string;
+    /**
+     * Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the
+     * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
+     * orientation always render against the primary axis.
+     */
+    axis?: number | string;
 }
 
 /** Options for configuring a {@link BarChart}. */
@@ -332,6 +338,21 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            // Secondary axes apply to vertical grouped bars only — stacked columns can't mix
+            // scales and the horizontal layout has no right-hand value band (see the series
+            // `axis` option JSDoc).
+            if (this.yAxes.length > 1 && !this._isHorizontal && !this._isStacked) {
+                return this._renderSecondaryAxes({
+                    series: activeSeries,
+                    keys,
+                    navBand,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
+
             if (this._isHorizontal) {
                 // Categories on Y, values on X.
                 const valueScale = createValueScale(this.xAxisOptions, dataExtent, [left, right]);
@@ -444,6 +465,89 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 seriesRender,
             ]);
         });
+    }
+
+    // Vertical grouped bars with two y-axes: each axis's extent covers the active series bound to
+    // it, the plot sits between the left (primary) and right (secondary) axis bands, and every bar
+    // renders against its own axis's scale via the renderer's per-series scale resolver.
+    private _renderSecondaryAxes(ctx: {
+        series: BarChartSeriesOptions<TData>[];
+        keys: string[];
+        navBand?: ChartArea;
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const { series, keys, navBand, left, top, right, bottom } = ctx;
+
+        // Independent value extent per axis over the active series bound to it.
+        const extents = this.yAxes.map((_, index) => {
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+
+            return numberExtent(group
+                .flatMap(srs => numberExtent(this.options.data, item => this._seriesValue(srs, item)))
+                .concat(0), functionIdentity);
+        });
+
+        // Provisional scales spanning the full width so each axis can measure its label band.
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
+            axis.bounds = new Box(top, left, bottom, right);
+        });
+
+        const plotLeft = this.yAxes[0].getBoundingBox().right;
+        const plotRight = this.yAxes[1].getBoundingBox().left;
+
+        const categoryScale = scaleBand(keys, [plotLeft, plotRight], {
+            outerPadding: 0.15,
+            innerPadding: 0.2,
+        });
+
+        this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        const scales = this.yAxes.map((axis, index) => {
+            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+
+            axis.scale = scale;
+            axis.bounds = new Box(top, left, xAxisBox.top, right);
+
+            return scale;
+        });
+
+        // The navigator windows the category axis only.
+        const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
+        this.xAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        this.clipPlot(plot);
+        this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
+        this.renderAnnotations({ y: scales[0] }, plot);
+
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const barCtx = this._seriesContext(viewedCategoryScale, scales[0], plot);
+
+        barCtx.resolveScale = srs => scaleBySeries.get(srs.id) ?? scales[0];
+
+        const seriesRender = this._series.render(series, barCtx);
+
+        this.registerHighlightGroups(this._series.groups);
+        this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [extents[0][0], extents[0][1]], false);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            seriesRender,
+        ]);
     }
 
 }

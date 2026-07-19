@@ -11,6 +11,7 @@ import {
 
 import {
     createAreaChart,
+    createBarChart,
     createLineChart,
     createScatterChart,
 } from '../src';
@@ -448,6 +449,122 @@ describe('secondary y-axis (scatter)', () => {
                 label: 'Points',
                 xBy: 'x',
                 yBy: 'y',
+            }],
+        });
+
+        await chart.render();
+
+        expect(yAxes(chart).length).toBe(1);
+    });
+
+});
+
+function createDualAxisBarChart() {
+    polyfillPath2D();
+    mockCanvasContext();
+
+    return createBarChart(document.createElement('div'), {
+        autoRender: false,
+        animation: false,
+        data: [
+            {
+                m: 'a',
+                small: 10,
+                big: 3000,
+            },
+            {
+                m: 'b',
+                small: 20,
+                big: 5000,
+            },
+        ],
+        key: 'm',
+        axis: {
+            y: [
+                {},
+                {},
+            ],
+        },
+        series: [
+            {
+                id: 'small',
+                label: 'Small',
+                value: 'small',
+            },
+            {
+                id: 'big',
+                label: 'Big',
+                value: 'big',
+                axis: 1,
+            },
+        ],
+    });
+}
+
+describe('secondary y-axis (bar)', () => {
+
+    it('binds independent extents per axis with the secondary on the right', async () => {
+        const chart = createDualAxisBarChart();
+
+        await chart.render();
+
+        expect(yAxes(chart).length).toBe(2);
+        expect(yAxes(chart)[1].alignment).toBe('right');
+        expect(yAxes(chart)[0].scale.domain.at(-1)).toBeLessThan(3000);
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(5000);
+    });
+
+    it('sizes each bar against its bound axis scale', async () => {
+        const chart = createDualAxisBarChart();
+
+        await chart.render();
+
+        const bar = sceneElement(chart, 'big-a') as unknown as {
+            height: number;
+        } | null;
+
+        expect(bar).toBeTruthy();
+
+        const scale = yAxes(chart)[1].scale;
+        const expected = Math.abs(scale(3000) - scale(0));
+
+        expect(bar?.height).toBeCloseTo(expected, 5);
+    });
+
+    it('rescales only the bound axis when a series is hidden via the legend', async () => {
+        const chart = createDualAxisBarChart();
+
+        await chart.render();
+
+        const primaryDomain = [...yAxes(chart)[0].scale.domain];
+
+        clickLegendItem(chart, 'big');
+        await chart.render();
+
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBeLessThan(5000);
+        expect(yAxes(chart)[0].scale.domain).toEqual(primaryDomain);
+
+        const domains = yAxes(chart).flatMap(axis => axis.scale.domain);
+
+        expect(domains.every(Number.isFinite)).toBe(true);
+    });
+
+    it('keeps single-axis bar charts on one axis', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createBarChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [{
+                m: 'a',
+                v: 1,
+            }],
+            key: 'm',
+            series: [{
+                id: 's',
+                label: 'S',
+                value: 'v',
             }],
         });
 
