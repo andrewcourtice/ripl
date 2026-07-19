@@ -1,0 +1,97 @@
+<script setup lang="ts">
+import {
+    useDevtoolsStore,
+} from '../../composables/use-devtools-store';
+
+import {
+    ELEMENT_EVENT_TYPES,
+} from '@ripl/devtools';
+
+import {
+    computed,
+} from 'vue';
+
+const store = useDevtoolsStore();
+
+const listenerMap = computed(() => {
+    const map = new Map<string, boolean>();
+
+    store.selectedDetail.value?.events.forEach(entry => map.set(entry.type, entry.hasListeners));
+
+    return map;
+});
+</script>
+
+<template>
+    <section class="events-section">
+        <h3 class="events-section__heading">Events</h3>
+        <ul class="events-section__list">
+            <li v-for="type of ELEMENT_EVENT_TYPES" :key="type" class="events-section__item">
+                <span
+                    class="events-section__dot"
+                    :class="{ 'events-section__dot--active': listenerMap.get(type) }"
+                ></span>
+                <span class="events-section__type">{{ type }}</span>
+            </li>
+        </ul>
+    </section>
+</template>
+
+<style scoped>
+.events-section {
+    flex: none;
+    max-height: 32%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.events-section__heading {
+    flex: none;
+    margin: 0;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ripl-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.events-section__list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0 8px 8px;
+    list-style: none;
+    columns: 2;
+    column-gap: 8px;
+}
+
+.events-section__item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    break-inside: avoid;
+}
+
+.events-section__dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--ripl-text-dim);
+    border-radius: 50%;
+}
+
+.events-section__dot--active {
+    border-color: var(--ripl-accent);
+    background: var(--ripl-accent);
+}
+
+.events-section__type {
+    font-size: 11px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    color: var(--ripl-text);
+}
+</style>

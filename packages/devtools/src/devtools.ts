@@ -77,7 +77,13 @@ function handlePageHide(): void {
     });
 }
 
-function handlePageShow(): void {
+function handlePageShow(event: PageTransitionEvent): void {
+    // `pageshow` also fires on the initial load, where bindings have already
+    // announced themselves — only re-announce after a bfcache restore.
+    if (!event.persisted) {
+        return;
+    }
+
     sendBridgeMessage({
         kind: 'bridge:hello',
     });

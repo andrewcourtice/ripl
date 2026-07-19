@@ -146,6 +146,28 @@ describe('Devtools', () => {
         expect(added[0].context.contextType).toBe(scene.context.type);
     });
 
+    test('Should re-announce on pageshow only after a bfcache restore', () => {
+        createDevtools(scene.context, scene);
+
+        const dispatchPageShow = (persisted: boolean) => {
+            const event = new Event('pageshow');
+
+            Object.defineProperty(event, 'persisted', {
+                value: persisted,
+            });
+
+            window.dispatchEvent(event);
+        };
+
+        dispatchPageShow(false);
+        expect(getMessagesOfKind('bridge:hello').length).toBe(1);
+        expect(getMessagesOfKind('context:added').length).toBe(1);
+
+        dispatchPageShow(true);
+        expect(getMessagesOfKind('bridge:hello').length).toBe(2);
+        expect(getMessagesOfKind('context:added').length).toBe(2);
+    });
+
     test('Should send no tree traffic before the panel connects', async () => {
         createDevtools(scene.context, scene);
 
