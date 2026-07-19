@@ -38,7 +38,7 @@ function commit(key: string, value: number | string | boolean | number[]): void 
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 0 0 6px;
+    padding: var(--ripl-space-1) 0 var(--ripl-space-2);
 }
 
 .property-grid__empty {

@@ -63,7 +63,7 @@ const activeContext = computed(() => {
 .properties-panel__heading {
     flex: none;
     margin: 0;
-    padding: 5px 8px;
+    padding: var(--ripl-section-pad-y) var(--ripl-section-pad-x);
     font-size: 11px;
     font-weight: 600;
     color: var(--ripl-text-dim);

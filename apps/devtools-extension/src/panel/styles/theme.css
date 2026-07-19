@@ -1,4 +1,12 @@
 :root {
+    --ripl-space-1: 4px;
+    --ripl-space-2: 8px;
+    --ripl-space-3: 12px;
+    --ripl-space-4: 16px;
+    --ripl-row-height: 22px;
+    --ripl-section-pad-y: 7px;
+    --ripl-section-pad-x: 10px;
+
     --ripl-bg: #ffffff;
     --ripl-bg-raised: #f8f9f9;
     --ripl-text: #202124;

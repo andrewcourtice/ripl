@@ -18,6 +18,7 @@ import type {
 } from './use-devtools-store';
 
 import type {
+    ContextInfo,
     SerializedNode,
 } from '@ripl/devtools';
 
@@ -88,6 +89,40 @@ export function getNodeAttributes(node: SerializedNode): TagAttribute[] {
     return attributes;
 }
 
+/**
+ * Builds a synthetic root node representing a context that has no scene (and therefore no
+ * tree snapshot), so it still appears in the explorer as `<context id="…" type="…" …/>`.
+ */
+export function createContextRootNode(context: ContextInfo): SerializedNode {
+    return {
+        id: context.contextId,
+        parentId: null,
+        elementType: 'context',
+        classes: [],
+        isGroup: false,
+        properties: [
+            {
+                key: 'type',
+                valueType: 'string',
+                editable: false,
+                value: context.contextType,
+            },
+            {
+                key: 'width',
+                valueType: 'number',
+                editable: false,
+                value: Math.round(context.width),
+            },
+            {
+                key: 'height',
+                valueType: 'number',
+                editable: false,
+                value: Math.round(context.height),
+            },
+        ],
+    };
+}
+
 /** Formats a node as a single pseudo-XML tag string (used for tooltips and tests). */
 export function formatNodeTag(node: SerializedNode, selfClosing: boolean = true): string {
     const attributes = getNodeAttributes(node)
@@ -155,12 +190,26 @@ export function useTree(store: DevtoolsStore): UseTree {
 
         const result: TreeRow[] = [];
 
-        store.contexts.forEach((_context, contextId) => {
+        store.contexts.forEach((context, contextId) => {
             const tree = store.getTree(contextId);
 
             if (tree) {
                 result.push(...flattenTree(contextId, tree, expandedIds.value));
+                return;
             }
+
+            // No scene → no snapshot; surface the context itself as a root.
+            const node = createContextRootNode(context);
+
+            result.push({
+                key: `${contextId}:${node.id}:self`,
+                kind: 'self',
+                contextId,
+                node,
+                depth: 0,
+                hasChildren: false,
+                expanded: false,
+            });
         });
 
         return result;

@@ -99,7 +99,7 @@ function onToggle(key: keyof RendererDebugInfo, event: Event): void {
 
 .context-section__heading {
     margin: 0;
-    padding: 5px 8px;
+    padding: var(--ripl-section-pad-y) var(--ripl-section-pad-x);
     font-size: 11px;
     font-weight: 600;
     color: var(--ripl-text-dim);
@@ -108,15 +108,15 @@ function onToggle(key: keyof RendererDebugInfo, event: Event): void {
 }
 
 .context-section__rows {
-    padding: 0 8px 8px;
+    padding: 0 var(--ripl-section-pad-x) var(--ripl-space-3);
 }
 
 .context-section__row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    min-height: 20px;
+    gap: var(--ripl-space-2);
+    min-height: var(--ripl-row-height);
     font-size: 11px;
 }
 

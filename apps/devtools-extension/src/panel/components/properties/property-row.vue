@@ -172,9 +172,9 @@ function onEnter(event: KeyboardEvent): void {
 .property-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 1px 8px;
-    min-height: 20px;
+    gap: var(--ripl-space-2);
+    padding: 2px var(--ripl-section-pad-x);
+    min-height: var(--ripl-row-height);
     font-size: 11px;
 }
 

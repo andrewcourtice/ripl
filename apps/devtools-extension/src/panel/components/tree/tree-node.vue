@@ -31,7 +31,7 @@ const attributes = computed(() => {
     return getNodeAttributes(props.row.node);
 });
 
-const indent = computed(() => `${props.row.depth * 12 + 4}px`);
+const indent = computed(() => `${props.row.depth * 14 + 6}px`);
 </script>
 
 <template>
@@ -48,22 +48,24 @@ const indent = computed(() => `${props.row.depth * 12 + 4}px`);
             v-if="row.hasChildren && row.kind !== 'close'"
             class="tree-node__chevron"
             @click.stop="emit('toggle')"
-        >{{ row.kind === 'open' ? '▾' : '▸' }}</span>
+        >{{ row.kind === 'open' ? '▼' : '▶' }}</span>
         <span v-else class="tree-node__chevron tree-node__chevron--spacer"></span>
-        <template v-if="row.kind === 'close'">
-            <span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
-        </template>
-        <template v-else>
-            <span class="tree-node__bracket">&lt;</span><span class="tree-node__tag">{{ row.node.elementType }}</span><template
-                v-for="attribute of attributes"
-                :key="attribute.key"
-            ><span> </span><span class="tree-node__attr-name">{{ attribute.key }}</span><span class="tree-node__bracket">="</span><span class="tree-node__attr-value">{{ attribute.value }}</span><span class="tree-node__bracket">"</span></template>
-            <span v-if="row.kind === 'open'" class="tree-node__bracket">&gt;</span>
-            <template v-else-if="row.hasChildren">
-                <span class="tree-node__bracket">&gt;</span><span class="tree-node__ellipsis">…</span><span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
+        <span class="tree-node__label">
+            <template v-if="row.kind === 'close'">
+                <span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
             </template>
-            <span v-else class="tree-node__bracket"> /&gt;</span>
-        </template>
+            <template v-else>
+                <span class="tree-node__bracket">&lt;</span><span class="tree-node__tag">{{ row.node.elementType }}</span><template
+                    v-for="attribute of attributes"
+                    :key="attribute.key"
+                ><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__attr-name">{{ attribute.key }}</span><span class="tree-node__bracket">="</span><span class="tree-node__attr-value">{{ attribute.value }}</span><span class="tree-node__bracket">"</span></template>
+                <span v-if="row.kind === 'open'" class="tree-node__bracket">&gt;</span>
+                <template v-else-if="row.hasChildren">
+                    <span class="tree-node__bracket">&gt;</span><span class="tree-node__ellipsis">…</span><span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
+                </template>
+                <template v-else><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__bracket">/&gt;</span></template>
+            </template>
+        </span>
     </div>
 </template>
 
@@ -71,8 +73,8 @@ const indent = computed(() => `${props.row.depth * 12 + 4}px`);
 .tree-node {
     display: flex;
     align-items: center;
-    height: 18px;
-    line-height: 18px;
+    height: var(--ripl-row-height);
+    line-height: var(--ripl-row-height);
     white-space: nowrap;
     cursor: default;
 }
@@ -88,16 +90,26 @@ const indent = computed(() => `${props.row.depth * 12 + 4}px`);
 
 .tree-node__chevron {
     flex: none;
-    display: inline-block;
-    width: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
     color: var(--ripl-text-dim);
-    font-size: 9px;
-    text-align: center;
+    font-size: 11px;
     cursor: pointer;
 }
 
 .tree-node__chevron--spacer {
     cursor: default;
+}
+
+/* The tag markup lives in its own inline formatting context so the spaces
+   between attribute spans render — as flex items they would collapse. */
+.tree-node__label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .tree-node__bracket {

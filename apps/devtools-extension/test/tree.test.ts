@@ -9,12 +9,19 @@ import {
 } from '../src/panel/composables/use-devtools-store';
 
 import {
+    createDevtoolsStore,
+} from '../src/panel/composables/use-devtools-store';
+
+import {
+    createContextRootNode,
     flattenTree,
     formatNodeTag,
     getNodeAttributes,
+    useTree,
 } from '../src/panel/composables/use-tree';
 
 import type {
+    ContextInfo,
     SerializedNode,
     SerializedProperty,
 } from '@ripl/devtools';
@@ -203,6 +210,108 @@ describe('Devtools tree', () => {
             });
 
             expect(formatNodeTag(node, false)).toBe('<group id="group-1">');
+        });
+
+    });
+
+    describe('Scene-less context root', () => {
+
+        function createContextInfo(overrides: Partial<ContextInfo> = {}): ContextInfo {
+            return {
+                contextId: 'context-1',
+                label: 'Canvas',
+                contextType: 'canvas',
+                width: 800.4,
+                height: 600.6,
+                hasScene: false,
+                hasRenderer: false,
+                ...overrides,
+            };
+        }
+
+        test('Should synthesise a context root node with id, type, and rounded size', () => {
+            const node = createContextRootNode(createContextInfo());
+
+            expect(node.parentId).toBe(null);
+            expect(node.elementType).toBe('context');
+            expect(node.isGroup).toBe(false);
+
+            const attributes = getNodeAttributes(node);
+
+            expect(attributes.map(attribute => [attribute.key, attribute.value])).toEqual([
+                ['id', 'context-1'],
+                ['type', 'canvas'],
+                ['width', '800'],
+                ['height', '601'],
+            ]);
+        });
+
+        test('Should format the context root as a self-closing tag', () => {
+            const node = createContextRootNode(createContextInfo());
+
+            expect(formatNodeTag(node)).toBe('<context id="context-1" type="canvas" width="800" height="601"/>');
+        });
+
+        test('Should emit one root row for a scene-less context and the full tree for a scene-ful one', () => {
+            const store = createDevtoolsStore(() => undefined);
+
+            store.handleMessage({
+                kind: 'context:added',
+                context: createContextInfo({
+                    contextId: 'ctx-scene',
+                    hasScene: true,
+                }),
+            });
+
+            store.handleMessage({
+                kind: 'context:added',
+                context: createContextInfo({
+                    contextId: 'ctx-bare',
+                    hasScene: false,
+                }),
+            });
+
+            const sceneNodes: SerializedNode[] = [
+                createNode('scene-1', null, {
+                    elementType: 'scene',
+                    isGroup: true,
+                }),
+                createNode('rect-1', 'scene-1'),
+            ];
+
+            store.handleMessage({
+                kind: 'tree:snapshot-begin',
+                contextId: 'ctx-scene',
+                snapshotId: 1,
+                nodeCount: sceneNodes.length,
+            });
+            store.handleMessage({
+                kind: 'tree:chunk',
+                contextId: 'ctx-scene',
+                snapshotId: 1,
+                seq: 0,
+                nodes: sceneNodes,
+            });
+            store.handleMessage({
+                kind: 'tree:snapshot-end',
+                contextId: 'ctx-scene',
+                snapshotId: 1,
+            });
+
+            const tree = useTree(store);
+            const rows = tree.rows.value;
+
+            const bareRows = rows.filter(row => row.contextId === 'ctx-bare');
+            const sceneRows = rows.filter(row => row.contextId === 'ctx-scene');
+
+            expect(bareRows.length).toBe(1);
+            expect(bareRows[0].node.elementType).toBe('context');
+            expect(bareRows[0].node.id).toBe('ctx-bare');
+            expect(bareRows[0].hasChildren).toBe(false);
+
+            expect(sceneRows.length).toBe(1);
+            expect(sceneRows[0].node.id).toBe('scene-1');
+            expect(sceneRows[0].hasChildren).toBe(true);
         });
 
     });

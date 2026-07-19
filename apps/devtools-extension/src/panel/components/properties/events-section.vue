@@ -49,7 +49,7 @@ const listenerMap = computed(() => {
 .events-section__heading {
     flex: none;
     margin: 0;
-    padding: 5px 8px;
+    padding: var(--ripl-section-pad-y) var(--ripl-section-pad-x);
     font-size: 11px;
     font-weight: 600;
     color: var(--ripl-text-dim);
@@ -62,17 +62,17 @@ const listenerMap = computed(() => {
     min-height: 0;
     overflow-y: auto;
     margin: 0;
-    padding: 0 8px 8px;
+    padding: 0 var(--ripl-section-pad-x) var(--ripl-space-3);
     list-style: none;
     columns: 2;
-    column-gap: 8px;
+    column-gap: var(--ripl-space-2);
 }
 
 .events-section__item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    height: 18px;
+    gap: var(--ripl-space-2);
+    height: var(--ripl-row-height);
     break-inside: avoid;
 }
 

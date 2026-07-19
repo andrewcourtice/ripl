@@ -44,8 +44,8 @@ const settingsOpen = ref(false);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 27px;
-    padding: 0 8px;
+    height: 32px;
+    padding: 0 var(--ripl-section-pad-x);
     border-bottom: 1px solid var(--ripl-border);
     background: var(--ripl-bg-raised);
     flex: none;
@@ -54,12 +54,12 @@ const settingsOpen = ref(false);
 .panel-header__brand {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: var(--ripl-space-2);
 }
 
 .panel-header__logo {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     color: var(--ripl-accent);
 }
 
@@ -79,11 +79,11 @@ const settingsOpen = ref(false);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     padding: 0;
     border: none;
-    border-radius: 3px;
+    border-radius: 4px;
     background: transparent;
     color: var(--ripl-text-dim);
     cursor: pointer;

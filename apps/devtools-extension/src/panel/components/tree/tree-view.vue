@@ -22,7 +22,8 @@ import {
     ref,
 } from 'vue';
 
-const ROW_HEIGHT = 18;
+// Must match the rendered `.tree-node` height (--ripl-row-height in theme.css).
+const ROW_HEIGHT = 22;
 
 const store = useDevtoolsStore();
 const tree = useTree(store);
@@ -188,10 +189,10 @@ function onKeydown(event: KeyboardEvent): void {
     flex: 1;
     min-height: 0;
     overflow: auto;
-    padding: 2px 0;
+    padding: var(--ripl-space-1) 0;
     outline: none;
     font-family: ui-monospace, Menlo, Consolas, monospace;
-    font-size: 11px;
+    font-size: 11.5px;
 }
 
 .tree-view__spacer {

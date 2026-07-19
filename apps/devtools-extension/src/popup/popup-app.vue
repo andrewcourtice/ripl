@@ -147,7 +147,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 12px;
+    padding: 7px 12px;
     min-width: 0;
 }
 
