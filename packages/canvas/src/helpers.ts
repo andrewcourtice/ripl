@@ -3,10 +3,13 @@ import {
     degreesToRadians,
     factory,
     getPathLength,
+    getPatternTileGeometry,
     isGradientString,
+    isPatternString,
     measureText,
     parseColor,
     parseGradient,
+    parsePattern,
     samplePathPoint,
     scaleContinuous,
     serialiseRGBA,
@@ -130,8 +133,86 @@ function parseGradientMemoized(value: string): Gradient | undefined {
     return gradient;
 }
 
-/** Sets the fill style on a native canvas context, resolving gradient strings when applicable. */
+// Pattern tiles are position-independent, so one materialized CanvasPattern per serialized
+// pattern string serves every element and frame (null caches invalid strings).
+const patternCache = new Map<string, CanvasPattern | null>();
+
+/**
+ * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
+ * tile geometry into an offscreen canvas. Results (including parse failures) are cached per
+ * string.
+ *
+ * @param ctx - The context the pattern will paint into.
+ * @param value - The `pattern(...)` paint string.
+ * @returns The repeating pattern, or `null` when the string or environment can't produce one.
+ */
+export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
+    const cached = patternCache.get(value);
+
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    const pattern = parsePattern(value);
+
+    if (!pattern) {
+        patternCache.set(value, null);
+        return null;
+    }
+
+    const geometry = getPatternTileGeometry(pattern);
+    const tile = document.createElement('canvas');
+
+    tile.width = geometry.size;
+    tile.height = geometry.size;
+
+    const tileContext = tile.getContext('2d');
+
+    if (!tileContext) {
+        patternCache.set(value, null);
+        return null;
+    }
+
+    if (pattern.background !== 'transparent') {
+        tileContext.fillStyle = pattern.background;
+        tileContext.fillRect(0, 0, geometry.size, geometry.size);
+    }
+
+    geometry.shapes.forEach(shape => {
+        if (shape.kind === 'line') {
+            tileContext.strokeStyle = pattern.foreground;
+            tileContext.lineWidth = shape.width;
+            tileContext.beginPath();
+            tileContext.moveTo(shape.x1, shape.y1);
+            tileContext.lineTo(shape.x2, shape.y2);
+            tileContext.stroke();
+            return;
+        }
+
+        tileContext.fillStyle = pattern.foreground;
+        tileContext.beginPath();
+        tileContext.arc(shape.cx, shape.cy, shape.radius, 0, Math.PI * 2);
+        tileContext.fill();
+    });
+
+    const canvasPattern = ctx.createPattern(tile, 'repeat');
+
+    patternCache.set(value, canvasPattern);
+
+    return canvasPattern;
+}
+
+/** Sets the fill style on a native canvas context, resolving gradient and pattern strings when applicable. */
 export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
+    if (isPatternString(value)) {
+        const pattern = toCanvasPattern(ctx, value);
+
+        if (pattern) {
+            ctx.fillStyle = pattern;
+            return;
+        }
+    }
+
     if (isGradientString(value)) {
         const gradient = parseGradientMemoized(value);
 
@@ -144,8 +225,17 @@ export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, boun
     ctx.fillStyle = value;
 }
 
-/** Sets the stroke style on a native canvas context, resolving gradient strings when applicable. */
+/** Sets the stroke style on a native canvas context, resolving gradient and pattern strings when applicable. */
 export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): void {
+    if (isPatternString(value)) {
+        const pattern = toCanvasPattern(ctx, value);
+
+        if (pattern) {
+            ctx.strokeStyle = pattern;
+            return;
+        }
+    }
+
     if (isGradientString(value)) {
         const gradient = parseGradientMemoized(value);
 

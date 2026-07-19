@@ -1,17 +1,20 @@
 import {
     createSVGClipPathElement,
     createSVGGradientElement,
+    createSVGPatternElement,
     createSVGShadowFilterElement,
     createSVGTextPathDefElement,
     isSupportedSVGGradient,
     resolveConicGradientFallback,
     sweepDefsCache,
     updateSVGGradientElement,
+    updateSVGPatternElement,
 } from './definitions';
 
 import type {
     ClipCacheEntry,
     GradientCacheEntry,
+    PatternCacheEntry,
     ShadowCacheEntry,
     TextPathCacheEntry,
 } from './definitions';
@@ -45,8 +48,10 @@ import type {
 import {
     createFrameBuffer,
     isGradientString,
+    isPatternString,
     measureText,
     parseGradient,
+    parsePattern,
     radiansToDegrees,
 } from '@ripl/core';
 
@@ -89,6 +94,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _requestFrame: (callback: AnyFunction) => void;
     private _defs: SVGDefsElement;
     private _gradientCache: Map<string, GradientCacheEntry>;
+    private _patternCache: Map<string, PatternCacheEntry>;
     private _textPathCache: Map<string, TextPathCacheEntry>;
     private _transformStack: string[][];
     private _currentTransforms: string[];
@@ -136,6 +142,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         this._domCache = new Map();
         this._gradientCache = new Map();
+        this._patternCache = new Map();
         this._textPathCache = new Map();
         this._transformStack = [];
         this._currentTransforms = [];
@@ -151,7 +158,41 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this.init();
     }
 
+    // Materializes a pattern(...) paint as a <pattern> def (created once per element paint slot,
+    // updated in place when the pattern changes, swept when unused).
+    private _resolvePatternStyle(value: string, cacheKey: string): string {
+        const pattern = parsePattern(value);
+
+        if (!pattern) {
+            return value;
+        }
+
+        this._usedDefs.add(`pattern:${cacheKey}`);
+
+        const cached = this._patternCache.get(cacheKey);
+
+        if (cached) {
+            updateSVGPatternElement(cached.element, pattern);
+            return `url(#${cached.patternId})`;
+        }
+
+        const patternId = `pattern-${stringUniqueId()}`;
+        const patternEl = createSVGPatternElement(pattern, patternId);
+
+        this._defs.appendChild(patternEl);
+        this._patternCache.set(cacheKey, {
+            patternId,
+            element: patternEl,
+        });
+
+        return `url(#${patternId})`;
+    }
+
     private _resolveGradientStyle(value: string, cacheKey: string): string {
+        if (isPatternString(value)) {
+            return this._resolvePatternStyle(value, cacheKey);
+        }
+
         if (!isGradientString(value)) {
             return value;
         }
@@ -254,6 +295,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         sweepDefsCache(this._clipCache, 'clip', this._usedDefs, entry => entry.clipPathElement);
         sweepDefsCache(this._textPathCache, 'textpath', this._usedDefs, entry => entry.element);
         sweepDefsCache(this._shadowCache, 'shadow', this._usedDefs, entry => entry.filterElement);
+        sweepDefsCache(this._patternCache, 'pattern', this._usedDefs, entry => entry.element);
     }
 
     protected rescale(width: number, height: number) {

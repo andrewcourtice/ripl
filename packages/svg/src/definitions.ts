@@ -5,17 +5,27 @@ import {
 
 import {
     degreesToRadians,
+    getPatternTileGeometry,
 } from '@ripl/core';
 
 import type {
     Gradient,
     GradientColorStop,
+    Pattern,
 } from '@ripl/core';
 
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
 type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
 
 /** Cache entry for a gradient definition living in `<defs>`. */
+/** A cached `<pattern>` definition: its referenced id and the live defs element. */
+export interface PatternCacheEntry {
+    /** The id the pattern is referenced by (`url(#id)`). */
+    patternId: string;
+    /** The live `<pattern>` element inside `<defs>`. */
+    element: SVGElement;
+}
+
 export interface GradientCacheEntry {
     /** The unique id referenced by `url(#...)` paint values. */
     gradientId: string;
@@ -212,4 +222,83 @@ export function sweepDefsCache<TEntry>(cache: Map<string, TEntry>, namespace: st
         getDefsNode(entry).remove();
         cache.delete(key);
     });
+}
+
+// Renders the shared pattern tile geometry into an SVG <pattern> definition's children so the
+// canvas and SVG backends draw identical tiles.
+function appendPatternTileShapes(element: SVGElement, pattern: Pattern): void {
+    const geometry = getPatternTileGeometry(pattern);
+
+    if (pattern.background !== 'transparent') {
+        const background = createSVGElement('rect');
+
+        background.setAttribute('x', '0');
+        background.setAttribute('y', '0');
+        background.setAttribute('width', String(geometry.size));
+        background.setAttribute('height', String(geometry.size));
+        background.setAttribute('fill', pattern.background);
+        element.appendChild(background);
+    }
+
+    geometry.shapes.forEach(shape => {
+        if (shape.kind === 'line') {
+            const line = createSVGElement('line');
+
+            line.setAttribute('x1', String(shape.x1));
+            line.setAttribute('y1', String(shape.y1));
+            line.setAttribute('x2', String(shape.x2));
+            line.setAttribute('y2', String(shape.y2));
+            line.setAttribute('stroke', pattern.foreground);
+            line.setAttribute('stroke-width', String(shape.width));
+            element.appendChild(line);
+            return;
+        }
+
+        const dot = createSVGElement('circle');
+
+        dot.setAttribute('cx', String(shape.cx));
+        dot.setAttribute('cy', String(shape.cy));
+        dot.setAttribute('r', String(shape.radius));
+        dot.setAttribute('fill', pattern.foreground);
+        element.appendChild(dot);
+    });
+}
+
+/**
+ * Creates a `<pattern>` definition for a parsed pattern paint, tiled in user space so the motif
+ * is stable regardless of the painted element's bounds.
+ *
+ * @param pattern - The parsed pattern to materialize.
+ * @param patternId - The id the pattern is referenced by (`url(#id)`).
+ * @returns The `<pattern>` element to append to `<defs>`.
+ */
+export function createSVGPatternElement(pattern: Pattern, patternId: string): SVGElement {
+    const element = createSVGElement('pattern');
+
+    element.setAttribute('id', patternId);
+    element.setAttribute('patternUnits', 'userSpaceOnUse');
+    element.setAttribute('width', String(pattern.size));
+    element.setAttribute('height', String(pattern.size));
+
+    appendPatternTileShapes(element, pattern);
+
+    return element;
+}
+
+/**
+ * Updates a cached `<pattern>` definition in place for a (possibly changed) pattern paint,
+ * rebuilding its tile children.
+ *
+ * @param element - The live `<pattern>` element inside `<defs>`.
+ * @param pattern - The parsed pattern to re-render.
+ */
+export function updateSVGPatternElement(element: SVGElement, pattern: Pattern): void {
+    element.setAttribute('width', String(pattern.size));
+    element.setAttribute('height', String(pattern.size));
+
+    while (element.firstChild) {
+        element.removeChild(element.firstChild);
+    }
+
+    appendPatternTileShapes(element, pattern);
 }
