@@ -71,7 +71,7 @@ import {
     createText,
     degreesToRadians,
     easeOutCubic,
-    scaleContinuous,
+    scaleRadial,
     setColorAlpha,
 } from '@ripl/core';
 
@@ -418,7 +418,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
 
-            this._radialScale = scaleContinuous([0, maxValue], [0, gridRadius], { clamp: true });
+            this._radialScale = scaleRadial([0, maxValue], [0, gridRadius]);
 
             this._drawGrid(cx, cy, gridRadius, levels, angleTicks);
 

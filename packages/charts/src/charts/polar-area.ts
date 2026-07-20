@@ -72,7 +72,7 @@ import {
     createText,
     easeOutQuint,
     elementIsArc,
-    scaleContinuous,
+    scaleRadial,
     setColorAlpha,
     TAU,
 } from '@ripl/core';
@@ -431,7 +431,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const activeData = this.filterActive(data, getKey);
 
             const maxValue = activeData.length ? (numberMaxOf(activeData, getValue) ?? 0) : 0;
-            const valueScale = scaleContinuous([0, maxValue], [size * innerRadius, size * maxRadiusRatio], { clamp: true });
+            const valueScale = scaleRadial([0, maxValue], [size * innerRadius, size * maxRadiusRatio]);
 
             const angleStep = TAU / Math.max(1, activeData.length);
             const startOffset = -TAU / 4; // Start at 12 o'clock similar to PieChart

@@ -66,6 +66,7 @@ import {
     easeOutCubic,
     easeOutQuart,
     getThetaPoint,
+    scaleRadial,
     setColorAlpha,
     TAU,
 } from '@ripl/core';
@@ -415,16 +416,19 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         seriesExits.forEach(el => el.destroy());
 
+        // Radial value scale: 0 at the centre, the data max at the outer ring (clamps out-of-range values).
+        const radiusScale = scaleRadial([0, maxValue], [0, radius]);
+
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
             return data.map((item, index) => {
                 const value = getValue(item);
-                const normalizedValue = Math.min(value / maxValue, 1);
+                const scaledRadius = radiusScale(value);
                 const angle = index * angleStep - TAU / 4;
-                const x = cx + radius * normalizedValue * Math.cos(angle);
-                const y = cy + radius * normalizedValue * Math.sin(angle);
+                const x = cx + scaledRadius * Math.cos(angle);
+                const y = cy + scaledRadius * Math.sin(angle);
 
                 return {
                     point: [x, y] as Point,
