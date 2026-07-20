@@ -556,17 +556,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * and opacity is composited at the boundary, so both are skipped here.
      */
     protected applyGroupPaint(group: RiplElement): void {
-        for (const key of group.$paintKeys) {
+        objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
             if (key === 'opacity') {
-                continue;
+                return;
             }
 
             const value = (group as unknown as Record<string, unknown>)[key];
 
             if (!typeIsNil(value)) {
-                (CONTEXT_OPERATIONS[key as keyof typeof CONTEXT_OPERATIONS] as (context: Context, val: unknown) => void)(this, value);
+                (operation as (context: Context, val: unknown) => void)(this, value);
             }
-        }
+        });
     }
 
     /**
