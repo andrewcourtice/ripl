@@ -19,6 +19,7 @@ import {
     scaleContinuous,
     scaleLogarithmic,
     scalePower,
+    scaleSymlog,
     scaleTime,
 } from '@ripl/core';
 
@@ -116,6 +117,13 @@ export function createValueScale(
     if (options.scale === 'sqrt') {
         return scalePower(resolvedDomain, range, {
             exponent: 0.5,
+            padToTicks,
+        });
+    }
+
+    if (options.scale === 'symlog') {
+        return scaleSymlog(resolvedDomain, range, {
+            constant: options.constant ?? 1,
             padToTicks,
         });
     }

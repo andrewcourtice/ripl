@@ -7,19 +7,37 @@ import type {
 } from '@ripl/core';
 
 import {
+    easeInBack,
+    easeInBounce,
+    easeInCirc,
     easeInCubic,
+    easeInElastic,
+    easeInExpo,
+    easeInOutBack,
+    easeInOutBounce,
+    easeInOutCirc,
     easeInOutCubic,
+    easeInOutElastic,
+    easeInOutExpo,
     easeInOutQuad,
     easeInOutQuart,
     easeInOutQuint,
+    easeInOutSine,
     easeInQuad,
     easeInQuart,
     easeInQuint,
+    easeInSine,
     easeLinear,
+    easeOutBack,
+    easeOutBounce,
+    easeOutCirc,
     easeOutCubic,
+    easeOutElastic,
+    easeOutExpo,
     easeOutQuad,
     easeOutQuart,
     easeOutQuint,
+    easeOutSine,
 } from '@ripl/core';
 
 import type {
@@ -50,7 +68,25 @@ export type EaseName =
     | 'easeInOutQuart'
     | 'easeInQuint'
     | 'easeOutQuint'
-    | 'easeInOutQuint';
+    | 'easeInOutQuint'
+    | 'easeInSine'
+    | 'easeOutSine'
+    | 'easeInOutSine'
+    | 'easeInExpo'
+    | 'easeOutExpo'
+    | 'easeInOutExpo'
+    | 'easeInCirc'
+    | 'easeOutCirc'
+    | 'easeInOutCirc'
+    | 'easeInBack'
+    | 'easeOutBack'
+    | 'easeInOutBack'
+    | 'easeInElastic'
+    | 'easeOutElastic'
+    | 'easeInOutElastic'
+    | 'easeInBounce'
+    | 'easeOutBounce'
+    | 'easeInOutBounce';
 
 const EASE_MAP: Record<EaseName, Ease> = {
     easeLinear,
@@ -66,6 +102,24 @@ const EASE_MAP: Record<EaseName, Ease> = {
     easeInQuint,
     easeOutQuint,
     easeInOutQuint,
+    easeInSine,
+    easeOutSine,
+    easeInOutSine,
+    easeInExpo,
+    easeOutExpo,
+    easeInOutExpo,
+    easeInCirc,
+    easeOutCirc,
+    easeInOutCirc,
+    easeInBack,
+    easeOutBack,
+    easeInOutBack,
+    easeInElastic,
+    easeOutElastic,
+    easeInOutElastic,
+    easeInBounce,
+    easeOutBounce,
+    easeInOutBounce,
 };
 
 /** Resolves an ease name or function to an `Ease` function, defaulting to `easeOutCubic`. */
@@ -485,8 +539,8 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
 /** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
-/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`; category and time axes are selected by the chart. */
-export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'time' | 'band' | 'point';
+/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`/`'symlog'`; category and time axes are selected by the chart. */
+export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog' | 'time' | 'band' | 'point';
 
 /** Options for a single axis (x or y). */
 // `TData` is retained for symmetry across the axis option family (ChartYAxisItemOptions, ChartAxisInput, etc.).
@@ -518,6 +572,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
     base?: number;
     /** Exponent for a `'pow'` scale. Defaults to 1. */
     exponent?: number;
+    /** Linear threshold for the `'symlog'` scale (region near zero treated linearly). Defaults to 1. */
+    constant?: number;
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */

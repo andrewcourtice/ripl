@@ -5,19 +5,37 @@ import {
 } from 'vitest';
 
 import {
+    easeInBack,
+    easeInBounce,
+    easeInCirc,
     easeInCubic,
+    easeInElastic,
+    easeInExpo,
+    easeInOutBack,
+    easeInOutBounce,
+    easeInOutCirc,
     easeInOutCubic,
+    easeInOutElastic,
+    easeInOutExpo,
     easeInOutQuad,
     easeInOutQuart,
     easeInOutQuint,
+    easeInOutSine,
     easeInQuad,
     easeInQuart,
     easeInQuint,
+    easeInSine,
     easeLinear,
+    easeOutBack,
+    easeOutBounce,
+    easeOutCirc,
     easeOutCubic,
+    easeOutElastic,
+    easeOutExpo,
     easeOutQuad,
     easeOutQuart,
     easeOutQuint,
+    easeOutSine,
 } from '../../src';
 
 const ALL_EASES = {
@@ -81,6 +99,57 @@ describe('Easing Functions', () => {
 
     test('easeInOutQuad should be symmetric around 0.5', () => {
         expect(easeInOutQuad(0.5)).toBeCloseTo(0.5, 5);
+    });
+
+});
+
+const EXPANDED_EASES = {
+    easeInSine,
+    easeOutSine,
+    easeInOutSine,
+    easeInExpo,
+    easeOutExpo,
+    easeInOutExpo,
+    easeInCirc,
+    easeOutCirc,
+    easeInOutCirc,
+    easeInBack,
+    easeOutBack,
+    easeInOutBack,
+    easeInElastic,
+    easeOutElastic,
+    easeInOutElastic,
+    easeInBounce,
+    easeOutBounce,
+    easeInOutBounce,
+};
+
+describe('Expanded Easing Functions', () => {
+
+    for (const [name, ease] of Object.entries(EXPANDED_EASES)) {
+        describe(name, () => {
+
+            test('Should return ~0 at time=0', () => {
+                expect(ease(0)).toBeCloseTo(0, 5);
+            });
+
+            test('Should return ~1 at time=1', () => {
+                expect(ease(1)).toBeCloseTo(1, 5);
+            });
+
+        });
+    }
+
+    test('easeInOutSine should pass through 0.5 at time=0.5', () => {
+        expect(easeInOutSine(0.5)).toBeCloseTo(0.5, 5);
+    });
+
+    test('easeInOutExpo should pass through 0.5 at time=0.5', () => {
+        expect(easeInOutExpo(0.5)).toBeCloseTo(0.5, 5);
+    });
+
+    test('easeInOutCirc should pass through 0.5 at time=0.5', () => {
+        expect(easeInOutCirc(0.5)).toBeCloseTo(0.5, 5);
     });
 
 });
