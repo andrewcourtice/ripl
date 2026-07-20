@@ -7,7 +7,7 @@
 import {
     resolveRotation,
     resolveTransformOrigin,
-} from '../context';
+} from '../context/transform';
 
 import type {
     Matrix,
