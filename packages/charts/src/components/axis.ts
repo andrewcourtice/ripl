@@ -632,6 +632,13 @@ export class ChartYAxis extends ChartAxis {
 
     /** Which edge the axis sits on (`left` or `right`). */
     public alignment: ChartYAxisAlignment;
+    /**
+     * Pixels this axis is shifted outward from its aligned chart edge (a left axis toward the chart's
+     * left edge, a right axis toward its right edge). Internal/auto-computed by the multi-axis layout
+     * to stack additional same-side axes clear of one another; `0` (the default) leaves the axis at its
+     * bounds edge.
+     */
+    public offset: number = 0;
 
     constructor(options: ChartYAxisOptions) {
         const {
@@ -646,7 +653,7 @@ export class ChartYAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
-    /** Computes the band the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden). */
+    /** Computes the band the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden), shifted outward by {@link ChartYAxis.offset}. */
     public getBoundingBox(): Box {
         const isLeftAligned = this.alignment === 'left';
         // A hidden axis reserves no band so the plot can use the full area.
@@ -665,11 +672,14 @@ export class ChartYAxis extends ChartAxis {
             right,
         } = this.bounds;
 
+        // The offset shifts the whole band outward (left axes leftward, right axes rightward), so a
+        // second, third, … same-side axis stacks clear of the one nearer the plot. Zero (single-axis
+        // and every current chart) leaves the band exactly at its bounds edge.
         return new Box(
             top,
-            isLeftAligned ? left : right - clearance,
+            isLeftAligned ? left - this.offset : right - clearance + this.offset,
             bottom,
-            isLeftAligned ? left + clearance : right
+            isLeftAligned ? left + clearance - this.offset : right + this.offset
         );
     }
 

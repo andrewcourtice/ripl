@@ -108,6 +108,8 @@ export interface SeriesRenderContext<TData> {
 export interface LineSeriesContext<TData> extends SeriesRenderContext<TData> {
     /** The point scale mapping a category key to its x pixel position. */
     xScale: Scale<string>;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `yScale` when omitted. */
+    resolveScale?: (series: LineSeriesLike<TData>) => Scale;
 }
 
 /** Context for the {@link AreaSeriesRenderer}: adds the x point scale and the stack toggle. */
@@ -116,6 +118,8 @@ export interface AreaSeriesContext<TData> extends SeriesRenderContext<TData> {
     xScale: Scale<string>;
     /** Whether area series are stacked cumulatively instead of overlaid. */
     stacked: boolean;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `yScale` when omitted. */
+    resolveScale?: (series: AreaSeriesLike<TData>) => Scale;
 }
 
 /** Context for the {@link BarSeriesRenderer}: adds the category band scale, value scale, orientation, and stacking. */

@@ -62,6 +62,7 @@ import type {
     Point,
     Polyline,
     PolylineState,
+    Scale,
 } from '@ripl/core';
 
 import {
@@ -144,15 +145,23 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         return typeIsFunction(series.label) ? series.label(item) : series.label;
     }
 
+    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    private _valueScale(series: AreaSeriesLike<TData>, ctx: AreaSeriesContext<TData>): Scale {
+        return ctx.resolveScale?.(series) ?? ctx.yScale;
+    }
+
     private _buildPoints(series: AreaSeriesLike<TData>, ctx: AreaSeriesContext<TData>, prepared: AreaPrepared<TData>): AreaPoints {
         const linePoints: Point[] = [];
         const bottomPoints: Point[] = [];
+        const scale = this._valueScale(series, ctx);
+        // Per-series baseline so a series bound to a secondary axis fills to its own axis's zero.
+        const baseline = scale(0);
 
         ctx.data.forEach((item, dataIndex) => {
             const x = ctx.xScale(ctx.getKey(item));
-            const y = ctx.yScale(prepared.getSeriesValue(series, item, dataIndex));
+            const y = scale(prepared.getSeriesValue(series, item, dataIndex));
             // Lower boundary: the previous series' cumulative top when stacked, else the baseline.
-            const bottomY = ctx.stacked ? ctx.yScale(prepared.getPrevSeriesValue(series, dataIndex)) : ctx.baseline;
+            const bottomY = ctx.stacked ? scale(prepared.getPrevSeriesValue(series, dataIndex)) : baseline;
 
             linePoints.push([x, y]);
             bottomPoints.push([x, bottomY]);
@@ -173,7 +182,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const color = ctx.getColor(series.id);
         const key = ctx.getKey(item);
         const x = ctx.xScale(key);
-        const y = ctx.yScale(prepared.getSeriesValue(series, item, dataIndex));
+        const y = this._valueScale(series, ctx)(prepared.getSeriesValue(series, item, dataIndex));
 
         const state: CircleState = {
             fill: '#FFFFFF',
@@ -209,7 +218,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         return {
             id: `${series.id}-marker-${key}-label`,
             x: ctx.xScale(key),
-            y: ctx.yScale(prepared.getSeriesValue(series, item, dataIndex)),
+            y: this._valueScale(series, ctx)(prepared.getSeriesValue(series, item, dataIndex)),
             anchor: ctx.dataLabels.anchor,
             content: ctx.formatValue(this._rawValue(series, item)),
             font: ctx.dataLabels.font,
@@ -220,16 +229,28 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
 
     protected prepare(series: AreaSeriesLike<TData>[], ctx: AreaSeriesContext<TData>): AreaPrepared<TData> {
         const { data } = ctx;
-        const stackedValues: number[][] = [];
+        // Per-series cumulative top and its lower boundary, so a stacked series fills from the top of
+        // the previous same-group series. Cumulation resets per value-scale group (series bound to
+        // different y-axes stack independently); single-axis charts share one group, so the behaviour
+        // is unchanged.
+        const stackedTop: number[][] = [];
+        const stackedBottom: number[][] = [];
 
         if (ctx.stacked) {
             data.forEach((item, dataIndex) => {
-                stackedValues[dataIndex] = [];
-                let cumulative = 0;
+                stackedTop[dataIndex] = [];
+                stackedBottom[dataIndex] = [];
+
+                const groupCumulative = new Map<unknown, number>();
 
                 series.forEach((srs, seriesIndex) => {
-                    cumulative += this._rawValue(srs, item);
-                    stackedValues[dataIndex][seriesIndex] = cumulative;
+                    const groupKey = ctx.resolveScale?.(srs) ?? ctx.yScale;
+                    const prev = groupCumulative.get(groupKey) ?? 0;
+                    const top = prev + this._rawValue(srs, item);
+
+                    groupCumulative.set(groupKey, top);
+                    stackedTop[dataIndex][seriesIndex] = top;
+                    stackedBottom[dataIndex][seriesIndex] = prev;
                 });
             });
         }
@@ -239,7 +260,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             const seriesIndex = series.indexOf(srs);
 
             if (ctx.stacked && seriesIndex >= 0) {
-                return stackedValues[dataIndex]?.[seriesIndex] ?? raw;
+                return stackedTop[dataIndex]?.[seriesIndex] ?? raw;
             }
 
             return raw;
@@ -248,8 +269,8 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const getPrevSeriesValue = (srs: AreaSeriesLike<TData>, dataIndex: number) => {
             const seriesIndex = series.indexOf(srs);
 
-            if (ctx.stacked && seriesIndex > 0) {
-                return stackedValues[dataIndex]?.[seriesIndex - 1] ?? 0;
+            if (ctx.stacked && seriesIndex >= 0) {
+                return stackedBottom[dataIndex]?.[seriesIndex] ?? 0;
             }
 
             return 0;
@@ -401,7 +422,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         markerUpdates.forEach(([item, marker]) => {
             const dataIndex = ctx.data.indexOf(item);
             const x = ctx.xScale(ctx.getKey(item));
-            const y = ctx.yScale(prepared.getSeriesValue(series, item, dataIndex));
+            const y = this._valueScale(series, ctx)(prepared.getSeriesValue(series, item, dataIndex));
 
             marker.data = {
                 fill: '#FFFFFF',

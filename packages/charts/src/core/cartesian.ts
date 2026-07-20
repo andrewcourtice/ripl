@@ -1065,6 +1065,80 @@ export abstract class CartesianChart<
         return byId >= 0 ? byId : 0;
     }
 
+    /**
+     * Lays out every y-axis for a multi-axis render and returns the horizontal plot bounds that clear
+     * their label bands. Each axis is given a provisional scale over `extents[i]` (spanning
+     * `[bottom, top]`) so it can measure its own band, then the axes are partitioned by
+     * {@link ChartYAxis.alignment} — preserving their configured order — and packed against the two
+     * chart edges: the first axis on each side sits innermost (adjacent to the plot) and any further
+     * same-side axes stack outward with an 8px gap. Each axis's {@link ChartYAxis.offset} and
+     * {@link ChartYAxis.bounds} are set so its band lands in the right slot; the caller then computes
+     * final value scales over the plot height and sets each `bounds.bottom` below the x-axis labels.
+     *
+     * @param chartLeft - The left edge of the drawable area (axes + plot).
+     * @param chartRight - The right edge of the drawable area.
+     * @param top - The top edge of the plot/axis range.
+     * @param bottom - The provisional bottom edge (before the x-axis band is measured).
+     * @param extents - The value extent for each y-axis, parallel to {@link CartesianChart.yAxes}.
+     * @returns The plot's left and right pixel bounds between the packed axis bands.
+     */
+    protected layoutYAxes(
+        chartLeft: number,
+        chartRight: number,
+        top: number,
+        bottom: number,
+        extents: number[][]
+    ): { plotLeft: number;
+        plotRight: number; } {
+        const GAP = 8;
+
+        // Provisional full-width bounds (offset reset) so each axis measures its own label band width.
+        const widths = this.yAxes.map((axis, index) => {
+            axis.offset = 0;
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
+            axis.bounds = new Box(top, chartLeft, bottom, chartRight);
+
+            return axis.getBoundingBox().width;
+        });
+
+        const indices = this.yAxes.map((_, index) => index);
+        const leftIndices = indices.filter(index => this.yAxes[index].alignment === 'left');
+        const rightIndices = indices.filter(index => this.yAxes[index].alignment === 'right');
+
+        const bandTotal = (group: number[]) => group.reduce((sum, index) => sum + widths[index], 0)
+            + GAP * Math.max(0, group.length - 1);
+
+        const plotLeft = chartLeft + bandTotal(leftIndices);
+        const plotRight = chartRight - bandTotal(rightIndices);
+
+        // Left axes: first innermost (band's right edge at plotLeft), each further one stacked outward.
+        let leftCursor = 0;
+
+        leftIndices.forEach(index => {
+            const width = widths[index];
+
+            this.yAxes[index].bounds = new Box(top, plotLeft - width, bottom, plotLeft);
+            this.yAxes[index].offset = leftCursor;
+            leftCursor += width + GAP;
+        });
+
+        // Right axes mirror the left: first innermost (band's left edge at plotRight), rest stack out.
+        let rightCursor = 0;
+
+        rightIndices.forEach(index => {
+            const width = widths[index];
+
+            this.yAxes[index].bounds = new Box(top, plotRight, bottom, plotRight + width);
+            this.yAxes[index].offset = rightCursor;
+            rightCursor += width + GAP;
+        });
+
+        return {
+            plotLeft,
+            plotRight,
+        };
+    }
+
     /** Sets up the crosshair to track within the given plot area. */
     protected setupCrosshair(area: ChartArea) {
         this.crosshair?.setup(area.x, area.y, area.width, area.height);

@@ -3,6 +3,7 @@ import type {
 } from '../core/data';
 
 import type {
+    AxisTooltipSnapshot,
     CartesianChartOptions,
     CartesianSetup,
 } from '../core/cartesian';
@@ -258,6 +259,59 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return this.buildOverviewSeries(this.filterActive(series), data, () => 'bar', (srs, item) => this._seriesValue(srs, item));
     }
 
+    // Resolves the shared axis-tooltip content for the hovered plot x (vertical bars): the nearest
+    // category, one row per active series, anchored above the tallest bar top at that category. The
+    // axis tooltip is wired for vertical orientation only — horizontal bars keep per-item tooltips.
+    private _axisTooltipSnapshot(
+        plotX: number,
+        keys: string[],
+        series: BarChartSeriesOptions<TData>[],
+        categoryScale: Scale<string>,
+        scaleFor: (series: BarChartSeriesOptions<TData>) => Scale
+    ): AxisTooltipSnapshot | null {
+        if (keys.length === 0 || series.length === 0) {
+            return null;
+        }
+
+        let nearest = 0;
+        let best = Number.POSITIVE_INFINITY;
+
+        keys.forEach((key, index) => {
+            const distance = Math.abs(categoryScale(key) - plotX);
+
+            if (distance < best) {
+                best = distance;
+                nearest = index;
+            }
+        });
+
+        const item = this.options.data[nearest];
+        const key = keys[nearest];
+        const formatValue = resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined));
+
+        let anchorY = Number.POSITIVE_INFINITY;
+
+        const rows = series.map(srs => {
+            const value = this._seriesValue(srs, item);
+            const scale = scaleFor(srs);
+
+            // The tallest bar top is the highest (smallest-y) of every series' bar edge at the category.
+            anchorY = Math.min(anchorY, scale(Math.max(0, value)), scale(0));
+
+            return {
+                label: srs.label,
+                value: formatValue(value),
+            };
+        });
+
+        return {
+            title: key,
+            rows,
+            x: categoryScale(key),
+            y: Number.isFinite(anchorY) ? anchorY : 0,
+        };
+    }
+
     private _seriesContext(categoryScale: BandScale<string>, valueScale: Scale, plot: ChartArea): BarSeriesContext<TData> {
         return {
             data: this.options.data,
@@ -271,7 +325,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             plot,
             baseline: valueScale(0),
             renderer: this.renderer,
-            tooltip: this.tooltip,
+            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
             formatValue: resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined)),
@@ -342,7 +397,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             // scales and the horizontal layout has no right-hand value band (see the series
             // `axis` option JSDoc).
             if (this.yAxes.length > 1 && !this._isHorizontal && !this._isStacked) {
-                return this._renderSecondaryAxes({
+                return this._renderMultiAxis({
                     series: activeSeries,
                     keys,
                     navBand,
@@ -389,6 +444,11 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 };
 
                 this.clipPlot(horizontalPlot);
+                // The shared axis tooltip is vertical-only (category along x). Wiring a null resolver
+                // here tears down any listeners left by a prior vertical render (e.g. after
+                // `update({ orientation })`) so a stale snapshot can't fire; item tooltips stay
+                // suppressed in axis mode, so horizontal + axis simply shows no tooltip.
+                this.setupAxisTooltip(horizontalPlot, () => null);
 
                 this.renderGrid(
                     this.gridTicks(adjustedValueScale, axisTickCount(this.xAxisOptions)),
@@ -435,7 +495,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             // The navigator windows the x (category) axis only — the value axis (y) stays at the full
             // extent, so the bottom strip scrubs horizontally without rescaling the value domain.
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
-            this.xAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
+            const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
+            this.xAxis.scale = categoryCenterScale;
 
             const verticalPlot = {
                 x: yAxisBox.right,
@@ -445,6 +506,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             };
 
             this.clipPlot(verticalPlot);
+            this.setupAxisTooltip(verticalPlot, plotX => this._axisTooltipSnapshot(plotX, keys, activeSeries, categoryCenterScale, () => adjustedValueScale));
 
             this.renderGrid(
                 [],
@@ -467,10 +529,11 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         });
     }
 
-    // Vertical grouped bars with two y-axes: each axis's extent covers the active series bound to
-    // it, the plot sits between the left (primary) and right (secondary) axis bands, and every bar
-    // renders against its own axis's scale via the renderer's per-series scale resolver.
-    private _renderSecondaryAxes(ctx: {
+    // Vertical grouped bars across N y-axes: each axis's extent covers the active series bound to
+    // it, `layoutYAxes` packs the axis bands against the chart edges and returns the plot bounds
+    // between them, and every bar renders against its own axis's scale via the renderer's per-series
+    // scale resolver.
+    private _renderMultiAxis(ctx: {
         series: BarChartSeriesOptions<TData>[];
         keys: string[];
         navBand?: ChartArea;
@@ -490,14 +553,8 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 .concat(0), functionIdentity);
         });
 
-        // Provisional scales spanning the full width so each axis can measure its label band.
-        this.yAxes.forEach((axis, index) => {
-            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
-            axis.bounds = new Box(top, left, bottom, right);
-        });
-
-        const plotLeft = this.yAxes[0].getBoundingBox().right;
-        const plotRight = this.yAxes[1].getBoundingBox().left;
+        // Pack the axis bands against the chart edges; the plot sits between them.
+        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
 
         const categoryScale = scaleBand(keys, [plotLeft, plotRight], {
             outerPadding: 0.15,
@@ -513,14 +570,15 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
 
             axis.scale = scale;
-            axis.bounds = new Box(top, left, xAxisBox.top, right);
+            axis.bounds.bottom = xAxisBox.top;
 
             return scale;
         });
 
         // The navigator windows the category axis only.
         const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
-        this.xAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
+        const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
+        this.xAxis.scale = categoryCenterScale;
 
         const plot = {
             x: plotLeft,
@@ -529,14 +587,17 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             height: xAxisBox.top - top,
         };
 
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
+
         this.clipPlot(plot);
+        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, categoryCenterScale, scaleFor));
         this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
         this.renderAnnotations({ y: scales[0] }, plot);
 
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
         const barCtx = this._seriesContext(viewedCategoryScale, scales[0], plot);
 
-        barCtx.resolveScale = srs => scaleBySeries.get(srs.id) ?? scales[0];
+        barCtx.resolveScale = scaleFor;
 
         const seriesRender = this._series.render(series, barCtx);
 

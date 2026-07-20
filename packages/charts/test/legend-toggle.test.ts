@@ -34,10 +34,7 @@ interface ChartInternals {
 
 interface DualAxisLineInternals {
     _series: {
-        groups: unknown[];
-    };
-    _series2: {
-        groups: unknown[];
+        groups: { id: string }[];
     };
     yAxes: {
         scale: {
@@ -308,19 +305,22 @@ describe('legend series toggling', () => {
 
 describe('legend series toggling (line, secondary axis)', () => {
 
+    // Both axes' series now render through the single collapsed `_series` renderer; hiding an
+    // axis-1 series drops its group from that one group set.
+    const groupIds = (chart: unknown) => dualAxisInternals(chart)._series.groups.map(group => group.id);
+
     it('rescales each axis over the active series bound to it', async () => {
         const chart = createDualAxisLineChart();
 
         await chart.render();
 
-        expect(dualAxisInternals(chart)._series.groups.length).toBe(1);
-        expect(dualAxisInternals(chart)._series2.groups.length).toBe(1);
+        expect(groupIds(chart).sort()).toEqual(['large', 'small']);
         expect(dualAxisInternals(chart).yAxes[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(140);
 
         clickLegendItem(chart, 'large');
         await chart.render();
 
-        expect(dualAxisInternals(chart)._series2.groups.length).toBe(0);
+        expect(groupIds(chart)).toEqual(['small']);
         expect(dualAxisInternals(chart).yAxes[1].scale.domain.at(-1)).toBeLessThan(140);
         expect(dualAxisInternals(chart).yAxes[0].scale.domain.at(-1)).toBeGreaterThanOrEqual(12);
 
@@ -337,12 +337,12 @@ describe('legend series toggling (line, secondary axis)', () => {
         clickLegendItem(chart, 'large');
         await chart.render();
 
-        expect(dualAxisInternals(chart)._series2.groups.length).toBe(0);
+        expect(groupIds(chart)).toEqual(['small']);
 
         clickLegendItem(chart, 'large');
         await chart.render();
 
-        expect(dualAxisInternals(chart)._series2.groups.length).toBe(1);
+        expect(groupIds(chart).sort()).toEqual(['large', 'small']);
         expect(dualAxisInternals(chart).yAxes[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(140);
     });
 

@@ -16,16 +16,26 @@ import {
     createScatterChart,
 } from '../src';
 
+interface AxisBox {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+}
+
 interface AxisInternals {
     alignment: string;
     scale: {
         (value: number): number;
         domain: number[];
     };
+    getBoundingBox(): AxisBox;
 }
 
 interface SceneElementInternals {
     cy: number;
+    height: number;
     emit(event: string, payload?: unknown): void;
 }
 
@@ -33,16 +43,24 @@ function yAxes(chart: unknown): AxisInternals[] {
     return (chart as { yAxes: AxisInternals[] }).yAxes;
 }
 
-function seriesGroups(chart: unknown): unknown[] {
-    return (chart as { _series: { groups: unknown[] } })._series.groups;
-}
-
-function secondarySeriesGroups(chart: unknown): unknown[] {
-    return (chart as { _series2: { groups: unknown[] } })._series2.groups;
+// Every series (across all axes) renders through the single collapsed `_series` renderer, so its
+// group ids are the set of currently-drawn series.
+function seriesGroupIds(chart: unknown): string[] {
+    return (chart as { _series: { groups: { id: string }[] } })._series.groups.map(group => group.id);
 }
 
 function bubbleGroups(chart: unknown): unknown[] {
     return (chart as { _bubbleGroups: unknown[] })._bubbleGroups;
+}
+
+function bubbleGroupIds(chart: unknown): string[] {
+    return (chart as { _bubbleGroups: { id: string }[] })._bubbleGroups.map(group => group.id);
+}
+
+// jsdom provides no layout, so the scene starts 0×0 and axis bands have no real pixel width — size
+// the context directly so the packed multi-axis layout can be asserted in pixel space.
+function rescaleContext(chart: unknown): void {
+    (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
 }
 
 function sceneElement(chart: unknown, id: string): SceneElementInternals | null {
@@ -321,8 +339,7 @@ describe('secondary y-axis (area)', () => {
 
         await chart.render();
 
-        expect(seriesGroups(chart).length).toBe(1);
-        expect(secondarySeriesGroups(chart).length).toBe(1);
+        expect(seriesGroupIds(chart).sort()).toEqual(['left', 'right']);
         expect(yAxes(chart)[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(3000);
 
         const primaryMax = yAxes(chart)[0].scale.domain.at(-1);
@@ -330,7 +347,8 @@ describe('secondary y-axis (area)', () => {
         clickLegendItem(chart, 'right');
         await chart.render();
 
-        expect(secondarySeriesGroups(chart).length).toBe(0);
+        // Hiding the axis-1 series drops its group from the single renderer's set.
+        expect(seriesGroupIds(chart)).toEqual(['left']);
         expect(yAxes(chart)[1].scale.domain.at(-1)).toBeLessThan(3000);
         expect(yAxes(chart)[0].scale.domain.at(-1)).toBe(primaryMax);
 
@@ -341,7 +359,7 @@ describe('secondary y-axis (area)', () => {
         clickLegendItem(chart, 'right');
         await chart.render();
 
-        expect(secondarySeriesGroups(chart).length).toBe(1);
+        expect(seriesGroupIds(chart).sort()).toEqual(['left', 'right']);
         expect(yAxes(chart)[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(3000);
     });
 
@@ -571,6 +589,365 @@ describe('secondary y-axis (bar)', () => {
         await chart.render();
 
         expect(yAxes(chart).length).toBe(1);
+    });
+
+});
+
+// The 8px gap `layoutYAxes` inserts between two same-side axis bands.
+const AXIS_GAP = 8;
+
+// Three series with order-of-magnitude-different values, each bound to its own axis; the axes
+// alternate left/right/left so both the left-stacking and the right side are exercised.
+const TRIPLE_DATA = [
+    {
+        m: 'a',
+        a: 10,
+        b: 1000,
+        c: 100000,
+    },
+    {
+        m: 'b',
+        a: 20,
+        b: 3000,
+        c: 300000,
+    },
+];
+
+const TRIPLE_AXES = {
+    y: [
+        {},
+        { position: 'right' as const },
+        { position: 'left' as const },
+    ],
+};
+
+// Asserts the three axes are laid out on the expected sides, packed without overlap, and each scaled
+// to its own series' magnitude. Shared by every chart's 3-axis test.
+function expectTripleAxisLayout(chart: unknown) {
+    const axes = yAxes(chart);
+
+    expect(axes.length).toBe(3);
+    expect(axes.map(axis => axis.alignment)).toEqual(['left', 'right', 'left']);
+
+    expect(axes[0].scale.domain.at(-1)!).toBeLessThan(100);
+    expect(axes[1].scale.domain.at(-1)!).toBeGreaterThanOrEqual(3000);
+    expect(axes[2].scale.domain.at(-1)!).toBeGreaterThanOrEqual(300000);
+
+    const [box0, box1, box2] = axes.map(axis => axis.getBoundingBox());
+
+    // Axis 0 is the innermost left band (adjacent to the plot); axis 2 stacks outward beyond it with
+    // an 8px gap and no overlap; the right axis sits past the plot's right edge.
+    expect(box0.right).toBeGreaterThan(box2.right);
+    expect(box0.left - box2.right).toBeCloseTo(AXIS_GAP);
+    expect(box1.left).toBeGreaterThan(box0.right);
+
+    // Plot spans between the innermost bands; the packed left band == both widths + one gap.
+    expect(box0.right - box2.left).toBeCloseTo(box0.width + box2.width + AXIS_GAP);
+}
+
+describe('N y-axes (line)', () => {
+
+    function createTripleAxisLineChart() {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: TRIPLE_DATA,
+            key: 'm',
+            axis: TRIPLE_AXES,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                    axis: 1,
+                },
+                {
+                    id: 'c',
+                    label: 'C',
+                    value: 'c',
+                    axis: 2,
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('lays out three axes and derives each series from its bound axis', async () => {
+        const chart = createTripleAxisLineChart();
+
+        await chart.render();
+
+        expectTripleAxisLayout(chart);
+
+        const axes = yAxes(chart);
+        const marker = sceneElement(chart, 'c-b');
+
+        // The axis-2 marker sits at axis 2's scale, not the primary's.
+        expect(marker?.cy).toBeCloseTo(axes[2].scale(300000));
+        expect(Math.abs((marker?.cy ?? 0) - axes[0].scale(300000))).toBeGreaterThan(1);
+    });
+
+    it('rescales only the bound axis on legend toggle', async () => {
+        const chart = createTripleAxisLineChart();
+
+        await chart.render();
+
+        const axis0Max = yAxes(chart)[0].scale.domain.at(-1);
+        const axis1Max = yAxes(chart)[1].scale.domain.at(-1);
+
+        clickLegendItem(chart, 'c');
+        await chart.render();
+
+        expect(seriesGroupIds(chart).sort()).toEqual(['a', 'b']);
+        expect(yAxes(chart)[2].scale.domain.at(-1)!).toBeLessThan(300000);
+        expect(yAxes(chart)[0].scale.domain.at(-1)).toBe(axis0Max);
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBe(axis1Max);
+    });
+
+});
+
+describe('N y-axes (area)', () => {
+
+    function createTripleAxisAreaChart() {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createAreaChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: TRIPLE_DATA,
+            key: 'm',
+            axis: TRIPLE_AXES,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                    axis: 1,
+                },
+                {
+                    id: 'c',
+                    label: 'C',
+                    value: 'c',
+                    axis: 2,
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('lays out three axes and derives each series from its bound axis', async () => {
+        const chart = createTripleAxisAreaChart();
+
+        await chart.render();
+
+        expectTripleAxisLayout(chart);
+
+        const axes = yAxes(chart);
+        const marker = sceneElement(chart, 'c-marker-b');
+
+        expect(marker?.cy).toBeCloseTo(axes[2].scale(300000));
+        expect(Math.abs((marker?.cy ?? 0) - axes[0].scale(300000))).toBeGreaterThan(1);
+    });
+
+    it('rescales only the bound axis on legend toggle', async () => {
+        const chart = createTripleAxisAreaChart();
+
+        await chart.render();
+
+        const axis0Max = yAxes(chart)[0].scale.domain.at(-1);
+        const axis1Max = yAxes(chart)[1].scale.domain.at(-1);
+
+        clickLegendItem(chart, 'c');
+        await chart.render();
+
+        expect(seriesGroupIds(chart).sort()).toEqual(['a', 'b']);
+        expect(yAxes(chart)[2].scale.domain.at(-1)!).toBeLessThan(300000);
+        expect(yAxes(chart)[0].scale.domain.at(-1)).toBe(axis0Max);
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBe(axis1Max);
+    });
+
+});
+
+describe('N y-axes (scatter)', () => {
+
+    function createTripleAxisScatterChart() {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createScatterChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    id: 'p1',
+                    x: 1,
+                    a: 10,
+                    b: 1000,
+                    c: 100000,
+                },
+                {
+                    id: 'p2',
+                    x: 2,
+                    a: 20,
+                    b: 3000,
+                    c: 300000,
+                },
+            ],
+            key: 'id',
+            axis: TRIPLE_AXES,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    xBy: 'x',
+                    yBy: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    xBy: 'x',
+                    yBy: 'b',
+                    axis: 1,
+                },
+                {
+                    id: 'c',
+                    label: 'C',
+                    xBy: 'x',
+                    yBy: 'c',
+                    axis: 2,
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('lays out three axes and positions bubbles against their bound axis', async () => {
+        const chart = createTripleAxisScatterChart();
+
+        await chart.render();
+
+        expectTripleAxisLayout(chart);
+
+        const axes = yAxes(chart);
+        const bubble = sceneElement(chart, 'c-p2');
+
+        expect(bubble?.cy).toBeCloseTo(axes[2].scale(300000));
+        expect(Math.abs((bubble?.cy ?? 0) - axes[0].scale(300000))).toBeGreaterThan(1);
+    });
+
+    it('rescales only the bound axis on legend toggle', async () => {
+        const chart = createTripleAxisScatterChart();
+
+        await chart.render();
+
+        const axis0Max = yAxes(chart)[0].scale.domain.at(-1);
+        const axis1Max = yAxes(chart)[1].scale.domain.at(-1);
+
+        clickLegendItem(chart, 'c');
+        await chart.render();
+
+        expect(bubbleGroupIds(chart).sort()).toEqual(['a', 'b']);
+        expect(yAxes(chart)[2].scale.domain.at(-1)!).toBeLessThan(300000);
+        expect(yAxes(chart)[0].scale.domain.at(-1)).toBe(axis0Max);
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBe(axis1Max);
+    });
+
+});
+
+describe('N y-axes (bar)', () => {
+
+    function createTripleAxisBarChart() {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createBarChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: TRIPLE_DATA,
+            key: 'm',
+            axis: TRIPLE_AXES,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                    axis: 1,
+                },
+                {
+                    id: 'c',
+                    label: 'C',
+                    value: 'c',
+                    axis: 2,
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('lays out three axes and sizes each bar against its bound axis', async () => {
+        const chart = createTripleAxisBarChart();
+
+        await chart.render();
+
+        expectTripleAxisLayout(chart);
+
+        const axes = yAxes(chart);
+        const bar = sceneElement(chart, 'c-b');
+
+        // The axis-2 bar's height derives from axis 2's scale, distinct from the primary's.
+        const expected = Math.abs(axes[2].scale(300000) - axes[2].scale(0));
+        const primary = Math.abs(axes[0].scale(300000) - axes[0].scale(0));
+
+        expect(bar?.height).toBeCloseTo(expected, 5);
+        expect(Math.abs((bar?.height ?? 0) - primary)).toBeGreaterThan(1);
+    });
+
+    it('rescales only the bound axis on legend toggle', async () => {
+        const chart = createTripleAxisBarChart();
+
+        await chart.render();
+
+        const axis0Max = yAxes(chart)[0].scale.domain.at(-1);
+        const axis1Max = yAxes(chart)[1].scale.domain.at(-1);
+
+        clickLegendItem(chart, 'c');
+        await chart.render();
+
+        expect(seriesGroupIds(chart).sort()).toEqual(['a', 'b']);
+        expect(yAxes(chart)[2].scale.domain.at(-1)!).toBeLessThan(300000);
+        expect(yAxes(chart)[0].scale.domain.at(-1)).toBe(axis0Max);
+        expect(yAxes(chart)[1].scale.domain.at(-1)).toBe(axis1Max);
     });
 
 });

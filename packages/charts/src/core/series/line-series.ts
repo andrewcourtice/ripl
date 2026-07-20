@@ -63,6 +63,7 @@ import type {
     Point,
     Polyline,
     PolylineState,
+    Scale,
 } from '@ripl/core';
 
 import {
@@ -111,11 +112,16 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         return series.marker ?? 'circle';
     }
 
+    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    private _valueScale(series: LineSeriesLike<TData>, ctx: LineSeriesContext<TData>): Scale {
+        return ctx.resolveScale?.(series) ?? ctx.yScale;
+    }
+
     private _markerState(series: LineSeriesLike<TData>, item: TData, ctx: LineSeriesContext<TData>): MarkerState {
         const value = resolveAccessor<TData, number>(series.value)(item);
         const key = ctx.getKey(item);
         const x = ctx.xScale(key);
-        const y = ctx.yScale(value);
+        const y = this._valueScale(series, ctx)(value);
         const color = ctx.getColor(series.id);
         const markerType = this._markerType(series);
         // A hidden marker rests at radius 0 (the toggle animates it in/out on update). Non-circle

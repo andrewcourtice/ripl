@@ -175,7 +175,6 @@ export interface LineChartEventMap extends EventMap {
 export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<TData>, TData, LineChartEventMap> {
 
     private _series = new LineSeriesRenderer<TData>();
-    private _series2 = new LineSeriesRenderer<TData>();
     private _yScale!: Scale;
     private _xScale!: Scale<string>;
 
@@ -255,12 +254,17 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
     }
 
-    private _seriesContext(plot: ChartArea, yScale: Scale = this._yScale): LineSeriesContext<TData> {
+    private _seriesContext(
+        plot: ChartArea,
+        yScale: Scale = this._yScale,
+        resolveScale?: LineSeriesContext<TData>['resolveScale']
+    ): LineSeriesContext<TData> {
         return {
             data: this.options.data,
             getKey: resolveAccessor<TData, string>(this.options.key),
             yScale,
             xScale: this._xScale,
+            resolveScale,
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
@@ -319,7 +323,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const bottom = area.y + area.height;
 
             if (this.yAxes.length > 1) {
-                return this._renderSecondaryAxes({
+                return this._renderMultiAxis({
                     series: activeSeries,
                     keys,
                     dataExtent,
@@ -375,12 +379,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
             const seriesRender = this._series.render(activeSeries, this._seriesContext(plot));
 
-            // A previous render may have drawn series against a since-removed secondary axis —
-            // rendering the secondary renderer empty exits those groups.
-            const secondaryExit = this._series2.groups.length > 0
-                ? this._series2.render([], this._seriesContext(plot))
-                : Promise.resolve();
-
             this.registerHighlightGroups(this._series.groups);
 
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
@@ -389,18 +387,18 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
                 this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
                 seriesRender,
-                secondaryExit,
             ]);
         });
     }
 
     /**
-     * Renders the chart with a secondary (right-hand) y-axis. The (legend-active) series are
-     * partitioned by their `axis` binding; each axis gets an independent value extent and scale
-     * computed over the active series bound to it, the plot sits between the two axis label bands,
-     * and each series group is drawn against its bound axis's scale.
+     * Renders the chart across N y-axes. The (legend-active) series are partitioned by their `axis`
+     * binding; each axis gets an independent value extent and scale computed over the active series
+     * bound to it, {@link CartesianChart.layoutYAxes} packs the axis label bands against the two chart
+     * edges and returns the plot bounds between them, and one series pass draws every series against
+     * its bound axis's scale via the renderer's per-series scale resolver.
      */
-    private _renderSecondaryAxes(ctx: {
+    private _renderMultiAxis(ctx: {
         series: LineChartSeriesOptions<TData>[];
         keys: string[];
         dataExtent: number[];
@@ -421,23 +419,17 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             bottom,
         } = ctx;
 
-        // Partition series by the y-axis they bind to.
-        const seriesByAxis = this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index));
+        // Independent value extent per axis, over the active series bound to it.
+        const extents = this.yAxes.map((_, index) => {
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
 
-        // Independent value extent per axis.
-        const extents = seriesByAxis.map(group => numberExtent(group
-            .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
-            .concat(0), functionIdentity));
-
-        // Provisional scales so each axis can measure its label band. Both bounds span the full width
-        // so the left axis reserves from the left edge and the right axis from the right edge.
-        this.yAxes.forEach((axis, index) => {
-            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
-            axis.bounds = new Box(top, left, bottom, right);
+            return numberExtent(group
+                .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
+                .concat(0), functionIdentity);
         });
 
-        const plotLeft = this.yAxes[0].getBoundingBox().right;
-        const plotRight = this.yAxes[1].getBoundingBox().left;
+        // Pack the axis bands against the chart edges; the plot sits between them.
+        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
 
         this._xScale = this.categoryScale(keys, plotLeft, plotRight);
         this.xAxis.scale = this._xScale;
@@ -465,29 +457,29 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             height: xAxisBox.top - top,
         };
 
+        // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
+        // agnostic — the renderer passes the series through as its shared `LineSeriesLike`).
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
+
         this.clipPlot(plot);
         this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
         this.setupCrosshair(plot);
-        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, srs => scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]));
+        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, scaleFor));
         this.renderAnnotations({ y: scales[0] }, plot);
 
         this._yScale = scales[0];
 
-        const primaryRender = this._series.render(seriesByAxis[0], this._seriesContext(plot, scales[0]));
-        const secondaryRender = this._series2.render(seriesByAxis[1], this._seriesContext(plot, scales[1]));
+        const seriesRender = this._series.render(series, this._seriesContext(plot, scales[0], scaleFor));
 
-        this.registerHighlightGroups([
-            ...this._series.groups,
-            ...this._series2.groups,
-        ]);
+        this.registerHighlightGroups(this._series.groups);
 
         this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
         return Promise.all([
             this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
             ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
-            primaryRender,
-            secondaryRender,
+            seriesRender,
         ]);
     }
 
