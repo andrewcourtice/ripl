@@ -462,6 +462,10 @@
           {
             "text": "toCanvasGradient",
             "link": "/docs/api/@ripl/canvas/functions/toCanvasGradient.md"
+          },
+          {
+            "text": "toCanvasPattern",
+            "link": "/docs/api/@ripl/canvas/functions/toCanvasPattern.md"
           }
         ]
       }
@@ -661,6 +665,14 @@
           {
             "text": "AreaChartSeriesOptions",
             "link": "/docs/api/@ripl/charts/interfaces/AreaChartSeriesOptions.md"
+          },
+          {
+            "text": "AxisTooltipRow",
+            "link": "/docs/api/@ripl/charts/interfaces/AxisTooltipRow.md"
+          },
+          {
+            "text": "AxisTooltipSnapshot",
+            "link": "/docs/api/@ripl/charts/interfaces/AxisTooltipSnapshot.md"
           },
           {
             "text": "BarChartBarEvent",
@@ -1255,6 +1267,10 @@
           {
             "text": "ChartTooltipInput",
             "link": "/docs/api/@ripl/charts/type-aliases/ChartTooltipInput.md"
+          },
+          {
+            "text": "ChartTooltipTrigger",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartTooltipTrigger.md"
           },
           {
             "text": "ColorLegendOrientation",
@@ -2115,6 +2131,22 @@
             "link": "/docs/api/@ripl/core/interfaces/PathState.md"
           },
           {
+            "text": "Pattern",
+            "link": "/docs/api/@ripl/core/interfaces/Pattern.md"
+          },
+          {
+            "text": "PatternTileDot",
+            "link": "/docs/api/@ripl/core/interfaces/PatternTileDot.md"
+          },
+          {
+            "text": "PatternTileGeometry",
+            "link": "/docs/api/@ripl/core/interfaces/PatternTileGeometry.md"
+          },
+          {
+            "text": "PatternTileLine",
+            "link": "/docs/api/@ripl/core/interfaces/PatternTileLine.md"
+          },
+          {
             "text": "PointScale",
             "link": "/docs/api/@ripl/core/interfaces/PointScale.md"
           },
@@ -2141,6 +2173,10 @@
           {
             "text": "RadialGradient",
             "link": "/docs/api/@ripl/core/interfaces/RadialGradient.md"
+          },
+          {
+            "text": "RadialScaleOptions",
+            "link": "/docs/api/@ripl/core/interfaces/RadialScaleOptions.md"
           },
           {
             "text": "RectState",
@@ -2193,6 +2229,10 @@
           {
             "text": "StringInterpolatorTag",
             "link": "/docs/api/@ripl/core/interfaces/StringInterpolatorTag.md"
+          },
+          {
+            "text": "SymlogScaleOptions",
+            "link": "/docs/api/@ripl/core/interfaces/SymlogScaleOptions.md"
           },
           {
             "text": "TextState",
@@ -2369,6 +2409,14 @@
             "link": "/docs/api/@ripl/core/type-aliases/PathRenderer.md"
           },
           {
+            "text": "PatternTileShape",
+            "link": "/docs/api/@ripl/core/type-aliases/PatternTileShape.md"
+          },
+          {
+            "text": "PatternType",
+            "link": "/docs/api/@ripl/core/type-aliases/PatternType.md"
+          },
+          {
             "text": "Point",
             "link": "/docs/api/@ripl/core/type-aliases/Point.md"
           },
@@ -2511,12 +2559,64 @@
             "link": "/docs/api/@ripl/core/variables/CONTEXT_OPERATIONS.md"
           },
           {
+            "text": "DEFAULT_PATTERN_BACKGROUND",
+            "link": "/docs/api/@ripl/core/variables/DEFAULT_PATTERN_BACKGROUND.md"
+          },
+          {
+            "text": "DEFAULT_PATTERN_FOREGROUND",
+            "link": "/docs/api/@ripl/core/variables/DEFAULT_PATTERN_FOREGROUND.md"
+          },
+          {
+            "text": "DEFAULT_PATTERN_SIZE",
+            "link": "/docs/api/@ripl/core/variables/DEFAULT_PATTERN_SIZE.md"
+          },
+          {
+            "text": "easeInBack",
+            "link": "/docs/api/@ripl/core/variables/easeInBack.md"
+          },
+          {
+            "text": "easeInBounce",
+            "link": "/docs/api/@ripl/core/variables/easeInBounce.md"
+          },
+          {
+            "text": "easeInCirc",
+            "link": "/docs/api/@ripl/core/variables/easeInCirc.md"
+          },
+          {
             "text": "easeInCubic",
             "link": "/docs/api/@ripl/core/variables/easeInCubic.md"
           },
           {
+            "text": "easeInElastic",
+            "link": "/docs/api/@ripl/core/variables/easeInElastic.md"
+          },
+          {
+            "text": "easeInExpo",
+            "link": "/docs/api/@ripl/core/variables/easeInExpo.md"
+          },
+          {
+            "text": "easeInOutBack",
+            "link": "/docs/api/@ripl/core/variables/easeInOutBack.md"
+          },
+          {
+            "text": "easeInOutBounce",
+            "link": "/docs/api/@ripl/core/variables/easeInOutBounce.md"
+          },
+          {
+            "text": "easeInOutCirc",
+            "link": "/docs/api/@ripl/core/variables/easeInOutCirc.md"
+          },
+          {
             "text": "easeInOutCubic",
             "link": "/docs/api/@ripl/core/variables/easeInOutCubic.md"
+          },
+          {
+            "text": "easeInOutElastic",
+            "link": "/docs/api/@ripl/core/variables/easeInOutElastic.md"
+          },
+          {
+            "text": "easeInOutExpo",
+            "link": "/docs/api/@ripl/core/variables/easeInOutExpo.md"
           },
           {
             "text": "easeInOutQuad",
@@ -2531,6 +2631,10 @@
             "link": "/docs/api/@ripl/core/variables/easeInOutQuint.md"
           },
           {
+            "text": "easeInOutSine",
+            "link": "/docs/api/@ripl/core/variables/easeInOutSine.md"
+          },
+          {
             "text": "easeInQuad",
             "link": "/docs/api/@ripl/core/variables/easeInQuad.md"
           },
@@ -2543,6 +2647,10 @@
             "link": "/docs/api/@ripl/core/variables/easeInQuint.md"
           },
           {
+            "text": "easeInSine",
+            "link": "/docs/api/@ripl/core/variables/easeInSine.md"
+          },
+          {
             "text": "easeLinear",
             "link": "/docs/api/@ripl/core/variables/easeLinear.md"
           },
@@ -2551,12 +2659,24 @@
             "link": "/docs/api/@ripl/core/variables/easeOutBack.md"
           },
           {
+            "text": "easeOutBounce",
+            "link": "/docs/api/@ripl/core/variables/easeOutBounce.md"
+          },
+          {
+            "text": "easeOutCirc",
+            "link": "/docs/api/@ripl/core/variables/easeOutCirc.md"
+          },
+          {
             "text": "easeOutCubic",
             "link": "/docs/api/@ripl/core/variables/easeOutCubic.md"
           },
           {
             "text": "easeOutElastic",
             "link": "/docs/api/@ripl/core/variables/easeOutElastic.md"
+          },
+          {
+            "text": "easeOutExpo",
+            "link": "/docs/api/@ripl/core/variables/easeOutExpo.md"
           },
           {
             "text": "easeOutQuad",
@@ -2569,6 +2689,10 @@
           {
             "text": "easeOutQuint",
             "link": "/docs/api/@ripl/core/variables/easeOutQuint.md"
+          },
+          {
+            "text": "easeOutSine",
+            "link": "/docs/api/@ripl/core/variables/easeOutSine.md"
           },
           {
             "text": "factory",
@@ -2613,6 +2737,10 @@
           {
             "text": "interpolateTransformOrigin",
             "link": "/docs/api/@ripl/core/variables/interpolateTransformOrigin.md"
+          },
+          {
+            "text": "PATTERN_TYPES",
+            "link": "/docs/api/@ripl/core/variables/PATTERN_TYPES.md"
           },
           {
             "text": "scaleRGB",
@@ -2805,6 +2933,10 @@
             "link": "/docs/api/@ripl/core/functions/getPathLength.md"
           },
           {
+            "text": "getPatternTileGeometry",
+            "link": "/docs/api/@ripl/core/functions/getPatternTileGeometry.md"
+          },
+          {
             "text": "getPolygonPoints",
             "link": "/docs/api/@ripl/core/functions/getPolygonPoints.md"
           },
@@ -2863,6 +2995,10 @@
           {
             "text": "isGroup",
             "link": "/docs/api/@ripl/core/functions/isGroup.md"
+          },
+          {
+            "text": "isPatternString",
+            "link": "/docs/api/@ripl/core/functions/isPatternString.md"
           },
           {
             "text": "isPointInBox",
@@ -2947,6 +3083,10 @@
           {
             "text": "parseHSVA",
             "link": "/docs/api/@ripl/core/functions/parseHSVA.md"
+          },
+          {
+            "text": "parsePattern",
+            "link": "/docs/api/@ripl/core/functions/parsePattern.md"
           },
           {
             "text": "parseRGB",
@@ -3101,12 +3241,20 @@
             "link": "/docs/api/@ripl/core/functions/scaleQuantize.md"
           },
           {
+            "text": "scaleRadial",
+            "link": "/docs/api/@ripl/core/functions/scaleRadial.md"
+          },
+          {
             "text": "scaleSequential",
             "link": "/docs/api/@ripl/core/functions/scaleSequential.md"
           },
           {
             "text": "scaleSqrt",
             "link": "/docs/api/@ripl/core/functions/scaleSqrt.md"
+          },
+          {
+            "text": "scaleSymlog",
+            "link": "/docs/api/@ripl/core/functions/scaleSymlog.md"
           },
           {
             "text": "scaleThreshold",
@@ -3139,6 +3287,10 @@
           {
             "text": "serialiseHSVA",
             "link": "/docs/api/@ripl/core/functions/serialiseHSVA.md"
+          },
+          {
+            "text": "serialisePattern",
+            "link": "/docs/api/@ripl/core/functions/serialisePattern.md"
           },
           {
             "text": "serialiseRGB",

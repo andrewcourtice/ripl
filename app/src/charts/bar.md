@@ -316,6 +316,37 @@ createBarChart('#container', {
 });
 ```
 
+### Multiple y-axes
+
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            axis: 0 },
+        { id: 'orders',
+            value: 'orders',
+            label: 'Orders',
+            axis: 1 },
+    ],
+    axis: {
+        y: [
+            { title: 'Revenue ($)' },
+            { position: 'right', title: 'Orders' },
+        ],
+    },
+});
+```
+
+> [!NOTE]
+> Multiple y-axes apply to vertical grouped bars only. Stacked bars share one cumulative value
+> scale, and horizontal bars read categories along the y-axis — both use the primary axis.
+
 ### Horizontal
 
 Swap axes so bars extend horizontally:
@@ -343,6 +374,6 @@ createBarChart('#container', {
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees)
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
 - **`overview`** — `boolean | { size }` — Show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
 - **`borderRadius`** — Bar corner radius (default `2`)

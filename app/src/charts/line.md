@@ -20,6 +20,9 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
             <RiplField label="Time axis" inline>
                 <RiplSwitch v-model="extras.timeAxis" />
             </RiplField>
+            <RiplField label="Multiple axes" inline>
+                <RiplSwitch v-model="extras.multiAxis" />
+            </RiplField>
             <RiplField label="Line type">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
@@ -121,6 +124,7 @@ const seriesMeta = [
 
 const { extras, reset } = useChartExtras({
     timeAxis: false,
+    multiAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
     lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
     lineWidth: 2,
@@ -174,8 +178,25 @@ function generateTimeData(count = 8) {
 let monthData = generateData();
 let timeData = generateTimeData();
 
-function activeData() {
+function baseData() {
     return extras.timeAxis ? timeData : monthData;
+}
+
+// With multiple axes on, push the three series into genuinely different ranges (dollars, a single-
+// digit-ish percentage, and thousands of units) so each of the three independently-scaled y-axes is
+// justified. Single-axis mode leaves the data untouched.
+function activeData() {
+    const rows = baseData();
+
+    if (!extras.multiAxis) {
+        return rows;
+    }
+
+    return rows.map(row => ({
+        ...row,
+        profit: Math.round(row.profit / 15),
+        expenses: row.expenses * 10,
+    }));
 }
 
 function activeKey() {
@@ -185,11 +206,11 @@ function activeKey() {
 function regenerate(count: number) {
     if (extras.timeAxis) {
         timeData = generateTimeData(count);
-        return timeData;
+    } else {
+        monthData = generateData(count);
     }
 
-    monthData = generateData(count);
-    return monthData;
+    return activeData();
 }
 
 function resolveMarker(index: number) {
@@ -212,6 +233,8 @@ function getSeries() {
         marker: resolveMarker(index),
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
+        // Bind each series to its own y-axis when multiple axes are enabled.
+        axis: extras.multiAxis ? index : undefined,
     }));
 }
 
@@ -232,6 +255,30 @@ function buildOptions() {
                 ...options.axis.x,
                 scale: 'time',
             },
+        };
+    }
+
+    // Three independently-scaled y-axes. Each series binds to its own axis (see getSeries); the two
+    // left axes stack outward from the plot and the third sits on the right.
+    if (extras.multiAxis) {
+        options.axis = {
+            ...options.axis,
+            y: [
+                {
+                    ...options.axis.y,
+                    title: 'Revenue ($)',
+                },
+                {
+                    visible: config.axesVisible,
+                    title: 'Profit (%)',
+                    position: 'right',
+                },
+                {
+                    visible: config.axesVisible,
+                    title: 'Expenses (units)',
+                    position: 'left',
+                },
+            ],
         };
     }
 
@@ -420,6 +467,40 @@ createLineChart('#container', {
             label: 'Expenses',
             marker: 'diamond' },
     ],
+});
+```
+
+### Multiple y-axes
+
+Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `axis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            axis: 0 },
+        { id: 'margin',
+            value: 'margin',
+            label: 'Margin',
+            axis: 1 },
+        { id: 'units',
+            value: 'units',
+            label: 'Units',
+            axis: 2 },
+    ],
+    axis: {
+        y: [
+            { title: 'Revenue ($)' },
+            { title: 'Margin (%)',
+                position: 'right' },
+            { title: 'Units',
+                position: 'left' },
+        ],
+    },
 });
 ```
 

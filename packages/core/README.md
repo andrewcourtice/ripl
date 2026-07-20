@@ -15,7 +15,7 @@ npm install @ripl/core
 - **Scene management** — Scenegraph with grouping, property inheritance, and element querying
 - **Animation** — High-performance async transitions with CSS-like keyframe support and custom interpolators
 - **Event system** — Event bubbling, delegation, and stop propagation (mimics the DOM)
-- **Scales** — 12 scale types for data mapping: continuous, discrete, ordinal, band, point, diverging, logarithmic, power, quantile, quantize, threshold, and time
+- **Scales** — 14 scale types for data mapping: continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, and time
 - **Color** — Color parsing, interpolation, and conversion (RGB, HSL, Hex)
 - **Math** — Geometry utilities, vector operations, and easing functions
 - **Zero dependencies** — Fully self-contained

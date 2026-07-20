@@ -37,10 +37,10 @@ notes where this repo now stands after the 1.0 consistency work (see
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
 | Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
-| Multiple / secondary axes | ✅ line/area/scatter/bar | ✅ | ✅ | ✅ | ✅ done (A6; bar = vertical grouped) |
+| Multiple / secondary axes | ✅ N-axis line/area/scatter/bar | ✅ | ✅ | ✅ | ✅ done (true N-axis; bar = vertical grouped) |
 | Stacking / **100%-stacked** | ✅ / ✅ | ✅/✅ | ✅/✅ | ✅/✅ | ✅ done (`stacked: 'percent'`) |
 | Legends (present + interactive toggle) | ✅ | ✅ | ✅ | ✅ | ✅ done (A7 + toggle) |
-| Shared axis-pointer tooltip | ✅ `tooltip.trigger: 'axis'` | 🟡 | ✅ | ✅ | ✅ done (line/area) |
+| Shared axis-pointer tooltip | ✅ `tooltip.trigger: 'axis'` | 🟡 | ✅ | ✅ | ✅ done (line/area/bar/scatter) |
 | Data labels | ✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Annotations** (reference lines / bands / markers) | ❌→✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done (B2) |
 | Zoom / pan / data-zoom | ✅ Navigator | 🟡 (plugin) | ✅ | ✅ | ✅ done |
@@ -146,6 +146,18 @@ Landed in the 1.0 hardening pass (this branch):
   hovered category's title plus one row per active series, runtime-switchable.
 - **Pattern (decal) paint** — `pattern(...)` strings render across canvas and SVG (see
   B3 note below).
+- **True N y-axes** for line, area, scatter, and bar — generalized from the two-axis
+  (left/right) model: each series draws against its bound axis's scale, and same-side axes
+  stack outward via a shared `layoutYAxes`. Single-axis output is byte-identical. (Bar stays
+  vertical-grouped-only; stacked/horizontal share one scale.)
+- **`scaleRadial`** in `@ripl/core` — a clamp-by-default value→radius scale; polar-area,
+  polar-scatter, and radar now share it instead of hand-rolling the mapping.
+- **`scaleSymlog`** in `@ripl/core` + `axis.scale: 'symlog'` — a symmetric-log value axis that
+  handles negatives and zero (linear near zero, log beyond a configurable `constant`).
+- **Expanded easing** — sine/expo/circ/bounce in In/Out/InOut plus the missing Back/Elastic
+  variants (31 built-in eases; every family complete), all resolvable by name from charts.
+- **Shared axis-pointer tooltip for bar and scatter** — bar resolves the nearest category,
+  scatter the nearest point; both list every active series and are runtime-switchable.
 
 ## Migration — breaking changes
 
@@ -209,9 +221,9 @@ colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 
 ### B4 — Smaller primitive gaps (opportunistic)
 
-Radial/angular scale (`scaleRadial`) so polar charts stop hand-rolling; `scaleSymlog`
-and a UTC time scale; an optional d3-format specifier parser; the remaining marker
-symbols (star/cross/wye — circle/square/diamond/triangle shipped); time-series
-**downsampling** (LTTB) for realtime/large data; an expanded easing set
-(sine/expo/circ/bounce); a moving-average/smoothing data transform;
-extending the shared axis-pointer tooltip to bar/scatter.
+A UTC time scale; an angular value→angle scale (`scaleAngular`) so gauge and radial-bar stop
+hand-rolling the value→sweep mapping (the radius-mapping `scaleRadial` has shipped); an optional
+d3-format specifier parser; the remaining marker symbols (star/cross/wye —
+circle/square/diamond/triangle shipped); time-series **downsampling** (LTTB) for realtime/large
+data; a moving-average/smoothing data transform; and a chart-level series option that applies
+decal patterns automatically (e.g. with the colourblind theme).

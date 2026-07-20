@@ -4,7 +4,7 @@ outline: "deep"
 
 # Scales
 
-**Scales** map data values to visual values — turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen. Ripl ships with a full family of scale types covering continuous, categorical, ordinal, logarithmic, quantile, and time-based mappings.
+**Scales** map data values to visual values — turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen. Ripl ships with a full family of scale types covering continuous, categorical, ordinal, logarithmic, symmetric-log, radial, quantile, and time-based mappings.
 
 Every scale is a callable function: pass a domain value in, get a range value out. Scales also expose `inverse` (reverse mapping), `ticks` (nice axis values), `includes` (domain membership), and the original `domain`/`range` arrays.
 
@@ -299,6 +299,27 @@ x(1000); // 600
 const y = scaleLog([1, 1000], [0, 600]);
 ```
 
+## Symmetric Log
+
+A log scale that also handles zero and negative values. It stays approximately linear within a threshold `constant` (default `1`) of zero and compresses logarithmically beyond it, so — unlike a plain log scale — its domain can cross zero. A domain symmetric about zero places zero at the range midpoint.
+
+```ts
+import {
+    scaleSymlog,
+} from '@ripl/web';
+
+const x = scaleSymlog([-100, 100], [0, 400]);
+
+x(-100); // 0
+x(0); // 200 — zero sits at the midpoint
+x(100); // 400
+
+x.inverse(200); // 0
+
+// A larger constant widens the near-zero linear region
+const y = scaleSymlog([-1000, 1000], [0, 400], { constant: 10 });
+```
+
 ## Power
 
 Maps values using an exponential transformation. `exponent: 2` gives a quadratic curve, `exponent: 0.5` gives a square root curve.
@@ -313,6 +334,25 @@ const x = scalePower([0, 100], [0, 400], { exponent: 2 });
 
 // scaleSqrt is a shortcut for exponent 0.5
 const y = scaleSqrt([0, 100], [0, 400]);
+```
+
+## Radial
+
+Maps a numeric magnitude onto a ring radius — typically `[innerRadius, outerRadius]` — for radial and polar charts. It **clamps by default**, so a value beyond the domain lands exactly on the outer ring instead of overshooting it, and a single-value domain `[max]` is treated as `[0, max]`.
+
+```ts
+import {
+    scaleRadial,
+} from '@ripl/web';
+
+const radius = scaleRadial([0, 100], [0, 240]);
+
+radius(0); // 0
+radius(50); // 120
+radius(100); // 240
+radius(200); // 240 — clamped to the outer ring
+
+radius.inverse(120); // 50
 ```
 
 ## Quantile

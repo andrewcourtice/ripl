@@ -38,7 +38,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
 - **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
-- **12 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
+- **14 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
 - **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives** — cube, sphere, cylinder, cone, plane, torus
@@ -432,7 +432,7 @@ Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Toolti
 
 ## Scales
 
-Ripl provides 12 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). Scales expose `inverse`, `ticks`, and `includes` methods (the categorical `scaleOrdinal` maps value → value and exposes just its `domain` and `range`).
+Ripl provides 14 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). Scales expose `inverse`, `ticks`, and `includes` methods (the categorical `scaleOrdinal` maps value → value and exposes just its `domain` and `range`).
 
 ```typescript
 import {
@@ -446,6 +446,8 @@ import {
     scalePower,
     scaleQuantile,
     scaleQuantize,
+    scaleRadial,
+    scaleSymlog,
     scaleThreshold,
     scaleTime,
 } from '@ripl/web';
@@ -492,6 +494,8 @@ scale.bandwidth; // width of each band
 - **`scalePower`** — polynomial mapping with configurable exponent (`scaleSqrt` is the exponent-0.5 shortcut)
 - **`scaleQuantile`** — maps continuous data to discrete quantile bins
 - **`scaleQuantize`** — maps a continuous domain to discrete range values
+- **`scaleRadial`** — maps a numeric magnitude onto a ring radius (clamp-by-default), for radial/polar charts
+- **`scaleSymlog`** — symmetric-log mapping that handles negatives and zero (linear near zero, log beyond a configurable `constant`)
 - **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries
 - **`scaleTime`** — maps `Date` domains to numeric ranges
 

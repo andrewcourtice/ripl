@@ -114,13 +114,14 @@ createLineChart('#container', {
 | `fontColor` | `string` | `'#777777'` | Label color |
 | `title` | `string` | — | Axis title text |
 | `format` | `'number' \| 'percentage' \| 'date' \| 'string' \| Intl.NumberFormat options \| (value) => string` | — | Label formatter |
-| `scale` | `'linear' \| 'log' \| 'pow' \| 'sqrt'` | `'linear'` | Value-axis scale family |
+| `scale` | `'linear' \| 'log' \| 'pow' \| 'sqrt' \| 'symlog'` | `'linear'` | Value-axis scale family |
 | `nice` | `boolean \| number` | `true` | Expand the domain to tick-aligned bounds |
 | `ticks` | `number` | `10` | Target number of ticks and grid lines |
 | `min` | `number` | — | Explicit lower bound (overrides the data extent) |
 | `max` | `number` | — | Explicit upper bound (overrides the data extent) |
 | `base` | `number` | `10` | Log base (when `scale: 'log'`) |
 | `exponent` | `number` | `1` | Power exponent (when `scale: 'pow'`) |
+| `constant` | `number` | `1` | Linear threshold near zero (when `scale: 'symlog'`) |
 
 ### Y-Axis Options
 
@@ -130,7 +131,7 @@ Extends x-axis options with:
 | --- | --- | --- | --- |
 | `position` | `'left' \| 'right'` | `'left'` | Axis position |
 
-Multiple y-axes are supported by passing an array:
+Any number of y-axes are supported by passing an array. Each `position: 'right'` axis sits on the right of the plot and the rest default to the left; axes on the same side stack outward from the plot in array order. Each axis scales independently to the extent of the series bound to it:
 
 <!-- eslint-skip -->
 ```ts
@@ -142,28 +143,30 @@ axis: {
 }
 ```
 
-Line, area, and scatter charts render a **secondary (right-hand) y-axis** when a second entry is supplied; bind a series to it with the series `axis` option (an index or the axis `id`):
+Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `axis` option (an array index or the axis `id`):
 
 <!-- eslint-skip -->
 ```ts
 createLineChart('#container', {
     // …
     series: [
-        { id: 'revenue', label: 'Revenue', value: 'revenue' },
+        { id: 'revenue', label: 'Revenue', value: 'revenue', axis: 0 },
         { id: 'growth', label: 'Growth %', value: 'growth', axis: 1 },
+        { id: 'units', label: 'Units', value: 'units', axis: 2 },
     ],
     axis: {
         y: [
             { title: 'Revenue ($)' },
             { position: 'right', title: 'Growth %' },
+            { position: 'left', title: 'Units' },
         ],
     },
 });
 ```
 
 > [!NOTE]
-> A secondary y-axis is currently rendered by line, area, and scatter charts; bar follows the
-> same `axis.y` array + series `axis` pattern and is on the roadmap.
+> Vertical bar charts support multiple y-axes for grouped (non-stacked) series. Stacked and
+> horizontal bars use the primary axis only, since stacked columns share one cumulative scale.
 
 ### Format Types
 
@@ -227,6 +230,7 @@ createBarChart('#container', {
 | Property | Type | Default | Description |
 | --- | --- | --- | --- |
 | `visible` | `boolean` | `true` | Show/hide tooltips |
+| `trigger` | `'item' \| 'axis'` | `'item'` | `'item'` shows a tooltip for the hovered mark; `'axis'` shows a shared tooltip listing every active series at the hovered position (line, area, bar, scatter) |
 | `padding` | `number \| Partial<Padding>` | `8` | Inner padding |
 | `font` | `string` | `'12px sans-serif'` | Text font |
 | `fontColor` | `string` | `'#FFFFFF'` | Text color |
