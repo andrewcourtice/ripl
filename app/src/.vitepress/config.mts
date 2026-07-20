@@ -370,6 +370,10 @@ export default defineConfig({
                             text: 'Custom Contexts',
                             link: '/docs/core/advanced/custom-contexts',
                         },
+                        {
+                            text: 'Devtools',
+                            link: '/docs/core/advanced/devtools',
+                        },
                     ],
                 },
                 {
