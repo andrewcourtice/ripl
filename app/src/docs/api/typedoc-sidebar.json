@@ -3329,6 +3329,10 @@
     ]
   },
   {
+    "text": "@ripl/devtools",
+    "link": "/docs/api/@ripl/devtools/"
+  },
+  {
     "text": "@ripl/dom",
     "link": "/docs/api/@ripl/dom/",
     "collapsed": true,

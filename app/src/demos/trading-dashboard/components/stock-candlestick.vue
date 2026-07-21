@@ -14,6 +14,10 @@ import {
     createStockChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -70,6 +74,10 @@ function buildChart() {
                 format: (val: number) => `$${val.toFixed(2)}`,
             },
         },
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Stock candlestick',
     });
 
     // Drive the summary cards from the hovered/selected candle; clear back to the latest on leave.

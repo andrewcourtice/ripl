@@ -8,6 +8,10 @@ import {
 } from '@ripl/3d';
 
 import {
+    createDevtools,
+} from '@ripl/devtools';
+
+import {
     createRenderer,
     createScene,
 } from '@ripl/web';
@@ -47,6 +51,9 @@ export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Cam
             fov: 50,
             ...cameraOptions,
         });
+
+        // Self-disposes when the scene is destroyed on the next context change/unmount.
+        createDevtools(ctx, scene, renderer);
 
         camera.flush();
         onReady?.(scene, camera, renderer);

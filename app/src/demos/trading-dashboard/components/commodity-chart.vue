@@ -24,6 +24,10 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import RiplSelect from '../../../.vitepress/components/ripl-select.vue';
 import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
@@ -90,6 +94,10 @@ function buildChart() {
             left: 20,
         },
         series,
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Commodity chart',
     });
 
     chart.on('markerenter', event => {

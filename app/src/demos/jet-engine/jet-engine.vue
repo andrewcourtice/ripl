@@ -50,6 +50,10 @@ import {
 } from '@ripl/3d';
 
 import {
+    createDevtools,
+} from '@ripl/devtools';
+
+import {
     createRenderer,
     createScene,
     easeInOutCubic,
@@ -338,6 +342,10 @@ onMounted(() => {
         debug: {
             fps: true,
         },
+    });
+
+    createDevtools(context, scene!, renderer, {
+        label: 'Jet engine',
     });
 
     renderer.on('tick', (event) => {

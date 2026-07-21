@@ -152,8 +152,10 @@ export class Chart<
     TEventMap extends EventMap = EventMap
 > extends EventBus<TEventMap> {
 
-    protected scene: Scene;
-    protected renderer: Renderer;
+    /** The scene the chart renders into. Exposed for inspection and tooling (e.g. devtools binding). */
+    public readonly scene: Scene;
+    /** The renderer driving the chart's animation loop. Exposed for inspection and tooling (e.g. devtools binding). */
+    public readonly renderer: Renderer;
     protected autoRender: boolean;
     protected animationOptions: ChartAnimationOptions;
     protected titleOptions?: ChartTitleOptions;
@@ -173,6 +175,11 @@ export class Chart<
     private _hiddenItems: Set<string> = new Set();
     private _highlightGroups: Array<{ group: Group;
         owners: string | string[]; }> = [];
+
+    /** The rendering context the chart's scene draws into. */
+    public get context(): Context {
+        return this.scene.context;
+    }
 
     constructor(target: Context | string | HTMLElement, options?: TOptions) {
         const {

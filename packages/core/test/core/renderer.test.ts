@@ -116,6 +116,70 @@ describe('Renderer', () => {
         renderer.destroy();
     });
 
+    test('Should list the events a renderer can emit', () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        expect(renderer.$events).toEqual(['destroyed', 'start', 'stop', 'tick']);
+
+        renderer.destroy();
+    });
+
+    test('Should expose resolved debug options', () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+            debug: {
+                fps: true,
+            },
+        });
+
+        expect(renderer.debug).toEqual({
+            fps: true,
+            elementCount: false,
+            boundingBoxes: false,
+        });
+
+        renderer.destroy();
+    });
+
+    test('Should apply runtime debug option changes', () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        renderer.debug = true;
+        expect(renderer.debug).toEqual({
+            fps: true,
+            elementCount: true,
+            boundingBoxes: true,
+        });
+
+        renderer.debug = {
+            elementCount: true,
+        };
+        expect(renderer.debug).toEqual({
+            fps: false,
+            elementCount: true,
+            boundingBoxes: false,
+        });
+
+        renderer.debug = false;
+        expect(renderer.debug).toEqual({
+            fps: false,
+            elementCount: false,
+            boundingBoxes: false,
+        });
+
+        renderer.destroy();
+    });
+
     test('Should complete a basic transition', async () => {
         const { scene } = createMockScene();
         const renderer = new Renderer(scene, {

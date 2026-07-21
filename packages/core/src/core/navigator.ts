@@ -152,6 +152,18 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         };
     }
 
+    /** The event types a navigator can emit. See {@link EventBus.$events}. */
+    public get $events(): (keyof NavigatorEventMap)[] {
+        return [
+            'brush',
+            'brushend',
+            'change',
+            'destroyed',
+            'pan',
+            'zoom',
+        ];
+    }
+
     /** The current view transform (a copy — mutating it does not affect the navigator). */
     public get transform(): NavigatorTransform {
         return {

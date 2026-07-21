@@ -112,6 +112,21 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     protected saveDepth = 0;
     private _groupDepthStack: number[] = [];
 
+    /** The event types a context can emit. See {@link EventBus.$events}. */
+    public get $events(): (keyof ContextEventMap)[] {
+        return [
+            'click',
+            'destroyed',
+            'drag',
+            'dragend',
+            'dragstart',
+            'mouseenter',
+            'mouseleave',
+            'mousemove',
+            'resize',
+        ];
+    }
+
     /** The element currently being rendered; setting a non-abstract element also records it in {@link Context.renderedElements}. */
     public get currentRenderElement() {
         return this.renderElement;

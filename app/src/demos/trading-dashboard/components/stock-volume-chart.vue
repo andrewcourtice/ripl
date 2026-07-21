@@ -16,6 +16,10 @@ import {
     createBarChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -72,6 +76,10 @@ function buildChart() {
                 label: 'Volume',
             },
         ],
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Stock volume chart',
     });
 
     chart.on('barenter', event => {

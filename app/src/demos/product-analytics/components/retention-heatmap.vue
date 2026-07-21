@@ -16,6 +16,10 @@ import {
     createHeatmapChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -78,6 +82,10 @@ function buildChart() {
 
     chart.on('cellenter', event => {
         hovered.value = describe(event.data.xLabel, event.data.yLabel, event.data.value);
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Retention heatmap',
     });
     chart.on('cellleave', () => {
         hovered.value = '';

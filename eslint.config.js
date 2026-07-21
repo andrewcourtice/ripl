@@ -468,6 +468,11 @@ export default tseslint.config(
             }],
             '@stylistic/member-delimiter-style': 'error',
             'ripl/import-export-spacing': 'error',
+
+            // SFC block order: <template> first, then <script>, then <style>.
+            'vue/block-order': ['error', {
+                order: ['template', 'script', 'style'],
+            }],
         },
     },
 
@@ -482,6 +487,19 @@ export default tseslint.config(
                 scene: 'readonly',
                 renderer: 'readonly',
             },
+        },
+    },
+
+    // Prefer keyed object-lookup dispatch over `switch` in library and extension
+    // source (see AGENTS.md → Control Flow). The docs site under `app/` is exempt.
+    {
+        name: 'ripl/no-switch',
+        files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        rules: {
+            'no-restricted-syntax': ['error', {
+                selector: 'SwitchStatement',
+                message: 'Use a keyed object-lookup dispatch instead of switch (see AGENTS.md → Control Flow).',
+            }],
         },
     }
 );

@@ -48,6 +48,10 @@ import {
     createContext,
 } from '@ripl/3d';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import type {
     Context3D,
     Shape3D,
@@ -220,6 +224,10 @@ onMounted(() => {
     renderer = createRenderer(scene, {
         autoStart: true,
         autoStop: false,
+    });
+
+    createDevtools(context, scene, renderer, {
+        label: 'Piston mechanism',
     });
 
     renderer.on('tick', (event) => {
