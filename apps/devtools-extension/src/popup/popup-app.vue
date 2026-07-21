@@ -1,3 +1,31 @@
+<template>
+    <div class="popup-app">
+        <header class="popup-app__header">
+            <svg class="popup-app__logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
+                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
+            </svg>
+            <span class="popup-app__title">Ripl Devtools</span>
+        </header>
+        <ul v-if="contextList.length" class="popup-app__list">
+            <li v-for="context of contextList" :key="context.contextId" class="popup-app__item">
+                <span class="popup-app__badge" :data-type="context.contextType">{{ context.contextType }}</span>
+                <span class="popup-app__label" :title="context.label">{{ context.label }}</span>
+                <span class="popup-app__size">{{ Math.round(context.width) }}×{{ Math.round(context.height) }}</span>
+                <span class="popup-app__chips">
+                    <span v-if="context.hasScene" class="popup-app__chip">scene</span>
+                    <span v-if="context.hasRenderer" class="popup-app__chip">renderer</span>
+                </span>
+            </li>
+        </ul>
+        <div v-else class="popup-app__empty">
+            <svg class="popup-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
+                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
+            </svg>
+            <p>No Ripl detected on this page</p>
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import {
     RIPL_LOGO_PATH,
@@ -53,34 +81,6 @@ onMounted(() => {
     });
 });
 </script>
-
-<template>
-    <div class="popup-app">
-        <header class="popup-app__header">
-            <svg class="popup-app__logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
-                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
-            </svg>
-            <span class="popup-app__title">Ripl Devtools</span>
-        </header>
-        <ul v-if="contextList.length" class="popup-app__list">
-            <li v-for="context of contextList" :key="context.contextId" class="popup-app__item">
-                <span class="popup-app__badge" :data-type="context.contextType">{{ context.contextType }}</span>
-                <span class="popup-app__label" :title="context.label">{{ context.label }}</span>
-                <span class="popup-app__size">{{ Math.round(context.width) }}×{{ Math.round(context.height) }}</span>
-                <span class="popup-app__chips">
-                    <span v-if="context.hasScene" class="popup-app__chip">scene</span>
-                    <span v-if="context.hasRenderer" class="popup-app__chip">renderer</span>
-                </span>
-            </li>
-        </ul>
-        <div v-else class="popup-app__empty">
-            <svg class="popup-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
-                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
-            </svg>
-            <p>No Ripl detected on this page</p>
-        </div>
-    </div>
-</template>
 
 <style>
 :root {

@@ -1,3 +1,39 @@
+<template>
+    <section class="context-section">
+        <h3 class="context-section__heading">Context</h3>
+        <div class="context-section__rows">
+            <div class="context-section__row">
+                <span class="context-section__label">Type</span>
+                <span class="context-section__badge" :data-type="context.contextType">{{ context.contextType }}</span>
+            </div>
+            <div class="context-section__row">
+                <span class="context-section__label">Size</span>
+                <span>{{ Math.round(context.width) }} × {{ Math.round(context.height) }}</span>
+            </div>
+            <div class="context-section__row">
+                <span class="context-section__label">Bound</span>
+                <span class="context-section__chips">
+                    <span class="context-section__chip" :class="{ 'context-section__chip--on': context.hasScene }">scene</span>
+                    <span class="context-section__chip" :class="{ 'context-section__chip--on': context.hasRenderer }">renderer</span>
+                </span>
+            </div>
+            <template v-if="context.hasRenderer">
+                <label v-for="toggle of toggles" :key="toggle.key" class="context-section__row context-section__toggle">
+                    <span class="context-section__label">{{ toggle.label }}</span>
+                    <span class="context-section__switch">
+                        <input
+                            type="checkbox"
+                            :checked="debug[toggle.key]"
+                            @change="onToggle(toggle.key, $event)"
+                        >
+                        <span class="context-section__slider"></span>
+                    </span>
+                </label>
+            </template>
+        </div>
+    </section>
+</template>
+
 <script setup lang="ts">
 import {
     useDevtoolsStore,
@@ -54,42 +90,6 @@ function onToggle(key: keyof RendererDebugInfo, event: Event): void {
     setDebugFlag(key, (event.target as HTMLInputElement).checked);
 }
 </script>
-
-<template>
-    <section class="context-section">
-        <h3 class="context-section__heading">Context</h3>
-        <div class="context-section__rows">
-            <div class="context-section__row">
-                <span class="context-section__label">Type</span>
-                <span class="context-section__badge" :data-type="context.contextType">{{ context.contextType }}</span>
-            </div>
-            <div class="context-section__row">
-                <span class="context-section__label">Size</span>
-                <span>{{ Math.round(context.width) }} × {{ Math.round(context.height) }}</span>
-            </div>
-            <div class="context-section__row">
-                <span class="context-section__label">Bound</span>
-                <span class="context-section__chips">
-                    <span class="context-section__chip" :class="{ 'context-section__chip--on': context.hasScene }">scene</span>
-                    <span class="context-section__chip" :class="{ 'context-section__chip--on': context.hasRenderer }">renderer</span>
-                </span>
-            </div>
-            <template v-if="context.hasRenderer">
-                <label v-for="toggle of toggles" :key="toggle.key" class="context-section__row context-section__toggle">
-                    <span class="context-section__label">{{ toggle.label }}</span>
-                    <span class="context-section__switch">
-                        <input
-                            type="checkbox"
-                            :checked="debug[toggle.key]"
-                            @change="onToggle(toggle.key, $event)"
-                        >
-                        <span class="context-section__slider"></span>
-                    </span>
-                </label>
-            </template>
-        </div>
-    </section>
-</template>
 
 <style scoped>
 .context-section {

@@ -1,3 +1,38 @@
+<template>
+    <div
+        class="tree-node"
+        :class="{ 'tree-node--selected': selected }"
+        :style="{ paddingLeft: indent }"
+        @click="emit('select')"
+        @dblclick="emit('toggle')"
+        @mouseenter="emit('hover')"
+        @mouseleave="emit('leave')"
+    >
+        <span
+            v-if="row.hasChildren && row.kind !== 'close'"
+            class="tree-node__chevron"
+            @click.stop="emit('toggle')"
+        >{{ row.kind === 'open' ? '▼' : '▶' }}</span>
+        <span v-else class="tree-node__chevron tree-node__chevron--spacer"></span>
+        <span class="tree-node__label">
+            <template v-if="row.kind === 'close'">
+                <span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
+            </template>
+            <template v-else>
+                <span class="tree-node__bracket">&lt;</span><span class="tree-node__tag">{{ row.node.elementType }}</span><template
+                    v-for="attribute of attributes"
+                    :key="attribute.key"
+                ><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__attr-name">{{ attribute.key }}</span><span class="tree-node__bracket">="</span><span class="tree-node__attr-value">{{ attribute.value }}</span><span class="tree-node__bracket">"</span></template>
+                <span v-if="row.kind === 'open'" class="tree-node__bracket">&gt;</span>
+                <template v-else-if="row.hasChildren">
+                    <span class="tree-node__bracket">&gt;</span><span class="tree-node__ellipsis">…</span><span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
+                </template>
+                <template v-else><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__bracket">/&gt;</span></template>
+            </template>
+        </span>
+    </div>
+</template>
+
 <script setup lang="ts">
 import {
     getNodeAttributes,
@@ -33,41 +68,6 @@ const attributes = computed(() => {
 
 const indent = computed(() => `${props.row.depth * 14 + 6}px`);
 </script>
-
-<template>
-    <div
-        class="tree-node"
-        :class="{ 'tree-node--selected': selected }"
-        :style="{ paddingLeft: indent }"
-        @click="emit('select')"
-        @dblclick="emit('toggle')"
-        @mouseenter="emit('hover')"
-        @mouseleave="emit('leave')"
-    >
-        <span
-            v-if="row.hasChildren && row.kind !== 'close'"
-            class="tree-node__chevron"
-            @click.stop="emit('toggle')"
-        >{{ row.kind === 'open' ? '▼' : '▶' }}</span>
-        <span v-else class="tree-node__chevron tree-node__chevron--spacer"></span>
-        <span class="tree-node__label">
-            <template v-if="row.kind === 'close'">
-                <span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
-            </template>
-            <template v-else>
-                <span class="tree-node__bracket">&lt;</span><span class="tree-node__tag">{{ row.node.elementType }}</span><template
-                    v-for="attribute of attributes"
-                    :key="attribute.key"
-                ><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__attr-name">{{ attribute.key }}</span><span class="tree-node__bracket">="</span><span class="tree-node__attr-value">{{ attribute.value }}</span><span class="tree-node__bracket">"</span></template>
-                <span v-if="row.kind === 'open'" class="tree-node__bracket">&gt;</span>
-                <template v-else-if="row.hasChildren">
-                    <span class="tree-node__bracket">&gt;</span><span class="tree-node__ellipsis">…</span><span class="tree-node__bracket">&lt;/</span><span class="tree-node__tag">{{ row.node.elementType }}</span><span class="tree-node__bracket">&gt;</span>
-                </template>
-                <template v-else><span class="tree-node__space">{{ ' ' }}</span><span class="tree-node__bracket">/&gt;</span></template>
-            </template>
-        </span>
-    </div>
-</template>
 
 <style scoped>
 .tree-node {

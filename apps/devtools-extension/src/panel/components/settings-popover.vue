@@ -1,3 +1,23 @@
+<template>
+    <div ref="root" class="settings-popover">
+        <div class="settings-popover__title">Settings</div>
+        <label class="settings-popover__field">
+            <span>Theme</span>
+            <select v-model="theme">
+                <option value="auto">Auto</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+        </label>
+        <label class="settings-popover__field">
+            <span>Poll rate</span>
+            <select v-model.number="pollRate">
+                <option v-for="rate of POLL_RATES" :key="rate" :value="rate">{{ rate }} Hz</option>
+            </select>
+        </label>
+    </div>
+</template>
+
 <script setup lang="ts">
 import {
     POLL_RATES,
@@ -30,26 +50,6 @@ function onDocumentPointerDown(event: PointerEvent): void {
 onMounted(() => document.addEventListener('pointerdown', onDocumentPointerDown, true));
 onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocumentPointerDown, true));
 </script>
-
-<template>
-    <div ref="root" class="settings-popover">
-        <div class="settings-popover__title">Settings</div>
-        <label class="settings-popover__field">
-            <span>Theme</span>
-            <select v-model="theme">
-                <option value="auto">Auto</option>
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-            </select>
-        </label>
-        <label class="settings-popover__field">
-            <span>Poll rate</span>
-            <select v-model.number="pollRate">
-                <option v-for="rate of POLL_RATES" :key="rate" :value="rate">{{ rate }} Hz</option>
-            </select>
-        </label>
-    </div>
-</template>
 
 <style scoped>
 .settings-popover {

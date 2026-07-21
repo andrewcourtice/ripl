@@ -1,3 +1,15 @@
+<template>
+    <div class="properties-panel">
+        <ContextSection v-if="activeContext" :context="activeContext" />
+        <section class="properties-panel__section properties-panel__section--grow">
+            <h3 class="properties-panel__heading">Properties</h3>
+            <PropertyGrid v-if="store.selection.value" />
+            <div v-else class="properties-panel__empty">Select an element</div>
+        </section>
+        <EventsSection v-if="store.selection.value" />
+    </div>
+</template>
+
 <script setup lang="ts">
 import ContextSection from './context-section.vue';
 import EventsSection from './events-section.vue';
@@ -25,18 +37,6 @@ const activeContext = computed(() => {
     return first.done ? undefined : first.value;
 });
 </script>
-
-<template>
-    <div class="properties-panel">
-        <ContextSection v-if="activeContext" :context="activeContext" />
-        <section class="properties-panel__section properties-panel__section--grow">
-            <h3 class="properties-panel__heading">Properties</h3>
-            <PropertyGrid v-if="store.selection.value" />
-            <div v-else class="properties-panel__empty">Select an element</div>
-        </section>
-        <EventsSection v-if="store.selection.value" />
-    </div>
-</template>
 
 <style scoped>
 .properties-panel {

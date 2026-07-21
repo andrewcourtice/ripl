@@ -1,3 +1,18 @@
+<template>
+    <section class="events-section">
+        <h3 class="events-section__heading">Events</h3>
+        <ul class="events-section__list">
+            <li v-for="event of events" :key="event.type" class="events-section__item">
+                <span
+                    class="events-section__dot"
+                    :class="{ 'events-section__dot--active': event.hasListeners }"
+                ></span>
+                <span class="events-section__type">{{ event.type }}</span>
+            </li>
+        </ul>
+    </section>
+</template>
+
 <script setup lang="ts">
 import {
     useDevtoolsStore,
@@ -13,21 +28,6 @@ const store = useDevtoolsStore();
 // element's own `$events`, so custom EventBus subclasses surface their events too.
 const events = computed(() => store.selectedDetail.value?.events ?? []);
 </script>
-
-<template>
-    <section class="events-section">
-        <h3 class="events-section__heading">Events</h3>
-        <ul class="events-section__list">
-            <li v-for="event of events" :key="event.type" class="events-section__item">
-                <span
-                    class="events-section__dot"
-                    :class="{ 'events-section__dot--active': event.hasListeners }"
-                ></span>
-                <span class="events-section__type">{{ event.type }}</span>
-            </li>
-        </ul>
-    </section>
-</template>
 
 <style scoped>
 .events-section {

@@ -1,3 +1,22 @@
+<template>
+    <div ref="container" class="split-pane">
+        <div class="split-pane__pane" :style="{ width: `${ratio * 100}%` }">
+            <slot name="left" />
+        </div>
+        <div
+            class="split-pane__divider"
+            :class="{ 'split-pane__divider--active': dragging }"
+            @pointerdown="onPointerDown"
+            @pointermove="onPointerMove"
+            @pointerup="onPointerUp"
+            @pointercancel="onPointerUp"
+        ></div>
+        <div class="split-pane__pane split-pane__pane--fill">
+            <slot name="right" />
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import {
     ref,
@@ -48,25 +67,6 @@ function onPointerUp(): void {
     localStorage.setItem(STORAGE_KEY, ratio.value.toFixed(4));
 }
 </script>
-
-<template>
-    <div ref="container" class="split-pane">
-        <div class="split-pane__pane" :style="{ width: `${ratio * 100}%` }">
-            <slot name="left" />
-        </div>
-        <div
-            class="split-pane__divider"
-            :class="{ 'split-pane__divider--active': dragging }"
-            @pointerdown="onPointerDown"
-            @pointermove="onPointerMove"
-            @pointerup="onPointerUp"
-            @pointercancel="onPointerUp"
-        ></div>
-        <div class="split-pane__pane split-pane__pane--fill">
-            <slot name="right" />
-        </div>
-    </div>
-</template>
 
 <style scoped>
 .split-pane {

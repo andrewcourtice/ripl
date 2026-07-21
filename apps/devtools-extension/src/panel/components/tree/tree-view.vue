@@ -1,3 +1,26 @@
+<template>
+    <div
+        ref="viewport"
+        class="tree-view"
+        tabindex="0"
+        @scroll.passive="virtualList.onScroll"
+        @keydown="onKeydown"
+    >
+        <div class="tree-view__spacer" :style="{ height: `${virtualList.range.value.topPad}px` }"></div>
+        <TreeNode
+            v-for="row of visibleRows"
+            :key="row.key"
+            :row="row"
+            :selected="isSelected(row)"
+            @select="selectRow(row)"
+            @toggle="toggleRow(row)"
+            @hover="hoverRow(row)"
+            @leave="leaveRow"
+        />
+        <div class="tree-view__spacer" :style="{ height: `${virtualList.range.value.bottomPad}px` }"></div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import TreeNode from './tree-node.vue';
 
@@ -160,29 +183,6 @@ function onKeydown(event: KeyboardEvent): void {
     }
 }
 </script>
-
-<template>
-    <div
-        ref="viewport"
-        class="tree-view"
-        tabindex="0"
-        @scroll.passive="virtualList.onScroll"
-        @keydown="onKeydown"
-    >
-        <div class="tree-view__spacer" :style="{ height: `${virtualList.range.value.topPad}px` }"></div>
-        <TreeNode
-            v-for="row of visibleRows"
-            :key="row.key"
-            :row="row"
-            :selected="isSelected(row)"
-            @select="selectRow(row)"
-            @toggle="toggleRow(row)"
-            @hover="hoverRow(row)"
-            @leave="leaveRow"
-        />
-        <div class="tree-view__spacer" :style="{ height: `${virtualList.range.value.bottomPad}px` }"></div>
-    </div>
-</template>
 
 <style scoped>
 .tree-view {

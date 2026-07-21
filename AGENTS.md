@@ -568,6 +568,7 @@ Reusable UI components live in `app/src/.vitepress/components/` and are globally
 
 ### Conventions
 
+- **SFC block order** — Every Vue single-file component (across the whole repo) must order its blocks `<template>` first, then `<script>`, then `<style>`. Enforced by ESLint (`vue/block-order`).
 - **Scoped CSS** — All component-specific styles must live in their Vue component's `<style scoped>` block, not in `theme/style.scss`
 - **Markdown files** — Use Vue component tags (e.g. `<RiplButton>`, `<RiplSwitch v-model="x" label="Y" />`) instead of raw HTML with CSS classes
 - **Icons** — Use `lucide-vue-next` for icons. Render as slot content: `<RiplButton><RotateCcw :size="14" /></RiplButton>`

@@ -468,6 +468,11 @@ export default tseslint.config(
             }],
             '@stylistic/member-delimiter-style': 'error',
             'ripl/import-export-spacing': 'error',
+
+            // SFC block order: <template> first, then <script>, then <style>.
+            'vue/block-order': ['error', {
+                order: ['template', 'script', 'style'],
+            }],
         },
     },
 

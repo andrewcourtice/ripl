@@ -1,3 +1,26 @@
+<template>
+    <div class="panel-app">
+        <PanelHeader />
+        <SplitPane v-if="store.hasContexts.value" class="panel-app__body">
+            <template #left>
+                <TreeView />
+            </template>
+            <template #right>
+                <PropertiesPanel />
+            </template>
+        </SplitPane>
+        <div v-else class="panel-app__empty">
+            <svg class="panel-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
+                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
+            </svg>
+            <p class="panel-app__empty-title">No Ripl detected</p>
+            <p class="panel-app__empty-hint">
+                Is <code>@ripl/devtools</code> installed and <code>createDevtools</code> called?
+            </p>
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import PanelHeader from './components/panel-header.vue';
 import PropertiesPanel from './components/properties/properties-panel.vue';
@@ -49,29 +72,6 @@ watchEffect(onCleanup => {
     onCleanup(() => window.clearInterval(handle));
 });
 </script>
-
-<template>
-    <div class="panel-app">
-        <PanelHeader />
-        <SplitPane v-if="store.hasContexts.value" class="panel-app__body">
-            <template #left>
-                <TreeView />
-            </template>
-            <template #right>
-                <PropertiesPanel />
-            </template>
-        </SplitPane>
-        <div v-else class="panel-app__empty">
-            <svg class="panel-app__empty-logo" :viewBox="RIPL_LOGO_VIEWBOX" aria-hidden="true">
-                <path :d="RIPL_LOGO_PATH" fill="currentColor" />
-            </svg>
-            <p class="panel-app__empty-title">No Ripl detected</p>
-            <p class="panel-app__empty-hint">
-                Is <code>@ripl/devtools</code> installed and <code>createDevtools</code> called?
-            </p>
-        </div>
-    </div>
-</template>
 
 <style scoped>
 .panel-app {

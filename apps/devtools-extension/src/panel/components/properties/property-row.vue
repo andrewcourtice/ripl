@@ -1,3 +1,61 @@
+<template>
+    <div class="property-row" :class="{ 'property-row--readonly': !property.editable }">
+        <span class="property-row__key" :title="property.key">{{ property.key }}</span>
+        <div class="property-row__editor">
+            <input
+                v-if="property.valueType === 'number'"
+                type="number"
+                step="any"
+                :value="displayValue"
+                :disabled="!property.editable"
+                @focus="onFocus"
+                @input="onInput"
+                @blur="onBlur"
+                @change="commitText"
+                @keydown.enter="onEnter"
+            >
+            <input
+                v-else-if="property.valueType === 'boolean'"
+                type="checkbox"
+                :checked="property.value === true"
+                :disabled="!property.editable"
+                @change="commitCheckbox"
+            >
+            <template v-else-if="property.valueType === 'color'">
+                <span class="property-row__swatch" :style="{ background: swatchColor }"></span>
+                <input
+                    type="text"
+                    spellcheck="false"
+                    :value="displayValue"
+                    :disabled="!property.editable"
+                    @focus="onFocus"
+                    @input="onInput"
+                    @blur="onBlur"
+                    @change="commitText"
+                    @keydown.enter="onEnter"
+                >
+            </template>
+            <span
+                v-else-if="property.valueType === 'opaque'"
+                class="property-row__opaque"
+                :title="property.preview"
+            >{{ property.preview ?? '…' }}</span>
+            <input
+                v-else
+                type="text"
+                spellcheck="false"
+                :value="displayValue"
+                :disabled="!property.editable"
+                @focus="onFocus"
+                @input="onInput"
+                @blur="onBlur"
+                @change="commitText"
+                @keydown.enter="onEnter"
+            >
+        </div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import {
     formatNumber,
@@ -109,64 +167,6 @@ function onEnter(event: KeyboardEvent): void {
     (event.target as HTMLInputElement).blur();
 }
 </script>
-
-<template>
-    <div class="property-row" :class="{ 'property-row--readonly': !property.editable }">
-        <span class="property-row__key" :title="property.key">{{ property.key }}</span>
-        <div class="property-row__editor">
-            <input
-                v-if="property.valueType === 'number'"
-                type="number"
-                step="any"
-                :value="displayValue"
-                :disabled="!property.editable"
-                @focus="onFocus"
-                @input="onInput"
-                @blur="onBlur"
-                @change="commitText"
-                @keydown.enter="onEnter"
-            >
-            <input
-                v-else-if="property.valueType === 'boolean'"
-                type="checkbox"
-                :checked="property.value === true"
-                :disabled="!property.editable"
-                @change="commitCheckbox"
-            >
-            <template v-else-if="property.valueType === 'color'">
-                <span class="property-row__swatch" :style="{ background: swatchColor }"></span>
-                <input
-                    type="text"
-                    spellcheck="false"
-                    :value="displayValue"
-                    :disabled="!property.editable"
-                    @focus="onFocus"
-                    @input="onInput"
-                    @blur="onBlur"
-                    @change="commitText"
-                    @keydown.enter="onEnter"
-                >
-            </template>
-            <span
-                v-else-if="property.valueType === 'opaque'"
-                class="property-row__opaque"
-                :title="property.preview"
-            >{{ property.preview ?? '…' }}</span>
-            <input
-                v-else
-                type="text"
-                spellcheck="false"
-                :value="displayValue"
-                :disabled="!property.editable"
-                @focus="onFocus"
-                @input="onInput"
-                @blur="onBlur"
-                @change="commitText"
-                @keydown.enter="onEnter"
-            >
-        </div>
-    </div>
-</template>
 
 <style scoped>
 .property-row {

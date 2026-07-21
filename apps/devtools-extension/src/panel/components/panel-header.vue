@@ -1,18 +1,3 @@
-<script setup lang="ts">
-import SettingsPopover from './settings-popover.vue';
-
-import {
-    RIPL_LOGO_PATH,
-    RIPL_LOGO_VIEWBOX,
-} from '../../shared/logo';
-
-import {
-    ref,
-} from 'vue';
-
-const settingsOpen = ref(false);
-</script>
-
 <template>
     <header class="panel-header">
         <div class="panel-header__brand">
@@ -38,6 +23,21 @@ const settingsOpen = ref(false);
         </div>
     </header>
 </template>
+
+<script setup lang="ts">
+import SettingsPopover from './settings-popover.vue';
+
+import {
+    RIPL_LOGO_PATH,
+    RIPL_LOGO_VIEWBOX,
+} from '../../shared/logo';
+
+import {
+    ref,
+} from 'vue';
+
+const settingsOpen = ref(false);
+</script>
 
 <style scoped>
 .panel-header {

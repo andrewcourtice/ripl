@@ -1,3 +1,18 @@
+<template>
+    <div class="property-grid">
+        <template v-if="detail">
+            <PropertyRow
+                v-for="property of detail.properties"
+                :key="property.key"
+                :property="property"
+                @commit="commit"
+            />
+            <div v-if="!detail.properties.length" class="property-grid__empty">No properties set</div>
+        </template>
+        <div v-else class="property-grid__empty">Loading…</div>
+    </div>
+</template>
+
 <script setup lang="ts">
 import PropertyRow from './property-row.vue';
 
@@ -17,21 +32,6 @@ function commit(key: string, value: number | string | boolean | number[]): void 
     store.setSelectedProperty(key, value);
 }
 </script>
-
-<template>
-    <div class="property-grid">
-        <template v-if="detail">
-            <PropertyRow
-                v-for="property of detail.properties"
-                :key="property.key"
-                :property="property"
-                @commit="commit"
-            />
-            <div v-if="!detail.properties.length" class="property-grid__empty">No properties set</div>
-        </template>
-        <div v-else class="property-grid__empty">Loading…</div>
-    </div>
-</template>
 
 <style scoped>
 .property-grid {
