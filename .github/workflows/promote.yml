@@ -1,0 +1,59 @@
+name: Promote release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to promote (e.g. 1.0.0-beta.4)
+        required: true
+        type: string
+      dist_tag:
+        description: Target dist-tag
+        required: true
+        default: latest
+        type: choice
+        options:
+          - latest
+          - next
+
+concurrency:
+  group: promote-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  promote:
+    name: Promote ${{ inputs.version }} -> ${{ inputs.dist_tag }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      # Move an already-staged version to the target dist-tag (default `latest`)
+      # for every public package. This is a pointer move, not a re-publish.
+      - name: Promote packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          for dir in packages/*/; do
+            [ -f "${dir}package.json" ] || continue
+            name=$(node -p "require('./${dir}package.json').name || ''")
+            private=$(node -p "require('./${dir}package.json').private === true")
+            if [ "$private" = "true" ] || [ -z "$name" ]; then
+              echo "Skipping ${dir} (private or unnamed)"
+              continue
+            fi
+            echo "Promoting $name@$version -> ${{ inputs.dist_tag }}"
+            npm dist-tag add "$name@$version" "${{ inputs.dist_tag }}"
+          done

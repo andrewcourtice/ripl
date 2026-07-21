@@ -11,13 +11,12 @@ concurrency:
 
 permissions:
   contents: write        # create the GitHub Release for the tag
-  id-token: write        # OIDC: tokenless npm trusted publishing + provenance
+  id-token: write        # build provenance
 
 jobs:
   release:
-    name: Publish to npm
+    name: 'Stage publish to npm (dist-tag: next)'
     runs-on: ubuntu-latest
-    # environment: npm-publish   # optional hardening: gate publishes behind a protected environment (must match the trusted-publisher config)
 
     steps:
       - name: Checkout tag
@@ -29,11 +28,6 @@ jobs:
           node-version: 22
           cache: yarn
           registry-url: https://registry.npmjs.org
-
-      - name: Upgrade npm (OIDC trusted publishing needs >= 11.5.1)
-        run: |
-          npm install -g npm@latest
-          npm --version
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -47,27 +41,14 @@ jobs:
       - name: Test
         run: yarn test
 
-      - name: Publish packages (Yarn pack -> npm publish, OIDC + provenance)
-        run: |
-          set -euo pipefail
-          for dir in packages/*/; do
-            [ -f "${dir}package.json" ] || continue
-            name=$(node -p "require('./${dir}package.json').name || ''")
-            version=$(node -p "require('./${dir}package.json').version || ''")
-            private=$(node -p "require('./${dir}package.json').private === true")
-            if [ "$private" = "true" ] || [ -z "$name" ]; then
-              echo "Skipping ${dir} (private or unnamed)"
-              continue
-            fi
-            if npm view "$name@$version" version > /dev/null 2>&1; then
-              echo "$name@$version already on npm, skipping"
-              continue
-            fi
-            echo "Packing $name@$version (Yarn rewrites workspace:^ -> ^$version)"
-            yarn workspace "$name" pack --out /tmp/ripl-pkg.tgz
-            echo "Publishing $name@$version"
-            npm publish /tmp/ripl-pkg.tgz --provenance --access public
-          done
+      # Stage the release: publish every un-published version under the `next`
+      # dist-tag. `latest` is untouched, so `npm install @ripl/*` is unaffected
+      # until the Promote workflow moves this version to `latest`.
+      - name: 'Stage publish (dist-tag: next)'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: yarn lerna publish from-package --yes --dist-tag next
 
       - name: Create GitHub Release
         env:

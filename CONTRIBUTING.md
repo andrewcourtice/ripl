@@ -204,14 +204,16 @@ Ensure your changes pass locally before pushing to avoid CI failures.
 
 ## Releasing
 
-Releases are **tag-triggered**. Bumping the version locally with Lerna pushes a `vX.Y.Z` tag, and the [Release workflow](.github/workflows/release.yml) builds and publishes every public `@ripl/*` package to npm.
+Releases are **tag-triggered** and **staged**. Bumping the version locally with Lerna pushes a `vX.Y.Z` tag, and the [Release workflow](.github/workflows/release.yml) builds and publishes every public `@ripl/*` package to npm under the **`next`** dist-tag — live on the registry but not what a plain `npm install` resolves.
 
 ```bash
 # from an up-to-date main branch
 yarn release   # lerna version --force-publish: choose a bump, then it commits, tags, and pushes
 ```
 
-Publishing is **tokenless**: the workflow authenticates to npm via GitHub Actions OIDC ([trusted publishing](https://docs.npmjs.com/trusted-publishers)) and attaches build provenance, so no `NPM_TOKEN` secret is required. Before a package's first automated release it must have a trusted publisher configured on npm (Organization `andrewcourtice`, Repository `ripl`, workflow `release.yml`). Because `@ripl/*` cross-dependencies use the `workspace:^` protocol, the workflow packs each package with Yarn (which rewrites `workspace:^` to the concrete version) before publishing the tarball with the npm CLI.
+Once you've verified the staged version (e.g. `npm install @ripl/web@next`), run the [Promote workflow](.github/workflows/promote.yml) (Actions → **Promote release**) with that version to move it to the `latest` dist-tag.
+
+Publishing authenticates with an `NPM_TOKEN` secret (a granular token scoped to `@ripl`, stored in the repository's Actions secrets) and attaches build provenance. `lerna publish` rewrites the `@ripl/*` `workspace:^` cross-dependencies to concrete versions at publish time.
 
 ## AI Agents
 
