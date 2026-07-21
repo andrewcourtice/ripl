@@ -23,10 +23,10 @@ devtools panel · popup
 yarn install
 
 # build the extension to apps/devtools-extension/dist
-yarn workspace ripl-devtools-extension build
+yarn workspace @ripl/devtools-extension build
 
 # serve the example page (two Ripl contexts, animation, 2000-element stress test)
-yarn workspace ripl-devtools-extension dev:example
+yarn workspace @ripl/devtools-extension dev:example
 ```
 
 ### Loading unpacked

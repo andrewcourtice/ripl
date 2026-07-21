@@ -1,6 +1,6 @@
 {
     "name": "@ripl/webgpu",
-    "version": "1.0.0-beta.2",
+    "version": "1.0.0-beta.3",
     "description": "WebGPU 3D rendering context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,9 +28,9 @@
         "build": "tsup && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "@ripl/3d": "^1.0.0-beta.2",
-        "@ripl/canvas": "^1.0.0-beta.2",
-        "@ripl/core": "^1.0.0-beta.2",
-        "@ripl/utilities": "^1.0.0-beta.1"
+        "@ripl/3d": "workspace:^",
+        "@ripl/canvas": "workspace:^",
+        "@ripl/core": "workspace:^",
+        "@ripl/utilities": "workspace:^"
     }
 }

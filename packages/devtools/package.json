@@ -1,6 +1,6 @@
 {
     "name": "@ripl/devtools",
-    "version": "1.0.0-beta.0",
+    "version": "1.0.0-beta.3",
     "description": "Runtime bridge connecting Ripl contexts, scenes, and renderers to the Ripl devtools browser extension",
     "type": "module",
     "main": "./dist/index.cjs",
@@ -28,7 +28,7 @@
         "build": "tsup && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "@ripl/core": "^1.0.0-beta.2",
-        "@ripl/utilities": "^1.0.0-beta.1"
+        "@ripl/core": "workspace:^",
+        "@ripl/utilities": "workspace:^"
     }
 }

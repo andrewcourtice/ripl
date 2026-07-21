@@ -1,6 +1,6 @@
 {
-    "name": "ripl-devtools-extension",
-    "version": "0.1.0",
+    "name": "@ripl/devtools-extension",
+    "version": "1.0.0-beta.3",
     "description": "Ripl devtools browser extension for inspecting Ripl contexts, scenes, and elements",
     "private": true,
     "type": "module",
