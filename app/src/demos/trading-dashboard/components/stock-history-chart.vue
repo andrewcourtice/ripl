@@ -19,6 +19,10 @@ import {
     createLineChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import RiplButtonGroup from '../../../.vitepress/components/ripl-button-group.vue';
 import DashboardCard from './dashboard-card.vue';
 
@@ -98,6 +102,10 @@ function buildChart() {
                 markers: false,
             },
         ],
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Stock history chart',
     });
 
     chart.on('markerenter', event => {

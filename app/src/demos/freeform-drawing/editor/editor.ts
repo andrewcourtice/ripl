@@ -85,6 +85,10 @@ import {
     EventBus,
 } from '@ripl/web';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import type {
     Box,
     Element,
@@ -159,6 +163,10 @@ export class Editor extends EventBus<EditorEventMap> {
         this.#renderer = createRenderer(this.#scene, {
             autoStart: true,
             autoStop: false,
+        });
+
+        createDevtools(this.#scene.context, this.#scene, this.#renderer, {
+            label: 'Freeform drawing',
         });
 
         this.#world = createGroup({ id: 'ripl-draw-world' });

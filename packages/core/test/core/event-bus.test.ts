@@ -18,6 +18,21 @@ type TestEventMap = {
 
 describe('EventBus', () => {
 
+    test('Should expose an empty event list on the base bus', () => {
+        const bus = new EventBus<TestEventMap>();
+        expect(bus.$events).toEqual([]);
+    });
+
+    test('Should allow subclasses to declare their emittable events', () => {
+        class CustomBus extends EventBus<TestEventMap> {
+            public get $events(): (keyof TestEventMap)[] {
+                return ['test', 'count'];
+            }
+        }
+
+        expect(new CustomBus().$events).toEqual(['test', 'count']);
+    });
+
     test('Should emit and receive events', () => {
         const bus = new EventBus<TestEventMap>();
         const handler = vi.fn();

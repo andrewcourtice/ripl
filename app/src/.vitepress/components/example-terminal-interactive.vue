@@ -49,6 +49,10 @@ import {
     easeOutCubic,
 } from '@ripl/web';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 const terminalContainer = ref<HTMLElement>();
 
 let terminal: any;
@@ -179,6 +183,10 @@ function runAnimationDemo(ctx: TerminalContext) {
     });
 
     const renderer = createRenderer(scene);
+
+    createDevtools(ctx, scene, renderer, {
+        label: 'Interactive terminal',
+    });
 
     (async () => {
         await renderer.transition(circle, {

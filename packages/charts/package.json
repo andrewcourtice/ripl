@@ -30,9 +30,9 @@
         "test:visual:update": "playwright test -c test/visual/playwright.config.ts --update-snapshots"
     },
     "dependencies": {
-        "@ripl/canvas": "^1.0.0-beta.3",
-        "@ripl/core": "^1.0.0-beta.3",
-        "@ripl/dom": "^1.0.0-beta.3",
-        "@ripl/utilities": "^1.0.0-beta.3"
+        "@ripl/canvas": "workspace:^",
+        "@ripl/core": "workspace:^",
+        "@ripl/dom": "workspace:^",
+        "@ripl/utilities": "workspace:^"
     }
 }

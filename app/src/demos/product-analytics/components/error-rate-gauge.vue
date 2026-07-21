@@ -15,6 +15,10 @@ import {
     createGaugeChart,
 } from '@ripl/charts';
 
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
 import DashboardCard from './dashboard-card.vue';
 
 import {
@@ -76,6 +80,10 @@ function buildChart() {
 
     chart.on('valueenter', event => {
         readout.value = `Current error rate: ${event.data.value.toFixed(2)}%`;
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Error rate gauge',
     });
     chart.on('valueleave', () => {
         readout.value = DEFAULT_READOUT;

@@ -291,11 +291,15 @@ function encloseBasis3(a: PackCircle, b: PackCircle, c: PackCircle): PackCircle 
 }
 
 function encloseBasis(basis: PackCircle[]): PackCircle {
-    switch (basis.length) {
-        case 1: return encloseBasis1(basis[0]);
-        case 2: return encloseBasis2(basis[0], basis[1]);
-        default: return encloseBasis3(basis[0], basis[1], basis[2]);
+    if (basis.length === 1) {
+        return encloseBasis1(basis[0]);
     }
+
+    if (basis.length === 2) {
+        return encloseBasis2(basis[0], basis[1]);
+    }
+
+    return encloseBasis3(basis[0], basis[1], basis[2]);
 }
 
 function extendBasis(basis: PackCircle[], p: PackCircle): PackCircle[] {

@@ -131,6 +131,7 @@ export default defineConfig({
                 '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
                 '@ripl/web': path.resolve(__dirname, '../../../packages/web/src/index.ts'),
                 '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
+                '@ripl/devtools': path.resolve(__dirname, '../../../packages/devtools/src/index.ts'),
                 '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
                 '@ripl/webgpu': path.resolve(__dirname, '../../../packages/webgpu/src/index.ts'),
                 '@ripl/terminal': path.resolve(__dirname, '../../../packages/terminal/src/index.ts'),
@@ -368,6 +369,10 @@ export default defineConfig({
                         {
                             text: 'Custom Contexts',
                             link: '/docs/core/advanced/custom-contexts',
+                        },
+                        {
+                            text: 'Devtools',
+                            link: '/docs/core/advanced/devtools',
                         },
                     ],
                 },

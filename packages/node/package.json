@@ -28,9 +28,9 @@
         "build": "tsup && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "@ripl/core": "^1.0.0-beta.3",
-        "@ripl/terminal": "^1.0.0-beta.3",
-        "@ripl/utilities": "^1.0.0-beta.3"
+        "@ripl/core": "workspace:^",
+        "@ripl/terminal": "workspace:^",
+        "@ripl/utilities": "workspace:^"
     },
     "devDependencies": {
         "@types/node": "^22.20.0"

@@ -28,9 +28,9 @@
         "build": "tsup && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "@ripl/3d": "^1.0.0-beta.3",
-        "@ripl/canvas": "^1.0.0-beta.3",
-        "@ripl/core": "^1.0.0-beta.3",
-        "@ripl/utilities": "^1.0.0-beta.3"
+        "@ripl/3d": "workspace:^",
+        "@ripl/canvas": "workspace:^",
+        "@ripl/core": "workspace:^",
+        "@ripl/utilities": "workspace:^"
     }
 }

@@ -28,6 +28,6 @@
         "build": "tsup && tsc -p tsconfig.build.json"
     },
     "dependencies": {
-        "@ripl/utilities": "^1.0.0-beta.3"
+        "@ripl/utilities": "workspace:^"
     }
 }
