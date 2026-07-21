@@ -295,3 +295,32 @@ export function messageIsFromBridge(value: unknown): value is BridgeEnvelope {
 export function messageIsFromExtension(value: unknown): value is ExtensionEnvelope {
     return isEnvelopeShape(value, MESSAGE_SOURCE_EXTENSION);
 }
+
+/** A discriminated-union message identified by a string `kind` discriminant. */
+export interface KindedMessage {
+    /** The discriminant identifying the message variant. */
+    kind: string;
+}
+
+/**
+ * A map of handlers for a discriminated-union message, keyed by its `kind`. Each handler
+ * receives the message narrowed to its specific variant. Used with {@link dispatchMessage} for
+ * keyed-lookup dispatch in place of a `switch`.
+ *
+ * @typeParam TMessage - The discriminated-union message type, keyed by `kind`.
+ */
+export type MessageHandlers<TMessage extends KindedMessage> = {
+    [TKind in TMessage['kind']]: (message: Extract<TMessage, { kind: TKind }>) => void;
+};
+
+/**
+ * Dispatches a discriminated-union message to its handler in a keyed handler map. A message whose
+ * `kind` has no handler is ignored. Prefer this over a `switch` on `message.kind`.
+ *
+ * @typeParam TMessage - The discriminated-union message type, keyed by `kind`.
+ * @param handlers - A (possibly partial) map of handlers keyed by message `kind`.
+ * @param message - The message to dispatch.
+ */
+export function dispatchMessage<TMessage extends KindedMessage>(handlers: Partial<MessageHandlers<TMessage>>, message: TMessage): void {
+    (handlers[message.kind as TMessage['kind']] as ((message: TMessage) => void) | undefined)?.(message);
+}

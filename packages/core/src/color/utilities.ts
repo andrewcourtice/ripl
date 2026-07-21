@@ -47,16 +47,12 @@ export function rgbaToHSL(red: number, green: number, blue: number, alpha: numbe
     if (delta !== 0) {
         saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min);
 
-        switch (max) {
-            case r:
-                hue = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-                break;
-            case g:
-                hue = ((b - r) / delta + 2) / 6;
-                break;
-            case b:
-                hue = ((r - g) / delta + 4) / 6;
-                break;
+        if (max === r) {
+            hue = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
+        } else if (max === g) {
+            hue = ((b - r) / delta + 2) / 6;
+        } else {
+            hue = ((r - g) / delta + 4) / 6;
         }
     }
 
@@ -122,16 +118,12 @@ export function rgbaToHSV(red: number, green: number, blue: number, alpha: numbe
     const value = max;
 
     if (delta !== 0) {
-        switch (max) {
-            case r:
-                hue = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
-                break;
-            case g:
-                hue = ((b - r) / delta + 2) / 6;
-                break;
-            case b:
-                hue = ((r - g) / delta + 4) / 6;
-                break;
+        if (max === r) {
+            hue = ((g - b) / delta + (g < b ? 6 : 0)) / 6;
+        } else if (max === g) {
+            hue = ((b - r) / delta + 2) / 6;
+        } else {
+            hue = ((r - g) / delta + 4) / 6;
         }
     }
 

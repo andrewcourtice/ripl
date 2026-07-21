@@ -9,12 +9,17 @@ import type {
     Ref,
 } from 'vue';
 
+import {
+    dispatchMessage,
+} from '@ripl/devtools';
+
 import type {
     BridgeMessage,
     ContextInfo,
     ElementEventInfo,
     ElementPropertyUpdate,
     ExtensionMessage,
+    MessageHandlers,
     RendererDebugInfo,
     SerializedBoundingBox,
     SerializedNode,
@@ -293,42 +298,24 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
         clearSelection();
     }
 
+    const messageHandlers: Partial<MessageHandlers<BridgeMessage>> = {
+        'context:added': message => addContext(message.context),
+        'context:updated': message => contexts.set(message.context.contextId, message.context),
+        'context:removed': message => removeContext(message.contextId),
+        'tree:snapshot-begin': message => beginSnapshot(message.contextId, message.snapshotId, message.nodeCount),
+        'tree:chunk': message => appendChunk(message.contextId, message.snapshotId, message.seq, message.nodes),
+        'tree:snapshot-end': message => commitSnapshot(message.contextId, message.snapshotId),
+        'tree:props': message => applyPropertyUpdates(message.contextId, message.updates),
+        'element:detail': message => applyElementDetail(message.contextId, message.elementId, {
+            properties: message.properties,
+            events: message.events,
+            boundingBox: message.boundingBox,
+        }),
+        'bridge:bye': () => reset(),
+    };
+
     function handleMessage(message: BridgeMessage): void {
-        switch (message.kind) {
-            case 'bridge:hello':
-                break;
-            case 'context:added':
-                addContext(message.context);
-                break;
-            case 'context:updated':
-                contexts.set(message.context.contextId, message.context);
-                break;
-            case 'context:removed':
-                removeContext(message.contextId);
-                break;
-            case 'tree:snapshot-begin':
-                beginSnapshot(message.contextId, message.snapshotId, message.nodeCount);
-                break;
-            case 'tree:chunk':
-                appendChunk(message.contextId, message.snapshotId, message.seq, message.nodes);
-                break;
-            case 'tree:snapshot-end':
-                commitSnapshot(message.contextId, message.snapshotId);
-                break;
-            case 'tree:props':
-                applyPropertyUpdates(message.contextId, message.updates);
-                break;
-            case 'element:detail':
-                applyElementDetail(message.contextId, message.elementId, {
-                    properties: message.properties,
-                    events: message.events,
-                    boundingBox: message.boundingBox,
-                });
-                break;
-            case 'bridge:bye':
-                reset();
-                break;
-        }
+        dispatchMessage(messageHandlers, message);
     }
 
     function selectElement(contextId: string, elementId: string): void {

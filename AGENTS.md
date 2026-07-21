@@ -356,6 +356,8 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 | Object curlies in imports | Always on new lines |
 | Blank line between imports | Between import/export groups of differing kind; same-kind side-effect / default / `export *` runs may group (`ripl/import-export-spacing`) |
 | Line endings | Unix (LF) |
+| No `switch` in library/extension source | Use keyed object-lookup dispatch (`no-restricted-syntax`) — see [Control Flow](#control-flow) |
+| Vue SFC block order | `<template>` → `<script>` → `<style>` (`vue/block-order`) |
 
 ### Naming Conventions
 
@@ -407,6 +409,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 - **No nested ternaries** — enforced by ESLint (`no-nested-ternary`). Prefer early returns or intermediate variables over ternary chains.
 - **Limit nesting depth** — enforced by ESLint (`max-depth: 4`). If logic nests too deeply, extract inner blocks into well-named helper functions.
 - **Avoid nested loops** — extract inner loops into descriptive functions where possible.
+- **Prefer keyed object-lookup dispatch over `switch`** — for a string-discriminant dispatch (e.g. a message `kind` handler, a `ChartSide`), use a keyed object map whose values are the branches (`{ top: () => …, bottom: () => … }[side]()`) rather than a `switch`. It reads cleaner and is exhaustively type-checked against the key union. Enforced by ESLint (`no-restricted-syntax` bans `SwitchStatement`) across library and extension source (`packages/*/src`, `apps/*/src`); the docs site under `app/` is exempt. For a switch whose labels are variables or numeric comparisons (not literal keys — e.g. the colour `case r/g/b` maxima), use an early-return `if/else` chain instead.
 
 ### Functions & Decomposition
 

@@ -1,3 +1,7 @@
+import {
+    dispatchMessage,
+} from '@ripl/devtools';
+
 import type {
     BridgeMessage,
     ContextInfo,
@@ -80,18 +84,14 @@ function broadcast(ports: Set<chrome.runtime.Port>, message: BridgeMessage): voi
 }
 
 function updateRegistry(state: TabState, message: BridgeMessage): void {
-    switch (message.kind) {
-        case 'context:added':
-        case 'context:updated':
-            state.contexts.set(message.context.contextId, message.context);
-            break;
-        case 'context:removed':
-            state.contexts.delete(message.contextId);
-            break;
-        case 'bridge:bye':
-            state.contexts.clear();
-            break;
-    }
+    const setContext = (context: ContextInfo) => state.contexts.set(context.contextId, context);
+
+    dispatchMessage<BridgeMessage>({
+        'context:added': added => setContext(added.context),
+        'context:updated': updated => setContext(updated.context),
+        'context:removed': removed => state.contexts.delete(removed.contextId),
+        'bridge:bye': () => state.contexts.clear(),
+    }, message);
 }
 
 function handleBridgeMessage(tabId: number, message: BridgeMessage): void {

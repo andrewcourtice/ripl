@@ -5,6 +5,10 @@ import {
 } from '../shared/logo';
 
 import {
+    dispatchMessage,
+} from '@ripl/devtools';
+
+import {
     computed,
     onMounted,
     reactive,
@@ -20,18 +24,14 @@ const contexts = reactive(new Map<string, ContextInfo>());
 const contextList = computed(() => Array.from(contexts.values()));
 
 function handleMessage(message: BridgeMessage): void {
-    switch (message.kind) {
-        case 'context:added':
-        case 'context:updated':
-            contexts.set(message.context.contextId, message.context);
-            break;
-        case 'context:removed':
-            contexts.delete(message.contextId);
-            break;
-        case 'bridge:bye':
-            contexts.clear();
-            break;
-    }
+    const setContext = (context: ContextInfo) => contexts.set(context.contextId, context);
+
+    dispatchMessage<BridgeMessage>({
+        'context:added': added => setContext(added.context),
+        'context:updated': updated => setContext(updated.context),
+        'context:removed': removed => contexts.delete(removed.contextId),
+        'bridge:bye': () => contexts.clear(),
+    }, message);
 }
 
 onMounted(() => {

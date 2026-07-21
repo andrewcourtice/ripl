@@ -3,9 +3,14 @@ import {
     showHighlight,
 } from './highlight';
 
+import {
+    dispatchMessage,
+} from './protocol';
+
 import type {
     ElementPropertyUpdate,
     ExtensionMessage,
+    MessageHandlers,
     RendererDebugInfo,
 } from './protocol';
 
@@ -354,66 +359,41 @@ export class Devtools {
         this._sendContextUpdated();
     }
 
+    // Wraps a handler so it only runs for messages addressed to this binding's context.
+    private _forThisContext<TMessage extends { contextId: string }>(handler: (message: TMessage) => void): (message: TMessage) => void {
+        return message => {
+            if (message.contextId === this.id) {
+                handler(message);
+            }
+        };
+    }
+
+    private _messageHandlers: MessageHandlers<ExtensionMessage> = {
+        'panel:connected': () => {
+            panelConnected = true;
+            this._sendContextAdded();
+            this._connectPanel();
+        },
+        'panel:disconnected': () => {
+            panelConnected = false;
+            this._disconnectPanel();
+            clearHighlight();
+            highlightOwnerId = undefined;
+        },
+        'state:request': () => this._sendContextAdded(),
+        'tree:request': this._forThisContext(() => this._scheduler?.markDirty()),
+        'element:inspect': this._forThisContext(message => this._inspectElement(message.elementId)),
+        'element:set-property': this._forThisContext(message => this._setElementProperty(message.elementId, message.key, message.value)),
+        'element:highlight': this._forThisContext(message => this._highlightElement(message.elementId)),
+        'element:highlight-clear': () => {
+            clearHighlight();
+            highlightOwnerId = undefined;
+        },
+        'renderer:set-debug': this._forThisContext(message => this._setRendererDebug(message.debug)),
+    };
+
     private _handleMessage(message: ExtensionMessage): void {
-        switch (message.kind) {
-            case 'panel:connected': {
-                panelConnected = true;
-                this._sendContextAdded();
-                this._connectPanel();
-                break;
-            }
-            case 'panel:disconnected': {
-                panelConnected = false;
-                this._disconnectPanel();
-                clearHighlight();
-                highlightOwnerId = undefined;
-                break;
-            }
-            case 'state:request': {
-                this._sendContextAdded();
-                break;
-            }
-            case 'tree:request': {
-                if (message.contextId === this.id) {
-                    this._scheduler?.markDirty();
-                }
-
-                break;
-            }
-            case 'element:inspect': {
-                if (message.contextId === this.id) {
-                    this._inspectElement(message.elementId);
-                }
-
-                break;
-            }
-            case 'element:set-property': {
-                if (message.contextId === this.id) {
-                    this._setElementProperty(message.elementId, message.key, message.value);
-                }
-
-                break;
-            }
-            case 'element:highlight': {
-                if (message.contextId === this.id) {
-                    this._highlightElement(message.elementId);
-                }
-
-                break;
-            }
-            case 'element:highlight-clear': {
-                clearHighlight();
-                highlightOwnerId = undefined;
-                break;
-            }
-            case 'renderer:set-debug': {
-                if (message.contextId === this.id) {
-                    this._setRendererDebug(message.debug);
-                }
-
-                break;
-            }
-        }
+        dispatchMessage(this._messageHandlers, message);
     }
 
     /**

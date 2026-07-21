@@ -483,5 +483,18 @@ export default tseslint.config(
                 renderer: 'readonly',
             },
         },
+    },
+
+    // Prefer keyed object-lookup dispatch over `switch` in library and extension
+    // source (see AGENTS.md → Control Flow). The docs site under `app/` is exempt.
+    {
+        name: 'ripl/no-switch',
+        files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        rules: {
+            'no-restricted-syntax': ['error', {
+                selector: 'SwitchStatement',
+                message: 'Use a keyed object-lookup dispatch instead of switch (see AGENTS.md → Control Flow).',
+            }],
+        },
     }
 );

@@ -126,16 +126,14 @@ export class ChartLayout {
 
     /** Reserves a band from the given side. Horizontal sides consume width, vertical sides consume height. */
     public reserve(side: ChartSide, amount: number): ChartArea {
-        switch (side) {
-            case 'top':
-                return this.reserveTop(amount);
-            case 'bottom':
-                return this.reserveBottom(amount);
-            case 'left':
-                return this.reserveLeft(amount);
-            case 'right':
-                return this.reserveRight(amount);
-        }
+        const reservers: Record<ChartSide, (amount: number) => ChartArea> = {
+            top: value => this.reserveTop(value),
+            bottom: value => this.reserveBottom(value),
+            left: value => this.reserveLeft(value),
+            right: value => this.reserveRight(value),
+        };
+
+        return reservers[side](amount);
     }
 
 }
