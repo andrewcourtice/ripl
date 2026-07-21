@@ -4,34 +4,26 @@ import {
 } from '../../composables/use-devtools-store';
 
 import {
-    ELEMENT_EVENT_TYPES,
-} from '@ripl/devtools';
-
-import {
     computed,
 } from 'vue';
 
 const store = useDevtoolsStore();
 
-const listenerMap = computed(() => {
-    const map = new Map<string, boolean>();
-
-    store.selectedDetail.value?.events.forEach(entry => map.set(entry.type, entry.hasListeners));
-
-    return map;
-});
+// The events a selected element can emit are reported by the bridge from the
+// element's own `$events`, so custom EventBus subclasses surface their events too.
+const events = computed(() => store.selectedDetail.value?.events ?? []);
 </script>
 
 <template>
     <section class="events-section">
         <h3 class="events-section__heading">Events</h3>
         <ul class="events-section__list">
-            <li v-for="type of ELEMENT_EVENT_TYPES" :key="type" class="events-section__item">
+            <li v-for="event of events" :key="event.type" class="events-section__item">
                 <span
                     class="events-section__dot"
-                    :class="{ 'events-section__dot--active': listenerMap.get(type) }"
+                    :class="{ 'events-section__dot--active': event.hasListeners }"
                 ></span>
-                <span class="events-section__type">{{ type }}</span>
+                <span class="events-section__type">{{ event.type }}</span>
             </li>
         </ul>
     </section>

@@ -198,6 +198,16 @@ export class Renderer extends EventBus<RendererEventMap> {
         return !!this._transitionMap.size;
     }
 
+    /** The event types a renderer can emit. See {@link EventBus.$events}. */
+    public get $events(): (keyof RendererEventMap)[] {
+        return [
+            'destroyed',
+            'start',
+            'stop',
+            'tick',
+        ];
+    }
+
     /**
      * The resolved debug overlay options currently in effect. Assigning a new value
      * (`true` for all overlays, `false` for none, or a partial {@link RendererDebugOptions}

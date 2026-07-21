@@ -57,6 +57,16 @@ describe('Element', () => {
         expect(el.fill).toBe('#00ff00');
     });
 
+    test('Should list the events an element can emit', () => {
+        const el = createElement('rect', {});
+
+        expect(el.$events).toContain('click');
+        expect(el.$events).toContain('updated');
+        expect(el.$events).toContain('destroyed');
+        expect(el.$events).toContain('drag');
+        expect(el.$events.length).toBe(12);
+    });
+
     test('Should return a shallow copy of set state', () => {
         const el = createElement('rect', {
             fill: '#ff0000',

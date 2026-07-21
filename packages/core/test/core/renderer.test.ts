@@ -90,6 +90,18 @@ describe('Renderer', () => {
         renderer.destroy();
     });
 
+    test('Should list the events a renderer can emit', () => {
+        const { scene } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        expect(renderer.$events).toEqual(['destroyed', 'start', 'stop', 'tick']);
+
+        renderer.destroy();
+    });
+
     test('Should expose resolved debug options', () => {
         const { scene } = createMockScene();
         const renderer = new Renderer(scene, {

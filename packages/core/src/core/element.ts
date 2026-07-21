@@ -451,6 +451,24 @@ export class Element<
         return { ...this.state };
     }
 
+    /** The event types an element can emit. See {@link EventBus.$events}. */
+    public get $events(): (keyof TEventMap)[] {
+        return [
+            'attached',
+            'click',
+            'destroyed',
+            'detached',
+            'drag',
+            'dragend',
+            'dragstart',
+            'graph',
+            'mouseenter',
+            'mouseleave',
+            'mousemove',
+            'updated',
+        ];
+    }
+
     // Props
 
     /** Text directionality used when rendering text, mirroring the canvas `direction` drawing-state property (`inherit`, `ltr`, or `rtl`). */

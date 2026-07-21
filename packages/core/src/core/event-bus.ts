@@ -90,6 +90,15 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
+    /**
+     * The event types this bus can emit. The base returns an empty list; subclasses override it
+     * to declare their emittable events (type-checked against their {@link EventMap}), so tooling
+     * such as the devtools can enumerate them — including events added by custom subclasses.
+     */
+    public get $events(): (keyof TEventMap)[] {
+        return [];
+    }
+
     /** Returns whether there are any listeners registered for the given event type. */
     public has(type: keyof TEventMap) {
         return !!this._listeners.get(type)?.size;

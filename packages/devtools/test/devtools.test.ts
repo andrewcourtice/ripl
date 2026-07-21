@@ -37,10 +37,13 @@ import {
     createRect,
     createRenderer,
     createScene,
+    Element,
     factory,
 } from '@ripl/core';
 
 import type {
+    BaseElementState,
+    ElementEventMap,
     Rect,
     Scene,
 } from '@ripl/core';
@@ -424,12 +427,42 @@ describe('Devtools', () => {
         expect(detail.properties.some(property => property.key === 'x')).toBe(true);
         expect(clickEvent?.hasListeners).toBe(true);
         expect(dragEvent?.hasListeners).toBe(false);
+        expect(detail.events.length).toBe(rect.$events.length);
         expect(detail.boundingBox).toEqual({
             left: 10,
             top: 10,
             width: 20,
             height: 20,
         });
+    });
+
+    test('Should surface custom subclass events declared via $events', () => {
+        interface CustomEventMap extends ElementEventMap {
+            beacon: null;
+        }
+
+        class CustomElement extends Element<BaseElementState, CustomEventMap> {
+            public get $events(): (keyof CustomEventMap)[] {
+                return [...super.$events, 'beacon'];
+            }
+        }
+
+        const devtools = createDevtools(scene.context, scene);
+        const custom = new CustomElement('custom', {});
+
+        scene.add(custom);
+
+        dispatchExtensionMessage({
+            kind: 'element:inspect',
+            contextId: devtools.id,
+            elementId: custom.id,
+        });
+
+        const [detail] = getMessagesOfKind('element:detail');
+        const beacon = detail.events.find(event => event.type === 'beacon');
+
+        expect(beacon).toBeDefined();
+        expect(beacon?.hasListeners).toBe(false);
     });
 
     test('Should show and clear the highlight overlay', () => {

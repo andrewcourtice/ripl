@@ -1,8 +1,4 @@
 import {
-    ELEMENT_EVENT_TYPES,
-} from './constants';
-
-import {
     clearHighlight,
     showHighlight,
 } from './highlight';
@@ -309,8 +305,8 @@ export class Devtools {
             kind: 'element:detail',
             contextId: this.id,
             properties: serializeElementProperties(element),
-            events: ELEMENT_EVENT_TYPES.map(type => ({
-                type,
+            events: element.$events.map(type => ({
+                type: String(type),
                 hasListeners: element.has(type),
             })),
             boundingBox: {
