@@ -18,6 +18,7 @@
         "test": "vitest",
         "test:bench": "vitest bench",
         "lint": "eslint .",
+        "release": "lerna version --force-publish",
         "publish": "lerna run build && lerna publish from-package"
     },
     "devDependencies": {

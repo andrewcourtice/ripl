@@ -202,6 +202,17 @@ Pull requests to `main` trigger the test workflow:
 
 Ensure your changes pass locally before pushing to avoid CI failures.
 
+## Releasing
+
+Releases are **tag-triggered**. Bumping the version locally with Lerna pushes a `vX.Y.Z` tag, and the [Release workflow](.github/workflows/release.yml) builds and publishes every public `@ripl/*` package to npm.
+
+```bash
+# from an up-to-date main branch
+yarn release   # lerna version --force-publish: choose a bump, then it commits, tags, and pushes
+```
+
+Publishing is **tokenless**: the workflow authenticates to npm via GitHub Actions OIDC ([trusted publishing](https://docs.npmjs.com/trusted-publishers)) and attaches build provenance, so no `NPM_TOKEN` secret is required. Before a package's first automated release it must have a trusted publisher configured on npm (Organization `andrewcourtice`, Repository `ripl`, workflow `release.yml`). Because `@ripl/*` cross-dependencies use the `workspace:^` protocol, the workflow packs each package with Yarn (which rewrites `workspace:^` to the concrete version) before publishing the tarball with the npm CLI.
+
 ## AI Agents
 
 If you are an AI coding agent, refer to [AGENTS.md](AGENTS.md) for comprehensive conventions, architecture details, and patterns specific to automated contributions.

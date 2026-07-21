@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write        # create the GitHub Release for the tag
+  id-token: write        # OIDC: tokenless npm trusted publishing + provenance
+
+jobs:
+  release:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    # environment: npm-publish   # optional hardening: gate publishes behind a protected environment (must match the trusted-publisher config)
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          registry-url: https://registry.npmjs.org
+
+      - name: Upgrade npm (OIDC trusted publishing needs >= 11.5.1)
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test
+
+      - name: Publish packages (Yarn pack -> npm publish, OIDC + provenance)
+        run: |
+          set -euo pipefail
+          for dir in packages/*/; do
+            [ -f "${dir}package.json" ] || continue
+            name=$(node -p "require('./${dir}package.json').name || ''")
+            version=$(node -p "require('./${dir}package.json').version || ''")
+            private=$(node -p "require('./${dir}package.json').private === true")
+            if [ "$private" = "true" ] || [ -z "$name" ]; then
+              echo "Skipping ${dir} (private or unnamed)"
+              continue
+            fi
+            if npm view "$name@$version" version > /dev/null 2>&1; then
+              echo "$name@$version already on npm, skipping"
+              continue
+            fi
+            echo "Packing $name@$version (Yarn rewrites workspace:^ -> ^$version)"
+            yarn workspace "$name" pack --out /tmp/ripl-pkg.tgz
+            echo "Publishing $name@$version"
+            npm publish /tmp/ripl-pkg.tgz --provenance --access public
+          done
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          pre=""
+          case "$tag" in
+            *-*) pre="--prerelease" ;;
+          esac
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists, skipping"
+          else
+            gh release create "$tag" --title "$tag" --generate-notes --verify-tag $pre
+          fi
