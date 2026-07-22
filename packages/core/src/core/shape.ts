@@ -11,7 +11,6 @@ import type {
 
 import {
     Element,
-    getWorldTransform,
 } from './element';
 
 import {
@@ -94,7 +93,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         // natively account for that during hit testing (e.g. canvas) need the point mapped back
         // into local space; the identity case (no transforms) is skipped for free.
         if (!this.context.hitTestHonoursTransform) {
-            const worldTransform = getWorldTransform(this as unknown as Element);
+            const worldTransform = (this as unknown as Element).getWorldTransform();
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
@@ -158,11 +157,11 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             // Paint if a fill/stroke is set on this shape *or inherited* from a group — the context
             // already holds the resolved value (own, applied by the base render; inherited, applied
             // at the group boundary), so autoFill/autoStroke fire whenever the effective paint is set.
-            if (this.path && this.autoFill && this.getComputedStateValue('fill')) {
+            if (this.path && this.autoFill && this.getComputedValue('fill')) {
                 context.applyFill(this.path);
             }
 
-            if (this.path && this.autoStroke && this.getComputedStateValue('stroke')) {
+            if (this.path && this.autoStroke && this.getComputedValue('stroke')) {
                 context.applyStroke(this.path);
             }
         }, this.clip);

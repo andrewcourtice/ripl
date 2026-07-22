@@ -38,7 +38,7 @@ import {
 
 import {
     applyElementTransform,
-} from '../core/element';
+} from '../core/transform';
 
 import type {
     Element as RiplElement,
@@ -88,7 +88,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /**
      * Whether this context's hit testing natively accounts for element and ancestor group
      * transforms (as SVG does, via the DOM). When `false` (e.g. canvas), callers map the hit
-     * point into the element's local space before testing. See {@link getWorldTransform}.
+     * point into the element's local space before testing. See {@link Element.getWorldTransform}.
      */
     public hitTestHonoursTransform = false;
     /** Current width, in pixels, of the rendering surface. */

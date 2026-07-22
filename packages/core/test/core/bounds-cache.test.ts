@@ -7,7 +7,6 @@ import {
 import {
     createCircle,
     createGroup,
-    getWorldTransform,
 } from '../../src';
 
 describe('World transform & bounding box caching', () => {
@@ -25,8 +24,8 @@ describe('World transform & bounding box caching', () => {
 
         group.add(circle);
 
-        const first = getWorldTransform(circle);
-        const second = getWorldTransform(circle);
+        const first = circle.getWorldTransform();
+        const second = circle.getWorldTransform();
 
         expect(first).not.toBeNull();
         expect(second).toBe(first);

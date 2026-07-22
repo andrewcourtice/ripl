@@ -67,16 +67,12 @@ import {
     getInterpolator,
     getKeyframeInterpolator,
     isElementValueKeyFrame,
-} from './element-interpolation';
+} from './interpolation';
 
 import {
     applyElementTransform,
     MatrixTransformTarget,
-} from './element-transform';
-
-export type { TransformTarget } from './element-transform';
-
-export { applyElementTransform } from './element-transform';
+} from './transform';
 
 /** Controls which pointer events an element responds to during hit testing. */
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
@@ -208,19 +204,6 @@ export interface ElementValidationResult {
     type: ElementValidationType;
     /** Human-readable description of the validation result. */
     message: string;
-}
-
-/**
- * Reconstructs an element's world transform — the composition of its own transform and
- * every ancestor group's transform, from the root down — for use in hit testing against
- * backends (such as canvas) that do not natively account for element transforms.
- *
- * @param element - The element whose world transform to compute.
- * @returns The composed {@link Matrix}, or `null` when the whole chain is the identity
- * transform (the common case), letting callers skip any point remapping.
- */
-export function getWorldTransform(element: Element): Matrix | null {
-    return element.$getWorldTransform();
 }
 
 /** The base renderable element with state management, event handling, interpolation, transform support, and context rendering. */
@@ -578,7 +561,7 @@ export class Element<
      * the render tree — a group applies its paint at its boundary ({@link Context.pushGroup}) and
      * descendants pick it up from the context's copied state — so property getters return own
      * values only, mirroring how the browser resolves computed style at paint time. Use
-     * {@link Element.getComputedStateValue} when the effective (inheritance-resolved) value is
+     * {@link Element.getComputedValue} when the effective (inheritance-resolved) value is
      * required outside a render pass (e.g. animation start values).
      */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
@@ -589,15 +572,18 @@ export class Element<
      * Resolves a state value against the parent chain (own value, else the nearest ancestor's) —
      * the effective value an element renders with. Used where the resolved value is needed without
      * a live context, such as computing a transition's start value.
+     *
+     * @param key - The state property to resolve.
+     * @returns The element's own value for `key`, or the nearest ancestor's when unset, else `undefined`.
      */
-    protected getComputedStateValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
+    public getComputedValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
         const own = this.state[key];
 
         if (own !== undefined && own !== null) {
             return own;
         }
 
-        return (this.parent as unknown as Element<TState> | undefined)?.getComputedStateValue(key) as TState[TKey];
+        return (this.parent as unknown as Element<TState> | undefined)?.getComputedValue(key) as TState[TKey];
     }
 
     /**
@@ -694,7 +680,7 @@ export class Element<
      * chain recomputes. A chain node whose transform origin resolves against an uncacheable box
      * (a group with a string origin) bypasses the cache entirely.
      */
-    public $getWorldTransform(): Matrix | null {
+    public getWorldTransform(): Matrix | null {
         const cache = this._worldTransformCache;
         const node = this as unknown as Element;
 
@@ -783,7 +769,7 @@ export class Element<
             return new Box(box.top, box.left, box.bottom, box.right);
         }
 
-        const matrix = this.$getWorldTransform();
+        const matrix = this.getWorldTransform();
         const worldCache = this._worldBoxCache;
 
         if (cacheable && worldCache && worldCache.version === this._stateVersion && worldCache.matrix === matrix) {
@@ -816,7 +802,7 @@ export class Element<
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
             // Start from the element's *effective* value (own, else inherited) so a transition on
             // an inherited property animates from what's actually on screen.
-            const currentValue = this.getComputedStateValue(key);
+            const currentValue = this.getComputedValue(key);
 
             if (typeIsNil(currentValue)) {
                 return output;

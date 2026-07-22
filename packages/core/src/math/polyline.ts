@@ -11,16 +11,17 @@ import type {
 
 import type {
     Point,
-} from '../math';
+} from './types';
 
 import {
     getEuclideanDistance,
-} from '../math';
+} from './geometry';
 
 import {
     typeIsFunction,
 } from '@ripl/utilities';
 
+/** The name of a built-in polyline curve interpolation algorithm used to draw a polyline's points. */
 export type PolylineRenderer = 'linear'
 | 'spline'
 | 'basis'

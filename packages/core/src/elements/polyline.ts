@@ -26,13 +26,11 @@ import {
 import type {
     PolylineRenderer,
     PolylineRenderFunc,
-} from './polyline-renderers';
+} from '../math/polyline';
 
 import {
     resolvePolylineRenderer,
-} from './polyline-renderers';
-
-export * from './polyline-renderers';
+} from '../math/polyline';
 
 export interface PolylineState extends BaseElementState {
     /** The ordered points that make up the polyline. */

@@ -74,7 +74,7 @@ export interface SceneOptions extends GroupOptions {
 /** The top-level group bound to a rendering context, maintaining a hoisted flat instruction stream for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
-    #needsRender = true;
+    private _needsRender = true;
 
     /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
@@ -107,7 +107,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
      * cleared at the end of each painted frame ({@link Scene.render} or a {@link Renderer} tick).
      */
     public get needsRender(): boolean {
-        return this.#needsRender;
+        return this._needsRender;
     }
 
     /** The pixel width of the scene's rendering context. */
@@ -241,7 +241,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
      * data read by a custom path renderer).
      */
     public invalidate(): void {
-        this.#needsRender = true;
+        this._needsRender = true;
     }
 
     /**
@@ -250,7 +250,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
      * after each painted tick. Consumers do not normally call this directly.
      */
     public $consumeRender(): void {
-        this.#needsRender = false;
+        this._needsRender = false;
     }
 
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */
