@@ -2953,10 +2953,6 @@
             "link": "/docs/api/@ripl/core/functions/getWaypoint.md"
           },
           {
-            "text": "getWorldTransform",
-            "link": "/docs/api/@ripl/core/functions/getWorldTransform.md"
-          },
-          {
             "text": "hslToRGBA",
             "link": "/docs/api/@ripl/core/functions/hslToRGBA.md"
           },
@@ -3003,6 +2999,10 @@
           {
             "text": "isPointInBox",
             "link": "/docs/api/@ripl/core/functions/isPointInBox.md"
+          },
+          {
+            "text": "isTransparentColor",
+            "link": "/docs/api/@ripl/core/functions/isTransparentColor.md"
           },
           {
             "text": "matches",
@@ -3851,6 +3851,10 @@
           {
             "text": "numberMinOf",
             "link": "/docs/api/@ripl/utilities/functions/numberMinOf.md"
+          },
+          {
+            "text": "numberNextPowerOfN",
+            "link": "/docs/api/@ripl/utilities/functions/numberNextPowerOfN.md"
           },
           {
             "text": "numberNice",
