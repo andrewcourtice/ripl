@@ -92,7 +92,6 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createHistogramChart(context, {
         data,
         value: 'value',
-        padding: { top: 20, right: 20, bottom: 40, left: 40 },
         axis: {
             x: { title: 'Response time (ms)' },
             y: { title: 'Frequency' },

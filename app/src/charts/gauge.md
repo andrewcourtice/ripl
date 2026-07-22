@@ -104,7 +104,7 @@ function buildOptions() {
 const { contextChanged, chart } = useRiplChart(context => {
     return createGaugeChart(context, {
         label: 'Performance',
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 12, right: 12, bottom: 12, left: 12 },
         ...buildOptions(),
     });
 });

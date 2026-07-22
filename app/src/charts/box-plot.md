@@ -88,7 +88,6 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'region',
         value: 'latency',
         categories: REGIONS,
-        padding: { top: 20, right: 20, bottom: 40, left: 40 },
         axis: {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },

@@ -155,7 +155,6 @@ const { contextChanged, chart } = useRiplChart(context => {
         start: 'start',
         end: 'end',
         progress: 'progress',
-        padding: { top: 20, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
 });

@@ -16,21 +16,25 @@ Controls the inner padding around the chart drawing area.
 ```ts
 const chart = createBarChart('#container', {
     padding: {
-        top: 30,
-        right: 20,
-        bottom: 40,
-        left: 50,
+        top: 12,
+        right: 12,
+        bottom: 8,
+        left: 8,
     },
     // ...
 });
 ```
 
+Each axis reserves its own band for tick labels and titles, so the `left` and `bottom`
+defaults only need a hairline of margin. `top` and `right` stay a little larger because the
+outermost tick labels are centred on the plot edge and spill about half a label past it.
+
 | Property | Type | Default |
 | --- | --- | --- |
 | `top` | `number` | `10` |
 | `right` | `number` | `10` |
-| `bottom` | `number` | `10` |
-| `left` | `number` | `10` |
+| `bottom` | `number` | `4` |
+| `left` | `number` | `4` |
 
 ## Animation
 

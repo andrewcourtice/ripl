@@ -161,7 +161,6 @@ const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     const instance = createRealtimeChart(context, {
-        padding: { top: 30, right: 20, bottom: 20, left: 20 },
         ...buildOptions(),
     });
 

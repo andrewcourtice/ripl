@@ -126,7 +126,6 @@ const { contextChanged, chart } = useRiplChart(context => {
         low: 'low',
         close: 'close',
         volume: 'volume',
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildOptions(),
     });
 });

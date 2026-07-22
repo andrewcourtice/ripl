@@ -112,7 +112,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         data,
         key: 'language',
         value: 'share',
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 12, right: 12, bottom: 12, left: 12 },
         ...buildOptions(),
     });
 });

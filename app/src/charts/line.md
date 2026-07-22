@@ -307,7 +307,6 @@ const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createLineChart(context, {
-        padding: { top: 30, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
 });
