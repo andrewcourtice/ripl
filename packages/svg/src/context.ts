@@ -25,20 +25,25 @@ import {
 
 import {
     SVGImage,
+} from './image';
+
+import {
     SVGPath,
+} from './path';
+
+import {
     SVGText,
     SVGTextPath,
-} from './elements';
+} from './text';
 
 import {
     canvasImageSourceToDataURL,
     createSVGElement,
     getImageSourceSize,
-    isTransparentColor,
     mapSVGStyles,
     normaliseGradientColor,
     svgMarkupToImageData,
-} from './helpers';
+} from './utilities';
 
 import type {
     Styles,
@@ -49,6 +54,7 @@ import {
     createFrameBuffer,
     isGradientString,
     isPatternString,
+    isTransparentColor,
     measureText,
     parseGradient,
     parsePattern,

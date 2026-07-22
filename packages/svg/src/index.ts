@@ -1,5 +1,7 @@
 export * from './context';
-export * from './elements';
+export * from './path';
+export * from './text';
+export * from './image';
 
 export type {
     SVGContextElement,

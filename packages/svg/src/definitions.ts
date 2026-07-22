@@ -1,7 +1,7 @@
 import {
     createSVGElement,
     normaliseGradientColor,
-} from './helpers';
+} from './utilities';
 
 import {
     degreesToRadians,

@@ -26,25 +26,6 @@ export function normaliseGradientColor(color: string): string {
     return rgba ? serialiseRGBA(...rgba) : color;
 }
 
-/** Determines whether a color string resolves to a fully transparent color. */
-export function isTransparentColor(color: string): boolean {
-    const rgba = parseColor(color);
-
-    if (rgba) {
-        return rgba[3] === 0;
-    }
-
-    const trimmed = color.trim().toLowerCase();
-
-    if (trimmed === 'transparent') {
-        return true;
-    }
-
-    // The core rgba/hsla parser doesn't accept a bare `0` alpha (e.g. the canvas default
-    // shadow color `rgba(0, 0, 0, 0)`), so detect a zero alpha component directly.
-    return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(trimmed);
-}
-
 /** Maps unified context style values to their SVG equivalents using the `SVG_STYLE_MAP` lookup. */
 export function mapSVGStyles(styles: Partial<Styles>) {
     return objectMap(styles, (key, value) => {
