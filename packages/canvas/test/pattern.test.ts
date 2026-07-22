@@ -15,7 +15,7 @@ import {
     setCanvasFill,
     setCanvasStroke,
     toCanvasPattern,
-} from '../src/helpers';
+} from '../src/utilities';
 
 describe('Canvas pattern fills', () => {
 

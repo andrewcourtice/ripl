@@ -1,10 +1,10 @@
 import {
     canvas2DStateMixin,
-} from './canvas2d-state';
+} from './mixins';
 
 import {
     rescaleCanvas,
-} from './helpers';
+} from './utilities';
 
 import type {
     ContextExport,

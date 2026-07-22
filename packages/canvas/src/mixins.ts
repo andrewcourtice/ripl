@@ -8,7 +8,7 @@ import {
     getCanvasGradientBounds,
     setCanvasFill,
     setCanvasStroke,
-} from './helpers';
+} from './utilities';
 
 import {
     CanvasPath,
