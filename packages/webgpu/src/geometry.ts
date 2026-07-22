@@ -10,6 +10,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    numberNextPowerOfN,
+} from '@ripl/utilities';
+
+import {
     MODEL_UNIFORM_SIZE,
     VERTEX_STRIDE,
 } from './pipeline';
@@ -19,16 +23,6 @@ import type {
 } from './pipeline';
 
 const FLOATS_PER_VERTEX = VERTEX_STRIDE / 4;
-
-function nextPowerOfTwo(minimum: number): number {
-    let capacity = 1;
-
-    while (capacity < minimum) {
-        capacity *= 2;
-    }
-
-    return capacity;
-}
 
 /**
  * Manages GPU buffer allocation and per-frame mesh accumulation.
@@ -159,7 +153,7 @@ export class GeometryManager {
             return;
         }
 
-        const capacity = nextPowerOfTwo(floatCount);
+        const capacity = numberNextPowerOfN(floatCount);
 
         if (this._vertexData.length < capacity) {
             this._vertexData = new Float32Array(capacity);
@@ -177,7 +171,7 @@ export class GeometryManager {
             return;
         }
 
-        const capacity = nextPowerOfTwo(indexCount);
+        const capacity = numberNextPowerOfN(indexCount);
 
         if (this._indexData.length < capacity) {
             this._indexData = new Uint32Array(capacity);

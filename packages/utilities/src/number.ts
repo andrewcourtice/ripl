@@ -124,6 +124,22 @@ export function numberNice(value: number, round: boolean = false) {
 }
 
 /**
+ * Returns the smallest power of `base` that is greater than or equal to `minimum`, starting from `1`.
+ *
+ * A `minimum` of `1` or less (including `0` and negatives) returns `1`. Useful for growing pooled
+ * buffers or capacities in exponential steps.
+ */
+export function numberNextPowerOfN(minimum: number, base = 2): number {
+    let capacity = 1;
+
+    while (capacity < minimum) {
+        capacity *= base;
+    }
+
+    return capacity;
+}
+
+/**
  * Formats a number as a locale-aware string. Supports decimal, `percent`, and `currency` styles;
  * `compact`/`scientific`/`engineering` notation; grouping; and fraction-digit control (with
  * `precision` as a shorthand for `maximumFractionDigits`). Non-numeric values fall back to `String`.
