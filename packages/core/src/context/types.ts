@@ -73,6 +73,8 @@ export interface RenderElement {
 export interface ContextEventMap extends EventMap {
     /** Emitted when the context's rendering surface is resized. */
     resize: null;
+    /** Emitted to request that the bound scene repaint on the next frame, for context-level changes (e.g. a 3D camera move) that mutate no element. */
+    render: null;
     /** Emitted when the pointer enters the context surface. */
     mouseenter: null;
     /** Emitted when the pointer leaves the context surface. */

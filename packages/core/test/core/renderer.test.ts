@@ -682,6 +682,26 @@ describe('Renderer', () => {
             scene.destroy();
         });
 
+        test('Should repaint when the context requests a render', async () => {
+            const { scene, renderer, clearSpy } = await createSettledScene();
+
+            const paintsBefore = clearSpy.mock.calls.length;
+
+            // Idle loop first — a clean scene under the dirty gate performs zero paints.
+            await vi.advanceTimersByTimeAsync(500);
+            expect(clearSpy.mock.calls.length).toBe(paintsBefore);
+
+            // A context-level repaint request (mutating no element, e.g. a 3D camera move) forces
+            // the next frame to paint — exactly the signal a camera change relies on.
+            scene.context.requestRender();
+
+            await vi.advanceTimersByTimeAsync(500);
+            expect(clearSpy.mock.calls.length).toBe(paintsBefore + 1);
+
+            renderer.destroy();
+            scene.destroy();
+        });
+
         test('Should paint every frame when the fps debug overlay is enabled', async () => {
             const { scene, renderer, clearSpy } = await createSettledScene({
                 debug: { fps: true },

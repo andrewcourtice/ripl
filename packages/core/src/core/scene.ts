@@ -171,6 +171,10 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             }
         }));
 
+        // A context-level repaint request (e.g. a 3D camera move) mutates no element, so it
+        // would otherwise be missed by the renderer's dirty check — invalidate to force a paint.
+        this.retain(context.on('render', () => this.invalidate()));
+
         this.on('graph', () => {
             this.invalidate();
             requestFrame(rebuild);

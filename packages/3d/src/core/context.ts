@@ -162,6 +162,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     public setCamera(eye: Vector3, target: Vector3, up: Vector3): void {
         this.viewMatrix = mat4LookAt(eye, target, up);
         this.updateViewProjectionMatrix();
+        this.requestRender();
     }
 
     /** Updates the perspective projection with the given field of view, near, and far planes. */
@@ -170,6 +171,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         this.near = near;
         this.far = far;
         this.updateProjectionMatrix();
+        this.requestRender();
     }
 
     /** Sets an orthographic projection with explicit frustum bounds. */
@@ -183,6 +185,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     ): void {
         this.projectionMatrix = mat4Orthographic(left, right, bottom, top, near, far);
         this.updateViewProjectionMatrix();
+        this.requestRender();
     }
 
     /** Returns the effective light direction for the current render, accounting for the light mode. */

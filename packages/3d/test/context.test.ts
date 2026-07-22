@@ -8,9 +8,14 @@ import {
 } from 'vitest';
 
 import {
+    createCamera,
     createContext,
     mat4Identity,
 } from '../src';
+
+import {
+    createScene,
+} from '@ripl/core';
 
 import {
     mockCanvasContext,
@@ -108,6 +113,57 @@ describe('Context3D', () => {
         ctx.markRenderStart();
 
         expect(ctx.faceBuffer.length).toBe(0);
+    });
+
+    describe('Camera-driven repaint', () => {
+
+        test('A camera orbit invalidates the bound scene', () => {
+            const context = createContext(document.createElement('div'));
+            const scene = createScene(context);
+            const camera = createCamera(context);
+
+            // Settle the scene so its dirty flag is clear before the camera change.
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            // A camera-only change mutates no element — it must still re-dirty the scene, or the
+            // renderer's dirty gate would freeze the view.
+            camera.orbit(0.2, 0.1);
+            camera.flush();
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('A direct setCamera call invalidates the bound scene', () => {
+            const context = createContext(document.createElement('div'));
+            const scene = createScene(context);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            context.setCamera([0, 0, 8], [0, 0, 0], [0, 1, 0]);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('An orthographic projection change invalidates the bound scene', () => {
+            const context = createContext(document.createElement('div'));
+            const scene = createScene(context);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            context.setOrthographic(-10, 10, -10, 10, 0.1, 100);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
     });
 
 });

@@ -338,6 +338,32 @@ describe('Scene', () => {
             scene.destroy();
         });
 
+        test('Should be set by a context render event', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.context.emit('render', null);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by context.requestRender()', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.context.requestRender();
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
         test('Should stay dirty after the frame-buffered graph rebuild', async () => {
             const scene = createScene(el);
 

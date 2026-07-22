@@ -123,6 +123,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             'mouseenter',
             'mouseleave',
             'mousemove',
+            'render',
             'resize',
         ];
     }
@@ -475,6 +476,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         } else {
             this._getTrackedElements.cache.clear();
         }
+    }
+
+    /** Requests that the bound scene repaint on the next frame — for context-level changes (e.g. a 3D camera move) that mutate no element and so would otherwise be skipped by the renderer's dirty check. */
+    public requestRender(): void {
+        this.emit('render', null);
     }
 
     /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */
