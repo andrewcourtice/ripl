@@ -951,3 +951,111 @@ describe('N y-axes (bar)', () => {
     });
 
 });
+
+// Titles on all three axes exercise the per-axis id namespacing (Fix 1a); the left/right/left
+// arrangement exercises the right-axis geometry mirror (Fix 1b). Both are asserted on the element
+// tree, so they hold regardless of the rendering backend.
+const TITLED_TRIPLE_AXES = {
+    y: [
+        { title: 'Axis A' },
+        {
+            position: 'right' as const,
+            title: 'Axis B',
+        },
+        {
+            position: 'left' as const,
+            title: 'Axis C',
+        },
+    ],
+};
+
+interface TickTextInternals {
+    textAlign: string;
+}
+
+interface TitledAxisInternals {
+    alignment: string;
+    group: {
+        id: string;
+        queryAll(selector: string): {
+            query(selector: string): TickTextInternals | null;
+        }[];
+    };
+    _titleText?: {
+        id: string;
+    };
+}
+
+function titledYAxes(chart: unknown): TitledAxisInternals[] {
+    return (chart as { yAxes: TitledAxisInternals[] }).yAxes;
+}
+
+// The text alignment of the first tick label on an axis (undefined when the axis has no ticks).
+function firstTickTextAlign(axis: TitledAxisInternals): string | undefined {
+    const [tickGroup] = axis.group.queryAll('.chart-axis__tick-group');
+    return tickGroup?.query('text')?.textAlign;
+}
+
+describe('multi y-axis element ids and right-axis geometry', () => {
+
+    function createTitledTripleAxisChart() {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: TRIPLE_DATA,
+            key: 'm',
+            axis: TITLED_TRIPLE_AXES,
+            series: [
+                {
+                    id: 'a',
+                    label: 'A',
+                    value: 'a',
+                },
+                {
+                    id: 'b',
+                    label: 'B',
+                    value: 'b',
+                    axis: 1,
+                },
+                {
+                    id: 'c',
+                    label: 'C',
+                    value: 'c',
+                    axis: 2,
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('gives each y-axis title a distinct element id so the SVG cache cannot dedupe them to one node', async () => {
+        const chart = createTitledTripleAxisChart();
+
+        await chart.render();
+
+        const titleIds = titledYAxes(chart).map(axis => axis._titleText?.id);
+
+        expect(titleIds.every(id => typeof id === 'string' && id.length > 0)).toBe(true);
+        expect(new Set(titleIds).size).toBe(3);
+    });
+
+    it('aligns tick labels toward the plot: left axes right-align, right axes left-align', async () => {
+        const chart = createTitledTripleAxisChart();
+
+        await chart.render();
+
+        const axes = titledYAxes(chart);
+
+        expect(axes.map(axis => axis.alignment)).toEqual(['left', 'right', 'left']);
+        expect(firstTickTextAlign(axes[0])).toBe('right');
+        expect(firstTickTextAlign(axes[1])).toBe('left');
+        expect(firstTickTextAlign(axes[2])).toBe('right');
+    });
+
+});

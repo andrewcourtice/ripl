@@ -417,6 +417,10 @@ export class ChartAxis extends ChartComponent {
 /** Horizontal (x) axis component with top/bottom alignment. */
 export class ChartXAxis extends ChartAxis {
 
+    // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
+    // with the group id — a colon in an id breaks a `#`-id selector, so the query approach can't be used.
+    private _titleText?: Text;
+
     /** Which edge the axis sits on (`top` or `bottom`). */
     public alignment: ChartXAxisAlignment;
 
@@ -507,7 +511,7 @@ export class ChartXAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => group.id === `x-tick:${value}`);
+        } = arrayJoin(ticks, groups, (value, group) => group.id === `x-tick:${this.group.id}:${value}`);
 
         const rotationRad = this._labelRotationRad;
         const labelY = boundingBox.top + this.padding + this.tickSize + 1;
@@ -521,9 +525,9 @@ export class ChartXAxis extends ChartAxis {
                 // guaranteed unique/stable and, in the SVG renderer, tick-group ids share a single
                 // global DOM cache with every other element — so a formatted label colliding with a
                 // data element id (e.g. a candlestick group keyed by the same date string) makes the
-                // two fight over one DOM node and the axis label vanishes. A value-namespaced id is
-                // unique per tick and can't collide with data ids.
-                id: `x-tick:${value}`,
+                // two fight over one DOM node and the axis label vanishes. Namespacing by the axis's
+                // own group id keeps the id unique per tick, per axis, and clear of data ids.
+                id: `x-tick:${this.group.id}:${value}`,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [
@@ -590,20 +594,18 @@ export class ChartXAxis extends ChartAxis {
         });
 
         // Render title in its own band below the tick labels (removing it when the title was cleared).
-        const titleId = 'chart-axis__x-title';
-        let titleText = this.group.query<Text>(`#${titleId}`);
-
         if (!this.title) {
-            titleText?.destroy();
+            this._titleText?.destroy();
+            this._titleText = undefined;
             return Promise.resolve();
         }
 
         const titleX = (boundingBox.left + boundingBox.right) / 2;
         const titleY = boundingBox.bottom;
 
-        if (!titleText) {
-            titleText = createText({
-                id: titleId,
+        if (!this._titleText) {
+            this._titleText = createText({
+                id: `chart-axis__x-title:${this.group.id}`,
                 content: this.title,
                 x: titleX,
                 y: titleY,
@@ -613,13 +615,13 @@ export class ChartXAxis extends ChartAxis {
                 font: this.titleFont,
             });
 
-            this.group.add(titleText);
+            this.group.add(this._titleText);
         } else {
-            titleText.content = this.title;
-            titleText.x = titleX;
-            titleText.y = titleY;
-            titleText.fill = this.labelColor;
-            titleText.font = this.titleFont;
+            this._titleText.content = this.title;
+            this._titleText.x = titleX;
+            this._titleText.y = titleY;
+            this._titleText.fill = this.labelColor;
+            this._titleText.font = this.titleFont;
         }
 
         return Promise.resolve();
@@ -629,6 +631,10 @@ export class ChartXAxis extends ChartAxis {
 
 /** Vertical (y) axis component with left/right alignment. */
 export class ChartYAxis extends ChartAxis {
+
+    // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
+    // with the group id — a colon in an id breaks a `#`-id selector, so the query approach can't be used.
+    private _titleText?: Text;
 
     /** Which edge the axis sits on (`left` or `right`). */
     public alignment: ChartYAxisAlignment;
@@ -689,8 +695,19 @@ export class ChartYAxis extends ChartAxis {
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
 
-        this.line.x1 = boundingBox.right;
-        this.line.x2 = boundingBox.right;
+        // Derive edge + direction from alignment: a left axis draws its line/ticks/labels off the
+        // box's plot-facing right edge with ticks pointing left; a right axis mirrors to the left
+        // edge with ticks pointing right, so both sit between the plot and their own labels.
+        const isLeft = this.alignment === 'left';
+        const lineX = isLeft ? boundingBox.right : boundingBox.left;
+        const tickEndX = isLeft ? lineX - this.tickSize : lineX + this.tickSize;
+        const labelX = isLeft
+            ? lineX - this.padding - this.tickSize - 1
+            : lineX + this.padding + this.tickSize + 1;
+        const labelAlign = isLeft ? 'right' : 'left';
+
+        this.line.x1 = lineX;
+        this.line.x2 = lineX;
         this.line.y1 = boundingBox.top;
         this.line.y2 = boundingBox.bottom;
         this.line.stroke = this.stroke;
@@ -701,7 +718,7 @@ export class ChartYAxis extends ChartAxis {
             left: groupEntries,
             inner: groupUpdates,
             right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => group.id === `y-tick:${value}`);
+        } = arrayJoin(ticks, groups, (value, group) => group.id === `y-tick:${this.group.id}:${value}`);
 
         const labelEntryTexts = groupEntries.map(value => {
             const y = this.scale(value);
@@ -709,16 +726,16 @@ export class ChartYAxis extends ChartAxis {
 
             return createGroup({
                 // See the x-axis note: key by the namespaced raw tick value, not the display label,
-                // so ids stay unique/stable and can't collide with data element ids in the SVG cache.
-                id: `y-tick:${value}`,
+                // so ids stay unique/stable per axis and can't collide with data element ids in the SVG cache.
+                id: `y-tick:${this.group.id}:${value}`,
                 class: 'chart-axis__tick-group',
                 zIndex: 1000,
                 children: [
                     createText({
                         content: label,
-                        x: boundingBox.right - this.padding - this.tickSize - 1,
+                        x: labelX,
                         y,
-                        textAlign: 'right',
+                        textAlign: labelAlign,
                         textBaseline: 'middle',
                         fill: this.labelColor,
                         font: this.labelFont,
@@ -726,9 +743,9 @@ export class ChartYAxis extends ChartAxis {
                         data: { opacity: 1 },
                     }),
                     createLine({
-                        x1: boundingBox.right,
+                        x1: lineX,
                         y1: y,
-                        x2: boundingBox.right - this.tickSize,
+                        x2: tickEndX,
                         y2: y,
                         stroke: this.stroke,
                         opacity: 0,
@@ -752,17 +769,18 @@ export class ChartYAxis extends ChartAxis {
             const y = this.scale(value);
 
             if (line) {
-                line.x1 = boundingBox.right;
+                line.x1 = lineX;
                 line.y1 = y;
-                line.x2 = boundingBox.right - this.tickSize;
+                line.x2 = tickEndX;
                 line.y2 = y;
                 line.stroke = this.stroke;
             }
 
             if (label) {
                 label.content = this.formatTickLabel(value);
-                label.x = boundingBox.right - this.padding - this.tickSize - 1;
+                label.x = labelX;
                 label.y = y;
+                label.textAlign = labelAlign;
                 label.fill = this.labelColor;
                 label.font = this.labelFont;
             }
@@ -770,28 +788,25 @@ export class ChartYAxis extends ChartAxis {
 
         // Render the title rotated vertically in its own band at the far edge of the axis,
         // outside the tick labels so the two never overlap or clip (removing it when cleared).
-        const titleId = 'chart-axis__y-title';
-        let titleText = this.group.query<Text>(`#${titleId}`);
-
         if (!this.title) {
-            titleText?.destroy();
+            this._titleText?.destroy();
+            this._titleText = undefined;
             return Promise.resolve();
         }
 
-        const isLeftAligned = this.alignment === 'left';
         // Anchor the rotated title to the outer edge of its band (not centred) so the full
         // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
         // widening the reserved band, so the plot margins are unchanged.
         const titleThickness = this.titleBand - TITLE_GAP;
-        const titleX = isLeftAligned
+        const titleX = isLeft
             ? boundingBox.left + titleThickness / 2
             : boundingBox.right - titleThickness / 2;
         const titleY = (boundingBox.top + boundingBox.bottom) / 2;
-        const rotation = isLeftAligned ? -Math.PI / 2 : Math.PI / 2;
+        const rotation = isLeft ? -Math.PI / 2 : Math.PI / 2;
 
-        if (!titleText) {
-            titleText = createText({
-                id: titleId,
+        if (!this._titleText) {
+            this._titleText = createText({
+                id: `chart-axis__y-title:${this.group.id}`,
                 content: this.title,
                 x: titleX,
                 y: titleY,
@@ -804,16 +819,16 @@ export class ChartYAxis extends ChartAxis {
                 transformOriginY: titleY,
             });
 
-            this.group.add(titleText);
+            this.group.add(this._titleText);
         } else {
-            titleText.content = this.title;
-            titleText.x = titleX;
-            titleText.y = titleY;
-            titleText.fill = this.labelColor;
-            titleText.font = this.titleFont;
-            titleText.rotation = rotation;
-            titleText.transformOriginX = titleX;
-            titleText.transformOriginY = titleY;
+            this._titleText.content = this.title;
+            this._titleText.x = titleX;
+            this._titleText.y = titleY;
+            this._titleText.fill = this.labelColor;
+            this._titleText.font = this.titleFont;
+            this._titleText.rotation = rotation;
+            this._titleText.transformOriginX = titleX;
+            this._titleText.transformOriginY = titleY;
         }
 
         return Promise.resolve();

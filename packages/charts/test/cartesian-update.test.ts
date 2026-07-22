@@ -46,6 +46,9 @@ interface CartesianInternals {
         getBoundingBox(): {
             height: number;
         };
+        group: {
+            id: string;
+        };
     };
     yAxis: AxisInternals;
     yAxes: AxisInternals[];
@@ -345,7 +348,8 @@ describe('cartesian runtime reconfiguration', () => {
         await chart.render();
 
         const flatBand = internals(chart).xAxis.getBoundingBox().height;
-        const flatLabel = internals(chart).scene.getElementById('x-tick:January')?.query('text');
+        const xTickId = `x-tick:${internals(chart).xAxis.group.id}:January`;
+        const flatLabel = internals(chart).scene.getElementById(xTickId)?.query('text');
 
         expect(flatLabel?.rotation ?? 0).toBe(0);
 
@@ -360,7 +364,7 @@ describe('cartesian runtime reconfiguration', () => {
         await chart.render();
 
         const rotatedBand = internals(chart).xAxis.getBoundingBox().height;
-        const rotatedLabel = internals(chart).scene.getElementById('x-tick:January')?.query('text');
+        const rotatedLabel = internals(chart).scene.getElementById(xTickId)?.query('text');
 
         // The mocked canvas reports zero text metrics, so the projected band cannot shrink but
         // its growth is not observable here — the rotation applied to live labels is.
