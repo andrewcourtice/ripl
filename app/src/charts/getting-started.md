@@ -105,7 +105,7 @@ All charts extend `BaseChartOptions` and share these core options:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `padding` | `Partial<ChartPadding>` | `{ top: 10, right: 10, bottom: 4, left: 4 }` | Inner padding around the chart area |
+| `padding` | `Partial<ChartPadding>` | `{ top: 10, right: 10, bottom: 10, left: 10 }` | Inner padding around the chart area |
 | `animation` | `boolean \| Partial<ChartAnimationOptions>` | `{ enabled: true, duration: 1000, ease: 'easeOutCubic' }` | Animation toggle or configuration |
 | `title` | `string \| Partial<ChartTitleOptions>` | — | Chart title text or configuration |
 | `autoRender` | `boolean` | `true` | Automatically render on creation and update |

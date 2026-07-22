@@ -468,19 +468,12 @@ export class Chart<
     protected getPadding(): ChartPadding {
         const p = this.options.padding || {};
 
-        // Defaults are deliberately asymmetric. Each axis reserves its own label band, so the
-        // left/bottom sides only need a hairline of margin between that band and the context edge;
-        // a larger value there just opens a visible gap between the edge and the outermost label
-        // (most noticeable on narrow/mobile viewports, where a fixed 20-40px dominates the width).
-        // Top and right are different: the topmost y-tick label (baseline-centred on the plot's top
-        // edge) and the rightmost x-tick label (centre-aligned on the plot's right edge) each spill
-        // roughly half a label past their edge, so those sides stay large enough to not clip that
-        // half-overflow. User-supplied values always win via the `??` fallbacks.
+        // All four sides default to 10; user-supplied values win via the `??` fallbacks.
         return {
             top: p.top ?? 10,
             right: p.right ?? 10,
-            bottom: p.bottom ?? 4,
-            left: p.left ?? 4,
+            bottom: p.bottom ?? 10,
+            left: p.left ?? 10,
         };
     }
 
