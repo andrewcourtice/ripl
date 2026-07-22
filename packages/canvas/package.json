@@ -1,6 +1,6 @@
 {
     "name": "@ripl/canvas",
-    "version": "1.0.0-beta.3",
+    "version": "1.0.0-beta.4",
     "description": "Canvas 2D rendering context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
