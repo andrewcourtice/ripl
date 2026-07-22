@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   release:
-    name: 'Stage publish to npm (dist-tag: next)'
+    name: Stage publish to npm
     runs-on: ubuntu-latest
 
     steps:
@@ -25,9 +25,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22        # resolves to latest 22.x (>= 22.14.0, required for staged publishing)
           cache: yarn
-          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -41,16 +40,19 @@ jobs:
       - name: Test
         run: yarn test
 
-      # Stage the release: publish every un-published version under the `next`
-      # dist-tag. `latest` is untouched, so `npm install @ripl/*` is unaffected
-      # until the Promote workflow moves this version to `latest`.
-      - name: 'Stage publish (dist-tag: next)'
+      # Stage every public package to npm's staging queue (non-interactive, no 2FA).
+      # Yarn rewrites workspace:^ -> ^<version> and attaches provenance. Nothing is
+      # installable until a maintainer approves each staged version with 2FA
+      # (npmjs.com UI, or `npm stage approve <id>` / `yarn npm stage approve <id>`).
+      # Publish is pinned to registry.npmjs.org (Yarn defaults reads to the yarnpkg mirror).
+      - name: Stage publish to npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
-        run: yarn lerna publish from-package --yes --dist-tag next
+          YARN_NPM_PUBLISH_REGISTRY: 'https://registry.npmjs.org'
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_NPM_ALWAYS_AUTH: 'true'
+        run: yarn workspaces foreach --all --no-private --topological npm publish --staged --provenance --tolerate-republish
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (prerelease until approved)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
