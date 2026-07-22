@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write        # create the GitHub Release for the tag
+  id-token: write        # build provenance
+
+jobs:
+  release:
+    name: Stage publish to npm
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22        # resolves to latest 22.x (>= 22.14.0, required for staged publishing)
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test
+
+      # Stage every public package to npm's staging queue (non-interactive, no 2FA).
+      # Yarn rewrites workspace:^ -> ^<version> and attaches provenance. Nothing is
+      # installable until a maintainer approves each staged version with 2FA
+      # (npmjs.com UI, or `npm stage approve <id>` / `yarn npm stage approve <id>`).
+      # Publish is pinned to registry.npmjs.org (Yarn defaults reads to the yarnpkg mirror).
+      - name: Stage publish to npm
+        env:
+          YARN_NPM_PUBLISH_REGISTRY: 'https://registry.npmjs.org'
+          YARN_NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          YARN_NPM_ALWAYS_AUTH: 'true'
+        run: yarn workspaces foreach --all --no-private --topological npm publish --staged --provenance --tolerate-republish
+
+      - name: Create GitHub Release (prerelease until approved)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          pre=""
+          case "$tag" in
+            *-*) pre="--prerelease" ;;
+          esac
+          if gh release view "$tag" > /dev/null 2>&1; then
+            echo "Release $tag already exists, skipping"
+          else
+            gh release create "$tag" --title "$tag" --generate-notes --verify-tag $pre
+          fi

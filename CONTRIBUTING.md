@@ -202,6 +202,24 @@ Pull requests to `main` trigger the test workflow:
 
 Ensure your changes pass locally before pushing to avoid CI failures.
 
+## Releasing
+
+Releases are **tag-triggered** and use **npm [staged publishing](https://docs.npmjs.com/staged-publishing/)**. Bumping the version locally with Lerna pushes a `vX.Y.Z` tag, and the [Release workflow](.github/workflows/release.yml) builds and **stages** every public `@ripl/*` package to npm (`yarn npm publish --staged`). Staged versions sit in npm's staging queue and are **not installable** until approved — staging needs no 2FA, so CI runs unattended.
+
+```bash
+# from an up-to-date main branch
+yarn release   # lerna version --force-publish: choose a bump, then it commits, tags, and pushes
+```
+
+After CI stages the release, **approve it with 2FA** to publish for real — either from the "staged versions" area on npmjs.com (simplest for a multi-package release) or per package via the CLI:
+
+```bash
+npm stage list @ripl/web                     # find the staged version's <stage-id>
+npm stage approve <stage-id> --otp <code>    # or: yarn npm stage approve <stage-id>
+```
+
+Staging authenticates with an `NPM_TOKEN` secret (a granular token scoped to `@ripl`, stored in the repository's Actions secrets) and attaches build provenance; Yarn rewrites the `@ripl/*` `workspace:^` cross-dependencies to concrete versions. Approving requires 2FA on your npm account. A brand-new package cannot be staged, so `@ripl/devtools` must be published once normally before its first staged release.
+
 ## AI Agents
 
 If you are an AI coding agent, refer to [AGENTS.md](AGENTS.md) for comprehensive conventions, architecture details, and patterns specific to automated contributions.
