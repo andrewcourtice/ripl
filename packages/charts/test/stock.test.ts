@@ -17,6 +17,8 @@ import {
 
 import type {
     Group,
+    Rect,
+    Text,
 } from '@ripl/core';
 
 polyfillPath2D();
@@ -103,6 +105,40 @@ describe('StockChart volume toggle', () => {
         await chart.render();
 
         expect(sceneOf(chart).getElementById('volume')).toBeDefined();
+
+        chart.destroy();
+    });
+
+    test('Should centre the volume caption under the volume bars', async () => {
+        mockCanvasContext();
+        mockCanvasSize(640, 400);
+
+        const chart = createStockChart<Candle>(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: CANDLES,
+            key: 'date',
+            open: 'open',
+            high: 'high',
+            low: 'low',
+            close: 'close',
+            volume: 'volume',
+            showVolume: true,
+        });
+
+        await chart.render();
+
+        const scene = sceneOf(chart);
+        const label = scene.getElementById<Text>('volume-label');
+        const clip = scene.getElementById<Rect>('volume-clip');
+
+        expect(label).toBeDefined();
+        expect(label?.textAlign).toBe('center');
+
+        // The clip rect spans the volume plot, so its centre is the caption's expected x.
+        const plotMidpoint = clip!.x + clip!.width / 2;
+
+        expect(label?.x).toBeCloseTo(plotMidpoint);
 
         chart.destroy();
     });

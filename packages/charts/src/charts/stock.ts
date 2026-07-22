@@ -142,7 +142,8 @@ interface CandlestickValues {
 
 const DEFAULT_UP_COLOR = '#6dd5b1';
 const DEFAULT_DOWN_COLOR = '#f4a0b9';
-const VOLUME_HEIGHT_RATIO = 0.2;
+const VOLUME_HEIGHT_RATIO = 0.22;
+const VOLUME_LABEL_GAP = 6;
 
 /**
  * Candlestick (stock) chart rendering OHLC data with optional volume bars.
@@ -499,6 +500,17 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
         ].flat());
     }
 
+    /**
+     * Measures the strip reserved beneath the volume bars for the centred "Volume" caption: the
+     * caption's line height (bold theme font, matching an axis title) plus a small gap above it.
+     */
+    private _volumeLabelBand(): number {
+        const metrics = this.scene.context.measureText('Volume', `bold ${this.theme.font}`);
+        const labelHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+        return labelHeight + VOLUME_LABEL_GAP;
+    }
+
     private async _drawVolume(
         candleWidth: number,
         volumeTop: number,
@@ -558,25 +570,27 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
         this._volumeClip.height = Math.max(0, volumeBottom - volumeTop);
         this._volumeClip.clip = !!this.navigator;
 
-        // "Volume" caption at the top-left of the volume band.
+        // Centred "Volume" caption in the strip reserved beneath the bars, styled like an axis title.
+        const labelBand = this._volumeLabelBand();
+
         if (!this._volumeLabel) {
             this._volumeLabel = createText({
                 id: 'volume-label',
                 content: 'Volume',
                 x: 0,
                 y: 0,
-                textAlign: 'left',
-                textBaseline: 'top',
-                fill: setColorAlpha(this.theme.axisColor, 0.9),
-                font: this.theme.font,
+                textAlign: 'center',
+                textBaseline: 'bottom',
+                fill: this.theme.axisColor,
+                font: `bold ${this.theme.font}`,
                 zIndex: 5,
             });
 
             group.add(this._volumeLabel);
         }
 
-        this._volumeLabel.x = plot.x + 2;
-        this._volumeLabel.y = volumeTop + 2;
+        this._volumeLabel.x = plot.x + plot.width / 2;
+        this._volumeLabel.y = volumeBottom + labelBand;
 
         // Exclude the clip rect (also a rect) from the bar data-join.
         const existingBars = (group.getElementsByType('rect') as Rect[]).filter(bar => bar.id !== 'volume-clip');
@@ -732,9 +746,10 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
-            // Volume band sits below the x-axis labels.
+            // Volume band sits below the x-axis labels, reserving a strip at its base for the caption.
             const volumeTop = xAxisBox.bottom + 5;
-            const volumeBottom = bottom;
+            const labelBand = hasVolume ? this._volumeLabelBand() : 0;
+            const volumeBottom = bottom - labelBand;
 
             const promises: Promise<unknown>[] = [
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
