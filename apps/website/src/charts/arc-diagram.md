@@ -147,7 +147,6 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createArcDiagramChart(context, {
         nodes,
         links,
-        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });

@@ -280,12 +280,8 @@ function runLineChart(ctx: TerminalContext) {
         grid: true,
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
+        // Tight padding: the terminal's braille grid is a small logical canvas, so the default 16 would crowd the plot.
+        padding: 10,
     });
 }
 
@@ -346,12 +342,8 @@ function runBarChart(ctx: TerminalContext) {
         grid: true,
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
+        // Tight padding: the terminal's braille grid is a small logical canvas, so the default 16 would crowd the plot.
+        padding: 10,
     });
 }
 
@@ -435,12 +427,8 @@ function runStockChart(ctx: TerminalContext) {
         grid: true,
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
+        // Tight padding: the terminal's braille grid is a small logical canvas, so the default 16 would crowd the plot.
+        padding: 10,
     });
 }
 
@@ -499,12 +487,8 @@ function runGanttChart(ctx: TerminalContext) {
         progress: 'progress',
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
+        // Tight padding: the terminal's braille grid is a small logical canvas, so the default 16 would crowd the plot.
+        padding: 10,
     });
 }
 

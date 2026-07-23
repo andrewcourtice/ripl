@@ -68,12 +68,6 @@ function buildChart() {
                 format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)),
             },
         },
-        padding: {
-            top: 16,
-            right: 16,
-            bottom: 16,
-            left: 12,
-        },
         series: [
             {
                 id: 'pages',

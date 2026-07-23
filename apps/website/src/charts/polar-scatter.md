@@ -142,7 +142,6 @@ const example = ref();
 const { contextChanged, chart } = useRiplChart(context => {
     return createPolarScatterChart(context, {
         data: samples,
-        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });

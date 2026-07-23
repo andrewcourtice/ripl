@@ -49,12 +49,6 @@ function buildChart() {
         links,
         nodeWidth: 18,
         nodePadding: 14,
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-        },
     };
 
     if (chart) {

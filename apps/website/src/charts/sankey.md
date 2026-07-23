@@ -126,7 +126,7 @@ const { contextChanged, chart } = useRiplChart(context => {
             { id: 'content', label: 'Content' },
         ],
         links,
-        padding: { top: 10, right: 80, bottom: 10, left: 10 },
+        padding: { right: 80 },
         ...buildOptions(),
     });
 });

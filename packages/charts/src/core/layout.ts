@@ -8,6 +8,12 @@
  * titles to overlap or clip the plotting area.
  */
 
+import {
+    DEFAULT_CHART_PADDING,
+} from '../constants/layout';
+
+export { DEFAULT_CHART_PADDING };
+
 /** The center point and inscribed size of a rectangular {@link ChartArea}. */
 export interface AreaCenter {
     /** The horizontal center of the area, in chart pixels. */
@@ -40,6 +46,36 @@ export interface ChartPadding {
     bottom: number;
     /** Left padding, in pixels. */
     left: number;
+}
+
+/**
+ * Resolves a chart padding input into a full {@link ChartPadding}. A single number applies to all
+ * four edges; a partial object sets individual edges and leaves the rest at `fallback`; `undefined`
+ * falls back on every edge. Explicit `0` values are preserved.
+ *
+ * @param input - A uniform number, a partial per-edge object, or `undefined`.
+ * @param fallback - Value used for any edge left unspecified. Defaults to {@link DEFAULT_CHART_PADDING}.
+ * @returns Fully resolved padding for all four edges.
+ */
+export function resolveChartPadding(
+    input?: number | Partial<ChartPadding>,
+    fallback: number = DEFAULT_CHART_PADDING
+): ChartPadding {
+    if (typeof input === 'number') {
+        return {
+            top: input,
+            right: input,
+            bottom: input,
+            left: input,
+        };
+    }
+
+    return {
+        top: input?.top ?? fallback,
+        right: input?.right ?? fallback,
+        bottom: input?.bottom ?? fallback,
+        left: input?.left ?? fallback,
+    };
 }
 
 /** An edge of the layout from which a band can be reserved. */

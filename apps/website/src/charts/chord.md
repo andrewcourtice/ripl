@@ -98,7 +98,6 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createChordChart(context, {
         labels: LABELS,
         matrix,
-        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });

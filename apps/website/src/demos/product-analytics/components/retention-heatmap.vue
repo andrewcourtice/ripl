@@ -65,12 +65,6 @@ function buildChart() {
             x: { title: 'Weeks Since Signup' },
             y: { title: 'Cohort' },
         },
-        padding: {
-            top: 16,
-            right: 16,
-            bottom: 16,
-            left: 12,
-        },
     };
 
     if (chart) {

@@ -88,12 +88,7 @@ function buildChart() {
         data,
         key: 'date',
         format: (value: number) => `$${value.toFixed(2)}`,
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 30,
-            left: 20,
-        },
+        padding: { bottom: 30 },
         series: [
             {
                 id: 'close',

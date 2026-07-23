@@ -15,6 +15,7 @@ Ripl is a modular library split into focused packages so you only ship what you 
 | `@ripl/3d` | 3D rendering: shapes, camera, shading, and projection onto 2D contexts |
 | `@ripl/terminal` | Terminal rendering context with braille-character output and ANSI truecolor |
 | `@ripl/node` | Node.js runtime bindings that configure the platform factory for headless environments |
+| `@ripl/devtools` | Runtime bridge connecting Ripl contexts, scenes, and renderers to the Ripl devtools browser extension |
 | `@ripl/dom` | DOM utilities used internally by browser contexts |
 | `@ripl/utilities` | Shared typed utility functions used across all packages |
 
@@ -29,6 +30,7 @@ Most projects only need one or two packages. Here's a quick guide:
 - **3D (WebGPU)** → `@ripl/web` + `@ripl/3d` + `@ripl/webgpu`
 - **Terminal / CLI** → `@ripl/terminal` + `@ripl/node`
 - **Terminal charts** → `@ripl/terminal` + `@ripl/node` + `@ripl/charts`
+- **Debugging** → `@ripl/devtools` (pairs with the Ripl devtools browser extension)
 
 > [!TIP]
 > Internal packages (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`) are installed automatically as dependencies, so you never need to install them directly.
