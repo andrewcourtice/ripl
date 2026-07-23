@@ -1,6 +1,6 @@
 {
     "name": "@ripl/web",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "description": "Ripl for the web: re-exports core with Canvas as the default context",
     "type": "module",
     "main": "./dist/index.cjs",

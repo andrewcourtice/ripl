@@ -1,6 +1,6 @@
 {
     "name": "@ripl/charts",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "description": "Pre-built chart components for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",

@@ -1,6 +1,6 @@
 {
     "name": "@ripl/webgpu",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "description": "WebGPU 3D rendering context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",

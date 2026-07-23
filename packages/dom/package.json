@@ -1,6 +1,6 @@
 {
     "name": "@ripl/dom",
-    "version": "1.0.0-beta.4",
+    "version": "1.0.0",
     "description": "DOM utilities and context for Ripl",
     "type": "module",
     "main": "./dist/index.cjs",
