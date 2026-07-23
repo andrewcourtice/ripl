@@ -73,7 +73,7 @@ export class ChartTitle extends ChartComponent {
         return this._options.position === 'left' || this._options.position === 'right';
     }
 
-    /** Lazily creates the title text element (added directly to the scene — no wrapping group). */
+    /** Lazily creates the title text element (added directly to the scene, no wrapping group). */
     private _ensureText(): Text {
         if (!this._text) {
             this._text = createText({

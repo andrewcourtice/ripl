@@ -2,7 +2,7 @@
  * Line series renderer: draws each series as a polyline with optional point markers.
  *
  * Extracted verbatim from the line chart so the standalone {@link LineChart} and the mixed trend
- * chart share one implementation — including the progressive draw-on entry, the staggered marker
+ * chart share one implementation, including the progressive draw-on entry, the staggered marker
  * pop-in, and the key-reconciled point morph that keeps curves curved across add/remove.
  */
 
@@ -112,7 +112,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         return series.marker ?? 'circle';
     }
 
-    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    // The value scale a series renders against: its bound axis's scale in multi-axis charts.
     private _valueScale(series: LineSeriesLike<TData>, ctx: LineSeriesContext<TData>): Scale {
         return ctx.resolveScale?.(series) ?? ctx.yScale;
     }
@@ -139,7 +139,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
                 cx: x,
                 cy: y,
                 radius,
-                // A square is a rotated quad — its transform origin must track its center through
+                // A square is a rotated quad, so its transform origin must track its center through
                 // position transitions, so the origin interpolates in lockstep with cx/cy.
                 ...(markerType === 'square' ? {
                     transformOriginX: x,

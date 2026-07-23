@@ -278,17 +278,17 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
  *
  * A character grid cannot honor the full canvas contract, so the following constraints apply:
  *
- * - **Text metrics are approximate** — every glyph occupies exactly one terminal cell, so
+ * - **Text metrics are approximate**: every glyph occupies exactly one terminal cell, so
  *   `measureText` reports one cell of width per character regardless of font, and the `font`
  *   state (family, size, weight) has no visual effect.
- * - **Fills use the even-odd rule only** — the scanline rasterizer ignores a `nonzero` fill rule
+ * - **Fills use the even-odd rule only**: the scanline rasterizer ignores a `nonzero` fill rule
  *   (see {@link TerminalContext.applyFill}).
- * - **No hit testing** — `isPointInPath`/`isPointInStroke` always return `false`, so pointer
+ * - **No hit testing**: `isPointInPath`/`isPointInStroke` always return `false`, so pointer
  *   events never match elements.
- * - **No affine transforms** — `rotate`/`scale`/`translate`/`setTransform`/`transform` are
+ * - **No affine transforms**: `rotate`/`scale`/`translate`/`setTransform`/`transform` are
  *   inherited as no-ops from {@link Context}; elements are positioned through the context's own
  *   `scaleX`/`scaleY`/`rasterScale` mapping instead.
- * - **No clipping or images** — `applyClip` and `drawImage` are inherited as no-ops.
+ * - **No clipping or images**: `applyClip` and `drawImage` are inherited as no-ops.
  */
 export class TerminalContext extends Context<Element> {
 
@@ -308,7 +308,7 @@ export class TerminalContext extends Context<Element> {
             logicalHeight,
         } = options || {};
 
-        // Pass a dummy element — terminal has no DOM element
+        // Pass a dummy element; terminal has no DOM element
         super('terminal', {} as Element, options);
 
         this._output = output;

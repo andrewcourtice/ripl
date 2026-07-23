@@ -26,7 +26,7 @@ export interface PointScale<TDomain = string> extends Scale<TDomain, number> {
 
 /**
  * Creates a point scale that maps discrete domain values to evenly spaced positions across the range
- * (the categorical analogue of a continuous axis — points, not bands). With zero padding the first
+ * (the categorical analogue of a continuous axis: points, not bands). With zero padding the first
  * and last values sit exactly on the range endpoints. `inverse` returns the nearest domain value.
  */
 export function scalePoint<TDomain = string>(

@@ -582,7 +582,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     const spec = labelSpec(srs, item, data.indexOf(item));
                     const layout = resolveDataLabelLayout(spec);
 
-                    // Text content isn't tweenable — apply it directly.
+                    // Text content isn't tweenable, so apply it directly.
                     label.content = spec.content;
                     label.font = spec.font;
                     label.data = {

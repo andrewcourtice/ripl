@@ -36,7 +36,7 @@ import {
 
 /** One grid line to draw: the tick value it represents (a stable join key across rescales) and its pixel position. */
 export interface GridTick {
-    /** The tick's domain value — grid lines are keyed by it, so a persisting tick transitions instead of redrawing. */
+    /** The tick's domain value; grid lines are keyed by it, so a persisting tick transitions instead of redrawing. */
     value: unknown;
     /** The tick's pixel position along the relevant axis. */
     position: number;
@@ -181,7 +181,7 @@ export class Grid extends ChartComponent {
     }
 
     // Joins one direction's lines against the new ticks by tick VALUE, so a persisting tick's
-    // line transitions to its new position, entries fade in, and exits fade out — instead of the
+    // line transitions to its new position, entries fade in, and exits fade out, instead of the
     // whole grid redrawing on every rescale.
     private _reconcileLines(
         ticks: GridTick[],
@@ -275,7 +275,7 @@ export class Grid extends ChartComponent {
     ) {
         this._ensureGroup();
 
-        // Drop grid lines that sit on the plot boundary — that's where the (solid) axis line lives,
+        // Drop grid lines that sit on the plot boundary; that's where the (solid) axis line lives,
         // so a dotted grid line there would draw right on top of it.
         const EDGE_EPSILON = 0.5;
         const onEdge = (value: number, min: number, max: number) => Math.abs(value - min) < EDGE_EPSILON || Math.abs(value - max) < EDGE_EPSILON;

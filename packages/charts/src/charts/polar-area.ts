@@ -679,7 +679,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             async function transitionUpdates() {
-                // Segments are grouped, but transitions animate their own state — drive the leaf
+                // Segments are grouped, but transitions animate their own state, so drive the leaf
                 // children (arc/label/connector) to their stashed `.data`, not the inert group.
                 return renderer.transition(updates.flatMap(group => group.children), element => ({
                     duration: animDuration * 0.8,

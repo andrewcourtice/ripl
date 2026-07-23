@@ -35,7 +35,7 @@ export class CanvasContext extends canvas2DStateMixin(CanvasDOMBase) {
         const context = canvas.getContext('2d');
 
         if (!context) {
-            throw new Error('Failed to acquire a 2D canvas rendering context — the environment does not support the Canvas API');
+            throw new Error('Failed to acquire a 2D canvas rendering context: the environment does not support the Canvas API');
         }
 
         canvas.style.display = 'block';

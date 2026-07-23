@@ -183,7 +183,7 @@ export class ChartAxis extends ChartComponent {
     /** Formats a tick value into its label string. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public formatLabel?: (value: any) => string;
-    /** Tick label rotation in degrees — positive tilts labels counterclockwise. Consumed by the x-axis; the label band and overflow handling account for the rotated extent. */
+    /** Tick label rotation in degrees; positive tilts labels counterclockwise. Consumed by the x-axis; the label band and overflow handling account for the rotated extent. */
     public labelRotation?: number;
 
     protected group: Group;
@@ -316,7 +316,7 @@ export class ChartAxis extends ChartComponent {
         const band = this.getBoundingBox();
         // The x-axis measures labels by width; it slides horizontally, so clip its horizontal span to
         // the plot. Across the axis (its label thickness) it needs breathing room so a label's
-        // ascent/descent isn't shaved at the plot/strip edge — pad the cross extent generously. The
+        // ascent/descent isn't shaved at the plot/strip edge, pad the cross extent generously. The
         // y-axis is the mirror image.
         const horizontal = this._labelDimension === 'width';
         const crossPad = 20;
@@ -392,7 +392,7 @@ export class ChartAxis extends ChartComponent {
     protected animateExits(groups: Group[]) {
         groups.forEach(exitGroup => {
             // Retag the group first so it can't collide with a re-entering tick of the same value
-            // while it fades — the reconcile join and the SVG DOM cache both key on class and id.
+            // while it fades; the reconcile join and the SVG DOM cache both key on class and id.
             exitGroup.classList.delete('chart-axis__tick-group');
             exitGroup.id = `${exitGroup.id}:exit:${stringUniqueId()}`;
 
@@ -418,7 +418,7 @@ export class ChartAxis extends ChartComponent {
 export class ChartXAxis extends ChartAxis {
 
     // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
-    // with the group id — a colon in an id breaks a `#`-id selector, so the query approach can't be used.
+    // with the group id, because a colon in an id breaks a `#`-id selector, so the query approach can't be used.
     private _titleText?: Text;
 
     /** Which edge the axis sits on (`top` or `bottom`). */
@@ -437,7 +437,7 @@ export class ChartXAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
-    /** The canvas-space rotation applied to tick labels — degrees are authored counterclockwise-positive. */
+    /** The canvas-space rotation applied to tick labels; degrees are authored counterclockwise-positive. */
     private get _labelRotationRad(): number {
         return this.labelRotation ? -degreesToRadians(this.labelRotation) : 0;
     }
@@ -523,7 +523,7 @@ export class ChartXAxis extends ChartAxis {
             return createGroup({
                 // Key by the raw tick value (namespaced), not the display label: the label is not
                 // guaranteed unique/stable and, in the SVG renderer, tick-group ids share a single
-                // global DOM cache with every other element — so a formatted label colliding with a
+                // global DOM cache with every other element, so a formatted label colliding with a
                 // data element id (e.g. a candlestick group keyed by the same date string) makes the
                 // two fight over one DOM node and the axis label vanishes. Namespacing by the axis's
                 // own group id keeps the id unique per tick, per axis, and clear of data ids.
@@ -633,7 +633,7 @@ export class ChartXAxis extends ChartAxis {
 export class ChartYAxis extends ChartAxis {
 
     // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
-    // with the group id — a colon in an id breaks a `#`-id selector, so the query approach can't be used.
+    // with the group id, because a colon in an id breaks a `#`-id selector, so the query approach can't be used.
     private _titleText?: Text;
 
     /** Which edge the axis sits on (`left` or `right`). */
@@ -795,7 +795,7 @@ export class ChartYAxis extends ChartAxis {
         }
 
         // Anchor the rotated title to the outer edge of its band (not centered) so the full
-        // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
+        // TITLE_GAP sits between the title and the tick labels, matching the x-axis, without
         // widening the reserved band, so the plot margins are unchanged.
         const titleThickness = this.titleBand - TITLE_GAP;
         const titleX = isLeft

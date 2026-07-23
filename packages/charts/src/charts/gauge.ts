@@ -71,7 +71,7 @@ export interface GaugeChartOptions extends BaseChartOptions {
     color?: string;
     /** Color of the background track arc. */
     trackColor?: string;
-    /** How the central value display is formatted — a built-in format type, Intl number-format options, or a custom function. */
+    /** How the central value display is formatted: a built-in format type, Intl number-format options, or a custom function. */
     format?: ValueFormatInput;
     /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide. */
     tickCount?: number;
@@ -308,8 +308,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const showTickLabels = this.options.showTickLabels !== false;
             const formatTick = resolveValueFormat(this.options.formatTick ?? this.options.format);
 
-            // Ticks only move when the center/radius/count/label-visibility changes — not on a plain
-            // value update — so a value change animates only the arc and the center number.
+            // Ticks only move when the center/radius/count/label-visibility changes, not on a plain
+            // value update, so a value change animates only the arc and the center number.
             const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
             const tickGeometryChanged = tickSignature !== this._tickSignature;
             this._tickSignature = tickSignature;
@@ -465,7 +465,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     state: (element.data ?? {}) as Record<string, unknown>,
                 }))
                 // On a data update the value counts up/down to the new value (only the bar and the
-                // number change — the rest of the gauge stays put).
+                // number change; the rest of the gauge stays put).
                 : renderer.transition(this._valueText, {
                     duration: valueDuration,
                     ease: easeOutCubic,

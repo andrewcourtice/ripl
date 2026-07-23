@@ -125,7 +125,7 @@ interface HighlightHost {
 /**
  * Abstract base class for all chart types, providing the scene, renderer, animation, color
  * management, title/legend layout, and the render/update lifecycle that every concrete chart
- * builds on. Consumers never instantiate this directly — each chart exposes a `createXChart`
+ * builds on. Consumers never instantiate this directly; each chart exposes a `createXChart`
  * factory (e.g. {@link createBarChart}) and this class supplies the shared behavior behind it.
  *
  * @typeParam TOptions - The chart's options type, extending {@link BaseChartOptions}.
@@ -168,7 +168,7 @@ export class Chart<
     /** The resolved theme (palette + furniture colors) this chart renders with. */
     protected theme: Theme;
 
-    /** The resolved tooltip trigger mode (`'item'` per-mark, `'axis'` shared) — kept in sync by {@link Chart.syncTooltip}. */
+    /** The resolved tooltip trigger mode (`'item'` per-mark, 'axis' shared), kept in sync by {@link Chart.syncTooltip}. */
     protected tooltipTrigger: ChartTooltipTrigger = 'item';
     protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
@@ -511,8 +511,8 @@ export class Chart<
     /**
      * Registers the groups that {@link highlightSeries} dims when a legend entry is hovered. Charts
      * call this each render. By default a group belongs to the legend item whose id equals its
-     * `group.id` (one-to-one). Pass `resolveId` when a group belongs to a different legend item — or
-     * to several — e.g. a cluster legend (many node groups per legend item) or a connector that is
+     * `group.id` (one-to-one). Pass `resolveId` when a group belongs to a different legend item, or
+     * to several, e.g. a cluster legend (many node groups per legend item) or a connector that is
      * incident to two legend items (return an array of owner ids). Replaces any previous set.
      *
      * @param groups - The element groups eligible for dimming.
@@ -532,7 +532,7 @@ export class Chart<
      *
      * Dims the leaf elements of each group rather than the group itself: a group's opacity does not
      * cascade multiplicatively, and the leaves carry no explicit `opacity` (so a group-level tween is
-     * a no-op — `element.interpolate` skips nil current values). Each leaf's rest opacity is captured
+     * a no-op; `element.interpolate` skips nil current values). Each leaf's rest opacity is captured
      * once on the element (via a Symbol slot, like `applyHoverHighlight`), so hidden elements stay
      * hidden and restoring returns to the true value.
      */

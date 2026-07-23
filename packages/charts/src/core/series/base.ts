@@ -5,7 +5,7 @@
  * persisted groups, animate exits out, build entering groups, key-reconcile updating groups, add the
  * entering groups to the plot, assign paint order, and run the enter/update/label transitions. Each
  * concrete renderer (line, area, bar) supplies only the geometry-specific pieces via the abstract
- * hooks — the shared marker-hover wiring and the data-label reconcile live here so all three (and the
+ * hooks; the shared marker-hover wiring and the data-label reconcile live here so all three (and the
  * trend chart that composes them) stay identical.
  */
 

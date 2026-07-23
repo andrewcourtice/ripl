@@ -194,8 +194,8 @@ export class Crosshair extends ChartComponent {
 
     /** Destroys the crosshair, removing event listeners and scene elements. */
     public destroy() {
-        // Disposes every retained subscription — including the pointer (mousemove/mouseleave)
-        // listeners registered under the events key in `setup` — so a destroyed crosshair never
+        // Disposes every retained subscription, including the pointer (mousemove/mouseleave)
+        // listeners registered under the events key in `setup`, so a destroyed crosshair never
         // keeps tracking the pointer.
         this.dispose();
 

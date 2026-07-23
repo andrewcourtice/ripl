@@ -12,7 +12,7 @@ export interface OrdinalScale<TDomain = string, TRange = string> {
  * Creates an ordinal scale mapping each distinct domain value to a value from `range`, cycling when
  * there are more domain values than range values. Unknown values encountered later are assigned the
  * next range slot (so a chart can color series without pre-declaring every category). Unlike the
- * numeric scales this maps value → value of any type — its most common use is categorical color.
+ * numeric scales this maps value → value of any type; its most common use is categorical color.
  */
 export function scaleOrdinal<TDomain = string, TRange = string>(domain: TDomain[], range: TRange[]): OrdinalScale<TDomain, TRange> {
     const index = new Map<TDomain, number>();

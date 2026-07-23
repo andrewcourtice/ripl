@@ -107,7 +107,7 @@ export interface AreaChartSeriesOptions<TData> {
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
     /**
-     * Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the
+     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
      * primary axis. When the chart is stacked, series stack only with other series bound to the
      * same axis.
      */
@@ -124,7 +124,7 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
     key: keyof TData | ((item: TData) => string);
     /**
      * Stack series cumulatively instead of overlaying them. Defaults to false. With multiple
-     * y-axes, stacking applies per axis group — series stack only with the other series bound to
+     * y-axes, stacking applies per axis group; series stack only with the other series bound to
      * the same axis, and each axis's extent covers its own group's cumulative total.
      *
      * Pass `'percent'` for a 100%-stacked chart: each category's values are normalized to their
@@ -312,7 +312,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
-            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            // In axis-trigger mode the shared tooltip owns the pointer; per-item tooltips stay quiet.
             tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
@@ -408,7 +408,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // The navigator windows the x (category) axis only — the value axis stays at the full
+            // The navigator windows the x (category) axis only; the value axis stays at the full
             // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
@@ -515,7 +515,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         };
 
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
-        // agnostic — the renderer passes the series through as its shared `AreaSeriesLike`).
+        // agnostic; the renderer passes the series through as its shared `AreaSeriesLike`).
         const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 

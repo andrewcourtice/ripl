@@ -154,7 +154,7 @@ const DEFAULT_OVERVIEW_SIZE = 48;
 const OVERVIEW_GAP = 14;
 /** Minimum visible window width, as a fraction of the domain (bounds the maximum zoom). */
 const MIN_WINDOW = 0.02;
-/** Maximum zoom factor `k` — you can zoom in to this, and out only to the full-data identity view (`k = 1`). */
+/** Maximum zoom factor `k`. You can zoom in to this, and out only to the full-data identity view (`k = 1`). */
 const NAV_MAX_ZOOM = 50;
 
 /** Disposer key scoping the shared axis-tooltip pointer listeners so each render re-wires them cleanly. */
@@ -215,8 +215,8 @@ export interface CartesianChartOptions<TData = unknown> extends BaseChartOptions
     /**
      * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom and
      * click-drag pan; an object configures each interaction individually. The chart auto-creates a
-     * {@link DOMNavigator} on its context and rescales the axis domains as the view changes — no data
-     * rebuild. Access the underlying controller via `chart.navigator` for imperative framing
+     * {@link DOMNavigator} on its context and rescales the axis domains as the view changes, with no
+     * data rebuild. Access the underlying controller via `chart.navigator` for imperative framing
      * (`centerOn`/`fitBounds`) or brush-and-link.
      */
     navigator?: boolean | NavigatorInteractions;
@@ -399,7 +399,7 @@ export abstract class CartesianChart<
     }
 
     // Re-normalizes the furniture options (axes, grid, tooltip, crosshair) and applies them to the
-    // persistent components — creating, destroying, or restyling them as needed. Runs once from
+    // persistent components, creating, destroying, or restyling them as needed. Runs once from
     // `setupCartesian` and again at the top of every render (via `prepareAxes`), which is what makes
     // `chart.update({ axis/grid/tooltip/crosshair/theme })` take effect at runtime.
     private _syncCartesianOptions(): void {
@@ -518,8 +518,8 @@ export abstract class CartesianChart<
     /**
      * Creates, destroys, or rebuilds the pan/zoom/brush controller to match the current `navigator`
      * option, returning `true` when it changed. Called on construction and whenever {@link update}
-     * receives a `navigator` option, so the controller can be toggled — and its interaction config
-     * (e.g. zoom `sensitivity`) retuned — at runtime. A change to the config rebuilds the controller;
+     * receives a `navigator` option, so the controller can be toggled at runtime and its interaction
+     * config (e.g. zoom `sensitivity`) retuned. A change to the config rebuilds the controller;
      * an unchanged config (the common case on a data/style update) leaves the current view intact.
      */
     private _reconcileNavigator(): boolean {
@@ -562,7 +562,7 @@ export abstract class CartesianChart<
 
         this._navigator = createNavigator(this.scene.context, {
             interactions,
-            // You can zoom in up to NAV_MAX_ZOOM, but only out to the full-data identity view (k = 1) —
+            // You can zoom in up to NAV_MAX_ZOOM, but only out to the full-data identity view (k = 1),
             // never past the extent of the dataset.
             scaleExtent: [1, NAV_MAX_ZOOM],
         });
@@ -606,8 +606,8 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Which axis the navigator windows: `'x'` (category on x — line/area/vertical bar/trend), `'y'`
-     * (category on y — horizontal bar), or `'both'` (2-D charts like scatter). Category-axis charts get
+     * Which axis the navigator windows: `'x'` (category on x: line/area/vertical bar/trend), `'y'`
+     * (category on y: horizontal bar), or `'both'` (2-D charts like scatter). Category-axis charts get
      * the overview strip and hold the value axis fixed; `'both'` charts zoom both axes uniformly. Only
      * `'x'`/`'y'` charts render the strip. Defaults to `'both'`.
      */
@@ -616,8 +616,8 @@ export abstract class CartesianChart<
     }
 
     /**
-     * How the overview strip positions category marks: `'band'` (bar/trend — padded category bands with
-     * marks at band centers, so bars sit fully inside the strip) or `'point'` (line/area — marks spread
+     * How the overview strip positions category marks: `'band'` (bar/trend: padded category bands with
+     * marks at band centers, so bars sit fully inside the strip) or `'point'` (line/area: marks spread
      * edge-to-edge). Defaults to `'point'`; category-band charts override it.
      */
     protected navigatorCategoryLayout(): ChartNavigatorCategoryLayout {
@@ -625,8 +625,8 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Builds the per-series overview data ({@link ChartNavigatorSeries}) the strip renders — id,
-     * palette color, draw type, and per-category values — from a series list and per-series
+     * Builds the per-series overview data ({@link ChartNavigatorSeries}) the strip renders (id,
+     * palette color, draw type, and per-category values) from a series list and per-series
      * `type`/`value` resolvers. Shared by the line, area, bar, and trend charts so each only supplies
      * how to resolve its own type and values.
      *
@@ -675,7 +675,7 @@ export abstract class CartesianChart<
             return navigator;
         }
 
-        // Strip on but in-plot gestures explicitly off — still create an inert controller for the strip.
+        // Strip on but in-plot gestures explicitly off: still create an inert controller for the strip.
         if (navigator === false) {
             return {
                 zoom: false,
@@ -849,7 +849,7 @@ export abstract class CartesianChart<
 
     /**
      * Transforms a scale's pixel *output* by the current view (`k·pos + t`) instead of rescaling its
-     * domain — for categorical axes (point/band scales) where domain rescaling is meaningless, so the
+     * domain. This suits categorical axes (point/band scales) where domain rescaling is meaningless, so the
      * category positions pan and zoom in lock-step with the continuous axis. Returns the scale
      * unchanged when there is no navigator or the view is at rest. Band/point pixel spans
      * (`bandwidth`/`step`) scale with the zoom so bars widen as you zoom in.
@@ -893,7 +893,7 @@ export abstract class CartesianChart<
      * that panning/zooming can't smear marks over the axes, title or legend. Subclasses call this in
      * place of `this.scene.add(...)` for their data marks (bars, bubbles, lines, …). The container sits
      * just above the grid (z-index 1) and below the axes/title/legend, and its clip only bites while a
-     * navigator is active — see {@link clipPlot} — so non-navigator rendering is byte-for-byte
+     * navigator is active (see {@link clipPlot}), so non-navigator rendering is byte-for-byte
      * unchanged.
      */
     protected addPlotContent(elements: OneOrMore<Element>): void {
@@ -1038,14 +1038,14 @@ export abstract class CartesianChart<
             });
         }
 
-        // Clip the annotations to the plot only while a navigator is active — the pan/zoom rescales
+        // Clip the annotations to the plot only while a navigator is active, because the pan/zoom rescales
         // the axes, so unclipped annotations would otherwise slide into the axis gutters. Matches the
         // series/grid/axis clip gate in `clipPlot`.
         this._annotations.render(annotations, scales, plot, !!this._navigator);
     }
 
     /**
-     * Resolves a series `axis` binding — a y-axis index or a y-axis `id` — to an index into
+     * Resolves a series `axis` binding (a y-axis index or a y-axis `id`) to an index into
      * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
      *
      * @param axis - The series' `axis` option (index, id, or undefined).
@@ -1069,7 +1069,7 @@ export abstract class CartesianChart<
      * Lays out every y-axis for a multi-axis render and returns the horizontal plot bounds that clear
      * their label bands. Each axis is given a provisional scale over `extents[i]` (spanning
      * `[bottom, top]`) so it can measure its own band, then the axes are partitioned by
-     * {@link ChartYAxis.alignment} — preserving their configured order — and packed against the two
+     * {@link ChartYAxis.alignment}, preserving their configured order, and packed against the two
      * chart edges: the first axis on each side sits innermost (adjacent to the plot) and any further
      * same-side axes stack outward with an 8px gap. Each axis's {@link ChartYAxis.offset} and
      * {@link ChartYAxis.bounds} are set so its band lands in the right slot; the caller then computes
@@ -1224,7 +1224,7 @@ export abstract class CartesianChart<
 
     /**
      * Builds the x scale for category-keyed charts: a continuous time scale when the x-axis is
-     * configured with `scale: 'time'` (keys parsed as dates — `Date` objects, epoch milliseconds,
+     * configured with `scale: 'time'` (keys parsed as dates: `Date` objects, epoch milliseconds,
      * or ISO strings), otherwise the standard evenly spaced point scale. The time facade accepts
      * raw keys, `Date`s, and epoch values interchangeably, so series renderers (string keys) and
      * axis ticks (`Date` values) share one scale, and unevenly spaced samples position
@@ -1256,7 +1256,7 @@ export abstract class CartesianChart<
     }
 
     // Wraps the core time scale so string keys, epoch numbers, and Dates are all accepted as
-    // input — series renderers pass raw keys/values while axis ticks are calendar-aligned Dates.
+    // input; series renderers pass raw keys/values while axis ticks are calendar-aligned Dates.
     private _timeScaleFacade(domainMs: [number, number], left: number, right: number): Scale<string> {
         const [min, rawMax] = domainMs;
         const max = rawMax === min ? min + 1 : rawMax;

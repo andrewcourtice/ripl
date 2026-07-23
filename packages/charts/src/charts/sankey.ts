@@ -414,7 +414,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
-            // The legend lists flow nodes, not toggleable series — hiding a node would orphan its
+            // The legend lists flow nodes, not toggleable series, because hiding a node would orphan its
             // links and break the flow layout, so legend clicks only dim the entry (real `active`
             // state) without filtering the rendered graph.
             const legendItems: LegendItem[] = nodes.map(node => ({
@@ -542,7 +542,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 this._attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
                 // Node labels sit to the right of the node (outside), so use the shared segment-label
-                // helper with the outside fill — consistent with the other charts' labels.
+                // helper with the outside fill, consistent with the other charts' labels.
                 const label = createSegmentLabel({
                     id: `${node.id}-label`,
                     x: offsetX + node.x + node.width + 5,

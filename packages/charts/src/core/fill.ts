@@ -9,8 +9,8 @@ import {
 
 /**
  * Renderer for a closed area band laid out as `[top..., reversed bottom...]` (area chart). Curves
- * only the top half with the series' line renderer — so the fill's upper edge exactly matches the
- * drawn line — then closes along the lower boundary with straight segments. Running a single curve
+ * only the top half with the series' line renderer, so the fill's upper edge exactly matches the
+ * drawn line, and then closes along the lower boundary with straight segments. Running a single curve
  * over the whole loop would smooth through the two side corners and the baseline, pulling the fill
  * away from the line and leaving gaps.
  */

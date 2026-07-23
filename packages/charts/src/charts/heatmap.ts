@@ -105,7 +105,7 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     borderRadius?: number;
     /** Gradient color legend showing the value→color scale. Shown by default; pass `false` to hide, or an options object to customize. */
     legend?: boolean | ColorLegendOptions;
-    /** How cell values are formatted in the tooltip and legend — a built-in format type, Intl options, or a custom function. */
+    /** How cell values are formatted in the tooltip and legend: a built-in format type, Intl options, or a custom function. */
     format?: ValueFormatInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
@@ -524,7 +524,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             if (legendRegion) {
                 // The bottom band is reserved at full width (before the y-axis inset is known), so
-                // realign the gradient bar to the plot's x-range — under the columns, not the
+                // realign the gradient bar to the plot's x-range, under the columns, not the
                 // y-axis label band. Mirrors CartesianChart.renderNavigator's band realignment.
                 this._colorLegend?.render({
                     ...legendRegion,

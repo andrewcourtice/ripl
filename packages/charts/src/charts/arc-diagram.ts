@@ -82,7 +82,7 @@ export interface ArcDiagramNode<TData = unknown> {
     id: string;
     /** Text shown beside the node; defaults to the node's id. */
     label?: string;
-    /** Optional grouping — nodes in the same group share a color. */
+    /** Optional grouping; nodes in the same group share a color. */
     group?: string;
     /** Explicit node color; falls back to the group/palette color when omitted. */
     color?: string;
@@ -166,7 +166,7 @@ export interface ArcDiagramChartEventMap<TData = unknown> extends EventMap {
  * Arc diagram: a cartesian axis whose points are nodes, connected by semicircular arcs whose
  * thickness encodes the link value. Nodes are laid out in order along the axis (horizontal by
  * default, or vertical), optionally sized by their connection count. On entry the arcs draw out of
- * each node and cascade along the axis — a ripple that fades each node in as its arcs reach it — and
+ * each node and cascade along the axis (a ripple that fades each node in as its arcs reach it) and
  * updates animate arcs reshaping and nodes resizing. Supports labels, tooltips, and typed node/link
  * interaction events.
  */

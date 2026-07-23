@@ -8,7 +8,7 @@
  * algorithm), used to center and scale the packed layout into the chart area and to draw the visible
  * containing circle.
  *
- * Both are deterministic (no randomisation), so a given dataset always packs identically — important
+ * Both are deterministic (no randomization), so a given dataset always packs identically, which matters
  * for stable visual snapshots.
  */
 
@@ -77,7 +77,7 @@ function score(node: ChainNode): number {
 /**
  * Assigns `x`/`y` to each circle so none overlap, arranged in a tight cluster centered on the origin.
  * Circles are packed largest-first (which yields a rounder, denser result) but the input array's
- * order — and each element's identity — is preserved, so callers can map results back by index.
+ * order, and each element's identity, is preserved, so callers can map results back by index.
  * Mutates and returns the input array.
  */
 export function packSiblings(circles: PackCircle[]): PackCircle[] {
@@ -172,7 +172,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
             }
         } while (j !== k.next);
 
-        // Success — splice the new circle into the chain between a and b.
+        // Success: splice the new circle into the chain between a and b.
         const inserted: ChainNode = {
             circle: c,
             next: nodeB,

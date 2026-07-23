@@ -374,7 +374,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             ...labelUpdates.map(([, label]) => label),
         ];
 
-        // Animate: staggered grow on entry, smooth morph on update. Exclude exiting labels — they
+        // Animate: staggered grow on entry, smooth morph on update. Exclude exiting labels; they
         // run their own fade-out transition above and are destroyed on completion.
         const allElements = this._gridGroup!.children.filter(element => !exitLabels.has(element));
 
@@ -605,7 +605,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             labelUpdates.forEach(([pd, label]) => {
                 const { x, y, textAlign, textBaseline } = labelProps(pd);
 
-                // Text content and alignment aren't tweenable — apply them directly.
+                // Text content and alignment aren't tweenable, so apply them directly.
                 label.content = formatValue(pd.value);
                 label.textAlign = textAlign;
                 label.textBaseline = textBaseline;

@@ -5,7 +5,7 @@
  * length. The core `interpolatePoints` interpolator would equalise them by inserting straight-line
  * waypoints (its default extrapolation), which makes a curved renderer (monotoneX, catmullRom, …)
  * look linear for the whole transition. Passing a `resolveKeys` correspondence to `interpolatePoints`
- * instead matches points by identity and preserves the curve — these helpers build that
+ * instead matches points by identity and preserves the curve; these helpers build that
  * correspondence from the charts' stable data keys.
  */
 

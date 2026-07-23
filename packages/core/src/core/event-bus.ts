@@ -93,7 +93,7 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
     /**
      * The event types this bus can emit. The base returns an empty list; subclasses override it
      * to declare their emittable events (type-checked against their {@link EventMap}), so tooling
-     * such as the devtools can enumerate them — including events added by custom subclasses.
+     * such as the devtools can enumerate them, including events added by custom subclasses.
      */
     public get $events(): (keyof TEventMap)[] {
         return [];

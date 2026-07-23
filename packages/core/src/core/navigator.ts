@@ -117,10 +117,10 @@ export function rescaleDomain<TDomain>(
 }
 
 /**
- * An interactive 2D pan/zoom/brush controller — the flat-scene analogue of the 3D `Camera`. This
+ * An interactive 2D pan/zoom/brush controller, the flat-scene analogue of the 3D `Camera`. This
  * base class is deliberately **context-agnostic**: it owns the view model (a `{ k, x, y }` transform
  * plus an optional brush selection) and the imperative commands that mutate it, but it attaches no
- * input listeners of its own. That mirrors the `Context`/`DOMContext` split — the DOM-bound
+ * input listeners of its own. That mirrors the `Context`/`DOMContext` split; the DOM-bound
  * `DOMNavigator` in `@ripl/dom` extends this class to translate real wheel/pointer/touch gestures
  * into these commands, while non-DOM environments can drive the same view model programmatically (or
  * subclass it with their own input source).
@@ -128,7 +128,7 @@ export function rescaleDomain<TDomain>(
  * The navigator does not itself repaint; consumers react to the emitted `zoom`/`pan`/`change`/
  * `brush`/`brushend` events (e.g. rescaling axis domains via {@link rescaleDomain}, or applying the
  * transform to a context). Translation is unbounded, so a consumer can pan and zoom to content that
- * currently sits outside the viewport — the Figma-style "navigate anywhere" behavior.
+ * currently sits outside the viewport: the Figma-style "navigate anywhere" behavior.
  */
 export class Navigator extends EventBus<NavigatorEventMap> {
 
@@ -164,7 +164,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         ];
     }
 
-    /** The current view transform (a copy — mutating it does not affect the navigator). */
+    /** The current view transform (a copy; mutating it does not affect the navigator). */
     public get transform(): NavigatorTransform {
         return {
             ...this._transform,
@@ -291,7 +291,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
 
     /**
      * Zooms and pans so a content-space box fills the viewport (respecting the scale extent and an
-     * optional padding). This is the primary way to jump the view to content — including content that
+     * optional padding). This is the primary way to jump the view to content, including content that
      * currently lies entirely outside the viewport.
      */
     public fitBounds(bounds: NavigatorBrush, options?: NavigatorFitOptions): void {

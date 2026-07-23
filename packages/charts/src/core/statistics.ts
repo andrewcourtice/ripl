@@ -1,6 +1,6 @@
 /**
  * Reusable statistical data transforms shared by the statistical chart types (histogram, box plot,
- * violin) and available to consumers directly. Pure functions over numeric arrays — no rendering.
+ * violin) and available to consumers directly. Pure functions over numeric arrays, no rendering.
  */
 
 import {

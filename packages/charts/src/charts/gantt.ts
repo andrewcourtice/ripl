@@ -104,7 +104,7 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     /**
      * Accessor for the keys of the tasks each task depends on. When provided, a curved connector is
      * drawn from every predecessor task's end to this task's start (finish-to-start). Return an empty
-     * array — or omit the option entirely — for a task with no dependencies.
+     * array, or omit the option entirely, for a task with no dependencies.
      */
     dependencies?: keyof TData | ((item: TData) => string[]);
     /** Background grid configuration (`true`/`false` or detailed grid options). */
@@ -723,7 +723,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             // Draw today marker
             this._drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
 
-            // Dependency connectors — resolve each task's bar geometry (finish/start x, row center y)
+            // Dependency connectors: resolve each task's bar geometry (finish/start x, row center y)
             // so links can be drawn from a predecessor's end to a dependent's start.
             const geometryByKey = new Map<string, { startX: number;
                 endX: number;

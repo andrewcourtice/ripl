@@ -1,6 +1,6 @@
 # @ripl/node
 
-Node.js runtime bindings for [Ripl](https://www.ripl.run) — render Ripl graphics in headless environments.
+Node.js runtime bindings for [Ripl](https://www.ripl.run): render Ripl graphics in headless environments.
 
 ## Installation
 

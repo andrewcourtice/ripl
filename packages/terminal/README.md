@@ -1,6 +1,6 @@
 # @ripl/terminal
 
-Terminal rendering context for [Ripl](https://www.ripl.run) — draw the same 2D graphics and charts to a terminal as braille-character output with ANSI truecolor.
+Terminal rendering context for [Ripl](https://www.ripl.run): draw the same 2D graphics and charts to a terminal as braille-character output with ANSI truecolor.
 
 ## Installation
 
@@ -10,11 +10,11 @@ npm install @ripl/terminal
 
 ## Overview
 
-`@ripl/terminal` implements Ripl's `Context` abstraction without any DOM. It rasterizes elements into a grid of Unicode braille dots (each character cell packs a 2×4 sub-pixel grid) and writes them to a runtime-agnostic `TerminalOutput` adapter — `process.stdout` in Node, or an [xterm.js](https://xtermjs.org/) instance in the browser. Because every Ripl element renders through the shared `Context` API, scenes written for [Canvas](https://www.npmjs.com/package/@ripl/canvas) or [SVG](https://www.npmjs.com/package/@ripl/svg) render unchanged in the terminal.
+`@ripl/terminal` implements Ripl's `Context` abstraction without any DOM. It rasterizes elements into a grid of Unicode braille dots (each character cell packs a 2×4 sub-pixel grid) and writes them to a runtime-agnostic `TerminalOutput` adapter: `process.stdout` in Node, or an [xterm.js](https://xtermjs.org/) instance in the browser. Because every Ripl element renders through the shared `Context` API, scenes written for [Canvas](https://www.npmjs.com/package/@ripl/canvas) or [SVG](https://www.npmjs.com/package/@ripl/svg) render unchanged in the terminal.
 
 Optional `logicalWidth`/`logicalHeight` options let you author a scene in CSS-pixel coordinates; the context uniformly scales and letterboxes that space into the character grid so it renders proportionally in any terminal size.
 
-> Note: the terminal context is a rasterizer — pointer events/hit-testing, gradients, images, and transforms are not supported.
+> Note: the terminal context is a rasterizer; pointer events/hit-testing, gradients, images, and transforms are not supported.
 
 ## Usage
 

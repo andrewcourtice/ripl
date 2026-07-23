@@ -108,7 +108,7 @@ export interface ScatterChartSeriesOptions<TData> {
     minRadius?: number;
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
-    /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
+    /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
     axis?: number | string;
     /** Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
@@ -288,7 +288,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     // Non-circle symbols use the circumradius matching the circle's visual area,
                     // so sized bubbles stay comparable across symbol shapes.
                     radius: symbolRadius(marker, radius),
-                    // A square is a rotated quad — its transform origin must track its center.
+                    // A square is a rotated quad, so its transform origin must track its center.
                     ...(marker === 'square' ? {
                         transformOriginX: this._xScale(xValue),
                         transformOriginY: yScale(yValue),
@@ -317,7 +317,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         applyHoverHighlight(bubble, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
-            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            // In axis-trigger mode the shared tooltip owns the pointer; per-item tooltips stay quiet.
             tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             anchor: () => ({
                 x: bubble.cx,
@@ -353,7 +353,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
     // Resolves the shared axis-tooltip content for the hovered plot position: the active data point
     // nearest in pixel space (scatter x is continuous, so nearness is measured in 2-D), titled with
-    // its series label and a single row of its formatted (x, y) — plus size when the series sizes by
+    // its series label and a single row of its formatted (x, y), plus size when the series sizes by
     // a third value. Anchored at the point itself.
     private _axisTooltipSnapshot(
         plotX: number,
@@ -714,7 +714,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
             // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
-            // so both follow the view. A time x-axis pans/zooms in pixel space instead — its Date
+            // so both follow the view. A time x-axis pans/zooms in pixel space instead; its Date
             // domain cannot round-trip through the numeric domain rescale.
             this._xScale = isTimeAxis(this.xAxisOptions)
                 ? this.applyViewToScale(this._xScale, 'x')

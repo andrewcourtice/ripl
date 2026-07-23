@@ -280,7 +280,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const existingGroup = existingGroupMap.get(srs.id);
 
             if (pointCount < 2) {
-                // Not enough data — destroy existing group if any, skip creation
+                // Not enough data: destroy existing group if any, skip creation
                 if (existingGroup) {
                     existingGroup.destroy();
                     existingGroupMap.delete(srs.id);
@@ -320,7 +320,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 // Once the window is full each push drops the oldest sample, so slot i now holds
                 // the value previously shown in slot i+1. Seeding the current points one step to
                 // the right (their previous on-screen positions) makes the transition slide the
-                // whole line left by one step — a scroll — with the newest point entering at the
+                // whole line left by one step (a scroll) with the newest point entering at the
                 // right, instead of morphing every point's height in place.
                 const scrolling = pointCount >= maxLen;
 

@@ -104,7 +104,7 @@ export interface InterpolatePointsFactory extends PredicatedFunction {
 /**
  * Builds the "from" array (length of `setB`) for a keyed morph: surviving target points start at
  * their matched source point; entering points (`-1`) start at the nearest matched neighbor's Y but
- * the target's own X — keeping X strictly monotonic so curve tangent maths never divides by zero.
+ * the target's own X, keeping X strictly monotonic so curve tangent maths never divides by zero.
  */
 function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[] {
     const nearestMatchedY = (index: number): number | undefined => {

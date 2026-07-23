@@ -14,7 +14,7 @@ export interface AreaCenter {
     cx: number;
     /** The vertical center of the area, in chart pixels. */
     cy: number;
-    /** The inscribed size — the smaller of the area's width and height. */
+    /** The inscribed size: the smaller of the area's width and height. */
     size: number;
 }
 
@@ -138,7 +138,7 @@ export class ChartLayout {
 
 }
 
-/** Computes the center point and inscribed size (the smaller of width and height) of a rectangular area — the shared basis for laying out radial and polar charts. */
+/** Computes the center point and inscribed size (the smaller of width and height) of a rectangular area: the shared basis for laying out radial and polar charts. */
 export function areaCenter(area: ChartArea): AreaCenter {
     return {
         cx: area.x + area.width / 2,

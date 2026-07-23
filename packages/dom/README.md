@@ -1,6 +1,6 @@
 # @ripl/dom
 
-DOM utilities for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
+DOM utilities for [Ripl](https://www.ripl.run): a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install @ripl/dom
 
 ## Overview
 
-DOM utilities and a lightweight virtual DOM reconciler used internally by browser contexts. This package is primarily an internal dependency — most users won't need to interact with it directly.
+DOM utilities and a lightweight virtual DOM reconciler used internally by browser contexts. This package is primarily an internal dependency; most users won't need to interact with it directly.
 
 ## API
 

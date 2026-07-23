@@ -240,7 +240,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
 
     /**
      * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
-     * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
+     * so prior listeners are disposed on re-apply; calling this on every update no longer leaks.
      */
     private _attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
         const formatValue = resolveValueFormat(this.options.format);
@@ -760,7 +760,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             if (hasVolume) {
                 promises.push(this._drawVolume(candleWidth, volumeTop, volumeBottom, plot));
             } else if (this._volumeGroup) {
-                // Volume was toggled off — tear down the orphaned group so the reclaimed space
+                // Volume was toggled off, so tear down the orphaned group so the reclaimed space
                 // (the candlesticks now expand into it) doesn't paint over stale bars.
                 this._volumeGroup.destroy();
                 this._volumeGroup = undefined;

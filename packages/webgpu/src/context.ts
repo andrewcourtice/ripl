@@ -250,7 +250,7 @@ export class WebGPUContext3D extends Context3D {
     }
 
     private _executeRenderPass(): void {
-        // A renderer (rAF loop) can keep ticking a context after it has been destroyed — e.g. while a docs
+        // A renderer (rAF loop) can keep ticking a context after it has been destroyed, e.g. while a docs
         // example swaps contexts. Bail out so we never write to, or submit, freed GPU resources.
         if (this._destroyed) {
             return;
@@ -262,7 +262,7 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        // Write scene uniforms (reused scratch array — writeBuffer copies at call time)
+        // Write scene uniforms (reused scratch array; writeBuffer copies at call time)
         const uniformData = this._sceneUniformData;
         uniformData.set(this.viewProjectionMatrix, 0);
 

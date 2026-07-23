@@ -42,7 +42,7 @@ export type AbstractConstructor<TInstance = object> = abstract new (...args: any
  * drawing, transform, measurement, and hit-testing operations common to every canvas-backed context.
  */
 export interface Canvas2DState {
-    /** The current fill style — a color or CSS gradient string. */
+    /** The current fill style: a color or CSS gradient string. */
     fill: string;
     /** The current filter applied to drawing operations. */
     filter: string;
@@ -76,7 +76,7 @@ export interface Canvas2DState {
     shadowOffsetX: number;
     /** The current vertical shadow offset. */
     shadowOffsetY: number;
-    /** The current stroke style — a color or CSS gradient string. */
+    /** The current stroke style: a color or CSS gradient string. */
     stroke: string;
     /** The current horizontal text alignment. */
     textAlign: TextAlignment;
@@ -139,7 +139,7 @@ export interface Canvas2DState {
  * to a `Context` base class. Concrete subclasses assign the `protected context` backing field
  * (declared here, so constructor assignment is not clobbered by class-field initialization) and may
  * override the protected `gradientBounds()` hook to change which bounding box gradients resolve
- * against — the default is the current render element's local (untransformed) box.
+ * against; the default is the current render element's local (untransformed) box.
  *
  * @param Base - The `Context` base class to extend (e.g. `DOMContext<HTMLCanvasElement>` or `Context3D`).
  * @returns An abstract class combining `Base` with the shared canvas 2D state surface.

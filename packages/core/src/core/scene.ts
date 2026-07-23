@@ -34,7 +34,7 @@ import {
 
 
 /**
- * Event map for the scene. Resize is deliberately *not* re-emitted here — listen for it on the
+ * Event map for the scene. Resize is deliberately *not* re-emitted here; listen for it on the
  * scene's `context` instead (`scene.context.on('resize', …)`), the single source of truth.
  */
 export type SceneEventMap = ElementEventMap;
@@ -93,7 +93,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     }
 
     /**
-     * The flat list of renderable leaf descendants in paint order — the `draw` targets of
+     * The flat list of renderable leaf descendants in paint order: the `draw` targets of
      * {@link Scene.instructions}. The array is materialized once per graph rebuild and cached,
      * so treat it as read-only.
      */
@@ -156,7 +156,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             this._rebuild();
             context.invalidateTrackedElements();
 
-            // The rebuild lands on its own frame — a renderer tick may have painted (and
+            // The rebuild lands on its own frame; a renderer tick may have painted (and
             // consumed the flag) in between, so re-invalidate for the new instruction stream.
             this.invalidate();
         };
@@ -172,7 +172,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         }));
 
         // A context-level repaint request (e.g. a 3D camera move) mutates no element, so it
-        // would otherwise be missed by the renderer's dirty check — invalidate to force a paint.
+        // would otherwise be missed by the renderer's dirty check, so invalidate to force a paint.
         this.retain(context.on('render', () => this.invalidate()));
 
         this.on('graph', () => {
@@ -182,8 +182,8 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         // Any bubbled state change means the on-screen output is stale. A z-index change
         // additionally reorders the instruction stream, so re-sort. Interpolated animations
-        // write state directly (no `updated` event) — the renderer covers those via its
-        // transition map — so the rebuild only fires on explicit z-index assignments, and is
+        // write state directly (no `updated` event); the renderer covers those via its
+        // transition map, so the rebuild only fires on explicit z-index assignments, and is
         // debounced to once per frame.
         this.on('updated', event => {
             this.invalidate();
@@ -210,7 +210,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     /**
      * Depth-first walk that flattens the scene graph into the render instruction stream.
      * Each group's direct children are sorted by z-index (stable, so equal-z-index siblings
-     * keep insertion order) — sorting siblings by the additive {@link Element.zIndex} is
+     * keep insertion order); sorting siblings by the additive {@link Element.zIndex} is
      * equivalent to sorting by their own z-index, since they share the same parent offset.
      * Groups are emitted as a contiguous `push` … `pop` pair (stacking-context ordering).
      */

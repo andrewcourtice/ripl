@@ -125,7 +125,7 @@ export class Legend extends ChartComponent {
     }
 
     /**
-     * Reconfigures the legend in place — position, label styling, and interactivity — so
+     * Reconfigures the legend in place (position, label styling, and interactivity) so
      * `chart.update({ legend })` restyles and relocates the live legend without recreating it.
      * A font change invalidates the label measurement cache.
      *

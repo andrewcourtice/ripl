@@ -133,11 +133,11 @@ export interface RendererDebugOptions {
 export interface RendererOptions {
     /** Whether the renderer starts its animation loop automatically on construction. Defaults to `true`. */
     autoStart?: boolean;
-    /** Whether the renderer stops the loop when idle — no active transitions and the pointer has left. Defaults to `true`. */
+    /** Whether the renderer stops the loop when idle (no active transitions and the pointer has left). Defaults to `true`. */
     autoStop?: boolean;
     /** Whether transitions apply their final state immediately rather than animating. */
     immediate?: boolean;
-    /** Enables debug overlays — `true` for all, or a {@link RendererDebugOptions} object to toggle individual overlays. */
+    /** Enables debug overlays: `true` for all, or a {@link RendererDebugOptions} object to toggle individual overlays. */
     debug?: boolean | RendererDebugOptions;
 }
 
@@ -190,7 +190,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
     /** Whether the renderer starts its animation loop automatically on construction. */
     public autoStart = true;
-    /** Whether the renderer stops the loop when idle — no active transitions and the pointer has left. */
+    /** Whether the renderer stops the loop when idle (no active transitions and the pointer has left). */
     public autoStop = true;
 
     /** Whether there are any active transitions in progress. */
@@ -211,7 +211,7 @@ export class Renderer extends EventBus<RendererEventMap> {
     /**
      * The resolved debug overlay options currently in effect. Assigning a new value
      * (`true` for all overlays, `false` for none, or a partial {@link RendererDebugOptions}
-     * object) replaces the full set — unspecified flags reset to their defaults, matching
+     * object) replaces the full set; unspecified flags reset to their defaults, matching
      * the constructor's `debug` option semantics.
      */
     public get debug(): Required<RendererDebugOptions> {
@@ -259,7 +259,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         const deltaTime = this._currentTime - this._previousTime;
 
-        // Tick fires every frame — even ones whose paint is skipped — so time-based consumers
+        // Tick fires every frame, even ones whose paint is skipped, so time-based consumers
         // stay live. A tick handler that mutates element state invalidates the scene (via the
         // bubbled `updated` event), so its change is painted this same frame.
         this.emit('tick', {
@@ -271,7 +271,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         // Skip the paint (but keep the loop) when nothing changed: the scene is clean, no
         // transition is advancing state, and no per-frame debug overlay (fps) is requested.
-        // The context is left untouched — no clear, no batch — so the previous frame persists
+        // The context is left untouched (no clear, no batch) so the previous frame persists
         // (and vtree/terminal backends see no churn). A transition's completion frame still
         // paints: its entry is only removed from the map during that frame's render.
         if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
@@ -343,7 +343,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         const context = this._scene.context;
 
         this._scene.instructions.forEach(({ type, element }) => {
-            // A group boundary closes here — its transitions were already advanced at the
+            // A group boundary closes here; its transitions were already advanced at the
             // matching `push`, so restore and move on without re-processing them.
             if (type === 'pop') {
                 context.popGroup();
@@ -520,7 +520,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         };
 
         const instance = new Transition((resolve, _reject, onAbort) => {
-            // Targets animate their own state — including groups, which the render loop advances at
+            // Targets animate their own state, including groups, which the render loop advances at
             // their `push` op so a group transitions as a unit (transform about its origin, opacity
             // composited at the boundary) rather than fanning out to per-leaf animations.
             const elements = valueOneOrMore(element);

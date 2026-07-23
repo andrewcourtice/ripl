@@ -200,7 +200,7 @@ export type ElementInterpolationState<TState extends BaseElementState> = {
 
 /** The result of validating an element, with a severity type and descriptive message. */
 export interface ElementValidationResult {
-    /** Severity of the result — `info`, `warning`, or `error`. */
+    /** Severity of the result: `info`, `warning`, or `error`. */
     type: ElementValidationType;
     /** Human-readable description of the validation result. */
     message: string;
@@ -257,7 +257,7 @@ export class Element<
         return this._dirty;
     }
 
-    /** Whether a state value was set since the last render cycle (the element was addressed), whether or not the value changed — so a real change also sets this. Reset after each render cycle. */
+    /** Whether a state value was set since the last render cycle (the element was addressed), whether or not the value changed, so a real change also sets this. Reset after each render cycle. */
     public get $touched(): boolean {
         return this._touched;
     }
@@ -558,8 +558,8 @@ export class Element<
 
     /**
      * Reads this element's own state value (no inheritance). Inherited paint now cascades through
-     * the render tree — a group applies its paint at its boundary ({@link Context.pushGroup}) and
-     * descendants pick it up from the context's copied state — so property getters return own
+     * the render tree: a group applies its paint at its boundary ({@link Context.pushGroup}) and
+     * descendants pick it up from the context's copied state, so property getters return own
      * values only, mirroring how the browser resolves computed style at paint time. Use
      * {@link Element.getComputedValue} when the effective (inheritance-resolved) value is
      * required outside a render pass (e.g. animation start values).
@@ -569,7 +569,7 @@ export class Element<
     }
 
     /**
-     * Resolves a state value against the parent chain (own value, else the nearest ancestor's) —
+     * Resolves a state value against the parent chain (own value, else the nearest ancestor's),
      * the effective value an element renders with. Used where the resolved value is needed without
      * a live context, such as computing a transition's start value.
      *
@@ -670,7 +670,7 @@ export class Element<
 
     /**
      * Whether this element's bounding boxes may be cached against its own state version. Groups
-     * opt out — their box composes from children whose changes are not visible in the group's own
+     * opt out; their box composes from children whose changes are not visible in the group's own
      * state.
      */
     protected get _boundsCacheable(): boolean {
@@ -874,7 +874,7 @@ export class Element<
 
     /**
      * Resets this element's per-render-cycle change flags ({@link Element.$dirty} and
-     * {@link Element.$touched}). Called automatically at the end of each render cycle — by an
+     * {@link Element.$touched}). Called automatically at the end of each render cycle, by an
      * element's own {@link Element.render} for leaves, and by the scene/renderer at each group
      * `pop` and for the root. Consumers do not normally call this directly.
      */

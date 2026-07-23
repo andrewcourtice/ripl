@@ -76,8 +76,8 @@ function createColorScale(interpolate: ColorInterpolator, domain: number[], posi
  * Creates a color scale mapping a numeric `domain` through a color interpolator (or array of stops,
  * e.g. one of the built-in `COLOR_SCHEME_*` palettes). Values are clamped to the domain.
  *
- * - **Sequential** — a two-element domain `[min, max]` maps linearly across the whole interpolator.
- * - **Diverging** — a three-element domain `[min, neutral, max]` maps `neutral` to the interpolator's
+ * - **Sequential**: a two-element domain `[min, max]` maps linearly across the whole interpolator.
+ * - **Diverging**: a three-element domain `[min, neutral, max]` maps `neutral` to the interpolator's
  *   midpoint, so signed data reads symmetrically around a reference value.
  *
  * Tick generation defers to an underlying continuous scale; formatting is left to the caller and is

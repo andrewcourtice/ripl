@@ -68,7 +68,7 @@ function resolveInteraction(option: NavigatorInteractionOption | undefined, fall
 
 /**
  * DOM-bound {@link Navigator} that translates real wheel/pointer/touch gestures into the base
- * navigator's imperative commands — the pan/zoom/brush analogue of how `DOMContext` adds real event
+ * navigator's imperative commands: the pan/zoom/brush analogue of how `DOMContext` adds real event
  * listeners on top of the abstract `Context`. The base class in `@ripl/core` owns the view model and
  * stays context-agnostic; this subclass owns input.
  *
@@ -79,7 +79,7 @@ function resolveInteraction(option: NavigatorInteractionOption | undefined, fall
  *
  * Because the base transform is unbounded, dragging past the viewport edge (the pointer is captured
  * for the duration of the drag) keeps panning, so content outside the current viewport can be reached
- * — then re-framed with the base `centerOn`/`fitBounds` helpers.
+ * and then re-framed with the base `centerOn`/`fitBounds` helpers.
  */
 export class DOMNavigator extends Navigator {
 
@@ -102,7 +102,7 @@ export class DOMNavigator extends Navigator {
         // A DOMNavigator drives real wheel/pointer gestures, so it needs a DOM-interactive element.
         // Non-DOM contexts signal this by carrying a non-interactive element (e.g. the terminal
         // context passes a dummy `{}`), so feature-detect the DOM APIs the navigator relies on rather
-        // than crashing on `getBoundingClientRect`. When unsupported, warn and stay inert — the
+        // than crashing on `getBoundingClientRect`. When unsupported, warn and stay inert; the
         // navigator constructs but attaches nothing and its transform never leaves the identity.
         if (!isInteractiveElement(this._element)) {
             console.warn('createNavigator: the provided context is not DOM-interactive; navigation is disabled.');
@@ -202,7 +202,7 @@ export class DOMNavigator extends Navigator {
             const button = event.button ?? 0;
 
             // Shift-drag brushes (when enabled); any other click-and-hold with the left or middle
-            // button pans — including ⌘/Ctrl-click, matching the Figma "grab the canvas" gesture.
+            // button pans, including ⌘/Ctrl-click, matching the Figma "grab the canvas" gesture.
             this._brushing = brush.enabled && event.shiftKey;
             this._panning = pan.enabled && !this._brushing && button !== 2;
 

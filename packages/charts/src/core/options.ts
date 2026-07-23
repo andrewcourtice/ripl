@@ -554,7 +554,7 @@ export interface ChartAxisItemOptions<TData = unknown> {
     fontColor: string;
     /** Optional axis title drawn alongside the tick labels. */
     title?: string;
-    /** How tick values are formatted — a built-in {@link AxisFormatType}, an Intl number-format options object, or a custom formatter. */
+    /** How tick values are formatted: a built-in {@link AxisFormatType}, an Intl number-format options object, or a custom formatter. */
     format?: ValueFormatInput;
     /** Scale family for this axis. Value axes default to `'linear'`. See {@link AxisScaleType}. */
     scale?: AxisScaleType;
@@ -562,7 +562,7 @@ export interface ChartAxisItemOptions<TData = unknown> {
     nice?: boolean | number;
     /** Target number of ticks and grid lines along the axis. Defaults to 10. */
     ticks?: number;
-    /** Tick label rotation in degrees — positive tilts labels counterclockwise (like `rotate(45)` slanting labels up to the right). Applied to the x-axis; the label band grows to fit and fewer labels are dropped on overflow. */
+    /** Tick label rotation in degrees; positive tilts labels counterclockwise (like `rotate(45)` slanting labels up to the right). Applied to the x-axis; the label band grows to fit and fewer labels are dropped on overflow. */
     labelRotation?: number;
     /** Explicit lower bound of the value domain (overrides the data extent). */
     min?: number;
@@ -706,7 +706,7 @@ const TIME_SPAN_MONTH = 30 * TIME_SPAN_DAY;
 const TIME_SPAN_YEAR = 365 * TIME_SPAN_DAY;
 
 /**
- * Formats a time-axis tick for display, adapting the format to the domain span — multi-year spans
+ * Formats a time-axis tick for display, adapting the format to the domain span; multi-year spans
  * show the year, month-scale spans show abbreviated month and year, day-scale spans show dates,
  * and anything shorter shows times. An explicit axis `format` always wins over this default.
  *
@@ -861,7 +861,7 @@ export interface ChartSegmentLabelsOptions {
 export type ChartSegmentLabelsInput = boolean | SegmentLabelPosition | Partial<ChartSegmentLabelsOptions>;
 
 const SEGMENT_LABELS_DEFAULTS: ChartSegmentLabelsOptions = {
-    // Hidden by default — the legend is shown by default, so on-segment labels are opt-in.
+    // Hidden by default; the legend is shown by default, so on-segment labels are opt-in.
     visible: false,
     position: 'inside',
 };

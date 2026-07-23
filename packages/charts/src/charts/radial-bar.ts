@@ -391,7 +391,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 const bar = group.query('.radial-bar__bar') as Arc;
 
                 if (track) {
-                    // lineCap isn't a tweenable value — apply it directly so toggling `rounded`
+                    // lineCap isn't a tweenable value, so apply it directly so toggling `rounded`
                     // takes effect on update, not just first render.
                     track.lineCap = lineCap;
                     track.stroke = trackColor;
@@ -455,7 +455,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
                 const { x, y } = labelPoint(geometry);
 
-                // Text content isn't tweenable — apply it directly.
+                // Text content isn't tweenable, so apply it directly.
                 valueLabel.content = formatValue(getValue(item));
                 valueLabel.font = dataLabels.font;
                 valueLabel.data = {

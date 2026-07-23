@@ -393,7 +393,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // The navigator windows the x (category) axis only — the value axis stays at the full extent.
+            // The navigator windows the x (category) axis only; the value axis stays at the full extent.
             const viewedBand = this.applyViewToScale(xBand, 'x');
             this._xCenter = this.bandCenterScale(viewedBand, keys);
             this.xAxis.scale = this._xCenter;

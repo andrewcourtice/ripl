@@ -85,7 +85,7 @@ export interface ForceNetworkNode<TData = unknown> {
     label?: string;
     /** Optional magnitude used to size the node; defaults to the node's link degree. */
     value?: number;
-    /** Optional grouping — nodes in the same group share a color. */
+    /** Optional grouping; nodes in the same group share a color. */
     group?: string;
     /** Explicit node color; falls back to the group/palette color when omitted. */
     color?: string;
@@ -499,7 +499,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     }
             );
 
-            // Entry delay per new link, keyed by its element id — it draws once the ripple reaches its
+            // Entry delay per new link, keyed by its element id, so it draws once the ripple reaches its
             // root-ward endpoint (the shallower of its two nodes).
             const linkEntryDelays = new Map<string, number>();
 
@@ -656,7 +656,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             // Recover a node id from a child element id (`node-<id>-circle` / `-label`) to look up its
-            // spring delay — robust even when node ids contain dashes.
+            // spring delay, robust even when node ids contain dashes.
             const delayForChild = (elementId: string, suffix: string) => (
                 springDelay(elementId.replace(/^node-/, '').replace(new RegExp(`-${suffix}$`), ''))
             );

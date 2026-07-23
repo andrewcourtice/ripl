@@ -144,7 +144,7 @@ export function numberNextPowerOfN(minimum: number, base = 2): number {
  * `compact`/`scientific`/`engineering` notation; grouping; and fraction-digit control (with
  * `precision` as a shorthand for `maximumFractionDigits`). Non-numeric values fall back to `String`.
  *
- * This is a standalone utility — it is passed values explicitly by axes, legends, and tooltips, and
+ * This is a standalone utility; it is passed values explicitly by axes, legends, and tooltips, and
  * is intentionally never bound to a scale.
  */
 export function numberFormat(value: unknown, options: NumberFormatOptions = {}): string {

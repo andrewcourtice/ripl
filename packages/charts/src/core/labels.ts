@@ -99,7 +99,7 @@ export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'an
  * Shared segment-label style constants. Every chart routes its segment labels through these so the
  * appearance is identical across chart types **and** across the Canvas and SVG contexts. The
  * cross-context inconsistency this fixes came from labels that omitted `font`, leaving each backend
- * to fall back to its own default — always set an explicit font.
+ * to fall back to its own default, so always set an explicit font.
  */
 export const SEGMENT_LABEL_FONT = '600 11px sans-serif';
 /** Fill for labels drawn inside a segment (on top of the filled shape). */
@@ -202,8 +202,8 @@ export interface RadialLabelPlacement {
 
 /**
  * Computes both the inside (centroid) and outside (leader-line) label placements for a radial
- * segment. Shared by the pie and polar-area charts so their inside/outside label behavior — and
- * the elbow leader line — stay identical. The outside `textAlign` flips by hemisphere so text reads
+ * segment. Shared by the pie and polar-area charts so their inside/outside label behavior and
+ * the elbow leader line, stay identical. The outside `textAlign` flips by hemisphere so text reads
  * away from the center.
  */
 export function resolveRadialLabel(input: RadialLabelInput): RadialLabelPlacement {

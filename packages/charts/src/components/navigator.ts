@@ -7,12 +7,12 @@
  * left↔right; a `vertical` strip (category on y, e.g. a horizontal bar chart) is a side bar whose
  * window slides up↕down. It reports the window as fractions `[start, end]` of the category domain via
  * `onWindow`; the host converts that to a navigator transform. The overview draws each series by
- * type — lines as polylines, areas as filled bands, bars as silhouettes — along the **main** (category)
+ * type (lines as polylines, areas as filled bands, bars as silhouettes) along the **main** (category)
  * axis, scaled along the **cross** (value) axis.
  *
  * Dragging is wired with DOM pointer listeners on the render context (pointer capture keeps a drag
  * tracking outside the strip). A `pointerdown` inside the strip band calls `stopImmediatePropagation`
- * so the in-plot navigator — whose listeners attach after the strip's — never also pans.
+ * so the in-plot navigator, whose listeners attach after the strip's, never also pans.
  */
 
 import {
@@ -110,7 +110,7 @@ export interface ChartNavigatorRenderOptions {
     valueExtent: [number, number];
     /**
      * Whether same-type series are stacked: bar series stack cumulatively (positive/negative
-     * independently) and area series stack as running cumulative bands. Defaults to `false` — bars are
+     * independently) and area series stack as running cumulative bands. Defaults to `false`; bars are
      * drawn grouped side-by-side and areas as independent baseline bands.
      */
     stacked?: boolean;
@@ -345,8 +345,8 @@ export class ChartNavigator extends ChartComponent {
 
     /**
      * Draws area series. Unstacked areas are independent baseline bands (correct for overlapping
-     * areas); stacked areas are running cumulative bands — each series stacked on the sum of the
-     * previous ones — mirroring the area renderer's plain cumulative accumulation.
+     * areas); stacked areas are running cumulative bands, each series stacked on the sum of the
+     * previous ones, mirroring the area renderer's plain cumulative accumulation.
      */
     private _areaGroupOverview(areaSeries: ChartNavigatorSeries[], min: number, span: number, baseline: number, stacked: boolean, mainFor: (index: number, count: number) => number): Element[] {
         if (areaSeries.length === 0) {

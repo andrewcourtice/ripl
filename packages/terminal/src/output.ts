@@ -1,4 +1,4 @@
-/** Abstract terminal output interface — runtime-agnostic. */
+/** Abstract terminal output interface, runtime-agnostic. */
 export interface TerminalOutput {
     /** Writes raw data (including ANSI escape sequences) to the terminal. */
     write(data: string): void;

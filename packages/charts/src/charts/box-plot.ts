@@ -174,7 +174,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 x: rect.x + rect.width / 2,
                 y: rect.y,
             }),
-            content: () => `${category} — median ${formatValue(stats.median)} (Q1 ${formatValue(stats.q1)}, Q3 ${formatValue(stats.q3)})`,
+            content: () => `${category}: median ${formatValue(stats.median)} (Q1 ${formatValue(stats.q1)}, Q3 ${formatValue(stats.q3)})`,
             highlight: {
                 fill: setColorAlpha(restFill, 0.5),
             },
@@ -472,7 +472,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             return group;
         });
 
-        // Update: reconcile geometry in place and transition to it — rather than clearing + rebuilding,
+        // Update: reconcile geometry in place and transition to it, rather than clearing + rebuilding,
         // which teleported the boxes to their new positions with no animation.
         const updateResults = updates.map(([item, group]) => ({
             group,

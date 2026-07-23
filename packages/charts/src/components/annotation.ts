@@ -30,7 +30,7 @@ export type AnnotationAxis = 'x' | 'y';
 
 /** A reference line drawn across the plot at a fixed value on one axis. */
 export interface ChartLineAnnotation {
-    /** Discriminator. Optional — a line is the default annotation kind. */
+    /** Discriminator. Optional; a line is the default annotation kind. */
     type?: 'line';
     /** The axis the {@link ChartLineAnnotation.value} is measured on. */
     axis: AnnotationAxis;
@@ -109,7 +109,7 @@ const DEFAULT_COLOR = '#ef4444';
 const DEFAULT_FONT = '11px sans-serif';
 
 /**
- * Renders chart {@link ChartAnnotation}s — reference lines, shaded bands, and point markers — into
+ * Renders chart {@link ChartAnnotation}s (reference lines, shaded bands, and point markers) into
  * the plot area, resolving their values through the supplied axis scales. Annotations whose value
  * cannot be mapped (e.g. an `x` annotation against a categorical x axis) are skipped. The overlay is
  * redrawn each call, which is inexpensive for the handful of annotations a chart typically carries.
@@ -152,8 +152,8 @@ export class ChartAnnotations extends ChartComponent {
 
         if (clip) {
             // Re-establish the clip mask as the group's first child (clear() detached it): a
-            // fill-less rect with `clip` set masks every later sibling to the plot rectangle — the
-            // same sibling-mask the series/grid/axes use — so annotations stay inside the plot when
+            // fill-less rect with `clip` set masks every later sibling to the plot rectangle (the
+            // same sibling-mask the series/grid/axes use), so annotations stay inside the plot when
             // the navigator rescales the axes. Added only while clipping, so non-navigator rendering
             // is byte-identical.
             if (!this._clip) {

@@ -478,7 +478,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         }
     }
 
-    /** Requests that the bound scene repaint on the next frame — for context-level changes (e.g. a 3D camera move) that mutate no element and so would otherwise be skipped by the renderer's dirty check. */
+    /** Requests that the bound scene repaint on the next frame, for context-level changes (e.g. a 3D camera move) that mutate no element and so would otherwise be skipped by the renderer's dirty check. */
     public requestRender(): void {
         this.emit('render', null);
     }
@@ -683,7 +683,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return hits;
         }
 
-        // Paint-order tiebreak via a one-pass index map — an `indexOf` inside the comparator
+        // Paint-order tiebreak via a one-pass index map; an `indexOf` inside the comparator
         // would rescan the rendered-element list for every comparison.
         const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
 

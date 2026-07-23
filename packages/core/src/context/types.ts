@@ -31,10 +31,10 @@ export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' |
 /** Fill rule algorithm used to determine if a point is inside a path. */
 export type FillRule = 'evenodd' | 'nonzero';
 
-/** Transform origin value — a numeric pixel offset or a percentage string. */
+/** Transform origin value: a numeric pixel offset or a percentage string. */
 export type TransformOrigin = number | string;
 
-/** Rotation value — a numeric radian value or a string with `deg`/`rad` suffix. */
+/** Rotation value: a numeric radian value or a string with `deg`/`rad` suffix. */
 export type Rotation = number | string;
 
 /** Controls which pointer events a render element responds to during hit testing. */
@@ -144,7 +144,7 @@ export interface ContextOptions<TMeta extends Record<string, unknown> = Record<s
 
 /**
  * The factory shape every rendering backend exports as `createContext`: target-first, with a
- * backend-specific target and options type. Backends legitimately diverge on `TTarget` — DOM
+ * backend-specific target and options type. Backends legitimately diverge on `TTarget`; DOM
  * backends (canvas, SVG, 3D) accept a `string | HTMLElement` mount target while non-DOM backends
  * accept their own output adapter (e.g. the terminal backend's `TerminalOutput`). Synchronous
  * backends return the constructed context directly and should conformance-check their factory
@@ -164,9 +164,9 @@ export type ContextFactory<TTarget, TOptions extends ContextOptions, TContext ex
  * `export()` for specifics); unsupported formats throw a descriptive error.
  */
 export interface ContextExport {
-    /** The context's native string form — SVG markup, a PNG data URL, or terminal text. */
+    /** The context's native string form: SVG markup, a PNG data URL, or terminal text. */
     toString(): string;
-    /** An openable `Blob` object URL — `image/svg+xml` for SVG, `image/png` for raster contexts. */
+    /** An openable `Blob` object URL: `image/svg+xml` for SVG, `image/png` for raster contexts. */
     toURL(): string;
     /**
      * Low-level, environment-agnostic pixel data. Promise-wrapped so contexts that must rasterize

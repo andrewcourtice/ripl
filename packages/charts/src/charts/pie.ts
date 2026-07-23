@@ -225,7 +225,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
                 if (innerRadiusOption !== undefined) {
                     // A fractional value is a fraction of the *outer radius* (so 0.55 is a hole 55% of
-                    // the ring), not of the overall size — otherwise the hole could exceed the ring and
+                    // the ring), not of the overall size, otherwise the hole could exceed the ring and
                     // render an inverted donut. Absolute values are taken as-is. Always clamp below the
                     // outer radius so the ring stays visible.
                     const resolved = innerRadiusOption <= 1 ? radius * innerRadiusOption : innerRadiusOption;
@@ -459,7 +459,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 }));
             };
 
-            // Segments are grouped, but transitions animate their own state — so drive the leaf
+            // Segments are grouped, but transitions animate their own state, so drive the leaf
             // children (arc/label/connector) to their stashed `.data`, not the inert group.
             const transitionUpdates = async () => renderer.transition(updates.flatMap(group => group.children), element => ({
                 duration: update.duration,

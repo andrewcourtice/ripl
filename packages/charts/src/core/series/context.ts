@@ -1,9 +1,9 @@
 /**
  * Shared context and series shapes for the series-renderer layer.
  *
- * A {@link SeriesRenderContext} bundles everything a series renderer needs from its host chart —
+ * A {@link SeriesRenderContext} bundles everything a series renderer needs from its host chart:
  * the resolved scales, plot rectangle, color lookup, animation resolver, tooltip, formatter, and
- * the callbacks for adding marks and emitting interaction events — so that the line/area/bar
+ * the callbacks for adding marks and emitting interaction events. This lets the line/area/bar
  * geometry can be shared verbatim between the standalone charts and the mixed trend chart. Each
  * renderer widens the context with the extra inputs its geometry needs (an x point scale for
  * line/area, a category band scale for bars).

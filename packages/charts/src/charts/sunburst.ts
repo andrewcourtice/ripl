@@ -211,7 +211,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             const colorGenerator = this.colorGenerator;
 
             // Resolve top-level node colors through the shared, id-keyed color map so they stay
-            // stable across data updates (randomising values must not reshuffle colors). Child
+            // stable across data updates (randomizing values must not reshuffle colors). Child
             // nodes inherit their parent's color via `flattenNodes`.
             this.resolveSeriesColors(data.map(node => ({
                 id: node.id,
