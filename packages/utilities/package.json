@@ -25,6 +25,6 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsup && tsc -p tsconfig.build.json"
+        "build": "tsc --noEmit -p tsconfig.json && tsup && node ../../scripts/finalize-dts.mjs"
     }
 }

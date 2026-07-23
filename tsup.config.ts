@@ -34,11 +34,17 @@ function resolveGlobalName(): string {
 
 export default (): Options => ({
     clean: true,
-    // Declarations are emitted by `tsc` (see each package's `tsconfig.build.json`) rather than
-    // tsup's bundled dts: tsup injects a `baseUrl` compiler option that TypeScript 6 deprecates
-    // (TS5101) and its rollup-plugin-dts engine caps at `typescript <6.1.0`, so emitting through
-    // `tsc` keeps the build working today and ready for the future TS7 native compiler.
-    dts: false,
+    // Build against `tsconfig.build.json`, which drops the workspace source aliases (`paths: {}`)
+    // that the root tsconfig defines. API Extractor reads this tsconfig directly, so without it the
+    // rollup would resolve `@ripl/*` to each dependency's source and pull that source into the
+    // analysis; with it, cross-package types resolve to the dependency's built `dist` and stay
+    // external imports in the emitted declarations.
+    tsconfig: 'tsconfig.build.json',
+    // Emit one flat, self-contained `dist/index.d.ts` per package via tsup's API-Extractor-backed
+    // declaration rollup (API Extractor's compiler is pinned to the project's TypeScript 6 through
+    // the root `resolutions`). Type-checking stays a separate `tsc --noEmit` step in each package's
+    // build script (the CI gate); this flag only controls declaration output.
+    experimentalDts: true,
     sourcemap: true,
     target: 'es2023',
     globalName: resolveGlobalName(),

@@ -23,6 +23,7 @@
         "@eslint/compat": "^2.1.0",
         "@eslint/js": "^10.0.1",
         "@eslint/markdown": "^8.0.2",
+        "@microsoft/api-extractor": "^7.36.0",
         "@playwright/test": "1.61.1",
         "@stylistic/eslint-plugin": "^5.10.0",
         "@vitest/coverage-v8": "^4.1.9",
@@ -38,5 +39,8 @@
         "typescript-eslint": "^8.62.1",
         "vitest": "^4.1.9",
         "vue-eslint-parser": "^10.4.1"
+    },
+    "resolutions": {
+        "@microsoft/api-extractor/typescript": "^6.0.3"
     }
 }

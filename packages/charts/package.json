@@ -25,7 +25,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsup && tsc -p tsconfig.build.json",
+        "build": "tsc --noEmit -p tsconfig.json && tsup && node ../../scripts/finalize-dts.mjs",
         "test:visual": "playwright test -c test/visual/playwright.config.ts",
         "test:visual:update": "playwright test -c test/visual/playwright.config.ts --update-snapshots"
     },
