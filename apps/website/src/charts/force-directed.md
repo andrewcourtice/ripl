@@ -81,7 +81,11 @@ const baseLinks = [];
 
 CLUSTERS.forEach((group, c) => {
     const hub = `${group}-hub`;
-    nodes.push({ id: hub, label: group.toUpperCase(), group });
+    nodes.push({
+        id: hub,
+        label: group.toUpperCase(),
+        group,
+    });
 
     const members = 15 + (c % 4) * 4;
     for (let i = 0; i < members; i++) {
@@ -157,23 +161,33 @@ import {
 
 const chart = createForceDirectedChart('#container', {
     nodes: [
-        { id: 'a',
+        {
+            id: 'a',
             label: 'A',
-            group: 'x' },
-        { id: 'b',
+            group: 'x',
+        },
+        {
+            id: 'b',
             label: 'B',
-            group: 'x' },
-        { id: 'c',
+            group: 'x',
+        },
+        {
+            id: 'c',
             label: 'C',
-            group: 'y' },
+            group: 'y',
+        },
     ],
     links: [
-        { source: 'a',
+        {
+            source: 'a',
             target: 'b',
-            value: 4 },
-        { source: 'b',
+            value: 4,
+        },
+        {
+            source: 'b',
             target: 'c',
-            value: 2 },
+            value: 2,
+        },
     ],
 });
 ```

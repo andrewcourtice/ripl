@@ -55,9 +55,21 @@ function generateData() {
             label: 'Technology',
             value: Math.round(Math.random() * 200 + 300),
             children: [
-                { id: 'web', label: 'Web', value: Math.round(Math.random() * 100 + 50) },
-                { id: 'mobile', label: 'Mobile', value: Math.round(Math.random() * 80 + 40) },
-                { id: 'cloud', label: 'Cloud', value: Math.round(Math.random() * 60 + 30) },
+                {
+                    id: 'web',
+                    label: 'Web',
+                    value: Math.round(Math.random() * 100 + 50),
+                },
+                {
+                    id: 'mobile',
+                    label: 'Mobile',
+                    value: Math.round(Math.random() * 80 + 40),
+                },
+                {
+                    id: 'cloud',
+                    label: 'Cloud',
+                    value: Math.round(Math.random() * 60 + 30),
+                },
             ],
         },
         {
@@ -65,8 +77,16 @@ function generateData() {
             label: 'Finance',
             value: Math.round(Math.random() * 150 + 200),
             children: [
-                { id: 'banking', label: 'Banking', value: Math.round(Math.random() * 80 + 40) },
-                { id: 'insurance', label: 'Insurance', value: Math.round(Math.random() * 60 + 30) },
+                {
+                    id: 'banking',
+                    label: 'Banking',
+                    value: Math.round(Math.random() * 80 + 40),
+                },
+                {
+                    id: 'insurance',
+                    label: 'Insurance',
+                    value: Math.round(Math.random() * 60 + 30),
+                },
             ],
         },
         {
@@ -112,12 +132,16 @@ const chart = createSunburstChart('#container', {
             label: 'Technology',
             value: 500,
             children: [
-                { id: 'web',
+                {
+                    id: 'web',
                     label: 'Web',
-                    value: 200 },
-                { id: 'mobile',
+                    value: 200,
+                },
+                {
+                    id: 'mobile',
                     label: 'Mobile',
-                    value: 150 },
+                    value: 150,
+                },
             ],
         },
     ],

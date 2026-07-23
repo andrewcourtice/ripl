@@ -88,13 +88,34 @@ const nodes = [
 
 function makeLinks() {
     const pairs = [
-        ['valjean', 'myriel'], ['valjean', 'javert'], ['valjean', 'fantine'], ['valjean', 'cosette'],
-        ['valjean', 'thenardier'], ['valjean', 'marius'], ['fantine', 'thenardier'], ['cosette', 'marius'],
-        ['cosette', 'thenardier'], ['marius', 'gillenormand'], ['marius', 'enjolras'], ['marius', 'eponine'],
-        ['thenardier', 'mme'], ['thenardier', 'eponine'], ['thenardier', 'javert'], ['enjolras', 'gavroche'],
-        ['enjolras', 'combeferre'], ['enjolras', 'courfeyrac'], ['enjolras', 'bossuet'], ['enjolras', 'joly'],
-        ['enjolras', 'bahorel'], ['gavroche', 'mabeuf'], ['courfeyrac', 'mabeuf'], ['combeferre', 'courfeyrac'],
-        ['bossuet', 'joly'], ['bahorel', 'bossuet'], ['eponine', 'marius'], ['javert', 'fantine'],
+        ['valjean', 'myriel'],
+        ['valjean', 'javert'],
+        ['valjean', 'fantine'],
+        ['valjean', 'cosette'],
+        ['valjean', 'thenardier'],
+        ['valjean', 'marius'],
+        ['fantine', 'thenardier'],
+        ['cosette', 'marius'],
+        ['cosette', 'thenardier'],
+        ['marius', 'gillenormand'],
+        ['marius', 'enjolras'],
+        ['marius', 'eponine'],
+        ['thenardier', 'mme'],
+        ['thenardier', 'eponine'],
+        ['thenardier', 'javert'],
+        ['enjolras', 'gavroche'],
+        ['enjolras', 'combeferre'],
+        ['enjolras', 'courfeyrac'],
+        ['enjolras', 'bossuet'],
+        ['enjolras', 'joly'],
+        ['enjolras', 'bahorel'],
+        ['gavroche', 'mabeuf'],
+        ['courfeyrac', 'mabeuf'],
+        ['combeferre', 'courfeyrac'],
+        ['bossuet', 'joly'],
+        ['bahorel', 'bossuet'],
+        ['eponine', 'marius'],
+        ['javert', 'fantine'],
     ];
 
     return pairs.map(([source, target]) => ({
@@ -149,20 +170,30 @@ import {
 
 const chart = createArcDiagramChart('#container', {
     nodes: [
-        { id: 'a',
-            label: 'A' },
-        { id: 'b',
-            label: 'B' },
-        { id: 'c',
-            label: 'C' },
+        {
+            id: 'a',
+            label: 'A',
+        },
+        {
+            id: 'b',
+            label: 'B',
+        },
+        {
+            id: 'c',
+            label: 'C',
+        },
     ],
     links: [
-        { source: 'a',
+        {
+            source: 'a',
             target: 'b',
-            value: 4 },
-        { source: 'a',
+            value: 4,
+        },
+        {
+            source: 'a',
             target: 'c',
-            value: 2 },
+            value: 2,
+        },
     ],
 });
 ```

@@ -413,7 +413,14 @@ function renderColor(ctx: Context) {
     const pad = 20;
 
     ctx.batch(() => {
-        createRect({ fill: color, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
+        createRect({
+            fill: color,
+            x: pad,
+            y: pad,
+            width: w - pad * 2,
+            height: h - 50,
+            borderRadius: 8,
+        }).render(ctx);
         createText({
             x: w / 2, y: h - 16,
             content: `t = ${t.toFixed(2)}  color = ${color}`,
@@ -448,7 +455,14 @@ function renderGradient(ctx: Context) {
     const pad = 20;
 
     ctx.batch(() => {
-        createRect({ fill: grad, x: pad, y: pad, width: w - pad * 2, height: h - 50, borderRadius: 8 }).render(ctx);
+        createRect({
+            fill: grad,
+            x: pad,
+            y: pad,
+            width: w - pad * 2,
+            height: h - 50,
+            borderRadius: 8,
+        }).render(ctx);
         createText({
             x: w / 2, y: h - 16,
             content: `t = ${t.toFixed(2)}`,
@@ -580,10 +594,25 @@ function renderMorph(ctx: Context) {
     ctx.batch(() => {
         const closePts = (pts: Point[]) => pts.length > 0 ? [...pts, pts[0]] : pts;
 
-        createPolyline({ points: closePts(fromPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
-        createPolyline({ points: closePts(toPts), stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4] }).render(ctx);
+        createPolyline({
+            points: closePts(fromPts),
+            stroke: '#e9ecef',
+            lineWidth: 1,
+            lineDash: [4, 4],
+        }).render(ctx);
+        createPolyline({
+            points: closePts(toPts),
+            stroke: '#e9ecef',
+            lineWidth: 1,
+            lineDash: [4, 4],
+        }).render(ctx);
 
-        createPolyline({ points: closePts(morphed), stroke: '#3a86ff', lineWidth: 2, fill: 'rgba(58, 134, 255, 0.15)' }).render(ctx);
+        createPolyline({
+            points: closePts(morphed),
+            stroke: '#3a86ff',
+            lineWidth: 2,
+            fill: 'rgba(58, 134, 255, 0.15)',
+        }).render(ctx);
 
         morphed.forEach(pt => {
             createCircle({ fill: '#3a86ff', cx: pt[0], cy: pt[1], radius: 3 }).render(ctx);

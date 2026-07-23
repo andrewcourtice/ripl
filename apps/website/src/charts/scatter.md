@@ -55,9 +55,27 @@ import {
 } from 'vue';
 
 const seriesMeta = [
-    { id: 'sales', label: 'Sales', xBy: 'sales', yBy: 'profit', sizeBy: 'volume' },
-    { id: 'marketing', label: 'Marketing', xBy: 'marketing', yBy: 'engagement', sizeBy: 'reach' },
-    { id: 'support', label: 'Support', xBy: 'support', yBy: 'satisfaction', sizeBy: 'tickets' },
+    {
+        id: 'sales',
+        label: 'Sales',
+        xBy: 'sales',
+        yBy: 'profit',
+        sizeBy: 'volume',
+    },
+    {
+        id: 'marketing',
+        label: 'Marketing',
+        xBy: 'marketing',
+        yBy: 'engagement',
+        sizeBy: 'reach',
+    },
+    {
+        id: 'support',
+        label: 'Support',
+        xBy: 'support',
+        yBy: 'satisfaction',
+        sizeBy: 'tickets',
+    },
 ];
 
 const { extras, reset } = useChartExtras({
@@ -221,18 +239,24 @@ Each item needs a unique `key` and numeric fields for x/y position (and optional
 
 ```ts
 const data = [
-    { id: 'a',
+    {
+        id: 'a',
         sales: 42,
         profit: 78,
-        volume: 15 },
-    { id: 'b',
+        volume: 15,
+    },
+    {
+        id: 'b',
         sales: 68,
         profit: 35,
-        volume: 30 },
-    { id: 'c',
+        volume: 30,
+    },
+    {
+        id: 'c',
         sales: 91,
         profit: 52,
-        volume: 8 },
+        volume: 8,
+    },
 ];
 ```
 
@@ -271,14 +295,18 @@ createScatterChart('#container', {
     data,
     key: 'id',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             label: 'Sales',
             xBy: 'sales',
-            yBy: 'profit' },
-        { id: 'marketing',
+            yBy: 'profit',
+        },
+        {
+            id: 'marketing',
             label: 'Marketing',
             xBy: 'marketing',
-            yBy: 'engagement' },
+            yBy: 'engagement',
+        },
     ],
 });
 ```
@@ -292,16 +320,20 @@ createScatterChart('#container', {
     data,
     key: 'id',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             label: 'Sales',
             xBy: 'spend',
             yBy: 'revenue',
-            axis: 0 },
-        { id: 'efficiency',
+            axis: 0,
+        },
+        {
+            id: 'efficiency',
             label: 'Efficiency',
             xBy: 'spend',
             yBy: 'roas',
-            axis: 1 },
+            axis: 1,
+        },
     ],
     axis: {
         y: [

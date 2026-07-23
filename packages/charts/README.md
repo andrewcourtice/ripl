@@ -31,30 +31,44 @@ import {
 
 const chart = createBarChart('#chart', {
     data: [
-        { label: 'A',
-            value: 10 },
-        { label: 'B',
-            value: 25 },
-        { label: 'C',
-            value: 15 },
+        {
+            label: 'A',
+            value: 10,
+        },
+        {
+            label: 'B',
+            value: 25,
+        },
+        {
+            label: 'C',
+            value: 15,
+        },
     ],
     key: 'label',
     series: [
-        { id: 'values',
+        {
+            id: 'values',
             label: 'Values',
-            value: 'value' },
+            value: 'value',
+        },
     ],
 });
 
 // Merge new options/data and re-render with animated transitions
 chart.update({
     data: [
-        { label: 'A',
-            value: 30 },
-        { label: 'B',
-            value: 5 },
-        { label: 'C',
-            value: 20 },
+        {
+            label: 'A',
+            value: 30,
+        },
+        {
+            label: 'B',
+            value: 5,
+        },
+        {
+            label: 'C',
+            value: 20,
+        },
     ],
 });
 ```

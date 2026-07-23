@@ -87,7 +87,14 @@ function generateData(count = 30) {
         const low = Math.round((Math.min(open, close) - Math.random() * 4) * 100) / 100;
         const volume = Math.round(Math.random() * 8000000 + 2000000);
 
-        data.push({ date: label, open, high, low, close, volume });
+        data.push({
+            date: label,
+            open,
+            high,
+            low,
+            close,
+            volume,
+        });
         price = close;
     }
 
@@ -103,7 +110,13 @@ function buildOptions() {
         downColor: extras.downColor,
         annotations: config.annotationsVisible
             ? [
-                { type: 'line', axis: 'y', value: 150, label: 'Support', color: '#f59e0b' },
+                {
+                    type: 'line',
+                    axis: 'y',
+                    value: 150,
+                    label: 'Support',
+                    color: '#f59e0b',
+                },
             ]
             : [],
         ...buildCommonOptions(config),

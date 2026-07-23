@@ -99,8 +99,26 @@ let samples = Array.from({ length: 12 }, makeSample);
 
 function getSeries() {
     return [
-        { id: 'morning', label: 'Morning', angle: 'morningAngle', radius: 'morningSpeed', sizeBy: 'morningGust', minRadius: extras.minRadius, maxRadius: extras.maxRadius, color: config.colors.morning },
-        { id: 'evening', label: 'Evening', angle: 'eveningAngle', radius: 'eveningSpeed', sizeBy: 'eveningGust', minRadius: extras.minRadius, maxRadius: extras.maxRadius, color: config.colors.evening },
+        {
+            id: 'morning',
+            label: 'Morning',
+            angle: 'morningAngle',
+            radius: 'morningSpeed',
+            sizeBy: 'morningGust',
+            minRadius: extras.minRadius,
+            maxRadius: extras.maxRadius,
+            color: config.colors.morning,
+        },
+        {
+            id: 'evening',
+            label: 'Evening',
+            angle: 'eveningAngle',
+            radius: 'eveningSpeed',
+            sizeBy: 'eveningGust',
+            minRadius: extras.minRadius,
+            maxRadius: extras.maxRadius,
+            color: config.colors.evening,
+        },
     ];
 }
 
@@ -162,22 +180,30 @@ import {
 
 const chart = createPolarScatterChart('#container', {
     data: [
-        { angle: 45,
+        {
+            angle: 45,
             speed: 62,
-            gust: 80 },
-        { angle: 120,
+            gust: 80,
+        },
+        {
+            angle: 120,
             speed: 34,
-            gust: 40 },
-        { angle: 250,
+            gust: 40,
+        },
+        {
+            angle: 250,
             speed: 88,
-            gust: 95 },
+            gust: 95,
+        },
     ],
     series: [
-        { id: 'wind',
+        {
+            id: 'wind',
             label: 'Wind',
             angle: 'angle',
             radius: 'speed',
-            sizeBy: 'gust' },
+            sizeBy: 'gust',
+        },
     ],
     maxValue: 100,
 });
@@ -189,12 +215,16 @@ Each item provides an angle (in degrees, `0°` at the top and increasing clockwi
 
 ```ts
 const data = [
-    { angle: 45,
+    {
+        angle: 45,
         speed: 62,
-        gust: 80 },
-    { angle: 120,
+        gust: 80,
+    },
+    {
+        angle: 120,
         speed: 34,
-        gust: 40 },
+        gust: 40,
+    },
 ];
 ```
 
@@ -203,21 +233,27 @@ observation and point each series at its own fields:
 
 ```ts
 const data = [
-    { morningAngle: 60,
+    {
+        morningAngle: 60,
         morningSpeed: 32,
         eveningAngle: 250,
-        eveningSpeed: 78 },
+        eveningSpeed: 78,
+    },
 ];
 
 const series = [
-    { id: 'morning',
+    {
+        id: 'morning',
         label: 'Morning',
         angle: 'morningAngle',
-        radius: 'morningSpeed' },
-    { id: 'evening',
+        radius: 'morningSpeed',
+    },
+    {
+        id: 'evening',
         label: 'Evening',
         angle: 'eveningAngle',
-        radius: 'eveningSpeed' },
+        radius: 'eveningSpeed',
+    },
 ];
 ```
 

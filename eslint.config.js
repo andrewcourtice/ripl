@@ -246,6 +246,7 @@ export default tseslint.config(
             '@stylistic/object-property-newline': 'error',
             '@stylistic/space-infix-ops': 'error',
             '@stylistic/array-bracket-newline': ['error', 'consistent'],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             '@stylistic/brace-style': ['error', '1tbs'],
             '@stylistic/linebreak-style': ['error', 'unix'],
             '@stylistic/object-curly-spacing': ['error', 'always'],
@@ -349,7 +350,11 @@ export default tseslint.config(
             // production-strictness rules, so relax those for fenced code blocks.
             'id-length': 'off',
             'no-multi-assign': 'off',
-            '@stylistic/object-property-newline': 'off',
+            // Snippets may keep a simple object fully inline, but members must not mix
+            // same-line and new-line placement within one literal.
+            '@stylistic/object-property-newline': ['error', {
+                'allowAllPropertiesOnSameLine': true,
+            }],
             '@stylistic/no-multi-spaces': 'off',
             '@typescript-eslint/no-unused-vars': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
@@ -368,8 +373,13 @@ export default tseslint.config(
             }],
             '@stylistic/object-curly-spacing': ['error', 'always'],
             '@stylistic/object-curly-newline': ['error', {
+                'ObjectExpression': {
+                    'multiline': true,
+                    'consistent': true,
+                },
                 'ImportDeclaration': 'always',
             }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             'ripl/import-export-spacing': 'error',
         },
     },
@@ -412,8 +422,18 @@ export default tseslint.config(
             }],
             '@stylistic/object-curly-spacing': ['error', 'always'],
             '@stylistic/object-curly-newline': ['error', {
+                'ObjectExpression': {
+                    'multiline': true,
+                    'consistent': true,
+                },
                 'ImportDeclaration': 'always',
             }],
+            // Doc script blocks may keep a simple object fully inline, but members must
+            // not mix same-line and new-line placement within one literal.
+            '@stylistic/object-property-newline': ['error', {
+                'allowAllPropertiesOnSameLine': true,
+            }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             'ripl/import-export-spacing': 'error',
         },
     },
@@ -466,6 +486,7 @@ export default tseslint.config(
                     'minProperties': 2,
                 },
             }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             '@stylistic/member-delimiter-style': 'error',
             'ripl/import-export-spacing': 'error',
 

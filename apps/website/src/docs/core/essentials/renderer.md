@@ -359,9 +359,27 @@ const {
     const r = Math.min(w, h) / 8;
 
     circles = [
-        createCircle({ id: 'c1', fill: '#3a86ff', cx: w * 0.25, cy: h / 2, radius: r }),
-        createCircle({ id: 'c2', fill: '#3a86ff', cx: w * 0.5, cy: h / 2, radius: r }),
-        createCircle({ id: 'c3', fill: '#3a86ff', cx: w * 0.75, cy: h / 2, radius: r }),
+        createCircle({
+            id: 'c1',
+            fill: '#3a86ff',
+            cx: w * 0.25,
+            cy: h / 2,
+            radius: r,
+        }),
+        createCircle({
+            id: 'c2',
+            fill: '#3a86ff',
+            cx: w * 0.5,
+            cy: h / 2,
+            radius: r,
+        }),
+        createCircle({
+            id: 'c3',
+            fill: '#3a86ff',
+            cx: w * 0.75,
+            cy: h / 2,
+            radius: r,
+        }),
     ];
 
     rScene = createScene(context, { children: circles });

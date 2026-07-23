@@ -109,8 +109,22 @@ function renderDemo(context: Context) {
 
         for (let i = 0; i <= 100; i += 20) {
             const x = pad + scaleContinuous([0, 100], [0, chartW])(i);
-            createLine({ stroke: '#e9ecef', lineWidth: 1, x1: x, y1: pad, x2: x, y2: pad + chartH }).render(context);
-            createText({ fill: '#999', x, y: pad + chartH + 16, content: String(i), textAlign: 'center', font: '11px sans-serif' }).render(context);
+            createLine({
+                stroke: '#e9ecef',
+                lineWidth: 1,
+                x1: x,
+                y1: pad,
+                x2: x,
+                y2: pad + chartH,
+            }).render(context);
+            createText({
+                fill: '#999',
+                x,
+                y: pad + chartH + 16,
+                content: String(i),
+                textAlign: 'center',
+                font: '11px sans-serif',
+            }).render(context);
         }
 
         const points: [number, number][] = [];

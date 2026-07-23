@@ -63,13 +63,41 @@ const config = useChartConfig({
 
 function generateLinks() {
     return [
-        { source: 'budget', target: 'engineering', value: Math.round(Math.random() * 300 + 200) },
-        { source: 'budget', target: 'marketing', value: Math.round(Math.random() * 200 + 100) },
-        { source: 'budget', target: 'operations', value: Math.round(Math.random() * 150 + 80) },
-        { source: 'engineering', target: 'frontend', value: Math.round(Math.random() * 150 + 50) },
-        { source: 'engineering', target: 'backend', value: Math.round(Math.random() * 150 + 50) },
-        { source: 'marketing', target: 'ads', value: Math.round(Math.random() * 100 + 50) },
-        { source: 'marketing', target: 'content', value: Math.round(Math.random() * 80 + 30) },
+        {
+            source: 'budget',
+            target: 'engineering',
+            value: Math.round(Math.random() * 300 + 200),
+        },
+        {
+            source: 'budget',
+            target: 'marketing',
+            value: Math.round(Math.random() * 200 + 100),
+        },
+        {
+            source: 'budget',
+            target: 'operations',
+            value: Math.round(Math.random() * 150 + 80),
+        },
+        {
+            source: 'engineering',
+            target: 'frontend',
+            value: Math.round(Math.random() * 150 + 50),
+        },
+        {
+            source: 'engineering',
+            target: 'backend',
+            value: Math.round(Math.random() * 150 + 50),
+        },
+        {
+            source: 'marketing',
+            target: 'ads',
+            value: Math.round(Math.random() * 100 + 50),
+        },
+        {
+            source: 'marketing',
+            target: 'content',
+            value: Math.round(Math.random() * 80 + 30),
+        },
     ];
 }
 
@@ -121,15 +149,21 @@ import {
 
 const chart = createSankeyChart('#container', {
     nodes: [
-        { id: 'a',
-            label: 'Source A' },
-        { id: 'b',
-            label: 'Target B' },
+        {
+            id: 'a',
+            label: 'Source A',
+        },
+        {
+            id: 'b',
+            label: 'Target B',
+        },
     ],
     links: [
-        { source: 'a',
+        {
+            source: 'a',
             target: 'b',
-            value: 100 },
+            value: 100,
+        },
     ],
 });
 ```

@@ -31,12 +31,14 @@ import type {
 
 describe('triangulatefaces', () => {
 
+    /* eslint-disable @stylistic/array-element-newline */
     const identity = new Float64Array([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1,
     ]);
+    /* eslint-enable @stylistic/array-element-newline */
 
     const white: ColorRGBA = [255, 255, 255, 1];
 
@@ -294,12 +296,14 @@ describe('triangulatefaces', () => {
 
 describe('GeometryManager', () => {
 
+    /* eslint-disable @stylistic/array-element-newline */
     const identity = new Float64Array([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1,
     ]);
+    /* eslint-enable @stylistic/array-element-newline */
 
     const white: ColorRGBA = [255, 255, 255, 1];
     const floatsPerVertex = VERTEX_STRIDE / 4;

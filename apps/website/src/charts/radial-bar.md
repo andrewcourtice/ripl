@@ -135,12 +135,18 @@ import {
 
 const chart = createRadialBarChart('#container', {
     data: [
-        { language: 'JavaScript',
-            share: 92 },
-        { language: 'Python',
-            share: 78 },
-        { language: 'Rust',
-            share: 61 },
+        {
+            language: 'JavaScript',
+            share: 92,
+        },
+        {
+            language: 'Python',
+            share: 78,
+        },
+        {
+            language: 'Rust',
+            share: 61,
+        },
     ],
     key: 'language',
     value: 'share',
@@ -155,10 +161,14 @@ Each item provides a category key and a numeric value:
 
 ```ts
 const data = [
-    { language: 'JavaScript',
-        share: 92 },
-    { language: 'Python',
-        share: 78 },
+    {
+        language: 'JavaScript',
+        share: 92,
+    },
+    {
+        language: 'Python',
+        share: 78,
+    },
 ];
 ```
 

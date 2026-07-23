@@ -366,15 +366,21 @@ Each item should contain a key field and one or more numeric value fields:
 
 ```ts
 const data = [
-    { month: 'Jan',
+    {
+        month: 'Jan',
         revenue: 620,
-        expenses: 340 },
-    { month: 'Feb',
+        expenses: 340,
+    },
+    {
+        month: 'Feb',
         revenue: 780,
-        expenses: 290 },
-    { month: 'Mar',
+        expenses: 290,
+    },
+    {
+        month: 'Mar',
         revenue: 550,
-        expenses: 410 },
+        expenses: 410,
+    },
 ];
 ```
 
@@ -389,14 +395,18 @@ createLineChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            markers: true },
-        { id: 'expenses',
+            markers: true,
+        },
+        {
+            id: 'expenses',
             value: 'expenses',
             label: 'Expenses',
-            markers: true },
+            markers: true,
+        },
     ],
 });
 ```
@@ -410,14 +420,18 @@ createLineChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            lineType: 'monotoneX' },
-        { id: 'expenses',
+            lineType: 'monotoneX',
+        },
+        {
+            id: 'expenses',
             value: 'expenses',
             label: 'Expenses',
-            lineType: 'step' },
+            lineType: 'step',
+        },
     ],
 });
 ```
@@ -429,18 +443,26 @@ Set `axis.x.scale` to `'time'` to treat keys as dates: points are positioned con
 ```ts
 createLineChart('#container', {
     data: [
-        { date: '2024-01-02',
-            value: 34 },
-        { date: '2024-01-05',
-            value: 41 },
-        { date: '2024-02-19',
-            value: 28 },
+        {
+            date: '2024-01-02',
+            value: 34,
+        },
+        {
+            date: '2024-01-05',
+            value: 41,
+        },
+        {
+            date: '2024-02-19',
+            value: 28,
+        },
     ],
     key: 'date',
     series: [
-        { id: 'value',
+        {
+            id: 'value',
             value: 'value',
-            label: 'Value' },
+            label: 'Value',
+        },
     ],
     axis: {
         x: { scale: 'time' },
@@ -457,14 +479,18 @@ createLineChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            marker: 'circle' },
-        { id: 'expenses',
+            marker: 'circle',
+        },
+        {
+            id: 'expenses',
             value: 'expenses',
             label: 'Expenses',
-            marker: 'diamond' },
+            marker: 'diamond',
+        },
     ],
 });
 ```
@@ -478,26 +504,36 @@ createLineChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0 },
-        { id: 'margin',
+            axis: 0,
+        },
+        {
+            id: 'margin',
             value: 'margin',
             label: 'Margin',
-            axis: 1 },
-        { id: 'units',
+            axis: 1,
+        },
+        {
+            id: 'units',
             value: 'units',
             label: 'Units',
-            axis: 2 },
+            axis: 2,
+        },
     ],
     axis: {
         y: [
             { title: 'Revenue ($)' },
-            { title: 'Margin (%)',
-                position: 'right' },
-            { title: 'Units',
-                position: 'left' },
+            {
+                title: 'Margin (%)',
+                position: 'right',
+            },
+            {
+                title: 'Units',
+                position: 'left',
+            },
         ],
     },
 });

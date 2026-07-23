@@ -274,15 +274,21 @@ Each item should contain a key field and one or more numeric value fields:
 
 ```ts
 const data = [
-    { month: 'Jan',
+    {
+        month: 'Jan',
         desktop: 620,
-        mobile: 340 },
-    { month: 'Feb',
+        mobile: 340,
+    },
+    {
+        month: 'Feb',
         desktop: 780,
-        mobile: 290 },
-    { month: 'Mar',
+        mobile: 290,
+    },
+    {
+        month: 'Mar',
         desktop: 550,
-        mobile: 410 },
+        mobile: 410,
+    },
 ];
 ```
 
@@ -298,14 +304,18 @@ createAreaChart('#container', {
     key: 'month',
     stacked: true,
     series: [
-        { id: 'desktop',
+        {
+            id: 'desktop',
             value: 'desktop',
             label: 'Desktop',
-            fillOpacity: 0.4 },
-        { id: 'mobile',
+            fillOpacity: 0.4,
+        },
+        {
+            id: 'mobile',
             value: 'mobile',
             label: 'Mobile',
-            fillOpacity: 0.4 },
+            fillOpacity: 0.4,
+        },
     ],
 });
 ```
@@ -320,12 +330,16 @@ createAreaChart('#container', {
     key: 'month',
     stacked: 'percent',
     series: [
-        { id: 'desktop',
+        {
+            id: 'desktop',
             value: 'desktop',
-            label: 'Desktop' },
-        { id: 'mobile',
+            label: 'Desktop',
+        },
+        {
+            id: 'mobile',
             value: 'mobile',
-            label: 'Mobile' },
+            label: 'Mobile',
+        },
     ],
 });
 ```
@@ -339,19 +353,25 @@ createAreaChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'sessions',
+        {
+            id: 'sessions',
             value: 'sessions',
-            label: 'Sessions' },
-        { id: 'conversion',
+            label: 'Sessions',
+        },
+        {
+            id: 'conversion',
             value: 'conversion',
             label: 'Conversion %',
-            axis: 1 },
+            axis: 1,
+        },
     ],
     axis: {
         y: [
             { title: 'Sessions' },
-            { title: 'Conversion %',
-                format: 'percentage' },
+            {
+                title: 'Conversion %',
+                format: 'percentage',
+            },
         ],
     },
 });
@@ -364,16 +384,20 @@ createAreaChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'desktop',
+        {
+            id: 'desktop',
             value: 'desktop',
             label: 'Desktop',
             fillOpacity: 0.2,
-            lineType: 'monotoneX' },
-        { id: 'mobile',
+            lineType: 'monotoneX',
+        },
+        {
+            id: 'mobile',
             value: 'mobile',
             label: 'Mobile',
             fillOpacity: 0.6,
-            lineType: 'step' },
+            lineType: 'step',
+        },
     ],
 });
 ```

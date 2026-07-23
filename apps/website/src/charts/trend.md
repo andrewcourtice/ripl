@@ -219,18 +219,24 @@ A single flat dataset is shared by every series; each series reads its own numer
 
 ```ts
 const data = [
-    { month: 'Jan',
+    {
+        month: 'Jan',
         revenue: 620,
         orders: 140,
-        target: 700 },
-    { month: 'Feb',
+        target: 700,
+    },
+    {
+        month: 'Feb',
         revenue: 780,
         orders: 190,
-        target: 720 },
-    { month: 'Mar',
+        target: 720,
+    },
+    {
+        month: 'Mar',
         revenue: 550,
         orders: 120,
-        target: 680 },
+        target: 680,
+    },
 ];
 ```
 

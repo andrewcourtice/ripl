@@ -239,12 +239,16 @@ const chart = createRealtimeChart('#container', {
     windowSize: 60,
     transitionDuration: 200,
     series: [
-        { id: 'cpu',
+        {
+            id: 'cpu',
             label: 'CPU %',
-            showArea: true },
-        { id: 'memory',
+            showArea: true,
+        },
+        {
+            id: 'memory',
             label: 'Memory %',
-            showArea: true },
+            showArea: true,
+        },
     ],
 });
 

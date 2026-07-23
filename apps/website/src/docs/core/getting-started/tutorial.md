@@ -130,22 +130,28 @@ const context = createContext('.mount-element');
 const group = createGroup({
     fill: '#3a86ff',
     children: [
-        createCircle({ id: 'c1',
+        createCircle({
+            id: 'c1',
             class: 'shape',
             cx: 80,
             cy: 100,
-            radius: 40 }),
-        createCircle({ id: 'c2',
+            radius: 40,
+        }),
+        createCircle({
+            id: 'c2',
             class: 'shape',
             cx: 200,
             cy: 100,
-            radius: 30 }),
-        createRect({ id: 'r1',
+            radius: 30,
+        }),
+        createRect({
+            id: 'r1',
             class: 'shape',
             x: 260,
             y: 70,
             width: 80,
-            height: 60 }),
+            height: 60,
+        }),
     ],
 });
 
@@ -596,10 +602,36 @@ const {
     queryGroup = createGroup({
         fill: queryColors.default,
         children: [
-            createCircle({ id: 'c1', class: 'highlight', cx: w * 0.2, cy: h / 2, radius: r }),
-            createCircle({ id: 'c2', class: 'shape', cx: w * 0.45, cy: h / 2, radius: r * 0.7 }),
-            createRect({ id: 'r1', class: 'highlight', x: w * 0.6, y: h / 2 - r * 0.7, width: r * 1.4, height: r * 1.4 }),
-            createRect({ id: 'r2', class: 'shape', x: w * 0.8, y: h / 2 - r * 0.5, width: r, height: r }),
+            createCircle({
+                id: 'c1',
+                class: 'highlight',
+                cx: w * 0.2,
+                cy: h / 2,
+                radius: r,
+            }),
+            createCircle({
+                id: 'c2',
+                class: 'shape',
+                cx: w * 0.45,
+                cy: h / 2,
+                radius: r * 0.7,
+            }),
+            createRect({
+                id: 'r1',
+                class: 'highlight',
+                x: w * 0.6,
+                y: h / 2 - r * 0.7,
+                width: r * 1.4,
+                height: r * 1.4,
+            }),
+            createRect({
+                id: 'r2',
+                class: 'shape',
+                x: w * 0.8,
+                y: h / 2 - r * 0.5,
+                width: r,
+                height: r,
+            }),
         ],
     });
 

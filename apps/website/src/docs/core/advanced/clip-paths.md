@@ -37,10 +37,12 @@ const r = Math.min(context.width, context.height) / 3;
 
 const group = createGroup({
     children: [
-        createCircle({ clip: true,
+        createCircle({
+            clip: true,
             cx,
             cy,
-            radius: r }),
+            radius: r,
+        }),
         createRect({
             fill: '#3a86ff',
             x: cx - r,

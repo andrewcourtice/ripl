@@ -47,18 +47,26 @@ const context = createContext(output, {
 
 const chart = createBarChart(context, {
     data: [
-        { month: 'Jan',
-            sales: 120 },
-        { month: 'Feb',
-            sales: 200 },
-        { month: 'Mar',
-            sales: 150 },
+        {
+            month: 'Jan',
+            sales: 120,
+        },
+        {
+            month: 'Feb',
+            sales: 200,
+        },
+        {
+            month: 'Mar',
+            sales: 150,
+        },
     ],
     key: 'month',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             label: 'Sales',
-            value: 'sales' },
+            value: 'sales',
+        },
     ],
     animation: false,
 });

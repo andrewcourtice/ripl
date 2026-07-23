@@ -39,7 +39,20 @@ import {
     watch,
 } from 'vue';
 
-const NAMES = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliet', 'Kilo', 'Lima'];
+const NAMES = [
+    'Alpha',
+    'Bravo',
+    'Charlie',
+    'Delta',
+    'Echo',
+    'Foxtrot',
+    'Golf',
+    'Hotel',
+    'India',
+    'Juliet',
+    'Kilo',
+    'Lima',
+];
 
 const config = useChartConfig({
     features: {
@@ -120,12 +133,18 @@ import {
 
 const chart = createPackedCircleChart('#container', {
     data: [
-        { name: 'Alpha',
-            size: 82 },
-        { name: 'Bravo',
-            size: 45 },
-        { name: 'Charlie',
-            size: 26 },
+        {
+            name: 'Alpha',
+            size: 82,
+        },
+        {
+            name: 'Bravo',
+            size: 45,
+        },
+        {
+            name: 'Charlie',
+            size: 26,
+        },
     ],
     key: 'name',
     value: 'size',
@@ -139,10 +158,14 @@ Each item provides a unique key, a numeric value (encoded as the circle's area),
 
 ```ts
 const data = [
-    { name: 'Alpha',
-        size: 82 },
-    { name: 'Bravo',
-        size: 45 },
+    {
+        name: 'Alpha',
+        size: 82,
+    },
+    {
+        name: 'Bravo',
+        size: 45,
+    },
 ];
 ```
 

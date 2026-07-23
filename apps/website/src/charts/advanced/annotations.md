@@ -20,23 +20,31 @@ const chart = createLineChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             label: 'Revenue',
-            value: 'revenue' },
+            value: 'revenue',
+        },
     ],
     annotations: [
-        { axis: 'y',
+        {
+            axis: 'y',
             value: 80,
-            label: 'Target' },
-        { type: 'band',
+            label: 'Target',
+        },
+        {
+            type: 'band',
             axis: 'y',
             from: 60,
             to: 80,
-            label: 'Acceptable' },
-        { type: 'point',
+            label: 'Acceptable',
+        },
+        {
+            type: 'point',
             x: 10,
             y: 42,
-            label: 'Peak' },
+            label: 'Peak',
+        },
     ],
 });
 ```
@@ -78,10 +86,23 @@ A band annotation shades a value range on one axis — a target zone, an accepta
 ```ts
 annotations: [
     // Shade the 60–80 range on the value axis
-    { type: 'band', axis: 'y', from: 60, to: 80, label: 'Nominal' },
+    {
+        type: 'band',
+        axis: 'y',
+        from: 60,
+        to: 80,
+        label: 'Nominal',
+    },
 
     // Highlight a period on the x axis
-    { type: 'band', axis: 'x', from: 2020, to: 2022, color: '#f59e0b', opacity: 0.2 },
+    {
+        type: 'band',
+        axis: 'x',
+        from: 2020,
+        to: 2022,
+        color: '#f59e0b',
+        opacity: 0.2,
+    },
 ]
 ```
 
@@ -104,7 +125,13 @@ A point annotation places a dot (with an optional label) at a specific x/y data 
 <!-- eslint-skip -->
 ```ts
 annotations: [
-    { type: 'point', x: 10, y: 42, label: 'Peak', radius: 5 },
+    {
+        type: 'point',
+        x: 10,
+        y: 42,
+        label: 'Peak',
+        radius: 5,
+    },
 ]
 ```
 
@@ -126,9 +153,11 @@ Annotations are ordinary chart options, so they participate in `chart.update()` 
 ```ts
 chart.update({
     annotations: [
-        { axis: 'y',
+        {
+            axis: 'y',
             value: newTarget,
-            label: 'Target' },
+            label: 'Target',
+        },
     ],
 });
 

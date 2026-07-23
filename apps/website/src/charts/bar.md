@@ -220,15 +220,21 @@ Each item in the `data` array should contain a category key and one or more nume
 
 ```ts
 const data = [
-    { month: 'Jan',
+    {
+        month: 'Jan',
         sales: 420,
-        costs: 280 },
-    { month: 'Feb',
+        costs: 280,
+    },
+    {
+        month: 'Feb',
         sales: 380,
-        costs: 310 },
-    { month: 'Mar',
+        costs: 310,
+    },
+    {
+        month: 'Mar',
         sales: 510,
-        costs: 250 },
+        costs: 250,
+    },
 ];
 ```
 
@@ -246,12 +252,16 @@ createBarChart('#container', {
     key: 'month',
     stacked: false,
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             value: 'sales',
-            label: 'Sales' },
-        { id: 'costs',
+            label: 'Sales',
+        },
+        {
+            id: 'costs',
             value: 'costs',
-            label: 'Costs' },
+            label: 'Costs',
+        },
     ],
 });
 ```
@@ -266,12 +276,16 @@ createBarChart('#container', {
     key: 'month',
     stacked: true,
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             value: 'sales',
-            label: 'Sales' },
-        { id: 'costs',
+            label: 'Sales',
+        },
+        {
+            id: 'costs',
             value: 'costs',
-            label: 'Costs' },
+            label: 'Costs',
+        },
     ],
 });
 ```
@@ -286,12 +300,16 @@ createBarChart('#container', {
     key: 'month',
     stacked: 'percent',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             value: 'sales',
-            label: 'Sales' },
-        { id: 'costs',
+            label: 'Sales',
+        },
+        {
+            id: 'costs',
             value: 'costs',
-            label: 'Costs' },
+            label: 'Costs',
+        },
     ],
 });
 ```
@@ -305,9 +323,11 @@ createBarChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             value: 'sales',
-            label: 'Sales' },
+            label: 'Sales',
+        },
     ],
     axis: {
         x: { labelRotation: 45 },
@@ -324,14 +344,18 @@ createBarChart('#container', {
     data,
     key: 'month',
     series: [
-        { id: 'revenue',
+        {
+            id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0 },
-        { id: 'orders',
+            axis: 0,
+        },
+        {
+            id: 'orders',
             value: 'orders',
             label: 'Orders',
-            axis: 1 },
+            axis: 1,
+        },
     ],
     axis: {
         y: [
@@ -356,9 +380,11 @@ createBarChart('#container', {
     key: 'month',
     orientation: 'horizontal',
     series: [
-        { id: 'sales',
+        {
+            id: 'sales',
             value: 'sales',
-            label: 'Sales' },
+            label: 'Sales',
+        },
     ],
 });
 ```

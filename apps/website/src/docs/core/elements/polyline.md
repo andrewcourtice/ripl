@@ -61,7 +61,18 @@ import {
     watch,
 } from 'vue';
 
-const renderers: PolylineRenderer[] = ['linear', 'spline', 'basis', 'bumpX', 'bumpY', 'cardinal', 'catmullRom', 'monotoneX', 'natural', 'step'];
+const renderers: PolylineRenderer[] = [
+    'linear',
+    'spline',
+    'basis',
+    'bumpX',
+    'bumpY',
+    'cardinal',
+    'catmullRom',
+    'monotoneX',
+    'natural',
+    'step',
+];
 const currentRenderer = ref<PolylineRenderer>('spline');
 
 let currentContext: Context | undefined;

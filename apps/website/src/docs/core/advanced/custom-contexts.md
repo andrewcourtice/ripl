@@ -130,13 +130,17 @@ class MyContextPath extends ContextPath {
         args: number[]; }> = [];
 
     moveTo(x: number, y: number): void {
-        this.commands.push({ type: 'moveTo',
-            args: [x, y] });
+        this.commands.push({
+            type: 'moveTo',
+            args: [x, y],
+        });
     }
 
     lineTo(x: number, y: number): void {
-        this.commands.push({ type: 'lineTo',
-            args: [x, y] });
+        this.commands.push({
+            type: 'lineTo',
+            args: [x, y],
+        });
     }
 
     arc(x: number, y: number, radius: number,
@@ -144,7 +148,11 @@ class MyContextPath extends ContextPath {
         counterclockwise?: boolean): void {
         this.commands.push({
             type: 'arc',
-            args: [x, y, radius, startAngle, endAngle,
+            args: [x,
+                y,
+                radius,
+                startAngle,
+                endAngle,
                 counterclockwise ? 1 : 0],
         });
     }
@@ -154,19 +162,29 @@ class MyContextPath extends ContextPath {
         counterclockwise?: boolean): void {
         this.commands.push({
             type: 'ellipse',
-            args: [x, y, radiusX, radiusY, rotation,
-                startAngle, endAngle, counterclockwise ? 1 : 0],
+            args: [x,
+                y,
+                radiusX,
+                radiusY,
+                rotation,
+                startAngle,
+                endAngle,
+                counterclockwise ? 1 : 0],
         });
     }
 
     rect(x: number, y: number, width: number, height: number): void {
-        this.commands.push({ type: 'rect',
-            args: [x, y, width, height] });
+        this.commands.push({
+            type: 'rect',
+            args: [x, y, width, height],
+        });
     }
 
     circle(x: number, y: number, radius: number): void {
-        this.commands.push({ type: 'circle',
-            args: [x, y, radius] });
+        this.commands.push({
+            type: 'circle',
+            args: [x, y, radius],
+        });
     }
 
     bezierCurveTo(cp1x: number, cp1y: number,
@@ -187,8 +205,10 @@ class MyContextPath extends ContextPath {
     }
 
     closePath(): void {
-        this.commands.push({ type: 'closePath',
-            args: [] });
+        this.commands.push({
+            type: 'closePath',
+            args: [],
+        });
     }
 }
 ```

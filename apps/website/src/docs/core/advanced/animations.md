@@ -139,8 +139,10 @@ Every `Transition` exposes an `inverse` property — a factory function that cre
 ```ts
 const grow = transition((t) => {
     circle.radius = 50 + t * 50;
-}, { duration: 800,
-    ease: easeOutCubic });
+}, {
+    duration: 800,
+    ease: easeOutCubic,
+});
 
 await grow;
 
@@ -430,8 +432,10 @@ const t = transition((time) => {
     circle.cx = 100 + time * 200;
     circle.radius = 40 + time * 30;
     scene.render();
-}, { duration: 2000,
-    ease: easeInOutCubic });
+}, {
+    duration: 2000,
+    ease: easeInOutCubic,
+});
 
 // Pause at any time
 t.pause();

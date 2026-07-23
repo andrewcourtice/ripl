@@ -91,7 +91,11 @@ function generateData() {
     const result = [];
     for (const day of DAYS) {
         for (const hour of HOURS) {
-            result.push({ day, hour, value: Math.round(Math.random() * 100) });
+            result.push({
+                day,
+                hour,
+                value: Math.round(Math.random() * 100),
+            });
         }
     }
     return result;

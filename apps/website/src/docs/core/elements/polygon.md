@@ -57,7 +57,18 @@ import {
     ref,
 } from 'vue';
 
-const NAMES: Record<number, string> = { 3: 'Triangle', 4: 'Square', 5: 'Pentagon', 6: 'Hexagon', 7: 'Heptagon', 8: 'Octagon', 9: 'Nonagon', 10: 'Decagon', 11: 'Hendecagon', 12: 'Dodecagon' };
+const NAMES: Record<number, string> = {
+    3: 'Triangle',
+    4: 'Square',
+    5: 'Pentagon',
+    6: 'Hexagon',
+    7: 'Heptagon',
+    8: 'Octagon',
+    9: 'Nonagon',
+    10: 'Decagon',
+    11: 'Hendecagon',
+    12: 'Dodecagon',
+};
 
 const sides = ref(6);
 const radiusPct = ref(70);

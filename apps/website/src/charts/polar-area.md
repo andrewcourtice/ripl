@@ -168,24 +168,36 @@ const chart = createPolarAreaChart(context, {
     value: 'value',
     label: 'label',
     data: [
-        { id: '1',
+        {
+            id: '1',
             label: 'Speed',
-            value: 72 },
-        { id: '2',
+            value: 72,
+        },
+        {
+            id: '2',
             label: 'Strength',
-            value: 45 },
-        { id: '3',
+            value: 45,
+        },
+        {
+            id: '3',
             label: 'Defense',
-            value: 88 },
-        { id: '4',
+            value: 88,
+        },
+        {
+            id: '4',
             label: 'Magic',
-            value: 63 },
-        { id: '5',
+            value: 63,
+        },
+        {
+            id: '5',
             label: 'Luck',
-            value: 31 },
-        { id: '6',
+            value: 31,
+        },
+        {
+            id: '6',
             label: 'Agility',
-            value: 55 },
+            value: 55,
+        },
     ],
 });
 ```
@@ -196,15 +208,21 @@ Each item needs a unique key, a numeric value (encoded as the segment's radius),
 
 ```ts
 const data = [
-    { id: 'speed',
+    {
+        id: 'speed',
         label: 'Speed',
-        value: 72 },
-    { id: 'strength',
+        value: 72,
+    },
+    {
+        id: 'strength',
         label: 'Strength',
-        value: 45 },
-    { id: 'defense',
+        value: 45,
+    },
+    {
+        id: 'defense',
         label: 'Defense',
-        value: 88 },
+        value: 88,
+    },
 ];
 ```
 

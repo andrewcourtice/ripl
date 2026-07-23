@@ -365,9 +365,21 @@ export interface PageLoadPoint {
 export function generatePageLoadData(period: Period): PageLoadPoint[] {
     const rand = seededRandom(seedFromPeriod(period) + 8);
     const pages = [
-        'Home', 'Dashboard', 'Settings', 'Profile', 'Reports',
-        'Billing', 'Help', 'API Docs', 'Integrations', 'Export',
-        'Analytics', 'Team', 'Notifications', 'Search', 'Admin',
+        'Home',
+        'Dashboard',
+        'Settings',
+        'Profile',
+        'Reports',
+        'Billing',
+        'Help',
+        'API Docs',
+        'Integrations',
+        'Export',
+        'Analytics',
+        'Team',
+        'Notifications',
+        'Search',
+        'Admin',
     ];
     const multiplier = periodToDays(period) / 30;
 

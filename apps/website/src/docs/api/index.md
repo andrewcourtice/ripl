@@ -299,10 +299,14 @@ await renderer.transition(circle, {
     ease: easeOutCubic,
     state: {
         fill: [
-            { value: '#FF0000',
-                offset: 0.25 },
-            { value: '#0000FF',
-                offset: 0.8 },
+            {
+                value: '#FF0000',
+                offset: 0.25,
+            },
+            {
+                value: '#0000FF',
+                offset: 0.8,
+            },
         ],
     },
 });
@@ -401,30 +405,44 @@ import {
 
 const chart = createBarChart('.mount-element', {
     data: [
-        { category: 'A',
-            value: 30 },
-        { category: 'B',
-            value: 70 },
-        { category: 'C',
-            value: 45 },
+        {
+            category: 'A',
+            value: 30,
+        },
+        {
+            category: 'B',
+            value: 70,
+        },
+        {
+            category: 'C',
+            value: 45,
+        },
     ],
     key: 'category',
     series: [
-        { id: 'values',
+        {
+            id: 'values',
             label: 'Values',
-            value: 'value' },
+            value: 'value',
+        },
     ],
 });
 
 // Update with new data
 chart.update({
     data: [
-        { category: 'A',
-            value: 50 },
-        { category: 'B',
-            value: 20 },
-        { category: 'C',
-            value: 80 },
+        {
+            category: 'A',
+            value: 50,
+        },
+        {
+            category: 'B',
+            value: 20,
+        },
+        {
+            category: 'C',
+            value: 80,
+        },
     ],
 });
 ```
