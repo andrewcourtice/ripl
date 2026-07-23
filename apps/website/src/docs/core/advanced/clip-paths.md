@@ -73,7 +73,7 @@ import {
 
 const group = createGroup({
     children: [
-        // Clip shape — defines the visible region
+        // Clip shape: defines the visible region
         createCircle({
             clip: true,
             cx: 150,
@@ -81,7 +81,7 @@ const group = createGroup({
             radius: 80,
         }),
 
-        // Clipped content — only visible inside the circle
+        // Clipped content: only visible inside the circle
         createRect({
             fill: '#3a86ff',
             x: 0,

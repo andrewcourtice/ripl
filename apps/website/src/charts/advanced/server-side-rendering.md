@@ -86,11 +86,11 @@ Every context snapshots its output via `export()`; charts forward it with `chart
 ```ts
 const snapshot = chart.export();
 
-// The rendered chart as plain braille text — log it, write it to a file,
+// The rendered chart as plain braille text: log it, write it to a file,
 // or embed it in CLI output.
 const text = snapshot.toString();
 
-// Raw pixel data (ImageData) rasterized from the braille grid — pass it to
+// Raw pixel data (ImageData) rasterized from the braille grid; pass it to
 // any PNG encoder to produce an image file.
 const image = await snapshot.toImage();
 ```

@@ -102,7 +102,7 @@ function topologicalLayers(nodes: GraphNode[], edges: GraphEdge[]): string[][] {
         current = next;
     }
 
-    // Any remaining nodes not reached (cycles) — add as final layer
+    // Any remaining nodes not reached (cycles): add as final layer
     const remaining = nodes.filter(n => !visited.has(n.id)).map(n => n.id);
     if (remaining.length > 0) {
         layers.push(remaining);

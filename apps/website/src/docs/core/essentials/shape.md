@@ -108,7 +108,7 @@ This is why shapes "just work": you set `fill` and/or `stroke` and the shape han
 Shapes provide pixel-accurate hit testing through the `intersectsWith` method. Instead of using a simple bounding box check (like the base `Element`), shapes test whether a point is inside the actual path geometry:
 
 ```ts
-// Pixel-accurate — tests against the actual circle path
+// Pixel-accurate: tests against the actual circle path
 circle.intersectsWith(mouseX, mouseY);
 ```
 

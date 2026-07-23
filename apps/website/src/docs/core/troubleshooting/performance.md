@@ -13,10 +13,10 @@ The single most impactful optimization in Ripl is **scene hoisting**. When eleme
 Without a scene, rendering a deeply nested group structure requires a recursive tree walk, an O(n^c) operation where `c` is the depth of the tree. With a scene, the render buffer converts this to a flat O(n) iteration:
 
 ```ts
-// Without scene — recursive tree walk each frame
+// Without scene: recursive tree walk each frame
 group.render(context); // O(n^c)
 
-// With scene — flat buffer iteration each frame
+// With scene: flat buffer iteration each frame
 const scene = createScene(context, { children: [group] });
 scene.render(); // O(n)
 ```
@@ -59,7 +59,7 @@ When creating paths in custom elements, always provide a **persistent key**:
 
 <!-- eslint-skip -->
 ```ts
-// ✅ Good — persistent key allows efficient DOM reconciliation
+// ✅ Good: persistent key allows efficient DOM reconciliation
 render(context: Context) {
     return super.render(context, path => {
         // this.id is stable across renders

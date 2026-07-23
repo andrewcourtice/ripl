@@ -93,7 +93,7 @@ import {
     createContext,
 } from '@ripl/web';
 
-// SVG — just change the import
+// SVG: just change the import
 import {
     createContext,
 } from '@ripl/svg';
@@ -104,12 +104,12 @@ import {
 Pointer events (click, mouseenter, mouseleave, mousemove) only work when elements are inside a **Scene**. The Scene handles DOM event listening and hit testing.
 
 ```ts
-// ❌ Won't work — no scene
+// ❌ Won't work: no scene
 const circle = createCircle({ /* ... */ });
 circle.render(context);
 circle.on('click', () => {}); // Never fires
 
-// ✅ Works — element is in a scene
+// ✅ Works: element is in a scene
 const scene = createScene(context, { children: [circle] });
 scene.render();
 circle.on('click', () => {}); // Fires correctly

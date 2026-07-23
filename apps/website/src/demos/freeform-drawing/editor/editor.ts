@@ -230,7 +230,7 @@ export class Editor extends EventBus<EditorEventMap> {
         return { ...this.#style };
     }
 
-    /** The document's shapes (live reference — treat as read-only when iterating). */
+    /** The document's shapes (live reference; treat as read-only when iterating). */
     public get document(): RiplDocument {
         return this.#document;
     }

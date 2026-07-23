@@ -120,7 +120,7 @@ const EXPLODED_OFFSETS = [
     -0.1, // Central Shaft (centered)
 ];
 
-// Assembled offsets — parts packed together along shaft
+// Assembled offsets: parts packed together along shaft
 const ASSEMBLED_OFFSETS = [
     0.55, // Fan
     0.55, // Fan Case

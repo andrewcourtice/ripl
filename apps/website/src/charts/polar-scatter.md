@@ -157,7 +157,7 @@ function randomize() {
 }
 
 function addPoint() {
-    // Append a single new sample — existing points stay put while the new one animates in.
+    // Append a single new sample; existing points stay put while the new one animates in.
     samples = [...samples, makeSample()];
     chart.value?.update({ data: samples });
 }

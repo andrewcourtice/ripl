@@ -11,7 +11,7 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
     <template #footer>
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
-            <RiplButton @click="randomise">Randomise</RiplButton>
+            <RiplButton @click="randomize">Randomize</RiplButton>
         </RiplControlGroup>
     </template>
     <template #config>
@@ -185,7 +185,7 @@ function addData() {
     chart.value?.update({ data });
 }
 
-function randomise() {
+function randomize() {
     data = data.map(item => ({
         month: item.month,
         ...rollValues(),

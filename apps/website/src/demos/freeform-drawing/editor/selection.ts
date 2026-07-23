@@ -87,7 +87,7 @@ export function getSelectionHandles(editor: Editor): SelectionHandle[] {
 
 /**
  * Rebuilds the editor's overlay group with the current selection's bounding rectangle and resize
- * handles plus any active marquee — all in untransformed screen space, so handles stay a constant
+ * handles plus any active marquee, all in untransformed screen space, so handles stay a constant
  * size regardless of zoom. Called whenever the selection, marquee or view transform changes.
  */
 export function renderSelectionOverlay(editor: Editor): void {

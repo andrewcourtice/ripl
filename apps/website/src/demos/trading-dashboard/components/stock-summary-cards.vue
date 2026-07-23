@@ -35,7 +35,7 @@ import {
 const store = useDashboardStore();
 
 // The candle currently hovered/selected in the candlestick chart, falling back to the most recent
-// point when nothing is active — so the cards reflect whatever candle the user is inspecting.
+// point when nothing is active, so the cards reflect whatever candle the user is inspecting.
 const activeIndex = computed(() => {
     const data = store.stockIntradayData;
     if (data.length === 0) return -1;

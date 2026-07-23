@@ -50,7 +50,7 @@ export function generateMockDailyData(count = 100, basePrice = 450): MockDailyPo
 
 /**
  * Adds a trailing simple moving average of `close` as an `ma` field, so a chart can render it as a
- * second series (which makes the legend — and its hover-highlight — appear).
+ * second series (which makes the legend, and its hover-highlight, appear).
  */
 export function withMovingAverage<T extends { close: number }>(data: T[], window = 7): (T & { ma: number })[] {
     return data.map((item, index) => {

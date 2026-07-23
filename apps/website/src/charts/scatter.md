@@ -10,7 +10,7 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
         <RiplControlGroup>
             <RiplButton @click="addData">Add Data</RiplButton>
             <RiplButton @click="removeData">Remove Data</RiplButton>
-            <RiplButton @click="randomise">Randomise</RiplButton>
+            <RiplButton @click="randomize">Randomize</RiplButton>
             <RiplButton @click="resetView">Reset View</RiplButton>
         </RiplControlGroup>
     </template>
@@ -194,7 +194,7 @@ function removeData() {
     }
 }
 
-function randomise() {
+function randomize() {
     data = data.map(value => ({
         ...getDataItem(),
         id: value.id,

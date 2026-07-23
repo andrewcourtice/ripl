@@ -97,7 +97,7 @@ export class LPTurbine extends Shape3D<LPTurbineState> {
             faces.push({ vertices: [f1, f2, b2, b1] });
         }
 
-        // Front & back caps (annular — hub to outer)
+        // Front & back caps (annular, hub to outer)
         const bh = this.bladeHeight;
         const bInner = r - bh;
 

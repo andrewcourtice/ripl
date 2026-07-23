@@ -72,7 +72,7 @@ import {
     createContext,
 } from '@ripl/terminal';
 
-// `output` implements { write, columns, rows, onResize? } — e.g. an
+// `output` implements { write, columns, rows, onResize? }, e.g. an
 // xterm.js instance in the browser, or process.stdout in Node.
 const context = createContext(output, {
     logicalWidth: 800,

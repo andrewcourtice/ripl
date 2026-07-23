@@ -74,7 +74,7 @@ const config = useChartConfig({
 });
 
 // Build a clustered network of 130 nodes: 6 hubs, each with a fan of members, plus a few
-// cross-cluster bridges — enough structure to show the springy, cascading entry.
+// cross-cluster bridges, enough structure to show the springy, cascading entry.
 const CLUSTERS = ['eng', 'design', 'gtm', 'ops', 'data', 'exec'];
 const nodes = [];
 const baseLinks = [];

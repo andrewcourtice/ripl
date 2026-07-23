@@ -118,7 +118,7 @@ export class CentralShaft extends Shape3D<CentralShaftState> {
             });
         }
 
-        // Bearing collars — raised ring bumps along the shaft
+        // Bearing collars: raised ring bumps along the shaft
         for (let c = 0; c < collarCount; c++) {
             const collarZ = halfL - this.length * ((c + 1) / (collarCount + 1));
             const halfCW = collarWidth / 2;

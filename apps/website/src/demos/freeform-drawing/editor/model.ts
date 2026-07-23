@@ -27,7 +27,7 @@ export type ConnectorSide = 'top'
 | 'bottom'
 | 'left';
 
-/** One end of a {@link ConnectorShape} — either bound to a shape's side or pinned to a free world point. */
+/** One end of a {@link ConnectorShape}: either bound to a shape's side or pinned to a free world point. */
 export interface ConnectorEnd {
     /** The id of the shape this end is bound to, or `undefined` for a free end. */
     shapeId?: string;
@@ -158,7 +158,7 @@ export type Shape = FreehandShape
 | ConnectorShape
 | TextShape;
 
-/** An ordered list of {@link Shape} records — the editor's single source of truth. */
+/** An ordered list of {@link Shape} records: the editor's single source of truth. */
 export type RiplDocument = Shape[];
 
 /** Generates a stable unique id for a new shape. */

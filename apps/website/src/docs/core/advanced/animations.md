@@ -487,7 +487,7 @@ const scene = createScene('.container', {
 const renderer = createRenderer(scene);
 const circle = scene.query('circle');
 
-// Restart loop — circle pulses in size
+// Restart loop: the circle pulses in size
 const t = renderer.transition(circle, {
     duration: 800,
     ease: easeInOutQuad,
@@ -495,7 +495,7 @@ const t = renderer.transition(circle, {
     state: { radius: 80 },
 });
 
-// Alternate loop — circle bounces left to right
+// Alternate loop: the circle bounces left to right
 const t2 = renderer.transition(circle, {
     duration: 1200,
     ease: easeInOutQuad,

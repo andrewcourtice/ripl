@@ -307,14 +307,14 @@ Every feature option accepts three input forms:
 
 <!-- eslint-skip -->
 ```ts
-// 1. Boolean — toggle with defaults
+// 1. Boolean: toggle with defaults
 { grid: true }
 { tooltip: false }
 
-// 2. String (legend only) — position shorthand
+// 2. String (legend only): position shorthand
 { legend: 'bottom' }
 
-// 3. Partial object — merge with defaults
+// 3. Partial object: merge with defaults
 { grid: { lineColor: '#ccc', lineDash: [] } }
 ```
 
@@ -331,7 +331,7 @@ import { createLineChart, setDefaultTheme } from '@ripl/charts';
 // Per chart
 createLineChart('#container', { theme: 'dark', /* … */ });
 
-// Or globally — restyles every chart's palette and furniture
+// Or globally, restyling every chart's palette and furniture
 setDefaultTheme('dark');
 ```
 

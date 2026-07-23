@@ -819,6 +819,10 @@
             "link": "/docs/api/@ripl/charts/interfaces/ColorLegendOptions.md"
           },
           {
+            "text": "DataLabelLayout",
+            "link": "/docs/api/@ripl/charts/interfaces/DataLabelLayout.md"
+          },
+          {
             "text": "DataLabelSpec",
             "link": "/docs/api/@ripl/charts/interfaces/DataLabelSpec.md"
           },

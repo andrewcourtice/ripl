@@ -73,7 +73,7 @@ export function cylinderY(cx: number, cz: number, radius: number, y1: number, y2
     return faces;
 }
 
-/** Annular ring (tube with a hole) whose axis runs along Z — used for the connecting-rod ends. */
+/** Annular ring (tube with a hole) whose axis runs along Z, used for the connecting-rod ends. */
 export function ringZ(cx: number, cy: number, innerR: number, outerR: number, z1: number, z2: number, segments: number): Face3D[] {
     const faces: Face3D[] = [];
 

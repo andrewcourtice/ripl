@@ -45,7 +45,7 @@ const navigator = createNavigator(context, {
 // Re-render the scene whenever the view transform changes.
 navigator.on('change', () => redraw());
 
-// Frame a content-space box — even one that sits entirely off-screen.
+// Frame a content-space box, even one that sits entirely off-screen.
 navigator.fitBounds({ x0: 0, y0: 0, x1: 1800, y1: 1100 }, { padding: 24 });
 ```
 :::

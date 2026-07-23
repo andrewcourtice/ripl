@@ -195,7 +195,7 @@ Options: `clamp` (constrain output to range), `padToTicks` (extend domain to nic
 ```ts
 const y = scaleContinuous([3, 97], [400, 0], { nice: true });
 
-y.domain; // [0, 100] — snapped to round boundaries
+y.domain; // [0, 100], snapped to round boundaries
 ```
 
 ## Band
@@ -271,7 +271,7 @@ const color = scaleOrdinal(
 
 color('apples'); // '#3a86ff'
 color('pears'); // '#ffbe0b'
-color('grapes'); // '#3a86ff' — cycles back to the first range value
+color('grapes'); // '#3a86ff', cycling back to the first range value
 ```
 
 ## Diverging
@@ -325,7 +325,7 @@ import {
 const x = scaleSymlog([-100, 100], [0, 400]);
 
 x(-100); // 0
-x(0); // 200 — zero sits at the midpoint
+x(0); // 200, zero sits at the midpoint
 x(100); // 400
 
 x.inverse(200); // 0
@@ -364,7 +364,7 @@ const radius = scaleRadial([0, 100], [0, 240]);
 radius(0); // 0
 radius(50); // 120
 radius(100); // 240
-radius(200); // 240 — clamped to the outer ring
+radius(200); // 240, clamped to the outer ring
 
 radius.inverse(120); // 50
 ```

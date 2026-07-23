@@ -101,10 +101,10 @@ export class ConnectingRod extends Shape3D<ConnectingRodState> {
         const beamDepth = this.width * 0.6;
         const segs = this.segments;
 
-        // Small end (top, +Y) — rides the piston's wrist pin.
+        // Small end (top, +Y): rides the piston's wrist pin.
         faces.push(...ringZ(0, halfLength, smallR * 0.55, smallR, -halfWidth, halfWidth, segs));
 
-        // Big end (bottom, -Y) — rides the crank pin.
+        // Big end (bottom, -Y): rides the crank pin.
         faces.push(...ringZ(0, -halfLength, bigR * 0.6, bigR, -halfWidth, halfWidth, segs));
 
         // Beam joining the two ends.

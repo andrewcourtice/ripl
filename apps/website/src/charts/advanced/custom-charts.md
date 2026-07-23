@@ -42,7 +42,7 @@ export class LollipopChart<TData = unknown> extends Chart<LollipopChartOptions<T
 
         // Set up components here (tooltips, hover state, ...).
 
-        this.init(); // MUST be called last — it triggers the first render
+        this.init(); // MUST be called last; it triggers the first render
     }
 
 }
@@ -67,7 +67,7 @@ public async render() {
         this.reserveTitle(layout);              // reserves a top band if a title is configured
         this.reserveLegend(layout, legendItems, this.options.legend);
 
-        const area = layout.area;               // { x, y, width, height } — the plot rect
+        const area = layout.area;               // { x, y, width, height }, the plot rect
         // ...draw into `area`
     });
 }
@@ -131,9 +131,9 @@ private _groups: Group[] = [];
 
 // inside render():
 const {
-    left: entries,    // new data with no matching element — create at their start state
-    inner: updates,   // [datum, element] pairs — transition to the new state
-    right: exits,     // elements with no matching datum — animate out, then destroy
+    left: entries,    // new data with no matching element: create at their start state
+    inner: updates,   // [datum, element] pairs: transition to the new state
+    right: exits,     // elements with no matching datum: animate out, then destroy
 } = arrayJoin(calculations, this._groups, (item, group) => item.key === group.id);
 ```
 
