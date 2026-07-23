@@ -21,7 +21,6 @@ const outputDir = path.resolve(__dirname, '../src/public/_playground');
 
 const PACKAGES = [
     '@ripl/utilities',
-    '@ripl/vdom',
     '@ripl/core',
     '@ripl/dom',
     '@ripl/canvas',
@@ -41,6 +40,7 @@ if (fs.existsSync(outputDir)) {
 fs.mkdirSync(outputDir, { recursive: true });
 
 const manifest = {};
+const missingArtifacts = [];
 
 for (const pkg of PACKAGES) {
     const shortName = pkg.replace('@ripl/', '');
@@ -52,12 +52,14 @@ for (const pkg of PACKAGES) {
     const esmSrc = path.resolve(pkgDistDir, 'index.js');
     const dtsSrc = path.resolve(pkgDistDir, 'index.d.ts');
 
-    if (!fs.existsSync(esmSrc)) {
+    // The ESM bundle comes from tsup and the declarations from a separate
+    // tsc step, so run the package's full build if either artifact is missing.
+    if (!fs.existsSync(esmSrc) || !fs.existsSync(dtsSrc)) {
         const pkgDir = path.resolve(packagesDir, shortName);
         console.warn(`Building ${pkg}...`);
 
         try {
-            execSync('npx tsup', {
+            execSync('npx tsup && npx tsc -p tsconfig.build.json', {
                 cwd: pkgDir,
                 stdio: 'inherit',
             });
@@ -66,26 +68,33 @@ for (const pkg of PACKAGES) {
         }
     }
 
-    const entry = {
-        esm: `/_playground/${shortName}/index.js`,
-        types: `/_playground/${shortName}/index.d.ts`,
-    };
+    // The playground is unusable for a package without its bundle and types,
+    // so a missing artifact fails the build rather than degrading silently.
+    if (!fs.existsSync(esmSrc)) {
+        missingArtifacts.push(esmSrc);
+    }
+
+    if (!fs.existsSync(dtsSrc)) {
+        missingArtifacts.push(dtsSrc);
+    }
 
     if (fs.existsSync(esmSrc)) {
         fs.copyFileSync(esmSrc, path.resolve(pkgOutputDir, 'index.js'));
-    } else {
-        console.warn(`Warning: ${esmSrc} not found, skipping ESM for ${pkg}`);
-        entry.esm = null;
     }
 
     if (fs.existsSync(dtsSrc)) {
         fs.copyFileSync(dtsSrc, path.resolve(pkgOutputDir, 'index.d.ts'));
-    } else {
-        console.warn(`Warning: ${dtsSrc} not found, skipping types for ${pkg}`);
-        entry.types = null;
     }
 
-    manifest[pkg] = entry;
+    manifest[pkg] = {
+        esm: `/_playground/${shortName}/index.js`,
+        types: `/_playground/${shortName}/index.d.ts`,
+    };
+}
+
+if (missingArtifacts.length) {
+    console.error(`Playground preparation failed; missing build artifacts:\n${missingArtifacts.join('\n')}`);
+    process.exit(1);
 }
 
 // Bundle xterm.js (+ the fit addon) to a single self-contained ESM module served from the app
