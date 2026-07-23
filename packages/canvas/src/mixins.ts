@@ -16,6 +16,7 @@ import {
 
 import {
     isGradientString,
+    isPatternString,
 } from '@ripl/core';
 
 import type {
@@ -158,9 +159,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set fill(value) {
             this._fillCSS = value;
 
-            // Fast path: plain colors skip bounding-box resolution and gradient parsing entirely,
-            // which otherwise ran for every element on every frame.
-            if (isGradientString(value)) {
+            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
+            // entirely, which otherwise ran for every element on every frame. Gradient and pattern
+            // strings both need the full resolver; a raw pattern string is not a valid canvas
+            // fillStyle, so skipping it here would silently leave the previous (default) fill.
+            if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasFill(this.context, value, bounds);
             } else {
@@ -303,8 +306,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set stroke(value) {
             this._strokeCSS = value;
 
-            // Fast path: plain colors skip bounding-box resolution and gradient parsing entirely.
-            if (isGradientString(value)) {
+            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
+            // entirely. Gradient and pattern strings both need the full resolver; a raw pattern
+            // string is not a valid canvas strokeStyle, so skipping it here would silently leave
+            // the previous (default) stroke.
+            if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasStroke(this.context, value, bounds);
             } else {
