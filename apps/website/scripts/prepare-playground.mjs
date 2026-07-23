@@ -52,14 +52,14 @@ for (const pkg of PACKAGES) {
     const esmSrc = path.resolve(pkgDistDir, 'index.js');
     const dtsSrc = path.resolve(pkgDistDir, 'index.d.ts');
 
-    // The ESM bundle comes from tsup and the declarations from a separate
-    // tsc step, so run the package's full build if either artifact is missing.
+    // tsup emits the ESM bundle and (via its API-Extractor dts rollup) the declarations, which
+    // `finalize-dts` flattens into a single `dist/index.d.ts`; run that if either is missing.
     if (!fs.existsSync(esmSrc) || !fs.existsSync(dtsSrc)) {
         const pkgDir = path.resolve(packagesDir, shortName);
         console.warn(`Building ${pkg}...`);
 
         try {
-            execSync('npx tsup && npx tsc -p tsconfig.build.json', {
+            execSync('npx tsup && node ../../scripts/finalize-dts.mjs', {
                 cwd: pkgDir,
                 stdio: 'inherit',
             });

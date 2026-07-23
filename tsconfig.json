@@ -38,9 +38,6 @@
             "@ripl/test-utils": ["./packages/test-utils/src/index.ts"],
         }
     },
-    "files": [
-        "global.d.ts"
-    ],
     "exclude": [
         "node_modules"
     ]

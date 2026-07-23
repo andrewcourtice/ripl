@@ -511,17 +511,24 @@ describe('Scale', () => {
 
 ## Build System
 
-**tsup** configuration (shared across packages):
+Each package builds with **tsup** (esbuild), driven by the shared root `tsup.config.ts`:
 
-- **Clean** output directory before builds
-- **Declaration files** (`.d.ts`) generated
-- **Source maps** enabled
-- **Target:** ES2018
-- **Formats:** ESM, CommonJS, IIFE
-- **Entry:** `./src/index.ts`
-- **Output:** `./dist`
+- **Formats:** ESM, CommonJS, IIFE (per-package IIFE global, e.g. `RiplCore`)
+- **Entry:** `./src/index.ts` — **Output:** `./dist` — **Target:** ES2023
+- **Clean** output before builds; **source maps** emitted
+- **Declarations:** a single self-contained `dist/index.d.ts` per package, produced by tsup's
+  API-Extractor-backed `experimentalDts` rollup and flattened by `scripts/finalize-dts.mjs` (which
+  promotes the rollup to `index.d.ts` and removes the split artifacts). Cross-package `@ripl/*`
+  types stay as external imports. The declaration build uses each package's `tsconfig.build.json`
+  (`paths: {}`) so dependencies resolve to their built `dist` rather than source, and API
+  Extractor's compiler is pinned to the project's TypeScript 6 through the root `resolutions`
+  (`@microsoft/api-extractor/typescript`).
+- **Type-checking** is a separate `tsc --noEmit -p tsconfig.json` step at the front of each
+  package's `build` script — the CI type-check gate, since tsup/esbuild do not type-check.
 
-**Package manager:** Yarn 4 (Berry) with PnP
+Per-package `build` script: `tsc --noEmit -p tsconfig.json && tsup && node ../../scripts/finalize-dts.mjs`
+
+**Package manager:** Yarn 4 (Berry), `node-modules` linker
 
 ## Performance Guidelines
 
