@@ -24,7 +24,7 @@ features:
   - title: One familiar API
     details: Draw to any context through a single, DOM-like API. Ripl mirrors the DOM and CSSOM (hierarchy, property inheritance, events, styling, and CSS-like querying), so switching between Canvas and SVG is a one-line change.
   - title: Charts & data visualization
-    details: 23 ready-made, animated chart types, including bar, line, area, pie, scatter, candlestick (OHLC), heatmap, radar, sankey, and treemap, with axes, legends, tooltips, and crosshairs built in.
+    details: 25 ready-made, animated chart types, including bar, line, area, pie, scatter, candlestick (OHLC), heatmap, radar, sankey, and treemap, with axes, legends, tooltips, and crosshairs built in.
   - title: Modular & tree-shakable
     details: Zero runtime dependencies and fully tree-shakable. Ship only the shapes, scales, and contexts you use across Canvas, SVG, Terminal, and WebGPU 3D.
   - title: High performance

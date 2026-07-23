@@ -26,15 +26,17 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 ## Features
 
-- **Unified rendering API** across Canvas, SVG, and 3D contexts
+- **Unified rendering API** across Canvas, SVG, Terminal (braille/ANSI), and WebGPU 3D contexts, so the same scene renders anywhere
 - **Grouping and property inheritance**: visual properties cascade through the element tree, much like CSS
 - **Scene and renderer management** with a hoisted scenegraph, O(n) rendering, and an automatic `requestAnimationFrame` loop
 - **DOM-like event system** supporting event bubbling, delegation, stop propagation, and disposable subscriptions
+- **Interactive navigator** for pan, zoom, and brush gestures on any context, the flat-scene analogue of the 3D camera
 - **CSS-like element querying**: `getElementById`, `getElementsByType`, `getElementsByClass`, plus `query`/`queryAll` with selector syntax
 - **Bounding box detection** via `getBoundingBox` on all shape elements
 - **Context exporting**: snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
 - **Transforms** (translate, scale, rotation, and transform-origin) on every element
 - **Clipping**: path-based clipping via `Shape2D`
+- **Shadows, filters, and blend modes** applied per element
 - **Gradient support**: CSS gradient parsing and serialization (linear, radial, conic)
 - **Pattern fill support** for repeating `pattern(...)` paint strings (diagonal, cross-hatch, dots, horizontal, vertical) in fills and strokes
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
@@ -43,10 +45,11 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives**: arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives**: cube, sphere, cylinder, cone, plane, torus
-- **Easing library** covering linear, quad, cubic, quart, and quint (in/out/inOut variants)
+- **Easing library** covering linear, quad, cubic, quart, quint, sine, exponential, circular, back, elastic, and bounce (in/out/inOut variants)
 - **Color utilities** for parsing, serialization, and color scales
 - **Math & geometry** helpers: degree/radian conversion, point operations, border radius normalization, polygon extrapolation
 - **Renderer debug overlay** with an FPS counter, element count, and bounding box visualization
+- **Runtime devtools** bridge (`@ripl/devtools`) with a companion browser extension for live scene-graph inspection and editing
 - **Completely modular and tree-shakable**, so you only ship the features you use
 - **Strictly typed** in TypeScript
 - **Zero runtime dependencies**
@@ -64,6 +67,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 | [`@ripl/webgpu`](packages/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
 | [`@ripl/terminal`](packages/terminal) | Terminal rendering context with braille-character output and ANSI truecolor |
 | [`@ripl/node`](packages/node) | Node.js runtime bindings that configure the platform factory for headless environments |
+| [`@ripl/devtools`](packages/devtools) | Page-side devtools bridge that streams the scene graph to the browser extension for live inspection |
 | [`@ripl/dom`](packages/dom) | DOM utilities used internally by browser contexts |
 | [`@ripl/utilities`](packages/utilities) | Shared typed utility functions: type guards, collection helpers, DOM helpers |
 
@@ -80,6 +84,7 @@ packages/
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings
 ├── web/          # Main browser entry point
+├── devtools/     # Page-side devtools bridge
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
 └── test-utils/   # Test utilities
@@ -447,7 +452,7 @@ chart.update({
 });
 ```
 
-Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Tooltip`, `Crosshair`.
+Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `ColorLegend`, `Tooltip`, `Crosshair`, and `ChartAnnotations` (reference lines, bands, and point markers).
 
 ## Scales
 
@@ -533,7 +538,7 @@ import {
 
 Available 3D primitives: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`.
 
-Camera supports interactive zoom, pivot, and pan with configurable sensitivity.
+Camera supports interactive zoom, pivot, and pan with configurable sensitivity. For hardware-accelerated rendering, `@ripl/webgpu` provides a drop-in WebGPU context with a real depth buffer, MSAA, and WGSL shaders; the same `Shape3D` elements work in both.
 
 ## Performance
 
