@@ -36,6 +36,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Transforms** — translate, scale, rotation, and transform-origin on every element
 - **Clipping** — path-based clipping via `Shape2D`
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
+- **Pattern fill support** for repeating `pattern(...)` paint strings (diagonal, cross-hatch, dots, horizontal, vertical) in fills and strokes
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
 - **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
 - **14 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts

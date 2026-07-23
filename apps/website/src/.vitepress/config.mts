@@ -344,6 +344,10 @@ export default defineConfig({
                             link: '/docs/core/advanced/gradients',
                         },
                         {
+                            text: 'Pattern Fills',
+                            link: '/docs/core/advanced/pattern-fills',
+                        },
+                        {
                             text: 'Interpolators',
                             link: '/docs/core/advanced/interpolators',
                         },
@@ -500,6 +504,10 @@ export default defineConfig({
                         {
                             text: 'Annotations',
                             link: '/charts/advanced/annotations',
+                        },
+                        {
+                            text: 'Color Legend',
+                            link: '/charts/advanced/color-legend',
                         },
                         {
                             text: 'Panning & Zooming',
