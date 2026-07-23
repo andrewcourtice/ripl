@@ -100,6 +100,30 @@ describe('Element', () => {
         expect(handler).not.toHaveBeenCalled();
     });
 
+    test('Should emit updated when set to the same array reference after in-place mutation', () => {
+        const dash = [4, 2];
+        const el = createElement('rect', { lineDash: dash });
+        const handler = vi.fn();
+        el.on('updated', handler);
+
+        dash.push(6);
+        el.lineDash = dash;
+
+        expect(handler).toHaveBeenCalledTimes(1);
+        expect(el.$dirty).toBe(true);
+    });
+
+    test('Should not emit updated or set $dirty when set to an identical primitive value', () => {
+        const el = createElement('rect', { opacity: 0.5 });
+        const handler = vi.fn();
+        el.on('updated', handler);
+
+        el.opacity = 0.5;
+
+        expect(handler).not.toHaveBeenCalled();
+        expect(el.$dirty).toBe(false);
+    });
+
     test('Should set $dirty and $touched when a state value changes', () => {
         const el = createElement('rect', {});
         expect(el.$dirty).toBe(false);

@@ -59,7 +59,7 @@ export type LightMode = 'world' | 'camera';
 
 /** A mesh submission queued for a single frame. */
 export interface MeshSubmission {
-    /** Interleaved vertex data (position, normal, and colour) for the mesh. */
+    /** Interleaved vertex data (position, normal, and color) for the mesh. */
     vertices: Float32Array;
     /** Triangle indices into the vertex buffer. */
     indices: Uint32Array;
@@ -211,7 +211,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     /** Submits a mesh for rendering this frame. Noop in the base class; overridden by GPU-backed contexts. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public submitMesh(submission: MeshSubmission): void {
-        // noop — overridden in subclasses (e.g. WebGPUContext3D)
+        // noop, overridden in subclasses (e.g. WebGPUContext3D)
     }
 
     /**
@@ -234,7 +234,7 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         const context = canvas.getContext('2d');
 
         if (!context) {
-            throw new Error('Failed to acquire a 2D canvas rendering context — the environment does not support the Canvas API');
+            throw new Error('Failed to acquire a 2D canvas rendering context: the environment does not support the Canvas API');
         }
 
         super('canvas3d', target, canvas, options);

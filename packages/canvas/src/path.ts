@@ -18,7 +18,7 @@ export class CanvasPath extends ContextPath {
         this.ref = new Path2D();
     }
 
-    /** Adds an arc centred at `(x, y)` with the given radius to the path. */
+    /** Adds an arc centered at `(x, y)` with the given radius to the path. */
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         return this.ref.arc(x, y, radius, startAngle, endAngle, counterclockwise);
     }
@@ -28,7 +28,7 @@ export class CanvasPath extends ContextPath {
         return this.ref.arcTo(x1, y1, x2, y2, radius);
     }
 
-    /** Adds a full circle centred at `(x, y)` to the path. */
+    /** Adds a full circle centered at `(x, y)` to the path. */
     public circle(x: number, y: number, radius: number): void {
         this.arc(x, y, radius, 0, TAU);
     }
@@ -43,7 +43,7 @@ export class CanvasPath extends ContextPath {
         return this.ref.closePath();
     }
 
-    /** Adds an elliptical arc centred at `(x, y)` to the path. */
+    /** Adds an elliptical arc centered at `(x, y)` to the path. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         return this.ref.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise);
     }

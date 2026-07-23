@@ -12,7 +12,7 @@ import {
     parsePattern,
     samplePathPoint,
     scaleContinuous,
-    serialiseRGBA,
+    serializeRGBA,
 } from '@ripl/core';
 
 import type {
@@ -84,7 +84,7 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     gradient.stops.forEach((stop) => {
         const offset = numberClamp(stop.offset ?? 0, 0, 1);
         const rgba = parseColor(stop.color);
-        const color = rgba ? serialiseRGBA(...rgba) : stop.color;
+        const color = rgba ? serializeRGBA(...rgba) : stop.color;
 
         canvasGradient.addColorStop(offset, color);
     });
@@ -134,7 +134,9 @@ function parseGradientMemoized(value: string): Gradient | undefined {
 }
 
 // Pattern tiles are position-independent, so one materialized CanvasPattern per serialized
-// pattern string serves every element and frame (null caches invalid strings).
+// pattern string serves every element and frame (null caches invalid strings). The cache is
+// bounded because a transition between two patterns produces a fresh string every frame.
+const PATTERN_CACHE_LIMIT = 256;
 const patternCache = new Map<string, CanvasPattern | null>();
 
 /**
@@ -151,6 +153,10 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
 
     if (cached !== undefined) {
         return cached;
+    }
+
+    if (patternCache.size >= PATTERN_CACHE_LIMIT) {
+        patternCache.clear();
     }
 
     const pattern = parsePattern(value);

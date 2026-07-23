@@ -67,11 +67,11 @@ export interface GaugeChartOptions extends BaseChartOptions {
     maxValue?: number;
     /** Optional descriptive text shown below the value. */
     label?: string;
-    /** Colour of the value arc. */
+    /** Color of the value arc. */
     color?: string;
-    /** Colour of the background track arc. */
+    /** Color of the background track arc. */
     trackColor?: string;
-    /** How the central value display is formatted — a built-in format type, Intl number-format options, or a custom function. */
+    /** How the central value display is formatted: a built-in format type, Intl number-format options, or a custom function. */
     format?: ValueFormatInput;
     /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide. */
     tickCount?: number;
@@ -123,7 +123,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
     private _tooltip: Tooltip;
     /** The last rendered value, so data updates can animate the value text counting up/down. */
     private _currentValue?: number;
-    /** Signature of the tick geometry (centre/radius/count) so ticks only re-animate when they move. */
+    /** Signature of the tick geometry (center/radius/count) so ticks only re-animate when they move. */
     private _tickSignature?: string;
 
     constructor(target: string | HTMLElement | Context, options: GaugeChartOptions) {
@@ -241,7 +241,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
 
             this._currentValue = clampedValue;
 
-            // Duration the value arc sweeps and the centre number counts over on a data update.
+            // Duration the value arc sweeps and the center number counts over on a data update.
             const valueDuration = this.getAnimationDuration(1200);
 
             if (!this._valueText) {
@@ -308,8 +308,8 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const showTickLabels = this.options.showTickLabels !== false;
             const formatTick = resolveValueFormat(this.options.formatTick ?? this.options.format);
 
-            // Ticks only move when the centre/radius/count/label-visibility changes — not on a plain
-            // value update — so a value change animates only the arc and the centre number.
+            // Ticks only move when the center/radius/count/label-visibility changes, not on a plain
+            // value update, so a value change animates only the arc and the center number.
             const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
             const tickGeometryChanged = tickSignature !== this._tickSignature;
             this._tickSignature = tickSignature;
@@ -465,7 +465,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     state: (element.data ?? {}) as Record<string, unknown>,
                 }))
                 // On a data update the value counts up/down to the new value (only the bar and the
-                // number change — the rest of the gauge stays put).
+                // number change; the rest of the gauge stays put).
                 : renderer.transition(this._valueText, {
                     duration: valueDuration,
                     ease: easeOutCubic,

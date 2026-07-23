@@ -75,7 +75,7 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
     bins?: number;
     /** Explicit bin boundaries; overrides `bins`. */
     thresholds?: number[];
-    /** Bar colour (defaults to the first palette colour). */
+    /** Bar color (defaults to the first palette color). */
     color?: string;
     /** Corner radius in pixels applied to the top of each bar. Defaults to 2. */
     borderRadius?: number;
@@ -91,9 +91,9 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
 
 /** Payload emitted for histogram bin interaction events. */
 export interface HistogramBinEvent {
-    /** The x coordinate (in chart pixels) of the bar's top-centre anchor. */
+    /** The x coordinate (in chart pixels) of the bar's top-center anchor. */
     x: number;
-    /** The y coordinate (in chart pixels) of the bar's top-centre anchor. */
+    /** The y coordinate (in chart pixels) of the bar's top-center anchor. */
     y: number;
     /** The lower bound of the interacted bin. */
     x0: number;

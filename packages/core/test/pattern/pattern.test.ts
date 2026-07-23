@@ -8,7 +8,7 @@ import {
     getPatternTileGeometry,
     isPatternString,
     parsePattern,
-    serialisePattern,
+    serializePattern,
 } from '../../src';
 
 describe('Pattern parsing', () => {
@@ -43,13 +43,13 @@ describe('Pattern parsing', () => {
         expect(parsePattern('red')).toBeNull();
     });
 
-    it('Should round-trip through the serialiser', () => {
+    it('Should round-trip through the serializer', () => {
         const source = 'pattern(cross-hatch, #336699, #ffffff, 10)';
         const parsed = parsePattern(source);
 
         expect(parsed).not.toBeNull();
-        expect(serialisePattern(parsed!)).toBe(source);
-        expect(parsePattern(serialisePattern(parsed!))).toEqual(parsed);
+        expect(serializePattern(parsed!)).toBe(source);
+        expect(parsePattern(serializePattern(parsed!))).toEqual(parsed);
     });
 
     it('Should identify pattern strings with the cheap guard', () => {
@@ -71,7 +71,7 @@ describe('Pattern tile geometry', () => {
         expect(geometry.shapes.every(shape => shape.kind === 'line')).toBe(true);
     });
 
-    it('Should build one centred dot for the dots motif', () => {
+    it('Should build one centered dot for the dots motif', () => {
         const geometry = getPatternTileGeometry(parsePattern('pattern(dots, red, transparent, 12)')!);
 
         expect(geometry.shapes).toEqual([{
@@ -82,7 +82,7 @@ describe('Pattern tile geometry', () => {
         }]);
     });
 
-    it('Should build crossing centre lines for the cross-hatch motif', () => {
+    it('Should build crossing center lines for the cross-hatch motif', () => {
         const geometry = getPatternTileGeometry(parsePattern('pattern(cross-hatch)')!);
 
         expect(geometry.shapes).toHaveLength(2);

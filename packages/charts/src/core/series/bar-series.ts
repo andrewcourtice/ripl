@@ -2,7 +2,7 @@
  * Bar series renderer: draws each series as rectangles, grouped side by side or stacked.
  *
  * Extracted from the bar chart so the standalone {@link BarChart} and the mixed trend chart share one
- * implementation — including vertical/horizontal orientation, grouped and stacked modes, the
+ * implementation, including vertical/horizontal orientation, grouped and stacked modes, the
  * outermost-segment rounding, and the stacked single-rising-fill entry timing.
  */
 
@@ -113,7 +113,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
         return typeIsFunction(series.label) ? series.label(item) : series.label;
     }
 
-    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    // The value scale a series renders against: its bound axis's scale in multi-axis charts.
     private _valueScale(series: BarSeriesLike<TData>, ctx: BarSeriesContext<TData>): Scale {
         return ctx.resolveScale?.(series) ?? ctx.valueScale;
     }
@@ -245,7 +245,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
     /** The collapsed geometry an entering/exiting bar grows from (the chart baseline). */
     private _collapsed(series: BarSeriesLike<TData> | undefined, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): Partial<RectState> {
-        // A removed series (exitSeries) can no longer resolve its axis binding — collapse to the
+        // A removed series (exitSeries) can no longer resolve its axis binding, so collapse to the
         // primary scale's baseline.
         const baseline = (series ? this._valueScale(series, ctx) : ctx.valueScale)(0);
 
@@ -454,8 +454,8 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
         return [
             ctx.renderer.transition(bars, (element, index, length) => {
-                // Stacked: each column fills as one rising unit — segments are timed by their position
-                // in the stack so the fill front sweeps the whole column once, in colour order.
+                // Stacked: each column fills as one rising unit; segments are timed by their position
+                // in the stack so the fill front sweeps the whole column once, in color order.
                 if (prepared.stacked) {
                     const timing = prepared.entryTiming.get(element.id);
                     const columnDelay = stagger(timing?.columnIndex ?? 0, categoryCount, enter.duration) * 0.4;

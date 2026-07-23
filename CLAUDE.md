@@ -30,9 +30,9 @@ Verify coverage with TypeDoc's `notDocumented` validation (ignore
 `SetSignature` warnings — the getter's doc covers them):
 
 ```bash
-cd app
+cd apps/website
 yarn typedoc --entryPointStrategy resolve \
-  --entryPoints ../packages/<pkg>/src/index.ts --tsconfig ../packages/<pkg>/tsconfig.json \
+  --entryPoints ../../packages/<pkg>/src/index.ts --tsconfig ../../packages/<pkg>/tsconfig.json \
   --validation.notDocumented --excludePrivate --excludeProtected --excludeInternal --emit none \
   | grep 'does not have any documentation' | grep -v SetSignature
 ```

@@ -11,31 +11,31 @@ import {
     typeIsArray,
 } from '@ripl/utilities';
 
-/** A function mapping a normalised position (0–1) to a CSS colour string. */
+/** A function mapping a normalized position (0–1) to a CSS color string. */
 export type ColorInterpolator = (position: number) => string;
 
-/** Either a ready-made colour interpolator or an array of colour stops to interpolate between. */
+/** Either a ready-made color interpolator or an array of color stops to interpolate between. */
 export type ColorInterpolatorInput = ColorInterpolator | string[];
 
-/** A callable colour scale mapping a numeric value to a CSS colour, with domain and tick access. */
+/** A callable color scale mapping a numeric value to a CSS color, with domain and tick access. */
 export interface ColorScale {
-    /** Maps a numeric value from the domain to its corresponding CSS colour. */
+    /** Maps a numeric value from the domain to its corresponding CSS color. */
     (value: number): string;
     /** The numeric input domain the scale maps from. */
     domain: number[];
     /** Generates approximately `count` representative tick values across the domain. */
     ticks(count?: number): number[];
-    /** The underlying position (0–1) → colour interpolator, e.g. for rendering a legend gradient. */
+    /** The underlying position (0–1) → color interpolator, e.g. for rendering a legend gradient. */
     interpolator: ColorInterpolator;
 }
 
-/** A continuous scale mapping normalised values (0–1) to the RGB channel range (0–255) with clamping. */
+/** A continuous scale mapping normalized values (0–1) to the RGB channel range (0–255) with clamping. */
 export const scaleRGB = scaleContinuous([0, 1], [0, 255], {
     clamp: true,
 });
 
 /**
- * Builds a colour interpolator from an array of colour stops. Position 0 returns the first stop, 1
+ * Builds a color interpolator from an array of color stops. Position 0 returns the first stop, 1
  * the last, and intermediate positions interpolate (RGBA, channel-wise) between adjacent stops.
  */
 export function interpolateColors(colors: string[]): ColorInterpolator {
@@ -73,11 +73,11 @@ function createColorScale(interpolate: ColorInterpolator, domain: number[], posi
 }
 
 /**
- * Creates a colour scale mapping a numeric `domain` through a colour interpolator (or array of stops,
+ * Creates a color scale mapping a numeric `domain` through a color interpolator (or array of stops,
  * e.g. one of the built-in `COLOR_SCHEME_*` palettes). Values are clamped to the domain.
  *
- * - **Sequential** — a two-element domain `[min, max]` maps linearly across the whole interpolator.
- * - **Diverging** — a three-element domain `[min, neutral, max]` maps `neutral` to the interpolator's
+ * - **Sequential**: a two-element domain `[min, max]` maps linearly across the whole interpolator.
+ * - **Diverging**: a three-element domain `[min, neutral, max]` maps `neutral` to the interpolator's
  *   midpoint, so signed data reads symmetrically around a reference value.
  *
  * Tick generation defers to an underlying continuous scale; formatting is left to the caller and is

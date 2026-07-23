@@ -60,7 +60,7 @@ import type {
 } from '@ripl/utilities';
 
 /**
- * Whether the devtools panel is currently connected. Shared across bindings — the panel is
+ * Whether the devtools panel is currently connected. Shared across bindings; the panel is
  * page-wide, not per-binding. Reset to unknown (false) when the last binding is disposed,
  * since without a live binding there is no listener left to observe panel state; the
  * extension re-handshakes in response to the next `bridge:hello`.
@@ -80,7 +80,7 @@ function handlePageHide(): void {
 
 function handlePageShow(event: PageTransitionEvent): void {
     // `pageshow` also fires on the initial load, where bindings have already
-    // announced themselves — only re-announce after a bfcache restore.
+    // announced themselves; only re-announce after a bfcache restore.
     if (!event.persisted) {
         return;
     }
@@ -141,7 +141,7 @@ export interface DevtoolsOptions {
  * The page-side devtools binding connecting a {@link Context} (and optionally a {@link Scene}
  * and {@link Renderer}) to the Ripl devtools browser extension over `window.postMessage`.
  *
- * A binding is cheap while the devtools panel is closed — it only announces its presence and
+ * A binding is cheap while the devtools panel is closed; it only announces its presence and
  * relays context metadata. Tree serialization and property streaming listeners are attached
  * when the panel connects and detached when it disconnects.
  */

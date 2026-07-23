@@ -46,8 +46,8 @@ camera.flush();
 
 ## Features
 
-- **WebGPU rendering** — true GPU rasterization with hardware depth buffer
-- **Drop-in replacement** — same `Shape3D` elements work with both Canvas 2D and WebGPU contexts
-- **WGSL shaders** — vertex and fragment shaders with Lambertian diffuse lighting
-- **MSAA** — 4x multisample anti-aliasing
-- **Async initialisation** — `createContext` returns a `Promise` for GPU adapter/device negotiation
+- **WebGPU rendering**: true GPU rasterization with hardware depth buffer
+- **Drop-in replacement**: same `Shape3D` elements work with both Canvas 2D and WebGPU contexts
+- **WGSL shaders**: vertex and fragment shaders with Lambertian diffuse lighting
+- **MSAA**: 4x multisample anti-aliasing
+- **Async initialization**: `createContext` returns a `Promise` for GPU adapter/device negotiation

@@ -139,7 +139,7 @@ describe('World transform & bounding box caching', () => {
         group.add(circleA);
         group.add(circleB);
 
-        // Composite box spans x [0..40] — origin x resolves to 20, so A (centre 10) maps to 30.
+        // Composite box spans x [0..40] — origin x resolves to 20, so A (center 10) maps to 30.
         const before = circleA.getBoundingBox();
 
         expect((before.left + before.right) / 2).toBeCloseTo(30);

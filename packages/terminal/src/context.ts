@@ -276,19 +276,19 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
  * Terminal rendering context that rasterizes Ripl elements into character-based output via a
  * `TerminalOutput` adapter.
  *
- * A character grid cannot honour the full canvas contract, so the following constraints apply:
+ * A character grid cannot honor the full canvas contract, so the following constraints apply:
  *
- * - **Text metrics are approximate** — every glyph occupies exactly one terminal cell, so
+ * - **Text metrics are approximate**: every glyph occupies exactly one terminal cell, so
  *   `measureText` reports one cell of width per character regardless of font, and the `font`
  *   state (family, size, weight) has no visual effect.
- * - **Fills use the even-odd rule only** — the scanline rasterizer ignores a `nonzero` fill rule
+ * - **Fills use the even-odd rule only**: the scanline rasterizer ignores a `nonzero` fill rule
  *   (see {@link TerminalContext.applyFill}).
- * - **No hit testing** — `isPointInPath`/`isPointInStroke` always return `false`, so pointer
+ * - **No hit testing**: `isPointInPath`/`isPointInStroke` always return `false`, so pointer
  *   events never match elements.
- * - **No affine transforms** — `rotate`/`scale`/`translate`/`setTransform`/`transform` are
+ * - **No affine transforms**: `rotate`/`scale`/`translate`/`setTransform`/`transform` are
  *   inherited as no-ops from {@link Context}; elements are positioned through the context's own
  *   `scaleX`/`scaleY`/`rasterScale` mapping instead.
- * - **No clipping or images** — `applyClip` and `drawImage` are inherited as no-ops.
+ * - **No clipping or images**: `applyClip` and `drawImage` are inherited as no-ops.
  */
 export class TerminalContext extends Context<Element> {
 
@@ -308,7 +308,7 @@ export class TerminalContext extends Context<Element> {
             logicalHeight,
         } = options || {};
 
-        // Pass a dummy element — terminal has no DOM element
+        // Pass a dummy element; terminal has no DOM element
         super('terminal', {} as Element, options);
 
         this._output = output;
@@ -335,8 +335,8 @@ export class TerminalContext extends Context<Element> {
 
     /**
      * Sizes the context's coordinate space against the rasterizer. Without a logical size the
-     * space *is* the braille pixel grid (the historical behaviour). With one, the context reports
-     * the logical size and `scaleX`/`scaleY` uniformly scale + centre (letterbox) it into the grid,
+     * space *is* the braille pixel grid (the historical behavior). With one, the context reports
+     * the logical size and `scaleX`/`scaleY` uniformly scale + center (letterbox) it into the grid,
      * mirroring how the canvas context maps CSS pixels onto its device-pixel backing store.
      */
     private _applyScaling(): void {
@@ -389,7 +389,7 @@ export class TerminalContext extends Context<Element> {
 
     /** Rasterizes and fills the given path or text element using the current fill color. */
     // `fillRule` is intentionally ignored: the braille scanline rasterizer (`fillPolygon`) implements
-    // only the even-odd rule. Honouring non-zero winding would require tracking edge directions per
+    // only the even-odd rule. Honoring non-zero winding would require tracking edge directions per
     // crossing, which is out of scope for the character-grid renderer.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: ContextElement, fillRule?: FillRule): void {

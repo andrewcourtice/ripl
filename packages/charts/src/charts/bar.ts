@@ -88,16 +88,16 @@ const BAR_EVENTS = {
 
 /** Configuration for an individual bar chart series. */
 export interface BarChartSeriesOptions<TData> {
-    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
     id: string;
-    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
     /** Human-readable series name shown in the legend and tooltips. */
     label: string;
     /**
-     * Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the
+     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
      * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
      * orientation always render against the primary axis.
      */
@@ -222,7 +222,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
     /**
      * Derives the cartesian setup from the current `orientation` so grid lines run across the bars
-     * (horizontal lines for vertical bars, vertical lines for horizontal bars) — re-resolved each
+     * (horizontal lines for vertical bars, vertical lines for horizontal bars), re-resolved each
      * render so `chart.update({ orientation })` flips the grid direction too.
      */
     protected override resolveCartesianSetup(): CartesianSetup {
@@ -252,7 +252,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         this.emit(BAR_EVENTS[phase], event);
     }
 
-    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    /** Builds the per-series overview data (id, color, type, values) for the navigator strip. */
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
@@ -261,7 +261,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
     // Resolves the shared axis-tooltip content for the hovered plot x (vertical bars): the nearest
     // category, one row per active series, anchored above the tallest bar top at that category. The
-    // axis tooltip is wired for vertical orientation only — horizontal bars keep per-item tooltips.
+    // axis tooltip is wired for vertical orientation only; horizontal bars keep per-item tooltips.
     private _axisTooltipSnapshot(
         plotX: number,
         keys: string[],
@@ -325,7 +325,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             plot,
             baseline: valueScale(0),
             renderer: this.renderer,
-            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            // In axis-trigger mode the shared tooltip owns the pointer; per-item tooltips stay quiet.
             tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
@@ -393,7 +393,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            // Secondary axes apply to vertical grouped bars only — stacked columns can't mix
+            // Secondary axes apply to vertical grouped bars only, because stacked columns can't mix
             // scales and the horizontal layout has no right-hand value band (see the series
             // `axis` option JSDoc).
             if (this.yAxes.length > 1 && !this._isHorizontal && !this._isStacked) {
@@ -431,7 +431,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = adjustedValueScale;
                 this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
-                // The navigator windows the y (category) axis only — the value axis (x) stays at the full
+                // The navigator windows the y (category) axis only; the value axis (x) stays at the full
                 // extent, so the side strip scrubs vertically without rescaling the value domain.
                 const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
                 this.yAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
@@ -492,7 +492,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             this.yAxis.scale = adjustedValueScale;
             this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
-            // The navigator windows the x (category) axis only — the value axis (y) stays at the full
+            // The navigator windows the x (category) axis only; the value axis (y) stays at the full
             // extent, so the bottom strip scrubs horizontally without rescaling the value domain.
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
             const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);

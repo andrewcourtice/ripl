@@ -119,7 +119,7 @@ describe('SVG pattern defs', () => {
         expect(getInternals()._patternCache.size).toBe(0);
     });
 
-    test('Should sweep a pattern def when the fill becomes a solid colour', () => {
+    test('Should sweep a pattern def when the fill becomes a solid color', () => {
         renderPass(() => {
             ctx.fill = 'pattern(cross-hatch, #333, transparent, 6)';
             drawRect('p1');

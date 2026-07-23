@@ -395,7 +395,7 @@ export function createDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
 let activeStore: DevtoolsStore | undefined;
 
 /** Creates the panel's singleton store instance. Call once during panel bootstrap. */
-export function initialiseDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
+export function initializeDevtoolsStore(send: SendExtensionMessage): DevtoolsStore {
     activeStore = createDevtoolsStore(send);
 
     return activeStore;
@@ -404,7 +404,7 @@ export function initialiseDevtoolsStore(send: SendExtensionMessage): DevtoolsSto
 /** Returns the panel's singleton store instance. */
 export function useDevtoolsStore(): DevtoolsStore {
     if (!activeStore) {
-        throw new Error('Devtools store has not been initialised');
+        throw new Error('Devtools store has not been initialized');
     }
 
     return activeStore;

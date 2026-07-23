@@ -94,9 +94,9 @@ export interface StockChartOptions<TData = unknown> extends CartesianChartOption
     axis?: ChartAxisInput<TData>;
     /** Format applied to the open/high/low/close values shown in the candle tooltip. */
     format?: ValueFormatInput;
-    /** Colour for candles that close at or above their open (bullish). */
+    /** Color for candles that close at or above their open (bullish). */
     upColor?: string;
-    /** Colour for candles that close below their open (bearish). */
+    /** Color for candles that close below their open (bearish). */
     downColor?: string;
 }
 
@@ -203,9 +203,9 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
     }
 
     /**
-     * Builds a centred category scale mapping each key to the centre of its equal-width band across
+     * Builds a centered category scale mapping each key to the center of its equal-width band across
      * `[left, right]`, exposing the metadata {@link CartesianChart.applyViewToScale} needs. Candles and
-     * volume bars centre on these positions, so they stay inside the plot (unlike an endpoint point
+     * volume bars center on these positions, so they stay inside the plot (unlike an endpoint point
      * scale, whose first/last marks would overhang the axes).
      */
     private _createCategoryScale(keys: string[], left: number, right: number): Scale<string> {
@@ -240,7 +240,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
 
     /**
      * Wires hover highlight + tooltip onto a candlestick body. Uses {@link applyHoverHighlight}
-     * so prior listeners are disposed on re-apply — calling this on every update no longer leaks.
+     * so prior listeners are disposed on re-apply; calling this on every update no longer leaks.
      */
     private _attachBodyHover(body: Rect, values: CandlestickValues, color: string, anchorX: number, anchorY: number) {
         const formatValue = resolveValueFormat(this.options.format);
@@ -501,7 +501,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
     }
 
     /**
-     * Measures the strip reserved beneath the volume bars for the centred "Volume" caption: the
+     * Measures the strip reserved beneath the volume bars for the centered "Volume" caption: the
      * caption's line height (bold theme font, matching an axis title) plus a small gap above it.
      */
     private _volumeLabelBand(): number {
@@ -570,7 +570,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
         this._volumeClip.height = Math.max(0, volumeBottom - volumeTop);
         this._volumeClip.clip = !!this.navigator;
 
-        // Centred "Volume" caption in the strip reserved beneath the bars, styled like an axis title.
+        // Centered "Volume" caption in the strip reserved beneath the bars, styled like an axis title.
         const labelBand = this._volumeLabelBand();
 
         if (!this._volumeLabel) {
@@ -706,7 +706,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            // Candlesticks centre in equal bands across the plot width, so they stay inside the plot.
+            // Candlesticks center in equal bands across the plot width, so they stay inside the plot.
             const candleWidth = Math.max(1, ((right - yAxisBox.right) / Math.max(1, data.length)) * 0.6);
 
             this._xScale = this._createCategoryScale(keys, yAxisBox.right, right);
@@ -760,7 +760,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             if (hasVolume) {
                 promises.push(this._drawVolume(candleWidth, volumeTop, volumeBottom, plot));
             } else if (this._volumeGroup) {
-                // Volume was toggled off — tear down the orphaned group so the reclaimed space
+                // Volume was toggled off, so tear down the orphaned group so the reclaimed space
                 // (the candlesticks now expand into it) doesn't paint over stale bars.
                 this._volumeGroup.destroy();
                 this._volumeGroup = undefined;

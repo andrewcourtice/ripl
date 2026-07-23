@@ -234,7 +234,7 @@ export interface DrawCommand {
     modelBindGroup: GPUBindGroup;
 }
 
-/** Result of flushing all queued meshes — buffers and per-mesh draw commands. */
+/** Result of flushing all queued meshes: buffers and per-mesh draw commands. */
 export interface FlushResult {
     /** Pooled GPU buffer containing the frame's vertex data; capacity may exceed the used length. */
     vertexBuffer: GPUBuffer;
@@ -254,7 +254,7 @@ export function triangulatefaces(
     modelMatrix: Matrix4,
     color: ColorRGBA
 ): {
-    /** Interleaved vertex data (positions, normals, colours) for all triangles. */
+    /** Interleaved vertex data (positions, normals, colors) for all triangles. */
     vertices: Float32Array;
     /** Triangle vertex indices into {@link vertices}. */
     indices: Uint32Array;

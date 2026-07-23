@@ -31,10 +31,10 @@ export type TextBaseline = 'alphabetic' | 'bottom' | 'hanging' | 'ideographic' |
 /** Fill rule algorithm used to determine if a point is inside a path. */
 export type FillRule = 'evenodd' | 'nonzero';
 
-/** Transform origin value — a numeric pixel offset or a percentage string. */
+/** Transform origin value: a numeric pixel offset or a percentage string. */
 export type TransformOrigin = number | string;
 
-/** Rotation value — a numeric radian value or a string with `deg`/`rad` suffix. */
+/** Rotation value: a numeric radian value or a string with `deg`/`rad` suffix. */
 export type Rotation = number | string;
 
 /** Controls which pointer events a render element responds to during hit testing. */
@@ -56,13 +56,13 @@ export interface RenderElement {
     abstract: boolean;
     /** Which regions of the element respond to pointer hit testing. */
     pointerEvents: RenderElementPointerEvents;
-    /** Stacking order used when sorting hit-test results; higher values are prioritised. */
+    /** Stacking order used when sorting hit-test results; higher values are prioritized. */
     zIndex: number;
     /** Returns the element's bounding box: the on-screen (world) box, or the raw local box when `local` is `true`. */
     getBoundingBox?(local?: boolean): Box;
     /** Returns whether the element has any listeners registered for the given event. */
     has(event: string): boolean;
-    /** Tests whether the point `(x, y)` lies within the element, honouring its pointer-event region. */
+    /** Tests whether the point `(x, y)` lies within the element, honoring its pointer-event region. */
     intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
     /** Emits an event of the given type carrying the given data on this element. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,7 +136,7 @@ export interface ContextEventMap extends EventMap {
 export interface ContextOptions<TMeta extends Record<string, unknown> = Record<string, unknown>> {
     /** Whether the context listens for and emits pointer and drag events. */
     interactive?: boolean;
-    /** Minimum pointer movement, in pixels, before a drag gesture is recognised. */
+    /** Minimum pointer movement, in pixels, before a drag gesture is recognized. */
     dragThreshold?: number;
     /** Arbitrary metadata attached to the context. */
     meta?: TMeta;
@@ -144,7 +144,7 @@ export interface ContextOptions<TMeta extends Record<string, unknown> = Record<s
 
 /**
  * The factory shape every rendering backend exports as `createContext`: target-first, with a
- * backend-specific target and options type. Backends legitimately diverge on `TTarget` — DOM
+ * backend-specific target and options type. Backends legitimately diverge on `TTarget`; DOM
  * backends (canvas, SVG, 3D) accept a `string | HTMLElement` mount target while non-DOM backends
  * accept their own output adapter (e.g. the terminal backend's `TerminalOutput`). Synchronous
  * backends return the constructed context directly and should conformance-check their factory
@@ -164,9 +164,9 @@ export type ContextFactory<TTarget, TOptions extends ContextOptions, TContext ex
  * `export()` for specifics); unsupported formats throw a descriptive error.
  */
 export interface ContextExport {
-    /** The context's native string form — SVG markup, a PNG data URL, or terminal text. */
+    /** The context's native string form: SVG markup, a PNG data URL, or terminal text. */
     toString(): string;
-    /** An openable `Blob` object URL — `image/svg+xml` for SVG, `image/png` for raster contexts. */
+    /** An openable `Blob` object URL: `image/svg+xml` for SVG, `image/png` for raster contexts. */
     toURL(): string;
     /**
      * Low-level, environment-agnostic pixel data. Promise-wrapped so contexts that must rasterize
@@ -201,7 +201,7 @@ export interface ContextElement {
 
 /** The full set of visual state properties inherited by every renderable element. */
 export interface BaseState {
-    /** Fill style (CSS colour, gradient, or pattern) used to paint filled regions. */
+    /** Fill style (CSS color, gradient, or pattern) used to paint filled regions. */
     fill: string;
     /** CSS filter string applied to subsequent drawing operations (e.g. `blur(4px)`). */
     filter: string;
@@ -229,13 +229,13 @@ export interface BaseState {
     miterLimit: number;
     /** Gaussian blur radius applied to drawn shadows. */
     shadowBlur: number;
-    /** Colour of drawn shadows. */
+    /** Color of drawn shadows. */
     shadowColor: string;
     /** Horizontal offset, in pixels, of drawn shadows. */
     shadowOffsetX: number;
     /** Vertical offset, in pixels, of drawn shadows. */
     shadowOffsetY: number;
-    /** Stroke style (CSS colour, gradient, or pattern) used to paint outlines. */
+    /** Stroke style (CSS color, gradient, or pattern) used to paint outlines. */
     stroke: string;
     /** Horizontal alignment of text relative to the drawing position. */
     textAlign: TextAlignment;

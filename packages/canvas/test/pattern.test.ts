@@ -70,7 +70,7 @@ describe('Canvas pattern fills', () => {
         expect(ctx.fillStyle).toBe('pattern(zigzag, red)');
     });
 
-    test('Should leave plain colours untouched', () => {
+    test('Should leave plain colors untouched', () => {
         setCanvasFill(ctx, '#ff0000', {
             top: 0,
             left: 0,

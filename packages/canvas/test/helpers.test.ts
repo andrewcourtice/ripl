@@ -80,7 +80,7 @@ describe('setCanvasFill / setCanvasStroke', () => {
     beforeEach(() => mockCanvasContext());
     afterEach(() => vi.restoreAllMocks());
 
-    test('sets a plain colour directly', () => {
+    test('sets a plain color directly', () => {
         const ctx = context();
 
         setCanvasFill(ctx, '#123456', BOUNDS);
@@ -119,7 +119,7 @@ describe('toCanvasGradient', () => {
     beforeEach(() => mockCanvasContext());
     afterEach(() => vi.restoreAllMocks());
 
-    test('adds a colour stop for each parsed stop', () => {
+    test('adds a color stop for each parsed stop', () => {
         const ctx = context();
         const gradient = toCanvasGradient(ctx, {
             type: 'linear',

@@ -85,9 +85,9 @@ export interface ForceNetworkNode<TData = unknown> {
     label?: string;
     /** Optional magnitude used to size the node; defaults to the node's link degree. */
     value?: number;
-    /** Optional grouping — nodes in the same group share a color. */
+    /** Optional grouping; nodes in the same group share a color. */
     group?: string;
-    /** Explicit node colour; falls back to the group/palette colour when omitted. */
+    /** Explicit node color; falls back to the group/palette color when omitted. */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -117,7 +117,7 @@ export interface ForceDirectedChartOptions<TData = unknown> extends BaseChartOpt
     linkDistance?: number;
     /** Strength pulling linked nodes toward `linkDistance`. */
     linkStrength?: number;
-    /** Strength pulling all nodes toward the layout centre. */
+    /** Strength pulling all nodes toward the layout center. */
     centerStrength?: number;
     /** Number of simulation iterations run before the layout is drawn. */
     iterations?: number;
@@ -188,7 +188,7 @@ interface PlacedNode {
 /**
  * Force-directed network chart laying out nodes and links with a settling physics simulation.
  *
- * Runs a deterministic charge/link/centre simulation to position the graph, then scales it to fit
+ * Runs a deterministic charge/link/center simulation to position the graph, then scales it to fit
  * the plot area. Nodes are circles (sized by value or degree), links are lines (width by value), with
  * labels, tooltips, typed node/link interaction events, and animated entry/update/exit transitions.
  */
@@ -298,7 +298,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             this.reserveTitle(layout);
 
             // One legend entry per distinct node group (or per node when ungrouped), using the
-            // group's/node's resolved colour.
+            // group's/node's resolved color.
             const legendSeen = new Set<string>();
             const legendItems: LegendItem[] = [];
 
@@ -343,7 +343,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 return nodeRadius * (0.7 + ratio * 0.9);
             };
 
-            // Run the (deterministic) simulation centred on the origin, then fit to the area. Seed
+            // Run the (deterministic) simulation centered on the origin, then fit to the area. Seed
             // existing nodes from their last settled positions so a reweight relaxes from the current
             // layout (nodes glide to new spots) rather than re-seeding from scratch (a full reshuffle).
             const simNodes: ForceNode[] = activeNodes.map(node => {
@@ -408,7 +408,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             });
 
             // Root + BFS depth drive the springy entry: nodes spring out from the root in waves, each
-            // wave delayed by its graph distance so the layout unfolds from the centre outward.
+            // wave delayed by its graph distance so the layout unfolds from the center outward.
             const adjacency = new Map<string, string[]>();
             activeNodes.forEach(node => adjacency.set(node.id, []));
             activeLinks.forEach(link => {
@@ -431,10 +431,10 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     const current = queue.shift()!;
                     const nextDepth = depthById.get(current)! + 1;
 
-                    (adjacency.get(current) ?? []).forEach(neighbour => {
-                        if (!depthById.has(neighbour)) {
-                            depthById.set(neighbour, nextDepth);
-                            queue.push(neighbour);
+                    (adjacency.get(current) ?? []).forEach(neighbor => {
+                        if (!depthById.has(neighbor)) {
+                            depthById.set(neighbor, nextDepth);
+                            queue.push(neighbor);
                         }
                     });
                 }
@@ -499,7 +499,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     }
             );
 
-            // Entry delay per new link, keyed by its element id — it draws once the ripple reaches its
+            // Entry delay per new link, keyed by its element id, so it draws once the ripple reaches its
             // root-ward endpoint (the shallower of its two nodes).
             const linkEntryDelays = new Map<string, number>();
 
@@ -656,7 +656,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
             // Recover a node id from a child element id (`node-<id>-circle` / `-label`) to look up its
-            // spring delay — robust even when node ids contain dashes.
+            // spring delay, robust even when node ids contain dashes.
             const delayForChild = (elementId: string, suffix: string) => (
                 springDelay(elementId.replace(/^node-/, '').replace(new RegExp(`-${suffix}$`), ''))
             );

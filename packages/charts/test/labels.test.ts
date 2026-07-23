@@ -98,7 +98,7 @@ describe('resolveSegmentLabelLayout', () => {
         expect(layout.fill).toBe(SEGMENT_LABEL_OUTSIDE_FILL);
     });
 
-    it('honours a fontColor override', () => {
+    it('honors a fontColor override', () => {
         const layout = resolveSegmentLabelLayout(geometry, normalizeSegmentLabels({ fontColor: '#123456' }), 'A');
         expect(layout.fill).toBe('#123456');
     });

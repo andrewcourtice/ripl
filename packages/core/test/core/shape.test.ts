@@ -101,7 +101,7 @@ describe('Shape2D', () => {
         const scaleDPR = Object.assign((value: number) => value * 2, { invert: (value: number) => value / 2 });
 
         (rect as unknown as { context: unknown }).context = {
-            hitTestHonoursTransform: false,
+            hitTestHonorsTransform: false,
             scaleDPR,
             isPointInStroke: () => false,
             isPointInPath: (_path: unknown, x: number, y: number) => {

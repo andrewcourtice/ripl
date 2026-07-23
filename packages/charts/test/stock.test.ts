@@ -109,7 +109,7 @@ describe('StockChart volume toggle', () => {
         chart.destroy();
     });
 
-    test('Should centre the volume caption under the volume bars', async () => {
+    test('Should center the volume caption under the volume bars', async () => {
         mockCanvasContext();
         mockCanvasSize(640, 400);
 
@@ -135,7 +135,7 @@ describe('StockChart volume toggle', () => {
         expect(label).toBeDefined();
         expect(label?.textAlign).toBe('center');
 
-        // The clip rect spans the volume plot, so its centre is the caption's expected x.
+        // The clip rect spans the volume plot, so its center is the caption's expected x.
         const plotMidpoint = clip!.x + clip!.width / 2;
 
         expect(label?.x).toBeCloseTo(plotMidpoint);

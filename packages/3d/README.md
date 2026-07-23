@@ -1,6 +1,6 @@
 # @ripl/3d
 
-3D rendering for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
+3D rendering for [Ripl](https://www.ripl.run): a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -14,12 +14,12 @@ Extends Ripl's rendering pipeline with 3D capabilities. Projects 3D geometry ont
 
 ## Features
 
-- **3D math** — Vectors, matrices, and transformations
-- **Camera** — Configurable virtual camera with projection
-- **Shading** — Flat shading with directional lighting
-- **Depth sorting** — Automatic painter's algorithm for correct draw order
-- **3D shapes** — Built-in 3D shape primitives
-- **Interpolation** — 3D-aware interpolators for smooth animation
+- **3D math**: Vectors, matrices, and transformations
+- **Camera**: Configurable virtual camera with projection
+- **Shading**: Flat shading with directional lighting
+- **Depth sorting**: Automatic painter's algorithm for correct draw order
+- **3D shapes**: Built-in 3D shape primitives
+- **Interpolation**: 3D-aware interpolators for smooth animation
 
 ## Usage
 

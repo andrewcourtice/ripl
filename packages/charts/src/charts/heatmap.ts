@@ -93,33 +93,33 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     keyX: keyof TData | ((item: TData) => string);
     /** Accessor for each item's y-axis category. */
     keyY: keyof TData | ((item: TData) => string);
-    /** Accessor for each cell's numeric value (drives its colour). */
+    /** Accessor for each cell's numeric value (drives its color). */
     value: NumericAccessor<TData>;
     /** Ordered list of categories along the x axis. */
     xCategories: string[];
     /** Ordered list of categories along the y axis. */
     yCategories: string[];
-    /** Colour stops (low→high) interpolated across the value extent; also accepts a built-in palette. */
+    /** Color stops (low→high) interpolated across the value extent; also accepts a built-in palette. */
     colors?: string[];
     /** Corner radius in pixels applied to each cell. Defaults to 2. */
     borderRadius?: number;
-    /** Gradient colour legend showing the value→colour scale. Shown by default; pass `false` to hide, or an options object to customise. */
+    /** Gradient color legend showing the value→color scale. Shown by default; pass `false` to hide, or an options object to customize. */
     legend?: boolean | ColorLegendOptions;
-    /** How cell values are formatted in the tooltip and legend — a built-in format type, Intl options, or a custom function. */
+    /** How cell values are formatted in the tooltip and legend: a built-in format type, Intl options, or a custom function. */
     format?: ValueFormatInput;
     /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
     tooltip?: ChartTooltipInput;
     /** Axis configuration for the x and y axes. */
     axis?: ChartAxisInput<TData>;
-    /** Show each cell's value centred in the cell (`true`/`false` or detailed label options). Label colour auto-contrasts against the cell colour. Off by default. */
+    /** Show each cell's value centered in the cell (`true`/`false` or detailed label options). Label color auto-contrasts against the cell color. Off by default. */
     labels?: ChartDataLabelsInput;
 }
 
 /** Payload emitted for heatmap cell interaction events. */
 export interface HeatmapChartCellEvent {
-    /** The x coordinate (in chart pixels) of the cell's top-centre anchor. */
+    /** The x coordinate (in chart pixels) of the cell's top-center anchor. */
     x: number;
-    /** The y coordinate (in chart pixels) of the cell's top-centre anchor. */
+    /** The y coordinate (in chart pixels) of the cell's top-center anchor. */
     y: number;
     /** The value of the interacted cell. */
     value: number;
@@ -141,7 +141,7 @@ export interface HeatmapChartEventMap extends EventMap {
 
 const DEFAULT_COLOR_RANGE = ['#e0f2fe', '#0369a1'];
 
-// Picks a light or dark label colour for legibility against the cell fill (perceived luminance).
+// Picks a light or dark label color for legibility against the cell fill (perceived luminance).
 function cellLabelColor(color: string): string {
     const parsed = parseColor(color);
 
@@ -230,7 +230,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             const valueRange = maxVal - minVal || 1;
 
-            // A sequential colour scale over the value extent. `colors` may be two colours (the
+            // A sequential color scale over the value extent. `colors` may be two colors (the
             // default low→high pair) or any number of stops, including a built-in `COLOR_SCHEME_*` palette.
             const colorScale = scaleSequential(colors ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
@@ -524,7 +524,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             if (legendRegion) {
                 // The bottom band is reserved at full width (before the y-axis inset is known), so
-                // realign the gradient bar to the plot's x-range — under the columns, not the
+                // realign the gradient bar to the plot's x-range, under the columns, not the
                 // y-axis label band. Mirrors CartesianChart.renderNavigator's band realignment.
                 this._colorLegend?.render({
                     ...legendRegion,

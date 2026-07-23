@@ -1,10 +1,10 @@
 /**
  * A tiny deterministic force simulation for the force-directed network chart.
  *
- * Runs a fixed number of iterations of three classic forces — many-body charge (repulsion), link
- * springs, and a centering pull — integrating node velocities with a decay each step so the layout
+ * Runs a fixed number of iterations of three classic forces (many-body charge repulsion, link
+ * springs, and a centering pull), integrating node velocities with a decay each step so the layout
  * cools to a stable arrangement. Initial positions are seeded deterministically (on a circle by
- * index), so the settled layout is reproducible run-to-run — important for stable visual snapshots.
+ * index), so the settled layout is reproducible run-to-run, which matters for stable visual snapshots.
  */
 
 /** A node in the simulation; `x`/`y`/`vx`/`vy` are managed by {@link simulateForce}. */
@@ -41,7 +41,7 @@ export interface ForceOptions {
     centerX?: number;
     /** Y coordinate of the centering pull. Defaults to `0`. */
     centerY?: number;
-    /** Strength of the pull toward the centre point. Defaults to `0.05`. */
+    /** Strength of the pull toward the center point. Defaults to `0.05`. */
     centerStrength?: number;
     /** Number of cooling iterations to run. Defaults to `300`. */
     iterations?: number;
@@ -92,7 +92,7 @@ export function simulateForce(nodes: ForceNode[], links: ForceLink[], options: F
         // Cooling factor from 1 → ~0.
         const alpha = 1 - iteration / iterations;
 
-        // Many-body charge (repulsion) — O(n²), fine for the modest graphs a chart renders.
+        // Many-body charge (repulsion): O(n²), fine for the modest graphs a chart renders.
         for (let i = 0; i < count; i++) {
             const a = nodes[i];
 

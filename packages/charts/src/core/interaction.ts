@@ -2,7 +2,7 @@
  * Shared interaction helpers for charts.
  *
  * `applyHoverHighlight` replaces the copy-pasted hover blocks in bar/line/area/scatter/pie that
- * each registered a fresh `mouseleave` listener *inside* every `mouseenter` handler — a bug that
+ * each registered a fresh `mouseleave` listener *inside* every `mouseenter` handler, a bug that
  * leaked and accumulated listeners on every re-render. This helper registers each listener once
  * and disposes any previous registration when re-applied to a persistent element.
  */
@@ -77,8 +77,8 @@ interface HoverHost {
 }
 
 /**
- * Wires consistent hover behaviour (highlight transition + optional tooltip) onto an element.
- * Safe to call repeatedly on the same persistent element across renders — prior listeners are
+ * Wires consistent hover behavior (highlight transition + optional tooltip) onto an element.
+ * Safe to call repeatedly on the same persistent element across renders; prior listeners are
  * disposed first so handlers never accumulate.
  */
 export function applyHoverHighlight<TElement extends Element>(

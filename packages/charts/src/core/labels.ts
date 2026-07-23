@@ -9,6 +9,8 @@
 import type {
     Point,
     Text,
+    TextAlignment,
+    TextBaseline,
     TextState,
 } from '@ripl/core';
 
@@ -39,7 +41,7 @@ export interface DataLabelSpec {
     content: string;
     /** CSS font shorthand for the label text. */
     font: string;
-    /** Colour of the label text. */
+    /** Color of the label text. */
     fill: string;
     /** Distance in pixels between the anchor point and the label. */
     offset?: number;
@@ -49,8 +51,8 @@ export interface DataLabelSpec {
 const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     dx: number;
     dy: number;
-    textAlign: TextState['textAlign'];
-    textBaseline: TextState['textBaseline'];
+    textAlign: TextAlignment;
+    textBaseline: TextBaseline;
 }> = {
     top: {
         dx: 0,
@@ -78,8 +80,20 @@ const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     },
 };
 
+/** Resolved placement for a data label: the offset position and the text alignment that anchors it. */
+export interface DataLabelLayout {
+    /** The x coordinate of the label, offset from the mark along the anchor direction. */
+    x: number;
+    /** The y coordinate of the label, offset from the mark along the anchor direction. */
+    y: number;
+    /** Horizontal text alignment that keeps the label text anchored toward the mark. */
+    textAlign: TextAlignment;
+    /** Vertical text baseline that keeps the label text anchored toward the mark. */
+    textBaseline: TextBaseline;
+}
+
 /** Resolves the anchored position and text alignment for a data label. */
-export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>) {
+export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>): DataLabelLayout {
     const { x, y, anchor, offset = 8 } = spec;
     const { dx, dy, textAlign, textBaseline } = DATA_LABEL_ANCHORS[anchor];
 
@@ -99,7 +113,7 @@ export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'an
  * Shared segment-label style constants. Every chart routes its segment labels through these so the
  * appearance is identical across chart types **and** across the Canvas and SVG contexts. The
  * cross-context inconsistency this fixes came from labels that omitted `font`, leaving each backend
- * to fall back to its own default — always set an explicit font.
+ * to fall back to its own default, so always set an explicit font.
  */
 export const SEGMENT_LABEL_FONT = '600 11px sans-serif';
 /** Fill for labels drawn inside a segment (on top of the filled shape). */
@@ -123,7 +137,7 @@ export interface SegmentLabelSpec {
     textBaseline?: TextState['textBaseline'];
     /** Defaults to {@link SEGMENT_LABEL_FONT}. */
     font?: string;
-    /** Defaults to the inside fill; pass the outside fill (or a custom colour) as needed. */
+    /** Defaults to the inside fill; pass the outside fill (or a custom color) as needed. */
     fill?: string;
     /** Initial opacity (defaults to 0 so callers can fade the label in). */
     opacity?: number;
@@ -153,9 +167,9 @@ export function createSegmentLabel(spec: SegmentLabelSpec): Text {
 
 /** Input geometry for placing a label around a radial (arc-based) segment. */
 export interface RadialLabelInput {
-    /** Centre x of the radial layout, in chart pixels. */
+    /** Center x of the radial layout, in chart pixels. */
     cx: number;
-    /** Centre y of the radial layout, in chart pixels. */
+    /** Center y of the radial layout, in chart pixels. */
     cy: number;
     /** Start angle of the segment, in radians. */
     startAngle: number;
@@ -202,9 +216,9 @@ export interface RadialLabelPlacement {
 
 /**
  * Computes both the inside (centroid) and outside (leader-line) label placements for a radial
- * segment. Shared by the pie and polar-area charts so their inside/outside label behaviour — and
- * the elbow leader line — stay identical. The outside `textAlign` flips by hemisphere so text reads
- * away from the centre.
+ * segment. Shared by the pie and polar-area charts so their inside/outside label behavior and
+ * the elbow leader line, stay identical. The outside `textAlign` flips by hemisphere so text reads
+ * away from the center.
  */
 export function resolveRadialLabel(input: RadialLabelInput): RadialLabelPlacement {
     const {
@@ -266,7 +280,7 @@ export interface SegmentLabelLayout {
     textAlign: TextState['textAlign'];
     /** Vertical text baseline for the label. */
     textBaseline: TextState['textBaseline'];
-    /** Colour of the label text. */
+    /** Color of the label text. */
     fill: string;
     /** CSS font shorthand for the label text (falls back to the shared segment-label font). */
     font?: string;
@@ -278,8 +292,8 @@ export interface SegmentLabelLayout {
 
 /**
  * Resolves a segment's label into a ready-to-render layout (inside centroid or outside leader line),
- * honouring visibility, an optional minimum-angle clutter guard, and position/font/colour options.
- * Shared by the pie and polar-area charts so their label behaviour is identical.
+ * honoring visibility, an optional minimum-angle clutter guard, and position/font/color options.
+ * Shared by the pie and polar-area charts so their label behavior is identical.
  *
  * The connector always has ≥2 points (a degenerate line at the anchor when hidden or inside) so
  * `Polyline.getBoundingBox` stays safe and renders nothing for non-outside labels.

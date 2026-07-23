@@ -2,7 +2,7 @@
 
 Playwright snapshots of **all 18 charts**, used to catch visual regressions such as missing
 titles, horizontally-clipped y-axis titles, legends overlapping the plot area, missing data
-points, and unresolved (grey) segment colours.
+points, and unresolved (gray) segment colors.
 
 The gallery (`gallery.ts` / `index.html`) renders each chart with `animation: false` and fixed
 data so screenshots are deterministic. The list of charts lives in `chart-ids.ts` and is shared

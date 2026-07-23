@@ -27,7 +27,7 @@ export type NumericKey<TData> = {
 export type NumericAccessor<TData> = NumericKey<TData> | ((item: TData) => number);
 
 /**
- * Normalises an {@link Accessor} into a function. Property keys read the field, functions are
+ * Normalizes an {@link Accessor} into a function. Property keys read the field, functions are
  * passed through, and any other value is treated as a constant.
  */
 export function resolveAccessor<TData, TValue>(accessor: Accessor<TData, TValue>): (item: TData) => TValue {
@@ -74,7 +74,7 @@ export function computeStackOffset<TSeries, TData>(
 }
 
 /**
- * Computes the value extent `[min, max]` of independently stacked positive and negative totals — the
+ * Computes the value extent `[min, max]` of independently stacked positive and negative totals: the
  * span a stacked bar chart covers when, per item, positive and negative values accumulate from the
  * baseline in opposite directions. Both bounds seed at `0`, so an all-positive (or all-negative)
  * dataset keeps a zero baseline.
@@ -116,7 +116,7 @@ export function positiveNegativeExtent<TSeries, TData>(
 }
 
 /**
- * Computes the value extent `[min, max]` of the running cumulative total across series — the span a
+ * Computes the value extent `[min, max]` of the running cumulative total across series: the span a
  * stacked area chart covers as each series accumulates on top of the previous ones. Both bounds seed
  * at `0`, so a single-sign dataset keeps a zero baseline.
  *

@@ -3,20 +3,20 @@
  *
  * `packSiblings` positions a set of circles (each with a fixed radius `r`) so that none overlap,
  * using the front-chain algorithm (Wang et al.) as popularised by D3: circles are placed tangent to
- * their neighbours around a growing chain, producing a tight, roughly circular cluster rather than a
+ * their neighbors around a growing chain, producing a tight, roughly circular cluster rather than a
  * loose spiral. `enclosingCircle` returns the *smallest* circle that contains them all (Welzl's
- * algorithm), used to centre and scale the packed layout into the chart area and to draw the visible
+ * algorithm), used to center and scale the packed layout into the chart area and to draw the visible
  * containing circle.
  *
- * Both are deterministic (no randomisation), so a given dataset always packs identically — important
+ * Both are deterministic (no randomization), so a given dataset always packs identically, which matters
  * for stable visual snapshots.
  */
 
 /** A circle to be packed; `x`/`y` are assigned by {@link packSiblings}. */
 export interface PackCircle {
-    /** Centre x, assigned by {@link packSiblings}. */
+    /** Center x, assigned by {@link packSiblings}. */
     x: number;
-    /** Centre y, assigned by {@link packSiblings}. */
+    /** Center y, assigned by {@link packSiblings}. */
     y: number;
     /** Fixed radius of the circle (supplied by the caller). */
     r: number;
@@ -75,9 +75,9 @@ function score(node: ChainNode): number {
 }
 
 /**
- * Assigns `x`/`y` to each circle so none overlap, arranged in a tight cluster centred on the origin.
+ * Assigns `x`/`y` to each circle so none overlap, arranged in a tight cluster centered on the origin.
  * Circles are packed largest-first (which yields a rounder, denser result) but the input array's
- * order — and each element's identity — is preserved, so callers can map results back by index.
+ * order, and each element's identity, is preserved, so callers can map results back by index.
  * Mutates and returns the input array.
  */
 export function packSiblings(circles: PackCircle[]): PackCircle[] {
@@ -172,7 +172,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
             }
         } while (j !== k.next);
 
-        // Success — splice the new circle into the chain between a and b.
+        // Success: splice the new circle into the chain between a and b.
         const inserted: ChainNode = {
             circle: c,
             next: nodeB,
@@ -196,7 +196,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
         nodeB = nodeA.next;
     }
 
-    // Recentre so the packed cluster's enclosing circle sits at the origin.
+    // Recenter so the packed cluster's enclosing circle sits at the origin.
     const enclosing = enclosingCircle(circles);
 
     for (let i = 0; i < n; i++) {
@@ -328,7 +328,7 @@ function extendBasis(basis: PackCircle[], p: PackCircle): PackCircle[] {
     return basis;
 }
 
-/** Returns the smallest circle (centre + radius) enclosing all the given circles. */
+/** Returns the smallest circle (center + radius) enclosing all the given circles. */
 export function enclosingCircle(circles: PackCircle[]): { x: number;
     y: number;
     r: number; } {

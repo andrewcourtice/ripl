@@ -1,6 +1,6 @@
 # @ripl/svg
 
-SVG rendering context for [Ripl](https://www.ripl.run) — a unified API for 2D graphics rendering in the browser.
+SVG rendering context for [Ripl](https://www.ripl.run): a unified API for 2D graphics rendering in the browser.
 
 ## Installation
 
@@ -10,7 +10,7 @@ npm install @ripl/svg
 
 ## Overview
 
-This package provides an SVG implementation of Ripl's `Context` interface. Swap a single import to switch your entire rendering pipeline from Canvas to SVG — all elements, scenes, animations, and events work identically.
+This package provides an SVG implementation of Ripl's `Context` interface. Swap a single import to switch your entire rendering pipeline from Canvas to SVG; all elements, scenes, animations, and events work identically.
 
 ## Usage
 
@@ -37,10 +37,10 @@ circle.render(context);
 
 ## Features
 
-- **Drop-in replacement** — Replace `@ripl/web`'s `createContext` with `@ripl/svg`'s and everything just works
-- **Efficient DOM updates** — Virtual DOM reconciler minimizes DOM mutations each frame
-- **Full API parity** — Paths, text, images, gradients, transforms, clipping, and hit testing
-- **Gradient support** — Linear and radial gradients rendered as native SVG gradient elements
+- **Drop-in replacement**: Replace `@ripl/web`'s `createContext` with `@ripl/svg`'s and everything just works
+- **Efficient DOM updates**: Virtual DOM reconciler minimizes DOM mutations each frame
+- **Full API parity**: Paths, text, images, gradients, transforms, clipping, and hit testing
+- **Gradient support**: Linear and radial gradients rendered as native SVG gradient elements
 
 ## Documentation
 

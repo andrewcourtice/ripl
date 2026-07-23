@@ -73,7 +73,7 @@ export class ChartTitle extends ChartComponent {
         return this._options.position === 'left' || this._options.position === 'right';
     }
 
-    /** Lazily creates the title text element (added directly to the scene — no wrapping group). */
+    /** Lazily creates the title text element (added directly to the scene, no wrapping group). */
     private _ensureText(): Text {
         if (!this._text) {
             this._text = createText({
@@ -122,7 +122,7 @@ export class ChartTitle extends ChartComponent {
             : textHeight + padding.top + padding.bottom;
     }
 
-    /** Draws (or repositions) the title centred within the reserved region. */
+    /** Draws (or repositions) the title centered within the reserved region. */
     public render(region: ChartArea, animation?: ResolvedAnimation) {
         if (!this.visible) {
             this.destroy();

@@ -83,7 +83,7 @@ export interface ChordChartOptions extends BaseChartOptions {
     labels: string[];
     /** Square flow matrix where `matrix[i][j]` is the flow from group `i` to group `j`. */
     matrix: number[][];
-    /** Explicit colour per group; falls back to the generated palette when omitted. */
+    /** Explicit color per group; falls back to the generated palette when omitted. */
     colors?: string[];
     /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
     padAngle?: number;
@@ -305,7 +305,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
             const colorGenerator = this.colorGenerator;
 
-            // Resolve a stable colour per label through the shared, id-keyed colour map so colours
+            // Resolve a stable color per label through the shared, id-keyed color map so colors
             // are preserved across data updates (not reshuffled each render) and stay in sync with
             // the legend. Keyed by `arc-${label}` to match the arc group / legend item ids.
             this.resolveSeriesColors(labels.map((label, index) => ({

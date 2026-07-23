@@ -147,7 +147,7 @@ describe('Interpolators', () => {
                 const mid = interpolator(0.5);
                 // survivor index 0: y morphs 0 → 100
                 expect(mid[0][1]).toBeCloseTo(50);
-                // new point (index 3): X is the target X (monotonic), start Y seeded from a neighbour
+                // new point (index 3): X is the target X (monotonic), start Y seeded from a neighbor
                 expect(mid[3][0]).toBeCloseTo(3);
             });
 

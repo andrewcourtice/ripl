@@ -246,6 +246,7 @@ export default tseslint.config(
             '@stylistic/object-property-newline': 'error',
             '@stylistic/space-infix-ops': 'error',
             '@stylistic/array-bracket-newline': ['error', 'consistent'],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             '@stylistic/brace-style': ['error', '1tbs'],
             '@stylistic/linebreak-style': ['error', 'unix'],
             '@stylistic/object-curly-spacing': ['error', 'always'],
@@ -318,7 +319,7 @@ export default tseslint.config(
     // Build/tooling scripts may log progress to the console.
     {
         name: 'ripl/scripts',
-        files: ['app/scripts/**/*.mjs', 'app/scripts/**/*.js'],
+        files: ['apps/website/scripts/**/*.mjs', 'apps/website/scripts/**/*.js'],
         rules: {
             'no-console': 'off',
         },
@@ -345,11 +346,15 @@ export default tseslint.config(
             'no-undef': 'off',
             'no-unused-vars': 'off',
             'no-unused-expressions': 'off',
-            // Documentation snippets favour compact, illustrative code over
+            // Documentation snippets favor compact, illustrative code over
             // production-strictness rules, so relax those for fenced code blocks.
             'id-length': 'off',
             'no-multi-assign': 'off',
-            '@stylistic/object-property-newline': 'off',
+            // Snippets may keep a simple object fully inline, but members must not mix
+            // same-line and new-line placement within one literal.
+            '@stylistic/object-property-newline': ['error', {
+                'allowAllPropertiesOnSameLine': true,
+            }],
             '@stylistic/no-multi-spaces': 'off',
             '@typescript-eslint/no-unused-vars': 'off',
             '@typescript-eslint/no-unused-expressions': 'off',
@@ -368,8 +373,13 @@ export default tseslint.config(
             }],
             '@stylistic/object-curly-spacing': ['error', 'always'],
             '@stylistic/object-curly-newline': ['error', {
+                'ObjectExpression': {
+                    'multiline': true,
+                    'consistent': true,
+                },
                 'ImportDeclaration': 'always',
             }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             'ripl/import-export-spacing': 'error',
         },
     },
@@ -377,7 +387,7 @@ export default tseslint.config(
     // Lint <script> blocks in VitePress markdown files
     {
         name: 'ripl/vue-markdown',
-        files: ['app/**/*.md'],
+        files: ['apps/website/**/*.md'],
         plugins: {
             vue,
             'ripl': riplPlugin,
@@ -412,8 +422,18 @@ export default tseslint.config(
             }],
             '@stylistic/object-curly-spacing': ['error', 'always'],
             '@stylistic/object-curly-newline': ['error', {
+                'ObjectExpression': {
+                    'multiline': true,
+                    'consistent': true,
+                },
                 'ImportDeclaration': 'always',
             }],
+            // Doc script blocks may keep a simple object fully inline, but members must
+            // not mix same-line and new-line placement within one literal.
+            '@stylistic/object-property-newline': ['error', {
+                'allowAllPropertiesOnSameLine': true,
+            }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             'ripl/import-export-spacing': 'error',
         },
     },
@@ -466,6 +486,7 @@ export default tseslint.config(
                     'minProperties': 2,
                 },
             }],
+            '@stylistic/array-element-newline': ['error', 'consistent'],
             '@stylistic/member-delimiter-style': 'error',
             'ripl/import-export-spacing': 'error',
 
@@ -480,7 +501,7 @@ export default tseslint.config(
     // `renderer` injected into scope, so treat them as read-only globals.
     {
         name: 'ripl/playground-examples',
-        files: ['app/src/.vitepress/components/playground/examples/**/*.js'],
+        files: ['apps/website/src/.vitepress/components/playground/examples/**/*.js'],
         languageOptions: {
             globals: {
                 context: 'readonly',
@@ -491,10 +512,11 @@ export default tseslint.config(
     },
 
     // Prefer keyed object-lookup dispatch over `switch` in library and extension
-    // source (see AGENTS.md → Control Flow). The docs site under `app/` is exempt.
+    // source (see AGENTS.md → Control Flow). The docs site under `apps/website/` is exempt.
     {
         name: 'ripl/no-switch',
         files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        ignores: ['apps/website/**'],
         rules: {
             'no-restricted-syntax': ['error', {
                 selector: 'SwitchStatement',

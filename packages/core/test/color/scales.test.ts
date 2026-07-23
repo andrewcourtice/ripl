@@ -13,7 +13,7 @@ import {
 } from '../../src';
 
 /**
- * Extracts the rounded RGB channels of a colour string for comparison, ignoring the serialised
+ * Extracts the rounded RGB channels of a color string for comparison, ignoring the serialized
  * format. Falls back to a numeric scan for interpolated `rgba()` strings with fractional channels,
  * which the library's integer-only `parseColor` does not match.
  */
@@ -102,7 +102,7 @@ describe('scaleSequential', () => {
 
 describe('scaleSequential (diverging domain)', () => {
 
-    test('Should centre the neutral value at the interpolator midpoint', () => {
+    test('Should center the neutral value at the interpolator midpoint', () => {
         const scale = scaleSequential(COLOR_SCHEME_RDBU, [-10, 0, 10]);
 
         expect(rgb(scale(-10))).toEqual(rgb(COLOR_SCHEME_RDBU[0]));

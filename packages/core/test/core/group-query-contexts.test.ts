@@ -7,10 +7,10 @@
  * factory that can be constructed in a headless (jsdom) environment and asserts the query results
  * are identical.
  *
- * Contexts that genuinely cannot initialise headlessly are exercised as much as possible:
+ * Contexts that genuinely cannot initialize headlessly are exercised as much as possible:
  *  - **WebGPU** needs a real GPU/adapter, **terminal** needs a TTY stream, and a **WebGL** context
  *    needs a GL implementation — none are available under vitest/jsdom. Their scene-graph/query
- *    behaviour is the shared, context-independent logic verified by the canvas/SVG cases here and by
+ *    behavior is the shared, context-independent logic verified by the canvas/SVG cases here and by
  *    `group-query-combinators.test.ts`; their render pipelines are covered by each platform package's
  *    own tests.
  */
@@ -154,7 +154,7 @@ describe('Group query API across contexts', () => {
             // Constructing a scene exercises the platform context factory + text measurement path.
             scene = createScene(el);
         } catch {
-            // Documented headless limitation — the context can't initialise here; the shared query
+            // Documented headless limitation — the context can't initialize here; the shared query
             // logic is still guaranteed by the context-free case below.
             el.remove();
             return;

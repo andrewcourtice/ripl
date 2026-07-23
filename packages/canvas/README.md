@@ -1,6 +1,6 @@
 # @ripl/canvas
 
-Canvas 2D rendering context for [Ripl](https://www.ripl.run) — a unified API for drawing 2D graphics and data visualizations in the browser.
+Canvas 2D rendering context for [Ripl](https://www.ripl.run): a unified API for drawing 2D graphics and data visualizations in the browser.
 
 ## Installation
 

@@ -168,7 +168,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
      * @param local - when `true`, unions the children's untransformed local geometry instead of their world boxes.
      */
     /**
-     * Group boxes compose from children, whose changes are invisible to the group's own state —
+     * Group boxes compose from children, whose changes are invisible to the group's own state,
      * they are never cached (see {@link Element.getBoundingBox}).
      */
     protected get _boundsCacheable(): boolean {
@@ -196,7 +196,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         context.pushGroup(this as unknown as Element);
 
         // `children` returns a fresh array, so this sort is safe. Rendering scene-less (a group drawn
-        // directly to a context) must honour z-index and the group's own transform just as `Scene`
+        // directly to a context) must honor z-index and the group's own transform just as `Scene`
         // does via its instruction stream; the sort is stable, so equal-z-index siblings keep
         // insertion order.
         this.children

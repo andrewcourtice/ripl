@@ -3,7 +3,7 @@ name: ripl-charts
 description: >-
   Build production-ready charts in the Ripl monorepo (@ripl/charts) — a new chart type, or a fix/demo
   for an existing one — with correct animation, interaction, docs, and demos, first try. Use whenever
-  adding or changing a chart in packages/charts, its VitePress demo/docs under app/src/charts, or
+  adding or changing a chart in packages/charts, its VitePress demo/docs under apps/website/src/charts, or
   the shared chart infrastructure. Covers the factory+class pattern, the enter/update/exit render
   pipeline, tooltips/hover-highlight, labels, the element toolkit, demo authoring, gallery/docs
   registration, and how to verify in this sandbox.
@@ -33,8 +33,8 @@ layouts), `pie.ts`/`radial-bar.ts` (arcs).
 - `packages/charts/src/components/` — `tooltip.ts`, `legend.ts`, `axis.ts`, `grid.ts`, `crosshair.ts`.
 - `packages/charts/test/` — vitest unit tests; `test/visual/gallery.ts` + `chart-ids.ts` drive
   Playwright snapshots.
-- `app/src/charts/<name>.md` — the VitePress demo + docs page.
-- `app/src/charts/getting-started.md` — the "Available Charts" table (register new charts here).
+- `apps/website/src/charts/<name>.md` — the VitePress demo + docs page.
+- `apps/website/src/charts/getting-started.md` — the "Available Charts" table (register new charts here).
 
 ## Anatomy of a chart
 
@@ -116,7 +116,7 @@ Inside `super.render(async () => { ... })`:
    }));
    ```
    Use `ANIMATION_REFERENCE.enter | update | hover` so `animation: false` and custom durations are
-   honoured. `stagger(index, length, duration, fraction?)` spreads delays.
+   honored. `stagger(index, length, duration, fraction?)` spreads delays.
 
 ### Path & point animation helpers (`@ripl/core`)
 
@@ -154,7 +154,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
 `createLine` (`x1,y1,x2,y2`), `createPolyline` (`points`, `renderer`), `createText`, `createGroup`,
 `createRect`. Shapes take `autoFill`/`autoStroke` toggles.
 
-- **Rounded radial/progress bars**: draw an **open arc** (no `innerRadius`) on the band centreline,
+- **Rounded radial/progress bars**: draw an **open arc** (no `innerRadius`) on the band centerline,
   stroked with `lineWidth = band thickness` and `lineCap: 'round'` — a round cap rounds the sweeping
   end. `Arc`'s `borderRadius` is not implemented in render; don't rely on it.
 - **Polyline curves**: `renderer` is a named type (`'linear' | 'spline' | 'cardinal' | 'monotoneX' | …`)
@@ -167,7 +167,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
 
 ## Custom layouts
 
-- **Circle packing**: `packSiblings(circles)` (front-chain, tight, centred on the origin) +
+- **Circle packing**: `packSiblings(circles)` (front-chain, tight, centered on the origin) +
   `enclosingCircle(circles)` (Welzl minimal enclosing circle) from `core/pack.ts`. Draw a visible
   containing circle at the fit radius.
 - **Force layout**: `simulateForce(nodes, links, options)` from `core/force.ts` — deterministic,
@@ -175,7 +175,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
   reweights relax from the current layout (glide, not reshuffle). Spring nodes out from a root using
   BFS depth for the stagger and `easeOutBack`.
 
-## Authoring the demo (`app/src/charts/<name>.md`)
+## Authoring the demo (`apps/website/src/charts/<name>.md`)
 
 VitePress page with a live example. Copy an existing page (e.g. `radial-bar.md`). Essentials:
 
@@ -251,12 +251,12 @@ Add a `create<Name>Chart(mount('<name>'), { animation: false, … })` block to
   `types: []`, `skipLibCheck`). Keep a `tc-tests.json` / `tc-gallery.json` including test files plus a
   `vitest-shim.d.ts`. Must be clean after every change.
 - **Pure logic** (packers, force sim, geometry) can be compiled with `tsc <file> --outDir … --module
-  commonjs --ignoreDeprecations 6.0` and exercised with `node` for a real behavioural check.
+  commonjs --ignoreDeprecations 6.0` and exercised with `node` for a real behavioral check.
 - **Runtime chart render** needs jsdom + a mock canvas (`@ripl/test-utils` `mockCanvasContext`,
   `polyfillPath2D`) — run via `vitest` locally. Charts that can't init headlessly (svg/webgpu/terminal)
   document the limitation and rely on the shared context-free logic.
 - **Locally (user runs)**: `yarn test` (vitest unit), Playwright visual snapshots, and
-  `yarn workspace @ripl/app prepare-playground` + `yarn app:dev` to eyeball demos.
+  `yarn workspace @ripl/website prepare-playground` + `yarn workspace @ripl/website start` to eyeball demos.
 
 ## Common pitfalls
 

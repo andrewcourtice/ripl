@@ -39,7 +39,7 @@ describe('Interpolators', () => {
         test('Should interpolate to midpoint', () => {
             const interpolator = interpolateColor('#000000', '#ffffff');
             const result = interpolator(0.5);
-            // serialiseRGBA does not round, so values like 127.5 are expected
+            // serializeRGBA does not round, so values like 127.5 are expected
             expect(result).toMatch(/^rgba\([\d.]+, [\d.]+, [\d.]+, [\d.]+\)$/);
             const match = result.match(/rgba\(([\d.]+), ([\d.]+), ([\d.]+)/);
             expect(match).toBeTruthy();

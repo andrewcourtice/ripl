@@ -1,0 +1,19 @@
+{
+    "extends": "../../tsconfig.json",
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.vue",
+        "src/**/*.md",
+        "src/.vitepress/**/*.ts",
+        "src/.vitepress/**/*.vue",
+        "src/.vitepress/**/*.md"
+    ],
+    "files": [
+        "global.d.ts"
+    ],
+    "vueCompilerOptions": {
+        "vitePressExtensions": [
+            ".md"
+        ]
+    }
+}

@@ -280,7 +280,7 @@ describe('normalizeDataLabels', () => {
         });
     });
 
-    it('honours a default anchor', () => {
+    it('honors a default anchor', () => {
         expect(normalizeDataLabels(true, { anchor: 'right' })).toMatchObject({
             visible: true,
             anchor: 'right',

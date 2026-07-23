@@ -88,13 +88,13 @@ const REST_ALPHA = 0.7;
 export interface PolarScatterSeriesOptions<TData> {
     /** Unique identifier for the series. */
     id: string;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    /** Optional color override for the series (otherwise a palette color is generated). */
     color?: string;
     /** Display label for the series (shown in the legend and tooltips). */
     label: string;
     /** Angular position in degrees (0° at the top, increasing clockwise). */
     angle: NumericAccessor<TData>;
-    /** Radial position (distance from the centre), on the radial value scale. */
+    /** Radial position (distance from the center), on the radial value scale. */
     radius: NumericAccessor<TData>;
     /** Optional accessor whose value scales each marker's size between `minRadius` and `maxRadius`. */
     sizeBy?: NumericAccessor<TData> | number;
@@ -153,7 +153,7 @@ export interface PolarScatterChartEventMap extends EventMap {
 /**
  * Polar scatter chart plotting points by angle and radius on a circular grid.
  *
- * Each point's angular position encodes one variable and its distance from the centre another, with
+ * Each point's angular position encodes one variable and its distance from the center another, with
  * an optional third variable driving marker size. Renders concentric value rings and angular spokes,
  * with interactive tooltips, a legend, and animated entry/update/exit transitions.
  *
@@ -413,7 +413,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             // series re-fits the value rings and animates its markers out through the exit join.
             const activeSeries = this.filterActive(series);
 
-            // Radial value scale: 0 at the centre, the data max (or override) at the outer ring.
+            // Radial value scale: 0 at the center, the data max (or override) at the outer ring.
             const radiusValues = activeSeries.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
             const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
             const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
@@ -582,7 +582,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     const spec = labelSpec(srs, item, data.indexOf(item));
                     const layout = resolveDataLabelLayout(spec);
 
-                    // Text content isn't tweenable — apply it directly.
+                    // Text content isn't tweenable, so apply it directly.
                     label.content = spec.content;
                     label.font = spec.font;
                     label.data = {

@@ -37,7 +37,7 @@ export interface LinearScaleOptions {
     padToTicks?: boolean | number;
     /**
      * Expand the domain to round, tick-aligned boundaries at construction. `true` uses ~10 ticks; a
-     * number sets the target tick count. This is a construction-time option by design — scales stay
+     * number sets the target tick count. This is a construction-time option by design; scales stay
      * plain callable objects with no chained `.nice()` method.
      */
     nice?: boolean | number;

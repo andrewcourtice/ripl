@@ -2,7 +2,7 @@
  * Area series renderer: draws each series as a filled band beneath a line with optional markers.
  *
  * Extracted from the area chart so the standalone {@link AreaChart} and the mixed trend chart share
- * one implementation — including cumulative stacking, the left→right fill reveal on entry, the
+ * one implementation, including cumulative stacking, the left→right fill reveal on entry, the
  * key-reconciled top/bottom morph, and the largest-at-back paint ordering that keeps small areas
  * from hiding behind large ones.
  */
@@ -104,7 +104,7 @@ interface AreaPrepared<TData> {
 
 /**
  * Builds an interpolator that reveals a filled area band left→right, growing a closed polygon from
- * the left edge to a moving front along the real top and lower boundaries — a true wipe, not a
+ * the left edge to a moving front along the real top and lower boundaries: a true wipe, not a
  * horizontal stretch.
  */
 function interpolateAreaReveal(top: Point[], bottom: Point[]): Interpolator<Point[]> {
@@ -145,7 +145,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         return typeIsFunction(series.label) ? series.label(item) : series.label;
     }
 
-    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    // The value scale a series renders against: its bound axis's scale in multi-axis charts.
     private _valueScale(series: AreaSeriesLike<TData>, ctx: AreaSeriesContext<TData>): Scale {
         return ctx.resolveScale?.(series) ?? ctx.yScale;
     }
@@ -231,7 +231,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const { data } = ctx;
         // Per-series cumulative top and its lower boundary, so a stacked series fills from the top of
         // the previous same-group series. Cumulation resets per value-scale group (series bound to
-        // different y-axes stack independently); single-axis charts share one group, so the behaviour
+        // different y-axes stack independently); single-axis charts share one group, so the behavior
         // is unchanged.
         const stackedTop: number[][] = [];
         const stackedBottom: number[][] = [];

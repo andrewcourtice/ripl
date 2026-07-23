@@ -27,7 +27,7 @@ export function scaleContinuous(
 
     // Resolve tick-padding to a concrete domain once so `convert` and `invert` share the exact same
     // `[min, max]`. Building `invert` by swapping the args into `getLinearScaleMethod` would otherwise
-    // re-apply `padToTicks` to the *range* — and `padDomain` on a descending range (e.g. the y-axis'
+    // re-apply `padToTicks` to the *range*, and `padDomain` on a descending range (e.g. the y-axis'
     // `[bottom, top]`) yields a negative step that corrupts the mapping and returns `NaN`.
     const padCount = options?.padToTicks;
     const mappingDomain = padCount ? niceDomain(resolvedDomain, +padCount) : resolvedDomain;

@@ -1,0 +1,121 @@
+<template>
+    <dashboard-card title="Page Load Time vs Views">
+        <div ref="chartEl" class="dashboard-chart"></div>
+        <div class="chart-readout">{{ readout }}</div>
+    </dashboard-card>
+</template>
+
+<script lang="ts" setup>
+import {
+    computed,
+    ref,
+    watch,
+} from 'vue';
+
+import {
+    createScatterChart,
+} from '@ripl/charts';
+
+import {
+    createDevtools,
+} from '@ripl/devtools';
+
+import DashboardCard from './dashboard-card.vue';
+
+import {
+    useChartContext,
+} from '../composables/use-chart-context';
+
+import {
+    useAnalyticsStore,
+} from '../store/analytics';
+
+import type {
+    PageLoadPoint,
+} from '../data/mock';
+
+const store = useAnalyticsStore();
+const chartEl = ref<HTMLElement>();
+const context = useChartContext(chartEl);
+let chart: ReturnType<typeof createScatterChart<PageLoadPoint>> | undefined;
+
+const DEFAULT_READOUT = 'Bubble size = unique sessions · hover a bubble';
+const hovered = ref('');
+const selected = ref('');
+const readout = computed(() => hovered.value || selected.value || DEFAULT_READOUT);
+
+function describe(loadTime: number, views: number, sessions: number): string {
+    return `${Math.round(loadTime)}ms load · ${Math.round(views).toLocaleString()} views · ${Math.round(sessions).toLocaleString()} sessions`;
+}
+
+function buildChart() {
+    const data = store.pageLoadData;
+    if (!context.value || data.length === 0) return;
+
+    const options = {
+        data,
+        key: 'page' as const,
+        grid: true,
+        crosshair: true,
+        format: 'number' as const,
+        axis: {
+            x: {
+                title: 'Load Time (ms)',
+                format: (v: number) => `${Math.round(v)}ms`,
+            },
+            y: {
+                title: 'Page Views',
+                format: (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : String(Math.round(v)),
+            },
+        },
+        padding: {
+            top: 16,
+            right: 16,
+            bottom: 16,
+            left: 12,
+        },
+        series: [
+            {
+                id: 'pages',
+                xBy: 'loadTime' as const,
+                yBy: 'views' as const,
+                // Scale each bubble by its session count (was previously fixed at minRadius).
+                sizeBy: 'sessions' as const,
+                label: 'Pages',
+                minRadius: 5,
+                maxRadius: 12,
+            },
+        ],
+    };
+
+    if (chart) {
+        chart.update(options);
+        return;
+    }
+
+    chart = createScatterChart(context.value, options);
+
+    chart.on('markerenter', event => {
+        hovered.value = describe(event.data.xValue, event.data.yValue, event.data.sizeValue);
+    });
+
+    createDevtools(chart.context, chart.scene, chart.renderer, {
+        label: 'Page load scatter',
+    });
+    chart.on('markerleave', () => {
+        hovered.value = '';
+    });
+    chart.on('markerclick', event => {
+        selected.value = `Pinned: ${describe(event.data.xValue, event.data.yValue, event.data.sizeValue)}`;
+    });
+}
+
+watch(context, () => buildChart());
+watch(() => store.pageLoadData, () => {
+    if (chart) {
+        chart.update({ data: store.pageLoadData });
+    } else {
+        buildChart();
+    }
+});
+</script>

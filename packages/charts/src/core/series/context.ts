@@ -1,9 +1,9 @@
 /**
  * Shared context and series shapes for the series-renderer layer.
  *
- * A {@link SeriesRenderContext} bundles everything a series renderer needs from its host chart —
- * the resolved scales, plot rectangle, colour lookup, animation resolver, tooltip, formatter, and
- * the callbacks for adding marks and emitting interaction events — so that the line/area/bar
+ * A {@link SeriesRenderContext} bundles everything a series renderer needs from its host chart:
+ * the resolved scales, plot rectangle, color lookup, animation resolver, tooltip, formatter, and
+ * the callbacks for adding marks and emitting interaction events. This lets the line/area/bar
  * geometry can be shared verbatim between the standalone charts and the mixed trend chart. Each
  * renderer widens the context with the extra inputs its geometry needs (an x point scale for
  * line/area, a category band scale for bars).
@@ -49,7 +49,7 @@ import type {
 /** Which phase of a pointer interaction produced a series event. */
 export type SeriesEventPhase = 'enter' | 'leave' | 'click';
 
-/** Normalised payload emitted for a mark (marker or bar) interaction, mapped by the host to its own event names. */
+/** Normalized payload emitted for a mark (marker or bar) interaction, mapped by the host to its own event names. */
 export interface SeriesInteractionEvent {
     /** The x coordinate (in chart pixels) of the interacted mark. */
     x: number;
@@ -84,7 +84,7 @@ export interface SeriesRenderContext<TData> {
     renderer: Renderer;
     /** The shared hover tooltip, when the chart has one. */
     tooltip?: Tooltip;
-    /** Resolves a series id to its palette (or explicit) colour. */
+    /** Resolves a series id to its palette (or explicit) color. */
     getColor: (seriesId: string) => string;
     /** Resolves the chart's animation for a given reference duration. */
     resolveAnimation: (reference?: number) => ResolvedAnimation;
@@ -94,7 +94,7 @@ export interface SeriesRenderContext<TData> {
     dataLabels: ChartDataLabelsOptions;
     /** Adds entering marks to the chart's plot-clipped content container. */
     addContent: (elements: OneOrMore<Element>) => void;
-    /** Emits a normalised interaction event, which the host maps to its typed event map. */
+    /** Emits a normalized interaction event, which the host maps to its typed event map. */
     emit: (phase: SeriesEventPhase, event: SeriesInteractionEvent) => void;
     /**
      * Base z-index for this renderer's series groups. When set (mixed charts), the renderer assigns
@@ -142,7 +142,7 @@ export interface BarSeriesContext<TData> extends SeriesRenderContext<TData> {
 export interface LineSeriesLike<TData> {
     /** Unique identifier for the series. */
     id: string;
-    /** Explicit series colour; falls back to the generated palette when omitted. */
+    /** Explicit series color; falls back to the generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
@@ -172,7 +172,7 @@ export interface AreaSeriesLike<TData> extends LineSeriesLike<TData> {
 export interface BarSeriesLike<TData> {
     /** Unique identifier for the series. */
     id: string;
-    /** Explicit series colour; falls back to the generated palette when omitted. */
+    /** Explicit series color; falls back to the generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;

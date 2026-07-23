@@ -74,7 +74,7 @@ describe('Context', () => {
             ctx.destroy();
         });
 
-        test('Should initialise scales', () => {
+        test('Should initialize scales', () => {
             const ctx = create();
 
             expect(ctx.scaleX).toBeDefined();

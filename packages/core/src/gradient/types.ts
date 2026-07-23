@@ -2,7 +2,7 @@
 export interface GradientColorStop {
     /** The CSS color of the stop. */
     color: string;
-    /** The stop's position along the gradient (0–1). Inferred from neighbouring stops when omitted. */
+    /** The stop's position along the gradient (0–1). Inferred from neighboring stops when omitted. */
     offset?: number;
 }
 
@@ -26,9 +26,9 @@ export interface RadialGradient {
     repeating: boolean;
     /** The gradient shape, e.g. `'circle'` or `'ellipse'`. */
     shape: string;
-    /** The centre position as `[x, y]` percentages of the paint area. */
+    /** The center position as `[x, y]` percentages of the paint area. */
     position: [number, number];
-    /** The color stops from the centre outward. */
+    /** The color stops from the center outward. */
     stops: GradientColorStop[];
 }
 
@@ -40,9 +40,9 @@ export interface ConicGradient {
     repeating: boolean;
     /** The starting angle in degrees, measured clockwise from the top. */
     angle: number;
-    /** The centre position as `[x, y]` percentages of the paint area. */
+    /** The center position as `[x, y]` percentages of the paint area. */
     position: [number, number];
-    /** The color stops swept around the centre. */
+    /** The color stops swept around the center. */
     stops: GradientColorStop[];
 }
 

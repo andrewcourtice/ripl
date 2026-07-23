@@ -6,7 +6,7 @@ import type {
 import {
     ContextPath,
     getThetaPoint,
-    normaliseBorderRadius,
+    normalizeBorderRadius,
     radiansToDegrees,
 } from '@ripl/core';
 
@@ -39,7 +39,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this.definition.attributes.d = `${this.definition.attributes.d} ${data}`.trim();
     }
 
-    /** Adds an arc centred at `(x, y)` with the given radius to the path. */
+    /** Adds an arc centered at `(x, y)` with the given radius to the path. */
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const [x1, y1] = getThetaPoint(startAngle, radius, x, y);
         const [x2, y2] = getThetaPoint(endAngle, radius, x, y);
@@ -56,7 +56,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this._appendElementData(`A ${radius} ${radius} 0 0 1 ${x2},${y2}`);
     }
 
-    /** Adds a full circle centred at `(x, y)` to the path. */
+    /** Adds a full circle centered at `(x, y)` to the path. */
     public circle(x: number, y: number, radius: number): void {
         this.moveTo(x + radius, y);
         this._appendElementData(`a ${radius} ${radius} 0 1 0 ${radius * -2},0`);
@@ -73,7 +73,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
         this._appendElementData('Z');
     }
 
-    /** Adds an elliptical arc centred at `(x, y)` to the path. */
+    /** Adds an elliptical arc centered at `(x, y)` to the path. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         const rotDeg = radiansToDegrees(rotation);
         const cos = Math.cos(rotation);
@@ -146,7 +146,7 @@ export class SVGPath extends ContextPath implements SVGContextElement {
             borderTopRight,
             borderBottomRight,
             borderBottomLeft,
-        ] = normaliseBorderRadius(radii);
+        ] = normalizeBorderRadius(radii);
 
         this.moveTo(x + borderTopLeft, y);
         this.lineTo(x + width - borderTopRight, y);

@@ -24,7 +24,7 @@ function dataURLToBlob(dataURL: string): Blob {
  * (Canvas 2D, 3D, WebGPU). The canvas is snapshotted immediately by copying its current pixels onto
  * a detached 2D canvas, so the returned exporters are unaffected by subsequent rendering. This works
  * for any canvas regardless of the API used to draw it, because the source canvas is a valid
- * `drawImage` source even when backed by WebGL/WebGPU — so callers should ensure a frame has been
+ * `drawImage` source even when backed by WebGL/WebGPU, so callers should ensure a frame has been
  * rendered before exporting (WebGPU present textures are transient).
  */
 export function createCanvasExport(canvas: HTMLCanvasElement): ContextExport {

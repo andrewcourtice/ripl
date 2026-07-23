@@ -91,9 +91,9 @@ const MARKER_EVENTS = {
 
 /** Configuration for an individual line chart series. */
 export interface LineChartSeriesOptions<TData> {
-    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
     id: string;
-    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
@@ -111,7 +111,7 @@ export interface LineChartSeriesOptions<TData> {
     markerRadius?: number;
     /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
-    /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
+    /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
     axis?: number | string;
 }
 
@@ -166,7 +166,7 @@ export interface LineChartEventMap extends EventMap {
 /**
  * Line chart rendering one or more series as polylines with optional markers.
  *
- * Supports customisable line renderers (e.g. curved, stepped), interactive crosshair, tooltips,
+ * Supports customizable line renderers (e.g. curved, stepped), interactive crosshair, tooltips,
  * legend, grid, chart title, and animated entry/update/exit transitions. Entry animations draw
  * lines progressively while markers appear with staggered delays.
  *
@@ -198,7 +198,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.emit(MARKER_EVENTS[phase], event);
     }
 
-    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    /** Builds the per-series overview data (id, color, type, values) for the navigator strip. */
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
@@ -268,7 +268,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             plot,
             baseline: yScale(0),
             renderer: this.renderer,
-            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            // In axis-trigger mode the shared tooltip owns the pointer; per-item tooltips stay quiet.
             tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
@@ -352,7 +352,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
 
-            // The navigator windows the x (category) axis only — the value axis stays at the full
+            // The navigator windows the x (category) axis only; the value axis stays at the full
             // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
@@ -458,7 +458,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         };
 
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
-        // agnostic — the renderer passes the series through as its shared `LineSeriesLike`).
+        // agnostic; the renderer passes the series through as its shared `LineSeriesLike`).
         const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 

@@ -16,6 +16,7 @@ import {
 
 import {
     isGradientString,
+    isPatternString,
 } from '@ripl/core';
 
 import type {
@@ -42,7 +43,7 @@ export type AbstractConstructor<TInstance = object> = abstract new (...args: any
  * drawing, transform, measurement, and hit-testing operations common to every canvas-backed context.
  */
 export interface Canvas2DState {
-    /** The current fill style — a colour or CSS gradient string. */
+    /** The current fill style: a color or CSS gradient string. */
     fill: string;
     /** The current filter applied to drawing operations. */
     filter: string;
@@ -70,13 +71,13 @@ export interface Canvas2DState {
     miterLimit: number;
     /** The current shadow blur radius. */
     shadowBlur: number;
-    /** The current shadow colour. */
+    /** The current shadow color. */
     shadowColor: string;
     /** The current horizontal shadow offset. */
     shadowOffsetX: number;
     /** The current vertical shadow offset. */
     shadowOffsetY: number;
-    /** The current stroke style — a colour or CSS gradient string. */
+    /** The current stroke style: a color or CSS gradient string. */
     stroke: string;
     /** The current horizontal text alignment. */
     textAlign: TextAlignment;
@@ -137,9 +138,9 @@ export interface Canvas2DState {
 /**
  * Mixin applying the shared `CanvasRenderingContext2D` state plumbing (see {@link Canvas2DState})
  * to a `Context` base class. Concrete subclasses assign the `protected context` backing field
- * (declared here, so constructor assignment is not clobbered by class-field initialisation) and may
+ * (declared here, so constructor assignment is not clobbered by class-field initialization) and may
  * override the protected `gradientBounds()` hook to change which bounding box gradients resolve
- * against — the default is the current render element's local (untransformed) box.
+ * against; the default is the current render element's local (untransformed) box.
  *
  * @param Base - The `Context` base class to extend (e.g. `DOMContext<HTMLCanvasElement>` or `Context3D`).
  * @returns An abstract class combining `Base` with the shared canvas 2D state surface.
@@ -158,9 +159,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set fill(value) {
             this._fillCSS = value;
 
-            // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely,
-            // which otherwise ran for every element on every frame.
-            if (isGradientString(value)) {
+            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
+            // entirely, which otherwise ran for every element on every frame. Gradient and pattern
+            // strings both need the full resolver; a raw pattern string is not a valid canvas
+            // fillStyle, so skipping it here would silently leave the previous (default) fill.
+            if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasFill(this.context, value, bounds);
             } else {
@@ -303,8 +306,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set stroke(value) {
             this._strokeCSS = value;
 
-            // Fast path: plain colours skip bounding-box resolution and gradient parsing entirely.
-            if (isGradientString(value)) {
+            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
+            // entirely. Gradient and pattern strings both need the full resolver; a raw pattern
+            // string is not a valid canvas strokeStyle, so skipping it here would silently leave
+            // the previous (default) stroke.
+            if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasStroke(this.context, value, bounds);
             } else {

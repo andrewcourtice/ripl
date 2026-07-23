@@ -7,12 +7,12 @@
  * left↔right; a `vertical` strip (category on y, e.g. a horizontal bar chart) is a side bar whose
  * window slides up↕down. It reports the window as fractions `[start, end]` of the category domain via
  * `onWindow`; the host converts that to a navigator transform. The overview draws each series by
- * type — lines as polylines, areas as filled bands, bars as silhouettes — along the **main** (category)
+ * type (lines as polylines, areas as filled bands, bars as silhouettes) along the **main** (category)
  * axis, scaled along the **cross** (value) axis.
  *
  * Dragging is wired with DOM pointer listeners on the render context (pointer capture keeps a drag
  * tracking outside the strip). A `pointerdown` inside the strip band calls `stopImmediatePropagation`
- * so the in-plot navigator — whose listeners attach after the strip's — never also pans.
+ * so the in-plot navigator, whose listeners attach after the strip's, never also pans.
  */
 
 import {
@@ -82,7 +82,7 @@ export type ChartNavigatorCategoryLayout = 'band' | 'point';
 export interface ChartNavigatorSeries {
     /** The series id (used for the overview element ids). */
     id: string;
-    /** The series colour. */
+    /** The series color. */
     color: string;
     /** How the series is drawn in the overview. */
     type: ChartNavigatorSeriesType;
@@ -110,13 +110,13 @@ export interface ChartNavigatorRenderOptions {
     valueExtent: [number, number];
     /**
      * Whether same-type series are stacked: bar series stack cumulatively (positive/negative
-     * independently) and area series stack as running cumulative bands. Defaults to `false` — bars are
+     * independently) and area series stack as running cumulative bands. Defaults to `false`; bars are
      * drawn grouped side-by-side and areas as independent baseline bands.
      */
     stacked?: boolean;
     /**
-     * How the category axis positions marks. `'band'` (bar/trend charts) centres each category in a
-     * padded band so bars sit fully inside the strip and line/area marks align to band centres;
+     * How the category axis positions marks. `'band'` (bar/trend charts) centers each category in a
+     * padded band so bars sit fully inside the strip and line/area marks align to band centers;
      * `'point'` (line/area charts) spreads marks edge-to-edge. Defaults to `'point'`.
      */
     categoryLayout?: ChartNavigatorCategoryLayout;
@@ -275,7 +275,7 @@ export class ChartNavigator extends ChartComponent {
         const lineSeries = active.filter(srs => srs.type === 'line');
 
         // A band host (bar/trend) positions marks in padded category bands so bars stay inside the strip
-        // and line/area marks align to band centres; a point host (line/area) spreads marks edge-to-edge.
+        // and line/area marks align to band centers; a point host (line/area) spreads marks edge-to-edge.
         const count = Math.max(1, ...active.map(srs => srs.values.length));
         const band = categoryLayout === 'band' ? this._categoryScale(count) : undefined;
         const mainFor: (index: number, seriesCount: number) => number = band
@@ -345,8 +345,8 @@ export class ChartNavigator extends ChartComponent {
 
     /**
      * Draws area series. Unstacked areas are independent baseline bands (correct for overlapping
-     * areas); stacked areas are running cumulative bands — each series stacked on the sum of the
-     * previous ones — mirroring the area renderer's plain cumulative accumulation.
+     * areas); stacked areas are running cumulative bands, each series stacked on the sum of the
+     * previous ones, mirroring the area renderer's plain cumulative accumulation.
      */
     private _areaGroupOverview(areaSeries: ChartNavigatorSeries[], min: number, span: number, baseline: number, stacked: boolean, mainFor: (index: number, count: number) => number): Element[] {
         if (areaSeries.length === 0) {

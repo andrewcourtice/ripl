@@ -87,7 +87,7 @@ export interface SankeyNode<TData = unknown> {
     id: string;
     /** Display label shown beside the node. */
     label: string;
-    /** Optional colour override for the node (otherwise a palette colour is generated). */
+    /** Optional color override for the node (otherwise a palette color is generated). */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -113,9 +113,9 @@ export interface SankeyChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for Sankey node interaction events. */
 export interface SankeyChartNodeEvent<TData = unknown> {
-    /** X position of the node's top-centre anchor, in canvas coordinates. */
+    /** X position of the node's top-center anchor, in canvas coordinates. */
     x: number;
-    /** Y position of the node's top-centre anchor, in canvas coordinates. */
+    /** Y position of the node's top-center anchor, in canvas coordinates. */
     y: number;
     /** The node's unique id. */
     id: string;
@@ -296,7 +296,7 @@ function computeSankeyLayout(
     depthGroups.forEach((nodeIds, depth) => {
         const columnValue = numberSum(nodeIds, id => nodeValueMap.get(id) ?? 0);
         const columnHeight = columnValue * scale + nodePadding * Math.max(nodeIds.length - 1, 0);
-        // Centre each column's stack vertically within the plot area.
+        // Center each column's stack vertically within the plot area.
         let currentY = Math.max(0, (height - columnHeight) / 2);
 
         nodeIds.forEach(nodeId => {
@@ -405,8 +405,8 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const colorGenerator = getColorGenerator();
             const nodeColors = new Map<string, string>();
 
-            // Resolve a stable colour per node up-front so the legend swatches match the rendered
-            // nodes (and honour any explicit per-node colour).
+            // Resolve a stable color per node up-front so the legend swatches match the rendered
+            // nodes (and honor any explicit per-node color).
             nodes.forEach(node => {
                 nodeColors.set(node.id, node.color ?? colorGenerator.next().value!);
             });
@@ -414,7 +414,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
-            // The legend lists flow nodes, not toggleable series — hiding a node would orphan its
+            // The legend lists flow nodes, not toggleable series, because hiding a node would orphan its
             // links and break the flow layout, so legend clicks only dim the entry (real `active`
             // state) without filtering the rendered graph.
             const legendItems: LegendItem[] = nodes.map(node => ({
@@ -542,7 +542,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 this._attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
                 // Node labels sit to the right of the node (outside), so use the shared segment-label
-                // helper with the outside fill — consistent with the other charts' labels.
+                // helper with the outside fill, consistent with the other charts' labels.
                 const label = createSegmentLabel({
                     id: `${node.id}-label`,
                     x: offsetX + node.x + node.width + 5,
@@ -577,7 +577,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                     this._attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
                 }
 
-                // Re-centre the label on the node's new position (was previously left stale).
+                // Re-center the label on the node's new position (was previously left stale).
                 if (label) {
                     label.content = node.label;
                     label.data = {

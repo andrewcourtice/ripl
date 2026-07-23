@@ -1,6 +1,6 @@
 /**
  * Element transform application: maps an element's transform state (translate, scale,
- * rotation, origin) onto a {@link TransformTarget} — either a live rendering context or the
+ * rotation, origin) onto a {@link TransformTarget}: either a live rendering context or the
  * matrix accumulator behind world-transform computation.
  */
 

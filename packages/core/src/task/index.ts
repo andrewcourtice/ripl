@@ -38,7 +38,7 @@ export class TaskAbortError extends Error {
 
 }
 
-/** A cancellable promise with `AbortController` integration, supporting abort callbacks and chaining. */
+/** A cancelable promise with `AbortController` integration, supporting abort callbacks and chaining. */
 export class Task<TResult = void> extends Promise<TResult> {
 
     private _controller: AbortController;

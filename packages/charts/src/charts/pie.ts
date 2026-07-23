@@ -98,7 +98,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     value: NumericAccessor<TData>;
     /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
-    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
+    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values are absolute pixels. Defaults to 0 (a solid pie). */
     innerRadius?: number;
@@ -107,7 +107,7 @@ export interface PieChartOptions<TData = unknown> extends BaseChartOptions {
     /**
      * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
      * inside each segment; `'outside'` places them beyond the arc with a leader line; a full object
-     * customises position/font/colour.
+     * customizes position/font/color.
      */
     labels?: ChartSegmentLabelsInput;
     /** Format applied to segment values shown as text (e.g. tooltips). */
@@ -142,7 +142,7 @@ export interface PieChartEventMap extends EventMap {
  * Pie chart rendering proportional arc segments with optional inner radius (donut).
  *
  * Supports a chart title, interactive tooltips, a legend in any position, and animated
- * entry/update/exit transitions. Segments grow outward from the centre with staggered delays,
+ * entry/update/exit transitions. Segments grow outward from the center with staggered delays,
  * and labels fade in after the arcs have settled.
  *
  * @typeParam TData - The type of each data item in the dataset.
@@ -175,8 +175,8 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
             const labels = normalizeSegmentLabels(this.options.labels);
 
-            // Register each segment in the shared colour map so it draws a palette colour instead
-            // of the unresolved-series grey fallback (honouring any explicit per-item colour).
+            // Register each segment in the shared color map so it draws a palette color instead
+            // of the unresolved-series gray fallback (honoring any explicit per-item color).
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),
@@ -225,7 +225,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
                 if (innerRadiusOption !== undefined) {
                     // A fractional value is a fraction of the *outer radius* (so 0.55 is a hole 55% of
-                    // the ring), not of the overall size — otherwise the hole could exceed the ring and
+                    // the ring), not of the overall size, otherwise the hole could exceed the ring and
                     // render an inverted donut. Absolute values are taken as-is. Always clamp below the
                     // outer radius so the ring stays visible.
                     const resolved = innerRadiusOption <= 1 ? radius * innerRadiusOption : innerRadiusOption;
@@ -459,7 +459,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 }));
             };
 
-            // Segments are grouped, but transitions animate their own state — so drive the leaf
+            // Segments are grouped, but transitions animate their own state, so drive the leaf
             // children (arc/label/connector) to their stashed `.data`, not the inert group.
             const transitionUpdates = async () => renderer.transition(updates.flatMap(group => group.children), element => ({
                 duration: update.duration,

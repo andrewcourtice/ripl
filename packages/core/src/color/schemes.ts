@@ -1,13 +1,13 @@
 /**
- * Perceptually-uniform colour schemes as sampled control points. Each is a small, evenly-spaced set
- * of stops from the corresponding matplotlib / ColorBrewer colormap; a colour scale interpolates
+ * Perceptually-uniform color schemes as sampled control points. Each is a small, evenly-spaced set
+ * of stops from the corresponding matplotlib / ColorBrewer colormap; a color scale interpolates
  * between them (see `interpolateColors`). Ten stops reproduce the originals closely while keeping the
- * bundle tiny — consumers who need the full 256-entry tables can pass their own stops.
+ * bundle tiny; consumers who need the full 256-entry tables can pass their own stops.
  *
  * Sequential schemes run low → high. Diverging schemes run low → neutral → high.
  */
 
-/** Sequential — dark purple → blue → teal → green → yellow. The default perceptual scheme. */
+/** Sequential: dark purple → blue → teal → green → yellow. The default perceptual scheme. */
 export const COLOR_SCHEME_VIRIDIS = [
     '#440154',
     '#482878',
@@ -21,7 +21,7 @@ export const COLOR_SCHEME_VIRIDIS = [
     '#fde725',
 ];
 
-/** Sequential — dark blue → purple → magenta → orange → yellow. */
+/** Sequential: dark blue → purple → magenta → orange → yellow. */
 export const COLOR_SCHEME_PLASMA = [
     '#0d0887',
     '#46039f',
@@ -35,7 +35,7 @@ export const COLOR_SCHEME_PLASMA = [
     '#f0f921',
 ];
 
-/** Sequential — black → purple → red → orange → pale yellow. */
+/** Sequential: black → purple → red → orange → pale yellow. */
 export const COLOR_SCHEME_INFERNO = [
     '#000004',
     '#1b0c41',
@@ -49,7 +49,7 @@ export const COLOR_SCHEME_INFERNO = [
     '#fcffa4',
 ];
 
-/** Sequential — black → purple → magenta → orange → cream. */
+/** Sequential: black → purple → magenta → orange → cream. */
 export const COLOR_SCHEME_MAGMA = [
     '#000004',
     '#180f3d',
@@ -63,7 +63,7 @@ export const COLOR_SCHEME_MAGMA = [
     '#fcfdbf',
 ];
 
-/** Sequential — dark blue → slate → tan → yellow. Colour-vision-deficiency friendly. */
+/** Sequential: dark blue → slate → tan → yellow. Color-vision-deficiency friendly. */
 export const COLOR_SCHEME_CIVIDIS = [
     '#00224e',
     '#123570',
@@ -77,7 +77,7 @@ export const COLOR_SCHEME_CIVIDIS = [
     '#fee838',
 ];
 
-/** Sequential rainbow — purple → blue → cyan → green → yellow → orange → red. High contrast. */
+/** Sequential rainbow: purple → blue → cyan → green → yellow → orange → red. High contrast. */
 export const COLOR_SCHEME_TURBO = [
     '#30123b',
     '#4145ab',
@@ -93,7 +93,7 @@ export const COLOR_SCHEME_TURBO = [
     '#7a0403',
 ];
 
-/** Diverging — red → white → blue (ColorBrewer RdBu). */
+/** Diverging: red → white → blue (ColorBrewer RdBu). */
 export const COLOR_SCHEME_RDBU = [
     '#b2182b',
     '#d6604d',
@@ -106,7 +106,7 @@ export const COLOR_SCHEME_RDBU = [
     '#2166ac',
 ];
 
-/** Diverging — brown → white → teal (ColorBrewer BrBG). */
+/** Diverging: brown → white → teal (ColorBrewer BrBG). */
 export const COLOR_SCHEME_BRBG = [
     '#8c510a',
     '#bf812d',

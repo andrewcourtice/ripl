@@ -92,7 +92,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         // group transform) is applied to the context during rendering. Backends that don't
         // natively account for that during hit testing (e.g. canvas) need the point mapped back
         // into local space; the identity case (no transforms) is skipped for free.
-        if (!this.context.hitTestHonoursTransform) {
+        if (!this.context.hitTestHonorsTransform) {
             const worldTransform = (this as unknown as Element).getWorldTransform();
             const inverse = worldTransform && matrixInvert(worldTransform);
 
@@ -154,7 +154,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
                 return;
             }
 
-            // Paint if a fill/stroke is set on this shape *or inherited* from a group — the context
+            // Paint if a fill/stroke is set on this shape *or inherited* from a group; the context
             // already holds the resolved value (own, applied by the base render; inherited, applied
             // at the group boundary), so autoFill/autoStroke fire whenever the effective paint is set.
             if (this.path && this.autoFill && this.getComputedValue('fill')) {

@@ -89,7 +89,7 @@ export function createValueScale(
     const max = typeof options.max === 'number' ? options.max : domain[1];
     const resolvedDomain: [number, number] = [min, max];
 
-    // Explicit bounds are honoured exactly; otherwise nice the domain to tick-aligned boundaries
+    // Explicit bounds are honored exactly; otherwise nice the domain to tick-aligned boundaries
     // (the historical default via `padToTicks`), unless the caller opted out with `nice: false`.
     const hasExplicitBounds = typeof options.min === 'number' || typeof options.max === 'number';
     const nice = options.nice ?? true;

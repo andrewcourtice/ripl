@@ -89,13 +89,13 @@ const REST_ALPHA = 0.7;
 export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOptions {
     /** The dataset rendered as packed circles. */
     data: TData[];
-    /** Accessor for each item's unique key (used for colour assignment and data joins). */
+    /** Accessor for each item's unique key (used for color assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
     /** Accessor for each circle's numeric value (its area encodes this). */
     value: NumericAccessor<TData>;
     /** Accessor for each circle's display label; defaults to the item's key. */
     label?: keyof TData | ((item: TData) => string);
-    /** Optional per-item colour accessor; falls back to the generated palette. */
+    /** Optional per-item color accessor; falls back to the generated palette. */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Legend configuration. Shown by default; pass `false` to hide. */
     legend?: ChartLegendInput;
@@ -265,7 +265,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             // scale up to fill the enclosing circle while hidden ones exit through the join.
             const activeData = this.filterActive(data, getKey);
 
-            // Pack circles with relative radii (area ∝ value), then centre + scale to fit the area.
+            // Pack circles with relative radii (area ∝ value), then center + scale to fit the area.
             const packInput: PackCircle[] = activeData.map(item => ({
                 x: 0,
                 y: 0,

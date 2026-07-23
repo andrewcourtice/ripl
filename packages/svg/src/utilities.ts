@@ -8,7 +8,7 @@ import type {
 
 import {
     parseColor,
-    serialiseRGBA,
+    serializeRGBA,
 } from '@ripl/core';
 
 import {
@@ -20,10 +20,10 @@ export function createSVGElement<TTag extends keyof SVGElementTagNameMap>(tag: T
     return document.createElementNS('http://www.w3.org/2000/svg', tag);
 }
 
-/** Normalises a color string to a serialised `rgba()` value, returning the input unchanged when it cannot be parsed. */
-export function normaliseGradientColor(color: string): string {
+/** Normalizes a color string to a serialized `rgba()` value, returning the input unchanged when it cannot be parsed. */
+export function normalizeGradientColor(color: string): string {
     const rgba = parseColor(color);
-    return rgba ? serialiseRGBA(...rgba) : color;
+    return rgba ? serializeRGBA(...rgba) : color;
 }
 
 /** Maps unified context style values to their SVG equivalents using the `SVG_STYLE_MAP` lookup. */

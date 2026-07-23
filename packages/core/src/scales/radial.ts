@@ -14,7 +14,7 @@ import type {
 export interface RadialScaleOptions {
     /**
      * Constrains mapped radii to the range bounds so out-of-domain magnitudes never overshoot the
-     * ring (or fall inside its inner radius). Defaults to `true` — radial magnitude must not exceed
+     * ring (or fall inside its inner radius). Defaults to `true`, since radial magnitude must not exceed
      * the ring.
      */
     clamp?: boolean;
@@ -31,7 +31,7 @@ export interface RadialScaleOptions {
  * ring rather than overshooting it, and a value below the domain lands on the inner radius.
  *
  * A single-element `domain` of `[max]` is treated as `[0, max]`, mapping magnitudes outward from the
- * centre.
+ * center.
  *
  * @param domain - The value domain `[min, max]` (or `[max]`, treated as `[0, max]`).
  * @param range - The radius range `[innerRadius, outerRadius]` in pixels.
@@ -51,14 +51,14 @@ export function scaleRadial(
     range: [number, number],
     options?: RadialScaleOptions
 ): Scale<number, number> {
-    // A single-value domain `[max]` is treated as `[0, max]` so magnitudes map from the centre outward.
+    // A single-value domain `[max]` is treated as `[0, max]` so magnitudes map from the center outward.
     const resolvedDomain = domain.length === 1 ? [0, domain[0]] : domain;
 
     // Radial magnitude must never exceed the ring, so clamping is enabled unless explicitly disabled.
     const clamp = options?.clamp ?? true;
 
     // Resolve tick-padding to a concrete domain once so `convert` and `invert` share the exact same
-    // `[min, max]` — see `continuous.ts` for why the invert must not re-pad the range.
+    // `[min, max]`; see `continuous.ts` for why the invert must not re-pad the range.
     const padCount = options?.padToTicks;
     const mappingDomain = padCount ? niceDomain(resolvedDomain, +padCount) : resolvedDomain;
     const mappingOptions = { clamp };

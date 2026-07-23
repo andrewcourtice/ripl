@@ -28,7 +28,7 @@ export function functionNoop() {
     // noop
 }
 
-/** Returns the value it receives unchanged — useful as a default transform or placeholder. */
+/** Returns the value it receives unchanged, useful as a default transform or placeholder. */
 export function functionIdentity<TValue>(value: TValue) {
     return value;
 }

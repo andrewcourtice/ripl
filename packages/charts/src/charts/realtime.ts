@@ -76,7 +76,7 @@ import {
 export interface RealtimeChartSeriesOptions {
     /** Unique identifier for the series, used as the key when pushing new values. */
     id: string;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    /** Optional color override for the series (otherwise a palette color is generated). */
     color?: string;
     /** Display label for the series (shown in the legend). Defaults to the series id. */
     label?: string;
@@ -187,7 +187,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             });
         }
 
-        // Initialise buffers for each series
+        // Initialize buffers for each series
         options.series.forEach(srs => {
             this._buffers.set(srs.id, []);
         });
@@ -280,7 +280,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             const existingGroup = existingGroupMap.get(srs.id);
 
             if (pointCount < 2) {
-                // Not enough data — destroy existing group if any, skip creation
+                // Not enough data: destroy existing group if any, skip creation
                 if (existingGroup) {
                     existingGroup.destroy();
                     existingGroupMap.delete(srs.id);
@@ -320,7 +320,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 // Once the window is full each push drops the oldest sample, so slot i now holds
                 // the value previously shown in slot i+1. Seeding the current points one step to
                 // the right (their previous on-screen positions) makes the transition slide the
-                // whole line left by one step — a scroll — with the newest point entering at the
+                // whole line left by one step (a scroll) with the newest point entering at the
                 // right, instead of morphing every point's height in place.
                 const scrolling = pointCount >= maxLen;
 

@@ -41,7 +41,7 @@ import {
     createSVGElement,
     getImageSourceSize,
     mapSVGStyles,
-    normaliseGradientColor,
+    normalizeGradientColor,
     svgMarkupToImageData,
 } from './utilities';
 
@@ -124,7 +124,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this.buffer = true;
         // SVG hit testing runs against the live DOM geometry, which already composes ancestor
         // <g> transforms, so no manual local-space point mapping is needed.
-        this.hitTestHonoursTransform = true;
+        this.hitTestHonorsTransform = true;
         this._vtree = {
             id: '__root__',
             tag: 'svg',
@@ -273,7 +273,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         cached.shadowElement.setAttribute('dy', shadowOffsetY.toString());
         // stdDeviation of blur/2 closely matches canvas shadow rendering.
         cached.shadowElement.setAttribute('stdDeviation', (shadowBlur / 2).toString());
-        cached.shadowElement.setAttribute('flood-color', normaliseGradientColor(shadowColor));
+        cached.shadowElement.setAttribute('flood-color', normalizeGradientColor(shadowColor));
 
         return `url(#${cached.filterId})`;
     }

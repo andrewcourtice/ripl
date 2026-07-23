@@ -12,10 +12,10 @@ import {
     parseHSVA,
     parseRGB,
     parseRGBA,
-    serialiseHSL,
-    serialiseHSLA,
-    serialiseHSV,
-    serialiseHSVA,
+    serializeHSL,
+    serializeHSLA,
+    serializeHSV,
+    serializeHSVA,
 } from '../../src';
 
 describe('Color', () => {
@@ -259,37 +259,37 @@ describe('Color', () => {
     describe('Serializers', () => {
 
         test('Should serialize RGBA to HSL', () => {
-            const hsl = serialiseHSL(255, 0, 0, 1);
+            const hsl = serializeHSL(255, 0, 0, 1);
 
             expect(hsl).toBe('hsl(0, 100%, 50%)');
         });
 
         test('Should serialize RGBA to HSLA', () => {
-            const hsla = serialiseHSLA(255, 0, 0, 0.5);
+            const hsla = serializeHSLA(255, 0, 0, 0.5);
 
             expect(hsla).toBe('hsla(0, 100%, 50%, 0.5)');
         });
 
         test('Should serialize RGBA to HSV', () => {
-            const hsv = serialiseHSV(255, 0, 0, 1);
+            const hsv = serializeHSV(255, 0, 0, 1);
 
             expect(hsv).toBe('hsv(0, 100%, 100%)');
         });
 
         test('Should serialize RGBA to HSVA', () => {
-            const hsva = serialiseHSVA(255, 0, 0, 0.5);
+            const hsva = serializeHSVA(255, 0, 0, 0.5);
 
             expect(hsva).toBe('hsva(0, 100%, 100%, 0.5)');
         });
 
         test('Should serialize white to HSL', () => {
-            const hsl = serialiseHSL(255, 255, 255, 1);
+            const hsl = serializeHSL(255, 255, 255, 1);
 
             expect(hsl).toBe('hsl(0, 0%, 100%)');
         });
 
         test('Should serialize black to HSL', () => {
-            const hsl = serialiseHSL(0, 0, 0, 1);
+            const hsl = serializeHSL(0, 0, 0, 1);
 
             expect(hsl).toBe('hsl(0, 0%, 0%)');
         });

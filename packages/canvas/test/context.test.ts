@@ -63,7 +63,7 @@ describe('CanvasContext', () => {
         expect(ctx.lineCap).toBe('round');
     });
 
-    test('fill fast-path: a plain colour skips bounding-box resolution', () => {
+    test('fill fast-path: a plain color skips bounding-box resolution', () => {
         const ctx = context();
         const element = createFakeRenderElement();
 
@@ -74,7 +74,7 @@ describe('CanvasContext', () => {
         expect(ctx.fill).toBe('#ff0000');
     });
 
-    test('stroke fast-path: a plain colour skips bounding-box resolution', () => {
+    test('stroke fast-path: a plain color skips bounding-box resolution', () => {
         const ctx = context();
         const element = createFakeRenderElement();
 
@@ -94,6 +94,28 @@ describe('CanvasContext', () => {
 
         // Gradient bounds are the element's local (untransformed) box.
         expect(element.getBoundingBox).toHaveBeenCalledWith(true);
+    });
+
+    test('fill pattern path: resolves a pattern string to a CanvasPattern, not the raw string', () => {
+        const ctx = context();
+        const native = (ctx as { context: CanvasRenderingContext2D }).context;
+
+        ctx.fill = 'pattern(diagonal, #1a6, #fff, 8)';
+
+        // A raw pattern string is not a valid canvas fillStyle; the setter must route it through
+        // createPattern so the native context receives a CanvasPattern object instead.
+        expect(typeof native.fillStyle).toBe('object');
+        expect(native.fillStyle).not.toBe('pattern(diagonal, #1a6, #fff, 8)');
+    });
+
+    test('stroke pattern path: resolves a pattern string to a CanvasPattern, not the raw string', () => {
+        const ctx = context();
+        const native = (ctx as { context: CanvasRenderingContext2D }).context;
+
+        ctx.stroke = 'pattern(dots, #333, #fff, 10)';
+
+        expect(typeof native.strokeStyle).toBe('object');
+        expect(native.strokeStyle).not.toBe('pattern(dots, #333, #fff, 10)');
     });
 
     test('createPath returns a CanvasPath', () => {

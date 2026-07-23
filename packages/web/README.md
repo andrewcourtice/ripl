@@ -1,6 +1,6 @@
 # @ripl/web
 
-The main browser entry point for [Ripl](https://www.ripl.run) — a unified, zero-dependency API for drawing and animating 2D graphics and data visualizations.
+The main browser entry point for [Ripl](https://www.ripl.run): a unified, zero-dependency API for drawing and animating 2D graphics and data visualizations.
 
 ## Installation
 
@@ -51,7 +51,7 @@ await renderer.transition(circle, {
 
 ## Switching contexts
 
-To render the same scene to SVG, import `createContext` from [`@ripl/svg`](https://www.npmjs.com/package/@ripl/svg) instead — everything else stays the same.
+To render the same scene to SVG, import `createContext` from [`@ripl/svg`](https://www.npmjs.com/package/@ripl/svg) instead; everything else stays the same.
 
 ## Documentation
 

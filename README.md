@@ -26,27 +26,31 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 ## Features
 
-- **Unified rendering API** across Canvas, SVG, and 3D contexts
-- **Grouping and property inheritance** — CSS-like cascading of visual properties through the element tree
-- **Scene and renderer management** — hoisted scenegraph with O(n) rendering and an automatic `requestAnimationFrame` loop
-- **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
-- **CSS-like element querying** — `getElementById`, `getElementsByType`, `getElementsByClass`, `query`, `queryAll` with selector syntax
+- **Unified rendering API** across Canvas, SVG, Terminal (braille/ANSI), and WebGPU 3D contexts, so the same scene renders anywhere
+- **Grouping and property inheritance**: visual properties cascade through the element tree, much like CSS
+- **Scene and renderer management** with a hoisted scenegraph, O(n) rendering, and an automatic `requestAnimationFrame` loop
+- **DOM-like event system** supporting event bubbling, delegation, stop propagation, and disposable subscriptions
+- **Interactive navigator** for pan, zoom, and brush gestures on any context, the flat-scene analogue of the 3D camera
+- **CSS-like element querying**: `getElementById`, `getElementsByType`, `getElementsByClass`, plus `query`/`queryAll` with selector syntax
 - **Bounding box detection** via `getBoundingBox` on all shape elements
-- **Context exporting** — snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
-- **Transforms** — translate, scale, rotation, and transform-origin on every element
-- **Clipping** — path-based clipping via `Shape2D`
-- **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
-- **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
-- **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
-- **14 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
+- **Context exporting**: snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
+- **Transforms** (translate, scale, rotation, and transform-origin) on every element
+- **Clipping**: path-based clipping via `Shape2D`
+- **Shadows, filters, and blend modes** applied per element
+- **Gradient support**: CSS gradient parsing and serialization (linear, radial, conic)
+- **Pattern fill support** for repeating `pattern(...)` paint strings (diagonal, cross-hatch, dots, horizontal, vertical) in fills and strokes
+- **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, patterns, paths, strings, and rotation values
+- **High performance animation**: cancelable `Task`-based transitions with CSS-like keyframe support and custom interpolators
+- **14 scale types** inspired by D3 (continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time), plus `scaleLog`/`scaleSqrt` shortcuts
 - **25 pre-built chart types** via `@ripl/charts`
-- **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
-- **3D primitives** — cube, sphere, cylinder, cone, plane, torus
-- **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
-- **Color utilities** — parsing, serialisation, and color scales
-- **Math & geometry** — degree/radian conversion, point operations, border radius normalisation, polygon extrapolation
-- **Renderer debug overlay** — FPS counter, element count, bounding box visualisation
-- **Completely modular and tree-shakable** — only ship the features you use
+- **Built-in shape primitives**: arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
+- **3D primitives**: cube, sphere, cylinder, cone, plane, torus
+- **Easing library** covering linear, quad, cubic, quart, quint, sine, exponential, circular, back, elastic, and bounce (in/out/inOut variants)
+- **Color utilities** for parsing, serialization, and color scales
+- **Math & geometry** helpers: degree/radian conversion, point operations, border radius normalization, polygon extrapolation
+- **Renderer debug overlay** with an FPS counter, element count, and bounding box visualization
+- **Runtime devtools** bridge (`@ripl/devtools`) with a companion browser extension for live scene-graph inspection and editing
+- **Completely modular and tree-shakable**, so you only ship the features you use
 - **Strictly typed** in TypeScript
 - **Zero runtime dependencies**
 
@@ -54,17 +58,18 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 | Package | Description |
 |---------|-------------|
-| [`@ripl/web`](packages/web) | **Main entry point for browser usage** — re-exports core + canvas context with browser platform bindings |
-| [`@ripl/core`](packages/core) | Core rendering — elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
+| [`@ripl/web`](packages/web) | **Main entry point for browser usage**. Re-exports core + canvas context with browser platform bindings |
+| [`@ripl/core`](packages/core) | Core rendering: elements, scene, renderer, animation, scales, math, color, interpolation, gradients, tasks |
 | [`@ripl/canvas`](packages/canvas) | Canvas 2D rendering context |
 | [`@ripl/svg`](packages/svg) | SVG rendering context |
 | [`@ripl/charts`](packages/charts) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
 | [`@ripl/3d`](packages/3d) | 3D rendering context with camera, shading, and primitive shapes |
 | [`@ripl/webgpu`](packages/webgpu) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
-| [`@ripl/terminal`](packages/terminal) | Terminal rendering context — braille-character output with ANSI truecolor |
-| [`@ripl/node`](packages/node) | Node.js runtime bindings — configures the platform factory for headless environments |
+| [`@ripl/terminal`](packages/terminal) | Terminal rendering context with braille-character output and ANSI truecolor |
+| [`@ripl/node`](packages/node) | Node.js runtime bindings that configure the platform factory for headless environments |
+| [`@ripl/devtools`](packages/devtools) | Page-side devtools bridge that streams the scene graph to the browser extension for live inspection |
 | [`@ripl/dom`](packages/dom) | DOM utilities used internally by browser contexts |
-| [`@ripl/utilities`](packages/utilities) | Shared typed utility functions — type guards, collection helpers, DOM helpers |
+| [`@ripl/utilities`](packages/utilities) | Shared typed utility functions: type guards, collection helpers, DOM helpers |
 
 The project is structured as a Yarn 4 monorepo:
 
@@ -79,10 +84,11 @@ packages/
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings
 ├── web/          # Main browser entry point
+├── devtools/     # Page-side devtools bridge
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
 └── test-utils/   # Test utilities
-app/              # Documentation site (VitePress) with live demos
+apps/website/     # Documentation site (VitePress) with live demos
 ```
 
 ## Usage
@@ -247,7 +253,7 @@ circle.on('click', event => console.log(event));
 
 ### Animation
 
-The renderer provides transition-based animation. Transitions are cancellable `Task` instances (extending `Promise` with `AbortController` integration).
+The renderer provides transition-based animation. Transitions are cancelable `Task` instances (extending `Promise` with `AbortController` integration).
 
 ```typescript
 import {
@@ -298,10 +304,14 @@ await renderer.transition(circle, {
     ease: easeOutCubic,
     state: {
         fill: [
-            { value: '#FF0000',
-                offset: 0.25 },
-            { value: '#0000FF',
-                offset: 0.8 },
+            {
+                value: '#FF0000',
+                offset: 0.25,
+            },
+            {
+                value: '#0000FF',
+                offset: 0.8,
+            },
         ],
     },
 });
@@ -400,35 +410,49 @@ import {
 
 const chart = createBarChart('.mount-element', {
     data: [
-        { category: 'A',
-            value: 30 },
-        { category: 'B',
-            value: 70 },
-        { category: 'C',
-            value: 45 },
+        {
+            category: 'A',
+            value: 30,
+        },
+        {
+            category: 'B',
+            value: 70,
+        },
+        {
+            category: 'C',
+            value: 45,
+        },
     ],
     key: 'category',
     series: [
-        { id: 'values',
+        {
+            id: 'values',
             label: 'Values',
-            value: 'value' },
+            value: 'value',
+        },
     ],
 });
 
 // Update with new data
 chart.update({
     data: [
-        { category: 'A',
-            value: 50 },
-        { category: 'B',
-            value: 20 },
-        { category: 'C',
-            value: 80 },
+        {
+            category: 'A',
+            value: 50,
+        },
+        {
+            category: 'B',
+            value: 20,
+        },
+        {
+            category: 'C',
+            value: 80,
+        },
     ],
 });
 ```
 
-Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Tooltip`, `Crosshair`.
+Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `ColorLegend`, `Tooltip`, `Crosshair`, and `ChartAnnotations` (reference lines, bands, and point markers).
 
 ## Scales
 
@@ -487,17 +511,17 @@ scale.bandwidth; // width of each band
 
 ### Additional Scales
 
-- **`scaleDiverging`** — maps values below and above a midpoint to separate sub-ranges
-- **`scaleLogarithmic`** — logarithmic mapping with configurable base (`scaleLog` is the base-10 shortcut)
-- **`scaleOrdinal`** — maps discrete domain values to discrete range values, cycling the range
-- **`scalePoint`** — positions discrete values at evenly spaced points along a range
-- **`scalePower`** — polynomial mapping with configurable exponent (`scaleSqrt` is the exponent-0.5 shortcut)
-- **`scaleQuantile`** — maps continuous data to discrete quantile bins
-- **`scaleQuantize`** — maps a continuous domain to discrete range values
-- **`scaleRadial`** — maps a numeric magnitude onto a ring radius (clamp-by-default), for radial/polar charts
-- **`scaleSymlog`** — symmetric-log mapping that handles negatives and zero (linear near zero, log beyond a configurable `constant`)
-- **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries
-- **`scaleTime`** — maps `Date` domains to numeric ranges
+- **`scaleDiverging`** maps values below and above a midpoint to separate sub-ranges
+- **`scaleLogarithmic`** is a logarithmic mapping with configurable base (`scaleLog` is the base-10 shortcut)
+- **`scaleOrdinal`** maps discrete domain values to discrete range values, cycling the range
+- **`scalePoint`** positions discrete values at evenly spaced points along a range
+- **`scalePower`** is a polynomial mapping with configurable exponent (`scaleSqrt` is the exponent-0.5 shortcut)
+- **`scaleQuantile`** maps continuous data to discrete quantile bins
+- **`scaleQuantize`** maps a continuous domain to discrete range values
+- **`scaleRadial`** maps a numeric magnitude onto a ring radius (clamped by default), for radial/polar charts
+- **`scaleSymlog`** is a symmetric-log mapping that handles negatives and zero (linear near zero, log beyond a configurable `constant`)
+- **`scaleThreshold`** maps values to discrete outputs based on threshold boundaries
+- **`scaleTime`** maps `Date` domains to numeric ranges
 
 ## 3D Rendering
 
@@ -514,15 +538,15 @@ import {
 
 Available 3D primitives: `cube`, `sphere`, `cylinder`, `cone`, `plane`, `torus`.
 
-Camera supports interactive zoom, pivot, and pan with configurable sensitivity.
+Camera supports interactive zoom, pivot, and pan with configurable sensitivity. For hardware-accelerated rendering, `@ripl/webgpu` provides a drop-in WebGPU context with a real depth buffer, MSAA, and WGSL shaders; the same `Shape3D` elements work in both.
 
 ## Performance
 
-1. **Scene + Renderer** — elements in a scene are hoisted into a flat buffer, converting render traversal from O(n^c) to O(n). The cost shifts to adding/removing elements from groups.
-2. **Persistent path keys** — always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames.
-3. **Memory lifecycle** — call `destroy()` on elements, scenes, and renderers when done to clean up subscriptions and DOM references.
-4. **Auto-stop** — the renderer stops ticking when idle (no active transitions and mouse has left the canvas) to avoid unnecessary CPU usage.
-5. **Debug overlay** — enable `{ debug: true }` on the renderer to visualise FPS, element count, and bounding boxes during development.
+1. **Scene + Renderer.** Elements in a scene are hoisted into a flat buffer, converting render traversal from O(n^c) to O(n). The cost shifts to adding/removing elements from groups.
+2. **Persistent path keys.** Always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames.
+3. **Memory lifecycle.** Call `destroy()` on elements, scenes, and renderers when done to clean up subscriptions and DOM references.
+4. **Auto-stop.** The renderer stops ticking when idle (no active transitions and the mouse has left the canvas) to avoid unnecessary CPU usage.
+5. **Debug overlay.** Enable `{ debug: true }` on the renderer to visualize FPS, element count, and bounding boxes during development.
 
 ## Development
 

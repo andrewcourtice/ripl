@@ -22,7 +22,7 @@ export interface CrosshairOptions extends ChartComponentOptions {
     vertical?: boolean;
     /** Whether to draw the horizontal line that tracks the pointer's y position. Defaults to `false`. */
     horizontal?: boolean;
-    /** Stroke colour of the crosshair lines. */
+    /** Stroke color of the crosshair lines. */
     stroke?: string;
     /** Stroke width of the crosshair lines, in pixels. */
     lineWidth?: number;
@@ -194,8 +194,8 @@ export class Crosshair extends ChartComponent {
 
     /** Destroys the crosshair, removing event listeners and scene elements. */
     public destroy() {
-        // Disposes every retained subscription — including the pointer (mousemove/mouseleave)
-        // listeners registered under the events key in `setup` — so a destroyed crosshair never
+        // Disposes every retained subscription, including the pointer (mousemove/mouseleave)
+        // listeners registered under the events key in `setup`, so a destroyed crosshair never
         // keeps tracking the pointer.
         this.dispose();
 

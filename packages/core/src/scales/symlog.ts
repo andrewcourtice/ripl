@@ -25,7 +25,7 @@ import type {
 /** Options for a symmetric-log scale, adding a configurable linear threshold to the base linear scale options. */
 export interface SymlogScaleOptions extends LinearScaleOptions {
     /**
-     * The linear threshold `C` — the region `|x| < C` around zero is treated approximately linearly,
+     * The linear threshold `C`; the region `|x| < C` around zero is treated approximately linearly,
      * with logarithmic compression taking over beyond it. A larger constant widens the near-zero
      * linear region. Defaults to 1.
      */
