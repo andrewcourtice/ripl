@@ -18,6 +18,7 @@ import {
     interpolateDate,
     interpolateGradient,
     interpolateNumber,
+    interpolatePattern,
     interpolatePoints,
 } from '../interpolators';
 
@@ -88,6 +89,7 @@ export function getInterpolator<TValue>(value: TValue, key?: string) {
     const interpolator = [
         interpolateNumber,
         interpolateGradient,
+        interpolatePattern,
         interpolateColor,
         interpolateDate,
         interpolatePoints,

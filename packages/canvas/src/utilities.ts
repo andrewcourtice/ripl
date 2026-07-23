@@ -134,7 +134,9 @@ function parseGradientMemoized(value: string): Gradient | undefined {
 }
 
 // Pattern tiles are position-independent, so one materialized CanvasPattern per serialized
-// pattern string serves every element and frame (null caches invalid strings).
+// pattern string serves every element and frame (null caches invalid strings). The cache is
+// bounded because a transition between two patterns produces a fresh string every frame.
+const PATTERN_CACHE_LIMIT = 256;
 const patternCache = new Map<string, CanvasPattern | null>();
 
 /**
@@ -151,6 +153,10 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
 
     if (cached !== undefined) {
         return cached;
+    }
+
+    if (patternCache.size >= PATTERN_CACHE_LIMIT) {
+        patternCache.clear();
     }
 
     const pattern = parsePattern(value);

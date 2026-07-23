@@ -4,6 +4,7 @@ export * from './date';
 export * from './gradient';
 export * from './number';
 export * from './path';
+export * from './pattern';
 export * from './rotation';
 export * from './string';
 export * from './transform';
