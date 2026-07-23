@@ -34,11 +34,11 @@ playwright-report/
 
 tsconfig.tsbuildinfo
 
-app/.vitepress/cache/
-app/src/.vitepress/cache/
-app/src/.vitepress/.temp/
-app/src/public/_playground/
-app/src/docs/api/
+apps/website/.vitepress/cache/
+apps/website/src/.vitepress/cache/
+apps/website/src/.vitepress/.temp/
+apps/website/src/public/_playground/
+apps/website/src/docs/api/
 
-# stray TypeDoc default output (real output goes to app/src/docs/api/)
-app/docs/
+# stray TypeDoc default output (real output goes to apps/website/src/docs/api/)
+apps/website/docs/

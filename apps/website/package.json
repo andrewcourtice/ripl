@@ -1,4 +1,5 @@
 {
+    "name": "@ripl/website",
     "private": true,
     "scripts": {
         "generate-api": "typedoc",

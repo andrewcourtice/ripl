@@ -35,7 +35,7 @@ packages/
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
 └── test-utils/   # Test utilities
-app/              # Documentation site (VitePress) with demos
+apps/website/     # Documentation site (VitePress) with demos
 ```
 
 Each package follows:
@@ -60,7 +60,7 @@ yarn test
 yarn lint
 ```
 
-The documentation site lives in `app/` and is built with VitePress.
+The documentation site lives in `apps/website/` and is built with VitePress.
 
 ## Code Style
 

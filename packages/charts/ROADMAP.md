@@ -62,7 +62,7 @@ pattern-fill paint done; keyboard navigation remains the largest post-1.0 gap).
 
 Landed on `claude/ripl-chart-gap-analysis-rmiuy1`:
 
-- **A1 — Demo UX.** The docs demo wrapper (`app/.../example.vue`) now right-aligns
+- **A1 — Demo UX.** The docs demo wrapper (`apps/website/.../example.vue`) now right-aligns
   the Export button and uses a mobile-first aspect ratio (`4/3` on phones, `16/9`
   at ≥640px) so charts aren't squashed on small screens.
 - **A2 — Formatting foundation.** Removed the duplicate charts-local `formatNumber`

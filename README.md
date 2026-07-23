@@ -82,7 +82,7 @@ packages/
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
 └── test-utils/   # Test utilities
-app/              # Documentation site (VitePress) with live demos
+apps/website/     # Documentation site (VitePress) with live demos
 ```
 
 ## Usage

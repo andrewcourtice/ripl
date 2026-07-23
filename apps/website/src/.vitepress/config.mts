@@ -21,7 +21,7 @@ import {
 
 import typedocSidebar from '../docs/api/typedoc-sidebar.json';
 
-const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../packages/core/package.json'), 'utf-8'));
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../../packages/core/package.json'), 'utf-8'));
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -119,24 +119,24 @@ export default defineConfig({
         server: {
             fs: {
                 allow: [
-                    path.resolve(__dirname, '../../../'),
+                    path.resolve(__dirname, '../../../../'),
                 ],
             },
         },
         resolve: {
             alias: {
-                '@ripl/utilities': path.resolve(__dirname, '../../../packages/utilities/src/index.ts'),
-                '@ripl/core': path.resolve(__dirname, '../../../packages/core/src/index.ts'),
-                '@ripl/dom': path.resolve(__dirname, '../../../packages/dom/src/index.ts'),
-                '@ripl/canvas': path.resolve(__dirname, '../../../packages/canvas/src/index.ts'),
-                '@ripl/svg': path.resolve(__dirname, '../../../packages/svg/src/index.ts'),
-                '@ripl/web': path.resolve(__dirname, '../../../packages/web/src/index.ts'),
-                '@ripl/charts': path.resolve(__dirname, '../../../packages/charts/src/index.ts'),
-                '@ripl/devtools': path.resolve(__dirname, '../../../packages/devtools/src/index.ts'),
-                '@ripl/3d': path.resolve(__dirname, '../../../packages/3d/src/index.ts'),
-                '@ripl/webgpu': path.resolve(__dirname, '../../../packages/webgpu/src/index.ts'),
-                '@ripl/terminal': path.resolve(__dirname, '../../../packages/terminal/src/index.ts'),
-                '@ripl/node': path.resolve(__dirname, '../../../packages/node/src/index.ts'),
+                '@ripl/utilities': path.resolve(__dirname, '../../../../packages/utilities/src/index.ts'),
+                '@ripl/core': path.resolve(__dirname, '../../../../packages/core/src/index.ts'),
+                '@ripl/dom': path.resolve(__dirname, '../../../../packages/dom/src/index.ts'),
+                '@ripl/canvas': path.resolve(__dirname, '../../../../packages/canvas/src/index.ts'),
+                '@ripl/svg': path.resolve(__dirname, '../../../../packages/svg/src/index.ts'),
+                '@ripl/web': path.resolve(__dirname, '../../../../packages/web/src/index.ts'),
+                '@ripl/charts': path.resolve(__dirname, '../../../../packages/charts/src/index.ts'),
+                '@ripl/devtools': path.resolve(__dirname, '../../../../packages/devtools/src/index.ts'),
+                '@ripl/3d': path.resolve(__dirname, '../../../../packages/3d/src/index.ts'),
+                '@ripl/webgpu': path.resolve(__dirname, '../../../../packages/webgpu/src/index.ts'),
+                '@ripl/terminal': path.resolve(__dirname, '../../../../packages/terminal/src/index.ts'),
+                '@ripl/node': path.resolve(__dirname, '../../../../packages/node/src/index.ts'),
             },
         },
         css: {

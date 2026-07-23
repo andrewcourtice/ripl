@@ -11,7 +11,7 @@ The Ripl project follows a monorepo structure using Yarn workspaces:
   - `charts/` - Pre-built chart components
   - `svg/` - SVG-specific implementation
   - `utilities/` - Shared utility functions
-- `app/` - Documentation site with examples
+- `apps/website/` - Documentation site with examples
 
 ## TypeScript Standards
 

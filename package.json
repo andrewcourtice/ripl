@@ -9,7 +9,6 @@
     "private": true,
     "packageManager": "yarn@4.17.0",
     "workspaces": [
-        "app",
         "apps/*",
         "packages/*"
     ],

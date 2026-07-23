@@ -318,7 +318,7 @@ export default tseslint.config(
     // Build/tooling scripts may log progress to the console.
     {
         name: 'ripl/scripts',
-        files: ['app/scripts/**/*.mjs', 'app/scripts/**/*.js'],
+        files: ['apps/website/scripts/**/*.mjs', 'apps/website/scripts/**/*.js'],
         rules: {
             'no-console': 'off',
         },
@@ -377,7 +377,7 @@ export default tseslint.config(
     // Lint <script> blocks in VitePress markdown files
     {
         name: 'ripl/vue-markdown',
-        files: ['app/**/*.md'],
+        files: ['apps/website/**/*.md'],
         plugins: {
             vue,
             'ripl': riplPlugin,
@@ -480,7 +480,7 @@ export default tseslint.config(
     // `renderer` injected into scope, so treat them as read-only globals.
     {
         name: 'ripl/playground-examples',
-        files: ['app/src/.vitepress/components/playground/examples/**/*.js'],
+        files: ['apps/website/src/.vitepress/components/playground/examples/**/*.js'],
         languageOptions: {
             globals: {
                 context: 'readonly',
@@ -491,10 +491,11 @@ export default tseslint.config(
     },
 
     // Prefer keyed object-lookup dispatch over `switch` in library and extension
-    // source (see AGENTS.md → Control Flow). The docs site under `app/` is exempt.
+    // source (see AGENTS.md → Control Flow). The docs site under `apps/website/` is exempt.
     {
         name: 'ripl/no-switch',
         files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        ignores: ['apps/website/**'],
         rules: {
             'no-restricted-syntax': ['error', {
                 selector: 'SwitchStatement',

@@ -33,7 +33,7 @@ packages/
 ├── dom/          # DOM utilities
 ├── utilities/    # Shared typed utility functions
 └── test-utils/   # Test utilities
-app/              # Documentation site (VitePress) with demos
+apps/website/     # Documentation site (VitePress) with demos
 ```
 
 Each package follows:
@@ -332,9 +332,9 @@ Every publicly exposed symbol **and every public member** must carry a JSDoc (`/
 TypeDoc's `notDocumented` validation is the source of truth (it respects the `excludePrivate/Protected/Internal` exclusions). Run it per package and confirm no warnings remain, ignoring `SetSignature` warnings (those are covered by the getter's doc):
 
 ```bash
-cd app
+cd apps/website
 yarn typedoc --entryPointStrategy resolve \
-  --entryPoints ../packages/<pkg>/src/index.ts --tsconfig ../packages/<pkg>/tsconfig.json \
+  --entryPoints ../../packages/<pkg>/src/index.ts --tsconfig ../../packages/<pkg>/tsconfig.json \
   --validation.notDocumented --excludePrivate --excludeProtected --excludeInternal --emit none \
   | grep 'does not have any documentation' | grep -v SetSignature
 ```
@@ -409,7 +409,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 - **No nested ternaries** — enforced by ESLint (`no-nested-ternary`). Prefer early returns or intermediate variables over ternary chains.
 - **Limit nesting depth** — enforced by ESLint (`max-depth: 4`). If logic nests too deeply, extract inner blocks into well-named helper functions.
 - **Avoid nested loops** — extract inner loops into descriptive functions where possible.
-- **Prefer keyed object-lookup dispatch over `switch`** — for a string-discriminant dispatch (e.g. a message `kind` handler, a `ChartSide`), use a keyed object map whose values are the branches (`{ top: () => …, bottom: () => … }[side]()`) rather than a `switch`. It reads cleaner and is exhaustively type-checked against the key union. Enforced by ESLint (`no-restricted-syntax` bans `SwitchStatement`) across library and extension source (`packages/*/src`, `apps/*/src`); the docs site under `app/` is exempt. For a switch whose labels are variables or numeric comparisons (not literal keys — e.g. the colour `case r/g/b` maxima), use an early-return `if/else` chain instead.
+- **Prefer keyed object-lookup dispatch over `switch`** — for a string-discriminant dispatch (e.g. a message `kind` handler, a `ChartSide`), use a keyed object map whose values are the branches (`{ top: () => …, bottom: () => … }[side]()`) rather than a `switch`. It reads cleaner and is exhaustively type-checked against the key union. Enforced by ESLint (`no-restricted-syntax` bans `SwitchStatement`) across library and extension source (`packages/*/src`, `apps/*/src`); the docs site under `apps/website/` is exempt. For a switch whose labels are variables or numeric comparisons (not literal keys — e.g. the colour `case r/g/b` maxima), use an early-return `if/else` chain instead.
 
 ### Functions & Decomposition
 
@@ -546,13 +546,13 @@ describe('Scale', () => {
 - **Dev dependencies** are for build and test tooling only: TypeScript, tsup, Vitest, ESLint, happy-dom/jsdom
 - When external libraries are necessary, prefer tree-shakable options
 
-## Documentation Site (`app/`)
+## Documentation Site (`apps/website/`)
 
-The `app/` directory is a VitePress site for documentation and demos.
+The `apps/website/` directory is a VitePress site for documentation and demos.
 
 ### Component Library
 
-Reusable UI components live in `app/src/.vitepress/components/` and are globally registered in `app/src/.vitepress/theme/index.ts`. **Always use built-in components** before creating new ones:
+Reusable UI components live in `apps/website/src/.vitepress/components/` and are globally registered in `apps/website/src/.vitepress/theme/index.ts`. **Always use built-in components** before creating new ones:
 
 | Component | Usage |
 |-----------|-------|
@@ -576,7 +576,7 @@ Reusable UI components live in `app/src/.vitepress/components/` and are globally
 
 ### Playground
 
-The playground (`app/src/.vitepress/components/playground/`) provides a live code editor:
+The playground (`apps/website/src/.vitepress/components/playground/`) provides a live code editor:
 - `sandbox.ts` — Builds iframe `srcdoc` with import maps, setup code, and user code
 - `defaults.ts` — Default 2D/3D code snippets
 - `examples.ts` — Example code snippets shown in the examples dropdown

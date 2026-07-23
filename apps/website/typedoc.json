@@ -1,17 +1,17 @@
 {
     "entryPointStrategy": "packages",
     "entryPoints": [
-        "../packages/canvas",
-        "../packages/core",
-        "../packages/charts",
-        "../packages/devtools",
-        "../packages/svg",
-        "../packages/web",
-        "../packages/3d",
-        "../packages/webgpu",
-        "../packages/terminal",
-        "../packages/dom",
-        "../packages/utilities"
+        "../../packages/canvas",
+        "../../packages/core",
+        "../../packages/charts",
+        "../../packages/devtools",
+        "../../packages/svg",
+        "../../packages/web",
+        "../../packages/3d",
+        "../../packages/webgpu",
+        "../../packages/terminal",
+        "../../packages/dom",
+        "../../packages/utilities"
     ],
     "out": "./src/docs/api",
     "plugin": [

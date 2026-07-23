@@ -16,7 +16,7 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-const packagesDir = path.resolve(__dirname, '../../packages');
+const packagesDir = path.resolve(__dirname, '../../../packages');
 const outputDir = path.resolve(__dirname, '../src/public/_playground');
 
 const PACKAGES = [
