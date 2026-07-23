@@ -1824,6 +1824,23 @@
             ]
           },
           {
+            "text": "interpolatePattern",
+            "link": "/docs/api/@ripl/core/namespaces/interpolatePattern/",
+            "collapsed": true,
+            "items": [
+              {
+                "text": "Functions",
+                "collapsed": true,
+                "items": [
+                  {
+                    "text": "test",
+                    "link": "/docs/api/@ripl/core/namespaces/interpolatePattern/functions/test.md"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "text": "interpolatePoints",
             "link": "/docs/api/@ripl/core/namespaces/interpolatePoints/",
             "collapsed": true,
@@ -2729,6 +2746,10 @@
           {
             "text": "interpolateNumber",
             "link": "/docs/api/@ripl/core/variables/interpolateNumber.md"
+          },
+          {
+            "text": "interpolatePattern",
+            "link": "/docs/api/@ripl/core/variables/interpolatePattern.md"
           },
           {
             "text": "interpolatePoints",

@@ -124,7 +124,24 @@ When Ripl encounters a pattern string in a style property:
    - **SVG**: creates a `<pattern>` element in a `<defs>` block (tiled in user space) and references it via `url(#id)`, updating the definition in place when the paint changes
 4. The native pattern is applied as the fill or stroke style
 
-Unlike [gradients](/docs/core/advanced/gradients), pattern paints are not interpolated during transitions. Set them directly rather than animating between two pattern values.
+## Pattern Interpolation
+
+Like [gradients](/docs/core/advanced/gradients), pattern paints animate during transitions. When both values are patterns of the same tile type, `renderer.transition()` interpolates their foreground color, background color, and tile size:
+
+```ts
+// A diagonal pattern eases its colors and tile size toward the target.
+await renderer.transition(rect, {
+    duration: 1000,
+    state: {
+        fill: 'pattern(diagonal, #ff006e, #fff0, 16)',
+    },
+});
+```
+
+The tile type is the pattern's signature. When the two patterns share a type they interpolate smoothly; when the types differ (say, `diagonal` to `dots`) there is no meaningful in-between motif, so the paint snaps from one to the other at the transition midpoint. The same snap applies when only one endpoint is a pattern, since a repeating tile cannot morph into a plain color or a gradient.
+
+> [!NOTE]
+> The literal `transparent` keyword is not a parseable color, so a transparent background snaps at the midpoint rather than fading. Use a zero-alpha color such as `#fff0` or `rgba(255, 255, 255, 0)` for a smooth fade.
 
 ## Working with Patterns Programmatically
 

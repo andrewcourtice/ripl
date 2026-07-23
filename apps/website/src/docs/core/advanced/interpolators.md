@@ -13,7 +13,7 @@ Ripl automatically selects the right interpolator based on the value type, but y
 
 ## Built-in Interpolators
 
-Ripl ships with interpolators for common value types. They are tested in order, and the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (a fallback that snaps at t > 0.5).
+Ripl ships with interpolators for common value types. They are tested in order, and the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolatePattern` (matching-type `pattern(...)` paints), `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (a fallback that snaps at t > 0.5).
 
 ## How Interpolators Work
 
@@ -243,6 +243,34 @@ rect.fill = interp(t);
 </ripl-example>
 :::
 
+### Pattern
+
+Transitions between two `pattern(...)` paints that share a tile type by interpolating their foreground color, background color, and tile size.
+
+:::tabs
+== Code
+```ts
+import {
+    interpolatePattern,
+} from '@ripl/web';
+
+const interp = interpolatePattern(
+    'pattern(diagonal, #3a86ff, #eff6ff, 6)',
+    'pattern(diagonal, #ff006e, #fff0, 16)'
+);
+rect.fill = interp(t);
+```
+== Demo
+<ripl-example @context-changed="patternCtxChanged">
+    <template #footer>
+        <RiplControlGroup>
+            <span>t</span>
+            <RiplInputRange v-model="patternT" :min="0" :max="100" :step="1" @update:model-value="patternRedraw" style="flex:1" />
+        </RiplControlGroup>
+    </template>
+</ripl-example>
+:::
+
 ### Rotation
 
 Interpolates between rotation values. It supports numbers (radians) and strings like `"90deg"` or `"1.5rad"`.
@@ -351,6 +379,7 @@ import {
     interpolateGradient,
     interpolateNumber,
     interpolatePath,
+    interpolatePattern,
     interpolatePoints,
     interpolateRotation,
     TAU,
@@ -478,6 +507,48 @@ const { contextChanged: gradientCtxChanged } = useRiplExample(ctx => {
 });
 
 function gradientRedraw() { if (gradientCtx) renderGradient(gradientCtx); }
+
+
+// --- Pattern demo ---
+
+const patternT = ref(0);
+let patternCtx: Context | undefined;
+
+function renderPattern(ctx: Context) {
+    const w = ctx.width;
+    const h = ctx.height;
+    const t = patternT.value / 100;
+    const interp = interpolatePattern(
+        'pattern(diagonal, #3a86ff, #eff6ff, 6)',
+        'pattern(diagonal, #ff006e, #fff0, 16)'
+    );
+    const fill = interp(t);
+    const pad = 20;
+
+    ctx.batch(() => {
+        createRect({
+            fill,
+            x: pad,
+            y: pad,
+            width: w - pad * 2,
+            height: h - 50,
+            borderRadius: 8,
+        }).render(ctx);
+        createText({
+            x: w / 2, y: h - 16,
+            content: `t = ${t.toFixed(2)}`,
+            fill: '#666', textAlign: 'center', font: '12px sans-serif',
+        }).render(ctx);
+    });
+}
+
+const { contextChanged: patternCtxChanged } = useRiplExample(ctx => {
+    patternCtx = ctx;
+    renderPattern(ctx);
+    ctx.on('resize', () => renderPattern(ctx));
+});
+
+function patternRedraw() { if (patternCtx) renderPattern(patternCtx); }
 
 
 // --- Rotation demo ---
