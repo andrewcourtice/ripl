@@ -6,5 +6,5 @@ export * from './number';
 export * from './path';
 export * from './rotation';
 export * from './string';
-export * from './transform-origin';
+export * from './transform';
 export * from './types';

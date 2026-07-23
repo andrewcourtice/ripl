@@ -6,7 +6,7 @@ import {
 
 import {
     interpolateTransformOrigin,
-} from '../../src/interpolators/transform-origin';
+} from '../../src/interpolators/transform';
 
 describe('Interpolators', () => {
 
