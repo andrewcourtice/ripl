@@ -33,9 +33,9 @@ export interface PatternTileLine {
 export interface PatternTileDot {
     /** Discriminant identifying the shape as a dot. */
     kind: 'dot';
-    /** The x coordinate of the dot's centre, in tile space. */
+    /** The x coordinate of the dot's center, in tile space. */
     cx: number;
-    /** The y coordinate of the dot's centre, in tile space. */
+    /** The y coordinate of the dot's center, in tile space. */
     cy: number;
     /** The radius of the dot, in tile-space pixels. */
     radius: number;

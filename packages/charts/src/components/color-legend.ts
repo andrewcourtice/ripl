@@ -25,14 +25,14 @@ import {
     numberFormat,
 } from '@ripl/utilities';
 
-/** Orientation of the colour legend bar. */
+/** Orientation of the color legend bar. */
 export type ColorLegendOrientation = 'horizontal' | 'vertical';
 
 /** Visual options for a {@link ColorLegend}. */
 export interface ColorLegendOptions {
-    /** Whether the colour bar runs horizontally or vertically. Defaults to `horizontal`. */
+    /** Whether the color bar runs horizontally or vertically. Defaults to `horizontal`. */
     orientation?: ColorLegendOrientation;
-    /** Thickness of the colour bar in pixels (height when horizontal, width when vertical). */
+    /** Thickness of the color bar in pixels (height when horizontal, width when vertical). */
     thickness?: number;
     /** Number of solid segments used to approximate the gradient. */
     segments?: number;
@@ -42,7 +42,7 @@ export interface ColorLegendOptions {
     format?: (value: number) => string;
     /** CSS font shorthand for the value labels. */
     font?: string;
-    /** Colour of the value labels. */
+    /** Color of the value labels. */
     fontColor?: string;
     /** Gap between the bar and its labels in pixels. */
     labelGap?: number;
@@ -53,7 +53,7 @@ export interface ColorLegendOptions {
 
 /** Options for constructing a {@link ColorLegend}. */
 export interface ColorLegendComponentOptions extends ChartComponentOptions {
-    /** The colour scale the legend visualizes. */
+    /** The color scale the legend visualizes. */
     scale: ColorScale;
     /** Visual options for the legend bar and labels. */
     options?: ColorLegendOptions;
@@ -76,7 +76,7 @@ const DEFAULT_OPTIONS: Required<ColorLegendOptions> = {
 const LABEL_ALLOWANCE = 16;
 
 /**
- * A continuous-colour legend: a gradient bar (approximated by solid segments so it works identically
+ * A continuous-color legend: a gradient bar (approximated by solid segments so it works identically
  * on Canvas and SVG) annotated with formatted value labels drawn from a {@link ColorScale}. Renders
  * into a reserved region like the other chart components; formatting is supplied explicitly, keeping
  * the scale and the formatter decoupled.
@@ -128,7 +128,7 @@ export class ColorLegend extends ChartComponent {
         return this._group;
     }
 
-    /** Updates the colour scale the legend renders. */
+    /** Updates the color scale the legend renders. */
     public setScale(scale: ColorScale): void {
         this._scale = scale;
     }

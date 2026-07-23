@@ -41,7 +41,7 @@ export interface ForceOptions {
     centerX?: number;
     /** Y coordinate of the centering pull. Defaults to `0`. */
     centerY?: number;
-    /** Strength of the pull toward the centre point. Defaults to `0.05`. */
+    /** Strength of the pull toward the center point. Defaults to `0.05`. */
     centerStrength?: number;
     /** Number of cooling iterations to run. Defaults to `300`. */
     iterations?: number;

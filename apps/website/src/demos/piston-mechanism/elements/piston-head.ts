@@ -87,7 +87,7 @@ export class PistonHead extends Shape3D<PistonHeadState> {
         return [
             // Piston body — a capped cylinder whose bore axis runs vertically (Y).
             ...cylinderY(0, 0, this.radius, -halfHeight, halfHeight, segs),
-            // Wrist pin along Z at the body's centre, where the rod's small end attaches.
+            // Wrist pin along Z at the body's center, where the rod's small end attaches.
             ...cylinderZ(0, 0, this.pinRadius, -this.pinLength / 2, this.pinLength / 2, 12),
         ];
     }

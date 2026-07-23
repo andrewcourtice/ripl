@@ -30,10 +30,10 @@ The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KP
             <RiplField label="Tick labels" inline>
                 <RiplSwitch v-model="extras.showTickLabels" />
             </RiplField>
-            <RiplField label="Fill colour" inline>
+            <RiplField label="Fill color" inline>
                 <RiplColorInput v-model="extras.color" />
             </RiplField>
-            <RiplField label="Track colour" inline>
+            <RiplField label="Track color" inline>
                 <RiplColorInput v-model="extras.trackColor" />
             </RiplField>
         </RiplChartConfig>

@@ -49,7 +49,7 @@ export function getMidpoint(pointA: Point, pointB: Point): Point {
     return getWaypoint(pointA, pointB, 0.5);
 }
 
-/** Returns a point along the line segment between two points at the given normalised position (0–1). */
+/** Returns a point along the line segment between two points at the given normalized position (0–1). */
 export function getWaypoint([x1, y1]: Point, [x2, y2]: Point, position: number): Point {
     return [
         x1 + (x2 - x1) * position,
@@ -62,7 +62,7 @@ export function getEuclideanDistance(dp: number, dq: number): number {
     return Math.sqrt(dp ** 2 + dq ** 2);
 }
 
-/** Returns the point at a given angle and distance from an optional centre. */
+/** Returns the point at a given angle and distance from an optional center. */
 export function getThetaPoint(angle: number, distance: number, cx?: number, cy?: number): Point {
     return [
         (cx || 0) + Math.cos(angle) * distance,
@@ -70,7 +70,7 @@ export function getThetaPoint(angle: number, distance: number, cx?: number, cy?:
     ];
 }
 
-/** Generates the vertex points of a regular polygon centred at `(cx, cy)` with the given radius and number of sides. */
+/** Generates the vertex points of a regular polygon centered at `(cx, cy)` with the given radius and number of sides. */
 export function getPolygonPoints(
     sides: number,
     cx: number,
@@ -157,8 +157,8 @@ export function isPointInBox([x, y]: Point, { left, top, bottom, right }: Box) {
         && y <= bottom;
 }
 
-/** Normalises a border radius value into a four-corner tuple, expanding a single number to all corners. */
-export function normaliseBorderRadius(borderRadius: number | BorderRadius): BorderRadius {
+/** Normalizes a border radius value into a four-corner tuple, expanding a single number to all corners. */
+export function normalizeBorderRadius(borderRadius: number | BorderRadius): BorderRadius {
     return typeIsArray(borderRadius)
         ? borderRadius
         : [

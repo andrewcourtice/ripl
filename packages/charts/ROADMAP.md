@@ -15,7 +15,7 @@ Ripl ships an unusually broad surface for a pre-1.0 library:
   sankey, arc-diagram, force-directed, stock (OHLC/candlestick), realtime.
 - **11+ D3-class scales** in `@ripl/core` — continuous (linear), band, point,
   ordinal, discrete, diverging, logarithmic, power/sqrt, quantile, quantize,
-  threshold, time — plus sequential/diverging **colour** scales with perceptual
+  threshold, time — plus sequential/diverging **color** scales with perceptual
   schemes (viridis/plasma/inferno/magma/cividis/turbo, RdBu, BrBG).
 - **Multi-backend rendering** behind one `Context` — Canvas, SVG, Terminal, and
   WebGPU. This exceeds Chart.js (canvas-only) and matches or
@@ -35,7 +35,7 @@ notes where this repo now stands after the 1.0 consistency work (see
 |---|---|---|---|---|---|
 | Chart-type breadth | ✅ 25 incl. exotic | 🟡 core + plugins | ✅ | ✅ | ✅ done |
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
-| Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
+| Scale types available | ✅ 11 + color | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
 | Multiple / secondary axes | ✅ N-axis line/area/scatter/bar | ✅ | ✅ | ✅ | ✅ done (true N-axis; bar = vertical grouped) |
 | Stacking / **100%-stacked** | ✅ / ✅ | ✅/✅ | ✅/✅ | ✅/✅ | ✅ done (`stacked: 'percent'`) |
@@ -55,7 +55,7 @@ notes where this repo now stands after the 1.0 consistency work (see
 
 **Headline 1.0 gaps:** cross-chart consistency (done), configurable axes (done),
 theming/dark mode (done, B1), annotations (done, B2), secondary axes (done for
-line/area/scatter/bar, A6), and accessibility (B3 — ARIA, colourblind palette, and
+line/area/scatter/bar, A6), and accessibility (B3 — ARIA, colorblind palette, and
 pattern-fill paint done; keyboard navigation remains the largest post-1.0 gap).
 
 ## Completed 1.0 consistency work
@@ -83,16 +83,16 @@ Landed on `claude/ripl-chart-1.0-remaining` (this branch, on top of the above):
 - **Formatting completeness.** `format?: ValueFormatInput` added to stock, gantt,
   realtime, sankey, and heatmap (every chart now exposes a value formatter).
 - **B1 — Theming + dark mode.** `core/theme.ts`: `Theme` + `lightTheme`/`darkTheme`
-  + a colourblind-safe theme, a registry, `resolveTheme`/`setDefaultTheme`
+  + a colorblind-safe theme, a registry, `resolveTheme`/`setDefaultTheme`
   (`'auto'` follows `prefers-color-scheme`). Charts take a `theme` option; the
-  colour generator is seeded from the palette and the furniture normalizers read
+  color generator is seeded from the palette and the furniture normalizers read
   the active theme, so `setDefaultTheme('dark')` restyles everything. The light
-  theme equals the historical colours, so default output is unchanged.
+  theme equals the historical colors, so default output is unchanged.
 - **B2 — Annotations.** `components/annotation.ts` (reference lines, shaded bands,
   point markers) exposed as `annotations?` on `CartesianChartOptions`, resolved
   through the axis scales and clipped to the plot (line/area/bar/scatter).
 - **B3 — Accessibility (partial).** Charts set `role="img"` + `aria-label` (from
-  `description`, else title) on the rendering element; a colourblind-safe
+  `description`, else title) on the rendering element; a colorblind-safe
   (Okabe–Ito) theme ships as `'colorblind'`.
 
 Landed on `claude/ripl-chart-axes-a5-a6` (this branch, on top of the above):
@@ -124,7 +124,7 @@ Landed in the 1.0 hardening pass (this branch):
   samples position proportionally to their timestamps.
 - **X-axis tick label rotation** (`labelRotation`, degrees) with rotated band sizing
   and a narrower overflow-drop footprint.
-- **Multi-line tooltips** — newline-separated lines plus greedy word wrap honouring
+- **Multi-line tooltips** — newline-separated lines plus greedy word wrap honoring
   `maxWidth`/`wrap`, reconfigurable at runtime.
 - **Animated axis tick exits** (fade-out via `exitElement`) instead of instant removal.
 - **A6 — Secondary y-axes for area and scatter** (mirroring the line pattern): per-series
@@ -208,15 +208,15 @@ hand-rolling axis/grid/crosshair/tooltip wiring.
 
 ### B3 (remaining) — keyboard navigation + pattern fills
 
-ARIA labelling (`role="img"` + `aria-label` from `description`/title) and a
-colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
+ARIA labeling (`role="img"` + `aria-label` from `description`/title) and a
+colorblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 
 - **Keyboard navigation:** a hidden, focusable DOM layer synced to data points
   (canvas has no native focus targets), arrow traversal, Enter → existing `click`.
 - **Pattern/decal fills:** the paint layer now ships them — `pattern(...)` strings
   (diagonal/cross-hatch/dots/horizontal/vertical) render as `CanvasPattern`s on canvas
   and swept `<pattern>` defs in SVG. Remaining: a chart-level series option applying
-  decals automatically (e.g. with the colourblind theme) and an optional
+  decals automatically (e.g. with the colorblind theme) and an optional
   visually-hidden data-table fallback.
 
 ### B4 — Smaller primitive gaps (opportunistic)
@@ -226,4 +226,4 @@ hand-rolling the value→sweep mapping (the radius-mapping `scaleRadial` has shi
 d3-format specifier parser; the remaining marker symbols (star/cross/wye —
 circle/square/diamond/triangle shipped); time-series **downsampling** (LTTB) for realtime/large
 data; a moving-average/smoothing data transform; and a chart-level series option that applies
-decal patterns automatically (e.g. with the colourblind theme).
+decal patterns automatically (e.g. with the colorblind theme).

@@ -112,7 +112,7 @@ const PASTEL_COLORS = [
     '#E2F0CB', // pastel lime - HP Turbine
     '#D4A5A5', // pastel rose - LP Turbine
     '#F0E6CC', // pastel cream - Exhaust Nozzle
-    '#C9CCD5', // pastel grey-blue - Central Shaft
+    '#C9CCD5', // pastel gray-blue - Central Shaft
 ];
 
 // Exploded offsets along z-axis (front to back)
@@ -323,7 +323,7 @@ onMounted(async () => {
         context = await withTimeout(
             createContext(viewport.value),
             WEBGPU_TIMEOUT_MS,
-            'WebGPU initialisation timed out.'
+            'WebGPU initialization timed out.'
         );
     } catch {
         supported.value = false;

@@ -50,4 +50,4 @@ camera.flush();
 - **Drop-in replacement** — same `Shape3D` elements work with both Canvas 2D and WebGPU contexts
 - **WGSL shaders** — vertex and fragment shaders with Lambertian diffuse lighting
 - **MSAA** — 4x multisample anti-aliasing
-- **Async initialisation** — `createContext` returns a `Promise` for GPU adapter/device negotiation
+- **Async initialization** — `createContext` returns a `Promise` for GPU adapter/device negotiation

@@ -14,7 +14,7 @@
             <slot></slot>
         </RiplConfigSection>
 
-        <RiplConfigSection v-if="series && series.length" title="Colours" :default-open="true">
+        <RiplConfigSection v-if="series && series.length" title="Colors" :default-open="true">
             <RiplField
                 v-for="item in series"
                 :key="item.id"
@@ -152,7 +152,7 @@
                     <option value="auto">Auto</option>
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
-                    <option value="colorblind">Colourblind</option>
+                    <option value="colorblind">Colorblind</option>
                 </RiplSelect>
             </RiplField>
         </RiplConfigSection>
@@ -195,7 +195,7 @@ export interface ChartConfigSeriesMeta {
 
 const props = withDefaults(defineProps<{
     config: ChartConfig;
-    /** Per-series / per-segment entries to render colour pickers for. */
+    /** Per-series / per-segment entries to render color pickers for. */
     series?: ChartConfigSeriesMeta[];
     /** Heading for the chart-specific controls passed via the default slot. */
     extraTitle?: string;
@@ -209,7 +209,7 @@ const props = withDefaults(defineProps<{
 
 const slots = useSlots();
 
-// The lead (default-open) sections are Options / Colours / Legend. When a chart has none of
+// The lead (default-open) sections are Options / Colors / Legend. When a chart has none of
 // them, open Title instead so the panel never opens fully collapsed.
 const hasLeadSection = computed(() => !!slots.default
     || (props.series?.length ?? 0) > 0

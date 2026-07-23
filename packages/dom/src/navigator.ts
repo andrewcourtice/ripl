@@ -74,7 +74,7 @@ function resolveInteraction(option: NavigatorInteractionOption | undefined, fall
  *
  * The gesture model is intentionally Figma-like so a navigator can roam a scene freely:
  * - **click-and-hold drag** (left or middle button, with or without ⌘/Ctrl) pans the view;
- * - **wheel** zooms toward the pointer, and a two-finger **pinch** zooms toward the gesture centre;
+ * - **wheel** zooms toward the pointer, and a two-finger **pinch** zooms toward the gesture center;
  * - **⇧ shift-drag** brushes a rectangular selection when brushing is enabled.
  *
  * Because the base transform is unbounded, dragging past the viewport edge (the pointer is captured

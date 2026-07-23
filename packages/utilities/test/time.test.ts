@@ -28,7 +28,7 @@ describe('timeFormat', () => {
         })).toBe('Jan 15, 2024');
     });
 
-    test('Should honour explicit field options', () => {
+    test('Should honor explicit field options', () => {
         const result = timeFormat(new Date(2024, 5, 1), {
             locale: LOCALE,
             month: 'long',

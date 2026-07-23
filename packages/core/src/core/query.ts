@@ -85,7 +85,7 @@ const COMBINATOR_PRODUCERS = [
     produce: (element: Queryable) => Queryable[];
 }[];
 
-function serialiseAttribute(value: unknown) {
+function serializeAttribute(value: unknown) {
     if (typeIsString(value)) {
         return value;
     }
@@ -130,7 +130,7 @@ function matchesSegment(element: Queryable, segment: string): boolean {
         return !typeIsNil(key)
             && !typeIsNil(value)
             && key in element
-            && serialiseAttribute((element as unknown as Record<string, unknown>)[key]) === value;
+            && serializeAttribute((element as unknown as Record<string, unknown>)[key]) === value;
     });
 
     return typeMatch
@@ -168,9 +168,9 @@ function runQuery(elements: OneOrMore<Queryable>, selector: string): Queryable[]
         return isQueryableContainer(element) ? element.graph(true) : [element];
     });
 
-    const normalisedSelector = selector.trim().replace(/\s+/g, ' ');
+    const normalizedSelector = selector.trim().replace(/\s+/g, ' ');
 
-    return executeQuery(els, normalisedSelector.split(QUERY_PATTERNS.combinators));
+    return executeQuery(els, normalizedSelector.split(QUERY_PATTERNS.combinators));
 }
 
 /** Queries all elements matching a CSS-like selector across the given element(s) and their descendants. */
@@ -192,7 +192,7 @@ export function matches(element: Queryable, selector: string): boolean {
     }
 
     // A single simple segment can be tested directly; multi-segment selectors (with combinators)
-    // are resolved against the element's root so ancestor/sibling constraints are honoured.
+    // are resolved against the element's root so ancestor/sibling constraints are honored.
     if (segments.length === 1) {
         return matchesSegment(element, segments[0]);
     }

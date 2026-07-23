@@ -90,7 +90,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * transforms (as SVG does, via the DOM). When `false` (e.g. canvas), callers map the hit
      * point into the element's local space before testing. See {@link Element.getWorldTransform}.
      */
-    public hitTestHonoursTransform = false;
+    public hitTestHonorsTransform = false;
     /** Current width, in pixels, of the rendering surface. */
     public width: number;
     /** Current height, in pixels, of the rendering surface. */
@@ -141,7 +141,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         }
     }
 
-    /** Fill style (CSS colour, gradient, or pattern) used to paint filled regions. */
+    /** Fill style (CSS color, gradient, or pattern) used to paint filled regions. */
     public get fill(): string {
         return this.currentState.fill;
     }
@@ -267,7 +267,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowBlur = value;
     }
 
-    /** Colour of drawn shadows. */
+    /** Color of drawn shadows. */
     public get shadowColor(): string {
         return this.currentState.shadowColor;
     }
@@ -294,7 +294,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.shadowOffsetY = value;
     }
 
-    /** Stroke style (CSS colour, gradient, or pattern) used to paint outlines. */
+    /** Stroke style (CSS color, gradient, or pattern) used to paint outlines. */
     public get stroke(): string {
         return this.currentState.stroke;
     }

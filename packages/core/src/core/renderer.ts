@@ -87,7 +87,7 @@ export interface RendererTransition {
     duration: number;
     /** Easing function applied to the transition's progress. */
     ease: Ease;
-    /** Loop behaviour once the transition completes. */
+    /** Loop behavior once the transition completes. */
     loop: TransitionLoopMode;
     /** Playback direction of the transition. */
     direction: RendererTransitionDirection;
@@ -107,7 +107,7 @@ export interface RendererTransitionOptions<TElement extends Element> {
     duration?: number;
     /** Easing function applied to the transition's progress. Defaults to linear. */
     ease?: Ease;
-    /** Loop behaviour once the transition completes. Defaults to no looping. */
+    /** Loop behavior once the transition completes. Defaults to no looping. */
     loop?: TransitionLoopMode;
     /** Delay, in milliseconds, before the transition begins. Defaults to `0`. */
     delay?: number;
@@ -129,7 +129,7 @@ export interface RendererDebugOptions {
     boundingBoxes?: boolean;
 }
 
-/** Configuration for the renderer, controlling auto-start/stop behaviour and debug overlays. */
+/** Configuration for the renderer, controlling auto-start/stop behavior and debug overlays. */
 export interface RendererOptions {
     /** Whether the renderer starts its animation loop automatically on construction. Defaults to `true`. */
     autoStart?: boolean;

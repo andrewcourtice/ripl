@@ -48,12 +48,12 @@ describe('Navigator transform', () => {
         expect(navigator.transform.y).toBe(12);
     });
 
-    test('Should keep the zoom centre fixed', () => {
+    test('Should keep the zoom center fixed', () => {
         const navigator = new Navigator();
 
         navigator.zoomBy(2, [100, 100]);
 
-        // The content point under screen [100, 100] is unchanged by a centred zoom.
+        // The content point under screen [100, 100] is unchanged by a centered zoom.
         expect(navigator.invertPoint([100, 100])).toEqual([100, 100]);
         expect(navigator.transform.k).toBe(2);
     });
@@ -101,7 +101,7 @@ describe('Navigator transform', () => {
 
 describe('Navigator framing', () => {
 
-    test('Should centre a content point within the viewport', () => {
+    test('Should center a content point within the viewport', () => {
         const navigator = new Navigator({
             viewport: {
                 width: 200,
@@ -111,11 +111,11 @@ describe('Navigator framing', () => {
 
         navigator.centerOn([50, 20]);
 
-        // Screen position of the centred content point is the viewport centre.
+        // Screen position of the centered content point is the viewport center.
         expect(navigator.applyPoint([50, 20])).toEqual([100, 50]);
     });
 
-    test('Should centre content that lies outside the current viewport', () => {
+    test('Should center content that lies outside the current viewport', () => {
         const navigator = new Navigator({
             viewport: {
                 width: 200,
@@ -144,7 +144,7 @@ describe('Navigator framing', () => {
             y1: 100,
         });
 
-        // A 100x100 box fits a 200x200 viewport at 2x zoom, centred.
+        // A 100x100 box fits a 200x200 viewport at 2x zoom, centered.
         expect(navigator.transform.k).toBe(2);
         expect(navigator.applyPoint([50, 50])).toEqual([100, 100]);
     });
@@ -174,7 +174,7 @@ describe('Navigator framing', () => {
 
 describe('Navigator brush', () => {
 
-    test('Should normalise the brush extent and emit brush', () => {
+    test('Should normalize the brush extent and emit brush', () => {
         const navigator = new Navigator();
         const onBrush = vi.fn();
 
@@ -225,7 +225,7 @@ describe('rescaleDomain', () => {
             inverse: (value: number) => value,
         };
 
-        // 2x zoom centred so screen 0..200 maps back to content 50..150.
+        // 2x zoom centered so screen 0..200 maps back to content 50..150.
         const domain = rescaleDomain(identity, {
             k: 2,
             x: -100,

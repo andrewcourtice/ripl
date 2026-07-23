@@ -86,15 +86,15 @@ const REST_ALPHA = 0.25;
 
 /** Options for configuring a {@link BoxPlotChart}. */
 export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
-    /** The dataset summarised by the chart. */
+    /** The dataset summarized by the chart. */
     data: TData[];
     /** Accessor for the category each value belongs to. */
     key: keyof TData | ((item: TData) => string);
-    /** Accessor for the numeric value to summarise. */
+    /** Accessor for the numeric value to summarize. */
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
     categories?: string[];
-    /** Colour used for every box; falls back to the first palette colour when omitted. */
+    /** Color used for every box; falls back to the first palette color when omitted. */
     color?: string;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
@@ -108,11 +108,11 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
 
 /** Payload emitted for box interaction events. */
 export interface BoxPlotBoxEvent {
-    /** The x coordinate (in chart pixels) of the box's top-centre anchor. */
+    /** The x coordinate (in chart pixels) of the box's top-center anchor. */
     x: number;
-    /** The y coordinate (in chart pixels) of the box's top-centre anchor. */
+    /** The y coordinate (in chart pixels) of the box's top-center anchor. */
     y: number;
-    /** The category the interacted box summarises. */
+    /** The category the interacted box summarizes. */
     category: string;
     /** The computed five-number summary (quartiles, whiskers, outliers) for the box. */
     stats: BoxplotStats;
@@ -129,7 +129,7 @@ export interface BoxPlotChartEventMap extends EventMap {
 }
 
 /**
- * Box-plot chart: summarises a numeric field per category with the shared {@link boxplotStats}
+ * Box-plot chart: summarizes a numeric field per category with the shared {@link boxplotStats}
  * transform and draws a box (Q1–Q3) with a median line, whiskers to the 1.5×IQR fences, and outlier
  * points. Boxes fade/grow in on entry and animate out on exit.
  *
@@ -188,8 +188,8 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
     }
 
     /** Computes the final geometry of every box element (the target the entry/update transitions animate to). */
-    private _boxTargets(stats: BoxplotStats, centre: number, boxWidth: number, valueScale: Scale<number>) {
-        const left = centre - boxWidth / 2;
+    private _boxTargets(stats: BoxplotStats, center: number, boxWidth: number, valueScale: Scale<number>) {
+        const left = center - boxWidth / 2;
         const capWidth = boxWidth * 0.5;
         const yQ3 = valueScale(stats.q3);
         const yQ1 = valueScale(stats.q1);
@@ -198,7 +198,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         const yMin = valueScale(stats.min);
 
         return {
-            centre,
+            center,
             yMedian,
             box: {
                 x: left,
@@ -213,27 +213,27 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 y2: yMedian,
             } as LineState,
             whiskerHigh: {
-                x1: centre,
+                x1: center,
                 y1: yQ3,
-                x2: centre,
+                x2: center,
                 y2: yMax,
             } as LineState,
             whiskerLow: {
-                x1: centre,
+                x1: center,
                 y1: yQ1,
-                x2: centre,
+                x2: center,
                 y2: yMin,
             } as LineState,
             capHigh: {
-                x1: centre - capWidth / 2,
+                x1: center - capWidth / 2,
                 y1: yMax,
-                x2: centre + capWidth / 2,
+                x2: center + capWidth / 2,
                 y2: yMax,
             } as LineState,
             capLow: {
-                x1: centre - capWidth / 2,
+                x1: center - capWidth / 2,
                 y1: yMin,
-                x2: centre + capWidth / 2,
+                x2: center + capWidth / 2,
                 y2: yMin,
             } as LineState,
         };
@@ -241,11 +241,11 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
     /**
      * Builds a box group with every element **collapsed toward the median** (box height 0 at the
-     * median line, whiskers/caps collapsed at their box edge/centre, outliers at radius 0) and its
+     * median line, whiskers/caps collapsed at their box edge/center, outliers at radius 0) and its
      * final geometry stashed on `data`, so the entry transition grows it out like a candlestick.
      */
-    private _createBox(category: string, stats: BoxplotStats, centre: number, boxWidth: number, valueScale: Scale<number>, color: string): Group {
-        const target = this._boxTargets(stats, centre, boxWidth, valueScale);
+    private _createBox(category: string, stats: BoxplotStats, center: number, boxWidth: number, valueScale: Scale<number>, color: string): Group {
+        const target = this._boxTargets(stats, center, boxWidth, valueScale);
         const restFill = setColorAlpha(color, REST_ALPHA);
 
         const box = createRect({
@@ -267,9 +267,9 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const median = createLine({
             id: `${category}-median`,
-            x1: centre,
+            x1: center,
             y1: target.yMedian,
-            x2: centre,
+            x2: center,
             y2: target.yMedian,
             stroke: color,
             lineWidth: 2,
@@ -278,9 +278,9 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const whiskerHigh = createLine({
             id: `${category}-whisker-high`,
-            x1: centre,
+            x1: center,
             y1: target.whiskerHigh.y1,
-            x2: centre,
+            x2: center,
             y2: target.whiskerHigh.y1,
             stroke: color,
             lineWidth: 1,
@@ -289,9 +289,9 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const whiskerLow = createLine({
             id: `${category}-whisker-low`,
-            x1: centre,
+            x1: center,
             y1: target.whiskerLow.y1,
-            x2: centre,
+            x2: center,
             y2: target.whiskerLow.y1,
             stroke: color,
             lineWidth: 1,
@@ -300,9 +300,9 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const capHigh = createLine({
             id: `${category}-cap-high`,
-            x1: centre,
+            x1: center,
             y1: target.capHigh.y1,
-            x2: centre,
+            x2: center,
             y2: target.capHigh.y2,
             stroke: color,
             lineWidth: 1,
@@ -311,9 +311,9 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const capLow = createLine({
             id: `${category}-cap-low`,
-            x1: centre,
+            x1: center,
             y1: target.capLow.y1,
-            x2: centre,
+            x2: center,
             y2: target.capLow.y2,
             stroke: color,
             lineWidth: 1,
@@ -322,12 +322,12 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         const outliers = stats.outliers.map((outlier, index) => createCircle({
             id: `${category}-outlier-${index}`,
-            cx: centre,
+            cx: center,
             cy: valueScale(outlier),
             radius: 0,
             fill: color,
             data: {
-                cx: centre,
+                cx: center,
                 cy: valueScale(outlier),
                 radius: 2.5,
             } as CircleState,
@@ -446,7 +446,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             .map(key => ({
                 id: key,
                 stats: grouped.get(key)!,
-                centre: categoryScale(key),
+                center: categoryScale(key),
             }));
 
         const {
@@ -467,7 +467,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         });
 
         const entryGroups = entries.map(item => {
-            const group = this._createBox(item.id, item.stats, item.centre, boxWidth, valueScale, color);
+            const group = this._createBox(item.id, item.stats, item.center, boxWidth, valueScale, color);
             this.addPlotContent(group);
             return group;
         });
@@ -510,7 +510,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         item: {
             id: string;
             stats: BoxplotStats;
-            centre: number;
+            center: number;
         },
         group: Group,
         boxWidth: number,
@@ -522,7 +522,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         lines: Line[];
         circles: Circle[];
     } {
-        const target = this._boxTargets(item.stats, item.centre, boxWidth, valueScale);
+        const target = this._boxTargets(item.stats, item.center, boxWidth, valueScale);
         const restFill = setColorAlpha(color, REST_ALPHA);
 
         const box = group.getElementById(`${item.id}-box`) as Rect | undefined;
@@ -575,12 +575,12 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
         outlierEntries.forEach(outlier => {
             const circle = createCircle({
                 id: outlier.id,
-                cx: item.centre,
+                cx: item.center,
                 cy: valueScale(outlier.value),
                 radius: 0,
                 fill: color,
                 data: {
-                    cx: item.centre,
+                    cx: item.center,
                     cy: valueScale(outlier.value),
                     radius: 2.5,
                 } as CircleState,
@@ -592,7 +592,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
 
         outlierUpdates.forEach(([outlier, circle]) => {
             circle.data = {
-                cx: item.centre,
+                cx: item.center,
                 cy: valueScale(outlier.value),
                 radius: 2.5,
             } as CircleState;

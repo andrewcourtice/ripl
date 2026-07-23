@@ -3,7 +3,7 @@ import type {
     Vector3,
 } from '@ripl/3d';
 
-/** Side wall + end caps of a solid cylinder whose axis runs along Z, centred at (cx, cy). */
+/** Side wall + end caps of a solid cylinder whose axis runs along Z, centered at (cx, cy). */
 export function cylinderZ(cx: number, cy: number, radius: number, z1: number, z2: number, segments: number): Face3D[] {
     const faces: Face3D[] = [];
     const near = Math.min(z1, z2);
@@ -39,7 +39,7 @@ export function cylinderZ(cx: number, cy: number, radius: number, z1: number, z2
     return faces;
 }
 
-/** Side wall + end caps of a solid cylinder whose axis runs along Y, centred at (cx, cz). */
+/** Side wall + end caps of a solid cylinder whose axis runs along Y, centered at (cx, cz). */
 export function cylinderY(cx: number, cz: number, radius: number, y1: number, y2: number, segments: number): Face3D[] {
     const faces: Face3D[] = [];
     const bottom = Math.min(y1, y2);

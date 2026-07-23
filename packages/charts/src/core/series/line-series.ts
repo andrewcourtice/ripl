@@ -139,7 +139,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
                 cx: x,
                 cy: y,
                 radius,
-                // A square is a rotated quad — its transform origin must track its centre through
+                // A square is a rotated quad — its transform origin must track its center through
                 // position transitions, so the origin interpolates in lockstep with cx/cy.
                 ...(markerType === 'square' ? {
                     transformOriginX: x,

@@ -1,6 +1,6 @@
 # Stock Chart
 
-The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with an optional, labelled volume sub-chart beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes both-axis crosshair tracking, grid lines, tooltips, annotations, and pan/zoom navigation. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
+The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with an optional, labeled volume sub-chart beneath. Bullish and bearish candles are colored distinctly (`upColor` / `downColor`), and the chart includes both-axis crosshair tracking, grid lines, tooltips, annotations, and pan/zoom navigation. Candles and volume bars animate smoothly on data changes, and the volume overlay can be toggled on or off.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -18,10 +18,10 @@ The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with 
             <RiplField label="Volume" inline>
                 <RiplSwitch v-model="extras.showVolume" />
             </RiplField>
-            <RiplField label="Up colour" inline>
+            <RiplField label="Up color" inline>
                 <RiplColorInput v-model="extras.upColor" />
             </RiplField>
-            <RiplField label="Down colour" inline>
+            <RiplField label="Down color" inline>
                 <RiplColorInput v-model="extras.downColor" />
             </RiplField>
         </RiplChartConfig>

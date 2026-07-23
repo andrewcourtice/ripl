@@ -72,7 +72,7 @@ export interface SunburstNode<TData = unknown> {
     label: string;
     /** The node's numeric value, which determines its angular extent. */
     value: number;
-    /** Optional colour override; child nodes inherit their parent's colour when omitted. */
+    /** Optional color override; child nodes inherit their parent's color when omitted. */
     color?: string;
     /** Child nodes rendered in the next ring outward, within this node's angular range. */
     children?: SunburstNode<TData>[];
@@ -210,9 +210,9 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
             const colorGenerator = this.colorGenerator;
 
-            // Resolve top-level node colours through the shared, id-keyed colour map so they stay
-            // stable across data updates (randomising values must not reshuffle colours). Child
-            // nodes inherit their parent's colour via `flattenNodes`.
+            // Resolve top-level node colors through the shared, id-keyed color map so they stay
+            // stable across data updates (randomising values must not reshuffle colors). Child
+            // nodes inherit their parent's color via `flattenNodes`.
             this.resolveSeriesColors(data.map(node => ({
                 id: node.id,
                 color: node.color,

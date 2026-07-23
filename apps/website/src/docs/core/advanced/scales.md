@@ -243,7 +243,7 @@ color('high'); // 100
 
 ## Ordinal
 
-Maps each distinct domain value to a value from `range` of **any type**, cycling when there are more categories than range values. Unknown values encountered later are assigned the next range slot — so a chart can colour series without pre-declaring every category. Its most common use is categorical colour.
+Maps each distinct domain value to a value from `range` of **any type**, cycling when there are more categories than range values. Unknown values encountered later are assigned the next range slot — so a chart can color series without pre-declaring every category. Its most common use is categorical color.
 
 ```ts
 import {

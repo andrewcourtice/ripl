@@ -1,6 +1,6 @@
 import {
     createSVGElement,
-    normaliseGradientColor,
+    normalizeGradientColor,
 } from './utilities';
 
 import {
@@ -67,7 +67,7 @@ function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) 
     stops.forEach((stop) => {
         const stopEl = createSVGElement('stop');
         stopEl.setAttribute('offset', `${(stop.offset ?? 0) * 100}%`);
-        stopEl.setAttribute('stop-color', normaliseGradientColor(stop.color));
+        stopEl.setAttribute('stop-color', normalizeGradientColor(stop.color));
         gradientEl.appendChild(stopEl);
     });
 }
@@ -162,7 +162,7 @@ export function resolveConicGradientFallback(gradient: Gradient): string {
         }
     });
 
-    return normaliseGradientColor(nearest.color);
+    return normalizeGradientColor(nearest.color);
 }
 
 /** Creates a `<clipPath>` definition (with its geometry `<path>` child) for `<defs>`. */

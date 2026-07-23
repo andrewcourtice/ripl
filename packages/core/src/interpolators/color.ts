@@ -1,6 +1,6 @@
 import {
     getColorParser,
-    serialiseRGBA,
+    serializeRGBA,
 } from '../color';
 
 import {
@@ -31,7 +31,7 @@ export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) =>
         return interpolateNumber(value, rgbaB[index]);
     });
 
-    return position => serialiseRGBA(
+    return position => serializeRGBA(
         interpolators[0](position),
         interpolators[1](position),
         interpolators[2](position),
@@ -39,5 +39,5 @@ export const interpolateColor: InterpolatorFactory<string> = (valueA, valueB) =>
     );
 };
 
-/** Predicate that matches when the value is a parseable colour string. */
+/** Predicate that matches when the value is a parseable color string. */
 interpolateColor.test = value => typeIsString(value) && !!getColorParser(value);

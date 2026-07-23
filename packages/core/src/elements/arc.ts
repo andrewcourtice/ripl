@@ -34,7 +34,7 @@ export interface ArcState extends BaseElementState {
     radius: number;
     /** The inner radius of the arc, producing an annular sector when set. */
     innerRadius?: number;
-    /** The angular padding between the arc and its neighbours, in radians. */
+    /** The angular padding between the arc and its neighbors, in radians. */
     padAngle?: number;
     /** The corner radius applied to the arc's corners. */
     borderRadius?: number;
@@ -97,7 +97,7 @@ export class Arc extends Shape2D<ArcState> {
         this.setStateValue('innerRadius', value);
     }
 
-    /** The angular padding between the arc and its neighbours, in radians. */
+    /** The angular padding between the arc and its neighbors, in radians. */
     public get padAngle() {
         return this.getStateValue('padAngle');
     }

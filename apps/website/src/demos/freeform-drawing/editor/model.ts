@@ -39,9 +39,9 @@ export interface ConnectorEnd {
 
 /** The visual style shared by every {@link Shape}. */
 export interface ShapeStyle {
-    /** The stroke (outline) colour. */
+    /** The stroke (outline) color. */
     stroke: string;
-    /** The fill colour, or `null` for no fill. */
+    /** The fill color, or `null` for no fill. */
     fill: string | null;
     /** The stroke width, in world units. */
     strokeWidth: number;

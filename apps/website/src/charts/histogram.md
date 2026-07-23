@@ -21,7 +21,7 @@ The **Histogram Chart** bins a numeric field and draws each bin as a bar on a co
             <RiplField label="Corner radius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Bar colour" inline>
+            <RiplField label="Bar color" inline>
                 <RiplColorInput v-model="extras.color" />
             </RiplField>
         </RiplChartConfig>
@@ -132,6 +132,6 @@ Each item contributes one numeric value, read via the `value` accessor (a field 
 - **`value`** — Accessor for the numeric field to bin (field name or function)
 - **`bins`** — Target number of bins (default: Sturges' rule)
 - **`thresholds`** — Explicit bin boundaries (overrides `bins`)
-- **`color`** — Bar colour (default: first palette colour)
+- **`color`** — Bar color (default: first palette color)
 - **`borderRadius`** — Bar corner radius (default `2`)
 - **`format`** — Format applied to bin bounds in tooltips

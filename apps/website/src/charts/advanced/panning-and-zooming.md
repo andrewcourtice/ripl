@@ -107,7 +107,7 @@ const nav = chart.navigator;
 // Zoom to 4x around a point
 nav?.zoomTo(4, [200, 150]);
 
-// Centre the view on a point
+// Center the view on a point
 nav?.centerOn([420, 180]);
 
 // Fit a rectangular region (two corners) into the viewport

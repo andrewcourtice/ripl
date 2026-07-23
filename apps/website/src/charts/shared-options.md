@@ -4,7 +4,7 @@ outline: "deep"
 
 # Shared Options
 
-All Ripl charts extend `BaseChartOptions` and support a common set of feature options for axes, grids, legends, tooltips, crosshairs, and animation. Each option follows the same pattern: pass `true`/`false` to toggle with defaults, or pass a partial options object to customise.
+All Ripl charts extend `BaseChartOptions` and support a common set of feature options for axes, grids, legends, tooltips, crosshairs, and animation. Each option follows the same pattern: pass `true`/`false` to toggle with defaults, or pass a partial options object to customize.
 
 > [!NOTE]
 > For the full API, see the [Chart Base & Options API Reference](/docs/api/@ripl/charts/).
@@ -37,7 +37,7 @@ individual sides — the rest keep the default.
 
 ## Animation
 
-Controls entry, update, and exit animations. Pass `false` to disable all animation, or customise duration and easing.
+Controls entry, update, and exit animations. Pass `false` to disable all animation, or customize duration and easing.
 
 ```ts
 // Disable animation
@@ -62,7 +62,7 @@ The `duration` acts as a base value — individual chart animations scale relati
 
 ## Title
 
-Display a title above the chart area. Pass a string for simple text, or an options object for customisation.
+Display a title above the chart area. Pass a string for simple text, or an options object for customization.
 
 ```ts
 // Simple string
@@ -335,7 +335,7 @@ createLineChart('#container', { theme: 'dark', /* … */ });
 setDefaultTheme('dark');
 ```
 
-A `Theme` bundles the series `palette`, the sequential colour scheme, and the furniture colours (text/axis/grid/crosshair/legend/tooltip). The built-in `lightTheme` matches Ripl's historical defaults, `darkTheme` is tuned for a dark background, and `colorBlindTheme` uses the Okabe–Ito palette. See [Theming](/charts/advanced/theming) for custom themes and the theme registry.
+A `Theme` bundles the series `palette`, the sequential color scheme, and the furniture colors (text/axis/grid/crosshair/legend/tooltip). The built-in `lightTheme` matches Ripl's historical defaults, `darkTheme` is tuned for a dark background, and `colorBlindTheme` uses the Okabe–Ito palette. See [Theming](/charts/advanced/theming) for custom themes and the theme registry.
 
 ## Annotations
 
@@ -370,7 +370,7 @@ createLineChart('#container', {
 
 ## Accessibility
 
-Set `description` for an accessible label — it applies `role="img"` and `aria-label` to the chart's rendering element (falling back to the title text). Use the `'colorblind'` theme for a colourblind-safe palette.
+Set `description` for an accessible label — it applies `role="img"` and `aria-label` to the chart's rendering element (falling back to the title text). Use the `'colorblind'` theme for a colorblind-safe palette.
 
 <!-- eslint-skip -->
 ```ts

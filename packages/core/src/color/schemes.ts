@@ -1,6 +1,6 @@
 /**
- * Perceptually-uniform colour schemes as sampled control points. Each is a small, evenly-spaced set
- * of stops from the corresponding matplotlib / ColorBrewer colormap; a colour scale interpolates
+ * Perceptually-uniform color schemes as sampled control points. Each is a small, evenly-spaced set
+ * of stops from the corresponding matplotlib / ColorBrewer colormap; a color scale interpolates
  * between them (see `interpolateColors`). Ten stops reproduce the originals closely while keeping the
  * bundle tiny — consumers who need the full 256-entry tables can pass their own stops.
  *
@@ -63,7 +63,7 @@ export const COLOR_SCHEME_MAGMA = [
     '#fcfdbf',
 ];
 
-/** Sequential — dark blue → slate → tan → yellow. Colour-vision-deficiency friendly. */
+/** Sequential — dark blue → slate → tan → yellow. Color-vision-deficiency friendly. */
 export const COLOR_SCHEME_CIVIDIS = [
     '#00224e',
     '#123570',

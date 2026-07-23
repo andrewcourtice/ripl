@@ -14,7 +14,7 @@ import {
 } from './geometry';
 
 export interface ConnectingRodState extends Shape3DState {
-    /** Distance between the small-end and big-end centres. */
+    /** Distance between the small-end and big-end centers. */
     length: number;
     /** Outer radius of the small end (wrist-pin end). */
     smallEndRadius: number;

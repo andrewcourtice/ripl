@@ -1,11 +1,11 @@
 /**
  * Shared animation vocabulary for charts.
  *
- * Centralises the durations, easing, stagger maths and exit behaviour that were previously
+ * Centralises the durations, easing, stagger maths and exit behavior that were previously
  * hard-coded and inconsistent across charts (e.g. axis labels animating for a fixed 400ms while
  * series used 1000ms, and some charts destroying elements with no exit transition at all). All
  * timings derive from the chart's {@link ChartAnimationOptions} so `animation: false` reliably
- * renders instantly and a custom `duration`/`ease` is honoured everywhere.
+ * renders instantly and a custom `duration`/`ease` is honored everywhere.
  */
 
 import type {

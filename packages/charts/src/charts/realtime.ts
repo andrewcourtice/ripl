@@ -76,7 +76,7 @@ import {
 export interface RealtimeChartSeriesOptions {
     /** Unique identifier for the series, used as the key when pushing new values. */
     id: string;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    /** Optional color override for the series (otherwise a palette color is generated). */
     color?: string;
     /** Display label for the series (shown in the legend). Defaults to the series id. */
     label?: string;
@@ -187,7 +187,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             });
         }
 
-        // Initialise buffers for each series
+        // Initialize buffers for each series
         options.series.forEach(srs => {
             this._buffers.set(srs.id, []);
         });

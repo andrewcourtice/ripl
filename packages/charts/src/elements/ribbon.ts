@@ -12,9 +12,9 @@ import {
 
 /** State interface for a ribbon shape connecting two arc segments via quadratic curves. */
 export interface RibbonState extends BaseElementState {
-    /** Centre x of the arc the ribbon spans, in pixels. */
+    /** Center x of the arc the ribbon spans, in pixels. */
     cx: number;
-    /** Centre y of the arc the ribbon spans, in pixels. */
+    /** Center y of the arc the ribbon spans, in pixels. */
     cy: number;
     /** Radius of the arc endpoints, in pixels. */
     radius: number;
@@ -31,7 +31,7 @@ export interface RibbonState extends BaseElementState {
 /** A chord diagram ribbon connecting two arc segments with quadratic Bézier curves through the center. */
 export class Ribbon extends Shape2D<RibbonState> {
 
-    /** Centre x of the arc the ribbon spans, in pixels. */
+    /** Center x of the arc the ribbon spans, in pixels. */
     public get cx() {
         return this.getStateValue('cx');
     }
@@ -40,7 +40,7 @@ export class Ribbon extends Shape2D<RibbonState> {
         this.setStateValue('cx', value);
     }
 
-    /** Centre y of the arc the ribbon spans, in pixels. */
+    /** Center y of the arc the ribbon spans, in pixels. */
     public get cy() {
         return this.getStateValue('cy');
     }

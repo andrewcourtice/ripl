@@ -4,7 +4,7 @@ This report documents several places in the codebase where performance could be 
 
 ## 1. ~~arrayMap uses undefined length~~ ✅ FIXED
 
-**Status:** Resolved. `arrayMap` and the generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`) have been removed in favour of native array methods. All consumers refactored. `arrayDedupe` remains (`packages/utilities/src/collection.ts`) — it wraps a `Set` round-trip that has no terser native equivalent and is used by `Context` event tracking.
+**Status:** Resolved. `arrayMap` and the generic array wrappers (`arrayForEach`, `arrayMap`, `arrayFilter`, `arrayReduce`, `arrayFind`, `arrayFlatMap`) have been removed in favor of native array methods. All consumers refactored. `arrayDedupe` remains (`packages/utilities/src/collection.ts`) — it wraps a `Set` round-trip that has no terser native equivalent and is used by `Context` event tracking.
 
 ---
 
@@ -57,7 +57,7 @@ public get children() {
 
 ## Summary
 
-**Fixed (items 1–5, 7):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimised. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`. `stringUniqueId` builds its hex string via `Array.from(...).join('')`. SVG rendering reorders through the O(n) `reconcileNode` pass.
+**Fixed (items 1–5, 7):** All generic array wrappers removed, consumers migrated to native methods. `arrayGroup` and set utilities optimized. `arrayJoin` now uses a `Map` for O(1) key lookups when predicate is a key string. `arrayMapRange` uses indexed `for` loop instead of `Array.from`. `stringUniqueId` builds its hex string via `Array.from(...).join('')`. SVG rendering reorders through the O(n) `reconcileNode` pass.
 
 **Remaining:**
 1. **Group.children caching** (#6) — deferred by design: callers (e.g. `Group.render`'s z-index sort) mutate the returned array, so it must stay a fresh copy.

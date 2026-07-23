@@ -130,7 +130,7 @@ console.log(t.paused); // true
 
 - **`pause()`** — stops the animation frame loop but keeps the promise pending
 - **`play()`** — resumes from the paused position
-- **`seek(position)`** — jumps to a normalised position (0–1), invokes the callback once with the eased time at that position, and pauses
+- **`seek(position)`** — jumps to a normalized position (0–1), invokes the callback once with the eased time at that position, and pauses
 
 ### Reversing a Transition
 

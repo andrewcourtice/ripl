@@ -1,44 +1,44 @@
 /**
  * Chart theming.
  *
- * A {@link Theme} bundles the palette and furniture colours a chart draws with. The active theme is
+ * A {@link Theme} bundles the palette and furniture colors a chart draws with. The active theme is
  * resolved per chart from the `theme` option, falling back to the module-level default set via
- * {@link setDefaultTheme}. Option normalizers read {@link getDefaultTheme} for their colour defaults,
+ * {@link setDefaultTheme}. Option normalizers read {@link getDefaultTheme} for their color defaults,
  * so `setDefaultTheme('dark')` restyles every chart with no per-chart wiring; the light theme's
- * values match Ripl's historical hardcoded colours, so the default appearance is unchanged.
+ * values match Ripl's historical hardcoded colors, so the default appearance is unchanged.
  */
 
 import {
-    COLOURS,
+    COLORS,
 } from '../constants/colors';
 
-/** The palette and furniture colours a chart renders with. */
+/** The palette and furniture colors a chart renders with. */
 export interface Theme {
     /** Categorical series/segment palette, cycled for unassigned series. */
     palette: string[];
-    /** Two-or-more colour stops (low→high) used as the default sequential colour scale (e.g. heatmap). */
+    /** Two-or-more color stops (low→high) used as the default sequential color scale (e.g. heatmap). */
     sequentialScheme: string[];
     /** Base CSS font shorthand for chart text. */
     font: string;
-    /** Colour of titles, data labels, and segment labels. */
+    /** Color of titles, data labels, and segment labels. */
     textColor: string;
-    /** Colour of axis tick labels. */
+    /** Color of axis tick labels. */
     axisColor: string;
-    /** Colour of grid lines. */
+    /** Color of grid lines. */
     gridColor: string;
-    /** Colour of crosshair lines. */
+    /** Color of crosshair lines. */
     crosshairColor: string;
-    /** Legend label colour. */
+    /** Legend label color. */
     legendColor: string;
-    /** Tooltip background colour. */
+    /** Tooltip background color. */
     tooltipBackground: string;
-    /** Tooltip text colour. */
+    /** Tooltip text color. */
     tooltipColor: string;
 }
 
-/** The built-in light theme. Its colours match Ripl's historical defaults. */
+/** The built-in light theme. Its colors match Ripl's historical defaults. */
 export const lightTheme: Theme = {
-    palette: Object.values(COLOURS),
+    palette: Object.values(COLORS),
     sequentialScheme: ['#e0f2fe', '#0369a1'],
     font: '12px sans-serif',
     textColor: '#333333',
@@ -78,7 +78,7 @@ export const darkTheme: Theme = {
 };
 
 /**
- * A colourblind-safe theme using the Okabe–Ito qualitative palette and a CVD-friendly sequential
+ * A colorblind-safe theme using the Okabe–Ito qualitative palette and a CVD-friendly sequential
  * scale, for accessible categorical encoding. Pair with data labels for the strongest accessibility.
  */
 export const colorBlindTheme: Theme = {

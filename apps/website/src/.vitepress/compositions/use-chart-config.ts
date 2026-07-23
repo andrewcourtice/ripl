@@ -7,9 +7,9 @@ import type {
 } from '@ripl/charts';
 
 /**
- * The default Ripl chart colour palette (mirrors `COLOURS` in `@ripl/charts`, which is not
- * re-exported from the package entry point). Used to seed the per-series colour pickers so they
- * start on the same colours the chart picks automatically.
+ * The default Ripl chart color palette (mirrors `COLORS` in `@ripl/charts`, which is not
+ * re-exported from the package entry point). Used to seed the per-series color pickers so they
+ * start on the same colors the chart picks automatically.
  */
 export const CHART_PALETTE = [
     '#7cacf8',
@@ -26,12 +26,12 @@ export const CHART_PALETTE = [
     '#a1afc4',
 ];
 
-/** Returns a colour from the default palette for the given index (cycling). */
+/** Returns a color from the default palette for the given index (cycling). */
 export function paletteColor(index: number): string {
     return CHART_PALETTE[index % CHART_PALETTE.length];
 }
 
-/** Seeds a colour map from an ordered list of ids using the default palette. */
+/** Seeds a color map from an ordered list of ids using the default palette. */
 export function seedColors(ids: string[]): Record<string, string> {
     return ids.reduce<Record<string, string>>((output, id, index) => {
         output[id] = paletteColor(index);
@@ -66,7 +66,7 @@ export interface ChartConfigFeatures {
     crosshair?: boolean;
     /** Exposes a data-label visibility toggle (bar/trend). */
     dataLabels?: boolean;
-    /** Exposes a theme selector (light/dark/colourblind/auto). */
+    /** Exposes a theme selector (light/dark/colorblind/auto). */
     theme?: boolean;
     /** Exposes a value-format preset selector, applied to the chart's `format`. */
     format?: boolean;
@@ -139,7 +139,7 @@ export interface ChartConfig {
 /** Remembers each config's resolved defaults so {@link resetChartConfig} can restore them. */
 const CONFIG_DEFAULTS = new WeakMap<ChartConfig, ChartConfig>();
 
-/** Deep-enough clone of a config's values (features + colours are the only nested objects). */
+/** Deep-enough clone of a config's values (features + colors are the only nested objects). */
 function snapshotConfig(config: ChartConfig): ChartConfig {
     return {
         ...config,
@@ -230,7 +230,7 @@ export function resetChartConfig(config: ChartConfig): void {
 /**
  * Maps a {@link ChartConfig} into a partial chart options object covering the common, cross-chart
  * properties (title, legend, axes, grid, animation). Only the features the demo enabled are
- * emitted, so it can be spread into any chart's options or `chart.update(...)`. Per-series colours
+ * emitted, so it can be spread into any chart's options or `chart.update(...)`. Per-series colors
  * are intentionally left out — series shape varies per chart, so demos merge `config.colors`
  * into their own series factory.
  */

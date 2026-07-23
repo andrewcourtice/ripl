@@ -91,9 +91,9 @@ const MARKER_EVENTS = {
 
 /** Configuration for an individual line chart series. */
 export interface LineChartSeriesOptions<TData> {
-    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
     id: string;
-    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
@@ -166,7 +166,7 @@ export interface LineChartEventMap extends EventMap {
 /**
  * Line chart rendering one or more series as polylines with optional markers.
  *
- * Supports customisable line renderers (e.g. curved, stepped), interactive crosshair, tooltips,
+ * Supports customizable line renderers (e.g. curved, stepped), interactive crosshair, tooltips,
  * legend, grid, chart title, and animated entry/update/exit transitions. Entry animations draw
  * lines progressively while markers appear with staggered delays.
  *
@@ -198,7 +198,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.emit(MARKER_EVENTS[phase], event);
     }
 
-    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    /** Builds the per-series overview data (id, color, type, values) for the navigator strip. */
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 

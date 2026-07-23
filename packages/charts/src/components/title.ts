@@ -122,7 +122,7 @@ export class ChartTitle extends ChartComponent {
             : textHeight + padding.top + padding.bottom;
     }
 
-    /** Draws (or repositions) the title centred within the reserved region. */
+    /** Draws (or repositions) the title centered within the reserved region. */
     public render(region: ChartArea, animation?: ResolvedAnimation) {
         if (!this.visible) {
             this.destroy();

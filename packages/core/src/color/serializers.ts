@@ -29,8 +29,8 @@ export function rgbChannelToHEX(channel: number): string {
     return hex.length === 1 ? '0' + hex : hex;
 }
 
-/** Serialises RGBA channel values into a hexadecimal color string (e.g. `#ff0000`). */
-export function serialiseHEX(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into a hexadecimal color string (e.g. `#ff0000`). */
+export function serializeHEX(...args: ColorRGBA): string {
     let output = rgbChannelToHEX(args[0])
         + rgbChannelToHEX(args[1])
         + rgbChannelToHEX(args[2]);
@@ -42,18 +42,18 @@ export function serialiseHEX(...args: ColorRGBA): string {
     return `#${output}`;
 }
 
-/** Serialises RGBA channel values into an `rgb()` color string. */
-export function serialiseRGB(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `rgb()` color string. */
+export function serializeRGB(...args: ColorRGBA): string {
     return `rgb(${clampRGBValue(args[0])}, ${clampRGBValue(args[1])}, ${clampRGBValue(args[2])})`;
 }
 
-/** Serialises RGBA channel values into an `rgba()` color string. */
-export function serialiseRGBA(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `rgba()` color string. */
+export function serializeRGBA(...args: ColorRGBA): string {
     return `rgba(${clampRGBValue(args[0])}, ${clampRGBValue(args[1])}, ${clampRGBValue(args[2])}, ${numberClamp(args[3], 0, 1)})`;
 }
 
-/** Serialises RGBA channel values into an `hsl()` color string. */
-export function serialiseHSL(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `hsl()` color string. */
+export function serializeHSL(...args: ColorRGBA): string {
     const [
         hue,
         saturation,
@@ -63,8 +63,8 @@ export function serialiseHSL(...args: ColorRGBA): string {
     return `hsl(${numberClamp(hue, 0, 360)}, ${clampPercentageValue(saturation)}%, ${clampPercentageValue(lightness)}%)`;
 }
 
-/** Serialises RGBA channel values into an `hsla()` color string. */
-export function serialiseHSLA(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `hsla()` color string. */
+export function serializeHSLA(...args: ColorRGBA): string {
     const [
         hue,
         saturation,
@@ -74,8 +74,8 @@ export function serialiseHSLA(...args: ColorRGBA): string {
     return `hsla(${numberClamp(hue, 0, 360)}, ${clampPercentageValue(saturation)}%, ${clampPercentageValue(lightness)}%, ${numberClamp(args[3], 0, 1)})`;
 }
 
-/** Serialises RGBA channel values into an `hsv()` color string. */
-export function serialiseHSV(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `hsv()` color string. */
+export function serializeHSV(...args: ColorRGBA): string {
     const [
         hue,
         saturation,
@@ -85,8 +85,8 @@ export function serialiseHSV(...args: ColorRGBA): string {
     return `hsv(${numberClamp(hue, 0, 360)}, ${clampPercentageValue(saturation)}%, ${clampPercentageValue(value)}%)`;
 }
 
-/** Serialises RGBA channel values into an `hsva()` color string. */
-export function serialiseHSVA(...args: ColorRGBA): string {
+/** Serializes RGBA channel values into an `hsva()` color string. */
+export function serializeHSVA(...args: ColorRGBA): string {
     const [
         hue,
         saturation,

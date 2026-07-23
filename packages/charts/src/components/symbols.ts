@@ -60,12 +60,12 @@ export function symbolRadius(type: SymbolType, radius: number): number {
 }
 
 /**
- * Repositions a symbol element, keeping a rotated symbol's transform origin locked to its centre
+ * Repositions a symbol element, keeping a rotated symbol's transform origin locked to its center
  * (a square is a 45°-rotated regular quad, so its origin must follow `cx`/`cy`).
  *
  * @param element - The symbol element to move.
- * @param cx - The new centre x-coordinate.
- * @param cy - The new centre y-coordinate.
+ * @param cx - The new center x-coordinate.
+ * @param cy - The new center y-coordinate.
  */
 export function positionSymbol(element: SymbolElement, cx: number, cy: number): void {
     element.cx = cx;
@@ -112,7 +112,7 @@ export function createSymbol(type: SymbolType, options: Shape2DOptions<CircleSta
         cx,
         cy,
         sides: SYMBOL_SIDES[type],
-        // A regular quad renders vertex-up (a diamond); rotating 45° about its centre squares it.
+        // A regular quad renders vertex-up (a diamond); rotating 45° about its center squares it.
         ...(type === 'square' ? {
             rotation: Math.PI / 4,
             transformOriginX: cx,

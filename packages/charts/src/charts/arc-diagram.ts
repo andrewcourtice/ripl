@@ -70,7 +70,7 @@ const REST_ALPHA = 0.9;
 /** Points sampled along each arc. */
 const ARC_SAMPLES = 24;
 
-/** Neutral colour for the axis line and node ticks. */
+/** Neutral color for the axis line and node ticks. */
 const AXIS_COLOR = '#cbd5e1';
 
 /** How the node axis is oriented. */
@@ -82,9 +82,9 @@ export interface ArcDiagramNode<TData = unknown> {
     id: string;
     /** Text shown beside the node; defaults to the node's id. */
     label?: string;
-    /** Optional grouping — nodes in the same group share a colour. */
+    /** Optional grouping — nodes in the same group share a color. */
     group?: string;
-    /** Explicit node colour; falls back to the group/palette colour when omitted. */
+    /** Explicit node color; falls back to the group/palette color when omitted. */
     color?: string;
     /** Arbitrary datum carried through to node interaction events. */
     data?: TData;
@@ -303,7 +303,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             this.reserveTitle(layout);
 
             // One legend entry per distinct node group (or per node when ungrouped), using the
-            // group's/node's resolved colour.
+            // group's/node's resolved color.
             const legendSeen = new Set<string>();
             const legendItems: LegendItem[] = [];
 

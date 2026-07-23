@@ -62,7 +62,7 @@ describe('resolveTheme', () => {
 
 describe('setDefaultTheme', () => {
 
-    it('drives furniture colour defaults through the normalizers', () => {
+    it('drives furniture color defaults through the normalizers', () => {
         expect(normalizeAxisItem().fontColor).toBe(lightTheme.axisColor);
 
         setDefaultTheme('dark');
@@ -75,7 +75,7 @@ describe('setDefaultTheme', () => {
 
 describe('chart theme palette', () => {
 
-    it('cycles the resolved theme palette for series colours', () => {
+    it('cycles the resolved theme palette for series colors', () => {
         polyfillPath2D();
         mockCanvasContext();
 
@@ -103,7 +103,7 @@ describe('chart theme palette', () => {
 
         expect(internals.theme).toBe(darkTheme);
 
-        // The colour generator is seeded from the theme palette, so a generated series colour
+        // The color generator is seeded from the theme palette, so a generated series color
         // (one not overridden per-series) comes from that palette.
         internals.resolveSeriesColors([{ id: 's' }]);
 

@@ -78,7 +78,7 @@ export class Transition extends Task {
         return this;
     }
 
-    /** Seeks to a normalised position (0–1) and pauses. */
+    /** Seeks to a normalized position (0–1) and pauses. */
     public seek(position: number): this {
         const clamped = numberClamp(position, 0, 1);
 

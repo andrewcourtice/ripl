@@ -95,7 +95,7 @@ By default the context's coordinate space **is** the braille pixel grid — `col
 (fixed radii, offsets in the hundreds) will overflow that space entirely.
 
 Pass `logicalWidth`/`logicalHeight` to author in a larger logical space instead. The context then
-reports the logical size via `context.width`/`context.height` and uniformly scales + centres
+reports the logical size via `context.width`/`context.height` and uniformly scales + centers
 (letterboxes) it into the character grid — the same way the canvas context maps CSS pixels onto its
 device-pixel backing store:
 

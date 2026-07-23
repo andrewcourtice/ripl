@@ -72,13 +72,13 @@ const REST_ALPHA = 0.7;
 export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
     /** The dataset rendered as funnel segments, top to bottom. */
     data: TData[];
-    /** Accessor for each item's unique key (used for colour assignment and data joins). */
+    /** Accessor for each item's unique key (used for color assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
     /** Accessor for each segment's numeric value (drives its width). */
     value: NumericAccessor<TData>;
     /** Accessor for each segment's display label. */
     label: keyof TData | ((item: TData) => string);
-    /** Optional per-item colour accessor; falls back to the generated palette. */
+    /** Optional per-item color accessor; falls back to the generated palette. */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Legend configuration. Shown by default; pass `false` to hide. */
     legend?: ChartLegendInput;
@@ -92,9 +92,9 @@ export interface FunnelChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for funnel segment interaction events. */
 export interface FunnelChartSegmentEvent {
-    /** The x coordinate (in chart pixels) of the segment's top-centre anchor. */
+    /** The x coordinate (in chart pixels) of the segment's top-center anchor. */
     x: number;
-    /** The y coordinate (in chart pixels) of the segment's top-centre anchor. */
+    /** The y coordinate (in chart pixels) of the segment's top-center anchor. */
     y: number;
     /** The value of the interacted segment. */
     value: number;
@@ -172,7 +172,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
-            // Resolve colours through the shared id-keyed map so they stay stable across data
+            // Resolve colors through the shared id-keyed map so they stay stable across data
             // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
@@ -286,7 +286,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     this._attachSegmentHover(rect, item, itemColor);
                 }
 
-                // Re-centre the label on the resized/repositioned segment (was previously left stale).
+                // Re-center the label on the resized/repositioned segment (was previously left stale).
                 if (label) {
                     label.content = item.label;
                     label.data = {
@@ -327,7 +327,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 state: element.data as Record<string, unknown>,
             }));
 
-            // Animate updates (rects reposition/resize; labels re-centre on their segment).
+            // Animate updates (rects reposition/resize; labels re-center on their segment).
             const updateRects = updateGroups.flatMap(g => g.getElementsByType('rect')) as Rect[];
             const updateTexts = updateGroups.flatMap(g => g.getElementsByType('text')) as Text[];
 

@@ -60,7 +60,7 @@ export interface Face3D {
 export interface ProjectedFace3D {
     /** The face's screen-space points, each carrying a depth component. */
     points: ProjectedPoint[];
-    /** The shaded fill colour applied to the face. */
+    /** The shaded fill color applied to the face. */
     fillColor: string;
     /** The stroke style applied to the face edges, if any. */
     strokeStyle: string | undefined;

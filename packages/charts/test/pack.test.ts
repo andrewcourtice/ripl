@@ -69,7 +69,7 @@ describe('packSiblings', () => {
         expect(packed.map(circle => circle.r)).toEqual([5, 20, 8]);
     });
 
-    test('centres the packed cluster on the origin', () => {
+    test('centers the packed cluster on the origin', () => {
         const packed = packSiblings(circles([20, 15, 15, 10, 8, 8, 6, 5, 5, 4, 3]));
         const bounds = enclosingCircle(packed);
         expect(Math.abs(bounds.x)).toBeLessThan(1e-6);

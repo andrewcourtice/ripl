@@ -96,7 +96,7 @@ export class ShapeTool implements Tool {
         this.#editor.beginDraft(this.#draft);
     }
 
-    /** Resizes the draft toward the pointer, honouring shift for squares/circles and 45° lines. */
+    /** Resizes the draft toward the pointer, honoring shift for squares/circles and 45° lines. */
     public onPointerMove(world: Point, input: PointerInput): void {
         if (!this.#draft) {
             return;

@@ -97,7 +97,7 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     value: NumericAccessor<TData>;
     /** Accessor for each item's display label (shown in the legend and segment labels). */
     label: keyof TData | ((item: TData) => string);
-    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
+    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Inner radius as a fraction of the chart size (0 - 1). Defaults to 0.15 */
     innerRadius?: number;
@@ -112,7 +112,7 @@ export interface PolarAreaChartOptions<TData = unknown> extends BaseChartOptions
     /**
      * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
      * inside each segment; `'outside'` places them beyond the arc with a leader line; a full object
-     * customises position/font/colour.
+     * customizes position/font/color.
      */
     labels?: ChartSegmentLabelsInput;
     /** Format applied to segment values shown as text (e.g. tooltips). */
@@ -400,8 +400,8 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(colorBy) ? colorBy : (item: any) => item[colorBy] as string;
 
-            // Register each segment in the shared colour map so legend swatches and segments share
-            // stable palette colours (honouring any explicit per-item colour).
+            // Register each segment in the shared color map so legend swatches and segments share
+            // stable palette colors (honoring any explicit per-item color).
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),

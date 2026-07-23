@@ -1,6 +1,6 @@
 # Polar Scatter Chart
 
-The **Polar Scatter Chart** plots points on a circular grid, where each point's **angle** encodes one variable and its **distance from the centre** another — with an optional third variable driving marker size. It's ideal for directional data (wind, radar returns, cyclical measurements) where a cartesian scatter would misrepresent the wrap-around nature of the angle.
+The **Polar Scatter Chart** plots points on a circular grid, where each point's **angle** encodes one variable and its **distance from the center** another — with an optional third variable driving marker size. It's ideal for directional data (wind, radar returns, cyclical measurements) where a cartesian scatter would misrepresent the wrap-around nature of the angle.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

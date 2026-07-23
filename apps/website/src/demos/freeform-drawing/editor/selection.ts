@@ -27,11 +27,11 @@ const SELECTION_COLOR = '#4c9ffe';
 /** The eight resize-handle positions around a selection's bounding box. */
 export type HandleId = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
-/** A resize handle with its screen-space centre and hit box. */
+/** A resize handle with its screen-space center and hit box. */
 export interface SelectionHandle {
     /** Which corner/edge the handle controls. */
     id: HandleId;
-    /** The handle's centre in screen space. */
+    /** The handle's center in screen space. */
     center: Point;
     /** The handle's hit box in screen space. */
     box: Box;

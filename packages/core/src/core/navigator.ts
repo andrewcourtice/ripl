@@ -36,7 +36,7 @@ export interface NavigatorBrush {
     y1: number;
 }
 
-/** The pixel dimensions of the surface the navigator drives (used to centre/fit content). */
+/** The pixel dimensions of the surface the navigator drives (used to center/fit content). */
 export interface NavigatorViewport {
     /** Width of the surface, in pixels. */
     width: number;
@@ -86,7 +86,7 @@ export interface NavigatorEventMap extends EventMap {
     pan: NavigatorTransform;
     /** Emitted whenever the transform changes for any reason (zoom or pan), carrying the new transform. */
     change: NavigatorTransform;
-    /** Emitted as the brush selection changes, carrying the normalised selection. */
+    /** Emitted as the brush selection changes, carrying the normalized selection. */
     brush: NavigatorBrush;
     /** Emitted when a brush gesture ends, carrying the final selection or `null` when cleared. */
     brushend: NavigatorBrush | null;
@@ -128,7 +128,7 @@ export function rescaleDomain<TDomain>(
  * The navigator does not itself repaint; consumers react to the emitted `zoom`/`pan`/`change`/
  * `brush`/`brushend` events (e.g. rescaling axis domains via {@link rescaleDomain}, or applying the
  * transform to a context). Translation is unbounded, so a consumer can pan and zoom to content that
- * currently sits outside the viewport — the Figma-style "navigate anywhere" behaviour.
+ * currently sits outside the viewport — the Figma-style "navigate anywhere" behavior.
  */
 export class Navigator extends EventBus<NavigatorEventMap> {
 
@@ -274,7 +274,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
     }
 
     /**
-     * Centres a content-space point within the viewport, keeping the current zoom. Useful for
+     * Centers a content-space point within the viewport, keeping the current zoom. Useful for
      * bringing an off-screen element into view without changing scale.
      */
     public centerOn(point: Point, viewport: NavigatorViewport = this._viewport): void {
@@ -309,13 +309,13 @@ export class Navigator extends EventBus<NavigatorEventMap> {
             this._scaleExtent[1]
         );
 
-        const centreX = (bounds.x0 + bounds.x1) / 2;
-        const centreY = (bounds.y0 + bounds.y1) / 2;
+        const centerX = (bounds.x0 + bounds.x1) / 2;
+        const centerY = (bounds.y0 + bounds.y1) / 2;
 
         this._transform = {
             k,
-            x: viewport.width / 2 - k * centreX,
-            y: viewport.height / 2 - k * centreY,
+            x: viewport.width / 2 - k * centerX,
+            y: viewport.height / 2 - k * centerY,
         };
 
         this._commit('zoom');
@@ -332,7 +332,7 @@ export class Navigator extends EventBus<NavigatorEventMap> {
         this._commit('zoom');
     }
 
-    /** Sets the brush selection, normalising the extent, and emits a `brush` event. */
+    /** Sets the brush selection, normalizing the extent, and emits a `brush` event. */
     public setBrush(brush: NavigatorBrush): void {
         this._brush = {
             x0: Math.min(brush.x0, brush.x1),

@@ -35,18 +35,18 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Context exporting** — snapshot any context to an image (`ImageData`), an object URL, or a string (PNG data URL / SVG markup / terminal text)
 - **Transforms** — translate, scale, rotation, and transform-origin on every element
 - **Clipping** — path-based clipping via `Shape2D`
-- **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
+- **Gradient support** — CSS gradient parsing and serialization (linear, radial, conic)
 - **Pattern fill support** for repeating `pattern(...)` paint strings (diagonal, cross-hatch, dots, horizontal, vertical) in fills and strokes
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
-- **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
+- **High performance animation** — cancelable `Task`-based transitions with CSS-like keyframe support and custom interpolators
 - **14 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
 - **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
 - **3D primitives** — cube, sphere, cylinder, cone, plane, torus
 - **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
-- **Color utilities** — parsing, serialisation, and color scales
-- **Math & geometry** — degree/radian conversion, point operations, border radius normalisation, polygon extrapolation
-- **Renderer debug overlay** — FPS counter, element count, bounding box visualisation
+- **Color utilities** — parsing, serialization, and color scales
+- **Math & geometry** — degree/radian conversion, point operations, border radius normalization, polygon extrapolation
+- **Renderer debug overlay** — FPS counter, element count, bounding box visualization
 - **Completely modular and tree-shakable** — only ship the features you use
 - **Strictly typed** in TypeScript
 - **Zero runtime dependencies**
@@ -248,7 +248,7 @@ circle.on('click', event => console.log(event));
 
 ### Animation
 
-The renderer provides transition-based animation. Transitions are cancellable `Task` instances (extending `Promise` with `AbortController` integration).
+The renderer provides transition-based animation. Transitions are cancelable `Task` instances (extending `Promise` with `AbortController` integration).
 
 ```typescript
 import {
@@ -523,7 +523,7 @@ Camera supports interactive zoom, pivot, and pan with configurable sensitivity.
 2. **Persistent path keys** — always pass a stable ID to `context.createPath(id)` so SVG contexts can efficiently diff DOM elements between frames.
 3. **Memory lifecycle** — call `destroy()` on elements, scenes, and renderers when done to clean up subscriptions and DOM references.
 4. **Auto-stop** — the renderer stops ticking when idle (no active transitions and mouse has left the canvas) to avoid unnecessary CPU usage.
-5. **Debug overlay** — enable `{ debug: true }` on the renderer to visualise FPS, element count, and bounding boxes during development.
+5. **Debug overlay** — enable `{ debug: true }` on the renderer to visualize FPS, element count, and bounding boxes during development.
 
 ## Development
 

@@ -27,7 +27,7 @@ export const DEFAULT_STYLE: ShapeStyle = {
     dash: false,
 };
 
-/** Curated colour swatches offered in the style panel (tuned for the light canvas). */
+/** Curated color swatches offered in the style panel (tuned for the light canvas). */
 export const PALETTE: string[] = [
     '#1e1e1e',
     '#e03131',

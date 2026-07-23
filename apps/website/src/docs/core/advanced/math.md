@@ -335,9 +335,9 @@ Normalize a border radius value into a four-corner tuple:
 
 ```ts
 import {
-    normaliseBorderRadius,
+    normalizeBorderRadius,
 } from '@ripl/web';
 
-normaliseBorderRadius(8); // [8, 8, 8, 8]
-normaliseBorderRadius([4, 8, 4, 8]); // [4, 8, 4, 8]
+normalizeBorderRadius(8); // [8, 8, 8, 8]
+normalizeBorderRadius([4, 8, 4, 8]); // [4, 8, 4, 8]
 ```

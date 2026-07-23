@@ -6,7 +6,7 @@ import type {
     Point,
 } from '@ripl/web';
 
-/** Normalised pointer input passed to a tool, carrying modifier keys and the raw screen position. */
+/** Normalized pointer input passed to a tool, carrying modifier keys and the raw screen position. */
 export interface PointerInput {
     /** The pointer position in screen (canvas-local CSS pixel) space. */
     screen: Point;

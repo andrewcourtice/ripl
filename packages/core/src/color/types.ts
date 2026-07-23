@@ -22,12 +22,12 @@ export type ColorSpace = 'hex'
 | 'hsv'
 | 'hsva';
 
-/** A color parser that can test, parse, and serialise a specific color format. */
+/** A color parser that can test, parse, and serialize a specific color format. */
 export interface ColorParser {
     /** Pattern that matches color strings this parser can handle. */
     pattern: RegExp;
     /** Parses a color string into an RGBA tuple. */
     parse(value: string): ColorRGBA;
-    /** Serialises RGBA channel values back into a color string in this parser's format. */
-    serialise(...args: ColorRGBA): string;
+    /** Serializes RGBA channel values back into a color string in this parser's format. */
+    serialize(...args: ColorRGBA): string;
 }

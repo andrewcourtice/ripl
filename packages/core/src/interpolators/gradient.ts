@@ -1,7 +1,7 @@
 import {
     isGradientString,
     parseGradient,
-    serialiseGradient,
+    serializeGradient,
 } from '../gradient';
 
 import type {
@@ -135,7 +135,7 @@ export const interpolateGradient: InterpolatorFactory<string> = (valueA, valueB)
 
     const gradientInterpolator = interpolateMatchingGradients(gradientA, gradientB);
 
-    return position => serialiseGradient(gradientInterpolator(position));
+    return position => serializeGradient(gradientInterpolator(position));
 };
 
 /** Reports whether this factory can interpolate the given value (a CSS gradient string). */

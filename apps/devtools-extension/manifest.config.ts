@@ -6,11 +6,11 @@ import {
     defineManifest,
 } from '@crxjs/vite-plugin';
 
-const GREY_ICONS = {
-    16: 'icons/icon-grey-16.png',
-    32: 'icons/icon-grey-32.png',
-    48: 'icons/icon-grey-48.png',
-    128: 'icons/icon-grey-128.png',
+const GRAY_ICONS = {
+    16: 'icons/icon-gray-16.png',
+    32: 'icons/icon-gray-32.png',
+    48: 'icons/icon-gray-48.png',
+    128: 'icons/icon-gray-128.png',
 };
 
 // Chrome only accepts a numeric dotted `version`, so strip the prerelease
@@ -24,11 +24,11 @@ export default defineManifest({
     version: numericVersion,
     version_name: packageVersion,
     description: 'Inspect Ripl contexts, scenes, elements, and renderers on any page.',
-    icons: GREY_ICONS,
+    icons: GRAY_ICONS,
     action: {
         default_title: 'Ripl Devtools',
         default_popup: 'src/popup/index.html',
-        default_icon: GREY_ICONS,
+        default_icon: GRAY_ICONS,
     },
     devtools_page: 'src/devtools/index.html',
     background: {

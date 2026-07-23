@@ -28,7 +28,7 @@ features:
   - title: Modular & tree-shakable
     details: Zero runtime dependencies and fully tree-shakable. Ship only the shapes, scales, and contexts you use across Canvas, SVG, Terminal, and WebGPU 3D.
   - title: High performance
-    details: Hoisted scene buffers, O(n) rendering, virtual-DOM diffing for SVG, and a cancellable animation engine keep interactive visualizations smooth at scale.
+    details: Hoisted scene buffers, O(n) rendering, virtual-DOM diffing for SVG, and a cancelable animation engine keep interactive visualizations smooth at scale.
 ---
 
 ## Draw once, render anywhere

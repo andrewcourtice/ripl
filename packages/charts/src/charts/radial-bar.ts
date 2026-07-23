@@ -88,7 +88,7 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     value: NumericAccessor<TData>;
     /** Optional accessor for each item's display label (defaults to its key). */
     label?: keyof TData | ((item: TData) => string);
-    /** Optional accessor for a per-item colour override (otherwise a palette colour is generated). */
+    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */
     maxValue?: number;
@@ -98,7 +98,7 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     range?: number;
     /** Gap between concentric rings as a ratio of the ring thickness (0–0.9). Defaults to 0.25. */
     gap?: number;
-    /** Colour of the faint full-length track drawn behind each value bar. Defaults to a light grey. */
+    /** Color of the faint full-length track drawn behind each value bar. Defaults to a light gray. */
     trackColor?: string;
     /** Round the ends of each value bar (and its track). Defaults to `false`. */
     rounded?: boolean;
@@ -112,9 +112,9 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
 
 /** Payload emitted for radial bar interaction events. */
 export interface RadialBarChartBarEvent {
-    /** X position of the chart centre, in canvas coordinates. */
+    /** X position of the chart center, in canvas coordinates. */
     x: number;
-    /** Y position of the chart centre, in canvas coordinates. */
+    /** Y position of the chart center, in canvas coordinates. */
     y: number;
     /** The bar's numeric value. */
     value: number;
@@ -174,8 +174,8 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             tooltip: this._tooltip,
             anchor: () => {
                 // Bars are stroked open arcs (no inner radius), so `getCentroid` (which assumes an
-                // annular sector) would land halfway to the centre. Anchor at the mid-sweep point
-                // on the band centreline instead, honouring the animated target state in `data`.
+                // annular sector) would land halfway to the center. Anchor at the mid-sweep point
+                // on the band centerline instead, honoring the animated target state in `data`.
                 const state = (arc.data ?? {}) as Partial<ArcState>;
                 const radius = state.radius ?? arc.radius;
                 const startAngle = state.startAngle ?? arc.startAngle;
@@ -257,16 +257,16 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const band = (outerRadius - holeRadius) / bandCount;
 
             // Geometry for the ring at data index `i` (first category outermost). Bars are stroked
-            // arcs, so we return the band centreline radius + thickness (the stroke width) rather
+            // arcs, so we return the band centerline radius + thickness (the stroke width) rather
             // than an inner/outer pair.
             const ringGeometry = (i: number, itemValue: number) => {
                 const ringOuter = outerRadius - i * band;
                 const thickness = band * (1 - gap);
-                const centre = ringOuter - thickness / 2;
+                const center = ringOuter - thickness / 2;
                 const endAngle = TOP_ANGLE + numberClamp(itemValue / maxValue, 0, 1) * sweep;
 
                 return {
-                    centre,
+                    center,
                     thickness,
                     endAngle,
                 };
@@ -275,12 +275,12 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const dataLabels = normalizeDataLabels(this.options.labels);
             const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
-            // The value label sits just past the bar's sweep end, on the ring's centreline. The
+            // The value label sits just past the bar's sweep end, on the ring's centerline. The
             // angular clearance covers half the stroke thickness (a rounded cap extends that far
             // beyond `endAngle`) plus a small pixel gap, converted to radians at the ring's radius.
             const labelPoint = (geometry: ReturnType<typeof ringGeometry>) => {
-                const clearance = geometry.centre > 0 ? (geometry.thickness / 2 + 6) / geometry.centre : 0;
-                const [x, y] = getThetaPoint(geometry.endAngle + clearance, geometry.centre, cx, cy);
+                const clearance = geometry.center > 0 ? (geometry.thickness / 2 + 6) / geometry.center : 0;
+                const [x, y] = getThetaPoint(geometry.endAngle + clearance, geometry.center, cx, cy);
 
                 return {
                     x,
@@ -320,14 +320,14 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const entryGroups = entries.map(item => {
                 const i = activeData.indexOf(item);
                 const itemColor = colorFor(item);
-                const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
+                const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 
                 const track = createArc({
                     id: `${getKey(item)}-track`,
                     class: 'radial-bar__track',
                     cx,
                     cy,
-                    radius: centre,
+                    radius: center,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE + sweep,
                     stroke: trackColor,
@@ -343,7 +343,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     class: 'radial-bar__bar',
                     cx,
                     cy,
-                    radius: centre,
+                    radius: center,
                     startAngle: TOP_ANGLE,
                     endAngle: TOP_ANGLE,
                     stroke: setColorAlpha(itemColor, REST_ALPHA),
@@ -371,7 +371,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                         track,
                         bar,
                         ...(dataLabels.visible ? [buildLabel(item, {
-                            centre,
+                            center,
                             thickness,
                             endAngle,
                         })] : []),
@@ -385,7 +385,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             updates.forEach(([item, group]) => {
                 const i = activeData.indexOf(item);
                 const itemColor = colorFor(item);
-                const { centre, thickness, endAngle } = ringGeometry(i, getValue(item));
+                const { center, thickness, endAngle } = ringGeometry(i, getValue(item));
 
                 const track = group.query('.radial-bar__track') as Arc;
                 const bar = group.query('.radial-bar__bar') as Arc;
@@ -398,7 +398,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     track.data = {
                         cx,
                         cy,
-                        radius: centre,
+                        radius: center,
                         lineWidth: thickness,
                         startAngle: TOP_ANGLE,
                         endAngle: TOP_ANGLE + sweep,
@@ -411,7 +411,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     bar.data = {
                         cx,
                         cy,
-                        radius: centre,
+                        radius: center,
                         lineWidth: thickness,
                         startAngle: TOP_ANGLE,
                         endAngle,
@@ -439,7 +439,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 }
 
                 const geometry = {
-                    centre,
+                    center,
                     thickness,
                     endAngle,
                 };

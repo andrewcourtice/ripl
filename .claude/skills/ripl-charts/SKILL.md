@@ -116,7 +116,7 @@ Inside `super.render(async () => { ... })`:
    }));
    ```
    Use `ANIMATION_REFERENCE.enter | update | hover` so `animation: false` and custom durations are
-   honoured. `stagger(index, length, duration, fraction?)` spreads delays.
+   honored. `stagger(index, length, duration, fraction?)` spreads delays.
 
 ### Path & point animation helpers (`@ripl/core`)
 
@@ -154,7 +154,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
 `createLine` (`x1,y1,x2,y2`), `createPolyline` (`points`, `renderer`), `createText`, `createGroup`,
 `createRect`. Shapes take `autoFill`/`autoStroke` toggles.
 
-- **Rounded radial/progress bars**: draw an **open arc** (no `innerRadius`) on the band centreline,
+- **Rounded radial/progress bars**: draw an **open arc** (no `innerRadius`) on the band centerline,
   stroked with `lineWidth = band thickness` and `lineCap: 'round'` — a round cap rounds the sweeping
   end. `Arc`'s `borderRadius` is not implemented in render; don't rely on it.
 - **Polyline curves**: `renderer` is a named type (`'linear' | 'spline' | 'cardinal' | 'monotoneX' | …`)
@@ -167,7 +167,7 @@ Use `createSegmentLabel({ id, x, y, content, font })` (fades via `text.data = { 
 
 ## Custom layouts
 
-- **Circle packing**: `packSiblings(circles)` (front-chain, tight, centred on the origin) +
+- **Circle packing**: `packSiblings(circles)` (front-chain, tight, centered on the origin) +
   `enclosingCircle(circles)` (Welzl minimal enclosing circle) from `core/pack.ts`. Draw a visible
   containing circle at the fit radius.
 - **Force layout**: `simulateForce(nodes, links, options)` from `core/force.ts` — deterministic,
@@ -251,7 +251,7 @@ Add a `create<Name>Chart(mount('<name>'), { animation: false, … })` block to
   `types: []`, `skipLibCheck`). Keep a `tc-tests.json` / `tc-gallery.json` including test files plus a
   `vitest-shim.d.ts`. Must be clean after every change.
 - **Pure logic** (packers, force sim, geometry) can be compiled with `tsc <file> --outDir … --module
-  commonjs --ignoreDeprecations 6.0` and exercised with `node` for a real behavioural check.
+  commonjs --ignoreDeprecations 6.0` and exercised with `node` for a real behavioral check.
 - **Runtime chart render** needs jsdom + a mock canvas (`@ripl/test-utils` `mockCanvasContext`,
   `polyfillPath2D`) — run via `vitest` locally. Charts that can't init headlessly (svg/webgpu/terminal)
   document the limitation and rely on the shared context-free logic.

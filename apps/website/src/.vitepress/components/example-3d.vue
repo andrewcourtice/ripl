@@ -110,7 +110,7 @@ async function updateContext([element, currentType]: [HTMLElement | undefined, C
         const created = await withTimeout(
             createWebGPUContext(element),
             WEBGPU_TIMEOUT_MS,
-            'WebGPU initialisation timed out.'
+            'WebGPU initialization timed out.'
         );
 
         if (token !== generation) {

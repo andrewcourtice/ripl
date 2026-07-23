@@ -538,7 +538,7 @@ describe('Overview navigator strip', () => {
         chart.destroy();
     });
 
-    test('Trend line marks are centred over the bars in the band layout', async () => {
+    test('Trend line marks are centered over the bars in the band layout', async () => {
         mockCanvasContext();
         mockCanvasSize(640, 400);
 
@@ -569,7 +569,7 @@ describe('Overview navigator strip', () => {
         const bar0 = rectOf(trend, 'navigator-overview-bar-bar-0');
         const linePoints = pointsOf(trend, 'navigator-overview-line');
 
-        // The line's first vertex sits at the first category's band centre — directly over the bar.
+        // The line's first vertex sits at the first category's band center — directly over the bar.
         expect(linePoints[0][0]).toBeCloseTo(bar0.x + bar0.width / 2, 6);
 
         trend.destroy();

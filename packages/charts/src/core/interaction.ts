@@ -77,7 +77,7 @@ interface HoverHost {
 }
 
 /**
- * Wires consistent hover behaviour (highlight transition + optional tooltip) onto an element.
+ * Wires consistent hover behavior (highlight transition + optional tooltip) onto an element.
  * Safe to call repeatedly on the same persistent element across renders — prior listeners are
  * disposed first so handlers never accumulate.
  */

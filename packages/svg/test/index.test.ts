@@ -33,7 +33,7 @@ describe('SVG', () => {
 
     describe('SVGPath', () => {
 
-        test('Should initialise with empty d attribute', () => {
+        test('Should initialize with empty d attribute', () => {
             const path = new SVGPath();
             expect(path.definition.tag).toBe('path');
             expect(path.definition.attributes.d).toBe('');

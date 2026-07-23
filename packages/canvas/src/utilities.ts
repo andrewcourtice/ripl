@@ -12,7 +12,7 @@ import {
     parsePattern,
     samplePathPoint,
     scaleContinuous,
-    serialiseRGBA,
+    serializeRGBA,
 } from '@ripl/core';
 
 import type {
@@ -84,7 +84,7 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     gradient.stops.forEach((stop) => {
         const offset = numberClamp(stop.offset ?? 0, 0, 1);
         const rgba = parseColor(stop.color);
-        const color = rgba ? serialiseRGBA(...rgba) : stop.color;
+        const color = rgba ? serializeRGBA(...rgba) : stop.color;
 
         canvasGradient.addColorStop(offset, color);
     });

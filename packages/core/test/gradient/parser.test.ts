@@ -115,7 +115,7 @@ describe('Gradient', () => {
             expect(gradient!.repeating).toBe(true);
         });
 
-        test('Should normalise stop offsets when some are missing', () => {
+        test('Should normalize stop offsets when some are missing', () => {
             const gradient = parseGradient('linear-gradient(red, green, blue)');
 
             expect(gradient).toBeDefined();

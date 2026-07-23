@@ -39,7 +39,7 @@ function getTabState(tabId: number): TabState {
     return state;
 }
 
-function getIconPaths(variant: 'active' | 'grey'): Record<string, string> {
+function getIconPaths(variant: 'active' | 'gray'): Record<string, string> {
     return Object.fromEntries(ICON_SIZES.map(size => [
         size.toString(),
         `icons/icon-${variant}-${size}.png`,
@@ -48,7 +48,7 @@ function getIconPaths(variant: 'active' | 'grey'): Record<string, string> {
 
 function updateAction(tabId: number): void {
     const count = tabStates.get(tabId)?.contexts.size ?? 0;
-    const variant = count > 0 ? 'active' : 'grey';
+    const variant = count > 0 ? 'active' : 'gray';
     const suffix = count === 1 ? '' : 's';
     const title = count > 0
         ? `Ripl — ${count} context${suffix} detected`

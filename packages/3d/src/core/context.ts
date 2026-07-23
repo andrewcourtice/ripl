@@ -59,7 +59,7 @@ export type LightMode = 'world' | 'camera';
 
 /** A mesh submission queued for a single frame. */
 export interface MeshSubmission {
-    /** Interleaved vertex data (position, normal, and colour) for the mesh. */
+    /** Interleaved vertex data (position, normal, and color) for the mesh. */
     vertices: Float32Array;
     /** Triangle indices into the vertex buffer. */
     indices: Uint32Array;

@@ -555,7 +555,7 @@ export class Editor extends EventBus<EditorEventMap> {
 
     // ---- View controls -------------------------------------------------------------------------
 
-    /** Multiplies the zoom by `factor`, keeping the viewport centre fixed. */
+    /** Multiplies the zoom by `factor`, keeping the viewport center fixed. */
     public zoomBy(factor: number): void {
         const { width, height } = this.#navigator.viewport;
         this.#navigator.zoomBy(factor, [width / 2, height / 2]);

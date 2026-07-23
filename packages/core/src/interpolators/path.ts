@@ -1,7 +1,7 @@
 import {
     getPolygonPoints,
     getWaypoint,
-    normaliseBorderRadius,
+    normalizeBorderRadius,
     TAU,
     typeIsPoint,
 } from '../math';
@@ -103,7 +103,7 @@ export interface InterpolatePointsFactory extends PredicatedFunction {
 
 /**
  * Builds the "from" array (length of `setB`) for a keyed morph: surviving target points start at
- * their matched source point; entering points (`-1`) start at the nearest matched neighbour's Y but
+ * their matched source point; entering points (`-1`) start at the nearest matched neighbor's Y but
  * the target's own X — keeping X strictly monotonic so curve tangent maths never divides by zero.
  */
 function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[] {
@@ -181,7 +181,7 @@ export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?
 /** Reports whether this factory can interpolate the given value (an array of {@link Point} tuples). */
 interpolatePoints.test = value => typeIsArray(value) && value.every(point => typeIsPoint(point));
 
-/** Creates an interpolator that returns the point along a polyline at the given normalised position. */
+/** Creates an interpolator that returns the point along a polyline at the given normalized position. */
 export function interpolateWaypoint(points: Point[]): Interpolator<Point> {
     const lastIndex = points.length - 1;
 
@@ -226,7 +226,7 @@ export function interpolatePolygonPoint(
     return interpolateWaypoint(points);
 }
 
-/** Creates an interpolator that traces a point around a circle of the given centre and radius. */
+/** Creates an interpolator that traces a point around a circle of the given center and radius. */
 export function interpolateCirclePoint(
     cx: number,
     cy: number,
@@ -242,8 +242,8 @@ export function interpolateCirclePoint(
 
 /** Interpolator factory that transitions between two border-radius values (single number or four-corner tuple). */
 export const interpolateBorderRadius: InterpolatorFactory<BorderRadius, number | BorderRadius> = (radiusA, radiusB) => {
-    const nRadiusA = normaliseBorderRadius(radiusA);
-    const nRadiusB = normaliseBorderRadius(radiusB);
+    const nRadiusA = normalizeBorderRadius(radiusA);
+    const nRadiusB = normalizeBorderRadius(radiusB);
     const interpolators = nRadiusA.map((value, index) => interpolateNumber(value, nRadiusB[index]));
 
     return position => interpolators.map(ib => ib(position)) as BorderRadius;

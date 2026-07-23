@@ -22,7 +22,7 @@ export interface CrosshairOptions extends ChartComponentOptions {
     vertical?: boolean;
     /** Whether to draw the horizontal line that tracks the pointer's y position. Defaults to `false`. */
     horizontal?: boolean;
-    /** Stroke colour of the crosshair lines. */
+    /** Stroke color of the crosshair lines. */
     stroke?: string;
     /** Stroke width of the crosshair lines, in pixels. */
     lineWidth?: number;

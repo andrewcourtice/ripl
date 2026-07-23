@@ -28,11 +28,11 @@ export interface TooltipOptions extends ChartComponentOptions {
     padding?: number;
     /** CSS font shorthand for the tooltip text. */
     font?: string;
-    /** Colour of the tooltip text. */
+    /** Color of the tooltip text. */
     fontColor?: string;
-    /** Fill colour of the tooltip box. */
+    /** Fill color of the tooltip box. */
     backgroundColor?: string;
-    /** Stroke colour of the tooltip box border. */
+    /** Stroke color of the tooltip box border. */
     borderColor?: string;
     /** Corner radius of the tooltip box, in pixels. */
     borderRadius?: number;
@@ -44,7 +44,7 @@ export interface TooltipOptions extends ChartComponentOptions {
     formatContent?: (content: string) => string;
     /**
      * Where the box sits relative to the anchor point. `'above'` (default) floats it above the point
-     * (best for cartesian markers); `'center'` centres the box on the point (best for radial charts
+     * (best for cartesian markers); `'center'` centers the box on the point (best for radial charts
      * whose anchor is a segment centroid).
      */
     placement?: TooltipPlacement;
@@ -233,7 +233,7 @@ export class Tooltip extends ChartComponent {
             bgWidth = Math.min(bgWidth, this._maxWidth);
         }
 
-        // Horizontally centred on the point; vertically either above it (default) or centred on it.
+        // Horizontally centered on the point; vertically either above it (default) or centered on it.
         let bgX = x - bgWidth / 2;
         let bgY = this._placement === 'center'
             ? y - bgHeight / 2

@@ -13,14 +13,14 @@ import {
 } from './parsers';
 
 import {
-    serialiseHEX,
-    serialiseHSL,
-    serialiseHSLA,
-    serialiseHSV,
-    serialiseHSVA,
-    serialiseRGB,
-    serialiseRGBA,
-} from './serialisers';
+    serializeHEX,
+    serializeHSL,
+    serializeHSLA,
+    serializeHSV,
+    serializeHSVA,
+    serializeRGB,
+    serializeRGBA,
+} from './serializers';
 
 import type {
     ColorParser,
@@ -29,7 +29,7 @@ import type {
 
 
 export * from './parsers';
-export * from './serialisers';
+export * from './serializers';
 export * from './utilities';
 export * from './scales';
 export * from './schemes';
@@ -39,37 +39,37 @@ const PARSER_MAP = [
     {
         pattern: PATTERNS.hex,
         parse: parseHEX,
-        serialise: serialiseHEX,
+        serialize: serializeHEX,
     },
     {
         pattern: PATTERNS.rgb,
         parse: parseRGB,
-        serialise: serialiseRGB,
+        serialize: serializeRGB,
     },
     {
         pattern: PATTERNS.rgba,
         parse: parseRGBA,
-        serialise: serialiseRGBA,
+        serialize: serializeRGBA,
     },
     {
         pattern: PATTERNS.hsl,
         parse: parseHSL,
-        serialise: serialiseHSL,
+        serialize: serializeHSL,
     },
     {
         pattern: PATTERNS.hsla,
         parse: parseHSLA,
-        serialise: serialiseHSLA,
+        serialize: serializeHSLA,
     },
     {
         pattern: PATTERNS.hsv,
         parse: parseHSV,
-        serialise: serialiseHSV,
+        serialize: serializeHSV,
     },
     {
         pattern: PATTERNS.hsva,
         parse: parseHSVA,
-        serialise: serialiseHSVA,
+        serialize: serializeHSVA,
     },
 ] as ColorParser[];
 

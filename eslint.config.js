@@ -345,7 +345,7 @@ export default tseslint.config(
             'no-undef': 'off',
             'no-unused-vars': 'off',
             'no-unused-expressions': 'off',
-            // Documentation snippets favour compact, illustrative code over
+            // Documentation snippets favor compact, illustrative code over
             // production-strictness rules, so relax those for fenced code blocks.
             'id-length': 'off',
             'no-multi-assign': 'off',

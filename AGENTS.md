@@ -193,7 +193,7 @@ export interface BarChartOptions<TData> extends BaseChartOptions {
 }
 ```
 
-Charts should always provide a high level of options and customisation to the consumer. Underlying options such as axis, legend etc should also be passed through at the top level for configuration where applicable and appropriate.
+Charts should always provide a high level of options and customization to the consumer. Underlying options such as axis, legend etc should also be passed through at the top level for configuration where applicable and appropriate.
 
 ### Reusable Chart Components
 
@@ -409,7 +409,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 - **No nested ternaries** — enforced by ESLint (`no-nested-ternary`). Prefer early returns or intermediate variables over ternary chains.
 - **Limit nesting depth** — enforced by ESLint (`max-depth: 4`). If logic nests too deeply, extract inner blocks into well-named helper functions.
 - **Avoid nested loops** — extract inner loops into descriptive functions where possible.
-- **Prefer keyed object-lookup dispatch over `switch`** — for a string-discriminant dispatch (e.g. a message `kind` handler, a `ChartSide`), use a keyed object map whose values are the branches (`{ top: () => …, bottom: () => … }[side]()`) rather than a `switch`. It reads cleaner and is exhaustively type-checked against the key union. Enforced by ESLint (`no-restricted-syntax` bans `SwitchStatement`) across library and extension source (`packages/*/src`, `apps/*/src`); the docs site under `apps/website/` is exempt. For a switch whose labels are variables or numeric comparisons (not literal keys — e.g. the colour `case r/g/b` maxima), use an early-return `if/else` chain instead.
+- **Prefer keyed object-lookup dispatch over `switch`** — for a string-discriminant dispatch (e.g. a message `kind` handler, a `ChartSide`), use a keyed object map whose values are the branches (`{ top: () => …, bottom: () => … }[side]()`) rather than a `switch`. It reads cleaner and is exhaustively type-checked against the key union. Enforced by ESLint (`no-restricted-syntax` bans `SwitchStatement`) across library and extension source (`packages/*/src`, `apps/*/src`); the docs site under `apps/website/` is exempt. For a switch whose labels are variables or numeric comparisons (not literal keys — e.g. the color `case r/g/b` maxima), use an early-return `if/else` chain instead.
 
 ### Functions & Decomposition
 
@@ -434,7 +434,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 
 ## Utility Conventions (`@ripl/utilities`)
 
-The project provides typed utility wrappers where they add value beyond native methods. Use native array methods (`forEach`, `map`, `filter`, `reduce`, `find`, `flatMap`) directly — the generic array wrappers have been removed in favour of native methods for better performance.
+The project provides typed utility wrappers where they add value beyond native methods. Use native array methods (`forEach`, `map`, `filter`, `reduce`, `find`, `flatMap`) directly — the generic array wrappers have been removed in favor of native methods for better performance.
 
 ### Type Guards (`typeIs*`)
 ```typescript

@@ -266,12 +266,12 @@ Every command clamps `k` to the scale extent and emits an event when it changes 
 | `panTo(x, y)` | Pan to an absolute translation |
 | `zoomBy(factor, center?)` | Multiply the zoom, keeping `center` (screen px) fixed |
 | `zoomTo(k, center?)` | Set an absolute zoom factor |
-| `centerOn(point, viewport?)` | Centre a content point in the viewport, keeping zoom |
+| `centerOn(point, viewport?)` | Center a content point in the viewport, keeping zoom |
 | `fitBounds(bounds, options?)` | Zoom and pan so a content box fills the viewport |
 | `reset()` | Return to the identity transform |
 | `setTransform(transform)` | Replace the transform outright |
 
-Because translation is unbounded, `fitBounds` and `centerOn` can jump the view to content that currently lies entirely outside the viewport — the "navigate anywhere" behaviour the demo's **Frame all** button relies on.
+Because translation is unbounded, `fitBounds` and `centerOn` can jump the view to content that currently lies entirely outside the viewport — the "navigate anywhere" behavior the demo's **Frame all** button relies on.
 
 ```ts
 // Zoom to 2× toward the top-left corner of the viewport.

@@ -110,7 +110,7 @@ camera.flush();
 | `lightDirection` | `Vector3` | `[-0.577, -0.577, -0.577]` | Light direction vector |
 | `lightMode` | `'world' \| 'camera'` | `'world'` | Whether light is in world or camera space |
 | `sampleCount` | `number` | `4` | MSAA sample count (1 to disable) |
-| `clearColor` | `[r, g, b, a]` | `[0, 0, 0, 0]` | Background clear colour (0–1 range) |
+| `clearColor` | `[r, g, b, a]` | `[0, 0, 0, 0]` | Background clear color (0–1 range) |
 
 ## API
 
@@ -205,7 +205,7 @@ const context = await createContext('#app');
 |--------|----------------------|-----------------|
 | Depth sorting | CPU painter's algorithm | Hardware depth buffer |
 | Rasterisation | Canvas 2D fill/stroke | GPU fragment shader |
-| Shading | CPU per-face colour | GPU per-fragment Lambertian |
+| Shading | CPU per-face color | GPU per-fragment Lambertian |
 | Anti-aliasing | None (canvas default) | 4× MSAA |
 | Intersecting geometry | May render incorrectly | Correct via depth test |
 

@@ -1,6 +1,6 @@
 # Box Plot Chart
 
-The **Box Plot Chart** summarises the distribution of a numeric field per category using the shared `boxplotStats` transform: a box spanning the interquartile range (Q1–Q3), a median line, whiskers to the 1.5×IQR fences, and outlier points. It's the standard view for comparing spread and skew across groups.
+The **Box Plot Chart** summarizes the distribution of a numeric field per category using the shared `boxplotStats` transform: a box spanning the interquartile range (Q1–Q3), a median line, whiskers to the 1.5×IQR fences, and outlier points. It's the standard view for comparing spread and skew across groups.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -15,7 +15,7 @@ The **Box Plot Chart** summarises the distribution of a numeric field per catego
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
-            <RiplField label="Box colour" inline>
+            <RiplField label="Box color" inline>
                 <RiplColorInput v-model="extras.color" />
             </RiplField>
         </RiplChartConfig>
@@ -64,11 +64,11 @@ const example = ref();
 
 function generateData() {
     return REGIONS.flatMap((region, index) => {
-        const centre = 60 + index * 30;
+        const center = 60 + index * 30;
 
         return Array.from({ length: 20 }, () => ({
             region,
-            latency: Math.round(centre + (Math.random() - 0.5) * 80),
+            latency: Math.round(center + (Math.random() - 0.5) * 80),
         }));
     });
 }
@@ -121,7 +121,7 @@ const chart = createBoxPlotChart('#container', {
 ## Data Format
 
 Each item contributes one numeric value to a category. The chart groups items by the `key`
-accessor and summarises the `value` accessor per group — no pre-aggregation required.
+accessor and summarizes the `value` accessor per group — no pre-aggregation required.
 
 ## Options
 
@@ -129,5 +129,5 @@ accessor and summarises the `value` accessor per group — no pre-aggregation re
 - **`key`** — Accessor for the category (field name or function)
 - **`value`** — Accessor for the numeric value (field name or function)
 - **`categories`** — Explicit category order (default: first-seen order)
-- **`color`** — Box colour (default: first palette colour)
+- **`color`** — Box color (default: first palette color)
 - **`format`** — Format applied to summary values in tooltips

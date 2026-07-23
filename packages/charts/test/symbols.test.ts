@@ -82,7 +82,7 @@ describe('Marker symbols', () => {
         });
     });
 
-    it('Should rotate the square about its centre', () => {
+    it('Should rotate the square about its center', () => {
         const square = createSymbol('square', {
             cx: 30,
             cy: 40,
@@ -94,7 +94,7 @@ describe('Marker symbols', () => {
         expect(square.transformOriginY).toBe(40);
     });
 
-    it('Should keep a rotated symbol origin locked to its centre when repositioned', () => {
+    it('Should keep a rotated symbol origin locked to its center when repositioned', () => {
         const square = createSymbol('square', {
             cx: 0,
             cy: 0,

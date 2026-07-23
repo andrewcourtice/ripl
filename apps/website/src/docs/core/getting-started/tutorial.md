@@ -286,7 +286,7 @@ await transition(time => {
 :::
 
 > [!NOTE]
-> The `transition()` function returns a `Transition` (which extends `Task`) — it is both **awaitable** and **cancellable** via `transition.abort()`.
+> The `transition()` function returns a `Transition` (which extends `Task`) — it is both **awaitable** and **cancelable** via `transition.abort()`.
 
 The standalone `transition()` gives you full control, but for most use-cases a **Scene** and **Renderer** provide a more convenient approach.
 

@@ -370,7 +370,7 @@ createHeatmapChart(mount('heatmap'), {
     data: DAYS.flatMap((day, di) => HOURS.map((hour, hi) => ({
         day,
         hour,
-        // Deterministic, varied surface so colour intensity is visible.
+        // Deterministic, varied surface so color intensity is visible.
         value: ((di * 7 + hi * 13) % 100),
     }))),
     keyX: 'hour',

@@ -89,7 +89,7 @@ import {
 export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     /** The tasks rendered as time-spanning bars. */
     data: TData[];
-    /** Accessor for each task's unique key (used for colour assignment and data joins). */
+    /** Accessor for each task's unique key (used for color assignment and data joins). */
     key: keyof TData | ((item: TData) => string);
     /** Accessor for each task's label shown on the category axis. */
     label: keyof TData | ((item: TData) => string);
@@ -97,7 +97,7 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     start: keyof TData | ((item: TData) => Date);
     /** Accessor for each task's end date. */
     end: keyof TData | ((item: TData) => Date);
-    /** Optional per-item colour accessor; falls back to the generated palette. */
+    /** Optional per-item color accessor; falls back to the generated palette. */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
     progress?: NumericAccessor<TData>;
@@ -117,7 +117,7 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
     format?: ValueFormatInput;
     /** Draw a marker line at the current date. Defaults to true. */
     showToday?: boolean;
-    /** Colour of the "today" marker line. */
+    /** Color of the "today" marker line. */
     todayColor?: string;
     /** Corner radius in pixels applied to each task bar. Defaults to 3. */
     borderRadius?: number;
@@ -125,9 +125,9 @@ export interface GanttChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for gantt task interaction events. */
 export interface GanttChartTaskEvent {
-    /** The x coordinate (in chart pixels) of the task bar's top-centre anchor. */
+    /** The x coordinate (in chart pixels) of the task bar's top-center anchor. */
     x: number;
-    /** The y coordinate (in chart pixels) of the task bar's top-centre anchor. */
+    /** The y coordinate (in chart pixels) of the task bar's top-center anchor. */
     y: number;
     /** The key of the interacted task. */
     id: string;
@@ -432,7 +432,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
         const group = this._connectorsGroup;
 
-        // Muted grid colour so the links read as light structure, not foreground content.
+        // Muted grid color so the links read as light structure, not foreground content.
         const color = this.theme.gridColor;
 
         // One spec per finish-to-start dependency edge, stably keyed by its (predecessor → task) pair
@@ -723,7 +723,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             // Draw today marker
             this._drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
 
-            // Dependency connectors — resolve each task's bar geometry (finish/start x, row centre y)
+            // Dependency connectors — resolve each task's bar geometry (finish/start x, row center y)
             // so links can be drawn from a predecessor's end to a dependent's start.
             const geometryByKey = new Map<string, { startX: number;
                 endX: number;

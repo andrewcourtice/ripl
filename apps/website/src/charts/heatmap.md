@@ -18,10 +18,10 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
             <RiplField label="Cell labels" inline>
                 <RiplSwitch v-model="extras.cellLabels" />
             </RiplField>
-            <RiplField label="Low colour" inline>
+            <RiplField label="Low color" inline>
                 <RiplColorInput v-model="extras.lowColor" />
             </RiplField>
-            <RiplField label="High colour" inline>
+            <RiplField label="High color" inline>
                 <RiplColorInput v-model="extras.highColor" />
             </RiplField>
             <RiplField label="Corner radius">
@@ -101,7 +101,7 @@ let data = generateData();
 
 function buildOptions() {
     return {
-        // Cell values centred in each cell; the label colour auto-contrasts against the cell colour.
+        // Cell values centered in each cell; the label color auto-contrasts against the cell color.
         labels: extras.cellLabels,
         colors: [extras.lowColor, extras.highColor],
         borderRadius: extras.borderRadius,
@@ -163,4 +163,4 @@ const chart = createHeatmapChart('#container', {
 - **`yCategories`** — Ordered list of y-axis categories
 - **`colors`** — Tuple of `[lowColor, highColor]` hex strings
 - **`borderRadius`** — Cell corner radius (default `2`)
-- **`labels`** — Show each cell's value centred in the cell (default `false`); the label colour auto-contrasts against the cell colour
+- **`labels`** — Show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color

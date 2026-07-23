@@ -3049,8 +3049,8 @@
             "link": "/docs/api/@ripl/core/functions/niceDomain.md"
           },
           {
-            "text": "normaliseBorderRadius",
-            "link": "/docs/api/@ripl/core/functions/normaliseBorderRadius.md"
+            "text": "normalizeBorderRadius",
+            "link": "/docs/api/@ripl/core/functions/normalizeBorderRadius.md"
           },
           {
             "text": "padDomain",
@@ -3265,40 +3265,40 @@
             "link": "/docs/api/@ripl/core/functions/scaleTime.md"
           },
           {
-            "text": "serialiseGradient",
-            "link": "/docs/api/@ripl/core/functions/serialiseGradient.md"
+            "text": "serializeGradient",
+            "link": "/docs/api/@ripl/core/functions/serializeGradient.md"
           },
           {
-            "text": "serialiseHEX",
-            "link": "/docs/api/@ripl/core/functions/serialiseHEX.md"
+            "text": "serializeHEX",
+            "link": "/docs/api/@ripl/core/functions/serializeHEX.md"
           },
           {
-            "text": "serialiseHSL",
-            "link": "/docs/api/@ripl/core/functions/serialiseHSL.md"
+            "text": "serializeHSL",
+            "link": "/docs/api/@ripl/core/functions/serializeHSL.md"
           },
           {
-            "text": "serialiseHSLA",
-            "link": "/docs/api/@ripl/core/functions/serialiseHSLA.md"
+            "text": "serializeHSLA",
+            "link": "/docs/api/@ripl/core/functions/serializeHSLA.md"
           },
           {
-            "text": "serialiseHSV",
-            "link": "/docs/api/@ripl/core/functions/serialiseHSV.md"
+            "text": "serializeHSV",
+            "link": "/docs/api/@ripl/core/functions/serializeHSV.md"
           },
           {
-            "text": "serialiseHSVA",
-            "link": "/docs/api/@ripl/core/functions/serialiseHSVA.md"
+            "text": "serializeHSVA",
+            "link": "/docs/api/@ripl/core/functions/serializeHSVA.md"
           },
           {
-            "text": "serialisePattern",
-            "link": "/docs/api/@ripl/core/functions/serialisePattern.md"
+            "text": "serializePattern",
+            "link": "/docs/api/@ripl/core/functions/serializePattern.md"
           },
           {
-            "text": "serialiseRGB",
-            "link": "/docs/api/@ripl/core/functions/serialiseRGB.md"
+            "text": "serializeRGB",
+            "link": "/docs/api/@ripl/core/functions/serializeRGB.md"
           },
           {
-            "text": "serialiseRGBA",
-            "link": "/docs/api/@ripl/core/functions/serialiseRGBA.md"
+            "text": "serializeRGBA",
+            "link": "/docs/api/@ripl/core/functions/serializeRGBA.md"
           },
           {
             "text": "setColorAlpha",

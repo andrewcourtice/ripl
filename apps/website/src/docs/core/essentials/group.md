@@ -222,7 +222,7 @@ rect + circle
 Tests whether an element matches a CSS-like selector, returning a boolean. `matches` is a method on
 **every element** (it comes from `Element`, so leaf shapes have it too — not just groups).
 Multi-segment selectors (with combinators) are evaluated relative to the element's root, so ancestor
-and sibling constraints are honoured:
+and sibling constraints are honored:
 
 ```ts
 group.matches('group'); // true

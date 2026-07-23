@@ -82,7 +82,7 @@ export type ChartNavigatorCategoryLayout = 'band' | 'point';
 export interface ChartNavigatorSeries {
     /** The series id (used for the overview element ids). */
     id: string;
-    /** The series colour. */
+    /** The series color. */
     color: string;
     /** How the series is drawn in the overview. */
     type: ChartNavigatorSeriesType;
@@ -115,8 +115,8 @@ export interface ChartNavigatorRenderOptions {
      */
     stacked?: boolean;
     /**
-     * How the category axis positions marks. `'band'` (bar/trend charts) centres each category in a
-     * padded band so bars sit fully inside the strip and line/area marks align to band centres;
+     * How the category axis positions marks. `'band'` (bar/trend charts) centers each category in a
+     * padded band so bars sit fully inside the strip and line/area marks align to band centers;
      * `'point'` (line/area charts) spreads marks edge-to-edge. Defaults to `'point'`.
      */
     categoryLayout?: ChartNavigatorCategoryLayout;
@@ -275,7 +275,7 @@ export class ChartNavigator extends ChartComponent {
         const lineSeries = active.filter(srs => srs.type === 'line');
 
         // A band host (bar/trend) positions marks in padded category bands so bars stay inside the strip
-        // and line/area marks align to band centres; a point host (line/area) spreads marks edge-to-edge.
+        // and line/area marks align to band centers; a point host (line/area) spreads marks edge-to-edge.
         const count = Math.max(1, ...active.map(srs => srs.values.length));
         const band = categoryLayout === 'band' ? this._categoryScale(count) : undefined;
         const mainFor: (index: number, seriesCount: number) => number = band

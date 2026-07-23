@@ -92,7 +92,7 @@ function parseColorStops(args: string[]): GradientColorStop[] {
     return args.map(parseColorStop);
 }
 
-function normaliseStopOffsets(stops: GradientColorStop[]): GradientColorStop[] {
+function normalizeStopOffsets(stops: GradientColorStop[]): GradientColorStop[] {
     if (stops.length === 0) {
         return stops;
     }
@@ -155,7 +155,7 @@ function parseLinearGradient(args: string[], repeating: boolean): LinearGradient
         type: 'linear',
         repeating,
         angle,
-        stops: normaliseStopOffsets(parseColorStops(stopArgs)),
+        stops: normalizeStopOffsets(parseColorStops(stopArgs)),
     };
 }
 
@@ -191,7 +191,7 @@ function parseRadialGradient(args: string[], repeating: boolean): RadialGradient
         repeating,
         shape,
         position,
-        stops: normaliseStopOffsets(parseColorStops(stopArgs)),
+        stops: normalizeStopOffsets(parseColorStops(stopArgs)),
     };
 }
 
@@ -225,7 +225,7 @@ function parseConicGradient(args: string[], repeating: boolean): ConicGradient {
         repeating,
         angle,
         position,
-        stops: normaliseStopOffsets(parseColorStops(stopArgs)),
+        stops: normalizeStopOffsets(parseColorStops(stopArgs)),
     };
 }
 
@@ -236,7 +236,7 @@ const GRADIENT_PARSERS: Record<string, (args: string[], repeating: boolean) => G
     conic: parseConicGradient,
 };
 
-/** Parses a CSS gradient string (linear, radial, or conic) into a structured `Gradient` object, or returns `undefined` if the string is not a recognised gradient. */
+/** Parses a CSS gradient string (linear, radial, or conic) into a structured `Gradient` object, or returns `undefined` if the string is not a recognized gradient. */
 export function parseGradient(value: string): Gradient | undefined {
     const match = GRADIENT_PATTERN.exec(value.trim());
 
@@ -254,7 +254,7 @@ export function parseGradient(value: string): Gradient | undefined {
         : undefined;
 }
 
-/** Tests whether a string looks like a CSS gradient (starts with a recognised gradient function name). */
+/** Tests whether a string looks like a CSS gradient (starts with a recognized gradient function name). */
 export function isGradientString(value: string): boolean {
     return GRADIENT_PATTERN.test(value.trim());
 }

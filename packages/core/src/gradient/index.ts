@@ -1,3 +1,3 @@
 export * from './parser';
-export * from './serialiser';
+export * from './serializer';
 export * from './types';

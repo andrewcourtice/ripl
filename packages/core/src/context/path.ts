@@ -23,7 +23,7 @@ export class ContextPath implements ContextElement {
         this.id = id;
     }
 
-    /** Adds an arc centred at `(x, y)` with the given radius, sweeping from `startAngle` to `endAngle`. */
+    /** Adds an arc centered at `(x, y)` with the given radius, sweeping from `startAngle` to `endAngle`. */
     public arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         // do nothing
     }
@@ -33,7 +33,7 @@ export class ContextPath implements ContextElement {
         // do nothing
     }
 
-    /** Adds a full circle centred at `(x, y)` with the given radius. */
+    /** Adds a full circle centered at `(x, y)` with the given radius. */
     public circle(x: number, y: number, radius: number): void {
         // do nothing
     }
@@ -48,7 +48,7 @@ export class ContextPath implements ContextElement {
         // do nothing
     }
 
-    /** Adds an ellipse centred at `(x, y)` with the given radii and rotation, sweeping from `startAngle` to `endAngle`. */
+    /** Adds an ellipse centered at `(x, y)` with the given radii and rotation, sweeping from `startAngle` to `endAngle`. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         // do nothing
     }

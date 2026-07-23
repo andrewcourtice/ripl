@@ -196,7 +196,7 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         context.pushGroup(this as unknown as Element);
 
         // `children` returns a fresh array, so this sort is safe. Rendering scene-less (a group drawn
-        // directly to a context) must honour z-index and the group's own transform just as `Scene`
+        // directly to a context) must honor z-index and the group's own transform just as `Scene`
         // does via its instruction stream; the sort is stable, so equal-z-index siblings keep
         // insertion order.
         this.children

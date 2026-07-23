@@ -1,6 +1,6 @@
 import {
     parseColor,
-    serialiseRGBA,
+    serializeRGBA,
 } from '.';
 
 import type {
@@ -27,7 +27,7 @@ export function setColorAlpha(color: string, alpha: number) {
         blue,
     ] = rgba;
 
-    return serialiseRGBA(red, green, blue, alpha);
+    return serializeRGBA(red, green, blue, alpha);
 }
 
 /** Determines whether a color string resolves to a fully transparent color. */

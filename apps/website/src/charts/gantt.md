@@ -20,7 +20,7 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
             <RiplField label="Today marker" inline>
                 <RiplSwitch v-model="extras.showToday" />
             </RiplField>
-            <RiplField v-if="extras.showToday" label="Marker colour" inline>
+            <RiplField v-if="extras.showToday" label="Marker color" inline>
                 <RiplColorInput v-model="extras.todayColor" />
             </RiplField>
             <RiplField label="Corner radius">

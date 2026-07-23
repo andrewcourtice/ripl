@@ -71,7 +71,7 @@ describe('accessibility', () => {
         expect(rootElement(chart).getAttribute('aria-label')).toBe('Quarterly sales');
     });
 
-    it('exposes a colourblind-safe theme by name', () => {
+    it('exposes a colorblind-safe theme by name', () => {
         expect(resolveTheme('colorblind')).toBe(colorBlindTheme);
         expect(colorBlindTheme.palette.length).toBeGreaterThanOrEqual(8);
     });

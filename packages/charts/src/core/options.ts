@@ -194,7 +194,7 @@ export interface ChartTitleOptions {
     padding: PaddingInput;
     /** CSS font shorthand for the title text. */
     font: string;
-    /** Colour of the title text. */
+    /** Color of the title text. */
     fontColor: string;
     /** Which side of the chart the title occupies. */
     position: TitlePosition;
@@ -290,7 +290,7 @@ export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Parti
 export interface ChartGridOptions {
     /** Whether grid lines are drawn. */
     visible: boolean;
-    /** Stroke colour of the grid lines. */
+    /** Stroke color of the grid lines. */
     lineColor: string;
     /** Stroke width of the grid lines, in pixels. */
     lineWidth: number;
@@ -346,7 +346,7 @@ export interface ChartCrosshairOptions {
     visible: boolean;
     /** Which axis (or both) the crosshair tracks. */
     axis: CrosshairAxis;
-    /** Stroke colour of the crosshair lines. */
+    /** Stroke color of the crosshair lines. */
     lineColor: string;
     /** Stroke width of the crosshair lines, in pixels. */
     lineWidth: number;
@@ -407,9 +407,9 @@ export interface ChartTooltipOptions {
     padding: PaddingInput;
     /** CSS font shorthand for the tooltip text. */
     font: string;
-    /** Colour of the tooltip text. */
+    /** Color of the tooltip text. */
     fontColor: string;
-    /** Fill colour of the tooltip box. */
+    /** Fill color of the tooltip box. */
     backgroundColor: string;
     /** Corner radius of the tooltip box, uniform or per-corner. */
     borderRadius: BorderRadiusInput;
@@ -479,7 +479,7 @@ export interface ChartLegendOptions {
     padding: PaddingInput;
     /** CSS font shorthand for the legend labels. */
     font: string;
-    /** Colour of the legend labels. */
+    /** Color of the legend labels. */
     fontColor: string;
     /** Whether hovering a legend entry highlights its series and clicking toggles its visibility. */
     highlight: boolean;
@@ -550,7 +550,7 @@ export interface ChartAxisItemOptions<TData = unknown> {
     visible: boolean;
     /** CSS font shorthand for the tick labels. */
     font: string;
-    /** Colour of the tick labels. */
+    /** Color of the tick labels. */
     fontColor: string;
     /** Optional axis title drawn alongside the tick labels. */
     title?: string;
@@ -670,8 +670,8 @@ export function normalizeYAxisItem<TData = unknown>(
 
 /** Normalizes axis input into a full `ChartAxisOptions` object with both x and y. */
 export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData> {
-    // Return minimal partials (no colours) so the per-item normalizers apply the active theme's
-    // colours; pre-filling here would shadow the theme for the default/boolean cases.
+    // Return minimal partials (no colors) so the per-item normalizers apply the active theme's
+    // colors; pre-filling here would shadow the theme for the default/boolean cases.
     if (input === undefined) {
         return {
             x: {},
@@ -782,7 +782,7 @@ export interface ChartDataLabelsOptions {
     anchor: LabelAnchor;
     /** CSS font shorthand for the label text. */
     font: string;
-    /** Colour of the label text. */
+    /** Color of the label text. */
     fontColor: string;
 }
 
@@ -850,7 +850,7 @@ export interface ChartSegmentLabelsOptions {
     position: SegmentLabelPosition;
     /** Label font; when omitted the shared segment-label font is used. */
     font?: string;
-    /** Label colour; when omitted a sensible default is chosen for the position. */
+    /** Label color; when omitted a sensible default is chosen for the position. */
     fontColor?: string;
 }
 

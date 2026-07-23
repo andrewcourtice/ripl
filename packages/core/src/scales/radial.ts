@@ -31,7 +31,7 @@ export interface RadialScaleOptions {
  * ring rather than overshooting it, and a value below the domain lands on the inner radius.
  *
  * A single-element `domain` of `[max]` is treated as `[0, max]`, mapping magnitudes outward from the
- * centre.
+ * center.
  *
  * @param domain - The value domain `[min, max]` (or `[max]`, treated as `[0, max]`).
  * @param range - The radius range `[innerRadius, outerRadius]` in pixels.
@@ -51,7 +51,7 @@ export function scaleRadial(
     range: [number, number],
     options?: RadialScaleOptions
 ): Scale<number, number> {
-    // A single-value domain `[max]` is treated as `[0, max]` so magnitudes map from the centre outward.
+    // A single-value domain `[max]` is treated as `[0, max]` so magnitudes map from the center outward.
     const resolvedDomain = domain.length === 1 ? [0, domain[0]] : domain;
 
     // Radial magnitude must never exceed the ring, so clamping is enabled unless explicitly disabled.

@@ -188,7 +188,7 @@ export type ElementInterpolationStateValue<TValue = number> = TValue
 | ElementInterpolationKeyFrame<TValue>[]
 | Interpolator<TValue>;
 
-/** A map of interpolator factories keyed by state property, used to override default interpolation behaviour. */
+/** A map of interpolator factories keyed by state property, used to override default interpolation behavior. */
 export type ElementInterpolators<TState extends BaseElementState> = {
     [TKey in keyof TState]: InterpolatorFactory<TState[TKey]>;
 };
@@ -301,7 +301,7 @@ export class Element<
         this.setStateValue('direction', value);
     }
 
-    /** Fill style (colour or gradient) painted inside the element, mirroring the canvas `fillStyle` drawing-state property. */
+    /** Fill style (color or gradient) painted inside the element, mirroring the canvas `fillStyle` drawing-state property. */
     public get fill() {
         return this.getStateValue('fill');
     }
@@ -409,7 +409,7 @@ export class Element<
         this.setStateValue('shadowBlur', value);
     }
 
-    /** Colour of the element's shadow, mirroring the canvas `shadowColor` drawing-state property. */
+    /** Color of the element's shadow, mirroring the canvas `shadowColor` drawing-state property. */
     public get shadowColor() {
         return this.getStateValue('shadowColor');
     }
@@ -436,7 +436,7 @@ export class Element<
         this.setStateValue('shadowOffsetY', value);
     }
 
-    /** Stroke style (colour or gradient) painted along the element's outline, mirroring the canvas `strokeStyle` drawing-state property. */
+    /** Stroke style (color or gradient) painted along the element's outline, mirroring the canvas `strokeStyle` drawing-state property. */
     public get stroke() {
         return this.getStateValue('stroke');
     }

@@ -4,7 +4,7 @@ import './styles/panel.css';
 import PanelApp from './panel-app.vue';
 
 import {
-    initialiseDevtoolsStore,
+    initializeDevtoolsStore,
 } from './composables/use-devtools-store';
 
 import {
@@ -21,7 +21,7 @@ const tabId = chrome.devtools.inspectedWindow.tabId;
 
 let port: chrome.runtime.Port | null = null;
 
-const store = initialiseDevtoolsStore(message => port?.postMessage(message));
+const store = initializeDevtoolsStore(message => port?.postMessage(message));
 
 function connect(): void {
     port = chrome.runtime.connect({

@@ -39,7 +39,7 @@ export interface DataLabelSpec {
     content: string;
     /** CSS font shorthand for the label text. */
     font: string;
-    /** Colour of the label text. */
+    /** Color of the label text. */
     fill: string;
     /** Distance in pixels between the anchor point and the label. */
     offset?: number;
@@ -123,7 +123,7 @@ export interface SegmentLabelSpec {
     textBaseline?: TextState['textBaseline'];
     /** Defaults to {@link SEGMENT_LABEL_FONT}. */
     font?: string;
-    /** Defaults to the inside fill; pass the outside fill (or a custom colour) as needed. */
+    /** Defaults to the inside fill; pass the outside fill (or a custom color) as needed. */
     fill?: string;
     /** Initial opacity (defaults to 0 so callers can fade the label in). */
     opacity?: number;
@@ -153,9 +153,9 @@ export function createSegmentLabel(spec: SegmentLabelSpec): Text {
 
 /** Input geometry for placing a label around a radial (arc-based) segment. */
 export interface RadialLabelInput {
-    /** Centre x of the radial layout, in chart pixels. */
+    /** Center x of the radial layout, in chart pixels. */
     cx: number;
-    /** Centre y of the radial layout, in chart pixels. */
+    /** Center y of the radial layout, in chart pixels. */
     cy: number;
     /** Start angle of the segment, in radians. */
     startAngle: number;
@@ -202,9 +202,9 @@ export interface RadialLabelPlacement {
 
 /**
  * Computes both the inside (centroid) and outside (leader-line) label placements for a radial
- * segment. Shared by the pie and polar-area charts so their inside/outside label behaviour — and
+ * segment. Shared by the pie and polar-area charts so their inside/outside label behavior — and
  * the elbow leader line — stay identical. The outside `textAlign` flips by hemisphere so text reads
- * away from the centre.
+ * away from the center.
  */
 export function resolveRadialLabel(input: RadialLabelInput): RadialLabelPlacement {
     const {
@@ -266,7 +266,7 @@ export interface SegmentLabelLayout {
     textAlign: TextState['textAlign'];
     /** Vertical text baseline for the label. */
     textBaseline: TextState['textBaseline'];
-    /** Colour of the label text. */
+    /** Color of the label text. */
     fill: string;
     /** CSS font shorthand for the label text (falls back to the shared segment-label font). */
     font?: string;
@@ -278,8 +278,8 @@ export interface SegmentLabelLayout {
 
 /**
  * Resolves a segment's label into a ready-to-render layout (inside centroid or outside leader line),
- * honouring visibility, an optional minimum-angle clutter guard, and position/font/colour options.
- * Shared by the pie and polar-area charts so their label behaviour is identical.
+ * honoring visibility, an optional minimum-angle clutter guard, and position/font/color options.
+ * Shared by the pie and polar-area charts so their label behavior is identical.
  *
  * The connector always has ≥2 points (a degenerate line at the anchor when hidden or inside) so
  * `Polyline.getBoundingBox` stays safe and renders nothing for non-outside labels.

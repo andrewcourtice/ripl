@@ -62,7 +62,7 @@ import {
 const TITLE_GAP = 6;
 
 // Rotated x-axis labels anchor their trailing edge at the tick so the slanted text hangs clear of
-// the plot; flat labels centre under it.
+// the plot; flat labels center under it.
 function tickLabelAlignment(rotationRad: number): 'center' | 'left' | 'right' {
     if (rotationRad === 0) {
         return 'center';
@@ -112,11 +112,11 @@ export interface ChartAxisOptions extends ChartComponentOptions {
     title?: string;
     /** CSS font shorthand for the axis title (defaults to a bold variant of the label font). */
     titleFont?: string;
-    /** Colour of the axis line and tick marks. */
+    /** Color of the axis line and tick marks. */
     stroke?: string;
     /** CSS font shorthand for the tick labels. */
     labelFont?: string;
-    /** Colour of the tick labels. */
+    /** Color of the tick labels. */
     labelColor?: string;
     /** Resolved animation used when tick labels and lines enter or update. */
     animation?: ResolvedAnimation;
@@ -170,11 +170,11 @@ export class ChartAxis extends ChartComponent {
     public title?: string;
     /** CSS font shorthand for the axis title. */
     public titleFont: string;
-    /** Colour of the axis line and tick marks. */
+    /** Color of the axis line and tick marks. */
     public stroke: string;
     /** CSS font shorthand for the tick labels. */
     public labelFont: string;
-    /** Colour of the tick labels. */
+    /** Color of the tick labels. */
     public labelColor: string;
     /** Resolved animation applied when ticks and labels enter or update. */
     public animation: ResolvedAnimation;
@@ -794,7 +794,7 @@ export class ChartYAxis extends ChartAxis {
             return Promise.resolve();
         }
 
-        // Anchor the rotated title to the outer edge of its band (not centred) so the full
+        // Anchor the rotated title to the outer edge of its band (not centered) so the full
         // TITLE_GAP sits between the title and the tick labels — matching the x-axis — without
         // widening the reserved band, so the plot margins are unchanged.
         const titleThickness = this.titleBand - TITLE_GAP;

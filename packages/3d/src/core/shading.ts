@@ -11,7 +11,7 @@ import type {
 
 import {
     parseColor,
-    serialiseRGBA,
+    serializeRGBA,
 } from '@ripl/core';
 
 import type {
@@ -50,7 +50,7 @@ export function shadeFaceColor(baseColor: string | ColorRGBA, brightness: number
         return baseColor as string;
     }
 
-    return serialiseRGBA(
+    return serializeRGBA(
         Math.round(rgba[0] * brightness),
         Math.round(rgba[1] * brightness),
         Math.round(rgba[2] * brightness),

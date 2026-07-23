@@ -38,9 +38,9 @@ import {
 export interface LegendItem {
     /** Unique id linking the entry to its series/segment (used for highlight and toggling). */
     id: string;
-    /** Text label shown next to the colour swatch. */
+    /** Text label shown next to the color swatch. */
     label: string;
-    /** Swatch colour, typically the series/segment colour. */
+    /** Swatch color, typically the series/segment color. */
     color: string;
     /** Whether the entry is active; inactive entries render dimmed. Defaults to `true`. */
     active?: boolean;
@@ -54,7 +54,7 @@ export interface LegendOptions extends ChartComponentOptions {
     position?: LegendPosition;
     /** CSS font shorthand for the entry labels. */
     font?: string;
-    /** Colour of the entry labels. */
+    /** Color of the entry labels. */
     fontColor?: string;
     /** Padding around the legend within its band, in pixels. */
     itemPadding?: number;
@@ -90,7 +90,7 @@ interface LegendLayout {
 }
 
 /**
- * A chart legend rendering colour swatches and labels, supporting all four positions, item
+ * A chart legend rendering color swatches and labels, supporting all four positions, item
  * reconciliation across renders (so toggling a series animates rather than rebuilding), and a
  * `measure`/`render` API that plugs into the shared layout system.
  */
@@ -228,7 +228,7 @@ export class Legend extends ChartComponent {
             };
         }
 
-        // Vertical: single column stacked top to bottom, centred within the region height.
+        // Vertical: single column stacked top to bottom, centered within the region height.
         const maxItemWidth = this._items.reduce((max, item) => Math.max(max, this._itemWidth(item)), 0);
         const thickness = maxItemWidth + this._itemPadding * 2;
         const totalHeight = this._items.length * rowHeight + (this._items.length - 1) * ROW_GAP;

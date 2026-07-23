@@ -38,7 +38,7 @@ yarn workspace @ripl/devtools-extension dev:example
 
 ### Icons
 
-`public/icons/*.png` are generated from `assets/logo/Ripl 512.svg` (blue `#459BF1` active set, grey `#9AA0A6` inactive set). Regenerate with:
+`public/icons/*.png` are generated from `assets/logo/Ripl 512.svg` (blue `#459BF1` active set, gray `#9AA0A6` inactive set). Regenerate with:
 
 ```bash
 node scripts/generate-icons.mjs

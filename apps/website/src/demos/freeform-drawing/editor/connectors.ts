@@ -41,7 +41,7 @@ function sideMidpoint(bounds: Box, side: ConnectorSide): Point {
     return [bounds.right, midY];
 }
 
-/** Returns the box centre point. */
+/** Returns the box center point. */
 function boundsCenter(bounds: Box): Point {
     return [(bounds.left + bounds.right) / 2, (bounds.top + bounds.bottom) / 2];
 }

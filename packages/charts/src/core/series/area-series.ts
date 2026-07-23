@@ -231,7 +231,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const { data } = ctx;
         // Per-series cumulative top and its lower boundary, so a stacked series fills from the top of
         // the previous same-group series. Cumulation resets per value-scale group (series bound to
-        // different y-axes stack independently); single-axis charts share one group, so the behaviour
+        // different y-axes stack independently); single-axis charts share one group, so the behavior
         // is unchanged.
         const stackedTop: number[][] = [];
         const stackedBottom: number[][] = [];

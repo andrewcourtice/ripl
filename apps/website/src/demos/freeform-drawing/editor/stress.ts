@@ -26,7 +26,7 @@ function randomPoint(): Point {
 
 /**
  * Generates a large field of assorted shapes used to demonstrate that pan/zoom stays a single
- * transform update over a big retained scene. Colours and positions vary by index so no runtime
+ * transform update over a big retained scene. Colors and positions vary by index so no runtime
  * randomness is required for reproducibility of counts.
  */
 export function generateStressShapes(count: number): Shape[] {

@@ -88,7 +88,7 @@ describe('Time axis scale', () => {
         expect(scale(new Date(start + 7 * DAY))).toBeCloseTo(70);
     });
 
-    it('Should honour explicit min/max overrides in epoch milliseconds', () => {
+    it('Should honor explicit min/max overrides in epoch milliseconds', () => {
         const start = Date.UTC(2024, 0, 1);
         const scale = createTimeAxisScale(normalizeAxisItem({
             scale: 'time',

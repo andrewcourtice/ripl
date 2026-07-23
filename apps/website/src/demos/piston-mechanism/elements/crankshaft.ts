@@ -100,9 +100,9 @@ export class Crankshaft extends Shape3D<CrankshaftState> {
         // Offset crank pin (the connecting rod's big end rides here).
         faces.push(...cylinderZ(thr, 0, pin, -pinHalf, pinHalf, segs));
 
-        for (const centreZ of [-pinHalf, pinHalf]) {
-            const zNear = centreZ - webThickness / 2;
-            const zFar = centreZ + webThickness / 2;
+        for (const centerZ of [-pinHalf, pinHalf]) {
+            const zNear = centerZ - webThickness / 2;
+            const zFar = centerZ + webThickness / 2;
 
             // Web plate connecting the main journal to the crank pin.
             faces.push(...box(-main, -webHalf, zNear, thr, webHalf, zFar));

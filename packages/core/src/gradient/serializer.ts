@@ -8,7 +8,7 @@ import type {
 } from './types';
 
 
-function serialiseStop(stop: GradientColorStop): string {
+function serializeStop(stop: GradientColorStop): string {
     if (stop.offset !== undefined) {
         return `${stop.color} ${(stop.offset * 100).toFixed(2)}%`;
     }
@@ -16,11 +16,11 @@ function serialiseStop(stop: GradientColorStop): string {
     return stop.color;
 }
 
-function serialiseStops(stops: GradientColorStop[]): string {
-    return stops.map(serialiseStop).join(', ');
+function serializeStops(stops: GradientColorStop[]): string {
+    return stops.map(serializeStop).join(', ');
 }
 
-function serialiseLinearGradient(gradient: LinearGradient): string {
+function serializeLinearGradient(gradient: LinearGradient): string {
     const prefix = gradient.repeating ? 'repeating-' : '';
     const parts: string[] = [];
 
@@ -28,12 +28,12 @@ function serialiseLinearGradient(gradient: LinearGradient): string {
         parts.push(`${gradient.angle}deg`);
     }
 
-    parts.push(serialiseStops(gradient.stops));
+    parts.push(serializeStops(gradient.stops));
 
     return `${prefix}linear-gradient(${parts.join(', ')})`;
 }
 
-function serialiseRadialGradient(gradient: RadialGradient): string {
+function serializeRadialGradient(gradient: RadialGradient): string {
     const prefix = gradient.repeating ? 'repeating-' : '';
     const parts: string[] = [];
 
@@ -50,12 +50,12 @@ function serialiseRadialGradient(gradient: RadialGradient): string {
         parts.push(descriptor);
     }
 
-    parts.push(serialiseStops(gradient.stops));
+    parts.push(serializeStops(gradient.stops));
 
     return `${prefix}radial-gradient(${parts.join(', ')})`;
 }
 
-function serialiseConicGradient(gradient: ConicGradient): string {
+function serializeConicGradient(gradient: ConicGradient): string {
     const prefix = gradient.repeating ? 'repeating-' : '';
     const parts: string[] = [];
 
@@ -76,19 +76,19 @@ function serialiseConicGradient(gradient: ConicGradient): string {
         parts.push(descriptor.trim());
     }
 
-    parts.push(serialiseStops(gradient.stops));
+    parts.push(serializeStops(gradient.stops));
 
     return `${prefix}conic-gradient(${parts.join(', ')})`;
 }
 
-/** Serialiser dispatch keyed by gradient type. */
-const GRADIENT_SERIALISERS: Record<GradientType, (gradient: Gradient) => string> = {
-    linear: gradient => serialiseLinearGradient(gradient as LinearGradient),
-    radial: gradient => serialiseRadialGradient(gradient as RadialGradient),
-    conic: gradient => serialiseConicGradient(gradient as ConicGradient),
+/** Serializer dispatch keyed by gradient type. */
+const GRADIENT_SERIALIZERS: Record<GradientType, (gradient: Gradient) => string> = {
+    linear: gradient => serializeLinearGradient(gradient as LinearGradient),
+    radial: gradient => serializeRadialGradient(gradient as RadialGradient),
+    conic: gradient => serializeConicGradient(gradient as ConicGradient),
 };
 
-/** Serialises a structured `Gradient` object back into a CSS gradient string. */
-export function serialiseGradient(gradient: Gradient): string {
-    return GRADIENT_SERIALISERS[gradient.type](gradient);
+/** Serializes a structured `Gradient` object back into a CSS gradient string. */
+export function serializeGradient(gradient: Gradient): string {
+    return GRADIENT_SERIALIZERS[gradient.type](gradient);
 }

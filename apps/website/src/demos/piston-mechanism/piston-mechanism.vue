@@ -179,8 +179,8 @@ function solveKinematics(angle: number) {
         pinX,
         pinY,
         pistonY,
-        rodCentreX: pinX / 2,
-        rodCentreY: (pistonY + pinY) / 2,
+        rodCenterX: pinX / 2,
+        rodCenterY: (pistonY + pinY) / 2,
         rodAngle: Math.atan2(pinX, pistonY - pinY),
     };
 }
@@ -213,8 +213,8 @@ onMounted(() => {
     connectingRodEl = addPart(
         'Connecting Rod',
         createConnectingRod({
-            x: initial.rodCentreX,
-            y: initial.rodCentreY,
+            x: initial.rodCenterX,
+            y: initial.rodCenterY,
             rotationZ: initial.rodAngle,
         }),
         CON_ROD_COLOR
@@ -238,15 +238,15 @@ onMounted(() => {
         const dt = event.data.deltaTime / 1000;
         crankAngle += CRANKSHAFT_SPEED * dt;
 
-        const { pistonY, rodCentreX, rodCentreY, rodAngle } = solveKinematics(crankAngle);
+        const { pistonY, rodCenterX, rodCenterY, rodAngle } = solveKinematics(crankAngle);
 
         if (crankshaftEl) {
             crankshaftEl.rotationZ = crankAngle;
         }
 
         if (connectingRodEl) {
-            connectingRodEl.x = rodCentreX;
-            connectingRodEl.y = rodCentreY;
+            connectingRodEl.x = rodCenterX;
+            connectingRodEl.y = rodCenterY;
             connectingRodEl.rotationZ = rodAngle;
         }
 

@@ -27,7 +27,7 @@ export type NumericKey<TData> = {
 export type NumericAccessor<TData> = NumericKey<TData> | ((item: TData) => number);
 
 /**
- * Normalises an {@link Accessor} into a function. Property keys read the field, functions are
+ * Normalizes an {@link Accessor} into a function. Property keys read the field, functions are
  * passed through, and any other value is treated as a constant.
  */
 export function resolveAccessor<TData, TValue>(accessor: Accessor<TData, TValue>): (item: TData) => TValue {

@@ -104,7 +104,7 @@ export const charts: ChartMeta[] = [
     {
         text: 'Box Plot',
         link: '/charts/box-plot',
-        description: 'Summarise a numeric field per category with an interquartile box, median, whiskers, and outliers.',
+        description: 'Summarize a numeric field per category with an interquartile box, median, whiskers, and outliers.',
         category: 'Cartesian',
     },
     {

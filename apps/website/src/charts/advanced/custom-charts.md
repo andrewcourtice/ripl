@@ -73,7 +73,7 @@ public async render() {
 }
 ```
 
-`reserveTitle` and `reserveLegend` measure and render the shared title/legend components into the bands they reserve — you only supply the legend items (`{ id, label, color, active }`). For custom bands (an axis gutter, a toolbar strip), call `layout.reserve(side, thickness)` / `reserveTop` / `reserveBottom` / `reserveLeft` / `reserveRight` yourself. Radial charts can convert the remaining area to a centre point and inscribed size with `areaCenter(area)`.
+`reserveTitle` and `reserveLegend` measure and render the shared title/legend components into the bands they reserve — you only supply the legend items (`{ id, label, color, active }`). For custom bands (an axis gutter, a toolbar strip), call `layout.reserve(side, thickness)` / `reserveTop` / `reserveBottom` / `reserveLeft` / `reserveRight` yourself. Radial charts can convert the remaining area to a center point and inscribed size with `areaCenter(area)`.
 
 Wrapping the body in `super.render(async () => { ... })` matters: it catches errors (clearing the context rather than leaving a half-drawn chart) and marks the chart as rendered so context resizes trigger re-renders.
 
@@ -156,7 +156,7 @@ Group each datum's elements (its mark, label, connector) under one `Group` keyed
 
 ## Transitions
 
-Resolve durations and easing through the chart's animation options so `animation: false` and custom durations are honoured, then drive the elements to their stashed targets via `renderer.transition`:
+Resolve durations and easing through the chart's animation options so `animation: false` and custom durations are honored, then drive the elements to their stashed targets via `renderer.transition`:
 
 <!-- eslint-skip -->
 ```ts

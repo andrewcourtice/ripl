@@ -80,7 +80,7 @@ import {
 export interface RadarChartSeriesOptions<TData> {
     /** Unique identifier for the series. */
     id: string;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    /** Optional color override for the series (otherwise a palette color is generated). */
     color?: string;
     /** Display label for the series (shown in the legend and tooltips). */
     label: string;
@@ -416,7 +416,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         seriesExits.forEach(el => el.destroy());
 
-        // Radial value scale: 0 at the centre, the data max at the outer ring (clamps out-of-range values).
+        // Radial value scale: 0 at the center, the data max at the outer ring (clamps out-of-range values).
         const radiusScale = scaleRadial([0, maxValue], [0, radius]);
 
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
@@ -442,7 +442,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         type SeriesPoint = ReturnType<typeof getSeriesPoints>[number];
 
         // Offsets a value label outward from its vertex along the vertex's angle, aligning the
-        // text away from the centre so it clears the marker on every side of the polygon.
+        // text away from the center so it clears the marker on every side of the polygon.
         const labelProps = (pd: SeriesPoint) => {
             const [x, y] = getThetaPoint(pd.angle, VALUE_LABEL_OFFSET, ...pd.point);
 

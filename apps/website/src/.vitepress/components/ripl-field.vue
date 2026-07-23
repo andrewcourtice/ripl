@@ -38,7 +38,7 @@ defineProps<{
 }
 
 /* Inline: full-width controls (select/text/number/range) fill the value column; fixed-size
-   controls (switch/colour swatch) sit at the right edge. */
+   controls (switch/color swatch) sit at the right edge. */
 .ripl-field--inline .ripl-field__control {
     display: flex;
     align-items: center;

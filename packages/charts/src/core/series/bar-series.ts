@@ -455,7 +455,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
         return [
             ctx.renderer.transition(bars, (element, index, length) => {
                 // Stacked: each column fills as one rising unit — segments are timed by their position
-                // in the stack so the fill front sweeps the whole column once, in colour order.
+                // in the stack so the fill front sweeps the whole column once, in color order.
                 if (prepared.stacked) {
                     const timing = prepared.entryTiming.get(element.id);
                     const columnDelay = stagger(timing?.columnIndex ?? 0, categoryCount, enter.duration) * 0.4;

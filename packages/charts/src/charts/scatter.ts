@@ -94,7 +94,7 @@ import {
 export interface ScatterChartSeriesOptions<TData> {
     /** Unique identifier for the series. */
     id: string;
-    /** Optional colour override for the series (otherwise a palette colour is generated). */
+    /** Optional color override for the series (otherwise a palette color is generated). */
     color?: string;
     /** Accessor for each item's value on the x-axis. */
     xBy: NumericAccessor<TData>;
@@ -288,7 +288,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     // Non-circle symbols use the circumradius matching the circle's visual area,
                     // so sized bubbles stay comparable across symbol shapes.
                     radius: symbolRadius(marker, radius),
-                    // A square is a rotated quad — its transform origin must track its centre.
+                    // A square is a rotated quad — its transform origin must track its center.
                     ...(marker === 'square' ? {
                         transformOriginX: this._xScale(xValue),
                         transformOriginY: yScale(yValue),

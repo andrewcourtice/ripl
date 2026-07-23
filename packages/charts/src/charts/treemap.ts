@@ -76,7 +76,7 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
     value: NumericAccessor<TData>;
     /** Accessor for each item's display label (shown inside sufficiently large cells). */
     label: keyof TData | ((item: TData) => string);
-    /** Optional per-item colour accessor; falls back to a generated palette colour. */
+    /** Optional per-item color accessor; falls back to a generated palette color. */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Legend configuration. Shown by default; pass `false` to hide. */
     legend?: ChartLegendInput;
@@ -90,7 +90,7 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
 
 /** Payload emitted for treemap cell interaction events. */
 export interface TreemapChartCellEvent {
-    /** X position of the cell's top-centre anchor, in canvas coordinates. */
+    /** X position of the cell's top-center anchor, in canvas coordinates. */
     x: number;
     /** Y position of the cell's top edge, in canvas coordinates. */
     y: number;
@@ -245,7 +245,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 color: getColor(item),
             }));
 
-            // Resolve colours through the shared id-keyed map so they stay stable across data
+            // Resolve colors through the shared id-keyed map so they stay stable across data
             // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(items.map(item => ({
                 id: item.key,
@@ -363,7 +363,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     this._attachCellHover(rect, node, nodeColor);
                 }
 
-                // Move the label to the cell's new centre in lockstep with the rect (routing the new
+                // Move the label to the cell's new center in lockstep with the rect (routing the new
                 // position through `.data` so it tweens instead of snapping). Cells that grew past the
                 // threshold gain a label; cells that shrank below it fade theirs out.
                 const cx = node.x + node.width / 2;
@@ -436,7 +436,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 state: element.data as RectState,
             }));
 
-            // Glide the labels to their cells' new centres (and fade in/out) alongside the rects.
+            // Glide the labels to their cells' new centers (and fade in/out) alongside the rects.
             const updateTextsTransition = renderer.transition(updateTexts, element => ({
                 duration: this.getAnimationDuration(800),
                 ease: easeOutCubic,

@@ -5,7 +5,7 @@ import {
 } from 'vitest';
 
 import {
-    serialiseGradient,
+    serializeGradient,
 } from '../../src';
 
 import type {
@@ -14,13 +14,13 @@ import type {
     RadialGradient,
 } from '../../src';
 
-describe('Gradient Serialiser', () => {
+describe('Gradient Serializer', () => {
 
     // ── Linear ───────────────────────────────────────────────────
 
     describe('Linear Gradient', () => {
 
-        test('Should serialise with default angle (180deg omitted)', () => {
+        test('Should serialize with default angle (180deg omitted)', () => {
             const gradient: LinearGradient = {
                 type: 'linear',
                 repeating: false,
@@ -30,10 +30,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('linear-gradient(red, blue)');
+            expect(serializeGradient(gradient)).toBe('linear-gradient(red, blue)');
         });
 
-        test('Should serialise with custom angle', () => {
+        test('Should serialize with custom angle', () => {
             const gradient: LinearGradient = {
                 type: 'linear',
                 repeating: false,
@@ -43,10 +43,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('linear-gradient(90deg, red, blue)');
+            expect(serializeGradient(gradient)).toBe('linear-gradient(90deg, red, blue)');
         });
 
-        test('Should serialise repeating linear gradient', () => {
+        test('Should serialize repeating linear gradient', () => {
             const gradient: LinearGradient = {
                 type: 'linear',
                 repeating: true,
@@ -62,7 +62,7 @@ describe('Gradient Serialiser', () => {
                     },
                 ],
             };
-            const result = serialiseGradient(gradient);
+            const result = serializeGradient(gradient);
             expect(result).toMatch(/^repeating-linear-gradient/);
             expect(result).toContain('45deg');
         });
@@ -87,7 +87,7 @@ describe('Gradient Serialiser', () => {
                     },
                 ],
             };
-            const result = serialiseGradient(gradient);
+            const result = serializeGradient(gradient);
             expect(result).toContain('red 0.00%');
             expect(result).toContain('blue 50.00%');
             expect(result).toContain('green 100.00%');
@@ -103,7 +103,7 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            const result = serialiseGradient(gradient);
+            const result = serializeGradient(gradient);
             expect(result).toBe('linear-gradient(red, blue)');
         });
 
@@ -113,7 +113,7 @@ describe('Gradient Serialiser', () => {
 
     describe('Radial Gradient', () => {
 
-        test('Should serialise with default shape and position (omitted)', () => {
+        test('Should serialize with default shape and position (omitted)', () => {
             const gradient: RadialGradient = {
                 type: 'radial',
                 repeating: false,
@@ -124,10 +124,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('radial-gradient(red, blue)');
+            expect(serializeGradient(gradient)).toBe('radial-gradient(red, blue)');
         });
 
-        test('Should serialise with custom shape', () => {
+        test('Should serialize with custom shape', () => {
             const gradient: RadialGradient = {
                 type: 'radial',
                 repeating: false,
@@ -138,10 +138,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('radial-gradient(circle, red, blue)');
+            expect(serializeGradient(gradient)).toBe('radial-gradient(circle, red, blue)');
         });
 
-        test('Should serialise with custom position', () => {
+        test('Should serialize with custom position', () => {
             const gradient: RadialGradient = {
                 type: 'radial',
                 repeating: false,
@@ -152,10 +152,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('radial-gradient(ellipse at 25% 75%, red, blue)');
+            expect(serializeGradient(gradient)).toBe('radial-gradient(ellipse at 25% 75%, red, blue)');
         });
 
-        test('Should serialise repeating radial gradient', () => {
+        test('Should serialize repeating radial gradient', () => {
             const gradient: RadialGradient = {
                 type: 'radial',
                 repeating: true,
@@ -166,7 +166,7 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toMatch(/^repeating-radial-gradient/);
+            expect(serializeGradient(gradient)).toMatch(/^repeating-radial-gradient/);
         });
 
     });
@@ -175,7 +175,7 @@ describe('Gradient Serialiser', () => {
 
     describe('Conic Gradient', () => {
 
-        test('Should serialise with default angle and position (omitted)', () => {
+        test('Should serialize with default angle and position (omitted)', () => {
             const gradient: ConicGradient = {
                 type: 'conic',
                 repeating: false,
@@ -186,10 +186,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('conic-gradient(red, blue)');
+            expect(serializeGradient(gradient)).toBe('conic-gradient(red, blue)');
         });
 
-        test('Should serialise with custom angle', () => {
+        test('Should serialize with custom angle', () => {
             const gradient: ConicGradient = {
                 type: 'conic',
                 repeating: false,
@@ -200,10 +200,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('conic-gradient(from 45deg, red, blue)');
+            expect(serializeGradient(gradient)).toBe('conic-gradient(from 45deg, red, blue)');
         });
 
-        test('Should serialise with custom position', () => {
+        test('Should serialize with custom position', () => {
             const gradient: ConicGradient = {
                 type: 'conic',
                 repeating: false,
@@ -214,10 +214,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('conic-gradient(at 25% 75%, red, blue)');
+            expect(serializeGradient(gradient)).toBe('conic-gradient(at 25% 75%, red, blue)');
         });
 
-        test('Should serialise with custom angle and position', () => {
+        test('Should serialize with custom angle and position', () => {
             const gradient: ConicGradient = {
                 type: 'conic',
                 repeating: false,
@@ -228,10 +228,10 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toBe('conic-gradient(from 90deg at 10% 20%, red, blue)');
+            expect(serializeGradient(gradient)).toBe('conic-gradient(from 90deg at 10% 20%, red, blue)');
         });
 
-        test('Should serialise repeating conic gradient', () => {
+        test('Should serialize repeating conic gradient', () => {
             const gradient: ConicGradient = {
                 type: 'conic',
                 repeating: true,
@@ -242,7 +242,7 @@ describe('Gradient Serialiser', () => {
                     { color: 'blue' },
                 ],
             };
-            expect(serialiseGradient(gradient)).toMatch(/^repeating-conic-gradient/);
+            expect(serializeGradient(gradient)).toMatch(/^repeating-conic-gradient/);
         });
 
     });

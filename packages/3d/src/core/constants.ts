@@ -2,7 +2,7 @@ import type {
     Vector3,
 } from '../math/vector';
 
-/** Pre-normalised light direction vectors for common light positions. */
+/** Pre-normalized light direction vectors for common light positions. */
 export const LIGHT_DIRECTION = {
     /** Light shining straight down from above. */
     top: [0, -1, 0],

@@ -1,15 +1,15 @@
 <template>
     <div class="freeform-style">
         <div class="freeform-style__section">
-            <span class="freeform-style__label">Colour</span>
+            <span class="freeform-style__label">Color</span>
             <div class="freeform-style__swatches">
                 <button
-                    v-for="colour in palette"
-                    :key="colour"
+                    v-for="color in palette"
+                    :key="color"
                     class="freeform-style__swatch"
-                    :class="{ 'freeform-style__swatch--active': colour === style.stroke }"
-                    :style="{ background: colour }"
-                    @click="$emit('patch', { stroke: colour })"
+                    :class="{ 'freeform-style__swatch--active': color === style.stroke }"
+                    :style="{ background: color }"
+                    @click="$emit('patch', { stroke: color })"
                 ></button>
             </div>
             <RiplColorInput

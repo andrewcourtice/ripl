@@ -49,7 +49,7 @@
     --vp-c-default-3: var(--vp-c-gray-3);
     --vp-c-default-soft: var(--vp-c-gray-soft);
 
-    /* Ripl brand — #459BF1. -3 is the literal brand colour (solid button bg);
+    /* Ripl brand — #459BF1. -3 is the literal brand color (solid button bg);
        -1 is darkened for legible link/heading text on white. */
     --vp-c-brand-1: #0a6cdf;
     --vp-c-brand-2: #1c82f5;
@@ -139,7 +139,7 @@
 /**
  * Component: Chart config drawer
  *
- * Design tokens for the customise drawer's "properties panel" look. Defined on the
+ * Design tokens for the customize drawer's "properties panel" look. Defined on the
  * panel so they cascade to every RiplConfigSection / RiplField inside it; each consumer
  * also supplies a `var(--token, fallback)` so the controls still work outside the drawer.
  * All reference `--vp-*` so light/dark mode is automatic.

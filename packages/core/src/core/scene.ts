@@ -268,7 +268,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         super.destroy();
     }
 
-    /** Clears the context and renders the entire instruction stream in paint order, honouring group boundaries. */
+    /** Clears the context and renders the entire instruction stream in paint order, honoring group boundaries. */
     public render(): void {
         const context = this.context;
 

@@ -103,11 +103,11 @@ export type TrendSeriesType = 'line' | 'bar' | 'area';
 
 /** Configuration shared by every trend chart series type. */
 export interface TrendChartBaseSeriesOptions<TData> {
-    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
     id: string;
     /** Which visualization type to render this series as. */
     type: TrendSeriesType;
-    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
@@ -267,7 +267,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         return 'x';
     }
 
-    /** Trend marks (bars, plus line/area markers at band centres) are laid out in category bands. */
+    /** Trend marks (bars, plus line/area markers at band centers) are laid out in category bands. */
     protected override navigatorCategoryLayout(): 'band' {
         return 'band';
     }
@@ -284,7 +284,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
         this.emit(BAR_EVENTS[phase], event);
     }
 
-    /** Builds the per-type overview series (id, colour, type, values) for the navigator strip. */
+    /** Builds the per-type overview series (id, color, type, values) for the navigator strip. */
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
@@ -378,7 +378,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            // A band scale positions bars; its centres position line/area markers and the x-axis ticks.
+            // A band scale positions bars; its centers position line/area markers and the x-axis ticks.
             const xBand = scaleBand(keys, [yAxisBox.right, right], {
                 outerPadding: 0.15,
                 innerPadding: 0.2,

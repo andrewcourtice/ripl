@@ -68,7 +68,7 @@ watchEffect(async () => {
                     clearColor: [0.05, 0.05, 0.1, 1],
                 }),
                 WEBGPU_TIMEOUT_MS,
-                'WebGPU initialisation timed out.'
+                'WebGPU initialization timed out.'
             );
 
             emit('context-changed', context);

@@ -56,13 +56,13 @@ export interface RenderElement {
     abstract: boolean;
     /** Which regions of the element respond to pointer hit testing. */
     pointerEvents: RenderElementPointerEvents;
-    /** Stacking order used when sorting hit-test results; higher values are prioritised. */
+    /** Stacking order used when sorting hit-test results; higher values are prioritized. */
     zIndex: number;
     /** Returns the element's bounding box: the on-screen (world) box, or the raw local box when `local` is `true`. */
     getBoundingBox?(local?: boolean): Box;
     /** Returns whether the element has any listeners registered for the given event. */
     has(event: string): boolean;
-    /** Tests whether the point `(x, y)` lies within the element, honouring its pointer-event region. */
+    /** Tests whether the point `(x, y)` lies within the element, honoring its pointer-event region. */
     intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
     /** Emits an event of the given type carrying the given data on this element. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -136,7 +136,7 @@ export interface ContextEventMap extends EventMap {
 export interface ContextOptions<TMeta extends Record<string, unknown> = Record<string, unknown>> {
     /** Whether the context listens for and emits pointer and drag events. */
     interactive?: boolean;
-    /** Minimum pointer movement, in pixels, before a drag gesture is recognised. */
+    /** Minimum pointer movement, in pixels, before a drag gesture is recognized. */
     dragThreshold?: number;
     /** Arbitrary metadata attached to the context. */
     meta?: TMeta;
@@ -201,7 +201,7 @@ export interface ContextElement {
 
 /** The full set of visual state properties inherited by every renderable element. */
 export interface BaseState {
-    /** Fill style (CSS colour, gradient, or pattern) used to paint filled regions. */
+    /** Fill style (CSS color, gradient, or pattern) used to paint filled regions. */
     fill: string;
     /** CSS filter string applied to subsequent drawing operations (e.g. `blur(4px)`). */
     filter: string;
@@ -229,13 +229,13 @@ export interface BaseState {
     miterLimit: number;
     /** Gaussian blur radius applied to drawn shadows. */
     shadowBlur: number;
-    /** Colour of drawn shadows. */
+    /** Color of drawn shadows. */
     shadowColor: string;
     /** Horizontal offset, in pixels, of drawn shadows. */
     shadowOffsetX: number;
     /** Vertical offset, in pixels, of drawn shadows. */
     shadowOffsetY: number;
-    /** Stroke style (CSS colour, gradient, or pattern) used to paint outlines. */
+    /** Stroke style (CSS color, gradient, or pattern) used to paint outlines. */
     stroke: string;
     /** Horizontal alignment of text relative to the drawing position. */
     textAlign: TextAlignment;

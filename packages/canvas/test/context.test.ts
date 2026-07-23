@@ -63,7 +63,7 @@ describe('CanvasContext', () => {
         expect(ctx.lineCap).toBe('round');
     });
 
-    test('fill fast-path: a plain colour skips bounding-box resolution', () => {
+    test('fill fast-path: a plain color skips bounding-box resolution', () => {
         const ctx = context();
         const element = createFakeRenderElement();
 
@@ -74,7 +74,7 @@ describe('CanvasContext', () => {
         expect(ctx.fill).toBe('#ff0000');
     });
 
-    test('stroke fast-path: a plain colour skips bounding-box resolution', () => {
+    test('stroke fast-path: a plain color skips bounding-box resolution', () => {
         const ctx = context();
         const element = createFakeRenderElement();
 

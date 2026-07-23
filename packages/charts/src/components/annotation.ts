@@ -38,7 +38,7 @@ export interface ChartLineAnnotation {
     value: number;
     /** Optional label rendered beside the line. */
     label?: string;
-    /** Line colour. Defaults to a neutral annotation colour. */
+    /** Line color. Defaults to a neutral annotation color. */
     color?: string;
     /** Line width in pixels. Defaults to 1. */
     lineWidth?: number;
@@ -56,7 +56,7 @@ export interface ChartBandAnnotation {
     from: number;
     /** Upper bound of the band, in axis values. */
     to: number;
-    /** Fill colour. Defaults to a neutral annotation colour. */
+    /** Fill color. Defaults to a neutral annotation color. */
     color?: string;
     /** Optional label rendered inside the band. */
     label?: string;
@@ -74,7 +74,7 @@ export interface ChartPointAnnotation {
     y: number;
     /** Optional label rendered beside the marker. */
     label?: string;
-    /** Marker colour. Defaults to a neutral annotation colour. */
+    /** Marker color. Defaults to a neutral annotation color. */
     color?: string;
     /** Marker radius in pixels. Defaults to 4. */
     radius?: number;

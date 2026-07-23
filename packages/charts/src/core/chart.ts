@@ -123,10 +123,10 @@ interface HighlightHost {
 }
 
 /**
- * Abstract base class for all chart types, providing the scene, renderer, animation, colour
+ * Abstract base class for all chart types, providing the scene, renderer, animation, color
  * management, title/legend layout, and the render/update lifecycle that every concrete chart
  * builds on. Consumers never instantiate this directly — each chart exposes a `createXChart`
- * factory (e.g. {@link createBarChart}) and this class supplies the shared behaviour behind it.
+ * factory (e.g. {@link createBarChart}) and this class supplies the shared behavior behind it.
  *
  * @typeParam TOptions - The chart's options type, extending {@link BaseChartOptions}.
  * @typeParam TEventMap - The map of events the chart emits.
@@ -165,7 +165,7 @@ export class Chart<
     private _hasRendered: boolean = false;
 
     protected options: TOptions;
-    /** The resolved theme (palette + furniture colours) this chart renders with. */
+    /** The resolved theme (palette + furniture colors) this chart renders with. */
     protected theme: Theme;
 
     /** The resolved tooltip trigger mode (`'item'` per-mark, `'axis'` shared) — kept in sync by {@link Chart.syncTooltip}. */
@@ -219,7 +219,7 @@ export class Chart<
 
     /**
      * Applies ARIA metadata to the rendering element so screen readers announce the chart as a
-     * labelled image. The label is the chart's `description`, falling back to the title text, then a
+     * labeled image. The label is the chart's `description`, falling back to the title text, then a
      * generic "Chart". No-ops when the context's element does not support attributes (e.g. terminal).
      */
     private _applyAccessibility() {
@@ -245,8 +245,8 @@ export class Chart<
      * on the next render, so they can be reconfigured at runtime without recreating the chart.
      *
      * Passing `theme` re-resolves the chart theme: the series palette generator is re-seeded and
-     * generated series colours are re-assigned from the new palette on the next render (explicit
-     * per-series colours are kept), and furniture colours follow the new theme automatically.
+     * generated series colors are re-assigned from the new palette on the next render (explicit
+     * per-series colors are kept), and furniture colors follow the new theme automatically.
      */
     public update(options: Partial<TOptions>) {
         if (options.animation !== undefined) {
@@ -260,8 +260,8 @@ export class Chart<
         if (options.theme !== undefined) {
             this.theme = resolveTheme(options.theme);
             this.colorGenerator = getColorGenerator(this.theme.palette);
-            // Drop the generated series colours so the next render re-seeds them from the new
-            // palette (explicit per-series colours are re-applied by `resolveSeriesColors`).
+            // Drop the generated series colors so the next render re-seeds them from the new
+            // palette (explicit per-series colors are re-applied by `resolveSeriesColors`).
             this._seriesColorMap.clear();
         }
 

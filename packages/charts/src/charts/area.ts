@@ -88,9 +88,9 @@ const MARKER_EVENTS = {
 
 /** Configuration for an individual area chart series. */
 export interface AreaChartSeriesOptions<TData> {
-    /** Unique identifier for the series, used for colour assignment, legend, and data joins. */
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
     id: string;
-    /** Explicit series colour; falls back to the chart's generated palette when omitted. */
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
     color?: string;
     /** Accessor for the series' value at each data item, or a constant applied to every item. */
     value: NumericAccessor<TData> | number;
@@ -290,7 +290,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         this.emit(MARKER_EVENTS[phase], event);
     }
 
-    /** Builds the per-series overview data (id, colour, type, values) for the navigator strip. */
+    /** Builds the per-series overview data (id, color, type, values) for the navigator strip. */
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 

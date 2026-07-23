@@ -48,7 +48,7 @@ export interface GridOptions extends ChartComponentOptions {
     horizontal?: boolean;
     /** Whether to draw vertical grid lines (at x-axis ticks). Defaults to `false`. */
     vertical?: boolean;
-    /** Stroke colour of the grid lines. */
+    /** Stroke color of the grid lines. */
     stroke?: string;
     /** Stroke width of the grid lines, in pixels. */
     lineWidth?: number;

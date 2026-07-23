@@ -1,4 +1,4 @@
-/** A function that interpolates between two values based on a normalised position (0–1). */
+/** A function that interpolates between two values based on a normalized position (0–1). */
 export type Interpolator<TValue = number> = (position: number) => TValue;
 
 /** A callable with a `test` method used to determine whether the factory can handle a given value. */

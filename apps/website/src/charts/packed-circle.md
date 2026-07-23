@@ -1,6 +1,6 @@
 # Packed Circle Chart
 
-The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole — proportions read at a glance without a rigid grid. Larger circles are labelled automatically.
+The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole — proportions read at a glance without a rigid grid. Larger circles are labeled automatically.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).

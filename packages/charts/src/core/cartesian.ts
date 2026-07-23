@@ -405,7 +405,7 @@ export abstract class CartesianChart<
     private _syncCartesianOptions(): void {
         const setup = this.resolveCartesianSetup();
 
-        // Per-chart theme colours are passed as normalizer defaults so a chart-level `theme`
+        // Per-chart theme colors are passed as normalizer defaults so a chart-level `theme`
         // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
         const axisDefaults = {
             font: this.theme.font,
@@ -617,7 +617,7 @@ export abstract class CartesianChart<
 
     /**
      * How the overview strip positions category marks: `'band'` (bar/trend — padded category bands with
-     * marks at band centres, so bars sit fully inside the strip) or `'point'` (line/area — marks spread
+     * marks at band centers, so bars sit fully inside the strip) or `'point'` (line/area — marks spread
      * edge-to-edge). Defaults to `'point'`; category-band charts override it.
      */
     protected navigatorCategoryLayout(): ChartNavigatorCategoryLayout {
@@ -626,7 +626,7 @@ export abstract class CartesianChart<
 
     /**
      * Builds the per-series overview data ({@link ChartNavigatorSeries}) the strip renders — id,
-     * palette colour, draw type, and per-category values — from a series list and per-series
+     * palette color, draw type, and per-category values — from a series list and per-series
      * `type`/`value` resolvers. Shared by the line, area, bar, and trend charts so each only supplies
      * how to resolve its own type and values.
      *
@@ -1278,9 +1278,9 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Wraps a band scale as a point scale positioned at each band's centre, rendering one centred
+     * Wraps a band scale as a point scale positioned at each band's center, rendering one centered
      * tick per category. Shared by the bar chart (its categorical axis) and the trend chart (which
-     * places line/area markers at the centre of each category slot).
+     * places line/area markers at the center of each category slot).
      */
     protected bandCenterScale(band: BandScale<string>, keys: string[]): Scale<string> {
         return Object.assign(

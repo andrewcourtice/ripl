@@ -28,20 +28,20 @@ Type or pick a color to see it parsed into every supported color space in real t
 ```ts
 import {
     parseColor,
-    serialiseHEX,
-    serialiseHSL,
-    serialiseRGB,
-    serialiseRGBA,
+    serializeHEX,
+    serializeHSL,
+    serializeRGB,
+    serializeRGBA,
     setColorAlpha,
 } from '@ripl/web';
 
 const rgba = parseColor('#3a86ff');
 // [58, 134, 255, 1]
 
-serialiseHEX(...rgba); // '#3a86ff'
-serialiseRGB(...rgba); // 'rgb(58, 134, 255)'
-serialiseRGBA(...rgba); // 'rgba(58, 134, 255, 1)'
-serialiseHSL(...rgba); // 'hsl(216, 100%, 61%)'
+serializeHEX(...rgba); // '#3a86ff'
+serializeRGB(...rgba); // 'rgb(58, 134, 255)'
+serializeRGBA(...rgba); // 'rgba(58, 134, 255, 1)'
+serializeHSL(...rgba); // 'hsl(216, 100%, 61%)'
 
 setColorAlpha('#3a86ff', 0.5); // 'rgba(58, 134, 255, 0.5)'
 ```
@@ -56,9 +56,9 @@ import {
     createRect,
     createText,
     parseColor,
-    serialiseHEX,
-    serialiseHSL,
-    serialiseRGBA,
+    serializeHEX,
+    serializeHSL,
+    serializeRGBA,
     setColorAlpha,
 } from '@ripl/web';
 
@@ -101,9 +101,9 @@ function renderDemo(context: Context) {
         if (rgba) {
             const lines = [
                 `RGBA: ${rgba.join(', ')}`,
-                `HEX: ${serialiseHEX(...rgba)}`,
-                `RGB: ${serialiseRGBA(...rgba)}`,
-                `HSL: ${serialiseHSL(...rgba)}`,
+                `HEX: ${serializeHEX(...rgba)}`,
+                `RGB: ${serializeRGBA(...rgba)}`,
+                `HSL: ${serializeHSL(...rgba)}`,
             ];
 
             const startX = w * 0.08 + swatchSize + 24;
@@ -137,15 +137,15 @@ watch(pickedColor, redraw);
 
 ## Supported Color Spaces
 
-| Space | Parse | Serialise | Example |
+| Space | Parse | Serialize | Example |
 | --- | --- | --- | --- |
-| HEX | `parseHEX` | `serialiseHEX` | `#3a86ff`, `#3a86ff80` |
-| RGB | `parseRGB` | `serialiseRGB` | `rgb(58, 134, 255)` |
-| RGBA | `parseRGBA` | `serialiseRGBA` | `rgba(58, 134, 255, 0.5)` |
-| HSL | `parseHSL` | `serialiseHSL` | `hsl(216, 100%, 61%)` |
-| HSLA | `parseHSLA` | `serialiseHSLA` | `hsla(216, 100%, 61%, 0.5)` |
-| HSV | `parseHSV` | `serialiseHSV` | `hsv(216, 77%, 100%)` |
-| HSVA | `parseHSVA` | `serialiseHSVA` | `hsva(216, 77%, 100%, 0.5)` |
+| HEX | `parseHEX` | `serializeHEX` | `#3a86ff`, `#3a86ff80` |
+| RGB | `parseRGB` | `serializeRGB` | `rgb(58, 134, 255)` |
+| RGBA | `parseRGBA` | `serializeRGBA` | `rgba(58, 134, 255, 0.5)` |
+| HSL | `parseHSL` | `serializeHSL` | `hsl(216, 100%, 61%)` |
+| HSLA | `parseHSLA` | `serializeHSLA` | `hsla(216, 100%, 61%, 0.5)` |
+| HSV | `parseHSV` | `serializeHSV` | `hsv(216, 77%, 100%)` |
+| HSVA | `parseHSVA` | `serializeHSVA` | `hsva(216, 77%, 100%, 0.5)` |
 
 ## Parsing Colors
 
@@ -179,12 +179,12 @@ Serializers convert RGBA channel values back to a color string:
 
 ```ts
 import {
-    serialiseHEX,
-    serialiseRGBA,
+    serializeHEX,
+    serializeRGBA,
 } from '@ripl/web';
 
-serialiseHEX(58, 134, 255, 1); // '#3a86ff'
-serialiseRGBA(58, 134, 255, 1); // 'rgba(58, 134, 255, 1)'
+serializeHEX(58, 134, 255, 1); // '#3a86ff'
+serializeRGBA(58, 134, 255, 1); // 'rgba(58, 134, 255, 1)'
 ```
 
 ## Color Space Conversion
@@ -238,7 +238,7 @@ This happens automatically when transitioning `fill` or `stroke` between color v
 
 ## Color Schemes
 
-Ripl ships a set of perceptually-uniform palettes as arrays of colour stops, each prefixed `COLOR_SCHEME_`: `VIRIDIS`, `PLASMA`, `INFERNO`, `MAGMA`, `CIVIDIS`, `TURBO` (sequential) and `RDBU`, `BRBG` (diverging). Being plain arrays, they compose directly with the interpolation and scale helpers below.
+Ripl ships a set of perceptually-uniform palettes as arrays of color stops, each prefixed `COLOR_SCHEME_`: `VIRIDIS`, `PLASMA`, `INFERNO`, `MAGMA`, `CIVIDIS`, `TURBO` (sequential) and `RDBU`, `BRBG` (diverging). Being plain arrays, they compose directly with the interpolation and scale helpers below.
 
 ```ts
 import {
@@ -246,19 +246,19 @@ import {
     interpolateColors,
 } from '@ripl/web';
 
-// Build a 0–1 → colour interpolator from a scheme's stops.
+// Build a 0–1 → color interpolator from a scheme's stops.
 const viridis = interpolateColors(COLOR_SCHEME_VIRIDIS);
 
 viridis(0); // first stop
-viridis(0.5); // midpoint colour
+viridis(0.5); // midpoint color
 viridis(1); // last stop
 ```
 
-`interpolateColors` accepts any array of colour stops, so you can pass your own palette just as easily.
+`interpolateColors` accepts any array of color stops, so you can pass your own palette just as easily.
 
 ## Color Scales
 
-`scaleSequential` maps a **numeric** domain through a colour interpolator (or an array of stops, such as a `COLOR_SCHEME_*` palette). Values are clamped to the domain, and the returned scale exposes `domain`, `ticks()`, and the underlying `interpolator` (handy for rendering a legend gradient).
+`scaleSequential` maps a **numeric** domain through a color interpolator (or an array of stops, such as a `COLOR_SCHEME_*` palette). Values are clamped to the domain, and the returned scale exposes `domain`, `ticks()`, and the underlying `interpolator` (handy for rendering a legend gradient).
 
 ```ts
 import {
@@ -269,7 +269,7 @@ import {
 const color = scaleSequential(COLOR_SCHEME_VIRIDIS, [0, 100]);
 
 color(0); // first stop
-color(50); // midpoint colour
+color(50); // midpoint color
 color(100); // last stop
 color.ticks(5); // [0, 25, 50, 75, 100]
 ```
@@ -289,7 +289,7 @@ anomaly(0); // neutral midpoint
 anomaly(5); // deep blue
 ```
 
-This is exactly how the heatmap chart and its continuous-colour legend translate values into colour. Tick generation defers to an underlying continuous scale; formatting is always left to the caller and is never bound to the scale.
+This is exactly how the heatmap chart and its continuous-color legend translate values into color. Tick generation defers to an underlying continuous scale; formatting is always left to the caller and is never bound to the scale.
 
 ## Internal Representation
 

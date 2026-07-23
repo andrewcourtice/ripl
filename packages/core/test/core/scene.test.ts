@@ -65,7 +65,7 @@ describe('Scene', () => {
         expect(() => createScene(el)).toThrow();
     });
 
-    test('Should initialise with empty buffer', () => {
+    test('Should initialize with empty buffer', () => {
         const scene = createScene(el);
 
         expect(scene.buffer).toEqual([]);

@@ -273,7 +273,7 @@ describe('TerminalContext logical sizing', () => {
         expect(ctx.height).toBe(300);
     });
 
-    test('maps the logical space into the raster with a uniform, centred scale', () => {
+    test('maps the logical space into the raster with a uniform, centered scale', () => {
         // 40×12 cells → 80×48 raster pixels; 400×300 logical → limiting axis is Y (48/300)
         const output = createMockOutput(40, 12);
         const ctx = createContext(output, {

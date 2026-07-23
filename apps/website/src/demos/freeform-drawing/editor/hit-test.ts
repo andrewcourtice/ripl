@@ -98,18 +98,18 @@ export function hitTestShape(shape: Shape, point: Point, tolerance: number = HIT
         return distanceToPolyline(point, boxOutline(bounds)) <= slack;
     }
 
-    // Ellipse: normalise the point into unit-circle space around the box centre.
+    // Ellipse: normalize the point into unit-circle space around the box center.
     const cx = (bounds.left + bounds.right) / 2;
     const cy = (bounds.top + bounds.bottom) / 2;
     const rx = Math.max(bounds.width / 2, 1e-6);
     const ry = Math.max(bounds.height / 2, 1e-6);
-    const normalised = Math.hypot((point[0] - cx) / rx, (point[1] - cy) / ry);
+    const normalized = Math.hypot((point[0] - cx) / rx, (point[1] - cy) / ry);
 
-    if (shape.fill && normalised <= 1) {
+    if (shape.fill && normalized <= 1) {
         return true;
     }
 
-    return Math.abs(normalised - 1) * Math.min(rx, ry) <= slack;
+    return Math.abs(normalized - 1) * Math.min(rx, ry) <= slack;
 }
 
 /** Finds the topmost shape (highest paint order) hit by a world-space point, or `undefined`. */
