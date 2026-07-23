@@ -9,6 +9,8 @@
 import type {
     Point,
     Text,
+    TextAlignment,
+    TextBaseline,
     TextState,
 } from '@ripl/core';
 
@@ -49,8 +51,8 @@ export interface DataLabelSpec {
 const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     dx: number;
     dy: number;
-    textAlign: TextState['textAlign'];
-    textBaseline: TextState['textBaseline'];
+    textAlign: TextAlignment;
+    textBaseline: TextBaseline;
 }> = {
     top: {
         dx: 0,
@@ -78,8 +80,20 @@ const DATA_LABEL_ANCHORS: Record<LabelAnchor, {
     },
 };
 
+/** Resolved placement for a data label: the offset position and the text alignment that anchors it. */
+export interface DataLabelLayout {
+    /** The x coordinate of the label, offset from the mark along the anchor direction. */
+    x: number;
+    /** The y coordinate of the label, offset from the mark along the anchor direction. */
+    y: number;
+    /** Horizontal text alignment that keeps the label text anchored toward the mark. */
+    textAlign: TextAlignment;
+    /** Vertical text baseline that keeps the label text anchored toward the mark. */
+    textBaseline: TextBaseline;
+}
+
 /** Resolves the anchored position and text alignment for a data label. */
-export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>) {
+export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'anchor' | 'offset'>): DataLabelLayout {
     const { x, y, anchor, offset = 8 } = spec;
     const { dx, dy, textAlign, textBaseline } = DATA_LABEL_ANCHORS[anchor];
 
