@@ -1,6 +1,6 @@
 # Force-Directed Network
 
-The **Force-Directed Network** lays out a graph of nodes and links using a physics simulation — repulsion pushes nodes apart, link springs pull connected nodes together, and a gentle centering force keeps the whole thing on screen. It's ideal for relationship data: social graphs, dependency trees, topic maps. The layout is deterministic, so the same data always settles the same way. On entry the graph springs out from its root node in cascading waves, and reweighting relaxes the simulation from its current positions so nodes glide smoothly to their new places.
+The **Force-Directed Network** lays out a graph of nodes and links using a physics simulation: repulsion pushes nodes apart, link springs pull connected nodes together, and a gentle centering force keeps the whole thing on screen. It works well for relationship data like social graphs, dependency trees, topic maps. The layout is deterministic, so the same data always settles the same way. On entry the graph springs out from its root node in cascading waves, and reweighting relaxes the simulation from its current positions so nodes glide smoothly to their new places.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -198,14 +198,14 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `value`, `c
 
 ## Options
 
-- **`nodes`** — Array of `{ id, label?, value?, group?, color? }`
-- **`links`** — Array of `{ source, target, value? }`
-- **`nodeRadius`** — Base node radius (nodes scale around this by value/degree, default `8`)
-- **`charge`** — Repulsion strength (negative, default `-240`)
-- **`linkDistance`** — Target distance for link springs (default `60`)
-- **`linkStrength`** — Link spring strength (default `0.5`)
-- **`centerStrength`** — Centering pull (default `0.05`)
-- **`iterations`** — Simulation iterations (default `300`)
-- **`root`** — Id of the node the entry animation springs out from (defaults to the highest-degree node)
-- **`format`** — Value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`** — Standard chart options
+- **`nodes`**: array of `{ id, label?, value?, group?, color? }`
+- **`links`**: array of `{ source, target, value? }`
+- **`nodeRadius`**: base node radius (nodes scale around this by value/degree, default `8`)
+- **`charge`**: repulsion strength (negative, default `-240`)
+- **`linkDistance`**: target distance for link springs (default `60`)
+- **`linkStrength`**: link spring strength (default `0.5`)
+- **`centerStrength`**: centering pull (default `0.05`)
+- **`iterations`**: simulation iterations (default `300`)
+- **`root`**: id of the node the entry animation springs out from (defaults to the highest-degree node)
+- **`format`**: value formatter for tooltips
+- **`padding`**, **`title`**, **`animation`**: standard chart options

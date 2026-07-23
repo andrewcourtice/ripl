@@ -1,6 +1,6 @@
 # Polar Area Chart
 
-The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle — only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default).
+The **Polar Area Chart** renders equal-angle segments whose radius encodes the value, making it easy to compare magnitudes across categories. Unlike a pie chart (where angle encodes value), all slices share the same angle; only the radius varies. The chart includes animated axis rings, radial lines, labels that enter on first render and transition smoothly on data updates, and an optional legend (shown by default).
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -226,22 +226,22 @@ const data = [
 ];
 ```
 
-Every segment spans the same angle — only the radius varies with `value`.
+Every segment spans the same angle, and only the radius varies with `value`.
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Key accessor for each segment (a field name or a function)
-- **`value`** — Numeric value accessor; encoded as the segment radius
-- **`label`** — Label accessor for each segment
-- **`colorBy`** — Optional per-segment color accessor (otherwise a palette color is assigned)
-- **`innerRadius`** — Inner radius as a fraction of the chart size (`0`–`1`, default `0.15`)
-- **`maxRadiusRatio`** — Maximum outer radius as a ratio of the chart size (`0`–`0.5`, default `0.45`)
-- **`padAngle`** — Padding angle between segments in radians (default `0.02`)
-- **`levels`** — Number of concentric grid rings (default `4`)
-- **`labels`** — `false` (default) \| `true` (inside) \| `'outside'` (leader-line) \| a full options object
-- **`legend`** — `boolean | ChartLegendOptions` — Segment legend (shown by default for multiple segments)
-- **`format`** — Value formatter for tooltips/labels (`'number'`, `'percentage'`, or a function)
-- **`padding`** — Chart padding
-- **`title`** — `string | ChartTitleOptions` — Chart title
-- **`animation`** — `boolean | ChartAnimationOptions` — Enable/configure entry/update animations
+- **`data`**: the data array
+- **`key`**: key accessor for each segment (a field name or a function)
+- **`value`**: numeric value accessor; encoded as the segment radius
+- **`label`**: label accessor for each segment
+- **`colorBy`**: optional per-segment color accessor (otherwise a palette color is assigned)
+- **`innerRadius`**: inner radius as a fraction of the chart size (`0`–`1`, default `0.15`)
+- **`maxRadiusRatio`**: maximum outer radius as a ratio of the chart size (`0`–`0.5`, default `0.45`)
+- **`padAngle`**: padding angle between segments in radians (default `0.02`)
+- **`levels`**: number of concentric grid rings (default `4`)
+- **`labels`**: `false` (default) \| `true` (inside) \| `'outside'` (leader-line) \| a full options object
+- **`legend`** (`boolean | ChartLegendOptions`): segment legend (shown by default for multiple segments)
+- **`format`**: value formatter for tooltips/labels (`'number'`, `'percentage'`, or a function)
+- **`padding`**: chart padding
+- **`title`** (`string | ChartTitleOptions`): chart title
+- **`animation`** (`boolean | ChartAnimationOptions`): enable/configure entry/update animations

@@ -4,7 +4,7 @@ title: Cylinder
 
 # Cylinder
 
-The **Cylinder** is a 3D primitive with configurable top and bottom radii — set different values to create a truncated cone. Segment count controls the smoothness of the circular cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
+The **Cylinder** is a 3D primitive with configurable top and bottom radii; set different values to create a truncated cone. Segment count controls the smoothness of the circular cross-section. Like all 3D shapes, it supports positioning, rotation, and automatic flat shading.
 
 > [!NOTE]
 > For the full API, see the [3D API Reference](/docs/api/@ripl/3d/).
@@ -67,12 +67,12 @@ const cylinder = createCylinder({
 
 ## Properties
 
-- **`radiusTop`** — Radius of the top cap
-- **`radiusBottom`** — Radius of the bottom cap
-- **`height`** — Height of the cylinder
-- **`segments`** — Number of radial segments (default `16`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`radiusTop`**: radius of the top cap
+- **`radiusBottom`**: radius of the bottom cap
+- **`height`**: height of the cylinder
+- **`segments`**: number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

@@ -76,11 +76,11 @@ const chart = createBarChart('#chart-container', {
 });
 ```
 
-This creates a fully interactive bar chart with animated entry, tooltips on hover, and axis labels — all with zero additional configuration.
+That's all it takes to get a fully interactive bar chart, complete with animated entry, hover tooltips, and axis labels.
 
 ## Updating Data
 
-Call `chart.update()` with partial options to reactively update the chart. Changes animate smoothly — new data points enter, removed points exit, and existing points transition to their new positions:
+Call `chart.update()` with partial options to reactively update the chart. Changes animate smoothly: new data points enter, removed points exit, and existing points transition to their new positions.
 
 ```ts
 chart.update({
@@ -109,7 +109,7 @@ chart.update({
 });
 ```
 
-You can update any option — not just data:
+Any option can be updated this way, not only the data:
 
 ```ts
 chart.update({ stacked: true });
@@ -202,10 +202,10 @@ chart.destroy();
 
 ## Next Steps
 
-- **[Shared Options](/charts/shared-options)** — Deep dive into axis, legend, tooltip, grid, and crosshair configuration
-- **[Bar Chart](/charts/bar)** — Start with the most versatile chart type
-- **[Theming](/charts/advanced/theming)** — Light/dark/colorblind themes and custom palettes
-- **[Annotations](/charts/advanced/annotations)** — Reference lines, bands, and point markers
-- **[Panning & Zooming](/charts/advanced/panning-and-zooming)** — Interactive navigation and the overview strip
-- **[Custom Charts](/charts/advanced/custom-charts)** — Build your own chart type on the `Chart` base class
-- **[Charts API Reference](/docs/api/@ripl/charts/)** — Full TypeScript API documentation
+- **[Shared Options](/charts/shared-options)**: the full reference for axis, legend, tooltip, grid, and crosshair configuration
+- **[Bar Chart](/charts/bar)**: start with the most versatile chart type
+- **[Theming](/charts/advanced/theming)**: light/dark/colorblind themes and custom palettes
+- **[Annotations](/charts/advanced/annotations)**: reference lines, bands, and point markers
+- **[Panning & Zooming](/charts/advanced/panning-and-zooming)**: interactive navigation and the overview strip
+- **[Custom Charts](/charts/advanced/custom-charts)**: build your own chart type on the `Chart` base class
+- **[Charts API Reference](/docs/api/@ripl/charts/)**: full TypeScript API documentation

@@ -1,6 +1,6 @@
 # Arc Diagram
 
-The **Arc Diagram** is a cartesian axis whose points are nodes, connected by semicircular arcs whose thickness encodes the strength of each relationship. Keeping nodes on one axis makes it easy to spot clusters and bridges — a clean way to show connections in an ordered set (character co-occurrence, module dependencies, adjacency). The axis can run horizontally or vertically, and nodes can be sized by their connection count.
+The **Arc Diagram** is a cartesian axis whose points are nodes, connected by semicircular arcs whose thickness encodes the strength of each relationship. Keeping nodes on one axis makes it easy to spot clusters and bridges, which makes this a clean way to show connections in an ordered set (character co-occurrence, module dependencies, adjacency). The axis can run horizontally or vertically, and nodes can be sized by their connection count.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -204,10 +204,10 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `color`) la
 
 ## Options
 
-- **`nodes`** — Array of `{ id, label?, group?, color? }`, laid out along the axis in order
-- **`links`** — Array of `{ source, target, value? }`
-- **`nodeRadius`** — Node dot radius, or the maximum radius when `sizeByConnections` is on (default `6`)
-- **`orientation`** — `'horizontal'` (default) or `'vertical'` (a Y axis with arcs bulging right)
-- **`sizeByConnections`** — Scale each node's dot by its connection count, like a bubble chart (default `false`)
-- **`format`** — Value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`** — Standard chart options
+- **`nodes`**: array of `{ id, label?, group?, color? }`, laid out along the axis in order
+- **`links`**: array of `{ source, target, value? }`
+- **`nodeRadius`**: node dot radius, or the maximum radius when `sizeByConnections` is on (default `6`)
+- **`orientation`**: `'horizontal'` (default) or `'vertical'` (a Y axis with arcs bulging right)
+- **`sizeByConnections`**: scale each node's dot by its connection count, like a bubble chart (default `false`)
+- **`format`**: value formatter for tooltips
+- **`padding`**, **`title`**, **`animation`**: standard chart options

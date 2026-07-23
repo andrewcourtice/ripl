@@ -1,6 +1,6 @@
 # Radial Bar Chart
 
-The **Radial Bar Chart** lays each category out as a concentric ring whose arc length encodes its value — a circular take on the bar chart that reads well for a handful of comparable metrics or progress-style values. Each ring has a faint track behind a colored value arc that sweeps clockwise from the top.
+The **Radial Bar Chart** lays each category out as a concentric ring whose arc length encodes its value. This circular take on the bar chart reads well for a handful of comparable metrics or progress-style values. Each ring has a faint track behind a colored value arc that sweeps clockwise from the top.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -174,17 +174,17 @@ const data = [
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Category accessor (a field name or a function)
-- **`value`** — Numeric value accessor; encoded as the arc length
-- **`label`** — Optional label accessor (defaults to `key`)
-- **`colorBy`** — Optional per-category color accessor
-- **`maxValue`** — Value mapped to a full sweep (defaults to the data maximum)
-- **`innerRadius`** — Inner hole radius as a ratio of the chart size (default `0.2`)
-- **`range`** — Angular sweep of a full-value bar in degrees (default `360`)
-- **`gap`** — Gap between rings as a ratio of ring thickness (default `0.25`)
-- **`rounded`** — Round the ends of each value bar and its track (default `false`)
-- **`trackColor`** — Background track color
-- **`legend`** — `boolean | ChartLegendOptions` — Category legend
-- **`format`** — Value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`** — Standard chart options
+- **`data`**: the data array
+- **`key`**: category accessor (a field name or a function)
+- **`value`**: numeric value accessor; encoded as the arc length
+- **`label`**: optional label accessor (defaults to `key`)
+- **`colorBy`**: optional per-category color accessor
+- **`maxValue`**: value mapped to a full sweep (defaults to the data maximum)
+- **`innerRadius`**: inner hole radius as a ratio of the chart size (default `0.2`)
+- **`range`**: angular sweep of a full-value bar in degrees (default `360`)
+- **`gap`**: gap between rings as a ratio of ring thickness (default `0.25`)
+- **`rounded`**: round the ends of each value bar and its track (default `false`)
+- **`trackColor`**: background track color
+- **`legend`** (`boolean | ChartLegendOptions`): category legend
+- **`format`**: value formatter for tooltips
+- **`padding`**, **`title`**, **`animation`**: standard chart options

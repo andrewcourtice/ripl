@@ -4,7 +4,7 @@ outline: "deep"
 
 # Theming
 
-Every chart resolves a **theme** — the series palette plus the "furniture" colors (text, axes, grid, crosshair, legend, tooltip) it draws with. Themes come from the `theme` chart option, falling back to a module-level default, so restyling a single chart, or every chart in an app, is one line.
+Every chart resolves a **theme**: the series palette plus the "furniture" colors (text, axes, grid, crosshair, legend, tooltip) it draws with. Themes come from the `theme` chart option, falling back to a module-level default, so restyling a single chart, or every chart in an app, is one line.
 
 > [!NOTE]
 > For the full API, see `Theme` in the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -116,7 +116,7 @@ Series and segment colors resolve in this order:
 1. An explicit color on the series/segment (e.g. a series `color` option or a `colorBy` accessor) always wins.
 2. Otherwise the chart draws the next color from the theme's `palette`, cycling when there are more series than palette entries.
 
-Color assignments are sticky for the lifetime of a chart — a series keeps its palette color across data updates, so colors never shuffle when data enters or leaves.
+Color assignments are sticky for the lifetime of a chart. A series keeps its palette color across data updates, so colors never shuffle when data enters or leaves.
 
 ## Accessibility
 
@@ -132,4 +132,4 @@ createBarChart('#container', {
 });
 ```
 
-Color alone is still the weakest channel — pair the theme with data labels or direct labeling where accuracy matters, and set `description` so screen readers announce the chart meaningfully.
+Color alone is still the weakest channel, so pair the theme with data labels or direct labeling where accuracy matters, and set `description` so screen readers announce the chart meaningfully.

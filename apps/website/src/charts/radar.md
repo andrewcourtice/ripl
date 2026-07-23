@@ -240,9 +240,9 @@ createRadarChart('#container', {
 
 ## Options
 
-- **`data`** — The data array (one item per axis)
-- **`categories`** — Array of axis labels
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
-- **`maxValue`** — Maximum value for the scale (auto-computed if omitted)
-- **`levels`** — Number of concentric grid levels (default `5`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`data`**: the data array (one item per axis)
+- **`categories`**: array of axis labels
+- **`series`**: array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
+- **`maxValue`**: maximum value for the scale (auto-computed if omitted)
+- **`levels`**: number of concentric grid levels (default `5`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend

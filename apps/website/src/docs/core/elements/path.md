@@ -227,18 +227,18 @@ path.render(context);
 
 ## Properties
 
-- **`x`** — X position of the bounding area
-- **`y`** — Y position of the bounding area
-- **`width`** — Width of the bounding area
-- **`height`** — Height of the bounding area
-- **`pathRenderer`** — Callback `(path: ContextPath, state: PathState) => void` that draws the geometry
+- **`x`**: X position of the bounding area
+- **`y`**: Y position of the bounding area
+- **`width`**: width of the bounding area
+- **`height`**: height of the bounding area
+- **`pathRenderer`**: callback `(path: ContextPath, state: PathState) => void` that draws the geometry
 
 ## The Path Renderer
 
 The `pathRenderer` callback receives:
 
-1. **`path`** — A `ContextPath` instance with methods like `moveTo`, `lineTo`, `arc`, `bezierCurveTo`, `quadraticCurveTo`, `rect`, `circle`, `ellipse`, and `closePath`
-2. **`state`** — The current `{ x, y, width, height }` of the element
+1. **`path`**: a `ContextPath` instance with methods like `moveTo`, `lineTo`, `arc`, `bezierCurveTo`, `quadraticCurveTo`, `rect`, `circle`, `ellipse`, and `closePath`
+2. **`state`**: the current `{ x, y, width, height }` of the element
 
 This separation means the geometry is always defined relative to the element's position and size, making the shape responsive and animatable.
 

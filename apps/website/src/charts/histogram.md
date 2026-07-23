@@ -1,6 +1,6 @@
 # Histogram Chart
 
-The **Histogram Chart** bins a numeric field and draws each bin as a bar on a continuous value axis against a frequency axis — the go-to view for the shape of a distribution. Binning uses the shared `bin` transform (nice uniform bins by default, or explicit `thresholds`), and bars animate on entry, update, and exit.
+The **Histogram Chart** bins a numeric field and draws each bin as a bar on a continuous value axis against a frequency axis, the go-to view for the shape of a distribution. Binning uses the shared `bin` transform (nice uniform bins by default, or explicit `thresholds`), and bars animate on entry, update, and exit.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -124,14 +124,14 @@ const chart = createHistogramChart('#container', {
 
 ## Data Format
 
-Each item contributes one numeric value, read via the `value` accessor (a field name or a function). The chart bins those values — no pre-aggregation required.
+Each item contributes one numeric value, read via the `value` accessor (a field name or a function). The chart bins those values itself, so no pre-aggregation is required.
 
 ## Options
 
-- **`data`** — The data array
-- **`value`** — Accessor for the numeric field to bin (field name or function)
-- **`bins`** — Target number of bins (default: Sturges' rule)
-- **`thresholds`** — Explicit bin boundaries (overrides `bins`)
-- **`color`** — Bar color (default: first palette color)
-- **`borderRadius`** — Bar corner radius (default `2`)
-- **`format`** — Format applied to bin bounds in tooltips
+- **`data`**: the data array
+- **`value`**: accessor for the numeric field to bin (field name or function)
+- **`bins`**: target number of bins (default: Sturges' rule)
+- **`thresholds`**: explicit bin boundaries (overrides `bins`)
+- **`color`**: bar color (default: first palette color)
+- **`borderRadius`**: bar corner radius (default `2`)
+- **`format`**: format applied to bin bounds in tooltips

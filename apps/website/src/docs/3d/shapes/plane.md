@@ -65,10 +65,10 @@ const plane = createPlane({
 
 ## Properties
 
-- **`width`** — Width of the plane
-- **`height`** — Height of the plane
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`width`**: width of the plane
+- **`height`**: height of the plane
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

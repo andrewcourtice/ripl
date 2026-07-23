@@ -65,7 +65,7 @@ createCircle({
 | --- | --- | --- |
 | Base class | `EventBus` | `Element` |
 | Rendering | Manual (override `render`) | Path-based (override `render` with path callback) |
-| Auto fill/stroke | No | Yes — fills and strokes automatically based on style |
+| Auto fill/stroke | No | Yes; fills and strokes automatically based on style |
 | Hit testing | Bounding box only | Pixel-accurate via path geometry |
 | Use case | Text, images, custom non-path elements | Geometric shapes with fill/stroke |
 
@@ -101,7 +101,7 @@ When you call `shape.render(context)`, the following happens:
 6. If `autoStroke` is `true` and `stroke` is set, the path is stroked
 7. The context state is restored
 
-This is why shapes "just work" — you set `fill` and/or `stroke` and the shape handles the rest.
+This is why shapes "just work": you set `fill` and/or `stroke` and the shape handles the rest.
 
 ## Hit Testing
 
@@ -114,10 +114,10 @@ circle.intersectsWith(mouseX, mouseY);
 
 The `pointerEvents` property controls which parts of the shape respond to hits:
 
-- `'all'` — fill area OR stroke area (default)
-- `'fill'` — only the fill area
-- `'stroke'` — only the stroke area
-- `'none'` — no hit testing
+- `'all'`: fill area OR stroke area (default)
+- `'fill'`: only the fill area
+- `'stroke'`: only the stroke area
+- `'none'`: no hit testing
 
 > [!NOTE]
 > For the full list of Shape properties and methods, see the [Shape API Reference](/docs/api/@ripl/core/).

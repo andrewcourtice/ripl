@@ -15,7 +15,7 @@ Common questions and clarifications about Ripl's concepts and usage.
 | | Element | Shape |
 | --- | --- | --- |
 | **Examples** | Text | Circle, Rect, Arc, Line, Polygon, Polyline, Ellipse |
-| **Rendering** | Manual — you control what gets drawn | Path-based — define geometry, auto fill/stroke |
+| **Rendering** | Manual: you control what gets drawn | Path-based: define geometry, auto fill/stroke |
 | **Hit testing** | Bounding box | Pixel-accurate path geometry |
 | **When to use** | Non-path elements (text, images, composites) | Geometric shapes |
 
@@ -25,12 +25,12 @@ Common questions and clarifications about Ripl's concepts and usage.
 
 Use a Group when you want to:
 
-- **Share styles** — Set `fill` once on the group instead of on every child
-- **Organize elements** — Create a logical hierarchy (like a DOM tree)
-- **Query elements** — Use `getElementById`, `getElementsByType`, `query`, etc.
-- **Batch operations** — Render, add, or remove multiple elements at once
+- **Share styles**: set `fill` once on the group instead of on every child
+- **Organize elements**: create a logical hierarchy (like a DOM tree)
+- **Query elements**: use `getElementById`, `getElementsByType`, `query`, etc.
+- **Batch operations**: render, add, or remove multiple elements at once
 
-Groups are lightweight and don't draw anything themselves — they just manage their children.
+Groups are lightweight and don't draw anything themselves; they just manage their children.
 
 ## When should I use a Scene vs a Group?
 
@@ -55,9 +55,9 @@ Groups are lightweight and don't draw anything themselves — they just manage t
 
 Not always. A Renderer is needed when you want:
 
-- **Animations** — Smooth transitions between property values
-- **Continuous rendering** — A `requestAnimationFrame` loop
-- **Auto start/stop** — Automatic render loop management
+- **Animations**: smooth transitions between property values
+- **Continuous rendering**: a `requestAnimationFrame` loop
+- **Auto start/stop**: automatic render loop management
 
 If you're just drawing static elements, you can render them directly without a Renderer:
 
@@ -73,12 +73,12 @@ await renderer.transition(circle, {
 });
 ```
 
-## Canvas or SVG — which should I use?
+## Canvas or SVG: which should I use?
 
 | | Canvas | SVG |
 | --- | --- | --- |
 | **Performance** | Better for many elements (1000+) | Better for fewer elements (< 500) |
-| **Quality** | Bitmap — can pixelate on zoom | Vector — crisp at any zoom level |
+| **Quality** | Bitmap, so it can pixelate on zoom | Vector, crisp at any zoom level |
 | **DOM access** | No DOM elements for rendered content | Each element is a DOM node |
 | **DevTools** | Can't inspect individual shapes | Can inspect/style individual elements |
 | **Pixel ops** | Supports `getImageData`/`putImageData` | No pixel-level access |
@@ -119,12 +119,12 @@ circle.on('click', () => {}); // Fires correctly
 
 Common causes:
 
-1. **No fill or stroke** — Elements need `fill` and/or `stroke` to be visible
-2. **Zero dimensions** — Check that `radius`, `width`, `height`, etc. are non-zero
-3. **Off-screen** — Check that coordinates are within the context bounds
-4. **Wrong context** — Make sure you're rendering to the right context
-5. **Not rendered** — Make sure you called `.render(context)` or `scene.render()`
-6. **Covered by another element** — Check `zIndex` or rendering order
+1. **No fill or stroke**: elements need `fill` and/or `stroke` to be visible
+2. **Zero dimensions**: check that `radius`, `width`, `height`, etc. are non-zero
+3. **Off-screen**: check that coordinates are within the context bounds
+4. **Wrong context**: make sure you're rendering to the right context
+5. **Not rendered**: make sure you called `.render(context)` or `scene.render()`
+6. **Covered by another element**: check `zIndex` or rendering order
 
 ## How do I render to a specific size?
 

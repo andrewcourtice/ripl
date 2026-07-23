@@ -64,11 +64,11 @@ const sphere = createSphere({
 
 ## Properties
 
-- **`radius`** — Radius of the sphere
-- **`segments`** — Number of horizontal segments (default `16`)
-- **`rings`** — Number of vertical rings (default `12`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`radius`**: radius of the sphere
+- **`segments`**: number of horizontal segments (default `16`)
+- **`rings`**: number of vertical rings (default `12`)
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

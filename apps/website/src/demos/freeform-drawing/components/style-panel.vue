@@ -33,7 +33,7 @@
         </div>
 
         <div class="freeform-style__section">
-            <span class="freeform-style__label">Stroke width — {{ style.strokeWidth }}px</span>
+            <span class="freeform-style__label">Stroke width: {{ style.strokeWidth }}px</span>
             <RiplInputRange
                 :model-value="style.strokeWidth"
                 :min="1"
@@ -44,7 +44,7 @@
         </div>
 
         <div class="freeform-style__section">
-            <span class="freeform-style__label">Opacity — {{ Math.round(style.opacity * 100) }}%</span>
+            <span class="freeform-style__label">Opacity: {{ Math.round(style.opacity * 100) }}%</span>
             <RiplInputRange
                 :model-value="style.opacity"
                 :min="0.1"

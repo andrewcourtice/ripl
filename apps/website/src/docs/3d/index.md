@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: "@ripl/3d — 3D rendering for Ripl with an interactive orbit/pan/zoom camera, flat shading, and six primitives (cube, sphere, cylinder, cone, plane, torus), projected onto Canvas or hardware-accelerated with WebGPU."
+description: "@ripl/3d brings 3D rendering to Ripl with an interactive orbit/pan/zoom camera, flat shading, and six primitives (cube, sphere, cylinder, cone, plane, torus), projected onto Canvas or hardware-accelerated with WebGPU."
 ---
 
 # 3D
@@ -47,8 +47,8 @@ renderer.render();
 
 ## Features
 
-- **Context3D** — extends `CanvasContext` with view/projection matrices and a `project()` method
-- **Camera** — reactive camera with orbit, pan, zoom, and microtask-batched updates
-- **Built-in Shapes** — Cube, Sphere, Cylinder, Cone, Plane, Torus
-- **Flat Shading** — automatic face shading based on normals and light direction
-- **Vector3 Interpolator** — animate 3D positions with Ripl's animation system
+- **Context3D**: extends `CanvasContext` with view/projection matrices and a `project()` method
+- **Camera**: reactive camera with orbit, pan, zoom, and microtask-batched updates
+- **Built-in Shapes**: Cube, Sphere, Cylinder, Cone, Plane, Torus
+- **Flat Shading**: automatic face shading based on normals and light direction
+- **Vector3 Interpolator**: animate 3D positions with Ripl's animation system

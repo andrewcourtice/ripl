@@ -6,11 +6,11 @@ outline: "deep"
 
 Cartesian charts support interactive pan/zoom through two complementary options:
 
-- **`navigator`** — enables in-plot gestures: wheel/pinch zoom, click-drag pan, and optionally a rectangular brush. The chart rescales its axis domains as the view changes; no data rebuild happens.
-- **`overview`** — adds an overview "scrub bar" strip beside the plot with a draggable, resizable window that selects the visible range of the category axis (like the range selector on a stock chart).
+- **`navigator`**: enables in-plot gestures: wheel/pinch zoom, click-drag pan, and optionally a rectangular brush. The chart rescales its axis domains as the view changes; no data rebuild happens.
+- **`overview`**: adds an overview "scrub bar" strip beside the plot with a draggable, resizable window that selects the visible range of the category axis (like the range selector on a stock chart).
 
 > [!NOTE]
-> The underlying pan/zoom controller is Ripl core's `Navigator` — see the [Navigator core docs](/docs/core/advanced/navigator) for the full controller API.
+> The underlying pan/zoom controller is Ripl core's `Navigator`; see the [Navigator core docs](/docs/core/advanced/navigator) for the full controller API.
 
 ## In-Plot Pan & Zoom
 
@@ -39,21 +39,21 @@ navigator: {
 }
 ```
 
-Each interaction accepts `true`/`false` or `{ enabled, sensitivity }`. Zooming is bounded: you can zoom in up to 50× but only out to the full-data view — never past the extent of the dataset, and panning is clamped so the visible window stays within the data.
+Each interaction accepts `true`/`false` or `{ enabled, sensitivity }`. Zooming is bounded: you can zoom in up to 50× but only out to the full-data view, never past the extent of the dataset. Panning is likewise clamped so the visible window stays within the data.
 
 Which axes the view affects depends on the chart:
 
 | Charts | Navigation |
 | --- | --- |
 | Line, Area, Trend, Stock | Window the **x** (category/time) axis; the value axis stays fixed |
-| Bar | Window the category axis — x for vertical bars, y for horizontal bars |
+| Bar | Window the category axis (x for vertical bars, y for horizontal bars) |
 | Scatter and other 2-D charts | Zoom and pan **both** axes uniformly |
 
 While a gesture is in flight the chart suppresses transition animations, so marks snap to the new view each frame instead of tweening behind the pointer. Marks are clipped to the plot rectangle so panning never smears them over the axes, title, or legend.
 
 ## The Overview Strip
 
-`overview: true` renders a miniature of the full dataset beside the plot — below it for category-on-x charts, to the right for a horizontal bar chart — with a draggable window over it:
+`overview: true` renders a miniature of the full dataset beside the plot (below it for category-on-x charts, to the right for a horizontal bar chart) with a draggable window over it:
 
 ```ts
 import {
@@ -69,7 +69,7 @@ const chart = createLineChart('#container', {
 ```
 
 - Drag the window to pan; drag its edges to resize (zoom).
-- The strip and the in-plot gestures stay in sync — zooming with the wheel moves the window, and vice versa.
+- The strip and the in-plot gestures stay in sync: zooming with the wheel moves the window, and vice versa.
 - Enabling `overview` implies `navigator: true` unless you explicitly pass `navigator: false`, in which case the strip still works but in-plot gestures are off.
 - Only category-axis charts (line, area, bar, trend) render the strip; on 2-D charts the option is ignored.
 
@@ -84,7 +84,7 @@ overview: {
 
 ## Toggling at Runtime
 
-Both options participate in `chart.update()` — the controller is created, destroyed, or rebuilt to match:
+Both options participate in `chart.update()`, and the controller is created, destroyed, or rebuilt to match:
 
 ```ts
 chart.update({ navigator: true });

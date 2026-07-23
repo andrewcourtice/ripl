@@ -4,7 +4,7 @@ outline: "deep"
 
 # Navigator
 
-A **navigator** is an interactive pan / zoom / brush controller — the flat-scene analogue of the 3D `Camera`. It owns a single affine **view transform** (`{ k, x, y }` — a uniform scale plus a translation) and an optional rectangular **brush**, and it emits events as that transform changes. The navigator never repaints anything itself; you react to its events and re-render your scene under the new transform.
+A **navigator** is an interactive pan / zoom / brush controller, the flat-scene analogue of the 3D `Camera`. It owns a single affine **view transform** (`{ k, x, y }`, a uniform scale plus a translation) and an optional rectangular **brush**, and it emits events as that transform changes. The navigator never repaints anything itself; you react to its events and re-render your scene under the new transform.
 
 The controller is split in two, mirroring the `Context` / `DOMContext` split:
 
@@ -16,7 +16,7 @@ The controller is split in two, mirroring the `Context` / `DOMContext` split:
 
 ## Demo
 
-Drag to pan, use the wheel (or pinch) to zoom toward the pointer, and **shift-drag** to zoom into a region. Translation is unbounded, so you can roam past the framed content — use the buttons to jump back.
+Drag to pan, use the wheel (or pinch) to zoom toward the pointer, and **shift-drag** to zoom into a region. Translation is unbounded, so you can roam past the framed content; use the buttons to jump back.
 
 :::tabs
 == Demo
@@ -223,7 +223,7 @@ onUnmounted(() => currentNavigator?.destroy());
 
 ## Creating a navigator
 
-`createNavigator` binds a `DOMNavigator` to a context's element and (optionally) wires up gestures. Pass `interactions: true` to enable everything, or an object to enable them individually — each interaction also accepts a `sensitivity` multiplier.
+`createNavigator` binds a `DOMNavigator` to a context's element and (optionally) wires up gestures. Pass `interactions: true` to enable everything, or an object to enable them individually. Each interaction also accepts a `sensitivity` multiplier.
 
 ```ts
 import {
@@ -254,7 +254,7 @@ navigator.applyPoint([100, 50]); // content → screen
 navigator.invertPoint([320, 240]); // screen → content
 ```
 
-`transform` returns a copy, so mutating it never affects the navigator — always go through a command.
+`transform` returns a copy, so mutating it never affects the navigator. Always go through a command.
 
 ## Commands
 
@@ -271,7 +271,7 @@ Every command clamps `k` to the scale extent and emits an event when it changes 
 | `reset()` | Return to the identity transform |
 | `setTransform(transform)` | Replace the transform outright |
 
-Because translation is unbounded, `fitBounds` and `centerOn` can jump the view to content that currently lies entirely outside the viewport — the "navigate anywhere" behavior the demo's **Frame all** button relies on.
+Because translation is unbounded, `fitBounds` and `centerOn` can jump the view to content that currently lies entirely outside the viewport. This is the "navigate anywhere" behavior the demo's **Frame all** button relies on.
 
 ```ts
 // Zoom to 2× toward the top-left corner of the viewport.
@@ -300,7 +300,7 @@ navigator.on('brushend', event => event.data && zoomToSelection(event.data));
 
 ## Rescaling chart axes
 
-A cartesian chart doesn't transform its rendered geometry — it rescales its **axis domains** and redraws. `rescaleDomain` does exactly that: it inverts the transformed pixel range back through a scale to produce the visible data domain.
+A cartesian chart doesn't transform its rendered geometry; it rescales its **axis domains** and redraws. `rescaleDomain` does exactly that: it inverts the transformed pixel range back through a scale to produce the visible data domain.
 
 ```ts
 import {
@@ -317,7 +317,7 @@ This keeps geometry crisp at any zoom level (no scaled stroke widths or blurred 
 
 ## Programmatic use
 
-Because the base `Navigator` in `@ripl/core` owns the view model without any input wiring, you can drive it directly — for animations, tests, or non-DOM contexts — and consume the same events:
+Because the base `Navigator` in `@ripl/core` owns the view model without any input wiring, you can drive it directly (for animations, tests, or non-DOM contexts) and consume the same events:
 
 ```ts
 import {

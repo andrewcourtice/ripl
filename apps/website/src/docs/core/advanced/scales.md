@@ -4,7 +4,7 @@ outline: "deep"
 
 # Scales
 
-**Scales** map data values to visual values — turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen. Ripl ships with a full family of scale types covering continuous, categorical, ordinal, logarithmic, symmetric-log, radial, quantile, and time-based mappings.
+**Scales** map data values to visual values, turning a number like `42` into a pixel position, a color, or a band width. They are the bridge between your data domain and the visual range on screen. Ripl ships with a full family of scale types covering continuous, categorical, ordinal, logarithmic, symmetric-log, radial, quantile, and time-based mappings.
 
 Every scale is a callable function: pass a domain value in, get a range value out. Scales also expose `inverse` (reverse mapping), `ticks` (nice axis values), `includes` (domain membership), and the original `domain`/`range` arrays.
 
@@ -190,7 +190,7 @@ x.inverse(400); // 50
 x.ticks(5); // [0, 25, 50, 75, 100]
 ```
 
-Options: `clamp` (constrain output to range), `padToTicks` (extend domain to nice tick boundaries), and `nice` (expand the domain to round, tick-aligned boundaries at construction — `true` targets ~10 ticks, or pass a number). `nice` is a construction-time option by design, so scales stay plain callable objects with no chained `.nice()` method:
+Options: `clamp` (constrain output to range), `padToTicks` (extend domain to nice tick boundaries), and `nice` (expand the domain to round, tick-aligned boundaries at construction; `true` targets ~10 ticks, or pass a number). `nice` is a construction-time option by design, so scales stay plain callable objects with no chained `.nice()` method:
 
 ```ts
 const y = scaleContinuous([3, 97], [400, 0], { nice: true });
@@ -221,7 +221,7 @@ Options: `innerPadding`, `outerPadding`, `alignment`, `round`.
 
 ## Point
 
-The categorical analogue of a continuous axis — positions discrete values at evenly spaced *points* rather than bands (no `bandwidth`). With zero padding the first and last values sit exactly on the range endpoints. Exposes `step`, and `inverse` returns the nearest domain value.
+The categorical analogue of a continuous axis: it positions discrete values at evenly spaced *points* rather than bands (no `bandwidth`). With zero padding the first and last values sit exactly on the range endpoints. Exposes `step`, and `inverse` returns the nearest domain value.
 
 ```ts
 import {
@@ -257,7 +257,7 @@ color('high'); // 100
 
 ## Ordinal
 
-Maps each distinct domain value to a value from `range` of **any type**, cycling when there are more categories than range values. Unknown values encountered later are assigned the next range slot — so a chart can color series without pre-declaring every category. Its most common use is categorical color.
+Maps each distinct domain value to a value from `range` of **any type**, cycling when there are more categories than range values. Unknown values encountered later are assigned the next range slot, so a chart can color series without pre-declaring every category. Its most common use is categorical color.
 
 ```ts
 import {
@@ -276,7 +276,7 @@ color('grapes'); // '#3a86ff' — cycles back to the first range value
 
 ## Diverging
 
-Like continuous, but splits at a midpoint — useful for scales that diverge around zero (e.g. temperature anomalies, profit/loss).
+Like continuous, but splits at a midpoint. This is useful for scales that diverge around zero (e.g. temperature anomalies, profit/loss).
 
 ```ts
 import {
@@ -315,7 +315,7 @@ const y = scaleLog([1, 1000], [0, 600]);
 
 ## Symmetric Log
 
-A log scale that also handles zero and negative values. It stays approximately linear within a threshold `constant` (default `1`) of zero and compresses logarithmically beyond it, so — unlike a plain log scale — its domain can cross zero. A domain symmetric about zero places zero at the range midpoint.
+A log scale that also handles zero and negative values. It stays approximately linear within a threshold `constant` (default `1`) of zero and compresses logarithmically beyond it, so, unlike a plain log scale, its domain can cross zero. A domain symmetric about zero places zero at the range midpoint.
 
 ```ts
 import {
@@ -352,7 +352,7 @@ const y = scaleSqrt([0, 100], [0, 400]);
 
 ## Radial
 
-Maps a numeric magnitude onto a ring radius — typically `[innerRadius, outerRadius]` — for radial and polar charts. It **clamps by default**, so a value beyond the domain lands exactly on the outer ring instead of overshooting it, and a single-value domain `[max]` is treated as `[0, max]`.
+Maps a numeric magnitude onto a ring radius (typically `[innerRadius, outerRadius]`) for radial and polar charts. It **clamps by default**, so a value beyond the domain lands exactly on the outer ring instead of overshooting it, and a single-value domain `[max]` is treated as `[0, max]`.
 
 ```ts
 import {

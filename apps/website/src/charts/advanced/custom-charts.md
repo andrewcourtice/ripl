@@ -13,7 +13,7 @@ This page walks through the pattern. The built-in pie chart (`packages/charts/sr
 
 ## Anatomy
 
-A chart is a class extending `Chart<TOptions, TEventMap>` plus a `createXChart` factory. Consumers always use the factory — never `new`:
+A chart is a class extending `Chart<TOptions, TEventMap>` plus a `createXChart` factory. Consumers always use the factory, never `new`:
 
 ```ts
 import type {
@@ -52,11 +52,11 @@ export function createLollipopChart<TData = unknown>(target: string | HTMLElemen
 }
 ```
 
-Extending `BaseChartOptions` gives your chart `padding`, `title`, `animation`, `theme`, `description`, and `autoRender` for free — the base class normalizes and applies them. The base class also builds the `scene` and `renderer` from the target (selector, element, or any `Context`), and provides `update(options)` (merge + re-render) and `destroy()` without further work.
+Extending `BaseChartOptions` gives your chart `padding`, `title`, `animation`, `theme`, `description`, and `autoRender` for free; the base class normalizes and applies them. The base class also builds the `scene` and `renderer` from the target (selector, element, or any `Context`), and provides `update(options)` (merge + re-render) and `destroy()` without further work.
 
 ## The Layout Pass
 
-Start every render by creating a `ChartLayout` — a shrinking rectangle model of the drawable canvas. Components reserve bands from its edges in order (first reserved sits outermost), and whatever remains is your plot area:
+Start every render by creating a `ChartLayout`, a shrinking rectangle model of the drawable canvas. Components reserve bands from its edges in order (first reserved sits outermost), and whatever remains is your plot area:
 
 <!-- eslint-skip -->
 ```ts
@@ -73,13 +73,13 @@ public async render() {
 }
 ```
 
-`reserveTitle` and `reserveLegend` measure and render the shared title/legend components into the bands they reserve — you only supply the legend items (`{ id, label, color, active }`). For custom bands (an axis gutter, a toolbar strip), call `layout.reserve(side, thickness)` / `reserveTop` / `reserveBottom` / `reserveLeft` / `reserveRight` yourself. Radial charts can convert the remaining area to a center point and inscribed size with `areaCenter(area)`.
+`reserveTitle` and `reserveLegend` measure and render the shared title/legend components into the bands they reserve; you only supply the legend items (`{ id, label, color, active }`). For custom bands (an axis gutter, a toolbar strip), call `layout.reserve(side, thickness)` / `reserveTop` / `reserveBottom` / `reserveLeft` / `reserveRight` yourself. Radial charts can convert the remaining area to a center point and inscribed size with `areaCenter(area)`.
 
 Wrapping the body in `super.render(async () => { ... })` matters: it catches errors (clearing the context rather than leaving a half-drawn chart) and marks the chart as rendered so context resizes trigger re-renders.
 
 ## Scales
 
-Map data to pixels with the scale library from `@ripl/core` — the same scales the built-in charts use:
+Map data to pixels with the scale library from `@ripl/core`, the same scales the built-in charts use:
 
 ```ts
 import {
@@ -152,7 +152,7 @@ this._groups = [
 ];
 ```
 
-Group each datum's elements (its mark, label, connector) under one `Group` keyed by the datum's id — that keeps the join one-level and lets a whole segment enter/exit as a unit.
+Group each datum's elements (its mark, label, connector) under one `Group` keyed by the datum's id. That keeps the join one-level and lets a whole segment enter/exit as a unit.
 
 ## Transitions
 
@@ -187,7 +187,7 @@ return Promise.all([
 
 `ANIMATION_REFERENCE` provides the reference durations for `enter`, `update`, `exit`, `hover`, and `axis` phases; `resolveAnimation` scales them by the consumer's `animation.duration` and returns `{ duration, ease, enabled }`. `stagger(index, length, duration)` spreads per-element delays across the entry.
 
-Return the combined transition promise from the render callback — `render()` then resolves when the chart has settled, which is what makes deterministic exports and tests possible.
+Return the combined transition promise from the render callback so that `render()` resolves when the chart has settled. That is what makes deterministic exports and tests possible.
 
 ## Interaction
 
@@ -210,7 +210,7 @@ applyHoverHighlight(mark, {
 });
 ```
 
-Highlight the property that actually carries the color — `fill` for filled shapes, `stroke` for stroked ones. Type your chart's events by passing an `EventMap` as the second generic parameter of `Chart`, and emit them from the interaction callbacks so consumers can subscribe via `chart.on('markclick', ...)`.
+Highlight the property that actually carries the color: `fill` for filled shapes, `stroke` for stroked ones. Type your chart's events by passing an `EventMap` as the second generic parameter of `Chart`, and emit them from the interaction callbacks so consumers can subscribe via `chart.on('markclick', ...)`.
 
 For legend-driven highlighting (hovering a legend item dims the other series), register your groups each render:
 
@@ -221,8 +221,8 @@ this.registerHighlightGroups(this._groups);
 ## Checklist
 
 - Factory function exported; consumers never call `new`.
-- `this.init()` is the **last** statement in the constructor — it triggers the first render.
+- `this.init()` is the **last** statement in the constructor; it triggers the first render.
 - Every render: layout pass first (`createLayout` → `reserveTitle` → `reserveLegend`), then scales, then the join.
 - Entries start at their entry state; targets stashed on `element.data`; exits destroyed after their transition.
-- All durations resolved via `resolveAnimation(ANIMATION_REFERENCE.x)` — never hardcode.
+- All durations resolved via `resolveAnimation(ANIMATION_REFERENCE.x)`; never hardcode.
 - Options interface extends `BaseChartOptions` and every public option carries a JSDoc comment.

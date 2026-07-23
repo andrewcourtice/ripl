@@ -71,10 +71,10 @@ const context = createContext('#app', {
 
 ## Properties
 
-- **`viewMatrix`** — `Matrix4` — The current view (camera) matrix
-- **`projectionMatrix`** — `Matrix4` — The current projection matrix
-- **`viewProjectionMatrix`** — `Matrix4` — Combined view × projection matrix
-- **`lightDirection`** — `Vector3` — Direction of the light source for shading
+- **`viewMatrix`** (`Matrix4`): the current view (camera) matrix
+- **`projectionMatrix`** (`Matrix4`): the current projection matrix
+- **`viewProjectionMatrix`** (`Matrix4`): combined view × projection matrix
+- **`lightDirection`** (`Vector3`): direction of the light source for shading
 
 ## Methods
 
@@ -122,9 +122,9 @@ const depth = context.projectDepth([1, 2, 3]);
 
 Canvas is the best choice when:
 
-- **Broad browser support** — Works in all modern browsers without feature detection
-- **Simple scenes** — Sufficient for scenes that don't require hardware depth testing
-- **Fallback** — Use as a fallback for browsers without WebGPU support
+- **Broad browser support**: works in all modern browsers without feature detection
+- **Simple scenes**: sufficient for scenes that don't require hardware depth testing
+- **Fallback**: use as a fallback for browsers without WebGPU support
 
 <script lang="ts" setup>
 import {

@@ -60,7 +60,7 @@ const context = createContext(container);
 
 ## DPR Scaling
 
-The canvas context automatically scales the canvas to match the device pixel ratio (DPR). This ensures crisp rendering on high-DPI displays (e.g. Retina screens). The scaling is transparent — you work in CSS pixel coordinates and Ripl handles the rest.
+The canvas context automatically scales the canvas to match the device pixel ratio (DPR). This ensures crisp rendering on high-DPI displays (e.g. Retina screens). The scaling is transparent: you work in CSS pixel coordinates and Ripl handles the rest.
 
 ```ts
 // These coordinates are in CSS pixels, not physical pixels
@@ -98,9 +98,9 @@ The canvas context provides all the standard [Context](/docs/core/essentials/con
 
 Canvas is the best choice when:
 
-- **Performance is critical** — Canvas is generally faster for rendering many elements per frame
-- **Pixel-level operations** — Canvas supports `getImageData`/`putImageData` for pixel manipulation
-- **Complex animations** — Canvas clears and redraws efficiently each frame
+- **Performance is critical**: Canvas is generally faster for rendering many elements per frame
+- **Pixel-level operations**: Canvas supports `getImageData`/`putImageData` for pixel manipulation
+- **Complex animations**: Canvas clears and redraws efficiently each frame
 
 Canvas is less ideal when:
 

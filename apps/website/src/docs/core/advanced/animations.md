@@ -70,7 +70,7 @@ await renderer.transition(circle, {
 
 ## Manual Transitions
 
-The `transition` function runs a timed animation loop using `requestAnimationFrame`. It's useful when you don't have a scene/renderer setup — for example, animating a single element rendered directly to a context.
+The `transition` function runs a timed animation loop using `requestAnimationFrame`. It's useful when you don't have a scene/renderer setup, for example when animating a single element rendered directly to a context.
 
 ```ts
 import {
@@ -128,13 +128,13 @@ t.seek(0.75);
 console.log(t.paused); // true
 ```
 
-- **`pause()`** — stops the animation frame loop but keeps the promise pending
-- **`play()`** — resumes from the paused position
-- **`seek(position)`** — jumps to a normalized position (0–1), invokes the callback once with the eased time at that position, and pauses
+- **`pause()`** stops the animation frame loop but keeps the promise pending
+- **`play()`** resumes from the paused position
+- **`seek(position)`** jumps to a normalized position (0–1), invokes the callback once with the eased time at that position, and pauses
 
 ### Reversing a Transition
 
-Every `Transition` exposes an `inverse` property — a factory function that creates a new `Transition` running in the opposite direction. Both the standalone `transition()` function and `renderer.transition()` set this automatically:
+Every `Transition` exposes an `inverse` property: a factory function that creates a new `Transition` running in the opposite direction. Both the standalone `transition()` function and `renderer.transition()` set this automatically:
 
 ```ts
 const grow = transition((t) => {
@@ -194,7 +194,7 @@ The renderer automatically:
 
 ## Looping
 
-Both `transition()` and `renderer.transition()` support looping via the `loop` option. A looping transition repeats indefinitely and **never resolves** — you must call `abort()` to stop it.
+Both `transition()` and `renderer.transition()` support looping via the `loop` option. A looping transition repeats indefinitely and **never resolves**, so you must call `abort()` to stop it.
 
 ### Restart Loop
 
@@ -242,11 +242,11 @@ const t = transition((time) => {
 ```
 
 > [!TIP]
-> Looping transitions support `pause()`, `play()`, and `seek()` — playback control operates within the current loop iteration.
+> Looping transitions support `pause()`, `play()`, and `seek()`. Playback control operates within the current loop iteration.
 
 ## Easing Functions
 
-Easing functions control the rate of change over time. Ripl ships with 31 built-in easing functions: `easeLinear` for constant speed, the `Quad`, `Cubic`, `Quart`, `Quint`, `Sine`, `Expo`, and `Circ` curves, plus the `Back`, `Elastic`, and `Bounce` families — each available in `In`, `Out`, and `InOut` variants.
+Easing functions control the rate of change over time. Ripl ships with 31 built-in easing functions: `easeLinear` for constant speed, the `Quad`, `Cubic`, `Quart`, `Quint`, `Sine`, `Expo`, and `Circ` curves, plus the `Back`, `Elastic`, and `Bounce` families, each available in `In`, `Out`, and `InOut` variants.
 
 ```ts
 import {

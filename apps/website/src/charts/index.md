@@ -1,6 +1,6 @@
 ---
 title: Charts
-description: "@ripl/charts — 25 animated, interactive chart types for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, histogram, box plot, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
+description: "25 animated, interactive chart types from @ripl/charts for data visualization (bar, line, area, pie, scatter, candlestick/OHLC, histogram, box plot, heatmap, radar, sankey, treemap and more) with axes, legends, tooltips, and crosshairs, rendered to Canvas or SVG."
 ---
 
 # Charts

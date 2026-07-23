@@ -4,7 +4,7 @@ outline: "deep"
 
 # Interpolators
 
-Interpolators are functions that compute intermediate values between two endpoints. They are the engine behind Ripl's animation system — when you transition an element's `radius` from 50 to 100, an interpolator generates all the in-between values.
+Interpolators are functions that compute intermediate values between two endpoints. They are the engine behind Ripl's animation system: when you transition an element's `radius` from 50 to 100, an interpolator generates all the in-between values.
 
 Ripl automatically selects the right interpolator based on the value type, but you can also provide custom interpolators for specialized behavior.
 
@@ -13,7 +13,7 @@ Ripl automatically selects the right interpolator based on the value type, but y
 
 ## Built-in Interpolators
 
-Ripl ships with interpolators for common value types. They are tested in order — the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (fallback — snaps at t > 0.5).
+Ripl ships with interpolators for common value types. They are tested in order, and the first one whose `test` function returns `true` is used. Built-in factories include `interpolateNumber`, `interpolateColor` (hex, rgb, rgba, hsl), `interpolateGradient`, `interpolateDate`, `interpolatePath` (SVG path strings), `interpolateString` (extracts numeric values), and `interpolateAny` (a fallback that snaps at t > 0.5).
 
 ## How Interpolators Work
 
@@ -33,7 +33,7 @@ interpolate(1); // 100
 
 ### Number Interpolation
 
-The simplest interpolator — linear interpolation between two numbers:
+The simplest interpolator performs linear interpolation between two numbers:
 
 ```ts
 const interpolate = interpolateNumber(10, 50);
@@ -56,7 +56,7 @@ interpolate(0.5); // 'rgba(157, 67, 162, 1)' (midpoint)
 interpolate(1); // 'rgba(255, 0, 110, 1)'
 ```
 
-Color interpolation works across different color formats — you can interpolate from a hex color to an RGB color seamlessly.
+Color interpolation works across different color formats, so you can interpolate from a hex color to an RGB color seamlessly.
 
 ### Any Interpolation
 
@@ -104,7 +104,7 @@ await renderer.transition(circle, {
 
 ### InterpolatorFactory
 
-For reusable interpolators, create an `InterpolatorFactory` — a function that takes start and end values and returns an interpolator:
+For reusable interpolators, create an `InterpolatorFactory`: a function that takes start and end values and returns an interpolator:
 
 ```ts
 import type {
@@ -167,7 +167,7 @@ Each demo below lets you scrub through interpolation time `t` (0→1) to see the
 
 ### Number
 
-Linear interpolation between two numbers — the foundation of all other interpolators.
+Linear interpolation between two numbers, the foundation of all other interpolators.
 
 :::tabs
 == Code
@@ -245,7 +245,7 @@ rect.fill = interp(t);
 
 ### Rotation
 
-Interpolates between rotation values — supports numbers (radians) and strings like `"90deg"` or `"1.5rad"`.
+Interpolates between rotation values. It supports numbers (radians) and strings like `"90deg"` or `"1.5rad"`.
 
 :::tabs
 == Code
@@ -296,7 +296,7 @@ polyline.points = interp(t);
 
 ### Point Interpolation & Shape Morphing
 
-`interpolatePoints` transitions between two point arrays. When the arrays differ in length, the shorter set is automatically **extrapolated** — intermediate points are inserted along its edges so both arrays have equal length. This enables smooth morphing between any two polygon shapes.
+`interpolatePoints` transitions between two point arrays. When the arrays differ in length, the shorter set is automatically **extrapolated**: intermediate points are inserted along its edges so both arrays have equal length. This enables smooth morphing between any two polygon shapes.
 
 :::tabs
 == Code

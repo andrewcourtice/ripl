@@ -115,12 +115,12 @@ Color stops define the colors and their positions along the gradient. You can us
 
 Gradient color stops accept:
 
-- **Named colors** — `red`, `blue`, `transparent`, etc.
-- **Hex** — `#ff0000`, `#f00`
-- **RGB** — `rgb(255, 0, 0)`
-- **RGBA** — `rgba(255, 0, 0, 0.5)`
-- **HSL** — `hsl(0, 100%, 50%)`
-- **HSLA** — `hsla(0, 100%, 50%, 0.5)`
+- **Named colors**: `red`, `blue`, `transparent`, etc.
+- **Hex**: `#ff0000`, `#f00`
+- **RGB**: `rgb(255, 0, 0)`
+- **RGBA**: `rgba(255, 0, 0, 0.5)`
+- **HSL**: `hsl(0, 100%, 50%)`
+- **HSLA**: `hsla(0, 100%, 50%, 0.5)`
 
 ## Repeating Gradients
 
@@ -156,7 +156,7 @@ When Ripl encounters a gradient string in a style property:
    - **SVG**: Creates `<linearGradient>` or `<radialGradient>` elements in a `<defs>` block
 3. The native gradient is applied as the fill or stroke style
 
-Gradient parsing happens automatically — you just write CSS gradient strings and Ripl handles the rest.
+Gradient parsing happens automatically: you just write CSS gradient strings and Ripl handles the rest.
 
 ## Gradient Interpolation
 

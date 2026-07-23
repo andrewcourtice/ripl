@@ -89,7 +89,7 @@ function buildChart() {
         hovered.value = '';
     });
     chart.on('barclick', event => {
-        selected.value = `Pinned — ${event.data.xValue}: ${formatVolume(event.data.yValue)}`;
+        selected.value = `Pinned: ${event.data.xValue}: ${formatVolume(event.data.yValue)}`;
     });
 }
 

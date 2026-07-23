@@ -174,19 +174,19 @@ chart.update({ data: newData });
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Key accessor for each data point (e.g. date)
-- **`open`** / **`high`** / **`low`** / **`close`** — Price accessors
-- **`volume`** — Volume accessor (optional)
-- **`showVolume`** — Show volume bars below the chart (default `true`)
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (tracks **both** axes by default)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
-- **`navigator`** — `boolean | NavigatorInteractions` — Enable in-plot pan/zoom navigation
-- **`overview`** — `boolean | ChartOverviewOptions` — Show the overview scrub-bar strip that windows the date axis
-- **`annotations`** — `ChartAnnotation[]` — Reference lines, shaded bands, and point markers drawn over the plot
-- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the OHLC values shown in the candle tooltip
-- **`upColor`** — Color for bullish candles (default `#6dd5b1`)
-- **`downColor`** — Color for bearish candles (default `#f4a0b9`)
-- **`padding`** — Chart padding
+- **`data`**: the data array
+- **`key`**: key accessor for each data point (e.g. date)
+- **`open`** / **`high`** / **`low`** / **`close`**: price accessors
+- **`volume`**: volume accessor (optional)
+- **`showVolume`**: show volume bars below the chart (default `true`)
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (tracks **both** axes by default)
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
+- **`navigator`** (`boolean | NavigatorInteractions`): enable in-plot pan/zoom navigation
+- **`overview`** (`boolean | ChartOverviewOptions`): show the overview scrub-bar strip that windows the date axis
+- **`annotations`** (`ChartAnnotation[]`): reference lines, shaded bands, and point markers drawn over the plot
+- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the OHLC values shown in the candle tooltip
+- **`upColor`**: color for bullish candles (default `#6dd5b1`)
+- **`downColor`**: color for bearish candles (default `#f4a0b9`)
+- **`padding`**: chart padding

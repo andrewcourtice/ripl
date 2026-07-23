@@ -1,6 +1,6 @@
 # Treemap Chart
 
-The **Treemap Chart** displays hierarchical data as nested rectangles, where each rectangle's area is proportional to its value. It's great for visualizing how a total breaks down into parts — market share, disk usage, budget allocation, etc. Cells are labeled, automatically colored, and animate smoothly on data changes. Configurable gaps and rounded corners keep the layout clean.
+The **Treemap Chart** displays hierarchical data as nested rectangles, where each rectangle's area is proportional to its value. It's great for visualizing how a total breaks down into parts, such as market share, disk usage, or budget allocation. Cells are labeled, automatically colored, and animate smoothly on data changes. Configurable gaps and rounded corners keep the layout clean.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -119,11 +119,11 @@ const chart = createTreemapChart('#container', {
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Unique key accessor
-- **`value`** — Value accessor (determines rectangle area)
-- **`label`** — Label accessor (displayed inside cells)
-- **`colorBy`** — Optional per-item color accessor
-- **`legend`** — Legend configuration; shown by default, pass `false` to hide
-- **`gap`** — Gap between cells in pixels (default `3`)
-- **`borderRadius`** — Cell corner radius (default `4`)
+- **`data`**: the data array
+- **`key`**: unique key accessor
+- **`value`**: value accessor (determines rectangle area)
+- **`label`**: label accessor (displayed inside cells)
+- **`colorBy`**: optional per-item color accessor
+- **`legend`**: legend configuration; shown by default, pass `false` to hide
+- **`gap`**: gap between cells in pixels (default `3`)
+- **`borderRadius`**: cell corner radius (default `4`)

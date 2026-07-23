@@ -322,7 +322,7 @@ createAreaChart('#container', {
 
 ### 100% stacked
 
-Pass `stacked: 'percent'` to normalize each category to its share of the category total — the value axis is fixed to 0–100% and values default to percentage formatting:
+Pass `stacked: 'percent'` to normalize each category to its share of the category total. The value axis is fixed to 0–100% and values default to percentage formatting:
 
 ```ts
 createAreaChart('#container', {
@@ -404,13 +404,13 @@ createAreaChart('#container', {
 
 ## Options
 
-- **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`, `axis` (y-axis index/id binding)
-- **`key`** — Key accessor for data points
-- **`stacked`** — `false` (overlaid, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
-- **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
+- **`data`**: the data array
+- **`series`**: array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`, `axis` (y-axis index/id binding)
+- **`key`**: key accessor for data points
+- **`stacked`**: `false` (overlaid, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
+- **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot

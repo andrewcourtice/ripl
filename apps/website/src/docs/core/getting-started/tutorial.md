@@ -12,9 +12,9 @@ This tutorial walks you through Ripl step-by-step, starting from the most basic 
 
 The most basic usage of Ripl involves 3 steps:
 
-1. **Create a context** — the rendering target (Canvas by default)
-2. **Create an element** — specify the element's properties
-3. **Render** — draw the element to the context
+1. **Create a context**: the rendering target (Canvas by default)
+2. **Create an element**: specify the element's properties
+3. **Render**: draw the element to the context
 
 :::tabs
 == Code
@@ -72,7 +72,7 @@ circle.render(context);
 
 ### Using Groups
 
-Groups let you organize elements into a hierarchy — just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fill` once on the group instead of on every element.
+Groups let you organize elements into a hierarchy, just like the DOM. A group can hold any number of child elements and even other groups. Properties set on a group are **inherited** by its children, so you can set a shared `fill` once on the group instead of on every element.
 
 :::tabs
 == Code
@@ -113,7 +113,7 @@ group.render(context);
 
 ### Querying Elements
 
-Groups and scenes support DOM-like querying methods — `getElementById`, `getElementsByType`, `query`, and `queryAll`. This makes it easy to find elements deep in the tree without keeping references to every element.
+Groups and scenes support DOM-like querying methods: `getElementById`, `getElementsByType`, `query`, and `queryAll`. This makes it easy to find elements deep in the tree without keeping references to every element.
 
 :::tabs
 == Code
@@ -182,7 +182,7 @@ group.queryAll('.shape');
 
 ## Interaction
 
-Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, `click`, `dragstart`, `drag`, and `dragend` directly on any element — no scene or renderer required.
+Ripl's context automatically handles pointer event delegation via hit testing. You can listen for events like `mouseenter`, `mouseleave`, `click`, `dragstart`, `drag`, and `dragend` directly on any element, with no scene or renderer required.
 
 :::tabs
 == Code
@@ -292,13 +292,13 @@ await transition(time => {
 :::
 
 > [!NOTE]
-> The `transition()` function returns a `Transition` (which extends `Task`) — it is both **awaitable** and **cancelable** via `transition.abort()`.
+> The `transition()` function returns a `Transition` (which extends `Task`), so it is both **awaitable** and **cancelable** via `transition.abort()`.
 
 The standalone `transition()` gives you full control, but for most use-cases a **Scene** and **Renderer** provide a more convenient approach.
 
 ## Using Scenes
 
-A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle — clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
+A **Scene** is a special group that binds to a context. It manages the full rendering lifecycle: clearing the context, rendering all children in z-index order, and automatically re-rendering when the context resizes.
 
 :::tabs
 == Code
@@ -334,11 +334,11 @@ scene.render();
 :::
 
 > [!TIP]
-> When you use a Scene, you don't need to call `context.batch()` yourself — the scene handles clearing and render markers automatically.
+> When you use a Scene, you don't need to call `context.batch()` yourself. The scene handles clearing and render markers automatically.
 
 ## Using a Renderer
 
-A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, and its `transition()` method handles interpolation and re-rendering for you — no manual `scene.render()` calls needed.
+A **Renderer** provides an automatic render loop powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, and its `transition()` method handles interpolation and re-rendering for you, so there are no manual `scene.render()` calls to make.
 
 :::tabs
 == Code
@@ -427,9 +427,9 @@ async function animate() {
 
 Now that you understand the basics, explore the rest of the documentation:
 
-- **[Essentials](/docs/core/essentials/context)** — Deep dive into each core concept
-- **[Elements](/docs/core/elements/arc)** — Reference for all built-in elements
-- **[Advanced](/docs/core/advanced/events)** — Events, animations, gradients, and custom elements
+- **[Essentials](/docs/core/essentials/context)**: a deep dive into each core concept
+- **[Elements](/docs/core/elements/arc)**: reference for all built-in elements
+- **[Advanced](/docs/core/advanced/events)**: events, animations, gradients, and custom elements
 
 <script lang="ts" setup>
 import {

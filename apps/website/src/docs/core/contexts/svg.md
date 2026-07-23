@@ -4,7 +4,7 @@ outline: "deep"
 
 # SVG Context
 
-The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically — just change the import. Under the hood, it maintains a virtual tree and reconciles it against the real SVG DOM on each render pass, minimizing mutations for better performance.
+The **SVG context** renders elements to an SVG DOM tree instead of a canvas bitmap. It provides the same unified API as the Canvas context, so your drawing code works identically; just change the import. Under the hood, it maintains a virtual tree and reconciles it against the real SVG DOM on each render pass, minimizing mutations for better performance.
 
 ## Demo
 
@@ -80,7 +80,7 @@ const circle = createCircle({
 circle.render(context);
 ```
 
-That's it — the same element code renders to SVG with no other changes.
+That's it. The same element code renders to SVG with no other changes.
 
 ## How It Works
 
@@ -125,10 +125,10 @@ The SVG context uses native SVG hit testing methods (`isPointInFill`, `isPointIn
 
 SVG is the best choice when:
 
-- **DOM accessibility** — SVG elements are part of the DOM and can be inspected in DevTools
-- **CSS styling** — Individual elements can be targeted with CSS
-- **Scalability** — SVG scales perfectly at any zoom level without pixelation
-- **Small element counts** — SVG performs well with hundreds of elements
+- **DOM accessibility**: SVG elements are part of the DOM and can be inspected in DevTools
+- **CSS styling**: individual elements can be targeted with CSS
+- **Scalability**: SVG scales perfectly at any zoom level without pixelation
+- **Small element counts**: SVG performs well with hundreds of elements
 
 SVG is less ideal when:
 

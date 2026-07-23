@@ -1,20 +1,20 @@
 # Installation
 
-Ripl is a modular library split into focused packages so you only ship what you need. Whether you're drawing custom shapes on a canvas, building interactive charts, or experimenting with 3D — you install only the packages your project requires. All packages are written in TypeScript with zero runtime dependencies.
+Ripl is a modular library split into focused packages so you only ship what you need. Whether you're drawing custom shapes on a canvas, building interactive charts, or experimenting with 3D, you install only the packages your project requires. All packages are written in TypeScript with zero runtime dependencies.
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
-| `@ripl/web` | **Main browser entry point** — re-exports core + canvas context with browser platform bindings |
-| `@ripl/core` | Core rendering internals — elements, scene, renderer, animation, scales, math, color, interpolation |
+| `@ripl/web` | **Main browser entry point** that re-exports core + canvas context with browser platform bindings |
+| `@ripl/core` | Core rendering internals: elements, scene, renderer, animation, scales, math, color, interpolation |
 | `@ripl/canvas` | Canvas 2D rendering context |
-| `@ripl/svg` | SVG rendering context — swap Canvas for SVG with a single import change |
+| `@ripl/svg` | SVG rendering context; swap Canvas for SVG with a single import change |
 | `@ripl/webgpu` | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
-| `@ripl/charts` | Pre-built chart components — bar, line, area, pie, scatter, stock, gantt, and 10+ more |
-| `@ripl/3d` | 3D rendering — shapes, camera, shading, and projection onto 2D contexts |
-| `@ripl/terminal` | Terminal rendering context — braille-character output with ANSI truecolor |
-| `@ripl/node` | Node.js runtime bindings — configures the platform factory for headless environments |
+| `@ripl/charts` | Pre-built chart components: bar, line, area, pie, scatter, stock, gantt, and 10+ more |
+| `@ripl/3d` | 3D rendering: shapes, camera, shading, and projection onto 2D contexts |
+| `@ripl/terminal` | Terminal rendering context with braille-character output and ANSI truecolor |
+| `@ripl/node` | Node.js runtime bindings that configure the platform factory for headless environments |
 | `@ripl/dom` | DOM utilities used internally by browser contexts |
 | `@ripl/utilities` | Shared typed utility functions used across all packages |
 
@@ -31,7 +31,7 @@ Most projects only need one or two packages. Here's a quick guide:
 - **Terminal charts** → `@ripl/terminal` + `@ripl/node` + `@ripl/charts`
 
 > [!TIP]
-> Internal packages (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`) are installed automatically as dependencies — you never need to install them directly.
+> Internal packages (`@ripl/core`, `@ripl/canvas`, `@ripl/dom`, `@ripl/utilities`) are installed automatically as dependencies, so you never need to install them directly.
 
 ## Install
 
@@ -93,7 +93,7 @@ pnpm add @ripl/3d
 :::
 
 > [!TIP]
-> All packages depend on `@ripl/core` internally, so the core library is always shared automatically — no need to install it separately.
+> All packages depend on `@ripl/core` internally, so the core library is always shared automatically. There is no need to install it separately.
 
 ## CDN
 

@@ -327,7 +327,7 @@ const point = samplePathPoint(d, 50);
 // { x: 50, y: 0, angle: 0 }
 ```
 
-`samplePathPoint` returns the position and tangent angle at a given distance along the path — this powers the [Text on Path](/docs/core/elements/text#text-on-path) feature.
+`samplePathPoint` returns the position and tangent angle at a given distance along the path, which powers the [Text on Path](/docs/core/elements/text#text-on-path) feature.
 
 ## Border Radius
 

@@ -122,7 +122,7 @@ function buildChart() {
         hovered.value = '';
     });
     chart.on('markerclick', event => {
-        selected.value = `Pinned — ${describe(event.data.seriesId, event.data.xValue, event.data.yValue)}`;
+        selected.value = `Pinned: ${describe(event.data.seriesId, event.data.xValue, event.data.yValue)}`;
     });
 }
 

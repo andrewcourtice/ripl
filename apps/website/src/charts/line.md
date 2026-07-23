@@ -1,6 +1,6 @@
 # Line Chart
 
-The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly — points enter, exit, and reposition with configurable transitions.
+The **Line Chart** renders one or more data series as smooth or straight lines with optional markers. Choose from 13 polyline interpolation modes (linear, monotone, cardinal, catmull-rom, step, and more) per series, and get crosshair tracking, grid lines, a legend, and tooltips out of the box. Data updates animate smoothly: points enter, exit, and reposition with configurable transitions.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -472,7 +472,7 @@ createLineChart('#container', {
 
 ### Marker symbols
 
-Each series can render its markers with a distinct symbol shape (`'circle'`, `'square'`, `'diamond'`, or `'triangle'` — non-circle symbols are sized to the same visual area as the circle):
+Each series can render its markers with a distinct symbol shape (`'circle'`, `'square'`, `'diamond'`, or `'triangle'`; non-circle symbols are sized to the same visual area as the circle):
 
 ```ts
 createLineChart('#container', {
@@ -541,13 +541,13 @@ createLineChart('#container', {
 
 ## Options
 
-- **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `marker` (symbol shape: `'circle'` \| `'square'` \| `'diamond'` \| `'triangle'`), `markerRadius`, `axis` (y-axis index/id binding)
-- **`key`** — Key accessor for each data point
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (shown by default for multiple series, at the bottom)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
-- **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
-- **`padding`** — Chart padding
+- **`data`**: the data array
+- **`series`**: array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `marker` (symbol shape: `'circle'` \| `'square'` \| `'diamond'` \| `'triangle'`), `markerRadius`, `axis` (y-axis index/id binding)
+- **`key`**: key accessor for each data point
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (shown by default for multiple series, at the bottom)
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
+- **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
+- **`padding`**: chart padding

@@ -63,9 +63,9 @@ createCircle({
 
 Creates a `TerminalOutput` adapter backed by `process.stdout`:
 
-- **`write`** — Writes ANSI escape sequences to stdout
-- **`columns` / `rows`** — Reads terminal dimensions from `process.stdout.columns` and `process.stdout.rows`
-- **`onResize`** — Listens for `SIGWINCH` signals to detect terminal resize events
+- **`write`**: writes ANSI escape sequences to stdout
+- **`columns` / `rows`**: reads terminal dimensions from `process.stdout.columns` and `process.stdout.rows`
+- **`onResize`**: listens for `SIGWINCH` signals to detect terminal resize events
 
 ## Comparison with `@ripl/web`
 
@@ -81,4 +81,4 @@ Creates a `TerminalOutput` adapter backed by `process.stdout`:
 
 ## Rendering Charts
 
-Charts from `@ripl/charts` accept a terminal context as their target like any other context — see [Server-Side Rendering](/charts/advanced/server-side-rendering) for a complete headless charting example.
+Charts from `@ripl/charts` accept a terminal context as their target like any other context; see [Server-Side Rendering](/charts/advanced/server-side-rendering) for a complete headless charting example.

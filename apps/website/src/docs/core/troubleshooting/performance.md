@@ -10,7 +10,7 @@ Ripl is designed to be performant out of the box, but understanding how the rend
 
 The single most impactful optimization in Ripl is **scene hoisting**. When elements are placed into a Scene, the scene flattens the entire element tree into a single sorted array called the **render buffer**.
 
-Without a scene, rendering a deeply nested group structure requires a recursive tree walk — an O(n^c) operation where `c` is the depth of the tree. With a scene, the render buffer converts this to a flat O(n) iteration:
+Without a scene, rendering a deeply nested group structure requires a recursive tree walk, an O(n^c) operation where `c` is the depth of the tree. With a scene, the render buffer converts this to a flat O(n) iteration:
 
 ```ts
 // Without scene — recursive tree walk each frame
@@ -33,10 +33,10 @@ The cost of maintaining the buffer is shifted to add/remove operations on groups
 
 The Renderer's `autoStart` and `autoStop` options (both `true` by default) ensure the render loop only runs when needed:
 
-- **autoStart** — The renderer starts automatically when a transition is created or the mouse enters the scene
-- **autoStop** — The renderer stops automatically when all transitions complete and the mouse leaves the scene
+- **autoStart**: the renderer starts automatically when a transition is created or the mouse enters the scene
+- **autoStop**: the renderer stops automatically when all transitions complete and the mouse leaves the scene
 
-This means the render loop is idle when nothing is happening — no wasted CPU cycles on static content.
+This means the render loop is idle when nothing is happening, so no CPU cycles are wasted on static content.
 
 ```ts
 const renderer = createRenderer(scene, {
@@ -68,7 +68,7 @@ render(context: Context) {
 }
 ```
 
-For the Canvas context, the key is ignored (canvas redraws from scratch each frame). But for the SVG context, the key is critical — it allows the virtual DOM reconciliation to match existing SVG elements with new render output, minimizing DOM mutations.
+For the Canvas context, the key is ignored (canvas redraws from scratch each frame). But for the SVG context, the key is critical: it allows the virtual DOM reconciliation to match existing SVG elements with new render output, minimizing DOM mutations.
 
 The built-in elements already use persistent keys. This tip applies when you create [custom elements](/docs/core/advanced/custom-elements).
 
@@ -90,13 +90,13 @@ The SVG context automatically uses **buffered rendering**. Instead of applying D
 
 ## Tips Summary
 
-1. **Use a Scene + Renderer** for anything beyond trivial rendering — the flat render buffer and automatic start/stop provide significant performance gains
-2. **Use Canvas** for large element counts or complex animations
-3. **Use persistent path keys** in custom elements for efficient SVG reconciliation
-4. **Let autoStop work** — don't disable it unless you have continuous animations
-5. **Minimize group depth** — while scenes flatten the tree for rendering, shallower trees are faster to modify
-6. **Batch property changes** — change multiple properties before triggering a render, rather than rendering after each change
-7. **Use `zIndex`** instead of render order when possible — the scene buffer sorts by zIndex automatically
+1. **Use a Scene + Renderer** for anything beyond trivial rendering. The flat render buffer and automatic start/stop provide significant performance gains.
+2. **Use Canvas** for large element counts or complex animations.
+3. **Use persistent path keys** in custom elements for efficient SVG reconciliation.
+4. **Let autoStop work**: don't disable it unless you have continuous animations.
+5. **Minimize group depth**: while scenes flatten the tree for rendering, shallower trees are faster to modify.
+6. **Batch property changes** by setting multiple properties before triggering a render, rather than rendering after each change.
+7. **Use `zIndex`** instead of render order when possible, since the scene buffer sorts by zIndex automatically.
 
 ## Stress Test
 

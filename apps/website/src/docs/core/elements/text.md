@@ -4,7 +4,7 @@ outline: "deep"
 
 # Text
 
-A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path. Text supports both filled and stroked rendering, and can follow arbitrary SVG paths via the `pathData` property — perfect for curved labels, circular badges, and decorative typography.
+A **Text** element renders a text string at a given position. Unlike other built-in elements, Text extends `Element` directly (not `Shape`) because it uses the context's text rendering API rather than a path. Text supports both filled and stroked rendering, and can follow arbitrary SVG paths via the `pathData` property, which is perfect for curved labels, circular badges, and decorative typography.
 
 ## Example
 

@@ -209,7 +209,7 @@ function resetView() {
 </script>
 
 > [!TIP]
-> This chart has the **navigator** enabled — scroll to zoom toward the cursor and click-and-hold to
+> This chart has the **navigator** enabled. Scroll to zoom toward the cursor and click-and-hold to
 > pan (⌘/Ctrl-drag works too). Use **Reset View** to return to the default framing.
 
 ## Usage
@@ -346,7 +346,7 @@ createScatterChart('#container', {
 
 ### Pan & zoom (navigator)
 
-Set `navigator: true` to make the plot explorable — wheel-zoom toward the cursor and click-and-hold
+Set `navigator: true` to make the plot explorable: wheel-zoom toward the cursor and click-and-hold
 to pan, with the axis domains rescaling as the view changes (no data rebuild). Pass an object to tune
 which interactions are active:
 
@@ -370,12 +370,12 @@ chart.navigator?.reset();
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Unique identifier field for each point
-- **`series`** — Array of series with `id`, `label`, `xBy`, `yBy`, optional `sizeBy`, `minRadius`, `maxRadius`, `color`
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes with optional titles (`y` accepts an array for multiple y-axes)
-- **`navigator`** — `boolean | NavigatorInteractions` — Enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`
+- **`data`**: the data array
+- **`key`**: unique identifier field for each point
+- **`series`**: array of series with `id`, `label`, `xBy`, `yBy`, optional `sizeBy`, `minRadius`, `maxRadius`, `color`
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes with optional titles (`y` accepts an array for multiple y-axes)
+- **`navigator`** (`boolean | NavigatorInteractions`): enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`

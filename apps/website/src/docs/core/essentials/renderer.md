@@ -6,7 +6,7 @@ outline: "deep"
 
 A **Renderer** provides an automatic render loop for a [Scene](/docs/core/essentials/scene), powered by `requestAnimationFrame`. It continuously re-renders the scene each frame, enabling smooth animations and interactive effects. The renderer also provides a `transition()` method for animating element properties.
 
-The Renderer is what brings your scene to life. Without it, you'd need to manually call `scene.render()` every time something changes. With a Renderer, you describe *what* should change (via transitions) and the renderer handles *when* and *how* — including easing, chaining, staggering, and automatic start/stop to conserve resources when idle.
+The Renderer is what brings your scene to life. Without it, you'd need to manually call `scene.render()` every time something changes. With a Renderer, you describe *what* should change (via transitions) and the renderer handles *when* and *how*, including easing, chaining, staggering, and automatic start/stop to conserve resources when idle.
 
 ## Demo
 
@@ -278,8 +278,8 @@ await renderer.transition(group.graph(false), (element, index, total) => ({
 }));
 ```
 
-Passing a **group** directly to `transition` animates the group itself as a single unit — its own
-transform and opacity, composited at the group boundary — not its children. To animate a group's
+Passing a **group** directly to `transition` animates the group itself as a single unit (its own
+transform and opacity, composited at the group boundary), not its children. To animate a group's
 descendants (for example, to stagger across them), flatten it first with `group.graph(false)`.
 
 ## Manual Control

@@ -4,7 +4,7 @@ outline: "deep"
 
 # Custom Contexts
 
-Ripl's context-agnostic architecture means you can create your own rendering context to target any medium — WebGL, PDF, terminal output, or anything else. A custom context implements the abstract methods defined by the base `Context` class, and all existing elements will render to it automatically.
+Ripl's context-agnostic architecture means you can create your own rendering context to target any medium: WebGL, PDF, terminal output, or anything else. A custom context implements the abstract methods defined by the base `Context` class, and all existing elements will render to it automatically.
 
 > [!NOTE]
 > For the full API, see the [Core API Reference](/docs/api/@ripl/core/).
@@ -236,13 +236,13 @@ class MyContextText extends ContextText {
 
 ## State Management
 
-The base `Context` class manages a state stack via `save()` and `restore()`. Your context inherits this automatically. The `setStateValue` method is called whenever a state property changes — this is where you map Ripl's unified state properties to your target's API.
+The base `Context` class manages a state stack via `save()` and `restore()`. Your context inherits this automatically. The `setStateValue` method is called whenever a state property changes. This is where you map Ripl's unified state properties to your target's API.
 
 Key state properties to handle include `fill`, `stroke`, `lineWidth`, `lineCap`, `lineJoin`, `opacity`, `font`, `textAlign`, and `textBaseline`.
 
 ## Persistent Path Keys
 
-When `createPath(key)` is called with a key, the key acts as a persistent identifier for that path across renders. This is critical for contexts that maintain a DOM (like SVG) — it allows efficient diffing and reconciliation instead of recreating elements every frame.
+When `createPath(key)` is called with a key, the key acts as a persistent identifier for that path across renders. This is critical for contexts that maintain a DOM (like SVG) because it allows efficient diffing and reconciliation instead of recreating elements every frame.
 
 For Canvas-like contexts that redraw from scratch each frame, the key can be ignored.
 
@@ -270,5 +270,5 @@ circle.render(context);
 
 For complete working examples of custom contexts, study the built-in implementations:
 
-- **Canvas Context** — `@ripl/core` (`packages/core/src/context/canvas.ts`) — The simplest implementation, maps directly to the Canvas 2D API
-- **SVG Context** — `@ripl/svg` (`packages/svg/src/index.ts`) — A more complex implementation with virtual DOM reconciliation and gradient management
+- **Canvas Context** in `@ripl/core` (`packages/core/src/context/canvas.ts`): the simplest implementation, mapping directly to the Canvas 2D API
+- **SVG Context** in `@ripl/svg` (`packages/svg/src/index.ts`): a more complex implementation with virtual DOM reconciliation and gradient management

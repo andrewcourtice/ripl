@@ -90,7 +90,7 @@ function buildChart() {
         hovered.value = '';
     });
     chart.on('segmentclick', event => {
-        selected.value = `Pinned — ${describe(event.data.label, event.data.value)}`;
+        selected.value = `Pinned: ${describe(event.data.label, event.data.value)}`;
     });
 }
 

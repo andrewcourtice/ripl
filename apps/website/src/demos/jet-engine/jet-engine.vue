@@ -2,7 +2,7 @@
     <div class="jet-engine-demo">
         <div class="jet-engine-demo__header">
             <h1 class="jet-engine-demo__title">Jet Engine Exploded View</h1>
-            <p class="jet-engine-demo__subtitle">Interactive 3D demo powered by @ripl/3d — orbit, zoom, and hover to explore</p>
+            <p class="jet-engine-demo__subtitle">Interactive 3D demo powered by @ripl/3d. Orbit, zoom, and hover to explore</p>
         </div>
         <div class="jet-engine-demo__controls">
             <RiplSwitch v-model="rotating" label="Rotate" />

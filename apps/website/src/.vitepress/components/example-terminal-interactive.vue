@@ -2,7 +2,7 @@
     <div class="terminal-demo">
         <div class="terminal-demo__header">
             <h1 class="terminal-demo__title">Interactive Terminal</h1>
-            <p class="terminal-demo__subtitle">Explore Ripl's terminal rendering — choose from basic shapes, animations, or full chart demos rendered in Unicode braille</p>
+            <p class="terminal-demo__subtitle">Explore Ripl's terminal rendering: choose from basic shapes, animations, or full chart demos rendered in Unicode braille</p>
         </div>
         <div class="terminal-demo__viewport">
             <div class="terminal-demo__chrome">

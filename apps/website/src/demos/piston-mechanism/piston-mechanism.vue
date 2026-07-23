@@ -2,7 +2,7 @@
     <div class="piston-mechanism-demo">
         <div class="piston-mechanism-demo__header">
             <h1 class="piston-mechanism-demo__title">Piston Mechanism</h1>
-            <p class="piston-mechanism-demo__subtitle">A basic single-cylinder slider-crank — crankshaft, connecting rod, and piston head — powered by @ripl/3d. Orbit, zoom, and hover to explore.</p>
+            <p class="piston-mechanism-demo__subtitle">A basic single-cylinder slider-crank (crankshaft, connecting rod, and piston head) powered by @ripl/3d. Orbit, zoom, and hover to explore.</p>
         </div>
         <div class="piston-mechanism-demo__controls">
             <RiplSwitch v-model="animating" label="Animate" />

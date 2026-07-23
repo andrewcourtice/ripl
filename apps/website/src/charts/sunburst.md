@@ -150,4 +150,4 @@ const chart = createSunburstChart('#container', {
 
 ## Options
 
-- **`data`** — Array of `SunburstNode` objects with `id`, `label`, `value`, optional `color` and `children`
+- **`data`**: array of `SunburstNode` objects with `id`, `label`, `value`, optional `color` and `children`

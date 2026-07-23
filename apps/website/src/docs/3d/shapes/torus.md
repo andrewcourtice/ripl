@@ -66,12 +66,12 @@ const torus = createTorus({
 
 ## Properties
 
-- **`radius`** — Distance from center of torus to center of tube
-- **`tube`** — Radius of the tube
-- **`radialSegments`** — Number of segments around the tube cross-section (default `12`)
-- **`tubularSegments`** — Number of segments around the torus ring (default `24`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`radius`**: distance from center of torus to center of tube
+- **`tube`**: radius of the tube
+- **`radialSegments`**: number of segments around the tube cross-section (default `12`)
+- **`tubularSegments`**: number of segments around the torus ring (default `24`)
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

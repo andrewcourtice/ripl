@@ -6,7 +6,7 @@ outline: "deep"
 
 A **Scene** is a specialized [Group](/docs/core/essentials/group) that binds to a [Context](/docs/core/essentials/context) and manages the full rendering lifecycle. It handles clearing, rendering in z-index order, and automatic resize re-rendering.
 
-Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear and render, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering. Pointer interactivity (hit testing and event delegation) is handled by the [Context](/docs/core/essentials/context) itself — see [Context: Interaction](/docs/core/essentials/context#interaction).
+Think of a Scene as your drawing surface brought to life. Where a raw Context requires you to manually clear and render, a Scene automates all of that. It maintains a flat, z-sorted render buffer for high-performance rendering. Pointer interactivity (hit testing and event delegation) is handled by the [Context](/docs/core/essentials/context) itself; see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ## Demo
 
@@ -86,7 +86,7 @@ const scene = createScene('.my-container', {
 
 ## Rendering
 
-Call `render()` with no arguments — the scene uses its bound context:
+Call `render()` with no arguments, and the scene uses its bound context:
 
 ```ts
 scene.render();
@@ -100,7 +100,7 @@ When elements are added to or removed from the scene (or any nested group), the 
 
 ## Events
 
-The scene extends the Group event system. Pointer interactivity — DOM event listening, hit testing, and event delegation — is handled by the [Context](/docs/core/essentials/context#interaction). The scene's role is to render elements so the context knows which elements are on screen for hit testing.
+The scene extends the Group event system. Pointer interactivity (DOM event listening, hit testing, and event delegation) is handled by the [Context](/docs/core/essentials/context#interaction). The scene's role is to render elements so the context knows which elements are on screen for hit testing.
 
 ### Pointer Events
 
@@ -145,7 +145,7 @@ The scene emits a `resize` event when the context resizes. Context-level pointer
 
 ## Automatic Resize
 
-By default (`renderOnResize: true`), the scene automatically re-renders when the context resizes. Disable this if you want to handle resize manually — listen for resize on the scene's `context`:
+By default (`renderOnResize: true`), the scene automatically re-renders when the context resizes. Disable this if you want to handle resize manually by listening for resize on the scene's `context`:
 
 ```ts
 const scene = createScene('.container', {

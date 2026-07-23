@@ -65,10 +65,10 @@ const cube = createCube({
 
 ## Properties
 
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`size`** — Side length of the cube
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
-- **`fill`** — Base fill color (shading is applied per-face)
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`size`**: side length of the cube
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
+- **`fill`**: base fill color (shading is applied per-face)
 
 ## Type Guard
 

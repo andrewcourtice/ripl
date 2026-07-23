@@ -1,6 +1,6 @@
 # Polar Scatter Chart
 
-The **Polar Scatter Chart** plots points on a circular grid, where each point's **angle** encodes one variable and its **distance from the center** another — with an optional third variable driving marker size. It's ideal for directional data (wind, radar returns, cyclical measurements) where a cartesian scatter would misrepresent the wrap-around nature of the angle.
+The **Polar Scatter Chart** plots points on a circular grid, where each point's **angle** encodes one variable and its **distance from the center** another; an optional third variable can drive marker size. It suits directional data (wind, radar returns, cyclical measurements) where a cartesian scatter would misrepresent the wrap-around nature of the angle.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -259,13 +259,13 @@ const series = [
 
 ## Options
 
-- **`data`** — The data array
-- **`series`** — Array of series with `id`, `label`, `angle` (degrees accessor), `radius` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
-- **`maxValue`** — Value mapped to the outer ring (defaults to the data maximum)
-- **`levels`** — Number of concentric value rings (default `4`)
-- **`angleTicks`** — Number of angular spokes/labels (default `8`)
-- **`legend`** — `boolean | ChartLegendOptions` — Series legend (shown by default for multiple series)
-- **`format`** — Value formatter for tooltips and ring labels
-- **`padding`** — Chart padding
-- **`title`** — `string | ChartTitleOptions` — Chart title
-- **`animation`** — `boolean | ChartAnimationOptions` — Enable/configure animations
+- **`data`**: the data array
+- **`series`**: array of series with `id`, `label`, `angle` (degrees accessor), `radius` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
+- **`maxValue`**: value mapped to the outer ring (defaults to the data maximum)
+- **`levels`**: number of concentric value rings (default `4`)
+- **`angleTicks`**: number of angular spokes/labels (default `8`)
+- **`legend`** (`boolean | ChartLegendOptions`): series legend (shown by default for multiple series)
+- **`format`**: value formatter for tooltips and ring labels
+- **`padding`**: chart padding
+- **`title`** (`string | ChartTitleOptions`): chart title
+- **`animation`** (`boolean | ChartAnimationOptions`): enable/configure animations

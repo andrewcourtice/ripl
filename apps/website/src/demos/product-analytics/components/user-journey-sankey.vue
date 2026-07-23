@@ -81,7 +81,7 @@ function buildChart() {
         hovered.value = '';
     });
     chart.on('linkclick', event => {
-        selected.value = `Pinned — ${event.data.sourceLabel} → ${event.data.targetLabel}: ${event.data.value.toLocaleString()} users`;
+        selected.value = `Pinned: ${event.data.sourceLabel} → ${event.data.targetLabel}: ${event.data.value.toLocaleString()} users`;
     });
 }
 

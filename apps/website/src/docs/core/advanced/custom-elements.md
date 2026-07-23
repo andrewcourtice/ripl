@@ -148,7 +148,7 @@ When `super.render(context, callback)` is called on a Shape:
 6. If `autoStroke` is true and `stroke` is set, the path is **stroked**
 7. The context state is **restored**
 
-The `this.id` passed to `createPath` is important — it acts as a persistent key that allows the SVG context to efficiently reconcile elements across renders without recreating DOM nodes.
+The `this.id` passed to `createPath` is important: it acts as a persistent key that allows the SVG context to efficiently reconcile elements across renders without recreating DOM nodes.
 
 ## Extending Element
 
@@ -230,7 +230,7 @@ class Badge extends Element<BadgeState> {
 
 ### `getStateValue(key)` / `setStateValue(key, value)`
 
-These protected methods read and write state values. `getStateValue` automatically falls back to the parent group's value if the element's own value is not set — this is how style inheritance works.
+These protected methods read and write state values. `getStateValue` automatically falls back to the parent group's value if the element's own value is not set, which is how style inheritance works.
 
 ### Getter/Setter Pattern
 
@@ -244,7 +244,7 @@ set radius(value) { this.setStateValue('radius', value); }
 
 ## Using Custom Elements
 
-Custom elements work exactly like built-in elements — they can be added to groups, scenes, animated with renderers, and respond to events:
+Custom elements work exactly like built-in elements: they can be added to groups, scenes, animated with renderers, and respond to events:
 
 ```ts
 const star = createStar({

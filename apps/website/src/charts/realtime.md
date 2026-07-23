@@ -266,21 +266,21 @@ chart.clear();
 
 ## Options
 
-- **`series`** — Array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `fillOpacity`
-- **`windowSize`** — Maximum visible data points (default `60`)
-- **`transitionDuration`** — Transition duration per update in ms (default `300`)
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure axes (default `true`)
-- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the y-axis tick labels
-- **`yMin`** / **`yMax`** — Fixed Y axis bounds (auto-computed if omitted)
-- **`padding`** — Chart padding
+- **`series`**: array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `fillOpacity`
+- **`windowSize`**: maximum visible data points (default `60`)
+- **`transitionDuration`**: transition duration per update in ms (default `300`)
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (default `true`)
+- **`axis`** (`boolean | ChartAxisOptions`): configure axes (default `true`)
+- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the y-axis tick labels
+- **`yMin`** / **`yMax`**: fixed Y axis bounds (auto-computed if omitted)
+- **`padding`**: chart padding
 
 ### Methods
 
-- **`push(values)`** — Append a data point for each series. Keys must match series `id` values.
-- **`clear()`** — Reset all buffers and clear the chart.
-- **`update(options)`** — Update chart options (inherited from `Chart`).
-- **`destroy()`** — Destroy the chart and release resources.
+- **`push(values)`**: append a data point for each series. Keys must match series `id` values.
+- **`clear()`**: reset all buffers and clear the chart.
+- **`update(options)`**: update chart options (inherited from `Chart`).
+- **`destroy()`**: destroy the chart and release resources.

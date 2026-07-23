@@ -170,7 +170,7 @@ const chart = createSankeyChart('#container', {
 
 ## Options
 
-- **`nodes`** — Array of `{ id, label, color? }`
-- **`links`** — Array of `{ source, target, value }`
-- **`nodeWidth`** — Width of node rectangles (default `20`)
-- **`nodePadding`** — Vertical padding between nodes (default `10`)
+- **`nodes`**: array of `{ id, label, color? }`
+- **`links`**: array of `{ source, target, value }`
+- **`nodeWidth`**: width of node rectangles (default `20`)
+- **`nodePadding`**: vertical padding between nodes (default `10`)

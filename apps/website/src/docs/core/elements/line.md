@@ -4,7 +4,7 @@ outline: "deep"
 
 # Line
 
-A **Line** draws a straight line between two points (`x1`, `y1`) to (`x2`, `y2`). Lines are stroke-only by default — set the `stroke` property to see them. They're commonly used for axis lines, connectors, separators, and wireframe constructions.
+A **Line** draws a straight line between two points (`x1`, `y1`) to (`x2`, `y2`). Lines are stroke-only by default, so set the `stroke` property to see them. They're commonly used for axis lines, connectors, separators, and wireframe constructions.
 
 ## Example
 
@@ -128,7 +128,7 @@ const line = createLine({
 The line's geometry is defined by `x1`, `y1`, `x2`, and `y2`.
 
 > [!TIP]
-> Lines are stroked by default. Set `stroke` to see the line — `fill` alone won't produce a visible result.
+> Lines are stroked by default. Set `stroke` to see the line; `fill` alone won't produce a visible result.
 
 > [!NOTE]
 > For the full property list, see the [Line API Reference](/docs/api/@ripl/core/).

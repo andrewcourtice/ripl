@@ -244,7 +244,7 @@ const data = [
 
 ### Stacked
 
-Same-type series stack independently — bars stack among bar series, areas among area series:
+Same-type series stack independently, so bars stack among bar series and areas among area series:
 
 ```ts
 createTrendChart('#container', {
@@ -277,23 +277,23 @@ createTrendChart('#container', {
 
 ## Options
 
-- **`data`** — The data array shared by all series
-- **`series`** — Array of series, each a discriminated union on `type`:
-  - **`type: 'line'`** — `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
-  - **`type: 'area'`** — as line, plus `fillOpacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
-  - **`type: 'bar'`** — `id`, `value`, `label`, optional `color`
-- **`key`** — Key accessor for the categorical x-axis
-- **`stacked`** — Stack same-type series (default `false`)
-- **`borderRadius`** — Corner radius applied to bars (default `2`)
-- **`overview`** — `boolean | { size }` — Show the navigator strip; enabling it also turns on in-plot pan/zoom
-- **`navigator`** — `boolean | NavigatorInteractions` — Configure in-plot pan/zoom/brush directly
-- **`labels`** — `boolean | anchor` — Show value labels next to marks
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
-- **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
-- **`format`** — Format applied to values in tooltips and labels
+- **`data`**: the data array shared by all series
+- **`series`**: array of series, each a discriminated union on `type`:
+  - **`type: 'line'`**: `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
+  - **`type: 'area'`**: as line, plus `fillOpacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
+  - **`type: 'bar'`**: `id`, `value`, `label`, optional `color`
+- **`key`**: key accessor for the categorical x-axis
+- **`stacked`**: stack same-type series (default `false`)
+- **`borderRadius`**: corner radius applied to bars (default `2`)
+- **`overview`** (`boolean | { size }`): show the navigator strip; enabling it also turns on in-plot pan/zoom
+- **`navigator`** (`boolean | NavigatorInteractions`): configure in-plot pan/zoom/brush directly
+- **`labels`** (`boolean | anchor`): show value labels next to marks
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
+- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
+- **`format`**: format applied to values in tooltips and labels
 
 ## Events
 

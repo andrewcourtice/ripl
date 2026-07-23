@@ -131,8 +131,8 @@ const chart = createChordChart('#container', {
 
 ## Options
 
-- **`labels`** — Array of group labels
-- **`matrix`** — Square matrix of flow values between groups
-- **`colors`** — Optional array of colors for each group
-- **`padAngle`** — Gap angle between arcs in radians (default `0.04`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`labels`**: array of group labels
+- **`matrix`**: square matrix of flow values between groups
+- **`colors`**: optional array of colors for each group
+- **`padAngle`**: gap angle between arcs in radians (default `0.04`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend

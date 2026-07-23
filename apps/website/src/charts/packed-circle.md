@@ -1,6 +1,6 @@
 # Packed Circle Chart
 
-The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole — proportions read at a glance without a rigid grid. Larger circles are labeled automatically.
+The **Packed Circle Chart** renders each datum as a circle whose **area** encodes its value, packed tightly and non-overlapping inside one large containing circle. It's a softer alternative to the treemap for showing many parts of a whole: proportions read at a glance without a rigid grid. Larger circles are labeled automatically.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -171,11 +171,11 @@ const data = [
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Unique key accessor for each circle
-- **`value`** — Numeric value accessor; encoded as the circle's area
-- **`label`** — Optional label accessor (defaults to `key`)
-- **`colorBy`** — Optional per-circle color accessor
-- **`legend`** — Legend configuration; shown by default, pass `false` to hide
-- **`format`** — Value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`** — Standard chart options
+- **`data`**: the data array
+- **`key`**: unique key accessor for each circle
+- **`value`**: numeric value accessor; encoded as the circle's area
+- **`label`**: optional label accessor (defaults to `key`)
+- **`colorBy`**: optional per-circle color accessor
+- **`legend`**: legend configuration; shown by default, pass `false` to hide
+- **`format`**: value formatter for tooltips
+- **`padding`**, **`title`**, **`animation`**: standard chart options

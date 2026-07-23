@@ -4,7 +4,7 @@ outline: "deep"
 
 # Events
 
-Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped — all familiar patterns for web developers.
+Ripl provides a full event system modeled after the browser DOM. Elements can listen for and emit events, events bubble up through the element hierarchy, and propagation can be stopped, all familiar patterns for web developers.
 
 ## Demo
 
@@ -118,7 +118,7 @@ circle.on('click', (event) => {
 
 When elements are rendered to a [Context](/docs/core/essentials/context), the context automatically delegates DOM pointer events to the correct elements based on hit testing. A [Scene](/docs/core/essentials/scene) manages the render lifecycle, but the context itself owns interaction.
 
-Following browser DOM behavior, pointer events target the **topmost element** (highest `zIndex`) at the cursor position. If overlapping elements exist, only the frontmost one receives the event — lower elements are occluded. The event then [bubbles](#event-bubbling) up through the parent hierarchy as usual.
+Following browser DOM behavior, pointer events target the **topmost element** (highest `zIndex`) at the cursor position. If overlapping elements exist, only the frontmost one receives the event; lower elements are occluded. The event then [bubbles](#event-bubbling) up through the parent hierarchy as usual.
 
 Elements with `pointerEvents` set to `'none'` are transparent to hit testing, allowing events to pass through to the next element below.
 
@@ -145,7 +145,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!IMPORTANT]
-> Pointer events only work when elements have been rendered to a context. The context handles DOM event listening and hit testing — see [Context: Interaction](/docs/core/essentials/context#interaction).
+> Pointer events only work when elements have been rendered to a context. The context handles DOM event listening and hit testing; see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ### Drag Events
 

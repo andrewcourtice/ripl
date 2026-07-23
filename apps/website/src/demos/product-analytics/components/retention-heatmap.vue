@@ -91,7 +91,7 @@ function buildChart() {
         hovered.value = '';
     });
     chart.on('cellclick', event => {
-        selected.value = `Pinned — ${describe(event.data.xLabel, event.data.yLabel, event.data.value)}`;
+        selected.value = `Pinned: ${describe(event.data.xLabel, event.data.yLabel, event.data.value)}`;
     });
 }
 

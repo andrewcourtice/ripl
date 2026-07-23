@@ -4,7 +4,7 @@ outline: "deep"
 
 # Color
 
-Ripl includes a complete color toolkit for parsing, converting, and serializing colors across multiple color spaces. Any CSS color string you pass to `fill` or `stroke` is automatically parsed — but you can also use the color utilities directly for programmatic color manipulation, palette generation, and animation.
+Ripl includes a complete color toolkit for parsing, converting, and serializing colors across multiple color spaces. Any CSS color string you pass to `fill` or `stroke` is automatically parsed, but you can also use the color utilities directly for programmatic color manipulation, palette generation, and animation.
 
 > [!NOTE]
 > For the full API, see the [Color API Reference](/docs/api/@ripl/core/).
@@ -274,7 +274,7 @@ color(100); // last stop
 color.ticks(5); // [0, 25, 50, 75, 100]
 ```
 
-Passing a **three-element** domain `[min, neutral, max]` produces a diverging scale — `neutral` maps to the interpolator's midpoint, so signed data reads symmetrically around a reference value:
+Passing a **three-element** domain `[min, neutral, max]` produces a diverging scale: `neutral` maps to the interpolator's midpoint, so signed data reads symmetrically around a reference value:
 
 ```ts
 import {

@@ -1,6 +1,6 @@
 # Bar Chart
 
-The **Bar Chart** is one of the most versatile chart types in Ripl. It supports grouped and stacked modes, vertical and horizontal orientations, and handles animated entry, exit, and update transitions automatically when data changes. Built-in features include tooltips on hover, a configurable legend, grid lines, and axis labels — all enabled by default so you get a polished result with minimal configuration.
+The **Bar Chart** is one of the most versatile chart types in Ripl. It supports grouped and stacked modes, vertical and horizontal orientations, and handles animated entry, exit, and update transitions automatically when data changes. Tooltips on hover, a configurable legend, grid lines, and axis labels are all built in and enabled by default, so you get a polished result with minimal configuration.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -292,7 +292,7 @@ createBarChart('#container', {
 
 ### 100% stacked
 
-Pass `stacked: 'percent'` to normalize each category to its share of the category total — the value axis is fixed to 0–100% and values default to percentage formatting:
+Pass `stacked: 'percent'` to normalize each category to its share of the category total. The value axis is fixed to 0–100% and values default to percentage formatting:
 
 ```ts
 createBarChart('#container', {
@@ -316,7 +316,7 @@ createBarChart('#container', {
 
 ### Rotated x labels
 
-Rotate crowded tick labels with `axis.x.labelRotation` (degrees — positive tilts labels up to the right):
+Rotate crowded tick labels with `axis.x.labelRotation` (degrees; positive tilts labels up to the right):
 
 ```ts
 createBarChart('#container', {
@@ -368,7 +368,7 @@ createBarChart('#container', {
 
 > [!NOTE]
 > Multiple y-axes apply to vertical grouped bars only. Stacked bars share one cumulative value
-> scale, and horizontal bars read categories along the y-axis — both use the primary axis.
+> scale, and horizontal bars read categories along the y-axis, so both use the primary axis.
 
 ### Horizontal
 
@@ -391,14 +391,14 @@ createBarChart('#container', {
 
 ## Options
 
-- **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, and optional `color`
-- **`key`** — Key accessor for categories
-- **`stacked`** — `false` (grouped, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`orientation`** — `'vertical'` (default) or `'horizontal'`
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
-- **`overview`** — `boolean | { size }` — Show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
-- **`borderRadius`** — Bar corner radius (default `2`)
+- **`data`**: the data array
+- **`series`**: array of series with `id`, `value`, `label`, and optional `color`
+- **`key`**: key accessor for categories
+- **`stacked`**: `false` (grouped, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
+- **`orientation`**: `'vertical'` (default) or `'horizontal'`
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
+- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
+- **`overview`** (`boolean | { size }`): show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
+- **`borderRadius`**: bar corner radius (default `2`)

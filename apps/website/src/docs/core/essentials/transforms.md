@@ -4,7 +4,7 @@ outline: "deep"
 
 # Transforms
 
-Ripl supports element-level transformations — translate, scale, and rotate — that apply to any element or group. Transforms are set as properties on the element and are automatically applied to the rendering context before the element draws.
+Ripl supports element-level transformations (translate, scale, and rotate) that apply to any element or group. Transforms are set as properties on the element and are automatically applied to the rendering context before the element draws.
 
 Every element exposes `translateX`, `translateY`, `transformScaleX`, `transformScaleY`, `rotation`, `transformOriginX`, and `transformOriginY` properties. These work identically across Canvas and SVG contexts and are fully animatable with smooth interpolation.
 

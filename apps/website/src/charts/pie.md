@@ -234,11 +234,11 @@ createPieChart('#container', {
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Unique identifier field for each slice
-- **`value`** — Numeric value field
-- **`label`** — Display label field
-- **`innerRadius`** — Inner radius ratio for donut mode (0–1, default `0`)
-- **`labels`** — `boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions` — Segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customizes `position` / `font` / `fontColor`.
-- **`format`** — `'number' | 'percentage' | 'date' | 'string' | ((value) => string)` — Formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
-- **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
+- **`data`**: the data array
+- **`key`**: unique identifier field for each slice
+- **`value`**: numeric value field
+- **`label`**: display label field
+- **`innerRadius`**: inner radius ratio for donut mode (0–1, default `0`)
+- **`labels`** (`boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions`): segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customizes `position` / `font` / `fontColor`.
+- **`format`** (`'number' | 'percentage' | 'date' | 'string' | ((value) => string)`): formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
+- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend

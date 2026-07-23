@@ -5,7 +5,7 @@ outline: "deep"
 
 # WebGPU (WebGPUContext3D)
 
-The **WebGPU context** provides GPU-accelerated 3D rendering for Ripl, replacing the Canvas 2D painter's algorithm in `@ripl/3d` with a true WebGPU rasterization pipeline. It features hardware depth testing, WGSL shaders with Lambertian diffuse lighting, and 4× MSAA anti-aliasing. All existing `Shape3D` elements work without modification — the rendering path is selected automatically based on the context type.
+The **WebGPU context** provides GPU-accelerated 3D rendering for Ripl, replacing the Canvas 2D painter's algorithm in `@ripl/3d` with a true WebGPU rasterization pipeline. It features hardware depth testing, WGSL shaders with Lambertian diffuse lighting, and 4× MSAA anti-aliasing. All existing `Shape3D` elements work without modification because the rendering path is selected automatically based on the context type.
 
 > [!NOTE]
 > WebGPU requires a compatible browser (Chrome 113+, Edge 113+, Firefox Nightly). The existing Canvas `Context3D` remains available as a fallback.
@@ -149,9 +149,9 @@ const [screenX, screenY, depth] = context.project([x, y, z]);
 
 WebGPU is the best choice when:
 
-- **Complex 3D scenes** — Hardware depth testing handles intersecting geometry correctly
-- **Large meshes** — GPU-accelerated rendering is significantly faster than software rasterization
-- **Visual quality** — 4× MSAA anti-aliasing produces smooth edges
+- **Complex 3D scenes**: hardware depth testing handles intersecting geometry correctly
+- **Large meshes**: GPU-accelerated rendering is significantly faster than software rasterization
+- **Visual quality**: 4× MSAA anti-aliasing produces smooth edges
 
 WebGPU is less ideal when:
 
@@ -188,23 +188,23 @@ const context = await createContext('#app');
 ```
 
 > [!IMPORTANT]
-> `createContext` from `@ripl/webgpu` is **async** — it returns a `Promise<WebGPUContext3D>`. You must `await` it.
+> `createContext` from `@ripl/webgpu` is **async**: it returns a `Promise<WebGPUContext3D>`. You must `await` it.
 
 ### 3. Everything else stays the same
 
-- `createScene(context)` — works unchanged
-- `createCamera(context, options)` — works unchanged
-- `createRenderer(scene)` — works unchanged
-- All `Shape3D` elements — work unchanged
-- Event handlers (`mouseenter`, `mouseleave`, etc.) — work unchanged
-- Transitions and animations — work unchanged
+- `createScene(context)` works unchanged
+- `createCamera(context, options)` works unchanged
+- `createRenderer(scene)` works unchanged
+- All `Shape3D` elements work unchanged
+- Event handlers (`mouseenter`, `mouseleave`, etc.) work unchanged
+- Transitions and animations work unchanged
 
 ### What changes under the hood
 
 | Aspect | Context3D (Canvas 2D) | WebGPUContext3D |
 |--------|----------------------|-----------------|
 | Depth sorting | CPU painter's algorithm | Hardware depth buffer |
-| Rasterisation | Canvas 2D fill/stroke | GPU fragment shader |
+| Rasterization | Canvas 2D fill/stroke | GPU fragment shader |
 | Shading | CPU per-face color | GPU per-fragment Lambertian |
 | Anti-aliasing | None (canvas default) | 4× MSAA |
 | Intersecting geometry | May render incorrectly | Correct via depth test |

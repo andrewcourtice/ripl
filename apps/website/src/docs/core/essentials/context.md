@@ -4,7 +4,7 @@ outline: "deep"
 
 # Context
 
-A **Context** is the rendering abstraction at the heart of Ripl. It sits between your elements and the underlying rendering technology — whether that's an HTML Canvas or an SVG element. By programming against the Context API, your drawing code becomes completely backend-agnostic: switch from Canvas to SVG (or any future context) by changing a single import.
+A **Context** is the rendering abstraction at the heart of Ripl. It sits between your elements and the underlying rendering technology, whether that's an HTML Canvas or an SVG element. By programming against the Context API, your drawing code becomes completely backend-agnostic: switch from Canvas to SVG (or any future context) by changing a single import.
 
 The context manages the drawing state stack, coordinate transforms, path creation, and fill/stroke operations. It automatically sizes itself to fit its parent container and emits events when it resizes, making responsive rendering straightforward.
 
@@ -109,11 +109,11 @@ context.markRenderEnd();
 ```
 
 > [!TIP]
-> When using a Scene or Renderer, you don't need `batch()` — they manage the render lifecycle automatically.
+> When using a Scene or Renderer, you don't need `batch()` because they manage the render lifecycle automatically.
 
 ## Interaction
 
-The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior — when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
+The context owns all pointer interactivity. It listens for DOM mouse events on its element, performs hit testing against rendered elements, and delegates `click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, and `dragend` events to the topmost Ripl element at the cursor automatically. This matches browser DOM behavior: when elements overlap, only the frontmost element (highest `zIndex`) receives the event, and it [bubbles](/docs/core/advanced/events#event-bubbling) up through the parent hierarchy.
 
 Interaction is enabled by default. You can disable it via the `interactive` option:
 

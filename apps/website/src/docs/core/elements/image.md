@@ -4,7 +4,7 @@ outline: "deep"
 
 # Image
 
-An **Image** renders a `CanvasImageSource` (such as an `HTMLImageElement`, `HTMLCanvasElement`, or `ImageBitmap`) to any context. The standout feature is crossfade interpolation — when you transition between two image sources using `interpolateImage`, Ripl composites both images onto an offscreen canvas and smoothly blends between them. This makes image carousels, thumbnail previews, and data-driven image swaps trivially easy to animate.
+An **Image** renders a `CanvasImageSource` (such as an `HTMLImageElement`, `HTMLCanvasElement`, or `ImageBitmap`) to any context. The standout feature is crossfade interpolation: when you transition between two image sources using `interpolateImage`, Ripl composites both images onto an offscreen canvas and smoothly blends between them. This makes image carousels, thumbnail previews, and data-driven image swaps trivially easy to animate.
 
 ## Example
 

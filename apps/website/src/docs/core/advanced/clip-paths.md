@@ -4,7 +4,7 @@ outline: "deep"
 
 # Clip Paths
 
-A **clip path** turns a shape into a clipping mask — instead of being filled or stroked, the shape defines a visible region. Any sibling elements rendered after the clip shape (within the same group) are only visible where they overlap with the clip region.
+A **clip path** turns a shape into a clipping mask. Instead of being filled or stroked, the shape defines a visible region. Any sibling elements rendered after the clip shape (within the same group) are only visible where they overlap with the clip region.
 
 ## Demo
 
@@ -104,15 +104,15 @@ When a shape has `clip: true`:
 3. The clip region remains active for all subsequent siblings in the same group
 4. When the group finishes rendering, the clip is automatically removed (via save/restore scoping)
 
-This means clips are **scoped to their group** — they don't leak to elements outside the group.
+This means clips are **scoped to their group**, so they don't leak to elements outside the group.
 
 ## The `clip` Property
 
-The `clip` option is available on all [Shape](/docs/core/essentials/shape) types. Set `clip: true` to use the shape as a clipping mask instead of rendering it visually. When active, `autoFill`, `autoStroke`, `fill`, and `stroke` have no effect — the shape is never drawn, only used to define the visible region.
+The `clip` option is available on all [Shape](/docs/core/essentials/shape) types. Set `clip: true` to use the shape as a clipping mask instead of rendering it visually. When active, `autoFill`, `autoStroke`, `fill`, and `stroke` have no effect: the shape is never drawn, only used to define the visible region.
 
 ## Combining with Transforms
 
-Clip shapes support all the same transforms as regular shapes — `translateX`, `translateY`, `rotation`, `transformScaleX`, `transformScaleY`, etc. The clip region will be transformed accordingly.
+Clip shapes support all the same transforms as regular shapes: `translateX`, `translateY`, `rotation`, `transformScaleX`, `transformScaleY`, etc. The clip region will be transformed accordingly.
 
 ```ts
 createCircle({

@@ -27,7 +27,7 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../../../pack
 export default defineConfig({
     outDir: '../dist',
     title: 'Ripl',
-    description: 'One unified TypeScript API for drawing 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU — high-performance and zero-dependency.',
+    description: 'One unified, high-performance, zero-dependency TypeScript API for drawing 2D graphics, charts, and data visualizations across Canvas, SVG, Terminal, and WebGPU.',
     ignoreDeadLinks: true,
 
     head: [
@@ -67,7 +67,7 @@ export default defineConfig({
         }],
         ['meta', {
             property: 'og:title',
-            content: 'Ripl — one API for drawing in any context',
+            content: 'Ripl: one API for drawing in any context',
         }],
         ['meta', {
             property: 'og:description',
@@ -87,7 +87,7 @@ export default defineConfig({
         }],
         ['meta', {
             name: 'twitter:title',
-            content: 'Ripl — one API for drawing in any context',
+            content: 'Ripl: one API for drawing in any context',
         }],
         ['meta', {
             name: 'twitter:description',

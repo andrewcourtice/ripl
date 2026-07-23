@@ -4,7 +4,7 @@ outline: "deep"
 
 # Rect
 
-A **Rect** draws a rectangle defined by position (`x`, `y`) and dimensions (`width`, `height`), with optional rounded corners via `borderRadius`. Rects are one of the most versatile shapes in Ripl — used for backgrounds, cards, bar chart segments, progress indicators, and layout scaffolding. The `borderRadius` property accepts a single number for uniform rounding or a `[topLeft, topRight, bottomRight, bottomLeft]` array for per-corner control.
+A **Rect** draws a rectangle defined by position (`x`, `y`) and dimensions (`width`, `height`), with optional rounded corners via `borderRadius`. Rects are one of the most versatile shapes in Ripl, used for backgrounds, cards, bar chart segments, progress indicators, and layout scaffolding. The `borderRadius` property accepts a single number for uniform rounding or a `[topLeft, topRight, bottomRight, bottomLeft]` array for per-corner control.
 
 ## Example
 

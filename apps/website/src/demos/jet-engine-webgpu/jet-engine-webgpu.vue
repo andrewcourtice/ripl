@@ -2,7 +2,7 @@
     <div class="jet-engine-demo">
         <div class="jet-engine-demo__header">
             <h1 class="jet-engine-demo__title">Jet Engine Exploded View</h1>
-            <p class="jet-engine-demo__subtitle">Interactive 3D demo powered by @ripl/webgpu — GPU-accelerated rendering with hardware depth testing</p>
+            <p class="jet-engine-demo__subtitle">Interactive 3D demo powered by @ripl/webgpu, with GPU-accelerated rendering and hardware depth testing</p>
         </div>
         <div class="jet-engine-demo__controls">
             <RiplSwitch v-model="rotating" label="Rotate" />

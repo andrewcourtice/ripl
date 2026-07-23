@@ -4,7 +4,7 @@ outline: "deep"
 
 # Devtools
 
-Ripl ships browser developer tools for inspecting and editing live scenes. They come in two parts: the **[@ripl/devtools](https://www.npmjs.com/package/@ripl/devtools)** package — a small runtime bridge you opt into in your app — and a **Chrome extension** that adds a **Ripl** panel to the browser devtools, much like the built-in Elements panel.
+Ripl ships browser developer tools for inspecting and editing live scenes. They come in two parts: the **[@ripl/devtools](https://www.npmjs.com/package/@ripl/devtools)** package (a small runtime bridge you opt into in your app) and a **Chrome extension** that adds a **Ripl** panel to the browser devtools, much like the built-in Elements panel.
 
 Once bound, the panel shows the full element tree of every Ripl context on the page, lets you edit element properties live, toggles renderer debug overlays, and reports which events have listeners attached.
 
@@ -13,7 +13,7 @@ Once bound, the panel shows the full element tree of every Ripl context on the p
 
 ## Demo
 
-The scene below is bound to the devtools. In fact, **every demo on this site is devtools-bound** — install the extension, open your browser devtools, and select the **Ripl** panel to inspect any of them live.
+The scene below is bound to the devtools. In fact, **every demo on this site is devtools-bound**: install the extension, open your browser devtools, and select the **Ripl** panel to inspect any of them live.
 
 :::tabs
 == Demo
@@ -49,7 +49,7 @@ npm install @ripl/devtools
 
 ## Setup
 
-Call `createDevtools` once per context, passing the context and — optionally — its scene and renderer. Binding the scene enables the element tree; binding the renderer enables the debug overlay switches.
+Call `createDevtools` once per context, passing the context and, optionally, its scene and renderer. Binding the scene enables the element tree; binding the renderer enables the debug overlay switches.
 
 ```ts
 import {
@@ -74,15 +74,15 @@ if (import.meta.env.DEV) {
 }
 ```
 
-A few things worth knowing:
+A few things to know:
 
 - **`scene` and `renderer` are optional.** With just a context you still get context detection and metadata; add the scene for the element tree and the renderer for debug overlays.
 - **One binding per context.** Calling `createDevtools` again for the same context returns the existing binding.
-- **Idle by default.** Until you open the **Ripl** panel, a binding only announces its presence — no scene serialization or event listening happens, so it is effectively zero-cost. This is why the example gates on `import.meta.env.DEV`: it is safe to ship, but there is rarely a reason to bind in production.
+- **Idle by default.** Until you open the **Ripl** panel, a binding only announces its presence. No scene serialization or event listening happens, so it is effectively zero-cost. This is why the example gates on `import.meta.env.DEV`: it is safe to ship, but there is rarely a reason to bind in production.
 - **Self-cleaning.** A binding disposes automatically when its context, scene, or renderer is destroyed. Call `dispose()` yourself if you need to unbind sooner.
 
 > [!TIP]
-> Bindings are cheap, but you can leave them enabled in production too if you want your live app to be inspectable — the bridge stays idle until someone opens the panel.
+> Bindings are cheap, but you can leave them enabled in production too if you want your live app to be inspectable. The bridge stays idle until someone opens the panel.
 
 ## Options
 
@@ -103,7 +103,7 @@ createDevtools(context, scene, renderer, {
 The companion Chrome extension adds a **Ripl** panel to your browser devtools with:
 
 - an **element tree** of every context on the page, rendered as pseudo-XML with each element's set properties as attributes;
-- an **editable properties** panel — change numbers, strings, colors and more, and the edits round-trip to the live element;
+- an **editable properties** panel to change numbers, strings, colors and more, with edits that round-trip to the live element;
 - **renderer debug switches** for an FPS counter, element count, and bounding boxes;
 - an **events** view showing which events the selected element emits and whether any listeners are attached.
 

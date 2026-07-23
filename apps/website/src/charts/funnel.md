@@ -119,11 +119,11 @@ const chart = createFunnelChart('#container', {
 
 ## Options
 
-- **`data`** — The data array (ordered from widest to narrowest)
-- **`key`** — Unique key accessor
-- **`value`** — Value accessor (determines bar width)
-- **`label`** — Label accessor (displayed inside bars)
-- **`colorBy`** — Optional per-item color accessor
-- **`legend`** — Legend configuration; shown by default, pass `false` to hide
-- **`gap`** — Gap between segments in pixels (default `4`)
-- **`borderRadius`** — Segment corner radius (default `4`)
+- **`data`**: the data array (ordered from widest to narrowest)
+- **`key`**: unique key accessor
+- **`value`**: value accessor (determines bar width)
+- **`label`**: label accessor (displayed inside bars)
+- **`colorBy`**: optional per-item color accessor
+- **`legend`**: legend configuration; shown by default, pass `false` to hide
+- **`gap`**: gap between segments in pixels (default `4`)
+- **`borderRadius`**: segment corner radius (default `4`)

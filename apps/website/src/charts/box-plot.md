@@ -121,13 +121,13 @@ const chart = createBoxPlotChart('#container', {
 ## Data Format
 
 Each item contributes one numeric value to a category. The chart groups items by the `key`
-accessor and summarizes the `value` accessor per group — no pre-aggregation required.
+accessor and summarizes the `value` accessor per group, so no pre-aggregation is required.
 
 ## Options
 
-- **`data`** — The data array
-- **`key`** — Accessor for the category (field name or function)
-- **`value`** — Accessor for the numeric value (field name or function)
-- **`categories`** — Explicit category order (default: first-seen order)
-- **`color`** — Box color (default: first palette color)
-- **`format`** — Format applied to summary values in tooltips
+- **`data`**: the data array
+- **`key`**: accessor for the category (field name or function)
+- **`value`**: accessor for the numeric value (field name or function)
+- **`categories`**: explicit category order (default: first-seen order)
+- **`color`**: box color (default: first palette color)
+- **`format`**: format applied to summary values in tooltips

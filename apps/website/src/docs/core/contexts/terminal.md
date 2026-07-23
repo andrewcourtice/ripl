@@ -8,7 +8,7 @@ The **Terminal context** renders elements to a character-based terminal using Un
 
 ## Demo
 
-The demo below renders a bar chart live in an xterm.js terminal widget — the same `@ripl/terminal` code that runs in Node.js:
+The demo below renders a bar chart live in an xterm.js terminal widget, using the same `@ripl/terminal` code that runs in Node.js:
 
 <ClientOnly>
 <example-terminal @ready="onTerminalReady" />
@@ -51,7 +51,7 @@ createCircle({
 
 ### Browser (xterm.js)
 
-Since `@ripl/terminal` is runtime-agnostic, you can wire it to any output that implements the `TerminalOutput` interface — including an xterm.js instance in the browser:
+Since `@ripl/terminal` is runtime-agnostic, you can wire it to any output that implements the `TerminalOutput` interface, including an xterm.js instance in the browser:
 
 ```ts
 import {
@@ -90,13 +90,13 @@ The terminal context:
 
 ## Logical Sizing
 
-By default the context's coordinate space **is** the braille pixel grid — `columns × 2` wide by
+By default the context's coordinate space **is** the braille pixel grid: `columns × 2` wide by
 `rows × 4` tall (an 80×24 terminal is a 160×96 space). A scene authored in typical screen pixels
 (fixed radii, offsets in the hundreds) will overflow that space entirely.
 
 Pass `logicalWidth`/`logicalHeight` to author in a larger logical space instead. The context then
 reports the logical size via `context.width`/`context.height` and uniformly scales + centers
-(letterboxes) it into the character grid — the same way the canvas context maps CSS pixels onto its
+(letterboxes) it into the character grid, the same way the canvas context maps CSS pixels onto its
 device-pixel backing store:
 
 ```ts
@@ -133,20 +133,20 @@ Pass a custom rasterizer via the `rasterizer` option when creating a context.
 
 ## Limitations
 
-- **No interaction** — Terminal contexts do not support pointer events or hit testing
-- **No gradients** — CSS gradient strings are not supported; use solid colors
-- **No image drawing** — `drawImage` is a no-op
-- **Monospace text** — Text is placed at character-grid positions; font metrics are approximate
-- **No transforms** — `rotate`, `scale`, `translate` are currently no-ops
-- **Resolution** — Limited by braille dot density (2×4 per cell)
+- **No interaction**: terminal contexts do not support pointer events or hit testing
+- **No gradients**: CSS gradient strings are not supported; use solid colors
+- **No image drawing**: `drawImage` is a no-op
+- **Monospace text**: text is placed at character-grid positions; font metrics are approximate
+- **No transforms**: `rotate`, `scale`, `translate` are currently no-ops
+- **Resolution**: limited by braille dot density (2×4 per cell)
 
 ## When to Use Terminal
 
 Terminal is the best choice when:
 
-- **Server-side rendering** — Visualize data in CI/CD pipelines, monitoring dashboards, or CLI tools
-- **No browser available** — Render charts and graphics in headless environments
-- **Quick prototyping** — See rendering output without setting up a browser environment
+- **Server-side rendering**: visualize data in CI/CD pipelines, monitoring dashboards, or CLI tools
+- **No browser available**: render charts and graphics in headless environments
+- **Quick prototyping**: see rendering output without setting up a browser environment
 
 <script lang="ts" setup>
 import {

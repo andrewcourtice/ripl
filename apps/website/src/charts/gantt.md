@@ -209,19 +209,19 @@ chart.update({ data: newData });
 
 ## Options
 
-- **`data`** — The data array (one item per task)
-- **`key`** — Unique key accessor per task
-- **`label`** — Label accessor for y-axis task names
-- **`start`** — Start date accessor
-- **`end`** — End date accessor
-- **`colorBy`** — Optional color accessor per task
-- **`progress`** — Optional progress accessor (0–1)
-- **`dependencies`** — Optional accessor returning the keys of each task's predecessors; draws curved finish-to-start connectors between dependent tasks
-- **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines
-- **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips
-- **`axis`** — `boolean | ChartAxisOptions` — Configure axes
-- **`format`** — `'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)` — Formats the numeric progress value in the task tooltip (defaults to a percentage)
-- **`showToday`** — Show a vertical "today" marker line (default `true`)
-- **`todayColor`** — Color for the today marker (default `#ef4444`)
-- **`borderRadius`** — Bar corner radius (default `3`)
-- **`padding`** — Chart padding
+- **`data`**: the data array (one item per task)
+- **`key`**: unique key accessor per task
+- **`label`**: label accessor for y-axis task names
+- **`start`**: start date accessor
+- **`end`**: end date accessor
+- **`colorBy`**: optional color accessor per task
+- **`progress`**: optional progress accessor (0–1)
+- **`dependencies`**: optional accessor returning the keys of each task's predecessors; draws curved finish-to-start connectors between dependent tasks
+- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`axis`** (`boolean | ChartAxisOptions`): configure axes
+- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the numeric progress value in the task tooltip (defaults to a percentage)
+- **`showToday`**: show a vertical "today" marker line (default `true`)
+- **`todayColor`**: color for the today marker (default `#ef4444`)
+- **`borderRadius`**: bar corner radius (default `3`)
+- **`padding`**: chart padding

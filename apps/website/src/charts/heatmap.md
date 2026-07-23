@@ -1,6 +1,6 @@
 # Heatmap Chart
 
-The **Heatmap Chart** displays data as a matrix of colored cells, where color intensity encodes each cell's value. It's ideal for spotting patterns across two categorical dimensions — time-of-day vs day-of-week, for example. Cells animate smoothly between values on update, and the color range is configurable via a `[low, high]` color tuple.
+The **Heatmap Chart** displays data as a matrix of colored cells, where color intensity encodes each cell's value. It's ideal for spotting patterns across two categorical dimensions, such as time-of-day against day-of-week. Cells animate smoothly between values on update, and the color range is configurable via a `[low, high]` color tuple.
 
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -159,12 +159,12 @@ const chart = createHeatmapChart('#container', {
 
 ## Options
 
-- **`data`** — The data array (one item per cell)
-- **`keyX`** — Accessor for the x-axis category
-- **`keyY`** — Accessor for the y-axis category
-- **`value`** — Accessor for the cell value
-- **`xCategories`** — Ordered list of x-axis categories
-- **`yCategories`** — Ordered list of y-axis categories
-- **`colors`** — Tuple of `[lowColor, highColor]` hex strings
-- **`borderRadius`** — Cell corner radius (default `2`)
-- **`labels`** — Show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color
+- **`data`**: the data array (one item per cell)
+- **`keyX`**: accessor for the x-axis category
+- **`keyY`**: accessor for the y-axis category
+- **`value`**: accessor for the cell value
+- **`xCategories`**: ordered list of x-axis categories
+- **`yCategories`**: ordered list of y-axis categories
+- **`colors`**: tuple of `[lowColor, highColor]` hex strings
+- **`borderRadius`**: cell corner radius (default `2`)
+- **`labels`**: show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color

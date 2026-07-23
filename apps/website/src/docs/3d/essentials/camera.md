@@ -64,13 +64,13 @@ const camera = createCamera(context, {
 
 ## Options
 
-- **`position`** — `Vector3` — Camera position in world space (default `[0, 0, 5]`)
-- **`target`** — `Vector3` — Point the camera looks at (default `[0, 0, 0]`)
-- **`up`** — `Vector3` — Up direction (default `[0, 1, 0]`)
-- **`fov`** — Field of view in degrees (default `60`)
-- **`near`** — Near clipping plane (default `0.1`)
-- **`far`** — Far clipping plane (default `1000`)
-- **`projection`** — `'perspective'` or `'orthographic'` (default `'perspective'`)
+- **`position`** (`Vector3`): camera position in world space (default `[0, 0, 5]`)
+- **`target`** (`Vector3`): point the camera looks at (default `[0, 0, 0]`)
+- **`up`** (`Vector3`): up direction (default `[0, 1, 0]`)
+- **`fov`**: field of view in degrees (default `60`)
+- **`near`**: near clipping plane (default `0.1`)
+- **`far`**: far clipping plane (default `1000`)
+- **`projection`**: `'perspective'` or `'orthographic'` (default `'perspective'`)
 
 ## Methods
 
@@ -156,9 +156,9 @@ Pass `interactions: true` to enable all interactions with default sensitivity, o
 
 ### Controls
 
-- **Orbit / Pivot** — Left-click + drag
-- **Pan** — Middle-click + drag, or Shift + left-click + drag
-- **Zoom** — Scroll wheel
+- **Orbit / Pivot**: left-click + drag
+- **Pan**: middle-click + drag, or Shift + left-click + drag
+- **Zoom**: scroll wheel
 
 ### dispose()
 

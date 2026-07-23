@@ -65,11 +65,11 @@ const cone = createCone({
 
 ## Properties
 
-- **`radius`** — Base radius
-- **`height`** — Height from base to apex
-- **`segments`** — Number of radial segments (default `16`)
-- **`x`** / **`y`** / **`z`** — Position in world space (default `0`)
-- **`rotationX`** / **`rotationY`** / **`rotationZ`** — Rotation around each axis in radians (default `0`)
+- **`radius`**: base radius
+- **`height`**: height from base to apex
+- **`segments`**: number of radial segments (default `16`)
+- **`x`** / **`y`** / **`z`**: position in world space (default `0`)
+- **`rotationX`** / **`rotationY`** / **`rotationZ`**: rotation around each axis in radians (default `0`)
 
 <script lang="ts" setup>
 import {

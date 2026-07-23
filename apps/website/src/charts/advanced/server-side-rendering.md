@@ -4,7 +4,7 @@ outline: "deep"
 
 # Server-Side Rendering
 
-Ripl charts can render without a browser. The `@ripl/node` package configures Ripl's platform factory for Node.js — animation timing, text measurement, default state — and re-exports everything from `@ripl/core` and `@ripl/terminal`, so a single import gets you a working headless pipeline.
+Ripl charts can render without a browser. The `@ripl/node` package configures Ripl's platform factory for Node.js (animation timing, text measurement, default state) and re-exports everything from `@ripl/core` and `@ripl/terminal`, so a single import gets you a working headless pipeline.
 
 > [!NOTE]
 > For the platform details (which factory bindings `@ripl/node` installs), see the [Node runtime docs](/docs/core/contexts/node).
@@ -15,7 +15,7 @@ Ripl charts can render without a browser. The `@ripl/node` package configures Ri
 npm install @ripl/node @ripl/charts
 ```
 
-Import `@ripl/node` at the top of your entry point. The import itself configures the runtime — it is the Node equivalent of importing `@ripl/web` in the browser:
+Import `@ripl/node` at the top of your entry point. The import itself configures the runtime; it is the Node equivalent of importing `@ripl/web` in the browser:
 
 ```ts
 import '@ripl/node';
@@ -74,10 +74,10 @@ const chart = createBarChart(context, {
 
 Two options matter in headless environments:
 
-- **`animation: false`** — renders the final frame immediately. Animations do run headlessly (`@ripl/node` shims `requestAnimationFrame` onto `setTimeout`), but for a one-shot render or a CI snapshot you want the settled state, not a tween.
-- **`logicalWidth` / `logicalHeight`** — author the chart in CSS-pixel coordinates; the terminal context scales and letterboxes that space into the character grid.
+- **`animation: false`**: renders the final frame immediately. Animations do run headlessly (`@ripl/node` shims `requestAnimationFrame` onto `setTimeout`), but for a one-shot render or a CI snapshot you want the settled state, not a tween.
+- **`logicalWidth` / `logicalHeight`**: author the chart in CSS-pixel coordinates; the terminal context scales and letterboxes that space into the character grid.
 
-Interactive features (tooltips, hover highlights, crosshair) are inert in the terminal — it has no pointer events.
+Interactive features (tooltips, hover highlights, crosshair) are inert in the terminal, which has no pointer events.
 
 ## Exporting
 
@@ -99,7 +99,7 @@ const image = await snapshot.toImage();
 
 ## Awaiting a Render
 
-`render()` is async and resolves when the render pass (including any transitions) completes. When you need to export deterministically — for example in a test or a build step — disable `autoRender` and await an explicit render:
+`render()` is async and resolves when the render pass (including any transitions) completes. When you need to export deterministically, for example in a test or a build step, disable `autoRender` and await an explicit render:
 
 ```ts
 const chart = createBarChart(context, {

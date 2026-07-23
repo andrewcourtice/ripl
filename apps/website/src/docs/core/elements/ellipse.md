@@ -4,7 +4,7 @@ outline: "deep"
 
 # Ellipse
 
-An **Ellipse** draws an elliptical shape with independent X and Y radii (`radiusX`, `radiusY`), intrinsic `rotation`, and optional `startAngle`/`endAngle` for partial ellipses. Use ellipses when you need non-uniform curvature — for example, orbit paths, oval indicators, or stylized backgrounds.
+An **Ellipse** draws an elliptical shape with independent X and Y radii (`radiusX`, `radiusY`), intrinsic `rotation`, and optional `startAngle`/`endAngle` for partial ellipses. Use ellipses when you need non-uniform curvature, for example orbit paths, oval indicators, or stylized backgrounds.
 
 ## Example
 

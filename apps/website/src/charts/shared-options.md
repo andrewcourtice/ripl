@@ -26,7 +26,7 @@ const chart = createBarChart('#container', {
 ```
 
 Every side defaults to `10`. Supply any subset of `top`/`right`/`bottom`/`left` to override
-individual sides — the rest keep the default.
+individual sides; the rest keep the default.
 
 | Property | Type | Default |
 | --- | --- | --- |
@@ -58,7 +58,7 @@ chart.update({
 | `duration` | `number` | `1000` | Base duration in milliseconds |
 | `ease` | `string \| Ease` | `'easeOutCubic'` | Easing function name or function |
 
-The `duration` acts as a base value — individual chart animations scale relative to it. Setting `duration: 500` makes all animations twice as fast.
+The `duration` acts as a base value that individual chart animations scale relative to. Setting `duration: 500` makes all animations twice as fast.
 
 ## Title
 
@@ -322,7 +322,7 @@ Internally, each input is normalized into a fully resolved options object using 
 
 ## Theme
 
-Every chart accepts a `theme` — a registered name (`'light'`, `'dark'`, `'colorblind'`, `'auto'`) or a `Theme` object. `'auto'` follows the OS `prefers-color-scheme`. Set a global default for all charts with `setDefaultTheme`.
+Every chart accepts a `theme`, either a registered name (`'light'`, `'dark'`, `'colorblind'`, `'auto'`) or a `Theme` object. `'auto'` follows the OS `prefers-color-scheme`. Set a global default for all charts with `setDefaultTheme`.
 
 <!-- eslint-skip -->
 ```ts
@@ -339,7 +339,7 @@ A `Theme` bundles the series `palette`, the sequential color scheme, and the fur
 
 ## Annotations
 
-Cartesian charts (line, area, bar, scatter) accept `annotations` — reference lines, shaded bands, and point markers drawn over the plot and resolved through the axis scales:
+Cartesian charts (line, area, bar, scatter) accept `annotations` for reference lines, shaded bands, and point markers. They're drawn over the plot and resolved through the axis scales:
 
 <!-- eslint-skip -->
 ```ts
@@ -370,7 +370,7 @@ createLineChart('#container', {
 
 ## Accessibility
 
-Set `description` for an accessible label — it applies `role="img"` and `aria-label` to the chart's rendering element (falling back to the title text). Use the `'colorblind'` theme for a colorblind-safe palette.
+Set `description` for an accessible label. It applies `role="img"` and `aria-label` to the chart's rendering element (falling back to the title text). Use the `'colorblind'` theme for a colorblind-safe palette.
 
 <!-- eslint-skip -->
 ```ts

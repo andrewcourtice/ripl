@@ -4,9 +4,9 @@ outline: "deep"
 
 # Group
 
-A **Group** is a container for organizing elements into a hierarchy — much like a `<div>` in HTML. Groups support property inheritance, child management, and powerful querying capabilities inspired by the DOM.
+A **Group** is a container for organizing elements into a hierarchy, much like a `<div>` in HTML. Groups support property inheritance, child management, and powerful querying capabilities inspired by the DOM.
 
-Groups are the backbone of Ripl's scene graph. By nesting elements inside groups, you can apply shared styles (which cascade to children like CSS), manage collections of elements as a unit, and use CSS-like selectors to find elements deep in the tree. Groups themselves don't draw anything — they orchestrate their children.
+Groups are the backbone of Ripl's scene graph. By nesting elements inside groups, you can apply shared styles (which cascade to children like CSS), manage collections of elements as a unit, and use CSS-like selectors to find elements deep in the tree. Groups themselves don't draw anything; they orchestrate their children.
 
 ## Demo
 
@@ -215,12 +215,12 @@ rect + circle
 ```
 
 > [!NOTE]
-> Type and id matching is **case-sensitive** — `#Item` and `rect` will not match an element with id `item` or type `Rect`. Extra whitespace in a selector is collapsed, so `group   circle` and `group circle` are equivalent.
+> Type and id matching is **case-sensitive**: `#Item` and `rect` will not match an element with id `item` or type `Rect`. Extra whitespace in a selector is collapsed, so `group   circle` and `group circle` are equivalent.
 
 ### `matches(selector)`
 
 Tests whether an element matches a CSS-like selector, returning a boolean. `matches` is a method on
-**every element** (it comes from `Element`, so leaf shapes have it too — not just groups).
+**every element** (it comes from `Element`, so leaf shapes have it too, not only groups).
 Multi-segment selectors (with combinators) are evaluated relative to the element's root, so ancestor
 and sibling constraints are honored:
 
@@ -243,7 +243,7 @@ matches(circle, 'circle.highlighted');
 ### `closest(selector)`
 
 Walks up the parent chain (starting with the element itself) and returns the nearest ancestor that
-matches the selector, or `undefined` if none do — the inverse of `query`. Like `matches`, `closest`
+matches the selector, or `undefined` if none do, the inverse of `query`. Like `matches`, `closest`
 is available on **every element**:
 
 ```ts
@@ -269,7 +269,7 @@ const outerGroup = createGroup({
 });
 ```
 
-Child elements inherit properties through the full chain — `circle1` inherits `lineWidth` from `outerGroup` and `fill` from `innerGroup`.
+Child elements inherit properties through the full chain: `circle1` inherits `lineWidth` from `outerGroup` and `fill` from `innerGroup`.
 
 ## Rendering
 
@@ -279,7 +279,7 @@ Call `render(context)` to draw all children in order:
 group.render(context);
 ```
 
-Groups themselves are **abstract** — they don't draw anything directly. They simply iterate over their children and render each one.
+Groups themselves are **abstract** and don't draw anything directly. They simply iterate over their children and render each one.
 
 > [!NOTE]
 > For the full list of Group properties and methods, see the [Group API Reference](/docs/api/@ripl/core/).

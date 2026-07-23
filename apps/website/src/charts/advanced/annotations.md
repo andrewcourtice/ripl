@@ -4,7 +4,7 @@ outline: "deep"
 
 # Annotations
 
-Cartesian charts (line, area, bar, scatter, and the other axis-based charts) accept an `annotations` option — an array of reference lines, shaded bands, and point markers drawn over the plot. Each annotation is positioned by resolving its data values through the chart's axis scales, so annotations stay locked to the data as it updates, animates, or is panned and zoomed.
+Cartesian charts (line, area, bar, scatter, and the other axis-based charts) accept an `annotations` option: an array of reference lines, shaded bands, and point markers drawn over the plot. Each annotation is positioned by resolving its data values through the chart's axis scales, so annotations stay locked to the data as it updates, animates, or is panned and zoomed.
 
 > [!NOTE]
 > For the full API, see `ChartAnnotation` in the [Charts API Reference](/docs/api/@ripl/charts/).
@@ -49,7 +49,7 @@ const chart = createLineChart('#container', {
 });
 ```
 
-Annotations render above the series (so they are never hidden behind bars or areas) and never intercept pointer events — tooltips and hover highlights on the underlying data keep working.
+Annotations render above the series (so they are never hidden behind bars or areas) and never intercept pointer events, so tooltips and hover highlights on the underlying data keep working.
 
 ## Reference Lines
 
@@ -68,7 +68,7 @@ annotations: [
 
 | Property | Type | Default | Description |
 | --- | --- | --- | --- |
-| `type` | `'line'` | `'line'` | Optional discriminator — a line is the default kind |
+| `type` | `'line'` | `'line'` | Optional discriminator; a line is the default kind |
 | `axis` | `'x' \| 'y'` | — | The axis the value is measured on |
 | `value` | `number` | — | The axis value the line is drawn at |
 | `label` | `string` | — | Optional label rendered beside the line |
@@ -80,7 +80,7 @@ An `axis: 'y'` line runs horizontally; an `axis: 'x'` line runs vertically. Labe
 
 ## Bands
 
-A band annotation shades a value range on one axis — a target zone, an acceptable operating range, or a highlighted period.
+A band annotation shades a value range on one axis: a target zone, an acceptable operating range, or a highlighted period.
 
 <!-- eslint-skip -->
 ```ts
@@ -116,11 +116,11 @@ annotations: [
 | `color` | `string` | `'#ef4444'` | Fill color |
 | `opacity` | `number` | `0.12` | Fill opacity (0–1) |
 
-`from` and `to` may be given in either order — the band always spans between them.
+`from` and `to` may be given in either order; the band always spans between them.
 
 ## Point Markers
 
-A point annotation places a dot (with an optional label) at a specific x/y data coordinate — a detected anomaly, an event, a maximum.
+A point annotation places a dot (with an optional label) at a specific x/y data coordinate, marking a detected anomaly, an event, or a maximum.
 
 <!-- eslint-skip -->
 ```ts
@@ -144,7 +144,7 @@ annotations: [
 | `color` | `string` | `'#ef4444'` | Marker color |
 | `radius` | `number` | `4` | Marker radius in pixels |
 
-Point annotations need both a numeric x and y scale. On a chart with a categorical x axis (for example a bar chart), an `x`-valued annotation cannot be mapped and is skipped — the rest of the annotations still render.
+Point annotations need both a numeric x and y scale. On a chart with a categorical x axis (for example a bar chart), an `x`-valued annotation cannot be mapped and is skipped; the rest of the annotations still render.
 
 ## Updating Annotations
 
@@ -165,10 +165,10 @@ chart.update({
 chart.update({ annotations: [] });
 ```
 
-The overlay is redrawn on every render at the annotations' newly resolved positions — inexpensive for the handful of annotations a chart typically carries.
+The overlay is redrawn on every render at the annotations' newly resolved positions, which is inexpensive for the handful of annotations a chart typically carries.
 
 ## Behavior Notes
 
-- **Skipped, not thrown** — an annotation whose value cannot be resolved through the chart's scales (wrong axis kind, `NaN`) is silently skipped.
-- **Pan/zoom aware** — when a [navigator](/charts/advanced/panning-and-zooming) is active, annotations are clipped to the plot rectangle so they don't slide into the axis gutters while panning; positions track the rescaled axes automatically.
-- **Non-interactive** — annotation elements set `pointerEvents: 'none'`, so they never block tooltips or click events on the data beneath them.
+- **Skipped, not thrown**: an annotation whose value cannot be resolved through the chart's scales (wrong axis kind, `NaN`) is silently skipped.
+- **Pan/zoom aware**: when a [navigator](/charts/advanced/panning-and-zooming) is active, annotations are clipped to the plot rectangle so they don't slide into the axis gutters while panning; positions track the rescaled axes automatically.
+- **Non-interactive**: annotation elements set `pointerEvents: 'none'`, so they never block tooltips or click events on the data beneath them.

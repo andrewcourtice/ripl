@@ -139,13 +139,13 @@ chart.update({ value: 85 });
 
 ## Options
 
-- **`value`** — The current gauge value
-- **`min`** — Minimum value (default `0`)
-- **`max`** — Maximum value (default `100`)
-- **`label`** — Label displayed below the value
-- **`color`** — Gauge fill color (default pastel blue)
-- **`trackColor`** — Background track color (default `#e5e7eb`)
-- **`format`** — Custom value formatter function
-- **`tickCount`** — Number of tick marks along the arc (default `5`, set to `0` to hide)
-- **`showTickLabels`** — Whether to show value labels at each tick (default `true`)
-- **`formatTick`** — Custom formatter for tick labels
+- **`value`**: the current gauge value
+- **`min`**: minimum value (default `0`)
+- **`max`**: maximum value (default `100`)
+- **`label`**: label displayed below the value
+- **`color`**: gauge fill color (default pastel blue)
+- **`trackColor`**: background track color (default `#e5e7eb`)
+- **`format`**: custom value formatter function
+- **`tickCount`**: number of tick marks along the arc (default `5`, set to `0` to hide)
+- **`showTickLabels`**: whether to show value labels at each tick (default `true`)
+- **`formatTick`**: custom formatter for tick labels

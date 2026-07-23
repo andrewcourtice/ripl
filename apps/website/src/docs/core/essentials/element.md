@@ -4,7 +4,7 @@ outline: "deep"
 
 # Element
 
-**Element** is the base class for everything that can be drawn in Ripl. Every built-in shape — circles, rectangles, lines, text — ultimately extends `Element`, which provides the shared foundation for styling, event handling, state interpolation, and rendering. If you're building anything with Ripl, you're working with elements.
+**Element** is the base class for everything that can be drawn in Ripl. Every built-in shape (circles, rectangles, lines, text) ultimately extends `Element`, which provides the shared foundation for styling, event handling, state interpolation, and rendering. If you're building anything with Ripl, you're working with elements.
 
 Elements follow a pattern inspired by the DOM: they have an `id`, a `classList`, a `parent` reference, and style properties that cascade through the group hierarchy. This makes Ripl's scene graph feel familiar to web developers while giving you full control over how things are drawn and animated.
 
@@ -37,7 +37,7 @@ circle.render(context);
 
 ## Creating Elements
 
-You don't create raw `Element` instances directly — instead you use factory functions like `createCircle`, `createRect`, or `createText`. Each element accepts an options object with its specific properties (like `cx`/`cy`/`radius` for a circle) plus all the shared base properties:
+You don't create raw `Element` instances directly. Instead you use factory functions like `createCircle`, `createRect`, or `createText`. Each element accepts an options object with its specific properties (like `cx`/`cy`/`radius` for a circle) plus all the shared base properties:
 
 ```ts
 import {
@@ -56,7 +56,7 @@ const circle = createCircle({
 
 ## Styling
 
-Elements support all Canvas 2D drawing state properties — `fill`, `stroke`, `lineWidth`, `opacity`, `font`, `shadow*`, `filter`, and more. Set them in the constructor or change them at any time:
+Elements support all Canvas 2D drawing state properties: `fill`, `stroke`, `lineWidth`, `opacity`, `font`, `shadow*`, `filter`, and more. Set them in the constructor or change them at any time:
 
 ```ts
 const circle = createCircle({
@@ -97,7 +97,7 @@ The `pointerEvents` property controls hit testing behavior: `'all'` (default), `
 ## Selector Matching
 
 Every element supports CSS-like selector testing via `matches(selector)` and ancestor lookup via
-`closest(selector)` — the same selector syntax used by [Group querying](/docs/core/essentials/group#query-selector-queryall-selector):
+`closest(selector)` uses the same selector syntax as [Group querying](/docs/core/essentials/group#query-selector-queryall-selector):
 
 ```ts
 circle.matches('circle.highlighted'); // test the element itself
@@ -138,7 +138,7 @@ circle.on('mouseleave', () => {
 ```
 
 > [!NOTE]
-> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing — see [Context: Interaction](/docs/core/essentials/context#interaction).
+> Pointer events (`click`, `mouseenter`, `mouseleave`, `mousemove`, `dragstart`, `drag`, `dragend`) only work when the element has been rendered to a [Context](/docs/core/essentials/context), because the context manages DOM event listening and hit testing; see [Context: Interaction](/docs/core/essentials/context#interaction).
 
 ## Style Inheritance
 

@@ -68,7 +68,7 @@ export const charts: ChartMeta[] = [
     {
         text: 'Radial Bar',
         link: '/charts/radial-bar',
-        description: 'Concentric rings whose arc length encodes each category\'s value — a circular take on the bar chart.',
+        description: 'Concentric rings whose arc length encodes each category\'s value, a circular take on the bar chart.',
         category: 'Radial & Polar',
     },
     {
