@@ -59,12 +59,6 @@ function buildChart() {
     const options = {
         data,
         key: 'feature' as const,
-        padding: {
-            top: 16,
-            right: 16,
-            bottom: 16,
-            left: 12,
-        },
         grid: true,
         legend: true,
         stacked: false,

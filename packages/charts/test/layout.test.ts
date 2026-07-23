@@ -6,6 +6,8 @@ import {
 
 import {
     ChartLayout,
+    DEFAULT_CHART_PADDING,
+    resolveChartPadding,
 } from '../src/core/layout';
 
 const PADDING = {
@@ -134,5 +136,59 @@ describe('ChartLayout', () => {
 
         expect(layout.area.width).toBe(0);
         expect(layout.area.height).toBeGreaterThanOrEqual(0);
+    });
+});
+
+describe('resolveChartPadding', () => {
+    it('defaults every edge to 16 when no input is given', () => {
+        expect(resolveChartPadding()).toEqual({
+            top: DEFAULT_CHART_PADDING,
+            right: DEFAULT_CHART_PADDING,
+            bottom: DEFAULT_CHART_PADDING,
+            left: DEFAULT_CHART_PADDING,
+        });
+        expect(DEFAULT_CHART_PADDING).toBe(16);
+    });
+
+    it('applies a single number to all four edges', () => {
+        expect(resolveChartPadding(24)).toEqual({
+            top: 24,
+            right: 24,
+            bottom: 24,
+            left: 24,
+        });
+    });
+
+    it('fills unspecified edges of a partial object with the default', () => {
+        expect(resolveChartPadding({ right: 80 })).toEqual({
+            top: 16,
+            right: 80,
+            bottom: 16,
+            left: 16,
+        });
+    });
+
+    it('preserves an explicit 0 rather than falling back to the default', () => {
+        expect(resolveChartPadding(0)).toEqual({
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+        });
+        expect(resolveChartPadding({ top: 0 })).toEqual({
+            top: 0,
+            right: 16,
+            bottom: 16,
+            left: 16,
+        });
+    });
+
+    it('honours a custom fallback for unspecified edges', () => {
+        expect(resolveChartPadding({ left: 40 }, 8)).toEqual({
+            top: 8,
+            right: 8,
+            bottom: 8,
+            left: 40,
+        });
     });
 });

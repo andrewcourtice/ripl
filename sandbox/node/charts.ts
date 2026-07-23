@@ -72,12 +72,6 @@ function runBarChart() {
         tooltip: false,
         grid: true,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
     });
 }
 
@@ -113,12 +107,6 @@ function runPieChart() {
         label: 'name',
         innerRadius: 0.35,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
     });
 }
 
@@ -219,12 +207,6 @@ function runStockChart() {
         grid: true,
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
     });
 }
 
@@ -288,12 +270,6 @@ function runLineChart() {
         grid: true,
         tooltip: false,
         animation: { duration: 2000 },
-        padding: {
-            top: 10,
-            right: 10,
-            bottom: 10,
-            left: 10,
-        },
     });
 }
 

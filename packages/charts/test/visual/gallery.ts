@@ -513,12 +513,7 @@ for (let i = 0; i < 40; i++) {
 createSankeyChart(mount('sankey'), {
     animation: false,
     title: 'Sankey — Budget',
-    padding: {
-        top: 20,
-        right: 80,
-        bottom: 20,
-        left: 20,
-    },
+    padding: { right: 80 },
     nodes: [
         {
             id: 'budget',

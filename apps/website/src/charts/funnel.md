@@ -88,7 +88,10 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'stage',
         value: 'value',
         label: 'stage',
-        padding: { top: 10, right: 40, bottom: 10, left: 40 },
+        padding: {
+            left: 40,
+            right: 40,
+        },
         ...buildOptions(),
     });
 });

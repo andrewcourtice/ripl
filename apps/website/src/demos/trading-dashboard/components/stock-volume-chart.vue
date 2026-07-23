@@ -63,12 +63,7 @@ function buildChart() {
         data,
         key: 'date',
         format: formatVolume,
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 30,
-            left: 20,
-        },
+        padding: { bottom: 30 },
         series: [
             {
                 id: 'volume',

@@ -57,12 +57,6 @@ function buildChart() {
         showVolume: true,
         upColor: '#16a34a',
         downColor: '#dc2626',
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-        },
         axis: {
             x: {
                 format: (val: string) => {

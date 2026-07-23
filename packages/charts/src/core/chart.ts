@@ -60,6 +60,7 @@ import type {
 
 import {
     ChartLayout,
+    resolveChartPadding,
 } from './layout';
 
 import type {
@@ -100,8 +101,8 @@ export { ChartLayout };
 export interface BaseChartOptions {
     /** Whether the chart renders automatically on construction and after every {@link Chart.update}. Defaults to `true`. */
     autoRender?: boolean;
-    /** Space reserved around the chart, per edge, in pixels. */
-    padding?: Partial<ChartPadding>;
+    /** Space reserved around the chart, in pixels. A single number applies to all four edges; an object sets per-edge values `{ top, right, bottom, left }`, leaving unspecified edges at the default. Defaults to `16`. */
+    padding?: number | Partial<ChartPadding>;
     /** Chart title as plain text, or a {@link ChartTitleOptions} object for full control. */
     title?: string | Partial<ChartTitleOptions>;
     /** Animation configuration, or a boolean toggling all transitions. See {@link ChartAnimationOptions}. */
@@ -466,15 +467,9 @@ export class Chart<
     }
 
     protected getPadding(): ChartPadding {
-        const p = this.options.padding || {};
-
-        // All four sides default to 10; user-supplied values win via the `??` fallbacks.
-        return {
-            top: p.top ?? 10,
-            right: p.right ?? 10,
-            bottom: p.bottom ?? 10,
-            left: p.left ?? 10,
-        };
+        // A number applies to all edges; a partial object fills unspecified edges with the shared
+        // default (see `DEFAULT_CHART_PADDING`), so every chart reserves 16px unless told otherwise.
+        return resolveChartPadding(this.options.padding);
     }
 
     protected getChartArea(): ChartArea {

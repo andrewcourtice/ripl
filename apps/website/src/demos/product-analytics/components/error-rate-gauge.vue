@@ -63,12 +63,6 @@ function buildChart() {
         tickCount: 5,
         showTickLabels: true,
         formatTick: (v: number) => `${v}%`,
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-        },
     };
 
     if (chart) {

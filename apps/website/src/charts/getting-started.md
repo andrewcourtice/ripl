@@ -123,7 +123,7 @@ All charts extend `BaseChartOptions` and share these core options:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `padding` | `Partial<ChartPadding>` | `{ top: 10, right: 10, bottom: 10, left: 10 }` | Inner padding around the chart area |
+| `padding` | `number \| Partial<ChartPadding>` | `16` | Space reserved around the chart area (a number applies to all edges; an object sets individual ones) |
 | `animation` | `boolean \| Partial<ChartAnimationOptions>` | `{ enabled: true, duration: 1000, ease: 'easeOutCubic' }` | Animation toggle or configuration |
 | `title` | `string \| Partial<ChartTitleOptions>` | — | Chart title text or configuration |
 | `autoRender` | `boolean` | `true` | Automatically render on creation and update |

@@ -11,29 +11,36 @@ All Ripl charts extend `BaseChartOptions` and support a common set of feature op
 
 ## Padding
 
-Controls the inner padding around the chart drawing area.
+Controls the space reserved around the chart drawing area. Pass a single number to apply the same padding to all four edges, or an object to set individual edges.
 
 ```ts
-const chart = createBarChart('#container', {
+// A single number applies to every edge
+createBarChart('#container', {
+    padding: 24,
+    // ...
+});
+
+// An object sets individual edges; unspecified edges keep the default
+createBarChart('#container', {
     padding: {
-        top: 10,
-        right: 10,
-        bottom: 10,
-        left: 10,
+        top: 16,
+        right: 32,
+        bottom: 16,
+        left: 32,
     },
     // ...
 });
 ```
 
-Every side defaults to `10`. Supply any subset of `top`/`right`/`bottom`/`left` to override
-individual sides; the rest keep the default.
+Every side defaults to `16`. Supply a number to set all four edges at once, or any subset of
+`top`/`right`/`bottom`/`left` to override individual sides; the rest keep the default.
 
 | Property | Type | Default |
 | --- | --- | --- |
-| `top` | `number` | `10` |
-| `right` | `number` | `10` |
-| `bottom` | `number` | `10` |
-| `left` | `number` | `10` |
+| `top` | `number` | `16` |
+| `right` | `number` | `16` |
+| `bottom` | `number` | `16` |
+| `left` | `number` | `16` |
 
 ## Animation
 

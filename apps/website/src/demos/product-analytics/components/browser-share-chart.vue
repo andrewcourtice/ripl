@@ -57,12 +57,6 @@ function buildChart() {
         format: (value: number) => `${value}%`,
         // Leader-line labels sit outside the donut and animate with their connectors.
         labels: 'outside' as const,
-        padding: {
-            top: 20,
-            right: 20,
-            bottom: 20,
-            left: 20,
-        },
     };
 
     if (chart) {

@@ -65,10 +65,8 @@ function buildChart() {
         borderRadius: 4,
         format: 'number' as const,
         padding: {
-            top: 20,
-            right: 40,
-            bottom: 20,
             left: 40,
+            right: 40,
         },
     };
 

@@ -123,7 +123,6 @@ const example = ref();
 const { contextChanged, chart } = useRiplChart(context => {
     return createRadarChart(context, {
         data,
-        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
