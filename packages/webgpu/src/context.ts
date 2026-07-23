@@ -53,6 +53,7 @@ export class WebGPUContext3D extends Context3D {
     private _pipelineState: PipelineState;
     private _geometryManager: GeometryManager;
     private _sceneUniformBuffer: GPUBuffer;
+    private _sceneUniformData = new Float32Array(SCENE_UNIFORM_SIZE / 4);
     private _sceneBindGroup: GPUBindGroup;
     private _depthTexture: GPUTexture | null = null;
     private _msaaTexture: GPUTexture | null = null;
@@ -261,8 +262,8 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        // Write scene uniforms
-        const uniformData = new Float32Array(SCENE_UNIFORM_SIZE / 4);
+        // Write scene uniforms (reused scratch array — writeBuffer copies at call time)
+        const uniformData = this._sceneUniformData;
         uniformData.set(this.viewProjectionMatrix, 0);
 
         const lightDir = this.getLightDirectionForRender();

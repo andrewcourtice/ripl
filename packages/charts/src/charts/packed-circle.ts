@@ -219,7 +219,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 id: getKey(item),
                 label: getLabel(item),
                 color: colorFor(item),
-                active: true,
+                active: this.isItemActive(getKey(item)),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
@@ -261,8 +261,12 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 } as CircleState;
             }
 
+            // Legend-hidden items are excluded from the pack, so the remaining circles re-pack and
+            // scale up to fill the enclosing circle while hidden ones exit through the join.
+            const activeData = this.filterActive(data, getKey);
+
             // Pack circles with relative radii (area ∝ value), then centre + scale to fit the area.
-            const packInput: PackCircle[] = data.map(item => ({
+            const packInput: PackCircle[] = activeData.map(item => ({
                 x: 0,
                 y: 0,
                 r: Math.sqrt(Math.max(0, getValue(item))) || 0.001,
@@ -272,7 +276,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             const bounds = enclosingCircle(packInput);
             const scale = bounds.r > 0 ? fitRadius / bounds.r : 1;
 
-            const nodes: PackedNode[] = data.map((item, index) => {
+            const nodes: PackedNode[] = activeData.map((item, index) => {
                 const packed = packInput[index];
                 return {
                     key: getKey(item),

@@ -7,19 +7,37 @@ import type {
 } from '@ripl/core';
 
 import {
+    easeInBack,
+    easeInBounce,
+    easeInCirc,
     easeInCubic,
+    easeInElastic,
+    easeInExpo,
+    easeInOutBack,
+    easeInOutBounce,
+    easeInOutCirc,
     easeInOutCubic,
+    easeInOutElastic,
+    easeInOutExpo,
     easeInOutQuad,
     easeInOutQuart,
     easeInOutQuint,
+    easeInOutSine,
     easeInQuad,
     easeInQuart,
     easeInQuint,
+    easeInSine,
     easeLinear,
+    easeOutBack,
+    easeOutBounce,
+    easeOutCirc,
     easeOutCubic,
+    easeOutElastic,
+    easeOutExpo,
     easeOutQuad,
     easeOutQuart,
     easeOutQuint,
+    easeOutSine,
 } from '@ripl/core';
 
 import type {
@@ -50,7 +68,25 @@ export type EaseName =
     | 'easeInOutQuart'
     | 'easeInQuint'
     | 'easeOutQuint'
-    | 'easeInOutQuint';
+    | 'easeInOutQuint'
+    | 'easeInSine'
+    | 'easeOutSine'
+    | 'easeInOutSine'
+    | 'easeInExpo'
+    | 'easeOutExpo'
+    | 'easeInOutExpo'
+    | 'easeInCirc'
+    | 'easeOutCirc'
+    | 'easeInOutCirc'
+    | 'easeInBack'
+    | 'easeOutBack'
+    | 'easeInOutBack'
+    | 'easeInElastic'
+    | 'easeOutElastic'
+    | 'easeInOutElastic'
+    | 'easeInBounce'
+    | 'easeOutBounce'
+    | 'easeInOutBounce';
 
 const EASE_MAP: Record<EaseName, Ease> = {
     easeLinear,
@@ -66,6 +102,24 @@ const EASE_MAP: Record<EaseName, Ease> = {
     easeInQuint,
     easeOutQuint,
     easeInOutQuint,
+    easeInSine,
+    easeOutSine,
+    easeInOutSine,
+    easeInExpo,
+    easeOutExpo,
+    easeInOutExpo,
+    easeInCirc,
+    easeOutCirc,
+    easeInOutCirc,
+    easeInBack,
+    easeOutBack,
+    easeInOutBack,
+    easeInElastic,
+    easeOutElastic,
+    easeInOutElastic,
+    easeInBounce,
+    easeOutBounce,
+    easeInOutBounce,
 };
 
 /** Resolves an ease name or function to an `Ease` function, defaulting to `easeOutCubic`. */
@@ -340,10 +394,15 @@ export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Parti
 /** Border radius expressed as a uniform number or a per-corner tuple. */
 export type BorderRadiusInput = number | [number, number, number, number];
 
+/** What causes a tooltip to show. */
+export type ChartTooltipTrigger = 'item' | 'axis';
+
 /** Fully resolved chart tooltip options. */
 export interface ChartTooltipOptions {
     /** Whether tooltips are shown on hover. */
     visible: boolean;
+    /** What triggers the tooltip: `'item'` (default) shows it when hovering an individual mark; `'axis'` shows a shared tooltip listing every active series' value at the hovered category (cartesian charts). */
+    trigger: ChartTooltipTrigger;
     /** Inner padding between the tooltip text and its box, in pixels. */
     padding: PaddingInput;
     /** CSS font shorthand for the tooltip text. */
@@ -365,6 +424,7 @@ export type ChartTooltipInput = boolean | Partial<ChartTooltipOptions>;
 
 const TOOLTIP_DEFAULTS: ChartTooltipOptions = {
     visible: true,
+    trigger: 'item',
     padding: 8,
     font: '12px sans-serif',
     fontColor: '#FFFFFF',
@@ -479,8 +539,8 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
 /** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 
-/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`; category and time axes are selected by the chart. */
-export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'time' | 'band' | 'point';
+/** The scale family an axis maps its domain through. Value axes accept `'linear'`/`'log'`/`'pow'`/`'sqrt'`/`'symlog'`; category and time axes are selected by the chart. */
+export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog' | 'time' | 'band' | 'point';
 
 /** Options for a single axis (x or y). */
 // `TData` is retained for symmetry across the axis option family (ChartYAxisItemOptions, ChartAxisInput, etc.).
@@ -502,6 +562,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
     nice?: boolean | number;
     /** Target number of ticks and grid lines along the axis. Defaults to 10. */
     ticks?: number;
+    /** Tick label rotation in degrees — positive tilts labels counterclockwise (like `rotate(45)` slanting labels up to the right). Applied to the x-axis; the label band grows to fit and fewer labels are dropped on overflow. */
+    labelRotation?: number;
     /** Explicit lower bound of the value domain (overrides the data extent). */
     min?: number;
     /** Explicit upper bound of the value domain (overrides the data extent). */
@@ -510,6 +572,8 @@ export interface ChartAxisItemOptions<TData = unknown> {
     base?: number;
     /** Exponent for a `'pow'` scale. Defaults to 1. */
     exponent?: number;
+    /** Linear threshold for the `'symlog'` scale (region near zero treated linearly). Defaults to 1. */
+    constant?: number;
 }
 
 /** Y-axis specific options extending the base axis item with a left/right position. */
@@ -636,6 +700,38 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ValueFormatInput = AxisFormatType | NumberFormatOptions | ((value: any) => string);
+
+const TIME_SPAN_DAY = 24 * 60 * 60 * 1000;
+const TIME_SPAN_MONTH = 30 * TIME_SPAN_DAY;
+const TIME_SPAN_YEAR = 365 * TIME_SPAN_DAY;
+
+/**
+ * Formats a time-axis tick for display, adapting the format to the domain span — multi-year spans
+ * show the year, month-scale spans show abbreviated month and year, day-scale spans show dates,
+ * and anything shorter shows times. An explicit axis `format` always wins over this default.
+ *
+ * @param value - The tick's date value.
+ * @param spanMs - The axis domain span in milliseconds.
+ * @returns The formatted label.
+ */
+export function formatTimeLabel(value: Date, spanMs: number): string {
+    if (spanMs >= TIME_SPAN_YEAR * 3) {
+        return String(value.getFullYear());
+    }
+
+    if (spanMs >= TIME_SPAN_MONTH * 2) {
+        return value.toLocaleDateString(undefined, {
+            month: 'short',
+            year: 'numeric',
+        });
+    }
+
+    if (spanMs >= TIME_SPAN_DAY * 2) {
+        return value.toLocaleDateString();
+    }
+
+    return value.toLocaleTimeString();
+}
 
 /**
  * Resolves a value formatter into a function, always returning a usable formatter (falling back

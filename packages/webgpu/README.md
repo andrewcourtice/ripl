@@ -17,29 +17,31 @@ import {
 
 import {
     createCamera,
-} from '@ripl/3d';
-
-import {
-    createRenderer, createScene,
-} from '@ripl/web';
-
-import {
     createCube,
 } from '@ripl/3d';
 
+import {
+    createRenderer,
+    createScene,
+} from '@ripl/web';
+
 const context = await createContext('#app');
 const scene = createScene(context);
-const renderer = createRenderer(scene);
+const renderer = createRenderer(scene, {
+    autoStop: false,
+});
 
-const camera = createCamera(scene, {
+const camera = createCamera(context, {
     position: [0, 2, 5],
     target: [0, 0, 0],
 });
 
-const cube = createCube({ size: 1,
-    fill: '#4488ff' });
-scene.add(cube);
-renderer.render();
+scene.add(createCube({
+    size: 1,
+    fill: '#4488ff',
+}));
+
+camera.flush();
 ```
 
 ## Features

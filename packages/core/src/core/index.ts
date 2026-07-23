@@ -9,3 +9,7 @@ export * from './query';
 export * from './renderer';
 export * from './scene';
 export * from './shape';
+
+export type { TransformTarget } from './transform';
+
+export { applyElementTransform } from './transform';

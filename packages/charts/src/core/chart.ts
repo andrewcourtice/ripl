@@ -26,12 +26,15 @@ import type {
     ChartAnimationOptions,
     ChartLegendInput,
     ChartTitleOptions,
+    ChartTooltipInput,
+    ChartTooltipTrigger,
 } from './options';
 
 import {
     normalizeAnimation,
     normalizeLegend,
     normalizeTitle,
+    normalizeTooltip,
 } from './options';
 
 import type {
@@ -71,6 +74,14 @@ import {
 import {
     ChartTitle,
 } from '../components/title';
+
+import type {
+    TooltipPlacement,
+} from '../components/tooltip';
+
+import {
+    Tooltip,
+} from '../components/tooltip';
 
 if (!factory.createContext) {
     factory.set({ createContext });
@@ -156,8 +167,12 @@ export class Chart<
     protected options: TOptions;
     /** The resolved theme (palette + furniture colours) this chart renders with. */
     protected theme: Theme;
+
+    /** The resolved tooltip trigger mode (`'item'` per-mark, `'axis'` shared) — kept in sync by {@link Chart.syncTooltip}. */
+    protected tooltipTrigger: ChartTooltipTrigger = 'item';
     protected colorGenerator: ReturnType<typeof getColorGenerator>;
     private _seriesColorMap: Map<string, string> = new Map();
+    private _hiddenItems: Set<string> = new Set();
     private _highlightGroups: Array<{ group: Group;
         owners: string | string[]; }> = [];
 
@@ -220,7 +235,19 @@ export class Chart<
         element.setAttribute('aria-label', label);
     }
 
-    /** Merges partial options into the current options and re-renders if `autoRender` is enabled. */
+    /**
+     * Merges partial options into the current options and re-renders if `autoRender` is enabled.
+     *
+     * The merge is a **shallow, top-level** merge: passing a key replaces that option wholesale
+     * (it is then re-normalized against the chart defaults), so e.g. `update({ axis: { y: { ticks: 5 } } })`
+     * replaces the whole `axis` option rather than deep-merging into the previous one. Furniture
+     * options (axis, grid, tooltip, crosshair, legend, title) are re-applied to the live components
+     * on the next render, so they can be reconfigured at runtime without recreating the chart.
+     *
+     * Passing `theme` re-resolves the chart theme: the series palette generator is re-seeded and
+     * generated series colours are re-assigned from the new palette on the next render (explicit
+     * per-series colours are kept), and furniture colours follow the new theme automatically.
+     */
     public update(options: Partial<TOptions>) {
         if (options.animation !== undefined) {
             this.animationOptions = normalizeAnimation(options.animation);
@@ -228,6 +255,14 @@ export class Chart<
 
         if (options.title !== undefined) {
             this.titleOptions = normalizeTitle(options.title);
+        }
+
+        if (options.theme !== undefined) {
+            this.theme = resolveTheme(options.theme);
+            this.colorGenerator = getColorGenerator(this.theme.palette);
+            // Drop the generated series colours so the next render re-seeds them from the new
+            // palette (explicit per-series colours are re-applied by `resolveSeriesColors`).
+            this._seriesColorMap.clear();
         }
 
         this.options = {
@@ -291,6 +326,37 @@ export class Chart<
     }
 
     /**
+     * Whether the series or segment behind a legend item id is currently shown. Legend clicks
+     * toggle this via {@link Chart.setItemActive}; charts read it when building legend items and
+     * filtering their rendered series.
+     */
+    protected isItemActive(id: string): boolean {
+        return !this._hiddenItems.has(id);
+    }
+
+    /**
+     * Filters series or segments down to the ones whose legend item is active. The id defaults to
+     * each item's `id` property; pass an accessor for keyed data items.
+     */
+    protected filterActive<T>(items: T[], getId: (item: T) => string = item => (item as { id: string }).id): T[] {
+        return items.filter(item => this.isItemActive(getId(item)));
+    }
+
+    /**
+     * Shows or hides the series/segment behind a legend item and re-renders, so the existing
+     * enter/exit joins animate it out of or back into the chart.
+     */
+    protected setItemActive(id: string, active: boolean): void {
+        if (active) {
+            this._hiddenItems.delete(id);
+        } else {
+            this._hiddenItems.add(id);
+        }
+
+        this.render();
+    }
+
+    /**
      * Reserves a band for the legend (when visible and given items) at its configured position
      * and renders it into that band, reconciling against the previous render.
      */
@@ -314,10 +380,16 @@ export class Chart<
                 font: legendOpts.font,
                 fontColor: legendOpts.fontColor,
                 highlight: legendOpts.highlight,
-                onToggle: () => this.render(),
+                onToggle: (item, active) => this.setItemActive(item.id, active),
                 onHighlight: id => this.highlightSeries(id),
             });
         } else {
+            this.legend.setOptions({
+                position: legendOpts.position,
+                font: legendOpts.font,
+                fontColor: legendOpts.fontColor,
+                highlight: legendOpts.highlight,
+            });
             this.legend.update(items);
         }
 
@@ -325,6 +397,54 @@ export class Chart<
         const region = layout.reserve(legendOpts.position, thickness);
 
         this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
+    }
+
+    /**
+     * Reconciles a hover tooltip against the chart's current `tooltip` option so it can be
+     * reconfigured (or toggled) at runtime. Call once per render with the previous instance and
+     * keep the returned one: the tooltip is created when it should be visible and none exists,
+     * destroyed (returning `undefined`) when hidden, and restyled in place otherwise.
+     *
+     * @param tooltip - The chart's current tooltip instance, if any.
+     * @param input - The chart's raw `tooltip` option.
+     * @param placement - Where the tooltip box sits relative to its anchor (see {@link Tooltip}).
+     * @returns The tooltip to use for this render, or `undefined` when tooltips are disabled.
+     */
+    protected syncTooltip(tooltip: Tooltip | undefined, input?: ChartTooltipInput, placement?: TooltipPlacement): Tooltip | undefined {
+        const opts = normalizeTooltip(input, {
+            fontColor: this.theme.tooltipColor,
+            backgroundColor: this.theme.tooltipBackground,
+        });
+
+        this.tooltipTrigger = opts.trigger;
+
+        if (!opts.visible) {
+            tooltip?.destroy();
+            return undefined;
+        }
+
+        const style = {
+            padding: typeof opts.padding === 'number' ? opts.padding : 8,
+            font: opts.font,
+            fontColor: opts.fontColor,
+            backgroundColor: opts.backgroundColor,
+            borderRadius: typeof opts.borderRadius === 'number' ? opts.borderRadius : 6,
+            maxWidth: opts.maxWidth,
+            wrap: opts.wrap,
+        };
+
+        if (!tooltip) {
+            return new Tooltip({
+                scene: this.scene,
+                renderer: this.renderer,
+                placement,
+                ...style,
+            });
+        }
+
+        tooltip.setOptions(style);
+
+        return tooltip;
     }
 
     /**
@@ -347,6 +467,8 @@ export class Chart<
 
     protected getPadding(): ChartPadding {
         const p = this.options.padding || {};
+
+        // All four sides default to 10; user-supplied values win via the `??` fallbacks.
         return {
             top: p.top ?? 10,
             right: p.right ?? 10,

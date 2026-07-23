@@ -17,14 +17,21 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bars" :extras-reset="reset">
-            <RiplField label="Stacked" inline>
-                <RiplSwitch v-model="extras.stacked" />
+            <RiplField label="Mode">
+                <RiplSelect v-model="extras.stackMode">
+                    <option value="grouped">Grouped</option>
+                    <option value="stacked">Stacked</option>
+                    <option value="percent">100% stacked</option>
+                </RiplSelect>
             </RiplField>
             <RiplField label="Horizontal" inline>
                 <RiplSwitch v-model="extras.horizontal" />
             </RiplField>
             <RiplField label="Corner radius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            </RiplField>
+            <RiplField label="X label rotation">
+                <RiplInputRange v-model="extras.labelRotation" :min="0" :max="60" :step="15" />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -62,10 +69,18 @@ const seriesMeta = [
 
 let monthCount = 6;
 
+// Maps the drawer's three-way mode onto the chart's `stacked` option.
+const STACK_MODE_VALUES = {
+    grouped: false,
+    stacked: true,
+    percent: 'percent',
+} as const;
+
 const { extras, reset } = useChartExtras({
-    stacked: false,
+    stackMode: 'grouped' as keyof typeof STACK_MODE_VALUES,
     horizontal: false,
     borderRadius: 2,
+    labelRotation: 0,
 });
 
 const config = useChartConfig({
@@ -115,11 +130,21 @@ function getSeries() {
 
 function buildOptions() {
     const options = {
-        stacked: extras.stacked,
+        stacked: STACK_MODE_VALUES[extras.stackMode],
         orientation: extras.horizontal ? 'horizontal' : 'vertical',
         borderRadius: extras.borderRadius,
         series: getSeries(),
         ...buildCommonOptions(config),
+    };
+
+    // Tick label rotation (degrees, counterclockwise-positive) applies to the x-axis; the label
+    // band grows to fit and fewer labels are dropped on overflow.
+    options.axis = {
+        ...options.axis,
+        x: {
+            ...options.axis.x,
+            labelRotation: extras.labelRotation || undefined,
+        },
     };
 
     options.annotations = config.annotationsVisible
@@ -141,13 +166,12 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createBarChart(context, {
         data,
         key: 'month',
-        padding: { top: 30, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     data = generateData();
@@ -252,6 +276,76 @@ createBarChart('#container', {
 });
 ```
 
+### 100% stacked
+
+Pass `stacked: 'percent'` to normalize each category to its share of the category total — the value axis is fixed to 0–100% and values default to percentage formatting:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    stacked: 'percent',
+    series: [
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+        { id: 'costs',
+            value: 'costs',
+            label: 'Costs' },
+    ],
+});
+```
+
+### Rotated x labels
+
+Rotate crowded tick labels with `axis.x.labelRotation` (degrees — positive tilts labels up to the right):
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'sales',
+            value: 'sales',
+            label: 'Sales' },
+    ],
+    axis: {
+        x: { labelRotation: 45 },
+    },
+});
+```
+
+### Multiple y-axes
+
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            axis: 0 },
+        { id: 'orders',
+            value: 'orders',
+            label: 'Orders',
+            axis: 1 },
+    ],
+    axis: {
+        y: [
+            { title: 'Revenue ($)' },
+            { position: 'right', title: 'Orders' },
+        ],
+    },
+});
+```
+
+> [!NOTE]
+> Multiple y-axes apply to vertical grouped bars only. Stacked bars share one cumulative value
+> scale, and horizontal bars read categories along the y-axis — both use the primary axis.
+
 ### Horizontal
 
 Swap axes so bars extend horizontally:
@@ -274,11 +368,11 @@ createBarChart('#container', {
 - **`data`** — The data array
 - **`series`** — Array of series with `id`, `value`, `label`, and optional `color`
 - **`key`** — Key accessor for categories
-- **`stacked`** — `false` (grouped, default) or `true` (stacked)
+- **`stacked`** — `false` (grouped, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
 - **`orientation`** — `'vertical'` (default) or `'horizontal'`
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
 - **`overview`** — `boolean | { size }` — Show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
 - **`borderRadius`** — Bar corner radius (default `2`)

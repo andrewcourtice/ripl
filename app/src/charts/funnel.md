@@ -88,13 +88,13 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'stage',
         value: 'value',
         label: 'stage',
-        padding: { top: 20, right: 40, bottom: 20, left: 40 },
+        padding: { top: 10, right: 40, bottom: 10, left: 40 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     data = generateData();

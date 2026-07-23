@@ -53,6 +53,7 @@ export function mockCanvasContext() {
             actualBoundingBoxLeft: 0,
             actualBoundingBoxRight: 0,
         })),
+        createPattern: vi.fn(() => ({})),
         createLinearGradient: vi.fn(() => ({
             addColorStop: vi.fn(),
         })),

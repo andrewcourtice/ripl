@@ -262,15 +262,19 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 id: item.key,
                 label: item.label,
                 color: colorFor(item),
-                active: true,
+                active: this.isItemActive(item.key),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
 
             const area = layout.area;
 
+            // Legend-hidden items are excluded from the layout, so the remaining cells expand to
+            // fill the area and hidden ones exit through the standard join.
+            const activeItems = this.filterActive(items, item => item.key);
+
             const nodes = layoutTreemap(
-                items,
+                activeItems,
                 area.x,
                 area.y,
                 area.width,

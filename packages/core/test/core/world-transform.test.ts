@@ -7,7 +7,6 @@ import {
 import {
     createGroup,
     createRect,
-    getWorldTransform,
     matrixApplyToPoint,
 } from '../../src';
 
@@ -20,7 +19,7 @@ describe('getWorldTransform', () => {
             width: 10,
             height: 10,
         });
-        expect(getWorldTransform(rect)).toBeNull();
+        expect(rect.getWorldTransform()).toBeNull();
     });
 
     test('composes an ancestor group transform with the element\'s own transform', () => {
@@ -35,7 +34,7 @@ describe('getWorldTransform', () => {
         const group = createGroup({ children: [rect] });
         group.translateX = 10;
 
-        const world = getWorldTransform(rect);
+        const world = rect.getWorldTransform();
 
         expect(world).not.toBeNull();
         // Group translate(10) composed with the element's own translate(5).
@@ -56,7 +55,7 @@ describe('getWorldTransform', () => {
         const outer = createGroup({ children: [inner] });
         outer.translateX = 100;
 
-        const world = getWorldTransform(rect);
+        const world = rect.getWorldTransform();
 
         expect(world).not.toBeNull();
         expect(matrixApplyToPoint(world!, [0, 0])).toEqual([100, 20]);
@@ -74,7 +73,7 @@ describe('getWorldTransform', () => {
         group.transformScaleX = 2;
         group.transformScaleY = 3;
 
-        const world = getWorldTransform(rect);
+        const world = rect.getWorldTransform();
 
         expect(world).not.toBeNull();
         expect(matrixApplyToPoint(world!, [4, 6])).toEqual([8, 18]);

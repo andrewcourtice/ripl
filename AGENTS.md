@@ -25,7 +25,7 @@ packages/
 ├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
 ├── charts/       # Pre-built chart components (bar, line, area, pie, radar, heatmap, etc.)
-├── 3d/           # 3D rendering (experimental)
+├── 3d/           # 3D rendering
 ├── webgpu/       # WebGPU 3D rendering context
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings

@@ -98,13 +98,13 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createChordChart(context, {
         labels: LABELS,
         matrix,
-        padding: { top: 30, right: 30, bottom: 30, left: 30 },
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     matrix = generateMatrix();

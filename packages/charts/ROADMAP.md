@@ -18,7 +18,7 @@ Ripl ships an unusually broad surface for a pre-1.0 library:
   threshold, time — plus sequential/diverging **colour** scales with perceptual
   schemes (viridis/plasma/inferno/magma/cividis/turbo, RdBu, BrBG).
 - **Multi-backend rendering** behind one `Context` — Canvas, SVG, Terminal, and
-  experimental WebGL/WebGPU. This exceeds Chart.js (canvas-only) and matches or
+  WebGPU. This exceeds Chart.js (canvas-only) and matches or
   edges ECharts (canvas+svg) and Highcharts (svg).
 - **Path-morphing animation**, a pan/zoom/brush `Navigator`, and a statistics
   layer (binning, box-plot stats, linear regression, KDE, rollup, stacking).
@@ -37,15 +37,15 @@ notes where this repo now stands after the 1.0 consistency work (see
 | Multi-backend (canvas/svg/terminal/webgpu) | ✅ unique | ❌ canvas | 🟡 canvas+svg | 🟡 svg | ✅ done |
 | Scale types available | ✅ 11 + colour | 🟡 | ✅ | ✅ | ✅ done |
 | **Configurable axis scale** (log/time/pow/nice/min-max/ticks) | 🟡→✅ | ✅ | ✅ | ✅ | ✅ done (A4) |
-| Multiple / secondary axes | 🟡→✅ line | ✅ | ✅ | ✅ | ✅ done (A6, line); area/bar/scatter ⏳ |
-| Stacking / **100%-stacked** | ✅ / ❌ | ✅/✅ | ✅/✅ | ✅/✅ | ⏳ B4 |
-| Legends (present + interactive toggle) | 🟡→✅ present | ✅ | ✅ | ✅ | ✅ done (A7); toggle ⏳ |
-| Shared axis-pointer tooltip | 🟡 per-element | 🟡 | ✅ | ✅ | ⏳ B4 |
-| Data labels | 🟡 uneven | 🟡 (plugin) | ✅ | ✅ | ⏳ B4 |
+| Multiple / secondary axes | ✅ N-axis line/area/scatter/bar | ✅ | ✅ | ✅ | ✅ done (true N-axis; bar = vertical grouped) |
+| Stacking / **100%-stacked** | ✅ / ✅ | ✅/✅ | ✅/✅ | ✅/✅ | ✅ done (`stacked: 'percent'`) |
+| Legends (present + interactive toggle) | ✅ | ✅ | ✅ | ✅ | ✅ done (A7 + toggle) |
+| Shared axis-pointer tooltip | ✅ `tooltip.trigger: 'axis'` | 🟡 | ✅ | ✅ | ✅ done (line/area/bar/scatter) |
+| Data labels | ✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Annotations** (reference lines / bands / markers) | ❌→✅ | 🟡 (plugin) | ✅ | ✅ | ✅ done (B2) |
 | Zoom / pan / data-zoom | ✅ Navigator | 🟡 (plugin) | ✅ | ✅ | ✅ done |
 | **Theming / dark mode** | ❌→✅ | 🟡 | ✅ built-in | ✅ | ✅ done (B1) |
-| **Accessibility** (ARIA / keyboard / patterns) | ❌→🟡 | 🟡 | ✅ | ✅ module | 🟡 ARIA+CVD done (B3); keyboard/patterns ⏳ |
+| **Accessibility** (ARIA / keyboard / patterns) | ❌→🟡 | 🟡 | ✅ | ✅ module | 🟡 ARIA+CVD+pattern paint done (B3); keyboard ⏳ |
 | Export (png / svg / …) | ✅ | 🟡 | ✅ | ✅ | ✅ done |
 | Animation | ✅ path-morphing | ✅ | ✅ | ✅ | ✅ done |
 | Formatting / i18n | 🟡→✅ Intl | 🟡 | ✅ | ✅ | ✅ mostly (A2) |
@@ -55,8 +55,8 @@ notes where this repo now stands after the 1.0 consistency work (see
 
 **Headline 1.0 gaps:** cross-chart consistency (done), configurable axes (done),
 theming/dark mode (done, B1), annotations (done, B2), secondary axes (done for
-line, A6; area/bar/scatter follow), and accessibility (B3 — ARIA + colourblind
-palette done; keyboard nav and pattern fills remain the largest post-1.0 gap).
+line/area/scatter/bar, A6), and accessibility (B3 — ARIA, colourblind palette, and
+pattern-fill paint done; keyboard navigation remains the largest post-1.0 gap).
 
 ## Completed 1.0 consistency work
 
@@ -109,6 +109,56 @@ Landed on `claude/ripl-chart-axes-a5-a6` (this branch, on top of the above):
   against the visual-regression baselines. The full stock/gantt migration *onto*
   `CartesianChart` is deferred (see remaining work below).
 
+Landed in the 1.0 hardening pass (this branch):
+
+- **Runtime reconfiguration.** `update()` now reconciles all furniture at runtime —
+  axis scale/ticks/min/max/format/title/visibility, grid, tooltip, crosshair, legend
+  position/styling, navigator, and theme — via a per-render `_syncCartesianOptions`
+  pass; the docs demos drive live `update()` instead of recreating charts.
+- **Interactive legends.** Legend clicks hide/show series and segments across every
+  chart family, with animated exits, extent/stack/angle/layout recomputation over the
+  active set, and hidden state that survives data updates (sankey deliberately
+  dims only — hiding a flow node would orphan its links).
+- **Continuous time x-axis** for line, area, and scatter (`axis.x.scale: 'time'`) —
+  calendar-aligned `Date` ticks and span-adaptive default labels; unevenly spaced
+  samples position proportionally to their timestamps.
+- **X-axis tick label rotation** (`labelRotation`, degrees) with rotated band sizing
+  and a narrower overflow-drop footprint.
+- **Multi-line tooltips** — newline-separated lines plus greedy word wrap honouring
+  `maxWidth`/`wrap`, reconfigurable at runtime.
+- **Animated axis tick exits** (fade-out via `exitElement`) instead of instant removal.
+- **A6 — Secondary y-axes for area and scatter** (mirroring the line pattern): per-series
+  `axis` binding, per-axis extents over the active series, per-axis-group stacking for area.
+- **100%-stacked mode** for bar and area (`stacked: 'percent'`) — share-space value
+  accessors, a fixed 0–100% axis, percentage formatting defaults, and legend-toggle
+  renormalization.
+- **Marker symbol set** for line-family series and scatter bubbles
+  (`marker: 'circle' | 'square' | 'diamond' | 'triangle'`) — equal-visual-area sizing and
+  uniform radius animation (star/cross/wye remain below).
+- **Value-keyed grid lines** — persisting ticks transition position, entries fade in,
+  exits fade out (previously pixel-keyed destroy/recreate).
+- **Data labels** for the remaining charts — heatmap (contrast-aware cell values), radar
+  (vertex labels), radial-bar (sweep-end labels), polar-scatter (marker labels) — all off
+  by default and runtime-toggleable.
+- **A6 — Secondary y-axis for bar** (vertical grouped): per-series scale resolution in
+  the bar renderer; stacked/percent modes and horizontal orientation stay primary-axis.
+- **Shared axis-pointer tooltip** (`tooltip.trigger: 'axis'`) for line and area — the
+  hovered category's title plus one row per active series, runtime-switchable.
+- **Pattern (decal) paint** — `pattern(...)` strings render across canvas and SVG (see
+  B3 note below).
+- **True N y-axes** for line, area, scatter, and bar — generalized from the two-axis
+  (left/right) model: each series draws against its bound axis's scale, and same-side axes
+  stack outward via a shared `layoutYAxes`. Single-axis output is byte-identical. (Bar stays
+  vertical-grouped-only; stacked/horizontal share one scale.)
+- **`scaleRadial`** in `@ripl/core` — a clamp-by-default value→radius scale; polar-area,
+  polar-scatter, and radar now share it instead of hand-rolling the mapping.
+- **`scaleSymlog`** in `@ripl/core` + `axis.scale: 'symlog'` — a symmetric-log value axis that
+  handles negatives and zero (linear near zero, log beyond a configurable `constant`).
+- **Expanded easing** — sine/expo/circ/bounce in In/Out/InOut plus the missing Back/Elastic
+  variants (31 built-in eases; every family complete), all resolvable by name from charts.
+- **Shared axis-pointer tooltip for bar and scatter** — bar resolves the nearest category,
+  scatter the nearest point; both list every active series and are runtime-switchable.
+
 ## Migration — breaking changes
 
 Ripl is pre-1.0, so option naming was unified with a **clean break** (no aliases).
@@ -156,23 +206,6 @@ hand-rolling axis/grid/crosshair/tooltip wiring.
   window) and **heatmap** (dual categorical) stay on `Chart` by design and already
   share `createChartAxes`.
 
-### A6 (remaining) — secondary axis for area / bar / scatter
-
-The secondary y-axis is implemented for **line** (see
-[Completed](#completed-1.0-consistency-work)): `yAxes: ChartYAxis[]` behind a
-`get yAxis()` shim, series `axis?: number | string` binding, per-axis extent + scale,
-right-hand axis band. Extending it to **area**, **bar**, and **scatter** requires their
-shared series renderer to resolve a y-scale *per series* (not one plot-wide `yScale`).
-
-- **Risk:** layout collision between a right-side second axis and a right-positioned
-  legend; per-axis extent isolation. Reuse line's `_renderSecondaryAxes` partitioning.
-
-### Interactive legends
-
-Legends now render across the chart families, but toggling a legend entry only
-hover-dims; wire the `Legend` `onToggle`/`active` state to actually hide/show a
-series (the plumbing — `onToggle` re-render — is already in place).
-
 ### B3 (remaining) — keyboard navigation + pattern fills
 
 ARIA labelling (`role="img"` + `aria-label` from `description`/title) and a
@@ -180,14 +213,17 @@ colourblind-safe theme (`'colorblind'`, Okabe–Ito) have landed. Still to do:
 
 - **Keyboard navigation:** a hidden, focusable DOM layer synced to data points
   (canvas has no native focus targets), arrow traversal, Enter → existing `click`.
-- **Pattern/decal fills:** a canvas/SVG pattern generator so series are
-  distinguishable without colour; an optional visually-hidden data-table fallback.
+- **Pattern/decal fills:** the paint layer now ships them — `pattern(...)` strings
+  (diagonal/cross-hatch/dots/horizontal/vertical) render as `CanvasPattern`s on canvas
+  and swept `<pattern>` defs in SVG. Remaining: a chart-level series option applying
+  decals automatically (e.g. with the colourblind theme) and an optional
+  visually-hidden data-table fallback.
 
 ### B4 — Smaller primitive gaps (opportunistic)
 
-Radial/angular scale (`scaleRadial`) so polar charts stop hand-rolling; `scaleSymlog`
-and a UTC time scale; an optional d3-format specifier parser; a marker-symbol set
-(star/cross/triangle/diamond/wye) beyond `Circle`; a **100%-stacked** helper
-(extend `computeStackOffset`); time-series **downsampling** (LTTB) for realtime/large
-data; an expanded easing set (sine/expo/circ/bounce); a moving-average/smoothing data
-transform; a shared/synced axis-pointer tooltip.
+A UTC time scale; an angular value→angle scale (`scaleAngular`) so gauge and radial-bar stop
+hand-rolling the value→sweep mapping (the radius-mapping `scaleRadial` has shipped); an optional
+d3-format specifier parser; the remaining marker symbols (star/cross/wye —
+circle/square/diamond/triangle shipped); time-series **downsampling** (LTTB) for realtime/large
+data; a moving-average/smoothing data transform; and a chart-level series option that applies
+decal patterns automatically (e.g. with the colourblind theme).

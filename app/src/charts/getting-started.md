@@ -186,4 +186,8 @@ chart.destroy();
 
 - **[Shared Options](/charts/shared-options)** — Deep dive into axis, legend, tooltip, grid, and crosshair configuration
 - **[Bar Chart](/charts/bar)** — Start with the most versatile chart type
+- **[Theming](/charts/advanced/theming)** — Light/dark/colorblind themes and custom palettes
+- **[Annotations](/charts/advanced/annotations)** — Reference lines, bands, and point markers
+- **[Panning & Zooming](/charts/advanced/panning-and-zooming)** — Interactive navigation and the overview strip
+- **[Custom Charts](/charts/advanced/custom-charts)** — Build your own chart type on the `Chart` base class
 - **[Charts API Reference](/docs/api/@ripl/charts/)** — Full TypeScript API documentation

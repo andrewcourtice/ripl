@@ -47,16 +47,19 @@ import {
     normalizeAxisItem,
     normalizeCrosshair,
     normalizeGrid,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
 } from './options';
 
 import {
     axisTickCount,
+    createTimeAxisScale,
+    createValueScale,
+    isTimeAxis,
 } from './scales';
 
 import type {
+    ChartAxis,
     ChartXAxisAlignment,
     ChartYAxisAlignment,
 } from '../components/axis';
@@ -65,6 +68,10 @@ import {
     ChartXAxis,
     ChartYAxis,
 } from '../components/axis';
+
+import type {
+    GridTick,
+} from '../components/grid';
 
 import {
     Grid,
@@ -83,7 +90,7 @@ import {
     Crosshair,
 } from '../components/crosshair';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -149,6 +156,29 @@ const OVERVIEW_GAP = 14;
 const MIN_WINDOW = 0.02;
 /** Maximum zoom factor `k` — you can zoom in to this, and out only to the full-data identity view (`k = 1`). */
 const NAV_MAX_ZOOM = 50;
+
+/** Disposer key scoping the shared axis-tooltip pointer listeners so each render re-wires them cleanly. */
+const AXIS_TOOLTIP_EVENTS_KEY = Symbol('axis-tooltip-events');
+
+/** One row of a shared axis tooltip: a series' display label and its formatted value at the hovered category. */
+export interface AxisTooltipRow {
+    /** The series' display label. */
+    label: string;
+    /** The series' formatted value at the hovered category. */
+    value: string;
+}
+
+/** The shared axis-tooltip content at a hovered plot position. */
+export interface AxisTooltipSnapshot {
+    /** The hovered category's display title (the tooltip's first line). */
+    title: string;
+    /** One row per active series at the hovered category. */
+    rows: AxisTooltipRow[];
+    /** X coordinate the tooltip anchors to, in chart pixels. */
+    x: number;
+    /** Y coordinate the tooltip anchors to, in chart pixels. */
+    y: number;
+}
 
 /** Whether a view transform is the identity (no pan, no zoom). */
 function isIdentityTransform(transform: NavigatorTransform): boolean {
@@ -238,14 +268,15 @@ export abstract class CartesianChart<
     protected yAxes: ChartYAxis[] = [];
     /** Resolved options for every y-axis, parallel to {@link CartesianChart.yAxes}. */
     protected yAxesOptions: ChartYAxisItemOptions<TData>[] = [];
-    /** Resolved x-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    /** Resolved x-axis options (scale type, ticks, min/max, format), re-resolved from the chart options each render. */
     protected xAxisOptions!: ChartAxisItemOptions<TData>;
-    /** Resolved y-axis options (scale type, ticks, min/max, format) captured in {@link CartesianChart.setupCartesian}. */
+    /** Resolved y-axis options (scale type, ticks, min/max, format), re-resolved from the chart options each render. */
     protected yAxisOptions!: ChartYAxisItemOptions<TData>;
     protected tooltip?: Tooltip;
     protected grid?: Grid;
     protected crosshair?: Crosshair;
     private _annotations?: ChartAnnotations;
+    private _setup: CartesianSetup = {};
 
     private _navigator?: DOMNavigator;
     private _navigatorConfigKey?: string;
@@ -311,10 +342,15 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Builds the cartesian components from the chart options. Call this from a subclass
-     * constructor (after `super(...)`) and before `init()`.
+     * Builds the construction-time cartesian skeletons (overview strip, x-axis shell, navigator
+     * wiring) and applies the furniture options once via the shared sync pass. Call this from a
+     * subclass constructor (after `super(...)`) and before `init()`. The furniture options are
+     * re-applied on every render (see {@link CartesianChart.prepareAxes}), so `chart.update(...)`
+     * reconfigures axes/grid/tooltip/crosshair at runtime.
      */
     protected setupCartesian(setup: CartesianSetup = {}) {
+        this._setup = setup;
+
         // Build the overview strip and attach its listeners before the in-plot navigator is created, so
         // a pointerdown inside the strip band is claimed by the strip and never also pans the plot.
         this._navigatorStrip = new ChartNavigator({
@@ -329,107 +365,15 @@ export abstract class CartesianChart<
         // Enabling the overview implies a navigator for the strip to drive.
         this.options.navigator = this._resolveNavigator();
 
-        // Per-chart theme colours are passed as normalizer defaults so a chart-level `theme`
-        // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
-        const axisDefaults = {
-            font: this.theme.font,
-            fontColor: this.theme.axisColor,
-        };
-
-        const axisOpts = normalizeAxis(this.options.axis);
-        const xAxis = normalizeAxisItem(axisOpts.x, axisDefaults);
-        const yAxisInputs = Array.isArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
-        const yAxisOptionsList = yAxisInputs.map((input, index) => normalizeYAxisItem(input, {
-            ...axisDefaults,
-            position: index === 0 ? 'left' : 'right',
-        }));
-
-        this.xAxisOptions = xAxis;
-        this.yAxesOptions = yAxisOptionsList;
-        this.yAxisOptions = yAxisOptionsList[0];
-        const gridOpts = normalizeGrid(this.options.grid, { lineColor: this.theme.gridColor });
-        const tooltipOpts = normalizeTooltip(this.options.tooltip, {
-            fontColor: this.theme.tooltipColor,
-            backgroundColor: this.theme.tooltipBackground,
-        });
-        const crosshairOpts = normalizeCrosshair(this.options.crosshair, {
-            ...(setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : {}),
-            lineColor: this.theme.crosshairColor,
-        });
-
-        if (tooltipOpts.visible) {
-            this.tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                padding: typeof tooltipOpts.padding === 'number' ? tooltipOpts.padding : 8,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-                borderRadius: typeof tooltipOpts.borderRadius === 'number' ? tooltipOpts.borderRadius : 6,
-            });
-        }
-
         this.xAxis = new ChartXAxis({
             scene: this.scene,
             renderer: this.renderer,
             bounds: Box.empty(),
             scale: scaleContinuous([0, 1], [0, 1]),
             alignment: setup.xAxisAlignment,
-            labelFont: xAxis.font,
-            labelColor: xAxis.fontColor,
-            formatLabel: resolveFormatLabel(xAxis.format),
-            title: xAxis.title,
         });
 
-        this.xAxis.visible = xAxis.visible;
-
-        this.yAxes = yAxisOptionsList.map((yOpts, index) => {
-            const axis = new ChartYAxis({
-                scene: this.scene,
-                renderer: this.renderer,
-                bounds: Box.empty(),
-                scale: scaleContinuous([0, 1], [0, 1]),
-                alignment: index === 0
-                    ? (setup.yAxisAlignment ?? (yOpts.position === 'right' ? 'right' : 'left'))
-                    : yOpts.position,
-                labelFont: yOpts.font,
-                labelColor: yOpts.fontColor,
-                formatLabel: resolveFormatLabel(yOpts.format),
-                title: yOpts.title,
-            });
-
-            axis.visible = yOpts.visible;
-            axis.tickCount = axisTickCount(yOpts);
-
-            return axis;
-        });
-
-        this.yAxis = this.yAxes[0];
-
-        this.xAxis.tickCount = axisTickCount(xAxis);
-
-        if (gridOpts.visible) {
-            this.grid = new Grid({
-                scene: this.scene,
-                renderer: this.renderer,
-                horizontal: setup.grid?.horizontal ?? true,
-                vertical: setup.grid?.vertical ?? false,
-                stroke: gridOpts.lineColor,
-                lineWidth: gridOpts.lineWidth,
-                lineDash: gridOpts.lineDash,
-            });
-        }
-
-        if (setup.crosshair && crosshairOpts.visible) {
-            this.crosshair = new Crosshair({
-                scene: this.scene,
-                renderer: this.renderer,
-                vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
-                horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
-                stroke: crosshairOpts.lineColor,
-                lineWidth: crosshairOpts.lineWidth,
-            });
-        }
+        this._syncCartesianOptions();
 
         this.retain({
             dispose: () => {
@@ -439,6 +383,136 @@ export abstract class CartesianChart<
         });
 
         this._reconcileNavigator();
+    }
+
+    // Applies resolved axis-item options onto a live axis component (visibility, ticks, formatter,
+    // label styling, and title), so option/theme changes restyle the axis on the next render.
+    private _applyAxisOptions(axis: ChartAxis, options: ChartAxisItemOptions<TData>): void {
+        axis.visible = options.visible;
+        axis.tickCount = axisTickCount(options);
+        axis.formatLabel = resolveFormatLabel(options.format);
+        axis.labelFont = options.font;
+        axis.labelColor = options.fontColor;
+        axis.labelRotation = options.labelRotation;
+        axis.titleFont = `bold ${options.font}`;
+        axis.title = options.title;
+    }
+
+    // Re-normalizes the furniture options (axes, grid, tooltip, crosshair) and applies them to the
+    // persistent components — creating, destroying, or restyling them as needed. Runs once from
+    // `setupCartesian` and again at the top of every render (via `prepareAxes`), which is what makes
+    // `chart.update({ axis/grid/tooltip/crosshair/theme })` take effect at runtime.
+    private _syncCartesianOptions(): void {
+        const setup = this.resolveCartesianSetup();
+
+        // Per-chart theme colours are passed as normalizer defaults so a chart-level `theme`
+        // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
+        const axisDefaults = {
+            font: this.theme.font,
+            fontColor: this.theme.axisColor,
+        };
+
+        const axisOpts = normalizeAxis(this.options.axis);
+        const xAxisOpts = normalizeAxisItem(axisOpts.x, axisDefaults);
+        const yAxisInputs = Array.isArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
+        const yAxisOptionsList = yAxisInputs.map((input, index) => normalizeYAxisItem(input, {
+            ...axisDefaults,
+            position: index === 0 ? 'left' : 'right',
+        }));
+
+        this.xAxisOptions = xAxisOpts;
+        this.yAxesOptions = yAxisOptionsList;
+        this.yAxisOptions = yAxisOptionsList[0];
+
+        this._applyAxisOptions(this.xAxis, xAxisOpts);
+
+        // Reconcile the y-axis instances against the configured axes: destroy the surplus, build the
+        // missing, and re-apply the options to every survivor.
+        this.yAxes.splice(yAxisOptionsList.length).forEach(axis => axis.destroy());
+
+        yAxisOptionsList.forEach((yOpts, index) => {
+            let axis = this.yAxes[index];
+
+            if (!axis) {
+                axis = new ChartYAxis({
+                    scene: this.scene,
+                    renderer: this.renderer,
+                    bounds: Box.empty(),
+                    scale: scaleContinuous([0, 1], [0, 1]),
+                });
+
+                this.yAxes[index] = axis;
+            }
+
+            axis.alignment = index === 0
+                ? (setup.yAxisAlignment ?? (yOpts.position === 'right' ? 'right' : 'left'))
+                : yOpts.position;
+
+            this._applyAxisOptions(axis, yOpts);
+        });
+
+        this.yAxis = this.yAxes[0];
+
+        const gridOpts = normalizeGrid(this.options.grid, { lineColor: this.theme.gridColor });
+        const gridConfig = {
+            horizontal: setup.grid?.horizontal ?? true,
+            vertical: setup.grid?.vertical ?? false,
+            stroke: gridOpts.lineColor,
+            lineWidth: gridOpts.lineWidth,
+            lineDash: gridOpts.lineDash,
+        };
+
+        if (gridOpts.visible && !this.grid) {
+            this.grid = new Grid({
+                scene: this.scene,
+                renderer: this.renderer,
+            });
+        }
+
+        if (!gridOpts.visible && this.grid) {
+            this.grid.destroy();
+            this.grid = undefined;
+        }
+
+        this.grid?.setOptions(gridConfig);
+
+        this.tooltip = this.syncTooltip(this.tooltip, this.options.tooltip);
+
+        const crosshairOpts = normalizeCrosshair(this.options.crosshair, {
+            ...(setup.crosshairAxisDefault ? { axis: setup.crosshairAxisDefault } : {}),
+            lineColor: this.theme.crosshairColor,
+        });
+
+        const crosshairEnabled = !!setup.crosshair && crosshairOpts.visible;
+
+        if (crosshairEnabled && !this.crosshair) {
+            this.crosshair = new Crosshair({
+                scene: this.scene,
+                renderer: this.renderer,
+            });
+        }
+
+        if (!crosshairEnabled && this.crosshair) {
+            this.crosshair.destroy();
+            this.crosshair = undefined;
+        }
+
+        this.crosshair?.setOptions({
+            vertical: crosshairOpts.axis === 'x' || crosshairOpts.axis === 'both',
+            horizontal: crosshairOpts.axis === 'y' || crosshairOpts.axis === 'both',
+            stroke: crosshairOpts.lineColor,
+            lineWidth: crosshairOpts.lineWidth,
+        });
+    }
+
+    /**
+     * The {@link CartesianSetup} the furniture sync pass reads each render. Defaults to the setup
+     * passed to {@link CartesianChart.setupCartesian}; charts whose setup depends on a runtime option
+     * (e.g. the bar chart's grid direction following its `orientation`) override this so
+     * `chart.update(...)` re-derives it.
+     */
+    protected resolveCartesianSetup(): CartesianSetup {
+        return this._setup;
     }
 
     /**
@@ -893,11 +967,25 @@ export abstract class CartesianChart<
         return super.resolveAnimation(referenceDuration);
     }
 
-    /** Applies the chart's resolved animation to both axes ahead of rendering. */
+    /**
+     * Re-applies the chart's furniture options to the live components and sets the resolved
+     * animation on every axis ahead of rendering. Cartesian charts call this at the start of each
+     * render pass, so options merged by `chart.update(...)` (axis scale/ticks/format/title, grid,
+     * tooltip, crosshair, theme) take effect without recreating the chart.
+     */
     protected prepareAxes() {
+        this._syncCartesianOptions();
+
         const animation = this.resolveAnimation(ANIMATION_REFERENCE.axis);
+
         this.xAxis.animation = animation;
-        this.yAxis.animation = animation;
+        this.yAxes.forEach(axis => {
+            axis.animation = animation;
+        });
+
+        if (this.grid) {
+            this.grid.animation = animation;
+        }
     }
 
     /** Reserves and renders the legend using the chart's `legend` option. */
@@ -906,8 +994,24 @@ export abstract class CartesianChart<
     }
 
     /** Renders the grid within the given plot area at the supplied tick positions. */
-    protected renderGrid(xTicks: number[], yTicks: number[], area: ChartArea) {
+    protected renderGrid(xTicks: GridTick[], yTicks: GridTick[], area: ChartArea) {
         this.grid?.render(xTicks, yTicks, area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Maps a scale's ticks into value-keyed {@link GridTick}s for {@link CartesianChart.renderGrid},
+     * so grid lines join by tick value and transition across rescales.
+     *
+     * @param scale - The scale producing tick values and positions.
+     * @param count - The target tick count (the axis `ticks` option).
+     * @returns The grid ticks (value + pixel position).
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected gridTicks(scale: Scale<any, number>, count: number): GridTick[] {
+        return scale.ticks(count).map(tick => ({
+            value: tick,
+            position: scale(tick),
+        }));
     }
 
     /**
@@ -961,9 +1065,133 @@ export abstract class CartesianChart<
         return byId >= 0 ? byId : 0;
     }
 
+    /**
+     * Lays out every y-axis for a multi-axis render and returns the horizontal plot bounds that clear
+     * their label bands. Each axis is given a provisional scale over `extents[i]` (spanning
+     * `[bottom, top]`) so it can measure its own band, then the axes are partitioned by
+     * {@link ChartYAxis.alignment} — preserving their configured order — and packed against the two
+     * chart edges: the first axis on each side sits innermost (adjacent to the plot) and any further
+     * same-side axes stack outward with an 8px gap. Each axis's {@link ChartYAxis.offset} and
+     * {@link ChartYAxis.bounds} are set so its band lands in the right slot; the caller then computes
+     * final value scales over the plot height and sets each `bounds.bottom` below the x-axis labels.
+     *
+     * @param chartLeft - The left edge of the drawable area (axes + plot).
+     * @param chartRight - The right edge of the drawable area.
+     * @param top - The top edge of the plot/axis range.
+     * @param bottom - The provisional bottom edge (before the x-axis band is measured).
+     * @param extents - The value extent for each y-axis, parallel to {@link CartesianChart.yAxes}.
+     * @returns The plot's left and right pixel bounds between the packed axis bands.
+     */
+    protected layoutYAxes(
+        chartLeft: number,
+        chartRight: number,
+        top: number,
+        bottom: number,
+        extents: number[][]
+    ): { plotLeft: number;
+        plotRight: number; } {
+        const GAP = 8;
+
+        // Provisional full-width bounds (offset reset) so each axis measures its own label band width.
+        const widths = this.yAxes.map((axis, index) => {
+            axis.offset = 0;
+            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
+            axis.bounds = new Box(top, chartLeft, bottom, chartRight);
+
+            return axis.getBoundingBox().width;
+        });
+
+        const indices = this.yAxes.map((_, index) => index);
+        const leftIndices = indices.filter(index => this.yAxes[index].alignment === 'left');
+        const rightIndices = indices.filter(index => this.yAxes[index].alignment === 'right');
+
+        const bandTotal = (group: number[]) => group.reduce((sum, index) => sum + widths[index], 0)
+            + GAP * Math.max(0, group.length - 1);
+
+        const plotLeft = chartLeft + bandTotal(leftIndices);
+        const plotRight = chartRight - bandTotal(rightIndices);
+
+        // Left axes: first innermost (band's right edge at plotLeft), each further one stacked outward.
+        let leftCursor = 0;
+
+        leftIndices.forEach(index => {
+            const width = widths[index];
+
+            this.yAxes[index].bounds = new Box(top, plotLeft - width, bottom, plotLeft);
+            this.yAxes[index].offset = leftCursor;
+            leftCursor += width + GAP;
+        });
+
+        // Right axes mirror the left: first innermost (band's left edge at plotRight), rest stack out.
+        let rightCursor = 0;
+
+        rightIndices.forEach(index => {
+            const width = widths[index];
+
+            this.yAxes[index].bounds = new Box(top, plotRight, bottom, plotRight + width);
+            this.yAxes[index].offset = rightCursor;
+            rightCursor += width + GAP;
+        });
+
+        return {
+            plotLeft,
+            plotRight,
+        };
+    }
+
     /** Sets up the crosshair to track within the given plot area. */
     protected setupCrosshair(area: ChartArea) {
         this.crosshair?.setup(area.x, area.y, area.width, area.height);
+    }
+
+    /**
+     * Wires the shared axis tooltip (`tooltip.trigger: 'axis'`) for the current render: while the
+     * pointer is inside the plot, the resolver maps its position to the hovered category and the
+     * tooltip shows the title plus one row per active series, anchored at the snapshot point.
+     * A no-op (and listener teardown) when the trigger is `'item'` or the tooltip is hidden, so
+     * charts can call it unconditionally each render and the mode reconfigures at runtime.
+     *
+     * @param plot - The plot rectangle pointer positions are tested against.
+     * @param resolve - Maps a plot position to the tooltip content, or `null` for no tooltip.
+     */
+    protected setupAxisTooltip(plot: ChartArea, resolve: (plotX: number, plotY: number) => AxisTooltipSnapshot | null): void {
+        this.dispose(AXIS_TOOLTIP_EVENTS_KEY);
+
+        if (this.tooltipTrigger !== 'axis' || !this.tooltip) {
+            return;
+        }
+
+        const contains = (x: number, y: number) => x >= plot.x
+            && x <= plot.x + plot.width
+            && y >= plot.y
+            && y <= plot.y + plot.height;
+
+        this.retain(this.scene.context.on('mousemove', event => {
+            const { x, y } = event.data;
+
+            if (!contains(x, y)) {
+                this.tooltip?.hide();
+                return;
+            }
+
+            const snapshot = resolve(x, y);
+
+            if (!snapshot) {
+                this.tooltip?.hide();
+                return;
+            }
+
+            const content = [
+                snapshot.title,
+                ...snapshot.rows.map(row => `${row.label}: ${row.value}`),
+            ].join('\n');
+
+            this.tooltip?.show(snapshot.x, snapshot.y, content);
+        }), AXIS_TOOLTIP_EVENTS_KEY);
+
+        this.retain(this.scene.context.on('mouseleave', () => {
+            this.tooltip?.hide();
+        }), AXIS_TOOLTIP_EVENTS_KEY);
     }
 
     /**
@@ -991,6 +1219,61 @@ export abstract class CartesianChart<
             inverse: invert,
             ticks: () => keys,
             includes: (value: string) => keys.includes(value),
+        }) as unknown as Scale<string>;
+    }
+
+    /**
+     * Builds the x scale for category-keyed charts: a continuous time scale when the x-axis is
+     * configured with `scale: 'time'` (keys parsed as dates — `Date` objects, epoch milliseconds,
+     * or ISO strings), otherwise the standard evenly spaced point scale. The time facade accepts
+     * raw keys, `Date`s, and epoch values interchangeably, so series renderers (string keys) and
+     * axis ticks (`Date` values) share one scale, and unevenly spaced samples position
+     * proportionally to their timestamps.
+     */
+    protected categoryScale(keys: string[], left: number, right: number): Scale<string> {
+        if (!isTimeAxis(this.xAxisOptions)) {
+            return this.pointScale(keys, left, right);
+        }
+
+        const times = keys.map(key => new Date(key).getTime()).filter(Number.isFinite);
+        const min = times.length > 0 ? Math.min(...times) : 0;
+        const max = times.length > 0 ? Math.max(...times) : 1;
+
+        return this._timeScaleFacade([min, max], left, right);
+    }
+
+    /**
+     * The continuous x scale for numeric-x charts (e.g. scatter): a time scale with
+     * calendar-aligned ticks when the x-axis is configured with `scale: 'time'` (values treated as
+     * epoch milliseconds or dates), otherwise the standard value scale.
+     */
+    protected continuousXScale(extent: number[], left: number, right: number): Scale {
+        if (!isTimeAxis(this.xAxisOptions)) {
+            return createValueScale(this.xAxisOptions, extent, [left, right]);
+        }
+
+        return this._timeScaleFacade([extent[0], extent[1]], left, right) as unknown as Scale;
+    }
+
+    // Wraps the core time scale so string keys, epoch numbers, and Dates are all accepted as
+    // input — series renderers pass raw keys/values while axis ticks are calendar-aligned Dates.
+    private _timeScaleFacade(domainMs: [number, number], left: number, right: number): Scale<string> {
+        const [min, rawMax] = domainMs;
+        const max = rawMax === min ? min + 1 : rawMax;
+        const timeScale = createTimeAxisScale(this.xAxisOptions, [min, max], [left, right]);
+
+        const toDate = (value: string | number | Date) => value instanceof Date ? value : new Date(value);
+        const convert = (value: string | number | Date) => timeScale(toDate(value));
+
+        return Object.assign(convert, {
+            domain: timeScale.domain,
+            range: timeScale.range,
+            inverse: (position: number) => String(timeScale.inverse(position)),
+            ticks: (count?: number) => timeScale.ticks(count),
+            includes: (value: string | number | Date) => {
+                const time = toDate(value).getTime();
+                return time >= min && time <= max;
+            },
         }) as unknown as Scale<string>;
     }
 

@@ -15,6 +15,9 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Heatmap" :extras-reset="reset">
+            <RiplField label="Cell labels" inline>
+                <RiplSwitch v-model="extras.cellLabels" />
+            </RiplField>
             <RiplField label="Low colour" inline>
                 <RiplColorInput v-model="extras.lowColor" />
             </RiplField>
@@ -64,6 +67,7 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 const HOURS = ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm'];
 
 const { extras, reset } = useChartExtras({
+    cellLabels: false,
     lowColor: '#e0f2fe',
     highColor: '#0369a1',
     borderRadius: 2,
@@ -97,6 +101,8 @@ let data = generateData();
 
 function buildOptions() {
     return {
+        // Cell values centred in each cell; the label colour auto-contrasts against the cell colour.
+        labels: extras.cellLabels,
         colors: [extras.lowColor, extras.highColor],
         borderRadius: extras.borderRadius,
         legend: {
@@ -118,14 +124,11 @@ const { contextChanged, chart } = useRiplChart(context => {
         value: 'value',
         xCategories: HOURS,
         yCategories: DAYS,
-        padding: { top: 20, right: 20, bottom: 40, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options (legend, tooltip, theme) are read only at construction, so rebuild the chart on
-// any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     data = generateData();
@@ -160,3 +163,4 @@ const chart = createHeatmapChart('#container', {
 - **`yCategories`** — Ordered list of y-axis categories
 - **`colors`** — Tuple of `[lowColor, highColor]` hex strings
 - **`borderRadius`** — Cell corner radius (default `2`)
+- **`labels`** — Show each cell's value centred in the cell (default `false`); the label colour auto-contrasts against the cell colour

@@ -4,12 +4,9 @@
 
 <h1 align="center">Ripl</h1>
 
-Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes an experimental 3D rendering package.
+Ripl (pronounced "ripple") is a library that provides a **unified API for 2D graphics rendering** (Canvas & SVG) in the browser, with a focus on high performance and interactive data visualization. It also includes a 3D rendering package.
 
 Working with the canvas API can be notoriously difficult as it is designed to be very low-level. Alternatively, working with SVG is rather straightforward but not without its flaws. Because these paradigms differ widely in their implementations developers often have to choose one or the other at the outset of a project. Ripl alleviates the issue by exposing a unified API and mimicking the DOM/CSSOM in as many ways as possible to make it simple for developers to interact with. Switching between Canvas and SVG is as simple as changing one line of code.
-
-> [!IMPORTANT]
-> Ripl is currently in beta.
 
 <div align="center">
   <table>
@@ -29,7 +26,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 
 ## Features
 
-- **Unified rendering API** across Canvas, SVG, and experimental 3D contexts
+- **Unified rendering API** across Canvas, SVG, and 3D contexts
 - **Grouping and property inheritance** — CSS-like cascading of visual properties through the element tree
 - **Scene and renderer management** — hoisted scenegraph with O(n) rendering and an automatic `requestAnimationFrame` loop
 - **DOM-like event system** — event bubbling, delegation, stop propagation, and disposable subscriptions
@@ -41,10 +38,10 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 - **Gradient support** — CSS gradient parsing and serialisation (linear, radial, conic)
 - **Automatic interpolation** for numbers, colors (RGB, hex, HSL), dates, gradients, paths, strings, and rotation values
 - **High performance animation** — cancellable `Task`-based transitions with CSS-like keyframe support and custom interpolators
-- **11 scale types** — continuous, discrete, band, diverging, logarithmic, power, quantile, quantize, threshold, time (inspired by D3)
-- **23 pre-built chart types** via `@ripl/charts`
+- **14 scale types** — continuous, discrete, ordinal, band, point, diverging, logarithmic, symmetric-log, power, radial, quantile, quantize, threshold, time (inspired by D3), plus `scaleLog`/`scaleSqrt` shortcuts
+- **25 pre-built chart types** via `@ripl/charts`
 - **Built-in shape primitives** — arc, circle, rect, line, polyline, polygon, ellipse, text, path, image
-- **3D primitives** (experimental) — cube, sphere, cylinder, cone, plane, torus
+- **3D primitives** — cube, sphere, cylinder, cone, plane, torus
 - **Easing library** — linear, quad, cubic, quart, quint (in/out/inOut variants)
 - **Color utilities** — parsing, serialisation, and color scales
 - **Math & geometry** — degree/radian conversion, point operations, border radius normalisation, polygon extrapolation
@@ -62,7 +59,7 @@ Working with the canvas API can be notoriously difficult as it is designed to be
 | [`@ripl/canvas`](@ripl/canvas/index.md) | Canvas 2D rendering context |
 | [`@ripl/svg`](@ripl/svg/index.md) | SVG rendering context |
 | [`@ripl/charts`](@ripl/charts/index.md) | Pre-built chart components with axes, legends, tooltips, crosshairs, and grids |
-| [`@ripl/3d`](@ripl/3d/index.md) | 3D rendering context with camera, shading, and primitive shapes (experimental) |
+| [`@ripl/3d`](@ripl/3d/index.md) | 3D rendering context with camera, shading, and primitive shapes |
 | [`@ripl/webgpu`](@ripl/webgpu/index.md) | WebGPU-accelerated 3D rendering context with hardware depth testing and WGSL shaders |
 | [`@ripl/terminal`](@ripl/terminal/index.md) | Terminal rendering context — braille-character output with ANSI truecolor |
 | [`@ripl/node`](_media/node) | Node.js runtime bindings — configures the platform factory for headless environments |
@@ -77,7 +74,7 @@ packages/
 ├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
 ├── charts/       # Pre-built chart components
-├── 3d/           # 3D rendering (experimental)
+├── 3d/           # 3D rendering
 ├── webgpu/       # WebGPU 3D rendering context
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings
@@ -364,19 +361,21 @@ window.open(chart.export().toURL(), '_blank');
 
 ## Charts
 
-`@ripl/charts` provides 23 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
+`@ripl/charts` provides 25 ready-to-use, animated chart types. Each chart supports tooltips, legends, crosshairs, grids, axes, and data update animations out of the box.
 
 | Chart | Factory |
 |-------|---------|
 | Arc Diagram | `createArcDiagramChart` |
 | Area | `createAreaChart` |
 | Bar | `createBarChart` |
+| Box Plot | `createBoxPlotChart` |
 | Chord | `createChordChart` |
 | Force-Directed | `createForceDirectedChart` |
 | Funnel | `createFunnelChart` |
 | Gantt | `createGanttChart` |
 | Gauge | `createGaugeChart` |
 | Heatmap | `createHeatmapChart` |
+| Histogram | `createHistogramChart` |
 | Line | `createLineChart` |
 | Packed Circle | `createPackedCircleChart` |
 | Pie / Donut | `createPieChart` |
@@ -408,10 +407,11 @@ const chart = createBarChart('.mount-element', {
         { category: 'C',
             value: 45 },
     ],
-    keyBy: 'category',
+    key: 'category',
     series: [
-        { label: 'Values',
-            valueBy: item => item.value },
+        { id: 'values',
+            label: 'Values',
+            value: 'value' },
     ],
 });
 
@@ -432,7 +432,7 @@ Reusable chart components: `ChartXAxis`, `ChartYAxis`, `Grid`, `Legend`, `Toolti
 
 ## Scales
 
-Ripl provides 11 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). All scales expose `inverse`, `ticks`, and `includes` methods.
+Ripl provides 14 scale types for mapping data between domains and ranges, inspired by [D3](https://d3js.org/d3-scale). Scales expose `inverse`, `ticks`, and `includes` methods (the categorical `scaleOrdinal` maps value → value and exposes just its `domain` and `range`).
 
 ```typescript
 import {
@@ -441,13 +441,19 @@ import {
     scaleDiscrete,
     scaleDiverging,
     scaleLogarithmic,
+    scaleOrdinal,
+    scalePoint,
     scalePower,
     scaleQuantile,
     scaleQuantize,
+    scaleRadial,
+    scaleSymlog,
     scaleThreshold,
     scaleTime,
 } from '@ripl/web';
 ```
+
+`scaleLog` and `scaleSqrt` are also exported as shortcuts for a base-10 logarithmic scale and a power scale with exponent 0.5.
 
 ### Continuous (Linear)
 
@@ -482,14 +488,18 @@ scale.bandwidth; // width of each band
 ### Additional Scales
 
 - **`scaleDiverging`** — maps values below and above a midpoint to separate sub-ranges
-- **`scaleLogarithmic`** — logarithmic mapping with configurable base
-- **`scalePower`** — polynomial mapping with configurable exponent
+- **`scaleLogarithmic`** — logarithmic mapping with configurable base (`scaleLog` is the base-10 shortcut)
+- **`scaleOrdinal`** — maps discrete domain values to discrete range values, cycling the range
+- **`scalePoint`** — positions discrete values at evenly spaced points along a range
+- **`scalePower`** — polynomial mapping with configurable exponent (`scaleSqrt` is the exponent-0.5 shortcut)
 - **`scaleQuantile`** — maps continuous data to discrete quantile bins
 - **`scaleQuantize`** — maps a continuous domain to discrete range values
+- **`scaleRadial`** — maps a numeric magnitude onto a ring radius (clamp-by-default), for radial/polar charts
+- **`scaleSymlog`** — symmetric-log mapping that handles negatives and zero (linear near zero, log beyond a configurable `constant`)
 - **`scaleThreshold`** — maps values to discrete outputs based on threshold boundaries
 - **`scaleTime`** — maps `Date` domains to numeric ranges
 
-## 3D Rendering (Experimental)
+## 3D Rendering
 
 `@ripl/3d` extends the Canvas context with perspective/orthographic projection, camera controls, and flat shading.
 

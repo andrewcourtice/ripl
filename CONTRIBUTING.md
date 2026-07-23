@@ -2,8 +2,6 @@
 
 Thanks for your interest in contributing to Ripl! This guide covers the essentials for getting started, making changes, and submitting contributions.
 
-> **Note:** Ripl is currently in beta. See the [README](README.md) for an overview of the project and its features.
-
 ## Getting Started
 
 ### Prerequisites
@@ -29,7 +27,7 @@ packages/
 ├── canvas/       # Canvas 2D rendering context
 ├── svg/          # SVG context implementation
 ├── charts/       # Pre-built chart components (bar, line, area, pie, radar, heatmap, etc.)
-├── 3d/           # 3D rendering (experimental)
+├── 3d/           # 3D rendering
 ├── webgpu/       # WebGPU 3D rendering context
 ├── terminal/     # Terminal rendering context
 ├── node/         # Node.js runtime bindings

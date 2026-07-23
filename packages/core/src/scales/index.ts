@@ -9,6 +9,8 @@ export * from './point';
 export * from './power';
 export * from './quantile';
 export * from './quantize';
+export * from './radial';
+export * from './symlog';
 export * from './threshold';
 export * from './time';
 export * from './types';

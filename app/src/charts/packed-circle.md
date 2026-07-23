@@ -61,6 +61,17 @@ function makeItem(name: string) {
 
 let data = NAMES.slice(0, 8).map(makeItem);
 
+function buildOptions() {
+    const options = {
+        ...buildCommonOptions(config),
+    };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v} people`;
+
+    return options;
+}
+
 const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
@@ -69,14 +80,13 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'name',
         value: 'size',
         label: 'name',
-        format: v => `${v} people`,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
-        ...buildCommonOptions(config),
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
+        ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch(config, () => example.value?.recreate(), { deep: true });
+watch(config, () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     // Re-roll every circle's value, keeping the same members, so the pack reflows smoothly.

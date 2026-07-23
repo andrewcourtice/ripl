@@ -155,7 +155,10 @@ function snapshotConfig(config: ChartConfig): ChartConfig {
 /**
  * Creates a reactive config object backing a chart demo's customization drawer. Pair it with
  * {@link buildCommonOptions} to translate the config into chart options, and a deep `watch` that
- * calls `chart.update(...)` whenever the config changes.
+ * calls `chart.update(...)` whenever the config changes — charts reconcile their furniture (title,
+ * legend, axes, grid, tooltip, crosshair, theme, navigator) at runtime. The one shared exception is
+ * `legendPosition`: legend orientation is fixed when the legend is created, so demos pair the
+ * update watch with a chart rebuild when the position changes.
  */
 export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig {
     const features = defaults.features ?? {};
@@ -305,11 +308,10 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.format) {
-        const format = resolveValueFormat(config.valueFormat);
-
-        if (format) {
-            options.format = format;
-        }
+        // Always emit the key ('none' resolves to undefined) so `chart.update(...)` can clear a
+        // previously applied preset back to the chart default. Demos with a bespoke default format
+        // re-apply it over this when the key resolves to undefined.
+        options.format = resolveValueFormat(config.valueFormat);
     }
 
     if (features.theme) {

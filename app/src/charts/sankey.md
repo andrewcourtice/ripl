@@ -98,13 +98,13 @@ const { contextChanged, chart } = useRiplChart(context => {
             { id: 'content', label: 'Content' },
         ],
         links,
-        padding: { top: 20, right: 80, bottom: 20, left: 20 },
+        padding: { top: 10, right: 80, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     links = generateLinks();

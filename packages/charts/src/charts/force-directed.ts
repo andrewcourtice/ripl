@@ -314,7 +314,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     id: legendId,
                     label: node.group ?? node.label ?? node.id,
                     color: this.getSeriesColor(legendId),
-                    active: true,
+                    active: this.isItemActive(legendId),
                 });
             });
 
@@ -322,15 +322,21 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const area = layout.area;
 
+            // Legend-hidden groups are excluded from the simulation and rendering; links keep only
+            // active endpoints, so the remaining network relaxes and rescales to fill the area.
+            const activeNodes = this.filterActive(nodes, node => node.group ?? node.id);
+            const activeNodeIds = new Set(activeNodes.map(node => node.id));
+            const activeLinks = links.filter(link => activeNodeIds.has(link.source) && activeNodeIds.has(link.target));
+
             // Node degree (for sizing when no value is given).
             const degree = new Map<string, number>();
-            links.forEach(link => {
+            activeLinks.forEach(link => {
                 degree.set(link.source, (degree.get(link.source) ?? 0) + 1);
                 degree.set(link.target, (degree.get(link.target) ?? 0) + 1);
             });
 
             const sizeValue = (node: ForceNetworkNode) => node.value ?? (degree.get(node.id) ?? 1);
-            const sizes = nodes.map(sizeValue);
+            const sizes = activeNodes.map(sizeValue);
             const [sMin, sMax] = sizes.length ? numberExtent(sizes, functionIdentity) : [1, 1];
             const nodeRadiusFor = (node: ForceNetworkNode) => {
                 const ratio = sMax > sMin ? (sizeValue(node) - sMin) / (sMax - sMin) : 0.5;
@@ -340,7 +346,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             // Run the (deterministic) simulation centred on the origin, then fit to the area. Seed
             // existing nodes from their last settled positions so a reweight relaxes from the current
             // layout (nodes glide to new spots) rather than re-seeding from scratch (a full reshuffle).
-            const simNodes: ForceNode[] = nodes.map(node => {
+            const simNodes: ForceNode[] = activeNodes.map(node => {
                 const previous = this._positions.get(node.id);
                 return {
                     id: node.id,
@@ -350,7 +356,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     vy: 0,
                 };
             });
-            const simLinks: ForceLink[] = links.map(link => ({
+            const simLinks: ForceLink[] = activeLinks.map(link => ({
                 source: link.source,
                 target: link.target,
             }));
@@ -377,7 +383,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const ys = simNodes.map(node => node.y);
             const [minX, maxX] = xs.length ? numberExtent(xs, functionIdentity) : [-1, 1];
             const [minY, maxY] = ys.length ? numberExtent(ys, functionIdentity) : [-1, 1];
-            const maxNodeR = Math.max(nodeRadius, ...nodes.map(nodeRadiusFor));
+            const maxNodeR = Math.max(nodeRadius, ...activeNodes.map(nodeRadiusFor));
             const spanX = Math.max(1e-3, maxX - minX);
             const spanY = Math.max(1e-3, maxY - minY);
             const pad = maxNodeR + 12;
@@ -388,7 +394,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const placed = new Map<string, PlacedNode>();
 
-            nodes.forEach(node => {
+            activeNodes.forEach(node => {
                 const sim = simById.get(node.id)!;
                 placed.set(node.id, {
                     id: node.id,
@@ -404,15 +410,15 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             // Root + BFS depth drive the springy entry: nodes spring out from the root in waves, each
             // wave delayed by its graph distance so the layout unfolds from the centre outward.
             const adjacency = new Map<string, string[]>();
-            nodes.forEach(node => adjacency.set(node.id, []));
-            links.forEach(link => {
+            activeNodes.forEach(node => adjacency.set(node.id, []));
+            activeLinks.forEach(link => {
                 adjacency.get(link.source)?.push(link.target);
                 adjacency.get(link.target)?.push(link.source);
             });
 
             const rootId = this.options.root && placed.has(this.options.root)
                 ? this.options.root
-                : nodes.reduce<ForceNetworkNode | undefined>((best, node) => (
+                : activeNodes.reduce<ForceNetworkNode | undefined>((best, node) => (
                     !best || (degree.get(node.id) ?? 0) > (degree.get(best.id) ?? 0) ? node : best
                 ), undefined)?.id;
 
@@ -456,7 +462,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 this.scene.add(this._linksGroup);
             }
 
-            const linkValues = links.map(link => link.value ?? 1);
+            const linkValues = activeLinks.map(link => link.value ?? 1);
             const [, linkMax] = linkValues.length ? numberExtent(linkValues, functionIdentity) : [0, 1];
             const linkWidth = (link: ForceNetworkLink) => 1 + ((link.value ?? 1) / (linkMax || 1)) * 3;
             const linkId = (link: ForceNetworkLink) => `link-${link.source}~${link.target}`;
@@ -465,7 +471,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 left: linkEntries,
                 inner: linkUpdates,
                 right: linkExits,
-            } = arrayJoin(links, this._linkElements, (link, line) => line.id === linkId(link));
+            } = arrayJoin(activeLinks, this._linkElements, (link, line) => line.id === linkId(link));
 
             linkExits.forEach(el => el.destroy());
 
@@ -552,7 +558,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 left: nodeEntries,
                 inner: nodeUpdates,
                 right: nodeExits,
-            } = arrayJoin(nodes, this._nodeElements, (node, group) => group.id === `node-${node.id}`);
+            } = arrayJoin(activeNodes, this._nodeElements, (node, group) => group.id === `node-${node.id}`);
 
             nodeExits.forEach(group => group.destroy());
 

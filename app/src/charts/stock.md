@@ -97,7 +97,7 @@ function generateData(count = 30) {
 let data = generateData();
 
 function buildOptions() {
-    return {
+    const options = {
         showVolume: extras.showVolume,
         upColor: extras.upColor,
         downColor: extras.downColor,
@@ -108,6 +108,11 @@ function buildOptions() {
             : [],
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `$${v.toFixed(2)}`;
+
+    return options;
 }
 
 const example = ref();
@@ -121,15 +126,11 @@ const { contextChanged, chart } = useRiplChart(context => {
         low: 'low',
         close: 'close',
         volume: 'volume',
-        format: v => `$${v.toFixed(2)}`,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options (axes, grid, tooltip, crosshair, theme) are read only at construction, so rebuild
-// the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     data = generateData();

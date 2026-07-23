@@ -19,7 +19,6 @@ import {
     normalizeAxis,
     normalizeCrosshair,
     normalizeGrid,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveFormatLabel,
     resolveValueFormat,
@@ -29,7 +28,7 @@ import {
     ChartYAxis,
 } from '../components/axis';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -135,7 +134,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
     private _seriesGroups: Group[] = [];
     private _yScale!: Scale;
     private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
+    private _tooltip?: Tooltip;
     private _grid?: Grid;
     private _crosshair?: Crosshair;
     private _windowSize: number;
@@ -153,17 +152,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         );
         const gridOpts = normalizeGrid(options.grid);
         const crosshairOpts = normalizeCrosshair(options.crosshair);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
 
         this._yAxis = new ChartYAxis({
             scene: this.scene,
@@ -279,7 +267,9 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         const newGroups: Group[] = [];
         const updatedGroups: Group[] = [];
 
-        series.forEach(srs => {
+        // Legend-hidden series are skipped, so their groups fall through to the leftover cleanup
+        // below and are removed (their buffers keep streaming, ready for re-show).
+        this.filterActive(series).forEach(srs => {
             const buffer = this._buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
             const showArea = srs.showArea !== false;
@@ -447,10 +437,18 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
             this.resolveSeriesColors(series);
 
-            // Compute y extent from all buffers
+            // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
+            this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
+
+            // Compute the y extent from the legend-active buffers only, so hiding a series
+            // rescales the axis to the remaining ones.
             const allValues: number[] = [];
 
-            this._buffers.forEach(buffer => {
+            this._buffers.forEach((buffer, seriesId) => {
+                if (!this.isItemActive(seriesId)) {
+                    return;
+                }
+
                 buffer.forEach(value => allValues.push(value));
             });
 
@@ -485,7 +483,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                     id: srs.id,
                     label: srs.label ?? srs.id,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -518,7 +516,10 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Render grid
             if (this._grid) {
                 const yTicks = this._yScale.ticks(10);
-                const yTickPositions = yTicks.map(tick => this._yScale(tick));
+                const yTickPositions = yTicks.map(tick => ({
+                    value: tick,
+                    position: this._yScale(tick),
+                }));
 
                 this._grid.render(
                     [],

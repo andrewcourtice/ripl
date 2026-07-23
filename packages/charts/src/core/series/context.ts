@@ -27,6 +27,10 @@ import type {
 } from '../options';
 
 import type {
+    SymbolType,
+} from '../../components/symbols';
+
+import type {
     Tooltip,
 } from '../../components/tooltip';
 
@@ -104,6 +108,8 @@ export interface SeriesRenderContext<TData> {
 export interface LineSeriesContext<TData> extends SeriesRenderContext<TData> {
     /** The point scale mapping a category key to its x pixel position. */
     xScale: Scale<string>;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `yScale` when omitted. */
+    resolveScale?: (series: LineSeriesLike<TData>) => Scale;
 }
 
 /** Context for the {@link AreaSeriesRenderer}: adds the x point scale and the stack toggle. */
@@ -112,6 +118,8 @@ export interface AreaSeriesContext<TData> extends SeriesRenderContext<TData> {
     xScale: Scale<string>;
     /** Whether area series are stacked cumulatively instead of overlaid. */
     stacked: boolean;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `yScale` when omitted. */
+    resolveScale?: (series: AreaSeriesLike<TData>) => Scale;
 }
 
 /** Context for the {@link BarSeriesRenderer}: adds the category band scale, value scale, orientation, and stacking. */
@@ -120,6 +128,8 @@ export interface BarSeriesContext<TData> extends SeriesRenderContext<TData> {
     categoryScale: BandScale<string>;
     /** The continuous scale mapping a value to its position along the value axis (y for vertical bars, x for horizontal). */
     valueScale: Scale;
+    /** Resolves the value scale for a specific series (multi-axis binding); every series uses `valueScale` when omitted. */
+    resolveScale?: (series: BarSeriesLike<TData>) => Scale;
     /** Whether bars run vertically (default) or horizontally. */
     orientation: 'vertical' | 'horizontal';
     /** Whether bar series are stacked into a single column instead of grouped side by side. */
@@ -148,6 +158,8 @@ export interface LineSeriesLike<TData> {
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
     markerRadius?: number;
+    /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
+    marker?: SymbolType;
 }
 
 /** The area series fields the area renderer reads (line fields plus a fill opacity). */

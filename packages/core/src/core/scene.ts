@@ -69,17 +69,18 @@ const RENDER_OPERATIONS: Record<RenderInstructionType, (context: Context, elemen
 export interface SceneOptions extends GroupOptions {
     /** Whether the scene re-renders automatically when its context is resized. Defaults to `true`. */
     renderOnResize?: boolean;
-    /** Whether the scene re-renders automatically when an element's state is updated. */
-    renderOnUpdate?: boolean;
 }
 
 /** The top-level group bound to a rendering context, maintaining a hoisted flat instruction stream for O(n) rendering. */
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
+    private _needsRender = true;
+
     /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
 
     private _instructions: RenderInstruction[] = [];
+    private _buffer: Element[] = [];
 
     /**
      * The flat, group-aware render instruction stream in paint order (stacking-context
@@ -91,11 +92,22 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         return this._instructions;
     }
 
-    /** The flat list of renderable leaf descendants in paint order — the `draw` targets of {@link Scene.instructions}. */
+    /**
+     * The flat list of renderable leaf descendants in paint order — the `draw` targets of
+     * {@link Scene.instructions}. The array is materialized once per graph rebuild and cached,
+     * so treat it as read-only.
+     */
     public get buffer(): Element[] {
-        return this._instructions
-            .filter(instruction => instruction.type === 'draw')
-            .map(instruction => instruction.element);
+        return this._buffer;
+    }
+
+    /**
+     * Whether the scene has pending visual changes that require a repaint. `true` on
+     * construction and whenever the graph, an element's state, or the context's size changes;
+     * cleared at the end of each painted frame ({@link Scene.render} or a {@link Renderer} tick).
+     */
+    public get needsRender(): boolean {
+        return this._needsRender;
     }
 
     /** The pixel width of the scene's rendering context. */
@@ -111,7 +123,6 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
     constructor(target: Context | string | HTMLElement, options?: SceneOptions) {
         const {
             renderOnResize = true,
-            // renderOnUpdate = true,
             ...groupOptions
         } = options || {};
 
@@ -141,29 +152,47 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         const requestFrame = createFrameBuffer();
 
+        const rebuild = () => {
+            this._rebuild();
+            context.invalidateTrackedElements();
+
+            // The rebuild lands on its own frame — a renderer tick may have painted (and
+            // consumed the flag) in between, so re-invalidate for the new instruction stream.
+            this.invalidate();
+        };
+
         this.retain(context.on('resize', () => {
+            // A resize clears the surface, so the next frame must repaint regardless of
+            // whether the scene renders synchronously here.
+            this.invalidate();
+
             if (renderOnResize && !!this.buffer.length) {
                 this.render();
             }
         }));
 
-        this.on('graph', () => requestFrame(() => {
-            this._rebuild();
-            context.invalidateTrackedElements();
-        }));
+        // A context-level repaint request (e.g. a 3D camera move) mutates no element, so it
+        // would otherwise be missed by the renderer's dirty check — invalidate to force a paint.
+        this.retain(context.on('render', () => this.invalidate()));
 
-        // A z-index change reorders the instruction stream, so re-sort. Interpolated
-        // animations write state directly (no `updated` event), so this only fires on explicit
-        // z-index assignments — and the rebuild is debounced to once per frame.
+        this.on('graph', () => {
+            this.invalidate();
+            requestFrame(rebuild);
+        });
+
+        // Any bubbled state change means the on-screen output is stale. A z-index change
+        // additionally reorders the instruction stream, so re-sort. Interpolated animations
+        // write state directly (no `updated` event) — the renderer covers those via its
+        // transition map — so the rebuild only fires on explicit z-index assignments, and is
+        // debounced to once per frame.
         this.on('updated', event => {
+            this.invalidate();
+
             if (event.data.key !== 'zIndex') {
                 return;
             }
 
-            requestFrame(() => {
-                this._rebuild();
-                context.invalidateTrackedElements();
-            });
+            requestFrame(rebuild);
         });
     }
 
@@ -173,6 +202,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this._collectInstructions(this, instructions);
 
         this._instructions = instructions;
+        this._buffer = instructions
+            .filter(instruction => instruction.type === 'draw')
+            .map(instruction => instruction.element);
     }
 
     /**
@@ -206,6 +238,25 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             });
     }
 
+    /**
+     * Flags the scene as having pending visual changes ({@link Scene.needsRender}) so the next
+     * {@link Renderer} frame paints. Called automatically for graph, state, and resize changes;
+     * call it manually only after mutating something the scene cannot observe (e.g. external
+     * data read by a custom path renderer).
+     */
+    public invalidate(): void {
+        this._needsRender = true;
+    }
+
+    /**
+     * Consumes the pending-render flag ({@link Scene.needsRender}) after a painted frame.
+     * Called automatically at the end of {@link Scene.render} and by the {@link Renderer}
+     * after each painted tick. Consumers do not normally call this directly.
+     */
+    public $consumeRender(): void {
+        this._needsRender = false;
+    }
+
     /** Destroys the scene (and optionally the context), removing all children and cleaning up event subscriptions. */
     public destroy(includeContext: boolean = false): void {
         this.clear();
@@ -230,6 +281,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         // Leaves clear their own flags in `Element.render` and groups at their `pop`; the root is
         // not part of its own instruction stream, so reset it explicitly here.
         this.$reset();
+        this.$consumeRender();
     }
 
 }

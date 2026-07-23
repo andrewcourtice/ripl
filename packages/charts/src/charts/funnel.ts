@@ -161,10 +161,14 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             const getColor = resolveColorBy<TData>(colorBy);
 
+            // Legend-hidden segments are excluded from the layout, so the remaining segments
+            // re-space and re-scale to fill the funnel while hidden ones exit through the join.
+            const activeData = this.filterActive(data, getKey);
+
             // Find max value for width scaling
             let maxValue = 0;
 
-            data.forEach(item => {
+            activeData.forEach(item => {
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
@@ -188,7 +192,7 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                     key: getKey(item),
                     color: getColor(item),
                 }),
-                active: true,
+                active: this.isItemActive(getKey(item)),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
@@ -198,9 +202,9 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
             const availableWidth = area.width;
             const availableHeight = area.height;
             const centerX = area.x + area.width / 2;
-            const segmentHeight = (availableHeight - gap * (data.length - 1)) / data.length;
+            const segmentHeight = (availableHeight - gap * (activeData.length - 1)) / Math.max(1, activeData.length);
 
-            const calculations = data.map((item, index) => {
+            const calculations = activeData.map((item, index) => {
                 const itemKey = getKey(item);
                 const itemValue = getValue(item);
                 const itemLabel = getLabel(item);

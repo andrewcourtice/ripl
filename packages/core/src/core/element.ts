@@ -2,7 +2,6 @@ import {
     CONTEXT_OPERATIONS,
     TRACKED_EVENTS,
     TRANSFORM_DEFAULTS,
-    TRANSFORM_INTERPOLATORS,
 } from './constants';
 
 import {
@@ -18,32 +17,13 @@ import type {
 import {
     Box,
     isPointInBox,
-    matrixIdentity,
     matrixIsIdentity,
-    matrixMultiply,
-    matrixRotate,
-    matrixScale,
-    matrixTranslate,
     transformBox,
 } from '../math';
 
 import type {
     Matrix,
 } from '../math';
-
-import {
-    scaleContinuous,
-} from '../scales';
-
-import {
-    interpolateAny,
-    interpolateBorderRadius,
-    interpolateColor,
-    interpolateDate,
-    interpolateGradient,
-    interpolateNumber,
-    interpolatePoints,
-} from '../interpolators';
 
 import type {
     Interpolator,
@@ -63,11 +43,6 @@ import type {
     Queryable,
 } from './query';
 
-import {
-    resolveRotation,
-    resolveTransformOrigin,
-} from '../context';
-
 import type {
     BaseState,
     Context,
@@ -77,10 +52,8 @@ import {
     objectForEach,
     objectReduce,
     stringUniqueId,
-    typeIsArray,
     typeIsFunction,
     typeIsNil,
-    typeIsObject,
     typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -89,6 +62,17 @@ import type {
     AnyFunction,
     OneOrMore,
 } from '@ripl/utilities';
+
+import {
+    getInterpolator,
+    getKeyframeInterpolator,
+    isElementValueKeyFrame,
+} from './interpolation';
+
+import {
+    applyElementTransform,
+    MatrixTransformTarget,
+} from './transform';
 
 /** Controls which pointer events an element responds to during hit testing. */
 export type ElementPointerEvents = 'none' | 'all' | 'stroke' | 'fill';
@@ -222,187 +206,6 @@ export interface ElementValidationResult {
     message: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function isElementValueKeyFrame(value: unknown): value is ElementInterpolationKeyFrame<any>[] {
-    return typeIsArray(value) && value.every(keyframe => typeIsObject(keyframe) && 'value' in keyframe);
-}
-
-function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: ElementInterpolationKeyFrame<TValue>[], interpolator: InterpolatorFactory<TValue>): Interpolator<TValue | undefined> {
-    let keyframes = ([{
-        offset: 0,
-        value: currentValue,
-    }] as { offset: number;
-        value: TValue; }[]).concat(
-        frames.map(frame => ({
-            offset: frame.offset ?? 0,
-            value: frame.value,
-        }))
-    );
-
-    keyframes = frames.map(({ offset, value }, index) => ({
-        value,
-        offset: typeIsNil(offset) ? index / (keyframes.length - 1) : offset,
-    }));
-
-    if (keyframes.at(-1)?.offset !== 1) {
-        keyframes.push({
-            offset: 1,
-            value: keyframes.at(-1)?.value ?? currentValue,
-        });
-    }
-
-    keyframes.sort(({ offset: oa }, { offset: ob }) => oa - ob);
-
-    const frameScale = scaleContinuous([0, 1], [0, keyframes.length - 1], { clamp: true });
-    const interpolators = Array.from({ length: keyframes.length - 1 }, (_, index) => {
-        const frameA = keyframes[index];
-        const frameB = keyframes[index + 1];
-        const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);
-        const interpolate = interpolator(frameA.value, frameB.value);
-
-        return (time: number) => interpolate(scale(time));
-    });
-
-    return time => interpolators[Math.min(Math.floor(frameScale(time)), interpolators.length - 1)](time);
-}
-
-function getInterpolator<TValue>(value: TValue, key?: string) {
-    if (key && TRANSFORM_INTERPOLATORS[key]) {
-        return TRANSFORM_INTERPOLATORS[key] as InterpolatorFactory<TValue>;
-    }
-
-    const interpolator = [
-        interpolateNumber,
-        interpolateGradient,
-        interpolateColor,
-        interpolateDate,
-        interpolatePoints,
-        interpolateBorderRadius,
-    ].find(({ test }) => !!test?.(value));
-
-    return (interpolator ?? interpolateAny) as InterpolatorFactory<TValue>;
-}
-
-/**
- * The subset of {@link Context} transform operations required to apply an element's
- * transform. Implemented by every {@link Context}, and by the internal matrix accumulator
- * used to reconstruct an element's world transform for hit testing.
- */
-export interface TransformTarget {
-    /** Applies a translation of `(x, y)`. */
-    translate(x: number, y: number): void;
-    /** Applies a rotation, in radians. */
-    rotate(angle: number): void;
-    /** Applies a scale with the given horizontal and vertical factors. */
-    scale(x: number, y: number): void;
-}
-
-/**
- * Applies an element's transform (translate, rotate, scale about its transform-origin) to
- * the given target. Used both to drive a {@link Context}'s transform during rendering and,
- * via a matrix accumulator, to reconstruct an element's world transform for hit testing.
- *
- * @param target - The {@link Context} (or matrix accumulator) to apply the transform to.
- * @param element - The element whose transform is applied.
- */
-export function applyElementTransform(target: TransformTarget, element: Element) {
-    const translateX = element.translateX ?? 0;
-    const translateY = element.translateY ?? 0;
-    const scaleX = element.transformScaleX ?? 1;
-    const scaleY = element.transformScaleY ?? 1;
-    const rawRotation = element.rotation ?? 0;
-    const rawOriginX = element.transformOriginX ?? 0;
-    const rawOriginY = element.transformOriginY ?? 0;
-
-    const rotation = resolveRotation(rawRotation);
-
-    const hasTranslate = translateX !== 0 || translateY !== 0;
-    const hasScale = scaleX !== 1 || scaleY !== 1;
-    const hasRotation = rotation !== 0;
-    const hasOrigin = rawOriginX !== 0 || rawOriginY !== 0;
-
-    if (!hasTranslate && !hasScale && !hasRotation) {
-        return;
-    }
-
-    let originX = 0;
-    let originY = 0;
-
-    if (hasOrigin) {
-        const needsBBox = typeIsString(rawOriginX) || typeIsString(rawOriginY);
-        // Origins resolve against the element's own (pre-transform) geometry, not its on-screen box.
-        const box = needsBBox ? element._getLocalBoundingBox() : null;
-
-        originX = resolveTransformOrigin(rawOriginX, box?.width ?? 0);
-        originY = resolveTransformOrigin(rawOriginY, box?.height ?? 0);
-
-        if (needsBBox && box) {
-            originX += box.left;
-            originY += box.top;
-        }
-    }
-
-    target.translate(originX + translateX, originY + translateY);
-
-    if (hasRotation) {
-        target.rotate(rotation);
-    }
-
-    if (hasScale) {
-        target.scale(scaleX, scaleY);
-    }
-
-    if (hasOrigin) {
-        target.translate(-originX, -originY);
-    }
-}
-
-/** A {@link TransformTarget} that accumulates applied transforms into a single {@link Matrix}. */
-class MatrixTransformTarget implements TransformTarget {
-
-    public matrix: Matrix = matrixIdentity();
-
-    public translate(x: number, y: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixTranslate(x, y));
-    }
-
-    public rotate(angle: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixRotate(angle));
-    }
-
-    public scale(x: number, y: number): void {
-        this.matrix = matrixMultiply(this.matrix, matrixScale(x, y));
-    }
-
-}
-
-/**
- * Reconstructs an element's world transform — the composition of its own transform and
- * every ancestor group's transform, from the root down — for use in hit testing against
- * backends (such as canvas) that do not natively account for element transforms.
- *
- * @param element - The element whose world transform to compute.
- * @returns The composed {@link Matrix}, or `null` when the whole chain is the identity
- * transform (the common case), letting callers skip any point remapping.
- */
-export function getWorldTransform(element: Element): Matrix | null {
-    const chain: Element[] = [];
-    let current: Element | undefined = element;
-
-    while (current) {
-        chain.unshift(current);
-        current = current.parent as Element | undefined;
-    }
-
-    const target = new MatrixTransformTarget();
-
-    chain.forEach(node => applyElementTransform(target, node));
-
-    return matrixIsIdentity(target.matrix)
-        ? null
-        : target.matrix;
-}
-
 /** The base renderable element with state management, event handling, interpolation, transform support, and context rendering. */
 export class Element<
     TState extends BaseElementState = BaseElementState,
@@ -430,6 +233,24 @@ export class Element<
 
     private _dirty = false;
     private _touched = false;
+    private _stateVersion = 0;
+
+    private _worldTransformCache?: {
+        matrix: Matrix | null;
+        chain: Element[];
+        versions: number[];
+    };
+
+    private _localBoxCache?: {
+        box: Box;
+        version: number;
+    };
+
+    private _worldBoxCache?: {
+        box: Box;
+        version: number;
+        matrix: Matrix | null;
+    };
 
     /** Whether an own state value has changed since the last render cycle. Drives per-element path-cache invalidation and is reset after each render cycle. */
     public get $dirty(): boolean {
@@ -740,7 +561,7 @@ export class Element<
      * the render tree — a group applies its paint at its boundary ({@link Context.pushGroup}) and
      * descendants pick it up from the context's copied state — so property getters return own
      * values only, mirroring how the browser resolves computed style at paint time. Use
-     * {@link Element.getComputedStateValue} when the effective (inheritance-resolved) value is
+     * {@link Element.getComputedValue} when the effective (inheritance-resolved) value is
      * required outside a render pass (e.g. animation start values).
      */
     protected getStateValue<TKey extends keyof TState>(key: TKey) {
@@ -751,15 +572,18 @@ export class Element<
      * Resolves a state value against the parent chain (own value, else the nearest ancestor's) —
      * the effective value an element renders with. Used where the resolved value is needed without
      * a live context, such as computing a transition's start value.
+     *
+     * @param key - The state property to resolve.
+     * @returns The element's own value for `key`, or the nearest ancestor's when unset, else `undefined`.
      */
-    protected getComputedStateValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
+    public getComputedValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
         const own = this.state[key];
 
         if (own !== undefined && own !== null) {
             return own;
         }
 
-        return (this.parent as unknown as Element<TState> | undefined)?.getComputedStateValue(key) as TState[TKey];
+        return (this.parent as unknown as Element<TState> | undefined)?.getComputedValue(key) as TState[TKey];
     }
 
     /**
@@ -776,6 +600,7 @@ export class Element<
         }
 
         this.state[key] = value;
+        this._stateVersion++;
         this._dirty = true;
         this.emit('updated', {
             key,
@@ -840,6 +665,81 @@ export class Element<
     }
 
     /**
+     * Whether this element's bounding boxes may be cached against its own state version. Groups
+     * opt out — their box composes from children whose changes are not visible in the group's own
+     * state.
+     */
+    protected get _boundsCacheable(): boolean {
+        return true;
+    }
+
+    /**
+     * The element's world transform (own and every ancestor's transform composed root-first), or
+     * `null` when the composition is the identity. Cached against the parent chain's state
+     * versions, so static scenes skip the matrix rebuild; any state change (or reparent) along the
+     * chain recomputes. A chain node whose transform origin resolves against an uncacheable box
+     * (a group with a string origin) bypasses the cache entirely.
+     */
+    public getWorldTransform(): Matrix | null {
+        const cache = this._worldTransformCache;
+        const node = this as unknown as Element;
+
+        let cacheable = true;
+        let valid = !!cache;
+        let index = 0;
+
+        let current: Element | undefined = node;
+
+        while (current) {
+            if (!current._boundsCacheable && (typeIsString(current.transformOriginX) || typeIsString(current.transformOriginY))) {
+                cacheable = false;
+            }
+
+            if (valid && cache && (cache.chain[index] !== current || cache.versions[index] !== current._stateVersion)) {
+                valid = false;
+            }
+
+            index++;
+            current = current.parent as Element | undefined;
+        }
+
+        if (cacheable && valid && cache && cache.chain.length === index) {
+            return cache.matrix;
+        }
+
+        const chain: Element[] = [];
+        const versions: number[] = [];
+
+        current = node;
+
+        while (current) {
+            chain.push(current);
+            versions.push(current._stateVersion);
+            current = current.parent as Element | undefined;
+        }
+
+        const target = new MatrixTransformTarget();
+
+        for (let position = chain.length - 1; position >= 0; position--) {
+            applyElementTransform(target, chain[position]);
+        }
+
+        const matrix = matrixIsIdentity(target.matrix)
+            ? null
+            : target.matrix;
+
+        if (cacheable) {
+            this._worldTransformCache = {
+                matrix,
+                chain,
+                versions,
+            };
+        }
+
+        return matrix;
+    }
+
+    /**
      * Returns this element's bounding box: the on-screen (world) box by default, or the raw local
      * box when `local` is `true`. The world box applies this element's own and every ancestor
      * group's transform (mirroring the DOM's `getBoundingClientRect`); a rotated element yields a
@@ -847,10 +747,48 @@ export class Element<
      * @param local - when `true`, returns the untransformed authored geometry instead of the world box.
      */
     public getBoundingBox(local = false): Box {
-        const box = this._getLocalBoundingBox();
-        return local
-            ? box
-            : transformBox(box, getWorldTransform(this as unknown as Element));
+        const cacheable = this._boundsCacheable;
+        const localCache = this._localBoxCache;
+
+        let box: Box;
+
+        if (cacheable && localCache && localCache.version === this._stateVersion) {
+            box = localCache.box;
+        } else {
+            box = this._getLocalBoundingBox();
+
+            if (cacheable) {
+                this._localBoxCache = {
+                    box,
+                    version: this._stateVersion,
+                };
+            }
+        }
+
+        if (local) {
+            return new Box(box.top, box.left, box.bottom, box.right);
+        }
+
+        const matrix = this.getWorldTransform();
+        const worldCache = this._worldBoxCache;
+
+        if (cacheable && worldCache && worldCache.version === this._stateVersion && worldCache.matrix === matrix) {
+            const cached = worldCache.box;
+
+            return new Box(cached.top, cached.left, cached.bottom, cached.right);
+        }
+
+        const world = transformBox(box, matrix);
+
+        if (cacheable) {
+            this._worldBoxCache = {
+                box: world,
+                version: this._stateVersion,
+                matrix,
+            };
+        }
+
+        return new Box(world.top, world.left, world.bottom, world.right);
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
@@ -864,7 +802,7 @@ export class Element<
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
             // Start from the element's *effective* value (own, else inherited) so a transition on
             // an inherited property animates from what's actually on screen.
-            const currentValue = this.getComputedStateValue(key);
+            const currentValue = this.getComputedValue(key);
 
             if (typeIsNil(currentValue)) {
                 return output;
@@ -887,6 +825,7 @@ export class Element<
             // The tick writes state directly (bypassing setStateValue), so mark dirty here or
             // an animating shape would keep serving a stale cached path.
             this._dirty = true;
+            this._stateVersion++;
 
             objectForEach(mappedIntpls, (key, value) => {
                 this.state[key] = value(time) as TState[keyof TState];

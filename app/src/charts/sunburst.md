@@ -84,13 +84,13 @@ const example = ref();
 const { contextChanged, chart } = useRiplChart(context => {
     return createSunburstChart(context, {
         data,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildCommonOptions(config),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch(config, () => example.value?.recreate(), { deep: true });
+watch(config, () => chart.value?.update(buildCommonOptions(config)), { deep: true });
+
 
 function randomize() {
     data = generateData();

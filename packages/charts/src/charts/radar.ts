@@ -15,11 +15,13 @@ import {
 } from '../core/layout';
 
 import type {
+    ChartDataLabelsInput,
     ChartLegendInput,
     ValueFormatInput,
 } from '../core/options';
 
 import {
+    normalizeDataLabels,
     resolveValueFormat,
 } from '../core/options';
 
@@ -29,6 +31,7 @@ import {
 
 import {
     ANIMATION_REFERENCE,
+    exitElement,
 } from '../core/animation';
 
 import {
@@ -62,6 +65,8 @@ import {
     createText,
     easeOutCubic,
     easeOutQuart,
+    getThetaPoint,
+    scaleRadial,
     setColorAlpha,
     TAU,
 } from '@ripl/core';
@@ -101,6 +106,8 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     legend?: ChartLegendInput;
     /** Format applied to point values shown as text (e.g. tooltips). */
     format?: ValueFormatInput;
+    /** Show each point's value beside its polygon vertex, offset outward along the vertex's angle (`true`/`false` or detailed label options). Off by default. */
+    labels?: ChartDataLabelsInput;
 }
 
 /** Payload emitted for radar point interaction events. */
@@ -127,6 +134,9 @@ export interface RadarChartEventMap extends EventMap {
     pointleave: RadarChartPointEvent;
 }
 
+// Distance in pixels between a polygon vertex and its value label, measured outward along the
+// vertex's angle so the label clears the marker (radius 3, growing to 5 on hover).
+const VALUE_LABEL_OFFSET = 10;
 
 /**
  * Radar (spider) chart plotting multi-axis data as filled polygonal areas.
@@ -387,11 +397,16 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
     private async _drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
         const {
             data,
-            series,
             categories,
         } = this.options;
 
+        // Legend-hidden series fall into the series-exit join below and are removed.
+        const series = this.filterActive(this.options.series);
+
         const angleStep = TAU / categories.length;
+        const dataLabels = normalizeDataLabels(this.options.labels);
+        const formatValue = resolveValueFormat(this.options.format);
+        const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
         const {
             left: seriesEntries,
@@ -401,22 +416,77 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         seriesExits.forEach(el => el.destroy());
 
+        // Radial value scale: 0 at the centre, the data max at the outer ring (clamps out-of-range values).
+        const radiusScale = scaleRadial([0, maxValue], [0, radius]);
+
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 
             return data.map((item, index) => {
                 const value = getValue(item);
-                const normalizedValue = Math.min(value / maxValue, 1);
+                const scaledRadius = radiusScale(value);
                 const angle = index * angleStep - TAU / 4;
-                const x = cx + radius * normalizedValue * Math.cos(angle);
-                const y = cy + radius * normalizedValue * Math.sin(angle);
+                const x = cx + scaledRadius * Math.cos(angle);
+                const y = cy + scaledRadius * Math.sin(angle);
 
                 return {
                     point: [x, y] as Point,
                     value,
+                    angle,
                     axisLabel: categories[index] ?? '',
                 };
+            });
+        };
+
+        type SeriesPoint = ReturnType<typeof getSeriesPoints>[number];
+
+        // Offsets a value label outward from its vertex along the vertex's angle, aligning the
+        // text away from the centre so it clears the marker on every side of the polygon.
+        const labelProps = (pd: SeriesPoint) => {
+            const [x, y] = getThetaPoint(pd.angle, VALUE_LABEL_OFFSET, ...pd.point);
+
+            let textAlign: CanvasTextAlign = 'center';
+
+            if (Math.cos(pd.angle) > 0.1) {
+                textAlign = 'left';
+            } else if (Math.cos(pd.angle) < -0.1) {
+                textAlign = 'right';
+            }
+
+            let textBaseline: CanvasTextBaseline = 'middle';
+
+            if (Math.sin(pd.angle) > 0.1) {
+                textBaseline = 'top';
+            } else if (Math.sin(pd.angle) < -0.1) {
+                textBaseline = 'bottom';
+            }
+
+            return {
+                x,
+                y,
+                textAlign,
+                textBaseline,
+            };
+        };
+
+        const buildLabel = (seriesId: string, pd: SeriesPoint, index: number): Text => {
+            const { x, y, textAlign, textBaseline } = labelProps(pd);
+
+            return createText({
+                id: `${seriesId}-label-${index}`,
+                content: formatValue(pd.value),
+                x,
+                y,
+                textAlign,
+                textBaseline,
+                font: dataLabels.font,
+                fill: dataLabels.fontColor,
+                pointerEvents: 'none',
+                opacity: 0,
+                data: {
+                    opacity: 1,
+                } as Partial<TextState>,
             });
         };
 
@@ -464,9 +534,16 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             return createGroup({
                 id: srs.id,
-                children: [area, ...markers],
+                children: [
+                    area,
+                    ...markers,
+                    ...(dataLabels.visible ? pointsData.map((pd, index) => buildLabel(srs.id, pd, index)) : []),
+                ],
             });
         });
+
+        const enteringLabels: Text[] = [];
+        const updatingLabels: Text[] = [];
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const pointsData = getSeriesPoints(srs);
@@ -496,6 +573,53 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 }
             });
 
+            // Reconcile the vertex value labels against the current `labels` option so they can be
+            // toggled and restyled at runtime, and follow the vertices as values change.
+            const labels = group.getElementsByType('text') as Text[];
+
+            if (!dataLabels.visible) {
+                labels.forEach(label => {
+                    void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
+                });
+
+                return group;
+            }
+
+            const {
+                left: labelEntries,
+                inner: labelUpdates,
+                right: labelExits,
+            } = arrayJoin(pointsData, labels, (pd, label) => label.id === `${srs.id}-label-${pointsData.indexOf(pd)}`);
+
+            labelExits.forEach(label => {
+                void exitElement(this.renderer, label, exitAnimation, { opacity: 0 });
+            });
+
+            labelEntries.forEach(pd => {
+                const label = buildLabel(srs.id, pd, pointsData.indexOf(pd));
+
+                group.add(label);
+                enteringLabels.push(label);
+            });
+
+            labelUpdates.forEach(([pd, label]) => {
+                const { x, y, textAlign, textBaseline } = labelProps(pd);
+
+                // Text content and alignment aren't tweenable — apply them directly.
+                label.content = formatValue(pd.value);
+                label.textAlign = textAlign;
+                label.textBaseline = textBaseline;
+                label.font = dataLabels.font;
+                label.data = {
+                    x,
+                    y,
+                    fill: dataLabels.fontColor,
+                    opacity: 1,
+                } as Partial<TextState>;
+
+                updatingLabels.push(label);
+            });
+
             return group;
         });
 
@@ -513,6 +637,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         const entryTransitions = seriesEntryGroups.map(group => {
             const area = group.getElementsByType('polyline')[0] as Polyline;
             const markers = group.getElementsByType('circle');
+            const labels = group.getElementsByType('text');
 
             const areaTransition = this.renderer.transition(area, {
                 duration: this.getAnimationDuration(800),
@@ -526,7 +651,13 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 state: element.data as Record<string, unknown>,
             }));
 
-            return [areaTransition, markersTransition];
+            const labelsTransition = this.renderer.transition(labels, element => ({
+                duration: this.getAnimationDuration(800),
+                ease: easeOutCubic,
+                state: element.data as Record<string, unknown>,
+            }));
+
+            return [areaTransition, markersTransition, labelsTransition];
         });
 
         // Animate updates
@@ -549,9 +680,18 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             return [areaTransition, markersTransition];
         });
 
+        // Entering labels (per-vertex or when labels are toggled on) fade in; updating labels glide
+        // to their refreshed vertex. Exiting labels run their own exit transition above.
+        const labelTransition = this.renderer.transition([...enteringLabels, ...updatingLabels], element => ({
+            duration: this.getAnimationDuration(600),
+            ease: easeOutCubic,
+            state: element.data as Partial<TextState>,
+        }));
+
         return Promise.all([
             ...entryTransitions,
             ...updateTransitions,
+            [labelTransition],
         ].flat());
     }
 
@@ -575,7 +715,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -585,11 +725,12 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             const { cx, cy, size } = areaCenter(area);
             const radius = size / 2 - 30;
 
-            // Compute max value from data if not provided
+            // Compute max value from the legend-active series if not provided, so hiding a series
+            // re-fits the radial scale to the remaining ones.
             let computedMax = maxValue ?? 0;
 
             if (!maxValue) {
-                series.forEach(srs => {
+                this.filterActive(series).forEach(srs => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
 

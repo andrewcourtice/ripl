@@ -26,12 +26,12 @@ features:
   - title: Charts & data visualization
     details: 23 ready-made, animated chart types — bar, line, area, pie, scatter, candlestick (OHLC), heatmap, radar, sankey, treemap and more — with axes, legends, tooltips, and crosshairs built in.
   - title: Modular & tree-shakable
-    details: Zero runtime dependencies and fully tree-shakable. Ship only the shapes, scales, and contexts you use across Canvas, SVG, Terminal, and experimental WebGPU 3D.
+    details: Zero runtime dependencies and fully tree-shakable. Ship only the shapes, scales, and contexts you use across Canvas, SVG, Terminal, and WebGPU 3D.
   - title: High performance
     details: Hoisted scene buffers, O(n) rendering, virtual-DOM diffing for SVG, and a cancellable animation engine keep interactive visualizations smooth at scale.
 ---
 
 ## Draw once, render anywhere
 
-Ripl (pronounced "ripple") is a high-performance, zero-dependency graphics library for the web. It gives developers a single, unified API for **2D rendering** and **interactive data visualization** — and renders the exact same scene to **Canvas**, **SVG**, or even the **Terminal** (as braille/ANSI), with experimental **WebGPU** 3D. Build custom shapes, charts, and animations once, then choose the rendering context that fits your use case — no rewrites required.
+Ripl (pronounced "ripple") is a high-performance, zero-dependency graphics library for the web. It gives developers a single, unified API for **2D rendering** and **interactive data visualization** — and renders the exact same scene to **Canvas**, **SVG**, or even the **Terminal** (as braille/ANSI), with **WebGPU** 3D. Build custom shapes, charts, and animations once, then choose the rendering context that fits your use case — no rewrites required.
 

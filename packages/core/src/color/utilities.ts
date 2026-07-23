@@ -30,6 +30,25 @@ export function setColorAlpha(color: string, alpha: number) {
     return serialiseRGBA(red, green, blue, alpha);
 }
 
+/** Determines whether a color string resolves to a fully transparent color. */
+export function isTransparentColor(color: string): boolean {
+    const rgba = parseColor(color);
+
+    if (rgba) {
+        return rgba[3] === 0;
+    }
+
+    const trimmed = color.trim().toLowerCase();
+
+    if (trimmed === 'transparent') {
+        return true;
+    }
+
+    // The core rgba/hsla parser doesn't accept a bare `0` alpha (e.g. the canvas default
+    // shadow color `rgba(0, 0, 0, 0)`), so detect a zero alpha component directly.
+    return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(trimmed);
+}
+
 /** Converts RGBA channel values to an HSLA tuple. */
 export function rgbaToHSL(red: number, green: number, blue: number, alpha: number = 1): ColorHSLA {
     const r = red / 255;

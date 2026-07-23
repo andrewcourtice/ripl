@@ -3,6 +3,7 @@ import type {
 } from '../core/data';
 
 import type {
+    AxisTooltipSnapshot,
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -47,11 +48,22 @@ import {
 import {
     axisTickCount,
     createValueScale,
+    isTimeAxis,
 } from '../core/scales';
 
 import type {
     LegendItem,
 } from '../components/legend';
+
+import type {
+    SymbolElement,
+    SymbolType,
+} from '../components/symbols';
+
+import {
+    createSymbol,
+    symbolRadius,
+} from '../components/symbols';
 
 import type {
     Circle,
@@ -66,7 +78,6 @@ import type {
 
 import {
     Box,
-    createCircle,
     createGroup,
     scaleContinuous,
     setColorAlpha,
@@ -97,6 +108,10 @@ export interface ScatterChartSeriesOptions<TData> {
     minRadius?: number;
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
+    /** Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
+    axis?: number | string;
+    /** Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
+    marker?: SymbolType;
 }
 
 /** Options for configuring a {@link ScatterChart}. */
@@ -151,6 +166,14 @@ export interface ScatterChartEventMap extends EventMap {
 
 const REST_ALPHA = 0.7;
 
+// All bubble symbols expose cx/cy/radius, so circles and polygon symbols animate identically.
+function seriesBubbles(group: Group): SymbolElement[] {
+    return [
+        ...group.getElementsByType('circle'),
+        ...group.getElementsByType('polygon'),
+    ] as SymbolElement[];
+}
+
 /**
  * Scatter chart (bubble chart) plotting data points as circles on two continuous axes.
  *
@@ -165,6 +188,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
     private _bubbleGroups: Group[] = [];
     private _xScale!: Scale;
     private _yScale!: Scale;
+    private _yScales: Scale[] = [];
     private _sizeScale!: Scale;
 
     constructor(target: string | HTMLElement | Context, options: ScatterChartOptions<TData>) {
@@ -186,7 +210,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const { data, series } = this.options;
         const sizes: number[] = [];
 
-        series.forEach(({ sizeBy }) => {
+        this.filterActive(series).forEach(({ sizeBy }) => {
             if (sizeBy === undefined) {
                 return;
             }
@@ -204,10 +228,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
      */
     private _getMaxBubbleRadius(): number {
         const { series } = this.options;
-        const radii = series.map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
+        const radii = this.filterActive(series).map(srs => (srs.sizeBy === undefined ? (srs.minRadius ?? 3) : (srs.maxRadius ?? 20)));
         const largest = radii.length > 0 ? Math.max(...radii) : 3;
 
         return largest + 2;
+    }
+
+    // The y scale of the axis a series binds to (the primary scale when no secondary axis exists).
+    private _seriesYScale(series: ScatterChartSeriesOptions<TData>): Scale {
+        return this._yScales[this.resolveSeriesAxisIndex(series.axis)] ?? this._yScale;
     }
 
     private _bubbleValueProducer(series: ScatterChartSeriesOptions<TData>, getKey: (item: TData) => string) {
@@ -227,6 +256,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const getSize = sizeBy === undefined ? () => minRadius : resolveAccessor<TData, number>(sizeBy);
         const getLabel = typeIsFunction(label) ? label : () => label;
         const resolvedColor = color ?? this.getSeriesColor(id);
+        const yScale = this._seriesYScale(series);
+        const marker = series.marker ?? 'circle';
 
         return (item: TData) => {
             const xValue = getX(item);
@@ -253,8 +284,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     stroke: resolvedColor,
                     lineWidth: 2,
                     cx: this._xScale(xValue),
-                    cy: this._yScale(yValue),
-                    radius,
+                    cy: yScale(yValue),
+                    // Non-circle symbols use the circumradius matching the circle's visual area,
+                    // so sized bubbles stay comparable across symbol shapes.
+                    radius: symbolRadius(marker, radius),
+                    // A square is a rotated quad — its transform origin must track its centre.
+                    ...(marker === 'square' ? {
+                        transformOriginX: this._xScale(xValue),
+                        transformOriginY: yScale(yValue),
+                    } : {}),
                 } as CircleState,
             };
         };
@@ -279,7 +317,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         applyHoverHighlight(bubble, {
             renderer: this.renderer,
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
-            tooltip: this.tooltip,
+            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             anchor: () => ({
                 x: bubble.cx,
                 y: bubble.cy - bubble.radius - 10,
@@ -312,8 +351,78 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             : `${label}: (${format(xValue)}, ${format(yValue)})`;
     }
 
+    // Resolves the shared axis-tooltip content for the hovered plot position: the active data point
+    // nearest in pixel space (scatter x is continuous, so nearness is measured in 2-D), titled with
+    // its series label and a single row of its formatted (x, y) — plus size when the series sizes by
+    // a third value. Anchored at the point itself.
+    private _axisTooltipSnapshot(
+        plotX: number,
+        plotY: number,
+        series: ScatterChartSeriesOptions<TData>[]
+    ): AxisTooltipSnapshot | null {
+        const { data } = this.options;
+
+        if (series.length === 0 || data.length === 0) {
+            return null;
+        }
+
+        let best: { series: ScatterChartSeriesOptions<TData>;
+            item: TData;
+            cx: number;
+            cy: number; } | undefined;
+        let bestDistance = Number.POSITIVE_INFINITY;
+
+        series.forEach(srs => {
+            const getX = resolveAccessor<TData, number>(srs.xBy);
+            const getY = resolveAccessor<TData, number>(srs.yBy);
+            const yScale = this._seriesYScale(srs);
+
+            data.forEach(item => {
+                const cx = this._xScale(getX(item));
+                const cy = yScale(getY(item));
+                const distance = (cx - plotX) ** 2 + (cy - plotY) ** 2;
+
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = {
+                        series: srs,
+                        item,
+                        cx,
+                        cy,
+                    };
+                }
+            });
+        });
+
+        if (!best) {
+            return null;
+        }
+
+        const format = resolveValueFormat(this.options.format);
+        const { series: srs, item, cx, cy } = best;
+        const xValue = resolveAccessor<TData, number>(srs.xBy)(item);
+        const yValue = resolveAccessor<TData, number>(srs.yBy)(item);
+        const label = typeIsFunction(srs.label) ? srs.label(item) : srs.label;
+
+        const value = srs.sizeBy === undefined
+            ? format(yValue)
+            : `${format(yValue)}, ${format(resolveAccessor<TData, number>(srs.sizeBy)(item))}`;
+
+        return {
+            title: label,
+            rows: [{
+                label: format(xValue),
+                value,
+            }],
+            x: cx,
+            y: cy,
+        };
+    }
+
     private async _drawBubbles(getKey: (item: TData) => string) {
-        const { data, series } = this.options;
+        const { data } = this.options;
+        // Legend-hidden series fall into the series-exit join below, so their bubbles shrink out.
+        const series = this.filterActive(this.options.series);
         const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
         const dataLabels = normalizeDataLabels(this.options.labels, { anchor: 'top' });
         const formatValue = resolveValueFormat(this.options.format);
@@ -367,7 +476,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const updatingLabels: Text[] = [];
 
         seriesExits.forEach(group => {
-            const exits = (group.getElementsByType('circle') as Circle[]).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
+            const exits = seriesBubbles(group).map(bubble => exitElement(this.renderer, bubble, exitAnimation, {
                 radius: 0,
                 fill: setColorAlpha(bubble.fill as string, 0),
                 stroke: setColorAlpha(bubble.stroke as string, 0),
@@ -383,7 +492,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 const values = getValues(item);
                 const { id, state } = values;
 
-                const bubble = createCircle({
+                const bubble = createSymbol(srs.marker ?? 'circle', {
                     id,
                     ...state,
                     radius: 0,
@@ -392,7 +501,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     data: state,
                 });
 
-                this._attachBubbleHover(bubble, values, this._tooltipText(values), state);
+                this._attachBubbleHover(bubble as Circle, values, this._tooltipText(values), state);
 
                 return bubble;
             };
@@ -410,7 +519,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
         const seriesUpdateGroups = seriesUpdates.map(([srs, group]) => {
             const getValues = this._bubbleValueProducer(srs, getKey);
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             const {
                 left: bubbleEntries,
@@ -475,7 +584,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
         const entryTransitions = seriesEntryGroups.map(group => {
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             return this.renderer.transition(bubbles, (element, index, length) => ({
                 duration: enter.duration,
@@ -486,7 +595,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         });
 
         const updateTransitions = seriesUpdateGroups.map(group => {
-            const bubbles = group.getElementsByType('circle') as Circle[];
+            const bubbles = seriesBubbles(group);
 
             return this.renderer.transition(bubbles, element => ({
                 duration: update.duration,
@@ -540,11 +649,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const getKey = resolveAccessor<TData, string>(key);
 
-            const xExtents = series.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
-            const yExtents = series.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+            // Legend-hidden series are excluded from the axis extents and rendering, so toggling a
+            // series rescales both axes; with every series hidden the extents fall back to [0, 1].
+            const activeSeries = this.filterActive(series);
 
-            const xExtent = numberExtent(xExtents, functionIdentity);
-            const yExtent = numberExtent(yExtents, functionIdentity);
+            const xExtents = activeSeries.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
+            const yExtents = activeSeries.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+
+            const xExtent = xExtents.length ? numberExtent(xExtents, functionIdentity) : [0, 1];
+            const yExtent = yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];
             this._sizeScale = scaleContinuous(this._getSizeExtent(), [0, 1]);
 
             const layout = this.createLayout();
@@ -555,7 +668,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     id: srs.id,
                     label: typeIsFunction(srs.label) ? srs.id : srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -566,6 +679,18 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const top = area.y;
             const right = area.x + area.width;
             const bottom = area.y + area.height;
+
+            if (this.yAxes.length > 1) {
+                return this._renderMultiAxis({
+                    series: activeSeries,
+                    getKey,
+                    xExtent,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
 
             // Inset the data range by the largest possible bubble radius so a point sitting on the
             // edge of the data extent keeps its whole circle inside the plot area instead of
@@ -579,7 +704,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = createValueScale(this.xAxisOptions, xExtent, [yAxisBox.right + maxRadius, right - maxRadius]);
+            this._xScale = this.continuousXScale(xExtent, yAxisBox.right + maxRadius, right - maxRadius);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
@@ -589,9 +714,13 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
             // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
-            // so both follow the view.
-            this._xScale = this.applyView(this._xScale, 'x');
+            // so both follow the view. A time x-axis pans/zooms in pixel space instead — its Date
+            // domain cannot round-trip through the numeric domain rescale.
+            this._xScale = isTimeAxis(this.xAxisOptions)
+                ? this.applyViewToScale(this._xScale, 'x')
+                : this.applyView(this._xScale, 'x');
             this._yScale = this.applyView(this._yScale, 'y');
+            this._yScales = [this._yScale];
             this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds.bottom = xAxisBox.top;
@@ -606,12 +735,13 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this.clipPlot(plot);
 
             this.renderGrid(
-                this._xScale.ticks(axisTickCount(this.xAxisOptions)).map(tick => this._xScale(tick)),
-                this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)),
+                this.gridTicks(this._xScale, axisTickCount(this.xAxisOptions)),
+                this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)),
                 plot
             );
 
             this.setupCrosshair(plot);
+            this.setupAxisTooltip(plot, (plotX, plotY) => this._axisTooltipSnapshot(plotX, plotY, activeSeries));
 
             this.renderAnnotations({
                 x: this._xScale,
@@ -624,6 +754,106 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 this._drawBubbles(getKey),
             ]);
         });
+    }
+
+    /**
+     * Renders the chart across N y-axes. The (legend-active) series are partitioned by their `axis`
+     * binding; each axis gets an independent y extent and scale computed over the active series bound
+     * to it, {@link CartesianChart.layoutYAxes} packs the axis label bands against the two chart edges
+     * and returns the plot bounds between them, and each series' bubbles are positioned against its
+     * bound axis's scale. The bubble-radius inset applies inside the axis bands (and to every y scale)
+     * so edge bubbles stay within the plot.
+     */
+    private _renderMultiAxis(ctx: {
+        series: ScatterChartSeriesOptions<TData>[];
+        getKey: (item: TData) => string;
+        xExtent: number[];
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const {
+            series,
+            getKey,
+            xExtent,
+            left,
+            top,
+            right,
+            bottom,
+        } = ctx;
+
+        const { data } = this.options;
+
+        // Independent y extent per axis, computed over the active series bound to it.
+        const extents = this.yAxes.map((_, index) => {
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+            const yExtents = group.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
+
+            return yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];
+        });
+
+        // Inset the data ranges by the largest possible bubble radius (see the single-axis path);
+        // horizontally the inset sits just inside the packed axis label bands.
+        const maxRadius = this._getMaxBubbleRadius();
+
+        // Pack the axis bands against the chart edges; the plot sits between them. The provisional
+        // scale range only affects label measurement (domain-driven), so the inset is applied later.
+        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+
+        this._xScale = this.continuousXScale(xExtent, plotLeft + maxRadius, plotRight - maxRadius);
+        this.xAxis.scale = this._xScale;
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        // Final scales over the plot height; clamp each axis band above the x-axis labels.
+        const scales = this.yAxes.map((axis, index) => {
+            axis.bounds.bottom = xAxisBox.top;
+
+            return createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top - maxRadius, top + maxRadius]);
+        });
+
+        // Rescale to the navigator's current pan/zoom window (see the single-axis path); each y
+        // axis follows the view independently. A time x-axis pans/zooms in pixel space instead.
+        this._xScale = isTimeAxis(this.xAxisOptions)
+            ? this.applyViewToScale(this._xScale, 'x')
+            : this.applyView(this._xScale, 'x');
+        this._yScales = scales.map(scale => this.applyView(scale, 'y'));
+        this._yScale = this._yScales[0];
+        this.xAxis.scale = this._xScale;
+        this.yAxes.forEach((axis, index) => {
+            axis.scale = this._yScales[index];
+        });
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        this.clipPlot(plot);
+
+        this.renderGrid(
+            this.gridTicks(this._xScale, axisTickCount(this.xAxisOptions)),
+            this.gridTicks(this._yScale, axisTickCount(this.yAxesOptions[0])),
+            plot
+        );
+
+        this.setupCrosshair(plot);
+        this.setupAxisTooltip(plot, (plotX, plotY) => this._axisTooltipSnapshot(plotX, plotY, series));
+
+        this.renderAnnotations({
+            x: this._xScale,
+            y: this._yScale,
+        }, plot);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this._drawBubbles(getKey),
+        ]);
     }
 
 }

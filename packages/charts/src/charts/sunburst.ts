@@ -230,7 +230,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 id: node.id,
                 label: node.label,
                 color: resolvedColors.get(node.id)!,
-                active: true,
+                active: this.isItemActive(node.id),
             }));
 
             this.reserveLegend(layout, legendItems, this.options.legend);
@@ -238,8 +238,12 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             const area = layout.area;
             const { cx, cy, size } = areaCenter(area);
 
+            // Legend-hidden top-level nodes (and their whole subtree) are excluded from the layout,
+            // so the remaining rings' angles expand to fill the circle and hidden arcs exit.
+            const activeData = this.filterActive(data, node => node.id);
+
             const offset = TAU / 4;
-            const arcs = flattenNodes(data, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);
+            const arcs = flattenNodes(activeData, 0, -offset, TAU - offset, colorGenerator, undefined, resolvedColors);
 
             // Find max depth
             let maxDepth = 0;

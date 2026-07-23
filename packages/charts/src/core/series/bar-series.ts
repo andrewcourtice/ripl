@@ -52,6 +52,7 @@ import type {
     Group,
     Rect,
     RectState,
+    Scale,
 } from '@ripl/core';
 
 import {
@@ -89,7 +90,6 @@ interface BarPrepared<TData> {
     series: BarSeriesLike<TData>[];
     horizontal: boolean;
     stacked: boolean;
-    baseline: number;
     cornerRadius: number;
     /** Grouping sub-scale (offsets each series within a category slot); undefined when stacked. */
     seriesScale?: BandScale<string>;
@@ -111,6 +111,11 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
     private _seriesLabel(series: BarSeriesLike<TData>, item: TData): string {
         return typeIsFunction(series.label) ? series.label(item) : series.label;
+    }
+
+    // The value scale a series renders against — its bound axis's scale in multi-axis charts.
+    private _valueScale(series: BarSeriesLike<TData>, ctx: BarSeriesContext<TData>): Scale {
+        return ctx.resolveScale?.(series) ?? ctx.valueScale;
     }
 
     private _stackOffset(prepared: BarPrepared<TData>, current: BarSeriesLike<TData>, item: TData): number {
@@ -160,8 +165,10 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
     }
 
     private _getBarState(series: BarSeriesLike<TData>, item: TData, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): BarState {
-        const { categoryScale, valueScale } = ctx;
-        const { horizontal, stacked, baseline, cornerRadius, seriesScale } = prepared;
+        const { categoryScale } = ctx;
+        const { horizontal, stacked, cornerRadius, seriesScale } = prepared;
+        const valueScale = this._valueScale(series, ctx);
+        const baseline = valueScale(0);
         const value = this._seriesValue(series, item);
         const key = ctx.getKey(item);
         const color = ctx.getColor(series.id);
@@ -237,14 +244,18 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
     }
 
     /** The collapsed geometry an entering/exiting bar grows from (the chart baseline). */
-    private _collapsed(prepared: BarPrepared<TData>): Partial<RectState> {
+    private _collapsed(series: BarSeriesLike<TData> | undefined, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): Partial<RectState> {
+        // A removed series (exitSeries) can no longer resolve its axis binding — collapse to the
+        // primary scale's baseline.
+        const baseline = (series ? this._valueScale(series, ctx) : ctx.valueScale)(0);
+
         return prepared.horizontal
             ? {
-                x: prepared.baseline,
+                x: baseline,
                 width: 0,
             }
             : {
-                y: prepared.baseline,
+                y: baseline,
                 height: 0,
             };
     }
@@ -252,18 +263,19 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
     /** A stacked segment collapses to its own lower edge so the column reveals as one rising fill. */
     private _collapsedEntry(series: BarSeriesLike<TData>, item: TData, ctx: BarSeriesContext<TData>, prepared: BarPrepared<TData>): Partial<RectState> {
         if (!prepared.stacked) {
-            return this._collapsed(prepared);
+            return this._collapsed(series, ctx, prepared);
         }
 
         const stackOffset = this._stackOffset(prepared, series, item);
+        const valueScale = this._valueScale(series, ctx);
 
         return prepared.horizontal
             ? {
-                x: ctx.valueScale(stackOffset),
+                x: valueScale(stackOffset),
                 width: 0,
             }
             : {
-                y: ctx.valueScale(stackOffset),
+                y: valueScale(stackOffset),
                 height: 0,
             };
     }
@@ -366,7 +378,6 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
             series,
             horizontal,
             stacked,
-            baseline: ctx.valueScale(0),
             cornerRadius: ctx.borderRadius,
             seriesScale,
             keyIndex,
@@ -396,7 +407,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
         } = arrayJoin(ctx.data, bars, (item, bar) => bar.id === `${series.id}-${ctx.getKey(item)}`);
 
         barExits.forEach(bar => exitElement(ctx.renderer, bar, exitAnimation, {
-            ...this._collapsed(prepared),
+            ...this._collapsed(series, ctx, prepared),
             opacity: 0,
         }));
 
@@ -428,7 +439,7 @@ export class BarSeriesRenderer<TData> extends SeriesRenderer<BarSeriesLike<TData
 
     protected exitSeries(group: Group, ctx: BarSeriesContext<TData>, exitAnimation: ResolvedAnimation, prepared: BarPrepared<TData>): void {
         const exits = (group.getElementsByType('rect') as Rect[]).map(bar => exitElement(ctx.renderer, bar, exitAnimation, {
-            ...this._collapsed(prepared),
+            ...this._collapsed(undefined, ctx, prepared),
             opacity: 0,
         }));
 

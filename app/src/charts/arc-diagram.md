@@ -107,12 +107,17 @@ function makeLinks() {
 let links = makeLinks();
 
 function buildOptions() {
-    return {
+    const options = {
         nodeRadius: extras.nodeRadius,
         orientation: extras.orientation ? 'vertical' : 'horizontal',
         sizeByConnections: extras.sizeByConnections,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v} scenes`;
+
+    return options;
 }
 
 const example = ref();
@@ -121,14 +126,13 @@ const { contextChanged, chart } = useRiplChart(context => {
     return createArcDiagramChart(context, {
         nodes,
         links,
-        format: v => `${v} scenes`,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     links = makeLinks();

@@ -204,6 +204,190 @@ describe('Scene', () => {
         scene.destroy();
     });
 
+    test('Should cache the buffer array between graph rebuilds', async () => {
+        const scene = createScene(el);
+
+        scene.add(createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        }));
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        const buffer = scene.buffer;
+
+        expect(scene.buffer).toBe(buffer);
+
+        scene.add(createRect({
+            x: 20,
+            y: 20,
+            width: 10,
+            height: 10,
+        }));
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        expect(scene.buffer).not.toBe(buffer);
+        expect(scene.buffer.length).toBe(2);
+
+        scene.destroy();
+    });
+
+    describe('needsRender lifecycle', () => {
+
+        test('Should start dirty and be consumed by render', () => {
+            const scene = createScene(el);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.render();
+
+            expect(scene.needsRender).toBe(false);
+
+            scene.destroy();
+        });
+
+        test('Should be set by invalidate', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.invalidate();
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by graph changes', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.add(createRect({
+                x: 0,
+                y: 0,
+                width: 10,
+                height: 10,
+            }));
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by a bubbled element state change', async () => {
+            const scene = createScene(el);
+            const rect = createRect({
+                x: 0,
+                y: 0,
+                width: 10,
+                height: 10,
+            });
+
+            scene.add(rect);
+
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            rect.opacity = 0.5;
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by a z-index change', async () => {
+            const scene = createScene(el);
+            const rect = createRect({
+                x: 0,
+                y: 0,
+                width: 10,
+                height: 10,
+            });
+
+            scene.add(rect);
+
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            rect.zIndex = 3;
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by a context resize', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.context.emit('resize', null);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by a context render event', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.context.emit('render', null);
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should be set by context.requestRender()', () => {
+            const scene = createScene(el);
+
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            scene.context.requestRender();
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+        test('Should stay dirty after the frame-buffered graph rebuild', async () => {
+            const scene = createScene(el);
+
+            scene.add(createRect({
+                x: 0,
+                y: 0,
+                width: 10,
+                height: 10,
+            }));
+
+            // A paint may consume the flag before the rebuild frame lands...
+            scene.render();
+            expect(scene.needsRender).toBe(false);
+
+            // ...but the rebuild re-invalidates so the new stream gets painted.
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            expect(scene.needsRender).toBe(true);
+
+            scene.destroy();
+        });
+
+    });
+
     test('Should clear $dirty and $touched on elements after render', async () => {
         const scene = createScene(el);
         const rect = createRect({

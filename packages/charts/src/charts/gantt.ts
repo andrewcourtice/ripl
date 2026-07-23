@@ -21,7 +21,6 @@ import {
     normalizeAxis,
     normalizeAxisItem,
     normalizeGrid,
-    normalizeTooltip,
     normalizeYAxisItem,
     resolveValueFormat,
 } from '../core/options';
@@ -47,7 +46,7 @@ import {
     createChartAxes,
 } from '../components/axis';
 
-import {
+import type {
     Tooltip,
 } from '../components/tooltip';
 
@@ -61,6 +60,9 @@ import type {
     EventMap,
     Group,
     Line,
+    Point,
+    Polyline,
+    PolylineState,
     Rect,
     RectState,
 } from '@ripl/core';
@@ -161,7 +163,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
     private _todayLine?: Line;
     private _xAxis!: ChartXAxis;
     private _yAxis!: ChartYAxis;
-    private _tooltip!: Tooltip;
+    private _tooltip?: Tooltip;
     private _grid?: Grid;
 
     constructor(target: string | HTMLElement | Context, options: GanttChartOptions<TData>) {
@@ -173,17 +175,6 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
-        const tooltipOpts = normalizeTooltip(options.tooltip);
-
-        if (tooltipOpts.visible) {
-            this._tooltip = new Tooltip({
-                scene: this.scene,
-                renderer: this.renderer,
-                font: tooltipOpts.font,
-                fontColor: tooltipOpts.fontColor,
-                backgroundColor: tooltipOpts.backgroundColor,
-            });
-        }
 
         const axes = createChartAxes({
             scene: this.scene,
@@ -403,9 +394,11 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
     /**
      * Draws curved finish-to-start connectors between dependent tasks. For each task with a
-     * `dependencies` entry, a `bumpX` link runs from every predecessor's end to this task's start,
-     * capped with an arrowhead. Rebuilt each render (cheap); missing predecessors are skipped, and the
-     * whole layer is torn down when no `dependencies` accessor is configured.
+     * `dependencies` entry, a light `bumpX` link runs from every predecessor's end to this task's
+     * start. Links are stably keyed by their dependency pair and reconciled with {@link arrayJoin},
+     * so when bars move the existing link elements morph to their new endpoints rather than snapping;
+     * links whose pair no longer exists are destroyed. The whole layer is torn down when no
+     * `dependencies` accessor is configured.
      */
     private _drawConnectors(
         data: TData[],
@@ -438,53 +431,107 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         }
 
         const group = this._connectorsGroup;
-        group.clear();
 
-        const color = setColorAlpha(this.theme.axisColor, 0.9);
-        const arrowSize = 6;
+        // Muted grid colour so the links read as light structure, not foreground content.
+        const color = this.theme.gridColor;
 
-        data.forEach(item => {
-            const target = geometryByKey.get(getKey(item));
+        // One spec per finish-to-start dependency edge, stably keyed by its (predecessor → task) pair
+        // so the link element survives across renders and morphs to new endpoints when bars move.
+        const connectors = data.flatMap(item => {
+            const targetKey = getKey(item);
+            const target = geometryByKey.get(targetKey);
 
             if (!target) {
-                return;
+                return [];
             }
 
             const dependencies = getDependencies(item) ?? [];
 
-            dependencies.forEach(dependencyKey => {
+            return dependencies.flatMap(dependencyKey => {
                 const source = geometryByKey.get(dependencyKey);
 
                 if (!source) {
-                    return;
+                    return [];
                 }
 
-                // Curved link: predecessor end → this task's start (stopping short for the arrowhead).
-                const link = createPolyline({
+                return [{
+                    id: `connector:${dependencyKey}->${targetKey}`,
                     points: [
                         [source.endX, source.centerY],
-                        [target.startX - arrowSize, target.centerY],
-                    ],
-                    renderer: 'bumpX',
-                    stroke: color,
-                    lineWidth: 1.5,
-                });
-
-                link.autoFill = false;
-
-                // Filled arrowhead pointing into the dependent task's start.
-                const arrow = createPolyline({
-                    points: [
-                        [target.startX - arrowSize, target.centerY - arrowSize * 0.55],
                         [target.startX, target.centerY],
-                        [target.startX - arrowSize, target.centerY + arrowSize * 0.55],
-                    ],
-                    fill: color,
-                });
-
-                group.add([link, arrow]);
+                    ] as Point[],
+                }];
             });
         });
+
+        const existingLinks = group.getElementsByType('polyline') as Polyline[];
+
+        const {
+            left: entries,
+            inner: updates,
+            right: exits,
+        } = arrayJoin(
+            connectors,
+            existingLinks,
+            (connector, link) => link.id === connector.id
+        );
+
+        exits.forEach(link => link.destroy());
+
+        const entryLinks = entries.map(connector => {
+            // Enter at the target endpoints (transparent) and fade in, mirroring the bar entries.
+            const link = createPolyline({
+                id: connector.id,
+                points: connector.points,
+                // `bumpX` is not tweenable, so it lives on the element rather than in the transition state.
+                renderer: 'bumpX',
+                stroke: color,
+                lineWidth: 1.5,
+                opacity: 0,
+                data: {
+                    points: connector.points,
+                    opacity: 1,
+                } as PolylineState,
+            });
+
+            link.autoFill = false;
+
+            group.add(link);
+
+            return link;
+        });
+
+        const updateLinks = updates.map(([connector, link]) => {
+            // Non-tweenable props applied directly; the endpoints morph via the transition below.
+            link.renderer = 'bumpX';
+            link.stroke = color;
+
+            link.data = {
+                points: connector.points,
+                opacity: 1,
+            } as PolylineState;
+
+            return link;
+        });
+
+        const duration = this.getAnimationDuration(1000);
+
+        const entriesTransition = this.renderer.transition(entryLinks, element => ({
+            duration,
+            ease: easeOutCubic,
+            state: element.data as PolylineState,
+        }));
+
+        const updatesTransition = this.renderer.transition(updateLinks, element => ({
+            duration,
+            ease: easeOutCubic,
+            state: element.data as PolylineState,
+        }));
+
+        return Promise.all([
+            entriesTransition,
+            updatesTransition,
+        ]);
     }
 
     private _drawTodayMarker(
@@ -557,6 +604,9 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             const getLabel = this._getAccessor<string>(labelAccessor);
             const getStart = this._getAccessor<Date>(startAccessor);
             const getEnd = this._getAccessor<Date>(endAccessor);
+
+            // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
+            this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
             const labels = data.map(getLabel);
 
@@ -655,9 +705,10 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
 
             // Render grid
             if (this._grid) {
-                const yTickPositions = labels.map(label =>
-                    adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2
-                );
+                const yTickPositions = labels.map(label => ({
+                    value: label,
+                    position: adjustedCategoryScale(label) + adjustedCategoryScale.bandwidth / 2,
+                }));
 
                 this._grid.render(
                     [],
@@ -690,12 +741,13 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 });
             });
 
-            this._drawConnectors(data, getKey, geometryByKey);
+            const connectorsTransition = this._drawConnectors(data, getKey, geometryByKey);
 
             return Promise.all([
                 this._xAxis.render(),
                 this._yAxis.render(),
                 this._drawBars(adjustedCategoryScale, timeScale, getKey, getLabel),
+                connectorsTransition,
             ]);
         });
     }

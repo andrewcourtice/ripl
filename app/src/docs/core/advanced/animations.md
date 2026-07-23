@@ -244,7 +244,7 @@ const t = transition((time) => {
 
 ## Easing Functions
 
-Easing functions control the rate of change over time. Ripl ships with 13 built-in easing functions covering `Quad`, `Cubic`, `Quart`, and `Quint` curves, each available in `In`, `Out`, and `InOut` variants, plus `easeLinear` for constant speed.
+Easing functions control the rate of change over time. Ripl ships with 31 built-in easing functions: `easeLinear` for constant speed, the `Quad`, `Cubic`, `Quart`, `Quint`, `Sine`, `Expo`, and `Circ` curves, plus the `Back`, `Elastic`, and `Bounce` families — each available in `In`, `Out`, and `InOut` variants.
 
 ```ts
 import {

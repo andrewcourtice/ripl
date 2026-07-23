@@ -91,7 +91,7 @@ function generateData() {
 let data = generateData();
 
 function buildOptions() {
-    return {
+    const options = {
         maxValue: extras.maxValue,
         innerRadius: extras.innerRadius,
         range: extras.range,
@@ -100,6 +100,11 @@ function buildOptions() {
         trackColor: extras.trackColor,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v}%`;
+
+    return options;
 }
 
 const { contextChanged, chart } = useRiplChart(context => {
@@ -107,14 +112,13 @@ const { contextChanged, chart } = useRiplChart(context => {
         data,
         key: 'language',
         value: 'share',
-        format: v => `${v}%`,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     data = generateData();

@@ -142,9 +142,8 @@ const {
     ...buildOptions(),
 }));
 
-// Furniture options (axes, grid, tooltip, crosshair, legend, theme, navigator) are only read when a
-// chart is constructed, so rebuild the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function getValue(min: number, max: number) {
     return Math.round((min + Math.random() * (max - min)) * 100) / 100;
@@ -284,6 +283,35 @@ createScatterChart('#container', {
 });
 ```
 
+### Multiple y-axes
+
+Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
+
+```ts
+createScatterChart('#container', {
+    data,
+    key: 'id',
+    series: [
+        { id: 'sales',
+            label: 'Sales',
+            xBy: 'spend',
+            yBy: 'revenue',
+            axis: 0 },
+        { id: 'efficiency',
+            label: 'Efficiency',
+            xBy: 'spend',
+            yBy: 'roas',
+            axis: 1 },
+    ],
+    axis: {
+        y: [
+            { title: 'Revenue ($)' },
+            { position: 'right', title: 'ROAS (×)' },
+        ],
+    },
+});
+```
+
 ### Pan & zoom (navigator)
 
 Set `navigator: true` to make the plot explorable — wheel-zoom toward the cursor and click-and-hold
@@ -317,5 +345,5 @@ chart.navigator?.reset();
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes with optional titles
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes with optional titles (`y` accepts an array for multiple y-axes)
 - **`navigator`** — `boolean | NavigatorInteractions` — Enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`

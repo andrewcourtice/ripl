@@ -10,22 +10,26 @@ npm install @ripl/charts
 
 ## Chart Types
 
+25 chart types, each created with a `createXChart` factory:
+
 | Category | Charts |
 |----------|--------|
-| **Cartesian** | Bar, Line, Area, Scatter, Trend (multi-series bar/line), Stock, Realtime |
-| **Radial** | Pie/Donut, Radar, Polar Area, Polar Scatter, Radial Bar, Gauge, Sunburst |
-| **Relational** | Sankey, Chord, Force-Directed, Arc Diagram |
-| **Distribution** | Heatmap, Treemap, Packed Circle, Funnel |
-| **Scheduling** | Gantt |
+| **Cartesian** | Bar, Line, Area, Scatter, Histogram, Box Plot, Trend (mixed bar/line/area), Stock |
+| **Radial & Polar** | Pie/Donut, Polar Area, Polar Scatter, Radial Bar, Radar, Gauge |
+| **Hierarchical** | Sunburst, Treemap, Packed Circle |
+| **Network & Flow** | Sankey, Chord, Arc Diagram, Force-Directed, Funnel |
+| **Specialized** | Heatmap, Gantt, Realtime |
 
 ## Usage
 
+Create a chart by passing a target (CSS selector, `HTMLElement`, or Ripl `Context`) and an options object to the chart's factory function:
+
 ```typescript
 import {
-    BarChart,
+    createBarChart,
 } from '@ripl/charts';
 
-const chart = new BarChart('#chart', {
+const chart = createBarChart('#chart', {
     data: [
         { label: 'A',
             value: 10 },
@@ -34,9 +38,23 @@ const chart = new BarChart('#chart', {
         { label: 'C',
             value: 15 },
     ],
-    keyBy: 'label',
+    key: 'label',
     series: [
-        { valueBy: item => item.value },
+        { id: 'values',
+            label: 'Values',
+            value: 'value' },
+    ],
+});
+
+// Merge new options/data and re-render with animated transitions
+chart.update({
+    data: [
+        { label: 'A',
+            value: 30 },
+        { label: 'B',
+            value: 5 },
+        { label: 'C',
+            value: 20 },
     ],
 });
 ```

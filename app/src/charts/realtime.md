@@ -144,20 +144,23 @@ function getSeries() {
 }
 
 function buildOptions() {
-    return {
+    const options = {
         windowSize: extras.windowSize,
         transitionDuration: extras.transitionDuration,
         series: getSeries(),
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${Math.round(v)}%`;
+
+    return options;
 }
 
 const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     const instance = createRealtimeChart(context, {
-        padding: { top: 30, right: 20, bottom: 20, left: 20 },
-        format: v => `${Math.round(v)}%`,
         ...buildOptions(),
     });
 
@@ -165,10 +168,16 @@ const { contextChanged, chart } = useRiplChart(context => {
     return instance;
 });
 
-// Furniture (legend, tooltip, crosshair, format, theme) is construction-time, so rebuild the chart on
-// any customization change. The stream loop below always feeds the current chart via `chart.value`, so
-// it keeps running after a rebuild; the sliding window restarts empty and refills as data arrives.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
+// The crosshair and y-axis label format are only read at construction, and legend orientation is
+// fixed when the legend is created, so rebuild the chart for those. The stream loop below always
+// feeds the current chart via `chart.value`, so it keeps running after a rebuild; the sliding window
+// restarts empty and refills as data arrives.
+watch(
+    () => [config.crosshairVisible, config.crosshairAxis, config.valueFormat, config.legendPosition],
+    () => example.value?.recreate()
+);
 
 function pushSample() {
     cpuBase = nextValue(cpuBase, 8, 5, 95);

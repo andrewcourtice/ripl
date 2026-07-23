@@ -29,10 +29,6 @@ import {
 } from './text';
 
 import {
-    degreesToRadians,
-} from '../math';
-
-import {
     EventBus,
 } from '../core/event-bus';
 
@@ -42,7 +38,7 @@ import {
 
 import {
     applyElementTransform,
-} from '../core/element';
+} from '../core/transform';
 
 import type {
     Element as RiplElement,
@@ -65,42 +61,12 @@ import {
     functionMemoize,
     objectForEach,
     typeIsNil,
-    typeIsNumber,
 } from '@ripl/utilities';
 
-/** Resolves a rotation value (number, degrees string, or radians string) to radians. */
-export function resolveRotation(value: Rotation): number {
-    if (typeIsNumber(value)) {
-        return value;
-    }
-
-    const trimmed = value.trim();
-
-    if (trimmed.endsWith('deg')) {
-        return degreesToRadians(parseFloat(trimmed));
-    }
-
-    if (trimmed.endsWith('rad')) {
-        return parseFloat(trimmed);
-    }
-
-    return parseFloat(trimmed) || 0;
-}
-
-/** Resolves a transform-origin value (number or percentage string) to a pixel offset relative to the given dimension. */
-export function resolveTransformOrigin(value: TransformOrigin, dimension: number): number {
-    if (typeIsNumber(value)) {
-        return value;
-    }
-
-    const trimmed = value.trim();
-
-    if (trimmed.endsWith('%')) {
-        return (parseFloat(trimmed) / 100) * dimension;
-    }
-
-    return parseFloat(trimmed) || 0;
-}
+export {
+    resolveRotation,
+    resolveTransformOrigin,
+} from './transform';
 
 /** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
@@ -122,7 +88,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /**
      * Whether this context's hit testing natively accounts for element and ancestor group
      * transforms (as SVG does, via the DOM). When `false` (e.g. canvas), callers map the hit
-     * point into the element's local space before testing. See {@link getWorldTransform}.
+     * point into the element's local space before testing. See {@link Element.getWorldTransform}.
      */
     public hitTestHonoursTransform = false;
     /** Current width, in pixels, of the rendering surface. */
@@ -157,6 +123,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             'mouseenter',
             'mouseleave',
             'mousemove',
+            'render',
             'resize',
         ];
     }
@@ -511,6 +478,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         }
     }
 
+    /** Requests that the bound scene repaint on the next frame — for context-level changes (e.g. a 3D camera move) that mutate no element and so would otherwise be skipped by the renderer's dirty check. */
+    public requestRender(): void {
+        this.emit('render', null);
+    }
+
     /** Signals the start of a render pass; resets the rendered-elements list at depth 0. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
@@ -702,17 +674,26 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        return arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
+        const hits = arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
             .filter(element => element.intersectsWith(x, y, {
                 isPointer: true,
-            }))
-            .sort((ea, eb) => {
-                const zDiff = eb.zIndex - ea.zIndex;
+            }));
 
-                return zDiff !== 0
-                    ? zDiff
-                    : this.renderedElements.indexOf(eb) - this.renderedElements.indexOf(ea);
-            });
+        if (hits.length < 2) {
+            return hits;
+        }
+
+        // Paint-order tiebreak via a one-pass index map — an `indexOf` inside the comparator
+        // would rescan the rendered-element list for every comparison.
+        const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
+
+        return hits.sort((ea, eb) => {
+            const zDiff = eb.zIndex - ea.zIndex;
+
+            return zDiff !== 0
+                ? zDiff
+                : (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1);
+        });
     }
 
     /**

@@ -131,13 +131,18 @@ function generateData() {
 let data = generateData();
 
 function buildOptions() {
-    return {
+    const options = {
         showToday: extras.showToday,
         todayColor: extras.todayColor,
         borderRadius: extras.borderRadius,
         dependencies: extras.showConnectors ? 'dependsOn' : undefined,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${Math.round(v * 100)}% complete`;
+
+    return options;
 }
 
 const example = ref();
@@ -150,15 +155,14 @@ const { contextChanged, chart } = useRiplChart(context => {
         start: 'start',
         end: 'end',
         progress: 'progress',
-        format: v => `${Math.round(v * 100)}% complete`,
-        padding: { top: 20, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options (grid, tooltip, theme, today marker) are read only at construction, so rebuild
-// the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
+// The grid is only created at construction, so rebuild the chart when it is toggled.
+watch(() => config.gridVisible, () => example.value?.recreate());
 
 function randomize() {
     data = generateData();

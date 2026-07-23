@@ -7,6 +7,7 @@ import {
 import type {
     ContextElement,
     ContextExport,
+    ContextFactory,
     ContextOptions,
     FillRule,
     TextOptions,
@@ -275,10 +276,19 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
  * Terminal rendering context that rasterizes Ripl elements into character-based output via a
  * `TerminalOutput` adapter.
  *
- * Unsupported operations (inherited as no-ops from {@link Context}): affine transforms
- * (`rotate`/`scale`/`translate`/`setTransform`/`transform`), path clipping (`applyClip`), image
- * drawing (`drawImage`) and pointer hit testing (`isPointInPath`/`isPointInStroke`). Elements are
- * positioned through the context's own `scaleX`/`scaleY`/`rasterScale` mapping instead.
+ * A character grid cannot honour the full canvas contract, so the following constraints apply:
+ *
+ * - **Text metrics are approximate** — every glyph occupies exactly one terminal cell, so
+ *   `measureText` reports one cell of width per character regardless of font, and the `font`
+ *   state (family, size, weight) has no visual effect.
+ * - **Fills use the even-odd rule only** — the scanline rasterizer ignores a `nonzero` fill rule
+ *   (see {@link TerminalContext.applyFill}).
+ * - **No hit testing** — `isPointInPath`/`isPointInStroke` always return `false`, so pointer
+ *   events never match elements.
+ * - **No affine transforms** — `rotate`/`scale`/`translate`/`setTransform`/`transform` are
+ *   inherited as no-ops from {@link Context}; elements are positioned through the context's own
+ *   `scaleX`/`scaleY`/`rasterScale` mapping instead.
+ * - **No clipping or images** — `applyClip` and `drawImage` are inherited as no-ops.
  */
 export class TerminalContext extends Context<Element> {
 
@@ -540,3 +550,6 @@ export class TerminalContext extends Context<Element> {
 export function createContext(output: TerminalOutput, options?: TerminalContextOptions): TerminalContext {
     return new TerminalContext(output, options);
 }
+
+// Compile-time conformance: the terminal backend factory matches the shared `ContextFactory` contract.
+createContext satisfies ContextFactory<TerminalOutput, TerminalContextOptions, TerminalContext>;

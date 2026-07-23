@@ -88,7 +88,6 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'region',
         value: 'latency',
         categories: REGIONS,
-        padding: { top: 20, right: 20, bottom: 40, left: 40 },
         axis: {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },
@@ -97,8 +96,7 @@ const { contextChanged, chart } = useRiplChart(context => {
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
 function randomize() {
     data = generateData();

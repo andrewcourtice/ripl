@@ -105,13 +105,18 @@ function getSeries() {
 }
 
 function buildOptions() {
-    return {
+    const options = {
         series: getSeries(),
         maxValue: extras.maxValue,
         levels: extras.levels,
         angleTicks: extras.angleTicks,
         ...buildCommonOptions(config),
     };
+
+    // The demo's bespoke format applies when no preset is selected.
+    options.format ??= (v: number) => `${v} km/h`;
+
+    return options;
 }
 
 const example = ref();
@@ -119,14 +124,13 @@ const example = ref();
 const { contextChanged, chart } = useRiplChart(context => {
     return createPolarScatterChart(context, {
         data: samples,
-        format: v => `${v} km/h`,
-        padding: { top: 20, right: 20, bottom: 20, left: 20 },
+        padding: { top: 10, right: 10, bottom: 10, left: 10 },
         ...buildOptions(),
     });
 });
 
-// Furniture options are read only at construction, so rebuild on any customization change.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     // Re-roll every sample's values but keep the count, so points morph in place.

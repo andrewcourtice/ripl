@@ -3,6 +3,7 @@ import type {
 } from '../core/data';
 
 import type {
+    AxisTooltipSnapshot,
     CartesianChartOptions,
 } from '../core/cartesian';
 
@@ -22,6 +23,7 @@ import type {
 
 import {
     normalizeDataLabels,
+    resolveFormatLabel,
     resolveValueFormat,
 } from '../core/options';
 
@@ -104,6 +106,12 @@ export interface AreaChartSeriesOptions<TData> {
     fillOpacity?: number;
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
+    /**
+     * Which y-axis this series binds to — an index into `axis.y` or a y-axis `id`. Defaults to the
+     * primary axis. When the chart is stacked, series stack only with other series bound to the
+     * same axis.
+     */
+    axis?: number | string;
 }
 
 /** Options for configuring an {@link AreaChart}. */
@@ -114,8 +122,17 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
     series: AreaChartSeriesOptions<TData>[];
     /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Stack series cumulatively instead of overlaying them. Defaults to false. */
-    stacked?: boolean;
+    /**
+     * Stack series cumulatively instead of overlaying them. Defaults to false. With multiple
+     * y-axes, stacking applies per axis group — series stack only with the other series bound to
+     * the same axis, and each axis's extent covers its own group's cumulative total.
+     *
+     * Pass `'percent'` for a 100%-stacked chart: each category's values are normalized to their
+     * share of the category's positive total across all active series (negative values contribute
+     * zero), the value axis is fixed to 0–100%, and values default to percentage formatting.
+     * Intended for single-axis charts.
+     */
+    stacked?: boolean | 'percent';
     /** Background grid configuration (`true`/`false` or detailed grid options). */
     grid?: ChartGridInput;
     /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
@@ -192,6 +209,83 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return resolveAccessor<TData, number>(series.value)(item);
     }
 
+    private get _isPercent() {
+        return this.options.stacked === 'percent';
+    }
+
+    // Resolves the shared axis-tooltip content for the hovered plot x: the nearest category, one
+    // row per active series (share values in percent mode), anchored above the topmost value.
+    private _axisTooltipSnapshot(
+        plotX: number,
+        keys: string[],
+        series: AreaChartSeriesOptions<TData>[],
+        scaleFor: (srs: AreaChartSeriesOptions<TData>) => Scale
+    ): AxisTooltipSnapshot | null {
+        if (keys.length === 0 || series.length === 0) {
+            return null;
+        }
+
+        let nearest = 0;
+        let best = Number.POSITIVE_INFINITY;
+
+        keys.forEach((key, index) => {
+            const distance = Math.abs(this._xScale(key) - plotX);
+
+            if (distance < best) {
+                best = distance;
+                nearest = index;
+            }
+        });
+
+        const item = this.options.data[nearest];
+        const key = keys[nearest];
+        const formatValue = resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined));
+
+        let anchorY = Number.POSITIVE_INFINITY;
+
+        const rows = series.map(srs => {
+            const value = this._seriesValue(srs, item);
+
+            anchorY = Math.min(anchorY, scaleFor(srs)(value));
+
+            return {
+                label: srs.label,
+                value: formatValue(value),
+            };
+        });
+
+        return {
+            title: key,
+            rows,
+            x: this._xScale(key),
+            y: Number.isFinite(anchorY) ? anchorY : 0,
+        };
+    }
+
+    // Wraps each series' value accessor to return its share of the category's positive total,
+    // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
+    private _percentSeries(series: AreaChartSeriesOptions<TData>[], data: TData[]): AreaChartSeriesOptions<TData>[] {
+        const totals = new Map<TData, number>(data.map(item => [
+            item,
+            series.reduce((total, srs) => total + Math.max(0, this._seriesValue(srs, item)), 0),
+        ]));
+
+        return series.map(srs => {
+            const rawValue = resolveAccessor<TData, number>(srs.value);
+
+            return {
+                ...srs,
+                value: (item: TData) => {
+                    const total = totals.get(item) ?? 0;
+
+                    return total > 0
+                        ? Math.max(0, rawValue(item)) / total
+                        : 0;
+                },
+            };
+        });
+    }
+
     private _emitMarker(phase: SeriesEventPhase, event: SeriesInteractionEvent): void {
         this.emit(MARKER_EVENTS[phase], event);
     }
@@ -200,23 +294,29 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
     private _overviewSeries(): ChartNavigatorSeries[] {
         const { data, series } = this.options;
 
-        return this.buildOverviewSeries(series, data, () => 'area', (srs, item) => this._seriesValue(srs, item));
+        return this.buildOverviewSeries(this.filterActive(series), data, () => 'area', (srs, item) => this._seriesValue(srs, item));
     }
 
-    private _seriesContext(plot: ChartArea): AreaSeriesContext<TData> {
+    private _seriesContext(
+        plot: ChartArea,
+        yScale: Scale = this._yScale,
+        resolveScale?: AreaSeriesContext<TData>['resolveScale']
+    ): AreaSeriesContext<TData> {
         return {
             data: this.options.data,
             getKey: resolveAccessor<TData, string>(this.options.key),
-            yScale: this._yScale,
+            yScale,
             xScale: this._xScale,
-            stacked: this.options.stacked ?? false,
+            resolveScale,
+            stacked: !!this.options.stacked,
             plot,
-            baseline: this._yScale(0),
+            baseline: yScale(0),
             renderer: this.renderer,
-            tooltip: this.tooltip,
+            // In axis-trigger mode the shared tooltip owns the pointer — per-item tooltips stay quiet.
+            tooltip: this.tooltipTrigger === 'axis' ? undefined : this.tooltip,
             getColor: id => this.getSeriesColor(id),
             resolveAnimation: reference => this.resolveAnimation(reference),
-            formatValue: resolveValueFormat(this.options.format),
+            formatValue: resolveValueFormat(this.options.format ?? (this._isPercent ? 'percentage' : undefined)),
             dataLabels: normalizeDataLabels(this.options.labels, { anchor: 'top' }),
             addContent: elements => this.addPlotContent(elements),
             emit: (phase, event) => this._emitMarker(phase, event),
@@ -233,12 +333,23 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
+            // Legend-hidden series are excluded from extents, stacking, and rendering, so toggling a
+            // series rescales the value axis (and restacks the remainder) while the hidden series
+            // animates out through the standard exit join. Percent mode additionally wraps the
+            // active series' value accessors in share space.
+            const activeSeries = this._isPercent
+                ? this._percentSeries(this.filterActive(series), data)
+                : this.filterActive(series);
+
             let dataExtent: number[];
 
-            if (stacked) {
-                dataExtent = cumulativeExtent(series, data, (srs, item) => this._seriesValue(srs, item));
+            if (this._isPercent) {
+                dataExtent = [0, 1];
+                this.yAxis.formatLabel ??= resolveFormatLabel('percentage');
+            } else if (stacked) {
+                dataExtent = cumulativeExtent(activeSeries, data, (srs, item) => this._seriesValue(srs, item));
             } else {
-                const seriesExtents = series
+                const seriesExtents = activeSeries
                     .flatMap(srs => numberExtent(data, item => this._seriesValue(srs, item)))
                     .concat(0);
 
@@ -253,7 +364,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                     id: srs.id,
                     label: srs.label,
                     color: this.getSeriesColor(srs.id),
-                    active: true,
+                    active: this.isItemActive(srs.id),
                 }))
                 : [];
 
@@ -268,13 +379,26 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
+            if (this.yAxes.length > 1) {
+                return this._renderMultiAxis({
+                    series: activeSeries,
+                    keys,
+                    dataExtent,
+                    navBand,
+                    left,
+                    top,
+                    right,
+                    bottom,
+                });
+            }
+
             this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
             this.yAxis.scale = this._yScale;
             this.yAxis.bounds = new Box(top, left, bottom, right);
 
             const yAxisBox = this.yAxis.getBoundingBox();
 
-            this._xScale = this.pointScale(keys, yAxisBox.right, right);
+            this._xScale = this.categoryScale(keys, yAxisBox.right, right);
             this.xAxis.scale = this._xScale;
             this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
@@ -297,15 +421,17 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             };
 
             this.clipPlot(plot);
-            this.renderGrid([], this._yScale.ticks(axisTickCount(this.yAxisOptions)).map(tick => this._yScale(tick)), plot);
+            this.renderGrid([], this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)), plot);
             this.setupCrosshair(plot);
+            this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, activeSeries, () => this._yScale));
 
             this.renderAnnotations({ y: this._yScale }, plot);
 
-            const seriesRender = this._series.render(series, this._seriesContext(plot));
+            const seriesRender = this._series.render(activeSeries, this._seriesContext(plot));
+
             this.registerHighlightGroups(this._series.groups);
 
-            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked ?? false);
+            this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], !!stacked);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
@@ -313,6 +439,105 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 seriesRender,
             ]);
         });
+    }
+
+    /**
+     * Renders the chart across N y-axes. The (legend-active) series are partitioned by their `axis`
+     * binding; each axis gets an independent value extent and scale computed over the active series
+     * bound to it (stacking cumulates within each axis group only),
+     * {@link CartesianChart.layoutYAxes} packs the axis label bands against the two chart edges and
+     * returns the plot bounds between them, and one series pass draws every series against its bound
+     * axis's scale via the renderer's per-series scale resolver.
+     */
+    private _renderMultiAxis(ctx: {
+        series: AreaChartSeriesOptions<TData>[];
+        keys: string[];
+        dataExtent: number[];
+        navBand: ChartArea | undefined;
+        left: number;
+        top: number;
+        right: number;
+        bottom: number;
+    }): Promise<unknown> {
+        const {
+            series,
+            keys,
+            dataExtent,
+            navBand,
+            left,
+            top,
+            right,
+            bottom,
+        } = ctx;
+
+        const stacked = !!this.options.stacked;
+
+        // Independent value extent per axis; stacked series cumulate within their axis group only.
+        const extents = this.yAxes.map((_, index) => {
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+
+            if (stacked) {
+                return cumulativeExtent(group, this.options.data, (srs, item) => this._seriesValue(srs, item));
+            }
+
+            return numberExtent(group
+                .flatMap(srs => numberExtent(this.options.data, item => this._seriesValue(srs, item)))
+                .concat(0), functionIdentity);
+        });
+
+        // Pack the axis bands against the chart edges; the plot sits between them.
+        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+
+        this._xScale = this.categoryScale(keys, plotLeft, plotRight);
+        this.xAxis.scale = this._xScale;
+        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+
+        const xAxisBox = this.xAxis.getBoundingBox();
+
+        // Final scales over the plot height; clamp each axis band above the x-axis labels.
+        const scales = this.yAxes.map((axis, index) => {
+            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+
+            axis.scale = scale;
+            axis.bounds.bottom = xAxisBox.top;
+
+            return scale;
+        });
+
+        this._xScale = this.applyViewToScale(this._xScale, 'x');
+        this.xAxis.scale = this._xScale;
+
+        const plot = {
+            x: plotLeft,
+            y: top,
+            width: plotRight - plotLeft,
+            height: xAxisBox.top - top,
+        };
+
+        // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
+        // agnostic — the renderer passes the series through as its shared `AreaSeriesLike`).
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
+
+        this.clipPlot(plot);
+        this.renderGrid([], this.gridTicks(scales[0], axisTickCount(this.yAxesOptions[0])), plot);
+        this.setupCrosshair(plot);
+        this.setupAxisTooltip(plot, plotX => this._axisTooltipSnapshot(plotX, keys, series, scaleFor));
+        this.renderAnnotations({ y: scales[0] }, plot);
+
+        this._yScale = scales[0];
+
+        const seriesRender = this._series.render(series, this._seriesContext(plot, scales[0], scaleFor));
+
+        this.registerHighlightGroups(this._series.groups);
+
+        this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
+
+        return Promise.all([
+            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            seriesRender,
+        ]);
     }
 
 }

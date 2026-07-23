@@ -10,6 +10,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    numberNextPowerOfN,
+} from '@ripl/utilities';
+
+import {
     MODEL_UNIFORM_SIZE,
     VERTEX_STRIDE,
 } from './pipeline';
@@ -18,7 +22,15 @@ import type {
     PipelineState,
 } from './pipeline';
 
-/** Manages GPU buffer allocation and per-frame mesh accumulation. */
+const FLOATS_PER_VERTEX = VERTEX_STRIDE / 4;
+
+/**
+ * Manages GPU buffer allocation and per-frame mesh accumulation.
+ *
+ * CPU staging arrays and GPU buffers are pooled between frames: capacity grows
+ * in powers of two and is only released by {@link GeometryManager.destroy}, so
+ * steady-state frames perform no allocations and no GPU buffer recreation.
+ */
 export class GeometryManager {
 
     private _device: GPUDevice;
@@ -26,12 +38,13 @@ export class GeometryManager {
 
     private _vertexBuffer: GPUBuffer | null = null;
     private _indexBuffer: GPUBuffer | null = null;
-    private _vertexCapacity = 0;
-    private _indexCapacity = 0;
+    private _vertexData = new Float32Array(0);
+    private _indexData = new Uint32Array(0);
 
     private _submissions: MeshSubmission[] = [];
     private _modelUniformBuffers: GPUBuffer[] = [];
     private _modelBindGroups: GPUBindGroup[] = [];
+    private _modelUniformData = new Float32Array(MODEL_UNIFORM_SIZE / 4);
     private _poolIndex = 0;
 
     constructor(device: GPUDevice, pipelineState: PipelineState) {
@@ -50,7 +63,13 @@ export class GeometryManager {
         this._submissions.push(submission);
     }
 
-    /** Uploads all queued meshes to GPU buffers and returns draw commands. */
+    /**
+     * Uploads all queued meshes to pooled GPU buffers and returns draw commands.
+     *
+     * Staging arrays and GPU buffers are reused between frames and only grow
+     * (in powers of two) when the frame's geometry exceeds current capacity;
+     * uploads and draw commands cover the used lengths, never the capacity.
+     */
     public flush(): FlushResult | null {
         if (this._submissions.length === 0) {
             return null;
@@ -60,18 +79,17 @@ export class GeometryManager {
         let totalIndices = 0;
 
         for (const sub of this._submissions) {
-            totalVertices += sub.vertices.length / 10;
+            totalVertices += sub.vertices.length / FLOATS_PER_VERTEX;
             totalIndices += sub.indices.length;
         }
 
-        const vertexByteSize = totalVertices * VERTEX_STRIDE;
-        const indexByteSize = totalIndices * 4;
+        const vertexFloatCount = totalVertices * FLOATS_PER_VERTEX;
 
-        this._ensureVertexBuffer(vertexByteSize);
-        this._ensureIndexBuffer(indexByteSize);
+        this._ensureVertexCapacity(vertexFloatCount);
+        this._ensureIndexCapacity(totalIndices);
 
-        const vertexData = new Float32Array(totalVertices * 10);
-        const indexData = new Uint32Array(totalIndices);
+        const vertexData = this._vertexData;
+        const indexData = this._indexData;
 
         let vertexOffset = 0;
         let indexOffset = 0;
@@ -80,9 +98,9 @@ export class GeometryManager {
         const draws: DrawCommand[] = [];
 
         for (const sub of this._submissions) {
-            const vertCount = sub.vertices.length / 10;
+            const vertCount = sub.vertices.length / FLOATS_PER_VERTEX;
 
-            vertexData.set(sub.vertices, vertexOffset * 10);
+            vertexData.set(sub.vertices, vertexOffset * FLOATS_PER_VERTEX);
 
             for (let i = 0; i < sub.indices.length; i++) {
                 indexData[indexOffset + i] = sub.indices[i] + baseVertex;
@@ -101,17 +119,19 @@ export class GeometryManager {
             baseVertex += vertCount;
         }
 
-        this._device.queue.writeBuffer(this._vertexBuffer!, 0, vertexData);
-        this._device.queue.writeBuffer(this._indexBuffer!, 0, indexData);
+        this._device.queue.writeBuffer(this._vertexBuffer!, 0, vertexData, 0, vertexFloatCount);
+        this._device.queue.writeBuffer(this._indexBuffer!, 0, indexData, 0, totalIndices);
 
         return {
             vertexBuffer: this._vertexBuffer!,
             indexBuffer: this._indexBuffer!,
+            vertexCount: totalVertices,
+            indexCount: totalIndices,
             draws,
         };
     }
 
-    /** Releases all GPU buffers. */
+    /** Releases all GPU buffers and pooled CPU staging arrays. */
     public destroy(): void {
         this._vertexBuffer?.destroy();
         this._indexBuffer?.destroy();
@@ -122,32 +142,44 @@ export class GeometryManager {
 
         this._vertexBuffer = null;
         this._indexBuffer = null;
+        this._vertexData = new Float32Array(0);
+        this._indexData = new Uint32Array(0);
         this._modelUniformBuffers.length = 0;
         this._modelBindGroups.length = 0;
     }
 
-    private _ensureVertexBuffer(byteSize: number): void {
-        if (this._vertexBuffer && this._vertexCapacity >= byteSize) {
+    private _ensureVertexCapacity(floatCount: number): void {
+        if (this._vertexBuffer && this._vertexData.length >= floatCount) {
             return;
         }
 
+        const capacity = numberNextPowerOfN(floatCount);
+
+        if (this._vertexData.length < capacity) {
+            this._vertexData = new Float32Array(capacity);
+        }
+
         this._vertexBuffer?.destroy();
-        this._vertexCapacity = Math.max(byteSize, this._vertexCapacity * 2);
         this._vertexBuffer = this._device.createBuffer({
-            size: this._vertexCapacity,
+            size: this._vertexData.byteLength,
             usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
         });
     }
 
-    private _ensureIndexBuffer(byteSize: number): void {
-        if (this._indexBuffer && this._indexCapacity >= byteSize) {
+    private _ensureIndexCapacity(indexCount: number): void {
+        if (this._indexBuffer && this._indexData.length >= indexCount) {
             return;
         }
 
+        const capacity = numberNextPowerOfN(indexCount);
+
+        if (this._indexData.length < capacity) {
+            this._indexData = new Uint32Array(capacity);
+        }
+
         this._indexBuffer?.destroy();
-        this._indexCapacity = Math.max(byteSize, this._indexCapacity * 2);
         this._indexBuffer = this._device.createBuffer({
-            size: this._indexCapacity,
+            size: this._indexData.byteLength,
             usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
         });
     }
@@ -176,11 +208,12 @@ export class GeometryManager {
         }
 
         const buffer = this._modelUniformBuffers[this._poolIndex];
-        const data = new Float32Array(MODEL_UNIFORM_SIZE / 4);
+        const data = this._modelUniformData;
 
         data.set(modelMatrix, 0);
         data.set(normalMatrix, 16);
 
+        // writeBuffer copies the data at call time, so the scratch array is safe to reuse.
         this._device.queue.writeBuffer(buffer, 0, data);
 
         const bindGroup = this._modelBindGroups[this._poolIndex];
@@ -203,10 +236,14 @@ export interface DrawCommand {
 
 /** Result of flushing all queued meshes — buffers and per-mesh draw commands. */
 export interface FlushResult {
-    /** GPU buffer containing all uploaded vertex data for the frame. */
+    /** Pooled GPU buffer containing the frame's vertex data; capacity may exceed the used length. */
     vertexBuffer: GPUBuffer;
-    /** GPU buffer containing all uploaded index data for the frame. */
+    /** Pooled GPU buffer containing the frame's index data; capacity may exceed the used length. */
     indexBuffer: GPUBuffer;
+    /** Number of vertices used by this frame within {@link FlushResult.vertexBuffer}. */
+    vertexCount: number;
+    /** Number of indices used by this frame within {@link FlushResult.indexBuffer}. */
+    indexCount: number;
     /** Per-mesh draw commands into the shared vertex and index buffers. */
     draws: DrawCommand[];
 }

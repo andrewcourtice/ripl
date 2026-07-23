@@ -17,8 +17,15 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area" :extras-reset="reset">
-            <RiplField label="Stacked" inline>
-                <RiplSwitch v-model="extras.stacked" />
+            <RiplField label="Mode">
+                <RiplSelect v-model="extras.stackMode">
+                    <option value="overlaid">Overlaid</option>
+                    <option value="stacked">Stacked</option>
+                    <option value="percent">100% stacked</option>
+                </RiplSelect>
+            </RiplField>
+            <RiplField v-if="extras.stackMode !== 'percent'" label="Secondary axis" inline>
+                <RiplSwitch v-model="extras.secondaryAxis" />
             </RiplField>
             <RiplField label="Line type">
                 <RiplSelect v-model="extras.lineType">
@@ -86,8 +93,16 @@ const seriesMeta = [
     { id: 'mobile', label: 'Mobile' },
 ];
 
+// Maps the drawer's three-way mode onto the chart's `stacked` option.
+const STACK_MODE_VALUES = {
+    overlaid: false,
+    stacked: true,
+    percent: 'percent',
+} as const;
+
 const { extras, reset } = useChartExtras({
-    stacked: false,
+    stackMode: 'overlaid' as keyof typeof STACK_MODE_VALUES,
+    secondaryAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
     lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
     fillOpacity: 0.3,
@@ -124,7 +139,28 @@ function generateData(count = 6) {
 
 let data = generateData();
 
+// Percent stacking normalizes per axis group, so the secondary-axis binding only applies to the
+// other modes (the drawer hides the toggle in percent mode to match).
+function secondaryAxisActive() {
+    return extras.secondaryAxis && extras.stackMode !== 'percent';
+}
+
+// With the secondary axis on, shrink the mobile series an order of magnitude so its units
+// genuinely differ from desktop's and the right-hand axis is justified.
+function activeData() {
+    if (!secondaryAxisActive()) {
+        return data;
+    }
+
+    return data.map(item => ({
+        ...item,
+        mobile: Math.round(item.mobile / 10),
+    }));
+}
+
 function getSeries() {
+    const secondary = secondaryAxisActive();
+
     return seriesMeta.map(s => ({
         id: s.id,
         value: s.id,
@@ -134,15 +170,32 @@ function getSeries() {
         lineStyle: extras.lineStyle,
         markers: extras.markers,
         color: config.colors[s.id],
+        axis: secondary && s.id === 'mobile' ? 1 : undefined,
     }));
 }
 
 function buildOptions() {
     const options = {
-        stacked: extras.stacked,
+        data: activeData(),
+        stacked: STACK_MODE_VALUES[extras.stackMode],
         series: getSeries(),
         ...buildCommonOptions(config),
     };
+
+    // A second `axis.y` entry renders a right-hand y-axis; the mobile series binds to it via its
+    // `axis: 1` series option.
+    if (secondaryAxisActive()) {
+        options.axis = {
+            ...options.axis,
+            y: [
+                options.axis.y,
+                {
+                    visible: config.axesVisible,
+                    title: 'Mobile (sessions)',
+                },
+            ],
+        };
+    }
 
     // Sample reference line + shaded band, drawn through the y scale.
     options.annotations = config.annotationsVisible
@@ -169,33 +222,30 @@ const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createAreaChart(context, {
-        data,
         key: 'month',
-        padding: { top: 30, right: 20, bottom: 30, left: 20 },
         ...buildOptions(),
     });
 });
 
-// Furniture options (axes, grid, tooltip, crosshair, legend, theme, navigator) are only read when a
-// chart is constructed, so rebuild the chart on any customization change; data edits animate in place.
-watch([config, extras], () => example.value?.recreate(), { deep: true });
+watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
+
 
 function randomize() {
     data = generateData(data.length);
-    chart.value?.update({ data });
+    chart.value?.update({ data: activeData() });
 }
 
 function addPoint() {
     if (data.length < MONTHS.length) {
         data = generateData(data.length + 1);
-        chart.value?.update({ data });
+        chart.value?.update({ data: activeData() });
     }
 }
 
 function removePoint() {
     if (data.length > 2) {
         data = generateData(data.length - 1);
-        chart.value?.update({ data });
+        chart.value?.update({ data: activeData() });
     }
 }
 </script>
@@ -260,6 +310,53 @@ createAreaChart('#container', {
 });
 ```
 
+### 100% stacked
+
+Pass `stacked: 'percent'` to normalize each category to its share of the category total — the value axis is fixed to 0–100% and values default to percentage formatting:
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    stacked: 'percent',
+    series: [
+        { id: 'desktop',
+            value: 'desktop',
+            label: 'Desktop' },
+        { id: 'mobile',
+            value: 'mobile',
+            label: 'Mobile' },
+    ],
+});
+```
+
+### Secondary y-axis
+
+Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `axis` option (an index or the axis `id`). When the chart is stacked, series stack per axis group:
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        { id: 'sessions',
+            value: 'sessions',
+            label: 'Sessions' },
+        { id: 'conversion',
+            value: 'conversion',
+            label: 'Conversion %',
+            axis: 1 },
+    ],
+    axis: {
+        y: [
+            { title: 'Sessions' },
+            { title: 'Conversion %',
+                format: 'percentage' },
+        ],
+    },
+});
+```
+
 ### Custom opacity and line type
 
 ```ts
@@ -284,12 +381,12 @@ createAreaChart('#container', {
 ## Options
 
 - **`data`** — The data array
-- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`
+- **`series`** — Array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`, `axis` (y-axis index/id binding)
 - **`key`** — Key accessor for data points
-- **`stacked`** — Stack series on top of each other (default `false`)
+- **`stacked`** — `false` (overlaid, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
 - **`grid`** — `boolean | ChartGridOptions` — Show/configure grid lines (default `true`)
 - **`crosshair`** — `boolean | ChartCrosshairOptions` — Show/configure crosshair (default `true`)
 - **`tooltip`** — `boolean | ChartTooltipOptions` — Show/configure tooltips (default `true`)
 - **`legend`** — `boolean | ChartLegendOptions` — Show/configure legend
-- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes
+- **`axis`** — `boolean | ChartAxisOptions` — Configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
 - **`overview`** — `boolean | { size }` — Show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
