@@ -83,7 +83,7 @@ export class PencilTool implements Tool {
             return;
         }
 
-        points.push([world[0], world[1]]);
+        this.#draft.points = [...points, [world[0], world[1]]];
         this.editor.updateLive([this.#draft]);
     }
 
@@ -104,7 +104,7 @@ export class PencilTool implements Tool {
 
         if (this.#draft.points.length === 1) {
             const [x, y] = this.#draft.points[0];
-            this.#draft.points.push([x + 0.01, y]);
+            this.#draft.points = [...this.#draft.points, [x + 0.01, y]];
         }
 
         this.#draft = null;

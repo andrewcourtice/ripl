@@ -70,10 +70,7 @@ export class PenTool implements Tool {
             return;
         }
 
-        const cursor = this.#draft.points[this.#draft.points.length - 1];
-        cursor[0] = world[0];
-        cursor[1] = world[1];
-        this.#draft.points.push([world[0], world[1]]);
+        this.#draft.points = [...anchors, [world[0], world[1]], [world[0], world[1]]];
         this.#editor.updateLive([this.#draft]);
     }
 
@@ -83,9 +80,7 @@ export class PenTool implements Tool {
             return;
         }
 
-        const cursor = this.#draft.points[this.#draft.points.length - 1];
-        cursor[0] = world[0];
-        cursor[1] = world[1];
+        this.#draft.points = [...this.#draft.points.slice(0, -1), [world[0], world[1]]];
         this.#editor.updateLive([this.#draft]);
     }
 

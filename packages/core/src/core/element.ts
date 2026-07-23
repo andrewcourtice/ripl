@@ -589,13 +589,17 @@ export class Element<
     /**
      * Sets a state value, marking the element {@link Element.$touched}. When the value differs
      * from the current one it is written, the element is marked {@link Element.$dirty}, and an
-     * `updated` event is emitted; setting a value equal to the current one is a no-op beyond
-     * `$touched` (no write, no `$dirty`, no event).
+     * `updated` event is emitted; setting a primitive value equal to the current one is a no-op
+     * beyond `$touched` (no write, no `$dirty`, no event). Reference-equal objects and arrays
+     * always take the full path, since in-place mutation makes them indistinguishable from a
+     * changed value.
      */
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this._touched = true;
 
-        if (this.state[key] === value) {
+        // Only primitives may short-circuit on equality. A reference-equal object or array may
+        // have been mutated in place, so it must still mark dirty and emit `updated`.
+        if (this.state[key] === value && (typeof value !== 'object' || value === null)) {
             return;
         }
 
