@@ -21,6 +21,7 @@ export default defineConfig({
             '@ripl/webgpu': resolve('webgpu'),
             '@ripl/terminal': resolve('terminal'),
             '@ripl/node': resolve('node'),
+            '@ripl/react-native': resolve('react-native'),
             '@ripl/test-utils': resolve('test-utils'),
         },
     },

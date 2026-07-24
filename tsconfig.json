@@ -35,6 +35,7 @@
             "@ripl/webgpu": ["./packages/webgpu/src/index.ts"],
             "@ripl/terminal": ["./packages/terminal/src/index.ts"],
             "@ripl/node": ["./packages/node/src/index.ts"],
+            "@ripl/react-native": ["./packages/react-native/src/index.ts"],
             "@ripl/test-utils": ["./packages/test-utils/src/index.ts"],
         }
     },

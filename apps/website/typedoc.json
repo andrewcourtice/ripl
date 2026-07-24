@@ -10,6 +10,7 @@
         "../../packages/3d",
         "../../packages/webgpu",
         "../../packages/terminal",
+        "../../packages/react-native",
         "../../packages/dom",
         "../../packages/utilities"
     ],

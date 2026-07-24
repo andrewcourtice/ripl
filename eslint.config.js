@@ -336,7 +336,7 @@ export default tseslint.config(
     },
     {
         name: 'ripl/markdown-code-blocks',
-        files: ['**/*.md/*.ts', '**/*.md/*.js'],
+        files: ['**/*.md/*.ts', '**/*.md/*.tsx', '**/*.md/*.js', '**/*.md/*.jsx'],
         plugins: {
             '@stylistic': stylistic,
             'ripl': riplPlugin,
@@ -515,7 +515,7 @@ export default tseslint.config(
     // source (see AGENTS.md → Control Flow). The docs site under `apps/website/` is exempt.
     {
         name: 'ripl/no-switch',
-        files: ['packages/*/src/**/*.ts', 'apps/*/src/**/*.ts', 'apps/*/src/**/*.vue'],
+        files: ['packages/*/src/**/*.{ts,tsx}', 'apps/*/src/**/*.{ts,tsx}', 'apps/*/src/**/*.vue'],
         ignores: ['apps/website/**'],
         rules: {
             'no-restricted-syntax': ['error', {

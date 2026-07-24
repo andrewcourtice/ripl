@@ -1,0 +1,48 @@
+{
+    "name": "@ripl/react-native",
+    "version": "1.0.0",
+    "description": "React Native (Skia) rendering context and components for Ripl",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "sideEffects": true,
+    "repository": "https://github.com/andrewcourtice/ripl",
+    "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
+    "homepage": "https://www.ripl.run",
+    "license": "MIT",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsup && tsc -p tsconfig.build.json"
+    },
+    "dependencies": {
+        "@ripl/charts": "workspace:^",
+        "@ripl/core": "workspace:^",
+        "@ripl/utilities": "workspace:^"
+    },
+    "peerDependencies": {
+        "@shopify/react-native-skia": ">=1.5.0",
+        "react": ">=18",
+        "react-native": ">=0.72",
+        "react-native-gesture-handler": ">=2.0.0"
+    },
+    "devDependencies": {
+        "@shopify/react-native-skia": "^1.5.0",
+        "@types/react": "^18.3.0",
+        "react": "^18.3.1",
+        "react-native": "^0.76.0",
+        "react-native-gesture-handler": "^2.20.0"
+    }
+}
