@@ -1,0 +1,52 @@
+name: Build Devtools Extension
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-devtools-extension-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build & package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build extension
+        run: yarn workspace @ripl/devtools-extension build
+
+      - name: Package extension
+        id: package
+        run: |
+          VERSION="$(node -p "require('./apps/devtools-extension/package.json').version")"
+          SHORT_SHA="${GITHUB_SHA::7}"
+          ZIP_NAME="ripl-devtools-extension-${VERSION}-${SHORT_SHA}.zip"
+          ( cd apps/devtools-extension/dist && zip -r "${GITHUB_WORKSPACE}/${ZIP_NAME}" . )
+          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ripl-devtools-extension
+          path: ${{ steps.package.outputs.zip_name }}
+          if-no-files-found: error
+          retention-days: 30
