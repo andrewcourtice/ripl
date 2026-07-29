@@ -52,14 +52,14 @@ for (const pkg of PACKAGES) {
     const esmSrc = path.resolve(pkgDistDir, 'index.js');
     const dtsSrc = path.resolve(pkgDistDir, 'index.d.ts');
 
-    // The ESM bundle comes from tsup and the declarations from a separate
-    // tsc step, so run the package's full build if either artifact is missing.
+    // tsdown emits both the ESM bundle and the bundled declarations, so run the
+    // package's build if either artifact is missing.
     if (!fs.existsSync(esmSrc) || !fs.existsSync(dtsSrc)) {
         const pkgDir = path.resolve(packagesDir, shortName);
         console.warn(`Building ${pkg}...`);
 
         try {
-            execSync('npx tsup && npx tsc -p tsconfig.build.json', {
+            execSync('yarn run -T tsdown', {
                 cwd: pkgDir,
                 stdio: 'inherit',
             });

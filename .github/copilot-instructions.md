@@ -193,15 +193,21 @@ Each package should follow this structure:
 
 ## Build System
 
-The project uses `tsup` for building packages with the following configuration:
+The project uses `tsdown` for building packages, via a single shared
+`tsdown.config.ts` at the repo root. Each package's `build` script is `tsdown`.
 
 1. Clean output directory before builds
-2. Generate declaration files (`.d.ts`)
-3. Generate source maps
-4. Target ES2018
-5. Output formats: ESM, CommonJS, and IIFE
+2. Generate bundled declaration files (`index.d.ts` and `index.d.cts`) — tsdown
+   does this itself, there is no separate `tsc` step
+3. Generate source maps for JS output
+4. Target ES2023, platform `neutral`
+5. Output formats: ESM (`index.js`), CommonJS (`index.cjs`), IIFE (`index.iife.js`)
 6. Entry point: `./src/index.ts`
 7. Output directory: `./dist`
+8. Workspace `@ripl/*` packages stay external in ESM/CJS and are inlined into IIFE
+9. `publint` and `attw` validate each package after it builds
+
+The build does not typecheck — run `yarn typecheck` for that.
 
 ## Dependencies
 

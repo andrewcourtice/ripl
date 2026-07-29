@@ -39,6 +39,6 @@ yarn typedoc --entryPointStrategy resolve \
 
 ## Before you commit
 
-- `yarn test` and `yarn lint` pass.
+- `yarn test`, `yarn lint` and `yarn typecheck` pass.
 - New/changed public API is fully documented (above).
 - Keep changes focused; no runtime dependencies without explicit approval.

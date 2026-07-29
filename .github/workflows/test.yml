@@ -54,7 +54,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build (typechecks + emits declarations via tsc)
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Build (bundles + emits declarations via tsdown)
         run: yarn build
 
       - name: Run tests
