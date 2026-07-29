@@ -11,5 +11,9 @@
     "vue.server.includeLanguages": [
         "vue",
         "markdown"
+    ],
+    "cSpell.words": [
+        "Courtice",
+        "ripl"
     ]
 }
