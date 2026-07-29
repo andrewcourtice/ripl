@@ -212,25 +212,6 @@ export class Element<
     TEventMap extends ElementEventMap = ElementEventMap
 > extends EventBus<TEventMap> implements Queryable {
 
-    protected state: TState;
-    protected context?: Context;
-
-    /** Unique identifier for this element, defaulting to `type:uniqueId` when not supplied. */
-    public id: string;
-    /** The element type name (e.g. `circle`, `rect`, `group`). */
-    public readonly type: string;
-    /** Set of CSS-like class names used for querying and selection. */
-    public readonly classList: Set<string>;
-
-    /** When `true`, the element skips transform and drawing-state application during {@link Element.render}; used by containers such as {@link Group}. */
-    public abstract: boolean = false;
-    /** Controls which parts of the element respond to pointer hit testing. See {@link ElementPointerEvents}. */
-    public pointerEvents: ElementPointerEvents = 'all';
-    /** The parent {@link Group} this element is attached to, or `undefined` when detached. */
-    public declare parent?: Group<TEventMap>;
-    /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
-    public data: unknown;
-
     private _dirty = false;
     private _touched = false;
     private _stateVersion = 0;
@@ -251,6 +232,25 @@ export class Element<
         version: number;
         matrix: Matrix | null;
     };
+
+    protected state: TState;
+    protected context?: Context;
+
+    /** Unique identifier for this element, defaulting to `type:uniqueId` when not supplied. */
+    public id: string;
+    /** The element type name (e.g. `circle`, `rect`, `group`). */
+    public readonly type: string;
+    /** Set of CSS-like class names used for querying and selection. */
+    public readonly classList: Set<string>;
+
+    /** When `true`, the element skips transform and drawing-state application during {@link Element.render}; used by containers such as {@link Group}. */
+    public abstract: boolean = false;
+    /** Controls which parts of the element respond to pointer hit testing. See {@link ElementPointerEvents}. */
+    public pointerEvents: ElementPointerEvents = 'all';
+    /** The parent {@link Group} this element is attached to, or `undefined` when detached. */
+    public declare parent?: Group<TEventMap>;
+    /** Arbitrary user data bound to the element, typically the datum backing a data-driven visual. */
+    public data: unknown;
 
     /** Whether an own state value has changed since the last render cycle. Drives per-element path-cache invalidation and is reset after each render cycle. */
     public get $dirty(): boolean {
@@ -569,24 +569,6 @@ export class Element<
     }
 
     /**
-     * Resolves a state value against the parent chain (own value, else the nearest ancestor's),
-     * the effective value an element renders with. Used where the resolved value is needed without
-     * a live context, such as computing a transition's start value.
-     *
-     * @param key - The state property to resolve.
-     * @returns The element's own value for `key`, or the nearest ancestor's when unset, else `undefined`.
-     */
-    public getComputedValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
-        const own = this.state[key];
-
-        if (own !== undefined && own !== null) {
-            return own;
-        }
-
-        return (this.parent as unknown as Element<TState> | undefined)?.getComputedValue(key) as TState[TKey];
-    }
-
-    /**
      * Sets a state value, marking the element {@link Element.$touched}. When the value differs
      * from the current one it is written, the element is marked {@link Element.$dirty}, and an
      * `updated` event is emitted; setting a primitive value equal to the current one is a no-op
@@ -610,6 +592,24 @@ export class Element<
             key,
             value,
         });
+    }
+
+    /**
+     * Resolves a state value against the parent chain (own value, else the nearest ancestor's),
+     * the effective value an element renders with. Used where the resolved value is needed without
+     * a live context, such as computing a transition's start value.
+     *
+     * @param key - The state property to resolve.
+     * @returns The element's own value for `key`, or the nearest ancestor's when unset, else `undefined`.
+     */
+    public getComputedValue<TKey extends keyof TState>(key: TKey): TState[TKey] {
+        const own = this.state[key];
+
+        if (own !== undefined && own !== null) {
+            return own;
+        }
+
+        return (this.parent as unknown as Element<TState> | undefined)?.getComputedValue(key) as TState[TKey];
     }
 
     /**
@@ -770,7 +770,12 @@ export class Element<
         }
 
         if (local) {
-            return new Box(box.top, box.left, box.bottom, box.right);
+            return new Box(
+                box.top,
+                box.left,
+                box.bottom,
+                box.right
+            );
         }
 
         const matrix = this.getWorldTransform();
@@ -779,7 +784,12 @@ export class Element<
         if (cacheable && worldCache && worldCache.version === this._stateVersion && worldCache.matrix === matrix) {
             const cached = worldCache.box;
 
-            return new Box(cached.top, cached.left, cached.bottom, cached.right);
+            return new Box(
+                cached.top,
+                cached.left,
+                cached.bottom,
+                cached.right
+            );
         }
 
         const world = transformBox(box, matrix);
@@ -792,7 +802,12 @@ export class Element<
             };
         }
 
-        return new Box(world.top, world.left, world.bottom, world.right);
+        return new Box(
+            world.top,
+            world.left,
+            world.bottom,
+            world.right
+        );
     }
 
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */

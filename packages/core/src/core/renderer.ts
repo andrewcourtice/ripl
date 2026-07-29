@@ -285,7 +285,6 @@ export class Renderer extends EventBus<RendererEventMap> {
         });
 
         this._scene.$consumeRender();
-
         this._handle = factory.requestAnimationFrame(() => this._tick());
     }
 

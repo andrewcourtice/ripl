@@ -54,6 +54,19 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
 
     private _elements = new Set<Element>();
 
+    /**
+     * Returns the composite bounding box enclosing all children: their on-screen (world) boxes by
+     * default, or their raw local boxes when `local` is `true`.
+     * @param local - when `true`, unions the children's untransformed local geometry instead of their world boxes.
+     */
+    /**
+     * Group boxes compose from children, whose changes are invisible to the group's own state,
+     * they are never cached (see {@link Element.getBoundingBox}).
+     */
+    protected get _boundsCacheable(): boolean {
+        return false;
+    }
+
     /** Returns a snapshot array of this group's direct child elements. */
     public get children() {
         return Array.from(this._elements);
@@ -160,19 +173,6 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
     public getElementsByClass<TElement extends Element = Element>(classes: OneOrMore<string>) {
         const classList = valueOneOrMore(classes);
         return this.graph(true).filter(element => classList.every(cls => element.classList.has(cls))) as TElement[];
-    }
-
-    /**
-     * Returns the composite bounding box enclosing all children: their on-screen (world) boxes by
-     * default, or their raw local boxes when `local` is `true`.
-     * @param local - when `true`, unions the children's untransformed local geometry instead of their world boxes.
-     */
-    /**
-     * Group boxes compose from children, whose changes are invisible to the group's own state,
-     * they are never cached (see {@link Element.getBoundingBox}).
-     */
-    protected get _boundsCacheable(): boolean {
-        return false;
     }
 
     public getBoundingBox(local = false) {

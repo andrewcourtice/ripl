@@ -85,10 +85,10 @@ export class Event<TData = undefined> {
 /** A typed pub/sub event system with parent-chain bubbling, disposable subscriptions, and self-filtering. */
 export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
+    private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();
+
     /** The parent event bus that emitted events bubble up to, if any. */
     public parent?: EventBus<TEventMap>;
-
-    private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
     /**
      * The event types this bus can emit. The base returns an empty list; subclasses override it
