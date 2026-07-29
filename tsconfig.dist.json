@@ -1,0 +1,28 @@
+// Typechecks the *published* declarations the way a consumer's project would see them.
+//
+// Deliberately does NOT extend ./tsconfig.json: the point is to drop this repo's `paths` aliases
+// and its ambient `types` array, so a package that leaks a type it never declared fails here.
+// `skipLibCheck` is off for the same reason — with it on (the common consumer setting) an
+// unresolved ambient type silently degrades to `any` instead of erroring.
+//
+// Requires `yarn build` first. Cross-package `@ripl/*` imports resolve through the workspace
+// symlinks and each package's `exports` map.
+{
+    "compilerOptions": {
+        "strict": true,
+        "target": "ES2023",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "types": [],
+        "skipLibCheck": false,
+        "noEmit": true
+    },
+    "include": [
+        "packages/*/dist/index.d.ts",
+        "packages/*/dist/index.d.cts"
+    ]
+}

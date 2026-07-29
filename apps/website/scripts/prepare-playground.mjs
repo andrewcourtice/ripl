@@ -138,6 +138,30 @@ try {
     console.warn('Warning: could not bundle xterm for the terminal playground, skipping:', error.message);
 }
 
+// Monaco bundles TypeScript 5.9, whose `lib.dom` predates the WebGPU interfaces that TypeScript 6
+// ships (and that `@ripl/webgpu`'s declarations rely on). Serve `@webgpu/types` so the editor can
+// resolve `GPUDevice` & co. `global: true` tells the editor to register it as an ambient lib
+// rather than wrapping it in `declare module`, which is what the package entries get.
+try {
+    const webgpuTypesOutput = path.resolve(outputDir, 'webgpu-types');
+    fs.mkdirSync(webgpuTypesOutput, { recursive: true });
+
+    const webgpuTypesPkgDir = path.dirname(require.resolve('@webgpu/types/package.json'));
+
+    fs.copyFileSync(
+        path.resolve(webgpuTypesPkgDir, 'dist/index.d.ts'),
+        path.resolve(webgpuTypesOutput, 'index.d.ts')
+    );
+
+    manifest['@webgpu/types'] = {
+        esm: null,
+        types: '/_playground/webgpu-types/index.d.ts',
+        global: true,
+    };
+} catch (error) {
+    console.warn('Warning: could not copy @webgpu/types for the playground, skipping:', error.message);
+}
+
 fs.writeFileSync(
     path.resolve(outputDir, 'manifest.json'),
     JSON.stringify(manifest, null, 2) + '\n'

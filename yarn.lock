@@ -2446,6 +2446,7 @@ __metadata:
     "@ripl/canvas": "workspace:^"
     "@ripl/core": "workspace:^"
     "@ripl/utilities": "workspace:^"
+    "@webgpu/types": "npm:^0.1.71"
   languageName: unknown
   linkType: soft
 
@@ -2464,6 +2465,7 @@ __metadata:
     "@ripl/utilities": "workspace:^"
     "@ripl/web": "workspace:^"
     "@ripl/webgpu": "workspace:^"
+    "@webgpu/types": "npm:^0.1.71"
     "@xterm/addon-fit": "npm:^0.11.0"
     "@xterm/xterm": "npm:^6.0.0"
     esbuild: "npm:^0.27.7"
@@ -9892,7 +9894,6 @@ __metadata:
     "@playwright/test": "npm:1.61.1"
     "@stylistic/eslint-plugin": "npm:^5.10.0"
     "@vitest/coverage-v8": "npm:^4.1.9"
-    "@webgpu/types": "npm:^0.1.71"
     eslint: "npm:^10.6.0"
     eslint-plugin-vue: "npm:^10.9.2"
     globals: "npm:^17.7.0"

@@ -30,6 +30,7 @@
         "vue": "^3.5.39"
     },
     "devDependencies": {
+        "@webgpu/types": "^0.1.71",
         "esbuild": "^0.27.7",
         "typedoc": "^0.28.19",
         "typedoc-plugin-markdown": "^4.12.0",

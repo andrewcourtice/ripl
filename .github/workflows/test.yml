@@ -60,6 +60,9 @@ jobs:
       - name: Build (bundles + emits declarations via tsdown)
         run: yarn build
 
+      - name: Typecheck published declarations
+        run: yarn typecheck:dist
+
       - name: Run tests
         run: yarn test
 

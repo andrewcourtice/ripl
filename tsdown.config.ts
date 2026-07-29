@@ -53,26 +53,31 @@ function stripDeclarationSourcemapComment(): TsdownPlugin {
     };
 }
 
+/** Reads the name of the package being built, or an empty string if it can't be read. */
+function readPackageName(cwd: string): string {
+    try {
+        const { name } = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as {
+            name: string;
+        };
+
+        return name;
+    } catch {
+        return '';
+    }
+}
+
 /**
  * Derives a distinct IIFE global for the package being built from its `package.json` name
  * (`@ripl/core` → `RiplCore`, `@ripl/3d` → `Ripl3d`). Every package previously shared the single
  * `Ripl` global, so loading two Ripl IIFE bundles on one page clobbered `window.Ripl`; a
  * package-specific name lets them coexist. Falls back to `Ripl` if the name can't be read.
  */
-function resolveGlobalName(cwd: string): string {
-    try {
-        const { name } = JSON.parse(readFileSync(resolve(cwd, 'package.json'), 'utf8')) as {
-            name: string;
-        };
+function resolveGlobalName(packageName: string): string {
+    const suffix = packageName.replace(/^@ripl\//, '').replace(/[^a-z0-9]/gi, '');
 
-        const suffix = name.replace(/^@ripl\//, '').replace(/[^a-z0-9]/gi, '');
-
-        return suffix
-            ? `Ripl${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}`
-            : 'Ripl';
-    } catch {
-        return 'Ripl';
-    }
+    return suffix
+        ? `Ripl${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}`
+        : 'Ripl';
 }
 
 export default defineConfig((inlineConfig): UserConfig[] => {
@@ -81,6 +86,7 @@ export default defineConfig((inlineConfig): UserConfig[] => {
     // against it. Do NOT enable tsdown's `workspace` mode: it evaluates this config once for
     // the whole monorepo, so every package would inherit the first package's IIFE global.
     const cwd = inlineConfig.cwd ?? process.cwd();
+    const packageName = readPackageName(cwd);
 
     const shared = {
         cwd,
@@ -96,14 +102,22 @@ export default defineConfig((inlineConfig): UserConfig[] => {
         // are `type: module`) and CJS `index.cjs`, matching every `main`/`module`/`exports`.
         platform: 'neutral',
         fixedExtension: false,
-        // The `.d.cts` pass emits declarations only, so a sourcemap there produces nothing but
-        // a `sourceMappingURL` comment pointing at a map that is never written.
-        outputOptions: (outputOptions, _format, { cjsDts }) => cjsDts
-            ? {
-                ...outputOptions,
+        outputOptions: (outputOptions, _format, { cjsDts }) => ({
+            ...outputOptions,
+            // JSDoc belongs in the declarations, where editors read it — in the runtime bundle
+            // it is dead weight (up to a third of a file). `jsdoc: false` leaves the `legal`
+            // and `annotation` categories on, so `@__PURE__` / `@__NO_SIDE_EFFECTS__` markers
+            // survive and consumers can still tree-shake. Declaration chunks are unaffected:
+            // rolldown-plugin-dts re-prints those from its own AST, not through rolldown codegen.
+            comments: {
+                jsdoc: false,
+            },
+            // The `.d.cts` pass emits declarations only, so a sourcemap there produces nothing
+            // but a `sourceMappingURL` comment pointing at a map that is never written.
+            ...cjsDts && {
                 sourcemap: false,
-            }
-            : outputOptions,
+            },
+        }),
     } satisfies UserConfig;
 
     return [
@@ -140,7 +154,7 @@ export default defineConfig((inlineConfig): UserConfig[] => {
             format: [
                 'iife',
             ],
-            globalName: resolveGlobalName(cwd),
+            globalName: resolveGlobalName(packageName),
             // The IIFE bundle is a standalone `<script>` drop-in, so it inlines its workspace
             // dependencies instead of expecting them on `window`. This matches what tsup
             // produced: esbuild ignored `external` for IIFE, so those bundles were already

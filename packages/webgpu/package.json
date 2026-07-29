@@ -40,5 +40,8 @@
         "@ripl/canvas": "workspace:^",
         "@ripl/core": "workspace:^",
         "@ripl/utilities": "workspace:^"
+    },
+    "devDependencies": {
+        "@webgpu/types": "^0.1.71"
     }
 }

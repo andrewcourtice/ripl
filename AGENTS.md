@@ -558,6 +558,17 @@ typechecks every package in one pass and is the type gate in CI.
 - **Zero runtime dependencies** — This is a core promise of the project. Do not add runtime dependencies.
 - **Dev dependencies** are for build and test tooling only: TypeScript, tsdown, Vitest, ESLint, happy-dom/jsdom
 - When external libraries are necessary, prefer tree-shakable options
+- **Ambient type packages must stay out of the public API.** A published `.d.ts` may only
+  reference types the consumer already has — i.e. TypeScript's own `lib` (`ESNext`, `DOM`).
+  Anything else (`@webgpu/types`, `@types/node`, …) is a `devDependency`, owned by the package
+  that needs it, with the package's own `tsconfig.json` pinning it in `compilerOptions.types`
+  rather than inheriting from the root. See `packages/node` (`@types/node`, for `process.stdout`)
+  and `packages/webgpu` (`@webgpu/types`, for the `GPUBufferUsage`/`GPUTextureUsage` flag objects
+  and the `getContext('webgpu')` overload — TypeScript 6's `lib.dom` declares the WebGPU
+  *interfaces* but not those).
+- `yarn typecheck:dist` enforces this: it typechecks every published `dist/index.d.ts` with
+  `types: []` and `skipLibCheck: false`, so a package that leaks a type it never declared fails
+  the build. Run it after `yarn build`.
 
 ## Documentation Site (`apps/website/`)
 

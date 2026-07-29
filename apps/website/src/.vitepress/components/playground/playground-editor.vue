@@ -233,7 +233,13 @@ async function initMonaco() {
         const manifest = await response.json();
 
         for (const [pkg, entry] of Object.entries(manifest)) {
-            const typesUrl = (entry as { types: string | null }).types;
+            const {
+                types: typesUrl,
+                global: isGlobal,
+            } = entry as {
+                types: string | null;
+                global?: boolean;
+            };
 
             if (!typesUrl) {
                 continue;
@@ -241,10 +247,15 @@ async function initMonaco() {
 
             const dtsResponse = await fetch(base + typesUrl.replace(/^\//, ''));
             const dts = await dtsResponse.text();
-            const wrapped = `declare module '${pkg}' {\n${dts}\n}`;
+
+            // Ambient declaration files (e.g. `@webgpu/types`) declare globals rather than a
+            // module, so wrapping them in `declare module` would hide everything they export.
+            const content = isGlobal
+                ? dts
+                : `declare module '${pkg}' {\n${dts}\n}`;
 
             const disposable = monaco.languages.typescript.javascriptDefaults.addExtraLib(
-                wrapped,
+                content,
                 `file:///node_modules/${pkg}/index.d.ts`
             );
 
