@@ -100,7 +100,12 @@ if (missingArtifacts.length) {
 // Bundle xterm.js (+ the fit addon) to a single self-contained ESM module served from the app
 // origin, so the Terminal playground context resolves them from the import map with no external CDN.
 try {
-    const esbuild = await import('esbuild');
+    // rolldown is the bundler tsdown builds the packages with, so the playground reuses the
+    // existing toolchain rather than pulling in a second one. Its API is used directly rather
+    // than tsdown's `build()`: tsdown is aimed at publishing libraries, so it externalises
+    // `dependencies` and emits declarations — the opposite of the single self-contained module
+    // needed here.
+    const { rolldown } = await import('rolldown');
     const xtermOutput = path.resolve(outputDir, 'xterm');
     fs.mkdirSync(xtermOutput, { recursive: true });
 
@@ -111,13 +116,18 @@ try {
         '',
     ].join('\n'));
 
-    await esbuild.build({
-        entryPoints: [entryFile],
-        bundle: true,
-        format: 'esm',
-        outfile: path.resolve(xtermOutput, 'index.js'),
+    const bundle = await rolldown({
+        input: entryFile,
+        platform: 'browser',
         logLevel: 'silent',
     });
+
+    await bundle.write({
+        file: path.resolve(xtermOutput, 'index.js'),
+        format: 'esm',
+    });
+
+    await bundle.close();
 
     fs.rmSync(entryFile);
 

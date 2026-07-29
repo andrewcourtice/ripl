@@ -31,7 +31,7 @@
     },
     "devDependencies": {
         "@webgpu/types": "^0.1.71",
-        "esbuild": "^0.27.7",
+        "rolldown": "~1.2.0",
         "typedoc": "^0.28.19",
         "typedoc-plugin-markdown": "^4.12.0",
         "typedoc-vitepress-theme": "^1.1.3",
