@@ -15,9 +15,11 @@ The **Box Plot Chart** summarizes the distribution of a numeric field per catego
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
-            <RiplField label="Box color" inline option="color">
-                <RiplColorInput v-model="extras.color" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Box color" inline option="color">
+                    <RiplColorInput v-model="extras.color" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>

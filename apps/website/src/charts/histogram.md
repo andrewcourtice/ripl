@@ -21,9 +21,11 @@ The **Histogram Chart** bins a numeric field and draws each bin as a bar on a co
             <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Bar color" inline option="color">
-                <RiplColorInput v-model="extras.color" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Bar color" inline option="color">
+                    <RiplColorInput v-model="extras.color" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>

@@ -30,9 +30,11 @@ The **Radial Bar Chart** lays each category out as a concentric ring whose arc l
             <RiplField label="Rounded" inline option="rounded">
                 <RiplSwitch v-model="extras.rounded" />
             </RiplField>
-            <RiplField label="Track color" inline option="trackColor">
-                <RiplColorInput v-model="extras.trackColor" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Track color" inline option="trackColor">
+                    <RiplColorInput v-model="extras.trackColor" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>

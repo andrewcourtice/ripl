@@ -14,7 +14,11 @@
             <slot></slot>
         </RiplConfigSection>
 
-        <RiplConfigSection v-if="series && series.length" title="Colors" :default-open="true">
+        <RiplConfigSection
+            v-if="(series && series.length) || $slots.colors"
+            title="Colors"
+            :default-open="true"
+        >
             <RiplField
                 v-for="item in series"
                 :key="item.id"
@@ -340,6 +344,7 @@ function shows(feature: keyof ChartConfigFeatures): boolean {
 // them, open Title instead so the panel never opens fully collapsed.
 const hasLeadSection = computed(() => !!slots.default
     || (props.series?.length ?? 0) > 0
+    || !!slots.colors
     || shows('legend'));
 
 function onReset(): void {
