@@ -41,6 +41,6 @@
         "@ripl/utilities": "workspace:^"
     },
     "devDependencies": {
-        "@types/node": "^26.1.2"
+        "@types/node": "^24.13.3"
     }
 }

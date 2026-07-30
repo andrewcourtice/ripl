@@ -2029,7 +2029,7 @@ __metadata:
     "@ripl/core": "workspace:^"
     "@ripl/terminal": "workspace:^"
     "@ripl/utilities": "workspace:^"
-    "@types/node": "npm:^26.1.2"
+    "@types/node": "npm:^24.13.3"
   languageName: unknown
   linkType: soft
 
@@ -2104,6 +2104,7 @@ __metadata:
     "@ripl/utilities": "workspace:^"
     "@ripl/web": "workspace:^"
     "@ripl/webgpu": "workspace:^"
+    "@vue/devtools-api": "npm:^8.2.1"
     "@webgpu/types": "npm:^0.1.71"
     "@xterm/addon-fit": "npm:^0.11.0"
     "@xterm/xterm": "npm:^6.0.0"
@@ -2116,6 +2117,7 @@ __metadata:
     typedoc: "npm:^0.28.20"
     typedoc-plugin-markdown: "npm:^4.12.0"
     typedoc-vitepress-theme: "npm:^1.1.3"
+    typescript: "npm:^6.0.3"
     vitepress: "npm:^1.6.4"
     vitepress-plugin-tabs: "npm:^0.9.1"
     vue: "npm:^3.5.40"
@@ -2906,12 +2908,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:>=20.0.0, @types/node@npm:^26.1.2":
+"@types/node@npm:*, @types/node@npm:>=20.0.0":
   version: 26.1.2
   resolution: "@types/node@npm:26.1.2"
   dependencies:
     undici-types: "npm:~8.3.0"
   checksum: 10/2dd6d75b80c006deab4e381acc8cb2e3d634f10141f05fd6cadaabddd80a95f04aef7b00a574bd8fd5e08e940b899c23b91dd09a70b11a34a2762203b5eea25e
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^24.13.3":
+  version: 24.13.3
+  resolution: "@types/node@npm:24.13.3"
+  dependencies:
+    undici-types: "npm:~7.18.0"
+  checksum: 10/cfa6ed1e16c4624d1e83b09aeb72a2f50a7e17d837bf5a1259a52e346f33a693afd289402d3b6118ce3abea7aff35f2a4f13a0284b96bc5807a50f0e22e1ec77
   languageName: node
   linkType: hard
 
@@ -3288,6 +3299,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/devtools-api@npm:^8.2.1":
+  version: 8.2.1
+  resolution: "@vue/devtools-api@npm:8.2.1"
+  dependencies:
+    "@vue/devtools-kit": "npm:^8.2.1"
+  checksum: 10/313476c4392d63a569a48b0088feba4df7386a5a7165b08da153ec67bbd7e7509d847cfadf561c7c9c7b56cc13ad2ccf9468e9ecc30b23d56e79f4458f19ac5a
+  languageName: node
+  linkType: hard
+
 "@vue/devtools-kit@npm:^7.7.10":
   version: 7.7.10
   resolution: "@vue/devtools-kit@npm:7.7.10"
@@ -3303,12 +3323,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/devtools-kit@npm:^8.2.1":
+  version: 8.2.1
+  resolution: "@vue/devtools-kit@npm:8.2.1"
+  dependencies:
+    "@vue/devtools-shared": "npm:^8.2.1"
+    birpc: "npm:^2.6.1"
+    hookable: "npm:^5.5.3"
+    perfect-debounce: "npm:^2.0.0"
+  checksum: 10/63a105471c8cb8162d5d3bed25a1972d9e0385654ce37eb10d861b26ec595a1553ed01e256cd6ba2aaf8bd24db557b72bbc84abb8980056a2fd6ef2d2cd60943
+  languageName: node
+  linkType: hard
+
 "@vue/devtools-shared@npm:^7.7.10":
   version: 7.7.10
   resolution: "@vue/devtools-shared@npm:7.7.10"
   dependencies:
     rfdc: "npm:^1.4.1"
   checksum: 10/d5e4c8bf90dc814d2822648df98e36da79dc553e498f5795d1b4a77bed7fc6684c293cb3f69917bfedee8db205615b26145cb44b302a223c23b82aa455f76a1d
+  languageName: node
+  linkType: hard
+
+"@vue/devtools-shared@npm:^8.2.1":
+  version: 8.2.1
+  resolution: "@vue/devtools-shared@npm:8.2.1"
+  checksum: 10/3ef7cca2409efede6f9a9a2f9923e788b671cf2558eca4d97fe3cff14017af9a15d4bfa0a3fe2d139b866d94475cdd5ef28b6f7ac477487fd4d8ae3c8b061a4c
   languageName: node
   linkType: hard
 
@@ -3935,7 +3974,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"birpc@npm:^2.3.0":
+"birpc@npm:^2.3.0, birpc@npm:^2.6.1":
   version: 2.9.0
   resolution: "birpc@npm:2.9.0"
   checksum: 10/2e620815cb01ac51257ce23d052bc03a6c42003faf0c48f2ae8beca37af44583b7865528752a9d2ce403b7a8dededfff6fef2ceb627399caf9656ab7155e12b6
@@ -8821,6 +8860,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"perfect-debounce@npm:^2.0.0":
+  version: 2.1.0
+  resolution: "perfect-debounce@npm:2.1.0"
+  checksum: 10/1e45b92ab585fa1bfafaf01783b693b6d164a4da3b80865487f716a010d95e3d8b1131693258e342da25da671312c194cddb103c4743161f57dcf26574273fe6
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:1.1.1, picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
@@ -10514,6 +10560,13 @@ __metadata:
     "@quansync/fs": "npm:^1.0.0"
     quansync: "npm:^1.0.0"
   checksum: 10/2975b628788327c2dc42305b787622223b0c4afa8f9287f2ee13720bfbe6830ed8cb4751eeab9f2a7f399a2a8d6c062a304f940725451cb266641c068df226db
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~7.18.0":
+  version: 7.18.2
+  resolution: "undici-types@npm:7.18.2"
+  checksum: 10/e61a5918f624d68420c3ca9d301e9f15b61cba6e97be39fe2ce266dd6151e4afe424d679372638826cb506be33952774e0424141200111a9857e464216c009af
   languageName: node
   linkType: hard
 

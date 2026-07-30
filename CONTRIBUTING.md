@@ -194,8 +194,11 @@ describe('Scale', () => {
 
 Pull requests to `main` trigger the test workflow:
 
-- **Node 22** on Ubuntu
+- **Node 24** on Ubuntu, pinned by `.nvmrc` (also the project's minimum — see `engines.node`)
 - `yarn install --immutable` (lockfile must be up to date)
+- `yarn lint`
+- `yarn typecheck` — the build does not typecheck, so this is the type gate
+- `yarn build`, then `yarn typecheck:dist` to check the published declarations
 - `yarn test` with JUnit and coverage reporting
 
 Ensure your changes pass locally before pushing to avoid CI failures.

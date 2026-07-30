@@ -171,58 +171,62 @@ async function initMonaco() {
     const monaco = await import('monaco-editor');
     monacoModule = monaco;
 
+    // These specifiers resolve through monaco's `exports` map (`"./*": "./esm/vs/*.js"`), which it
+    // gained in 0.56 — they are deliberately NOT the on-disk paths. Writing the physical
+    // `monaco-editor/esm/vs/…` path maps to a doubled `esm/vs/esm/vs/…` that does not exist, and
+    // Vite then falls back to resolving it relative to this component.
     self.MonacoEnvironment = {
         getWorker(_: string, label: string) {
             if (label === 'typescript' || label === 'javascript') {
                 return new Worker(
-                    new URL('monaco-editor/esm/vs/language/typescript/ts.worker.js', import.meta.url),
+                    new URL('monaco-editor/language/typescript/ts.worker.js', import.meta.url),
                     { type: 'module' }
                 );
             }
 
             if (label === 'css' || label === 'scss' || label === 'less') {
                 return new Worker(
-                    new URL('monaco-editor/esm/vs/language/css/css.worker.js', import.meta.url),
+                    new URL('monaco-editor/language/css/css.worker.js', import.meta.url),
                     { type: 'module' }
                 );
             }
 
             if (label === 'json') {
                 return new Worker(
-                    new URL('monaco-editor/esm/vs/language/json/json.worker.js', import.meta.url),
+                    new URL('monaco-editor/language/json/json.worker.js', import.meta.url),
                     { type: 'module' }
                 );
             }
 
             if (label === 'html' || label === 'handlebars' || label === 'razor') {
                 return new Worker(
-                    new URL('monaco-editor/esm/vs/language/html/html.worker.js', import.meta.url),
+                    new URL('monaco-editor/language/html/html.worker.js', import.meta.url),
                     { type: 'module' }
                 );
             }
 
             return new Worker(
-                new URL('monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+                new URL('monaco-editor/editor/editor.worker.js', import.meta.url),
                 { type: 'module' }
             );
         },
     };
 
-    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    monaco.typescript.javascriptDefaults.setDiagnosticsOptions({
         noSemanticValidation: true,
         noSyntaxValidation: false,
     });
 
-    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
-        target: monaco.languages.typescript.ScriptTarget.ES2020,
+    monaco.typescript.javascriptDefaults.setCompilerOptions({
+        target: monaco.typescript.ScriptTarget.ES2020,
         allowNonTsExtensions: true,
-        moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
-        module: monaco.languages.typescript.ModuleKind.ESNext,
+        moduleResolution: monaco.typescript.ModuleResolutionKind.NodeJs,
+        module: monaco.typescript.ModuleKind.ESNext,
         allowJs: true,
         checkJs: false,
     });
 
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(
+    monaco.typescript.javascriptDefaults.addExtraLib(
         GLOBALS_DTS,
         'file:///globals.d.ts'
     );
@@ -254,7 +258,7 @@ async function initMonaco() {
                 ? dts
                 : `declare module '${pkg}' {\n${dts}\n}`;
 
-            const disposable = monaco.languages.typescript.javascriptDefaults.addExtraLib(
+            const disposable = monaco.typescript.javascriptDefaults.addExtraLib(
                 content,
                 `file:///node_modules/${pkg}/index.d.ts`
             );
@@ -386,7 +390,7 @@ async function fetchAndRegisterTypes(pkg: string) {
 
     const wrapped = `declare module '${pkg}' {\n${dts}\n}`;
 
-    const disposable = monacoModule.languages.typescript.javascriptDefaults.addExtraLib(
+    const disposable = monacoModule.typescript.javascriptDefaults.addExtraLib(
         wrapped,
         `file:///node_modules/${pkg}/index.d.ts`
     );
