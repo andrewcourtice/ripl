@@ -37,6 +37,11 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      # Every configurable option of every chart must be reachable from that chart's demo config
+      # panel, and every control must name an option the chart actually has. Fails if either drifts.
+      - name: Check chart config coverage
+        run: yarn workspace @ripl/website check-config-coverage
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
