@@ -875,6 +875,57 @@ export class ChartAxis extends ChartComponent {
         // helpers, so the base component render is intentionally a no-op.
     }
 
+    /**
+     * Removes everything the axis has drawn — ticks, labels, the axis line and the title — fading it
+     * out when animating. Charts call this instead of {@link ChartAxis.render} for an axis that should
+     * not be drawn this pass, so that an axis which *was* drawn leaves the scene rather than lingering
+     * at its last position. Safe to call on an axis that has never rendered.
+     *
+     * The axis is kept alive, not destroyed: the same instance renders again (entering from scratch)
+     * as soon as it has something to draw.
+     *
+     * @returns Resolves once the exit transitions have settled.
+     */
+    public hide(): Promise<unknown> {
+        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
+        const title = this._titleText;
+
+        // Coming back has to enter from scratch: there is no previous scale left to slide from, and
+        // the recorded tick values no longer point at live elements.
+        this._previousScale = undefined;
+        this._tickValues.clear();
+        this._titleText = undefined;
+        this.invalidate();
+
+        if (!this.animated) {
+            groups.forEach(group => group.destroy());
+            title?.destroy();
+            this.line.opacity = 0;
+
+            return Promise.resolve();
+        }
+
+        const exits = groups.map(group => {
+            // Retag before fading so the group cannot collide with a tick that re-enters while it is
+            // still on its way out (the reconcile join and the SVG DOM cache both key on class and id).
+            group.classList.delete('chart-axis__tick-group');
+            group.id = `${group.id}:exit:${stringUniqueId()}`;
+
+            const { line, label } = this._tickLeaves(group);
+
+            return Promise.all([
+                line && this._transition(line, { opacity: 0 }),
+                label && this._transition(label, { opacity: 0 }),
+            ]).then(() => group.destroy());
+        });
+
+        return Promise.all([
+            ...exits,
+            title ? exitElement(this.renderer, title, this.animation) : Promise.resolve(),
+            this._transition(this.line, { opacity: 0 }),
+        ]);
+    }
+
     /** Destroys the axis, removing its group (line, ticks, labels, and title) from the scene. */
     public destroy() {
         this.group.destroy();

@@ -62,11 +62,17 @@ interface CartesianInternals {
                 rotation: number;
             } | null;
         } | null;
+        queryAll(selector: string): unknown[];
     };
 }
 
 function internals(chart: unknown): CartesianInternals {
     return chart as CartesianInternals;
+}
+
+/** How many tick groups the axes currently have in the scene, across both axes. */
+function tickGroupCount(chart: unknown): number {
+    return internals(chart).scene.queryAll('.chart-axis__tick-group').length;
 }
 
 // jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — which
@@ -179,6 +185,8 @@ describe('cartesian runtime reconfiguration', () => {
 
         await chart.render();
 
+        expect(tickGroupCount(chart)).toBeGreaterThan(0);
+
         chart.update({
             axis: false,
         });
@@ -188,6 +196,11 @@ describe('cartesian runtime reconfiguration', () => {
         expect(internals(chart).xAxis.visible).toBe(false);
         expect(internals(chart).yAxis.visible).toBe(false);
 
+        // The flag alone is not the behaviour: an axis that is no longer drawn has to leave the
+        // scene. Charts skipped the render pass but never tore the group down, so every tick and
+        // label stayed where it was, over a plot that had already expanded into the vacated band.
+        expect(tickGroupCount(chart)).toBe(0);
+
         chart.update({
             axis: true,
         });
@@ -196,6 +209,7 @@ describe('cartesian runtime reconfiguration', () => {
 
         expect(internals(chart).xAxis.visible).toBe(true);
         expect(internals(chart).yAxis.visible).toBe(true);
+        expect(tickGroupCount(chart)).toBeGreaterThan(0);
     });
 
     it('destroys and recreates the grid through update()', async () => {

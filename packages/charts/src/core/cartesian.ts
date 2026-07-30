@@ -1011,9 +1011,10 @@ export abstract class CartesianChart<
 
         const xBand = this.xAxis.measure();
 
-        // Same-side y-axes stack outward from the plot with a gap between each band.
+        // Same-side y-axes stack outward from the plot with a gap between each band. Hidden axes are
+        // excluded outright rather than measured at zero, so they leave no gap behind either.
         const yBandFor = (alignment: ChartYAxisAlignment) => {
-            const group = this.yAxes.filter(axis => axis.alignment === alignment);
+            const group = this.yAxes.filter(axis => axis.visible && axis.alignment === alignment);
 
             return group.reduce((sum, axis) => sum + axis.measure(), 0)
                 + AXIS_STACK_GAP * Math.max(0, group.length - 1);
@@ -1056,6 +1057,11 @@ export abstract class CartesianChart<
         let rightCursor = plot.x + plot.width;
 
         this.yAxes.forEach(axis => {
+            // A hidden axis occupies no slot, so it must not advance the cursor past a stack gap.
+            if (!axis.visible) {
+                return;
+            }
+
             const width = axis.measure();
 
             // The slot is carried entirely by `bounds`, so clear any offset a previous layout left.
@@ -1174,10 +1180,10 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Resolves a series `axis` binding (a y-axis index or a y-axis `id`) to an index into
+     * Resolves a series `yAxis` binding (a y-axis index or a y-axis `id`) to an index into
      * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
      *
-     * @param axis - The series' `axis` option (index, id, or undefined).
+     * @param axis - The series' `yAxis` option (index, id, or undefined).
      * @returns The resolved y-axis index.
      */
     protected resolveSeriesAxisIndex(axis?: number | string): number {
@@ -1192,6 +1198,46 @@ export abstract class CartesianChart<
         const byId = this.yAxesOptions.findIndex((opts, index) => (opts.id ?? String(index)) === axis);
 
         return byId >= 0 ? byId : 0;
+    }
+
+    /**
+     * Partitions `series` by the y-axis each one binds to: one group per entry in
+     * {@link CartesianChart.yAxes}, in axis order. Charts derive an independent value extent per axis
+     * from these groups, so every axis scales to the series it actually labels.
+     *
+     * @param series - The series to partition, typically the legend-active ones.
+     * @returns One group per y-axis; a group is empty when nothing binds to that axis.
+     */
+    protected groupSeriesByAxis<TSeries extends { yAxis?: number | string }>(series: TSeries[]): TSeries[][] {
+        return this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index));
+    }
+
+    /**
+     * Hides every secondary y-axis that has no series bound to it for this render.
+     *
+     * An axis with nothing bound resolves to a zero-width extent, which is a single tick at the range
+     * start — an axis labelled `0` against the baseline, describing data that is not on the plot. Not
+     * drawing it at all is both honest and self-diagnosing: a mis-bound series shows up as a missing
+     * axis rather than as a misleading one. The band goes with it, so the plot reclaims the space
+     * through the usual outside-in pass.
+     *
+     * The primary axis always draws: it frames the plot and carries the grid and the annotation
+     * scales, so it stays even when every series is hidden via the legend.
+     *
+     * Call this after {@link CartesianChart.prepareAxes} and before resolving the plot. The hidden
+     * state lasts one render — `prepareAxes` re-applies the configured visibility at the top of the
+     * next one — so an axis comes back as soon as something binds to it again.
+     *
+     * @param series - The legend-active series whose bindings decide which axes have something to draw.
+     */
+    protected hideUnboundAxes(series: { yAxis?: number | string }[]): void {
+        const bound = new Set(series.map(srs => this.resolveSeriesAxisIndex(srs.yAxis)));
+
+        this.yAxes.forEach((axis, index) => {
+            if (index > 0 && !bound.has(index)) {
+                axis.visible = false;
+            }
+        });
     }
 
     /** Sets up the crosshair to track within the given plot area. */

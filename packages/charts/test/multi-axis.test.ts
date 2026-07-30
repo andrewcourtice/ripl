@@ -11,6 +11,10 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    DEFAULT_CHART_PADDING,
+} from '../src/constants/layout';
+
+import {
     createAreaChart,
     createBarChart,
     createLineChart,
@@ -42,6 +46,10 @@ interface SceneElementInternals {
 
 function yAxes(chart: unknown): AxisInternals[] {
     return (chart as { yAxes: AxisInternals[] }).yAxes;
+}
+
+function xAxis(chart: unknown): AxisInternals {
+    return (chart as { xAxis: AxisInternals }).xAxis;
 }
 
 // Every series (across all axes) renders through the single collapsed `_series` renderer, so its
@@ -1171,23 +1179,64 @@ describe('secondary y-axis tick labels', () => {
         });
     });
 
-    it('Should keep an axis with no bound series finite rather than labelling it NaN', async () => {
+    it('Should not render a secondary axis that has no series bound to it', async () => {
         // Both series fall back to the primary axis, so the secondary axis has a zero-width extent.
         // That used to emit a single `NaN` tick at `y = NaN` — invisible on canvas, but rendered by
-        // SVG as a stray "NaN" pinned to the top of the chart.
+        // SVG as a stray "NaN" pinned to the top of the chart. Hardening the scale turned it into a
+        // lone `0` tick against the baseline, which is finite but still describes data that is not on
+        // the plot, so the axis is skipped entirely instead.
         const chart = createChart(false);
 
         await chart.render();
 
-        const labels = [...tickLabelsByAxisGroup(chart).values()].flat();
+        const byGroup = tickLabelsByAxisGroup(chart);
+        const labels = [...byGroup.values()].flat();
 
-        expect(labels.length).toBeGreaterThan(0);
+        expect(byGroup.size).toBe(1);
+        expect(labels.length).toBeGreaterThan(1);
 
         labels.forEach(label => {
             expect(label.content).not.toBe('NaN');
             expect(Number.isFinite(label.x)).toBe(true);
             expect(Number.isFinite(label.y)).toBe(true);
         });
+    });
+
+    it('Should drop an axis when the legend hides its last series, and restore it when shown again', async () => {
+        const chart = createChart(true);
+
+        await chart.render();
+        expect(tickLabelsByAxisGroup(chart).size).toBe(2);
+
+        // The right-hand axis labels only the `right` series, so hiding it leaves that axis with
+        // nothing to describe.
+        clickLegendItem(chart, 'right');
+        await chart.render();
+
+        expect(tickLabelsByAxisGroup(chart).size).toBe(1);
+
+        clickLegendItem(chart, 'right');
+        await chart.render();
+
+        expect(tickLabelsByAxisGroup(chart).size).toBe(2);
+    });
+
+    it('Should reclaim the whole band of a hidden axis, not just narrow it', async () => {
+        const bound = createChart(true);
+        const unbound = createChart(false);
+
+        await bound.render();
+        await unbound.render();
+
+        // The x-axis spans the plot horizontally, so its box is the plot's horizontal extent.
+        const plotRight = (chart: unknown) => xAxis(chart).getBoundingBox().right;
+
+        // A skipped axis has to reserve *nothing*: the plot must reach the padding edge of the 600px
+        // context, exactly as it would if the second axis had never been configured. Merely rendering
+        // a narrower band (which a zero-width extent did, having only a `0` to measure) already made
+        // the plot wider than the two-axis case, so comparing the two is not enough.
+        expect(plotRight(unbound)).toBeCloseTo(600 - DEFAULT_CHART_PADDING, 0);
+        expect(plotRight(bound)).toBeLessThan(plotRight(unbound));
     });
 
 });

@@ -366,8 +366,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 seriesRender,
             ]);
         });
@@ -402,13 +402,12 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         } = ctx;
 
         // Independent value extent per axis, over the active series bound to it.
-        const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
+        const extents = this.groupSeriesByAxis(series).map(group => numberExtent(group
+            .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
+            .concat(0), functionIdentity));
 
-            return numberExtent(group
-                .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
-                .concat(0), functionIdentity);
-        });
+        // Before the plot is resolved, so an axis nothing binds to reserves no band either.
+        this.hideUnboundAxes(series);
 
         let scales: Scale[] = [];
 
@@ -455,8 +454,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
         return Promise.all([
-            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : axis.hide()),
             seriesRender,
         ]);
     }
