@@ -116,10 +116,13 @@ const TIME_POINTS = [
 // Distinct per-series symbols used by the "Mixed" marker option.
 const SERIES_SYMBOLS = ['circle', 'diamond', 'triangle'];
 
+// Three metrics in genuinely different units and magnitudes — dollars, a percentage, and thousands of
+// units. On one shared axis the margin series is pinned flat against the baseline; that is the case
+// the "Multiple axes" toggle exists to fix, so the sample data has to actually exhibit it.
 const seriesMeta = [
     { id: 'revenue', label: 'Revenue' },
-    { id: 'profit', label: 'Profit' },
-    { id: 'expenses', label: 'Expenses' },
+    { id: 'margin', label: 'Margin' },
+    { id: 'units', label: 'Units' },
 ];
 
 const { extras, reset } = useChartExtras({
@@ -149,15 +152,17 @@ const config = useChartConfig({
     },
     title: 'Monthly Performance',
     axisX: 'Month',
-    axisY: 'Amount ($)',
+    // Deliberately generic: with one shared axis it carries three different units at once. Turning on
+    // "Multiple axes" replaces it with a per-metric title.
+    axisY: 'Value',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
 function generateValues() {
     return {
         revenue: Math.round(Math.random() * 800 + 200),
-        profit: Math.round(Math.random() * 450 + 100),
-        expenses: Math.round(Math.random() * 300 + 150),
+        margin: Math.round(Math.random() * 35 + 5),
+        units: Math.round(Math.random() * 3000 + 1500),
     };
 }
 
@@ -178,25 +183,8 @@ function generateTimeData(count = 8) {
 let monthData = generateData();
 let timeData = generateTimeData();
 
-function baseData() {
-    return extras.timeAxis ? timeData : monthData;
-}
-
-// With multiple axes on, push the three series into genuinely different ranges (dollars, a single-
-// digit-ish percentage, and thousands of units) so each of the three independently-scaled y-axes is
-// justified. Single-axis mode leaves the data untouched.
 function activeData() {
-    const rows = baseData();
-
-    if (!extras.multiAxis) {
-        return rows;
-    }
-
-    return rows.map(row => ({
-        ...row,
-        profit: Math.round(row.profit / 15),
-        expenses: row.expenses * 10,
-    }));
+    return extras.timeAxis ? timeData : monthData;
 }
 
 function activeKey() {
@@ -259,7 +247,8 @@ function buildOptions() {
     }
 
     // Three independently-scaled y-axes. Each series binds to its own axis (see getSeries); the two
-    // left axes stack outward from the plot and the third sits on the right.
+    // left axes stack outward from the plot and the third sits on the right. Revenue stays on the
+    // primary axis: the grid and the annotations below are drawn through it.
     if (extras.multiAxis) {
         options.axis = {
             ...options.axis,
@@ -270,12 +259,12 @@ function buildOptions() {
                 },
                 {
                     visible: config.axesVisible,
-                    title: 'Profit (%)',
+                    title: 'Margin (%)',
                     position: 'right',
                 },
                 {
                     visible: config.axesVisible,
-                    title: 'Expenses (units)',
+                    title: 'Units',
                     position: 'left',
                 },
             ],
@@ -369,17 +358,20 @@ const data = [
     {
         month: 'Jan',
         revenue: 620,
-        expenses: 340,
+        margin: 18,
+        units: 2400,
     },
     {
         month: 'Feb',
         revenue: 780,
-        expenses: 290,
+        margin: 24,
+        units: 3100,
     },
     {
         month: 'Mar',
         revenue: 550,
-        expenses: 410,
+        margin: 11,
+        units: 1900,
     },
 ];
 ```
@@ -402,9 +394,9 @@ createLineChart('#container', {
             markers: true,
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             markers: true,
         },
     ],
@@ -427,9 +419,9 @@ createLineChart('#container', {
             lineType: 'monotoneX',
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             lineType: 'step',
         },
     ],
@@ -486,9 +478,9 @@ createLineChart('#container', {
             marker: 'circle',
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             marker: 'diamond',
         },
     ],
