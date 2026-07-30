@@ -336,7 +336,197 @@ function codeBlocksOf(contents) {
 }
 
 /**
- * Checks the hand-written snippets on a page: every option passed to a `createXChart(...)` call must
+ * Every `<script setup lang="ts">` block in a markdown or `.vue` file, with the line it starts on.
+ *
+ * The live demo on each chart page — and every full-page demo under `src/demos` — lives in one of
+ * these, not in a fenced snippet. A validator that only read fences therefore never saw the code the
+ * site actually runs, which is how three renamed option keys went on being passed silently: an
+ * unknown key is ignored, so each one just fell back to a default.
+ */
+function scriptBlocksOf(contents) {
+    const blocks = [];
+    const lines = contents.split('\n');
+
+    let current = null;
+
+    lines.forEach((line, index) => {
+        if (current) {
+            if (line.trim() === '</script>') {
+                blocks.push(current);
+                current = null;
+                return;
+            }
+
+            current.code.push(line);
+            return;
+        }
+
+        // Attribute order varies between the markdown demos (`setup lang="ts"`) and the `.vue`
+        // components (`lang="ts" setup`), so match on both being present rather than on their order.
+        if (/^<script(?=[^>]*\blang="ts")(?=[^>]*\bsetup\b)[^>]*>$/.test(line.trim())) {
+            current = {
+                line: index + 2,
+                code: [],
+            };
+        }
+    });
+
+    return blocks.map(block => ({
+        line: block.line,
+        code: block.code.join('\n'),
+    }));
+}
+
+/** Strips the wrappers that sit between a reference and the literal it stands for. */
+function unwrapExpression(expression) {
+    let node = expression;
+
+    while (node && (ts.isParenthesizedExpression(node)
+        || ts.isAsExpression(node)
+        || ts.isSatisfiesExpression(node)
+        || ts.isNonNullExpression(node))) {
+        node = node.expression;
+    }
+
+    return node;
+}
+
+/**
+ * The expression a function hands back: the body of an expression-bodied arrow, or the first
+ * top-level `return`. Nested functions are not descended into, so a callback's own `return` cannot be
+ * mistaken for the outer function's.
+ */
+function returnedExpression(fn) {
+    if (!fn?.body) {
+        return undefined;
+    }
+
+    if (!ts.isBlock(fn.body)) {
+        return fn.body;
+    }
+
+    return fn.body.statements.find(ts.isReturnStatement)?.expression;
+}
+
+/** Marks a name that is declared more than once with different values, so it resolves to nothing. */
+const AMBIGUOUS = Symbol('ambiguous');
+
+/**
+ * Indexes a script's local `const`/`let` initializers and function declarations by name, so a
+ * reference can be followed back to the literal behind it.
+ *
+ * Scoping is deliberately flat — a demo script holds one chart, so a name is unambiguous in practice.
+ * Where it is not, the name is recorded as {@link AMBIGUOUS} and resolves to nothing: a missed check
+ * is acceptable, a check against the wrong interface is not.
+ */
+function scopeOf(source) {
+    const variables = new Map();
+    const functions = new Map();
+
+    const record = (map, name, value) => {
+        map.set(name, map.has(name) ? AMBIGUOUS : value);
+    };
+
+    const visit = node => {
+        if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.initializer) {
+            record(variables, node.name.text, node.initializer);
+        }
+
+        if (ts.isFunctionDeclaration(node) && node.name) {
+            record(functions, node.name.text, returnedExpression(node));
+        }
+
+        ts.forEachChild(node, visit);
+    };
+
+    visit(source);
+
+    return {
+        variables,
+        functions,
+    };
+}
+
+/** Follows an identifier to its initializer, or a call of a local function to what it returns. */
+function resolveReference(node, scope) {
+    const lookup = (map, name) => {
+        const value = map.get(name);
+
+        return value === AMBIGUOUS ? undefined : value;
+    };
+
+    if (ts.isIdentifier(node)) {
+        return lookup(scope.variables, node.text);
+    }
+
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        return lookup(scope.functions, node.expression.text);
+    }
+
+    return undefined;
+}
+
+/**
+ * The object literals that make up an expression's value, following a local `const`, a call to a
+ * local function, and object spreads.
+ *
+ * No demo hands a fresh literal straight to its factory — each builds one in a helper
+ * (`const options = { … }`, `{ ...buildOptions() }`) and passes that. Following the reference is what
+ * lets a name check reach them, and it is also why TypeScript cannot do this job: excess-property
+ * checking needs a fresh literal contextually typed at the call site, and the freshness is gone by
+ * the time the helper's result arrives.
+ */
+function collectLiterals(expression, scope, seen = new Set()) {
+    const node = unwrapExpression(expression);
+
+    if (!node || seen.has(node)) {
+        return [];
+    }
+
+    seen.add(node);
+
+    if (ts.isObjectLiteralExpression(node)) {
+        const spreads = node.properties
+            .filter(ts.isSpreadAssignment)
+            .flatMap(spread => collectLiterals(spread.expression, scope, seen));
+
+        return [node, ...spreads];
+    }
+
+    return collectLiterals(resolveReference(node, scope), scope, seen);
+}
+
+/**
+ * The object literals describing the entries of an array-valued option (`series`), following the same
+ * references as {@link collectLiterals} plus `items.map(item => ({ … }))` — the shape every demo uses
+ * to build its series from a metadata list.
+ */
+function collectEntryLiterals(expression, scope, seen = new Set()) {
+    const node = unwrapExpression(expression);
+
+    if (!node || seen.has(node)) {
+        return [];
+    }
+
+    seen.add(node);
+
+    if (ts.isArrayLiteralExpression(node)) {
+        return node.elements.flatMap(element => collectLiterals(element, scope, seen));
+    }
+
+    if (ts.isCallExpression(node)
+        && ts.isPropertyAccessExpression(node.expression)
+        && node.expression.name.text === 'map') {
+        const callback = node.arguments.find(argument => ts.isArrowFunction(argument) || ts.isFunctionExpression(argument));
+
+        return collectLiterals(returnedExpression(callback), scope, seen);
+    }
+
+    return collectEntryLiterals(resolveReference(node, scope), scope, seen);
+}
+
+/**
+ * Checks the code on a page: every option passed to a `createXChart(...)` call must
  * exist on that chart's options interface, and every property of a `series` entry must exist on its
  * series interface.
  *
@@ -349,16 +539,17 @@ function codeBlocksOf(contents) {
  * old `axis`, every series quietly fell back to the primary axis, and the secondary axis rendered
  * with nothing bound to it.
  */
-function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFactory) {
+function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactory) {
     const problems = [];
 
-    codeBlocksOf(contents).forEach(block => {
-        const source = ts.createSourceFile(`${page}.ts`, block.code, ts.ScriptTarget.Latest, true);
+    blocks.forEach(block => {
+        const source = ts.createSourceFile('block.ts', block.code, ts.ScriptTarget.Latest, true);
+        const scope = scopeOf(source);
 
         const report = (property, name, owner) => {
             const { line } = source.getLineAndCharacterOfPosition(property.getStart(source));
 
-            problems.push(`${page}.md:${block.line + line}: \`${name}\` is not ${owner}`);
+            problems.push(`${label}:${block.line + line}: \`${name}\` is not ${owner}`);
         };
 
         const checkLiteral = (literal, known, owner) => {
@@ -375,21 +566,24 @@ function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFac
             if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
                 const factory = node.expression.text;
                 const known = optionNamesByFactory.get(factory);
-                const literal = node.arguments.find(ts.isObjectLiteralExpression);
+                // The options may arrive as a literal, a local `const`, or a helper's return value, so
+                // resolve every argument and take whichever yields literals.
+                const literals = known
+                    ? node.arguments.flatMap(argument => collectLiterals(argument, scope))
+                    : [];
 
-                if (known && literal) {
-                    checkLiteral(literal, known, `an option of ${factory}`);
+                literals.forEach(literal => checkLiteral(literal, known, `an option of ${factory}`));
 
-                    const seriesNames = seriesNamesByFactory.get(factory);
-                    const series = literal.properties.find(property => ts.isPropertyAssignment(property)
+                const seriesNames = seriesNamesByFactory.get(factory);
+                const series = literals
+                    .flatMap(literal => literal.properties)
+                    .find(property => ts.isPropertyAssignment(property)
                         && ts.isIdentifier(property.name)
                         && property.name.text === 'series');
 
-                    if (seriesNames && series && ts.isPropertyAssignment(series) && ts.isArrayLiteralExpression(series.initializer)) {
-                        series.initializer.elements
-                            .filter(ts.isObjectLiteralExpression)
-                            .forEach(entry => checkLiteral(entry, seriesNames, `a series option of ${factory}`));
-                    }
+                if (seriesNames && series) {
+                    collectEntryLiterals(series.initializer, scope)
+                        .forEach(entry => checkLiteral(entry, seriesNames, `a series option of ${factory}`));
                 }
             }
 
@@ -400,6 +594,56 @@ function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFac
     });
 
     return problems;
+}
+
+/**
+ * Validates both halves of a docs page: the hand-written fenced snippets, and the `<script setup>`
+ * block holding the live demo.
+ */
+function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFactory) {
+    return validateBlocks(
+        `${page}.md`,
+        [...codeBlocksOf(contents), ...scriptBlocksOf(contents)],
+        optionNamesByFactory,
+        seriesNamesByFactory
+    );
+}
+
+/**
+ * Every `.vue` file under the demo and component roots. The full-page demos build their charts here
+ * rather than on a docs page, so they need the same check — two of the three stale option keys this
+ * validator was extended to catch were in these files, not in the markdown.
+ */
+function demoComponentFiles() {
+    const roots = [
+        path.join(websiteRoot, 'src/demos'),
+        path.join(websiteRoot, 'src/.vitepress/components'),
+    ];
+
+    const files = [];
+
+    const walk = dir => {
+        if (!fs.existsSync(dir)) {
+            return;
+        }
+
+        fs.readdirSync(dir, { withFileTypes: true }).forEach(entry => {
+            const full = path.join(dir, entry.name);
+
+            if (entry.isDirectory()) {
+                walk(full);
+                return;
+            }
+
+            if (entry.name.endsWith('.vue')) {
+                files.push(full);
+            }
+        });
+    };
+
+    roots.forEach(walk);
+
+    return files.sort();
 }
 
 /**
@@ -737,6 +981,17 @@ function main() {
         written++;
     });
 
+    const components = demoComponentFiles();
+
+    components.forEach(file => {
+        problems.push(...validateBlocks(
+            path.relative(path.join(websiteRoot, 'src'), file),
+            scriptBlocksOf(fs.readFileSync(file, 'utf8')),
+            optionNamesByFactory,
+            seriesNamesByFactory
+        ));
+    });
+
     if (problems.length > 0) {
         console.error('Chart docs disagree with the source:');
         problems.forEach(problem => console.error(`  - ${problem}`));
@@ -754,6 +1009,8 @@ function main() {
         : `Chart option docs generated (${written} of ${CHARTS.length} pages updated).`);
     console.log(`Validated documented options against the source for ${optionNamesByFactory.size} charts`
         + ` (series options for ${seriesNamesByFactory.size}).`);
+    console.log(`Validated the snippets and live demo on ${CHARTS.length} pages, plus ${components.length}`
+        + ' demo components.');
     console.log('Cross-checked the chart factory list against .vitepress/data/charts.ts.');
 }
 
