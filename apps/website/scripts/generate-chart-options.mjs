@@ -337,37 +337,59 @@ function codeBlocksOf(contents) {
 
 /**
  * Checks the hand-written snippets on a page: every option passed to a `createXChart(...)` call must
- * exist on that chart's options interface.
+ * exist on that chart's options interface, and every property of a `series` entry must exist on its
+ * series interface.
  *
  * This is the guard against the drift that made these pages untrustworthy — a documented option that
  * had never existed, and renamed options still documented under their old names. The generated blocks
  * cannot drift by construction; the hand-written Usage and Variants snippets can, so they are checked.
+ *
+ * `series` is checked explicitly because a stale key nested one level down is *silently* ignored at
+ * runtime rather than erroring: renaming the series axis binding to `yAxis` left snippets passing the
+ * old `axis`, every series quietly fell back to the primary axis, and the secondary axis rendered
+ * with nothing bound to it.
  */
-function validateSnippets(page, contents, optionNamesByFactory) {
+function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFactory) {
     const problems = [];
 
     codeBlocksOf(contents).forEach(block => {
         const source = ts.createSourceFile(`${page}.ts`, block.code, ts.ScriptTarget.Latest, true);
 
+        const report = (property, name, owner) => {
+            const { line } = source.getLineAndCharacterOfPosition(property.getStart(source));
+
+            problems.push(`${page}.md:${block.line + line}: \`${name}\` is not ${owner}`);
+        };
+
+        const checkLiteral = (literal, known, owner) => {
+            literal.properties.forEach(property => {
+                if (!property.name || !ts.isIdentifier(property.name) || known.has(property.name.text)) {
+                    return;
+                }
+
+                report(property, property.name.text, owner);
+            });
+        };
+
         const visit = node => {
             if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-                const known = optionNamesByFactory.get(node.expression.text);
+                const factory = node.expression.text;
+                const known = optionNamesByFactory.get(factory);
                 const literal = node.arguments.find(ts.isObjectLiteralExpression);
 
                 if (known && literal) {
-                    literal.properties.forEach(property => {
-                        if (!property.name || !ts.isIdentifier(property.name)) {
-                            return;
-                        }
+                    checkLiteral(literal, known, `an option of ${factory}`);
 
-                        const name = property.name.text;
+                    const seriesNames = seriesNamesByFactory.get(factory);
+                    const series = literal.properties.find(property => ts.isPropertyAssignment(property)
+                        && ts.isIdentifier(property.name)
+                        && property.name.text === 'series');
 
-                        if (!known.has(name)) {
-                            const { line } = source.getLineAndCharacterOfPosition(property.getStart(source));
-
-                            problems.push(`${page}.md:${block.line + line}: \`${name}\` is not an option of ${node.expression.text}`);
-                        }
-                    });
+                    if (seriesNames && series && ts.isPropertyAssignment(series) && ts.isArrayLiteralExpression(series.initializer)) {
+                        series.initializer.elements
+                            .filter(ts.isObjectLiteralExpression)
+                            .forEach(entry => checkLiteral(entry, seriesNames, `a series option of ${factory}`));
+                    }
                 }
             }
 
@@ -630,12 +652,27 @@ function main() {
     const moduleExports = moduleSymbol ? checker.getExportsOfModule(moduleSymbol) : [];
 
     const optionNamesByFactory = new Map();
+    const seriesNamesByFactory = new Map();
 
     CHARTS.forEach(chart => {
         const shape = readInterface(checker, moduleExports, chart.options);
 
         if (shape) {
             optionNamesByFactory.set(chart.factory, new Set(shape.properties.map(property => property.name)));
+        }
+
+        // A chart may declare several series shapes (trend's line/bar/area union), so accept a
+        // property that exists on any of them.
+        const seriesShapes = (chart.extras ?? [])
+            .filter(name => name.includes('Series'))
+            .map(name => readInterface(checker, moduleExports, name))
+            .filter(Boolean);
+
+        if (seriesShapes.length > 0) {
+            seriesNamesByFactory.set(
+                chart.factory,
+                new Set(seriesShapes.flatMap(series => series.properties.map(property => property.name)))
+            );
         }
     });
 
@@ -668,7 +705,7 @@ function main() {
         let next = fs.readFileSync(file, 'utf8');
         const contents = next;
 
-        problems.push(...validateSnippets(chart.page, contents, optionNamesByFactory));
+        problems.push(...validateSnippets(chart.page, contents, optionNamesByFactory, seriesNamesByFactory));
 
         REGIONS.forEach(region => {
             const startMarker = `<!-- ${region}:start -->`;
@@ -715,7 +752,8 @@ function main() {
     console.log(check
         ? `Chart option docs are up to date (${CHARTS.length} pages checked).`
         : `Chart option docs generated (${written} of ${CHARTS.length} pages updated).`);
-    console.log(`Validated documented options against the source for ${optionNamesByFactory.size} charts.`);
+    console.log(`Validated documented options against the source for ${optionNamesByFactory.size} charts`
+        + ` (series options for ${seriesNamesByFactory.size}).`);
     console.log('Cross-checked the chart factory list against .vitepress/data/charts.ts.');
 }
 
