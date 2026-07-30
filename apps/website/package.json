@@ -3,9 +3,11 @@
     "private": true,
     "scripts": {
         "generate-api": "typedoc",
+        "generate-chart-options": "node scripts/generate-chart-options.mjs",
+        "check-chart-options": "node scripts/generate-chart-options.mjs --check",
         "prepare-playground": "node scripts/prepare-playground.mjs",
         "start": "yarn generate-api && yarn prepare-playground && vitepress dev ./src",
-        "build": "yarn generate-api && yarn prepare-playground && vitepress build ./src",
+        "build": "yarn check-chart-options && yarn generate-api && yarn prepare-playground && vitepress build ./src",
         "preview": "vitepress preview ./src"
     },
     "dependencies": {

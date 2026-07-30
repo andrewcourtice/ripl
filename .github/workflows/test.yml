@@ -37,6 +37,12 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      # The chart option reference on each docs page is generated from the chart's TypeScript
+      # definitions, and the hand-written snippets are validated against them. Fails if either has
+      # drifted from the code.
+      - name: Check chart option docs
+        run: yarn workspace @ripl/website check-chart-options
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
