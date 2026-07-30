@@ -44,6 +44,13 @@ function createMockScene() {
         popGroup: vi.fn(),
         batch: vi.fn((fn: () => unknown) => fn()),
         layer: vi.fn((fn: () => unknown) => fn()),
+        createPath: vi.fn(() => ({ rect: vi.fn() })),
+        applyStroke: vi.fn(),
+        // Transform operations are applied to the context during render; they are no-ops here
+        // because bounding boxes are composed from element state, not read back off the context.
+        translate: vi.fn(),
+        rotate: vi.fn(),
+        scale: vi.fn(),
         element: document.createElement('div'),
     };
 
@@ -176,6 +183,71 @@ describe('Renderer', () => {
             elementCount: false,
             boundingBoxes: false,
         });
+
+        renderer.destroy();
+    });
+
+    test('Should outline the world bounding box of a rotated element in debug mode', async () => {
+        const { scene, mockContext } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+            debug: {
+                boundingBoxes: true,
+            },
+        });
+
+        const rect = createRect({
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 10,
+            rotation: Math.PI / 2,
+            transformOriginX: 0,
+            transformOriginY: 0,
+        });
+
+        scene.add(rect);
+        renderer.start();
+
+        await vi.advanceTimersByTimeAsync(50);
+
+        const traced = mockContext.createPath.mock.results
+            .flatMap(result => (result.value as { rect: ReturnType<typeof vi.fn> }).rect.mock.calls);
+
+        const world = rect.getBoundingBox();
+
+        // The outline must follow the rotated element, not its unrotated authored geometry.
+        expect(traced.length).toBeGreaterThan(0);
+        expect(traced.some(([left, top, width, height]) => Math.abs(left - world.left) < 0.001
+            && Math.abs(top - world.top) < 0.001
+            && Math.abs(width - world.width) < 0.001
+            && Math.abs(height - world.height) < 0.001)).toBe(true);
+
+        // Sanity check that this is a real distinction: the local box differs from the world box.
+        expect(rect.getBoundingBox(true).width).not.toBeCloseTo(world.width);
+
+        renderer.destroy();
+    });
+
+    test('Should not outline bounding boxes when the debug option is off', async () => {
+        const { scene, mockContext } = createMockScene();
+        const renderer = new Renderer(scene, {
+            autoStart: false,
+            autoStop: false,
+        });
+
+        scene.add(createRect({
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 10,
+        }));
+
+        renderer.start();
+        await vi.advanceTimersByTimeAsync(50);
+
+        expect(mockContext.applyStroke).not.toHaveBeenCalled();
 
         renderer.destroy();
     });

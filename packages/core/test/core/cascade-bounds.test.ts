@@ -109,4 +109,86 @@ describe('Transform-aware bounding boxes', () => {
         expect(group.getBoundingBox().left).toBe(110);
     });
 
+    test('getBoundingBox reflects the element\'s own rotation about a numeric origin', () => {
+        const rect = createRect({
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 10,
+        });
+        rect.rotation = Math.PI / 2;
+        rect.transformOriginX = 0;
+        rect.transformOriginY = 0;
+
+        const world = rect.getBoundingBox();
+
+        // A quarter turn about (0, 0) maps (x, y) -> (-y, x), so the 40x10 box becomes 10x40.
+        expect(world.width).toBeCloseTo(10);
+        expect(world.height).toBeCloseTo(40);
+        expect(world.left).toBeCloseTo(-10);
+        expect(world.top).toBeCloseTo(0);
+        // Local geometry is untouched.
+        expect(rect.getBoundingBox(true).width).toBe(40);
+    });
+
+    test('getBoundingBox rotates about a percentage origin resolved from local geometry', () => {
+        const rect = createRect({
+            x: 100,
+            y: 100,
+            width: 40,
+            height: 10,
+        });
+        rect.rotation = Math.PI / 2;
+        rect.transformOriginX = '50%';
+        rect.transformOriginY = '50%';
+
+        const world = rect.getBoundingBox();
+
+        // Rotating about its own center swaps the extents and holds the center in place.
+        expect(world.width).toBeCloseTo(10);
+        expect(world.height).toBeCloseTo(40);
+        expect((world.left + world.right) / 2).toBeCloseTo(120);
+        expect((world.top + world.bottom) / 2).toBeCloseTo(105);
+    });
+
+    test('getBoundingBox composes a rotated child with an ancestor group translation', () => {
+        const rect = createRect({
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 10,
+        });
+        rect.rotation = Math.PI / 2;
+        rect.transformOriginX = 0;
+        rect.transformOriginY = 0;
+
+        const group = createGroup({ children: [rect] });
+        group.translateX = 100;
+        group.translateY = 50;
+
+        const world = rect.getBoundingBox();
+
+        expect(world.left).toBeCloseTo(90);
+        expect(world.top).toBeCloseTo(50);
+        expect(world.width).toBeCloseTo(10);
+        expect(world.height).toBeCloseTo(40);
+    });
+
+    test('a rotated element yields a conservative box that encloses its unrotated size', () => {
+        const rect = createRect({
+            x: -10,
+            y: -10,
+            width: 20,
+            height: 20,
+        });
+        rect.rotation = Math.PI / 4;
+        rect.transformOriginX = 0;
+        rect.transformOriginY = 0;
+
+        const world = rect.getBoundingBox();
+
+        expect(world.width).toBeGreaterThan(20);
+        expect(world.width).toBeCloseTo(Math.sqrt(800));
+    });
+
 });

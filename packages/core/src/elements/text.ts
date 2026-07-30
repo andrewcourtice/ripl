@@ -91,15 +91,17 @@ export class Text extends Element<TextState> {
 
         // Measure with the element's alignment so the anchor-relative `actualBoundingBox*` metrics
         // position the box correctly for any `textAlign`/`textBaseline` (not just start/alphabetic).
+        // Read the *computed* paint (own value, else inherited from an ancestor group) so text that
+        // takes its font from the render-tree cascade is not measured against the default font.
         const {
             actualBoundingBoxAscent,
             actualBoundingBoxLeft,
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
         } = measureText(text, {
-            font: this.font,
-            textAlign: this.textAlign,
-            textBaseline: this.textBaseline,
+            font: this.getComputedValue('font'),
+            textAlign: this.getComputedValue('textAlign'),
+            textBaseline: this.getComputedValue('textBaseline'),
         });
 
         return new Box(

@@ -813,7 +813,12 @@ export class Element<
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        return isPointInBox([x, y], this.getBoundingBox());
+        // The point arrives in device pixels (scaled by the device pixel ratio) but the bounding box
+        // is composed in logical space, so map the point back before comparing. `Shape2D` makes the
+        // same correction around its path-based test.
+        const dpr = this.context?.scaleDPR(1) ?? 1;
+
+        return isPointInBox([x / dpr, y / dpr], this.getBoundingBox());
     }
 
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */

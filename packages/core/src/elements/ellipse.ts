@@ -72,7 +72,11 @@ export class Ellipse extends Shape2D<EllipseState> {
         this.setStateValue('radiusY', value);
     }
 
-    /** The rotation of the ellipse, in radians. */
+    /**
+     * The rotation of the ellipse, in radians, applied about its center unless an explicit
+     * transform origin is set. This is the shared element transform rotation, so it is reflected in
+     * {@link Ellipse.getBoundingBox} and in hit testing.
+     */
     public get rotation() {
         return this.getStateValue('rotation');
     }
@@ -101,9 +105,22 @@ export class Ellipse extends Shape2D<EllipseState> {
 
     constructor(options: Shape2DOptions<EllipseState>) {
         super('ellipse', options);
+
+        // `rotation` is the shared element transform property, which pivots about the transform
+        // origin (default `(0, 0)`). An ellipse conventionally rotates about its own center, so
+        // default the origin to the element's center when the caller has not chosen one. A
+        // percentage origin resolves against the local bounding box on every use, so it keeps
+        // tracking `cx`/`cy` as they change.
+        if (options.transformOriginX === undefined && options.transformOriginY === undefined) {
+            this.transformOriginX = '50%';
+            this.transformOriginY = '50%';
+        }
     }
 
-    /** @internal Local-space bounding box of the ellipse. */
+    /**
+     * @internal Local-space (unrotated) bounding box of the ellipse. Rotation is applied by the
+     * shared element transform, so {@link Ellipse.getBoundingBox} composes it into the world box.
+     */
     public _getLocalBoundingBox(): Box {
         return new Box(
             this.cy - this.radiusY,
@@ -116,12 +133,14 @@ export class Ellipse extends Shape2D<EllipseState> {
     /** Renders the ellipse to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
+            // Rotation is applied once, by the shared element transform (see the constructor).
+            // Passing it to the path as well would rotate the geometry a second time.
             path.ellipse(
                 this.cx,
                 this.cy,
                 this.radiusX,
                 this.radiusY,
-                this.rotation,
+                0,
                 this.startAngle,
                 this.endAngle
             );

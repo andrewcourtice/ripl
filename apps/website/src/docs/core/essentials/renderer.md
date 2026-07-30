@@ -127,7 +127,9 @@ const renderer = createRenderer(scene, {
 | `elementCount` | Shows the total number of elements rendered each frame |
 | `boundingBoxes` | Draws a red stroke rectangle around every element's bounding box |
 
-When `fps` or `elementCount` is enabled, a semi-transparent overlay badge appears in the top-left corner of the scene. `boundingBoxes` renders directly onto the canvas after each element, making it easy to verify hit areas and layout.
+When `fps` or `elementCount` is enabled, a semi-transparent overlay badge appears in the top-left corner of the scene.
+
+`boundingBoxes` draws as a post-pass over the whole scene buffer, in world space, so each outline follows the element's rendered position — including its own `translate`, `rotate` and `scale` and every ancestor group's transform. A rotated element yields a conservative axis-aligned box that encloses the rotated content, matching what [`getBoundingBox()`](/docs/core/essentials/elements) reports. Only leaf elements are outlined; groups are not.
 
 ### Demo
 

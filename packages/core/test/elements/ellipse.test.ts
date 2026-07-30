@@ -79,6 +79,60 @@ describe('Ellipse', () => {
         expect(box.right).toBe(150);
     });
 
+    test('Should rotate the bounding box about its center, keeping the center fixed', () => {
+        const ellipse = createEllipse({
+            cx: 100,
+            cy: 100,
+            radiusX: 50,
+            radiusY: 30,
+            rotation: Math.PI / 2,
+            startAngle: 0,
+            endAngle: Math.PI * 2,
+        });
+
+        const box = ellipse.getBoundingBox();
+
+        // A quarter turn swaps the radii, and the center must not drift.
+        expect(box.right - box.left).toBeCloseTo(60);
+        expect(box.bottom - box.top).toBeCloseTo(100);
+        expect((box.left + box.right) / 2).toBeCloseTo(100);
+        expect((box.top + box.bottom) / 2).toBeCloseTo(100);
+    });
+
+    test('Should honor an explicit transform origin instead of defaulting to the center', () => {
+        const ellipse = createEllipse({
+            cx: 100,
+            cy: 100,
+            radiusX: 50,
+            radiusY: 30,
+            rotation: Math.PI / 2,
+            startAngle: 0,
+            endAngle: Math.PI * 2,
+            transformOriginX: 0,
+            transformOriginY: 0,
+        });
+
+        // Rotating about the canvas origin moves the ellipse off its authored center.
+        expect((ellipse.getBoundingBox().left + ellipse.getBoundingBox().right) / 2).toBeCloseTo(-100);
+    });
+
+    test('Should leave the local bounding box unrotated', () => {
+        const ellipse = createEllipse({
+            cx: 100,
+            cy: 100,
+            radiusX: 50,
+            radiusY: 30,
+            rotation: Math.PI / 2,
+            startAngle: 0,
+            endAngle: Math.PI * 2,
+        });
+
+        const local = ellipse.getBoundingBox(true);
+
+        expect(local.right - local.left).toBe(100);
+        expect(local.bottom - local.top).toBe(60);
+    });
+
 });
 
 describe('elementIsEllipse', () => {
