@@ -12,12 +12,7 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartCrosshairInput,
     ChartDataLabelsInput,
-    ChartGridInput,
-    ChartLegendInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -121,16 +116,6 @@ export interface ScatterChartOptions<TData = unknown> extends CartesianChartOpti
     series: ScatterChartSeriesOptions<TData>[];
     /** Accessor for each item's unique key, used to match bubbles across data updates. */
     key: keyof TData | ((item: TData) => string);
-    /** Background grid line configuration. */
-    grid?: ChartGridInput;
-    /** Crosshair overlay configuration. */
-    crosshair?: ChartCrosshairInput;
-    /** Hover tooltip configuration. */
-    tooltip?: ChartTooltipInput;
-    /** Series legend configuration. */
-    legend?: ChartLegendInput;
-    /** Axis configuration (labels, ticks, titles). */
-    axis?: ChartAxisInput<TData>;
     /** Show value labels next to each bubble. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
     /** Format applied to bubble values shown as text (tooltips and labels). */

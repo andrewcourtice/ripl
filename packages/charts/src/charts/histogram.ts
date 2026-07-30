@@ -11,9 +11,6 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartGridInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -78,12 +75,6 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
     color?: string;
     /** Corner radius in pixels applied to the top of each bar. Defaults to 2. */
     borderRadius?: number;
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Axis configuration for the value and frequency axes. */
-    axis?: ChartAxisInput<TData>;
     /** Format applied to bin bounds shown in tooltips. */
     format?: ValueFormatInput;
 }

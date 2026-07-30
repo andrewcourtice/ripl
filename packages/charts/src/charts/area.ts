@@ -12,12 +12,7 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartCrosshairInput,
     ChartDataLabelsInput,
-    ChartGridInput,
-    ChartLegendInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -129,16 +124,6 @@ export interface AreaChartOptions<TData = unknown> extends CartesianChartOptions
      * Intended for single-axis charts.
      */
     stacked?: boolean | 'percent';
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
-    crosshair?: ChartCrosshairInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
-    legend?: ChartLegendInput;
-    /** Axis configuration for the x and y axes. */
-    axis?: ChartAxisInput<TData>;
     /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
     /** Format applied to marker values shown as text (tooltips and labels). */

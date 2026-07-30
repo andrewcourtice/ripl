@@ -1,5 +1,6 @@
 import type {
     ChartPadding,
+    PaddingInput,
 } from './layout';
 
 import {
@@ -145,11 +146,7 @@ export function resolveEase(value?: EaseName | Ease): Ease {
 // Padding helper
 // ---------------------------------------------------------------------------
 
-/**
- * Padding, in pixels: a uniform number, a `[top, right, bottom, left]` tuple, or a partial per-edge
- * object. Every option named `padding` accepts this same shape, on the chart and on every component.
- */
-export type PaddingInput = number | [number, number, number, number] | Partial<ChartPadding>;
+export type { PaddingInput };
 
 /**
  * Resolved padding with explicit top, right, bottom, and left values.

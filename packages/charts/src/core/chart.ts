@@ -61,6 +61,7 @@ import {
 import type {
     ChartArea,
     ChartPadding,
+    PaddingInput,
 } from './layout';
 
 import {
@@ -98,6 +99,7 @@ export type {
     ChartTitleOptions,
     ChartArea,
     ChartPadding,
+    PaddingInput,
 };
 
 export { ChartLayout };
@@ -106,8 +108,8 @@ export { ChartLayout };
 export interface BaseChartOptions {
     /** Whether the chart renders automatically on construction and after every {@link Chart.update}. Defaults to `true`. */
     autoRender?: boolean;
-    /** Space reserved around the chart, in pixels. A single number applies to all four edges; an object sets per-edge values `{ top, right, bottom, left }`, leaving unspecified edges at the default. Defaults to `16`. */
-    padding?: number | Partial<ChartPadding>;
+    /** Space reserved around the chart, in pixels. A single number applies to all four edges; a `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets individual edges, leaving unspecified edges at the default. Defaults to `16`. */
+    padding?: PaddingInput;
     /** Chart title as plain text, or a {@link ChartTitleOptions} object for full control. */
     title?: string | Partial<ChartTitleOptions>;
     /** Animation configuration, or a boolean toggling all transitions. See {@link ChartAnimationOptions}. */

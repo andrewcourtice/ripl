@@ -45,6 +45,12 @@ export interface ChartArea {
     height: number;
 }
 
+/**
+ * Padding, in pixels: a uniform number, a `[top, right, bottom, left]` tuple, or a partial per-edge
+ * object. Every option named `padding` accepts this same shape, on the chart and on every component.
+ */
+export type PaddingInput = number | [number, number, number, number] | Partial<ChartPadding>;
+
 /** Padding with explicit top, right, bottom, and left values. */
 export interface ChartPadding {
     /** Top padding, in pixels. */
@@ -67,7 +73,7 @@ export interface ChartPadding {
  * @returns Fully resolved padding for all four edges.
  */
 export function resolveChartPadding(
-    input?: number | Partial<ChartPadding>,
+    input?: PaddingInput,
     fallback: number = DEFAULT_CHART_PADDING
 ): ChartPadding {
     if (typeof input === 'number') {
@@ -76,6 +82,15 @@ export function resolveChartPadding(
             right: input,
             bottom: input,
             left: input,
+        };
+    }
+
+    if (Array.isArray(input)) {
+        return {
+            top: input[0],
+            right: input[1],
+            bottom: input[2],
+            left: input[3],
         };
     }
 

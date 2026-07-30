@@ -11,10 +11,6 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartCrosshairInput,
-    ChartGridInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -87,14 +83,6 @@ export interface StockChartOptions<TData = unknown> extends CartesianChartOption
     volume?: NumericAccessor<TData>;
     /** Show the volume sub-chart below the candlesticks. Defaults to `true` (requires `volume`). */
     showVolume?: boolean;
-    /** Background grid configuration. */
-    grid?: ChartGridInput;
-    /** Crosshair overlay configuration. Both axes are tracked by default. */
-    crosshair?: ChartCrosshairInput;
-    /** Hover tooltip configuration. */
-    tooltip?: ChartTooltipInput;
-    /** Axis configuration (labels, ticks, titles). */
-    axis?: ChartAxisInput<TData>;
     /** Format applied to the open/high/low/close values shown in the candle tooltip. */
     format?: ValueFormatInput;
     /** Color for candles that close at or above their open (bullish). */

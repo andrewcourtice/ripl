@@ -11,9 +11,6 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartGridInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -102,12 +99,6 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     categoryOrder?: string[];
     /** Color used for every box; falls back to the first palette color when omitted. */
     color?: string;
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Axis configuration for the category and value axes. */
-    axis?: ChartAxisInput<TData>;
     /** Format applied to summary values shown in tooltips. */
     format?: ValueFormatInput;
 }
