@@ -6,7 +6,7 @@ import {
 export const DEFAULT_CHART_PADDING = SPACING.md;
 
 /** Gap, in pixels, inserted between two adjacent reserved bands (title, legend, navigator, plot). */
-export const ELEMENT_GAP = SPACING.md;
+export const ELEMENT_GAP = SPACING.sm;
 
 /** Gap, in pixels, between two same-side axis bands stacked outward from the plot. */
 export const AXIS_STACK_GAP = SPACING.sm;
