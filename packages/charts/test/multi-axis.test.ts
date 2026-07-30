@@ -6,6 +6,7 @@ import {
 
 import {
     mockCanvasContext,
+    mockTextMetrics,
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -1056,6 +1057,137 @@ describe('multi y-axis element ids and right-axis geometry', () => {
         expect(firstTickTextAlign(axes[0])).toBe('right');
         expect(firstTickTextAlign(axes[1])).toBe('left');
         expect(firstTickTextAlign(axes[2])).toBe('right');
+    });
+
+});
+
+describe('secondary y-axis tick labels', () => {
+
+    interface TickInternals {
+        id: string;
+        getElementsByType(type: string): { content: string | number;
+            x: number;
+            y: number; }[];
+    }
+
+    function tickLabelsByAxisGroup(chart: unknown) {
+        const groups = (chart as { scene: { queryAll(selector: string): TickInternals[] } })
+            .scene.queryAll('.chart-axis__tick-group')
+            .filter(group => group.id.startsWith('y-tick:'));
+
+        const byGroup = new Map<string, { content: string;
+            x: number;
+            y: number; }[]>();
+
+        groups.forEach(group => {
+            // Ids are `y-tick:<axis group id>:<value>`, and the auto-generated group id itself
+            // contains a colon, so take everything between the prefix and the final segment.
+            const axisGroup = group.id.slice('y-tick:'.length, group.id.lastIndexOf(':'));
+            const label = group.getElementsByType('text')[0];
+
+            if (!label) {
+                return;
+            }
+
+            const entries = byGroup.get(axisGroup) ?? [];
+
+            entries.push({
+                content: String(label.content),
+                x: label.x,
+                y: label.y,
+            });
+            byGroup.set(axisGroup, entries);
+        });
+
+        return byGroup;
+    }
+
+    function createChart(bindSecondSeries: boolean) {
+        polyfillPath2D();
+        mockTextMetrics(mockCanvasContext());
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            axis: {
+                y: [
+                    { position: 'left' },
+                    { position: 'right' },
+                ],
+            },
+            data: [
+                {
+                    k: 'a',
+                    v: 10,
+                    w: 5000,
+                },
+                {
+                    k: 'b',
+                    v: 30,
+                    w: 12000,
+                },
+            ],
+            key: 'k',
+            series: [
+                {
+                    id: 'left',
+                    label: 'Left',
+                    value: 'v',
+                },
+                {
+                    id: 'right',
+                    label: 'Right',
+                    value: 'w',
+                    ...(bindSecondSeries ? { yAxis: 1 } : {}),
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('Should label each axis over its own bound extent', async () => {
+        const chart = createChart(true);
+
+        await chart.render();
+
+        const byGroup = [...tickLabelsByAxisGroup(chart).values()];
+
+        expect(byGroup.length).toBe(2);
+
+        // One axis covers the 0–30 series, the other the 0–12,000 series; neither may borrow the
+        // other's extent, and every label must be finite and positioned.
+        const maxima = byGroup.map(labels => Math.max(...labels.map(label => Number(label.content.replace(/,/g, '')))));
+
+        expect(Math.min(...maxima)).toBeLessThanOrEqual(30);
+        expect(Math.max(...maxima)).toBeGreaterThanOrEqual(12_000);
+
+        byGroup.flat().forEach(label => {
+            expect(label.content).not.toBe('NaN');
+            expect(Number.isFinite(label.x)).toBe(true);
+            expect(Number.isFinite(label.y)).toBe(true);
+        });
+    });
+
+    it('Should keep an axis with no bound series finite rather than labelling it NaN', async () => {
+        // Both series fall back to the primary axis, so the secondary axis has a zero-width extent.
+        // That used to emit a single `NaN` tick at `y = NaN` — invisible on canvas, but rendered by
+        // SVG as a stray "NaN" pinned to the top of the chart.
+        const chart = createChart(false);
+
+        await chart.render();
+
+        const labels = [...tickLabelsByAxisGroup(chart).values()].flat();
+
+        expect(labels.length).toBeGreaterThan(0);
+
+        labels.forEach(label => {
+            expect(label.content).not.toBe('NaN');
+            expect(Number.isFinite(label.x)).toBe(true);
+            expect(Number.isFinite(label.y)).toBe(true);
+        });
     });
 
 });
