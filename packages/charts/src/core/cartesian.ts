@@ -982,7 +982,10 @@ export abstract class CartesianChart<
     protected prepareAxes() {
         this._syncCartesianOptions();
 
-        const animation = this.resolveAnimation(ANIMATION_REFERENCE.axis);
+        // Axis and grid geometry move in lockstep with the marks they frame, so they share the
+        // series' update duration. Running the axis faster (as it once did) left the labels settled
+        // while the data they label was still travelling.
+        const animation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
         this.xAxis.animation = animation;
         this.yAxes.forEach(axis => {

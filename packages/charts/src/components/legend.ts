@@ -22,6 +22,10 @@ import type {
     ResolvedAnimation,
 } from '../core/animation';
 
+import {
+    exitElement,
+} from '../core/animation';
+
 import type {
     Group,
     Rect,
@@ -36,6 +40,7 @@ import {
 
 import {
     arrayJoin,
+    stringUniqueId,
 } from '@ripl/utilities';
 
 /** A single legend entry with id, label, color, and active state. */
@@ -294,12 +299,25 @@ export class Legend extends ChartComponent {
             right: exits,
         } = arrayJoin(placements, swatches, (placement, swatch) => swatch.id === `legend-swatch-${placement.item.id}`);
 
-        // Exit removed items.
+        // Exit removed items, fading them out to match how entries fade in.
         exits.forEach(swatch => {
             const item = swatch.data as LegendItem;
             const label = this._group?.query(`#legend-label-${item.id}`) as Text | undefined;
-            swatch.destroy();
-            label?.destroy();
+
+            if (!animation?.enabled || animation.duration <= 0) {
+                swatch.destroy();
+                label?.destroy();
+                return;
+            }
+
+            // Retag first so a re-entering item of the same id can't collide with the fading pair.
+            swatch.id = `${swatch.id}:exit:${stringUniqueId()}`;
+            void exitElement(this.renderer, swatch, animation);
+
+            if (label) {
+                label.id = `${label.id}:exit:${stringUniqueId()}`;
+                void exitElement(this.renderer, label, animation);
+            }
         });
 
         // Enter new items.
