@@ -160,9 +160,9 @@ Line, area, scatter, and bar charts all render as many y-axes as you supply; bin
 createLineChart('#container', {
     // …
     series: [
-        { id: 'revenue', label: 'Revenue', value: 'revenue', axis: 0 },
-        { id: 'growth', label: 'Growth %', value: 'growth', axis: 1 },
-        { id: 'units', label: 'Units', value: 'units', axis: 2 },
+        { id: 'revenue', label: 'Revenue', value: 'revenue', yAxis: 0 },
+        { id: 'growth', label: 'Growth %', value: 'growth', yAxis: 1 },
+        { id: 'units', label: 'Units', value: 'units', yAxis: 2 },
     ],
     axis: {
         y: [

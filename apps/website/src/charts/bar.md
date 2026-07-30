@@ -348,13 +348,13 @@ createBarChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0,
+            yAxis: 0,
         },
         {
             id: 'orders',
             value: 'orders',
             label: 'Orders',
-            axis: 1,
+            yAxis: 1,
         },
     ],
     axis: {

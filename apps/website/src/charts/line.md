@@ -508,19 +508,19 @@ createLineChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0,
+            yAxis: 0,
         },
         {
             id: 'margin',
             value: 'margin',
             label: 'Margin',
-            axis: 1,
+            yAxis: 1,
         },
         {
             id: 'units',
             value: 'units',
             label: 'Units',
-            axis: 2,
+            yAxis: 2,
         },
     ],
     axis: {

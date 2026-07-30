@@ -73,4 +73,45 @@ describe('Scale', () => {
 
     });
 
+    describe('Degenerate domain', () => {
+        const range = [300, 20];
+
+        test('Should produce a single finite tick rather than NaN', () => {
+            const scale = scaleContinuous([0, 0], range);
+            const ticks = scale.ticks(10);
+
+            // `padDomain` used to divide the bounds by a zero step, so a zero-width domain emitted a
+            // single `NaN` tick. Rendered as an axis label that read "NaN".
+            expect(ticks.length).toBe(1);
+            ticks.forEach(tick => expect(Number.isNaN(tick)).toBe(false));
+        });
+
+        test('Should map every value to the range start rather than NaN', () => {
+            const scale = scaleContinuous([0, 0], range);
+
+            // `(value - min) / 0` is NaN at the bound and +/-Infinity either side of it. There is no
+            // meaningful distribution across a zero-width domain, so collapse onto the range start.
+            expect(scale(0)).toBe(range[0]);
+            expect(Number.isFinite(scale(5))).toBe(true);
+            expect(Number.isFinite(scale(-5))).toBe(true);
+        });
+
+        test('Should stay finite for a non-zero repeated value', () => {
+            const scale = scaleContinuous([7, 7], range);
+
+            expect(scale(7)).toBe(range[0]);
+            scale.ticks(10).forEach(tick => expect(Number.isNaN(tick)).toBe(false));
+        });
+
+        test('Should stay finite when padded to ticks', () => {
+            const scale = scaleContinuous([0, 0], range, {
+                padToTicks: 10,
+            });
+
+            expect(Number.isFinite(scale(0))).toBe(true);
+            scale.ticks(10).forEach(tick => expect(Number.isNaN(tick)).toBe(false));
+        });
+
+    });
+
 });

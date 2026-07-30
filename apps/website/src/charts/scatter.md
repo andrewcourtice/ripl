@@ -325,14 +325,14 @@ createScatterChart('#container', {
             label: 'Sales',
             xBy: 'spend',
             yBy: 'revenue',
-            axis: 0,
+            yAxis: 0,
         },
         {
             id: 'efficiency',
             label: 'Efficiency',
             xBy: 'spend',
             yBy: 'roas',
-            axis: 1,
+            yAxis: 1,
         },
     ],
     axis: {

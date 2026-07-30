@@ -170,7 +170,7 @@ function getSeries() {
         lineStyle: extras.lineStyle,
         markers: extras.markers,
         color: config.colors[s.id],
-        axis: secondary && s.id === 'mobile' ? 1 : undefined,
+        yAxis: secondary && s.id === 'mobile' ? 1 : undefined,
     }));
 }
 
@@ -362,7 +362,7 @@ createAreaChart('#container', {
             id: 'conversion',
             value: 'conversion',
             label: 'Conversion %',
-            axis: 1,
+            yAxis: 1,
         },
     ],
     axis: {
