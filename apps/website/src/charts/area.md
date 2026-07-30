@@ -17,17 +17,14 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Area" :extras-reset="reset">
-            <RiplField label="Mode">
+            <RiplField label="Mode" option="stacked">
                 <RiplSelect v-model="extras.stackMode">
                     <option value="overlaid">Overlaid</option>
                     <option value="stacked">Stacked</option>
                     <option value="percent">100% stacked</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField v-if="extras.stackMode !== 'percent'" label="Secondary axis" inline>
-                <RiplSwitch v-model="extras.secondaryAxis" />
-            </RiplField>
-            <RiplField label="Line type">
+            <RiplField label="Line type" option="lineType">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
@@ -44,19 +41,42 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
                     <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Line style">
+            <RiplField label="Line style" option="lineStyle">
                 <RiplSelect v-model="extras.lineStyle">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Fill opacity">
-                <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
+            <RiplField label="Line width" option="lineWidth">
+                <RiplInputRange
+                    v-model="extras.lineWidth"
+                    :min="1"
+                    :max="5"
+                    :step="0.5"
+                />
             </RiplField>
-            <RiplField label="Markers" inline>
+            <RiplField label="Fill opacity" option="fillOpacity">
+                <RiplInputRange
+                    v-model="extras.fillOpacity"
+                    :min="0"
+                    :max="1"
+                    :step="0.05"
+                />
+            </RiplField>
+            <RiplField label="Markers" option="markers" inline>
                 <RiplSwitch v-model="extras.markers" />
             </RiplField>
+            <template #axes>
+                <RiplField
+                    v-if="extras.stackMode !== 'percent'"
+                    label="Secondary axis"
+                    option="yAxis"
+                    inline
+                >
+                    <RiplSwitch v-model="extras.secondaryAxis" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -105,6 +125,7 @@ const { extras, reset } = useChartExtras({
     secondaryAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
     lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    lineWidth: 2,
     fillOpacity: 0.3,
     markers: false,
 });
@@ -117,6 +138,7 @@ const config = useChartConfig({
         grid: true,
         tooltip: true,
         crosshair: true,
+        dataLabels: true,
         format: true,
         animation: true,
         theme: true,
@@ -168,6 +190,7 @@ function getSeries() {
         fillOpacity: extras.fillOpacity,
         lineType: extras.lineType,
         lineStyle: extras.lineStyle,
+        lineWidth: extras.lineWidth,
         markers: extras.markers,
         color: config.colors[s.id],
         yAxis: secondary && s.id === 'mobile' ? 1 : undefined,

@@ -17,19 +17,19 @@ The **Polar Scatter Chart** plots points on a circular grid, where each point's 
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Polar Scatter" :extras-reset="reset">
-            <RiplField label="Max value">
+            <RiplField label="Max value" option="max">
                 <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
-            <RiplField label="Value rings">
+            <RiplField label="Value rings" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Angle spokes">
+            <RiplField label="Angle spokes" option="sectors">
                 <RiplInputRange v-model="extras.sectors" :min="4" :max="16" :step="1" />
             </RiplField>
-            <RiplField label="Min marker">
+            <RiplField label="Min marker" option="minRadius">
                 <RiplInputRange v-model="extras.minRadius" :min="2" :max="12" :step="1" />
             </RiplField>
-            <RiplField label="Max marker">
+            <RiplField label="Max marker" option="maxRadius">
                 <RiplInputRange v-model="extras.maxRadius" :min="8" :max="30" :step="1" />
             </RiplField>
         </RiplChartConfig>
@@ -77,6 +77,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        dataLabels: true,
     },
     title: 'Wind Samples',
     colors: seedColors(seriesMeta.map(s => s.id)),

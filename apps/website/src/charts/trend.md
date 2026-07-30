@@ -16,10 +16,10 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Trend" :extras-reset="reset">
-            <RiplField label="Stacked" inline>
+            <RiplField label="Stacked" inline option="stacked">
                 <RiplSwitch v-model="extras.stacked" />
             </RiplField>
-            <RiplField label="Line type">
+            <RiplField label="Line type" option="lineType">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
@@ -36,11 +36,58 @@ The **Trend Chart** is a true mixed cartesian chart that combines line, bar, and
                     <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Corner radius">
-                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            <RiplField label="Line style" option="lineStyle">
+                <RiplSelect v-model="extras.lineStyle">
+                    <option value="solid">Solid</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="dotted">Dotted</option>
+                </RiplSelect>
             </RiplField>
-            <RiplField label="Fill opacity">
-                <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
+            <RiplField label="Line width" option="lineWidth">
+                <RiplInputRange
+                    v-model="extras.lineWidth"
+                    :min="1"
+                    :max="5"
+                    :step="0.5"
+                />
+            </RiplField>
+            <RiplField label="Markers" option="markers" inline>
+                <RiplSwitch v-model="extras.markers" />
+            </RiplField>
+            <RiplField
+                v-if="extras.markers"
+                label="Marker radius"
+                option="markerRadius"
+            >
+                <RiplInputRange
+                    v-model="extras.markerRadius"
+                    :min="1"
+                    :max="8"
+                    :step="1"
+                />
+            </RiplField>
+            <RiplField label="Corner radius" option="borderRadius">
+                <RiplInputRange
+                    v-model="extras.borderRadius"
+                    :min="0"
+                    :max="8"
+                    :step="1"
+                />
+            </RiplField>
+            <RiplField label="Fill opacity" option="fillOpacity">
+                <RiplInputRange
+                    v-model="extras.fillOpacity"
+                    :min="0"
+                    :max="1"
+                    :step="0.05"
+                />
+            </RiplField>
+            <RiplField label="Target series as" option="type">
+                <RiplSelect v-model="extras.targetType">
+                    <option value="line">Line</option>
+                    <option value="bar">Bar</option>
+                    <option value="area">Area</option>
+                </RiplSelect>
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -93,8 +140,14 @@ const seriesMeta = [
 const { extras, reset } = useChartExtras({
     stacked: false,
     lineType: 'monotoneX' as PolylineRenderer,
+    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    lineWidth: 2,
+    markers: false,
+    markerRadius: 3,
     borderRadius: 2,
     fillOpacity: 0.25,
+    // A trend chart mixes mark types per series, so the demo lets one series change its own.
+    targetType: 'line' as 'line' | 'bar' | 'area',
 });
 
 const config = useChartConfig({
@@ -110,6 +163,7 @@ const config = useChartConfig({
         animation: true,
         theme: true,
         navigator: true,
+        annotations: true,
     },
     title: 'Sales Trend',
     axisY: 'Value',
@@ -117,15 +171,25 @@ const config = useChartConfig({
 });
 
 function getSeries(): TrendChartSeriesOptions<SalesRow>[] {
-    return seriesMeta.map(s => ({
-        type: s.type,
-        id: s.id,
-        label: s.label,
-        value: s.value,
-        color: config.colors[s.id],
-        ...(s.type === 'area' ? { fillOpacity: extras.fillOpacity } : {}),
-        ...(s.type === 'bar' ? {} : { lineType: extras.lineType }),
-    })) as TrendChartSeriesOptions<SalesRow>[];
+    return seriesMeta.map(s => {
+        const type = s.id === 'target' ? extras.targetType : s.type;
+
+        return {
+            type,
+            id: s.id,
+            label: s.label,
+            value: s.value,
+            color: config.colors[s.id],
+            ...(type === 'area' ? { fillOpacity: extras.fillOpacity } : {}),
+            ...(type === 'bar' ? {} : {
+                lineType: extras.lineType,
+                lineStyle: extras.lineStyle,
+                lineWidth: extras.lineWidth,
+                markers: extras.markers,
+                markerRadius: extras.markerRadius,
+            }),
+        };
+    }) as TrendChartSeriesOptions<SalesRow>[];
 }
 
 function buildOptions() {

@@ -15,7 +15,7 @@ The **Box Plot Chart** summarizes the distribution of a numeric field per catego
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
-            <RiplField label="Box color" inline>
+            <RiplField label="Box color" inline option="color">
                 <RiplColorInput v-model="extras.color" />
             </RiplField>
         </RiplChartConfig>
@@ -56,6 +56,9 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        legend: true,
+        axes: true,
+        crosshair: true,
     },
     title: 'Latency by Region',
 });

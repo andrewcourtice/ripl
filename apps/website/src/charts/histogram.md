@@ -15,13 +15,13 @@ The **Histogram Chart** bins a numeric field and draws each bin as a bar on a co
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Bins" :extras-reset="reset">
-            <RiplField label="Bin count">
+            <RiplField label="Bin count" option="bins">
                 <RiplInputRange v-model="extras.bins" :min="4" :max="20" :step="1" />
             </RiplField>
-            <RiplField label="Corner radius">
+            <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Bar color" inline>
+            <RiplField label="Bar color" inline option="color">
                 <RiplColorInput v-model="extras.color" />
             </RiplField>
         </RiplChartConfig>
@@ -62,6 +62,9 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        legend: true,
+        crosshair: true,
+        axes: true,
     },
     title: 'Response Time Distribution',
 });

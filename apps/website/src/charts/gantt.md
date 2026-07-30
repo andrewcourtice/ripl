@@ -17,16 +17,16 @@ The **Gantt Chart** displays tasks as horizontal bars along a time axis, with ta
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Gantt" :extras-reset="reset">
-            <RiplField label="Today marker" inline>
+            <RiplField label="Today marker" inline option="showToday">
                 <RiplSwitch v-model="extras.showToday" />
             </RiplField>
-            <RiplField v-if="extras.showToday" label="Marker color" inline>
+            <RiplField v-if="extras.showToday" label="Marker color" inline option="todayColor">
                 <RiplColorInput v-model="extras.todayColor" />
             </RiplField>
-            <RiplField label="Corner radius">
+            <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Dependencies" inline>
+            <RiplField label="Dependencies" inline option="dependencies">
                 <RiplSwitch v-model="extras.showConnectors" />
             </RiplField>
         </RiplChartConfig>

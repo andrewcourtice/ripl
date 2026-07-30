@@ -15,28 +15,28 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Heatmap" :extras-reset="reset">
-            <RiplField label="Cell labels" inline>
+            <RiplField label="Cell labels" inline option="labels">
                 <RiplSwitch v-model="extras.cellLabels" />
             </RiplField>
-            <RiplField label="Low color" inline>
+            <RiplField label="Low color" inline option="gradient">
                 <RiplColorInput v-model="extras.lowColor" />
             </RiplField>
-            <RiplField label="High color" inline>
+            <RiplField label="High color" inline option="gradient">
                 <RiplColorInput v-model="extras.highColor" />
             </RiplField>
-            <RiplField label="Corner radius">
+            <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Legend orientation">
+            <RiplField label="Legend orientation" option="legend">
                 <RiplSelect v-model="extras.legendOrientation">
                     <option value="horizontal">Horizontal</option>
                     <option value="vertical">Vertical</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Legend thickness">
+            <RiplField label="Legend thickness" option="legend">
                 <RiplInputRange v-model="extras.legendThickness" :min="6" :max="24" :step="1" />
             </RiplField>
-            <RiplField label="Legend segments">
+            <RiplField label="Legend segments" option="legend">
                 <RiplInputRange v-model="extras.legendSegments" :min="0" :max="12" :step="1" />
             </RiplField>
         </RiplChartConfig>

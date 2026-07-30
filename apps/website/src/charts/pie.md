@@ -15,10 +15,10 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Pie" :extras-reset="reset">
-            <RiplField label="Inner radius">
+            <RiplField label="Inner radius" option="innerRadius">
                 <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.9" :step="0.05" />
             </RiplField>
-            <RiplField label="Labels">
+            <RiplField label="Labels" option="labels">
                 <RiplSelect v-model="extras.labels">
                     <option value="off">Off</option>
                     <option value="inside">Inside</option>

@@ -17,19 +17,19 @@ The **Polar Area Chart** renders equal-angle segments whose radius encodes the v
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Polar Area" :extras-reset="reset">
-            <RiplField label="Inner radius">
+            <RiplField label="Inner radius" option="innerRadius">
                 <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.4" :step="0.05" />
             </RiplField>
-            <RiplField label="Max radius">
+            <RiplField label="Max radius" option="maxRadiusRatio">
                 <RiplInputRange v-model="extras.maxRadiusRatio" :min="0.2" :max="0.5" :step="0.05" />
             </RiplField>
-            <RiplField label="Segment gap">
+            <RiplField label="Segment gap" option="padAngle">
                 <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.1" :step="0.01" />
             </RiplField>
-            <RiplField label="Grid rings">
+            <RiplField label="Grid rings" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="2" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Labels">
+            <RiplField label="Labels" option="labels">
                 <RiplSelect v-model="extras.labels">
                     <option value="off">Off</option>
                     <option value="inside">Inside</option>

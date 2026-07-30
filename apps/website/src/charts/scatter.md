@@ -16,15 +16,38 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bubbles" :extras-reset="reset">
-            <RiplField label="Size by value" inline>
+            <RiplField label="Size by value" inline option="sizeBy">
                 <RiplSwitch v-model="extras.sizeBy" />
             </RiplField>
-            <RiplField label="Min radius">
+            <RiplField label="Min radius" option="minRadius">
                 <RiplInputRange v-model="extras.minRadius" :min="2" :max="20" :step="1" />
             </RiplField>
-            <RiplField v-if="extras.sizeBy" label="Max radius">
-                <RiplInputRange v-model="extras.maxRadius" :min="5" :max="40" :step="1" />
+            <RiplField
+                v-if="extras.sizeBy"
+                label="Max radius"
+                option="maxRadius"
+            >
+                <RiplInputRange
+                    v-model="extras.maxRadius"
+                    :min="5"
+                    :max="40"
+                    :step="1"
+                />
             </RiplField>
+            <RiplField label="Marker symbol" option="marker">
+                <RiplSelect v-model="extras.markerSymbol">
+                    <option value="mixed">Mixed (per series)</option>
+                    <option value="circle">Circle</option>
+                    <option value="square">Square</option>
+                    <option value="diamond">Diamond</option>
+                    <option value="triangle">Triangle</option>
+                </RiplSelect>
+            </RiplField>
+            <template #axes>
+                <RiplField label="Multiple axes" option="yAxis" inline>
+                    <RiplSwitch v-model="extras.multiAxis" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -82,7 +105,20 @@ const { extras, reset } = useChartExtras({
     sizeBy: true,
     minRadius: 5,
     maxRadius: 25,
+    markerSymbol: 'mixed' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
+    multiAxis: false,
 });
+
+// Distinct per-series symbols used by the "Mixed" marker option.
+const SERIES_SYMBOLS = ['circle', 'diamond', 'triangle'];
+
+function resolveMarker(index: number) {
+    if (extras.markerSymbol === 'mixed') {
+        return SERIES_SYMBOLS[index % SERIES_SYMBOLS.length];
+    }
+
+    return extras.markerSymbol;
+}
 
 const config = useChartConfig({
     features: {
@@ -98,6 +134,7 @@ const config = useChartConfig({
         theme: true,
         navigator: true,
         annotations: true,
+        dataLabels: true,
     },
     title: 'Channel Performance',
     axisX: 'X Value',
@@ -110,7 +147,7 @@ const config = useChartConfig({
 let data = Array.from({ length: 20 }, getDataItem);
 
 function getSeries() {
-    return seriesMeta.map(s => ({
+    return seriesMeta.map((s, index) => ({
         id: s.id,
         label: s.label,
         xBy: s.xBy,
@@ -118,7 +155,10 @@ function getSeries() {
         sizeBy: extras.sizeBy ? s.sizeBy : undefined,
         minRadius: extras.minRadius,
         maxRadius: extras.maxRadius,
+        marker: resolveMarker(index),
         color: config.colors[s.id],
+        // Marketing plots impressions in the thousands, so it gets the right-hand axis.
+        yAxis: extras.multiAxis && s.id === 'marketing' ? 1 : undefined,
     }));
 }
 
@@ -127,6 +167,21 @@ function buildOptions() {
         series: getSeries(),
         ...buildCommonOptions(config),
     };
+
+    // A second `axis.y` entry renders a right-hand axis for the impressions series.
+    if (extras.multiAxis) {
+        options.axis = {
+            ...options.axis,
+            y: [
+                options.axis.y,
+                {
+                    visible: config.axesVisible,
+                    title: 'Impressions',
+                    position: 'right',
+                },
+            ],
+        };
+    }
 
     // Sample reference line + shaded band, drawn through the y scale.
     options.annotations = config.annotationsVisible
@@ -174,7 +229,10 @@ function getDataItem() {
         profit: getValue(10, 100),
         volume: getValue(5, 50),
         marketing: getValue(10, 100),
-        engagement: getValue(10, 100),
+        // Thousands of impressions, against the 10-100 scores the other series plot. On one shared
+        // y-axis this flattens every other series against the baseline; that is the case the
+        // "Multiple axes" toggle resolves.
+        engagement: getValue(2000, 9000),
         reach: getValue(5, 50),
         support: getValue(10, 100),
         satisfaction: getValue(10, 100),
