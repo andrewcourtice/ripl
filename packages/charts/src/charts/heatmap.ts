@@ -100,7 +100,7 @@ export interface HeatmapChartOptions<TData = unknown> extends BaseChartOptions {
     /** Ordered list of categories along the y axis. */
     yCategories: string[];
     /** Color stops (low→high) interpolated across the value extent; also accepts a built-in palette. */
-    colors?: string[];
+    gradient?: string[];
     /** Corner radius in pixels applied to each cell. Defaults to 2. */
     borderRadius?: number;
     /** Gradient color legend showing the value→color scale. Shown by default; pass `false` to hide, or an options object to customize. */
@@ -203,7 +203,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                 value: valueBy,
                 xCategories,
                 yCategories,
-                colors,
+                gradient,
                 borderRadius = 2,
             } = this.options;
 
@@ -230,9 +230,9 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             const valueRange = maxVal - minVal || 1;
 
-            // A sequential color scale over the value extent. `colors` may be two colors (the
+            // A sequential color scale over the value extent. `gradient` may be two colors (the
             // default low→high pair) or any number of stops, including a built-in `COLOR_SCHEME_*` palette.
-            const colorScale = scaleSequential(colors ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
+            const colorScale = scaleSequential(gradient ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);

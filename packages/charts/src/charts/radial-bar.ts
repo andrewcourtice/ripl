@@ -91,7 +91,7 @@ export interface RadialBarChartOptions<TData = unknown> extends BaseChartOptions
     /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
     colorBy?: keyof TData | ((item: TData) => string);
     /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */
-    maxValue?: number;
+    max?: number;
     /** Inner hole radius as a ratio of the chart size (0–1). Defaults to 0.2. */
     innerRadius?: number;
     /** Angular sweep of a full-value bar, in degrees. Defaults to 360 (a full circle). */
@@ -250,7 +250,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
 
             const values = activeData.map(getValue);
             const [, dataMax] = values.length ? numberExtent(values, functionIdentity) : [0, 1];
-            const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
+            const max = this.options.max ?? (dataMax > 0 ? dataMax : 1);
             const sweep = (range * Math.PI) / 180;
 
             const bandCount = Math.max(1, activeData.length);
@@ -263,7 +263,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 const ringOuter = outerRadius - i * band;
                 const thickness = band * (1 - gap);
                 const center = ringOuter - thickness / 2;
-                const endAngle = TOP_ANGLE + numberClamp(itemValue / maxValue, 0, 1) * sweep;
+                const endAngle = TOP_ANGLE + numberClamp(itemValue / max, 0, 1) * sweep;
 
                 return {
                     center,
@@ -533,7 +533,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
  *     key: 'team',
  *     value: 'progress',
  *     label: 'team',
- *     maxValue: 100,
+ *     max: 100,
  *     rounded: true,
  * });
  * ```

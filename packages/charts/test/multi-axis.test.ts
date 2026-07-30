@@ -105,7 +105,7 @@ function createDualAxisAreaChart(stacked = false) {
                 id: 'right',
                 label: 'Right',
                 value: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
         axis: {
@@ -154,7 +154,7 @@ function createDualAxisScatterChart() {
                 label: 'Right',
                 xBy: 'x',
                 yBy: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
         axis: {
@@ -201,7 +201,7 @@ describe('secondary y-axis (line)', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'large',
-                    axis: 1,
+                    yAxis: 1,
                 },
             ],
             axis: {
@@ -307,7 +307,7 @@ describe('secondary y-axis (area)', () => {
                     id: 'other',
                     label: 'Other',
                     value: 'other',
-                    axis: 1,
+                    yAxis: 1,
                 },
             ],
             axis: {
@@ -513,7 +513,7 @@ function createDualAxisBarChart() {
                 id: 'big',
                 label: 'Big',
                 value: 'big',
-                axis: 1,
+                yAxis: 1,
             },
         ],
     });
@@ -667,13 +667,13 @@ describe('N y-axes (line)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -739,13 +739,13 @@ describe('N y-axes (area)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -827,14 +827,14 @@ describe('N y-axes (scatter)', () => {
                     label: 'B',
                     xBy: 'x',
                     yBy: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     xBy: 'x',
                     yBy: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -899,13 +899,13 @@ describe('N y-axes (bar)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -1018,13 +1018,13 @@ describe('multi y-axis element ids and right-axis geometry', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });

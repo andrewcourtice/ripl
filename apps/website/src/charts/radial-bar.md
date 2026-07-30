@@ -16,7 +16,7 @@ The **Radial Bar Chart** lays each category out as a concentric ring whose arc l
     <template #config>
         <RiplChartConfig :config="config" extra-title="Rings" :extras-reset="reset">
             <RiplField label="Max value">
-                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+                <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
             <RiplField label="Inner radius">
                 <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.6" :step="0.05" />
@@ -60,7 +60,7 @@ import {
 const LANGUAGES = ['JavaScript', 'Python', 'Rust', 'Go', 'TypeScript'];
 
 const { extras, reset } = useChartExtras({
-    maxValue: 100 as number | undefined,
+    max: 100 as number | undefined,
     innerRadius: 0.25,
     range: 300,
     gap: 0.25,
@@ -92,7 +92,7 @@ let data = generateData();
 
 function buildOptions() {
     const options = {
-        maxValue: extras.maxValue,
+        max: extras.max,
         innerRadius: extras.innerRadius,
         range: extras.range,
         gap: extras.gap,
@@ -149,7 +149,7 @@ const chart = createRadialBarChart('#container', {
     ],
     key: 'language',
     value: 'share',
-    maxValue: 100,
+    max: 100,
     format: v => `${v}%`,
 });
 ```
@@ -178,7 +178,7 @@ const data = [
 - **`value`**: numeric value accessor; encoded as the arc length
 - **`label`**: optional label accessor (defaults to `key`)
 - **`colorBy`**: optional per-category color accessor
-- **`maxValue`**: value mapped to a full sweep (defaults to the data maximum)
+- **`max`**: value mapped to a full sweep (defaults to the data maximum)
 - **`innerRadius`**: inner hole radius as a ratio of the chart size (default `0.2`)
 - **`range`**: angular sweep of a full-value bar in degrees (default `360`)
 - **`gap`**: gap between rings as a ratio of ring thickness (default `0.25`)

@@ -271,7 +271,7 @@ createChordChart(mount('chord'), {
     animation: false,
     title: 'Chord — Team flows',
     legend: true,
-    labels: ['Engineering', 'Design', 'Marketing', 'Sales'],
+    groups: ['Engineering', 'Design', 'Marketing', 'Sales'],
     matrix: [
         [0, 5, 10, 8],
         [5, 0, 6, 4],
@@ -354,11 +354,11 @@ createGaugeChart(mount('gauge'), {
     animation: false,
     title: 'Gauge — Performance',
     value: 72,
-    minValue: 0,
-    maxValue: 100,
+    min: 0,
+    max: 100,
     label: 'Performance',
     format: v => `${v}%`,
-    formatTick: v => `${v}%`,
+    tickFormat: v => `${v}%`,
 });
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
@@ -828,12 +828,12 @@ createPolarScatterChart(mount('polar-scatter'), {
         {
             id: 'wind',
             label: 'Wind',
-            angle: 'angle',
-            radius: 'speed',
+            angleBy: 'angle',
+            radiusBy: 'speed',
             sizeBy: 'gust',
         },
     ],
-    maxValue: 100,
+    max: 100,
 });
 
 createRadialBarChart(mount('radial-bar'), {
@@ -859,7 +859,7 @@ createRadialBarChart(mount('radial-bar'), {
     ],
     key: 'language',
     value: 'share',
-    maxValue: 100,
+    max: 100,
     rounded: true,
 });
 

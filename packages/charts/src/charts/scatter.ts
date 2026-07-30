@@ -108,7 +108,7 @@ export interface ScatterChartSeriesOptions<TData> {
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
     /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    axis?: number | string;
+    yAxis?: number | string;
     /** Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
 }
@@ -235,7 +235,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
     // The y scale of the axis a series binds to (the primary scale when no secondary axis exists).
     private _seriesYScale(series: ScatterChartSeriesOptions<TData>): Scale {
-        return this._yScales[this.resolveSeriesAxisIndex(series.axis)] ?? this._yScale;
+        return this._yScales[this.resolveSeriesAxisIndex(series.yAxis)] ?? this._yScale;
     }
 
     private _bubbleValueProducer(series: ScatterChartSeriesOptions<TData>, getKey: (item: TData) => string) {
@@ -773,7 +773,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
         // Independent y extent per axis, computed over the active series bound to it.
         const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
             const yExtents = group.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
 
             return yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];

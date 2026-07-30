@@ -136,7 +136,7 @@ function createDualAxisLineChart() {
                 id: 'large',
                 label: 'Large',
                 value: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
     });

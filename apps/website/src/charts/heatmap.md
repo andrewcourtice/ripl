@@ -107,7 +107,7 @@ function buildOptions() {
     return {
         // Cell values centered in each cell; the label color auto-contrasts against the cell color.
         labels: extras.cellLabels,
-        colors: [extras.lowColor, extras.highColor],
+        gradient: [extras.lowColor, extras.highColor],
         borderRadius: extras.borderRadius,
         legend: {
             orientation: extras.legendOrientation,
@@ -165,6 +165,10 @@ const chart = createHeatmapChart('#container', {
 - **`value`**: accessor for the cell value
 - **`xCategories`**: ordered list of x-axis categories
 - **`yCategories`**: ordered list of y-axis categories
-- **`colors`**: tuple of `[lowColor, highColor]` hex strings
+- **`gradient`**: sequential color stops, low to high; any number of stops (default two)
 - **`borderRadius`**: cell corner radius (default `2`)
 - **`labels`**: show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color
+- **`legend`** (`boolean | ColorLegendOptions`): show/configure the color-scale legend. Unlike the series legend on other charts this is a continuous color ramp, configured with `orientation`, `thickness`, `segments`, `ticks` and `format`
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`axis`** (`boolean | ChartAxisOptions`): configure the category axes
+- **`format`** (`ValueFormatInput`): format applied to cell values in tooltips and labels

@@ -99,7 +99,7 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     /** Accessor for the numeric value to summarize. */
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
-    categories?: string[];
+    categoryOrder?: string[];
     /** Color used for every box; falls back to the first palette color when omitted. */
     color?: string;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
@@ -359,7 +359,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 data,
                 key,
                 value,
-                categories,
+                categoryOrder,
             } = this.options;
 
             this.resolveSeriesColors([
@@ -375,7 +375,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const color = this.getSeriesColor('boxplot');
 
             const grouped = rollup(data, getGroup, items => boxplotStats(items.map(getValue)));
-            const keys = categories ?? [...new Set(data.map(getGroup))];
+            const keys = categoryOrder ?? [...new Set(data.map(getGroup))];
             const valueExtent = numberExtent(data, getValue);
 
             const layout = this.createLayout();

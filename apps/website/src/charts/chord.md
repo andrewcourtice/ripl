@@ -25,7 +25,7 @@ The **Chord Chart** visualizes relationships between groups using arcs and ribbo
                 inline
             >
                 <RiplColorInput
-                    :model-value="extras.colors[index]"
+                    :model-value="extras.palette[index]"
                     @update:model-value="setColor(index, $event)"
                 />
             </RiplField>
@@ -58,7 +58,7 @@ const LABELS = ['Engineering', 'Design', 'Marketing', 'Sales'];
 
 const { extras, reset } = useChartExtras({
     padAngle: 0.04,
-    colors: LABELS.map((_, index) => paletteColor(index)),
+    palette: LABELS.map((_, index) => paletteColor(index)),
 });
 
 const config = useChartConfig({
@@ -72,7 +72,7 @@ const config = useChartConfig({
 });
 
 function setColor(index: number, value: string) {
-    extras.colors = extras.colors.map((color, i) => (i === index ? value : color));
+    extras.palette = extras.palette.map((color, i) => (i === index ? value : color));
 }
 
 function generateMatrix() {
@@ -86,7 +86,7 @@ let matrix = generateMatrix();
 
 function buildOptions() {
     return {
-        colors: extras.colors,
+        palette: extras.palette,
         padAngle: extras.padAngle,
         ...buildCommonOptions(config),
     };
@@ -96,7 +96,7 @@ const example = ref();
 
 const { contextChanged, chart } = useRiplChart(context => {
     return createChordChart(context, {
-        labels: LABELS,
+        groups: LABELS,
         matrix,
         ...buildOptions(),
     });
@@ -130,8 +130,8 @@ const chart = createChordChart('#container', {
 
 ## Options
 
-- **`labels`**: array of group labels
+- **`groups`**: array of group names, one per row/column of the matrix
 - **`matrix`**: square matrix of flow values between groups
-- **`colors`**: optional array of colors for each group
+- **`palette`**: optional array of colors, one per group (positional)
 - **`padAngle`**: gap angle between arcs in radians (default `0.04`)
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend

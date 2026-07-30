@@ -91,7 +91,7 @@ export interface SunburstChartOptions<TData = unknown> extends BaseChartOptions 
 }
 
 /** Payload emitted for sunburst segment interaction events. */
-export interface SunburstChartSegmentEvent<TData = unknown> {
+export interface SunburstChartNodeEvent<TData = unknown> {
     /** X position of the segment centroid, in canvas coordinates. */
     x: number;
     /** Y position of the segment centroid, in canvas coordinates. */
@@ -109,11 +109,11 @@ export interface SunburstChartSegmentEvent<TData = unknown> {
 /** Events emitted by a {@link SunburstChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface SunburstChartEventMap<TData = unknown> extends EventMap {
     /** Emitted when a segment is clicked. */
-    segmentclick: SunburstChartSegmentEvent<TData>;
+    nodeclick: SunburstChartNodeEvent<TData>;
     /** Emitted when the pointer enters a segment. */
-    segmententer: SunburstChartSegmentEvent<TData>;
+    nodeenter: SunburstChartNodeEvent<TData>;
     /** Emitted when the pointer leaves a segment. */
-    segmentleave: SunburstChartSegmentEvent<TData>;
+    nodeleave: SunburstChartNodeEvent<TData>;
 }
 
 interface FlattenedArc<TData = unknown> {
@@ -362,7 +362,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): SunburstChartSegmentEvent<TData> => ({
+            y: number; }): SunburstChartNodeEvent<TData> => ({
             x: point.x,
             y: point.y,
             value: arc.value,
@@ -385,9 +385,9 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
             highlight: { fill: arc.color },
             restore: { fill: setColorAlpha(arc.color, REST_ALPHA) },
-            onEnter: point => this.emit('segmententer', payload(point)),
-            onLeave: point => this.emit('segmentleave', payload(point)),
-            onClick: point => this.emit('segmentclick', payload(point)),
+            onEnter: point => this.emit('nodeenter', payload(point)),
+            onLeave: point => this.emit('nodeleave', payload(point)),
+            onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
 

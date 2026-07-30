@@ -549,5 +549,6 @@ createLineChart('#container', {
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
 - **`padding`**: chart padding

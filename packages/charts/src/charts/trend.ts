@@ -166,7 +166,13 @@ export interface TrendChartOptions<TData = unknown> extends CartesianChartOption
     series: TrendChartSeriesOptions<TData>[];
     /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false. */
+    /**
+     * Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false.
+     *
+     * Unlike {@link BarChartOptions.stacked} and {@link AreaChartOptions.stacked} this does not
+     * accept `'percent'`: normalizing to a share of a category total is only meaningful when every
+     * series shares one mark type, and a trend chart mixes lines, bars and areas on one value axis.
+     */
     stacked?: boolean;
     /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;

@@ -400,5 +400,6 @@ createBarChart('#container', {
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`overview`** (`boolean | { size }`): show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
 - **`borderRadius`**: bar corner radius (default `2`)

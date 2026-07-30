@@ -183,7 +183,7 @@ function buildOptions() {
     };
 
     // A second `axis.y` entry renders a right-hand y-axis; the mobile series binds to it via its
-    // `axis: 1` series option.
+    // `yAxis: 1` series option.
     if (secondaryAxisActive()) {
         options.axis = {
             ...options.axis,
@@ -413,4 +413,5 @@ createAreaChart('#container', {
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot

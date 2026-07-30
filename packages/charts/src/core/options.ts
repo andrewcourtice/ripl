@@ -1,3 +1,7 @@
+import type {
+    ChartPadding,
+} from './layout';
+
 import {
     getDefaultTheme,
 } from './theme';
@@ -46,7 +50,9 @@ import type {
 
 import {
     numberFormat,
+    typeIsArray,
     typeIsBoolean,
+    typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
 
@@ -139,28 +145,28 @@ export function resolveEase(value?: EaseName | Ease): Ease {
 // Padding helper
 // ---------------------------------------------------------------------------
 
-/** Padding expressed as a uniform number or a [top, right, bottom, left] tuple. */
-export type PaddingInput = number | [number, number, number, number];
+/**
+ * Padding, in pixels: a uniform number, a `[top, right, bottom, left]` tuple, or a partial per-edge
+ * object. Every option named `padding` accepts this same shape, on the chart and on every component.
+ */
+export type PaddingInput = number | [number, number, number, number] | Partial<ChartPadding>;
 
-/** Resolved padding with explicit top, right, bottom, and left values. */
-export interface Padding {
-    /** Top padding, in pixels. */
-    top: number;
-    /** Right padding, in pixels. */
-    right: number;
-    /** Bottom padding, in pixels. */
-    bottom: number;
-    /** Left padding, in pixels. */
-    left: number;
-}
+/**
+ * Resolved padding with explicit top, right, bottom, and left values.
+ * @deprecated Use {@link ChartPadding}, which this is an alias of.
+ */
+export type Padding = ChartPadding;
 
-/** Normalizes a padding input into a `Padding` object, or returns `undefined` if no input. */
-export function normalizePadding(value?: PaddingInput): Padding | undefined {
+/**
+ * Normalizes a padding input into a full {@link ChartPadding}, or returns `undefined` when there is
+ * no input. Unspecified edges of a partial object fall back to `0`.
+ */
+export function normalizePadding(value?: PaddingInput): ChartPadding | undefined {
     if (value === undefined) {
         return undefined;
     }
 
-    if (typeof value === 'number') {
+    if (typeIsNumber(value)) {
         return {
             top: value,
             right: value,
@@ -169,11 +175,20 @@ export function normalizePadding(value?: PaddingInput): Padding | undefined {
         };
     }
 
+    if (typeIsArray(value)) {
+        return {
+            top: value[0],
+            right: value[1],
+            bottom: value[2],
+            left: value[3],
+        };
+    }
+
     return {
-        top: value[0],
-        right: value[1],
-        bottom: value[2],
-        left: value[3],
+        top: value.top ?? 0,
+        right: value.right ?? 0,
+        bottom: value.bottom ?? 0,
+        left: value.left ?? 0,
     };
 }
 

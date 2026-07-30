@@ -100,7 +100,7 @@ export interface BarChartSeriesOptions<TData> {
      * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
      * orientation always render against the primary axis.
      */
-    axis?: number | string;
+    yAxis?: number | string;
 }
 
 /** Options for configuring a {@link BarChart}. */
@@ -523,7 +523,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
         // Independent value extent per axis over the active series bound to it.
         const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
 
             return numberExtent(group
                 .flatMap(srs => numberExtent(this.options.data, item => this._seriesValue(srs, item)))
@@ -562,7 +562,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
         this.xAxis.scale = categoryCenterScale;
 
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 
         this.clipPlot(plot);

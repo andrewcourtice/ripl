@@ -378,4 +378,5 @@ chart.navigator?.reset();
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes with optional titles (`y` accepts an array for multiple y-axes)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`navigator`** (`boolean | NavigatorInteractions`): enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`

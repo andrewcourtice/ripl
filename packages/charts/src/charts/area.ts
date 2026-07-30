@@ -107,7 +107,7 @@ export interface AreaChartSeriesOptions<TData> {
      * primary axis. When the chart is stacked, series stack only with other series bound to the
      * same axis.
      */
-    axis?: number | string;
+    yAxis?: number | string;
 }
 
 /** Options for configuring an {@link AreaChart}. */
@@ -457,7 +457,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         // Independent value extent per axis; stacked series cumulate within their axis group only.
         const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
 
             if (stacked) {
                 return cumulativeExtent(group, this.options.data, (srs, item) => this._seriesValue(srs, item));
@@ -495,7 +495,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
         // agnostic; the renderer passes the series through as its shared `AreaSeriesLike`).
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 
         this.clipPlot(plot);

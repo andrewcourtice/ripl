@@ -87,7 +87,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         data,
         key: 'region',
         value: 'latency',
-        categories: REGIONS,
+        categoryOrder: REGIONS,
         axis: {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },
@@ -128,6 +128,6 @@ accessor and summarizes the `value` accessor per group, so no pre-aggregation is
 - **`data`**: the data array
 - **`key`**: accessor for the category (field name or function)
 - **`value`**: accessor for the numeric value (field name or function)
-- **`categories`**: explicit category order (default: first-seen order)
+- **`categoryOrder`**: explicit category order (default: first-seen order)
 - **`color`**: box color (default: first palette color)
 - **`format`**: format applied to summary values in tooltips

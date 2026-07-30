@@ -108,7 +108,7 @@ export interface LineChartSeriesOptions<TData> {
     /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
     /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    axis?: number | string;
+    yAxis?: number | string;
 }
 
 /** Options for configuring a {@link LineChart}. */
@@ -403,7 +403,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
         // Independent value extent per axis, over the active series bound to it.
         const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
 
             return numberExtent(group
                 .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
@@ -437,7 +437,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
         // agnostic; the renderer passes the series through as its shared `LineSeriesLike`).
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 
         this.clipPlot(plot);

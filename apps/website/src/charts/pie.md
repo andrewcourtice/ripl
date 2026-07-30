@@ -218,9 +218,9 @@ createPieChart('#container', {
 });
 ```
 
-### Custom start angle
+### Per-slice colors
 
-Rotate the starting position of the first slice:
+Drive slice colors from the data instead of the palette:
 
 ```ts
 createPieChart('#container', {
@@ -228,7 +228,7 @@ createPieChart('#container', {
     key: 'id',
     value: 'value',
     label: 'label',
-    startAngle: Math.PI,
+    colorBy: 'color',
 });
 ```
 
