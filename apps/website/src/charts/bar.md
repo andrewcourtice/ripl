@@ -337,7 +337,7 @@ createBarChart('#container', {
 
 ### Multiple y-axes
 
-Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
 
 ```ts
 createBarChart('#container', {

@@ -346,7 +346,7 @@ createAreaChart('#container', {
 
 ### Secondary y-axis
 
-Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `axis` option (an index or the axis `id`). When the chart is stacked, series stack per axis group:
+Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `yAxis` option (an index or the axis `id`). When the chart is stacked, series stack per axis group:
 
 ```ts
 createAreaChart('#container', {

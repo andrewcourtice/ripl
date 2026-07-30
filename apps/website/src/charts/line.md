@@ -234,7 +234,7 @@ function getSeries() {
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
         // Bind each series to its own y-axis when multiple axes are enabled.
-        axis: extras.multiAxis ? index : undefined,
+        yAxis: extras.multiAxis ? index : undefined,
     }));
 }
 
@@ -497,7 +497,7 @@ createLineChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `axis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
+Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
 
 ```ts
 createLineChart('#container', {

@@ -421,8 +421,8 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 areaRender,
                 barRender,
                 lineRender,

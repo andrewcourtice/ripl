@@ -720,8 +720,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             }, plot);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawBubbles(getKey),
             ]);
         });
@@ -757,12 +757,14 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         const { data } = this.options;
 
         // Independent y extent per axis, computed over the active series bound to it.
-        const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index);
+        const extents = this.groupSeriesByAxis(series).map(group => {
             const yExtents = group.flatMap(({ yBy }) => numberExtent(data, resolveAccessor<TData, number>(yBy)));
 
             return yExtents.length ? numberExtent(yExtents, functionIdentity) : [0, 1];
         });
+
+        // Before the plot is resolved, so an axis nothing binds to reserves no band either.
+        this.hideUnboundAxes(series);
 
         // Inset the data ranges by the largest possible bubble radius (see the single-axis path);
         // horizontally the inset sits just inside the packed axis label bands.
@@ -819,8 +821,8 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         }, plot);
 
         return Promise.all([
-            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : axis.hide()),
             this._drawBubbles(getKey),
         ]);
     }

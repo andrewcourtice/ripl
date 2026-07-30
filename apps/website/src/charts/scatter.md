@@ -315,7 +315,7 @@ createScatterChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
+Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
 
 ```ts
 createScatterChart('#container', {

@@ -60,7 +60,7 @@ function buildChart() {
         label: 'Error Rate',
         color: errorColor(value),
         format: (v: number) => `${v.toFixed(2)}%`,
-        tickCount: 5,
+        ticks: 5,
         tickLabels: true,
         tickFormat: (v: number) => `${v}%`,
     };

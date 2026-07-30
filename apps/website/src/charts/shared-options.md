@@ -161,7 +161,7 @@ axis: {
 }
 ```
 
-Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `axis` option (an array index or the axis `id`):
+Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `yAxis` option (an array index or the axis `id`):
 
 <!-- eslint-skip -->
 ```ts

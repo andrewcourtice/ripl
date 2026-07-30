@@ -409,8 +409,8 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const boxWidth = Math.min(Math.abs(step) * 0.6, 60);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawBoxes(keys, grouped, viewedCategoryScale, viewedValueScale, boxWidth, color),
             ]);
         });

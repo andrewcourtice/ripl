@@ -59,7 +59,7 @@ function buildChart() {
         value: 'retention' as const,
         xCategories: weeks,
         yCategories: cohorts,
-        colors: ['#dbeafe', '#1d4ed8'] as [string, string],
+        gradient: ['#dbeafe', '#1d4ed8'] as [string, string],
         borderRadius: 4,
         axis: {
             x: { title: 'Weeks Since Signup' },

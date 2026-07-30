@@ -733,8 +733,8 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             const volumeBottom = bottom - labelBand;
 
             const promises: Promise<unknown>[] = [
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawCandlesticks(candleWidth),
             ];
 
