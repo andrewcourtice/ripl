@@ -123,10 +123,12 @@ All charts extend `BaseChartOptions` and share these core options:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `padding` | `number \| Partial<ChartPadding>` | `16` | Space reserved around the chart area (a number applies to all edges; an object sets individual ones) |
+| `padding` | `PaddingInput` | `16` | Space reserved around the chart area: a number for every edge, a `[top, right, bottom, left]` tuple, or a partial per-edge object |
 | `animation` | `boolean \| Partial<ChartAnimationOptions>` | `{ enabled: true, duration: 1000, ease: 'easeOutCubic' }` | Animation toggle or configuration |
 | `title` | `string \| Partial<ChartTitleOptions>` | — | Chart title text or configuration |
 | `autoRender` | `boolean` | `true` | Automatically render on creation and update |
+| `theme` | `string \| Theme` | module default | A registered theme name (`'light'`/`'dark'`/`'auto'`) or a `Theme` object |
+| `description` | `string` | title text | Accessible description announced by screen readers |
 
 Most chart types also support these feature options:
 
@@ -138,7 +140,8 @@ Most chart types also support these feature options:
 | `legend` | `boolean \| ChartLegendOptions` | auto | Show/configure series legend (shown by default for charts with more than one series/segment, at the bottom) |
 | `crosshair` | `boolean \| ChartCrosshairOptions` | varies | Show/configure crosshair tracking |
 
-See [Shared Options](/charts/shared-options) for a complete reference on each of these.
+See [Shared Options](/charts/shared-options) for a complete reference on each of these, and each
+chart's own page for the full, generated list of every option it accepts.
 
 ## SVG Rendering
 
@@ -172,33 +175,32 @@ chart.destroy();
 
 ## Available Charts
 
-| Chart | Factory | Key Features |
-| --- | --- | --- |
-| [Bar](/charts/bar) | `createBarChart` | Grouped, stacked, horizontal |
-| [Line](/charts/line) | `createLineChart` | 13 interpolation modes, markers |
-| [Area](/charts/area) | `createAreaChart` | Stacked, gradient fills |
-| [Pie](/charts/pie) | `createPieChart` | Donut mode, slice animations |
-| [Scatter](/charts/scatter) | `createScatterChart` | Bubble sizing, multi-series |
-| [Radar](/charts/radar) | `createRadarChart` | Multi-series overlay |
-| [Heatmap](/charts/heatmap) | `createHeatmapChart` | Color-encoded matrix |
-| [Histogram](/charts/histogram) | `createHistogramChart` | Distribution binning |
-| [Box Plot](/charts/box-plot) | `createBoxPlotChart` | Distribution summary, whiskers, outliers |
-| [Treemap](/charts/treemap) | `createTreemapChart` | Hierarchical proportions |
-| [Funnel](/charts/funnel) | `createFunnelChart` | Conversion funnels |
-| [Gauge](/charts/gauge) | `createGaugeChart` | Radial progress, tick marks |
-| [Polar Area](/charts/polar-area) | `createPolarAreaChart` | Radial bar segments |
-| [Sankey](/charts/sankey) | `createSankeyChart` | Flow diagrams |
-| [Chord](/charts/chord) | `createChordChart` | Relationship matrices |
-| [Sunburst](/charts/sunburst) | `createSunburstChart` | Hierarchical rings |
-| [Trend](/charts/trend) | `createTrendChart` | Mixed line/bar/area, stacking, navigator |
-| [Stock](/charts/stock) | `createStockChart` | OHLC candlesticks, volume |
-| [Gantt](/charts/gantt) | `createGanttChart` | Tasks over a time axis |
-| [Realtime](/charts/realtime) | `createRealtimeChart` | Streaming sliding window |
-| [Polar Scatter](/charts/polar-scatter) | `createPolarScatterChart` | Angle/radius points, size |
-| [Radial Bar](/charts/radial-bar) | `createRadialBarChart` | Concentric value rings |
-| [Packed Circle](/charts/packed-circle) | `createPackedCircleChart` | Area-encoded circle pack |
-| [Force-Directed](/charts/force-directed) | `createForceDirectedChart` | Springy physics network |
-| [Arc Diagram](/charts/arc-diagram) | `createArcDiagramChart` | Axis of nodes linked by arcs |
+<template v-for="category in chartCategories" :key="category">
+    <h3>{{ category }}</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Chart</th>
+                <th>Factory</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="chart in charts.filter(chart => chart.category === category)" :key="chart.link">
+                <td><a :href="chart.link">{{ chart.text }}</a></td>
+                <td><code>{{ chart.factory }}</code></td>
+                <td>{{ chart.description }}</td>
+            </tr>
+        </tbody>
+    </table>
+</template>
+
+<script setup lang="ts">
+import {
+    chartCategories,
+    charts,
+} from '../.vitepress/data/charts';
+</script>
 
 ## Next Steps
 
