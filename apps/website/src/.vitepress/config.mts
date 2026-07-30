@@ -147,7 +147,10 @@ export default defineConfig({
             },
         },
         ssr: {
-            noExternal: ['monaco-editor'],
+            // `pinia` must be bundled rather than externalised: `createPinia()` reads the
+            // `__VUE_PROD_DEVTOOLS__` compile-time flag as a bare global, which throws a
+            // ReferenceError during SSR page rendering unless the bundler has substituted it.
+            noExternal: ['monaco-editor', 'pinia'],
         },
     },
 

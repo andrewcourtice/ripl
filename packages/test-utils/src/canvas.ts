@@ -95,7 +95,10 @@ export function mockCanvasContext() {
         textBaseline: 'alphabetic' as CanvasTextBaseline,
     };
 
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(stub as unknown as CanvasRenderingContext2D);
+    // `getContext` is overloaded and `@webgpu/types` contributes the last overload, so
+    // `mockReturnValue` infers `GPUCanvasContext`. `never` satisfies every overload's return
+    // type; the stub is a 2D context regardless.
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(stub as never);
 
     return stub;
 }

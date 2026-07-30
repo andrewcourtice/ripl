@@ -4,7 +4,7 @@ outline: "deep"
 
 # Devtools
 
-Ripl ships browser developer tools for inspecting and editing live scenes. They come in two parts: the **[@ripl/devtools](https://www.npmjs.com/package/@ripl/devtools)** package (a small runtime bridge you opt into in your app) and a **Chrome extension** that adds a **Ripl** panel to the browser devtools, much like the built-in Elements panel.
+Ripl ships browser developer tools for inspecting and editing live scenes. They come in two parts: the **[@ripl/devtools](https://www.npmjs.com/package/@ripl/devtools)** package (a small runtime bridge you opt into in your app) and the **[Ripl Devtools Chrome extension](https://chromewebstore.google.com/detail/ripl-devtools/fbcceifmhbcmmbmkphpjepigabdiamjb)** that adds a **Ripl** panel to the browser devtools, much like the built-in Elements panel.
 
 Once bound, the panel shows the full element tree of every Ripl context on the page, lets you edit element properties live, toggles renderer debug overlays, and reports which events have listeners attached.
 
@@ -13,7 +13,7 @@ Once bound, the panel shows the full element tree of every Ripl context on the p
 
 ## Demo
 
-The scene below is bound to the devtools. In fact, **every demo on this site is devtools-bound**: install the extension, open your browser devtools, and select the **Ripl** panel to inspect any of them live.
+The scene below is bound to the devtools. In fact, **every demo on this site is devtools-bound**: [install the extension](https://chromewebstore.google.com/detail/ripl-devtools/fbcceifmhbcmmbmkphpjepigabdiamjb), open your browser devtools, and select the **Ripl** panel to inspect any of them live.
 
 :::tabs
 == Demo
@@ -109,9 +109,10 @@ The companion Chrome extension adds a **Ripl** panel to your browser devtools wi
 
 A toolbar icon lights up when Ripl is detected on the page; clicking it lists the contexts it found.
 
-<!-- TODO: replace with the real Chrome Web Store URL once the extension is published. -->
 > [!TIP]
-> **Coming soon to the Chrome Web Store.** Until then, you can build the extension from source and load it unpacked: build the `apps/devtools-extension` workspace and load its `dist/` folder via **Load unpacked** at `chrome://extensions` (with Developer mode enabled). See the extension's `README.md` for the full steps.
+> **[Install Ripl Devtools from the Chrome Web Store.](https://chromewebstore.google.com/detail/ripl-devtools/fbcceifmhbcmmbmkphpjepigabdiamjb)**
+>
+> Prefer to run it from source? Build the `apps/devtools-extension` workspace and load its `dist/` folder via **Load unpacked** at `chrome://extensions` (with Developer mode enabled). See the extension's `README.md` for the full steps.
 
 <script lang="ts" setup>
 import {

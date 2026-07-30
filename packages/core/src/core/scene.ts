@@ -75,12 +75,11 @@ export interface SceneOptions extends GroupOptions {
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
     private _needsRender = true;
+    private _buffer: Element[] = [];
+    private _instructions: RenderInstruction[] = [];
 
     /** The rendering {@link Context} this scene draws to. */
     public context: TContext;
-
-    private _instructions: RenderInstruction[] = [];
-    private _buffer: Element[] = [];
 
     /**
      * The flat, group-aware render instruction stream in paint order (stacking-context
@@ -223,11 +222,14 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
                         type: 'push',
                         element,
                     });
+
                     this._collectInstructions(element, instructions);
+
                     instructions.push({
                         type: 'pop',
                         element,
                     });
+
                     return;
                 }
 

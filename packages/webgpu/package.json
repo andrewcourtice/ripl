@@ -5,19 +5,27 @@
     "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
+    "types": "./dist/index.d.cts",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js",
-            "require": "./dist/index.cjs"
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
         }
     },
     "files": [
         "dist"
     ],
     "sideEffects": false,
-    "repository": "https://github.com/andrewcourtice/ripl",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/andrewcourtice/ripl.git"
+    },
     "author": "Andrew Courtice <andrewcourtice@users.noreply.github.com>",
     "homepage": "https://www.ripl.run",
     "license": "MIT",
@@ -25,12 +33,15 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsup && tsc -p tsconfig.build.json"
+        "build": "tsdown"
     },
     "dependencies": {
         "@ripl/3d": "workspace:^",
         "@ripl/canvas": "workspace:^",
         "@ripl/core": "workspace:^",
         "@ripl/utilities": "workspace:^"
+    },
+    "devDependencies": {
+        "@webgpu/types": "^0.1.71"
     }
 }

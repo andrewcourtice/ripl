@@ -76,6 +76,13 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
+    private _groupDepthStack: number[] = [];
+
+    protected states: BaseState[];
+    protected currentState: BaseState;
+    protected renderDepth = 0;
+    protected saveDepth = 0;
+
     /** The context type identifier (e.g. `canvas`, `svg`). */
     public readonly type: string;
     /** The underlying DOM element the context renders into. */
@@ -105,12 +112,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public renderElement?: RenderElement;
     /** Elements rendered during the current pass, used for hit testing. */
     public renderedElements: RenderElement[];
-
-    protected states: BaseState[];
-    protected currentState: BaseState;
-    protected renderDepth = 0;
-    protected saveDepth = 0;
-    private _groupDepthStack: number[] = [];
 
     /** The event types a context can emit. See {@link EventBus.$events}. */
     public get $events(): (keyof ContextEventMap)[] {

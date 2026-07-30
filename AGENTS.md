@@ -511,17 +511,30 @@ describe('Scale', () => {
 
 ## Build System
 
-**tsup** configuration (shared across packages):
+**tsdown** owns the whole build. One shared config at the repo root
+(`tsdown.config.ts`) serves every package; each package's `build` script is just
+`tsdown`, run with the package as cwd (tsdown finds the config by searching
+parent directories, and reads that package's own `package.json`/`tsconfig.json`).
 
 - **Clean** output directory before builds
-- **Declaration files** (`.d.ts`) generated
-- **Source maps** enabled
-- **Target:** ES2018
-- **Formats:** ESM, CommonJS, IIFE
+- **Declaration files** — bundled by tsdown into a single `index.d.ts` (plus
+  `index.d.cts` for the `require` condition). No separate `tsc` step
+- **Source maps** enabled for JS (declaration maps are not emitted)
+- **Target:** ES2023
+- **Platform:** `neutral`
+- **Formats:** ESM (`index.js`), CommonJS (`index.cjs`), IIFE (`index.iife.js`)
 - **Entry:** `./src/index.ts`
 - **Output:** `./dist`
+- **Workspace deps** (`@ripl/*`) stay external in ESM/CJS so consumers install
+  them and types stay identical across packages; the IIFE build inlines them so
+  each `.iife.js` is a standalone `<script>` drop-in
+- **Validation** — `publint` and `attw` run after every package build
 
-**Package manager:** Yarn 4 (Berry) with PnP
+Because tsdown emits declarations without computing semantic diagnostics, the
+build does **not** typecheck. `yarn typecheck` (`tsconfig.typecheck.json`)
+typechecks every package in one pass and is the type gate in CI.
+
+**Package manager:** Yarn 4 (Berry), `node-modules` linker
 
 ## Performance Guidelines
 
@@ -543,8 +556,19 @@ describe('Scale', () => {
 ## Dependencies
 
 - **Zero runtime dependencies** — This is a core promise of the project. Do not add runtime dependencies.
-- **Dev dependencies** are for build and test tooling only: TypeScript, tsup, Vitest, ESLint, happy-dom/jsdom
+- **Dev dependencies** are for build and test tooling only: TypeScript, tsdown, Vitest, ESLint, happy-dom/jsdom
 - When external libraries are necessary, prefer tree-shakable options
+- **Ambient type packages must stay out of the public API.** A published `.d.ts` may only
+  reference types the consumer already has — i.e. TypeScript's own `lib` (`ESNext`, `DOM`).
+  Anything else (`@webgpu/types`, `@types/node`, …) is a `devDependency`, owned by the package
+  that needs it, with the package's own `tsconfig.json` pinning it in `compilerOptions.types`
+  rather than inheriting from the root. See `packages/node` (`@types/node`, for `process.stdout`)
+  and `packages/webgpu` (`@webgpu/types`, for the `GPUBufferUsage`/`GPUTextureUsage` flag objects
+  and the `getContext('webgpu')` overload — TypeScript 6's `lib.dom` declares the WebGPU
+  *interfaces* but not those).
+- `yarn typecheck:dist` enforces this: it typechecks every published `dist/index.d.ts` with
+  `types: []` and `skipLibCheck: false`, so a package that leaks a type it never declared fails
+  the build. Run it after `yarn build`.
 
 ## Documentation Site (`apps/website/`)
 
@@ -587,7 +611,7 @@ The playground (`apps/website/src/.vitepress/components/playground/`) provides a
 
 1. Write tests for new features and bug fixes
 2. Ensure all tests pass (`yarn test`)
-3. Ensure linting passes (`yarn lint`)
+3. Ensure linting (`yarn lint`) and typechecking (`yarn typecheck`) pass
 4. Follow the code style and patterns described in this document
 5. Keep changes focused and atomic
 6. Document **every** public API member with JSDoc per [Public API Documentation](#public-api-documentation) — new or changed public methods, config options, properties, accessors, factories, and type-guards must all carry doc comments (verify with the TypeDoc `notDocumented` check). An undocumented public member is an incomplete change.

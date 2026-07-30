@@ -52,9 +52,9 @@ const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPa
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
 
-    protected path?: ContextPath;
-
     private _cachedContext?: Context;
+
+    protected path?: ContextPath;
 
     /** When `true`, the shape's outline is automatically stroked after rendering whenever {@link Element.stroke} is set. */
     public autoStroke: boolean;

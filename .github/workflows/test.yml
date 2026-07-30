@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: yarn
 
       - name: Install dependencies
@@ -48,14 +48,20 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: yarn
 
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build (typechecks + emits declarations via tsc)
+      - name: Typecheck
+        run: yarn typecheck
+
+      - name: Build (bundles + emits declarations via tsdown)
         run: yarn build
+
+      - name: Typecheck published declarations
+        run: yarn typecheck:dist
 
       - name: Run tests
         run: yarn test

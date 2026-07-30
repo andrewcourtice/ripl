@@ -1,5 +1,16 @@
+// `@webgpu/types` is pinned here rather than inherited from the root tsconfig: it is a
+// build-only concern of this package. TypeScript 6's `lib.dom` already declares the WebGPU
+// *interfaces* (`GPUDevice`, `GPUBuffer`, …) that appear in this package's public signatures —
+// what it lacks are the `GPUBufferUsage`/`GPUTextureUsage` flag objects used as values in
+// `context.ts`/`geometry.ts`, and the `getContext('webgpu')` overload. Those are implementation
+// details, so `@webgpu/types` stays a devDependency and never reaches the published `.d.ts`.
 {
     "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "types": [
+            "@webgpu/types"
+        ]
+    },
     "include": [
         "src/**/*.ts",
     ]

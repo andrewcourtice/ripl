@@ -132,25 +132,14 @@ export function rescaleDomain<TDomain>(
  */
 export class Navigator extends EventBus<NavigatorEventMap> {
 
+    protected _brush: NavigatorBrush | null = null;
+    protected _scaleExtent: [number, number];
+    protected _viewport: NavigatorViewport;
     protected _transform: NavigatorTransform = {
         k: 1,
         x: 0,
         y: 0,
     };
-
-    protected _brush: NavigatorBrush | null = null;
-    protected _scaleExtent: [number, number];
-    protected _viewport: NavigatorViewport;
-
-    constructor(options?: NavigatorOptions) {
-        super();
-
-        this._scaleExtent = options?.scaleExtent ?? [...DEFAULT_SCALE_EXTENT];
-        this._viewport = {
-            width: options?.viewport?.width ?? 0,
-            height: options?.viewport?.height ?? 0,
-        };
-    }
 
     /** The event types a navigator can emit. See {@link EventBus.$events}. */
     public get $events(): (keyof NavigatorEventMap)[] {
@@ -195,6 +184,16 @@ export class Navigator extends EventBus<NavigatorEventMap> {
     public set viewport(viewport: NavigatorViewport) {
         this._viewport = {
             ...viewport,
+        };
+    }
+
+    constructor(options?: NavigatorOptions) {
+        super();
+
+        this._scaleExtent = options?.scaleExtent ?? [...DEFAULT_SCALE_EXTENT];
+        this._viewport = {
+            width: options?.viewport?.width ?? 0,
+            height: options?.viewport?.height ?? 0,
         };
     }
 
