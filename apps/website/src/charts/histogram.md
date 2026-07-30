@@ -64,7 +64,6 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
-        legend: true,
         crosshair: true,
         axes: true,
     },

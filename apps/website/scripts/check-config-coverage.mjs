@@ -97,12 +97,17 @@ const CHART_EXCLUSIONS = {
         annotations: 'the chart does not call `renderAnnotations` yet',
         navigator: 'the chart does not reserve a navigator band yet',
         overview: 'the chart does not reserve a navigator band yet',
+        legend: 'the chart does not call `reserveLegend` yet',
     },
     histogram: {
         thresholds: 'explicit bin edges, an alternative to `bins` — a control for both would contradict itself',
         annotations: 'the chart does not call `renderAnnotations` yet',
         navigator: 'the chart does not reserve a navigator band yet',
         overview: 'the chart does not reserve a navigator band yet',
+        legend: 'the chart does not call `reserveLegend` yet',
+    },
+    stock: {
+        legend: 'the chart does not call `reserveLegend` yet',
     },
     gauge: {
         tickFormat: 'the demo pins a `%` suffix so the tick labels carry the gauge\'s unit',
