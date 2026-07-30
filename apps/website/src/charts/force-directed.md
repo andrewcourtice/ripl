@@ -197,14 +197,171 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `value`, `c
 
 ## Options
 
-- **`nodes`**: array of `{ id, label?, value?, group?, color? }`
-- **`links`**: array of `{ source, target, value? }`
-- **`nodeRadius`**: base node radius (nodes scale around this by value/degree, default `8`)
-- **`charge`**: repulsion strength (negative, default `-240`)
-- **`linkDistance`**: target distance for link springs (default `60`)
-- **`linkStrength`**: link spring strength (default `0.5`)
-- **`centerStrength`**: centering pull (default `0.05`)
-- **`iterations`**: simulation iterations (default `300`)
-- **`root`**: id of the node the entry animation springs out from (defaults to the highest-degree node)
-- **`format`**: value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`**: standard chart options
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createForceDirectedChart('#container', {
+    nodes, // ForceNetworkNode<TData>[]
+    links, // ForceNetworkLink[]
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface ForceDirectedChartOptions<TData> {
+    // Chart-specific
+    /** The nodes in the network. */
+    nodes: ForceNetworkNode<TData>[];
+
+    /** The links (edges) connecting pairs of nodes. */
+    links: ForceNetworkLink[];
+
+    /** Base node radius (nodes with a `value` scale around this). Defaults to 8. */
+    nodeRadius?: number;
+
+    /** Force tuning. */
+    charge?: number;
+
+    /** Target resting distance between two linked nodes. */
+    linkDistance?: number;
+
+    /** Strength pulling linked nodes toward `linkDistance`. */
+    linkStrength?: number;
+
+    /** Strength pulling all nodes toward the layout center. */
+    centerStrength?: number;
+
+    /** Number of simulation iterations run before the layout is drawn. */
+    iterations?: number;
+
+    /** Id of the node the layout springs out from on entry. Defaults to the highest-degree node. */
+    root?: string;
+
+    /**
+     * Legend configuration. Shown automatically when there is more than one node group; pass
+     * `false` to hide.
+     */
+    legend?: ChartLegendInput;
+
+    /** Format applied to node/link values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+}
+
+interface ForceNetworkNode<TData> {
+    /** Unique identifier for the node, referenced by links and used for data joins. */
+    id: string;
+
+    /** Text shown beneath the node; defaults to the node's id. */
+    label?: string;
+
+    /** Optional magnitude used to size the node; defaults to the node's link degree. */
+    value?: number;
+
+    /** Optional grouping; nodes in the same group share a color. */
+    group?: string;
+
+    /** Explicit node color; falls back to the group/palette color when omitted. */
+    color?: string;
+
+    /** Arbitrary datum carried through to node interaction events. */
+    data?: TData;
+}
+
+interface ForceNetworkLink {
+    /** Id of the node the link starts from. */
+    source: string;
+
+    /** Id of the node the link connects to. */
+    target: string;
+
+    /** Optional weight; scales the link's line width. */
+    value?: number;
+}
+
+interface ForceDirectedChartEventMap<TData> {
+    /** Emitted when a node is clicked. */
+    nodeclick: ForceDirectedNodeEvent<TData>;
+
+    /** Emitted when the pointer enters a node. */
+    nodeenter: ForceDirectedNodeEvent<TData>;
+
+    /** Emitted when the pointer leaves a node. */
+    nodeleave: ForceDirectedNodeEvent<TData>;
+
+    /** Emitted when a link is clicked. */
+    linkclick: ForceDirectedLinkEvent;
+
+    /** Emitted when the pointer enters a link. */
+    linkenter: ForceDirectedLinkEvent;
+
+    /** Emitted when the pointer leaves a link. */
+    linkleave: ForceDirectedLinkEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a node is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when the pointer enters a node.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when the pointer leaves a node.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when a link is clicked.
+chart.on('linkclick', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+// Emitted when the pointer enters a link.
+chart.on('linkenter', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+// Emitted when the pointer leaves a link.
+chart.on('linkleave', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+```
+<!-- events:end -->

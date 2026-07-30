@@ -136,15 +136,138 @@ const chart = createGaugeChart('#container', {
 chart.update({ value: 85 });
 ```
 
+## Data Format
+
+A gauge shows a single number rather than a dataset, so there is no `data` option — pass `value`
+directly and update it as it changes:
+
+```ts
+const chart = createGaugeChart('#container', {
+    value: 72,
+    min: 0,
+    max: 100,
+});
+
+chart.update({ value: 85 });
+```
+
 ## Options
 
-- **`value`**: the current gauge value
-- **`min`**: minimum value (default `0`)
-- **`max`**: maximum value (default `100`)
-- **`label`**: label displayed below the value
-- **`color`**: gauge fill color (default pastel blue)
-- **`trackColor`**: background track color (default `#e5e7eb`)
-- **`format`**: custom value formatter function
-- **`ticks`**: number of tick marks along the arc (default `5`, set to `0` to hide)
-- **`tickLabels`**: whether to show value labels at each tick (default `true`)
-- **`tickFormat`**: custom formatter for tick labels
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createGaugeChart('#container', {
+    value, // number
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface GaugeChartOptions {
+    // Chart-specific
+    /** The value displayed by the gauge (clamped to `min`–`max`). */
+    value: number;
+
+    /** Lower bound of the gauge scale. Defaults to 0. */
+    min?: number;
+
+    /** Upper bound of the gauge scale. Defaults to 100. */
+    max?: number;
+
+    /** Optional descriptive text shown below the value. */
+    label?: string;
+
+    /** Color of the value arc. */
+    color?: string;
+
+    /** Color of the background track arc. */
+    trackColor?: string;
+
+    /**
+     * How the central value display is formatted: a built-in format type, Intl number-format
+     * options, or a custom function.
+     */
+    format?: ValueFormatInput;
+
+    /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide the ticks. */
+    ticks?: number;
+
+    /** Show a value label at each tick. Defaults to `true`. */
+    tickLabels?: boolean;
+
+    /** How tick labels are formatted. Defaults to `GaugeChartOptions.format`. */
+    tickFormat?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+}
+
+interface GaugeChartEventMap {
+    /** Emitted when the value arc is clicked. */
+    valueclick: GaugeChartValueEvent;
+
+    /** Emitted when the pointer enters the value arc. */
+    valueenter: GaugeChartValueEvent;
+
+    /** Emitted when the pointer leaves the value arc. */
+    valueleave: GaugeChartValueEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when the value arc is clicked.
+chart.on('valueclick', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+// Emitted when the pointer enters the value arc.
+chart.on('valueenter', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+// Emitted when the pointer leaves the value arc.
+chart.on('valueleave', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+```
+<!-- events:end -->

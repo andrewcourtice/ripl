@@ -5,6 +5,8 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
+## Example
+
 <ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
@@ -234,11 +236,125 @@ createPieChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: unique identifier field for each slice
-- **`value`**: numeric value field
-- **`label`**: display label field
-- **`innerRadius`**: inner radius ratio for donut mode (0–1, default `0`)
-- **`labels`** (`boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions`): segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customizes `position` / `font` / `fontColor`.
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | ((value) => string)`): formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createPieChart('#container', {
+    data,  // TData[]
+    key,   // keyof TData | ((item: TData) => string)
+    value, // NumericAccessor<TData>
+    label, // keyof TData | ((item: TData) => string)
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface PieChartOptions<TData> {
+    // Chart-specific
+    /** The dataset to render, one segment per item. */
+    data: TData[];
+
+    /** Accessor for each item's unique key, used to match segments across data updates. */
+    key: keyof TData | ((item: TData) => string);
+
+    /** Accessor for each item's numeric value, which determines its proportional arc angle. */
+    value: NumericAccessor<TData>;
+
+    /** Accessor for each item's display label (shown in the legend and segment labels). */
+    label: keyof TData | ((item: TData) => string);
+
+    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
+    colorBy?: keyof TData | ((item: TData) => string);
+
+    /**
+     * Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values
+     * are absolute pixels. Defaults to 0 (a solid pie).
+     */
+    innerRadius?: number;
+
+    /** Legend configuration. Shown by default; pass `false` to hide. */
+    legend?: ChartLegendInput;
+
+    /**
+     * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
+     * inside each segment; `'outside'` places them beyond the arc with a leader line; a full
+     * object customizes position/font/color.
+     */
+    labels?: ChartSegmentLabelsInput;
+
+    /** Format applied to segment values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+}
+
+interface PieChartEventMap {
+    /** Emitted when a segment is clicked. */
+    segmentclick: PieChartSegmentEvent;
+
+    /** Emitted when the pointer enters a segment. */
+    segmententer: PieChartSegmentEvent;
+
+    /** Emitted when the pointer leaves a segment. */
+    segmentleave: PieChartSegmentEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a segment is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+// Emitted when the pointer enters a segment.
+chart.on('segmententer', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+// Emitted when the pointer leaves a segment.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+```
+<!-- events:end -->

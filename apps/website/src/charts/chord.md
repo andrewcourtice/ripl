@@ -119,7 +119,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createChordChart('#container', {
-    labels: ['A', 'B', 'C'],
+    groups: ['A', 'B', 'C'],
     matrix: [
         [0, 10, 20],
         [10, 0, 15],
@@ -128,10 +128,143 @@ const chart = createChordChart('#container', {
 });
 ```
 
+## Data Format
+
+A chord chart is driven by a square matrix rather than a row-per-item dataset. `groups` names each
+row/column, and `matrix[i][j]` is the flow from group `i` to group `j`:
+
+```ts
+const groups = ['Engineering', 'Design', 'Marketing'];
+
+const matrix = [
+    //  Eng  Des  Mkt
+    [0, 5, 10], // from Engineering
+    [5, 0, 6], //  from Design
+    [10, 6, 0], //  from Marketing
+];
+```
+
+The diagonal is normally `0` (a group does not flow to itself), and the matrix must be the same
+length as `groups` in both dimensions.
+
 ## Options
 
-- **`groups`**: array of group names, one per row/column of the matrix
-- **`matrix`**: square matrix of flow values between groups
-- **`palette`**: optional array of colors, one per group (positional)
-- **`padAngle`**: gap angle between arcs in radians (default `0.04`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createChordChart('#container', {
+    groups, // string[]
+    matrix, // number[][]
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface ChordChartOptions {
+    // Chart-specific
+    /** Group names, one per row/column of the matrix, rendered as outer arcs. */
+    groups: string[];
+
+    /** Square flow matrix where `matrix[i][j]` is the flow from group `i` to group `j`. */
+    matrix: number[][];
+
+    /** Explicit color per group; falls back to the generated palette when omitted. */
+    palette?: string[];
+
+    /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
+    padAngle?: number;
+
+    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
+    legend?: ChartLegendInput;
+
+    /** Format applied to flow values shown as text (e.g. tooltips). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+}
+
+interface ChordChartEventMap {
+    /** Emitted when an outer arc is clicked. */
+    segmentclick: ChordChartSegmentEvent;
+
+    /** Emitted when the pointer enters an outer arc. */
+    segmententer: ChordChartSegmentEvent;
+
+    /** Emitted when the pointer leaves an outer arc. */
+    segmentleave: ChordChartSegmentEvent;
+
+    /** Emitted when a ribbon is clicked. */
+    linkclick: ChordChartLinkEvent;
+
+    /** Emitted when the pointer enters a ribbon. */
+    linkenter: ChordChartLinkEvent;
+
+    /** Emitted when the pointer leaves a ribbon. */
+    linkleave: ChordChartLinkEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when an outer arc is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when the pointer enters an outer arc.
+chart.on('segmententer', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when the pointer leaves an outer arc.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when a ribbon is clicked.
+chart.on('linkclick',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+// Emitted when the pointer enters a ribbon.
+chart.on('linkenter',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+// Emitted when the pointer leaves a ribbon.
+chart.on('linkleave',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+```
+<!-- events:end -->

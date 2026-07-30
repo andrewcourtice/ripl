@@ -172,21 +172,196 @@ const chart = createStockChart('#container', {
 chart.update({ data: newData });
 ```
 
+## Data Format
+
+Each item is one candle: a key for the x axis plus its open, high, low and close. `volume` is
+optional and enables the volume panel beneath the candles:
+
+```ts
+const data = [
+    {
+        date: '2024-01-02',
+        open: 184.2,
+        high: 188.4,
+        low: 183.9,
+        close: 187.6,
+        volume: 12_400_000,
+    },
+    {
+        date: '2024-01-03',
+        open: 187.6,
+        high: 189.1,
+        low: 184.0,
+        close: 184.5,
+        volume: 9_800_000,
+    },
+];
+```
+
+A candle closing at or above its open is drawn with `upColor`, below its open with `downColor`.
+
 ## Options
 
-- **`data`**: the data array
-- **`key`**: key accessor for each data point (e.g. date)
-- **`open`** / **`high`** / **`low`** / **`close`**: price accessors
-- **`volume`**: volume accessor (optional)
-- **`showVolume`**: show volume bars below the chart (default `true`)
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (tracks **both** axes by default)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
-- **`navigator`** (`boolean | NavigatorInteractions`): enable in-plot pan/zoom navigation
-- **`overview`** (`boolean | ChartOverviewOptions`): show the overview scrub-bar strip that windows the date axis
-- **`annotations`** (`ChartAnnotation[]`): reference lines, shaded bands, and point markers drawn over the plot
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the OHLC values shown in the candle tooltip
-- **`upColor`**: color for bullish candles (default `#6dd5b1`)
-- **`downColor`**: color for bearish candles (default `#f4a0b9`)
-- **`padding`**: chart padding
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createStockChart('#container', {
+    data,  // TData[]
+    key,   // keyof TData | ((item: TData) => string)
+    open,  // NumericAccessor<TData>
+    high,  // NumericAccessor<TData>
+    low,   // NumericAccessor<TData>
+    close, // NumericAccessor<TData>
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface StockChartOptions<TData> {
+    // Chart-specific
+    /** The dataset to render, one candlestick per item. */
+    data: TData[];
+
+    /**
+     * Accessor for each item's unique key, used along the x-axis and to match candles across
+     * updates.
+     */
+    key: keyof TData | ((item: TData) => string);
+
+    /** Accessor for each item's opening price. */
+    open: NumericAccessor<TData>;
+
+    /** Accessor for each item's high price. */
+    high: NumericAccessor<TData>;
+
+    /** Accessor for each item's low price. */
+    low: NumericAccessor<TData>;
+
+    /** Accessor for each item's closing price. */
+    close: NumericAccessor<TData>;
+
+    /** Optional accessor for each item's traded volume, enabling the volume sub-chart. */
+    volume?: NumericAccessor<TData>;
+
+    /** Show the volume sub-chart below the candlesticks. Defaults to `true` (requires `volume`). */
+    showVolume?: boolean;
+
+    /** Format applied to the open/high/low/close values shown in the candle tooltip. */
+    format?: ValueFormatInput;
+
+    /** Color for candles that close at or above their open (bullish). */
+    upColor?: string;
+
+    /** Color for candles that close below their open (bearish). */
+    downColor?: string;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+
+    // Shared by every cartesian chart (CartesianChartOptions)
+    /** X/y axis configuration, or a boolean toggling both axes. See `ChartAxisInput`. */
+    axis?: ChartAxisInput<TData>;
+
+    /** Background grid configuration, or a boolean toggle. See `ChartGridInput`. */
+    grid?: ChartGridInput;
+
+    /** Hover-tooltip configuration, or a boolean toggle. See `ChartTooltipInput`. */
+    tooltip?: ChartTooltipInput;
+
+    /** Legend configuration, a position string, or a boolean toggle. See `ChartLegendInput`. */
+    legend?: ChartLegendInput;
+
+    /** Crosshair configuration, or a boolean toggle. See `ChartCrosshairInput`. */
+    crosshair?: ChartCrosshairInput;
+
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See `ChartAnnotation`. */
+    annotations?: ChartAnnotation[];
+
+    /**
+     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom
+     * and click-drag pan; an object configures each interaction individually. The chart
+     * auto-creates a `DOMNavigator` on its context and rescales the axis domains as the view
+     * changes, with no data rebuild. Access the underlying controller via `chart.navigator` for
+     * imperative framing (`centerOn`/`fitBounds`) or brush-and-link.
+     */
+    navigator?: boolean | NavigatorInteractions;
+
+    /**
+     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects
+     * the visible range of the **category** axis (a bottom bar for category-on-x charts, a side
+     * bar for a horizontal bar chart). `true` uses the default size; an object sets it. Enabling
+     * the strip also turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator`
+     * is explicitly `false`. Only category-axis charts (line, area, bar, trend) render the strip.
+     */
+    overview?: boolean | ChartOverviewOptions;
+}
+
+interface StockChartEventMap {
+    /** Emitted when a candlestick is clicked. */
+    candleclick: StockChartCandleEvent;
+
+    /** Emitted when the pointer enters a candlestick. */
+    candleenter: StockChartCandleEvent;
+
+    /** Emitted when the pointer leaves a candlestick. */
+    candleleave: StockChartCandleEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a candlestick is clicked.
+chart.on('candleclick', event => console.log(event.data)); // event.data: StockChartCandleEvent
+// Emitted when the pointer enters a candlestick.
+chart.on('candleenter', event => console.log(event.data)); // event.data: StockChartCandleEvent
+// Emitted when the pointer leaves a candlestick.
+chart.on('candleleave', event => console.log(event.data)); // event.data: StockChartCandleEvent
+```
+<!-- events:end -->

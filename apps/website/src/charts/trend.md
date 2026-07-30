@@ -277,31 +277,265 @@ createTrendChart('#container', {
 
 ## Options
 
-- **`data`**: the data array shared by all series
-- **`series`**: array of series, each a discriminated union on `type`:
-  - **`type: 'line'`**: `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
-  - **`type: 'area'`**: as line, plus `fillOpacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
-  - **`type: 'bar'`**: `id`, `value`, `label`, optional `color`
-- **`key`**: key accessor for the categorical x-axis
-- **`stacked`**: stack same-type series (default `false`)
-- **`borderRadius`**: corner radius applied to bars (default `2`)
-- **`overview`** (`boolean | { size }`): show the navigator strip; enabling it also turns on in-plot pan/zoom
-- **`navigator`** (`boolean | NavigatorInteractions`): configure in-plot pan/zoom/brush directly
-- **`labels`** (`boolean | anchor`): show value labels next to marks
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
-- **`format`**: format applied to values in tooltips and labels
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createTrendChart('#container', {
+    data,   // TData[]
+    series, // TrendChartSeriesOptions<TData>[]
+    key,    // keyof TData | ((item: TData) => string)
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface TrendChartOptions<TData> {
+    // Chart-specific
+    /** The dataset plotted across all series. */
+    data: TData[];
+
+    /** The series to render, mixing line, bar, and area types on shared axes. */
+    series: TrendChartSeriesOptions<TData>[];
+
+    /** Accessor for each item's category key (the value plotted along the x axis). */
+    key: keyof TData | ((item: TData) => string);
+
+    /** Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false. */
+    stacked?: boolean;
+
+    /** Corner radius in pixels applied to each bar. Defaults to 2. */
+    borderRadius?: number;
+
+    /**
+     * Show value labels next to each mark. `true` uses the default anchor; a string sets the
+     * anchor side.
+     */
+    labels?: ChartDataLabelsInput;
+
+    /** Format applied to values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+
+    // Shared by every cartesian chart (CartesianChartOptions)
+    /** X/y axis configuration, or a boolean toggling both axes. See `ChartAxisInput`. */
+    axis?: ChartAxisInput<TData>;
+
+    /** Background grid configuration, or a boolean toggle. See `ChartGridInput`. */
+    grid?: ChartGridInput;
+
+    /** Hover-tooltip configuration, or a boolean toggle. See `ChartTooltipInput`. */
+    tooltip?: ChartTooltipInput;
+
+    /** Legend configuration, a position string, or a boolean toggle. See `ChartLegendInput`. */
+    legend?: ChartLegendInput;
+
+    /** Crosshair configuration, or a boolean toggle. See `ChartCrosshairInput`. */
+    crosshair?: ChartCrosshairInput;
+
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See `ChartAnnotation`. */
+    annotations?: ChartAnnotation[];
+
+    /**
+     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom
+     * and click-drag pan; an object configures each interaction individually. The chart
+     * auto-creates a `DOMNavigator` on its context and rescales the axis domains as the view
+     * changes, with no data rebuild. Access the underlying controller via `chart.navigator` for
+     * imperative framing (`centerOn`/`fitBounds`) or brush-and-link.
+     */
+    navigator?: boolean | NavigatorInteractions;
+
+    /**
+     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects
+     * the visible range of the **category** axis (a bottom bar for category-on-x charts, a side
+     * bar for a horizontal bar chart). `true` uses the default size; an object sets it. Enabling
+     * the strip also turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator`
+     * is explicitly `false`. Only category-axis charts (line, area, bar, trend) render the strip.
+     */
+    overview?: boolean | ChartOverviewOptions;
+}
+
+interface TrendChartLineSeriesOptions<TData> {
+    // Chart-specific
+    /** Discriminant marking this as a line series. */
+    type: 'line';
+
+    /** Renderer used to draw the line (e.g. straight or curved); defaults to straight segments. */
+    lineType?: PolylineRenderer;
+
+    /** Width in pixels of the series line. */
+    lineWidth?: number;
+
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
+
+    /** Show point markers along the line. Defaults to `true`. */
+    markers?: boolean;
+
+    /** Radius in pixels of each point marker. Defaults to 3. */
+    markerRadius?: number;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
+    id: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
+    color?: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Series name shown in the legend and tooltips (or a per-item function). */
+    label: string | ((item: TData) => string);
+}
+
+interface TrendChartBarSeriesOptions<TData> {
+    // Chart-specific
+    /** Discriminant marking this as a bar series. */
+    type: 'bar';
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
+    id: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
+    color?: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Series name shown in the legend and tooltips (or a per-item function). */
+    label: string | ((item: TData) => string);
+}
+
+interface TrendChartAreaSeriesOptions<TData> {
+    // Chart-specific
+    /** Discriminant marking this as an area series. */
+    type: 'area';
+
+    /**
+     * Renderer used to draw the area top edge (e.g. straight or curved); defaults to straight
+     * segments.
+     */
+    lineType?: PolylineRenderer;
+
+    /** Width in pixels of the series line. */
+    lineWidth?: number;
+
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
+
+    /** Fill opacity of the area band. Defaults to 0.3. */
+    fillOpacity?: number;
+
+    /** Show point markers at each data value. Defaults to `true`. */
+    markers?: boolean;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
+    id: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
+    color?: string;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+
+    // Inherited from TrendChartBaseSeriesOptions
+    /** Series name shown in the legend and tooltips (or a per-item function). */
+    label: string | ((item: TData) => string);
+}
+
+interface TrendChartEventMap {
+    /** Emitted when a bar is clicked. */
+    barclick: TrendChartBarEvent;
+
+    /** Emitted when the pointer enters a bar. */
+    barenter: TrendChartBarEvent;
+
+    /** Emitted when the pointer leaves a bar. */
+    barleave: TrendChartBarEvent;
+
+    /** Emitted when a line/area marker is clicked. */
+    markerclick: TrendChartMarkerEvent;
+
+    /** Emitted when the pointer enters a line/area marker. */
+    markerenter: TrendChartMarkerEvent;
+
+    /** Emitted when the pointer leaves a line/area marker. */
+    markerleave: TrendChartMarkerEvent;
+}
+```
+<!-- options:end -->
 
 ## Events
 
-Bar series emit `barclick` / `barenter` / `barleave`, and line/area markers emit `markerclick` / `markerenter` / `markerleave`. Each payload carries `{ x, y, xValue, yValue, seriesId }`:
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
 
+<!-- events:start -->
+<!-- eslint-skip -->
 ```ts
-chart.on('markerclick', event => {
-    const { seriesId, xValue, yValue } = event.data;
-    console.log(`${seriesId} @ ${xValue}: ${yValue}`);
-});
+// Emitted when a bar is clicked.
+chart.on('barclick',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when the pointer enters a bar.
+chart.on('barenter',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when the pointer leaves a bar.
+chart.on('barleave',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when a line/area marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
+// Emitted when the pointer enters a line/area marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
+// Emitted when the pointer leaves a line/area marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
 ```
+<!-- events:end -->

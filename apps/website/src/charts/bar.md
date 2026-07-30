@@ -391,15 +391,180 @@ createBarChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `value`, `label`, and optional `color`
-- **`key`**: key accessor for categories
-- **`stacked`**: `false` (grouped, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`orientation`**: `'vertical'` (default) or `'horizontal'`
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`overview`** (`boolean | { size }`): show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
-- **`borderRadius`**: bar corner radius (default `2`)
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createBarChart('#container', {
+    data,   // TData[]
+    series, // BarChartSeriesOptions<TData>[]
+    key,    // keyof TData | ((item: TData) => string)
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface BarChartOptions<TData> {
+    // Chart-specific
+    /** The dataset rendered by the chart. */
+    data: TData[];
+
+    /** The series to draw from each data item. */
+    series: BarChartSeriesOptions<TData>[];
+
+    /** Accessor for each item's category key (the value plotted along the categorical axis). */
+    key: keyof TData | ((item: TData) => string);
+
+    /** Whether bars run vertically (default) or horizontally. */
+    orientation?: BarChartOrientation;
+
+    /**
+     * Whether multiple series are stacked into a single bar per category (`true`) or grouped side
+     * by side (default `false`). Pass `'percent'` for a 100%-stacked chart: each category's values
+     * are normalized to their share of the category's positive total (negative values contribute
+     * zero), the value axis is fixed to 0–100%, and values default to percentage formatting.
+     */
+    stacked?: boolean | 'percent';
+
+    /** Corner radius in pixels applied to each bar. Defaults to 2. */
+    borderRadius?: number;
+
+    /**
+     * Show value labels next to each bar. `true` uses the default anchor; a string sets the anchor
+     * side.
+     */
+    labels?: ChartDataLabelsInput;
+
+    /** Format applied to bar values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+
+    // Shared by every cartesian chart (CartesianChartOptions)
+    /** X/y axis configuration, or a boolean toggling both axes. See `ChartAxisInput`. */
+    axis?: ChartAxisInput<TData>;
+
+    /** Background grid configuration, or a boolean toggle. See `ChartGridInput`. */
+    grid?: ChartGridInput;
+
+    /** Hover-tooltip configuration, or a boolean toggle. See `ChartTooltipInput`. */
+    tooltip?: ChartTooltipInput;
+
+    /** Legend configuration, a position string, or a boolean toggle. See `ChartLegendInput`. */
+    legend?: ChartLegendInput;
+
+    /** Crosshair configuration, or a boolean toggle. See `ChartCrosshairInput`. */
+    crosshair?: ChartCrosshairInput;
+
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See `ChartAnnotation`. */
+    annotations?: ChartAnnotation[];
+
+    /**
+     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom
+     * and click-drag pan; an object configures each interaction individually. The chart
+     * auto-creates a `DOMNavigator` on its context and rescales the axis domains as the view
+     * changes, with no data rebuild. Access the underlying controller via `chart.navigator` for
+     * imperative framing (`centerOn`/`fitBounds`) or brush-and-link.
+     */
+    navigator?: boolean | NavigatorInteractions;
+
+    /**
+     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects
+     * the visible range of the **category** axis (a bottom bar for category-on-x charts, a side
+     * bar for a horizontal bar chart). `true` uses the default size; an object sets it. Enabling
+     * the strip also turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator`
+     * is explicitly `false`. Only category-axis charts (line, area, bar, trend) render the strip.
+     */
+    overview?: boolean | ChartOverviewOptions;
+}
+
+interface BarChartSeriesOptions<TData> {
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
+    id: string;
+
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
+    color?: string;
+
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+
+    /** Human-readable series name shown in the legend and tooltips. */
+    label: string;
+
+    /**
+     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
+     * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
+     * orientation always render against the primary axis.
+     */
+    yAxis?: number | string;
+}
+
+interface BarChartEventMap {
+    /** Emitted when a bar is clicked. */
+    barclick: BarChartBarEvent;
+
+    /** Emitted when the pointer enters a bar. */
+    barenter: BarChartBarEvent;
+
+    /** Emitted when the pointer leaves a bar. */
+    barleave: BarChartBarEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a bar is clicked.
+chart.on('barclick', event => console.log(event.data)); // event.data: BarChartBarEvent
+// Emitted when the pointer enters a bar.
+chart.on('barenter', event => console.log(event.data)); // event.data: BarChartBarEvent
+// Emitted when the pointer leaves a bar.
+chart.on('barleave', event => console.log(event.data)); // event.data: BarChartBarEvent
+```
+<!-- events:end -->

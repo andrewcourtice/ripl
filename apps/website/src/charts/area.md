@@ -404,14 +404,191 @@ createAreaChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`, `axis` (y-axis index/id binding)
-- **`key`**: key accessor for data points
-- **`stacked`**: `false` (overlaid, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
+Every option is listed below, generated from the chart's TypeScript definitions so this reference
+cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
+to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+
+### Required
+
+<!-- required:start -->
+<!-- eslint-skip -->
+```ts
+createAreaChart('#container', {
+    data,   // TData[]
+    series, // AreaChartSeriesOptions<TData>[]
+    key,    // keyof TData | ((item: TData) => string)
+});
+```
+<!-- required:end -->
+
+### All options
+
+<!-- options:start -->
+<!-- eslint-skip -->
+```ts
+interface AreaChartOptions<TData> {
+    // Chart-specific
+    /** The dataset rendered by the chart. */
+    data: TData[];
+
+    /** The series to draw from each data item. */
+    series: AreaChartSeriesOptions<TData>[];
+
+    /** Accessor for each item's category key (the value plotted along the x axis). */
+    key: keyof TData | ((item: TData) => string);
+
+    /**
+     * Stack series cumulatively instead of overlaying them. Defaults to false. With multiple
+     * y-axes, stacking applies per axis group; series stack only with the other series bound to
+     * the same axis, and each axis's extent covers its own group's cumulative total.
+     */
+    stacked?: boolean | 'percent';
+
+    /**
+     * Show value labels next to each marker. `true` uses the default anchor; a string sets the
+     * anchor side.
+     */
+    labels?: ChartDataLabelsInput;
+
+    /** Format applied to marker values shown as text (tooltips and labels). */
+    format?: ValueFormatInput;
+
+    // Shared by every chart (BaseChartOptions)
+    /**
+     * Whether the chart renders automatically on construction and after every `Chart.update`.
+     * Defaults to `true`.
+     */
+    autoRender?: boolean;
+
+    /**
+     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
+     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
+     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
+     */
+    padding?: PaddingInput;
+
+    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
+    title?: string | Partial<ChartTitleOptions>;
+
+    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
+    animation?: boolean | Partial<ChartAnimationOptions>;
+
+    /**
+     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
+     * back to the module default (see `setDefaultTheme`).
+     */
+    theme?: string | Theme;
+
+    /**
+     * Accessible description announced by screen readers (sets the rendering element's ARIA
+     * label). Defaults to the title text.
+     */
+    description?: string;
+
+    // Shared by every cartesian chart (CartesianChartOptions)
+    /** X/y axis configuration, or a boolean toggling both axes. See `ChartAxisInput`. */
+    axis?: ChartAxisInput<TData>;
+
+    /** Background grid configuration, or a boolean toggle. See `ChartGridInput`. */
+    grid?: ChartGridInput;
+
+    /** Hover-tooltip configuration, or a boolean toggle. See `ChartTooltipInput`. */
+    tooltip?: ChartTooltipInput;
+
+    /** Legend configuration, a position string, or a boolean toggle. See `ChartLegendInput`. */
+    legend?: ChartLegendInput;
+
+    /** Crosshair configuration, or a boolean toggle. See `ChartCrosshairInput`. */
+    crosshair?: ChartCrosshairInput;
+
+    /** Reference lines, shaded bands, and point markers drawn over the plot. See `ChartAnnotation`. */
+    annotations?: ChartAnnotation[];
+
+    /**
+     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom
+     * and click-drag pan; an object configures each interaction individually. The chart
+     * auto-creates a `DOMNavigator` on its context and rescales the axis domains as the view
+     * changes, with no data rebuild. Access the underlying controller via `chart.navigator` for
+     * imperative framing (`centerOn`/`fitBounds`) or brush-and-link.
+     */
+    navigator?: boolean | NavigatorInteractions;
+
+    /**
+     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects
+     * the visible range of the **category** axis (a bottom bar for category-on-x charts, a side
+     * bar for a horizontal bar chart). `true` uses the default size; an object sets it. Enabling
+     * the strip also turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator`
+     * is explicitly `false`. Only category-axis charts (line, area, bar, trend) render the strip.
+     */
+    overview?: boolean | ChartOverviewOptions;
+}
+
+interface AreaChartSeriesOptions<TData> {
+    /** Unique identifier for the series, used for color assignment, legend, and data joins. */
+    id: string;
+
+    /** Explicit series color; falls back to the chart's generated palette when omitted. */
+    color?: string;
+
+    /** Accessor for the series' value at each data item, or a constant applied to every item. */
+    value: NumericAccessor<TData> | number;
+
+    /** Human-readable series name shown in the legend and tooltips. */
+    label: string;
+
+    /**
+     * Renderer used to draw the line/area top edge (e.g. straight or curved); defaults to straight
+     * segments.
+     */
+    lineType?: PolylineRenderer;
+
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
+    lineStyle?: LineStyle;
+
+    /** Width in pixels of the series line. */
+    lineWidth?: number;
+
+    /** Fill opacity of the area band. Defaults to 0.3. */
+    fillOpacity?: number;
+
+    /** Show point markers at each data value. Defaults to true. */
+    markers?: boolean;
+
+    /**
+     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
+     * primary axis. When the chart is stacked, series stack only with other series bound to the
+     * same axis.
+     */
+    yAxis?: number | string;
+}
+
+interface AreaChartEventMap {
+    /** Emitted when a marker is clicked. */
+    markerclick: AreaChartMarkerEvent;
+
+    /** Emitted when the pointer enters a marker. */
+    markerenter: AreaChartMarkerEvent;
+
+    /** Emitted when the pointer leaves a marker. */
+    markerleave: AreaChartMarkerEvent;
+}
+```
+<!-- options:end -->
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+// Emitted when the pointer enters a marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+// Emitted when the pointer leaves a marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+```
+<!-- events:end -->
