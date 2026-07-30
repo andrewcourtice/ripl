@@ -398,6 +398,7 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.clipPlot(plot);
             this.renderGrid([], this.gridTicks(this._yScale, 10), plot);
             this.setupCrosshair(plot);
+            this.renderAnnotations({ y: this._yScale }, plot);
 
             // Draw back-to-front: areas (largest first), then bars, then lines/markers on top.
             const areaContext: AreaSeriesContext<TData> = {

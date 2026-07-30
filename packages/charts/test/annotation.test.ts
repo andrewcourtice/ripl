@@ -15,7 +15,10 @@ import type {
 } from '@ripl/core';
 
 import {
+    createBoxPlotChart,
+    createHistogramChart,
     createLineChart,
+    createTrendChart,
 } from '../src';
 
 function annotationGroup(chart: unknown): Group | undefined {
@@ -95,6 +98,130 @@ describe('cartesian annotations', () => {
         await chart.render();
 
         expect(annotationGroup(chart)).toBeUndefined();
+    });
+
+});
+
+describe('charts that advertise cartesian furniture actually draw it', () => {
+
+    // `CartesianChartOptions` gives every cartesian chart `crosshair` and `annotations`, but a chart
+    // only gets them if it declares the component in `setupCartesian` and wires it into its render.
+    // Where it does not, the option is documented and accepted but silently does nothing — which is
+    // also a dead control in the demo config panel. These pin the ones that are wired.
+
+    function crosshair(chart: unknown) {
+        return (chart as { crosshair?: object }).crosshair;
+    }
+
+    it('gives the box plot a working crosshair', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createBoxPlotChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    g: 'a',
+                    v: 1,
+                },
+                {
+                    g: 'a',
+                    v: 4,
+                },
+                {
+                    g: 'a',
+                    v: 9,
+                },
+                {
+                    g: 'b',
+                    v: 2,
+                },
+                {
+                    g: 'b',
+                    v: 6,
+                },
+                {
+                    g: 'b',
+                    v: 11,
+                },
+            ],
+            key: 'g',
+            value: 'v',
+            crosshair: true,
+        });
+
+        await chart.render();
+
+        expect(crosshair(chart)).toBeDefined();
+
+        chart.update({ crosshair: false });
+        await chart.render();
+
+        expect(crosshair(chart)).toBeUndefined();
+    });
+
+    it('gives the histogram a working crosshair', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createHistogramChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [1, 2, 2, 3, 5, 8, 8, 9].map(v => ({ v })),
+            value: 'v',
+            crosshair: true,
+        });
+
+        await chart.render();
+
+        expect(crosshair(chart)).toBeDefined();
+
+        chart.update({ crosshair: false });
+        await chart.render();
+
+        expect(crosshair(chart)).toBeUndefined();
+    });
+
+    it('draws annotations on the trend chart', async () => {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createTrendChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    m: 'a',
+                    v: 10,
+                },
+                {
+                    m: 'b',
+                    v: 40,
+                },
+            ],
+            key: 'm',
+            series: [{
+                type: 'line',
+                id: 'v',
+                label: 'V',
+                value: 'v',
+            }],
+            annotations: [{
+                axis: 'y',
+                value: 25,
+                label: 'Target',
+            }],
+        });
+
+        await chart.render();
+
+        expect(annotationGroup(chart)).toBeDefined();
+
+        chart.update({ annotations: [] });
+        await chart.render();
+
+        expect(annotationGroup(chart)?.children.length ?? 0).toBe(0);
     });
 
 });
