@@ -69,11 +69,18 @@ function internals(chart: unknown): CartesianInternals {
     return chart as CartesianInternals;
 }
 
+// jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — which
+// collapses the tick set to a single tick and leaves nothing to reposition. Size the context so
+// axis/grid behaviour can be asserted in real pixel space.
+function rescaleContext(chart: unknown): void {
+    (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
+}
+
 function createChart() {
     polyfillPath2D();
     mockCanvasContext();
 
-    return createBarChart(document.createElement('div'), {
+    const chart = createBarChart(document.createElement('div'), {
         autoRender: false,
         animation: false,
         data: [
@@ -97,6 +104,10 @@ function createChart() {
             value: 'v',
         }],
     });
+
+    rescaleContext(chart);
+
+    return chart;
 }
 
 describe('cartesian runtime reconfiguration', () => {

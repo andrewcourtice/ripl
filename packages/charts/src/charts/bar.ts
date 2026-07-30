@@ -67,7 +67,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     scaleBand,
 } from '@ripl/core';
 
@@ -410,38 +409,27 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             if (this._isHorizontal) {
                 // Categories on Y, values on X.
-                const valueScale = createValueScale(this.xAxisOptions, dataExtent, [left, right]);
+                let categoryScale!: BandScale<string>;
+                let adjustedValueScale!: Scale;
 
-                this.xAxis.scale = valueScale;
-                this.xAxis.bounds = new Box(top, left, bottom, right);
+                // Resolve the plot outside-in so the bar geometry below is derived from the same
+                // bounds the axes draw (see `resolveCartesianPlot`).
+                const horizontalPlot = this.resolveCartesianPlot(area, candidate => {
+                    adjustedValueScale = createValueScale(this.xAxisOptions, dataExtent, [candidate.x, candidate.x + candidate.width]);
+                    this.xAxis.scale = adjustedValueScale;
 
-                const xAxisBox = this.xAxis.getBoundingBox();
+                    categoryScale = scaleBand(keys, [candidate.y, candidate.y + candidate.height], {
+                        outerPadding: 0.15,
+                        innerPadding: 0.2,
+                    });
 
-                const categoryScale = scaleBand(keys, [top, xAxisBox.top], {
-                    outerPadding: 0.15,
-                    innerPadding: 0.2,
+                    this.yAxis.scale = this.bandCenterScale(categoryScale, keys);
                 });
-
-                this.yAxis.scale = this.bandCenterScale(categoryScale, keys);
-                this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
-
-                const yAxisBox = this.yAxis.getBoundingBox();
-
-                const adjustedValueScale = createValueScale(this.xAxisOptions, dataExtent, [yAxisBox.right, right]);
-                this.xAxis.scale = adjustedValueScale;
-                this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
 
                 // The navigator windows the y (category) axis only; the value axis (x) stays at the full
                 // extent, so the side strip scrubs vertically without rescaling the value domain.
                 const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
                 this.yAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
-
-                const horizontalPlot = {
-                    x: yAxisBox.right,
-                    y: top,
-                    width: right - yAxisBox.right,
-                    height: xAxisBox.top - top,
-                };
 
                 this.clipPlot(horizontalPlot);
                 // The shared axis tooltip is vertical-only (category along x). Wiring a null resolver
@@ -471,39 +459,28 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             }
 
             // Categories on X, values on Y.
-            const valueScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
+            let categoryScale!: BandScale<string>;
+            let adjustedValueScale!: Scale;
 
-            this.yAxis.scale = valueScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
+            // Resolve the plot outside-in so the bar geometry below is derived from the same bounds
+            // the axes draw (see `resolveCartesianPlot`).
+            const verticalPlot = this.resolveCartesianPlot(area, candidate => {
+                adjustedValueScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
+                this.yAxis.scale = adjustedValueScale;
 
-            const yAxisBox = this.yAxis.getBoundingBox();
+                categoryScale = scaleBand(keys, [candidate.x, candidate.x + candidate.width], {
+                    outerPadding: 0.15,
+                    innerPadding: 0.2,
+                });
 
-            const categoryScale = scaleBand(keys, [yAxisBox.right, right], {
-                outerPadding: 0.15,
-                innerPadding: 0.2,
+                this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
             });
-
-            this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            const adjustedValueScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
-            this.yAxis.scale = adjustedValueScale;
-            this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
             // The navigator windows the x (category) axis only; the value axis (y) stays at the full
             // extent, so the bottom strip scrubs horizontally without rescaling the value domain.
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
             const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
             this.xAxis.scale = categoryCenterScale;
-
-            const verticalPlot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(verticalPlot);
             this.setupAxisTooltip(verticalPlot, plotX => this._axisTooltipSnapshot(plotX, keys, activeSeries, categoryCenterScale, () => adjustedValueScale));
@@ -553,39 +530,37 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 .concat(0), functionIdentity);
         });
 
-        // Pack the axis bands against the chart edges; the plot sits between them.
-        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+        let scales: Scale[] = [];
+        let categoryScale!: BandScale<string>;
 
-        const categoryScale = scaleBand(keys, [plotLeft, plotRight], {
-            outerPadding: 0.15,
-            innerPadding: 0.2,
-        });
+        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
+        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
+        const plot = this.resolveCartesianPlot({
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        }, candidate => {
+            scales = this.yAxes.map((axis, index) => {
+                const scale = createValueScale(this.yAxesOptions[index], extents[index], [candidate.y + candidate.height, candidate.y]);
 
-        this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
-        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+                axis.scale = scale;
 
-        const xAxisBox = this.xAxis.getBoundingBox();
+                return scale;
+            });
 
-        const scales = this.yAxes.map((axis, index) => {
-            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+            categoryScale = scaleBand(keys, [candidate.x, candidate.x + candidate.width], {
+                outerPadding: 0.15,
+                innerPadding: 0.2,
+            });
 
-            axis.scale = scale;
-            axis.bounds.bottom = xAxisBox.top;
-
-            return scale;
+            this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
         });
 
         // The navigator windows the category axis only.
         const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
         const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
         this.xAxis.scale = categoryCenterScale;
-
-        const plot = {
-            x: plotLeft,
-            y: top,
-            width: plotRight - plotLeft,
-            height: xAxisBox.top - top,
-        };
 
         const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];

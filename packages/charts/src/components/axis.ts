@@ -29,6 +29,10 @@ import {
     axisTickCount,
 } from '../core/scales';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     Element,
     Group,
@@ -58,8 +62,12 @@ import {
     typeIsDate,
 } from '@ripl/utilities';
 
-/** Gap (px) between axis tick labels and the axis title. */
-const TITLE_GAP = 6;
+/**
+ * Gap (px) between the axis tick labels and the axis title. A full element step: the title is a
+ * distinct piece of chart furniture, not part of the label band, and at a smaller gap the two read
+ * as one cramped block.
+ */
+const TITLE_GAP = SPACING.md;
 
 // Rotated x-axis labels anchor their trailing edge at the tick so the slanted text hangs clear of
 // the plot; flat labels center under it.
@@ -155,43 +163,139 @@ const LABEL_DIMENSION_MAP = {
 /** Base axis component managing scale, ticks, labels, and an axis line. */
 export class ChartAxis extends ChartComponent {
 
-    /** Scale mapping domain values to pixel positions along the axis. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public scale: Scale<any, number>;
-    /** Bounding box the axis is laid out within. */
-    public bounds: Box;
     /** Gap between the tick marks and their labels, in pixels. */
     public padding: number;
     /** Length of each tick mark, in pixels. */
     public tickSize: number;
-    /** Target number of ticks to generate. */
-    public tickCount: number;
-    /** Optional axis title drawn alongside the ticks. */
-    public title?: string;
-    /** CSS font shorthand for the axis title. */
-    public titleFont: string;
     /** Color of the axis line and tick marks. */
     public stroke: string;
-    /** CSS font shorthand for the tick labels. */
-    public labelFont: string;
     /** Color of the tick labels. */
     public labelColor: string;
     /** Resolved animation applied when ticks and labels enter or update. */
     public animation: ResolvedAnimation;
-    /** Whether the axis renders and reserves layout space. */
-    public visible: boolean = true;
-    /** Formats a tick value into its label string. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public formatLabel?: (value: any) => string;
-    /** Tick label rotation in degrees; positive tilts labels counterclockwise. Consumed by the x-axis; the label band and overflow handling account for the rotated extent. */
-    public labelRotation?: number;
 
     protected group: Group;
     protected line: Line;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _scale: Scale<any, number>;
+    private _bounds: Box;
+    private _tickCount: number;
+    private _title?: string;
+    private _titleFont: string;
+    private _labelFont: string;
+    private _labelRotation?: number;
+    private _visible: boolean = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _formatLabel?: (value: any) => string;
+
     private _labelDimension: LabelDimension;
     private _clip?: Rect;
     protected cachedTicks?: unknown[];
+
+    /**
+     * Scale mapping domain values to pixel positions along the axis. Assigning a scale invalidates
+     * the cached tick set, so a measurement taken after the assignment reflects the new domain.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public get scale(): Scale<any, number> {
+        return this._scale;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public set scale(value: Scale<any, number>) {
+        this._scale = value;
+        this.invalidate();
+    }
+
+    /**
+     * Bounding box the axis is laid out within. Assign a new {@link Box} rather than mutating the
+     * existing one: an in-place edit cannot invalidate the cached measurement, and it also silently
+     * stales any box a caller has already read.
+     */
+    public get bounds(): Box {
+        return this._bounds;
+    }
+
+    public set bounds(value: Box) {
+        this._bounds = value;
+        this.invalidate();
+    }
+
+    /** Target number of ticks to generate. */
+    public get tickCount(): number {
+        return this._tickCount;
+    }
+
+    public set tickCount(value: number) {
+        this._tickCount = value;
+        this.invalidate();
+    }
+
+    /** Optional axis title drawn alongside the ticks. */
+    public get title(): string | undefined {
+        return this._title;
+    }
+
+    public set title(value: string | undefined) {
+        this._title = value;
+        this.invalidate();
+    }
+
+    /** CSS font shorthand for the axis title. */
+    public get titleFont(): string {
+        return this._titleFont;
+    }
+
+    public set titleFont(value: string) {
+        this._titleFont = value;
+        this.invalidate();
+    }
+
+    /** CSS font shorthand for the tick labels. */
+    public get labelFont(): string {
+        return this._labelFont;
+    }
+
+    public set labelFont(value: string) {
+        this._labelFont = value;
+        this.invalidate();
+    }
+
+    /**
+     * Tick label rotation in degrees; positive tilts labels counterclockwise. Consumed by the
+     * x-axis; the label band and overflow handling account for the rotated extent.
+     */
+    public get labelRotation(): number | undefined {
+        return this._labelRotation;
+    }
+
+    public set labelRotation(value: number | undefined) {
+        this._labelRotation = value;
+        this.invalidate();
+    }
+
+    /** Whether the axis renders and reserves layout space. */
+    public get visible(): boolean {
+        return this._visible;
+    }
+
+    public set visible(value: boolean) {
+        this._visible = value;
+        this.invalidate();
+    }
+
+    /** Formats a tick value into its label string. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public get formatLabel(): ((value: any) => string) | undefined {
+        return this._formatLabel;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public set formatLabel(value: ((value: any) => string) | undefined) {
+        this._formatLabel = value;
+        this.invalidate();
+    }
 
     protected get ticks() {
         if (this.cachedTicks) {
@@ -238,7 +342,7 @@ export class ChartAxis extends ChartComponent {
             scale,
             bounds,
             labelDimension,
-            padding = 8,
+            padding = SPACING.sm,
             tickSize = 5,
             tickCount = 10,
             stroke = '#777777',
@@ -251,17 +355,17 @@ export class ChartAxis extends ChartComponent {
             renderer,
         });
 
-        this.bounds = bounds;
-        this.scale = scale;
+        this._bounds = bounds;
+        this._scale = scale;
+        this._tickCount = tickCount;
+        this._title = options.title;
+        this._titleFont = options.titleFont ?? `bold ${labelFont}`;
+        this._formatLabel = options.formatLabel;
+        this._labelFont = labelFont;
+        this._labelDimension = labelDimension;
         this.padding = padding;
         this.tickSize = tickSize;
-        this.tickCount = tickCount;
-        this._labelDimension = labelDimension;
-        this.title = options.title;
-        this.titleFont = options.titleFont ?? `bold ${labelFont}`;
-        this.formatLabel = options.formatLabel;
         this.stroke = stroke;
-        this.labelFont = labelFont;
         this.labelColor = labelColor;
         this.animation = options.animation ?? DEFAULT_AXIS_ANIMATION;
 
@@ -365,6 +469,29 @@ export class ChartAxis extends ChartComponent {
         return titleHeight + TITLE_GAP;
     }
 
+    /**
+     * Discards the cached tick set so the next measurement or render recomputes it. Called
+     * automatically whenever an input the tick set depends on is assigned ({@link ChartAxis.scale},
+     * {@link ChartAxis.bounds}, {@link ChartAxis.tickCount}, {@link ChartAxis.labelFont},
+     * {@link ChartAxis.labelRotation}, {@link ChartAxis.formatLabel}, {@link ChartAxis.title},
+     * {@link ChartAxis.titleFont}, {@link ChartAxis.visible}), so hosts rarely need it directly.
+     */
+    public invalidate(): void {
+        this.cachedTicks = undefined;
+    }
+
+    /**
+     * The thickness, in pixels, this axis needs for its tick marks, labels and title: the band it
+     * reserves out of the plot. Concrete axes measure across their own direction (an x-axis returns
+     * a height, a y-axis a width) and return `0` when hidden.
+     *
+     * Measured from the same cached tick set the next {@link ChartAxis.render} draws, so a layout
+     * pass that measures and then renders without changing the axis cannot disagree with itself.
+     */
+    public measure(): number {
+        return 0;
+    }
+
     /** Returns the box the axis occupies (its assigned bounds). */
     public getBoundingBox(): Box {
         return this.bounds;
@@ -466,17 +593,24 @@ export class ChartXAxis extends ChartAxis {
         return Math.abs(width * Math.cos(theta)) + Math.abs(height * Math.sin(theta));
     }
 
+    /** The height the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
+    public override measure(): number {
+        // A hidden axis reserves no band so the plot can use the full area.
+        if (!this.visible) {
+            return 0;
+        }
+
+        return this._labelBandHeight
+            + this.padding
+            + this.tickSize
+            + 1 // 1 for line width
+            + this.titleBand;
+    }
+
     /** Computes the band the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
     public getBoundingBox(): Box {
         const isBottomAligned = this.alignment === 'bottom';
-        // A hidden axis reserves no band so the plot can use the full area.
-        const clearance = this.visible
-            ? this._labelBandHeight
-                + this.padding
-                + this.tickSize
-                + 1 // 1 for line width
-                + this.titleBand
-            : 0;
+        const clearance = this.measure();
 
         const {
             top,
@@ -495,7 +629,6 @@ export class ChartXAxis extends ChartAxis {
 
     /** Renders the x-axis line, tick marks, and labels, reconciling and animating against the previous render. */
     public async render() {
-        this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
 
@@ -659,17 +792,24 @@ export class ChartYAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
+    /** The width the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden). */
+    public override measure(): number {
+        // A hidden axis reserves no band so the plot can use the full area.
+        if (!this.visible) {
+            return 0;
+        }
+
+        return this.maxLabelWidth
+            + this.padding
+            + this.tickSize
+            + 1 // 1 for line width
+            + this.titleBand;
+    }
+
     /** Computes the band the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden), shifted outward by {@link ChartYAxis.offset}. */
     public getBoundingBox(): Box {
         const isLeftAligned = this.alignment === 'left';
-        // A hidden axis reserves no band so the plot can use the full area.
-        const clearance = this.visible
-            ? this.maxLabelWidth
-                + this.padding
-                + this.tickSize
-                + 1 // 1 for line width
-                + this.titleBand
-            : 0;
+        const clearance = this.measure();
 
         const {
             top,
@@ -691,7 +831,6 @@ export class ChartYAxis extends ChartAxis {
 
     /** Renders the y-axis line, tick marks, and labels, reconciling and animating against the previous render. */
     public async render() {
-        this.cachedTicks = undefined;
         const ticks = this.ticks;
         const boundingBox = this.getBoundingBox();
 

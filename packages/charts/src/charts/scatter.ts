@@ -77,7 +77,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     createGroup,
     scaleContinuous,
     setColorAlpha,
@@ -697,20 +696,15 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             // drawing past the boundary. The axis bounds/grid still span the full plot.
             const maxRadius = this._getMaxBubbleRadius();
 
-            // Provisional Y scale to measure the y-axis width.
-            this._yScale = createValueScale(this.yAxisOptions, yExtent, [bottom - maxRadius, top + maxRadius]);
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
+            // Resolve the plot outside-in so the point geometry below is derived from the same bounds
+            // the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                this._yScale = createValueScale(this.yAxisOptions, yExtent, [candidate.y + candidate.height - maxRadius, candidate.y + maxRadius]);
+                this.yAxis.scale = this._yScale;
 
-            const yAxisBox = this.yAxis.getBoundingBox();
-
-            this._xScale = this.continuousXScale(xExtent, yAxisBox.right + maxRadius, right - maxRadius);
-            this.xAxis.scale = this._xScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            this._yScale = createValueScale(this.yAxisOptions, yExtent, [xAxisBox.top - maxRadius, top + maxRadius]);
+                this._xScale = this.continuousXScale(xExtent, candidate.x + maxRadius, candidate.x + candidate.width - maxRadius);
+                this.xAxis.scale = this._xScale;
+            });
 
             // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
             // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
@@ -723,14 +717,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this._yScales = [this._yScale];
             this.xAxis.scale = this._xScale;
             this.yAxis.scale = this._yScale;
-            this.yAxis.bounds.bottom = xAxisBox.top;
-
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
 
@@ -797,21 +783,26 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         // horizontally the inset sits just inside the packed axis label bands.
         const maxRadius = this._getMaxBubbleRadius();
 
-        // Pack the axis bands against the chart edges; the plot sits between them. The provisional
-        // scale range only affects label measurement (domain-driven), so the inset is applied later.
-        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+        let scales: Scale[] = [];
 
-        this._xScale = this.continuousXScale(xExtent, plotLeft + maxRadius, plotRight - maxRadius);
-        this.xAxis.scale = this._xScale;
-        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
+        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
+        const plot = this.resolveCartesianPlot({
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        }, candidate => {
+            scales = this.yAxes.map((axis, index) => {
+                const scale = createValueScale(this.yAxesOptions[index], extents[index], [candidate.y + candidate.height - maxRadius, candidate.y + maxRadius]);
 
-        const xAxisBox = this.xAxis.getBoundingBox();
+                axis.scale = scale;
 
-        // Final scales over the plot height; clamp each axis band above the x-axis labels.
-        const scales = this.yAxes.map((axis, index) => {
-            axis.bounds.bottom = xAxisBox.top;
+                return scale;
+            });
 
-            return createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top - maxRadius, top + maxRadius]);
+            this._xScale = this.continuousXScale(xExtent, candidate.x + maxRadius, candidate.x + candidate.width - maxRadius);
+            this.xAxis.scale = this._xScale;
         });
 
         // Rescale to the navigator's current pan/zoom window (see the single-axis path); each y
@@ -825,13 +816,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         this.yAxes.forEach((axis, index) => {
             axis.scale = this._yScales[index];
         });
-
-        const plot = {
-            x: plotLeft,
-            y: top,
-            width: plotRight - plotLeft,
-            height: xAxisBox.top - top,
-        };
 
         this.clipPlot(plot);
 

@@ -27,6 +27,13 @@ function yScale(chart: unknown): ScaleInternals {
     return (chart as { yAxes: { scale: ScaleInternals }[] }).yAxes[0].scale;
 }
 
+// jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — leaving
+// the value scale with a degenerate range that cannot express relative spacing. Size the context so
+// the positions being asserted are real pixels.
+function rescaleContext(chart: unknown): void {
+    (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
+}
+
 describe('symlog axis', () => {
 
     it('maps zero to the vertical midpoint for data spanning negative to positive', async () => {
@@ -115,6 +122,7 @@ describe('symlog axis', () => {
             },
         });
 
+        rescaleContext(chart);
         await chart.render();
 
         const scale = yScale(chart);

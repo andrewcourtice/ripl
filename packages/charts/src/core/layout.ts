@@ -10,9 +10,18 @@
 
 import {
     DEFAULT_CHART_PADDING,
+    ELEMENT_GAP,
 } from '../constants/layout';
 
-export { DEFAULT_CHART_PADDING };
+import {
+    SPACING,
+} from '../constants/spacing';
+
+export {
+    DEFAULT_CHART_PADDING,
+    ELEMENT_GAP,
+    SPACING,
+};
 
 /** The center point and inscribed size of a rectangular {@link ChartArea}. */
 export interface AreaCenter {
@@ -85,6 +94,12 @@ export type ChartSide = 'top' | 'bottom' | 'left' | 'right';
  * Tracks the remaining free space within a chart and allows components to reserve
  * bands from any edge. The order of reservation determines stacking: bands reserved
  * first sit furthest from the plot area.
+ *
+ * Every reservation accepts a `gap` — space consumed beyond the returned band, separating it from
+ * whatever is reserved next. Without one, adjacent elements (a title and the legend below it, a
+ * legend and the plot) sit flush against each other. Callers should pass a step from
+ * {@link SPACING} rather than a bare number; {@link ELEMENT_GAP} is the default separation between
+ * two distinct chart elements.
  */
 export class ChartLayout {
 
@@ -110,8 +125,13 @@ export class ChartLayout {
         };
     }
 
-    /** Reserves a band of the given thickness from the top edge and returns it. */
-    public reserveTop(amount: number): ChartArea {
+    /**
+     * Reserves a band of the given thickness from the top edge and returns it.
+     *
+     * @param amount - Thickness of the band, in pixels.
+     * @param gap - Extra space consumed after the band, separating it from the next reservation.
+     */
+    public reserveTop(amount: number, gap: number = 0): ChartArea {
         const region: ChartArea = {
             x: this._leftEdge,
             y: this._topEdge,
@@ -119,24 +139,37 @@ export class ChartLayout {
             height: amount,
         };
 
-        this._topEdge += amount;
+        this._topEdge += amount + gap;
         return region;
     }
 
-    /** Reserves a band of the given thickness from the bottom edge and returns it. */
-    public reserveBottom(amount: number): ChartArea {
+    /**
+     * Reserves a band of the given thickness from the bottom edge and returns it.
+     *
+     * @param amount - Thickness of the band, in pixels.
+     * @param gap - Extra space consumed after the band, separating it from the next reservation.
+     */
+    public reserveBottom(amount: number, gap: number = 0): ChartArea {
         this._bottomEdge -= amount;
 
-        return {
+        const region: ChartArea = {
             x: this._leftEdge,
             y: this._bottomEdge,
             width: Math.max(0, this._rightEdge - this._leftEdge),
             height: amount,
         };
+
+        this._bottomEdge -= gap;
+        return region;
     }
 
-    /** Reserves a band of the given thickness from the left edge and returns it. */
-    public reserveLeft(amount: number): ChartArea {
+    /**
+     * Reserves a band of the given thickness from the left edge and returns it.
+     *
+     * @param amount - Thickness of the band, in pixels.
+     * @param gap - Extra space consumed after the band, separating it from the next reservation.
+     */
+    public reserveLeft(amount: number, gap: number = 0): ChartArea {
         const region: ChartArea = {
             x: this._leftEdge,
             y: this._topEdge,
@@ -144,32 +177,47 @@ export class ChartLayout {
             height: Math.max(0, this._bottomEdge - this._topEdge),
         };
 
-        this._leftEdge += amount;
+        this._leftEdge += amount + gap;
         return region;
     }
 
-    /** Reserves a band of the given thickness from the right edge and returns it. */
-    public reserveRight(amount: number): ChartArea {
+    /**
+     * Reserves a band of the given thickness from the right edge and returns it.
+     *
+     * @param amount - Thickness of the band, in pixels.
+     * @param gap - Extra space consumed after the band, separating it from the next reservation.
+     */
+    public reserveRight(amount: number, gap: number = 0): ChartArea {
         this._rightEdge -= amount;
 
-        return {
+        const region: ChartArea = {
             x: this._rightEdge,
             y: this._topEdge,
             width: amount,
             height: Math.max(0, this._bottomEdge - this._topEdge),
         };
+
+        this._rightEdge -= gap;
+        return region;
     }
 
-    /** Reserves a band from the given side. Horizontal sides consume width, vertical sides consume height. */
-    public reserve(side: ChartSide, amount: number): ChartArea {
-        const reservers: Record<ChartSide, (amount: number) => ChartArea> = {
-            top: value => this.reserveTop(value),
-            bottom: value => this.reserveBottom(value),
-            left: value => this.reserveLeft(value),
-            right: value => this.reserveRight(value),
+    /**
+     * Reserves a band from the given side. Horizontal sides consume width, vertical sides consume
+     * height.
+     *
+     * @param side - The edge to reserve from.
+     * @param amount - Thickness of the band, in pixels.
+     * @param gap - Extra space consumed after the band, separating it from the next reservation.
+     */
+    public reserve(side: ChartSide, amount: number, gap: number = 0): ChartArea {
+        const reservers: Record<ChartSide, (amount: number, gap: number) => ChartArea> = {
+            top: (value, spacing) => this.reserveTop(value, spacing),
+            bottom: (value, spacing) => this.reserveBottom(value, spacing),
+            left: (value, spacing) => this.reserveLeft(value, spacing),
+            right: (value, spacing) => this.reserveRight(value, spacing),
         };
 
-        return reservers[side](amount);
+        return reservers[side](amount, gap);
     }
 
 }

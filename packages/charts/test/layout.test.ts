@@ -7,7 +7,9 @@ import {
 import {
     ChartLayout,
     DEFAULT_CHART_PADDING,
+    ELEMENT_GAP,
     resolveChartPadding,
+    SPACING,
 } from '../src/core/layout';
 
 const PADDING = {
@@ -115,6 +117,80 @@ describe('ChartLayout', () => {
         expect(plot.y).toBe(34);
         expect(plot.width).toBe(230);
         expect(plot.height).toBe(86);
+    });
+
+    describe('gaps between bands', () => {
+
+        it('returns a band of the requested size but consumes the gap as well', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+            const band = layout.reserveTop(24, SPACING.md);
+
+            expect(band.height).toBe(24);
+            expect(layout.area.y).toBe(10 + 24 + SPACING.md);
+            expect(layout.area.height).toBe(80 - 24 - SPACING.md);
+        });
+
+        it('separates a bottom band from the next reservation', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+            const band = layout.reserveBottom(30, SPACING.md);
+
+            expect(band.y).toBe(90 - 30);
+            expect(band.height).toBe(30);
+            expect(layout.area.height).toBe(80 - 30 - SPACING.md);
+        });
+
+        it('separates a left band from the next reservation', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+            const band = layout.reserveLeft(50, SPACING.sm);
+
+            expect(band.x).toBe(10);
+            expect(band.width).toBe(50);
+            expect(layout.area.x).toBe(10 + 50 + SPACING.sm);
+        });
+
+        it('separates a right band from the next reservation', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+            const band = layout.reserveRight(50, SPACING.sm);
+
+            expect(band.x).toBe(190 - 50);
+            expect(band.width).toBe(50);
+            expect(layout.area.width).toBe(180 - 50 - SPACING.sm);
+        });
+
+        it('defaults to no gap so an unspecified reservation is flush', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+
+            layout.reserveTop(24);
+
+            expect(layout.area.y).toBe(34);
+        });
+
+        it('passes the gap through reserve()', () => {
+            const layout = new ChartLayout(200, 100, PADDING);
+
+            layout.reserve('top', 24, SPACING.lg);
+
+            expect(layout.area.y).toBe(10 + 24 + SPACING.lg);
+        });
+
+    });
+
+    describe('spacing scale', () => {
+
+        it('follows an 8-point rhythm with a 4px half-step', () => {
+            expect(SPACING.none).toBe(0);
+            expect(SPACING.xs).toBe(4);
+            expect(SPACING.sm).toBe(8);
+            expect(SPACING.md).toBe(16);
+            expect(SPACING.lg).toBe(24);
+            expect(SPACING.xl).toBe(32);
+        });
+
+        it('derives the default chart padding and element gap from the scale', () => {
+            expect(DEFAULT_CHART_PADDING).toBe(SPACING.md);
+            expect(ELEMENT_GAP).toBe(SPACING.md);
+        });
+
     });
 
     it('reserve() dispatches to the correct side', () => {

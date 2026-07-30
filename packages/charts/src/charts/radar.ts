@@ -38,6 +38,10 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     LegendItem,
 } from '../components/legend';
@@ -136,7 +140,7 @@ export interface RadarChartEventMap extends EventMap {
 
 // Distance in pixels between a polygon vertex and its value label, measured outward along the
 // vertex's angle so the label clears the marker (radius 3, growing to 5 on hover).
-const VALUE_LABEL_OFFSET = 10;
+const VALUE_LABEL_OFFSET = SPACING.sm;
 
 /**
  * Radar (spider) chart plotting multi-axis data as filled polygonal areas.

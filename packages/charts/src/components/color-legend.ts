@@ -6,6 +6,10 @@ import {
     ChartComponent,
 } from './_base';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     ChartArea,
 } from '../core/layout';
@@ -73,7 +77,7 @@ const DEFAULT_OPTIONS: Required<ColorLegendOptions> = {
     padding: 8,
 };
 
-const LABEL_ALLOWANCE = 16;
+const LABEL_ALLOWANCE = SPACING.md;
 
 /**
  * A continuous-color legend: a gradient bar (approximated by solid segments so it works identically

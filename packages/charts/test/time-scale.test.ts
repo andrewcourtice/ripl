@@ -31,6 +31,13 @@ function timeInternals(chart: unknown): TimeChartInternals {
     return chart as TimeChartInternals;
 }
 
+// jsdom provides no layout, so the scene starts 0×0 and the plot resolves to zero width — leaving
+// the x scale with a degenerate range that cannot express relative spacing. Size the context so the
+// positions being asserted are real pixels.
+function rescaleContext(chart: unknown): void {
+    (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
+}
+
 function createTimeLineChart(scale?: 'time') {
     polyfillPath2D();
     mockCanvasContext();
@@ -117,6 +124,7 @@ describe('Line chart time axis', () => {
     it('Should position unevenly spaced dates proportionally with scale: time', async () => {
         const chart = createTimeLineChart('time');
 
+        rescaleContext(chart);
         await chart.render();
 
         const xScale = timeInternals(chart)._xScale;
@@ -130,6 +138,7 @@ describe('Line chart time axis', () => {
     it('Should keep even point spacing without scale: time', async () => {
         const chart = createTimeLineChart();
 
+        rescaleContext(chart);
         await chart.render();
 
         const xScale = timeInternals(chart)._xScale;

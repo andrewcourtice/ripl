@@ -14,6 +14,10 @@ import type {
     ChartArea,
 } from '../core/layout';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     ResolvedAnimation,
 } from '../core/animation';
@@ -68,11 +72,11 @@ export interface LegendOptions extends ChartComponentOptions {
 
 const SWATCH_SIZE = 10;
 const SWATCH_RADIUS = 2;
-const ITEM_GAP_X = 16;
-const ROW_GAP = 8;
-const LABEL_GAP = 6;
+const ITEM_GAP_X = SPACING.md;
+const ROW_GAP = SPACING.sm;
+const LABEL_GAP = SPACING.sm;
 const DEFAULT_FONT_SIZE = 11;
-const DEFAULT_PADDING = 12;
+const DEFAULT_PADDING = SPACING.md;
 const INACTIVE_COLOR = '#cccccc';
 const INACTIVE_LABEL_COLOR = '#999999';
 
