@@ -108,7 +108,7 @@ const { extras, reset } = useChartExtras({
     minRadius: 5,
     maxRadius: 25,
     markerSymbol: 'circle' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
-    multiAxis: false,
+    multiAxis: true,
 });
 
 // Distinct per-series symbols used by the "Mixed" marker option.
@@ -178,6 +178,7 @@ function buildOptions() {
                 {
                     ...options.axis.y,
                     id: 'score',
+                    title: 'Score',
                 },
                 {
                     id: 'impressions',
@@ -235,9 +236,7 @@ function getDataItem() {
         profit: getValue(10, 100),
         volume: getValue(5, 50),
         marketing: getValue(10, 100),
-        // Thousands of impressions, against the 10-100 scores the other series plot. On one shared
-        // y-axis this flattens every other series against the baseline; that is the case the
-        // "Multiple axes" toggle resolves.
+        // Thousands, against the 10-100 the others plot; turning "Multiple axes" off flattens them.
         engagement: getValue(2000, 9000),
         reach: getValue(5, 50),
         support: getValue(10, 100),
