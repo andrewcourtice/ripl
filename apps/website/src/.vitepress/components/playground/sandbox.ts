@@ -1,3 +1,7 @@
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 export type PlaygroundMode = '2d' | '3d';
 export type ContextType = 'canvas' | 'svg' | 'webgpu' | 'terminal';
 
@@ -314,7 +318,7 @@ export function decodeState(encoded: string): PlaygroundState | null {
         try {
             const parsed = JSON.parse(decoded);
 
-            if (parsed && typeof parsed.code === 'string') {
+            if (parsed && typeIsString(parsed.code)) {
                 return parsed as PlaygroundState;
             }
         } catch {

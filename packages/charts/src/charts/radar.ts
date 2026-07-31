@@ -77,6 +77,7 @@ import {
 
 import {
     arrayJoin,
+    arrayMapRange,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -201,7 +202,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         };
 
         // --- Concentric level polygons ---
-        const levelIndices = Array.from({ length: levels }).map((_, i) => i + 1);
+        const levelIndices = arrayMapRange(levels, i => i + 1);
 
         const {
             left: levelEntries,

@@ -54,6 +54,7 @@ import {
     stringUniqueId,
     typeIsFunction,
     typeIsNil,
+    typeIsObject,
     typeIsString,
     valueOneOrMore,
 } from '@ripl/utilities';
@@ -581,7 +582,7 @@ export class Element<
 
         // Only primitives may short-circuit on equality. A reference-equal object or array may
         // have been mutated in place, so it must still mark dirty and emit `updated`.
-        if (this.state[key] === value && (typeof value !== 'object' || value === null)) {
+        if (this.state[key] === value && !typeIsObject(value)) {
             return;
         }
 

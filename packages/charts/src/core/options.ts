@@ -53,6 +53,7 @@ import {
     numberFormat,
     typeIsArray,
     typeIsBoolean,
+    typeIsFunction,
     typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
@@ -784,7 +785,7 @@ const LINE_DASH_PRESETS: Record<string, number[]> = {
 
 /** Resolves a {@link LineStyle} into a `lineDash` array (`[]` for a solid line). */
 export function resolveLineDash(style?: LineStyle): number[] {
-    if (Array.isArray(style)) {
+    if (typeIsArray(style)) {
         return style;
     }
 
@@ -953,11 +954,11 @@ export function resolveFormatLabel(format?: ValueFormatInput): ((value: any) => 
         return undefined;
     }
 
-    if (typeof format === 'function') {
+    if (typeIsFunction(format)) {
         return format;
     }
 
-    if (typeof format === 'string') {
+    if (typeIsString(format)) {
         return VALUE_FORMATTERS[format];
     }
 

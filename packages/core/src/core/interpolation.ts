@@ -28,6 +28,7 @@ import type {
 } from '../interpolators';
 
 import {
+    arrayMapRange,
     typeIsArray,
     typeIsNil,
     typeIsObject,
@@ -69,7 +70,7 @@ export function getKeyframeInterpolator<TValue>(currentValue: TValue, frames: El
     keyframes.sort(({ offset: oa }, { offset: ob }) => oa - ob);
 
     const frameScale = scaleContinuous([0, 1], [0, keyframes.length - 1], { clamp: true });
-    const interpolators = Array.from({ length: keyframes.length - 1 }, (_, index) => {
+    const interpolators = arrayMapRange(keyframes.length - 1, index => {
         const frameA = keyframes[index];
         const frameB = keyframes[index + 1];
         const scale = scaleContinuous([frameA.offset, frameB.offset], [0, 1]);

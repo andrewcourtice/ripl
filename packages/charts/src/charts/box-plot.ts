@@ -77,6 +77,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayDedupe,
     arrayJoin,
     numberExtent,
 } from '@ripl/utilities';
@@ -367,7 +368,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const color = this.getSeriesColor('boxplot');
 
             const grouped = rollup(data, getGroup, items => boxplotStats(items.map(getValue)));
-            const keys = categoryOrder ?? [...new Set(data.map(getGroup))];
+            const keys = categoryOrder ?? arrayDedupe(data.map(getGroup));
             const valueExtent = numberExtent(data, getValue);
 
             const layout = this.createLayout();

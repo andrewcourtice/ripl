@@ -53,6 +53,7 @@ import {
 
 import {
     arrayJoin,
+    arrayMapRange,
     numberClamp,
     numberRoundTo,
 } from '@ripl/utilities';
@@ -315,7 +316,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             this._tickSignature = tickSignature;
 
             const tickIndices = tickCount > 0
-                ? Array.from({ length: tickCount + 1 }).map((_, i) => i)
+                ? arrayMapRange(tickCount + 1, i => i)
                 : [];
 
             const tickOuterRadius = radius + 4;

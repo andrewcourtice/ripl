@@ -141,6 +141,10 @@ import type {
 
 import {
     numberClamp,
+    typeIsArray,
+    typeIsDate,
+    typeIsNumber,
+    typeIsObject,
 } from '@ripl/utilities';
 
 import {
@@ -420,7 +424,7 @@ export abstract class CartesianChart<
 
         const axisOpts = normalizeAxis(this.options.axis);
         const xAxisOpts = normalizeAxisItem(axisOpts.x, axisDefaults);
-        const yAxisInputs = Array.isArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
+        const yAxisInputs = typeIsArray(axisOpts.y) ? axisOpts.y : [axisOpts.y];
         const yAxisOptionsList = yAxisInputs.map((input, index) => normalizeYAxisItem(input, {
             ...axisDefaults,
             position: index === 0 ? 'left' : 'right',
@@ -666,7 +670,7 @@ export abstract class CartesianChart<
     private _overviewSize(): number {
         const overview = this.options.overview;
 
-        if (overview && typeof overview === 'object') {
+        if (typeIsObject(overview)) {
             return overview.size ?? DEFAULT_OVERVIEW_SIZE;
         }
 
@@ -883,11 +887,11 @@ export abstract class CartesianChart<
         viewed.inverse = (position: number) => source.inverse((position - translate) / factor);
 
         // Band/point scales expose pixel spans that must zoom with the view (bars widen on zoom-in).
-        if (typeof source.bandwidth === 'number') {
+        if (typeIsNumber(source.bandwidth)) {
             viewed.bandwidth = source.bandwidth * factor;
         }
 
-        if (typeof source.step === 'number') {
+        if (typeIsNumber(source.step)) {
             viewed.step = source.step * factor;
         }
 
@@ -1363,7 +1367,7 @@ export abstract class CartesianChart<
         const max = rawMax === min ? min + 1 : rawMax;
         const timeScale = createTimeAxisScale(this.xAxisOptions, [min, max], [left, right]);
 
-        const toDate = (value: string | number | Date) => value instanceof Date ? value : new Date(value);
+        const toDate = (value: string | number | Date) => typeIsDate(value) ? value : new Date(value);
         const convert = (value: string | number | Date) => timeScale(toDate(value));
 
         return Object.assign(convert, {

@@ -1996,6 +1996,7 @@ __metadata:
     "@ripl/core": "workspace:^"
     "@ripl/devtools": "workspace:^"
     "@ripl/svg": "workspace:^"
+    "@ripl/utilities": "workspace:^"
     "@ripl/web": "workspace:^"
     "@types/chrome": "npm:^0.2.2"
     "@vitejs/plugin-vue": "npm:^6.0.8"

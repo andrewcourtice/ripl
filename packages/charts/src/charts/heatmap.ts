@@ -82,7 +82,9 @@ import {
 
 import {
     arrayJoin,
+    typeIsArray,
     typeIsFunction,
+    typeIsObject,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link HeatmapChart}. */
@@ -178,7 +180,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         const axisOpts = normalizeAxis(options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
 
         const axes = createChartAxes({
@@ -244,7 +246,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             if (legendOption !== false) {
                 const legendOptions: ColorLegendOptions = {
                     format: resolveValueFormat(this.options.format),
-                    ...(typeof legendOption === 'object' ? legendOption : {}),
+                    ...(typeIsObject(legendOption) ? legendOption : {}),
                 };
 
                 if (this._colorLegend) {

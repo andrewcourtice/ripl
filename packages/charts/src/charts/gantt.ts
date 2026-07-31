@@ -86,6 +86,7 @@ import {
 import {
     arrayJoin,
     numberClamp,
+    typeIsArray,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -176,7 +177,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         const axisOpts = normalizeAxis(options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
 

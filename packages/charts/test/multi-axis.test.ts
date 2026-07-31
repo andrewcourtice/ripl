@@ -21,6 +21,10 @@ import {
     createScatterChart,
 } from '../src';
 
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 interface AxisBox {
     left: number;
     right: number;
@@ -1083,7 +1087,7 @@ describe('multi y-axis element ids and right-axis geometry', () => {
 
         const titleIds = titledYAxes(chart).map(axis => axis._titleText?.id);
 
-        expect(titleIds.every(id => typeof id === 'string' && id.length > 0)).toBe(true);
+        expect(titleIds.every(id => typeIsString(id) && id.length > 0)).toBe(true);
         expect(new Set(titleIds).size).toBe(3);
     });
 

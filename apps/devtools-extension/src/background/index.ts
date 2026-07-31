@@ -8,6 +8,10 @@ import type {
     ExtensionMessage,
 } from '@ripl/devtools';
 
+import {
+    typeIsNumber,
+} from '@ripl/utilities';
+
 interface TabState {
     contexts: Map<string, ContextInfo>;
     contentPort?: chrome.runtime.Port;
@@ -142,7 +146,7 @@ function parsePortTabId(name: string, prefix: string): number | undefined {
 function connectContentPort(port: chrome.runtime.Port): void {
     const tabId = port.sender?.tab?.id;
 
-    if (typeof tabId !== 'number') {
+    if (!typeIsNumber(tabId)) {
         port.disconnect();
         return;
     }

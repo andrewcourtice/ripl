@@ -12,6 +12,11 @@ import {
     COLORS,
 } from '../constants/colors';
 
+import {
+    typeIsFunction,
+    typeIsString,
+} from '@ripl/utilities';
+
 /** The palette and furniture colors a chart renders with. */
 export interface Theme {
     /** Categorical series/segment palette, cycled for unassigned series. */
@@ -134,19 +139,19 @@ export function setDefaultTheme(theme: string | Theme): void {
  * @returns The resolved theme.
  */
 export function resolveTheme(theme?: string | Theme): Theme {
-    if (theme && typeof theme !== 'string') {
+    if (theme && !typeIsString(theme)) {
         return theme;
     }
 
     if (theme === 'auto') {
         const prefersDark = typeof globalThis !== 'undefined'
-            && typeof globalThis.matchMedia === 'function'
+            && typeIsFunction(globalThis.matchMedia)
             && globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
 
         return prefersDark ? darkTheme : lightTheme;
     }
 
-    if (typeof theme === 'string') {
+    if (typeIsString(theme)) {
         return THEME_REGISTRY.get(theme) ?? defaultTheme;
     }
 

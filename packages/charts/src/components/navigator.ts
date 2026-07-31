@@ -43,8 +43,10 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayMapRange,
     numberClamp,
     numberSum,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 import {
@@ -160,7 +162,7 @@ export class ChartNavigator extends ChartComponent {
 
         const element = this.context.element as unknown as HTMLElement;
 
-        if (!element || typeof element.getBoundingClientRect !== 'function' || typeof element.addEventListener !== 'function') {
+        if (!element || !typeIsFunction(element.getBoundingClientRect) || !typeIsFunction(element.addEventListener)) {
             return;
         }
 
@@ -292,7 +294,7 @@ export class ChartNavigator extends ChartComponent {
 
     /** A band scale over category indices `[0, count)` spanning the main axis, matching the chart's padded bars. */
     private _categoryScale(count: number): BandScale<number> {
-        const domain = Array.from({ length: count }, (_, index) => index);
+        const domain = arrayMapRange(count, index => index);
 
         return scaleBand(domain, [this._mainStart(), this._mainStart() + this._mainSize()], {
             outerPadding: 0.15,

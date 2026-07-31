@@ -17,6 +17,11 @@ import {
     SPACING,
 } from '../constants/spacing';
 
+import {
+    typeIsArray,
+    typeIsNumber,
+} from '@ripl/utilities';
+
 export {
     DEFAULT_CHART_PADDING,
     ELEMENT_GAP,
@@ -76,7 +81,7 @@ export function resolveChartPadding(
     input?: PaddingInput,
     fallback: number = DEFAULT_CHART_PADDING
 ): ChartPadding {
-    if (typeof input === 'number') {
+    if (typeIsNumber(input)) {
         return {
             top: input,
             right: input,
@@ -85,7 +90,7 @@ export function resolveChartPadding(
         };
     }
 
-    if (Array.isArray(input)) {
+    if (typeIsArray(input)) {
         return {
             top: input[0],
             right: input[1],

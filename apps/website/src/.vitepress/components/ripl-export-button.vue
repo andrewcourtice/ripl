@@ -35,6 +35,10 @@ import type {
     Context,
 } from '@ripl/core';
 
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 interface ExportItem {
     label: string;
     filename: string;
@@ -157,7 +161,7 @@ function run(item: ExportItem): void {
     // `window.open` must be called synchronously within the click gesture or popup blockers reject
     // it. Sync formats open immediately; async formats (e.g. SVG → PNG) open a blank tab now and
     // navigate it once the URL resolves.
-    if (typeof result === 'string') {
+    if (typeIsString(result)) {
         openInTab(result, item.filename);
         dropdown.value?.close();
         return;

@@ -7,6 +7,7 @@
 
 import {
     typeIsFunction,
+    typeIsString,
 } from '@ripl/utilities';
 
 /** A value accessor expressed as a property key, a constant, or a function. */
@@ -37,7 +38,7 @@ export function resolveAccessor<TData, TValue>(accessor: Accessor<TData, TValue>
 
     // Only strings and symbols are treated as property keys; numbers (and any other value) are
     // treated as constants so options like a scatter `sizeBy: number` behave as a fixed value.
-    if (typeof accessor === 'string' || typeof accessor === 'symbol') {
+    if (typeIsString(accessor) || typeof accessor === 'symbol') {
         return (item: TData) => item[accessor as keyof TData] as unknown as TValue;
     }
 

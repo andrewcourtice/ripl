@@ -2,6 +2,10 @@ import {
     TAU,
 } from '@ripl/core';
 
+import {
+    comparitorNumeric,
+} from '@ripl/utilities';
+
 /** Callback invoked for each pixel in a rasterization pass. */
 export type PixelCallback = (x: number, y: number) => void;
 
@@ -388,7 +392,7 @@ export function fillPolygon(contours: Vertex[][], plot: PixelCallback): void {
             continue;
         }
 
-        crossings.sort((first, second) => first - second);
+        crossings.sort(comparitorNumeric);
 
         for (let i = 0; i + 1 < crossings.length; i += 2) {
             const xStart = Math.round(crossings[i]);

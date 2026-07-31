@@ -83,6 +83,10 @@ import type {
     PlaygroundMode,
 } from './sandbox';
 
+import {
+    typeIsObject,
+} from '@ripl/utilities';
+
 type EditorTab = 'code' | 'importmap';
 
 const GLOBALS_DTS = `
@@ -157,7 +161,7 @@ function parseImportMap(json: string): Record<string, string> | null {
     try {
         const parsed = JSON.parse(json);
 
-        if (parsed && typeof parsed.imports === 'object') {
+        if (parsed && typeIsObject(parsed.imports)) {
             return parsed.imports as Record<string, string>;
         }
 

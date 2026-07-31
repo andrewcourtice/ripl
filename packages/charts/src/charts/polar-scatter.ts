@@ -77,6 +77,7 @@ import {
 
 import {
     arrayJoin,
+    arrayMapRange,
     functionIdentity,
     numberExtent,
 } from '@ripl/utilities';
@@ -197,7 +198,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         }
 
         // Concentric value rings + a value label on each.
-        const ringIndices = Array.from({ length: levels }).map((_, i) => i + 1);
+        const ringIndices = arrayMapRange(levels, i => i + 1);
         const ringCircles = this._gridGroup.getElementsByType('circle') as Circle[];
 
         const {
@@ -263,7 +264,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         });
 
         // Angular spokes + degree labels.
-        const spokeIndices = Array.from({ length: sectors }).map((_, i) => i);
+        const spokeIndices = arrayMapRange(sectors, i => i);
         const spokeStep = 360 / sectors;
         const spokeLines = this._gridGroup.getElementsByType<Line>('line');
 

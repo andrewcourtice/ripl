@@ -1,4 +1,5 @@
 import {
+    typeIsArray,
     typeIsNumber,
 } from '@ripl/utilities';
 
@@ -71,7 +72,7 @@ export function vec3Distance(a: Vector3, b: Vector3): number {
 
 /** Type guard that checks whether a value is a `Vector3` tuple. */
 export function typeIsVector3(value: unknown): value is Vector3 {
-    return Array.isArray(value) && value.length === 3
+    return typeIsArray(value) && value.length === 3
         && typeIsNumber(value[0])
         && typeIsNumber(value[1])
         && typeIsNumber(value[2]);

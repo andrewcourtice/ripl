@@ -12,6 +12,7 @@ import type {
 
 import {
     typeIsBoolean,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 import {
@@ -41,8 +42,8 @@ const WHEEL_SENSITIVITY = 0.002;
  */
 function isInteractiveElement(element: unknown): element is HTMLElement {
     return !!element
-        && typeof (element as HTMLElement).getBoundingClientRect === 'function'
-        && typeof (element as HTMLElement).addEventListener === 'function';
+        && typeIsFunction((element as HTMLElement).getBoundingClientRect)
+        && typeIsFunction((element as HTMLElement).addEventListener);
 }
 
 function resolveInteraction(option: NavigatorInteractionOption | undefined, fallback: boolean): ResolvedInteraction {

@@ -90,6 +90,12 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
+import {
+    typeIsArray,
+    typeIsFunction,
+    typeIsNumber,
+} from '@ripl/utilities';
+
 if (!factory.createContext) {
     factory.set({ createContext });
 }
@@ -233,7 +239,7 @@ export class Chart<
     private _applyAccessibility() {
         const element = this.scene.context.element as unknown as { setAttribute?: (name: string, value: string) => void };
 
-        if (!element || typeof element.setAttribute !== 'function') {
+        if (!element || !typeIsFunction(element.setAttribute)) {
             return;
         }
 
@@ -447,11 +453,11 @@ export class Chart<
         }
 
         const style = {
-            padding: typeof opts.padding === 'number' ? opts.padding : 8,
+            padding: typeIsNumber(opts.padding) ? opts.padding : 8,
             font: opts.font,
             fontColor: opts.fontColor,
             backgroundColor: opts.backgroundColor,
-            borderRadius: typeof opts.borderRadius === 'number' ? opts.borderRadius : 6,
+            borderRadius: typeIsNumber(opts.borderRadius) ? opts.borderRadius : 6,
             maxWidth: opts.maxWidth,
             wrap: opts.wrap,
         };
@@ -561,7 +567,7 @@ export class Chart<
         const { duration, ease } = this.resolveAnimation(ANIMATION_REFERENCE.hover);
 
         this._highlightGroups.forEach(({ group, owners }) => {
-            const active = id === null || (Array.isArray(owners) ? owners.includes(id) : owners === id);
+            const active = id === null || (typeIsArray(owners) ? owners.includes(id) : owners === id);
 
             group.graph(false).forEach(element => {
                 const host = element as unknown as HighlightHost;

@@ -4,6 +4,7 @@
  */
 
 import {
+    comparitorNumeric,
     numberNice,
     numberSum,
 } from '@ripl/utilities';
@@ -99,7 +100,7 @@ function quantileSorted(sorted: number[], probability: number): number {
 
 /** The `p`-quantile (0–1) of the values via linear interpolation between order statistics. */
 export function quantile(values: number[], probability: number): number {
-    return quantileSorted([...values].sort((a, b) => a - b), probability);
+    return quantileSorted([...values].sort(comparitorNumeric), probability);
 }
 
 /**
@@ -169,7 +170,7 @@ export function bin(values: number[], options?: BinOptions): Bin[] {
 
 /** Computes the box-plot five-number summary, splitting values beyond 1.5×IQR out as outliers. */
 export function boxplotStats(values: number[]): BoxplotStats {
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].sort(comparitorNumeric);
 
     const q1 = quantileSorted(sorted, 0.25);
     const median = quantileSorted(sorted, 0.5);
@@ -241,7 +242,7 @@ function gaussianKernel(value: number): number {
 }
 
 function silvermanBandwidth(values: number[]): number {
-    const sorted = [...values].sort((a, b) => a - b);
+    const sorted = [...values].sort(comparitorNumeric);
     const spread = quantileSorted(sorted, 0.75) - quantileSorted(sorted, 0.25);
     const sigma = Math.min(deviation(values), spread / 1.34) || deviation(values) || 1;
 

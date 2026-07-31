@@ -79,6 +79,7 @@ import {
 
 import {
     arrayJoin,
+    arrayMapRange,
     numberFormat,
     numberMaxOf,
     typeIsFunction,
@@ -200,7 +201,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         }
 
         // --- Concentric rings ---
-        const levelIndices = Array.from({ length: levels }).map((_, i) => i + 1);
+        const levelIndices = arrayMapRange(levels, i => i + 1);
 
         const {
             left: ringEntries,
@@ -296,7 +297,7 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
         ];
 
         // --- Radial axis lines ---
-        const lineIndices = Array.from({ length: segmentCount }).map((_, i) => i);
+        const lineIndices = arrayMapRange(segmentCount, i => i);
 
         const {
             left: lineEntries,

@@ -74,6 +74,7 @@ import {
 import {
     functionIdentity,
     numberExtent,
+    typeIsArray,
 } from '@ripl/utilities';
 
 /** Configuration for an individual realtime chart series. */
@@ -152,7 +153,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
         const axisOpts = normalizeAxis(options.axis);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
         const crosshairOpts = normalizeCrosshair(options.crosshair);

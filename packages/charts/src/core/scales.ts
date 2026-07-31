@@ -23,6 +23,10 @@ import {
     scaleTime,
 } from '@ripl/core';
 
+import {
+    typeIsNumber,
+} from '@ripl/utilities';
+
 /**
  * The target number of ticks (and grid lines) an axis draws, from its `ticks` option (default 10).
  *
@@ -59,8 +63,8 @@ export function createTimeAxisScale(
     domain: number[],
     range: number[]
 ): Scale<Date, number> {
-    const min = typeof options.min === 'number' ? options.min : domain[0];
-    const max = typeof options.max === 'number' ? options.max : domain[1];
+    const min = typeIsNumber(options.min) ? options.min : domain[0];
+    const max = typeIsNumber(options.max) ? options.max : domain[1];
 
     return scaleTime([
         new Date(min),
@@ -85,19 +89,19 @@ export function createValueScale(
     domain: number[],
     range: number[]
 ): Scale<number> {
-    const min = typeof options.min === 'number' ? options.min : domain[0];
-    const max = typeof options.max === 'number' ? options.max : domain[1];
+    const min = typeIsNumber(options.min) ? options.min : domain[0];
+    const max = typeIsNumber(options.max) ? options.max : domain[1];
     const resolvedDomain: [number, number] = [min, max];
 
     // Explicit bounds are honored exactly; otherwise nice the domain to tick-aligned boundaries
     // (the historical default via `padToTicks`), unless the caller opted out with `nice: false`.
-    const hasExplicitBounds = typeof options.min === 'number' || typeof options.max === 'number';
+    const hasExplicitBounds = typeIsNumber(options.min) || typeIsNumber(options.max);
     const nice = options.nice ?? true;
 
     let padToTicks: boolean | number | undefined;
 
     if (nice !== false && !hasExplicitBounds) {
-        padToTicks = typeof nice === 'number' ? nice : axisTickCount(options);
+        padToTicks = typeIsNumber(nice) ? nice : axisTickCount(options);
     }
 
     if (options.scale === 'log') {

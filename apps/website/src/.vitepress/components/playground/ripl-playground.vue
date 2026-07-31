@@ -59,6 +59,10 @@ import type {
     PlaygroundState,
 } from './sandbox';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 const mode = ref<PlaygroundMode>('2d');
 const contextType = ref<ContextType>('canvas');
 const code = ref('');
@@ -217,7 +221,7 @@ function onMouseMove(event: MouseEvent) {
 
     const minWidth = 200;
     const maxWidth = window.innerWidth - 200;
-    leftWidth.value = Math.min(maxWidth, Math.max(minWidth, event.clientX));
+    leftWidth.value = numberClamp(event.clientX, minWidth, maxWidth);
 }
 
 function onMouseUp() {

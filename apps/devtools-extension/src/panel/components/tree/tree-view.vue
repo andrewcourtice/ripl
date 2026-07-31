@@ -45,6 +45,10 @@ import {
     ref,
 } from 'vue';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 // Must match the rendered `.tree-node` height (--ripl-row-height in theme.css).
 const ROW_HEIGHT = 22;
 
@@ -132,7 +136,7 @@ function selectByOffset(offset: number): void {
     const index = getSelectedIndex(rows);
     const nextIndex = index < 0
         ? 0
-        : Math.min(rows.length - 1, Math.max(0, index + offset));
+        : numberClamp(index + offset, 0, rows.length - 1);
     const row = rows[nextIndex];
 
     selectRow(row);

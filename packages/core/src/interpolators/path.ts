@@ -16,6 +16,7 @@ import {
 } from './number';
 
 import {
+    arrayMapRange,
     numberFractional,
     typeIsArray,
     typeIsNil,
@@ -64,11 +65,11 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     const segmentsB = setBLength - 1;
 
     if (segmentsA === 0) {
-        return [Array.from({ length: setBLength }, () => setA[0]), setB];
+        return [arrayMapRange(setBLength, () => setA[0]), setB];
     }
 
     if (segmentsB === 0) {
-        return [setA, Array.from({ length: setALength }, () => setB[0])];
+        return [setA, arrayMapRange(setALength, () => setB[0])];
     }
 
     const targetSegments = lcm(segmentsA, segmentsB);

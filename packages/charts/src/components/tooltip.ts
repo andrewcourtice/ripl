@@ -19,6 +19,10 @@ import {
     easeOutQuart,
 } from '@ripl/core';
 
+import {
+    numberMaxOf,
+} from '@ripl/utilities';
+
 /** Where the tooltip box sits relative to the anchor point. */
 export type TooltipPlacement = 'above' | 'center';
 
@@ -222,7 +226,7 @@ export class Tooltip extends ChartComponent {
 
         existing.slice(lines.length).forEach(element => element.destroy());
 
-        const measuredWidth = Math.max(...lines.map(line => this._measureLine(line)));
+        const measuredWidth = numberMaxOf(lines, line => this._measureLine(line));
         const textWidth = measuredWidth || 40;
         const textHeight = lines.length * lineHeight;
 

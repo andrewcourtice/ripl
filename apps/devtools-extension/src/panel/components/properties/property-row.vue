@@ -70,6 +70,11 @@ import type {
     SerializedProperty,
 } from '@ripl/devtools';
 
+import {
+    typeIsArray,
+    typeIsNumber,
+} from '@ripl/utilities';
+
 const HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
 const props = defineProps<{
@@ -86,11 +91,11 @@ const focused = ref(false);
 const draft = ref('');
 
 function formatEditableValue(property: SerializedProperty): string {
-    if (property.valueType === 'number-array' && Array.isArray(property.value)) {
+    if (property.valueType === 'number-array' && typeIsArray(property.value)) {
         return property.value.map(formatNumber).join(', ');
     }
 
-    if (property.valueType === 'number' && typeof property.value === 'number') {
+    if (property.valueType === 'number' && typeIsNumber(property.value)) {
         return formatNumber(property.value);
     }
 
