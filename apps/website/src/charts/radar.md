@@ -17,13 +17,13 @@ The **Radar Chart** displays multivariate data on a radial grid, ideal for compa
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Radar" :extras-reset="reset">
-            <RiplField label="Grid levels">
+            <RiplField label="Grid levels" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Max value">
+            <RiplField label="Max value" option="max">
                 <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
-            <RiplField label="Fill opacity">
+            <RiplField label="Fill opacity" option="fillOpacity">
                 <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
         </RiplChartConfig>
@@ -73,6 +73,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        dataLabels: true,
     },
     title: 'Player Comparison',
     colors: seedColors(seriesMeta.map(s => s.id)),

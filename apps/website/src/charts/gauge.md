@@ -18,24 +18,26 @@ The **Gauge Chart** displays a single value on a semi-circular arc, ideal for KP
             <RiplField label="Value">
                 <RiplInputRange v-model="extras.value" :min="0" :max="100" :step="1" />
             </RiplField>
-            <RiplField label="Min value">
+            <RiplField label="Min value" option="min">
                 <RiplInputNumber v-model="extras.min" placeholder="0" />
             </RiplField>
-            <RiplField label="Max value">
+            <RiplField label="Max value" option="max">
                 <RiplInputNumber v-model="extras.max" placeholder="100" />
             </RiplField>
-            <RiplField label="Ticks">
+            <RiplField label="Ticks" option="ticks">
                 <RiplInputRange v-model="extras.ticks" :min="0" :max="12" :step="1" />
             </RiplField>
-            <RiplField label="Tick labels" inline>
+            <RiplField label="Tick labels" inline option="tickLabels">
                 <RiplSwitch v-model="extras.tickLabels" />
             </RiplField>
-            <RiplField label="Fill color" inline>
-                <RiplColorInput v-model="extras.color" />
-            </RiplField>
-            <RiplField label="Track color" inline>
-                <RiplColorInput v-model="extras.trackColor" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Fill color" inline option="color">
+                    <RiplColorInput v-model="extras.color" />
+                </RiplField>
+                <RiplField label="Track color" inline option="trackColor">
+                    <RiplColorInput v-model="extras.trackColor" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>

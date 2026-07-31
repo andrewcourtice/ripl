@@ -15,20 +15,23 @@ The **Chord Chart** visualizes relationships between groups using arcs and ribbo
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Groups" :extras-reset="reset">
-            <RiplField label="Pad angle">
+            <RiplField label="Pad angle" option="padAngle">
                 <RiplInputRange v-model="extras.padAngle" :min="0" :max="0.2" :step="0.01" />
             </RiplField>
-            <RiplField
-                v-for="(label, index) in LABELS"
-                :key="label"
-                :label="label"
-                inline
-            >
-                <RiplColorInput
-                    :model-value="extras.palette[index]"
-                    @update:model-value="setColor(index, $event)"
-                />
-            </RiplField>
+            <template #colors>
+                <RiplField
+                    v-for="(label, index) in LABELS"
+                    :key="label"
+                    :label="label"
+                    option="palette"
+                    inline
+                >
+                    <RiplColorInput
+                        :model-value="extras.palette[index]"
+                        @update:model-value="setColor(index, $event)"
+                    />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -67,6 +70,7 @@ const config = useChartConfig({
         legend: true,
         animation: true,
         theme: true,
+        format: true,
     },
     title: 'Team Collaboration',
 });

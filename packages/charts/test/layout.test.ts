@@ -188,7 +188,10 @@ describe('ChartLayout', () => {
 
         it('derives the default chart padding and element gap from the scale', () => {
             expect(DEFAULT_CHART_PADDING).toBe(SPACING.md);
-            expect(ELEMENT_GAP).toBe(SPACING.md);
+            // A half step, not a full one: the gap separates a chart's own bands from each other
+            // (title to legend, legend to plot), which sit inside the padding that already holds the
+            // whole chart clear of its container.
+            expect(ELEMENT_GAP).toBe(SPACING.sm);
         });
 
     });

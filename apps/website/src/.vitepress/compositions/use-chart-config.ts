@@ -6,6 +6,17 @@ import type {
     LegendPosition,
 } from '@ripl/charts';
 
+import {
+    DEFAULT_CHART_PADDING,
+} from '@ripl/charts';
+
+/**
+ * The charts package's own default base transition duration (`ANIMATION_DEFAULTS.duration`), which is
+ * not exported. Mirrored here so the Animation section's slider starts on the value the chart is
+ * already using rather than jumping when first touched.
+ */
+const DEFAULT_ANIMATION_DURATION = 1000;
+
 /**
  * The default Ripl chart color palette (mirrors `COLORS` in `@ripl/charts`, which is not
  * re-exported from the package entry point). Used to seed the per-series color pickers so they
@@ -45,6 +56,9 @@ export type ChartConfigTheme = 'auto' | 'light' | 'dark' | 'colorblind';
 /** Which axis a crosshair tracks. */
 export type CrosshairAxisMode = 'x' | 'y' | 'both';
 
+/** Whether a tooltip follows individual marks or the hovered category. */
+export type TooltipTriggerMode = 'item' | 'axis';
+
 /** Value-axis scale families exposed by the axis controls. */
 export type AxisScaleMode = 'linear' | 'log' | 'pow' | 'sqrt';
 
@@ -58,6 +72,8 @@ export interface ChartConfigFeatures {
     axes?: boolean;
     grid?: boolean;
     animation?: boolean;
+    /** Exposes the chart's `padding`, in the Layout section. Every chart supports it. */
+    layout?: boolean;
     /** Exposes a pan/zoom navigator toggle (cartesian charts only). */
     navigator?: boolean;
     /** Exposes a tooltip visibility toggle. */
@@ -86,11 +102,15 @@ export interface ChartConfigDefaults {
     axesVisible?: boolean;
     axisX?: string;
     axisY?: string;
+    axisXLabelRotation?: number;
     gridVisible?: boolean;
     animationEnabled?: boolean;
+    animationDuration?: number;
     navigatorEnabled?: boolean;
     navigatorSensitivity?: number;
+    overviewEnabled?: boolean;
     tooltipVisible?: boolean;
+    tooltipTrigger?: TooltipTriggerMode;
     crosshairVisible?: boolean;
     crosshairAxis?: CrosshairAxisMode;
     dataLabelsVisible?: boolean;
@@ -102,6 +122,7 @@ export interface ChartConfigDefaults {
     axisMax?: number;
     axisYFormat?: ValueFormatKey;
     annotationsVisible?: boolean;
+    padding?: number;
     colors?: Record<string, string>;
 }
 
@@ -115,11 +136,19 @@ export interface ChartConfig {
     axesVisible: boolean;
     axisX: string;
     axisY: string;
+    /** Rotation applied to x-axis tick labels, in degrees. */
+    axisXLabelRotation: number;
     gridVisible: boolean;
     animationEnabled: boolean;
+    /** Base transition duration in milliseconds. */
+    animationDuration: number;
     navigatorEnabled: boolean;
     navigatorSensitivity: number;
+    /** Whether the overview scrub strip is shown (category-axis charts). */
+    overviewEnabled: boolean;
     tooltipVisible: boolean;
+    /** Whether the tooltip follows individual marks or the hovered category. */
+    tooltipTrigger: TooltipTriggerMode;
     crosshairVisible: boolean;
     crosshairAxis: CrosshairAxisMode;
     dataLabelsVisible: boolean;
@@ -133,6 +162,8 @@ export interface ChartConfig {
     axisMax: number | undefined;
     axisYFormat: ValueFormatKey;
     annotationsVisible: boolean;
+    /** Space reserved around the chart, in pixels. */
+    padding: number;
     colors: Record<string, string>;
 }
 
@@ -156,9 +187,8 @@ function snapshotConfig(config: ChartConfig): ChartConfig {
  * Creates a reactive config object backing a chart demo's customization drawer. Pair it with
  * {@link buildCommonOptions} to translate the config into chart options, and a deep `watch` that
  * calls `chart.update(...)` whenever the config changes — charts reconcile their furniture (title,
- * legend, axes, grid, tooltip, crosshair, theme, navigator) at runtime. The one shared exception is
- * `legendPosition`: legend orientation is fixed when the legend is created, so demos pair the
- * update watch with a chart rebuild when the position changes.
+ * legend, axes, grid, tooltip, crosshair, theme, navigator) at runtime, including legend position,
+ * which `Legend.setOptions` relocates in place.
  */
 export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig {
     const features = defaults.features ?? {};
@@ -170,6 +200,8 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
             axes: features.axes ?? false,
             grid: features.grid ?? false,
             animation: features.animation ?? true,
+            // Every chart takes a `padding`, so the Layout section is on unless a demo opts out.
+            layout: features.layout ?? true,
             navigator: features.navigator ?? false,
             tooltip: features.tooltip ?? false,
             crosshair: features.crosshair ?? false,
@@ -186,11 +218,15 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
         axesVisible: defaults.axesVisible ?? true,
         axisX: defaults.axisX ?? '',
         axisY: defaults.axisY ?? '',
+        axisXLabelRotation: defaults.axisXLabelRotation ?? 0,
         gridVisible: defaults.gridVisible ?? true,
         animationEnabled: defaults.animationEnabled ?? true,
+        animationDuration: defaults.animationDuration ?? DEFAULT_ANIMATION_DURATION,
         navigatorEnabled: defaults.navigatorEnabled ?? false,
         navigatorSensitivity: defaults.navigatorSensitivity ?? 0.5,
+        overviewEnabled: defaults.overviewEnabled ?? false,
         tooltipVisible: defaults.tooltipVisible ?? true,
+        tooltipTrigger: defaults.tooltipTrigger ?? 'item',
         crosshairVisible: defaults.crosshairVisible ?? true,
         crosshairAxis: defaults.crosshairAxis ?? 'x',
         dataLabelsVisible: defaults.dataLabelsVisible ?? false,
@@ -202,6 +238,7 @@ export function useChartConfig(defaults: ChartConfigDefaults = {}): ChartConfig 
         axisMax: defaults.axisMax,
         axisYFormat: defaults.axisYFormat ?? 'none',
         annotationsVisible: defaults.annotationsVisible ?? false,
+        padding: defaults.padding ?? DEFAULT_CHART_PADDING,
         colors: {
             ...(defaults.colors ?? {}),
         },
@@ -281,6 +318,7 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
             x: {
                 visible: config.axesVisible,
                 title: config.axisX || undefined,
+                labelRotation: config.axisXLabelRotation,
             },
             y,
         };
@@ -291,7 +329,12 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.tooltip) {
-        options.tooltip = config.tooltipVisible;
+        options.tooltip = config.tooltipVisible
+            ? {
+                visible: true,
+                trigger: config.tooltipTrigger,
+            }
+            : false;
     }
 
     if (features.crosshair) {
@@ -319,14 +362,23 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.animation) {
-        options.animation = config.animationEnabled;
+        options.animation = config.animationEnabled
+            ? {
+                enabled: true,
+                duration: config.animationDuration,
+            }
+            : false;
+    }
+
+    if (features.layout) {
+        options.padding = config.padding;
     }
 
     if (features.navigator) {
-        // Emit both `overview` (the scrub-bar strip, on category-axis charts — inert elsewhere)
-        // and `navigator` (in-plot pan/zoom, with the tuned sensitivity). `overview: true` implies
-        // a navigator, but passing the object too keeps the sensitivity; `false` disables both.
-        options.overview = config.navigatorEnabled;
+        // `navigator` is in-plot pan/zoom (with the tuned sensitivity); `overview` is the scrub-bar
+        // strip, drawn only by category-axis charts and inert elsewhere. They are separate controls
+        // because either is useful without the other.
+        options.overview = config.overviewEnabled;
         options.navigator = config.navigatorEnabled
             ? {
                 zoom: {

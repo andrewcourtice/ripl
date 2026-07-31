@@ -1,6 +1,6 @@
 <template>
     <label class="ripl-field" :class="{ 'ripl-field--inline': inline }">
-        <span class="ripl-field__label" :title="label">{{ label }}</span>
+        <span class="ripl-field__label" :title="hint">{{ label }}</span>
         <span class="ripl-field__control">
             <slot></slot>
         </span>
@@ -8,11 +8,26 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+import {
+    computed,
+} from 'vue';
+
+const props = defineProps<{
     label: string;
     /** Lay the label and control out on a single row instead of stacked. */
     inline?: boolean;
+    /**
+     * The chart option this field sets, e.g. `borderRadius` or `axis`. Surfaced as the label's
+     * tooltip so a reader can connect a control to the option it drives, and read by
+     * `scripts/check-config-coverage.mjs` to prove every option of every chart has a control.
+     *
+     * Several fields may declare the same option when one option is driven by more than one control
+     * (a heatmap's low and high colour both set `gradient`).
+     */
+    option?: string;
 }>();
+
+const hint = computed(() => (props.option ? `${props.label} — sets \`${props.option}\`` : props.label));
 </script>
 
 <style scoped>

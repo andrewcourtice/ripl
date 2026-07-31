@@ -238,8 +238,12 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         const targetPoints = ctx.data.map(item => this._markerState(series, item, ctx).point);
         const prevKeys = this._morphKeys.get(series.id);
 
-        // When the key set changes, match points by identity so a curved line keeps its shape.
+        // When the key set changes, match points by identity so a curved line keeps its shape. Stroke
+        // and width ride along: they used to be applied only when the series was built, so changing
+        // either did nothing until the series was recreated.
         line.data = {
+            stroke: ctx.getColor(series.id),
+            lineWidth: series.lineWidth ?? 2,
             points: prevKeys && keysDiffer(prevKeys, newKeys)
                 ? interpolatePoints(line.points, targetPoints, {
                     resolveKeys: () => correspondence(prevKeys, newKeys),

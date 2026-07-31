@@ -7,23 +7,89 @@
             :min="min"
             :max="max"
             :step="step"
-            @input="$emit('update:modelValue', Number(($event.target as HTMLInputElement).value))"
+            @input="onInput"
         >
-        <span class="ripl-input-range__value">{{ modelValue }}</span>
+        <span class="ripl-input-range__value">{{ display }}</span>
     </span>
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+import {
+    computed,
+    onBeforeUnmount,
+    ref,
+    watch,
+} from 'vue';
+
+const props = withDefaults(defineProps<{
     modelValue: number;
     min?: number;
     max?: number;
     step?: number;
-}>();
+    /**
+     * Milliseconds to hold back `update:modelValue` while the slider is being dragged. The first
+     * change in a gesture is emitted immediately, so a click or a keyboard step still applies at
+     * once; subsequent changes coalesce onto the trailing edge. Set `0` to emit every step.
+     */
+    debounce?: number;
+}>(), {
+    min: undefined,
+    max: undefined,
+    step: undefined,
+    debounce: 120,
+});
 
-defineEmits<{
+const emit = defineEmits<{
     'update:modelValue': [value: number];
 }>();
+
+// A drag fires `input` on every step, and each one costs a `chart.update()` and a full animated
+// render — enough to make the slider feel like it is fighting back. The emit is throttled instead,
+// while the thumb (which the browser moves on its own) and this readout stay at full rate, so the
+// control still feels immediate.
+const dragged = ref<number>();
+const display = computed(() => dragged.value ?? props.modelValue);
+
+let timer: ReturnType<typeof setTimeout> | undefined;
+
+function flush(value: number): void {
+    timer = undefined;
+    emit('update:modelValue', value);
+}
+
+function onInput(event: Event): void {
+    const value = Number((event.target as HTMLInputElement).value);
+
+    dragged.value = value;
+
+    if (!props.debounce) {
+        flush(value);
+        return;
+    }
+
+    // Leading edge: with nothing in flight, apply straight away. Anything arriving inside the window
+    // replaces the pending value rather than queueing behind it.
+    if (!timer) {
+        flush(value);
+        timer = setTimeout(() => {
+            timer = undefined;
+        }, props.debounce);
+
+        return;
+    }
+
+    clearTimeout(timer);
+    timer = setTimeout(() => flush(value), props.debounce);
+}
+
+// Once the model catches up (or is reset externally) the readout goes back to tracking it.
+watch(() => props.modelValue, value => {
+    if (!timer || value === dragged.value) {
+        dragged.value = undefined;
+    }
+});
+
+onBeforeUnmount(() => clearTimeout(timer));
 </script>
 
 <style scoped>

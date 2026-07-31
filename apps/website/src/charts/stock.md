@@ -15,15 +15,17 @@ The **Stock Chart** renders OHLC (Open, High, Low, Close) candlestick data with 
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Candles" :extras-reset="reset">
-            <RiplField label="Volume" inline>
+            <RiplField label="Volume" inline option="showVolume">
                 <RiplSwitch v-model="extras.showVolume" />
             </RiplField>
-            <RiplField label="Up color" inline>
-                <RiplColorInput v-model="extras.upColor" />
-            </RiplField>
-            <RiplField label="Down color" inline>
-                <RiplColorInput v-model="extras.downColor" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Up color" inline option="upColor">
+                    <RiplColorInput v-model="extras.upColor" />
+                </RiplField>
+                <RiplField label="Down color" inline option="downColor">
+                    <RiplColorInput v-model="extras.downColor" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>

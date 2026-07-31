@@ -17,13 +17,7 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line" :extras-reset="reset">
-            <RiplField label="Time axis" inline>
-                <RiplSwitch v-model="extras.timeAxis" />
-            </RiplField>
-            <RiplField label="Multiple axes" inline>
-                <RiplSwitch v-model="extras.multiAxis" />
-            </RiplField>
-            <RiplField label="Line type">
+            <RiplField label="Line type" option="lineType">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
@@ -40,20 +34,29 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Line style">
+            <RiplField label="Line style" option="lineStyle">
                 <RiplSelect v-model="extras.lineStyle">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Line width">
-                <RiplInputRange v-model="extras.lineWidth" :min="1" :max="5" :step="0.5" />
+            <RiplField label="Line width" option="lineWidth">
+                <RiplInputRange
+                    v-model="extras.lineWidth"
+                    :min="1"
+                    :max="5"
+                    :step="0.5"
+                />
             </RiplField>
-            <RiplField label="Markers" inline>
+            <RiplField label="Markers" option="markers" inline>
                 <RiplSwitch v-model="extras.markers" />
             </RiplField>
-            <RiplField v-if="extras.markers" label="Marker symbol">
+            <RiplField
+                v-if="extras.markers"
+                label="Marker symbol"
+                option="marker"
+            >
                 <RiplSelect v-model="extras.markerSymbol">
                     <option value="mixed">Mixed (per series)</option>
                     <option value="circle">Circle</option>
@@ -62,9 +65,26 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="triangle">Triangle</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField v-if="extras.markers" label="Marker radius">
-                <RiplInputRange v-model="extras.markerRadius" :min="1" :max="8" :step="1" />
+            <RiplField
+                v-if="extras.markers"
+                label="Marker radius"
+                option="markerRadius"
+            >
+                <RiplInputRange
+                    v-model="extras.markerRadius"
+                    :min="1"
+                    :max="8"
+                    :step="1"
+                />
             </RiplField>
+            <template #axes>
+                <RiplField label="Time axis" option="axis" inline>
+                    <RiplSwitch v-model="extras.timeAxis" />
+                </RiplField>
+                <RiplField label="Multiple axes" option="yAxis" inline>
+                    <RiplSwitch v-model="extras.multiAxis" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -144,6 +164,7 @@ const config = useChartConfig({
         grid: true,
         tooltip: true,
         crosshair: true,
+        dataLabels: true,
         format: true,
         animation: true,
         theme: true,

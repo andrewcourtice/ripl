@@ -15,24 +15,26 @@ The **Radial Bar Chart** lays each category out as a concentric ring whose arc l
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Rings" :extras-reset="reset">
-            <RiplField label="Max value">
+            <RiplField label="Max value" option="max">
                 <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
-            <RiplField label="Inner radius">
+            <RiplField label="Inner radius" option="innerRadius">
                 <RiplInputRange v-model="extras.innerRadius" :min="0" :max="0.6" :step="0.05" />
             </RiplField>
-            <RiplField label="Range (°)">
+            <RiplField label="Range (°)" option="range">
                 <RiplInputRange v-model="extras.range" :min="180" :max="360" :step="10" />
             </RiplField>
-            <RiplField label="Ring gap">
+            <RiplField label="Ring gap" option="gap">
                 <RiplInputRange v-model="extras.gap" :min="0" :max="0.9" :step="0.05" />
             </RiplField>
-            <RiplField label="Rounded" inline>
+            <RiplField label="Rounded" inline option="rounded">
                 <RiplSwitch v-model="extras.rounded" />
             </RiplField>
-            <RiplField label="Track color" inline>
-                <RiplColorInput v-model="extras.trackColor" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Track color" inline option="trackColor">
+                    <RiplColorInput v-model="extras.trackColor" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -75,6 +77,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        dataLabels: true,
     },
     title: 'Language Popularity',
 });

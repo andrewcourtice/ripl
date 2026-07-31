@@ -23,6 +23,7 @@ import {
 } from '@ripl/test-utils';
 
 import type {
+    Rect,
     Scene,
     Text,
 } from '@ripl/core';
@@ -140,6 +141,46 @@ describe('Tooltip', () => {
             'bbbb',
             'cccc',
         ]);
+    });
+
+    test('Should size the box to its content when wrapping is off', () => {
+        const {
+            scene,
+            tooltip,
+        } = createTooltipHarness({
+            maxWidth: 100,
+            padding: 8,
+        });
+
+        measureByLength(scene);
+
+        // 14 characters at 10px each, so the text is 140px wide against a 100px `maxWidth`. With no
+        // wrapping there is nothing to wrap it to: the box was clamped to 100px anyway and simply cut
+        // the text off. `maxWidth` is the width content wraps *at*, so it cannot apply here.
+        tooltip.show(100, 100, 'aaaa bbbb cccc');
+
+        const [text] = scene.getElementsByType<Text>('text');
+        const [box] = scene.getElementsByType<Rect>('rect');
+
+        expect(text.content).toBe('aaaa bbbb cccc');
+        expect(box.width).toBeGreaterThanOrEqual(140 + 8 * 2);
+    });
+
+    test('Should not let an unwrapped box exceed the scene width', () => {
+        const {
+            scene,
+            tooltip,
+        } = createTooltipHarness({ padding: 8 });
+
+        // jsdom reports no layout, so the scene starts 0x0 — size it so there is a real bound to clamp to.
+        scene.context.rescale(600, 400);
+        measureByLength(scene);
+
+        tooltip.show(100, 100, 'a'.repeat(400));
+
+        const [box] = scene.getElementsByType<Rect>('rect');
+
+        expect(box.width).toBeLessThanOrEqual(scene.width);
     });
 
     test('Should apply wrap and maxWidth through setOptions at runtime', () => {

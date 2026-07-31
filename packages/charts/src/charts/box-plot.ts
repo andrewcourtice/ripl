@@ -144,6 +144,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 horizontal: true,
                 vertical: false,
             },
+            crosshair: true,
         });
 
         this.init();
@@ -402,6 +403,8 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 this.gridTicks(viewedValueScale, axisTickCount(this.yAxisOptions)),
                 plot
             );
+
+            this.setupCrosshair(plot);
 
             const step = keys.length > 1
                 ? viewedCategoryScale(keys[1]) - viewedCategoryScale(keys[0])

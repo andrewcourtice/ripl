@@ -10,9 +10,9 @@ export const SPACING = {
     none: 0,
     /** 4px — half-step, only for gaps within a single component (e.g. a legend swatch and its label). */
     xs: 4,
-    /** 8px — tightly related elements (tick marks and their labels, two stacked axis bands). */
+    /** 8px — adjacent chart bands (title to legend, legend to plot) and two stacked axis bands. */
     sm: 8,
-    /** 16px — the default gap between distinct chart elements (axis title to labels, legend to plot). */
+    /** 16px — the chart's own padding, and the gap between an axis title and its tick labels. */
     md: 16,
     /** 24px — generous separation. */
     lg: 24,

@@ -654,6 +654,16 @@ describe('SVG', () => {
 
         // ── rescale ──────────────────────────────────────────────
 
+        test('Should suppress text selection on the context element', () => {
+            const ctx = create();
+
+            // Chart text is graphics, not document content: without this, dragging to pan or brush
+            // sweeps a selection across the labels. The canvas backend has nothing to select, so this
+            // is what keeps the two consistent.
+            expect(ctx.element.style.userSelect).toBe('none');
+            ctx.destroy();
+        });
+
         test('Should set viewBox on rescale via resize emit', () => {
             const ctx = create();
             // The viewBox is set during init via rescale

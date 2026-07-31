@@ -15,10 +15,10 @@ The **Treemap Chart** displays hierarchical data as nested rectangles, where eac
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Treemap" :extras-reset="reset">
-            <RiplField label="Cell gap">
+            <RiplField label="Cell gap" option="gap">
                 <RiplInputRange v-model="extras.gap" :min="0" :max="12" :step="1" />
             </RiplField>
-            <RiplField label="Corner radius">
+            <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="12" :step="1" />
             </RiplField>
         </RiplChartConfig>

@@ -122,6 +122,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 horizontal: true,
                 vertical: false,
             },
+            crosshair: true,
         });
 
         this.init();
@@ -228,6 +229,8 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 this.gridTicks(viewedCountScale, 10),
                 plot
             );
+
+            this.setupCrosshair(plot);
 
             return Promise.all([
                 this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
