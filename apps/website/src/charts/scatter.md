@@ -105,7 +105,7 @@ const { extras, reset } = useChartExtras({
     sizeBy: true,
     minRadius: 5,
     maxRadius: 25,
-    markerSymbol: 'mixed' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
+    markerSymbol: 'circle' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
     multiAxis: false,
 });
 

@@ -127,13 +127,17 @@ interface SalesRow {
     revenue: number;
     expenses: number;
     orders: number;
+    returns: number;
     target: number;
 }
 
 const seriesMeta = [
     { type: 'area' as const, id: 'revenue', label: 'Revenue', value: 'revenue' },
     { type: 'area' as const, id: 'expenses', label: 'Expenses', value: 'expenses' },
+    // Two bar series, so the demo shows both how same-type bars group side by side and how the
+    // Stacked toggle sums them (orders + returns = total transactions).
     { type: 'bar' as const, id: 'orders', label: 'Orders', value: 'orders' },
+    { type: 'bar' as const, id: 'returns', label: 'Returns', value: 'returns' },
     { type: 'line' as const, id: 'target', label: 'Target', value: 'target' },
 ];
 
@@ -233,6 +237,7 @@ function rollValues() {
         revenue: getValue(400, 1000),
         expenses: getValue(120, 420),
         orders: getValue(60, 320),
+        returns: getValue(20, 140),
         target: getValue(520, 900),
     };
 }

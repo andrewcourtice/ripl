@@ -70,11 +70,11 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
             <template #axes>
                 <RiplField
                     v-if="extras.stackMode !== 'percent'"
-                    label="Secondary axis"
+                    label="Multiple axes"
                     option="yAxis"
                     inline
                 >
-                    <RiplSwitch v-model="extras.secondaryAxis" />
+                    <RiplSwitch v-model="extras.multiAxis" />
                 </RiplField>
             </template>
         </RiplChartConfig>
@@ -122,7 +122,7 @@ const STACK_MODE_VALUES = {
 
 const { extras, reset } = useChartExtras({
     stackMode: 'overlaid' as keyof typeof STACK_MODE_VALUES,
-    secondaryAxis: false,
+    multiAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
     lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
     lineWidth: 2,
@@ -161,16 +161,16 @@ function generateData(count = 6) {
 
 let data = generateData();
 
-// Percent stacking normalizes per axis group, so the secondary-axis binding only applies to the
-// other modes (the drawer hides the toggle in percent mode to match).
-function secondaryAxisActive() {
-    return extras.secondaryAxis && extras.stackMode !== 'percent';
+// Percent stacking normalizes per axis group, so a second axis only applies to the other modes (the
+// drawer hides the toggle in percent mode to match).
+function multiAxisActive() {
+    return extras.multiAxis && extras.stackMode !== 'percent';
 }
 
-// With the secondary axis on, shrink the mobile series an order of magnitude so its units
-// genuinely differ from desktop's and the right-hand axis is justified.
+// With multiple axes on, shrink the mobile series an order of magnitude so its units genuinely
+// differ from desktop's and the right-hand axis is justified.
 function activeData() {
-    if (!secondaryAxisActive()) {
+    if (!multiAxisActive()) {
         return data;
     }
 
@@ -181,7 +181,7 @@ function activeData() {
 }
 
 function getSeries() {
-    const secondary = secondaryAxisActive();
+    const multiAxis = multiAxisActive();
 
     return seriesMeta.map(s => ({
         id: s.id,
@@ -193,7 +193,7 @@ function getSeries() {
         lineWidth: extras.lineWidth,
         markers: extras.markers,
         color: config.colors[s.id],
-        yAxis: secondary && s.id === 'mobile' ? 1 : undefined,
+        yAxis: multiAxis && s.id === 'mobile' ? 1 : undefined,
     }));
 }
 
@@ -207,7 +207,7 @@ function buildOptions() {
 
     // A second `axis.y` entry renders a right-hand y-axis; the mobile series binds to it via its
     // `yAxis: 1` series option.
-    if (secondaryAxisActive()) {
+    if (multiAxisActive()) {
         options.axis = {
             ...options.axis,
             y: [
