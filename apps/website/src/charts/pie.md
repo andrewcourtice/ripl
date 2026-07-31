@@ -236,110 +236,26 @@ createPieChart('#container', {
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createPieChart('#container', {
-    data,  // TData[]
-    key,   // keyof TData | ((item: TData) => string)
-    value, // NumericAccessor<TData>
-    label, // keyof TData | ((item: TData) => string)
+    data,
+    key: 'browser',
+    value: 'share',
+    label: 'browser',
+    colorBy: 'browser',
+    // Non-zero turns the pie into a donut. A value of 1 or less is a fraction of the outer
+    // radius; anything larger is read as absolute pixels.
+    innerRadius: 60,
+    labels: 'outside',
+    legend: { position: 'right' },
+    format: 'percentage',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface PieChartOptions<TData> {
-    // Chart-specific
-    /** The dataset to render, one segment per item. */
-    data: TData[];
-
-    /** Accessor for each item's unique key, used to match segments across data updates. */
-    key: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each item's numeric value, which determines its proportional arc angle. */
-    value: NumericAccessor<TData>;
-
-    /** Accessor for each item's display label (shown in the legend and segment labels). */
-    label: keyof TData | ((item: TData) => string);
-
-    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
-    colorBy?: keyof TData | ((item: TData) => string);
-
-    /**
-     * Inner hole radius (donut). A value `<= 1` is a fraction of the outer radius; larger values
-     * are absolute pixels. Defaults to 0 (a solid pie).
-     */
-    innerRadius?: number;
-
-    /** Legend configuration. Shown by default; pass `false` to hide. */
-    legend?: ChartLegendInput;
-
-    /**
-     * Segment labels. Hidden by default (the legend is shown by default). `true` shows labels
-     * inside each segment; `'outside'` places them beyond the arc with a leader line; a full
-     * object customizes position/font/color.
-     */
-    labels?: ChartSegmentLabelsInput;
-
-    /** Format applied to segment values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface PieChartEventMap {
-    /** Emitted when a segment is clicked. */
-    segmentclick: PieChartSegmentEvent;
-
-    /** Emitted when the pointer enters a segment. */
-    segmententer: PieChartSegmentEvent;
-
-    /** Emitted when the pointer leaves a segment. */
-    segmentleave: PieChartSegmentEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

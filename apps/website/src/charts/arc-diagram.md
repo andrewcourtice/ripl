@@ -203,138 +203,26 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `color`) la
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createArcDiagramChart('#container', {
-    nodes, // ArcDiagramNode<TData>[]
-    links, // ArcDiagramLink[]
+    nodes,
+    links,
+    // `'horizontal'` (the default) runs the node axis along the bottom with arcs bulging up.
+    // `'vertical'` runs it down the left, arcs bulging right.
+    orientation: 'vertical',
+    // The dot radius — and, with `sizeByConnections` on, the radius of the *most* connected
+    // node. The rest scale down from it by degree.
+    nodeRadius: 8,
+    sizeByConnections: true,
+    legend: { position: 'bottom' },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface ArcDiagramChartOptions<TData> {
-    // Chart-specific
-    /** The nodes laid out along the axis. */
-    nodes: ArcDiagramNode<TData>[];
-
-    /** The links drawn as arcs between pairs of nodes. */
-    links: ArcDiagramLink[];
-
-    /** Node dot radius (the max radius when `sizeByConnections` is on). Defaults to 6. */
-    nodeRadius?: number;
-
-    /** Lay the node axis horizontally (default) or vertically (a Y axis with arcs bulging right). */
-    orientation?: ArcDiagramOrientation;
-
-    /**
-     * Scale each node's dot by its connection count (degree), like a bubble chart. Defaults to
-     * false.
-     */
-    sizeByConnections?: boolean;
-
-    /**
-     * Legend configuration. Shown automatically when there is more than one node group; pass
-     * `false` to hide.
-     */
-    legend?: ChartLegendInput;
-
-    /** Format applied to link values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface ArcDiagramNode<TData> {
-    /** Unique identifier for the node, referenced by links and used for data joins. */
-    id: string;
-
-    /** Text shown beside the node; defaults to the node's id. */
-    label?: string;
-
-    /** Optional grouping; nodes in the same group share a color. */
-    group?: string;
-
-    /** Explicit node color; falls back to the group/palette color when omitted. */
-    color?: string;
-
-    /** Arbitrary datum carried through to node interaction events. */
-    data?: TData;
-}
-
-interface ArcDiagramLink {
-    /** Id of the node the link starts from. */
-    source: string;
-
-    /** Id of the node the link connects to. */
-    target: string;
-
-    /** Optional flow magnitude; scales the arc's thickness. */
-    value?: number;
-}
-
-interface ArcDiagramChartEventMap<TData> {
-    /** Emitted when a node is clicked. */
-    nodeclick: ArcDiagramNodeEvent<TData>;
-
-    /** Emitted when the pointer enters a node. */
-    nodeenter: ArcDiagramNodeEvent<TData>;
-
-    /** Emitted when the pointer leaves a node. */
-    nodeleave: ArcDiagramNodeEvent<TData>;
-
-    /** Emitted when a link arc is clicked. */
-    linkclick: ArcDiagramLinkEvent;
-
-    /** Emitted when the pointer enters a link arc. */
-    linkenter: ArcDiagramLinkEvent;
-
-    /** Emitted when the pointer leaves a link arc. */
-    linkleave: ArcDiagramLinkEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

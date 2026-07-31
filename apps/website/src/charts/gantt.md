@@ -239,129 +239,32 @@ from each one.
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createGanttChart('#container', {
-    data,  // TData[]
-    key,   // keyof TData | ((item: TData) => string)
-    label, // keyof TData | ((item: TData) => string)
-    start, // keyof TData | ((item: TData) => Date)
-    end,   // keyof TData | ((item: TData) => Date)
+    data,
+    key: 'id',
+    label: 'name',
+    start: 'start',
+    end: 'end',
+    colorBy: 'team',
+    // Completion ratio (0–1), drawn as an overlay on each bar.
+    progress: 'progress',
+    // Ids of the tasks this one depends on, drawn as connectors.
+    dependencies: 'dependsOn',
+    borderRadius: 4,
+    showToday: true,
+    todayColor: '#f4a0b9',
+    grid: true,
+    tooltip: true,
+    axis: { x: { title: 'Timeline' } },
+    format: 'percentage',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface GanttChartOptions<TData> {
-    // Chart-specific
-    /** The tasks rendered as time-spanning bars. */
-    data: TData[];
-
-    /** Accessor for each task's unique key (used for color assignment and data joins). */
-    key: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each task's label shown on the category axis. */
-    label: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each task's start date. */
-    start: keyof TData | ((item: TData) => Date);
-
-    /** Accessor for each task's end date. */
-    end: keyof TData | ((item: TData) => Date);
-
-    /** Optional per-item color accessor; falls back to the generated palette. */
-    colorBy?: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each task's completion ratio (0–1), drawn as a progress overlay. */
-    progress?: NumericAccessor<TData>;
-
-    /**
-     * Accessor for the keys of the tasks each task depends on. When provided, a curved connector
-     * is drawn from every predecessor task's end to this task's start (finish-to-start). Return an
-     * empty array, or omit the option entirely, for a task with no dependencies.
-     */
-    dependencies?: keyof TData | ((item: TData) => string[]);
-
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-
-    /** Axis configuration for the category and time axes. */
-    axis?: ChartAxisInput<TData>;
-
-    /**
-     * Format applied to the numeric progress value shown in the task tooltip. Defaults to a
-     * percentage.
-     */
-    format?: ValueFormatInput;
-
-    /** Draw a marker line at the current date. Defaults to true. */
-    showToday?: boolean;
-
-    /** Color of the "today" marker line. */
-    todayColor?: string;
-
-    /** Corner radius in pixels applied to each task bar. Defaults to 3. */
-    borderRadius?: number;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface GanttChartEventMap {
-    /** Emitted when a task bar is clicked. */
-    taskclick: GanttChartTaskEvent;
-
-    /** Emitted when the pointer enters a task bar. */
-    taskenter: GanttChartTaskEvent;
-
-    /** Emitted when the pointer leaves a task bar. */
-    taskleave: GanttChartTaskEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

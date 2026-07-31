@@ -184,102 +184,20 @@ descendants.
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createSunburstChart('#container', {
-    data, // SunburstNode<TData>[]
+    // Each node carries `id`, `label`, `value` and optional `children`; the ring depth follows
+    // the nesting.
+    data,
+    legend: { position: 'right' },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface SunburstChartOptions<TData> {
-    // Chart-specific
-    /** The root nodes of the hierarchy to render as concentric rings. */
-    data: SunburstNode<TData>[];
-
-    /** Legend configuration, listing the top-level nodes. */
-    legend?: ChartLegendInput;
-
-    /** Format applied to node values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface SunburstNode<TData> {
-    /** Unique identifier for the node. */
-    id: string;
-
-    /** Display label shown in the legend and tooltips. */
-    label: string;
-
-    /** The node's numeric value, which determines its angular extent. */
-    value: number;
-
-    /** Optional color override; child nodes inherit their parent's color when omitted. */
-    color?: string;
-
-    /** Child nodes rendered in the next ring outward, within this node's angular range. */
-    children?: SunburstNode<TData>[];
-
-    /** Arbitrary datum carried through to segment interaction events. */
-    data?: TData;
-}
-
-interface SunburstChartEventMap<TData> {
-    /** Emitted when a segment is clicked. */
-    nodeclick: SunburstChartNodeEvent<TData>;
-
-    /** Emitted when the pointer enters a segment. */
-    nodeenter: SunburstChartNodeEvent<TData>;
-
-    /** Emitted when the pointer leaves a segment. */
-    nodeleave: SunburstChartNodeEvent<TData>;
-}
-```
-<!-- options:end -->
 
 ## Events
 

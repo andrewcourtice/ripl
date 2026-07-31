@@ -153,101 +153,24 @@ length as `groups` in both dimensions.
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createChordChart('#container', {
-    groups, // string[]
-    matrix, // number[][]
+    groups: ['Engineering', 'Design', 'Marketing', 'Sales'],
+    // Square flow matrix: matrix[i][j] is the flow from groups[i] to groups[j].
+    matrix,
+    // One color per group, positional.
+    palette: ['#7cacf8', '#6dd5b1', '#b197fc', '#f7c97e'],
+    // Gap between adjacent group arcs, in radians.
+    padAngle: 0.04,
+    legend: { position: 'right' },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface ChordChartOptions {
-    // Chart-specific
-    /** Group names, one per row/column of the matrix, rendered as outer arcs. */
-    groups: string[];
-
-    /** Square flow matrix where `matrix[i][j]` is the flow from group `i` to group `j`. */
-    matrix: number[][];
-
-    /** Explicit color per group; falls back to the generated palette when omitted. */
-    palette?: string[];
-
-    /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
-    padAngle?: number;
-
-    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
-    legend?: ChartLegendInput;
-
-    /** Format applied to flow values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface ChordChartEventMap {
-    /** Emitted when an outer arc is clicked. */
-    segmentclick: ChordChartSegmentEvent;
-
-    /** Emitted when the pointer enters an outer arc. */
-    segmententer: ChordChartSegmentEvent;
-
-    /** Emitted when the pointer leaves an outer arc. */
-    segmentleave: ChordChartSegmentEvent;
-
-    /** Emitted when a ribbon is clicked. */
-    linkclick: ChordChartLinkEvent;
-
-    /** Emitted when the pointer enters a ribbon. */
-    linkenter: ChordChartLinkEvent;
-
-    /** Emitted when the pointer leaves a ribbon. */
-    linkleave: ChordChartLinkEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

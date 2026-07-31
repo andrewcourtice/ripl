@@ -240,119 +240,32 @@ createRadarChart('#container', {
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createRadarChart('#container', {
-    data,       // TData[]
-    series,     // RadarChartSeriesOptions<TData>[]
-    categories, // string[]
+    data,
+    categories: ['Speed', 'Power', 'Range', 'Accuracy', 'Defence'],
+    max: 100,
+    // Concentric grid rings.
+    levels: 5,
+    labels: true,
+    legend: { position: 'bottom' },
+    format: 'number',
+    series: [
+        {
+            id: 'player-1',
+            label: 'Player 1',
+            value: 'playerOne',
+            color: '#7cacf8',
+            fillOpacity: 0.3,
+        },
+    ],
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface RadarChartOptions<TData> {
-    // Chart-specific
-    /** The dataset, with one item per axis (in axis order). */
-    data: TData[];
-
-    /** The series to overlay, each rendered as a filled polygon. */
-    series: RadarChartSeriesOptions<TData>[];
-
-    /** Axis labels arranged clockwise around the chart, one per data item. */
-    categories: string[];
-
-    /** Maximum value mapped to the outer ring (defaults to the largest value across all series). */
-    max?: number;
-
-    /** Number of concentric grid rings. Defaults to 5. */
-    levels?: number;
-
-    /** Legend configuration. Shown by default when there is more than one series. */
-    legend?: ChartLegendInput;
-
-    /** Format applied to point values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    /**
-     * Show each point's value beside its polygon vertex, offset outward along the vertex's angle
-     * (`true`/`false` or detailed label options). Off by default.
-     */
-    labels?: ChartDataLabelsInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface RadarChartSeriesOptions<TData> {
-    /** Unique identifier for the series. */
-    id: string;
-
-    /** Optional color override for the series (otherwise a palette color is generated). */
-    color?: string;
-
-    /** Display label for the series (shown in the legend and tooltips). */
-    label: string;
-
-    /** Accessor for each data item's value on the series' axis. */
-    value: NumericAccessor<TData>;
-
-    /** Fill opacity of the series' area polygon. Defaults to 0.25. */
-    fillOpacity?: number;
-}
-
-interface RadarChartEventMap {
-    /** Emitted when a point marker is clicked. */
-    markerclick: RadarChartMarkerEvent;
-
-    /** Emitted when the pointer enters a point marker. */
-    markerenter: RadarChartMarkerEvent;
-
-    /** Emitted when the pointer leaves a point marker. */
-    markerleave: RadarChartMarkerEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

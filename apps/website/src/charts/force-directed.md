@@ -207,150 +207,29 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `value`, `c
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createForceDirectedChart('#container', {
-    nodes, // ForceNetworkNode<TData>[]
-    links, // ForceNetworkLink[]
+    nodes,
+    links,
+    nodeRadius: 7,
+    // Negative charge repels; a larger magnitude spreads the graph further.
+    charge: -160,
+    linkDistance: 40,
+    linkStrength: 0.6,
+    centerStrength: 0.05,
+    // Simulation passes run before the layout is drawn.
+    iterations: 300,
+    // The node the layout springs out from on entry; defaults to the highest-degree node.
+    root: 'core',
+    legend: { position: 'bottom' },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface ForceDirectedChartOptions<TData> {
-    // Chart-specific
-    /** The nodes in the network. */
-    nodes: ForceNetworkNode<TData>[];
-
-    /** The links (edges) connecting pairs of nodes. */
-    links: ForceNetworkLink[];
-
-    /** Base node radius (nodes with a `value` scale around this). Defaults to 8. */
-    nodeRadius?: number;
-
-    /** Force tuning. */
-    charge?: number;
-
-    /** Target resting distance between two linked nodes. */
-    linkDistance?: number;
-
-    /** Strength pulling linked nodes toward `linkDistance`. */
-    linkStrength?: number;
-
-    /** Strength pulling all nodes toward the layout center. */
-    centerStrength?: number;
-
-    /** Number of simulation iterations run before the layout is drawn. */
-    iterations?: number;
-
-    /** Id of the node the layout springs out from on entry. Defaults to the highest-degree node. */
-    root?: string;
-
-    /**
-     * Legend configuration. Shown automatically when there is more than one node group; pass
-     * `false` to hide.
-     */
-    legend?: ChartLegendInput;
-
-    /** Format applied to node/link values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface ForceNetworkNode<TData> {
-    /** Unique identifier for the node, referenced by links and used for data joins. */
-    id: string;
-
-    /** Text shown beneath the node; defaults to the node's id. */
-    label?: string;
-
-    /** Optional magnitude used to size the node; defaults to the node's link degree. */
-    value?: number;
-
-    /** Optional grouping; nodes in the same group share a color. */
-    group?: string;
-
-    /** Explicit node color; falls back to the group/palette color when omitted. */
-    color?: string;
-
-    /** Arbitrary datum carried through to node interaction events. */
-    data?: TData;
-}
-
-interface ForceNetworkLink {
-    /** Id of the node the link starts from. */
-    source: string;
-
-    /** Id of the node the link connects to. */
-    target: string;
-
-    /** Optional weight; scales the link's line width. */
-    value?: number;
-}
-
-interface ForceDirectedChartEventMap<TData> {
-    /** Emitted when a node is clicked. */
-    nodeclick: ForceDirectedNodeEvent<TData>;
-
-    /** Emitted when the pointer enters a node. */
-    nodeenter: ForceDirectedNodeEvent<TData>;
-
-    /** Emitted when the pointer leaves a node. */
-    nodeleave: ForceDirectedNodeEvent<TData>;
-
-    /** Emitted when a link is clicked. */
-    linkclick: ForceDirectedLinkEvent;
-
-    /** Emitted when the pointer enters a link. */
-    linkenter: ForceDirectedLinkEvent;
-
-    /** Emitted when the pointer leaves a link. */
-    linkleave: ForceDirectedLinkEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

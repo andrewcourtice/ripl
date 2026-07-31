@@ -176,120 +176,38 @@ const data = [
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createRadialBarChart('#container', {
-    data,  // TData[]
-    key,   // keyof TData | ((item: TData) => string)
-    value, // NumericAccessor<TData>
+    data,
+    key: 'id',
+    value: 'progress',
+    label: 'name',
+    colorBy: 'team',
+    max: 100,
+    // Hole in the middle, as a ratio of the chart size (0–1).
+    innerRadius: 0.3,
+    // Sweep of a full-value bar, in degrees.
+    range: 270,
+    // Gap between rings, as a ratio of the ring thickness (0–0.9).
+    gap: 0.3,
+    trackColor: '#e5e7eb',
+    rounded: true,
+    legend: { position: 'right' },
+    // Each ring's value, printed just past the end of its bar. The position is fixed, so
+    // `anchor` has no effect here.
+    labels: {
+        visible: true,
+        font: '11px sans-serif',
+        fontColor: '#555555',
+    },
+    format: 'percentage',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface RadialBarChartOptions<TData> {
-    // Chart-specific
-    /** The dataset to render, one concentric ring per item. */
-    data: TData[];
-
-    /** Accessor for each item's unique key, used to match rings across data updates. */
-    key: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each item's numeric value, which determines its arc length. */
-    value: NumericAccessor<TData>;
-
-    /** Optional accessor for each item's display label (defaults to its key). */
-    label?: keyof TData | ((item: TData) => string);
-
-    /** Optional accessor for a per-item color override (otherwise a palette color is generated). */
-    colorBy?: keyof TData | ((item: TData) => string);
-
-    /** Maximum value mapped to a full sweep (defaults to the largest value in the data). */
-    max?: number;
-
-    /** Inner hole radius as a ratio of the chart size (0–1). Defaults to 0.2. */
-    innerRadius?: number;
-
-    /** Angular sweep of a full-value bar, in degrees. Defaults to 360 (a full circle). */
-    range?: number;
-
-    /** Gap between concentric rings as a ratio of the ring thickness (0–0.9). Defaults to 0.25. */
-    gap?: number;
-
-    /** Color of the faint full-length track drawn behind each value bar. Defaults to a light gray. */
-    trackColor?: string;
-
-    /** Round the ends of each value bar (and its track). Defaults to `false`. */
-    rounded?: boolean;
-
-    /** Legend configuration. Shown by default when there is more than one ring. */
-    legend?: ChartLegendInput;
-
-    /** Format applied to values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    /**
-     * Show each ring's value just past the end of its bar, at the ring's mid-radius
-     * (`true`/`false` or detailed label options). Off by default.
-     */
-    labels?: ChartDataLabelsInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface RadialBarChartEventMap {
-    /** Emitted when a bar is clicked. */
-    barclick: RadialBarChartBarEvent;
-
-    /** Emitted when the pointer enters a bar. */
-    barenter: RadialBarChartBarEvent;
-
-    /** Emitted when the pointer leaves a bar. */
-    barleave: RadialBarChartBarEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

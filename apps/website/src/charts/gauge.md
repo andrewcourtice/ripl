@@ -155,106 +155,26 @@ chart.update({ value: 85 });
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createGaugeChart('#container', {
-    value, // number
+    value: 72,
+    min: 0,
+    max: 100,
+    label: 'Utilisation',
+    color: '#6dd5b1',
+    trackColor: '#e5e7eb',
+    ticks: 5,
+    tickLabels: true,
+    // `format` styles the central value; `tickFormat` styles the tick labels around the arc.
+    format: 'number',
+    tickFormat: v => `${v}%`,
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface GaugeChartOptions {
-    // Chart-specific
-    /** The value displayed by the gauge (clamped to `min`–`max`). */
-    value: number;
-
-    /** Lower bound of the gauge scale. Defaults to 0. */
-    min?: number;
-
-    /** Upper bound of the gauge scale. Defaults to 100. */
-    max?: number;
-
-    /** Optional descriptive text shown below the value. */
-    label?: string;
-
-    /** Color of the value arc. */
-    color?: string;
-
-    /** Color of the background track arc. */
-    trackColor?: string;
-
-    /**
-     * How the central value display is formatted: a built-in format type, Intl number-format
-     * options, or a custom function.
-     */
-    format?: ValueFormatInput;
-
-    /** Number of tick marks along the gauge arc. Defaults to 5. Set to 0 to hide the ticks. */
-    ticks?: number;
-
-    /** Show a value label at each tick. Defaults to `true`. */
-    tickLabels?: boolean;
-
-    /** How tick labels are formatted. Defaults to `GaugeChartOptions.format`. */
-    tickFormat?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface GaugeChartEventMap {
-    /** Emitted when the value arc is clicked. */
-    valueclick: GaugeChartValueEvent;
-
-    /** Emitted when the pointer enters the value arc. */
-    valueenter: GaugeChartValueEvent;
-
-    /** Emitted when the pointer leaves the value arc. */
-    valueleave: GaugeChartValueEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

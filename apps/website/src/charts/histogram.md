@@ -132,132 +132,36 @@ Each item contributes one numeric value, read via the `value` accessor (a field 
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createHistogramChart('#container', {
-    data,  // TData[]
-    value, // NumericAccessor<TData>
+    data,
+    value: 'duration',
+    // Target bin count — the binner treats it as a hint and rounds to a readable step.
+    // `thresholds` below is the alternative, and wins when both are given.
+    bins: 20,
+    color: '#7cacf8',
+    borderRadius: 2,
+    format: 'number',
 });
 ```
-<!-- required:end -->
 
-### All options
+To place the bin edges yourself — uneven buckets, or a scale that has to match another
+chart — pass `thresholds` instead of `bins`:
 
-<!-- options:start -->
 <!-- eslint-skip -->
 ```ts
-interface HistogramChartOptions<TData> {
-    // Chart-specific
-    /** The dataset whose values are binned into the histogram. */
-    data: TData[];
-
-    /** The numeric field (or accessor) to bin. */
-    value: NumericAccessor<TData>;
-
-    /** Target number of bins (ignored when `thresholds` is given). Defaults to Sturges' rule. */
-    bins?: number;
-
-    /** Explicit bin boundaries; overrides `bins`. */
-    thresholds?: number[];
-
-    /** Bar color (defaults to the first palette color). */
-    color?: string;
-
-    /** Corner radius in pixels applied to the top of each bar. Defaults to 2. */
-    borderRadius?: number;
-
-    /** Format applied to bin bounds shown in tooltips. */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-
-    // Shared by every cartesian chart (CartesianChartOptions)
-    /** X/y axis configuration, or a boolean toggling both axes. See `ChartAxisInput`. */
-    axis?: ChartAxisInput<TData>;
-
-    /** Background grid configuration, or a boolean toggle. See `ChartGridInput`. */
-    grid?: ChartGridInput;
-
-    /** Hover-tooltip configuration, or a boolean toggle. See `ChartTooltipInput`. */
-    tooltip?: ChartTooltipInput;
-
-    /** Legend configuration, a position string, or a boolean toggle. See `ChartLegendInput`. */
-    legend?: ChartLegendInput;
-
-    /** Crosshair configuration, or a boolean toggle. See `ChartCrosshairInput`. */
-    crosshair?: ChartCrosshairInput;
-
-    /** Reference lines, shaded bands, and point markers drawn over the plot. See `ChartAnnotation`. */
-    annotations?: ChartAnnotation[];
-
-    /**
-     * Enables pan/zoom (and optionally brush) navigation on the plot. `true` turns on wheel-zoom
-     * and click-drag pan; an object configures each interaction individually. The chart
-     * auto-creates a `DOMNavigator` on its context and rescales the axis domains as the view
-     * changes, with no data rebuild. Access the underlying controller via `chart.navigator` for
-     * imperative framing (`centerOn`/`fitBounds`) or brush-and-link.
-     */
-    navigator?: boolean | NavigatorInteractions;
-
-    /**
-     * Enables an overview "scrub bar" strip beside the plot with a draggable window that selects
-     * the visible range of the **category** axis (a bottom bar for category-on-x charts, a side
-     * bar for a horizontal bar chart). `true` uses the default size; an object sets it. Enabling
-     * the strip also turns on in-plot wheel/drag pan-zoom (category-axis only) unless `navigator`
-     * is explicitly `false`. Only category-axis charts (line, area, bar, trend) render the strip.
-     */
-    overview?: boolean | ChartOverviewOptions;
-}
-
-interface HistogramChartEventMap {
-    /** Emitted when a bin bar is clicked. */
-    binclick: HistogramBinEvent;
-
-    /** Emitted when the pointer enters a bin bar. */
-    binenter: HistogramBinEvent;
-
-    /** Emitted when the pointer leaves a bin bar. */
-    binleave: HistogramBinEvent;
-}
+createHistogramChart('#container', {
+    data,
+    value: 'duration',
+    // n edges produce n - 1 bins: 0–50, 50–100, 100–250, 250–500.
+    thresholds: [0, 50, 100, 250, 500],
+});
 ```
-<!-- options:end -->
 
 ## Events
 

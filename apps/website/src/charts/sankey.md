@@ -216,132 +216,26 @@ Node depth is computed from the link graph, so nodes do not need to be ordered.
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createSankeyChart('#container', {
-    nodes, // SankeyNode<TData>[]
-    links, // SankeyLink[]
+    nodes,
+    links,
+    // Width of each node rectangle, in pixels.
+    nodeWidth: 20,
+    // Vertical gap between stacked nodes in a column, in pixels.
+    nodePadding: 10,
+    // Layout relaxation passes. Accepted and reserved for tuning node positioning — the current
+    // layout does not read it, so changing it has no visible effect yet.
+    iterations: 6,
+    legend: { position: 'bottom' },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface SankeyChartOptions<TData> {
-    // Chart-specific
-    /** The nodes in the diagram. */
-    nodes: SankeyNode<TData>[];
-
-    /** The directional flows connecting nodes. */
-    links: SankeyLink[];
-
-    /** Width of each node rectangle in pixels. Defaults to 20. */
-    nodeWidth?: number;
-
-    /** Vertical gap between stacked nodes in a column, in pixels. Defaults to 10. */
-    nodePadding?: number;
-
-    /** Number of layout relaxation iterations (reserved for tuning node positioning). */
-    iterations?: number;
-
-    /**
-     * Legend configuration. Shown automatically when there is more than one node; pass `false` to
-     * hide.
-     */
-    legend?: ChartLegendInput;
-
-    /** Format applied to node and link values shown as text (e.g. tooltips). */
-    format?: ValueFormatInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface SankeyNode<TData> {
-    /** Unique identifier for the node, referenced by link `source`/`target`. */
-    id: string;
-
-    /** Display label shown beside the node. */
-    label: string;
-
-    /** Optional color override for the node (otherwise a palette color is generated). */
-    color?: string;
-
-    /** Arbitrary datum carried through to node interaction events. */
-    data?: TData;
-}
-
-interface SankeyLink {
-    /** Id of the node the flow originates from. */
-    source: string;
-
-    /** Id of the node the flow terminates at. */
-    target: string;
-
-    /** Magnitude of the flow, which determines the link's width. */
-    value: number;
-}
-
-interface SankeyChartEventMap<TData> {
-    /** Emitted when a node is clicked. */
-    nodeclick: SankeyChartNodeEvent<TData>;
-
-    /** Emitted when the pointer enters a node. */
-    nodeenter: SankeyChartNodeEvent<TData>;
-
-    /** Emitted when the pointer leaves a node. */
-    nodeleave: SankeyChartNodeEvent<TData>;
-
-    /** Emitted when a link is clicked. */
-    linkclick: SankeyChartLinkEvent;
-
-    /** Emitted when the pointer enters a link. */
-    linkenter: SankeyChartLinkEvent;
-
-    /** Emitted when the pointer leaves a link. */
-    linkleave: SankeyChartLinkEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

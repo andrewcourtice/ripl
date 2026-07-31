@@ -340,139 +340,39 @@ window.
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createRealtimeChart('#container', {
-    series, // RealtimeChartSeriesOptions[]
+    // Samples kept in the sliding window; older ones scroll off the left.
+    windowSize: 60,
+    // Duration of the transition applied on each `push()`, in milliseconds.
+    transitionDuration: 300,
+    showYAxis: true,
+    yMin: 0,
+    yMax: 100,
+    grid: true,
+    crosshair: true,
+    tooltip: true,
+    legend: { position: 'bottom' },
+    axis: { y: { title: 'Utilisation' } },
+    format: 'number',
+    series: [
+        {
+            id: 'cpu',
+            label: 'CPU %',
+            color: '#7cacf8',
+            lineType: 'monotoneX',
+            lineWidth: 2,
+            showArea: true,
+            fillOpacity: 0.15,
+        },
+    ],
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface RealtimeChartOptions {
-    // Chart-specific
-    /** The series to stream, one line/area per entry. */
-    series: RealtimeChartSeriesOptions[];
-
-    /** Number of samples kept in the sliding window before the oldest scrolls off. Defaults to 60. */
-    windowSize?: number;
-
-    /** Background grid line configuration. */
-    grid?: ChartGridInput;
-
-    /** Crosshair overlay configuration. */
-    crosshair?: ChartCrosshairInput;
-
-    /** Hover tooltip configuration. */
-    tooltip?: ChartTooltipInput;
-
-    /** Series legend configuration. */
-    legend?: ChartLegendInput;
-
-    /** Axis configuration (labels, ticks, title). */
-    axis?: ChartAxisInput;
-
-    /** Format applied to the y-axis tick labels (a per-axis `axis.y.format` takes precedence). */
-    format?: ValueFormatInput;
-
-    /** Show the y-axis. Defaults to `true`. */
-    showYAxis?: boolean;
-
-    /** Fixed lower bound for the y-axis (otherwise derived from the windowed data). */
-    yMin?: number;
-
-    /** Fixed upper bound for the y-axis (otherwise derived from the windowed data). */
-    yMax?: number;
-
-    /** Duration in milliseconds of the transition applied on each push. Defaults to 300. */
-    transitionDuration?: number;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface RealtimeChartSeriesOptions {
-    /** Unique identifier for the series, used as the key when pushing new values. */
-    id: string;
-
-    /** Optional color override for the series (otherwise a palette color is generated). */
-    color?: string;
-
-    /** Display label for the series (shown in the legend). Defaults to the series id. */
-    label?: string;
-
-    /** Renderer controlling the line's shape (e.g. straight or curved). */
-    lineType?: PolylineRenderer;
-
-    /** Width of the series line in pixels. Defaults to 2. */
-    lineWidth?: number;
-
-    /** Fill the area beneath the line. Defaults to `true`. */
-    showArea?: boolean;
-
-    /** Opacity of the area fill when `showArea` is enabled. Defaults to 0.2. */
-    fillOpacity?: number;
-}
-```
-<!-- options:end -->
-
-## Methods
-
-A realtime chart is driven imperatively: options set up the window and the series, and samples are
-pushed in as they arrive.
-
-<!-- eslint-skip -->
-```ts
-// Appends one sample per series, keyed by series id, and re-renders. A series omitted from the map
-// keeps its previous value for that step.
-chart.push({ cpu: 42, memory: 61 });
-
-// Empties every series' window and removes their rendered lines.
-chart.clear();
-```
-
-Every chart also inherits `update(options)`, `render()`, `export()` and `destroy()` — see
-[Shared Options](/charts/shared-options#lifecycle).
 
 ## Events
 

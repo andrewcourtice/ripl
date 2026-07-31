@@ -1273,6 +1273,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/ChartTooltipTrigger.md"
           },
           {
+            "text": "ChartYAxisEntry",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartYAxisEntry.md"
+          },
+          {
             "text": "ColorLegendOrientation",
             "link": "/docs/api/@ripl/charts/type-aliases/ColorLegendOrientation.md"
           },

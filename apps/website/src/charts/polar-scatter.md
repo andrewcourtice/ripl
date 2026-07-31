@@ -259,127 +259,36 @@ const series = [
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createPolarScatterChart('#container', {
-    data,   // TData[]
-    series, // PolarScatterSeriesOptions<TData>[]
+    data,
+    // Outer bound of the radial scale; omit to derive it from the data.
+    max: 100,
+    // Concentric value rings and angular spokes.
+    levels: 5,
+    sectors: 12,
+    labels: true,
+    legend: { position: 'bottom' },
+    format: 'number',
+    series: [
+        {
+            id: 'morning',
+            label: 'Morning',
+            color: '#7cacf8',
+            angleBy: 'bearing',
+            radiusBy: 'distance',
+            sizeBy: 'weight',
+            minRadius: 4,
+            maxRadius: 18,
+        },
+    ],
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface PolarScatterChartOptions<TData> {
-    // Chart-specific
-    /** The dataset plotted across all series. */
-    data: TData[];
-
-    /** The series to render, each mapping the data to angle/radius positions. */
-    series: PolarScatterSeriesOptions<TData>[];
-
-    /** The value mapped to the outer radius (defaults to the largest radius value in the data). */
-    max?: number;
-
-    /** Number of concentric value rings. Defaults to 4. */
-    levels?: number;
-
-    /** Number of angular spokes/labels around the circle. Defaults to 8. */
-    sectors?: number;
-
-    /** Legend configuration. Shown by default when there is more than one series. */
-    legend?: ChartLegendInput;
-
-    /** Format applied to radial values shown as text (tooltips + ring labels). */
-    format?: ValueFormatInput;
-
-    /**
-     * Show each marker's radial value beside it, just above by default (`true`/`false`, an anchor,
-     * or detailed label options). Off by default.
-     */
-    labels?: ChartDataLabelsInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface PolarScatterSeriesOptions<TData> {
-    /** Unique identifier for the series. */
-    id: string;
-
-    /** Optional color override for the series (otherwise a palette color is generated). */
-    color?: string;
-
-    /** Display label for the series (shown in the legend and tooltips). */
-    label: string;
-
-    /** Angular position in degrees (0° at the top, increasing clockwise). */
-    angleBy: NumericAccessor<TData>;
-
-    /** Radial position (distance from the center), on the radial value scale. */
-    radiusBy: NumericAccessor<TData>;
-
-    /** Optional accessor whose value scales each marker's size between `minRadius` and `maxRadius`. */
-    sizeBy?: NumericAccessor<TData> | number;
-
-    /** Smallest marker radius in pixels when `sizeBy` is set. Defaults to 4. */
-    minRadius?: number;
-
-    /** Largest marker radius in pixels when `sizeBy` is set. Defaults to 14. */
-    maxRadius?: number;
-}
-
-interface PolarScatterChartEventMap {
-    /** Emitted when a marker is clicked. */
-    markerclick: PolarScatterMarkerEvent;
-
-    /** Emitted when the pointer enters a marker. */
-    markerenter: PolarScatterMarkerEvent;
-
-    /** Emitted when the pointer leaves a marker. */
-    markerleave: PolarScatterMarkerEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 

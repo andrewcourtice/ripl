@@ -209,129 +209,38 @@ const yCategories = ['Mon', 'Tue', 'Wed'];
 
 ## Options
 
-Every option is listed below, generated from the chart's TypeScript definitions so this reference
-cannot drift from the code. See [Shared Options](/charts/shared-options) for how the options common
-to every chart behave, and [Migration](/charts/migration) if you are upgrading.
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Required
-
-<!-- required:start -->
 <!-- eslint-skip -->
 ```ts
 createHeatmapChart('#container', {
-    data,        // TData[]
-    keyX,        // keyof TData | ((item: TData) => string)
-    keyY,        // keyof TData | ((item: TData) => string)
-    value,       // NumericAccessor<TData>
-    xCategories, // string[]
-    yCategories, // string[]
+    data,
+    keyX: 'hour',
+    keyY: 'day',
+    value: 'sessions',
+    xCategories: HOURS,
+    yCategories: DAYS,
+    // Color stops interpolated low→high: two for a simple ramp, or any number of stops —
+    // a built-in `COLOR_SCHEME_*` palette works here too.
+    gradient: ['#dbeafe', '#1d4ed8'],
+    borderRadius: 4,
+    labels: true,
+    // A color-scale legend, not the per-series legend other charts use.
+    legend: {
+        orientation: 'horizontal',
+        thickness: 12,
+        segments: 6,
+    },
+    tooltip: true,
+    axis: {
+        x: { title: 'Hour' },
+        y: { title: 'Day' },
+    },
+    format: 'number',
 });
 ```
-<!-- required:end -->
-
-### All options
-
-<!-- options:start -->
-<!-- eslint-skip -->
-```ts
-interface HeatmapChartOptions<TData> {
-    // Chart-specific
-    /** The dataset rendered as a grid of cells. */
-    data: TData[];
-
-    /** Accessor for each item's x-axis category. */
-    keyX: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each item's y-axis category. */
-    keyY: keyof TData | ((item: TData) => string);
-
-    /** Accessor for each cell's numeric value (drives its color). */
-    value: NumericAccessor<TData>;
-
-    /** Ordered list of categories along the x axis. */
-    xCategories: string[];
-
-    /** Ordered list of categories along the y axis. */
-    yCategories: string[];
-
-    /**
-     * Color stops (low→high) interpolated across the value extent; also accepts a built-in
-     * palette.
-     */
-    gradient?: string[];
-
-    /** Corner radius in pixels applied to each cell. Defaults to 2. */
-    borderRadius?: number;
-
-    /**
-     * Gradient color legend showing the value→color scale. Shown by default; pass `false` to hide,
-     * or an options object to customize.
-     */
-    legend?: boolean | ColorLegendOptions;
-
-    /**
-     * How cell values are formatted in the tooltip and legend: a built-in format type, Intl
-     * options, or a custom function.
-     */
-    format?: ValueFormatInput;
-
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-
-    /** Axis configuration for the x and y axes. */
-    axis?: ChartAxisInput<TData>;
-
-    /**
-     * Show each cell's value centered in the cell (`true`/`false` or detailed label options).
-     * Label color auto-contrasts against the cell color. Off by default.
-     */
-    labels?: ChartDataLabelsInput;
-
-    // Shared by every chart (BaseChartOptions)
-    /**
-     * Whether the chart renders automatically on construction and after every `Chart.update`.
-     * Defaults to `true`.
-     */
-    autoRender?: boolean;
-
-    /**
-     * Space reserved around the chart, in pixels. A single number applies to all four edges; a
-     * `[top, right, bottom, left]` tuple or a partial `{ top, right, bottom, left }` object sets
-     * individual edges, leaving unspecified edges at the default. Defaults to `16`.
-     */
-    padding?: PaddingInput;
-
-    /** Chart title as plain text, or a `ChartTitleOptions` object for full control. */
-    title?: string | Partial<ChartTitleOptions>;
-
-    /** Animation configuration, or a boolean toggling all transitions. See `ChartAnimationOptions`. */
-    animation?: boolean | Partial<ChartAnimationOptions>;
-
-    /**
-     * Theme for this chart: a registered name (`'light'`/`'dark'`/`'auto'`), or a `Theme`. Falls
-     * back to the module default (see `setDefaultTheme`).
-     */
-    theme?: string | Theme;
-
-    /**
-     * Accessible description announced by screen readers (sets the rendering element's ARIA
-     * label). Defaults to the title text.
-     */
-    description?: string;
-}
-
-interface HeatmapChartEventMap {
-    /** Emitted when a cell is clicked. */
-    cellclick: HeatmapChartCellEvent;
-
-    /** Emitted when the pointer enters a cell. */
-    cellenter: HeatmapChartCellEvent;
-
-    /** Emitted when the pointer leaves a cell. */
-    cellleave: HeatmapChartCellEvent;
-}
-```
-<!-- options:end -->
 
 ## Events
 
