@@ -31,22 +31,22 @@ const chartsEntry = path.join(repoRoot, 'packages/charts/src/index.ts');
 const chartDocsDir = path.join(websiteRoot, 'src/charts');
 
 /**
- * The generated regions on each page. `required` is the minimum call to render the chart; `options`
- * is the full reference. Both are derived from the same interface, so they cannot disagree.
+ * The generated regions on each page.
+ *
+ * Only the events block is generated. An event map maps onto a subscription example with no values to
+ * invent, so it can be derived. The option examples cannot: a type does not imply a good value, and a
+ * useful example needs values that agree across options — a series' `value` naming a field that is in
+ * the mock data, its `yAxis` naming an axis that is in `axis.y`. Those are written by hand and kept
+ * honest by {@link validateSnippets} instead, which checks both that every option named exists and
+ * that every option the chart has is named.
  */
-const REGIONS = ['required', 'options', 'events'];
+const REGIONS = ['events'];
 
 /**
  * Members every `EventBus` carries. They are not part of a chart's own surface, so repeating them on
  * all 25 pages is noise; Shared Options covers them once.
  */
 const BASE_EVENT_BUS_MEMBERS = new Set(['destroyed']);
-
-/** Interfaces whose members are shared by many charts, listed under their own heading. */
-const SHARED_SOURCES = {
-    BaseChartOptions: 'Shared by every chart',
-    CartesianChartOptions: 'Shared by every cartesian chart',
-};
 
 /** Creates a program over the charts package so inherited members resolve. */
 function createProgram() {
@@ -140,112 +140,6 @@ function readInterface(checker, moduleExports, name) {
     };
 }
 
-/** Wraps a comment to fit the code block without trailing whitespace. */
-function commentLines(summary, indent) {
-    const width = 96 - indent.length;
-    const words = summary.split(/\s+/);
-    const lines = [];
-
-    let current = '';
-
-    words.forEach(word => {
-        const candidate = current ? `${current} ${word}` : word;
-
-        if (candidate.length > width && current) {
-            lines.push(current);
-            current = word;
-            return;
-        }
-
-        current = candidate;
-    });
-
-    if (current) {
-        lines.push(current);
-    }
-
-    if (lines.length === 1) {
-        return [`${indent}/** ${lines[0]} */`];
-    }
-
-    return [
-        `${indent}/**`,
-        ...lines.map(line => `${indent} * ${line}`),
-        `${indent} */`,
-    ];
-}
-
-/** Renders one property as a documented interface member. */
-function renderProperty(property, indent) {
-    const lines = property.summary ? commentLines(property.summary, indent) : [];
-
-    lines.push(`${indent}${property.name}${property.optional ? '?' : ''}: ${property.type};`);
-
-    return lines;
-}
-
-/** Renders an interface listing, with inherited members grouped under their source. */
-function renderInterface(shape, { heading } = {}) {
-    const indent = '    ';
-    const own = shape.properties.filter(property => property.owner === shape.name);
-    const inherited = Object.keys(SHARED_SOURCES)
-        .map(source => ({
-            source,
-            properties: shape.properties.filter(property => property.owner === source),
-        }))
-        .filter(group => group.properties.length > 0);
-    const other = shape.properties.filter(property => property.owner !== shape.name
-        && !Object.keys(SHARED_SOURCES).includes(property.owner));
-
-    const lines = [`interface ${shape.name}${shape.typeParameters} {`];
-
-    const section = (title, properties) => {
-        if (properties.length === 0) {
-            return;
-        }
-
-        if (lines.length > 1) {
-            lines.push('');
-        }
-
-        if (title) {
-            lines.push(`${indent}// ${title}`);
-        }
-
-        properties.forEach((property, index) => {
-            if (index > 0) {
-                lines.push('');
-            }
-
-            lines.push(...renderProperty(property, indent));
-        });
-    };
-
-    // Only label the chart's own members when there are inherited ones to distinguish them from.
-    // A standalone datum or event interface has nothing to contrast with, so a heading is just noise.
-    const hasInherited = other.length > 0 || inherited.length > 0;
-
-    section(hasInherited ? (heading ?? 'Chart-specific') : '', own);
-    other.forEach(property => section(property.owner ? `Inherited from ${property.owner}` : 'Inherited', [property]));
-    inherited.forEach(group => section(`${SHARED_SOURCES[group.source]} (${group.source})`, group.properties));
-
-    lines.push('}');
-
-    return lines.join('\n');
-}
-
-/** Renders the full options reference for one chart: its options, series options and event map. */
-function renderOptionsBlock(shapes) {
-    const blocks = shapes.filter(Boolean).map(shape => renderInterface(shape));
-
-    return [
-        '<!-- eslint-skip -->',
-        '```ts',
-        blocks.join('\n\n'),
-        '```',
-    ].join('\n');
-}
-
 /**
  * Renders a subscription example covering every event the chart emits. Event maps were previously
  * undocumented on all but one page, so the events a chart offered were invisible unless you read the
@@ -278,27 +172,6 @@ function renderEventsBlock(shape) {
     ].join('\n');
 }
 
-/**
- * Renders the minimum call to render the chart: every required option, with its type as a trailing
- * comment. Shorthand properties keep it short enough to scan and to copy.
- */
-function renderRequiredBlock(shape, factory) {
-    const required = shape.properties.filter(property => !property.optional);
-    const width = required.reduce((longest, property) => Math.max(longest, property.name.length), 0);
-
-    const lines = required.length > 0
-        ? required.map(property => `    ${property.name},${' '.repeat(width - property.name.length)} // ${property.type}`)
-        : ['    // No required options.'];
-
-    return [
-        '<!-- eslint-skip -->',
-        '```ts',
-        `${factory}('#container', {`,
-        ...lines,
-        '});',
-        '```',
-    ].join('\n');
-}
 
 /**
  * Every fenced `ts`/`typescript` block in a markdown file, with the line it starts on.
@@ -539,8 +412,12 @@ function collectEntryLiterals(expression, scope, seen = new Set()) {
  * old `axis`, every series quietly fell back to the primary axis, and the secondary axis rendered
  * with nothing bound to it.
  */
-function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactory) {
+function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactory, declared) {
     const problems = [];
+
+    // Record a name the page used, so the caller can check the other direction: not just that every
+    // option named exists, but that every option the chart has is named somewhere.
+    const record = name => declared?.add(name);
 
     blocks.forEach(block => {
         const source = ts.createSourceFile('block.ts', block.code, ts.ScriptTarget.Latest, true);
@@ -554,7 +431,12 @@ function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactor
 
         const checkLiteral = (literal, known, owner) => {
             literal.properties.forEach(property => {
-                if (!property.name || !ts.isIdentifier(property.name) || known.has(property.name.text)) {
+                if (!property.name || !ts.isIdentifier(property.name)) {
+                    return;
+                }
+
+                if (known.has(property.name.text)) {
+                    record(property.name.text);
                     return;
                 }
 
@@ -600,13 +482,127 @@ function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactor
  * Validates both halves of a docs page: the hand-written fenced snippets, and the `<script setup>`
  * block holding the live demo.
  */
-function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFactory) {
+function validateSnippets(page, contents, optionNamesByFactory, seriesNamesByFactory, declared) {
     return validateBlocks(
         `${page}.md`,
         [...codeBlocksOf(contents), ...scriptBlocksOf(contents)],
         optionNamesByFactory,
-        seriesNamesByFactory
+        seriesNamesByFactory,
+        declared
     );
+}
+
+/**
+ * Checks that a page's examples reach every option the chart actually has.
+ *
+ * Only the chart's *own* options are required. The ones every chart shares (`BaseChartOptions`) and
+ * every cartesian chart shares (`CartesianChartOptions`) are documented once on Shared Options, so
+ * repeating them in 25 examples would be the noise this reference exists to remove — they are allowed
+ * to appear, never required to.
+ *
+ * Coverage is per *page*, not per block. Some options cannot be shown together — a bar chart honours
+ * multiple y-axes only when it is neither stacked nor horizontal — so the full-configuration example
+ * shows one and a Variants example shows the other. Either satisfies the requirement.
+ */
+function validateCoverage(page, shapes, seriesNames, declared) {
+    const own = (shapes[0]?.properties ?? [])
+        .filter(property => property.owner === shapes[0].name)
+        .map(property => property.name);
+
+    const required = [...new Set([...own, ...(seriesNames ?? [])])];
+    const missing = required.filter(name => !declared.has(name));
+
+    return missing.map(name => `${page}.md: \`${name}\` never appears in an example on this page`);
+}
+
+/** Whether a page points the reader at the options every chart shares. */
+function linksToSharedOptions(contents) {
+    return contents.includes('/charts/shared-options');
+}
+
+/**
+ * Diagnostics for names the examples never define. The mock data an example reads from is shown in
+ * the page's own Data Format section rather than restated in every block, so `data` and friends are
+ * deliberately free here — an unresolved name is the fixture, not a mistake.
+ */
+const UNRESOLVED_NAME_DIAGNOSTICS = new Set([
+    2304,
+    2552,
+    18004,
+]);
+
+/** Where the synthesized example files pretend to live, so the relative import below resolves. */
+const EXAMPLE_DIR = path.join(repoRoot, '.chart-examples');
+
+/**
+ * Type-checks every example on every page against the library source.
+ *
+ * {@link validateSnippets} checks that an option *exists* and {@link validateCoverage} that it is
+ * *shown*, but neither looks at the value: `maxRadiusRatio: 0.9` on a scale that tops out at 0.5, or
+ * a `lineType` misspelt as `'monotone'`, both read as fine. Compiling the examples closes that gap —
+ * a value of the wrong shape, a misspelt enum member, or an `axis.y` entry missing its `id` fails
+ * here rather than in the reader's browser.
+ */
+function validateExampleTypes(pages) {
+    // The library is imported by relative path, not by package name, so the check does not depend on
+    // a `paths` mapping being in scope. Blocks are wrapped in their own scope so two examples on a
+    // page cannot collide, and their imports are dropped — an import cannot sit inside a block, and
+    // the namespace import already covers it.
+    const entry = path.relative(EXAMPLE_DIR, chartsEntry).replace(/\.ts$/, '');
+    const sources = new Map();
+
+    pages.forEach(({ page, contents }) => {
+        const blocks = [...contents.matchAll(/```ts\n([\s\S]*?)```/g)]
+            .map(match => match[1])
+            .filter(block => /\bcreate[A-Za-z]+Chart\(/.test(block))
+            .map(block => block
+                .replace(/^import[\s\S]*?from\s+'[^']*';\n/gm, '')
+                // An elided dataset would infer `TData` as `never` and fail every accessor.
+                .replace(/\[\s*\/\* \.\.\. \*\/\s*\]/g, 'data')
+                .replace(/\bcreate([A-Za-z]+)Chart\(/g, 'charts.create$1Chart('))
+            .map(block => `{\n${block}\n}`);
+
+        if (blocks.length > 0) {
+            sources.set(path.join(EXAMPLE_DIR, `${page}.ts`), `import * as charts from '${entry}';\n\n${blocks.join('\n\n')}\n`);
+        }
+    });
+
+    const configPath = path.join(repoRoot, 'packages/charts/tsconfig.json');
+    const config = ts.readConfigFile(configPath, ts.sys.readFile);
+    const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, path.dirname(configPath));
+
+    const options = {
+        ...parsed.options,
+        noEmit: true,
+        // The examples are fragments spliced into one file, not modules of their own.
+        isolatedModules: false,
+        verbatimModuleSyntax: false,
+    };
+
+    const host = ts.createCompilerHost(options, true);
+    const readFile = host.readFile.bind(host);
+    const fileExists = host.fileExists.bind(host);
+    const getSourceFile = host.getSourceFile.bind(host);
+
+    host.readFile = file => sources.get(file) ?? readFile(file);
+    host.fileExists = file => sources.has(file) || fileExists(file);
+    host.getSourceFile = (file, version, onError) => (sources.has(file)
+        ? ts.createSourceFile(file, sources.get(file), version, true)
+        : getSourceFile(file, version, onError));
+
+    const program = ts.createProgram([...sources.keys()], options, host);
+
+    return ts.getPreEmitDiagnostics(program)
+        .filter(diagnostic => diagnostic.file && sources.has(diagnostic.file.fileName))
+        .filter(diagnostic => !UNRESOLVED_NAME_DIAGNOSTICS.has(diagnostic.code))
+        .map(diagnostic => {
+            const page = path.basename(diagnostic.file.fileName, '.ts');
+            const { line } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start ?? 0);
+            const text = diagnostic.file.text.split('\n')[line].trim();
+            const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, ' ');
+
+            return `${page}.md: \`${text}\` does not type-check — ${message}`;
+        });
 }
 
 /**
@@ -921,6 +917,7 @@ function main() {
     });
 
     const stale = [];
+    const pages = [];
     const problems = validateChartData(CHARTS);
     let written = 0;
 
@@ -941,15 +938,25 @@ function main() {
         }
 
         const rendered = {
-            required: renderRequiredBlock(shapes[0], chart.factory),
-            options: renderOptionsBlock(shapes),
             events: renderEventsBlock(shapes[shapes.length - 1] && chart.events ? shapes[shapes.length - 1] : null),
         };
 
         let next = fs.readFileSync(file, 'utf8');
         const contents = next;
 
-        problems.push(...validateSnippets(chart.page, contents, optionNamesByFactory, seriesNamesByFactory));
+        const declared = new Set();
+
+        problems.push(...validateSnippets(chart.page, contents, optionNamesByFactory, seriesNamesByFactory, declared));
+        problems.push(...validateCoverage(chart.page, shapes, seriesNamesByFactory.get(chart.factory), declared));
+
+        if (!linksToSharedOptions(contents)) {
+            problems.push(`${chart.page}.md: no link to /charts/shared-options`);
+        }
+
+        pages.push({
+            page: chart.page,
+            contents,
+        });
 
         REGIONS.forEach(region => {
             const startMarker = `<!-- ${region}:start -->`;
@@ -981,6 +988,8 @@ function main() {
         written++;
     });
 
+    problems.push(...validateExampleTypes(pages));
+
     const components = demoComponentFiles();
 
     components.forEach(file => {
@@ -1011,6 +1020,7 @@ function main() {
         + ` (series options for ${seriesNamesByFactory.size}).`);
     console.log(`Validated the snippets and live demo on ${CHARTS.length} pages, plus ${components.length}`
         + ' demo components.');
+    console.log(`Type-checked every example on ${pages.length} pages against the library source.`);
     console.log('Cross-checked the chart factory list against .vitepress/data/charts.ts.');
 }
 
