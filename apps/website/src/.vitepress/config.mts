@@ -486,10 +486,6 @@ export default defineConfig({
                             text: 'Shared Options',
                             link: '/charts/shared-options',
                         },
-                        {
-                            text: 'Migration',
-                            link: '/charts/migration',
-                        },
                     ],
                 },
                 {
