@@ -243,7 +243,7 @@ function getSeries() {
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
         // Bind each series to its own y-axis when multiple axes are enabled.
-        yAxis: extras.multiAxis ? index : undefined,
+        yAxis: extras.multiAxis ? s.id : undefined,
     }));
 }
 
@@ -276,14 +276,17 @@ function buildOptions() {
             y: [
                 {
                     ...options.axis.y,
+                    id: 'revenue',
                     title: 'Revenue ($)',
                 },
                 {
+                    id: 'margin',
                     visible: config.axesVisible,
                     title: 'Margin (%)',
                     position: 'right',
                 },
                 {
+                    id: 'units',
                     visible: config.axesVisible,
                     title: 'Units',
                     position: 'left',
@@ -510,7 +513,7 @@ createLineChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
+Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option, naming the axis's `id`. Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
 
 ```ts
 createLineChart('#container', {
@@ -521,29 +524,34 @@ createLineChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'margin',
             value: 'margin',
             label: 'Margin',
-            yAxis: 1,
+            yAxis: 'margin',
         },
         {
             id: 'units',
             value: 'units',
             label: 'Units',
-            yAxis: 2,
+            yAxis: 'units',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
             {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'margin',
                 title: 'Margin (%)',
                 position: 'right',
             },
             {
+                id: 'units',
                 title: 'Units',
                 position: 'left',
             },
@@ -703,11 +711,8 @@ interface LineChartSeriesOptions<TData> {
      */
     marker?: SymbolType;
 
-    /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis.
-     */
-    yAxis?: number | string;
+    /** The `id` of the y-axis this series binds to. Defaults to the primary axis. */
+    yAxis?: string;
 }
 
 interface LineChartEventMap {

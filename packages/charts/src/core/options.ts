@@ -592,16 +592,28 @@ export interface ChartAxisItemOptions<TData = unknown> {
 export interface ChartYAxisItemOptions<TData = unknown> extends ChartAxisItemOptions<TData> {
     /** Which side of the chart the y-axis is drawn on. */
     position: 'left' | 'right';
-    /** Stable identifier a series can bind to via its `axis` option. Defaults to the axis index. */
+    /** Stable identifier a series binds to via its `yAxis` option. Required when configuring multiple y-axes. */
     id?: string;
 }
+
+/**
+ * One y-axis in a multi-axis configuration.
+ *
+ * `id` is required here and nowhere else: with several axes a series has to say which one it belongs
+ * to, and naming it beats counting it — an `id` survives the array being reordered, where a position
+ * would silently re-point every series bound after the one that moved.
+ */
+export type ChartYAxisEntry<TData = unknown> = Partial<ChartYAxisItemOptions<TData>> & {
+    /** Stable identifier a series binds to via its `yAxis` option. */
+    id: string;
+};
 
 /** Combined x and y axis configuration. */
 export interface ChartAxisOptions<TData = unknown> {
     /** X-axis configuration, or a boolean toggling its visibility. */
     x?: boolean | Partial<ChartAxisItemOptions<TData>>;
-    /** Y-axis configuration (an array configures multiple y-axes), or a boolean toggling visibility. */
-    y?: boolean | Partial<ChartYAxisItemOptions<TData>> | Partial<ChartYAxisItemOptions<TData>>[];
+    /** Y-axis configuration (an array configures multiple y-axes, each needing an `id`), or a boolean toggling visibility. */
+    y?: boolean | Partial<ChartYAxisItemOptions<TData>> | ChartYAxisEntry<TData>[];
 }
 
 /** Axis input accepting a boolean toggle or a full axis options object. */

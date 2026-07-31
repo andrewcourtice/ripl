@@ -102,8 +102,8 @@ export interface ScatterChartSeriesOptions<TData> {
     minRadius?: number;
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
-    /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    yAxis?: number | string;
+    /** The `id` of the y-axis this series binds to. Defaults to the primary axis. */
+    yAxis?: string;
     /** Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
 }

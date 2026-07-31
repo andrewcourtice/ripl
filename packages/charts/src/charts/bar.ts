@@ -92,11 +92,11 @@ export interface BarChartSeriesOptions<TData> {
     /** Human-readable series name shown in the legend and tooltips. */
     label: string;
     /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
-     * orientation always render against the primary axis.
+     * The `id` of the y-axis this series binds to. Defaults to the primary axis. Takes effect for
+     * vertical grouped bars; stacked/percent modes and horizontal orientation always render against
+     * the primary axis.
      */
-    yAxis?: number | string;
+    yAxis?: string;
 }
 
 /** Options for configuring a {@link BarChart}. */

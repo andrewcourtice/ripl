@@ -161,22 +161,22 @@ axis: {
 }
 ```
 
-Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `yAxis` option (an array index or the axis `id`):
+Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `yAxis` option, naming the axis's `id`. Every entry needs one, so reordering the array never re-points a series:
 
 <!-- eslint-skip -->
 ```ts
 createLineChart('#container', {
     // …
     series: [
-        { id: 'revenue', label: 'Revenue', value: 'revenue', yAxis: 0 },
-        { id: 'growth', label: 'Growth %', value: 'growth', yAxis: 1 },
-        { id: 'units', label: 'Units', value: 'units', yAxis: 2 },
+        { id: 'revenue', label: 'Revenue', value: 'revenue', yAxis: 'revenue' },
+        { id: 'growth', label: 'Growth %', value: 'growth', yAxis: 'growth' },
+        { id: 'units', label: 'Units', value: 'units', yAxis: 'units' },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'Growth %' },
-            { position: 'left', title: 'Units' },
+            { id: 'revenue', title: 'Revenue ($)' },
+            { id: 'growth', position: 'right', title: 'Growth %' },
+            { id: 'units', position: 'left', title: 'Units' },
         ],
     },
 });

@@ -102,8 +102,8 @@ export interface LineChartSeriesOptions<TData> {
     markerRadius?: number;
     /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
-    /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    yAxis?: number | string;
+    /** The `id` of the y-axis this series binds to. Defaults to the primary axis. */
+    yAxis?: string;
 }
 
 /** Options for configuring a {@link LineChart}. */

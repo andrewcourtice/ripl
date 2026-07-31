@@ -123,8 +123,12 @@ function createDualAxisLineChart() {
         key: 'm',
         axis: {
             y: [
-                {},
-                {},
+                {
+                    id: 'y0',
+                },
+                {
+                    id: 'y1',
+                },
             ],
         },
         series: [
@@ -137,7 +141,7 @@ function createDualAxisLineChart() {
                 id: 'large',
                 label: 'Large',
                 value: 'large',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
     });

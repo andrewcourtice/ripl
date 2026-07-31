@@ -148,7 +148,7 @@ function getSeries() {
         label: s.label,
         color: config.colors[s.id],
         // The return-rate series is a percentage; give it its own axis when asked.
-        yAxis: multiAxisActive.value && s.id === 'returnRate' ? 1 : undefined,
+        yAxis: multiAxisActive.value && s.id === 'returnRate' ? 'rate' : undefined,
     }));
 }
 
@@ -166,8 +166,12 @@ function buildOptions() {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'amount',
+                },
+                {
+                    id: 'rate',
                     visible: config.axesVisible,
                     title: 'Return rate (%)',
                     position: 'right',
@@ -366,7 +370,7 @@ createBarChart('#container', {
 
 ### Multiple y-axes
 
-Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option, naming the axis's `id`; `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
 
 ```ts
 createBarChart('#container', {
@@ -377,19 +381,26 @@ createBarChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'orders',
             value: 'orders',
             label: 'Orders',
-            yAxis: 1,
+            yAxis: 'orders',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'Orders' },
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'orders',
+                position: 'right',
+                title: 'Orders',
+            },
         ],
     },
 });
@@ -560,11 +571,11 @@ interface BarChartSeriesOptions<TData> {
     label: string;
 
     /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
-     * orientation always render against the primary axis.
+     * The `id` of the y-axis this series binds to. Defaults to the primary axis. Takes effect for
+     * vertical grouped bars; stacked/percent modes and horizontal orientation always render
+     * against the primary axis.
      */
-    yAxis?: number | string;
+    yAxis?: string;
 }
 
 interface BarChartEventMap {

@@ -114,13 +114,17 @@ function createDualAxisAreaChart(stacked = false) {
                 id: 'right',
                 label: 'Right',
                 value: 'large',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
         axis: {
             y: [
-                { title: 'Left' },
                 {
+                    id: 'y0',
+                    title: 'Left',
+                },
+                {
+                    id: 'y1',
                     position: 'right',
                     title: 'Right',
                 },
@@ -163,13 +167,17 @@ function createDualAxisScatterChart() {
                 label: 'Right',
                 xBy: 'x',
                 yBy: 'large',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
         axis: {
             y: [
-                { title: 'Left' },
                 {
+                    id: 'y0',
+                    title: 'Left',
+                },
+                {
+                    id: 'y1',
                     position: 'right',
                     title: 'Right',
                 },
@@ -210,13 +218,17 @@ describe('secondary y-axis (line)', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'large',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
             ],
             axis: {
                 y: [
-                    { title: 'Left' },
                     {
+                        id: 'y0',
+                        title: 'Left',
+                    },
+                    {
+                        id: 'y1',
                         position: 'right',
                         title: 'Right',
                     },
@@ -316,13 +328,17 @@ describe('secondary y-axis (area)', () => {
                     id: 'other',
                     label: 'Other',
                     value: 'other',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
             ],
             axis: {
                 y: [
-                    {},
-                    {},
+                    {
+                        id: 'y0',
+                    },
+                    {
+                        id: 'y1',
+                    },
                 ],
             },
         });
@@ -508,8 +524,12 @@ function createDualAxisBarChart() {
         key: 'm',
         axis: {
             y: [
-                {},
-                {},
+                {
+                    id: 'y0',
+                },
+                {
+                    id: 'y1',
+                },
             ],
         },
         series: [
@@ -522,7 +542,7 @@ function createDualAxisBarChart() {
                 id: 'big',
                 label: 'Big',
                 value: 'big',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
     });
@@ -624,9 +644,17 @@ const TRIPLE_DATA = [
 
 const TRIPLE_AXES = {
     y: [
-        {},
-        { position: 'right' as const },
-        { position: 'left' as const },
+        {
+            id: 'y0',
+        },
+        {
+            id: 'y1',
+            position: 'right' as const,
+        },
+        {
+            id: 'y2',
+            position: 'left' as const,
+        },
     ],
 };
 
@@ -676,13 +704,13 @@ describe('N y-axes (line)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -748,13 +776,13 @@ describe('N y-axes (area)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -836,14 +864,14 @@ describe('N y-axes (scatter)', () => {
                     label: 'B',
                     xBy: 'x',
                     yBy: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     xBy: 'x',
                     yBy: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -908,13 +936,13 @@ describe('N y-axes (bar)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -966,12 +994,17 @@ describe('N y-axes (bar)', () => {
 // tree, so they hold regardless of the rendering backend.
 const TITLED_TRIPLE_AXES = {
     y: [
-        { title: 'Axis A' },
         {
+            id: 'y0',
+            title: 'Axis A',
+        },
+        {
+            id: 'y1',
             position: 'right' as const,
             title: 'Axis B',
         },
         {
+            id: 'y2',
             position: 'left' as const,
             title: 'Axis C',
         },
@@ -1027,13 +1060,13 @@ describe('multi y-axis element ids and right-axis geometry', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -1065,6 +1098,124 @@ describe('multi y-axis element ids and right-axis geometry', () => {
         expect(firstTickTextAlign(axes[0])).toBe('right');
         expect(firstTickTextAlign(axes[1])).toBe('left');
         expect(firstTickTextAlign(axes[2])).toBe('right');
+    });
+
+});
+
+describe('y-axis binding by id', () => {
+
+    function createChart(axes: { id: string;
+        position: 'left' | 'right'; }[]) {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    m: 'a',
+                    small: 10,
+                    large: 5000,
+                },
+                {
+                    m: 'b',
+                    small: 30,
+                    large: 9000,
+                },
+            ],
+            key: 'm',
+            series: [
+                {
+                    id: 'small',
+                    label: 'Small',
+                    value: 'small',
+                    yAxis: 'units',
+                },
+                {
+                    id: 'large',
+                    label: 'Large',
+                    value: 'large',
+                    yAxis: 'revenue',
+                },
+            ],
+            axis: { y: axes },
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    // The domain of the axis each series named, whichever position that axis ended up in.
+    function domainOf(chart: unknown, id: string) {
+        const index = (chart as { yAxesOptions: { id?: string }[] }).yAxesOptions.findIndex(axis => axis.id === id);
+
+        expect(index, `no axis with id ${id}`).toBeGreaterThanOrEqual(0);
+
+        return yAxes(chart)[index].scale.domain;
+    }
+
+    it('Should keep every series on the axis it named when the axes are reordered', async () => {
+        const units: { id: string;
+            position: 'left' | 'right'; } = {
+            id: 'units',
+            position: 'left',
+        };
+        const revenue: { id: string;
+            position: 'left' | 'right'; } = {
+            id: 'revenue',
+            position: 'right',
+        };
+
+        const first = createChart([units, revenue]);
+        const swapped = createChart([revenue, units]);
+
+        await first.render();
+        await swapped.render();
+
+        // Binding by position would have followed the move and swapped the two domains. Naming the
+        // axis is what makes the array's order a presentation detail.
+        expect(domainOf(swapped, 'units')).toEqual(domainOf(first, 'units'));
+        expect(domainOf(swapped, 'revenue')).toEqual(domainOf(first, 'revenue'));
+
+        // And the two are genuinely different axes, so the assertion above has something to catch.
+        expect(domainOf(first, 'revenue')[1]).toBeGreaterThan(domainOf(first, 'units')[1] * 10);
+    });
+
+    it('Should fall back to the primary axis when a series names one that is not configured', async () => {
+        const chart = createChart([
+            {
+                id: 'units',
+                position: 'left',
+            },
+            {
+                id: 'revenue',
+                position: 'right',
+            },
+        ]);
+
+        chart.update({
+            series: [
+                {
+                    id: 'small',
+                    label: 'Small',
+                    value: 'small',
+                    yAxis: 'nope',
+                },
+                {
+                    id: 'large',
+                    label: 'Large',
+                    value: 'large',
+                    yAxis: 'revenue',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        // Both the unnamed and the misnamed case land on the primary axis rather than throwing.
+        expect(domainOf(chart, 'units')[1]).toBeGreaterThan(0);
     });
 
 });
@@ -1119,8 +1270,14 @@ describe('secondary y-axis tick labels', () => {
             animation: false,
             axis: {
                 y: [
-                    { position: 'left' },
-                    { position: 'right' },
+                    {
+                        id: 'y0',
+                        position: 'left',
+                    },
+                    {
+                        id: 'y1',
+                        position: 'right',
+                    },
                 ],
             },
             data: [
@@ -1146,7 +1303,7 @@ describe('secondary y-axis tick labels', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'w',
-                    ...(bindSecondSeries ? { yAxis: 1 } : {}),
+                    ...(bindSecondSeries ? { yAxis: 'y1' } : {}),
                 },
             ],
         });

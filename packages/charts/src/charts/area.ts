@@ -98,11 +98,10 @@ export interface AreaChartSeriesOptions<TData> {
     /** Show point markers at each data value. Defaults to true. */
     markers?: boolean;
     /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis. When the chart is stacked, series stack only with other series bound to the
-     * same axis.
+     * The `id` of the y-axis this series binds to. Defaults to the primary axis. When the chart is
+     * stacked, series stack only with other series bound to the same axis.
      */
-    yAxis?: number | string;
+    yAxis?: string;
 }
 
 /** Options for configuring an {@link AreaChart}. */

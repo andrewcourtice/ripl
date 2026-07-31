@@ -160,7 +160,7 @@ function getSeries() {
         marker: resolveMarker(index),
         color: config.colors[s.id],
         // Marketing plots impressions in the thousands, so it gets the right-hand axis.
-        yAxis: extras.multiAxis && s.id === 'marketing' ? 1 : undefined,
+        yAxis: extras.multiAxis && s.id === 'marketing' ? 'impressions' : undefined,
     }));
 }
 
@@ -175,8 +175,12 @@ function buildOptions() {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'score',
+                },
+                {
+                    id: 'impressions',
                     visible: config.axesVisible,
                     title: 'Impressions',
                     position: 'right',
@@ -373,7 +377,7 @@ createScatterChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
+Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `yAxis` option, naming the axis's `id`; `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
 
 ```ts
 createScatterChart('#container', {
@@ -385,20 +389,27 @@ createScatterChart('#container', {
             label: 'Sales',
             xBy: 'spend',
             yBy: 'revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'efficiency',
             label: 'Efficiency',
             xBy: 'spend',
             yBy: 'roas',
-            yAxis: 1,
+            yAxis: 'roas',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'ROAS (×)' },
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'roas',
+                position: 'right',
+                title: 'ROAS (×)',
+            },
         ],
     },
 });
@@ -567,11 +578,8 @@ interface ScatterChartSeriesOptions<TData> {
     /** Largest bubble radius in pixels when `sizeBy` is set. Defaults to 20. */
     maxRadius?: number;
 
-    /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis.
-     */
-    yAxis?: number | string;
+    /** The `id` of the y-axis this series binds to. Defaults to the primary axis. */
+    yAxis?: string;
 
     /**
      * Bubble symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`.

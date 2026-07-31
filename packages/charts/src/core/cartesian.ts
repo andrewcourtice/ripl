@@ -1180,24 +1180,24 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Resolves a series `yAxis` binding (a y-axis index or a y-axis `id`) to an index into
-     * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
+     * Resolves a series `yAxis` binding (a y-axis `id`) to an index into
+     * {@link CartesianChart.yAxes}. Falls back to the primary axis when the series names no axis, or
+     * names one that is not configured.
      *
-     * @param axis - The series' `yAxis` option (index, id, or undefined).
+     * Binding is by id rather than position so that reordering `axis.y` cannot silently re-point the
+     * series bound to it.
+     *
+     * @param id - The series' `yAxis` option, or `undefined` for the primary axis.
      * @returns The resolved y-axis index.
      */
-    protected resolveSeriesAxisIndex(axis?: number | string): number {
-        if (axis === undefined) {
+    protected resolveSeriesAxisIndex(id?: string): number {
+        if (id === undefined) {
             return 0;
         }
 
-        if (typeof axis === 'number') {
-            return Math.max(0, Math.min(axis, this.yAxes.length - 1));
-        }
+        const index = this.yAxesOptions.findIndex(options => options.id === id);
 
-        const byId = this.yAxesOptions.findIndex((opts, index) => (opts.id ?? String(index)) === axis);
-
-        return byId >= 0 ? byId : 0;
+        return index >= 0 ? index : 0;
     }
 
     /**
@@ -1208,7 +1208,7 @@ export abstract class CartesianChart<
      * @param series - The series to partition, typically the legend-active ones.
      * @returns One group per y-axis; a group is empty when nothing binds to that axis.
      */
-    protected groupSeriesByAxis<TSeries extends { yAxis?: number | string }>(series: TSeries[]): TSeries[][] {
+    protected groupSeriesByAxis<TSeries extends { yAxis?: string }>(series: TSeries[]): TSeries[][] {
         return this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index));
     }
 
@@ -1230,7 +1230,7 @@ export abstract class CartesianChart<
      *
      * @param series - The legend-active series whose bindings decide which axes have something to draw.
      */
-    protected hideUnboundAxes(series: { yAxis?: number | string }[]): void {
+    protected hideUnboundAxes(series: { yAxis?: string }[]): void {
         const bound = new Set(series.map(srs => this.resolveSeriesAxisIndex(srs.yAxis)));
 
         this.yAxes.forEach((axis, index) => {

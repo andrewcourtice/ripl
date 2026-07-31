@@ -193,7 +193,7 @@ function getSeries() {
         lineWidth: extras.lineWidth,
         markers: extras.markers,
         color: config.colors[s.id],
-        yAxis: multiAxis && s.id === 'mobile' ? 1 : undefined,
+        yAxis: multiAxis && s.id === 'mobile' ? 'mobile' : undefined,
     }));
 }
 
@@ -205,14 +205,18 @@ function buildOptions() {
         ...buildCommonOptions(config),
     };
 
-    // A second `axis.y` entry renders a right-hand y-axis; the mobile series binds to it via its
-    // `yAxis: 1` series option.
+    // A second `axis.y` entry renders a right-hand y-axis; the mobile series names it through its
+    // `yAxis` option.
     if (multiAxisActive()) {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'desktop',
+                },
+                {
+                    id: 'mobile',
                     visible: config.axesVisible,
                     title: 'Mobile (sessions)',
                 },
@@ -369,7 +373,7 @@ createAreaChart('#container', {
 
 ### Secondary y-axis
 
-Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `yAxis` option (an index or the axis `id`). When the chart is stacked, series stack per axis group:
+Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `yAxis` option, naming the axis's `id`. When the chart is stacked, series stack per axis group:
 
 ```ts
 createAreaChart('#container', {
@@ -385,13 +389,17 @@ createAreaChart('#container', {
             id: 'conversion',
             value: 'conversion',
             label: 'Conversion %',
-            yAxis: 1,
+            yAxis: 'conversion',
         },
     ],
     axis: {
         y: [
-            { title: 'Sessions' },
             {
+                id: 'sessions',
+                title: 'Sessions',
+            },
+            {
+                id: 'conversion',
                 title: 'Conversion %',
                 format: 'percentage',
             },
@@ -578,11 +586,10 @@ interface AreaChartSeriesOptions<TData> {
     markers?: boolean;
 
     /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis. When the chart is stacked, series stack only with other series bound to the
-     * same axis.
+     * The `id` of the y-axis this series binds to. Defaults to the primary axis. When the chart is
+     * stacked, series stack only with other series bound to the same axis.
      */
-    yAxis?: number | string;
+    yAxis?: string;
 }
 
 interface AreaChartEventMap {
