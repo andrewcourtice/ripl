@@ -9,6 +9,7 @@ import {
 
 import type {
     Ease,
+    PolylineSegment,
 } from '@ripl/core';
 
 import {
@@ -54,6 +55,7 @@ import {
     typeIsArray,
     typeIsBoolean,
     typeIsFunction,
+    typeIsNil,
     typeIsNumber,
     typeIsString,
 } from '@ripl/utilities';
@@ -766,6 +768,110 @@ export function resolveLineDash(style?: LineStyle): number[] {
     }
 
     return (style && LINE_DASH_PRESETS[style]) ?? [];
+}
+
+/** A segment boundary: the key of a data point, or a function picking one out of the chart data. */
+export type LineStyleBound<TData> = string | ((data: TData[]) => string);
+
+/** A span of a series line, anchored to data keys, stroked with its own style. */
+export interface LineStyleSegment<TData> {
+    /** Key of the point the span starts at; the start of the line when omitted. */
+    from?: LineStyleBound<TData>;
+    /** Key of the point the span ends at, inclusive; the end of the line when omitted. */
+    to?: LineStyleBound<TData>;
+    /** Dash style stroked over the span. */
+    style: LineStyle;
+}
+
+/** A segmented line style: the style of each span, plus the style used everywhere else. */
+export interface LineStyleSegments<TData> {
+    /** Style applied wherever no segment applies. Defaults to `'solid'`. */
+    default?: LineStyle;
+    /** Spans of the line overriding the default, applied in order so a later span wins where two overlap. */
+    segments: LineStyleSegment<TData>[];
+}
+
+/**
+ * How a series line is stroked: one style for the whole line, or key-anchored spans each with their
+ * own style. A bare array of segments defaults everything they do not cover to `'solid'`; the
+ * object form names that fallback explicitly.
+ *
+ * @typeParam TData - The type of each data item in the dataset.
+ */
+export type LineStyleInput<TData> = LineStyle | LineStyleSegment<TData>[] | LineStyleSegments<TData>;
+
+/** A {@link LineStyleInput} resolved into the polyline state that draws it. */
+export interface ResolvedLineStyle {
+    /** Dash pattern for every part of the line no segment covers. */
+    lineDash: number[];
+    /** Per-span dash overrides, or `undefined` when the line is uniformly styled. */
+    segments?: PolylineSegment[];
+}
+
+// A dash array and a segment list are both arrays; only a non-empty list of objects is the latter.
+function isSegmentList<TData>(style: LineStyleInput<TData>): style is LineStyleSegment<TData>[] {
+    return typeIsArray(style) && style.length > 0 && style.every(entry => !typeIsNumber(entry));
+}
+
+function isSegmented<TData>(style: LineStyleInput<TData>): style is LineStyleSegments<TData> {
+    return !typeIsArray(style) && !typeIsString(style) && typeIsArray(style.segments);
+}
+
+function resolveBound<TData>(bound: LineStyleBound<TData> | undefined, data: TData[], keys: string[], fallback: number): number {
+    if (typeIsNil(bound)) {
+        return fallback;
+    }
+
+    const key = typeIsFunction(bound) ? bound(data) : bound;
+
+    return keys.indexOf(key);
+}
+
+/**
+ * Resolves a {@link LineStyleInput} against the chart data into the dash state that draws it: the
+ * dash pattern for the line as a whole, plus the point-index spans that override it.
+ *
+ * Segments whose `from` or `to` matches no key in the data are dropped rather than throwing, so a
+ * data change that removes a boundary leaves the rest of the line intact.
+ *
+ * @param style - The series' `lineStyle` option.
+ * @param data - The dataset being plotted, in render order.
+ * @param getKey - Resolves a data item to its category key.
+ * @returns The polyline `lineDash` and, when the style is segmented, its `segments`.
+ */
+export function resolveLineStyle<TData>(style: LineStyleInput<TData> | undefined, data: TData[], getKey: (item: TData) => string): ResolvedLineStyle {
+    if (typeIsNil(style) || (!isSegmentList(style) && !isSegmented(style))) {
+        return {
+            lineDash: resolveLineDash(style as LineStyle | undefined),
+        };
+    }
+
+    const entries = isSegmentList(style) ? style : style.segments;
+    const lineDash = resolveLineDash(isSegmented(style) ? style.default : undefined);
+    const keys = data.map(getKey);
+    const lastIndex = keys.length - 1;
+
+    const segments = entries.reduce((output, entry) => {
+        const from = resolveBound(entry.from, data, keys, 0);
+        const to = resolveBound(entry.to, data, keys, lastIndex);
+
+        if (from < 0 || to < 0 || from >= to) {
+            return output;
+        }
+
+        output.push({
+            from,
+            to,
+            lineDash: resolveLineDash(entry.style),
+        });
+
+        return output;
+    }, [] as PolylineSegment[]);
+
+    return {
+        lineDash,
+        segments: segments.length ? segments : undefined,
+    };
 }
 
 // Data labels

@@ -26,7 +26,7 @@ import {
 } from '../animation';
 
 import {
-    resolveLineDash,
+    resolveLineStyle,
 } from '../options';
 
 import {
@@ -201,12 +201,14 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
     protected buildSeriesGroup(series: LineSeriesLike<TData>, ctx: LineSeriesContext<TData>): Group {
         const color = ctx.getColor(series.id);
         const items = ctx.data.map(item => this._buildMarker(series, item, ctx));
+        const { lineDash, segments } = resolveLineStyle(series.lineStyle, ctx.data, ctx.getKey);
 
         const line = createPolyline({
             id: `${series.id}-line`,
             lineWidth: series.lineWidth ?? 2,
             stroke: color,
-            lineDash: resolveLineDash(series.lineStyle),
+            lineDash,
+            segments,
             points: items.map(item => item.point),
             renderer: series.lineType,
         });
@@ -227,9 +229,12 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         const line = group.getElementsByType('polyline')[0] as Polyline;
         const markers = seriesMarkers(group);
 
+        const { lineDash, segments } = resolveLineStyle(series.lineStyle, ctx.data, ctx.getKey);
+
         // Apply the curve renderer + dash directly (not via the transition, which would snap them).
         line.renderer = series.lineType;
-        line.lineDash = resolveLineDash(series.lineStyle);
+        line.lineDash = lineDash;
+        line.segments = segments;
 
         const newKeys = ctx.data.map(ctx.getKey);
         const targetPoints = ctx.data.map(item => this._markerState(series, item, ctx).point);

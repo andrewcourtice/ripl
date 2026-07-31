@@ -12,7 +12,7 @@ import {
 
 import type {
     ChartDataLabelsInput,
-    LineStyle,
+    LineStyleInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -118,8 +118,8 @@ export interface TrendChartLineSeriesOptions<TData> extends TrendChartBaseSeries
     lineType?: PolylineRenderer;
     /** Width in pixels of the series line. */
     lineWidth?: number;
-    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
-    lineStyle?: LineStyle;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, a custom dash array, or key-anchored spans each with their own style. */
+    lineStyle?: LineStyleInput<TData>;
     /** Show point markers along the line. Defaults to `true`. */
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
@@ -134,8 +134,8 @@ export interface TrendChartAreaSeriesOptions<TData> extends TrendChartBaseSeries
     lineType?: PolylineRenderer;
     /** Width in pixels of the series line. */
     lineWidth?: number;
-    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
-    lineStyle?: LineStyle;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, a custom dash array, or key-anchored spans each with their own style. */
+    lineStyle?: LineStyleInput<TData>;
     /** Fill opacity of the area band. Defaults to 0.3. */
     fillOpacity?: number;
     /** Show point markers at each data value. Defaults to `true`. */

@@ -30,7 +30,7 @@ import type {
 } from '../animation';
 
 import {
-    resolveLineDash,
+    resolveLineStyle,
 } from '../options';
 
 import {
@@ -332,11 +332,14 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
 
         areaFill.autoStroke = false;
 
+        const { lineDash, segments } = resolveLineStyle(series.lineStyle, ctx.data, ctx.getKey);
+
         const line = createPolyline({
             id: `${series.id}-line`,
             lineWidth: series.lineWidth ?? 2,
             stroke: color,
-            lineDash: resolveLineDash(series.lineStyle),
+            lineDash,
+            segments,
             points: linePoints,
             renderer: series.lineType,
             data: {
@@ -369,10 +372,13 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const prevKeys = this._morphKeys.get(series.id);
         const keyed = !!prevKeys && keysDiffer(prevKeys, newKeys);
 
+        const { lineDash, segments } = resolveLineStyle(series.lineStyle, ctx.data, ctx.getKey);
+
         // The fill is a closed [top, reversed-bottom] polygon, so keys are `t:`/`b:` tagged per run.
         line.renderer = series.lineType;
         areaFill.renderer = areaBandRenderer(series.lineType);
-        line.lineDash = resolveLineDash(series.lineStyle);
+        line.lineDash = lineDash;
+        line.segments = segments;
 
         const fillKeys = (keys: string[]): string[] => [
             ...keys.map(key => `t:${key}`),

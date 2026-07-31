@@ -22,7 +22,7 @@ import {
 } from '../core/options';
 
 import type {
-    LineStyle,
+    LineStyleInput,
 } from '../core/options';
 
 import {
@@ -94,8 +94,8 @@ export interface LineChartSeriesOptions<TData> {
     lineType?: PolylineRenderer;
     /** Width in pixels of the series line. */
     lineWidth?: number;
-    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
-    lineStyle?: LineStyle;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, a custom dash array, or key-anchored spans each with their own style. */
+    lineStyle?: LineStyleInput<TData>;
     /** Show point markers along the line. Defaults to `true`; set `false` to hide them (toggling animates them in/out). */
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */
