@@ -229,8 +229,19 @@ export class Tooltip extends ChartComponent {
         let bgWidth = textWidth + this._padding * 2;
         const bgHeight = textHeight + this._padding * 2;
 
-        if (this._maxWidth) {
+        // Get scene boundaries
+        const sceneWidth = this.scene.width;
+        const sceneHeight = this.scene.height;
+        const offset = 10; // Offset from pointer and edges
+
+        // `maxWidth` is the width content *wraps at*, so it only bounds the box when wrapping is on.
+        // Clamping it either way made an unwrapped box narrower than the text it was about to draw,
+        // and the overflow was simply cut off — every tooltip over the 200px default lost its tail.
+        // Without wrapping the box has to fit its content, bounded only by the chart itself.
+        if (this._wrap && this._maxWidth) {
             bgWidth = Math.min(bgWidth, this._maxWidth);
+        } else if (sceneWidth > 0) {
+            bgWidth = Math.min(bgWidth, sceneWidth - offset * 2);
         }
 
         // Horizontally centered on the point; vertically either above it (default) or centered on it.
@@ -238,11 +249,6 @@ export class Tooltip extends ChartComponent {
         let bgY = this._placement === 'center'
             ? y - bgHeight / 2
             : y - bgHeight - 10;
-
-        // Get scene boundaries
-        const sceneWidth = this.scene.width;
-        const sceneHeight = this.scene.height;
-        const offset = 10; // Offset from pointer and edges
 
         // Boundary aware positioning
         // Check horizontal boundaries
