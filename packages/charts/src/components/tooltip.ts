@@ -146,8 +146,6 @@ export class Tooltip extends ChartComponent {
         return lines;
     }
 
-    // Resolves the display lines: formatted content split on newlines, then word-wrapped to
-    // `maxWidth` when wrapping is enabled.
     private _layoutLines(content: string): string[] {
         const formatted = this._formatContent ? this._formatContent(content) : content;
         const authored = formatted.split('\n');
@@ -185,8 +183,7 @@ export class Tooltip extends ChartComponent {
             this._group = createGroup({
                 id: 'tooltip',
                 opacity: 0,
-                // Above every other overlay (crosshair 1500, legend 2000): the tooltip is
-                // transient focused info and must never be occluded.
+                // Above every other overlay (crosshair 1500, legend 2000) — must never be occluded.
                 zIndex: 2500,
                 pointerEvents: 'none',
                 children: [background],
@@ -238,10 +235,7 @@ export class Tooltip extends ChartComponent {
         const sceneHeight = this.scene.height;
         const offset = 10; // Offset from pointer and edges
 
-        // `maxWidth` is the width content *wraps at*, so it only bounds the box when wrapping is on.
-        // Clamping it either way made an unwrapped box narrower than the text it was about to draw,
-        // and the overflow was simply cut off — every tooltip over the 200px default lost its tail.
-        // Without wrapping the box has to fit its content, bounded only by the chart itself.
+        // `maxWidth` is where content *wraps*, not a box clamp — clamping cut the tail off unwrapped boxes.
         if (this._wrap && this._maxWidth) {
             bgWidth = Math.min(bgWidth, this._maxWidth);
         } else if (sceneWidth > 0) {
@@ -254,8 +248,6 @@ export class Tooltip extends ChartComponent {
             ? y - bgHeight / 2
             : y - bgHeight - 10;
 
-        // Boundary aware positioning
-        // Check horizontal boundaries
         if (bgX < 0) {
             // Would be cut off on the left
             bgX = offset;

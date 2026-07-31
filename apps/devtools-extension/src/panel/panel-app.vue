@@ -53,8 +53,7 @@ const settings = useSettings();
 
 useTheme();
 
-// Poll the selected element's detail so animation-driven property changes are
-// reflected without extra page-side work; paused while the panel is hidden.
+// Poll so animation-driven property changes show without extra page-side work; paused while hidden.
 watchEffect(onCleanup => {
     const selection = store.selection.value;
     const rate = settings.pollRate.value;

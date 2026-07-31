@@ -361,8 +361,7 @@ export abstract class CartesianChart<
     protected setupCartesian(setup: CartesianSetup = {}) {
         this._setup = setup;
 
-        // Build the overview strip and attach its listeners before the in-plot navigator is created, so
-        // a pointerdown inside the strip band is claimed by the strip and never also pans the plot.
+        // Strip before the in-plot navigator, so a strip `pointerdown` is claimed by the strip alone.
         this._navigatorStrip = new ChartNavigator({
             scene: this.scene,
             renderer: this.renderer,
@@ -395,8 +394,6 @@ export abstract class CartesianChart<
         this._reconcileNavigator();
     }
 
-    // Applies resolved axis-item options onto a live axis component (visibility, ticks, formatter,
-    // label styling, and title), so option/theme changes restyle the axis on the next render.
     private _applyAxisOptions(axis: ChartAxis, options: ChartAxisItemOptions<TData>): void {
         axis.visible = options.visible;
         axis.tickCount = axisTickCount(options);
@@ -408,15 +405,11 @@ export abstract class CartesianChart<
         axis.title = options.title;
     }
 
-    // Re-normalizes the furniture options (axes, grid, tooltip, crosshair) and applies them to the
-    // persistent components, creating, destroying, or restyling them as needed. Runs once from
-    // `setupCartesian` and again at the top of every render (via `prepareAxes`), which is what makes
-    // `chart.update({ axis/grid/tooltip/crosshair/theme })` take effect at runtime.
+    // Runs from `setupCartesian` and every render (via `prepareAxes`) — what makes `chart.update()` live.
     private _syncCartesianOptions(): void {
         const setup = this.resolveCartesianSetup();
 
-        // Per-chart theme colors are passed as normalizer defaults so a chart-level `theme`
-        // themes the axes/grid/tooltip/crosshair (user-supplied options still win over them).
+        // Theme colors go in as normalizer defaults, so user-supplied options still win over them.
         const axisDefaults = {
             font: this.theme.font,
             fontColor: this.theme.axisColor,
@@ -436,8 +429,6 @@ export abstract class CartesianChart<
 
         this._applyAxisOptions(this.xAxis, xAxisOpts);
 
-        // Reconcile the y-axis instances against the configured axes: destroy the surplus, build the
-        // missing, and re-apply the options to every survivor.
         this.yAxes.splice(yAxisOptionsList.length).forEach(axis => axis.destroy());
 
         yAxisOptionsList.forEach((yOpts, index) => {
@@ -572,14 +563,12 @@ export abstract class CartesianChart<
 
         this._navigator = createNavigator(this.scene.context, {
             interactions,
-            // You can zoom in up to NAV_MAX_ZOOM, but only out to the full-data identity view (k = 1),
-            // never past the extent of the dataset.
+            // Lower bound `1` is the full-data identity view; never zoom out past the dataset extent.
             scaleExtent: [1, NAV_MAX_ZOOM],
         });
 
         this._navigator.on('change', event => {
-            // Bound the transform so pan/zoom can't scroll past the data edges. Clamping is a fixpoint,
-            // so re-applying the clamped transform re-enters once and then settles.
+            // Clamping is a fixpoint, so re-applying the clamped transform re-enters once then settles.
             const clamped = this._clampView(event.data);
 
             if (!isSameTransform(clamped, event.data)) {
@@ -913,16 +902,14 @@ export abstract class CartesianChart<
     /** Lazily builds the plot-content container and its clip rect, adding it to the scene once. */
     private _ensurePlotContent(): Group {
         if (!this._plotContent) {
-            // A fill-less, stroke-less rect: when `clip` is on it masks its later siblings (the marks);
-            // when off it draws nothing. Lowest z-index so it applies before any mark renders.
+            // Fill-less rect: with `clip` on it masks its later siblings; lowest z-index so it precedes them.
             this._plotClip = createRect({
                 x: 0,
                 y: 0,
                 width: 0,
                 height: 0,
                 clip: false,
-                // A pure visual mask: never intercept pointer events, or it would swallow hovers/clicks
-                // meant for the marks it covers (barclick, marker hover, etc.).
+                // Or the mask would swallow hovers/clicks meant for the marks it covers.
                 pointerEvents: 'none',
                 zIndex: Number.NEGATIVE_INFINITY,
             });
@@ -948,11 +935,7 @@ export abstract class CartesianChart<
         this._navPlot = area;
         this._ensurePlotContent();
 
-        // Marks + grid must stay within the plot while navigating; they live in `_plotContent` (masked by
-        // `_plotClip`) and the grid's own clip. Axis labels only need clipping along the axis they
-        // actually slide: the category axis slides under the window, so clip it; the value axis is held
-        // at the full extent, so leave it unclipped (clipping it bisected its min/max labels). 2-D charts
-        // (`both`) slide both axes.
+        // Only clip the axis that actually slides; clipping the held value axis bisected its min/max labels.
         const navigating = !!this._navigator;
         const axis = this.navigationAxis();
 
@@ -986,9 +969,7 @@ export abstract class CartesianChart<
     protected prepareAxes() {
         this._syncCartesianOptions();
 
-        // Axis and grid geometry move in lockstep with the marks they frame, so they share the
-        // series' update duration. Running the axis faster (as it once did) left the labels settled
-        // while the data they label was still travelling.
+        // Axis/grid share the series duration; running the axis faster settled labels before their data.
         const animation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
         this.xAxis.animation = animation;
@@ -1015,8 +996,7 @@ export abstract class CartesianChart<
 
         const xBand = this.xAxis.measure();
 
-        // Same-side y-axes stack outward from the plot with a gap between each band. Hidden axes are
-        // excluded outright rather than measured at zero, so they leave no gap behind either.
+        // Hidden axes are excluded outright, not measured at zero, so they leave no stack gap behind.
         const yBandFor = (alignment: ChartYAxisAlignment) => {
             const group = this.yAxes.filter(axis => axis.visible && axis.alignment === alignment);
 
@@ -1055,8 +1035,7 @@ export abstract class CartesianChart<
 
         this.xAxis.bounds = new Box(top, plot.x, bottom, plot.x + plot.width);
 
-        // A left axis's band runs rightward from `bounds.left`, a right axis's band leftward from
-        // `bounds.right`, so encoding the slot in that edge places the band exactly.
+        // Left bands run rightward from `bounds.left`, right bands leftward from `bounds.right`.
         let leftCursor = plot.x;
         let rightCursor = plot.x + plot.width;
 
@@ -1177,9 +1156,7 @@ export abstract class CartesianChart<
             });
         }
 
-        // Clip the annotations to the plot only while a navigator is active, because the pan/zoom rescales
-        // the axes, so unclipped annotations would otherwise slide into the axis gutters. Matches the
-        // series/grid/axis clip gate in `clipPlot`.
+        // Only clip while navigating: pan/zoom rescales the axes, so annotations would slide into the gutters.
         this._annotations.render(annotations, scales, plot, !!this._navigator);
     }
 
@@ -1360,8 +1337,7 @@ export abstract class CartesianChart<
         return this._timeScaleFacade([extent[0], extent[1]], left, right) as unknown as Scale;
     }
 
-    // Wraps the core time scale so string keys, epoch numbers, and Dates are all accepted as
-    // input; series renderers pass raw keys/values while axis ticks are calendar-aligned Dates.
+    // Accepts string keys, epoch numbers and Dates: series pass raw keys, axis ticks pass Dates.
     private _timeScaleFacade(domainMs: [number, number], left: number, right: number): Scale<string> {
         const [min, rawMax] = domainMs;
         const max = rawMax === min ? min + 1 : rawMax;

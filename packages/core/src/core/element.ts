@@ -580,8 +580,7 @@ export class Element<
     protected setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         this._touched = true;
 
-        // Only primitives may short-circuit on equality. A reference-equal object or array may
-        // have been mutated in place, so it must still mark dirty and emit `updated`.
+        // Only primitives may short-circuit: a reference-equal object may have been mutated in place.
         if (this.state[key] === value && !typeIsObject(value)) {
             return;
         }
@@ -814,9 +813,7 @@ export class Element<
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        // The point arrives in device pixels (scaled by the device pixel ratio) but the bounding box
-        // is composed in logical space, so map the point back before comparing. `Shape2D` makes the
-        // same correction around its path-based test.
+        // The point arrives in device pixels; the bounding box is logical, so map it back first.
         const dpr = this.context?.scaleDPR(1) ?? 1;
 
         return isPointInBox([x / dpr, y / dpr], this.getBoundingBox());
@@ -825,8 +822,7 @@ export class Element<
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */
     public interpolate(newState: Partial<ElementInterpolationState<TState>>, interpolators: Partial<ElementInterpolators<TState>> = {}): Interpolator<void> {
         const mappedIntpls = objectReduce(newState, (output, key, value) => {
-            // Start from the element's *effective* value (own, else inherited) so a transition on
-            // an inherited property animates from what's actually on screen.
+            // Use the effective value so an inherited property animates from what's on screen.
             const currentValue = this.getComputedValue(key);
 
             if (typeIsNil(currentValue)) {
@@ -847,8 +843,7 @@ export class Element<
         }, {} as Record<keyof TState, Interpolator<TState[keyof TState] | undefined>>);
 
         return time => {
-            // The tick writes state directly (bypassing setStateValue), so mark dirty here or
-            // an animating shape would keep serving a stale cached path.
+            // The tick bypasses `setStateValue`, so mark dirty or a cached path goes stale.
             this._dirty = true;
             this._stateVersion++;
 
@@ -887,8 +882,6 @@ export class Element<
 
             context.markRenderEnd();
 
-            // Every leaf (and any directly-rendered element) clears its own per-cycle flags here.
-            // Groups override `render`, so the scene/renderer reset them at their `pop` instead.
             this.$reset();
         }
     }

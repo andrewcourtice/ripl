@@ -58,9 +58,7 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-// ---------------------------------------------------------------------------
 // Ease
-// ---------------------------------------------------------------------------
 
 /** Named easing function identifiers. */
 export type EaseName =
@@ -143,9 +141,7 @@ export function resolveEase(value?: EaseName | Ease): Ease {
     return value;
 }
 
-// ---------------------------------------------------------------------------
 // Padding helper
-// ---------------------------------------------------------------------------
 
 export type { PaddingInput };
 
@@ -190,9 +186,7 @@ export function normalizePadding(value?: PaddingInput): ChartPadding | undefined
     };
 }
 
-// ---------------------------------------------------------------------------
 // Title
-// ---------------------------------------------------------------------------
 
 /** Position of the chart title relative to the chart area. */
 export type TitlePosition = 'top' | 'bottom' | 'left' | 'right';
@@ -248,9 +242,7 @@ export function normalizeTitle(input?: ChartTitleInput): ChartTitleOptions | und
     };
 }
 
-// ---------------------------------------------------------------------------
 // Animation
-// ---------------------------------------------------------------------------
 
 /** Fully resolved chart animation options. */
 export interface ChartAnimationOptions {
@@ -295,9 +287,7 @@ export function normalizeAnimation(input?: ChartAnimationInput, defaults?: Parti
     };
 }
 
-// ---------------------------------------------------------------------------
 // Grid
-// ---------------------------------------------------------------------------
 
 /** Fully resolved chart grid options. */
 export interface ChartGridOptions {
@@ -346,9 +336,7 @@ export function normalizeGrid(input?: ChartGridInput, defaults?: Partial<ChartGr
     };
 }
 
-// ---------------------------------------------------------------------------
 // Crosshair
-// ---------------------------------------------------------------------------
 
 /** Which axis the crosshair tracks. */
 export type CrosshairAxis = 'x' | 'y' | 'both';
@@ -400,9 +388,7 @@ export function normalizeCrosshair(input?: ChartCrosshairInput, defaults?: Parti
     };
 }
 
-// ---------------------------------------------------------------------------
 // Tooltip
-// ---------------------------------------------------------------------------
 
 /** Border radius expressed as a uniform number or a per-corner tuple. */
 export type BorderRadiusInput = number | [number, number, number, number];
@@ -475,9 +461,7 @@ export function normalizeTooltip(input?: ChartTooltipInput, defaults?: Partial<C
     };
 }
 
-// ---------------------------------------------------------------------------
 // Legend
-// ---------------------------------------------------------------------------
 
 /** Position of the chart legend relative to the chart area. */
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right';
@@ -545,9 +529,7 @@ export function normalizeLegend(input?: ChartLegendInput, defaults?: Partial<Cha
     };
 }
 
-// ---------------------------------------------------------------------------
 // Axis
-// ---------------------------------------------------------------------------
 
 /** Built-in axis label format types. */
 export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
@@ -556,7 +538,7 @@ export type AxisFormatType = 'number' | 'percentage' | 'date' | 'string';
 export type AxisScaleType = 'linear' | 'log' | 'pow' | 'sqrt' | 'symlog' | 'time' | 'band' | 'point';
 
 /** Options for a single axis (x or y). */
-// `TData` is retained for symmetry across the axis option family (ChartYAxisItemOptions, ChartAxisInput, etc.).
+// `TData` retained for symmetry across the axis option family.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface ChartAxisItemOptions<TData = unknown> {
     /** Whether the axis line, ticks, and labels are rendered. */
@@ -695,8 +677,7 @@ export function normalizeYAxisItem<TData = unknown>(
 
 /** Normalizes axis input into a full `ChartAxisOptions` object with both x and y. */
 export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): ChartAxisOptions<TData> {
-    // Return minimal partials (no colors) so the per-item normalizers apply the active theme's
-    // colors; pre-filling here would shadow the theme for the default/boolean cases.
+    // Return colorless partials — pre-filling colors here would shadow the active theme.
     if (input === undefined) {
         return {
             x: {},
@@ -714,9 +695,7 @@ export function normalizeAxis<TData = unknown>(input?: ChartAxisInput<TData>): C
     return input;
 }
 
-// ---------------------------------------------------------------------------
 // Value format
-// ---------------------------------------------------------------------------
 
 /**
  * A value formatter accepted anywhere a chart renders a raw value as text (tooltips, data
@@ -765,14 +744,11 @@ export function formatTimeLabel(value: Date, spanMs: number): string {
  */
 export function resolveValueFormat(format?: ValueFormatInput): (value: unknown) => string {
     const resolved = resolveFormatLabel(format);
-    // Fall back to the shared precision-capped number formatter (rather than raw `String`) so
-    // untyped numeric values still respect the default 2-decimal cap.
+    // Not raw `String`: untyped numeric values must still respect the default 2-decimal cap.
     return resolved ?? (value => numberFormat(value, { precision: 2 }));
 }
 
-// ---------------------------------------------------------------------------
 // Line style (dash pattern)
-// ---------------------------------------------------------------------------
 
 /** How a series line is stroked: a preset, or a custom canvas dash array. */
 export type LineStyle = 'solid' | 'dashed' | 'dotted' | number[];
@@ -792,9 +768,7 @@ export function resolveLineDash(style?: LineStyle): number[] {
     return (style && LINE_DASH_PRESETS[style]) ?? [];
 }
 
-// ---------------------------------------------------------------------------
 // Data labels
-// ---------------------------------------------------------------------------
 
 /** Where a data label is anchored relative to its marker/bar. */
 export type LabelAnchor = 'top' | 'left' | 'bottom' | 'right';
@@ -860,9 +834,7 @@ export function normalizeDataLabels(input?: ChartDataLabelsInput, defaults?: Par
     };
 }
 
-// ---------------------------------------------------------------------------
 // Segment labels (radial charts: pie, polar-area)
-// ---------------------------------------------------------------------------
 
 /** Where a radial segment label sits: inside the segment, or outside with a leader line. */
 export type SegmentLabelPosition = 'inside' | 'outside';
@@ -926,9 +898,7 @@ export function normalizeSegmentLabels(input?: ChartSegmentLabelsInput, defaults
     };
 }
 
-// ---------------------------------------------------------------------------
 // Format helper
-// ---------------------------------------------------------------------------
 
 
 /** Built-in value formatters keyed by {@link AxisFormatType}. */

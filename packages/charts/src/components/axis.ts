@@ -71,8 +71,7 @@ import {
  */
 const TITLE_GAP = SPACING.md;
 
-// Rotated x-axis labels anchor their trailing edge at the tick so the slanted text hangs clear of
-// the plot; flat labels center under it.
+// Rotated labels anchor their trailing edge at the tick so the slanted text hangs clear of the plot.
 function tickLabelAlignment(rotationRad: number): 'center' | 'left' | 'right' {
     if (rotationRad === 0) {
         return 'center';
@@ -221,12 +220,10 @@ export class ChartAxis extends ChartComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _scale: Scale<any, number>;
-    // The scale the previous render drew with, used to seed entering ticks at the position their
-    // value used to occupy. `undefined` marks the first render, which draws without movement.
+    // Seeds entering ticks at the position their value used to occupy; `undefined` = first render.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private _previousScale?: Scale<any, number>;
-    // Tick group id -> the raw tick value it was built from, so a leaving tick can still be mapped
-    // through the new scale (its id only carries the stringified value).
+    // Tick group id -> raw tick value, so a leaving tick still maps through the new scale (id is a string).
     private _tickValues = new Map<string, unknown>();
     private _bounds: Box;
     private _tickCount: number;
@@ -418,8 +415,6 @@ export class ChartAxis extends ChartComponent {
         this.labelColor = labelColor;
         this.animation = options.animation ?? DEFAULT_AXIS_ANIMATION;
 
-        // The axis line is kept as a direct reference (rather than re-queried each render) but still
-        // lives inside the axis group alongside the tick groups and title text.
         this.line = createLine({
             class: 'chart-axis__line',
             stroke: this.stroke,
@@ -467,10 +462,7 @@ export class ChartAxis extends ChartComponent {
         }
 
         const band = this.getBoundingBox();
-        // The x-axis measures labels by width; it slides horizontally, so clip its horizontal span to
-        // the plot. Across the axis (its label thickness) it needs breathing room so a label's
-        // ascent/descent isn't shaved at the plot/strip edge, pad the cross extent generously. The
-        // y-axis is the mirror image.
+        // Clip the sliding span to the plot; pad the cross extent so label ascent/descent isn't shaved.
         const horizontal = this._labelDimension === 'width';
         const crossPad = 20;
 
@@ -685,8 +677,7 @@ export class ChartAxis extends ChartComponent {
 
             this._tickValues.delete(group.id);
 
-            // Retag the group first so it can't collide with a re-entering tick of the same value
-            // while it fades; the reconcile join and the SVG DOM cache both key on class and id.
+            // Retag first, or a re-entering tick collides — the join and SVG cache key on class and id.
             group.classList.delete('chart-axis__tick-group');
             group.id = `${group.id}:exit:${stringUniqueId()}`;
 
@@ -695,8 +686,7 @@ export class ChartAxis extends ChartComponent {
                 return Promise.resolve();
             }
 
-            // Fade the leaves, not the group: a group carries no explicit opacity to interpolate
-            // from, so a group-level fade would silently do nothing and then pop.
+            // Fade the leaves, not the group: a group has no explicit opacity to interpolate, so it pops.
             const { line, label } = this._tickLeaves(group);
             const target = value === undefined ? undefined : this.tickState(value, this.scale, boundingBox);
             const slide = target && Number.isFinite(target.label.x) && Number.isFinite(target.label.y);
@@ -871,8 +861,7 @@ export class ChartAxis extends ChartComponent {
 
     /** No-op base render; concrete axes ({@link ChartXAxis}/{@link ChartYAxis}) draw through their own render pass. */
     public render() {
-        // No direct render pass: concrete axes draw through their tick/label
-        // helpers, so the base component render is intentionally a no-op.
+        // Intentional no-op: concrete axes draw through their own tick/label helpers.
     }
 
     /**
@@ -890,8 +879,7 @@ export class ChartAxis extends ChartComponent {
         const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
         const title = this._titleText;
 
-        // Coming back has to enter from scratch: there is no previous scale left to slide from, and
-        // the recorded tick values no longer point at live elements.
+        // Coming back enters from scratch: no previous scale to slide from, tick values are now dead.
         this._previousScale = undefined;
         this._tickValues.clear();
         this._titleText = undefined;
@@ -906,8 +894,7 @@ export class ChartAxis extends ChartComponent {
         }
 
         const exits = groups.map(group => {
-            // Retag before fading so the group cannot collide with a tick that re-enters while it is
-            // still on its way out (the reconcile join and the SVG DOM cache both key on class and id).
+            // Retag before fading, or a re-entering tick collides — the join and SVG cache key on class/id.
             group.classList.delete('chart-axis__tick-group');
             group.id = `${group.id}:exit:${stringUniqueId()}`;
 
@@ -1132,9 +1119,7 @@ export class ChartYAxis extends ChartAxis {
             right,
         } = this.bounds;
 
-        // The offset shifts the whole band outward (left axes leftward, right axes rightward), so a
-        // second, third, … same-side axis stacks clear of the one nearer the plot. Zero (single-axis
-        // and every current chart) leaves the band exactly at its bounds edge.
+        // `offset` shifts the band outward so same-side axes stack clear; zero sits at the bounds edge.
         return new Box(
             top,
             isLeftAligned ? left - this.offset : right - clearance + this.offset,
@@ -1191,9 +1176,7 @@ export class ChartYAxis extends ChartAxis {
         const isLeft = this.alignment === 'left';
         const lineX = isLeft ? boundingBox.right : boundingBox.left;
 
-        // Anchor the rotated title to the outer edge of its band (not centered) so the full
-        // TITLE_GAP sits between the title and the tick labels, matching the x-axis, without
-        // widening the reserved band, so the plot margins are unchanged.
+        // Anchor to the band's outer edge, not centered, so the full `TITLE_GAP` clears the tick labels.
         const titleThickness = this.titleBand - TITLE_GAP;
         const titleX = isLeft
             ? boundingBox.left + titleThickness / 2

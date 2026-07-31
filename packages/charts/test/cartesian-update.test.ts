@@ -75,9 +75,7 @@ function tickGroupCount(chart: unknown): number {
     return internals(chart).scene.queryAll('.chart-axis__tick-group').length;
 }
 
-// jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — which
-// collapses the tick set to a single tick and leaves nothing to reposition. Size the context so
-// axis/grid behaviour can be asserted in real pixel space.
+// jsdom provides no layout, so the scene starts 0x0 — size the context to assert in real pixels.
 function rescaleContext(chart: unknown): void {
     (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
 }
@@ -196,9 +194,7 @@ describe('cartesian runtime reconfiguration', () => {
         expect(internals(chart).xAxis.visible).toBe(false);
         expect(internals(chart).yAxis.visible).toBe(false);
 
-        // The flag alone is not the behaviour: an axis that is no longer drawn has to leave the
-        // scene. Charts skipped the render pass but never tore the group down, so every tick and
-        // label stayed where it was, over a plot that had already expanded into the vacated band.
+        // Charts skipped the render pass but never tore the group down, so stale ticks stayed over the plot.
         expect(tickGroupCount(chart)).toBe(0);
 
         chart.update({
@@ -391,8 +387,7 @@ describe('cartesian runtime reconfiguration', () => {
         const rotatedBand = internals(chart).xAxis.getBoundingBox().height;
         const rotatedLabel = internals(chart).scene.getElementById(xTickId)?.query('text');
 
-        // The mocked canvas reports zero text metrics, so the projected band cannot shrink but
-        // its growth is not observable here — the rotation applied to live labels is.
+        // The mocked canvas reports zero text metrics, so band growth is not observable — the rotation is.
         expect(rotatedBand).toBeGreaterThanOrEqual(flatBand);
         expect(rotatedLabel?.rotation).toBeLessThan(0);
     });

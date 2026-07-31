@@ -106,11 +106,7 @@ export class Ellipse extends Shape2D<EllipseState> {
     constructor(options: Shape2DOptions<EllipseState>) {
         super('ellipse', options);
 
-        // `rotation` is the shared element transform property, which pivots about the transform
-        // origin (default `(0, 0)`). An ellipse conventionally rotates about its own center, so
-        // default the origin to the element's center when the caller has not chosen one. A
-        // percentage origin resolves against the local bounding box on every use, so it keeps
-        // tracking `cx`/`cy` as they change.
+        // Ellipses rotate about their center by convention; a % origin keeps tracking `cx`/`cy`.
         if (options.transformOriginX === undefined && options.transformOriginY === undefined) {
             this.transformOriginX = '50%';
             this.transformOriginY = '50%';
@@ -133,8 +129,7 @@ export class Ellipse extends Shape2D<EllipseState> {
     /** Renders the ellipse to the provided {@link Context}. */
     public render(context: Context) {
         return super.render(context, path => {
-            // Rotation is applied once, by the shared element transform (see the constructor).
-            // Passing it to the path as well would rotate the geometry a second time.
+            // Rotation comes from the element transform; passing it here too would rotate twice.
             path.ellipse(
                 this.cx,
                 this.cy,

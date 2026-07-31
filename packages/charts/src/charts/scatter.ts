@@ -247,8 +247,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             const xValue = getX(item);
             const yValue = getY(item);
             const sizeValue = getSize(item);
-            // When every size value is identical the size extent is degenerate and the scale
-            // returns a non-finite value; fall back to the midpoint so bubbles share one size.
+            // A degenerate size extent yields a non-finite ratio; fall back to the midpoint
             const sizeRatio = this._sizeScale(sizeValue);
             const normalizedSize = Number.isFinite(sizeRatio) ? sizeRatio : 0.5;
             const radius = sizeBy === undefined
@@ -269,8 +268,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                     lineWidth: 2,
                     cx: this._xScale(xValue),
                     cy: yScale(yValue),
-                    // Non-circle symbols use the circumradius matching the circle's visual area,
-                    // so sized bubbles stay comparable across symbol shapes.
+                    // Circumradius matched to the circle's area so sized bubbles compare across symbols
                     radius: symbolRadius(marker, radius),
                     // A square is a rotated quad, so its transform origin must track its center.
                     ...(marker === 'square' ? {
@@ -335,10 +333,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             : `${label}: (${format(xValue)}, ${format(yValue)})`;
     }
 
-    // Resolves the shared axis-tooltip content for the hovered plot position: the active data point
-    // nearest in pixel space (scatter x is continuous, so nearness is measured in 2-D), titled with
-    // its series label and a single row of its formatted (x, y), plus size when the series sizes by
-    // a third value. Anchored at the point itself.
     private _axisTooltipSnapshot(
         plotX: number,
         plotY: number,
@@ -633,8 +627,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
 
             const getKey = resolveAccessor<TData, string>(key);
 
-            // Legend-hidden series are excluded from the axis extents and rendering, so toggling a
-            // series rescales both axes; with every series hidden the extents fall back to [0, 1].
             const activeSeries = this.filterActive(series);
 
             const xExtents = activeSeries.flatMap(({ xBy }) => numberExtent(data, resolveAccessor<TData, number>(xBy)));
@@ -676,13 +668,9 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 });
             }
 
-            // Inset the data range by the largest possible bubble radius so a point sitting on the
-            // edge of the data extent keeps its whole circle inside the plot area instead of
-            // drawing past the boundary. The axis bounds/grid still span the full plot.
+            // Inset the data range by the max bubble radius so edge points stay inside the plot
             const maxRadius = this._getMaxBubbleRadius();
 
-            // Resolve the plot outside-in so the point geometry below is derived from the same bounds
-            // the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 this._yScale = createValueScale(this.yAxisOptions, yExtent, [candidate.y + candidate.height - maxRadius, candidate.y + maxRadius]);
                 this.yAxis.scale = this._yScale;
@@ -691,10 +679,7 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
                 this.xAxis.scale = this._xScale;
             });
 
-            // Rescale the axis domains to the navigator's current pan/zoom window (no-op when the
-            // chart has no navigator or the view is at rest). Geometry and axes read the same scales,
-            // so both follow the view. A time x-axis pans/zooms in pixel space instead; its Date
-            // domain cannot round-trip through the numeric domain rescale.
+            // Time axes pan/zoom in pixel space; a `Date` domain can't round-trip a numeric rescale
             this._xScale = isTimeAxis(this.xAxisOptions)
                 ? this.applyViewToScale(this._xScale, 'x')
                 : this.applyView(this._xScale, 'x');
@@ -766,14 +751,10 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
         // Before the plot is resolved, so an axis nothing binds to reserves no band either.
         this.hideUnboundAxes(series);
 
-        // Inset the data ranges by the largest possible bubble radius (see the single-axis path);
-        // horizontally the inset sits just inside the packed axis label bands.
         const maxRadius = this._getMaxBubbleRadius();
 
         let scales: Scale[] = [];
 
-        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
-        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
         const plot = this.resolveCartesianPlot({
             x: left,
             y: top,
@@ -792,8 +773,6 @@ export class ScatterChart<TData = unknown> extends CartesianChart<ScatterChartOp
             this.xAxis.scale = this._xScale;
         });
 
-        // Rescale to the navigator's current pan/zoom window (see the single-axis path); each y
-        // axis follows the view independently. A time x-axis pans/zooms in pixel space instead.
         this._xScale = isTimeAxis(this.xAxisOptions)
             ? this.applyViewToScale(this._xScale, 'x')
             : this.applyView(this._xScale, 'x');

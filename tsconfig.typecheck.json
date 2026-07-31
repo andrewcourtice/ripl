@@ -1,15 +1,9 @@
-// Typechecks every package in a single pass. The build no longer runs `tsc` — tsdown emits
-// declarations without computing semantic diagnostics — so this project is the type gate.
-//
-// `declaration` stays inherited (`true`) so declaration-emit errors (TS4023 and friends) are
-// reported too; those are exactly the errors a bundled `.d.ts` would otherwise hide.
+// The type gate: tsdown emits declarations without semantic diagnostics, so `tsc` never runs in the build.
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "noEmit": true,
         // A single program spans every package, so it needs the union of their ambient types.
-        // `node` covers `packages/node`, which uses `process.stdout` and overrides `types` in
-        // its own tsconfig.
         "types": [
             "vitest/importMeta",
             "@webgpu/types",

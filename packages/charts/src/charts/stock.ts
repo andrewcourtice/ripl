@@ -378,8 +378,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             });
 
             const group = createGroup({
-                // Namespace the candle group id so a data key can never equal an axis tick id
-                // (which shares a single global DOM cache in the SVG renderer).
+                // Namespaced so a data key can't collide with an axis tick id in the SVG renderer's cache
                 id: `candle-${values.key}`,
                 children: [wick, body],
             });
@@ -695,8 +694,6 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
                 height: axisRegionBottom - top,
             };
 
-            // Resolve the plot outside-in so the candle geometry below is derived from the same bounds
-            // the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(axisArea, candidate => {
                 this._yScale = scaleContinuous(priceExtent, [candidate.y + candidate.height, candidate.y], {
                     padToTicks: 10,
@@ -741,8 +738,7 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             if (hasVolume) {
                 promises.push(this._drawVolume(candleWidth, volumeTop, volumeBottom, plot));
             } else if (this._volumeGroup) {
-                // Volume was toggled off, so tear down the orphaned group so the reclaimed space
-                // (the candlesticks now expand into it) doesn't paint over stale bars.
+                // Volume toggled off: tear the group down or stale bars linger under the taller candles
                 this._volumeGroup.destroy();
                 this._volumeGroup = undefined;
                 this._volumeClip = undefined;

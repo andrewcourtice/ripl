@@ -119,18 +119,13 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         svg.style.width = '100%';
         svg.style.height = '100%';
 
-        // A context is a drawing surface, so its `<text>` is graphics rather than document content —
-        // and unlike a canvas, an SVG's is selectable. Dragging to pan, brush or track a crosshair
-        // would otherwise sweep a text selection across the chart's own labels. Suppressing it here
-        // rather than in the interaction code covers every drag, and matches the canvas backend,
-        // which has nothing to select in the first place.
+        // Unlike a canvas, SVG `<text>` is selectable: a drag to pan or brush would sweep a selection over labels.
         svg.style.userSelect = 'none';
 
         super('svg', target, svg, options);
 
         this.buffer = true;
-        // SVG hit testing runs against the live DOM geometry, which already composes ancestor
-        // <g> transforms, so no manual local-space point mapping is needed.
+        // SVG hit testing runs against live DOM geometry, which already composes ancestor `<g>` transforms.
         this.hitTestHonorsTransform = true;
         this._vtree = {
             id: '__root__',
@@ -171,8 +166,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this.init();
     }
 
-    // Materializes a pattern(...) paint as a <pattern> def (created once per element paint slot,
-    // updated in place when the pattern changes, swept when unused).
     private _resolvePatternStyle(value: string, cacheKey: string): string {
         const pattern = parsePattern(value);
 
@@ -217,9 +210,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         }
 
         if (!isSupportedSVGGradient(gradient)) {
-            // SVG has no native conic gradient primitive, so conic gradients degrade to a
-            // solid paint using the color stop nearest the middle of the gradient rather
-            // than leaking the raw CSS gradient string through as an invalid paint value.
+            // SVG has no conic gradient primitive, so degrade to the color stop nearest the gradient's middle.
             return resolveConicGradientFallback(gradient);
         }
 
@@ -329,9 +320,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             ...styles,
         }));
 
-        // Filter, transform, and clip-path are stamped onto the definition only when they carry
-        // a value; omitted members are removed from the live DOM node by the write-through diff
-        // in updateSVGElement, so no stale attribute survives a state change between frames.
+        // Omitted attributes are removed from the live node by the write-through diff, so nothing goes stale.
         const filter = this._resolveElementFilter(element);
         const transformStr = this._currentTransforms.join(' ');
 
@@ -417,8 +406,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
     /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
     public export(): ContextExport {
-        // Rendering is deferred to rAF when buffering is enabled, so force a synchronous reconcile
-        // to ensure the serialized markup reflects the latest scene.
+        // Buffered rendering defers to rAF, so reconcile synchronously for markup to reflect the latest scene.
         this._render();
 
         const markup = new XMLSerializer().serializeToString(this.element);
@@ -537,9 +525,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             groupElement.definition.attributes.transform = transform;
         }
 
-        // Opacity composites the subtree as a unit: stamp it on the <g> and reset the inheritable
-        // state so descendants don't also stamp it (which would double-apply). Paint (fill, stroke,
-        // …) stays in the state so leaves inherit and stamp their resolved value.
+        // Opacity composites the subtree: stamp it on the `<g>` and clear it so descendants don't double-apply.
         const opacity = this.currentState.opacity;
 
         if (opacity !== 1) {

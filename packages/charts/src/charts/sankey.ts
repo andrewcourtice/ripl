@@ -283,9 +283,7 @@ function computeSankeyLayout(
     const xStep = maxDepth > 0 ? (width - nodeWidth) / maxDepth : 0;
     const layoutNodeMap = new Map<string, LayoutNode>();
 
-    // A single global value→pixel scale shared by every column: the densest column must fit the
-    // available height, and using one scale everywhere makes a link's width identical at its source
-    // and target ends (so links tile the node edges instead of overlapping/gapping).
+    // One global scale so a link's width matches at both ends and the densest column still fits
     let scale = Infinity;
 
     depthGroups.forEach(nodeIds => {
@@ -430,8 +428,6 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const colorGenerator = getColorGenerator();
             const nodeColors = new Map<string, string>();
 
-            // Resolve a stable color per node up-front so the legend swatches match the rendered
-            // nodes (and honor any explicit per-node color).
             nodes.forEach(node => {
                 nodeColors.set(node.id, node.color ?? colorGenerator.next().value!);
             });
@@ -439,9 +435,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
-            // The legend lists flow nodes, not toggleable series, because hiding a node would orphan its
-            // links and break the flow layout, so legend clicks only dim the entry (real `active`
-            // state) without filtering the rendered graph.
+            // Hiding a node would orphan its links, so legend clicks only dim the entry
             const legendItems: LegendItem[] = nodes.map(node => ({
                 id: node.id,
                 label: node.label,
@@ -457,10 +451,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const chartWidth = area.width;
             const chartHeight = area.height;
 
-            // Every node label is drawn to the right of its node, so the last column's labels run past
-            // the plot unless the layout leaves room for them. Measure them and lay the flow out inside
-            // what remains: the depths come from the link graph, not the width, so one throwaway pass
-            // identifies the last column and the second pass is final.
+            // Throwaway pass to measure the last column's right-hand labels; the second pass is final
             const labelBand = this._measureLabelBand(computeSankeyLayout(
                 nodes,
                 links,
@@ -520,8 +511,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 });
             });
 
-            // Reposition existing links to their new geometry (previously the update path discarded
-            // it, freezing links while nodes moved).
+            // Reposition existing links too, or they freeze while nodes move
             const linkUpdateGroups = linkUpdates.map(([link, group]) => {
                 const linkEl = group.getElementsByType('sankey-link')[0] as SankeyLinkPath;
 
@@ -580,8 +570,6 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
 
                 this._attachNodeHover(rect, node, offsetX + node.x + node.width / 2, offsetY + node.y);
 
-                // Node labels sit to the right of the node (outside), so use the shared segment-label
-                // helper with the outside fill, consistent with the other charts' labels.
                 const label = createSegmentLabel({
                     id: `${node.id}-label`,
                     x: offsetX + node.x + node.width + NODE_LABEL_GAP,
@@ -636,8 +624,6 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 ...nodeUpdateGroups,
             ];
 
-            // Legend hover highlights the node plus its incident links, dimming the rest. Node group
-            // ids equal the node id; link group ids are `${source}-${target}`, owned by both ends.
             const linkOwners = new Map<string, string[]>();
             links.forEach(link => linkOwners.set(`${link.source}-${link.target}`, [link.source, link.target]));
             this.registerHighlightGroups(

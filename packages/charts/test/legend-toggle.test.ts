@@ -310,8 +310,7 @@ describe('legend series toggling', () => {
 
 describe('legend series toggling (line, secondary axis)', () => {
 
-    // Both axes' series now render through the single collapsed `_series` renderer; hiding an
-    // axis-1 series drops its group from that one group set.
+    // Both axes' series render through the single collapsed `_series` renderer.
     const groupIds = (chart: unknown) => dualAxisInternals(chart)._series.groups.map(group => group.id);
 
     it('rescales each axis over the active series bound to it', async () => {
@@ -496,8 +495,7 @@ describe('legend position', () => {
         return chart;
     }
 
-    // The legend renders one swatch per item into the scene, so a swatch's position is where the
-    // legend band currently sits.
+    // A swatch's position is where the legend band currently sits.
     function swatch(chart: unknown): SwatchInternals {
         const element = (chart as {
             scene: { getElementById(id: string): SwatchInternals | null };
@@ -520,9 +518,7 @@ describe('legend position', () => {
         chart.update({ legend: { position: 'top' } });
         await chart.render();
 
-        // `Legend.setOptions` relocates the band, so a demo does not need to rebuild the chart for a
-        // position change — and a rebuild is destructive for a chart that holds state, such as the
-        // realtime chart's sliding window.
+        // A rebuild is destructive for a chart that holds state, e.g. the realtime chart's sliding window.
         expect(swatch(chart).y).toBeLessThan(bottomY);
 
         chart.update({ legend: { position: 'left' } });

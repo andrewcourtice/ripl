@@ -7,9 +7,7 @@
  * covered across the whole chart catalogue, not just the flagship charts.
  */
 
-// `@ripl/charts` relies on a platform package to register the browser factory (canvas context,
-// text measurement, requestAnimationFrame, devicePixelRatio). Importing `@ripl/web` for its
-// side-effect wires that up, exactly as a real consumer app would.
+// Side-effect import: `@ripl/web` registers the browser factory (canvas context, text measurement, rAF).
 import '@ripl/web';
 
 import {
@@ -997,8 +995,7 @@ createArcDiagramChart(mount('arc-diagram'), {
     ],
 });
 
-// Signal readiness for the Playwright test to capture screenshots, only once every chart in the
-// shared id list has actually been mounted.
+// Signal readiness for Playwright only once every chart in the shared id list has mounted.
 const mounted = CHART_IDS.every(id => document.querySelector(`[data-chart="${id}"]`));
 
 requestAnimationFrame(() => {

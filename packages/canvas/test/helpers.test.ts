@@ -106,8 +106,7 @@ describe('setCanvasFill / setCanvasStroke', () => {
         setCanvasFill(ctx, LINEAR, BOUNDS);
         setCanvasFill(ctx, LINEAR, BOUNDS);
 
-        // Both calls build a native gradient (bounds may change per frame) but parsing is cached,
-        // so the resolved definition is reused without re-parsing the string.
+        // Both calls build a native gradient (bounds change per frame), but parsing is cached.
         expect(createLinearGradient).toHaveBeenCalledTimes(2);
         expect(typeof ctx.fillStyle).toBe('object');
     });

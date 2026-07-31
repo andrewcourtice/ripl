@@ -124,8 +124,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         const y = this._valueScale(series, ctx)(value);
         const color = ctx.getColor(series.id);
         const markerType = this._markerType(series);
-        // A hidden marker rests at radius 0 (the toggle animates it in/out on update). Non-circle
-        // symbols rest at the circumradius matching the circle's visual area.
+        // Hidden markers rest at radius 0 so the toggle can animate them in/out on update.
         const radius = series.markers === false ? 0 : symbolRadius(markerType, series.markerRadius ?? 3);
 
         return {
@@ -139,8 +138,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
                 cx: x,
                 cy: y,
                 radius,
-                // A square is a rotated quad, so its transform origin must track its center through
-                // position transitions, so the origin interpolates in lockstep with cx/cy.
+                // A square is a rotated quad, so its origin must interpolate in lockstep with cx/cy.
                 ...(markerType === 'square' ? {
                     transformOriginX: x,
                     transformOriginY: y,
@@ -155,8 +153,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
             return;
         }
 
-        // Polygon symbols share the circle's cx/cy/radius surface, so the hover helper's radius
-        // bump applies uniformly.
+        // Polygon symbols share the circle's cx/cy/radius surface, so the radius bump applies uniformly.
         this.attachMarkerHover(marker as Circle, ctx, {
             seriesId: series.id,
             key,
@@ -238,9 +235,7 @@ export class LineSeriesRenderer<TData> extends SeriesRenderer<LineSeriesLike<TDa
         const targetPoints = ctx.data.map(item => this._markerState(series, item, ctx).point);
         const prevKeys = this._morphKeys.get(series.id);
 
-        // When the key set changes, match points by identity so a curved line keeps its shape. Stroke
-        // and width ride along: they used to be applied only when the series was built, so changing
-        // either did nothing until the series was recreated.
+        // Match points by identity when the key set changes, or a curved line loses its shape.
         line.data = {
             stroke: ctx.getColor(series.id),
             lineWidth: series.lineWidth ?? 2,

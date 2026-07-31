@@ -43,10 +43,7 @@ const emit = defineEmits<{
     'update:modelValue': [value: number];
 }>();
 
-// A drag fires `input` on every step, and each one costs a `chart.update()` and a full animated
-// render — enough to make the slider feel like it is fighting back. The emit is throttled instead,
-// while the thumb (which the browser moves on its own) and this readout stay at full rate, so the
-// control still feels immediate.
+// Each `input` costs a `chart.update()` and a full render, so throttle the emit; the thumb and readout stay live.
 const dragged = ref<number>();
 const display = computed(() => dragged.value ?? props.modelValue);
 
@@ -67,8 +64,7 @@ function onInput(event: Event): void {
         return;
     }
 
-    // Leading edge: with nothing in flight, apply straight away. Anything arriving inside the window
-    // replaces the pending value rather than queueing behind it.
+    // Leading edge: apply immediately when idle; values inside the window replace the pending one.
     if (!timer) {
         flush(value);
         timer = setTimeout(() => {

@@ -158,9 +158,7 @@ function openInTab(url: string, filename: string): void {
 function run(item: ExportItem): void {
     const result = item.run();
 
-    // `window.open` must be called synchronously within the click gesture or popup blockers reject
-    // it. Sync formats open immediately; async formats (e.g. SVG → PNG) open a blank tab now and
-    // navigate it once the URL resolves.
+    // `window.open` must run synchronously in the click gesture or popup blockers reject it.
     if (typeIsString(result)) {
         openInTab(result, item.filename);
         dropdown.value?.close();

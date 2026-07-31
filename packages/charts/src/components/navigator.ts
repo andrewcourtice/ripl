@@ -276,8 +276,7 @@ export class ChartNavigator extends ChartComponent {
         const barSeries = active.filter(srs => srs.type === 'bar');
         const lineSeries = active.filter(srs => srs.type === 'line');
 
-        // A band host (bar/trend) positions marks in padded category bands so bars stay inside the strip
-        // and line/area marks align to band centers; a point host (line/area) spreads marks edge-to-edge.
+        // Band hosts (bar/trend) keep marks in padded category bands; point hosts spread edge-to-edge.
         const count = Math.max(1, ...active.map(srs => srs.values.length));
         const band = categoryLayout === 'band' ? this._categoryScale(count) : undefined;
         const mainFor: (index: number, seriesCount: number) => number = band

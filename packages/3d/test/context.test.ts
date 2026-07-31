@@ -62,9 +62,7 @@ describe('Context3D', () => {
 
         ctx.setPerspective(90, 0.5, 500);
 
-        // In jsdom, canvas width/height are 0 so the projection matrix
-        // won't update, but the values should be stored for when rescale occurs.
-        // We verify the method doesn't throw and the context remains valid.
+        // In jsdom, canvas width/height are 0 so the projection matrix won't update, but values are stored.
         expect(ctx.projectionMatrix).toBeDefined();
         expect(ctx.viewProjectionMatrix).toBeDefined();
     });
@@ -126,8 +124,7 @@ describe('Context3D', () => {
             scene.render();
             expect(scene.needsRender).toBe(false);
 
-            // A camera-only change mutates no element — it must still re-dirty the scene, or the
-            // renderer's dirty gate would freeze the view.
+            // A camera-only change mutates no element, so it must still re-dirty the scene or the view freezes.
             camera.orbit(0.2, 0.1);
             camera.flush();
 

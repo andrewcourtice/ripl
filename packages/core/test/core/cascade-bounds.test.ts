@@ -21,8 +21,7 @@ describe('Own-only state cascade', () => {
         const group = createGroup({ children: [rect] });
         group.fill = '#ff0000';
 
-        // Inheritance now happens through the render tree (the group applies its paint at its
-        // boundary), so the getter itself is own-only.
+        // Inheritance happens through the render tree, so the getter itself is own-only.
         expect(rect.fill).toBeUndefined();
         expect(group.fill).toBe('#ff0000');
     });

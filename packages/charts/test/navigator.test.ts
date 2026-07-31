@@ -208,8 +208,7 @@ describe('CartesianChart navigator integration', () => {
         const axisGroups = scene.queryAll('.chart-axis');
         expect(axisGroups.length).toBeGreaterThan(0);
 
-        // The clip rect is the pointer-transparent mask (distinct from the axis line, which also
-        // carries a `clip` flag). It's engaged while navigating.
+        // The clip rect is the pointer-transparent mask — the axis line also carries a `clip` flag.
         const findClip = (group: { children: { clip?: boolean;
             pointerEvents?: string; }[]; }) =>
             group.children.find(child => child.clip !== undefined && child.pointerEvents === 'none');

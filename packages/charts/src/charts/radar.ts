@@ -139,8 +139,7 @@ export interface RadarChartEventMap extends EventMap {
     markerleave: RadarChartMarkerEvent;
 }
 
-// Distance in pixels between a polygon vertex and its value label, measured outward along the
-// vertex's angle so the label clears the marker (radius 3, growing to 5 on hover).
+// Outward offset from a vertex to its value label so it clears the marker
 const VALUE_LABEL_OFFSET = SPACING.sm;
 
 /**
@@ -323,8 +322,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             right: labelExits,
         } = arrayJoin(axisIndices, this._gridLabels, (idx, label) => label.id === `radar-label-${idx}`);
 
-        // Fade exiting axis labels out before destroying them (instead of removing instantly) so
-        // removing an axis animates symmetrically with adding one.
+        // Fade exiting axis labels so removing an axis animates symmetrically with adding one
         const exitLabels = new Set<Element>(labelExits);
 
         labelExits.forEach(label => {
@@ -350,8 +348,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 font: '11px sans-serif',
                 textAlign,
                 textBaseline: 'middle',
-                // Always start hidden so a newly-added axis label fades in via the transition below,
-                // not just on the first render.
+                // Start hidden so a newly-added label fades in on update, not just on first render
                 opacity: 0,
                 data: {
                     opacity: 1,
@@ -379,8 +376,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             ...labelUpdates.map(([, label]) => label),
         ];
 
-        // Animate: staggered grow on entry, smooth morph on update. Exclude exiting labels; they
-        // run their own fade-out transition above and are destroyed on completion.
+        // Exclude exiting labels; they run their own fade-out above and self-destroy
         const allElements = this._gridGroup!.children.filter(element => !exitLabels.has(element));
 
         if (isEntry) {
@@ -446,8 +442,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
         type SeriesPoint = ReturnType<typeof getSeriesPoints>[number];
 
-        // Offsets a value label outward from its vertex along the vertex's angle, aligning the
-        // text away from the center so it clears the marker on every side of the polygon.
         const labelProps = (pd: SeriesPoint) => {
             const [x, y] = getThetaPoint(pd.angle, VALUE_LABEL_OFFSET, ...pd.point);
 
@@ -578,8 +572,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 }
             });
 
-            // Reconcile the vertex value labels against the current `labels` option so they can be
-            // toggled and restyled at runtime, and follow the vertices as values change.
             const labels = group.getElementsByType('text') as Text[];
 
             if (!dataLabels.visible) {
@@ -685,8 +677,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             return [areaTransition, markersTransition];
         });
 
-        // Entering labels (per-vertex or when labels are toggled on) fade in; updating labels glide
-        // to their refreshed vertex. Exiting labels run their own exit transition above.
         const labelTransition = this.renderer.transition([...enteringLabels, ...updatingLabels], element => ({
             duration: this.getAnimationDuration(600),
             ease: easeOutCubic,
@@ -730,8 +720,6 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             const { cx, cy, size } = areaCenter(area);
             const radius = size / 2 - 30;
 
-            // Compute max value from the legend-active series if not provided, so hiding a series
-            // re-fits the radial scale to the remaining ones.
             let computedMax = max ?? 0;
 
             if (!max) {

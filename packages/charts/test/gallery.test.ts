@@ -27,8 +27,7 @@ describe('chart catalogue', () => {
         polyfillPath2D();
         mockCanvasContext();
 
-        // `@ripl/web` (imported by the gallery) registers the canvas context factory; the gallery
-        // body then mounts every chart. Both run during this dynamic import.
+        // `@ripl/web` registers the canvas context factory and the gallery body mounts every chart, on import.
         await import('./visual/gallery');
 
         await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));

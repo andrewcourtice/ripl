@@ -175,8 +175,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
 
             const labels = normalizeSegmentLabels(this.options.labels);
 
-            // Register each segment in the shared color map so it draws a palette color instead
-            // of the unresolved-series gray fallback (honoring any explicit per-item color).
+            // Register segments in the shared color map so palette colors stay stable across updates
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),
@@ -200,8 +199,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
             const area = layout.area;
             const { cx, cy, size } = areaCenter(area);
 
-            // Legend-hidden segments are excluded from the layout, so the remaining segments'
-            // angles expand to fill the circle and hidden ones exit through the standard join.
             const activeData = this.filterActive(data, getKey);
 
             const total = numberSum(activeData, getValue);
@@ -219,15 +216,10 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 const endAngle = startAngle + scale(itemValue);
                 const radius = size * 0.45;
                 const innerRadiusOption = this.options.innerRadius;
-                // Default to a true pie (no hole); a donut is opt-in via `innerRadius`. This matches
-                // the documented default of 0 and keeps the demo's pie/donut toggle consistent.
                 let innerRadius = 0;
 
                 if (innerRadiusOption !== undefined) {
-                    // A fractional value is a fraction of the *outer radius* (so 0.55 is a hole 55% of
-                    // the ring), not of the overall size, otherwise the hole could exceed the ring and
-                    // render an inverted donut. Absolute values are taken as-is. Always clamp below the
-                    // outer radius so the ring stays visible.
+                    // Fractions are of the outer radius and clamped below it, else the hole inverts the donut
                     const resolved = innerRadiusOption <= 1 ? radius * innerRadiusOption : innerRadiusOption;
                     innerRadius = Math.min(resolved, radius * 0.95);
                 }
@@ -321,8 +313,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     font: labelInfo.font,
                 });
 
-                // Fade each to its intended rest opacity on entry (hidden labels/connectors settle at
-                // 0 so they can later fade *in* on an update, rather than sitting at full opacity).
+                // Stash rest opacity in `.data`; hidden labels/connectors settle at 0 so they can fade in later
                 connector.data = { opacity: labelInfo.showConnector ? 1 : 0 } as Partial<PolylineState>;
                 labelText.data = { opacity: labelInfo.visible ? 1 : 0 } as Partial<TextState>;
 
@@ -391,8 +382,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     opacity: labelInfo.visible ? 1 : 0,
                 } as Partial<TextState>;
 
-                // Route the connector's new geometry through `.data` (not a direct `points =`) so it
-                // tweens in lockstep with the label position instead of snapping.
+                // Route points through `.data` so the connector tweens with the label instead of snapping
                 connector.stroke = resolvedColor;
                 connector.data = {
                     points: labelInfo.connector,
@@ -450,8 +440,6 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     state: element.data as Partial<ArcState>,
                 }));
 
-                // Fade in the non-arc children (labels and any outside-label connectors) to their
-                // intended rest opacity (hidden ones settle at 0), read from each element's `.data`.
                 return renderer.transition(elements.filter(element => !elementIsArc(element)), element => ({
                     duration: enter.duration,
                     ease: enter.ease,
@@ -459,8 +447,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                 }));
             };
 
-            // Segments are grouped, but transitions animate their own state, so drive the leaf
-            // children (arc/label/connector) to their stashed `.data`, not the inert group.
+            // Groups are inert in transitions, so drive the leaf children to their stashed `.data`
             const transitionUpdates = async () => renderer.transition(updates.flatMap(group => group.children), element => ({
                 duration: update.duration,
                 ease: update.ease,
@@ -474,8 +461,7 @@ export class PieChart<TData = unknown> extends Chart<PieChartOptions<TData>, Pie
                     state: element.data as Partial<BaseElementState>,
                 }));
 
-                // Destroy the whole segment group once its leaves have collapsed (destroying leaves
-                // individually would leave empty group nodes behind).
+                // Destroy the whole group; destroying leaves individually leaves empty groups behind
                 exits.forEach(group => group.destroy());
             };
 

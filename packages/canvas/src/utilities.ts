@@ -111,9 +111,7 @@ export function getCanvasGradientBounds(box: Box | undefined, width: number, hei
     };
 }
 
-// Parsing a CSS gradient string is comparatively expensive and fill/stroke are re-applied for the
-// same gradient across frames (and across many elements within a frame), so memoize by string. The
-// cache is bounded to avoid unbounded growth when the string varies every frame (animated gradients).
+// Parsing is expensive and repeats per element per frame, so memoize by string; bounded for animated gradients.
 const GRADIENT_CACHE_LIMIT = 256;
 const gradientCache = new Map<string, Gradient | undefined>();
 
@@ -133,9 +131,7 @@ function parseGradientMemoized(value: string): Gradient | undefined {
     return gradient;
 }
 
-// Pattern tiles are position-independent, so one materialized CanvasPattern per serialized
-// pattern string serves every element and frame (null caches invalid strings). The cache is
-// bounded because a transition between two patterns produces a fresh string every frame.
+// Pattern tiles are position-independent, so one `CanvasPattern` per string serves every element and frame.
 const PATTERN_CACHE_LIMIT = 256;
 const patternCache = new Map<string, CanvasPattern | null>();
 

@@ -274,8 +274,7 @@ export class Chart<
         if (options.theme !== undefined) {
             this.theme = resolveTheme(options.theme);
             this.colorGenerator = getColorGenerator(this.theme.palette);
-            // Drop the generated series colors so the next render re-seeds them from the new
-            // palette (explicit per-series colors are re-applied by `resolveSeriesColors`).
+            // Drop generated colors so the next render re-seeds them from the new palette.
             this._seriesColorMap.clear();
         }
 
@@ -335,8 +334,7 @@ export class Chart<
         }
 
         const thickness = this.title.measure();
-        // Separate the title band from whatever is reserved next (legend, axis, or the plot itself),
-        // so the title never sits flush against its neighbour.
+        // `ELEMENT_GAP` stops the title sitting flush against whatever is reserved next.
         const region = layout.reserve(this.title.position, thickness, ELEMENT_GAP);
 
         this.title.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
@@ -378,8 +376,7 @@ export class Chart<
      * and renders it into that band, reconciling against the previous render.
      */
     protected reserveLegend(layout: ChartLayout, items: LegendItem[], input?: ChartLegendInput) {
-        // When the chart hasn't explicitly configured a legend, show one automatically for
-        // multi-series / multi-segment charts (more than one legend item) and hide it otherwise.
+        // Unconfigured legends default to visible only for multi-item charts.
         const legendOpts = normalizeLegend(input, { visible: items.length > 1 });
 
         if (!legendOpts.visible || items.length === 0) {
@@ -388,8 +385,7 @@ export class Chart<
             return;
         }
 
-        // `padding` resolves to a per-edge box, but the legend lays its entries out symmetrically
-        // within its band, so take the largest edge as the uniform inset.
+        // The legend insets symmetrically, so collapse the per-edge box to its largest edge.
         const legendPadding = normalizePadding(legendOpts.padding);
         const itemPadding = legendPadding && Math.max(
             legendPadding.top,
@@ -495,8 +491,6 @@ export class Chart<
     }
 
     protected getPadding(): ChartPadding {
-        // A number applies to all edges; a partial object fills unspecified edges with the shared
-        // default (see `DEFAULT_CHART_PADDING`), so every chart reserves 16px unless told otherwise.
         return resolveChartPadding(this.options.padding);
     }
 

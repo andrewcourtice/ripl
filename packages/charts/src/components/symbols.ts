@@ -28,8 +28,7 @@ export type SymbolType = 'circle' | 'square' | 'diamond' | 'triangle';
 /** An element usable as a point marker: circle or regular polygon, both animated via `radius`. */
 export type SymbolElement = Circle | Polygon;
 
-// Circumradius multipliers giving each regular polygon the same area as a circle of radius r:
-// polygon area = (n/2)·R²·sin(2π/n) = π·r² → R = r·√(2π / (n·sin(2π/n))).
+// Equal-area circumradius: (n/2)·R²·sin(2π/n) = π·r² → R = r·√(2π / (n·sin(2π/n))).
 const TRIANGLE_RADIUS_FACTOR = Math.sqrt((2 * Math.PI) / (3 * Math.sin((2 * Math.PI) / 3)));
 const QUAD_RADIUS_FACTOR = Math.sqrt((2 * Math.PI) / (4 * Math.sin((2 * Math.PI) / 4)));
 

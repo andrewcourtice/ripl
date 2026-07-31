@@ -161,8 +161,6 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
 
             const getColor = resolveColorBy<TData>(colorBy);
 
-            // Legend-hidden segments are excluded from the layout, so the remaining segments
-            // re-space and re-scale to fill the funnel while hidden ones exit through the join.
             const activeData = this.filterActive(data, getKey);
 
             // Find max value for width scaling
@@ -172,8 +170,6 @@ export class FunnelChart<TData = unknown> extends Chart<FunnelChartOptions<TData
                 maxValue = Math.max(maxValue, getValue(item));
             });
 
-            // Resolve colors through the shared id-keyed map so they stay stable across data
-            // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),

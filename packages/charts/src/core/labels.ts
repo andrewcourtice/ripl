@@ -105,9 +105,7 @@ export function resolveDataLabelLayout(spec: Pick<DataLabelSpec, 'x' | 'y' | 'an
     };
 }
 
-// ---------------------------------------------------------------------------
 // Segment labels (pie, polar-area, treemap, funnel, sunburst)
-// ---------------------------------------------------------------------------
 
 /**
  * Shared segment-label style constants. Every chart routes its segment labels through these so the

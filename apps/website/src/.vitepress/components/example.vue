@@ -88,8 +88,7 @@ const root = ref<HTMLElement>();
 const configOpen = ref(false);
 const loading = ref(false);
 
-// Terminal rendering runs through an xterm.js emulator that is loaded on demand; keep a handle so it
-// can be disposed when the context switches away from Terminal.
+// xterm.js is loaded on demand; keep a handle so it can be disposed when switching away from Terminal.
 let terminalDispose: (() => void) | undefined;
 let generation = 0;
 
@@ -135,8 +134,7 @@ async function createTerminal(element: HTMLElement): Promise<{ context: Context;
         },
     };
 
-    // Author the scene against the host box size (like Canvas/SVG); the terminal context scales that
-    // logical space into the braille grid so demos render with the same proportions.
+    // Author against the host box size; the terminal context scales that logical space into the braille grid.
     const terminalContext = createTerminalContext(output, {
         logicalWidth: element.clientWidth,
         logicalHeight: element.clientHeight,
@@ -203,9 +201,7 @@ async function initContext(): Promise<void> {
 
 let recreateTimer: ReturnType<typeof setTimeout> | undefined;
 
-// Rebuilds the rendering context (and, via `context-changed`, the demo's chart) so demos can apply
-// options a chart only reads at construction time — axes, grid, tooltip, crosshair, legend, theme.
-// Debounced so dragging a slider coalesces into a single rebuild.
+// Rebuilds the context so demos can apply construction-time-only options; debounced to coalesce slider drags.
 function recreate(): void {
     if (recreateTimer) {
         clearTimeout(recreateTimer);

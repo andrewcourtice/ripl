@@ -75,9 +75,7 @@ function sendToContent(tabId: number, state: TabState, message: ExtensionMessage
         return;
     }
 
-    // No live content port — the service worker (and its ports) may have been
-    // restarted while the page sat idle. Deliver via a one-off tab message; the
-    // content script relays it into the page and re-establishes its port.
+    // No live port — the service worker may have restarted, so fall back to a one-off tab message.
     chrome.tabs.sendMessage(tabId, message).catch(() => {
         // No content script in this tab (e.g. chrome:// pages) — nothing to do.
     });

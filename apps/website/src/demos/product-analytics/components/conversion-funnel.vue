@@ -44,8 +44,7 @@ const hovered = ref('');
 const selected = ref('');
 const readout = computed(() => hovered.value || selected.value || DEFAULT_READOUT);
 
-// Read the current top-of-funnel value each call so the percentage stays correct after the
-// data updates (the event handlers below are wired once, at creation).
+// Handlers are wired once, so read the top-of-funnel value each call to stay correct after data updates.
 function describe(label: string, value: number): string {
     const total = store.funnelData[0]?.value ?? 0;
     const pct = total > 0 ? Math.round(value / total * 100) : 0;

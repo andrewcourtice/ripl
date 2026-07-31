@@ -25,10 +25,7 @@ import {
 
 polyfillPath2D();
 
-// "Large" static scene rendered over several frames. These assertions count how many times
-// `context.createPath` runs — the allocation + geometry tracing the cache is meant to avoid —
-// so they validate the optimization independently of wall-clock (which is meaningless here,
-// since jsdom's polyfilled Path2D is a no-op). See shape-cache.bench.ts for timing.
+// Counts `createPath` calls rather than wall-clock, meaningless under jsdom's no-op `Path2D`.
 const ELEMENT_COUNT = 2000;
 const FRAME_COUNT = 5;
 
@@ -118,8 +115,7 @@ describe('Shape2D path caching — work avoided at scale', () => {
             scene.render();
         }
 
-        // Paths are local-space, so an animating ancestor never forces a child re-trace: the
-        // children are traced once and reused for the rest of the animation.
+        // Paths are local-space, so an animating ancestor never forces a child re-trace.
         expect(createPathSpy).toHaveBeenCalledTimes(ELEMENT_COUNT);
 
         scene.destroy();

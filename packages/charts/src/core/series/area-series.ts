@@ -229,10 +229,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
 
     protected prepare(series: AreaSeriesLike<TData>[], ctx: AreaSeriesContext<TData>): AreaPrepared<TData> {
         const { data } = ctx;
-        // Per-series cumulative top and its lower boundary, so a stacked series fills from the top of
-        // the previous same-group series. Cumulation resets per value-scale group (series bound to
-        // different y-axes stack independently); single-axis charts share one group, so the behavior
-        // is unchanged.
+        // Cumulation resets per value-scale group, so series on different y-axes stack independently.
         const stackedTop: number[][] = [];
         const stackedBottom: number[][] = [];
 
@@ -372,9 +369,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         const prevKeys = this._morphKeys.get(series.id);
         const keyed = !!prevKeys && keysDiffer(prevKeys, newKeys);
 
-        // Apply the renderer + dash directly (not via the transition), and key-reconcile the morph so
-        // curved lines/fills stay curved. The fill is a closed [top, reversed-bottom] polygon, so its
-        // keys are disambiguated per run (t:/b:) to keep top matched to top and bottom to bottom.
+        // The fill is a closed [top, reversed-bottom] polygon, so keys are `t:`/`b:` tagged per run.
         line.renderer = series.lineType;
         areaFill.renderer = areaBandRenderer(series.lineType);
         line.lineDash = resolveLineDash(series.lineStyle);
@@ -384,9 +379,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             ...keys.slice().reverse().map(key => `b:${key}`),
         ];
 
-        // Paint travels with the points. It used to be applied only when the series was built, so a
-        // color, width or fill-opacity change did nothing until the series was recreated — which is
-        // exactly what a live control changes. All three interpolate, so they ride the same transition.
+        // Paint rides the same transition as the points, or a live color/width change does nothing.
         line.data = {
             stroke: color,
             lineWidth: series.lineWidth ?? 2,

@@ -105,9 +105,7 @@ describe('Scene instruction stream', () => {
     });
 
     test('applies stacking-context ordering: a child cannot escape its group past a sibling group', async () => {
-        // groupLow sits below groupHigh, but its child has a very high local z-index. Under
-        // global additive z-index the child would paint on top; under stacking-context
-        // semantics it stays trapped within its (lower) group.
+        // Under global additive z-index the high-z child would paint on top; stacking contexts trap it.
         const childHigh = createRect({
             x: 0,
             y: 0,
@@ -136,8 +134,6 @@ describe('Scene instruction stream', () => {
         scene.add([groupLow, groupHigh]);
         await nextFrame();
 
-        // Paint order of leaves: the deep high-z child (trapped in the low group) first,
-        // then the low-z child in the high group last (on top).
         expect(scene.buffer).toEqual([childHigh, childLow]);
 
         scene.destroy();

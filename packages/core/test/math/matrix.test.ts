@@ -40,8 +40,7 @@ describe('Math', () => {
         });
 
         test('multiply composes transforms (translate then scale)', () => {
-            // Post-multiply: apply the right operand first, then the left — matching how
-            // successive translate/scale calls accumulate on a canvas transform.
+            // Post-multiply: the right operand applies first, as canvas transform calls accumulate.
             const composed = matrixMultiply(matrixTranslate(10, 0), matrixScale(2, 2));
             expect(matrixApplyToPoint(composed, [3, 4])).toEqual([16, 8]);
         });

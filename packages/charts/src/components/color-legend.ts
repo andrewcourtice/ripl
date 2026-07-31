@@ -174,8 +174,7 @@ export class ColorLegend extends ChartComponent {
 
         const span = max - min || 1;
         const vertical = orientation === 'vertical';
-        // Inset the content by `padding` from the band's leading edge so the bar doesn't sit flush
-        // against the adjacent axis (the standard Legend does the same via itemPadding).
+        // Inset by `padding` so the bar doesn't sit flush against the adjacent axis.
         const top = region.y + padding;
         const length = vertical ? region.height - padding : region.width;
 

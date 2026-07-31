@@ -630,8 +630,7 @@ describe('SVG', () => {
             ctx.markRenderStart();
             ctx.pushGroup(group);
 
-            // Simulate a clip child: it saves, installs a clip, and (like a real clip element)
-            // deliberately does not restore, so the clip applies to later siblings in the group.
+            // Simulates a clip child: deliberately does not restore, so the clip applies to later siblings.
             ctx.save();
             const clipPath = ctx.createPath('clip');
             clipPath.rect(0, 0, 10, 10);
@@ -657,9 +656,7 @@ describe('SVG', () => {
         test('Should suppress text selection on the context element', () => {
             const ctx = create();
 
-            // Chart text is graphics, not document content: without this, dragging to pan or brush
-            // sweeps a selection across the labels. The canvas backend has nothing to select, so this
-            // is what keeps the two consistent.
+            // Without this, dragging to pan or brush sweeps a text selection across the chart's labels.
             expect(ctx.element.style.userSelect).toBe('none');
             ctx.destroy();
         });

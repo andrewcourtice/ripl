@@ -410,8 +410,6 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const { cx, cy, size } = areaCenter(area);
             const gridRadius = (size / 2) * 0.82;
 
-            // Legend-hidden series are excluded from the radial extent and rendering, so toggling a
-            // series re-fits the value rings and animates its markers out through the exit join.
             const activeSeries = this.filterActive(series);
 
             // Radial value scale: 0 at the center, the data max (or override) at the outer ring.
@@ -550,8 +548,6 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                     this._attachMarkerHover(marker, spec.values, spec.content, spec.restFill, spec.color, spec.markerRadius);
                 });
 
-                // Reconcile the value labels against the current `labels` option so they can be
-                // toggled and restyled at runtime, and follow their markers as values change.
                 const valueLabels = group.getElementsByType('text') as Text[];
 
                 if (!dataLabels.visible) {
@@ -610,8 +606,6 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const updateMarkers = seriesUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
             const update = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
-            // Entry-series labels fade in with their markers; entering/updating labels on update
-            // fade in or glide to their refreshed marker. Exiting labels fade via `exitElement`.
             const entryLabels = entryGroups.flatMap(group => group.getElementsByType('text') as Text[]);
 
             return Promise.all([

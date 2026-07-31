@@ -24,8 +24,7 @@ import {
     typeIsString,
 } from '@ripl/utilities';
 
-// Patterns interpolate only when their tile motifs match; a diagonal tile cannot morph into dots,
-// so mismatched types fall back to a discrete swap, mirroring how gradients handle mismatched types.
+// A diagonal tile cannot morph into dots, so mismatched types fall back to a discrete swap.
 function canInterpolatePatterns(patternA: Pattern, patternB: Pattern): boolean {
     return patternA.type === patternB.type;
 }

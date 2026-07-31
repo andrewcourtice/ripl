@@ -67,8 +67,7 @@ const providers = [
 function buildTree() {
     const target = createRect({
         id: 'target',
-        // Two separate classes — Ripl's `class` option doesn't split on whitespace, so a
-        // space-joined string would be a single class token and `.leaf` wouldn't match here.
+        // Ripl's `class` option doesn't split on whitespace, so two classes need an array.
         class: ['leaf', 'active'],
         x: 0,
         y: 0,
@@ -154,8 +153,7 @@ describe('Group query API across contexts', () => {
             // Constructing a scene exercises the platform context factory + text measurement path.
             scene = createScene(el);
         } catch {
-            // Documented headless limitation — the context can't initialize here; the shared query
-            // logic is still guaranteed by the context-free case below.
+            // Documented headless limitation; the context-free case below still covers the query logic.
             el.remove();
             return;
         }

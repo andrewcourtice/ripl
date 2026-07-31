@@ -46,8 +46,7 @@ const hovered = ref('');
 const selected = ref('');
 const readout = computed(() => hovered.value || selected.value || DEFAULT_READOUT);
 
-// Trailing simple moving average, exposed as a second series so the legend appears and its
-// hover-highlight can dim the raw line.
+// Trailing SMA as a second series so the legend appears and hover-highlight can dim the raw line.
 function withMovingAverage(data: DailyActiveUsersPoint[], window = 7): ActiveUsersDatum[] {
     return data.map((item, index) => {
         const slice = data.slice(Math.max(0, index - window + 1), index + 1);

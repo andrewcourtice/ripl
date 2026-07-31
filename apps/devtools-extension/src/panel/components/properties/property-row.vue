@@ -85,8 +85,7 @@ const emit = defineEmits<{
     (event: 'commit', key: string, value: number | string | boolean | number[]): void;
 }>();
 
-// While an input is focused the user's draft wins; otherwise the polled value
-// from the page (the source of truth) is displayed.
+// While an input is focused the user's draft wins; otherwise the polled page value is displayed.
 const focused = ref(false);
 const draft = ref('');
 

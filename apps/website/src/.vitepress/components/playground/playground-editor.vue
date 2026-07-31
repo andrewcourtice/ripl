@@ -175,10 +175,7 @@ async function initMonaco() {
     const monaco = await import('monaco-editor');
     monacoModule = monaco;
 
-    // These specifiers resolve through monaco's `exports` map (`"./*": "./esm/vs/*.js"`), which it
-    // gained in 0.56 — they are deliberately NOT the on-disk paths. Writing the physical
-    // `monaco-editor/esm/vs/…` path maps to a doubled `esm/vs/esm/vs/…` that does not exist, and
-    // Vite then falls back to resolving it relative to this component.
+    // These go through monaco's `exports` map, NOT the on-disk paths — the physical `esm/vs/…` path breaks.
     self.MonacoEnvironment = {
         getWorker(_: string, label: string) {
             if (label === 'typescript' || label === 'javascript') {
@@ -256,8 +253,7 @@ async function initMonaco() {
             const dtsResponse = await fetch(base + typesUrl.replace(/^\//, ''));
             const dts = await dtsResponse.text();
 
-            // Ambient declaration files (e.g. `@webgpu/types`) declare globals rather than a
-            // module, so wrapping them in `declare module` would hide everything they export.
+            // Ambient files declare globals, so wrapping them in `declare module` would hide what they export.
             const content = isGlobal
                 ? dts
                 : `declare module '${pkg}' {\n${dts}\n}`;

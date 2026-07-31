@@ -104,10 +104,7 @@ describe('cartesian annotations', () => {
 
 describe('charts that advertise cartesian furniture actually draw it', () => {
 
-    // `CartesianChartOptions` gives every cartesian chart `crosshair` and `annotations`, but a chart
-    // only gets them if it declares the component in `setupCartesian` and wires it into its render.
-    // Where it does not, the option is documented and accepted but silently does nothing — which is
-    // also a dead control in the demo config panel. These pin the ones that are wired.
+    // Cartesian options are accepted by every chart but only work where the component is wired in.
 
     function crosshair(chart: unknown) {
         return (chart as { crosshair?: object }).crosshair;

@@ -193,8 +193,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         return this.options.stacked === 'percent';
     }
 
-    // Resolves the shared axis-tooltip content for the hovered plot x: the nearest category, one
-    // row per active series (share values in percent mode), anchored above the topmost value.
     private _axisTooltipSnapshot(
         plotX: number,
         keys: string[],
@@ -242,8 +240,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         };
     }
 
-    // Wraps each series' value accessor to return its share of the category's positive total,
-    // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
     private _percentSeries(series: AreaChartSeriesOptions<TData>[], data: TData[]): AreaChartSeriesOptions<TData>[] {
         const totals = new Map<TData, number>(data.map(item => [
             item,
@@ -313,10 +309,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            // Legend-hidden series are excluded from extents, stacking, and rendering, so toggling a
-            // series rescales the value axis (and restacks the remainder) while the hidden series
-            // animates out through the standard exit join. Percent mode additionally wraps the
-            // active series' value accessors in share space.
             const activeSeries = this._isPercent
                 ? this._percentSeries(this.filterActive(series), data)
                 : this.filterActive(series);
@@ -372,8 +364,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 });
             }
 
-            // Resolve the plot outside-in so the series geometry below is derived from the same
-            // bounds the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 this._yScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
                 this.yAxis.scale = this._yScale;
@@ -382,8 +372,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 this.xAxis.scale = this._xScale;
             });
 
-            // The navigator windows the x (category) axis only; the value axis stays at the full
-            // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
 
@@ -455,8 +443,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
 
         let scales: Scale[] = [];
 
-        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
-        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
         const plot = this.resolveCartesianPlot({
             x: left,
             y: top,
@@ -478,8 +464,6 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         this._xScale = this.applyViewToScale(this._xScale, 'x');
         this.xAxis.scale = this._xScale;
 
-        // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
-        // agnostic; the renderer passes the series through as its shared `AreaSeriesLike`).
         const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 

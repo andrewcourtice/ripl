@@ -355,8 +355,7 @@ export class TerminalContext extends Context<Element> {
 
         this._rasterScale = scale;
 
-        // `rescale` resets scaleX/scaleY to identity (and emits `resize`), so set the letterbox
-        // mapping immediately after it.
+        // `rescale` resets scaleX/scaleY to identity, so set the letterbox mapping immediately after it.
         this.rescale(this._logicalWidth, this._logicalHeight);
         this.scaleX = scaleContinuous([0, this._logicalWidth], [offsetX, offsetX + this._logicalWidth * scale]);
         this.scaleY = scaleContinuous([0, this._logicalHeight], [offsetY, offsetY + this._logicalHeight * scale]);
@@ -388,9 +387,7 @@ export class TerminalContext extends Context<Element> {
     }
 
     /** Rasterizes and fills the given path or text element using the current fill color. */
-    // `fillRule` is intentionally ignored: the braille scanline rasterizer (`fillPolygon`) implements
-    // only the even-odd rule. Honoring non-zero winding would require tracking edge directions per
-    // crossing, which is out of scope for the character-grid renderer.
+    // `fillRule` is ignored: the braille scanline rasterizer implements only the even-odd rule.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: ContextElement, fillRule?: FillRule): void {
         const color = colorToAnsiFg(this.fill);
@@ -458,8 +455,7 @@ export class TerminalContext extends Context<Element> {
             ? text.content.slice(0, Math.floor((text.maxWidth * this._rasterScale) / BRAILLE_CELL_WIDTH))
             : text.content;
 
-        // Position follows the logical space; glyphs stay cell-sized. Approximate textAlign/
-        // textBaseline by shifting the anchor cell (each glyph is one cell wide and tall).
+        // Glyphs stay cell-sized, so approximate `textAlign`/`textBaseline` by shifting the anchor cell.
         const alignFactor = TEXT_ALIGN_FACTORS[this.textAlign] ?? 0;
         const baselineFactor = TEXT_BASELINE_FACTORS[this.textBaseline] ?? 1;
 

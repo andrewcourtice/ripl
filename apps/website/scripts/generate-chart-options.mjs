@@ -1,14 +1,13 @@
 /**
- * Generates the "All options" reference block on every chart docs page from the chart's TypeScript
- * options interface.
+ * Generates the events block on every chart docs page, and checks the hand-written examples against
+ * the chart source.
  *
- * The option lists used to be hand-written bullet points, one per page, which drifted from the code
- * (a documented option that never existed, a renamed option still documented under its old name) and
- * from each other (the same shared option described four different ways, or omitted entirely). Those
- * blocks are now derived from the source, so a rename or a new option shows up in the docs on the
- * next run and cannot silently disagree.
+ * The examples are hand-written because a type does not imply a good value and a coherent
+ * configuration needs values that agree across options. Four checks keep them honest: every option
+ * named must exist, every option the chart has must be named somewhere on its page, every example
+ * must compile against the library source, and every page must link to Shared Options.
  *
- * Each page marks the generated region with `<!-- options:start -->` / `<!-- options:end -->`;
+ * Each page marks the generated region with `<!-- events:start -->` / `<!-- events:end -->`;
  * everything outside the markers is hand-written and left alone.
  *
  *   node scripts/generate-chart-options.mjs           # rewrite the generated regions
@@ -234,8 +233,7 @@ function scriptBlocksOf(contents) {
             return;
         }
 
-        // Attribute order varies between the markdown demos (`setup lang="ts"`) and the `.vue`
-        // components (`lang="ts" setup`), so match on both being present rather than on their order.
+        // Attribute order varies between markdown demos and `.vue` components, so match on presence, not order.
         if (/^<script(?=[^>]*\blang="ts")(?=[^>]*\bsetup\b)[^>]*>$/.test(line.trim())) {
             current = {
                 line: index + 2,
@@ -415,8 +413,7 @@ function collectEntryLiterals(expression, scope, seen = new Set()) {
 function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactory, declared) {
     const problems = [];
 
-    // Record a name the page used, so the caller can check the other direction: not just that every
-    // option named exists, but that every option the chart has is named somewhere.
+    // Records names the page used so the caller can also check every option the chart has is named somewhere.
     const record = name => declared?.add(name);
 
     blocks.forEach(block => {
@@ -448,8 +445,7 @@ function validateBlocks(label, blocks, optionNamesByFactory, seriesNamesByFactor
             if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
                 const factory = node.expression.text;
                 const known = optionNamesByFactory.get(factory);
-                // The options may arrive as a literal, a local `const`, or a helper's return value, so
-                // resolve every argument and take whichever yields literals.
+                // Options may be a literal, a local `const`, or a helper's return, so resolve every argument.
                 const literals = known
                     ? node.arguments.flatMap(argument => collectLiterals(argument, scope))
                     : [];
@@ -544,10 +540,7 @@ const EXAMPLE_DIR = path.join(repoRoot, '.chart-examples');
  * here rather than in the reader's browser.
  */
 function validateExampleTypes(pages) {
-    // The library is imported by relative path, not by package name, so the check does not depend on
-    // a `paths` mapping being in scope. Blocks are wrapped in their own scope so two examples on a
-    // page cannot collide, and their imports are dropped — an import cannot sit inside a block, and
-    // the namespace import already covers it.
+    // Imported by relative path so no `paths` mapping is needed; each block is scoped so examples can't collide.
     const entry = path.relative(EXAMPLE_DIR, chartsEntry).replace(/\.ts$/, '');
     const sources = new Map();
 
@@ -901,8 +894,7 @@ function main() {
             optionNamesByFactory.set(chart.factory, new Set(shape.properties.map(property => property.name)));
         }
 
-        // A chart may declare several series shapes (trend's line/bar/area union), so accept a
-        // property that exists on any of them.
+        // A chart may declare several series shapes (trend's line/bar/area union), so accept any of them.
         const seriesShapes = (chart.extras ?? [])
             .filter(name => name.includes('Series'))
             .map(name => readInterface(checker, moduleExports, name))

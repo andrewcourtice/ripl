@@ -311,9 +311,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            // Legend-hidden series are excluded from extents, per-type stacking, and rendering, so
-            // toggling a series rescales the value axis (and restacks its type group) while the
-            // hidden series animates out through the standard exit join.
             const activeSeries = this.filterActive(series);
 
             const areaSeries = activeSeries.filter((srs): srs is TrendChartAreaSeriesOptions<TData> => srs.type === 'area');
@@ -361,8 +358,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             // A band scale positions bars; its centers position line/area markers and the x-axis ticks.
             let xBand!: BandScale<string>;
 
-            // Resolve the plot outside-in so the bar/marker geometry below is derived from the same
-            // bounds the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 this._yScale = scaleContinuous(dataExtent, [candidate.y + candidate.height, candidate.y], { padToTicks: 10 });
                 this.yAxis.scale = this._yScale;

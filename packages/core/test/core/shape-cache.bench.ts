@@ -15,24 +15,12 @@ import {
     createPath,
 } from '../../src';
 
-// Timing benchmarks for the Shape2D path cache (packages/core/src/core/shape.ts).
-//
-// IMPORTANT: run with `yarn test:bench` (vitest bench) — these are never collected by
-// `yarn test`/CI. Under jsdom the polyfilled `Path2D` is a no-op, so native tessellation is
-// free; a benchmark can therefore only measure the JS-side work the cache avoids — path-object
-// allocation plus the trace callback. To make that visible we trace deliberately heavy
-// geometry (a real trig loop). These numbers are a LOWER BOUND on the real-world gain, which
-// also includes native re-tessellation the cache skips. The authoritative correctness proof is
-// the deterministic shape-cache.test.ts.
+// Run with `yarn test:bench` (never in CI); jsdom's `Path2D` is a no-op so these are a lower bound.
 
-// Sink for traced coordinates. The trace methods feed it and renderFrame reads it, so the JIT
-// cannot dead-code-eliminate the (otherwise result-less) trace loop — which would make "heavy"
-// geometry falsely free and hide the very cost the cache avoids.
+// Sink read by `renderFrame` so the JIT cannot dead-code-eliminate the trace loop.
 let blackhole = 0;
 
-// Trace methods shared via the prototype, so createNoopPath allocates a single object per call
-// (like a real `new Path2D()`) rather than a fresh closure per method. They consume their
-// coordinates so the geometry computation is real work, not eliminable.
+// Shared via the prototype so `createNoopPath` allocates one object per call, like `new Path2D()`.
 const noopPathMethods = {
     moveTo(x: number, y: number) {
         blackhole += x + y;
@@ -126,8 +114,6 @@ function renderFrame(shapes: Element[]): void {
 }
 
 // ── Static scenes, heavy geometry (the primary "many static elements" result) ──────────────
-// Each pair renders the whole array once per frame. tinybench warms up first, so the cached
-// bench measures the steady-state reuse cost and the uncached bench measures full re-tracing.
 
 describe('static heavy paths — 500 elements / frame', () => {
     const cached = makeHeavyPaths(500, true);
@@ -169,8 +155,6 @@ describe('static heavy paths — 8000 elements / frame', () => {
 });
 
 // ── Static scene, light geometry (honest contrast) ─────────────────────────────────────────
-// A no-op Path2D means the only saving here is path-object allocation, so the delta is small —
-// caching pays off in proportion to how expensive the geometry is to trace.
 
 describe('static light circles — 2000 elements / frame', () => {
     const cached = makeLightCircles(2000, true);
@@ -186,8 +170,6 @@ describe('static light circles — 2000 elements / frame', () => {
 });
 
 // ── Group-transform animation with static heavy children (pan/zoom a large chart) ──────────
-// The group's transform changes every frame; the children never do. Rendered through the
-// scene-less Group.render path, which resets the per-cycle flags at the end of each frame.
 
 describe('group transform animation — 2000 static heavy children / frame', () => {
     const cachedGroup = createGroup({ children: makeHeavyPaths(2000, true) });

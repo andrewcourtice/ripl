@@ -46,8 +46,7 @@ export function useRiplExample(onContextChanged?: (context: Context) => void, bi
         context.value?.destroy();
         context.value = ctx;
 
-        // Bindings self-dispose when their context is destroyed above. Callers that
-        // create a richer binding themselves (scene/renderer) opt out here.
+        // Bindings self-dispose with their context; callers creating a richer binding opt out here.
         if (bindDevtools) {
             createDevtools(ctx);
         }

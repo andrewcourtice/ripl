@@ -244,8 +244,7 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         this.init();
     }
 
-    // 3D faces are projected into screen space before painting, so gradients resolve against the
-    // element's world box rather than the local box the 2D canvas context uses.
+    // 3D faces project into screen space, so gradients resolve against the world box, not the local box.
     protected gradientBounds(): Box | undefined {
         return this.currentRenderElement?.getBoundingBox?.();
     }

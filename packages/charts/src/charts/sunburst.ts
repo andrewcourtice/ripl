@@ -210,9 +210,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
             const colorGenerator = this.colorGenerator;
 
-            // Resolve top-level node colors through the shared, id-keyed color map so they stay
-            // stable across data updates (randomizing values must not reshuffle colors). Child
-            // nodes inherit their parent's color via `flattenNodes`.
+            // Child nodes inherit their parent's color via `flattenNodes`
             this.resolveSeriesColors(data.map(node => ({
                 id: node.id,
                 color: node.color,
@@ -238,8 +236,6 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             const area = layout.area;
             const { cx, cy, size } = areaCenter(area);
 
-            // Legend-hidden top-level nodes (and their whole subtree) are excluded from the layout,
-            // so the remaining rings' angles expand to fill the circle and hidden arcs exit.
             const activeData = this.filterActive(data, node => node.id);
 
             const offset = TAU / 4;
@@ -325,8 +321,7 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 ...updateGroups,
             ];
 
-            // The legend covers only top-level nodes, so hovering one highlights its whole subtree:
-            // map every node id to its top-level ancestor and dim arcs outside that tree.
+            // The legend covers top-level nodes only, so map each node to its root to highlight subtrees
             const rootOf = new Map<string, string>();
             const assignRoot = (node: SunburstNode<TData>, rootId: string) => {
                 rootOf.set(node.id, rootId);

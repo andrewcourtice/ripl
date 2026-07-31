@@ -81,8 +81,7 @@ function createChart(tooltip?: ChartTooltipInput) {
         ],
     });
 
-    // jsdom provides no layout, so the scene starts 0×0 and the plot rectangle is degenerate —
-    // size the context directly so pointer containment has a real plot to test against.
+    // jsdom provides no layout, so the scene starts 0×0 — size the context to get a real plot rectangle.
     (internals(chart).scene.context as unknown as { rescale(width: number, height: number): void }).rescale(600, 400);
 
     return chart;

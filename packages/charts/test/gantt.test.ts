@@ -149,8 +149,7 @@ describe('GanttChart dependency connectors', () => {
 
         expect(beforeIds).toEqual(['connector:design->build', 'connector:research->design']);
 
-        // Reschedule design/build so their bars (and hence the connector endpoints) move; keys are
-        // unchanged, so the connectors should update rather than be torn down and rebuilt.
+        // Keys are unchanged, so the connectors should update rather than be torn down and rebuilt.
         chart.update({
             data: makeTasks(10),
         });

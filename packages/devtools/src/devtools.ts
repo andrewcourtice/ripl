@@ -79,8 +79,7 @@ function handlePageHide(): void {
 }
 
 function handlePageShow(event: PageTransitionEvent): void {
-    // `pageshow` also fires on the initial load, where bindings have already
-    // announced themselves; only re-announce after a bfcache restore.
+    // `pageshow` also fires on initial load, where bindings already announced; only re-announce after bfcache.
     if (!event.persisted) {
         return;
     }

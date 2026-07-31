@@ -401,8 +401,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const getColor = typeIsFunction(colorBy) ? colorBy : (item: any) => item[colorBy] as string;
 
-            // Register each segment in the shared color map so legend swatches and segments share
-            // stable palette colors (honoring any explicit per-item color).
             this.resolveSeriesColors(data.map(item => ({
                 id: getKey(item),
                 color: getColor(item),
@@ -427,8 +425,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             const area = layout.area;
             const { cx: centerX, cy: centerY, size } = areaCenter(area);
 
-            // Legend-hidden segments are excluded from the layout, so the remaining equal-angle
-            // slices widen to fill the circle and the radial scale re-fits the visible values.
             const activeData = this.filterActive(data, getKey);
 
             const maxValue = activeData.length ? (numberMaxOf(activeData, getValue) ?? 0) : 0;
@@ -543,8 +539,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     font: labelInfo.font,
                 });
 
-                // Fade each to its intended rest opacity on entry (hidden labels/connectors settle at
-                // 0 so they can later fade *in* on an update, rather than sitting at full opacity).
                 connector.data = { opacity: labelInfo.showConnector ? 1 : 0 } as Partial<PolylineState>;
                 segmentLabel.data = { opacity: labelInfo.visible ? 1 : 0 } as Partial<TextState>;
 
@@ -614,8 +608,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     opacity: labelInfo.visible ? 1 : 0,
                 } as Partial<TextState>;
 
-                // Route the connector's new geometry through `.data` (not a direct `points =`) so it
-                // tweens in lockstep with the label position instead of snapping.
                 connector.stroke = resolvedColor;
                 connector.data = {
                     points: labelInfo.connector,
@@ -670,8 +662,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     state: element.data as Partial<ArcState>,
                 }));
 
-                // Fade in the non-arc children (labels and any outside-label connectors) to their
-                // intended rest opacity (hidden ones settle at 0), read from each element's `.data`.
                 return renderer.transition(elements.filter(element => !elementIsArc(element)), element => ({
                     duration: animDuration * 1.5,
                     ease: easeOutQuint,
@@ -680,8 +670,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
             }
 
             async function transitionUpdates() {
-                // Segments are grouped, but transitions animate their own state, so drive the leaf
-                // children (arc/label/connector) to their stashed `.data`, not the inert group.
                 return renderer.transition(updates.flatMap(group => group.children), element => ({
                     duration: animDuration * 0.8,
                     ease: easeOutQuint,
@@ -696,8 +684,6 @@ export class PolarAreaChart<TData = unknown> extends Chart<PolarAreaChartOptions
                     state: element.data as Partial<BaseElementState>,
                 }));
 
-                // Destroy the whole segment group once its leaves have collapsed (destroying leaves
-                // individually would leave empty group nodes behind).
                 exits.forEach(group => group.destroy());
             }
 

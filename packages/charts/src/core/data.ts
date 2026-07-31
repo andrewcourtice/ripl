@@ -36,8 +36,7 @@ export function resolveAccessor<TData, TValue>(accessor: Accessor<TData, TValue>
         return accessor as (item: TData) => TValue;
     }
 
-    // Only strings and symbols are treated as property keys; numbers (and any other value) are
-    // treated as constants so options like a scatter `sizeBy: number` behave as a fixed value.
+    // Numbers are constants, not keys, so a scatter `sizeBy: number` reads as a fixed value.
     if (typeIsString(accessor) || typeof accessor === 'symbol') {
         return (item: TData) => item[accessor as keyof TData] as unknown as TValue;
     }

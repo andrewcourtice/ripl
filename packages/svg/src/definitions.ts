@@ -186,8 +186,7 @@ export function createSVGShadowFilterElement(filterId: string): ShadowCacheEntry
     const shadowElement = createSVGElement('feDropShadow');
 
     filterElement.setAttribute('id', filterId);
-    // Widen the filter region beyond the default 10% margins so large blurs and
-    // offsets aren't clipped at the element's bounding box.
+    // Widen the filter region beyond the default 10% margins so large blurs and offsets aren't clipped.
     filterElement.setAttribute('x', '-50%');
     filterElement.setAttribute('y', '-50%');
     filterElement.setAttribute('width', '200%');
@@ -224,8 +223,7 @@ export function sweepDefsCache<TEntry>(cache: Map<string, TEntry>, namespace: st
     });
 }
 
-// Renders the shared pattern tile geometry into an SVG <pattern> definition's children so the
-// canvas and SVG backends draw identical tiles.
+// Renders shared pattern tile geometry into `<pattern>` children so canvas and SVG draw identical tiles.
 function appendPatternTileShapes(element: SVGElement, pattern: Pattern): void {
     const geometry = getPatternTileGeometry(pattern);
 

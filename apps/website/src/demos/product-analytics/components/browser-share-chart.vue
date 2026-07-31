@@ -52,8 +52,7 @@ function buildChart() {
         label: 'browser' as const,
         innerRadius: 0.55,
         legend: true,
-        // Values are already a 0–100 percentage, so append a literal `%` rather than
-        // re-percentaging via the built-in 'percentage' formatter.
+        // Values are already 0–100, so append a literal `%` rather than re-percentaging via `percentage`.
         format: (value: number) => `${value}%`,
         // Leader-line labels sit outside the donut and animate with their connectors.
         labels: 'outside' as const,

@@ -56,9 +56,7 @@ describe('Scale', () => {
         });
 
         test('Should invert consistently with padToTicks over a descending range', () => {
-            // A y-axis maps data (ascending) to pixels (descending, top < bottom). `inverse` must be
-            // the true inverse of `convert` and must never return NaN — regression for a bug where the
-            // invert method re-padded the *range*, producing a negative step over a descending range.
+            // Regression: the invert re-padded the *range*, giving a negative step on a descending range.
             const scale = scaleContinuous([0, 100], [560, 40], {
                 padToTicks: 10,
             });
@@ -80,8 +78,7 @@ describe('Scale', () => {
             const scale = scaleContinuous([0, 0], range);
             const ticks = scale.ticks(10);
 
-            // `padDomain` used to divide the bounds by a zero step, so a zero-width domain emitted a
-            // single `NaN` tick. Rendered as an axis label that read "NaN".
+            // `padDomain` divided by a zero step, so a zero-width domain emitted one `NaN` tick label.
             expect(ticks.length).toBe(1);
             ticks.forEach(tick => expect(Number.isNaN(tick)).toBe(false));
         });
@@ -89,8 +86,7 @@ describe('Scale', () => {
         test('Should map every value to the range start rather than NaN', () => {
             const scale = scaleContinuous([0, 0], range);
 
-            // `(value - min) / 0` is NaN at the bound and +/-Infinity either side of it. There is no
-            // meaningful distribution across a zero-width domain, so collapse onto the range start.
+            // `(value - min) / 0` is non-finite, so a zero-width domain collapses onto the range start.
             expect(scale(0)).toBe(range[0]);
             expect(Number.isFinite(scale(5))).toBe(true);
             expect(Number.isFinite(scale(-5))).toBe(true);
