@@ -16,6 +16,7 @@ import {
 } from './number';
 
 import {
+    arrayMapRange,
     numberFractional,
     typeIsArray,
     typeIsNil,
@@ -64,11 +65,11 @@ function extrapolatePointSet(setA: Point[], setB: Point[]): Point[][] {
     const segmentsB = setBLength - 1;
 
     if (segmentsA === 0) {
-        return [Array.from({ length: setBLength }, () => setA[0]), setB];
+        return [arrayMapRange(setBLength, () => setA[0]), setB];
     }
 
     if (segmentsB === 0) {
-        return [setA, Array.from({ length: setALength }, () => setB[0])];
+        return [setA, arrayMapRange(setALength, () => setB[0])];
     }
 
     const targetSegments = lcm(segmentsA, segmentsB);
@@ -140,8 +141,7 @@ function buildKeyedFromSet(setA: Point[], setB: Point[], map: number[]): Point[]
 export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?: InterpolatePointsOptions) => {
     const resolveKeys = options?.resolveKeys;
 
-    // Keyed morph: a from-array the length of setB, matched point-for-point (no LCM upsampling).
-    // Otherwise fall back to the default extrapolation that equalises differing lengths.
+    // Keyed morph matches point-for-point (no LCM upsampling); otherwise equalise by extrapolation.
     const [
         extSetA,
         extSetB,
@@ -158,10 +158,7 @@ export const interpolatePoints: InterpolatePointsFactory = (setA, setB, options?
         ];
     });
 
-    // Settle on the original (un-extrapolated) sets at the endpoints so a completed morph
-    // commits the clean target points rather than the LCM-upsampled set. Without this the
-    // element would retain the inflated point array and each subsequent morph would compound
-    // the point count (lcm of ever-growing lengths), exhausting memory.
+    // Settle on the original sets at the endpoints, else each morph compounds the LCM point count.
     return position => {
         if (position <= 0) {
             return setA;

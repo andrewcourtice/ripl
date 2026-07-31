@@ -123,7 +123,7 @@ import {
 } from '@ripl/charts';
 
 const chart = createChordChart('#container', {
-    labels: ['A', 'B', 'C'],
+    groups: ['A', 'B', 'C'],
     matrix: [
         [0, 10, 20],
         [10, 0, 15],
@@ -132,10 +132,66 @@ const chart = createChordChart('#container', {
 });
 ```
 
+## Data Format
+
+A chord chart is driven by a square matrix rather than a row-per-item dataset. `groups` names each
+row/column, and `matrix[i][j]` is the flow from group `i` to group `j`:
+
+```ts
+const groups = ['Engineering', 'Design', 'Marketing'];
+
+const matrix = [
+    //  Eng  Des  Mkt
+    [0, 5, 10], // from Engineering
+    [5, 0, 6], //  from Design
+    [10, 6, 0], //  from Marketing
+];
+```
+
+The diagonal is normally `0` (a group does not flow to itself), and the matrix must be the same
+length as `groups` in both dimensions.
+
 ## Options
 
-- **`groups`**: array of group names, one per row/column of the matrix
-- **`matrix`**: square matrix of flow values between groups
-- **`palette`**: optional array of colors, one per group (positional)
-- **`padAngle`**: gap angle between arcs in radians (default `0.04`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createChordChart('#container', {
+    groups: ['Engineering', 'Design', 'Marketing', 'Sales'],
+    // Square flow matrix: matrix[i][j] is the flow from groups[i] to groups[j].
+    matrix,
+    // One color per group, positional.
+    palette: ['#7cacf8', '#6dd5b1', '#b197fc', '#f7c97e'],
+    // Gap between adjacent group arcs, in radians.
+    padAngle: 0.04,
+    legend: { position: 'right' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when an outer arc is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when the pointer enters an outer arc.
+chart.on('segmententer', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when the pointer leaves an outer arc.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: ChordChartSegmentEvent
+// Emitted when a ribbon is clicked.
+chart.on('linkclick',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+// Emitted when the pointer enters a ribbon.
+chart.on('linkenter',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+// Emitted when the pointer leaves a ribbon.
+chart.on('linkleave',    event => console.log(event.data)); // event.data: ChordChartLinkEvent
+```
+<!-- events:end -->

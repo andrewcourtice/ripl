@@ -53,9 +53,7 @@ export function padDomain(domain: number[], count: number = 10) {
     const extent = max - min;
     const step = numberNice(extent / (count - 1));
 
-    // A zero-width (or non-finite) extent gives a zero step, and dividing the bounds by it yields
-    // NaN — which propagated all the way out as a `NaN` tick label. There is nothing to round to, so
-    // leave the domain alone.
+    // A zero/non-finite step means nothing to round to; dividing by it yielded `NaN` tick labels.
     if (!step || !isFinite(step)) {
         return [
             min,
@@ -141,10 +139,7 @@ export function getLinearScaleMethod(domain: number[], range: number[], options?
     const interpolator = interpolateNumber(rangeMin, rangeMax);
 
     return (value: number) => {
-        // A zero-width domain (every value identical, or an axis with nothing bound to it) has no
-        // meaningful distribution: `(value - min) / 0` is NaN at the bound and ±Infinity either side.
-        // Collapse onto the range start rather than emitting a non-finite position, which rendered as
-        // a stray mark — visibly, an SVG `y="NaN"` pinned to the top of the chart.
+        // `(value - min) / 0` is non-finite and rendered a stray mark, so collapse onto the range start.
         if (domainDelta === 0) {
             return rangeMin;
         }

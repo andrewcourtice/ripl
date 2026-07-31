@@ -53,6 +53,7 @@ import {
 
 import {
     arrayJoin,
+    arrayMapRange,
     numberClamp,
     numberRoundTo,
 } from '@ripl/utilities';
@@ -231,8 +232,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 endAngle: valueAngle,
             } as Partial<ArcState>;
 
-            // --- Value text ---
-            // Format a (possibly fractional, mid-animation) value, capping precision at 2 decimals.
+            // Value text: the value can be fractional mid-animation, so cap precision at 2 decimals
             const resolveDisplay = resolveValueFormat(format);
             const formatDisplay = (v: number) => resolveDisplay(numberRoundTo(v, 2));
             // The value the text counts up/down *from* on a data update (the previously shown value).
@@ -266,9 +266,7 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                 this._valueText.y = cy - 10;
                 this._valueText.font = `bold ${Math.round(size * 0.08)}px sans-serif`;
                 this._valueText.opacity = 1;
-                // Seed the starting number so the counting transition below ticks smoothly from the
-                // previously shown value; with animation off, show the final value immediately (rather
-                // than flashing the end number for a frame before the count begins).
+                // Seed the count's start value; with animation off show the final value to avoid a flash
                 this._valueText.content = valueDuration > 0 ? formatDisplay(displayFrom) : displayValue;
             }
 
@@ -308,14 +306,13 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
             const showTickLabels = this.options.tickLabels !== false;
             const formatTick = resolveValueFormat(this.options.tickFormat ?? this.options.format);
 
-            // Ticks only move when the center/radius/count/label-visibility changes, not on a plain
-            // value update, so a value change animates only the arc and the center number.
+            // Signature so ticks only rebuild on geometry changes, not on a plain value update
             const tickSignature = `${cx}|${cy}|${radius}|${tickCount}|${showTickLabels}`;
             const tickGeometryChanged = tickSignature !== this._tickSignature;
             this._tickSignature = tickSignature;
 
             const tickIndices = tickCount > 0
-                ? Array.from({ length: tickCount + 1 }).map((_, i) => i)
+                ? arrayMapRange(tickCount + 1, i => i)
                 : [];
 
             const tickOuterRadius = radius + 4;
@@ -464,8 +461,6 @@ export class GaugeChart extends Chart<GaugeChartOptions, GaugeChartEventMap> {
                     ease: easeOutCubic,
                     state: (element.data ?? {}) as Record<string, unknown>,
                 }))
-                // On a data update the value counts up/down to the new value (only the bar and the
-                // number change; the rest of the gauge stays put).
                 : renderer.transition(this._valueText, {
                     duration: valueDuration,
                     ease: easeOutCubic,

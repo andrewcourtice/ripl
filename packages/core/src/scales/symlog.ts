@@ -135,8 +135,7 @@ export function scaleSymlog(
         padToTicks,
     } = options || {};
 
-    // Resolve tick-padding to a concrete domain once so `convert` and `invert` share the same
-    // `[min, max]` before the symlog transform is applied.
+    // Resolve tick-padding once so `convert` and `invert` share the same domain.
     const mappingDomain = padToTicks ? niceDomain(domain, +padToTicks) : domain;
     const mappingOptions = { clamp };
 

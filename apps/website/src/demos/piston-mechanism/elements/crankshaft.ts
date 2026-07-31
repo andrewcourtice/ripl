@@ -92,9 +92,7 @@ export class Crankshaft extends Shape3D<CrankshaftState> {
         const webHalf = main * 1.4;
         const webThickness = main;
 
-        // Main journal along Z: the axis the whole crank rotates about. The pin is offset along +X
-        // so that a `rotationZ` of θ places it at (cos θ · throw, sin θ · throw), matching the
-        // slider-crank kinematics the demo drives the rod and piston with.
+        // Main journal along Z; the pin offsets along +X so `rotationZ` θ puts it at (cos θ, sin θ) · throw.
         faces.push(...cylinderZ(0, 0, main, -halfWidth, halfWidth, segs));
 
         // Offset crank pin (the connecting rod's big end rides here).

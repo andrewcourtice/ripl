@@ -7,12 +7,16 @@ import type {
     Scale,
 } from './types';
 
+import {
+    comparitorNumeric,
+} from '@ripl/utilities';
+
 /** Creates a threshold scale that maps numeric values to range values based on a set of threshold breakpoints. */
 export function scaleThreshold<TRange>(
     domain: number[],
     range: TRange[]
 ): Scale<number, TRange> {
-    const sortedDomain = domain.slice().sort((a, b) => a - b);
+    const sortedDomain = domain.slice().sort(comparitorNumeric);
 
     return createScale({
         domain,

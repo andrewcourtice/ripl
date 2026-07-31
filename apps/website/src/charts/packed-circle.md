@@ -170,11 +170,37 @@ const data = [
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: unique key accessor for each circle
-- **`value`**: numeric value accessor; encoded as the circle's area
-- **`label`**: optional label accessor (defaults to `key`)
-- **`colorBy`**: optional per-circle color accessor
-- **`legend`**: legend configuration; shown by default, pass `false` to hide
-- **`format`**: value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`**: standard chart options
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createPackedCircleChart('#container', {
+    data,
+    key: 'id',
+    value: 'size',
+    label: 'name',
+    colorBy: 'group',
+    legend: { position: 'bottom' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a circle is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: PackedCircleChartNodeEvent
+// Emitted when the pointer enters a circle.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: PackedCircleChartNodeEvent
+// Emitted when the pointer leaves a circle.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: PackedCircleChartNodeEvent
+```
+<!-- events:end -->

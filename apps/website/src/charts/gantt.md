@@ -209,21 +209,77 @@ const chart = createGanttChart('#container', {
 chart.update({ data: newData });
 ```
 
+## Data Format
+
+Each item is one task, with a key, a label, and `Date` values for its start and end. `progress` is
+optional and drawn as an overlay on the bar:
+
+```ts
+const data = [
+    {
+        id: 'design',
+        name: 'Design',
+        start: new Date('2024-01-08'),
+        end: new Date('2024-01-19'),
+        progress: 1,
+    },
+    {
+        id: 'build',
+        name: 'Build',
+        start: new Date('2024-01-22'),
+        end: new Date('2024-02-16'),
+        progress: 0.4,
+        dependsOn: ['design'],
+    },
+];
+```
+
+`dependencies` returns the keys of the tasks a task waits on, and draws a finish-to-start connector
+from each one.
+
 ## Options
 
-- **`data`**: the data array (one item per task)
-- **`key`**: unique key accessor per task
-- **`label`**: label accessor for y-axis task names
-- **`start`**: start date accessor
-- **`end`**: end date accessor
-- **`colorBy`**: optional color accessor per task
-- **`progress`**: optional progress accessor (0–1)
-- **`dependencies`**: optional accessor returning the keys of each task's predecessors; draws curved finish-to-start connectors between dependent tasks
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`axis`** (`boolean | ChartAxisOptions`): configure axes
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the numeric progress value in the task tooltip (defaults to a percentage)
-- **`showToday`**: show a vertical "today" marker line (default `true`)
-- **`todayColor`**: color for the today marker (default `#ef4444`)
-- **`borderRadius`**: bar corner radius (default `3`)
-- **`padding`**: chart padding
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createGanttChart('#container', {
+    data,
+    key: 'id',
+    label: 'name',
+    start: 'start',
+    end: 'end',
+    colorBy: 'team',
+    // Completion ratio (0–1), drawn as an overlay on each bar.
+    progress: 'progress',
+    // Ids of the tasks this one depends on, drawn as connectors.
+    dependencies: 'dependsOn',
+    borderRadius: 4,
+    showToday: true,
+    todayColor: '#f4a0b9',
+    grid: true,
+    tooltip: true,
+    axis: { x: { title: 'Timeline' } },
+    format: 'percentage',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a task bar is clicked.
+chart.on('taskclick', event => console.log(event.data)); // event.data: GanttChartTaskEvent
+// Emitted when the pointer enters a task bar.
+chart.on('taskenter', event => console.log(event.data)); // event.data: GanttChartTaskEvent
+// Emitted when the pointer leaves a task bar.
+chart.on('taskleave', event => console.log(event.data)); // event.data: GanttChartTaskEvent
+```
+<!-- events:end -->

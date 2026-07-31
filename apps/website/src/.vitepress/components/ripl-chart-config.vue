@@ -340,8 +340,7 @@ function shows(feature: keyof ChartConfigFeatures): boolean {
     return !!props.config.features[feature] || !!slots[SECTION_SLOTS[feature]];
 }
 
-// The lead (default-open) sections are Options / Colors / Legend. When a chart has none of
-// them, open Title instead so the panel never opens fully collapsed.
+// Fall back to Title when a chart has no Options/Colors/Legend, so the panel never opens fully collapsed.
 const hasLeadSection = computed(() => !!slots.default
     || (props.series?.length ?? 0) > 0
     || !!slots.colors

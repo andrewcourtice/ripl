@@ -80,8 +80,7 @@ describe('BoxPlotChart animations', () => {
 
         const box = sceneOf(chart).getElementById('A-box') as unknown as { data?: { height: number } };
 
-        // The box carries a `data` snapshot of its full geometry — the candlestick-style entry grows
-        // from a collapsed median toward this stashed height.
+        // The `data` snapshot is the full geometry the collapsed-median entry grows toward.
         expect(box.data).toBeDefined();
         expect(box.data!.height).toBeGreaterThan(0);
 
@@ -119,8 +118,6 @@ describe('BoxPlotChart animations', () => {
 
         const boxAfter = sceneOf(chart).getElementById('A-box') as Element | undefined;
 
-        // The same element instance survives the update — it is reconciled and transitioned to the new
-        // geometry, not cleared and rebuilt (which teleported the boxes with no animation).
         expect(boxAfter).toBe(boxBefore);
 
         chart.destroy();

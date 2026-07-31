@@ -207,14 +207,50 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `value`, `c
 
 ## Options
 
-- **`nodes`**: array of `{ id, label?, value?, group?, color? }`
-- **`links`**: array of `{ source, target, value? }`
-- **`nodeRadius`**: base node radius (nodes scale around this by value/degree, default `8`)
-- **`charge`**: repulsion strength (negative, default `-240`)
-- **`linkDistance`**: target distance for link springs (default `60`)
-- **`linkStrength`**: link spring strength (default `0.5`)
-- **`centerStrength`**: centering pull (default `0.05`)
-- **`iterations`**: simulation iterations (default `300`)
-- **`root`**: id of the node the entry animation springs out from (defaults to the highest-degree node)
-- **`format`**: value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`**: standard chart options
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createForceDirectedChart('#container', {
+    nodes,
+    links,
+    nodeRadius: 7,
+    // Negative charge repels; a larger magnitude spreads the graph further.
+    charge: -160,
+    linkDistance: 40,
+    linkStrength: 0.6,
+    centerStrength: 0.05,
+    // Simulation passes run before the layout is drawn.
+    iterations: 300,
+    // The node the layout springs out from on entry; defaults to the highest-degree node.
+    root: 'core',
+    legend: { position: 'bottom' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a node is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when the pointer enters a node.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when the pointer leaves a node.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: ForceDirectedNodeEvent<TData>
+// Emitted when a link is clicked.
+chart.on('linkclick', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+// Emitted when the pointer enters a link.
+chart.on('linkenter', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+// Emitted when the pointer leaves a link.
+chart.on('linkleave', event => console.log(event.data)); // event.data: ForceDirectedLinkEvent
+```
+<!-- events:end -->

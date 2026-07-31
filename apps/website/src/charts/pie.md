@@ -5,6 +5,8 @@ The **Pie Chart** illustrates numerical proportions as angular slices of a circl
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
+## Example
+
 <ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
@@ -234,11 +236,41 @@ createPieChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: unique identifier field for each slice
-- **`value`**: numeric value field
-- **`label`**: display label field
-- **`innerRadius`**: inner radius ratio for donut mode (0–1, default `0`)
-- **`labels`** (`boolean | 'inside' | 'outside' | ChartSegmentLabelsOptions`): segment labels. Hidden by default (the legend is shown by default). `true` / `'inside'` draws labels inside each slice; `'outside'` places them beyond the arc with a leader line; an object customizes `position` / `font` / `fontColor`.
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | ((value) => string)`): formats segment values shown as text (e.g. tooltips). Numbers are capped at 2 decimals by default.
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createPieChart('#container', {
+    data,
+    key: 'browser',
+    value: 'share',
+    label: 'browser',
+    colorBy: 'browser',
+    // Non-zero turns the pie into a donut. A value of 1 or less is a fraction of the outer
+    // radius; anything larger is read as absolute pixels.
+    innerRadius: 60,
+    labels: 'outside',
+    legend: { position: 'right' },
+    format: 'percentage',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a segment is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+// Emitted when the pointer enters a segment.
+chart.on('segmententer', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+// Emitted when the pointer leaves a segment.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: PieChartSegmentEvent
+```
+<!-- events:end -->

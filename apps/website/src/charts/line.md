@@ -136,10 +136,13 @@ const TIME_POINTS = [
 // Distinct per-series symbols used by the "Mixed" marker option.
 const SERIES_SYMBOLS = ['circle', 'diamond', 'triangle'];
 
+// Three metrics in genuinely different units and magnitudes — dollars, a percentage, and thousands of
+// units. On one shared axis the margin series is pinned flat against the baseline; that is the case
+// the "Multiple axes" toggle exists to fix, so the sample data has to actually exhibit it.
 const seriesMeta = [
     { id: 'revenue', label: 'Revenue' },
-    { id: 'profit', label: 'Profit' },
-    { id: 'expenses', label: 'Expenses' },
+    { id: 'margin', label: 'Margin' },
+    { id: 'units', label: 'Units' },
 ];
 
 const { extras, reset } = useChartExtras({
@@ -170,15 +173,17 @@ const config = useChartConfig({
     },
     title: 'Monthly Performance',
     axisX: 'Month',
-    axisY: 'Amount ($)',
+    // Deliberately generic: with one shared axis it carries three different units at once. Turning on
+    // "Multiple axes" replaces it with a per-metric title.
+    axisY: 'Value',
     colors: seedColors(seriesMeta.map(s => s.id)),
 });
 
 function generateValues() {
     return {
         revenue: Math.round(Math.random() * 800 + 200),
-        profit: Math.round(Math.random() * 450 + 100),
-        expenses: Math.round(Math.random() * 300 + 150),
+        margin: Math.round(Math.random() * 35 + 5),
+        units: Math.round(Math.random() * 3000 + 1500),
     };
 }
 
@@ -199,25 +204,8 @@ function generateTimeData(count = 8) {
 let monthData = generateData();
 let timeData = generateTimeData();
 
-function baseData() {
-    return extras.timeAxis ? timeData : monthData;
-}
-
-// With multiple axes on, push the three series into genuinely different ranges (dollars, a single-
-// digit-ish percentage, and thousands of units) so each of the three independently-scaled y-axes is
-// justified. Single-axis mode leaves the data untouched.
 function activeData() {
-    const rows = baseData();
-
-    if (!extras.multiAxis) {
-        return rows;
-    }
-
-    return rows.map(row => ({
-        ...row,
-        profit: Math.round(row.profit / 15),
-        expenses: row.expenses * 10,
-    }));
+    return extras.timeAxis ? timeData : monthData;
 }
 
 function activeKey() {
@@ -255,7 +243,7 @@ function getSeries() {
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
         // Bind each series to its own y-axis when multiple axes are enabled.
-        yAxis: extras.multiAxis ? index : undefined,
+        yAxis: extras.multiAxis ? s.id : undefined,
     }));
 }
 
@@ -280,23 +268,27 @@ function buildOptions() {
     }
 
     // Three independently-scaled y-axes. Each series binds to its own axis (see getSeries); the two
-    // left axes stack outward from the plot and the third sits on the right.
+    // left axes stack outward from the plot and the third sits on the right. Revenue stays on the
+    // primary axis: the grid and the annotations below are drawn through it.
     if (extras.multiAxis) {
         options.axis = {
             ...options.axis,
             y: [
                 {
                     ...options.axis.y,
+                    id: 'revenue',
                     title: 'Revenue ($)',
                 },
                 {
+                    id: 'margin',
                     visible: config.axesVisible,
-                    title: 'Profit (%)',
+                    title: 'Margin (%)',
                     position: 'right',
                 },
                 {
+                    id: 'units',
                     visible: config.axesVisible,
-                    title: 'Expenses (units)',
+                    title: 'Units',
                     position: 'left',
                 },
             ],
@@ -372,7 +364,7 @@ const chart = createLineChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            lineType: 'monotone',
+            lineType: 'monotoneX',
         },
     ],
 });
@@ -390,17 +382,20 @@ const data = [
     {
         month: 'Jan',
         revenue: 620,
-        expenses: 340,
+        margin: 18,
+        units: 2400,
     },
     {
         month: 'Feb',
         revenue: 780,
-        expenses: 290,
+        margin: 24,
+        units: 3100,
     },
     {
         month: 'Mar',
         revenue: 550,
-        expenses: 410,
+        margin: 11,
+        units: 1900,
     },
 ];
 ```
@@ -423,9 +418,9 @@ createLineChart('#container', {
             markers: true,
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             markers: true,
         },
     ],
@@ -448,9 +443,9 @@ createLineChart('#container', {
             lineType: 'monotoneX',
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             lineType: 'step',
         },
     ],
@@ -507,9 +502,9 @@ createLineChart('#container', {
             marker: 'circle',
         },
         {
-            id: 'expenses',
-            value: 'expenses',
-            label: 'Expenses',
+            id: 'units',
+            value: 'units',
+            label: 'Units',
             marker: 'diamond',
         },
     ],
@@ -518,7 +513,7 @@ createLineChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
+Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option, naming the axis's `id`. Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
 
 ```ts
 createLineChart('#container', {
@@ -529,29 +524,34 @@ createLineChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'margin',
             value: 'margin',
             label: 'Margin',
-            yAxis: 1,
+            yAxis: 'margin',
         },
         {
             id: 'units',
             value: 'units',
             label: 'Units',
-            yAxis: 2,
+            yAxis: 'units',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
             {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'margin',
                 title: 'Margin (%)',
                 position: 'right',
             },
             {
+                id: 'units',
                 title: 'Units',
                 position: 'left',
             },
@@ -562,14 +562,70 @@ createLineChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `value`, `label`, optional `color`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers` (show/hide point markers, default `true`), `marker` (symbol shape: `'circle'` \| `'square'` \| `'diamond'` \| `'triangle'`), `markerRadius`, `axis` (y-axis index/id binding)
-- **`key`**: key accessor for each data point
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (shown by default for multiple series, at the bottom)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
-- **`padding`**: chart padding
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    labels: true,
+    format: 'number',
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            color: '#7cacf8',
+            lineType: 'monotoneX',
+            lineStyle: 'solid',
+            lineWidth: 2,
+            markers: true,
+            marker: 'circle',
+            markerRadius: 3,
+            yAxis: 'revenue',
+        },
+        {
+            id: 'margin',
+            value: 'margin',
+            label: 'Margin',
+            color: '#6dd5b1',
+            marker: 'diamond',
+            yAxis: 'margin',
+        },
+    ],
+    axis: {
+        y: [
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'margin',
+                position: 'right',
+                title: 'Margin (%)',
+            },
+        ],
+    },
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: LineChartMarkerEvent
+// Emitted when the pointer enters a marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: LineChartMarkerEvent
+// Emitted when the pointer leaves a marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: LineChartMarkerEvent
+```
+<!-- events:end -->

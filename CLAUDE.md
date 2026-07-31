@@ -37,8 +37,31 @@ yarn typedoc --entryPointStrategy resolve \
   | grep 'does not have any documentation' | grep -v SetSignature
 ```
 
+## Always: keep comments to one line
+
+The two rules pull in opposite directions and both hold. **JSDoc on the public
+API is mandatory** (above). A `//` comment inside a function body is the
+opposite — the maintainer of this project writes very few, and prefers that
+style. Most code you write should carry none at all.
+
+Key rules (full details in [AGENTS.md → Comments](./AGENTS.md#comments)):
+
+- **Never write a multi-line `//` block.** One line, or delete it. Accuracy is
+  not the bar — necessity is.
+- **Why, never what.** If the code already says it, the comment is noise. A
+  comment earns its line by recording a browser quirk, a constraint, or the bug
+  the code prevents.
+- If the point will not fit on one line, **extract a named function** instead of
+  writing a paragraph.
+- **Do not narrate tests.** The `it('...')` title covers it; comment only the
+  regression the test exists to catch.
+- State a rationale **once**, at the thing it describes — never copied across
+  sibling files.
+- Pragmas (`eslint-disable`, `@ts-expect-error`, `TODO`) are exempt.
+
 ## Before you commit
 
 - `yarn test`, `yarn lint` and `yarn typecheck` pass.
 - New/changed public API is fully documented (above).
+- No multi-line `//` comment blocks were added (above).
 - Keep changes focused; no runtime dependencies without explicit approval.

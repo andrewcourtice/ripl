@@ -74,6 +74,7 @@ import {
 import {
     functionIdentity,
     numberExtent,
+    typeIsArray,
 } from '@ripl/utilities';
 
 /** Configuration for an individual realtime chart series. */
@@ -152,7 +153,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
 
         const axisOpts = normalizeAxis(options.axis);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
         const crosshairOpts = normalizeCrosshair(options.crosshair);
@@ -271,8 +272,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
         const newGroups: Group[] = [];
         const updatedGroups: Group[] = [];
 
-        // Legend-hidden series are skipped, so their groups fall through to the leftover cleanup
-        // below and are removed (their buffers keep streaming, ready for re-show).
+        // Hidden series fall through to the cleanup below and are removed; their buffers keep filling
         this.filterActive(series).forEach(srs => {
             const buffer = this._buffers.get(srs.id) || [];
             const color = this.getSeriesColor(srs.id);
@@ -321,11 +321,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 const areaFill = showArea ? polylines[0] : undefined;
                 const line = showArea ? polylines[1] : polylines[0];
 
-                // Once the window is full each push drops the oldest sample, so slot i now holds
-                // the value previously shown in slot i+1. Seeding the current points one step to
-                // the right (their previous on-screen positions) makes the transition slide the
-                // whole line left by one step (a scroll) with the newest point entering at the
-                // right, instead of morphing every point's height in place.
+                // Seed points one step right (their previous positions) so the transition reads as a scroll
                 const scrolling = pointCount >= maxLen;
 
                 if (line) {
@@ -363,8 +359,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                         fill: setColorAlpha(color, fillOpacity),
                         stroke: undefined,
                         points: areaPoints,
-                        // Curve only the interior line points; the two baseline anchors join with
-                        // straight edges so the fill's top edge exactly matches the line.
+                        // Curve only the interior points so the fill's top edge exactly matches the line
                         renderer: anchoredAreaRenderer(srs.lineType),
                         data: {
                             points: areaPoints,
@@ -444,8 +439,6 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
             // Reconcile the tooltip against the current option so `update({ tooltip })` applies live.
             this._tooltip = this.syncTooltip(this._tooltip, this.options.tooltip);
 
-            // Compute the y extent from the legend-active buffers only, so hiding a series
-            // rescales the axis to the remaining ones.
             const allValues: number[] = [];
 
             this._buffers.forEach((buffer, seriesId) => {

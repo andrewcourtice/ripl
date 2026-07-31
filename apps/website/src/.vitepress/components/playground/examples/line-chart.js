@@ -15,8 +15,7 @@ const VALUES = Array.from({ length: 12 }, () => VALUE_SCALE(Math.random()));
 const COLOR = '#6366f1';
 const DURATION = 1600;
 
-// All geometry derives from the context size, so the chart fits any
-// renderer — canvas, SVG, or a terminal.
+// All geometry derives from the context size, so the chart fits any renderer.
 function getArea() {
     const marginX = context.width * 0.1;
     const marginY = context.height * 0.12;
@@ -148,8 +147,7 @@ const points = layout();
 
 scene.add([...gridLines, ...tickLabels, ...monthLabels, baseline, line, ...markers]);
 
-// --- Entry animation: the line draws on left→right while markers pop in
-// as the front passes them, and the chart furniture fades up. ---
+// --- Entry animation: the line draws left→right, markers pop in behind the front, furniture fades up. ---
 
 renderer.transition(line, {
     duration: DURATION,

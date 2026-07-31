@@ -82,7 +82,9 @@ import {
 
 import {
     arrayJoin,
+    typeIsArray,
     typeIsFunction,
+    typeIsObject,
 } from '@ripl/utilities';
 
 /** Options for configuring a {@link HeatmapChart}. */
@@ -178,7 +180,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
         const axisOpts = normalizeAxis(options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
 
         const axes = createChartAxes({
@@ -230,8 +232,6 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
 
             const valueRange = maxVal - minVal || 1;
 
-            // A sequential color scale over the value extent. `gradient` may be two colors (the
-            // default low→high pair) or any number of stops, including a built-in `COLOR_SCHEME_*` palette.
             const colorScale = scaleSequential(gradient ?? DEFAULT_COLOR_RANGE, [minVal, minVal + valueRange]);
 
             const layout = this.createLayout();
@@ -244,7 +244,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             if (legendOption !== false) {
                 const legendOptions: ColorLegendOptions = {
                     format: resolveValueFormat(this.options.format),
-                    ...(typeof legendOption === 'object' ? legendOption : {}),
+                    ...(typeIsObject(legendOption) ? legendOption : {}),
                 };
 
                 if (this._colorLegend) {
@@ -461,8 +461,6 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
                     this._attachCellHover(rect, cell);
                 }
 
-                // Reconcile the cell label against the current `labels` option so it can be
-                // toggled and restyled at runtime.
                 let label = group.getElementsByType('text')[0] as Text | undefined;
 
                 if (!dataLabels.visible && label) {
@@ -523,9 +521,7 @@ export class HeatmapChart<TData = unknown> extends Chart<HeatmapChartOptions<TDa
             }));
 
             if (legendRegion) {
-                // The bottom band is reserved at full width (before the y-axis inset is known), so
-                // realign the gradient bar to the plot's x-range, under the columns, not the
-                // y-axis label band. Mirrors CartesianChart.renderNavigator's band realignment.
+                // The band was reserved at full width before the y-axis inset was known, so realign it
                 this._colorLegend?.render({
                     ...legendRegion,
                     x: yAxisBoundingBox.right,

@@ -115,9 +115,7 @@ describe('Plot alignment', () => {
 
         const before = yAxisLineX(chart);
 
-        // Widening the values widens the tick labels, which moves the y-axis band and the plot.
-        // This is the case that previously left the axis line and the series disagreeing, because
-        // the plot was sized from the *previous* render's labels.
+        // The plot used to be sized from the *previous* render's labels, leaving line and series adrift.
         chart.update({
             data: [{
                 k: 'a',
@@ -197,8 +195,7 @@ describe('Plot alignment', () => {
 
         await chart.render();
 
-        // One pass per iteration plus the final re-application; settling on the second iteration
-        // means at most three calls.
+        // One pass per iteration plus the final re-application, so settling on iteration two means 3.
         expect(passes).toBeLessThanOrEqual(3);
     });
 

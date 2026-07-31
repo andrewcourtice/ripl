@@ -46,8 +46,7 @@ function createMockScene() {
         layer: vi.fn((fn: () => unknown) => fn()),
         createPath: vi.fn(() => ({ rect: vi.fn() })),
         applyStroke: vi.fn(),
-        // Transform operations are applied to the context during render; they are no-ops here
-        // because bounding boxes are composed from element state, not read back off the context.
+        // No-ops here: bounding boxes come from element state, not read back off the context.
         translate: vi.fn(),
         rotate: vi.fn(),
         scale: vi.fn(),
@@ -763,8 +762,7 @@ describe('Renderer', () => {
             await vi.advanceTimersByTimeAsync(500);
             expect(clearSpy.mock.calls.length).toBe(paintsBefore);
 
-            // A context-level repaint request (mutating no element, e.g. a 3D camera move) forces
-            // the next frame to paint — exactly the signal a camera change relies on.
+            // A context-level repaint request mutates no element but must still force a paint.
             scene.context.requestRender();
 
             await vi.advanceTimersByTimeAsync(500);

@@ -19,6 +19,7 @@ import {
 } from '../core/factory';
 
 import {
+    arrayMapRange,
     functionCache,
     numberClamp,
     typeIsArray,
@@ -81,7 +82,7 @@ export function getPolygonPoints(
     const offset = TAU / 4;
     const angle = TAU / sides;
 
-    const points = Array.from({ length: sides }, (_, i) => {
+    const points = arrayMapRange(sides, i => {
         return getThetaPoint(i * angle - offset, radius, cx, cy);
     });
 

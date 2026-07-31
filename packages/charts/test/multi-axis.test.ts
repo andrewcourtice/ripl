@@ -21,6 +21,10 @@ import {
     createScatterChart,
 } from '../src';
 
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 interface AxisBox {
     left: number;
     right: number;
@@ -52,8 +56,7 @@ function xAxis(chart: unknown): AxisInternals {
     return (chart as { xAxis: AxisInternals }).xAxis;
 }
 
-// Every series (across all axes) renders through the single collapsed `_series` renderer, so its
-// group ids are the set of currently-drawn series.
+// All series, across every axis, render through the single collapsed `_series` renderer.
 function seriesGroupIds(chart: unknown): string[] {
     return (chart as { _series: { groups: { id: string }[] } })._series.groups.map(group => group.id);
 }
@@ -66,8 +69,7 @@ function bubbleGroupIds(chart: unknown): string[] {
     return (chart as { _bubbleGroups: { id: string }[] })._bubbleGroups.map(group => group.id);
 }
 
-// jsdom provides no layout, so the scene starts 0×0 and axis bands have no real pixel width — size
-// the context directly so the packed multi-axis layout can be asserted in pixel space.
+// jsdom provides no layout, so the scene starts 0×0 — size the context to assert in real pixels.
 function rescaleContext(chart: unknown): void {
     (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
 }
@@ -114,13 +116,17 @@ function createDualAxisAreaChart(stacked = false) {
                 id: 'right',
                 label: 'Right',
                 value: 'large',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
         axis: {
             y: [
-                { title: 'Left' },
                 {
+                    id: 'y0',
+                    title: 'Left',
+                },
+                {
+                    id: 'y1',
                     position: 'right',
                     title: 'Right',
                 },
@@ -163,13 +169,17 @@ function createDualAxisScatterChart() {
                 label: 'Right',
                 xBy: 'x',
                 yBy: 'large',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
         axis: {
             y: [
-                { title: 'Left' },
                 {
+                    id: 'y0',
+                    title: 'Left',
+                },
+                {
+                    id: 'y1',
                     position: 'right',
                     title: 'Right',
                 },
@@ -210,13 +220,17 @@ describe('secondary y-axis (line)', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'large',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
             ],
             axis: {
                 y: [
-                    { title: 'Left' },
                     {
+                        id: 'y0',
+                        title: 'Left',
+                    },
+                    {
+                        id: 'y1',
                         position: 'right',
                         title: 'Right',
                     },
@@ -230,8 +244,6 @@ describe('secondary y-axis (line)', () => {
 
         expect(axes.length).toBe(2);
 
-        // Each axis scales to its own series' extent — the secondary domain is an order larger
-        // (visual positioning of the right-hand axis is covered by the visual gallery).
         expect(axes[1].scale.domain[1]).toBeGreaterThan(axes[0].scale.domain[1] * 10);
     });
 
@@ -273,8 +285,6 @@ describe('secondary y-axis (area)', () => {
         expect(axes.length).toBe(2);
         expect(axes[1].alignment).toBe('right');
 
-        // Each axis scales to its own series' extent — the secondary domain is an order larger
-        // (visual positioning of the right-hand axis is covered by the visual gallery).
         expect(axes[1].scale.domain[1]).toBeGreaterThan(axes[0].scale.domain[1] * 10);
     });
 
@@ -316,13 +326,17 @@ describe('secondary y-axis (area)', () => {
                     id: 'other',
                     label: 'Other',
                     value: 'other',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
             ],
             axis: {
                 y: [
-                    {},
-                    {},
+                    {
+                        id: 'y0',
+                    },
+                    {
+                        id: 'y1',
+                    },
                 ],
             },
         });
@@ -331,14 +345,10 @@ describe('secondary y-axis (area)', () => {
 
         const axes = yAxes(chart);
 
-        // The primary axis covers only its own group's cumulative total (s1 + s2), untouched by
-        // the secondary series; the secondary covers its lone series without the primary stack.
         expect(axes[0].scale.domain.at(-1)).toBeGreaterThanOrEqual(50);
         expect(axes[0].scale.domain.at(-1)).toBeLessThan(1000);
         expect(axes[1].scale.domain.at(-1)).toBeGreaterThanOrEqual(3000);
 
-        // Geometry: s2 stacks on s1 within the primary group (cumulative 50 at item b), while the
-        // secondary series sits at its raw value against its own axis scale.
         expect(sceneElement(chart, 's2-marker-b')?.cy).toBeCloseTo(axes[0].scale(50));
         expect(sceneElement(chart, 'other-marker-b')?.cy).toBeCloseTo(axes[1].scale(3000));
     });
@@ -410,8 +420,6 @@ describe('secondary y-axis (scatter)', () => {
         expect(axes.length).toBe(2);
         expect(axes[1].alignment).toBe('right');
 
-        // Each axis scales to its own series' y extent — the secondary domain is an order larger
-        // (visual positioning of the right-hand axis is covered by the visual gallery).
         expect(axes[1].scale.domain.at(-1)!).toBeGreaterThan(axes[0].scale.domain.at(-1)! * 10);
     });
 
@@ -508,8 +516,12 @@ function createDualAxisBarChart() {
         key: 'm',
         axis: {
             y: [
-                {},
-                {},
+                {
+                    id: 'y0',
+                },
+                {
+                    id: 'y1',
+                },
             ],
         },
         series: [
@@ -522,7 +534,7 @@ function createDualAxisBarChart() {
                 id: 'big',
                 label: 'Big',
                 value: 'big',
-                yAxis: 1,
+                yAxis: 'y1',
             },
         ],
     });
@@ -605,8 +617,7 @@ describe('secondary y-axis (bar)', () => {
 // The 8px gap `layoutYAxes` inserts between two same-side axis bands.
 const AXIS_GAP = 8;
 
-// Three series with order-of-magnitude-different values, each bound to its own axis; the axes
-// alternate left/right/left so both the left-stacking and the right side are exercised.
+// Three series an order of magnitude apart, one per axis; the axes alternate left/right/left.
 const TRIPLE_DATA = [
     {
         m: 'a',
@@ -624,14 +635,21 @@ const TRIPLE_DATA = [
 
 const TRIPLE_AXES = {
     y: [
-        {},
-        { position: 'right' as const },
-        { position: 'left' as const },
+        {
+            id: 'y0',
+        },
+        {
+            id: 'y1',
+            position: 'right' as const,
+        },
+        {
+            id: 'y2',
+            position: 'left' as const,
+        },
     ],
 };
 
-// Asserts the three axes are laid out on the expected sides, packed without overlap, and each scaled
-// to its own series' magnitude. Shared by every chart's 3-axis test.
+// Shared by every chart's 3-axis test.
 function expectTripleAxisLayout(chart: unknown) {
     const axes = yAxes(chart);
 
@@ -644,8 +662,7 @@ function expectTripleAxisLayout(chart: unknown) {
 
     const [box0, box1, box2] = axes.map(axis => axis.getBoundingBox());
 
-    // Axis 0 is the innermost left band (adjacent to the plot); axis 2 stacks outward beyond it with
-    // an 8px gap and no overlap; the right axis sits past the plot's right edge.
+    // Axis 0 is the innermost left band; axis 2 stacks outward beyond it; axis 1 sits right of the plot.
     expect(box0.right).toBeGreaterThan(box2.right);
     expect(box0.left - box2.right).toBeCloseTo(AXIS_GAP);
     expect(box1.left).toBeGreaterThan(box0.right);
@@ -676,13 +693,13 @@ describe('N y-axes (line)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -748,13 +765,13 @@ describe('N y-axes (area)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -836,14 +853,14 @@ describe('N y-axes (scatter)', () => {
                     label: 'B',
                     xBy: 'x',
                     yBy: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     xBy: 'x',
                     yBy: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -908,13 +925,13 @@ describe('N y-axes (bar)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -961,17 +978,20 @@ describe('N y-axes (bar)', () => {
 
 });
 
-// Titles on all three axes exercise the per-axis id namespacing (Fix 1a); the left/right/left
-// arrangement exercises the right-axis geometry mirror (Fix 1b). Both are asserted on the element
-// tree, so they hold regardless of the rendering backend.
+// Titles on all 3 axes exercise per-axis id namespacing; left/right/left the right-axis geometry mirror.
 const TITLED_TRIPLE_AXES = {
     y: [
-        { title: 'Axis A' },
         {
+            id: 'y0',
+            title: 'Axis A',
+        },
+        {
+            id: 'y1',
             position: 'right' as const,
             title: 'Axis B',
         },
         {
+            id: 'y2',
             position: 'left' as const,
             title: 'Axis C',
         },
@@ -1027,13 +1047,13 @@ describe('multi y-axis element ids and right-axis geometry', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    yAxis: 1,
+                    yAxis: 'y1',
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    yAxis: 2,
+                    yAxis: 'y2',
                 },
             ],
         });
@@ -1050,7 +1070,7 @@ describe('multi y-axis element ids and right-axis geometry', () => {
 
         const titleIds = titledYAxes(chart).map(axis => axis._titleText?.id);
 
-        expect(titleIds.every(id => typeof id === 'string' && id.length > 0)).toBe(true);
+        expect(titleIds.every(id => typeIsString(id) && id.length > 0)).toBe(true);
         expect(new Set(titleIds).size).toBe(3);
     });
 
@@ -1065,6 +1085,123 @@ describe('multi y-axis element ids and right-axis geometry', () => {
         expect(firstTickTextAlign(axes[0])).toBe('right');
         expect(firstTickTextAlign(axes[1])).toBe('left');
         expect(firstTickTextAlign(axes[2])).toBe('right');
+    });
+
+});
+
+describe('y-axis binding by id', () => {
+
+    function createChart(axes: { id: string;
+        position: 'left' | 'right'; }[]) {
+        polyfillPath2D();
+        mockCanvasContext();
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    m: 'a',
+                    small: 10,
+                    large: 5000,
+                },
+                {
+                    m: 'b',
+                    small: 30,
+                    large: 9000,
+                },
+            ],
+            key: 'm',
+            series: [
+                {
+                    id: 'small',
+                    label: 'Small',
+                    value: 'small',
+                    yAxis: 'units',
+                },
+                {
+                    id: 'large',
+                    label: 'Large',
+                    value: 'large',
+                    yAxis: 'revenue',
+                },
+            ],
+            axis: { y: axes },
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    // The domain of the axis each series named, whichever position that axis ended up in.
+    function domainOf(chart: unknown, id: string) {
+        const index = (chart as { yAxesOptions: { id?: string }[] }).yAxesOptions.findIndex(axis => axis.id === id);
+
+        expect(index, `no axis with id ${id}`).toBeGreaterThanOrEqual(0);
+
+        return yAxes(chart)[index].scale.domain;
+    }
+
+    it('Should keep every series on the axis it named when the axes are reordered', async () => {
+        const units: { id: string;
+            position: 'left' | 'right'; } = {
+            id: 'units',
+            position: 'left',
+        };
+        const revenue: { id: string;
+            position: 'left' | 'right'; } = {
+            id: 'revenue',
+            position: 'right',
+        };
+
+        const first = createChart([units, revenue]);
+        const swapped = createChart([revenue, units]);
+
+        await first.render();
+        await swapped.render();
+
+        // Binding by position would have followed the move and swapped the two domains.
+        expect(domainOf(swapped, 'units')).toEqual(domainOf(first, 'units'));
+        expect(domainOf(swapped, 'revenue')).toEqual(domainOf(first, 'revenue'));
+
+        // And the two are genuinely different axes, so the assertion above has something to catch.
+        expect(domainOf(first, 'revenue')[1]).toBeGreaterThan(domainOf(first, 'units')[1] * 10);
+    });
+
+    it('Should fall back to the primary axis when a series names one that is not configured', async () => {
+        const chart = createChart([
+            {
+                id: 'units',
+                position: 'left',
+            },
+            {
+                id: 'revenue',
+                position: 'right',
+            },
+        ]);
+
+        chart.update({
+            series: [
+                {
+                    id: 'small',
+                    label: 'Small',
+                    value: 'small',
+                    yAxis: 'nope',
+                },
+                {
+                    id: 'large',
+                    label: 'Large',
+                    value: 'large',
+                    yAxis: 'revenue',
+                },
+            ],
+        });
+
+        await chart.render();
+
+        // Both the unnamed and the misnamed case land on the primary axis rather than throwing.
+        expect(domainOf(chart, 'units')[1]).toBeGreaterThan(0);
     });
 
 });
@@ -1088,8 +1225,7 @@ describe('secondary y-axis tick labels', () => {
             y: number; }[]>();
 
         groups.forEach(group => {
-            // Ids are `y-tick:<axis group id>:<value>`, and the auto-generated group id itself
-            // contains a colon, so take everything between the prefix and the final segment.
+            // Group ids themselves contain colons, so slice between the `y-tick:` prefix and the last segment.
             const axisGroup = group.id.slice('y-tick:'.length, group.id.lastIndexOf(':'));
             const label = group.getElementsByType('text')[0];
 
@@ -1119,8 +1255,14 @@ describe('secondary y-axis tick labels', () => {
             animation: false,
             axis: {
                 y: [
-                    { position: 'left' },
-                    { position: 'right' },
+                    {
+                        id: 'y0',
+                        position: 'left',
+                    },
+                    {
+                        id: 'y1',
+                        position: 'right',
+                    },
                 ],
             },
             data: [
@@ -1146,7 +1288,7 @@ describe('secondary y-axis tick labels', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'w',
-                    ...(bindSecondSeries ? { yAxis: 1 } : {}),
+                    ...(bindSecondSeries ? { yAxis: 'y1' } : {}),
                 },
             ],
         });
@@ -1165,8 +1307,6 @@ describe('secondary y-axis tick labels', () => {
 
         expect(byGroup.length).toBe(2);
 
-        // One axis covers the 0–30 series, the other the 0–12,000 series; neither may borrow the
-        // other's extent, and every label must be finite and positioned.
         const maxima = byGroup.map(labels => Math.max(...labels.map(label => Number(label.content.replace(/,/g, '')))));
 
         expect(Math.min(...maxima)).toBeLessThanOrEqual(30);
@@ -1180,11 +1320,7 @@ describe('secondary y-axis tick labels', () => {
     });
 
     it('Should not render a secondary axis that has no series bound to it', async () => {
-        // Both series fall back to the primary axis, so the secondary axis has a zero-width extent.
-        // That used to emit a single `NaN` tick at `y = NaN` — invisible on canvas, but rendered by
-        // SVG as a stray "NaN" pinned to the top of the chart. Hardening the scale turned it into a
-        // lone `0` tick against the baseline, which is finite but still describes data that is not on
-        // the plot, so the axis is skipped entirely instead.
+        // A zero-width extent used to emit a stray `NaN` tick, so an unbound axis is now skipped entirely.
         const chart = createChart(false);
 
         await chart.render();
@@ -1208,8 +1344,6 @@ describe('secondary y-axis tick labels', () => {
         await chart.render();
         expect(tickLabelsByAxisGroup(chart).size).toBe(2);
 
-        // The right-hand axis labels only the `right` series, so hiding it leaves that axis with
-        // nothing to describe.
         clickLegendItem(chart, 'right');
         await chart.render();
 
@@ -1231,10 +1365,7 @@ describe('secondary y-axis tick labels', () => {
         // The x-axis spans the plot horizontally, so its box is the plot's horizontal extent.
         const plotRight = (chart: unknown) => xAxis(chart).getBoundingBox().right;
 
-        // A skipped axis has to reserve *nothing*: the plot must reach the padding edge of the 600px
-        // context, exactly as it would if the second axis had never been configured. Merely rendering
-        // a narrower band (which a zero-width extent did, having only a `0` to measure) already made
-        // the plot wider than the two-axis case, so comparing the two is not enough.
+        // A narrower band already beats the two-axis case, so pin the absolute edge rather than compare.
         expect(plotRight(unbound)).toBeCloseTo(600 - DEFAULT_CHART_PADDING, 0);
         expect(plotRight(bound)).toBeLessThan(plotRight(unbound));
     });

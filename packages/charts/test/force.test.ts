@@ -100,8 +100,7 @@ describe('simulateForce', () => {
     });
 
     test('keeps pre-seeded positions instead of re-seeding them', () => {
-        // The chart seeds existing nodes from their last layout so reweights animate from where they
-        // were. Only zero positions get the circular seed; non-zero positions are left in place.
+        // The chart seeds nodes from their last layout so reweights animate from where they were.
         const seeded: ForceNode[] = [
             {
                 id: 'a',
@@ -152,8 +151,7 @@ describe('simulateForce', () => {
             },
         ];
 
-        // Settle once, then re-run seeded from those positions (as the chart does on a reweight of
-        // the same topology). The layout should barely move, not reshuffle.
+        // Re-running seeded from settled positions is what the chart does on a reweight of the same topology.
         const settled = simulateForce(nodes(ids), links, { iterations: 300 });
         const seeded = settled.map(node => ({
             ...node,

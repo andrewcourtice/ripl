@@ -96,8 +96,7 @@ describe('Axis title spacing', () => {
 
         expect(labels.length).toBeGreaterThan(0);
 
-        // A left-aligned y-axis right-aligns its labels, so the widest label's outer edge is the
-        // smallest `left` among them. The rotated title's world box gives its on-screen extent.
+        // A left-aligned y-axis right-aligns its labels, so the widest label's outer edge is the smallest `left`.
         const labelOuterEdge = Math.min(...labels.map(label => label.getBoundingBox().left));
         const titleBox = axisTitle(chart, 'y').getBoundingBox();
 
@@ -151,8 +150,7 @@ describe('Axis title spacing', () => {
 
         const titleBox = axisTitle(chart, 'y').getBoundingBox();
 
-        // The rotated title reads bottom-to-top, so its on-screen box is tall and narrow. This only
-        // holds if the world box composes the element's rotation.
+        // The rotated title is tall and narrow only if the world box composes the element's rotation.
         expect(titleBox.height).toBeGreaterThan(titleBox.width);
     });
 

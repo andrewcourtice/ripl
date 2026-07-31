@@ -325,8 +325,7 @@ describe('Overview navigator strip', () => {
         const axisGroups = sceneOf(chart).queryAll<Group>('.chart-axis');
         const clipped = axisGroups.filter(group => findClip(group)?.clip === true);
 
-        // Both axes exist, but only the sliding category (x) axis is masked — the value axis is held at
-        // the full extent, so its min/max labels are never bisected.
+        // Only the sliding category axis is masked; the value axis stays full so its labels are not bisected.
         expect(axisGroups.length).toBe(2);
         expect(clipped.length).toBe(1);
 
@@ -477,8 +476,7 @@ describe('Overview navigator strip', () => {
         const strip = rectOf(chart, 'navigator-strip');
         const last = DATA.length - 1;
 
-        // No bleed: the leftmost sub-bar of the first category and the rightmost of the last category
-        // both sit inside the strip rectangle.
+        // No bleed: the first category's leftmost sub-bar and the last's rightmost sit inside the strip.
         const first = rectOf(chart, 'navigator-overview-a-bar-0');
         const lastBar = rectOf(chart, `navigator-overview-b-bar-${last}`);
 
@@ -530,8 +528,7 @@ describe('Overview navigator strip', () => {
         expect(aBar.x).toBeCloseTo(bBar.x, 6);
         expect(aBar.width).toBeCloseTo(bBar.width, 6);
 
-        // Bottom strip: values grow upward, so `b` sits on top of `a` — b's lower edge meets a's upper
-        // edge, and `a` (anchored at the baseline) extends lower than `b`.
+        // Bottom strip: values grow upward, so `b` sits on top of `a`, and `a` extends down to the baseline.
         expect(Math.abs((bBar.y + bBar.height) - aBar.y)).toBeLessThan(1e-6);
         expect(aBar.y + aBar.height).toBeGreaterThan(bBar.y + bBar.height);
 

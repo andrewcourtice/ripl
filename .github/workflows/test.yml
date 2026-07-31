@@ -37,6 +37,11 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      # Every option named in a docs example must exist on the chart, and every option the chart has
+      # must appear in one of its examples. Fails if either drifts from the code.
+      - name: Check chart option docs
+        run: yarn workspace @ripl/website check-chart-options
+
       # Every configurable option of every chart must be reachable from that chart's demo config
       # panel, and every control must name an option the chart actually has. Fails if either drifts.
       - name: Check chart config coverage

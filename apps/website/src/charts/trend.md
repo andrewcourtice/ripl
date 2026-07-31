@@ -346,31 +346,72 @@ createTrendChart('#container', {
 
 ## Options
 
-- **`data`**: the data array shared by all series
-- **`series`**: array of series, each a discriminated union on `type`:
-  - **`type: 'line'`**: `id`, `value`, `label`, optional `color`, `lineType`, `lineWidth`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `markers`, `markerRadius`
-  - **`type: 'area'`**: as line, plus `fillOpacity` (fill opacity, default `0.3`); unstacked areas paint largest-first
-  - **`type: 'bar'`**: `id`, `value`, `label`, optional `color`
-- **`key`**: key accessor for the categorical x-axis
-- **`stacked`**: stack same-type series (default `false`)
-- **`borderRadius`**: corner radius applied to bars (default `2`)
-- **`overview`** (`boolean | { size }`): show the navigator strip; enabling it also turns on in-plot pan/zoom
-- **`navigator`** (`boolean | NavigatorInteractions`): configure in-plot pan/zoom/brush directly
-- **`labels`** (`boolean | anchor`): show value labels next to marks
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
-- **`format`**: format applied to values in tooltips and labels
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createTrendChart('#container', {
+    data,
+    key: 'month',
+    borderRadius: 4,
+    labels: true,
+    format: 'number',
+    // `stacked` cumulates same-type series onto one scale, so it is shown on its own in Variants
+    // above. Each series declares its own `type` and the options that type supports.
+    series: [
+        {
+            type: 'area',
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            color: '#7cacf8',
+            lineType: 'monotoneX',
+            lineStyle: 'solid',
+            lineWidth: 2,
+            fillOpacity: 0.25,
+            markers: false,
+        },
+        {
+            type: 'bar',
+            id: 'orders',
+            value: 'orders',
+            label: 'Orders',
+            color: '#6dd5b1',
+        },
+        {
+            type: 'line',
+            id: 'target',
+            value: 'target',
+            label: 'Target',
+            color: '#b197fc',
+            markerRadius: 3,
+        },
+    ],
+});
+```
 
 ## Events
 
-Bar series emit `barclick` / `barenter` / `barleave`, and line/area markers emit `markerclick` / `markerenter` / `markerleave`. Each payload carries `{ x, y, xValue, yValue, seriesId }`:
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
 
+<!-- events:start -->
+<!-- eslint-skip -->
 ```ts
-chart.on('markerclick', event => {
-    const { seriesId, xValue, yValue } = event.data;
-    console.log(`${seriesId} @ ${xValue}: ${yValue}`);
-});
+// Emitted when a bar is clicked.
+chart.on('barclick',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when the pointer enters a bar.
+chart.on('barenter',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when the pointer leaves a bar.
+chart.on('barleave',    event => console.log(event.data)); // event.data: TrendChartBarEvent
+// Emitted when a line/area marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
+// Emitted when the pointer enters a line/area marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
+// Emitted when the pointer leaves a line/area marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: TrendChartMarkerEvent
 ```
+<!-- events:end -->

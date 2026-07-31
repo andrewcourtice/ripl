@@ -22,13 +22,17 @@ import {
     ref,
 } from 'vue';
 
+import {
+    numberClamp,
+} from '@ripl/utilities';
+
 const STORAGE_KEY = 'ripl-devtools:split-ratio';
 const DEFAULT_RATIO = 0.66;
 const MIN_RATIO = 0.2;
 const MAX_RATIO = 0.85;
 
 function clampRatio(value: number): number {
-    return Math.min(MAX_RATIO, Math.max(MIN_RATIO, value));
+    return numberClamp(value, MIN_RATIO, MAX_RATIO);
 }
 
 function readRatio(): number {

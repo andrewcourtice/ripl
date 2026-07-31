@@ -32,8 +32,7 @@ function connect(): void {
 
     port.onMessage.addListener(message => store.handleMessage(message as BridgeMessage));
 
-    // The background service worker was restarted — reconnect so the port-based
-    // routing (and the registry replay) is re-established.
+    // The service worker restarted — reconnect to re-establish port routing and the registry replay.
     port.onDisconnect.addListener(() => {
         port = null;
         store.setConnected(false);

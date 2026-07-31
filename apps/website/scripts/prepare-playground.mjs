@@ -52,8 +52,7 @@ for (const pkg of PACKAGES) {
     const esmSrc = path.resolve(pkgDistDir, 'index.js');
     const dtsSrc = path.resolve(pkgDistDir, 'index.d.ts');
 
-    // tsdown emits both the ESM bundle and the bundled declarations, so run the
-    // package's build if either artifact is missing.
+    // tsdown emits both artifacts together, so build the package if either is missing.
     if (!fs.existsSync(esmSrc) || !fs.existsSync(dtsSrc)) {
         const pkgDir = path.resolve(packagesDir, shortName);
         console.warn(`Building ${pkg}...`);
@@ -68,8 +67,7 @@ for (const pkg of PACKAGES) {
         }
     }
 
-    // The playground is unusable for a package without its bundle and types,
-    // so a missing artifact fails the build rather than degrading silently.
+    // The playground is unusable without both, so fail the build rather than degrade silently.
     if (!fs.existsSync(esmSrc)) {
         missingArtifacts.push(esmSrc);
     }
@@ -97,14 +95,9 @@ if (missingArtifacts.length) {
     process.exit(1);
 }
 
-// Bundle xterm.js (+ the fit addon) to a single self-contained ESM module served from the app
-// origin, so the Terminal playground context resolves them from the import map with no external CDN.
+// Bundle xterm.js to one self-contained module served from the app origin, so no external CDN is needed.
 try {
-    // rolldown is the bundler tsdown builds the packages with, so the playground reuses the
-    // existing toolchain rather than pulling in a second one. Its API is used directly rather
-    // than tsdown's `build()`: tsdown is aimed at publishing libraries, so it externalises
-    // `dependencies` and emits declarations — the opposite of the single self-contained module
-    // needed here.
+    // rolldown directly, not tsdown's `build()`: tsdown externalises `dependencies`, the opposite of this.
     const { rolldown } = await import('rolldown');
     const xtermOutput = path.resolve(outputDir, 'xterm');
     fs.mkdirSync(xtermOutput, { recursive: true });
@@ -148,10 +141,7 @@ try {
     console.warn('Warning: could not bundle xterm for the terminal playground, skipping:', error.message);
 }
 
-// Monaco bundles TypeScript 5.9, whose `lib.dom` predates the WebGPU interfaces that TypeScript 6
-// ships (and that `@ripl/webgpu`'s declarations rely on). Serve `@webgpu/types` so the editor can
-// resolve `GPUDevice` & co. `global: true` tells the editor to register it as an ambient lib
-// rather than wrapping it in `declare module`, which is what the package entries get.
+// Monaco bundles TypeScript 5.9, whose `lib.dom` predates the WebGPU interfaces `@ripl/webgpu` relies on.
 try {
     const webgpuTypesOutput = path.resolve(outputDir, 'webgpu-types');
     fs.mkdirSync(webgpuTypesOutput, { recursive: true });

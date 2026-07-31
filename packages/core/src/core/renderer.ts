@@ -264,9 +264,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         const deltaTime = this._currentTime - this._previousTime;
 
-        // Tick fires every frame, even ones whose paint is skipped, so time-based consumers
-        // stay live. A tick handler that mutates element state invalidates the scene (via the
-        // bubbled `updated` event), so its change is painted this same frame.
+        // Tick fires every frame, even skipped-paint ones, so time-based consumers stay live.
         this.emit('tick', {
             time: this._currentTime,
             deltaTime,
@@ -274,11 +272,7 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         this._previousTime = this._currentTime;
 
-        // Skip the paint (but keep the loop) when nothing changed: the scene is clean, no
-        // transition is advancing state, and no per-frame debug overlay (fps) is requested.
-        // The context is left untouched (no clear, no batch) so the previous frame persists
-        // (and vtree/terminal backends see no churn). A transition's completion frame still
-        // paints: its entry is only removed from the map during that frame's render.
+        // Skip the paint but keep the loop; the context is untouched so the previous frame persists.
         if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
             this._handle = factory.requestAnimationFrame(() => this._tick());
             return;
@@ -359,8 +353,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         const context = this._scene.context;
 
         this._scene.instructions.forEach(({ type, element }) => {
-            // A group boundary closes here; its transitions were already advanced at the
-            // matching `push`, so restore and move on without re-processing them.
+            // A group's transitions were advanced at its matching `push`, so just restore here.
             if (type === 'pop') {
                 context.popGroup();
                 element.$reset();
@@ -536,9 +529,7 @@ export class Renderer extends EventBus<RendererEventMap> {
         };
 
         const instance = new Transition((resolve, _reject, onAbort) => {
-            // Targets animate their own state, including groups, which the render loop advances at
-            // their `push` op so a group transitions as a unit (transform about its origin, opacity
-            // composited at the boundary) rather than fanning out to per-leaf animations.
+            // Groups are advanced at their `push` op so they transition as a unit, not per-leaf.
             const elements = valueOneOrMore(element);
 
             if (!elements.length) {

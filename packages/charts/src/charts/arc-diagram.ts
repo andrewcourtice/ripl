@@ -271,8 +271,6 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
             const colorFor = (node: ArcDiagramNode) => node.color ?? this.getSeriesColor(node.group ?? node.id);
 
-            // Legend-hidden groups are excluded from the axis layout and rendering; links keep only
-            // active endpoints, so the remaining nodes re-space to fill the axis.
             const activeNodes = this.filterActive(nodes, node => node.group ?? node.id);
             const activeNodeIds = new Set(activeNodes.map(node => node.id));
             const activeLinks = links.filter(link => activeNodeIds.has(link.source) && activeNodeIds.has(link.target));
@@ -302,8 +300,6 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
-            // One legend entry per distinct node group (or per node when ungrouped), using the
-            // group's/node's resolved color.
             const legendSeen = new Set<string>();
             const legendItems: LegendItem[] = [];
 
@@ -327,9 +323,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
 
             const area = layout.area;
 
-            // --- Axis geometry, parameterised by orientation ---
-            // `along` runs down the axis (x when horizontal, y when vertical); `cross` is the fixed
-            // axis position, with arcs bulging away from the labels (up / right).
+            // Axis geometry: `along` runs down the axis (x when horizontal, y when vertical), `cross` is fixed
             const labelGutter = 22;
             const margin = maxRadius + 6;
 
@@ -358,8 +352,7 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
             const toXY = (along: number, cross: number): Point => horizontal ? [along, cross] : [cross, along];
             const nodePoint = (id: string): Point => toXY(nodeInfo.get(id)?.along ?? alongStart, baseCross);
 
-            // Semicircle sampled from the lower `along` endpoint to the higher one, so `interpolatePath`
-            // reveals it growing outward from the earlier node (left→right / top→bottom).
+            // Sampled low→high so `interpolatePath` grows the arc outward from the earlier node
             const arcPoints = (alongA: number, alongB: number): Point[] => {
                 const lo = Math.min(alongA, alongB);
                 const hi = Math.max(alongA, alongB);
@@ -649,8 +642,6 @@ export class ArcDiagramChart<TData = unknown> extends Chart<ArcDiagramChartOptio
                 ...nodeUpdates.map(([, group]) => group),
             ];
 
-            // Legend hover highlights the hovered cluster's nodes (legend id = node.group ?? node.id;
-            // node group ids are `arc-node-<id>`), dimming the other clusters.
             const nodeClusterOf = new Map<string, string>();
             nodes.forEach(node => nodeClusterOf.set(`arc-node-${node.id}`, node.group ?? node.id));
             this.registerHighlightGroups(this._nodeElements, group => nodeClusterOf.get(group.id) ?? group.id);

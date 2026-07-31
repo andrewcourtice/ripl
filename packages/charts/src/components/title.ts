@@ -79,8 +79,7 @@ export class ChartTitle extends ChartComponent {
             this._text = createText({
                 id: 'chart-title',
                 class: 'chart-title',
-                // Sit above the plot/axes but below the tooltip (1000) so tooltips near the
-                // top of the chart aren't occluded by the title.
+                // Above the plot/axes, below the tooltip (1000), so top-edge tooltips aren't occluded.
                 zIndex: 500,
                 content: this._options.text,
                 x: 0,
@@ -103,8 +102,6 @@ export class ChartTitle extends ChartComponent {
             return 0;
         }
 
-        // The text element already measures itself via getBoundingBox, so reuse it rather than
-        // re-deriving the metrics by hand.
         const text = this._ensureText();
         text.content = this._options.text;
         text.font = this._options.font;

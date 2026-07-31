@@ -193,7 +193,7 @@ function getSeries() {
         lineWidth: extras.lineWidth,
         markers: extras.markers,
         color: config.colors[s.id],
-        yAxis: multiAxis && s.id === 'mobile' ? 1 : undefined,
+        yAxis: multiAxis && s.id === 'mobile' ? 'mobile' : undefined,
     }));
 }
 
@@ -205,14 +205,18 @@ function buildOptions() {
         ...buildCommonOptions(config),
     };
 
-    // A second `axis.y` entry renders a right-hand y-axis; the mobile series binds to it via its
-    // `yAxis: 1` series option.
+    // A second `axis.y` entry renders a right-hand y-axis; the mobile series names it through its
+    // `yAxis` option.
     if (multiAxisActive()) {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'desktop',
+                },
+                {
+                    id: 'mobile',
                     visible: config.axesVisible,
                     title: 'Mobile (sessions)',
                 },
@@ -369,7 +373,7 @@ createAreaChart('#container', {
 
 ### Secondary y-axis
 
-Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `yAxis` option (an index or the axis `id`). When the chart is stacked, series stack per axis group:
+Supply a second `axis.y` entry to render a right-hand axis, and bind a series to it with the series `yAxis` option, naming the axis's `id`. When the chart is stacked, series stack per axis group:
 
 ```ts
 createAreaChart('#container', {
@@ -385,13 +389,17 @@ createAreaChart('#container', {
             id: 'conversion',
             value: 'conversion',
             label: 'Conversion %',
-            yAxis: 1,
+            yAxis: 'conversion',
         },
     ],
     axis: {
         y: [
-            { title: 'Sessions' },
             {
+                id: 'sessions',
+                title: 'Sessions',
+            },
+            {
+                id: 'conversion',
                 title: 'Conversion %',
                 format: 'percentage',
             },
@@ -427,14 +435,71 @@ createAreaChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `value`, `label`, optional `color`, `fillOpacity`, `lineType`, `lineStyle` (`'solid'` \| `'dashed'` \| `'dotted'` \| custom dash array), `lineWidth`, `markers`, `axis` (y-axis index/id binding)
-- **`key`**: key accessor for data points
-- **`stacked`**: `false` (overlaid, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`y` accepts an array for multiple y-axes; `x.scale: 'time'` positions date keys continuously)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    labels: true,
+    format: 'number',
+    // `stacked` shares one cumulative scale across a group, so it is shown on its own in Variants
+    // above rather than combined with the second axis here.
+    series: [
+        {
+            id: 'sessions',
+            value: 'sessions',
+            label: 'Sessions',
+            color: '#7cacf8',
+            lineType: 'monotoneX',
+            lineStyle: 'solid',
+            lineWidth: 2,
+            fillOpacity: 0.3,
+            markers: true,
+            yAxis: 'sessions',
+        },
+        {
+            id: 'conversion',
+            value: 'conversion',
+            label: 'Conversion %',
+            color: '#6dd5b1',
+            yAxis: 'conversion',
+        },
+    ],
+    axis: {
+        y: [
+            {
+                id: 'sessions',
+                title: 'Sessions',
+            },
+            {
+                id: 'conversion',
+                position: 'right',
+                title: 'Conversion %',
+                format: 'percentage',
+            },
+        ],
+    },
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+// Emitted when the pointer enters a marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+// Emitted when the pointer leaves a marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: AreaChartMarkerEvent
+```
+<!-- events:end -->

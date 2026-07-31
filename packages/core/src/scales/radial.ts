@@ -57,8 +57,7 @@ export function scaleRadial(
     // Radial magnitude must never exceed the ring, so clamping is enabled unless explicitly disabled.
     const clamp = options?.clamp ?? true;
 
-    // Resolve tick-padding to a concrete domain once so `convert` and `invert` share the exact same
-    // `[min, max]`; see `continuous.ts` for why the invert must not re-pad the range.
+    // Resolve tick-padding once so `convert` and `invert` share a domain (see `continuous.ts`).
     const padCount = options?.padToTicks;
     const mappingDomain = padCount ? niceDomain(resolvedDomain, +padCount) : resolvedDomain;
     const mappingOptions = { clamp };

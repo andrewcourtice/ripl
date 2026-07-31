@@ -13,11 +13,7 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
     ChartDataLabelsInput,
-    ChartGridInput,
-    ChartLegendInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -96,11 +92,11 @@ export interface BarChartSeriesOptions<TData> {
     /** Human-readable series name shown in the legend and tooltips. */
     label: string;
     /**
-     * Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the
-     * primary axis. Takes effect for vertical grouped bars; stacked/percent modes and horizontal
-     * orientation always render against the primary axis.
+     * The `id` of the y-axis this series binds to. Defaults to the primary axis. Takes effect for
+     * vertical grouped bars; stacked/percent modes and horizontal orientation always render against
+     * the primary axis.
      */
-    yAxis?: number | string;
+    yAxis?: string;
 }
 
 /** Options for configuring a {@link BarChart}. */
@@ -120,14 +116,6 @@ export interface BarChartOptions<TData = unknown> extends CartesianChartOptions<
      * zero), the value axis is fixed to 0–100%, and values default to percentage formatting.
      */
     stacked?: boolean | 'percent';
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
-    legend?: ChartLegendInput;
-    /** Axis configuration for the categorical and value axes. */
-    axis?: ChartAxisInput<TData>;
     /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;
     /** Show value labels next to each bar. `true` uses the default anchor; a string sets the anchor side. */
@@ -195,8 +183,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return this.options.stacked === 'percent';
     }
 
-    // Wraps each series' value accessor to return its share of the category's positive total,
-    // computed over the ACTIVE series so legend toggling renormalizes the remaining shares.
     private _percentSeries(series: BarChartSeriesOptions<TData>[], data: TData[]): BarChartSeriesOptions<TData>[] {
         const totals = new Map<TData, number>(data.map(item => [
             item,
@@ -258,9 +244,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         return this.buildOverviewSeries(this.filterActive(series), data, () => 'bar', (srs, item) => this._seriesValue(srs, item));
     }
 
-    // Resolves the shared axis-tooltip content for the hovered plot x (vertical bars): the nearest
-    // category, one row per active series, anchored above the tallest bar top at that category. The
-    // axis tooltip is wired for vertical orientation only; horizontal bars keep per-item tooltips.
+    // Axis-tooltip content for the hovered plot x. Vertical only; horizontal keeps item tooltips.
     private _axisTooltipSnapshot(
         plotX: number,
         keys: string[],
@@ -345,9 +329,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            // Legend-hidden series are excluded from extents and rendering, so toggling a series
-            // rescales the value axis and animates the series out through the standard exit join.
-            // Percent mode additionally wraps the active series' value accessors in share space.
             const activeSeries = this._isPercent
                 ? this._percentSeries(this.filterActive(series), data)
                 : this.filterActive(series);
@@ -382,8 +363,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
 
             this.reserveLegend(layout, legendItems);
 
-            // Reserve the overview strip band before the axes are measured (a side band for a horizontal
-            // bar chart, a bottom band for a vertical one).
+            // Reserve the navigator band before the axes are measured
             const navBand = this.reserveNavigatorBand(layout);
 
             const area = layout.area;
@@ -392,9 +372,7 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             const right = area.x + area.width;
             const bottom = area.y + area.height;
 
-            // Secondary axes apply to vertical grouped bars only, because stacked columns can't mix
-            // scales and the horizontal layout has no right-hand value band (see the series
-            // `axis` option JSDoc).
+            // Multi-axis is vertical grouped only: stacked can't mix scales, horizontal has no right band
             if (this.yAxes.length > 1 && !this._isHorizontal && !this._isStacked) {
                 return this._renderMultiAxis({
                     series: activeSeries,
@@ -412,8 +390,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 let categoryScale!: BandScale<string>;
                 let adjustedValueScale!: Scale;
 
-                // Resolve the plot outside-in so the bar geometry below is derived from the same
-                // bounds the axes draw (see `resolveCartesianPlot`).
                 const horizontalPlot = this.resolveCartesianPlot(area, candidate => {
                     adjustedValueScale = createValueScale(this.xAxisOptions, dataExtent, [candidate.x, candidate.x + candidate.width]);
                     this.xAxis.scale = adjustedValueScale;
@@ -426,16 +402,11 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                     this.yAxis.scale = this.bandCenterScale(categoryScale, keys);
                 });
 
-                // The navigator windows the y (category) axis only; the value axis (x) stays at the full
-                // extent, so the side strip scrubs vertically without rescaling the value domain.
                 const viewedCategoryScale = this.applyViewToScale(categoryScale, 'y');
                 this.yAxis.scale = this.bandCenterScale(viewedCategoryScale, keys);
 
                 this.clipPlot(horizontalPlot);
-                // The shared axis tooltip is vertical-only (category along x). Wiring a null resolver
-                // here tears down any listeners left by a prior vertical render (e.g. after
-                // `update({ orientation })`) so a stale snapshot can't fire; item tooltips stay
-                // suppressed in axis mode, so horizontal + axis simply shows no tooltip.
+                // Null resolver tears down listeners from a prior vertical render so a stale snapshot can't fire
                 this.setupAxisTooltip(horizontalPlot, () => null);
 
                 this.renderGrid(
@@ -462,8 +433,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
             let categoryScale!: BandScale<string>;
             let adjustedValueScale!: Scale;
 
-            // Resolve the plot outside-in so the bar geometry below is derived from the same bounds
-            // the axes draw (see `resolveCartesianPlot`).
             const verticalPlot = this.resolveCartesianPlot(area, candidate => {
                 adjustedValueScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
                 this.yAxis.scale = adjustedValueScale;
@@ -476,8 +445,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
                 this.xAxis.scale = this.bandCenterScale(categoryScale, keys);
             });
 
-            // The navigator windows the x (category) axis only; the value axis (y) stays at the full
-            // extent, so the bottom strip scrubs horizontally without rescaling the value domain.
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
             const categoryCenterScale = this.bandCenterScale(viewedCategoryScale, keys);
             this.xAxis.scale = categoryCenterScale;
@@ -506,10 +473,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         });
     }
 
-    // Vertical grouped bars across N y-axes: each axis's extent covers the active series bound to
-    // it, `layoutYAxes` packs the axis bands against the chart edges and returns the plot bounds
-    // between them, and every bar renders against its own axis's scale via the renderer's per-series
-    // scale resolver.
     private _renderMultiAxis(ctx: {
         series: BarChartSeriesOptions<TData>[];
         keys: string[];
@@ -532,8 +495,6 @@ export class BarChart<TData = unknown> extends CartesianChart<BarChartOptions<TD
         let scales: Scale[] = [];
         let categoryScale!: BandScale<string>;
 
-        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
-        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
         const plot = this.resolveCartesianPlot({
             x: left,
             y: top,

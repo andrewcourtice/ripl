@@ -159,10 +159,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set fill(value) {
             this._fillCSS = value;
 
-            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
-            // entirely, which otherwise ran for every element on every frame. Gradient and pattern
-            // strings both need the full resolver; a raw pattern string is not a valid canvas
-            // fillStyle, so skipping it here would silently leave the previous (default) fill.
+            // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid fill.
             if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasFill(this.context, value, bounds);
@@ -306,10 +303,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         public set stroke(value) {
             this._strokeCSS = value;
 
-            // Fast path: plain colors skip bounding-box resolution and gradient/pattern parsing
-            // entirely. Gradient and pattern strings both need the full resolver; a raw pattern
-            // string is not a valid canvas strokeStyle, so skipping it here would silently leave
-            // the previous (default) stroke.
+            // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid stroke.
             if (isGradientString(value) || isPatternString(value)) {
                 const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasStroke(this.context, value, bounds);
@@ -334,9 +328,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
             this.context.textBaseline = value;
         }
 
-        // Hook: the box gradients resolve against. 2D contexts use the element's local
-        // (untransformed) box; the 3D canvas context overrides this to use the world box because
-        // its projected faces live in screen space.
+        // Hook: the box gradients resolve against — the 3D context overrides it to use the world box.
         protected gradientBounds(): Box | undefined {
             return this.currentRenderElement?.getBoundingBox?.(true);
         }

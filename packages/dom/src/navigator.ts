@@ -12,6 +12,7 @@ import type {
 
 import {
     typeIsBoolean,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 import {
@@ -41,8 +42,8 @@ const WHEEL_SENSITIVITY = 0.002;
  */
 function isInteractiveElement(element: unknown): element is HTMLElement {
     return !!element
-        && typeof (element as HTMLElement).getBoundingClientRect === 'function'
-        && typeof (element as HTMLElement).addEventListener === 'function';
+        && typeIsFunction((element as HTMLElement).getBoundingClientRect)
+        && typeIsFunction((element as HTMLElement).addEventListener);
 }
 
 function resolveInteraction(option: NavigatorInteractionOption | undefined, fallback: boolean): ResolvedInteraction {
@@ -99,11 +100,7 @@ export class DOMNavigator extends Navigator {
 
         this._element = context.element as unknown as HTMLElement;
 
-        // A DOMNavigator drives real wheel/pointer gestures, so it needs a DOM-interactive element.
-        // Non-DOM contexts signal this by carrying a non-interactive element (e.g. the terminal
-        // context passes a dummy `{}`), so feature-detect the DOM APIs the navigator relies on rather
-        // than crashing on `getBoundingClientRect`. When unsupported, warn and stay inert; the
-        // navigator constructs but attaches nothing and its transform never leaves the identity.
+        // Non-DOM contexts (e.g. terminal) carry a dummy element, so feature-detect and stay inert, not crash.
         if (!isInteractiveElement(this._element)) {
             console.warn('createNavigator: the provided context is not DOM-interactive; navigation is disabled.');
             return;
@@ -201,8 +198,7 @@ export class DOMNavigator extends Navigator {
 
             const button = event.button ?? 0;
 
-            // Shift-drag brushes (when enabled); any other click-and-hold with the left or middle
-            // button pans, including ⌘/Ctrl-click, matching the Figma "grab the canvas" gesture.
+            // Shift-drag brushes; any other left/middle click-and-hold pans, matching the Figma grab gesture.
             this._brushing = brush.enabled && event.shiftKey;
             this._panning = pan.enabled && !this._brushing && button !== 2;
 

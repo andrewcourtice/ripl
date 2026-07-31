@@ -11,9 +11,6 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartGridInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -78,12 +75,6 @@ export interface HistogramChartOptions<TData = unknown> extends CartesianChartOp
     color?: string;
     /** Corner radius in pixels applied to the top of each bar. Defaults to 2. */
     borderRadius?: number;
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Axis configuration for the value and frequency axes. */
-    axis?: ChartAxisInput<TData>;
     /** Format applied to bin bounds shown in tooltips. */
     format?: ValueFormatInput;
 }
@@ -211,8 +202,6 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             let countScale!: ReturnType<typeof scaleContinuous>;
             let valueScale!: ReturnType<typeof scaleContinuous>;
 
-            // Resolve the plot outside-in so the bin geometry below is derived from the same bounds
-            // the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 countScale = scaleContinuous([0, maxCount], [candidate.y + candidate.height, candidate.y], {
                     nice: true,
@@ -224,8 +213,6 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 this.xAxis.scale = valueScale;
             });
 
-            // Rescale both continuous axes to the navigator view (no-op at rest) so bins and axes pan
-            // and zoom in 2D together.
             const viewedValueScale = this.applyView(valueScale, 'x');
             const viewedCountScale = this.applyView(countScale, 'y');
             this.xAxis.scale = viewedValueScale;

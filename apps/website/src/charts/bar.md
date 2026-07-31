@@ -148,7 +148,7 @@ function getSeries() {
         label: s.label,
         color: config.colors[s.id],
         // The return-rate series is a percentage; give it its own axis when asked.
-        yAxis: multiAxisActive.value && s.id === 'returnRate' ? 1 : undefined,
+        yAxis: multiAxisActive.value && s.id === 'returnRate' ? 'rate' : undefined,
     }));
 }
 
@@ -166,8 +166,12 @@ function buildOptions() {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'amount',
+                },
+                {
+                    id: 'rate',
                     visible: config.axesVisible,
                     title: 'Return rate (%)',
                     position: 'right',
@@ -366,7 +370,7 @@ createBarChart('#container', {
 
 ### Multiple y-axes
 
-Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option, naming the axis's `id`; `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
 
 ```ts
 createBarChart('#container', {
@@ -377,19 +381,26 @@ createBarChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'orders',
             value: 'orders',
             label: 'Orders',
-            yAxis: 1,
+            yAxis: 'orders',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'Orders' },
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'orders',
+                position: 'right',
+                title: 'Orders',
+            },
         ],
     },
 });
@@ -420,15 +431,67 @@ createBarChart('#container', {
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `value`, `label`, and optional `color`
-- **`key`**: key accessor for categories
-- **`stacked`**: `false` (grouped, default), `true` (stacked), or `'percent'` (100%-stacked with a 0–100% value axis)
-- **`orientation`**: `'vertical'` (default) or `'horizontal'`
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`overview`** (`boolean | { size }`): show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
-- **`borderRadius`**: bar corner radius (default `2`)
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createBarChart('#container', {
+    data,
+    key: 'month',
+    orientation: 'vertical',
+    borderRadius: 4,
+    labels: true,
+    format: 'number',
+    // `stacked` is not shown here: stacked and percent bars share one cumulative scale, so they
+    // cannot combine with the second axis below. Both are in Variants above.
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            color: '#7cacf8',
+            yAxis: 'revenue',
+        },
+        {
+            id: 'orders',
+            value: 'orders',
+            label: 'Orders',
+            color: '#6dd5b1',
+            yAxis: 'orders',
+        },
+    ],
+    axis: {
+        y: [
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'orders',
+                position: 'right',
+                title: 'Orders',
+            },
+        ],
+    },
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a bar is clicked.
+chart.on('barclick', event => console.log(event.data)); // event.data: BarChartBarEvent
+// Emitted when the pointer enters a bar.
+chart.on('barenter', event => console.log(event.data)); // event.data: BarChartBarEvent
+// Emitted when the pointer leaves a bar.
+chart.on('barleave', event => console.log(event.data)); // event.data: BarChartBarEvent
+```
+<!-- events:end -->

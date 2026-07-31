@@ -86,6 +86,7 @@ import {
 import {
     arrayJoin,
     numberClamp,
+    typeIsArray,
     typeIsFunction,
 } from '@ripl/utilities';
 
@@ -176,7 +177,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         const axisOpts = normalizeAxis(options.axis);
         const xAxis = normalizeAxisItem(axisOpts.x);
         const yAxis = normalizeYAxisItem(
-            Array.isArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
+            typeIsArray(axisOpts.y) ? axisOpts.y[0] : axisOpts.y
         );
         const gridOpts = normalizeGrid(options.grid);
 
@@ -439,8 +440,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
         // Muted grid color so the links read as light structure, not foreground content.
         const color = this.theme.gridColor;
 
-        // One spec per finish-to-start dependency edge, stably keyed by its (predecessor → task) pair
-        // so the link element survives across renders and morphs to new endpoints when bars move.
+        // Key each connector by its (predecessor → task) pair so it survives renders and morphs endpoints
         const connectors = data.flatMap(item => {
             const targetKey = getKey(item);
             const target = geometryByKey.get(targetKey);
@@ -705,8 +705,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 }
             ) as unknown as typeof this._yAxis.scale;
 
-            // Assign a fresh box rather than mutating in place: `bounds` invalidates the axis's cached
-            // measurement on assignment, and an in-place edit would also stale `yAxisBoundingBox`.
+            // Assign a fresh `Box`: `bounds` invalidates the axis's cached measurement only on assignment
             this._yAxis.bounds = new Box(
                 chartTop,
                 left,
@@ -734,8 +733,6 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             // Draw today marker
             this._drawTodayMarker(timeScale, chartTop, xAxisBoundingBox.top);
 
-            // Dependency connectors: resolve each task's bar geometry (finish/start x, row center y)
-            // so links can be drawn from a predecessor's end to a dependent's start.
             const geometryByKey = new Map<string, { startX: number;
                 endX: number;
                 centerY: number; }>();

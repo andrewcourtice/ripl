@@ -88,18 +88,13 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             return super.intersectsWith(x, y, options);
         }
 
-        // The stored path is in this element's local space, but its transform (and any ancestor
-        // group transform) is applied to the context during rendering. Backends that don't
-        // natively account for that during hit testing (e.g. canvas) need the point mapped back
-        // into local space; the identity case (no transforms) is skipped for free.
+        // The path is local-space, so backends that don't honor transforms need the point mapped back.
         if (!this.context.hitTestHonorsTransform) {
             const worldTransform = (this as unknown as Element).getWorldTransform();
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
-                // The point arrives in device pixels (scaled by the device pixel ratio) but the world
-                // transform is composed in logical space. Map device → logical, apply the inverse, then
-                // map back to device so the native path test (which works in device pixels) stays correct.
+                // The point is in device pixels but the world transform is logical, so scale by DPR.
                 const dpr = this.context.scaleDPR(1);
                 const [localX, localY] = matrixApplyToPoint(inverse, [x / dpr, y / dpr]);
 
@@ -131,10 +126,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
     /** Renders this shape, reusing its cached path while unchanged (else creating and tracing a new one), then automatically applying fill/stroke or clipping. */
     public render(context: Context, callback?: (path: ContextPath) => void) {
         return super.render(context, () => {
-            // The traced path is authored in local space (element and ancestor transforms are
-            // applied to the context, not the path), so it only needs re-tracing when this
-            // element's own state changed. Reuse it across frames on backends whose createPath is
-            // side-effect-free, and only when the same context produced the cached path.
+            // Paths are local-space, so only this element's own state change forces a re-trace.
             const canReuse = this.cachePath
                 && context.supportsPathCaching
                 && this._cachedContext === context
@@ -154,9 +146,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
                 return;
             }
 
-            // Paint if a fill/stroke is set on this shape *or inherited* from a group; the context
-            // already holds the resolved value (own, applied by the base render; inherited, applied
-            // at the group boundary), so autoFill/autoStroke fire whenever the effective paint is set.
+            // The context already holds the resolved paint, so this fires for inherited values too.
             if (this.path && this.autoFill && this.getComputedValue('fill')) {
                 context.applyFill(this.path);
             }

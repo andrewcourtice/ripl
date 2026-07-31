@@ -43,8 +43,10 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayMapRange,
     numberClamp,
     numberSum,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 import {
@@ -160,7 +162,7 @@ export class ChartNavigator extends ChartComponent {
 
         const element = this.context.element as unknown as HTMLElement;
 
-        if (!element || typeof element.getBoundingClientRect !== 'function' || typeof element.addEventListener !== 'function') {
+        if (!element || !typeIsFunction(element.getBoundingClientRect) || !typeIsFunction(element.addEventListener)) {
             return;
         }
 
@@ -274,8 +276,7 @@ export class ChartNavigator extends ChartComponent {
         const barSeries = active.filter(srs => srs.type === 'bar');
         const lineSeries = active.filter(srs => srs.type === 'line');
 
-        // A band host (bar/trend) positions marks in padded category bands so bars stay inside the strip
-        // and line/area marks align to band centers; a point host (line/area) spreads marks edge-to-edge.
+        // Band hosts (bar/trend) keep marks in padded category bands; point hosts spread edge-to-edge.
         const count = Math.max(1, ...active.map(srs => srs.values.length));
         const band = categoryLayout === 'band' ? this._categoryScale(count) : undefined;
         const mainFor: (index: number, seriesCount: number) => number = band
@@ -292,7 +293,7 @@ export class ChartNavigator extends ChartComponent {
 
     /** A band scale over category indices `[0, count)` spanning the main axis, matching the chart's padded bars. */
     private _categoryScale(count: number): BandScale<number> {
-        const domain = Array.from({ length: count }, (_, index) => index);
+        const domain = arrayMapRange(count, index => index);
 
         return scaleBand(domain, [this._mainStart(), this._mainStart() + this._mainSize()], {
             outerPadding: 0.15,

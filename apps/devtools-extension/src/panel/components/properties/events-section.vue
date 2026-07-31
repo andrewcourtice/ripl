@@ -24,8 +24,7 @@ import {
 
 const store = useDevtoolsStore();
 
-// The events a selected element can emit are reported by the bridge from the
-// element's own `$events`, so custom EventBus subclasses surface their events too.
+// The bridge reports these from the element's own `$events`, so `EventBus` subclasses surface theirs too.
 const events = computed(() => store.selectedDetail.value?.events ?? []);
 </script>
 

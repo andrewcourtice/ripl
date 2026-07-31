@@ -104,8 +104,7 @@ export function applyHoverHighlight<TElement extends Element>(
 
     const disposers: { dispose(): void }[] = [];
 
-    // Tracks the latest pointer position so enter/leave callbacks can report a meaningful
-    // location (the `mouseenter`/`mouseleave` events themselves carry no coordinates).
+    // `mouseenter`/`mouseleave` carry no coordinates, so track the latest position for them.
     const pointer: InteractionPoint = {
         x: 0,
         y: 0,

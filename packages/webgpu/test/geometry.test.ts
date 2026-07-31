@@ -228,9 +228,6 @@ describe('triangulatefaces', () => {
 
         // 3 + 4 = 7 vertices × 10 = 70 floats
         expect(result.vertices).toHaveLength(70);
-        // 1 triangle + 2 triangles = 3 + 6 = 9 indices (wait: 3 + 6 = 9)
-        // Actually: first face: 3 indices, second face (quad): 6 indices = 9
-        // Wait, first face (tri): (3-2)*3 = 3, second face (quad): (4-2)*3 = 6 → total 9
         expect(result.indices).toHaveLength(9);
     });
 

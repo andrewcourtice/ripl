@@ -10,8 +10,7 @@ export interface NumberFormatOptions extends Intl.NumberFormatOptions {
     precision?: number;
 }
 
-// `Intl.NumberFormat` construction is comparatively expensive, so memoise formatters by their config.
-// The number of distinct configs in an application is small and bounded by usage.
+// `Intl.NumberFormat` construction is expensive, so memoise by config; distinct configs are few and bounded.
 const NUMBER_FORMATTER_CACHE = new Map<string, Intl.NumberFormat>();
 
 function getNumberFormatter(locale: string | undefined, options: Intl.NumberFormatOptions): Intl.NumberFormat {

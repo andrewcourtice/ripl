@@ -180,9 +180,7 @@ export class Grid extends ChartComponent {
         });
     }
 
-    // Joins one direction's lines against the new ticks by tick VALUE, so a persisting tick's
-    // line transitions to its new position, entries fade in, and exits fade out, instead of the
-    // whole grid redrawing on every rescale.
+    // Joins lines to ticks by tick value, so a persisting tick's line transitions instead of redrawing.
     private _reconcileLines(
         ticks: GridTick[],
         lines: Line[],
@@ -275,8 +273,7 @@ export class Grid extends ChartComponent {
     ) {
         this._ensureGroup();
 
-        // Drop grid lines that sit on the plot boundary; that's where the (solid) axis line lives,
-        // so a dotted grid line there would draw right on top of it.
+        // Drop boundary lines: the solid axis line lives there, so a dotted grid line would double up.
         const EDGE_EPSILON = 0.5;
         const onEdge = (value: number, min: number, max: number) => Math.abs(value - min) < EDGE_EPSILON || Math.abs(value - max) < EDGE_EPSILON;
 

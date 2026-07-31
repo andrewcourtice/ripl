@@ -70,6 +70,11 @@ import type {
     SerializedProperty,
 } from '@ripl/devtools';
 
+import {
+    typeIsArray,
+    typeIsNumber,
+} from '@ripl/utilities';
+
 const HEX_COLOR_PATTERN = /^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
 const props = defineProps<{
@@ -80,17 +85,16 @@ const emit = defineEmits<{
     (event: 'commit', key: string, value: number | string | boolean | number[]): void;
 }>();
 
-// While an input is focused the user's draft wins; otherwise the polled value
-// from the page (the source of truth) is displayed.
+// While an input is focused the user's draft wins; otherwise the polled page value is displayed.
 const focused = ref(false);
 const draft = ref('');
 
 function formatEditableValue(property: SerializedProperty): string {
-    if (property.valueType === 'number-array' && Array.isArray(property.value)) {
+    if (property.valueType === 'number-array' && typeIsArray(property.value)) {
         return property.value.map(formatNumber).join(', ');
     }
 
-    if (property.valueType === 'number' && typeof property.value === 'number') {
+    if (property.valueType === 'number' && typeIsNumber(property.value)) {
         return formatNumber(property.value);
     }
 

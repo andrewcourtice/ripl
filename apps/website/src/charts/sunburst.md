@@ -147,6 +147,72 @@ const chart = createSunburstChart('#container', {
 });
 ```
 
+## Data Format
+
+A sunburst takes a tree of nodes rather than a flat dataset. Each node has an id, a label and a
+value, and `children` nests the next ring outward:
+
+```ts
+const data = [
+    {
+        id: 'engineering',
+        label: 'Engineering',
+        value: 0,
+        children: [
+            {
+                id: 'frontend',
+                label: 'Frontend',
+                value: 18,
+            },
+            {
+                id: 'backend',
+                label: 'Backend',
+                value: 24,
+            },
+        ],
+    },
+    {
+        id: 'design',
+        label: 'Design',
+        value: 12,
+    },
+];
+```
+
+A branch node's own `value` is ignored when it has children — its arc spans the total of its
+descendants.
+
 ## Options
 
-- **`data`**: array of `SunburstNode` objects with `id`, `label`, `value`, optional `color` and `children`
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createSunburstChart('#container', {
+    // Each node carries `id`, `label`, `value` and optional `children`; the ring depth follows
+    // the nesting.
+    data,
+    legend: { position: 'right' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a segment is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: SunburstChartNodeEvent<TData>
+// Emitted when the pointer enters a segment.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: SunburstChartNodeEvent<TData>
+// Emitted when the pointer leaves a segment.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: SunburstChartNodeEvent<TData>
+```
+<!-- events:end -->

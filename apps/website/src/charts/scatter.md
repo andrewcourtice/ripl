@@ -5,6 +5,8 @@ The **Scatter Chart** (also known as a bubble chart when using variable sizes) p
 > [!NOTE]
 > For the full API, see the [Charts API Reference](/docs/api/@ripl/charts/).
 
+## Example
+
 <ripl-example ref="example" @context-changed="contextChanged">
     <template #footer>
         <RiplControlGroup>
@@ -106,7 +108,7 @@ const { extras, reset } = useChartExtras({
     minRadius: 5,
     maxRadius: 25,
     markerSymbol: 'circle' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
-    multiAxis: false,
+    multiAxis: true,
 });
 
 // Distinct per-series symbols used by the "Mixed" marker option.
@@ -158,7 +160,7 @@ function getSeries() {
         marker: resolveMarker(index),
         color: config.colors[s.id],
         // Marketing plots impressions in the thousands, so it gets the right-hand axis.
-        yAxis: extras.multiAxis && s.id === 'marketing' ? 1 : undefined,
+        yAxis: extras.multiAxis && s.id === 'marketing' ? 'impressions' : undefined,
     }));
 }
 
@@ -173,8 +175,13 @@ function buildOptions() {
         options.axis = {
             ...options.axis,
             y: [
-                options.axis.y,
                 {
+                    ...options.axis.y,
+                    id: 'score',
+                    title: 'Score',
+                },
+                {
+                    id: 'impressions',
                     visible: config.axesVisible,
                     title: 'Impressions',
                     position: 'right',
@@ -229,9 +236,7 @@ function getDataItem() {
         profit: getValue(10, 100),
         volume: getValue(5, 50),
         marketing: getValue(10, 100),
-        // Thousands of impressions, against the 10-100 scores the other series plot. On one shared
-        // y-axis this flattens every other series against the baseline; that is the case the
-        // "Multiple axes" toggle resolves.
+        // Thousands, against the 10-100 the others plot; turning "Multiple axes" off flattens them.
         engagement: getValue(2000, 9000),
         reach: getValue(5, 50),
         support: getValue(10, 100),
@@ -371,7 +376,7 @@ createScatterChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
+Supply an array of `axis.y` entries to plot series with different y units on their own independently-scaled axes. Bind each series to an axis with its `yAxis` option, naming the axis's `id`; `position: 'right'` axes sit on the right and same-side axes stack outward in array order:
 
 ```ts
 createScatterChart('#container', {
@@ -383,20 +388,27 @@ createScatterChart('#container', {
             label: 'Sales',
             xBy: 'spend',
             yBy: 'revenue',
-            yAxis: 0,
+            yAxis: 'revenue',
         },
         {
             id: 'efficiency',
             label: 'Efficiency',
             xBy: 'spend',
             yBy: 'roas',
-            yAxis: 1,
+            yAxis: 'roas',
         },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'ROAS (×)' },
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'roas',
+                position: 'right',
+                title: 'ROAS (×)',
+            },
         ],
     },
 });
@@ -428,13 +440,70 @@ chart.navigator?.reset();
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: unique identifier field for each point
-- **`series`**: array of series with `id`, `label`, `xBy`, `yBy`, optional `sizeBy`, `minRadius`, `maxRadius`, `color`
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes with optional titles (`y` accepts an array for multiple y-axes)
-- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
-- **`navigator`** (`boolean | NavigatorInteractions`): enable pan/zoom (and optional brush) navigation. Access the controller via `chart.navigator`
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createScatterChart('#container', {
+    data,
+    key: 'id',
+    labels: true,
+    format: 'number',
+    series: [
+        {
+            id: 'sales',
+            label: 'Sales',
+            color: '#7cacf8',
+            xBy: 'spend',
+            yBy: 'revenue',
+            // Scales each bubble between `minRadius` and `maxRadius`.
+            sizeBy: 'volume',
+            minRadius: 4,
+            maxRadius: 20,
+            marker: 'circle',
+            yAxis: 'revenue',
+        },
+        {
+            id: 'reach',
+            label: 'Reach',
+            color: '#6dd5b1',
+            xBy: 'spend',
+            yBy: 'impressions',
+            yAxis: 'impressions',
+        },
+    ],
+    axis: {
+        y: [
+            {
+                id: 'revenue',
+                title: 'Revenue ($)',
+            },
+            {
+                id: 'impressions',
+                position: 'right',
+                title: 'Impressions',
+            },
+        ],
+    },
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a bubble is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: ScatterChartMarkerEvent
+// Emitted when the pointer enters a bubble.
+chart.on('markerenter', event => console.log(event.data)); // event.data: ScatterChartMarkerEvent
+// Emitted when the pointer leaves a bubble.
+chart.on('markerleave', event => console.log(event.data)); // event.data: ScatterChartMarkerEvent
+```
+<!-- events:end -->

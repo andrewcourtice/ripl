@@ -11,12 +11,20 @@ All Ripl charts extend `BaseChartOptions` and support a common set of feature op
 
 ## Padding
 
-Controls the space reserved around the chart drawing area. Pass a single number to apply the same padding to all four edges, or an object to set individual edges.
+Controls the space reserved around the chart drawing area. Every option named `padding` — on the
+chart, and on the title, legend and tooltip — accepts the same `PaddingInput` shape: a number, a
+`[top, right, bottom, left]` tuple, or a partial per-edge object.
 
 ```ts
 // A single number applies to every edge
 createBarChart('#container', {
     padding: 24,
+    // ...
+});
+
+// A tuple sets all four edges, clockwise from the top
+createBarChart('#container', {
+    padding: [16, 32, 16, 32],
     // ...
 });
 
@@ -153,22 +161,22 @@ axis: {
 }
 ```
 
-Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `yAxis` option (an array index or the axis `id`):
+Line, area, scatter, and bar charts all render as many y-axes as you supply; bind a series to one with the series `yAxis` option, naming the axis's `id`. Every entry needs one, so reordering the array never re-points a series:
 
 <!-- eslint-skip -->
 ```ts
 createLineChart('#container', {
     // …
     series: [
-        { id: 'revenue', label: 'Revenue', value: 'revenue', yAxis: 0 },
-        { id: 'growth', label: 'Growth %', value: 'growth', yAxis: 1 },
-        { id: 'units', label: 'Units', value: 'units', yAxis: 2 },
+        { id: 'revenue', label: 'Revenue', value: 'revenue', yAxis: 'revenue' },
+        { id: 'growth', label: 'Growth %', value: 'growth', yAxis: 'growth' },
+        { id: 'units', label: 'Units', value: 'units', yAxis: 'units' },
     ],
     axis: {
         y: [
-            { title: 'Revenue ($)' },
-            { position: 'right', title: 'Growth %' },
-            { position: 'left', title: 'Units' },
+            { id: 'revenue', title: 'Revenue ($)' },
+            { id: 'growth', position: 'right', title: 'Growth %' },
+            { id: 'units', position: 'left', title: 'Units' },
         ],
     },
 });
@@ -387,3 +395,58 @@ createBarChart('#container', {
     // …
 });
 ```
+
+## Spacing
+
+Gaps *between* chart elements — the axis title and its tick labels, the legend and the plot, two
+stacked axis bands — come from a single 8-point scale rather than per-component constants, so spacing
+stays consistent as components are combined. It is exported for use in custom charts:
+
+```ts
+import {
+    SPACING,
+} from '@ripl/charts';
+
+SPACING.none; // 0
+SPACING.xs;   // 4  — half-step, only within a single component (a legend swatch and its label)
+SPACING.sm;   // 8  — tightly related elements (tick marks and their labels)
+SPACING.md;   // 16 — the default gap between distinct elements, and the default chart padding
+SPACING.lg;   // 24
+SPACING.xl;   // 32
+```
+
+`padding` is the space *around* the chart and remains yours to set; the scale governs the internal
+gaps the layout inserts.
+
+## Events
+
+Every chart is an event bus. Subscribe with `chart.on(type, handler)`, which returns a disposable:
+
+<!-- eslint-skip -->
+```ts
+const subscription = chart.on('barclick', event => {
+    // The handler receives an `Event`, not the payload — the payload is `event.data`.
+    const { seriesId, xValue, yValue } = event.data;
+
+    console.log(seriesId, xValue, yValue);
+});
+
+subscription.dispose();
+```
+
+An `Event` also carries `type`, `timestamp`, `target` (the bus it was emitted on) and
+`stopPropagation()`. Alongside its own interaction events, every chart emits `destroyed` (with no
+payload) when `chart.destroy()` runs — useful for tearing down anything bound to the chart.
+
+Each chart's page lists the events it emits, with the payload type for each.
+
+## Lifecycle
+
+Shared by every chart, regardless of type:
+
+| Method | Description |
+| --- | --- |
+| `update(options)` | Merges partial options over the current ones and re-renders (when `autoRender` is enabled) |
+| `render()` | Renders explicitly; resolves once entry/update transitions have settled |
+| `export()` | Exports the rendered chart from its context |
+| `destroy()` | Tears the chart down and releases its scene, renderer and listeners |

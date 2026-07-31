@@ -2,6 +2,11 @@ import type {
     SerializedProperty,
 } from '@ripl/devtools';
 
+import {
+    typeIsArray,
+    typeIsNumber,
+} from '@ripl/utilities';
+
 const MAX_DECIMALS = 3;
 
 /** Formats a number for display, trimming to at most 3 decimal places without trailing zeros. */
@@ -15,12 +20,12 @@ export function formatNumber(value: number): string {
 
 /** Formats a serialized property value as a short display string based on its wire type. */
 export function formatPropertyValue(property: SerializedProperty): string {
-    if (property.valueType === 'number' && typeof property.value === 'number') {
+    if (property.valueType === 'number' && typeIsNumber(property.value)) {
         return formatNumber(property.value);
     }
 
     if (property.valueType === 'number-array') {
-        return Array.isArray(property.value)
+        return typeIsArray(property.value)
             ? property.value.map(formatNumber).join(', ')
             : '';
     }

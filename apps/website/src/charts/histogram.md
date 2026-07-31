@@ -132,10 +132,51 @@ Each item contributes one numeric value, read via the `value` accessor (a field 
 
 ## Options
 
-- **`data`**: the data array
-- **`value`**: accessor for the numeric field to bin (field name or function)
-- **`bins`**: target number of bins (default: Sturges' rule)
-- **`thresholds`**: explicit bin boundaries (overrides `bins`)
-- **`color`**: bar color (default: first palette color)
-- **`borderRadius`**: bar corner radius (default `2`)
-- **`format`**: format applied to bin bounds in tooltips
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createHistogramChart('#container', {
+    data,
+    value: 'duration',
+    // Target bin count — the binner treats it as a hint and rounds to a readable step.
+    // `thresholds` below is the alternative, and wins when both are given.
+    bins: 20,
+    color: '#7cacf8',
+    borderRadius: 2,
+    format: 'number',
+});
+```
+
+To place the bin edges yourself — uneven buckets, or a scale that has to match another
+chart — pass `thresholds` instead of `bins`:
+
+<!-- eslint-skip -->
+```ts
+createHistogramChart('#container', {
+    data,
+    value: 'duration',
+    // n edges produce n - 1 bins: 0–50, 50–100, 100–250, 250–500.
+    thresholds: [0, 50, 100, 250, 500],
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a bin bar is clicked.
+chart.on('binclick', event => console.log(event.data)); // event.data: HistogramBinEvent
+// Emitted when the pointer enters a bin bar.
+chart.on('binenter', event => console.log(event.data)); // event.data: HistogramBinEvent
+// Emitted when the pointer leaves a bin bar.
+chart.on('binleave', event => console.log(event.data)); // event.data: HistogramBinEvent
+```
+<!-- events:end -->

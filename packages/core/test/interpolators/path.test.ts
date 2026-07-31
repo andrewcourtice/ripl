@@ -80,9 +80,7 @@ describe('Interpolators', () => {
         });
 
         test('Repeated completed morphs do not compound the point count (memory-leak regression)', () => {
-            // Models the chart update loop: an element keeps interpolator(1) as its next baseline.
-            // Before the endpoint fix this kept the LCM-upsampled set, so the count exploded
-            // (6 → 31 → 211 → 841 → …) and ran the tab out of memory. It must stay == the target.
+            // Regression: an LCM-upsampled baseline compounded the count (6 → 31 → 211 → …) out of memory.
             let current: Point[] = Array.from({ length: 6 }, (_, i) => [i, i] as Point);
 
             for (let count = 7; count <= 40; count++) {
@@ -124,8 +122,7 @@ describe('Interpolators', () => {
         describe('resolveKeys (identity matching)', () => {
 
             test('Should not upsample mid-transition when a point is appended', () => {
-                // 3 → 4 points. Without resolveKeys the mid frame would be LCM-upsampled (7 pts);
-                // with an identity correspondence the mid frame stays the target length (4).
+                // Without `resolveKeys` the mid frame would be LCM-upsampled to 7 points, not the target 4.
                 const setA: Point[] = [[0, 0], [1, 10], [2, 20]];
                 const setB: Point[] = [[0, 5], [1, 15], [2, 25], [3, 35]];
                 const interpolator = interpolatePoints(setA, setB, {

@@ -259,13 +259,51 @@ const series = [
 
 ## Options
 
-- **`data`**: the data array
-- **`series`**: array of series with `id`, `label`, `angleBy` (degrees accessor), `radiusBy` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
-- **`max`**: value mapped to the outer ring (defaults to the data maximum)
-- **`levels`**: number of concentric value rings (default `4`)
-- **`sectors`**: number of angular spokes/labels (default `8`)
-- **`legend`** (`boolean | ChartLegendOptions`): series legend (shown by default for multiple series)
-- **`format`**: value formatter for tooltips and ring labels
-- **`padding`**: chart padding
-- **`title`** (`string | ChartTitleOptions`): chart title
-- **`animation`** (`boolean | ChartAnimationOptions`): enable/configure animations
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createPolarScatterChart('#container', {
+    data,
+    // Outer bound of the radial scale; omit to derive it from the data.
+    max: 100,
+    // Concentric value rings and angular spokes.
+    levels: 5,
+    sectors: 12,
+    labels: true,
+    legend: { position: 'bottom' },
+    format: 'number',
+    series: [
+        {
+            id: 'morning',
+            label: 'Morning',
+            color: '#7cacf8',
+            angleBy: 'bearing',
+            radiusBy: 'distance',
+            sizeBy: 'weight',
+            minRadius: 4,
+            maxRadius: 18,
+        },
+    ],
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: PolarScatterMarkerEvent
+// Emitted when the pointer enters a marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: PolarScatterMarkerEvent
+// Emitted when the pointer leaves a marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: PolarScatterMarkerEvent
+```
+<!-- events:end -->

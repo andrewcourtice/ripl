@@ -177,9 +177,86 @@ const chart = createSankeyChart('#container', {
 });
 ```
 
+## Data Format
+
+A sankey chart takes nodes and the links between them. A link's `source` and `target` are node ids,
+and its `value` sets the ribbon's thickness:
+
+```ts
+const nodes = [
+    {
+        id: 'search',
+        label: 'Search',
+    },
+    {
+        id: 'signup',
+        label: 'Sign up',
+    },
+    {
+        id: 'purchase',
+        label: 'Purchase',
+    },
+];
+
+const links = [
+    {
+        source: 'search',
+        target: 'signup',
+        value: 620,
+    },
+    {
+        source: 'signup',
+        target: 'purchase',
+        value: 180,
+    },
+];
+```
+
+Node depth is computed from the link graph, so nodes do not need to be ordered.
+
 ## Options
 
-- **`nodes`**: array of `{ id, label, color? }`
-- **`links`**: array of `{ source, target, value }`
-- **`nodeWidth`**: width of node rectangles (default `20`)
-- **`nodePadding`**: vertical padding between nodes (default `10`)
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createSankeyChart('#container', {
+    nodes,
+    links,
+    // Width of each node rectangle, in pixels.
+    nodeWidth: 20,
+    // Vertical gap between stacked nodes in a column, in pixels.
+    nodePadding: 10,
+    // Layout relaxation passes. Accepted and reserved for tuning node positioning — the current
+    // layout does not read it, so changing it has no visible effect yet.
+    iterations: 6,
+    legend: { position: 'bottom' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a node is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: SankeyChartNodeEvent<TData>
+// Emitted when the pointer enters a node.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: SankeyChartNodeEvent<TData>
+// Emitted when the pointer leaves a node.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: SankeyChartNodeEvent<TData>
+// Emitted when a link is clicked.
+chart.on('linkclick', event => console.log(event.data)); // event.data: SankeyChartLinkEvent
+// Emitted when the pointer enters a link.
+chart.on('linkenter', event => console.log(event.data)); // event.data: SankeyChartLinkEvent
+// Emitted when the pointer leaves a link.
+chart.on('linkleave', event => console.log(event.data)); // event.data: SankeyChartLinkEvent
+```
+<!-- events:end -->

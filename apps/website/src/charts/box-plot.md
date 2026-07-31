@@ -129,9 +129,37 @@ accessor and summarizes the `value` accessor per group, so no pre-aggregation is
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: accessor for the category (field name or function)
-- **`value`**: accessor for the numeric value (field name or function)
-- **`categoryOrder`**: explicit category order (default: first-seen order)
-- **`color`**: box color (default: first palette color)
-- **`format`**: format applied to summary values in tooltips
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createBoxPlotChart('#container', {
+    data,
+    key: 'team',
+    value: 'score',
+    // Fixes the order the categories are drawn in; without it they follow the data.
+    categoryOrder: ['Alpha', 'Bravo', 'Charlie'],
+    color: '#7cacf8',
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a box is clicked.
+chart.on('boxclick', event => console.log(event.data)); // event.data: BoxPlotBoxEvent
+// Emitted when the pointer enters a box.
+chart.on('boxenter', event => console.log(event.data)); // event.data: BoxPlotBoxEvent
+// Emitted when the pointer leaves a box.
+chart.on('boxleave', event => console.log(event.data)); // event.data: BoxPlotBoxEvent
+```
+<!-- events:end -->

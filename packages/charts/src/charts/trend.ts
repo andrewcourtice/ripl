@@ -11,12 +11,7 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartCrosshairInput,
     ChartDataLabelsInput,
-    ChartGridInput,
-    ChartLegendInput,
-    ChartTooltipInput,
     LineStyle,
     ValueFormatInput,
 } from '../core/options';
@@ -176,16 +171,6 @@ export interface TrendChartOptions<TData = unknown> extends CartesianChartOption
     stacked?: boolean;
     /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
-    crosshair?: ChartCrosshairInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
-    legend?: ChartLegendInput;
-    /** Axis configuration for the x and y axes. */
-    axis?: ChartAxisInput<TData>;
     /** Show value labels next to each mark. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
     /** Format applied to values shown as text (tooltips and labels). */
@@ -326,9 +311,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            // Legend-hidden series are excluded from extents, per-type stacking, and rendering, so
-            // toggling a series rescales the value axis (and restacks its type group) while the
-            // hidden series animates out through the standard exit join.
             const activeSeries = this.filterActive(series);
 
             const areaSeries = activeSeries.filter((srs): srs is TrendChartAreaSeriesOptions<TData> => srs.type === 'area');
@@ -376,8 +358,6 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             // A band scale positions bars; its centers position line/area markers and the x-axis ticks.
             let xBand!: BandScale<string>;
 
-            // Resolve the plot outside-in so the bar/marker geometry below is derived from the same
-            // bounds the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 this._yScale = scaleContinuous(dataExtent, [candidate.y + candidate.height, candidate.y], { padToTicks: 10 });
                 this.yAxis.scale = this._yScale;

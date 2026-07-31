@@ -22,9 +22,7 @@ export const SVG_STYLE_MAP = {
         middle: 'middle',
         bottom: 'text-after-edge',
     } as Record<TextBaseline, string>,
-    // `dominant-baseline` is the property browsers actually honor on a <text> element (unlike
-    // `alignment-baseline`, which only applies to <tspan>/<textPath>). Without it, SVG text falls
-    // back to the alphabetic baseline, mispositioning every label and clipping rotated titles.
+    // Browsers only honor `dominant-baseline` on `<text>`; `alignment-baseline` applies to `<tspan>`/`<textPath>`.
     dominantBaseline: {
         top: 'text-before-edge',
         middle: 'central',

@@ -107,9 +107,7 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
         return circles;
     }
 
-    // Place the third circle tangent to the first two. Argument order matters: `place` puts `c` on
-    // a specific side of the a→b vector, so this mirrors D3's `place(b, a, c)` seeding to keep the
-    // front-chain wound consistently with the `place(a, b, c)` calls in the loop below.
+    // Argument order matters: `place(b, a, c)` (D3's seeding) winds the front-chain consistently.
     let c = order[2];
     place(b, a, c);
 
@@ -182,8 +180,6 @@ export function packSiblings(circles: PackCircle[]): PackCircle[] {
         nodeB.previous = inserted;
         nodeB = inserted;
 
-        // Recompute the pair whose weighted midpoint is closest to the centroid, walking the whole
-        // chain from the newly inserted node.
         let best = score(nodeA);
         let walk = inserted;
         while ((walk = walk.next) !== nodeB) {

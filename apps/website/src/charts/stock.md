@@ -174,21 +174,72 @@ const chart = createStockChart('#container', {
 chart.update({ data: newData });
 ```
 
+## Data Format
+
+Each item is one candle: a key for the x axis plus its open, high, low and close. `volume` is
+optional and enables the volume panel beneath the candles:
+
+```ts
+const data = [
+    {
+        date: '2024-01-02',
+        open: 184.2,
+        high: 188.4,
+        low: 183.9,
+        close: 187.6,
+        volume: 12_400_000,
+    },
+    {
+        date: '2024-01-03',
+        open: 187.6,
+        high: 189.1,
+        low: 184.0,
+        close: 184.5,
+        volume: 9_800_000,
+    },
+];
+```
+
+A candle closing at or above its open is drawn with `upColor`, below its open with `downColor`.
+
 ## Options
 
-- **`data`**: the data array
-- **`key`**: key accessor for each data point (e.g. date)
-- **`open`** / **`high`** / **`low`** / **`close`**: price accessors
-- **`volume`**: volume accessor (optional)
-- **`showVolume`**: show volume bars below the chart (default `true`)
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (tracks **both** axes by default)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes
-- **`navigator`** (`boolean | NavigatorInteractions`): enable in-plot pan/zoom navigation
-- **`overview`** (`boolean | ChartOverviewOptions`): show the overview scrub-bar strip that windows the date axis
-- **`annotations`** (`ChartAnnotation[]`): reference lines, shaded bands, and point markers drawn over the plot
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the OHLC values shown in the candle tooltip
-- **`upColor`**: color for bullish candles (default `#6dd5b1`)
-- **`downColor`**: color for bearish candles (default `#f4a0b9`)
-- **`padding`**: chart padding
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createStockChart('#container', {
+    data,
+    key: 'date',
+    open: 'open',
+    high: 'high',
+    low: 'low',
+    close: 'close',
+    volume: 'volume',
+    // Draws the volume histogram beneath the candles.
+    showVolume: true,
+    upColor: '#6dd5b1',
+    downColor: '#f4a0b9',
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a candlestick is clicked.
+chart.on('candleclick', event => console.log(event.data)); // event.data: StockChartCandleEvent
+// Emitted when the pointer enters a candlestick.
+chart.on('candleenter', event => console.log(event.data)); // event.data: StockChartCandleEvent
+// Emitted when the pointer leaves a candlestick.
+chart.on('candleleave', event => console.log(event.data)); // event.data: StockChartCandleEvent
+```
+<!-- events:end -->

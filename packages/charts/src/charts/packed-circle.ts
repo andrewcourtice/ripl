@@ -229,8 +229,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             const { cx, cy, size } = areaCenter(area);
             const fitRadius = (size / 2) * 0.96;
 
-            // A single visible circle that contains the whole pack, drawn behind the cells. The pack
-            // is scaled so its enclosing circle has radius `fitRadius`, so this exactly bounds it.
+            // The pack is scaled to `fitRadius`, so this backing circle exactly bounds it
             const enclosingIsNew = !this._enclosing;
 
             if (!this._enclosing) {
@@ -261,8 +260,6 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
                 } as CircleState;
             }
 
-            // Legend-hidden items are excluded from the pack, so the remaining circles re-pack and
-            // scale up to fill the enclosing circle while hidden ones exit through the join.
             const activeData = this.filterActive(data, getKey);
 
             // Pack circles with relative radii (area ∝ value), then center + scale to fit the area.

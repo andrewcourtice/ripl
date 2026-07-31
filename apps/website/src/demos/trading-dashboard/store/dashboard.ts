@@ -80,8 +80,7 @@ export const useDashboardStore = defineStore('trading-dashboard', () => {
     const stockIntradayData = ref<MockIntradayPoint[]>([]);
     const searchResults = ref<MockSearchResult[]>([]);
 
-    // The intraday candle currently hovered/selected in the candlestick chart (its `datetime` key),
-    // driving the summary cards. Null falls back to the latest candle.
+    // `datetime` key of the hovered/selected candle driving the summary cards; null falls back to the latest.
     const selectedCandleKey = ref<string | null>(null);
 
     const marketLoading = ref(false);

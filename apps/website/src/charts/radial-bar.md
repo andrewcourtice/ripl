@@ -176,17 +176,53 @@ const data = [
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: category accessor (a field name or a function)
-- **`value`**: numeric value accessor; encoded as the arc length
-- **`label`**: optional label accessor (defaults to `key`)
-- **`colorBy`**: optional per-category color accessor
-- **`max`**: value mapped to a full sweep (defaults to the data maximum)
-- **`innerRadius`**: inner hole radius as a ratio of the chart size (default `0.2`)
-- **`range`**: angular sweep of a full-value bar in degrees (default `360`)
-- **`gap`**: gap between rings as a ratio of ring thickness (default `0.25`)
-- **`rounded`**: round the ends of each value bar and its track (default `false`)
-- **`trackColor`**: background track color
-- **`legend`** (`boolean | ChartLegendOptions`): category legend
-- **`format`**: value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`**: standard chart options
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createRadialBarChart('#container', {
+    data,
+    key: 'id',
+    value: 'progress',
+    label: 'name',
+    colorBy: 'team',
+    max: 100,
+    // Hole in the middle, as a ratio of the chart size (0–1).
+    innerRadius: 0.3,
+    // Sweep of a full-value bar, in degrees.
+    range: 270,
+    // Gap between rings, as a ratio of the ring thickness (0–0.9).
+    gap: 0.3,
+    trackColor: '#e5e7eb',
+    rounded: true,
+    legend: { position: 'right' },
+    // Each ring's value, printed just past the end of its bar. The position is fixed, so
+    // `anchor` has no effect here.
+    labels: {
+        visible: true,
+        font: '11px sans-serif',
+        fontColor: '#555555',
+    },
+    format: 'percentage',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a bar is clicked.
+chart.on('barclick', event => console.log(event.data)); // event.data: RadialBarChartBarEvent
+// Emitted when the pointer enters a bar.
+chart.on('barenter', event => console.log(event.data)); // event.data: RadialBarChartBarEvent
+// Emitted when the pointer leaves a bar.
+chart.on('barleave', event => console.log(event.data)); // event.data: RadialBarChartBarEvent
+```
+<!-- events:end -->

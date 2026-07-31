@@ -351,9 +351,7 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.format) {
-        // Always emit the key ('none' resolves to undefined) so `chart.update(...)` can clear a
-        // previously applied preset back to the chart default. Demos with a bespoke default format
-        // re-apply it over this when the key resolves to undefined.
+        // Always emit the key so `chart.update(...)` can clear a previously applied preset back to the default.
         options.format = resolveValueFormat(config.valueFormat);
     }
 
@@ -375,9 +373,7 @@ export function buildCommonOptions(config: ChartConfig): Record<string, any> {
     }
 
     if (features.navigator) {
-        // `navigator` is in-plot pan/zoom (with the tuned sensitivity); `overview` is the scrub-bar
-        // strip, drawn only by category-axis charts and inert elsewhere. They are separate controls
-        // because either is useful without the other.
+        // `navigator` is in-plot pan/zoom; `overview` is the scrub-bar strip — either is useful alone.
         options.overview = config.overviewEnabled;
         options.navigator = config.navigatorEnabled
             ? {

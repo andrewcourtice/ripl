@@ -28,8 +28,7 @@ export function areaBandRenderer(lineType?: PolylineRenderer | PolylineRenderFun
 
         renderTop(context, path, top);
 
-        // Continue the same subpath down and back along the lower boundary; the fill's implicit
-        // close returns to the subpath start (the first top point), sealing the left edge.
+        // Same subpath: the fill's implicit close returns to the first top point, sealing the left edge.
         bottom.forEach(([x, y]) => path.lineTo(x, y));
     };
 }

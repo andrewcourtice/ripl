@@ -11,9 +11,6 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartGridInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -80,6 +77,7 @@ import {
 } from '@ripl/core';
 
 import {
+    arrayDedupe,
     arrayJoin,
     numberExtent,
 } from '@ripl/utilities';
@@ -102,12 +100,6 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     categoryOrder?: string[];
     /** Color used for every box; falls back to the first palette color when omitted. */
     color?: string;
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Axis configuration for the category and value axes. */
-    axis?: ChartAxisInput<TData>;
     /** Format applied to summary values shown in tooltips. */
     format?: ValueFormatInput;
 }
@@ -376,7 +368,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const color = this.getSeriesColor('boxplot');
 
             const grouped = rollup(data, getGroup, items => boxplotStats(items.map(getValue)));
-            const keys = categoryOrder ?? [...new Set(data.map(getGroup))];
+            const keys = categoryOrder ?? arrayDedupe(data.map(getGroup));
             const valueExtent = numberExtent(data, getValue);
 
             const layout = this.createLayout();
@@ -387,8 +379,6 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             let valueScale!: Scale;
             let categoryScale!: Scale<string>;
 
-            // Resolve the plot outside-in so the box geometry below is derived from the same bounds
-            // the axes draw (see `resolveCartesianPlot`).
             const plot = this.resolveCartesianPlot(area, candidate => {
                 valueScale = createValueScale(this.yAxisOptions, valueExtent, [candidate.y + candidate.height, candidate.y]);
                 this.yAxis.scale = valueScale;
@@ -398,8 +388,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 this.xAxis.scale = categoryScale;
             });
 
-            // Rescale to the navigator view (no-op at rest): value (y) via domain rescale, category
-            // (x) via a pixel-space transform, so boxes and axes track the pan/zoom together.
+            // Navigator view: value (y) rescales its domain, category (x) transforms in pixel space
             const viewedValueScale = this.applyView(valueScale, 'y');
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
             this.yAxis.scale = viewedValueScale;
@@ -467,8 +456,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             return group;
         });
 
-        // Update: reconcile geometry in place and transition to it, rather than clearing + rebuilding,
-        // which teleported the boxes to their new positions with no animation.
+        // Reconcile in place; clearing + rebuilding teleports the boxes with no animation
         const updateResults = updates.map(([item, group]) => ({
             group,
             marks: this._reconcileBox(item, group, boxWidth, valueScale, color, exitAnimation),

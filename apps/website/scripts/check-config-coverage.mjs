@@ -90,9 +90,7 @@ const CHART_EXCLUSIONS = {
     'force-directed': {
         root: 'names a node in the dataset, so a control would be a node picker, not a visual option',
     },
-    // `CartesianChartOptions` gives every cartesian chart these, but the box plot and histogram do not
-    // wire them into their render pass yet, so a control would be inert. Recorded rather than exposed:
-    // the panel's contract is that every control does something.
+    // Inherited from `CartesianChartOptions` but not wired into these charts' render pass, so a control is inert.
     'box-plot': {
         annotations: 'the chart does not call `renderAnnotations` yet',
         navigator: 'the chart does not reserve a navigator band yet',
@@ -112,10 +110,7 @@ const CHART_EXCLUSIONS = {
     gauge: {
         tickFormat: 'the demo pins a `%` suffix so the tick labels carry the gauge\'s unit',
     },
-    // Gantt, heatmap and realtime are still on `Chart` rather than `CartesianChart`, so they build
-    // their axes (and grid, for realtime) once in their constructors instead of reconciling them per
-    // render. A live control for these would silently do nothing, so they are recorded here until
-    // those charts move onto the shared cartesian pass.
+    // Still on `Chart`, not `CartesianChart`, so these build axes once in the constructor instead of per render.
     gantt: {
         axis: 'read once at construction, so a live control would silently do nothing',
     },
@@ -319,8 +314,7 @@ function main() {
             const features = enabledFeatures(script);
             const declared = declaredOptions(template);
 
-            // Everything the panel reaches: the shared sections whose feature is on, the color
-            // pickers when the page passes `:series`, and the page's own declarations.
+            // Everything the panel reaches: enabled shared sections, color pickers, and the page's declarations.
             const covered = new Set(declared);
 
             features.forEach(feature => shared.byFeature.get(feature)?.forEach(option => covered.add(option)));

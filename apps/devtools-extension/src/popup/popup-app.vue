@@ -47,6 +47,10 @@ import type {
     ContextInfo,
 } from '@ripl/devtools';
 
+import {
+    typeIsNumber,
+} from '@ripl/utilities';
+
 const contexts = reactive(new Map<string, ContextInfo>());
 
 const contextList = computed(() => Array.from(contexts.values()));
@@ -69,7 +73,7 @@ onMounted(() => {
     }, tabs => {
         const tabId = tabs[0]?.id;
 
-        if (typeof tabId !== 'number') {
+        if (!typeIsNumber(tabId)) {
             return;
         }
 

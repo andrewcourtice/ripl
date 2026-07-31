@@ -164,8 +164,7 @@ describe('Axis transitions', () => {
         rescale(chart, 160);
         await renderPartially(chart);
 
-        // A taller domain moves every tick, but only a fraction of the transition has elapsed, so the
-        // label is still near where it started. Assigning the position would have put it at its target.
+        // Assigning the position instead of transitioning it would have put the label at its target.
         expect(label.y).not.toBe(settled);
         expect(Math.abs(label.y - settled)).toBeLessThan(5);
 
@@ -173,9 +172,7 @@ describe('Axis transitions', () => {
     });
 
     it('Should fade leaving ticks out instead of popping them', async () => {
-        // Settle the first render with animation off, so every tick is fully opaque before the
-        // rescale. Otherwise the entry fade would still be in flight and a broken exit fade would
-        // look identical to a working one.
+        // Settle with animation off first, else an in-flight entry fade looks identical to a broken exit fade.
         const chart = createChart(100, false);
 
         await chart.render();
@@ -190,8 +187,7 @@ describe('Axis transitions', () => {
         expect(leaving.length).toBeGreaterThan(0);
 
         leaving.forEach(group => {
-            // Leaves carry a concrete opacity, so the fade interpolates. The fade used to be applied
-            // to the group, whose opacity was undefined, so it silently did nothing and then popped.
+            // The fade used to be applied to the group, whose opacity was undefined, so it no-opped and popped.
             expect(labelOf(group).opacity).toBeLessThan(1);
             expect(labelOf(group).opacity).toBeGreaterThan(0);
             expect(markOf(group).opacity).toBeLessThan(1);
@@ -236,8 +232,7 @@ describe('Axis transitions', () => {
 
         expect(fresh.length).toBeGreaterThan(0);
 
-        // Linear interpolation of the previous scale gives where the old axis would have drawn this
-        // value. A freshly entered tick starts there, which is what makes a rescale read as movement.
+        // Where the old axis would have drawn this value — a freshly entered tick starts there.
         const [
             lowValue,
             lowPosition,
@@ -255,8 +250,7 @@ describe('Axis transitions', () => {
             const seeded = labelOf(after.get(key)!).y;
             const previous = previousPositionOf(value);
 
-            // A few frames have elapsed, so allow a small drift toward the target; the point is that
-            // the tick started at the old position, not at the new one.
+            // A few frames have elapsed, so allow small drift; the point is it started at the old position.
             expect(Math.abs(seeded - previous)).toBeLessThan(5);
         });
 

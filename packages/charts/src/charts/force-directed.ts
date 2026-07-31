@@ -297,8 +297,6 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
-            // One legend entry per distinct node group (or per node when ungrouped), using the
-            // group's/node's resolved color.
             const legendSeen = new Set<string>();
             const legendItems: LegendItem[] = [];
 
@@ -322,8 +320,6 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
 
             const area = layout.area;
 
-            // Legend-hidden groups are excluded from the simulation and rendering; links keep only
-            // active endpoints, so the remaining network relaxes and rescales to fill the area.
             const activeNodes = this.filterActive(nodes, node => node.group ?? node.id);
             const activeNodeIds = new Set(activeNodes.map(node => node.id));
             const activeLinks = links.filter(link => activeNodeIds.has(link.source) && activeNodeIds.has(link.target));
@@ -343,9 +339,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 return nodeRadius * (0.7 + ratio * 0.9);
             };
 
-            // Run the (deterministic) simulation centered on the origin, then fit to the area. Seed
-            // existing nodes from their last settled positions so a reweight relaxes from the current
-            // layout (nodes glide to new spots) rather than re-seeding from scratch (a full reshuffle).
+            // Seed from last settled positions so a reweight relaxes from the current layout, not a reshuffle
             const simNodes: ForceNode[] = activeNodes.map(node => {
                 const previous = this._positions.get(node.id);
                 return {
@@ -407,8 +401,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 });
             });
 
-            // Root + BFS depth drive the springy entry: nodes spring out from the root in waves, each
-            // wave delayed by its graph distance so the layout unfolds from the center outward.
+            // BFS depth from the root drives the entry delay so nodes spring out in waves
             const adjacency = new Map<string, string[]>();
             activeNodes.forEach(node => adjacency.set(node.id, []));
             activeLinks.forEach(link => {
@@ -499,16 +492,12 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                     }
             );
 
-            // Entry delay per new link, keyed by its element id, so it draws once the ripple reaches its
-            // root-ward endpoint (the shallower of its two nodes).
             const linkEntryDelays = new Map<string, number>();
 
             const newLinks = linkEntries.map(link => {
                 const ends = linkEndpoints(link);
                 const origin = linkOrigin(link, ends);
                 linkEntryDelays.set(linkId(link), Math.min(depthOf(link.source), depthOf(link.target)) * enter.duration * 0.18);
-                // Start collapsed at the root-ward node, then grow out to the full endpoints so the
-                // link appears to draw itself toward the child as the ripple reaches it.
                 const line = createLine({
                     id: linkId(link),
                     x1: origin.x,
@@ -645,8 +634,6 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
                 ...nodeUpdates.map(([, group]) => group),
             ];
 
-            // Legend hover highlights the hovered cluster's nodes (legend id = node.group ?? node.id;
-            // node group ids are `node-<id>`), dimming the other clusters.
             const nodeClusterOf = new Map<string, string>();
             nodes.forEach(node => nodeClusterOf.set(`node-${node.id}`, node.group ?? node.id));
             this.registerHighlightGroups(this._nodeElements, group => nodeClusterOf.get(group.id) ?? group.id);
@@ -655,8 +642,7 @@ export class ForceDirectedChart<TData = unknown> extends Chart<ForceDirectedChar
             const entryLabels = entryNodeGroups.flatMap(group => group.getElementsByType('text') as Text[]);
             const updateCircles = nodeUpdates.flatMap(([, group]) => group.getElementsByType('circle') as Circle[]);
 
-            // Recover a node id from a child element id (`node-<id>-circle` / `-label`) to look up its
-            // spring delay, robust even when node ids contain dashes.
+            // Anchored regexes so node ids containing dashes still resolve to their spring delay
             const delayForChild = (elementId: string, suffix: string) => (
                 springDelay(elementId.replace(/^node-/, '').replace(new RegExp(`-${suffix}$`), ''))
             );

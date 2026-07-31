@@ -203,10 +203,47 @@ Provide `nodes` (each with a unique `id`, optional `label`, `group`, `color`) la
 
 ## Options
 
-- **`nodes`**: array of `{ id, label?, group?, color? }`, laid out along the axis in order
-- **`links`**: array of `{ source, target, value? }`
-- **`nodeRadius`**: node dot radius, or the maximum radius when `sizeByConnections` is on (default `6`)
-- **`orientation`**: `'horizontal'` (default) or `'vertical'` (a Y axis with arcs bulging right)
-- **`sizeByConnections`**: scale each node's dot by its connection count, like a bubble chart (default `false`)
-- **`format`**: value formatter for tooltips
-- **`padding`**, **`title`**, **`animation`**: standard chart options
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createArcDiagramChart('#container', {
+    nodes,
+    links,
+    // `'horizontal'` (the default) runs the node axis along the bottom with arcs bulging up.
+    // `'vertical'` runs it down the left, arcs bulging right.
+    orientation: 'vertical',
+    // The dot radius — and, with `sizeByConnections` on, the radius of the *most* connected
+    // node. The rest scale down from it by degree.
+    nodeRadius: 8,
+    sizeByConnections: true,
+    legend: { position: 'bottom' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a node is clicked.
+chart.on('nodeclick', event => console.log(event.data)); // event.data: ArcDiagramNodeEvent<TData>
+// Emitted when the pointer enters a node.
+chart.on('nodeenter', event => console.log(event.data)); // event.data: ArcDiagramNodeEvent<TData>
+// Emitted when the pointer leaves a node.
+chart.on('nodeleave', event => console.log(event.data)); // event.data: ArcDiagramNodeEvent<TData>
+// Emitted when a link arc is clicked.
+chart.on('linkclick', event => console.log(event.data)); // event.data: ArcDiagramLinkEvent
+// Emitted when the pointer enters a link arc.
+chart.on('linkenter', event => console.log(event.data)); // event.data: ArcDiagramLinkEvent
+// Emitted when the pointer leaves a link arc.
+chart.on('linkleave', event => console.log(event.data)); // event.data: ArcDiagramLinkEvent
+```
+<!-- events:end -->

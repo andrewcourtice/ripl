@@ -44,8 +44,7 @@ export function isTransparentColor(color: string): boolean {
         return true;
     }
 
-    // The core rgba/hsla parser doesn't accept a bare `0` alpha (e.g. the canvas default
-    // shadow color `rgba(0, 0, 0, 0)`), so detect a zero alpha component directly.
+    // The core rgba/hsla parser rejects a bare `0` alpha (e.g. `rgba(0, 0, 0, 0)`), so match it here.
     return /^(?:rgba|hsla)\([^)]*[,/]\s*(?:0|0?\.0+|0%)\s*\)$/.test(trimmed);
 }
 

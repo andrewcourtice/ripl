@@ -80,10 +80,7 @@ const error = ref('');
 
 let generation = 0;
 
-// Driven by an explicit `watch` on `[root, type]` rather than `watchEffect`: the handler both reads
-// (`context.value?.destroy()`) and — in the WebGPU branch — writes `context.value` after an `await`, and a
-// `watchEffect` would track that read and re-trigger itself on the write, churning contexts forever. `watch`
-// tracks only its declared sources, so the post-await assignment settles state once.
+// `watch`, not `watchEffect`: the handler reads and writes `context.value`, which would re-trigger itself forever.
 async function updateContext([element, currentType]: [HTMLElement | undefined, ContextType]) {
     const token = ++generation;
 

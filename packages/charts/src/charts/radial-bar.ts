@@ -173,9 +173,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             animation: () => this.resolveAnimation(ANIMATION_REFERENCE.hover),
             tooltip: this._tooltip,
             anchor: () => {
-                // Bars are stroked open arcs (no inner radius), so `getCentroid` (which assumes an
-                // annular sector) would land halfway to the center. Anchor at the mid-sweep point
-                // on the band centerline instead, honoring the animated target state in `data`.
+                // `getCentroid` assumes an annular sector; these bars are stroked arcs, so anchor at mid-sweep
                 const state = (arc.data ?? {}) as Partial<ArcState>;
                 const radius = state.radius ?? arc.radius;
                 const startAngle = state.startAngle ?? arc.startAngle;
@@ -244,8 +242,6 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const outerRadius = (size / 2) * 0.92;
             const holeRadius = outerRadius * innerRadius;
 
-            // Legend-hidden rings are excluded from the banding, so the remaining rings thicken to
-            // fill the radial range and the sweep scale re-fits the visible values.
             const activeData = this.filterActive(data, getKey);
 
             const values = activeData.map(getValue);
@@ -256,9 +252,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const bandCount = Math.max(1, activeData.length);
             const band = (outerRadius - holeRadius) / bandCount;
 
-            // Geometry for the ring at data index `i` (first category outermost). Bars are stroked
-            // arcs, so we return the band centerline radius + thickness (the stroke width) rather
-            // than an inner/outer pair.
+            // Stroked arcs, so return the centerline radius + thickness, not an inner/outer pair
             const ringGeometry = (i: number, itemValue: number) => {
                 const ringOuter = outerRadius - i * band;
                 const thickness = band * (1 - gap);
@@ -275,9 +269,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
             const dataLabels = normalizeDataLabels(this.options.labels);
             const exitAnimation = this.resolveAnimation(ANIMATION_REFERENCE.exit);
 
-            // The value label sits just past the bar's sweep end, on the ring's centerline. The
-            // angular clearance covers half the stroke thickness (a rounded cap extends that far
-            // beyond `endAngle`) plus a small pixel gap, converted to radians at the ring's radius.
+            // Clearance covers half the stroke (a rounded cap overshoots `endAngle`) plus a pixel gap
             const labelPoint = (geometry: ReturnType<typeof ringGeometry>) => {
                 const clearance = geometry.center > 0 ? (geometry.thickness / 2 + 6) / geometry.center : 0;
                 const [x, y] = getThetaPoint(geometry.endAngle + clearance, geometry.center, cx, cy);
@@ -391,8 +383,7 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 const bar = group.query('.radial-bar__bar') as Arc;
 
                 if (track) {
-                    // lineCap isn't a tweenable value, so apply it directly so toggling `rounded`
-                    // takes effect on update, not just first render.
+                    // `lineCap` isn't tweenable, so set it directly or toggling `rounded` won't apply on update
                     track.lineCap = lineCap;
                     track.stroke = trackColor;
                     track.data = {
@@ -426,8 +417,6 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                     }, itemColor, `${getLabel(item)}: ${formatValue(getValue(item))}`);
                 }
 
-                // Reconcile the value label against the current `labels` option so it can be
-                // toggled and restyled at runtime, tracking the bar's sweep end as values change.
                 const valueLabel = group.query('.radial-bar__label') as Text | null;
 
                 if (!dataLabels.visible) {
@@ -486,8 +475,6 @@ export class RadialBarChart<TData = unknown> extends Chart<RadialBarChartOptions
                 ...updates.flatMap(([, group]) => [group.query('.radial-bar__track') as Arc, group.query('.radial-bar__bar') as Arc]).filter(Boolean),
             ];
 
-            // Entry labels fade in alongside the sweeping bars; entering/updating labels on update
-            // fade in or glide to the refreshed sweep end. Exiting labels fade via `exitElement`.
             const entryLabels = entryGroups.map(group => group.query('.radial-bar__label') as Text).filter(Boolean);
 
             return Promise.all([

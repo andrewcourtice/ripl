@@ -309,23 +309,77 @@ setInterval(() => {
 chart.clear();
 ```
 
+## Data Format
+
+A realtime chart has no `data` option: it holds a rolling window and you push samples into it. Each
+push is one object keyed by series id:
+
+```ts
+const chart = createRealtimeChart('#container', {
+    windowSize: 60,
+    series: [
+        {
+            id: 'cpu',
+            label: 'CPU %',
+        },
+        {
+            id: 'memory',
+            label: 'Memory %',
+        },
+    ],
+});
+
+chart.push({
+    cpu: 42,
+    memory: 61,
+});
+```
+
+The chart keeps the most recent `windowSize` samples and drops the rest. `chart.clear()` empties the
+window.
+
 ## Options
 
-- **`series`**: array of series with `id`, `label`, optional `color`, `lineType`, `lineWidth`, `showArea`, `fillOpacity`
-- **`windowSize`**: maximum visible data points (default `60`)
-- **`transitionDuration`**: transition duration per update in ms (default `300`)
-- **`grid`** (`boolean | ChartGridOptions`): show/configure grid lines (default `true`)
-- **`crosshair`** (`boolean | ChartCrosshairOptions`): show/configure crosshair (default `true`)
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (default `true`)
-- **`axis`** (`boolean | ChartAxisOptions`): configure axes (default `true`)
-- **`format`** (`'number' | 'percentage' | 'date' | 'string' | Intl.NumberFormat options | ((value) => string)`): formats the y-axis tick labels
-- **`yMin`** / **`yMax`**: fixed Y axis bounds (auto-computed if omitted)
-- **`padding`**: chart padding
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
 
-### Methods
+<!-- eslint-skip -->
+```ts
+createRealtimeChart('#container', {
+    // Samples kept in the sliding window; older ones scroll off the left.
+    windowSize: 60,
+    // Duration of the transition applied on each `push()`, in milliseconds.
+    transitionDuration: 300,
+    showYAxis: true,
+    yMin: 0,
+    yMax: 100,
+    grid: true,
+    crosshair: true,
+    tooltip: true,
+    legend: { position: 'bottom' },
+    axis: { y: { title: 'Utilisation' } },
+    format: 'number',
+    series: [
+        {
+            id: 'cpu',
+            label: 'CPU %',
+            color: '#7cacf8',
+            lineType: 'monotoneX',
+            lineWidth: 2,
+            showArea: true,
+            fillOpacity: 0.15,
+        },
+    ],
+});
+```
 
-- **`push(values)`**: append a data point for each series. Keys must match series `id` values.
-- **`clear()`**: reset all buffers and clear the chart.
-- **`update(options)`**: update chart options (inherited from `Chart`).
-- **`destroy()`**: destroy the chart and release resources.
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+This chart emits no events.
+<!-- events:end -->

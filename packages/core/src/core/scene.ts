@@ -155,14 +155,12 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             this._rebuild();
             context.invalidateTrackedElements();
 
-            // The rebuild lands on its own frame; a renderer tick may have painted (and
-            // consumed the flag) in between, so re-invalidate for the new instruction stream.
+            // A tick may have painted (consuming the flag) since the graph change, so re-invalidate.
             this.invalidate();
         };
 
         this.retain(context.on('resize', () => {
-            // A resize clears the surface, so the next frame must repaint regardless of
-            // whether the scene renders synchronously here.
+            // A resize clears the surface, so the next frame must repaint regardless.
             this.invalidate();
 
             if (renderOnResize && !!this.buffer.length) {
@@ -170,8 +168,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             }
         }));
 
-        // A context-level repaint request (e.g. a 3D camera move) mutates no element, so it
-        // would otherwise be missed by the renderer's dirty check, so invalidate to force a paint.
+        // A context-level repaint (e.g. a 3D camera move) mutates no element, so force a paint.
         this.retain(context.on('render', () => this.invalidate()));
 
         this.on('graph', () => {
@@ -179,11 +176,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             requestFrame(rebuild);
         });
 
-        // Any bubbled state change means the on-screen output is stale. A z-index change
-        // additionally reorders the instruction stream, so re-sort. Interpolated animations
-        // write state directly (no `updated` event); the renderer covers those via its
-        // transition map, so the rebuild only fires on explicit z-index assignments, and is
-        // debounced to once per frame.
+        // Any bubbled change invalidates; a z-index change also reorders the stream, so re-sort.
         this.on('updated', event => {
             this.invalidate();
 
@@ -280,8 +273,7 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             });
         });
 
-        // Leaves clear their own flags in `Element.render` and groups at their `pop`; the root is
-        // not part of its own instruction stream, so reset it explicitly here.
+        // The root is not part of its own instruction stream, so reset it explicitly.
         this.$reset();
         this.$consumeRender();
     }

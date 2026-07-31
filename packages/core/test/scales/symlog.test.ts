@@ -67,8 +67,7 @@ describe('Scale', () => {
                 constant: 100,
             });
 
-            // With a larger constant the mapping stays closer to linear near zero, so a small value
-            // remains closer to the midpoint instead of being pushed outward by log compression.
+            // A larger constant stays closer to linear near zero, so small values stay near the midpoint.
             const tightDeviation = Math.abs(tightScale(1) - 100);
             const wideDeviation = Math.abs(wideScale(1) - 100);
 

@@ -103,8 +103,7 @@ describe('chart theme palette', () => {
 
         expect(internals.theme).toBe(darkTheme);
 
-        // The color generator is seeded from the theme palette, so a generated series color
-        // (one not overridden per-series) comes from that palette.
+        // The color generator is seeded from the theme palette, so a generated color comes from it.
         internals.resolveSeriesColors([{ id: 's' }]);
 
         expect(darkTheme.palette).toContain(internals.getSeriesColor('s'));

@@ -110,8 +110,7 @@ describe('sankey label layout', () => {
 
         const right = WIDTH - DEFAULT_CHART_PADDING;
 
-        // Labels are left-anchored beside their node, so the box runs rightward from `x`. The last
-        // column used to start exactly on the plot's right edge, putting all of its label outside.
+        // Labels run rightward from `x`; the last column used to start on the plot edge, so ran outside.
         NODES.forEach(node => {
             const box = byId(chart, `${node.id}-label`).getBoundingBox();
 
@@ -137,8 +136,7 @@ describe('sankey label layout', () => {
             return rect.x + rect.width;
         };
 
-        // A shorter last-column label needs less room, so the flow reaches further right. If the band
-        // were a fixed inset rather than a measurement, both would land in the same place.
+        // If the band were a fixed inset rather than a measurement, both would land in the same place.
         expect(rightEdge(short)).toBeGreaterThan(rightEdge(long));
         expect(rightEdge(long)).toBeLessThan(WIDTH - DEFAULT_CHART_PADDING);
     });

@@ -250,8 +250,7 @@ export class WebGPUContext3D extends Context3D {
     }
 
     private _executeRenderPass(): void {
-        // A renderer (rAF loop) can keep ticking a context after it has been destroyed, e.g. while a docs
-        // example swaps contexts. Bail out so we never write to, or submit, freed GPU resources.
+        // A rAF loop can keep ticking a destroyed context, so bail out rather than touch freed GPU resources.
         if (this._destroyed) {
             return;
         }

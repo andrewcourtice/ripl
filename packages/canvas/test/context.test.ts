@@ -102,8 +102,7 @@ describe('CanvasContext', () => {
 
         ctx.fill = 'pattern(diagonal, #1a6, #fff, 8)';
 
-        // A raw pattern string is not a valid canvas fillStyle; the setter must route it through
-        // createPattern so the native context receives a CanvasPattern object instead.
+        // A raw pattern string is not a valid `fillStyle`, so the setter must route it through `createPattern`.
         expect(typeof native.fillStyle).toBe('object');
         expect(native.fillStyle).not.toBe('pattern(diagonal, #1a6, #fff, 8)');
     });

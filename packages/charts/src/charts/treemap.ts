@@ -245,8 +245,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 color: getColor(item),
             }));
 
-            // Resolve colors through the shared id-keyed map so they stay stable across data
-            // updates instead of being reassigned from the generator on every render.
             this.resolveSeriesColors(items.map(item => ({
                 id: item.key,
                 color: item.color,
@@ -269,8 +267,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             const area = layout.area;
 
-            // Legend-hidden items are excluded from the layout, so the remaining cells expand to
-            // fill the area and hidden ones exit through the standard join.
             const activeItems = this.filterActive(items, item => item.key);
 
             const nodes = layoutTreemap(
@@ -290,8 +286,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
 
             exits.forEach(el => el.destroy());
 
-            // A cell only carries a label when it is large enough to fit one; the font scales with
-            // the cell width. Shared by the entry and update branches so both stay in sync.
             const showLabelFor = (node: { width: number;
                 height: number; }) => node.width > 40 && node.height > 20;
             const labelFont = (width: number) => `600 ${numberClamp(width / 8, 9, 12)}px sans-serif`;
@@ -327,8 +321,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                         x: node.x + node.width / 2,
                         y: node.y + node.height / 2,
                         content: node.label,
-                        // Keep the treemap's size-adaptive font, but with the shared weight/family
-                        // (and explicit styling, so Canvas and SVG render identically).
+                        // Explicit font styling so Canvas and SVG render the label identically
                         font: labelFont(node.width),
                     });
 
@@ -343,8 +336,6 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                 });
             });
 
-            // Labels reconciled on the update path (repositioned, and faded in/out as cells cross the
-            // size threshold), collected here so they animate alongside their rectangles below.
             const updateTexts: Text[] = [];
 
             const updateGroups = updates.map(([node, group]) => {
@@ -363,9 +354,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
                     this._attachCellHover(rect, node, nodeColor);
                 }
 
-                // Move the label to the cell's new center in lockstep with the rect (routing the new
-                // position through `.data` so it tweens instead of snapping). Cells that grew past the
-                // threshold gain a label; cells that shrank below it fade theirs out.
+                // Route the new center through `.data` so the label tweens with the rect instead of snapping
                 const cx = node.x + node.width / 2;
                 const cy = node.y + node.height / 2;
                 const showLabel = showLabelFor(node);

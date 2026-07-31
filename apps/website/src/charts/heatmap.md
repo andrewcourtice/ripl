@@ -178,18 +178,84 @@ const chart = createHeatmapChart('#container', {
 });
 ```
 
+## Data Format
+
+Each item is one cell, identified by its x and y category and carrying the value that drives its
+color. `xCategories` and `yCategories` fix the axis order (and which cells exist), so a missing
+combination simply renders no cell:
+
+```ts
+const data = [
+    {
+        day: 'Mon',
+        hour: '9am',
+        value: 42,
+    },
+    {
+        day: 'Mon',
+        hour: '10am',
+        value: 71,
+    },
+    {
+        day: 'Tue',
+        hour: '9am',
+        value: 18,
+    },
+];
+
+const xCategories = ['9am', '10am', '11am'];
+const yCategories = ['Mon', 'Tue', 'Wed'];
+```
+
 ## Options
 
-- **`data`**: the data array (one item per cell)
-- **`keyX`**: accessor for the x-axis category
-- **`keyY`**: accessor for the y-axis category
-- **`value`**: accessor for the cell value
-- **`xCategories`**: ordered list of x-axis categories
-- **`yCategories`**: ordered list of y-axis categories
-- **`gradient`**: sequential color stops, low to high; any number of stops (default two)
-- **`borderRadius`**: cell corner radius (default `2`)
-- **`labels`**: show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color
-- **`legend`** (`boolean | ColorLegendOptions`): show/configure the color-scale legend. Unlike the series legend on other charts this is a continuous color ramp, configured with `orientation`, `thickness`, `segments`, `ticks` and `format`
-- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
-- **`axis`** (`boolean | ChartAxisOptions`): configure the category axes
-- **`format`** (`ValueFormatInput`): format applied to cell values in tooltips and labels
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createHeatmapChart('#container', {
+    data,
+    keyX: 'hour',
+    keyY: 'day',
+    value: 'sessions',
+    xCategories: HOURS,
+    yCategories: DAYS,
+    // Color stops interpolated low→high: two for a simple ramp, or any number of stops —
+    // a built-in `COLOR_SCHEME_*` palette works here too.
+    gradient: ['#dbeafe', '#1d4ed8'],
+    borderRadius: 4,
+    labels: true,
+    // A color-scale legend, not the per-series legend other charts use.
+    legend: {
+        orientation: 'horizontal',
+        thickness: 12,
+        segments: 6,
+    },
+    tooltip: true,
+    axis: {
+        x: { title: 'Hour' },
+        y: { title: 'Day' },
+    },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a cell is clicked.
+chart.on('cellclick', event => console.log(event.data)); // event.data: HeatmapChartCellEvent
+// Emitted when the pointer enters a cell.
+chart.on('cellenter', event => console.log(event.data)); // event.data: HeatmapChartCellEvent
+// Emitted when the pointer leaves a cell.
+chart.on('cellleave', event => console.log(event.data)); // event.data: HeatmapChartCellEvent
+```
+<!-- events:end -->

@@ -191,8 +191,7 @@ export function matches(element: Queryable, selector: string): boolean {
         return false;
     }
 
-    // A single simple segment can be tested directly; multi-segment selectors (with combinators)
-    // are resolved against the element's root so ancestor/sibling constraints are honored.
+    // Multi-segment selectors resolve against the root so ancestor/sibling combinators are honored.
     if (segments.length === 1) {
         return matchesSegment(element, segments[0]);
     }

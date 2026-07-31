@@ -795,20 +795,20 @@
             "link": "/docs/api/@ripl/charts/interfaces/ChartYAxisItemOptions.md"
           },
           {
-            "text": "ChordChartArcEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/ChordChartArcEvent.md"
-          },
-          {
             "text": "ChordChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/ChordChartEventMap.md"
+          },
+          {
+            "text": "ChordChartLinkEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ChordChartLinkEvent.md"
           },
           {
             "text": "ChordChartOptions",
             "link": "/docs/api/@ripl/charts/interfaces/ChordChartOptions.md"
           },
           {
-            "text": "ChordChartRibbonEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/ChordChartRibbonEvent.md"
+            "text": "ChordChartSegmentEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/ChordChartSegmentEvent.md"
           },
           {
             "text": "ColorLegendComponentOptions",
@@ -947,20 +947,16 @@
             "link": "/docs/api/@ripl/charts/interfaces/LineChartSeriesOptions.md"
           },
           {
-            "text": "PackedCircleChartCellEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartCellEvent.md"
-          },
-          {
             "text": "PackedCircleChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartEventMap.md"
           },
           {
-            "text": "PackedCircleChartOptions",
-            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartOptions.md"
+            "text": "PackedCircleChartNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartNodeEvent.md"
           },
           {
-            "text": "Padding",
-            "link": "/docs/api/@ripl/charts/interfaces/Padding.md"
+            "text": "PackedCircleChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartOptions.md"
           },
           {
             "text": "PieChartEventMap",
@@ -1007,12 +1003,12 @@
             "link": "/docs/api/@ripl/charts/interfaces/RadarChartEventMap.md"
           },
           {
-            "text": "RadarChartOptions",
-            "link": "/docs/api/@ripl/charts/interfaces/RadarChartOptions.md"
+            "text": "RadarChartMarkerEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/RadarChartMarkerEvent.md"
           },
           {
-            "text": "RadarChartPointEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/RadarChartPointEvent.md"
+            "text": "RadarChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/RadarChartOptions.md"
           },
           {
             "text": "RadarChartSeriesOptions",
@@ -1127,12 +1123,12 @@
             "link": "/docs/api/@ripl/charts/interfaces/SunburstChartEventMap.md"
           },
           {
-            "text": "SunburstChartOptions",
-            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartOptions.md"
+            "text": "SunburstChartNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartNodeEvent.md"
           },
           {
-            "text": "SunburstChartSegmentEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartSegmentEvent.md"
+            "text": "SunburstChartOptions",
+            "link": "/docs/api/@ripl/charts/interfaces/SunburstChartOptions.md"
           },
           {
             "text": "SunburstNode",
@@ -1143,12 +1139,12 @@
             "link": "/docs/api/@ripl/charts/interfaces/Theme.md"
           },
           {
-            "text": "TreemapChartCellEvent",
-            "link": "/docs/api/@ripl/charts/interfaces/TreemapChartCellEvent.md"
-          },
-          {
             "text": "TreemapChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/TreemapChartEventMap.md"
+          },
+          {
+            "text": "TreemapChartNodeEvent",
+            "link": "/docs/api/@ripl/charts/interfaces/TreemapChartNodeEvent.md"
           },
           {
             "text": "TreemapChartOptions",
@@ -1277,6 +1273,10 @@
             "link": "/docs/api/@ripl/charts/type-aliases/ChartTooltipTrigger.md"
           },
           {
+            "text": "ChartYAxisEntry",
+            "link": "/docs/api/@ripl/charts/type-aliases/ChartYAxisEntry.md"
+          },
+          {
             "text": "ColorLegendOrientation",
             "link": "/docs/api/@ripl/charts/type-aliases/ColorLegendOrientation.md"
           },
@@ -1307,6 +1307,10 @@
           {
             "text": "NumericKey",
             "link": "/docs/api/@ripl/charts/type-aliases/NumericKey.md"
+          },
+          {
+            "text": "Padding",
+            "link": "/docs/api/@ripl/charts/type-aliases/Padding.md"
           },
           {
             "text": "PaddingInput",
@@ -1359,6 +1363,14 @@
             "link": "/docs/api/@ripl/charts/variables/darkTheme.md"
           },
           {
+            "text": "DEFAULT_CHART_PADDING",
+            "link": "/docs/api/@ripl/charts/variables/DEFAULT_CHART_PADDING.md"
+          },
+          {
+            "text": "ELEMENT_GAP",
+            "link": "/docs/api/@ripl/charts/variables/ELEMENT_GAP.md"
+          },
+          {
             "text": "lightTheme",
             "link": "/docs/api/@ripl/charts/variables/lightTheme.md"
           },
@@ -1373,6 +1385,10 @@
           {
             "text": "SEGMENT_LABEL_OUTSIDE_FILL",
             "link": "/docs/api/@ripl/charts/variables/SEGMENT_LABEL_OUTSIDE_FILL.md"
+          },
+          {
+            "text": "SPACING",
+            "link": "/docs/api/@ripl/charts/variables/SPACING.md"
           }
         ]
       },
@@ -1655,6 +1671,10 @@
           {
             "text": "resolveAnimation",
             "link": "/docs/api/@ripl/charts/functions/resolveAnimation.md"
+          },
+          {
+            "text": "resolveChartPadding",
+            "link": "/docs/api/@ripl/charts/functions/resolveChartPadding.md"
           },
           {
             "text": "resolveColorBy",

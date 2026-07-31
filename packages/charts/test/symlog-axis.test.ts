@@ -27,9 +27,7 @@ function yScale(chart: unknown): ScaleInternals {
     return (chart as { yAxes: { scale: ScaleInternals }[] }).yAxes[0].scale;
 }
 
-// jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — leaving
-// the value scale with a degenerate range that cannot express relative spacing. Size the context so
-// the positions being asserted are real pixels.
+// jsdom provides no layout, so the scene starts 0x0 — size the context to assert in real pixels.
 function rescaleContext(chart: unknown): void {
     (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
 }
@@ -127,8 +125,7 @@ describe('symlog axis', () => {
 
         const scale = yScale(chart);
 
-        // A linear scale would place 10 one-tenth of the way from the midpoint to the max (ratio 0.1);
-        // symlog compresses large magnitudes, so 10 sits much further out.
+        // A linear scale would give ratio 0.1; symlog compresses large magnitudes, so 10 sits further out.
         const ratio = (scale(10) - scale(0)) / (scale(100) - scale(0));
 
         expect(ratio).toBeGreaterThan(0.3);

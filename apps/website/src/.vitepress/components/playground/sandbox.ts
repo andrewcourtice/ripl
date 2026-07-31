@@ -1,3 +1,7 @@
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 export type PlaygroundMode = '2d' | '3d';
 export type ContextType = 'canvas' | 'svg' | 'webgpu' | 'terminal';
 
@@ -104,8 +108,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 '    get rows() { return term.rows; },',
                 '    onResize(cb) { const sub = term.onResize((e) => cb(e.cols, e.rows)); return () => sub.dispose(); },',
                 '};',
-                // Author examples against the host box size (like canvas/SVG); the context scales
-                // that logical space into the braille grid so nothing renders out of bounds.
+                // Author against the host box size; the context scales that logical space into the braille grid.
                 'const context = createContext(output, { logicalWidth: root.clientWidth, logicalHeight: root.clientHeight });',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
@@ -214,8 +217,7 @@ export function buildSrcdoc(
     const importMapJson = JSON.stringify({ imports: resolvedMap }, null, 2);
 
     const isTerminal = contextType === 'terminal';
-    // The terminal context renders into an xterm.js emulator, which needs its own stylesheet and a
-    // dark, padded host so the ANSI/braille output reads like a real terminal.
+    // xterm.js needs its own stylesheet and a dark, padded host for the ANSI/braille output to read right.
     const terminalStylesheet = isTerminal && resolvedMap['@xterm/xterm']
         ? `<link rel="stylesheet" href="${origin}/_playground/xterm/xterm.css">`
         : '';
@@ -314,7 +316,7 @@ export function decodeState(encoded: string): PlaygroundState | null {
         try {
             const parsed = JSON.parse(decoded);
 
-            if (parsed && typeof parsed.code === 'string') {
+            if (parsed && typeIsString(parsed.code)) {
                 return parsed as PlaygroundState;
             }
         } catch {

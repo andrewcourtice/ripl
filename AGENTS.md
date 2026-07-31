@@ -359,6 +359,17 @@ All enforced via ESLint + `@stylistic/eslint-plugin`:
 | No `switch` in library/extension source | Use keyed object-lookup dispatch (`no-restricted-syntax`) — see [Control Flow](#control-flow) |
 | Vue SFC block order | `<template>` → `<script>` → `<style>` (`vue/block-order`) |
 
+### Comments
+
+Comments are the exception, not the habit. JSDoc on the public API is mandatory (see [Public API Documentation](#public-api-documentation)); `//` comments inside a body are not, and most code should carry none.
+
+- **One line, or none** — a `//` comment is a single line. Multi-line `//` blocks are not the house style, however accurate they are.
+- **Explain why, never what** — the code already says what it does. A comment earns its place only by recording something the code cannot: a browser quirk, a constraint, the bug a line prevents.
+- **If one line will not carry it, the code is the problem** — that is the signal to extract a named function (see [Functions & Decomposition](#functions--decomposition)), not to write a paragraph.
+- **Do not narrate tests** — a good `it('...')` title already says what the assertion below checks. Comment only the specific regression a test exists to catch.
+- **Do not repeat a rationale across files** — it belongs once, at the thing it describes.
+- Pragmas (`eslint-disable`, `@ts-expect-error`, `TODO`, `FIXME`) are exempt and must stay adjacent to the code they apply to.
+
 ### Naming Conventions
 
 - `kebab-case` — all file names (`.ts`, `.vue`, `.scss`, etc.)
@@ -414,7 +425,7 @@ When a file accumulates several constants, extract them into a dedicated `consta
 ### Functions & Decomposition
 
 - Break large blocks of logic into small, well-named functions that are easy to debug and test
-- Each function should do one thing; if a function needs a comment explaining a section, that section is a candidate for extraction
+- Each function should do one thing; if a function needs a comment explaining a section, that section is a candidate for extraction (see [Comments](#comments))
 - Prefer pure functions where feasible — they are easier to test and reason about
 
 ### Class Conventions
@@ -616,3 +627,4 @@ The playground (`apps/website/src/.vitepress/components/playground/`) provides a
 5. Keep changes focused and atomic
 6. Document **every** public API member with JSDoc per [Public API Documentation](#public-api-documentation) — new or changed public methods, config options, properties, accessors, factories, and type-guards must all carry doc comments (verify with the TypeDoc `notDocumented` check). An undocumented public member is an incomplete change.
 7. Do not add runtime dependencies without explicit approval
+8. Keep `//` comments to one line and to the non-obvious per [Comments](#comments) — JSDoc is required, prose in bodies is not

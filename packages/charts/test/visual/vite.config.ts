@@ -17,8 +17,6 @@ const resolve = (pkg: string) => path.resolve(root, `packages/${pkg}/src/index.t
 export default defineConfig({
     root: dirname,
     resolve: {
-        // Alias every `@ripl/*` package to source so the gallery (and its transitive imports,
-        // e.g. canvas -> @ripl/dom) resolve without a build step.
         alias: {
             '@ripl/utilities': resolve('utilities'),
             '@ripl/dom': resolve('dom'),

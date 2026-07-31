@@ -25,6 +25,10 @@ import type {
     InterpolatorFactory,
 } from './types';
 
+import {
+    typeIsString,
+} from '@ripl/utilities';
+
 function canInterpolateGradients(gradientA: Gradient, gradientB: Gradient): boolean {
     if (gradientA.type !== gradientB.type) {
         return false;
@@ -139,4 +143,4 @@ export const interpolateGradient: InterpolatorFactory<string> = (valueA, valueB)
 };
 
 /** Reports whether this factory can interpolate the given value (a CSS gradient string). */
-interpolateGradient.test = value => typeof value === 'string' && isGradientString(value);
+interpolateGradient.test = value => typeIsString(value) && isGradientString(value);

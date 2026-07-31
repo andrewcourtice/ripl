@@ -154,9 +154,7 @@ describe('Tooltip', () => {
 
         measureByLength(scene);
 
-        // 14 characters at 10px each, so the text is 140px wide against a 100px `maxWidth`. With no
-        // wrapping there is nothing to wrap it to: the box was clamped to 100px anyway and simply cut
-        // the text off. `maxWidth` is the width content wraps *at*, so it cannot apply here.
+        // 14 chars at 10px = 140px against a 100px `maxWidth`; with no wrapping there is nothing to wrap to.
         tooltip.show(100, 100, 'aaaa bbbb cccc');
 
         const [text] = scene.getElementsByType<Text>('text');

@@ -12,12 +12,7 @@ import {
 } from '../core/cartesian';
 
 import type {
-    ChartAxisInput,
-    ChartCrosshairInput,
     ChartDataLabelsInput,
-    ChartGridInput,
-    ChartLegendInput,
-    ChartTooltipInput,
     ValueFormatInput,
 } from '../core/options';
 
@@ -107,8 +102,8 @@ export interface LineChartSeriesOptions<TData> {
     markerRadius?: number;
     /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
-    /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    yAxis?: number | string;
+    /** The `id` of the y-axis this series binds to. Defaults to the primary axis. */
+    yAxis?: string;
 }
 
 /** Options for configuring a {@link LineChart}. */
@@ -119,16 +114,6 @@ export interface LineChartOptions<TData = unknown> extends CartesianChartOptions
     series: LineChartSeriesOptions<TData>[];
     /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Background grid configuration (`true`/`false` or detailed grid options). */
-    grid?: ChartGridInput;
-    /** Crosshair overlay configuration (`true`/`false` or detailed crosshair options). */
-    crosshair?: ChartCrosshairInput;
-    /** Hover tooltip configuration (`true`/`false` or detailed tooltip options). */
-    tooltip?: ChartTooltipInput;
-    /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
-    legend?: ChartLegendInput;
-    /** Axis configuration for the x and y axes. */
-    axis?: ChartAxisInput<TData>;
     /** Show value labels next to each marker. `true` uses the default anchor; a string sets the anchor side. */
     labels?: ChartDataLabelsInput;
     /** Format applied to marker values shown as text (tooltips and labels). */
@@ -201,8 +186,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         return this.buildOverviewSeries(this.filterActive(series), data, () => 'line', (srs, item) => resolveAccessor<TData, number>(srs.value)(item));
     }
 
-    // Resolves the shared axis-tooltip content for the hovered plot x: the nearest category, one
-    // row per active series, anchored above the topmost marker at that category.
     private _axisTooltipSnapshot(
         plotX: number,
         keys: string[],
@@ -285,8 +268,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             const getKey = resolveAccessor<TData, string>(key);
             const keys = data.map(getKey);
 
-            // Legend-hidden series are excluded from extents and rendering, so toggling a series
-            // rescales the value axis and animates the series out through the standard exit join.
             const activeSeries = this.filterActive(series);
 
             const seriesExtents = activeSeries
@@ -331,8 +312,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 });
             }
 
-            // Resolve the plot outside-in: the axes are measured and the plot recomputed until both
-            // settle, so the series geometry below is derived from bounds the axes will actually draw.
             const plot = this.resolveCartesianPlot(area, candidate => {
                 this._yScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
                 this.yAxis.scale = this._yScale;
@@ -341,8 +320,7 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 this.xAxis.scale = this._xScale;
             });
 
-            // The navigator windows the x (category) axis only; the value axis stays at the full
-            // extent, so the strip scrubs horizontally without rescaling the y domain.
+            // The navigator windows the category axis only; the value axis keeps its full extent
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
 
@@ -411,8 +389,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
 
         let scales: Scale[] = [];
 
-        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
-        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
         const plot = this.resolveCartesianPlot({
             x: left,
             y: top,
@@ -434,8 +410,6 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this._xScale = this.applyViewToScale(this._xScale, 'x');
         this.xAxis.scale = this._xScale;
 
-        // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
-        // agnostic; the renderer passes the series through as its shared `LineSeriesLike`).
         const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 

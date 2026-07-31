@@ -52,9 +52,7 @@ const DATA = [
 
 describe('per-series paint reconciles on update', () => {
 
-    // Stroke, line width and fill opacity were applied only when a series was first built. On an
-    // update the existing polyline was reused and only its points were transitioned, so changing any
-    // of them did nothing until the series was recreated — a live control that silently no-ops.
+    // Paint was applied only on first build, so an update reused the polyline and silently no-opped.
 
     it('re-applies a line series\' stroke and width', async () => {
         polyfillPath2D();

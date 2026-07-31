@@ -529,8 +529,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         applyElementTransform(this, group);
         this.applyGroupPaint(group);
 
-        // Opacity composites the group as a unit (multiplicative), rather than inheriting as a
-        // per-element value. Nested groups compound because each `save()` re-copies the state.
+        // Opacity composites the group as a unit (multiplicative); nested groups compound via `save()`.
         const opacity = group.opacity;
 
         if (!typeIsNil(opacity) && opacity !== 1) {
@@ -684,8 +683,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return hits;
         }
 
-        // Paint-order tiebreak via a one-pass index map; an `indexOf` inside the comparator
-        // would rescan the rendered-element list for every comparison.
+        // One-pass index map; an `indexOf` in the comparator would rescan the list per comparison.
         const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
 
         return hits.sort((ea, eb) => {

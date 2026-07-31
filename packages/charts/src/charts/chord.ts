@@ -305,9 +305,6 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
 
             const colorGenerator = this.colorGenerator;
 
-            // Resolve a stable color per label through the shared, id-keyed color map so colors
-            // are preserved across data updates (not reshuffled each render) and stay in sync with
-            // the legend. Keyed by `arc-${label}` to match the arc group / legend item ids.
             this.resolveSeriesColors(labels.map((label, index) => ({
                 id: `arc-${label}`,
                 color: colors?.[index],
@@ -333,9 +330,6 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             const outerRadius = size * 0.42;
             const innerRadius = outerRadius - 15;
 
-            // Legend-hidden groups are dropped from the layout (their matrix row/column excluded),
-            // so the remaining arcs and ribbons expand to fill the circle. Arc/ribbon ids are
-            // label-based, so the joins still match and hidden elements exit cleanly.
             const activeIndices = labels
                 .map((_, index) => index)
                 .filter(index => this.isItemActive(`arc-${labels[index]}`));
@@ -447,9 +441,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
                 });
             });
 
-            // Apply the new layout to existing ribbons so the inner ribbons animate to their new
-            // positions on data update (previously the update path discarded ribbon geometry, so
-            // only the outer ring moved).
+            // Update ribbon geometry too, or only the outer ring moves on a data update
             const ribbonUpdateGroups = ribbonUpdates.map(([ribbon, group]) => {
                 const ribbonEl = group.query('ribbon') as Ribbon;
 

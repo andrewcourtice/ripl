@@ -162,8 +162,14 @@ function randomize() {
 }
 </script>
 
-```typescript
-const chart = createPolarAreaChart(context, {
+## Usage
+
+```ts
+import {
+    createPolarAreaChart,
+} from '@ripl/charts';
+
+const chart = createPolarAreaChart('#container', {
     key: 'id',
     value: 'value',
     label: 'label',
@@ -230,18 +236,47 @@ Every segment spans the same angle, and only the radius varies with `value`.
 
 ## Options
 
-- **`data`**: the data array
-- **`key`**: key accessor for each segment (a field name or a function)
-- **`value`**: numeric value accessor; encoded as the segment radius
-- **`label`**: label accessor for each segment
-- **`colorBy`**: optional per-segment color accessor (otherwise a palette color is assigned)
-- **`innerRadius`**: inner radius as a fraction of the chart size (`0`–`1`, default `0.15`)
-- **`maxRadiusRatio`**: maximum outer radius as a ratio of the chart size (`0`–`0.5`, default `0.45`)
-- **`padAngle`**: padding angle between segments in radians (default `0.02`)
-- **`levels`**: number of concentric grid rings (default `4`)
-- **`labels`**: `false` (default) \| `true` (inside) \| `'outside'` (leader-line) \| a full options object
-- **`legend`** (`boolean | ChartLegendOptions`): segment legend (shown by default for multiple segments)
-- **`format`**: value formatter for tooltips/labels (`'number'`, `'percentage'`, or a function)
-- **`padding`**: chart padding
-- **`title`** (`string | ChartTitleOptions`): chart title
-- **`animation`** (`boolean | ChartAnimationOptions`): enable/configure entry/update animations
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createPolarAreaChart('#container', {
+    data,
+    key: 'month',
+    value: 'rainfall',
+    label: 'month',
+    colorBy: 'season',
+    // Hole in the middle, as a fraction of the chart size (0–1).
+    innerRadius: 0.15,
+    // How far the longest segment reaches, as a fraction of the chart size. 0.5 touches the
+    // edge, so this is the outer bound (0–0.5).
+    maxRadiusRatio: 0.45,
+    // Gap between adjacent segments, in radians.
+    padAngle: 0.02,
+    // Concentric grid rings.
+    levels: 4,
+    labels: 'outside',
+    legend: { position: 'right' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a segment is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: PolarAreaChartSegmentEvent
+// Emitted when the pointer enters a segment.
+chart.on('segmententer', event => console.log(event.data)); // event.data: PolarAreaChartSegmentEvent
+// Emitted when the pointer leaves a segment.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: PolarAreaChartSegmentEvent
+```
+<!-- events:end -->

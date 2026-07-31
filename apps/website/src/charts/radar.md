@@ -240,9 +240,47 @@ createRadarChart('#container', {
 
 ## Options
 
-- **`data`**: the data array (one item per axis)
-- **`categories`**: array of axis labels
-- **`series`**: array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
-- **`max`**: maximum value for the scale (auto-computed if omitted)
-- **`levels`**: number of concentric grid levels (default `5`)
-- **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createRadarChart('#container', {
+    data,
+    categories: ['Speed', 'Power', 'Range', 'Accuracy', 'Defence'],
+    max: 100,
+    // Concentric grid rings.
+    levels: 5,
+    labels: true,
+    legend: { position: 'bottom' },
+    format: 'number',
+    series: [
+        {
+            id: 'player-1',
+            label: 'Player 1',
+            value: 'playerOne',
+            color: '#7cacf8',
+            fillOpacity: 0.3,
+        },
+    ],
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a point marker is clicked.
+chart.on('markerclick', event => console.log(event.data)); // event.data: RadarChartMarkerEvent
+// Emitted when the pointer enters a point marker.
+chart.on('markerenter', event => console.log(event.data)); // event.data: RadarChartMarkerEvent
+// Emitted when the pointer leaves a point marker.
+chart.on('markerleave', event => console.log(event.data)); // event.data: RadarChartMarkerEvent
+```
+<!-- events:end -->

@@ -151,11 +151,7 @@ export class ChartAnnotations extends ChartComponent {
         group.clear();
 
         if (clip) {
-            // Re-establish the clip mask as the group's first child (clear() detached it): a
-            // fill-less rect with `clip` set masks every later sibling to the plot rectangle (the
-            // same sibling-mask the series/grid/axes use), so annotations stay inside the plot when
-            // the navigator rescales the axes. Added only while clipping, so non-navigator rendering
-            // is byte-identical.
+            // Re-add as the group's first child (`clear()` detached it): the rect masks its later siblings.
             if (!this._clip) {
                 this._clip = createRect({
                     id: 'chart-annotations__clip',

@@ -5,6 +5,7 @@ import {
 
 import {
     arrayMapRange,
+    comparitorNumeric,
 } from '@ripl/utilities';
 
 import type {
@@ -16,7 +17,7 @@ export function scaleQuantile<TRange>(
     domain: number[],
     range: TRange[]
 ): Scale<number, TRange> {
-    const sortedDomain = domain.slice().sort((a, b) => a - b);
+    const sortedDomain = domain.slice().sort(comparitorNumeric);
     const rangeLength = range.length;
     const quantileSize = sortedDomain.length / rangeLength;
 

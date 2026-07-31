@@ -29,8 +29,7 @@ interface TimeInterval {
     duration: number;
 }
 
-// Calendar-aware tick intervals ordered by duration. Sub-month intervals step by fixed milliseconds;
-// month/year steps use calendar arithmetic so they land on real month/year boundaries.
+// Tick intervals ordered by duration; `month`/`year` step by calendar arithmetic, the rest by ms.
 const TIME_INTERVALS: TimeInterval[] = [
     {
         kind: 'ms',

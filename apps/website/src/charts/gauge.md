@@ -138,15 +138,58 @@ const chart = createGaugeChart('#container', {
 chart.update({ value: 85 });
 ```
 
+## Data Format
+
+A gauge shows a single number rather than a dataset, so there is no `data` option — pass `value`
+directly and update it as it changes:
+
+```ts
+const chart = createGaugeChart('#container', {
+    value: 72,
+    min: 0,
+    max: 100,
+});
+
+chart.update({ value: 85 });
+```
+
 ## Options
 
-- **`value`**: the current gauge value
-- **`min`**: minimum value (default `0`)
-- **`max`**: maximum value (default `100`)
-- **`label`**: label displayed below the value
-- **`color`**: gauge fill color (default pastel blue)
-- **`trackColor`**: background track color (default `#e5e7eb`)
-- **`format`**: custom value formatter function
-- **`ticks`**: number of tick marks along the arc (default `5`, set to `0` to hide)
-- **`tickLabels`**: whether to show value labels at each tick (default `true`)
-- **`tickFormat`**: custom formatter for tick labels
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createGaugeChart('#container', {
+    value: 72,
+    min: 0,
+    max: 100,
+    label: 'Utilisation',
+    color: '#6dd5b1',
+    trackColor: '#e5e7eb',
+    ticks: 5,
+    tickLabels: true,
+    // `format` styles the central value; `tickFormat` styles the tick labels around the arc.
+    format: 'number',
+    tickFormat: v => `${v}%`,
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when the value arc is clicked.
+chart.on('valueclick', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+// Emitted when the pointer enters the value arc.
+chart.on('valueenter', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+// Emitted when the pointer leaves the value arc.
+chart.on('valueleave', event => console.log(event.data)); // event.data: GaugeChartValueEvent
+```
+<!-- events:end -->

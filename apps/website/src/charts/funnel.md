@@ -120,13 +120,66 @@ const chart = createFunnelChart('#container', {
 });
 ```
 
+## Data Format
+
+Each item is one stage of the funnel, with a key, a numeric value and a display label. Stages render
+top to bottom in array order, so sort the data the way you want it read:
+
+```ts
+const data = [
+    {
+        stage: 'visited',
+        label: 'Visited',
+        count: 12_480,
+    },
+    {
+        stage: 'signed-up',
+        label: 'Signed up',
+        count: 4_210,
+    },
+    {
+        stage: 'purchased',
+        label: 'Purchased',
+        count: 1_150,
+    },
+];
+```
+
 ## Options
 
-- **`data`**: the data array (ordered from widest to narrowest)
-- **`key`**: unique key accessor
-- **`value`**: value accessor (determines bar width)
-- **`label`**: label accessor (displayed inside bars)
-- **`colorBy`**: optional per-item color accessor
-- **`legend`**: legend configuration; shown by default, pass `false` to hide
-- **`gap`**: gap between segments in pixels (default `4`)
-- **`borderRadius`**: segment corner radius (default `4`)
+A full configuration for this chart. The options every chart shares — `padding`, `title`,
+`animation`, `theme` and the rest — behave the same everywhere and are documented on
+[Shared Options](/charts/shared-options).
+
+<!-- eslint-skip -->
+```ts
+createFunnelChart('#container', {
+    data,
+    key: 'stage',
+    value: 'value',
+    label: 'stage',
+    colorBy: 'stage',
+    gap: 4,
+    borderRadius: 6,
+    legend: { position: 'bottom' },
+    format: 'number',
+});
+```
+
+## Events
+
+Subscribe with `chart.on(...)`. A handler receives an `Event` object, not the payload directly — the
+payload is on `event.data`, and carries the interacted datum plus its `{ x, y }` anchor in chart
+pixels. `event.target` and `event.stopPropagation()` are also available.
+
+<!-- events:start -->
+<!-- eslint-skip -->
+```ts
+// Emitted when a segment is clicked.
+chart.on('segmentclick', event => console.log(event.data)); // event.data: FunnelChartSegmentEvent
+// Emitted when the pointer enters a segment.
+chart.on('segmententer', event => console.log(event.data)); // event.data: FunnelChartSegmentEvent
+// Emitted when the pointer leaves a segment.
+chart.on('segmentleave', event => console.log(event.data)); // event.data: FunnelChartSegmentEvent
+```
+<!-- events:end -->

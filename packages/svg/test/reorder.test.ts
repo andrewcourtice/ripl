@@ -41,8 +41,7 @@ describe('SVG element reordering', () => {
         ctx.save();
         ctx.markRenderStart();
 
-        // Elements are emitted in paint order (the scene sorts its buffer by zIndex before
-        // rendering), so a z-index permutation manifests as a different emission order.
+        // The scene sorts by zIndex before rendering, so a z-index permutation changes emission order.
         order.forEach(id => {
             const path = ctx.createPath(id);
             path.rect(0, 0, 10, 10);

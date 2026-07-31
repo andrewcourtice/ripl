@@ -69,8 +69,7 @@ describe('Math', () => {
             test('Should refit the box around a 90 degree rotation', () => {
                 const box = new Box(0, 0, 10, 40);
 
-                // Rotating 90deg about the origin maps (x, y) -> (-y, x), so a 40x10 box
-                // becomes a 10x40 box spanning x in [-10, 0] and y in [0, 40].
+                // 90deg about the origin maps (x, y) -> (-y, x), so the box spans x [-10, 0], y [0, 40].
                 expect(edgesOf(transformBox(box, matrixRotate(Math.PI / 2)))).toEqual([-10, 0, 0, 40]);
             });
 
@@ -79,8 +78,7 @@ describe('Math', () => {
                 const result = transformBox(box, matrixRotate(Math.PI / 4));
                 const diagonal = Math.sqrt(box.width ** 2 + box.height ** 2);
 
-                // A rotated square no longer fits its original AABB; the refit box grows to the
-                // square's diagonal.
+                // A rotated square no longer fits its original AABB; the refit box grows to the diagonal.
                 expect(result.width).toBeCloseTo(diagonal);
                 expect(result.height).toBeCloseTo(diagonal);
                 expect(result.width).toBeGreaterThan(box.width);
