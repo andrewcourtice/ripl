@@ -66,6 +66,7 @@ import type {
 } from '../components/legend';
 
 import type {
+    BandScale,
     Context,
     EventMap,
     PolylineRenderer,
@@ -73,7 +74,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     scaleBand,
     scaleContinuous,
 } from '@ripl/core';
@@ -166,7 +166,13 @@ export interface TrendChartOptions<TData = unknown> extends CartesianChartOption
     series: TrendChartSeriesOptions<TData>[];
     /** Accessor for each item's category key (the value plotted along the x axis). */
     key: keyof TData | ((item: TData) => string);
-    /** Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false. */
+    /**
+     * Stack same-type series cumulatively (bars among bars, areas among areas). Defaults to false.
+     *
+     * Unlike {@link BarChartOptions.stacked} and {@link AreaChartOptions.stacked} this does not
+     * accept `'percent'`: normalizing to a share of a category total is only meaningful when every
+     * series shares one mark type, and a trend chart mixes lines, bars and areas on one value axis.
+     */
     stacked?: boolean;
     /** Corner radius in pixels applied to each bar. Defaults to 2. */
     borderRadius?: number;
@@ -366,48 +372,33 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             const navBand = this.reserveNavigatorBand(layout);
 
             const area = layout.area;
-            const left = area.x;
-            const top = area.y;
-            const right = area.x + area.width;
-            const bottom = area.y + area.height;
-
-            // Provisional value scale to measure the y-axis width.
-            this._yScale = scaleContinuous(dataExtent, [bottom, top], { padToTicks: 10 });
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
-
-            const yAxisBox = this.yAxis.getBoundingBox();
 
             // A band scale positions bars; its centers position line/area markers and the x-axis ticks.
-            const xBand = scaleBand(keys, [yAxisBox.right, right], {
-                outerPadding: 0.15,
-                innerPadding: 0.2,
+            let xBand!: BandScale<string>;
+
+            // Resolve the plot outside-in so the bar/marker geometry below is derived from the same
+            // bounds the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                this._yScale = scaleContinuous(dataExtent, [candidate.y + candidate.height, candidate.y], { padToTicks: 10 });
+                this.yAxis.scale = this._yScale;
+
+                xBand = scaleBand(keys, [candidate.x, candidate.x + candidate.width], {
+                    outerPadding: 0.15,
+                    innerPadding: 0.2,
+                });
+
+                this.xAxis.scale = this.bandCenterScale(xBand, keys);
             });
-
-            this.xAxis.scale = this.bandCenterScale(xBand, keys);
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            this._yScale = scaleContinuous(dataExtent, [xAxisBox.top, top], { padToTicks: 10 });
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds.bottom = xAxisBox.top;
 
             // The navigator windows the x (category) axis only; the value axis stays at the full extent.
             const viewedBand = this.applyViewToScale(xBand, 'x');
             this._xCenter = this.bandCenterScale(viewedBand, keys);
             this.xAxis.scale = this._xCenter;
 
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
-
             this.clipPlot(plot);
             this.renderGrid([], this.gridTicks(this._yScale, 10), plot);
             this.setupCrosshair(plot);
+            this.renderAnnotations({ y: this._yScale }, plot);
 
             // Draw back-to-front: areas (largest first), then bars, then lines/markers on top.
             const areaContext: AreaSeriesContext<TData> = {
@@ -446,8 +437,8 @@ export class TrendChart<TData = unknown> extends CartesianChart<TrendChartOption
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 areaRender,
                 barRender,
                 lineRender,

@@ -6,8 +6,13 @@ import {
 
 import {
     mockCanvasContext,
+    mockTextMetrics,
     polyfillPath2D,
 } from '@ripl/test-utils';
+
+import {
+    DEFAULT_CHART_PADDING,
+} from '../src/constants/layout';
 
 import {
     createAreaChart,
@@ -41,6 +46,10 @@ interface SceneElementInternals {
 
 function yAxes(chart: unknown): AxisInternals[] {
     return (chart as { yAxes: AxisInternals[] }).yAxes;
+}
+
+function xAxis(chart: unknown): AxisInternals {
+    return (chart as { xAxis: AxisInternals }).xAxis;
 }
 
 // Every series (across all axes) renders through the single collapsed `_series` renderer, so its
@@ -105,7 +114,7 @@ function createDualAxisAreaChart(stacked = false) {
                 id: 'right',
                 label: 'Right',
                 value: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
         axis: {
@@ -154,7 +163,7 @@ function createDualAxisScatterChart() {
                 label: 'Right',
                 xBy: 'x',
                 yBy: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
         axis: {
@@ -201,7 +210,7 @@ describe('secondary y-axis (line)', () => {
                     id: 'right',
                     label: 'Right',
                     value: 'large',
-                    axis: 1,
+                    yAxis: 1,
                 },
             ],
             axis: {
@@ -307,7 +316,7 @@ describe('secondary y-axis (area)', () => {
                     id: 'other',
                     label: 'Other',
                     value: 'other',
-                    axis: 1,
+                    yAxis: 1,
                 },
             ],
             axis: {
@@ -513,7 +522,7 @@ function createDualAxisBarChart() {
                 id: 'big',
                 label: 'Big',
                 value: 'big',
-                axis: 1,
+                yAxis: 1,
             },
         ],
     });
@@ -667,13 +676,13 @@ describe('N y-axes (line)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -739,13 +748,13 @@ describe('N y-axes (area)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -827,14 +836,14 @@ describe('N y-axes (scatter)', () => {
                     label: 'B',
                     xBy: 'x',
                     yBy: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     xBy: 'x',
                     yBy: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -899,13 +908,13 @@ describe('N y-axes (bar)', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -1018,13 +1027,13 @@ describe('multi y-axis element ids and right-axis geometry', () => {
                     id: 'b',
                     label: 'B',
                     value: 'b',
-                    axis: 1,
+                    yAxis: 1,
                 },
                 {
                     id: 'c',
                     label: 'C',
                     value: 'c',
-                    axis: 2,
+                    yAxis: 2,
                 },
             ],
         });
@@ -1056,6 +1065,178 @@ describe('multi y-axis element ids and right-axis geometry', () => {
         expect(firstTickTextAlign(axes[0])).toBe('right');
         expect(firstTickTextAlign(axes[1])).toBe('left');
         expect(firstTickTextAlign(axes[2])).toBe('right');
+    });
+
+});
+
+describe('secondary y-axis tick labels', () => {
+
+    interface TickInternals {
+        id: string;
+        getElementsByType(type: string): { content: string | number;
+            x: number;
+            y: number; }[];
+    }
+
+    function tickLabelsByAxisGroup(chart: unknown) {
+        const groups = (chart as { scene: { queryAll(selector: string): TickInternals[] } })
+            .scene.queryAll('.chart-axis__tick-group')
+            .filter(group => group.id.startsWith('y-tick:'));
+
+        const byGroup = new Map<string, { content: string;
+            x: number;
+            y: number; }[]>();
+
+        groups.forEach(group => {
+            // Ids are `y-tick:<axis group id>:<value>`, and the auto-generated group id itself
+            // contains a colon, so take everything between the prefix and the final segment.
+            const axisGroup = group.id.slice('y-tick:'.length, group.id.lastIndexOf(':'));
+            const label = group.getElementsByType('text')[0];
+
+            if (!label) {
+                return;
+            }
+
+            const entries = byGroup.get(axisGroup) ?? [];
+
+            entries.push({
+                content: String(label.content),
+                x: label.x,
+                y: label.y,
+            });
+            byGroup.set(axisGroup, entries);
+        });
+
+        return byGroup;
+    }
+
+    function createChart(bindSecondSeries: boolean) {
+        polyfillPath2D();
+        mockTextMetrics(mockCanvasContext());
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            axis: {
+                y: [
+                    { position: 'left' },
+                    { position: 'right' },
+                ],
+            },
+            data: [
+                {
+                    k: 'a',
+                    v: 10,
+                    w: 5000,
+                },
+                {
+                    k: 'b',
+                    v: 30,
+                    w: 12000,
+                },
+            ],
+            key: 'k',
+            series: [
+                {
+                    id: 'left',
+                    label: 'Left',
+                    value: 'v',
+                },
+                {
+                    id: 'right',
+                    label: 'Right',
+                    value: 'w',
+                    ...(bindSecondSeries ? { yAxis: 1 } : {}),
+                },
+            ],
+        });
+
+        rescaleContext(chart);
+
+        return chart;
+    }
+
+    it('Should label each axis over its own bound extent', async () => {
+        const chart = createChart(true);
+
+        await chart.render();
+
+        const byGroup = [...tickLabelsByAxisGroup(chart).values()];
+
+        expect(byGroup.length).toBe(2);
+
+        // One axis covers the 0–30 series, the other the 0–12,000 series; neither may borrow the
+        // other's extent, and every label must be finite and positioned.
+        const maxima = byGroup.map(labels => Math.max(...labels.map(label => Number(label.content.replace(/,/g, '')))));
+
+        expect(Math.min(...maxima)).toBeLessThanOrEqual(30);
+        expect(Math.max(...maxima)).toBeGreaterThanOrEqual(12_000);
+
+        byGroup.flat().forEach(label => {
+            expect(label.content).not.toBe('NaN');
+            expect(Number.isFinite(label.x)).toBe(true);
+            expect(Number.isFinite(label.y)).toBe(true);
+        });
+    });
+
+    it('Should not render a secondary axis that has no series bound to it', async () => {
+        // Both series fall back to the primary axis, so the secondary axis has a zero-width extent.
+        // That used to emit a single `NaN` tick at `y = NaN` — invisible on canvas, but rendered by
+        // SVG as a stray "NaN" pinned to the top of the chart. Hardening the scale turned it into a
+        // lone `0` tick against the baseline, which is finite but still describes data that is not on
+        // the plot, so the axis is skipped entirely instead.
+        const chart = createChart(false);
+
+        await chart.render();
+
+        const byGroup = tickLabelsByAxisGroup(chart);
+        const labels = [...byGroup.values()].flat();
+
+        expect(byGroup.size).toBe(1);
+        expect(labels.length).toBeGreaterThan(1);
+
+        labels.forEach(label => {
+            expect(label.content).not.toBe('NaN');
+            expect(Number.isFinite(label.x)).toBe(true);
+            expect(Number.isFinite(label.y)).toBe(true);
+        });
+    });
+
+    it('Should drop an axis when the legend hides its last series, and restore it when shown again', async () => {
+        const chart = createChart(true);
+
+        await chart.render();
+        expect(tickLabelsByAxisGroup(chart).size).toBe(2);
+
+        // The right-hand axis labels only the `right` series, so hiding it leaves that axis with
+        // nothing to describe.
+        clickLegendItem(chart, 'right');
+        await chart.render();
+
+        expect(tickLabelsByAxisGroup(chart).size).toBe(1);
+
+        clickLegendItem(chart, 'right');
+        await chart.render();
+
+        expect(tickLabelsByAxisGroup(chart).size).toBe(2);
+    });
+
+    it('Should reclaim the whole band of a hidden axis, not just narrow it', async () => {
+        const bound = createChart(true);
+        const unbound = createChart(false);
+
+        await bound.render();
+        await unbound.render();
+
+        // The x-axis spans the plot horizontally, so its box is the plot's horizontal extent.
+        const plotRight = (chart: unknown) => xAxis(chart).getBoundingBox().right;
+
+        // A skipped axis has to reserve *nothing*: the plot must reach the padding edge of the 600px
+        // context, exactly as it would if the second axis had never been configured. Merely rendering
+        // a narrower band (which a zero-width extent did, having only a `0` to measure) already made
+        // the plot wider than the two-axis case, so comparing the two is not enough.
+        expect(plotRight(unbound)).toBeCloseTo(600 - DEFAULT_CHART_PADDING, 0);
+        expect(plotRight(bound)).toBeLessThan(plotRight(unbound));
     });
 
 });

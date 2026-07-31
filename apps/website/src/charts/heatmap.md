@@ -15,30 +15,51 @@ The **Heatmap Chart** displays data as a matrix of colored cells, where color in
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Heatmap" :extras-reset="reset">
-            <RiplField label="Cell labels" inline>
-                <RiplSwitch v-model="extras.cellLabels" />
+            <RiplField label="Corner radius" option="borderRadius">
+                <RiplInputRange
+                    v-model="extras.borderRadius"
+                    :min="0"
+                    :max="8"
+                    :step="1"
+                />
             </RiplField>
-            <RiplField label="Low color" inline>
-                <RiplColorInput v-model="extras.lowColor" />
-            </RiplField>
-            <RiplField label="High color" inline>
-                <RiplColorInput v-model="extras.highColor" />
-            </RiplField>
-            <RiplField label="Corner radius">
-                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
-            </RiplField>
-            <RiplField label="Legend orientation">
-                <RiplSelect v-model="extras.legendOrientation">
-                    <option value="horizontal">Horizontal</option>
-                    <option value="vertical">Vertical</option>
-                </RiplSelect>
-            </RiplField>
-            <RiplField label="Legend thickness">
-                <RiplInputRange v-model="extras.legendThickness" :min="6" :max="24" :step="1" />
-            </RiplField>
-            <RiplField label="Legend segments">
-                <RiplInputRange v-model="extras.legendSegments" :min="0" :max="12" :step="1" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Low" option="gradient" inline>
+                    <RiplColorInput v-model="extras.lowColor" />
+                </RiplField>
+                <RiplField label="High" option="gradient" inline>
+                    <RiplColorInput v-model="extras.highColor" />
+                </RiplField>
+            </template>
+            <template #labels>
+                <RiplField label="Cell labels" option="labels" inline>
+                    <RiplSwitch v-model="extras.cellLabels" />
+                </RiplField>
+            </template>
+            <template #legend>
+                <RiplField label="Orientation" option="legend">
+                    <RiplSelect v-model="extras.legendOrientation">
+                        <option value="horizontal">Horizontal</option>
+                        <option value="vertical">Vertical</option>
+                    </RiplSelect>
+                </RiplField>
+                <RiplField label="Thickness" option="legend">
+                    <RiplInputRange
+                        v-model="extras.legendThickness"
+                        :min="6"
+                        :max="24"
+                        :step="1"
+                    />
+                </RiplField>
+                <RiplField label="Segments" option="legend">
+                    <RiplInputRange
+                        v-model="extras.legendSegments"
+                        :min="0"
+                        :max="12"
+                        :step="1"
+                    />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -107,7 +128,7 @@ function buildOptions() {
     return {
         // Cell values centered in each cell; the label color auto-contrasts against the cell color.
         labels: extras.cellLabels,
-        colors: [extras.lowColor, extras.highColor],
+        gradient: [extras.lowColor, extras.highColor],
         borderRadius: extras.borderRadius,
         legend: {
             orientation: extras.legendOrientation,
@@ -165,6 +186,10 @@ const chart = createHeatmapChart('#container', {
 - **`value`**: accessor for the cell value
 - **`xCategories`**: ordered list of x-axis categories
 - **`yCategories`**: ordered list of y-axis categories
-- **`colors`**: tuple of `[lowColor, highColor]` hex strings
+- **`gradient`**: sequential color stops, low to high; any number of stops (default two)
 - **`borderRadius`**: cell corner radius (default `2`)
 - **`labels`**: show each cell's value centered in the cell (default `false`); the label color auto-contrasts against the cell color
+- **`legend`** (`boolean | ColorLegendOptions`): show/configure the color-scale legend. Unlike the series legend on other charts this is a continuous color ramp, configured with `orientation`, `thickness`, `segments`, `ticks` and `format`
+- **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips
+- **`axis`** (`boolean | ChartAxisOptions`): configure the category axes
+- **`format`** (`ValueFormatInput`): format applied to cell values in tooltips and labels

@@ -55,14 +55,14 @@ function buildChart() {
 
     const options = {
         value,
-        minValue: 0,
-        maxValue: 5,
+        min: 0,
+        max: 5,
         label: 'Error Rate',
         color: errorColor(value),
         format: (v: number) => `${v.toFixed(2)}%`,
-        tickCount: 5,
-        showTickLabels: true,
-        formatTick: (v: number) => `${v}%`,
+        ticks: 5,
+        tickLabels: true,
+        tickFormat: (v: number) => `${v}%`,
     };
 
     if (chart) {

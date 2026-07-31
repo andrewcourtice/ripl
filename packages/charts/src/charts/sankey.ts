@@ -25,8 +25,13 @@ import {
 
 import {
     createSegmentLabel,
+    SEGMENT_LABEL_FONT,
     SEGMENT_LABEL_OUTSIDE_FILL,
 } from '../core/labels';
+
+import {
+    SPACING,
+} from '../constants/spacing';
 
 import {
     getColorGenerator,
@@ -158,6 +163,9 @@ export interface SankeyChartEventMap<TData = unknown> extends EventMap {
     /** Emitted when the pointer leaves a link. */
     linkleave: SankeyChartLinkEvent;
 }
+
+/** Gap, in pixels, between a node's right edge and the label drawn beside it. */
+const NODE_LABEL_GAP = SPACING.xs;
 
 interface LayoutNode {
     id: string;
@@ -393,6 +401,23 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
         this.init();
     }
 
+    /**
+     * The width to hold clear on the right of the flow for the labels of its last column.
+     *
+     * Labels sit outside their node, so every column but the last has the next column's gap to draw
+     * into — the last has only whatever the layout left it. Reserving the measured width is what keeps
+     * those labels inside the chart instead of running off its edge.
+     */
+    private _measureLabelBand(layoutNodes: LayoutNode[]): number {
+        const maxDepth = Math.max(...layoutNodes.map(node => node.depth), 0);
+
+        const widest = layoutNodes
+            .filter(node => node.depth === maxDepth)
+            .reduce((max, node) => Math.max(max, this.scene.context.measureText(node.label, SEGMENT_LABEL_FONT).width), 0);
+
+        return widest > 0 ? widest + NODE_LABEL_GAP : 0;
+    }
+
     public async render() {
         return super.render(async (scene, renderer) => {
             const {
@@ -432,10 +457,24 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
             const chartWidth = area.width;
             const chartHeight = area.height;
 
-            const { layoutNodes, layoutLinks } = computeSankeyLayout(
+            // Every node label is drawn to the right of its node, so the last column's labels run past
+            // the plot unless the layout leaves room for them. Measure them and lay the flow out inside
+            // what remains: the depths come from the link graph, not the width, so one throwaway pass
+            // identifies the last column and the second pass is final.
+            const labelBand = this._measureLabelBand(computeSankeyLayout(
                 nodes,
                 links,
                 chartWidth,
+                chartHeight,
+                nodeWidth,
+                nodePadding,
+                nodeColors
+            ).layoutNodes);
+
+            const { layoutNodes, layoutLinks } = computeSankeyLayout(
+                nodes,
+                links,
+                Math.max(nodeWidth, chartWidth - labelBand),
                 chartHeight,
                 nodeWidth,
                 nodePadding,
@@ -545,7 +584,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 // helper with the outside fill, consistent with the other charts' labels.
                 const label = createSegmentLabel({
                     id: `${node.id}-label`,
-                    x: offsetX + node.x + node.width + 5,
+                    x: offsetX + node.x + node.width + NODE_LABEL_GAP,
                     y: offsetY + node.y + node.height / 2,
                     content: node.label,
                     fill: SEGMENT_LABEL_OUTSIDE_FILL,
@@ -581,7 +620,7 @@ export class SankeyChart<TData = unknown> extends Chart<SankeyChartOptions<TData
                 if (label) {
                     label.content = node.label;
                     label.data = {
-                        x: offsetX + node.x + node.width + 5,
+                        x: offsetX + node.x + node.width + NODE_LABEL_GAP,
                         y: offsetY + node.y + node.height / 2,
                         opacity: 1,
                     } as Partial<TextState>;

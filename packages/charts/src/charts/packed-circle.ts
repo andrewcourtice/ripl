@@ -104,7 +104,7 @@ export interface PackedCircleChartOptions<TData = unknown> extends BaseChartOpti
 }
 
 /** Payload emitted for packed circle interaction events. */
-export interface PackedCircleChartCellEvent {
+export interface PackedCircleChartNodeEvent {
     /** The x coordinate (in chart pixels) of the circle's top anchor. */
     x: number;
     /** The y coordinate (in chart pixels) of the circle's top anchor. */
@@ -120,11 +120,11 @@ export interface PackedCircleChartCellEvent {
 /** Events emitted by a {@link PackedCircleChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface PackedCircleChartEventMap extends EventMap {
     /** Emitted when a circle is clicked. */
-    cellclick: PackedCircleChartCellEvent;
+    nodeclick: PackedCircleChartNodeEvent;
     /** Emitted when the pointer enters a circle. */
-    cellenter: PackedCircleChartCellEvent;
+    nodeenter: PackedCircleChartNodeEvent;
     /** Emitted when the pointer leaves a circle. */
-    cellleave: PackedCircleChartCellEvent;
+    nodeleave: PackedCircleChartNodeEvent;
 }
 
 interface PackedNode {
@@ -164,7 +164,7 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
     private _attachCellHover(circle: Circle, node: PackedNode, content: string) {
 
         const payload = (point: { x: number;
-            y: number; }): PackedCircleChartCellEvent => ({
+            y: number; }): PackedCircleChartNodeEvent => ({
             x: point.x,
             y: point.y,
             value: node.value,
@@ -183,9 +183,9 @@ export class PackedCircleChart<TData = unknown> extends Chart<PackedCircleChartO
             content: () => content,
             highlight: { fill: node.color },
             restore: { fill: setColorAlpha(node.color, REST_ALPHA) },
-            onEnter: point => this.emit('cellenter', payload(point)),
-            onLeave: point => this.emit('cellleave', payload(point)),
-            onClick: point => this.emit('cellclick', payload(point)),
+            onEnter: point => this.emit('nodeenter', payload(point)),
+            onLeave: point => this.emit('nodeleave', payload(point)),
+            onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
 

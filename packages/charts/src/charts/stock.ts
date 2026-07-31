@@ -34,6 +34,10 @@ import type {
     ChartArea,
 } from '../core/layout';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     Context,
     EventMap,
@@ -47,7 +51,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     createGroup,
     createLine,
     createRect,
@@ -143,7 +146,7 @@ interface CandlestickValues {
 const DEFAULT_UP_COLOR = '#6dd5b1';
 const DEFAULT_DOWN_COLOR = '#f4a0b9';
 const VOLUME_HEIGHT_RATIO = 0.22;
-const VOLUME_LABEL_GAP = 6;
+const VOLUME_LABEL_GAP = SPACING.sm;
 
 /**
  * Candlestick (stock) chart rendering OHLC data with optional volume bars.
@@ -696,43 +699,33 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             // The candle + axis region ends above the volume band (which sits below the x-axis labels).
             const axisRegionBottom = bottom - volumeHeight;
 
-            // Provisional y (price) scale to measure the y-axis label width.
-            this._yScale = scaleContinuous(priceExtent, [axisRegionBottom, top], {
-                padToTicks: 10,
+            // The axes lay out within the candle region only; the volume band sits below them.
+            const axisArea: ChartArea = {
+                x: left,
+                y: top,
+                width: right - left,
+                height: axisRegionBottom - top,
+            };
+
+            // Resolve the plot outside-in so the candle geometry below is derived from the same bounds
+            // the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(axisArea, candidate => {
+                this._yScale = scaleContinuous(priceExtent, [candidate.y + candidate.height, candidate.y], {
+                    padToTicks: 10,
+                });
+
+                this.yAxis.scale = this._yScale;
+
+                this._xScale = this._createCategoryScale(keys, candidate.x, candidate.x + candidate.width);
+                this.xAxis.scale = this._xScale;
             });
-
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds = new Box(top, left, axisRegionBottom, right);
-
-            const yAxisBox = this.yAxis.getBoundingBox();
 
             // Candlesticks center in equal bands across the plot width, so they stay inside the plot.
-            const candleWidth = Math.max(1, ((right - yAxisBox.right) / Math.max(1, data.length)) * 0.6);
-
-            this._xScale = this._createCategoryScale(keys, yAxisBox.right, right);
-            this.xAxis.scale = this._xScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, axisRegionBottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            // Final y scale over the candle plot height.
-            this._yScale = scaleContinuous(priceExtent, [xAxisBox.top, top], {
-                padToTicks: 10,
-            });
-
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds.bottom = xAxisBox.top;
+            const candleWidth = Math.max(1, (plot.width / Math.max(1, data.length)) * 0.6);
 
             // The navigator windows the x (category) axis only; the price axis stays at the full extent.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
-
-            const plot: ChartArea = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
 
@@ -747,13 +740,13 @@ export class StockChart<TData = unknown> extends CartesianChart<StockChartOption
             this.renderAnnotations({ y: this._yScale }, plot);
 
             // Volume band sits below the x-axis labels, reserving a strip at its base for the caption.
-            const volumeTop = xAxisBox.bottom + 5;
+            const volumeTop = this.xAxis.getBoundingBox().bottom + SPACING.xs;
             const labelBand = hasVolume ? this._volumeLabelBand() : 0;
             const volumeBottom = bottom - labelBand;
 
             const promises: Promise<unknown>[] = [
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawCandlesticks(candleWidth),
             ];
 

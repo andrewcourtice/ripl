@@ -89,7 +89,7 @@ export interface TreemapChartOptions<TData = unknown> extends BaseChartOptions {
 }
 
 /** Payload emitted for treemap cell interaction events. */
-export interface TreemapChartCellEvent {
+export interface TreemapChartNodeEvent {
     /** X position of the cell's top-center anchor, in canvas coordinates. */
     x: number;
     /** Y position of the cell's top edge, in canvas coordinates. */
@@ -105,11 +105,11 @@ export interface TreemapChartCellEvent {
 /** Events emitted by a {@link TreemapChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface TreemapChartEventMap extends EventMap {
     /** Emitted when a cell is clicked. */
-    cellclick: TreemapChartCellEvent;
+    nodeclick: TreemapChartNodeEvent;
     /** Emitted when the pointer enters a cell. */
-    cellenter: TreemapChartCellEvent;
+    nodeenter: TreemapChartNodeEvent;
     /** Emitted when the pointer leaves a cell. */
-    cellleave: TreemapChartCellEvent;
+    nodeleave: TreemapChartNodeEvent;
 }
 
 interface TreemapNode {
@@ -456,7 +456,7 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): TreemapChartCellEvent => ({
+            y: number; }): TreemapChartNodeEvent => ({
             x: point.x,
             y: point.y,
             value: node.value,
@@ -475,9 +475,9 @@ export class TreemapChart<TData = unknown> extends Chart<TreemapChartOptions<TDa
             content: () => `${node.label}: ${formatValue(node.value)}`,
             highlight: { fill: color },
             restore: { fill: setColorAlpha(color, REST_ALPHA) },
-            onEnter: point => this.emit('cellenter', payload(point)),
-            onLeave: point => this.emit('cellleave', payload(point)),
-            onClick: point => this.emit('cellclick', payload(point)),
+            onEnter: point => this.emit('nodeenter', payload(point)),
+            onLeave: point => this.emit('nodeleave', payload(point)),
+            onClick: point => this.emit('nodeclick', payload(point)),
         });
     }
 

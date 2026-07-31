@@ -38,6 +38,10 @@ import {
     Tooltip,
 } from '../components/tooltip';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     LegendItem,
 } from '../components/legend';
@@ -99,7 +103,7 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
     /** Axis labels arranged clockwise around the chart, one per data item. */
     categories: string[];
     /** Maximum value mapped to the outer ring (defaults to the largest value across all series). */
-    maxValue?: number;
+    max?: number;
     /** Number of concentric grid rings. Defaults to 5. */
     levels?: number;
     /** Legend configuration. Shown by default when there is more than one series. */
@@ -111,7 +115,7 @@ export interface RadarChartOptions<TData = unknown> extends BaseChartOptions {
 }
 
 /** Payload emitted for radar point interaction events. */
-export interface RadarChartPointEvent {
+export interface RadarChartMarkerEvent {
     /** X position of the point marker, in canvas coordinates. */
     x: number;
     /** Y position of the point marker, in canvas coordinates. */
@@ -127,16 +131,16 @@ export interface RadarChartPointEvent {
 /** Events emitted by a {@link RadarChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface RadarChartEventMap extends EventMap {
     /** Emitted when a point marker is clicked. */
-    pointclick: RadarChartPointEvent;
+    markerclick: RadarChartMarkerEvent;
     /** Emitted when the pointer enters a point marker. */
-    pointenter: RadarChartPointEvent;
+    markerenter: RadarChartMarkerEvent;
     /** Emitted when the pointer leaves a point marker. */
-    pointleave: RadarChartPointEvent;
+    markerleave: RadarChartMarkerEvent;
 }
 
 // Distance in pixels between a polygon vertex and its value label, measured outward along the
 // vertex's angle so the label clears the marker (radius 3, growing to 5 on hover).
-const VALUE_LABEL_OFFSET = 10;
+const VALUE_LABEL_OFFSET = SPACING.sm;
 
 /**
  * Radar (spider) chart plotting multi-axis data as filled polygonal areas.
@@ -394,7 +398,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         }));
     }
 
-    private async _drawSeries(cx: number, cy: number, radius: number, maxValue: number) {
+    private async _drawSeries(cx: number, cy: number, radius: number, max: number) {
         const {
             data,
             categories,
@@ -417,7 +421,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         seriesExits.forEach(el => el.destroy());
 
         // Radial value scale: 0 at the center, the data max at the outer ring (clamps out-of-range values).
-        const radiusScale = scaleRadial([0, maxValue], [0, radius]);
+        const radiusScale = scaleRadial([0, max], [0, radius]);
 
         const getSeriesPoints = (srs: RadarChartSeriesOptions<TData>) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -700,7 +704,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
             const {
                 categories,
                 series,
-                maxValue,
+                max,
                 levels = 5,
             } = this.options;
 
@@ -727,9 +731,9 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
 
             // Compute max value from the legend-active series if not provided, so hiding a series
             // re-fits the radial scale to the remaining ones.
-            let computedMax = maxValue ?? 0;
+            let computedMax = max ?? 0;
 
-            if (!maxValue) {
+            if (!max) {
                 this.filterActive(series).forEach(srs => {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const getValue = typeIsFunction(srs.value) ? srs.value : (item: any) => item[srs.value] as number;
@@ -753,7 +757,7 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): RadarChartPointEvent => ({
+            y: number; }): RadarChartMarkerEvent => ({
             x: point.x,
             y: point.y,
             value: pd.value,
@@ -778,9 +782,9 @@ export class RadarChart<TData = unknown> extends Chart<RadarChartOptions<TData>,
                 fill: color,
                 radius: 3,
             },
-            onEnter: point => this.emit('pointenter', payload(point)),
-            onLeave: point => this.emit('pointleave', payload(point)),
-            onClick: point => this.emit('pointclick', payload(point)),
+            onEnter: point => this.emit('markerenter', payload(point)),
+            onLeave: point => this.emit('markerleave', payload(point)),
+            onClick: point => this.emit('markerclick', payload(point)),
         });
     }
 

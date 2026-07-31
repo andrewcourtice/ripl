@@ -17,22 +17,34 @@ The **Bar Chart** is one of the most versatile chart types in Ripl. It supports 
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Bars" :extras-reset="reset">
-            <RiplField label="Mode">
+            <RiplField label="Mode" option="stacked">
                 <RiplSelect v-model="extras.stackMode">
                     <option value="grouped">Grouped</option>
                     <option value="stacked">Stacked</option>
                     <option value="percent">100% stacked</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Horizontal" inline>
+            <RiplField label="Horizontal" option="orientation" inline>
                 <RiplSwitch v-model="extras.horizontal" />
             </RiplField>
-            <RiplField label="Corner radius">
-                <RiplInputRange v-model="extras.borderRadius" :min="0" :max="8" :step="1" />
+            <RiplField label="Corner radius" option="borderRadius">
+                <RiplInputRange
+                    v-model="extras.borderRadius"
+                    :min="0"
+                    :max="8"
+                    :step="1"
+                />
             </RiplField>
-            <RiplField label="X label rotation">
-                <RiplInputRange v-model="extras.labelRotation" :min="0" :max="60" :step="15" />
-            </RiplField>
+            <template #axes>
+                <RiplField
+                    v-if="multiAxisAvailable"
+                    label="Multiple axes"
+                    option="yAxis"
+                    inline
+                >
+                    <RiplSwitch v-model="extras.multiAxis" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -54,6 +66,7 @@ import {
 } from '@ripl/charts';
 
 import {
+    computed,
     ref,
     watch,
 } from 'vue';
@@ -64,7 +77,7 @@ const seriesMeta = [
     { id: 'sales', label: 'Sales' },
     { id: 'costs', label: 'Costs' },
     { id: 'profit', label: 'Profit' },
-    { id: 'returns', label: 'Returns' },
+    { id: 'returnRate', label: 'Return rate' },
 ];
 
 let monthCount = 6;
@@ -80,8 +93,14 @@ const { extras, reset } = useChartExtras({
     stackMode: 'grouped' as keyof typeof STACK_MODE_VALUES,
     horizontal: false,
     borderRadius: 2,
-    labelRotation: 0,
+    multiAxis: false,
 });
+
+// Multiple y-axes apply to vertical grouped bars only: stacked bars share one cumulative scale and
+// horizontal bars read categories along the y-axis, so both fall back to the primary axis. The toggle
+// is withdrawn rather than left inert, so it never looks broken.
+const multiAxisAvailable = computed(() => !extras.horizontal && extras.stackMode === 'grouped');
+const multiAxisActive = computed(() => multiAxisAvailable.value && extras.multiAxis);
 
 const config = useChartConfig({
     features: {
@@ -90,6 +109,7 @@ const config = useChartConfig({
         axes: true,
         grid: true,
         tooltip: true,
+        crosshair: true,
         dataLabels: true,
         format: true,
         animation: true,
@@ -109,7 +129,9 @@ function generateItem(month: string) {
         sales: Math.round(Math.random() * 500 + 100),
         costs: Math.round(Math.random() * 300 + 50),
         profit: Math.round(Math.random() * 400 - 200),
-        returns: Math.round(Math.random() * 100 + 10),
+        // A percentage, not dollars: the one series whose units differ, so the "Multiple axes"
+        // toggle has something real to separate.
+        returnRate: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
     };
 }
 
@@ -125,6 +147,8 @@ function getSeries() {
         value: s.id,
         label: s.label,
         color: config.colors[s.id],
+        // The return-rate series is a percentage; give it its own axis when asked.
+        yAxis: multiAxisActive.value && s.id === 'returnRate' ? 1 : undefined,
     }));
 }
 
@@ -137,15 +161,20 @@ function buildOptions() {
         ...buildCommonOptions(config),
     };
 
-    // Tick label rotation (degrees, counterclockwise-positive) applies to the x-axis; the label
-    // band grows to fit and fewer labels are dropped on overflow.
-    options.axis = {
-        ...options.axis,
-        x: {
-            ...options.axis.x,
-            labelRotation: extras.labelRotation || undefined,
-        },
-    };
+    // A second `axis.y` entry renders a right-hand percentage axis for the return-rate series.
+    if (multiAxisActive.value) {
+        options.axis = {
+            ...options.axis,
+            y: [
+                options.axis.y,
+                {
+                    visible: config.axesVisible,
+                    title: 'Return rate (%)',
+                    position: 'right',
+                },
+            ],
+        };
+    }
 
     options.annotations = config.annotationsVisible
         ? [
@@ -337,7 +366,7 @@ createBarChart('#container', {
 
 ### Multiple y-axes
 
-Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `axis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
+Vertical **grouped** bars support any number of y-axes. Supply an array of `axis.y` entries and bind each series to one with its `yAxis` option (an array index or the axis `id`); `position: 'right'` axes sit on the right and same-side axes stack outward in array order. Each axis scales independently to the series bound to it:
 
 ```ts
 createBarChart('#container', {
@@ -348,13 +377,13 @@ createBarChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0,
+            yAxis: 0,
         },
         {
             id: 'orders',
             value: 'orders',
             label: 'Orders',
-            axis: 1,
+            yAxis: 1,
         },
     ],
     axis: {
@@ -400,5 +429,6 @@ createBarChart('#container', {
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.labelRotation` rotates tick labels by the given degrees; `y` accepts an array for multiple y-axes on vertical grouped bars)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`overview`** (`boolean | { size }`): show the navigator scrub bar (beneath the plot for vertical bars, alongside it for horizontal bars); enabling it also turns on category-axis pan/zoom on the plot
 - **`borderRadius`**: bar corner radius (default `2`)

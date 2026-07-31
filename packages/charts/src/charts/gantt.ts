@@ -51,6 +51,10 @@ import type {
 } from '../components/tooltip';
 
 import {
+    SPACING,
+} from '../constants/spacing';
+
+import {
     Grid,
 } from '../components/grid';
 
@@ -665,7 +669,7 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
             // Setup x-axis with time scale
             const timeScale = scaleTime(
                 [paddedMin, paddedMax],
-                [yAxisBoundingBox.right + 10, right]
+                [yAxisBoundingBox.right + SPACING.sm, right]
             );
 
             this._xAxis.scale = timeScale;
@@ -701,7 +705,14 @@ export class GanttChart<TData = unknown> extends Chart<GanttChartOptions<TData>,
                 }
             ) as unknown as typeof this._yAxis.scale;
 
-            this._yAxis.bounds.bottom = xAxisBoundingBox.top;
+            // Assign a fresh box rather than mutating in place: `bounds` invalidates the axis's cached
+            // measurement on assignment, and an in-place edit would also stale `yAxisBoundingBox`.
+            this._yAxis.bounds = new Box(
+                chartTop,
+                left,
+                xAxisBoundingBox.top,
+                right
+            );
 
             // Render grid
             if (this._grid) {

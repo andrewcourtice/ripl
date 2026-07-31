@@ -14,12 +14,20 @@ The **Sankey Chart** visualizes flow between nodes using weighted links. It's id
         </RiplControlGroup>
     </template>
     <template #config>
-        <RiplChartConfig :config="config" extra-title="Layout" :extras-reset="reset">
-            <RiplField label="Node width">
+        <RiplChartConfig :config="config" extra-title="Nodes" :extras-reset="reset">
+            <RiplField label="Node width" option="nodeWidth">
                 <RiplInputRange v-model="extras.nodeWidth" :min="8" :max="40" :step="1" />
             </RiplField>
-            <RiplField label="Node padding">
+            <RiplField label="Node padding" option="nodePadding">
                 <RiplInputRange v-model="extras.nodePadding" :min="0" :max="30" :step="1" />
+            </RiplField>
+            <RiplField label="Layout passes" option="iterations">
+                <RiplInputRange
+                    v-model="extras.iterations"
+                    :min="1"
+                    :max="32"
+                    :step="1"
+                />
             </RiplField>
         </RiplChartConfig>
     </template>
@@ -48,6 +56,7 @@ import {
 const { extras, reset } = useChartExtras({
     nodeWidth: 20,
     nodePadding: 10,
+    iterations: 6,
 });
 
 const config = useChartConfig({
@@ -107,6 +116,7 @@ function buildOptions() {
     return {
         nodeWidth: extras.nodeWidth,
         nodePadding: extras.nodePadding,
+        iterations: extras.iterations,
         ...buildCommonOptions(config),
     };
 }
@@ -126,7 +136,6 @@ const { contextChanged, chart } = useRiplChart(context => {
             { id: 'content', label: 'Content' },
         ],
         links,
-        padding: { right: 80 },
         ...buildOptions(),
     });
 });

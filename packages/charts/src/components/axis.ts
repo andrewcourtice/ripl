@@ -29,15 +29,21 @@ import {
     axisTickCount,
 } from '../core/scales';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     Element,
     Group,
     Line,
+    LineState,
     Rect,
     Renderer,
     Scale,
     Scene,
     Text,
+    TextState,
 } from '@ripl/core';
 
 import {
@@ -58,8 +64,12 @@ import {
     typeIsDate,
 } from '@ripl/utilities';
 
-/** Gap (px) between axis tick labels and the axis title. */
-const TITLE_GAP = 6;
+/**
+ * Gap (px) between the axis tick labels and the axis title. A full element step: the title is a
+ * distinct piece of chart furniture, not part of the label band, and at a smaller gap the two read
+ * as one cramped block.
+ */
+const TITLE_GAP = SPACING.md;
 
 // Rotated x-axis labels anchor their trailing edge at the tick so the slanted text hangs clear of
 // the plot; flat labels center under it.
@@ -152,46 +162,189 @@ const LABEL_DIMENSION_MAP = {
     height: metrics => metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent,
 } as Record<LabelDimension, (metrics: TextMetrics) => number>;
 
+/** The tweenable geometry of a single tick: its mark and its label anchor. */
+interface AxisTickState {
+    /** Endpoints of the tick mark. */
+    line: Pick<LineState, 'x1' | 'y1' | 'x2' | 'y2'>;
+    /** The label's anchor, plus the transform origin any rotation pivots about. */
+    label: Pick<TextState, 'x' | 'y'> & Partial<Pick<TextState, 'transformOriginX' | 'transformOriginY'>>;
+}
+
+/** Tick-label properties that must be assigned rather than interpolated. */
+interface AxisLabelPaint {
+    /** Horizontal alignment of the label against its anchor. */
+    textAlign: NonNullable<TextState['textAlign']>;
+    /** Vertical alignment of the label against its anchor. */
+    textBaseline: NonNullable<TextState['textBaseline']>;
+    /** Label rotation, in radians. */
+    rotation: number;
+}
+
+/** Where an axis title's anchor sits, and how it is oriented. */
+interface AxisTitlePosition {
+    /** The x coordinate of the title's anchor. */
+    x: number;
+    /** The y coordinate of the title's anchor. */
+    y: number;
+    /** Title rotation, in radians. */
+    rotation?: number;
+    /** The x coordinate the rotation pivots about. */
+    transformOriginX?: number;
+    /** The y coordinate the rotation pivots about. */
+    transformOriginY?: number;
+    /** Vertical alignment of the title against its anchor. Defaults to `middle`. */
+    textBaseline?: NonNullable<TextState['textBaseline']>;
+}
+
 /** Base axis component managing scale, ticks, labels, and an axis line. */
 export class ChartAxis extends ChartComponent {
 
-    /** Scale mapping domain values to pixel positions along the axis. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public scale: Scale<any, number>;
-    /** Bounding box the axis is laid out within. */
-    public bounds: Box;
     /** Gap between the tick marks and their labels, in pixels. */
     public padding: number;
     /** Length of each tick mark, in pixels. */
     public tickSize: number;
-    /** Target number of ticks to generate. */
-    public tickCount: number;
-    /** Optional axis title drawn alongside the ticks. */
-    public title?: string;
-    /** CSS font shorthand for the axis title. */
-    public titleFont: string;
     /** Color of the axis line and tick marks. */
     public stroke: string;
-    /** CSS font shorthand for the tick labels. */
-    public labelFont: string;
     /** Color of the tick labels. */
     public labelColor: string;
     /** Resolved animation applied when ticks and labels enter or update. */
     public animation: ResolvedAnimation;
-    /** Whether the axis renders and reserves layout space. */
-    public visible: boolean = true;
-    /** Formats a tick value into its label string. */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public formatLabel?: (value: any) => string;
-    /** Tick label rotation in degrees; positive tilts labels counterclockwise. Consumed by the x-axis; the label band and overflow handling account for the rotated extent. */
-    public labelRotation?: number;
 
     protected group: Group;
     protected line: Line;
 
+    /**
+     * Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
+     * with the group id, because a colon in an id breaks a `#`-id selector.
+     */
+    protected _titleText?: Text;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _scale: Scale<any, number>;
+    // The scale the previous render drew with, used to seed entering ticks at the position their
+    // value used to occupy. `undefined` marks the first render, which draws without movement.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _previousScale?: Scale<any, number>;
+    // Tick group id -> the raw tick value it was built from, so a leaving tick can still be mapped
+    // through the new scale (its id only carries the stringified value).
+    private _tickValues = new Map<string, unknown>();
+    private _bounds: Box;
+    private _tickCount: number;
+    private _title?: string;
+    private _titleFont: string;
+    private _labelFont: string;
+    private _labelRotation?: number;
+    private _visible: boolean = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private _formatLabel?: (value: any) => string;
+
     private _labelDimension: LabelDimension;
     private _clip?: Rect;
     protected cachedTicks?: unknown[];
+
+    /**
+     * Scale mapping domain values to pixel positions along the axis. Assigning a scale invalidates
+     * the cached tick set, so a measurement taken after the assignment reflects the new domain.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public get scale(): Scale<any, number> {
+        return this._scale;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public set scale(value: Scale<any, number>) {
+        this._scale = value;
+        this.invalidate();
+    }
+
+    /**
+     * Bounding box the axis is laid out within. Assign a new {@link Box} rather than mutating the
+     * existing one: an in-place edit cannot invalidate the cached measurement, and it also silently
+     * stales any box a caller has already read.
+     */
+    public get bounds(): Box {
+        return this._bounds;
+    }
+
+    public set bounds(value: Box) {
+        this._bounds = value;
+        this.invalidate();
+    }
+
+    /** Target number of ticks to generate. */
+    public get tickCount(): number {
+        return this._tickCount;
+    }
+
+    public set tickCount(value: number) {
+        this._tickCount = value;
+        this.invalidate();
+    }
+
+    /** Optional axis title drawn alongside the ticks. */
+    public get title(): string | undefined {
+        return this._title;
+    }
+
+    public set title(value: string | undefined) {
+        this._title = value;
+        this.invalidate();
+    }
+
+    /** CSS font shorthand for the axis title. */
+    public get titleFont(): string {
+        return this._titleFont;
+    }
+
+    public set titleFont(value: string) {
+        this._titleFont = value;
+        this.invalidate();
+    }
+
+    /** CSS font shorthand for the tick labels. */
+    public get labelFont(): string {
+        return this._labelFont;
+    }
+
+    public set labelFont(value: string) {
+        this._labelFont = value;
+        this.invalidate();
+    }
+
+    /**
+     * Tick label rotation in degrees; positive tilts labels counterclockwise. Consumed by the
+     * x-axis; the label band and overflow handling account for the rotated extent.
+     */
+    public get labelRotation(): number | undefined {
+        return this._labelRotation;
+    }
+
+    public set labelRotation(value: number | undefined) {
+        this._labelRotation = value;
+        this.invalidate();
+    }
+
+    /** Whether the axis renders and reserves layout space. */
+    public get visible(): boolean {
+        return this._visible;
+    }
+
+    public set visible(value: boolean) {
+        this._visible = value;
+        this.invalidate();
+    }
+
+    /** Formats a tick value into its label string. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public get formatLabel(): ((value: any) => string) | undefined {
+        return this._formatLabel;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public set formatLabel(value: ((value: any) => string) | undefined) {
+        this._formatLabel = value;
+        this.invalidate();
+    }
 
     protected get ticks() {
         if (this.cachedTicks) {
@@ -238,7 +391,7 @@ export class ChartAxis extends ChartComponent {
             scale,
             bounds,
             labelDimension,
-            padding = 8,
+            padding = SPACING.sm,
             tickSize = 5,
             tickCount = 10,
             stroke = '#777777',
@@ -251,17 +404,17 @@ export class ChartAxis extends ChartComponent {
             renderer,
         });
 
-        this.bounds = bounds;
-        this.scale = scale;
+        this._bounds = bounds;
+        this._scale = scale;
+        this._tickCount = tickCount;
+        this._title = options.title;
+        this._titleFont = options.titleFont ?? `bold ${labelFont}`;
+        this._formatLabel = options.formatLabel;
+        this._labelFont = labelFont;
+        this._labelDimension = labelDimension;
         this.padding = padding;
         this.tickSize = tickSize;
-        this.tickCount = tickCount;
-        this._labelDimension = labelDimension;
-        this.title = options.title;
-        this.titleFont = options.titleFont ?? `bold ${labelFont}`;
-        this.formatLabel = options.formatLabel;
         this.stroke = stroke;
-        this.labelFont = labelFont;
         this.labelColor = labelColor;
         this.animation = options.animation ?? DEFAULT_AXIS_ANIMATION;
 
@@ -365,45 +518,412 @@ export class ChartAxis extends ChartComponent {
         return titleHeight + TITLE_GAP;
     }
 
+    /**
+     * Discards the cached tick set so the next measurement or render recomputes it. Called
+     * automatically whenever an input the tick set depends on is assigned ({@link ChartAxis.scale},
+     * {@link ChartAxis.bounds}, {@link ChartAxis.tickCount}, {@link ChartAxis.labelFont},
+     * {@link ChartAxis.labelRotation}, {@link ChartAxis.formatLabel}, {@link ChartAxis.title},
+     * {@link ChartAxis.titleFont}, {@link ChartAxis.visible}), so hosts rarely need it directly.
+     */
+    public invalidate(): void {
+        this.cachedTicks = undefined;
+    }
+
+    /**
+     * The thickness, in pixels, this axis needs for its tick marks, labels and title: the band it
+     * reserves out of the plot. Concrete axes measure across their own direction (an x-axis returns
+     * a height, a y-axis a width) and return `0` when hidden.
+     *
+     * Measured from the same cached tick set the next {@link ChartAxis.render} draws, so a layout
+     * pass that measures and then renders without changing the axis cannot disagree with itself.
+     */
+    public measure(): number {
+        return 0;
+    }
+
     /** Returns the box the axis occupies (its assigned bounds). */
     public getBoundingBox(): Box {
         return this.bounds;
     }
 
-    /** Fades in newly-entered tick labels and lines using the chart's resolved animation. */
-    protected animateEntries(elements: Element[]) {
-        if (elements.length === 0) {
-            return;
-        }
-
-        if (!this.animation.enabled || this.animation.duration <= 0) {
-            elements.forEach(element => Object.assign(element, element.data ?? {}));
-            return;
-        }
-
-        this.renderer.transition(elements, element => ({
-            duration: this.animation.duration,
-            ease: this.animation.ease,
-            state: (element.data ?? {}) as Record<string, unknown>,
-        }));
+    /** Whether transitions should animate, or land on their target state immediately. */
+    protected get animated(): boolean {
+        return this.animation.enabled && this.animation.duration > 0;
     }
 
-    /** Fades exiting tick groups out before destroying them (immediate when animation is disabled). */
-    protected animateExits(groups: Group[]) {
-        groups.forEach(exitGroup => {
+    /** The id prefix namespacing this axis's tick groups. Overridden per concrete axis. */
+    protected get tickPrefix(): string {
+        return 'tick';
+    }
+
+    /**
+     * The id of the tick group for `value`.
+     *
+     * Keyed by the raw tick value, not the display label: the label is not guaranteed unique or
+     * stable and, in the SVG renderer, tick-group ids share a single global DOM cache with every
+     * other element, so a formatted label colliding with a data element id (e.g. a candlestick group
+     * keyed by the same date string) makes the two fight over one DOM node and the axis label
+     * vanishes. Namespacing by the axis's own group id keeps the id unique per tick, per axis, and
+     * clear of data ids.
+     */
+    protected tickId(value: unknown): string {
+        return `${this.tickPrefix}:${this.group.id}:${value}`;
+    }
+
+    /**
+     * Where a tick's mark and label sit for `value` under `scale`. Overridden per concrete axis; the
+     * shared reconcile drives every enter/update/exit position through it, and passes the *previous*
+     * scale to seed an entering tick at the position its value used to occupy.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+    protected tickState(value: unknown, scale: Scale<any, number>, boundingBox: Box): AxisTickState {
+        return {
+            line: {
+                x1: 0,
+                y1: 0,
+                x2: 0,
+                y2: 0,
+            },
+            label: {
+                x: 0,
+                y: 0,
+            },
+        };
+    }
+
+    /** The non-tweenable tick-label paint. Overridden per concrete axis. */
+    protected tickLabelPaint(): AxisLabelPaint {
+        return {
+            textAlign: 'center',
+            textBaseline: 'middle',
+            rotation: 0,
+        };
+    }
+
+    /** Every tweenable leaf inside a tick group: its mark and its label. */
+    private _tickLeaves(group: Group): { line?: Line;
+        label?: Text; } {
+        return {
+            line: group.query<Line>('line') ?? undefined,
+            label: group.query<Text>('text') ?? undefined,
+        };
+    }
+
+    /**
+     * The state an entering tick starts from: the position its value occupied under the previous
+     * scale, so a rescale reads as the labels sliding to their new places rather than one set fading
+     * out while another fades in at different spots. Falls back to the target position on the first
+     * render, or when the value does not map into the previous scale (a new category).
+     */
+    private _entryState(value: unknown, boundingBox: Box, target: AxisTickState): AxisTickState {
+        if (!this._previousScale) {
+            return target;
+        }
+
+        const seeded = this.tickState(value, this._previousScale, boundingBox);
+
+        return Number.isFinite(seeded.label.x) && Number.isFinite(seeded.label.y)
+            ? seeded
+            : target;
+    }
+
+    /** Transitions `element` to `state`, or assigns it directly when animation is off. */
+    private _transition(element: Element, state: Record<string, unknown>): Promise<unknown> {
+        if (!this.animated) {
+            Object.assign(element, state);
+            return Promise.resolve();
+        }
+
+        return this.renderer.transition(element, {
+            duration: this.animation.duration,
+            ease: this.animation.ease,
+            state: state as never,
+        });
+    }
+
+    /**
+     * Reconciles this axis's tick marks and labels against the current tick set, joined by tick
+     * value so a tick that survives a rescale keeps its elements.
+     *
+     * - Entering ticks are created at their previous-scale position, transparent, and transition to
+     *   their new position at full opacity.
+     * - Surviving ticks transition to their new position.
+     * - Leaving ticks slide toward where their value now maps and fade out before being destroyed.
+     *
+     * Non-tweenable properties (`content`, `textAlign`, `textBaseline`, `rotation`, paint) are
+     * assigned directly — interpolating them would snap them mid-transition.
+     *
+     * @param boundingBox - The axis's band, which the tick geometry is measured from.
+     * @returns Resolves once every tick transition has settled.
+     */
+    protected reconcileTicks(boundingBox: Box): Promise<unknown> {
+        const ticks = this.ticks;
+        const paint = this.tickLabelPaint();
+        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
+
+        const {
+            left: entries,
+            inner: updates,
+            right: exits,
+        } = arrayJoin(ticks, groups, (value, group) => group.id === this.tickId(value));
+
+        const pending: Promise<unknown>[] = [
+            ...this._exitTicks(exits, boundingBox),
+            ...this._enterTicks(entries, boundingBox, paint),
+            ...this._updateTicks(updates, boundingBox, paint),
+        ];
+
+        this._previousScale = this.scale;
+
+        return Promise.all(pending);
+    }
+
+    /** Slides leaving ticks toward their new position while fading them out, then destroys them. */
+    private _exitTicks(groups: Group[], boundingBox: Box): Promise<unknown>[] {
+        return groups.map(group => {
+            const value = this._tickValues.get(group.id);
+
+            this._tickValues.delete(group.id);
+
             // Retag the group first so it can't collide with a re-entering tick of the same value
             // while it fades; the reconcile join and the SVG DOM cache both key on class and id.
-            exitGroup.classList.delete('chart-axis__tick-group');
-            exitGroup.id = `${exitGroup.id}:exit:${stringUniqueId()}`;
+            group.classList.delete('chart-axis__tick-group');
+            group.id = `${group.id}:exit:${stringUniqueId()}`;
 
-            void exitElement(this.renderer, exitGroup, this.animation);
+            if (!this.animated) {
+                group.destroy();
+                return Promise.resolve();
+            }
+
+            // Fade the leaves, not the group: a group carries no explicit opacity to interpolate
+            // from, so a group-level fade would silently do nothing and then pop.
+            const { line, label } = this._tickLeaves(group);
+            const target = value === undefined ? undefined : this.tickState(value, this.scale, boundingBox);
+            const slide = target && Number.isFinite(target.label.x) && Number.isFinite(target.label.y);
+
+            return Promise.all([
+                line && this._transition(line, {
+                    opacity: 0,
+                    ...(slide ? target.line : {}),
+                }),
+                label && this._transition(label, {
+                    opacity: 0,
+                    ...(slide ? target.label : {}),
+                }),
+            ]).then(() => group.destroy());
         });
+    }
+
+    /** Creates entering ticks at their seeded start state and transitions them into place. */
+    private _enterTicks(values: unknown[], boundingBox: Box, paint: AxisLabelPaint): Promise<unknown>[] {
+        const created = values.map(value => {
+            const target = this.tickState(value, this.scale, boundingBox);
+            const start = this._entryState(value, boundingBox, target);
+            const id = this.tickId(value);
+
+            this._tickValues.set(id, value);
+
+            const group = createGroup({
+                id,
+                class: 'chart-axis__tick-group',
+                zIndex: 1000,
+                // An explicit opacity so a group-level fade has a value to interpolate from.
+                opacity: 1,
+                children: [
+                    createText({
+                        content: this.formatTickLabel(value),
+                        ...start.label,
+                        ...paint,
+                        fill: this.labelColor,
+                        font: this.labelFont,
+                        opacity: 0,
+                    }),
+                    createLine({
+                        ...start.line,
+                        stroke: this.stroke,
+                        opacity: 0,
+                    }),
+                ],
+            });
+
+            return {
+                group,
+                target,
+            };
+        });
+
+        this.group.add(created.map(({ group }) => group));
+
+        return created.flatMap(({ group, target }) => {
+            const { line, label } = this._tickLeaves(group);
+
+            return [
+                line && this._transition(line, {
+                    opacity: 1,
+                    ...target.line,
+                }),
+                label && this._transition(label, {
+                    opacity: 1,
+                    ...target.label,
+                }),
+            ].filter(Boolean) as Promise<unknown>[];
+        });
+    }
+
+    /** Transitions surviving ticks to their new position, restyling them in place. */
+    private _updateTicks(pairs: [unknown, Group][], boundingBox: Box, paint: AxisLabelPaint): Promise<unknown>[] {
+        return pairs.flatMap(([value, group]) => {
+            const target = this.tickState(value, this.scale, boundingBox);
+            const { line, label } = this._tickLeaves(group);
+
+            this._tickValues.set(group.id, value);
+
+            if (line) {
+                line.stroke = this.stroke;
+            }
+
+            if (label) {
+                // Non-tweenable: interpolating text content or its alignment snaps at t=0.5.
+                label.content = this.formatTickLabel(value);
+                label.textAlign = paint.textAlign;
+                label.textBaseline = paint.textBaseline;
+                label.rotation = paint.rotation;
+                label.fill = this.labelColor;
+                label.font = this.labelFont;
+            }
+
+            return [
+                line && this._transition(line, target.line as unknown as Record<string, unknown>),
+                label && this._transition(label, target.label as unknown as Record<string, unknown>),
+            ].filter(Boolean) as Promise<unknown>[];
+        });
+    }
+
+    /**
+     * Moves the axis line to `state`, transitioning on an update and landing immediately on the
+     * first render (an axis is drawn straight away, and only animates between states thereafter).
+     */
+    protected reconcileLine(state: Pick<LineState, 'x1' | 'y1' | 'x2' | 'y2'>): Promise<unknown> {
+        this.line.stroke = this.stroke;
+
+        if (!this._previousScale) {
+            Object.assign(this.line, state);
+
+            if (!this.animated) {
+                this.line.opacity = 1;
+                return Promise.resolve();
+            }
+
+            this.line.opacity = 0;
+
+            return this._transition(this.line, { opacity: 1 });
+        }
+
+        return this._transition(this.line, state as unknown as Record<string, unknown>);
+    }
+
+    /**
+     * Moves the axis title to `position`, transitioning on an update and fading it in on creation.
+     * Removes the title (fading it out) when the axis no longer has one.
+     *
+     * @param position - Where the title's anchor sits, plus any rotation and transform origin.
+     * @param id - The title element's id, namespaced per axis by the caller.
+     */
+    protected reconcileTitle(position: AxisTitlePosition, id: string): Promise<unknown> {
+        if (!this.title) {
+            const previous = this._titleText;
+
+            this._titleText = undefined;
+
+            return previous
+                ? exitElement(this.renderer, previous, this.animation)
+                : Promise.resolve();
+        }
+
+        if (!this._titleText) {
+            this._titleText = createText({
+                id,
+                content: this.title,
+                ...position,
+                textAlign: 'center',
+                textBaseline: position.textBaseline ?? 'middle',
+                fill: this.labelColor,
+                font: this.titleFont,
+                opacity: this.animated ? 0 : 1,
+            });
+
+            this.group.add(this._titleText);
+
+            return this._transition(this._titleText, { opacity: 1 });
+        }
+
+        // Non-tweenable: content, paint and rotation are assigned; only the anchor animates.
+        this._titleText.content = this.title;
+        this._titleText.fill = this.labelColor;
+        this._titleText.font = this.titleFont;
+
+        if (position.rotation !== undefined) {
+            this._titleText.rotation = position.rotation;
+        }
+
+        return this._transition(this._titleText, position as unknown as Record<string, unknown>);
     }
 
     /** No-op base render; concrete axes ({@link ChartXAxis}/{@link ChartYAxis}) draw through their own render pass. */
     public render() {
         // No direct render pass: concrete axes draw through their tick/label
         // helpers, so the base component render is intentionally a no-op.
+    }
+
+    /**
+     * Removes everything the axis has drawn — ticks, labels, the axis line and the title — fading it
+     * out when animating. Charts call this instead of {@link ChartAxis.render} for an axis that should
+     * not be drawn this pass, so that an axis which *was* drawn leaves the scene rather than lingering
+     * at its last position. Safe to call on an axis that has never rendered.
+     *
+     * The axis is kept alive, not destroyed: the same instance renders again (entering from scratch)
+     * as soon as it has something to draw.
+     *
+     * @returns Resolves once the exit transitions have settled.
+     */
+    public hide(): Promise<unknown> {
+        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
+        const title = this._titleText;
+
+        // Coming back has to enter from scratch: there is no previous scale left to slide from, and
+        // the recorded tick values no longer point at live elements.
+        this._previousScale = undefined;
+        this._tickValues.clear();
+        this._titleText = undefined;
+        this.invalidate();
+
+        if (!this.animated) {
+            groups.forEach(group => group.destroy());
+            title?.destroy();
+            this.line.opacity = 0;
+
+            return Promise.resolve();
+        }
+
+        const exits = groups.map(group => {
+            // Retag before fading so the group cannot collide with a tick that re-enters while it is
+            // still on its way out (the reconcile join and the SVG DOM cache both key on class and id).
+            group.classList.delete('chart-axis__tick-group');
+            group.id = `${group.id}:exit:${stringUniqueId()}`;
+
+            const { line, label } = this._tickLeaves(group);
+
+            return Promise.all([
+                line && this._transition(line, { opacity: 0 }),
+                label && this._transition(label, { opacity: 0 }),
+            ]).then(() => group.destroy());
+        });
+
+        return Promise.all([
+            ...exits,
+            title ? exitElement(this.renderer, title, this.animation) : Promise.resolve(),
+            this._transition(this.line, { opacity: 0 }),
+        ]);
     }
 
     /** Destroys the axis, removing its group (line, ticks, labels, and title) from the scene. */
@@ -416,10 +936,6 @@ export class ChartAxis extends ChartComponent {
 
 /** Horizontal (x) axis component with top/bottom alignment. */
 export class ChartXAxis extends ChartAxis {
-
-    // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
-    // with the group id, because a colon in an id breaks a `#`-id selector, so the query approach can't be used.
-    private _titleText?: Text;
 
     /** Which edge the axis sits on (`top` or `bottom`). */
     public alignment: ChartXAxisAlignment;
@@ -466,17 +982,24 @@ export class ChartXAxis extends ChartAxis {
         return Math.abs(width * Math.cos(theta)) + Math.abs(height * Math.sin(theta));
     }
 
+    /** The height the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
+    public override measure(): number {
+        // A hidden axis reserves no band so the plot can use the full area.
+        if (!this.visible) {
+            return 0;
+        }
+
+        return this._labelBandHeight
+            + this.padding
+            + this.tickSize
+            + 1 // 1 for line width
+            + this.titleBand;
+    }
+
     /** Computes the band the x-axis reserves above/below the plot, sized to fit its tick labels and title (zero when hidden). */
     public getBoundingBox(): Box {
         const isBottomAligned = this.alignment === 'bottom';
-        // A hidden axis reserves no band so the plot can use the full area.
-        const clearance = this.visible
-            ? this._labelBandHeight
-                + this.padding
-                + this.tickSize
-                + 1 // 1 for line width
-                + this.titleBand
-            : 0;
+        const clearance = this.measure();
 
         const {
             top,
@@ -493,148 +1016,72 @@ export class ChartXAxis extends ChartAxis {
         );
     }
 
-    /** Renders the x-axis line, tick marks, and labels, reconciling and animating against the previous render. */
-    public async render() {
-        this.cachedTicks = undefined;
-        const ticks = this.ticks;
-        const boundingBox = this.getBoundingBox();
+    /** The tick-group id prefix for an x-axis. */
+    protected override get tickPrefix(): string {
+        return 'x-tick';
+    }
 
-        this.line.x1 = boundingBox.left;
-        this.line.y1 = boundingBox.top;
-        this.line.x2 = boundingBox.right;
-        this.line.y2 = boundingBox.top;
-        this.line.stroke = this.stroke;
-
-        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
-
-        const {
-            left: groupEntries,
-            inner: groupUpdates,
-            right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => group.id === `x-tick:${this.group.id}:${value}`);
-
-        const rotationRad = this._labelRotationRad;
+    /** Tick marks drop from the axis line, with the label below them. */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected override tickState(value: unknown, scale: Scale<any, number>, boundingBox: Box): AxisTickState {
+        const x = scale(value);
         const labelY = boundingBox.top + this.padding + this.tickSize + 1;
 
-        const labelEntryTexts = groupEntries.map(value => {
-            const x = this.scale(value);
-            const label = this.formatTickLabel(value);
+        return {
+            line: {
+                x1: x,
+                y1: boundingBox.top,
+                x2: x,
+                y2: boundingBox.top + this.tickSize,
+            },
+            label: {
+                x,
+                y: labelY,
+                transformOriginX: x,
+                transformOriginY: labelY,
+            },
+        };
+    }
 
-            return createGroup({
-                // Key by the raw tick value (namespaced), not the display label: the label is not
-                // guaranteed unique/stable and, in the SVG renderer, tick-group ids share a single
-                // global DOM cache with every other element, so a formatted label colliding with a
-                // data element id (e.g. a candlestick group keyed by the same date string) makes the
-                // two fight over one DOM node and the axis label vanishes. Namespacing by the axis's
-                // own group id keeps the id unique per tick, per axis, and clear of data ids.
-                id: `x-tick:${this.group.id}:${value}`,
-                class: 'chart-axis__tick-group',
-                zIndex: 1000,
-                children: [
-                    createText({
-                        content: label,
-                        x,
-                        y: labelY,
-                        textAlign: tickLabelAlignment(rotationRad),
-                        textBaseline: rotationRad === 0 ? 'top' : 'middle',
-                        rotation: rotationRad,
-                        transformOriginX: x,
-                        transformOriginY: labelY,
-                        fill: this.labelColor,
-                        font: this.labelFont,
-                        opacity: 0,
-                        data: { opacity: 1 },
-                    }),
-                    createLine({
-                        x1: x,
-                        y1: boundingBox.top,
-                        x2: x,
-                        y2: boundingBox.top + this.tickSize,
-                        stroke: this.stroke,
-                        opacity: 0,
-                        data: { opacity: 1 },
-                    }),
-                ],
-            });
+    protected override tickLabelPaint(): AxisLabelPaint {
+        const rotation = this._labelRotationRad;
+
+        return {
+            textAlign: tickLabelAlignment(rotation),
+            textBaseline: rotation === 0 ? 'top' : 'middle',
+            rotation,
+        };
+    }
+
+    /** Renders the x-axis line, tick marks, labels, and title, animating against the previous render. */
+    public async render() {
+        const boundingBox = this.getBoundingBox();
+
+        // The title sits in its own band below the tick labels, anchored to the band's outer edge.
+        const title = this.reconcileTitle({
+            x: (boundingBox.left + boundingBox.right) / 2,
+            y: boundingBox.bottom,
+            textBaseline: 'bottom',
+        }, `chart-axis__x-title:${this.group.id}`);
+
+        const line = this.reconcileLine({
+            x1: boundingBox.left,
+            y1: boundingBox.top,
+            x2: boundingBox.right,
+            y2: boundingBox.top,
         });
 
-        this.group.add(labelEntryTexts);
-        this.animateExits(groupExits);
-
-        // Animate entries
-        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
-
-        this.animateEntries(entryElements);
-
-        groupUpdates.forEach(([value, group]) => {
-            const line = group.query<Line>('line');
-            const label = group.query<Text>('text');
-            const x = this.scale(value);
-
-            if (line) {
-                line.x1 = x;
-                line.y1 = boundingBox.top;
-                line.x2 = x;
-                line.y2 = boundingBox.top + this.tickSize;
-                line.stroke = this.stroke;
-            }
-
-            if (label) {
-                label.content = this.formatTickLabel(value);
-                label.x = x;
-                label.y = labelY;
-                label.textAlign = tickLabelAlignment(rotationRad);
-                label.textBaseline = rotationRad === 0 ? 'top' : 'middle';
-                label.rotation = rotationRad;
-                label.transformOriginX = x;
-                label.transformOriginY = labelY;
-                label.fill = this.labelColor;
-                label.font = this.labelFont;
-            }
-        });
-
-        // Render title in its own band below the tick labels (removing it when the title was cleared).
-        if (!this.title) {
-            this._titleText?.destroy();
-            this._titleText = undefined;
-            return Promise.resolve();
-        }
-
-        const titleX = (boundingBox.left + boundingBox.right) / 2;
-        const titleY = boundingBox.bottom;
-
-        if (!this._titleText) {
-            this._titleText = createText({
-                id: `chart-axis__x-title:${this.group.id}`,
-                content: this.title,
-                x: titleX,
-                y: titleY,
-                textAlign: 'center',
-                textBaseline: 'bottom',
-                fill: this.labelColor,
-                font: this.titleFont,
-            });
-
-            this.group.add(this._titleText);
-        } else {
-            this._titleText.content = this.title;
-            this._titleText.x = titleX;
-            this._titleText.y = titleY;
-            this._titleText.fill = this.labelColor;
-            this._titleText.font = this.titleFont;
-        }
-
-        return Promise.resolve();
+        return Promise.all([
+            line,
+            this.reconcileTicks(boundingBox),
+            title,
+        ]);
     }
 
 }
 
 /** Vertical (y) axis component with left/right alignment. */
 export class ChartYAxis extends ChartAxis {
-
-    // Held as an instance field (rather than re-queried by id) so its id can be namespaced per axis
-    // with the group id, because a colon in an id breaks a `#`-id selector, so the query approach can't be used.
-    private _titleText?: Text;
 
     /** Which edge the axis sits on (`left` or `right`). */
     public alignment: ChartYAxisAlignment;
@@ -659,17 +1106,24 @@ export class ChartYAxis extends ChartAxis {
         this.alignment = alignment;
     }
 
+    /** The width the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden). */
+    public override measure(): number {
+        // A hidden axis reserves no band so the plot can use the full area.
+        if (!this.visible) {
+            return 0;
+        }
+
+        return this.maxLabelWidth
+            + this.padding
+            + this.tickSize
+            + 1 // 1 for line width
+            + this.titleBand;
+    }
+
     /** Computes the band the y-axis reserves left/right of the plot, sized to fit its tick labels and title (zero when hidden), shifted outward by {@link ChartYAxis.offset}. */
     public getBoundingBox(): Box {
         const isLeftAligned = this.alignment === 'left';
-        // A hidden axis reserves no band so the plot can use the full area.
-        const clearance = this.visible
-            ? this.maxLabelWidth
-                + this.padding
-                + this.tickSize
-                + 1 // 1 for line width
-                + this.titleBand
-            : 0;
+        const clearance = this.measure();
 
         const {
             top,
@@ -689,110 +1143,53 @@ export class ChartYAxis extends ChartAxis {
         );
     }
 
-    /** Renders the y-axis line, tick marks, and labels, reconciling and animating against the previous render. */
-    public async render() {
-        this.cachedTicks = undefined;
-        const ticks = this.ticks;
-        const boundingBox = this.getBoundingBox();
+    /** The tick-group id prefix for a y-axis. */
+    protected override get tickPrefix(): string {
+        return 'y-tick';
+    }
 
-        // Derive edge + direction from alignment: a left axis draws its line/ticks/labels off the
-        // box's plot-facing right edge with ticks pointing left; a right axis mirrors to the left
-        // edge with ticks pointing right, so both sit between the plot and their own labels.
+    /**
+     * Tick marks project away from the plot and the label sits beyond them. A left axis draws off its
+     * band's plot-facing (right) edge with ticks pointing left; a right axis mirrors that, so both
+     * sit between the plot and their own labels.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    protected override tickState(value: unknown, scale: Scale<any, number>, boundingBox: Box): AxisTickState {
         const isLeft = this.alignment === 'left';
+        const y = scale(value);
         const lineX = isLeft ? boundingBox.right : boundingBox.left;
         const tickEndX = isLeft ? lineX - this.tickSize : lineX + this.tickSize;
         const labelX = isLeft
             ? lineX - this.padding - this.tickSize - 1
             : lineX + this.padding + this.tickSize + 1;
-        const labelAlign = isLeft ? 'right' : 'left';
 
-        this.line.x1 = lineX;
-        this.line.x2 = lineX;
-        this.line.y1 = boundingBox.top;
-        this.line.y2 = boundingBox.bottom;
-        this.line.stroke = this.stroke;
+        return {
+            line: {
+                x1: lineX,
+                y1: y,
+                x2: tickEndX,
+                y2: y,
+            },
+            label: {
+                x: labelX,
+                y,
+            },
+        };
+    }
 
-        const groups = this.group.queryAll<Group>('.chart-axis__tick-group');
+    protected override tickLabelPaint(): AxisLabelPaint {
+        return {
+            textAlign: this.alignment === 'left' ? 'right' : 'left',
+            textBaseline: 'middle',
+            rotation: 0,
+        };
+    }
 
-        const {
-            left: groupEntries,
-            inner: groupUpdates,
-            right: groupExits,
-        } = arrayJoin(ticks, groups, (value, group) => group.id === `y-tick:${this.group.id}:${value}`);
-
-        const labelEntryTexts = groupEntries.map(value => {
-            const y = this.scale(value);
-            const label = this.formatTickLabel(value);
-
-            return createGroup({
-                // See the x-axis note: key by the namespaced raw tick value, not the display label,
-                // so ids stay unique/stable per axis and can't collide with data element ids in the SVG cache.
-                id: `y-tick:${this.group.id}:${value}`,
-                class: 'chart-axis__tick-group',
-                zIndex: 1000,
-                children: [
-                    createText({
-                        content: label,
-                        x: labelX,
-                        y,
-                        textAlign: labelAlign,
-                        textBaseline: 'middle',
-                        fill: this.labelColor,
-                        font: this.labelFont,
-                        opacity: 0,
-                        data: { opacity: 1 },
-                    }),
-                    createLine({
-                        x1: lineX,
-                        y1: y,
-                        x2: tickEndX,
-                        y2: y,
-                        stroke: this.stroke,
-                        opacity: 0,
-                        data: { opacity: 1 },
-                    }),
-                ],
-            });
-        });
-
-        this.group.add(labelEntryTexts);
-        this.animateExits(groupExits);
-
-        // Animate entries
-        const entryElements = labelEntryTexts.flatMap(g => [...g.getElementsByType('text'), ...g.getElementsByType('line')]);
-
-        this.animateEntries(entryElements);
-
-        groupUpdates.forEach(([value, group]) => {
-            const line = group.query<Line>('line');
-            const label = group.query<Text>('text');
-            const y = this.scale(value);
-
-            if (line) {
-                line.x1 = lineX;
-                line.y1 = y;
-                line.x2 = tickEndX;
-                line.y2 = y;
-                line.stroke = this.stroke;
-            }
-
-            if (label) {
-                label.content = this.formatTickLabel(value);
-                label.x = labelX;
-                label.y = y;
-                label.textAlign = labelAlign;
-                label.fill = this.labelColor;
-                label.font = this.labelFont;
-            }
-        });
-
-        // Render the title rotated vertically in its own band at the far edge of the axis,
-        // outside the tick labels so the two never overlap or clip (removing it when cleared).
-        if (!this.title) {
-            this._titleText?.destroy();
-            this._titleText = undefined;
-            return Promise.resolve();
-        }
+    /** Renders the y-axis line, tick marks, labels, and title, animating against the previous render. */
+    public async render() {
+        const boundingBox = this.getBoundingBox();
+        const isLeft = this.alignment === 'left';
+        const lineX = isLeft ? boundingBox.right : boundingBox.left;
 
         // Anchor the rotated title to the outer edge of its band (not centered) so the full
         // TITLE_GAP sits between the title and the tick labels, matching the x-axis, without
@@ -802,36 +1199,27 @@ export class ChartYAxis extends ChartAxis {
             ? boundingBox.left + titleThickness / 2
             : boundingBox.right - titleThickness / 2;
         const titleY = (boundingBox.top + boundingBox.bottom) / 2;
-        const rotation = isLeft ? -Math.PI / 2 : Math.PI / 2;
 
-        if (!this._titleText) {
-            this._titleText = createText({
-                id: `chart-axis__y-title:${this.group.id}`,
-                content: this.title,
-                x: titleX,
-                y: titleY,
-                textAlign: 'center',
-                textBaseline: 'middle',
-                fill: this.labelColor,
-                font: this.titleFont,
-                rotation,
-                transformOriginX: titleX,
-                transformOriginY: titleY,
-            });
+        const title = this.reconcileTitle({
+            x: titleX,
+            y: titleY,
+            rotation: isLeft ? -Math.PI / 2 : Math.PI / 2,
+            transformOriginX: titleX,
+            transformOriginY: titleY,
+        }, `chart-axis__y-title:${this.group.id}`);
 
-            this.group.add(this._titleText);
-        } else {
-            this._titleText.content = this.title;
-            this._titleText.x = titleX;
-            this._titleText.y = titleY;
-            this._titleText.fill = this.labelColor;
-            this._titleText.font = this.titleFont;
-            this._titleText.rotation = rotation;
-            this._titleText.transformOriginX = titleX;
-            this._titleText.transformOriginY = titleY;
-        }
+        const line = this.reconcileLine({
+            x1: lineX,
+            y1: boundingBox.top,
+            x2: lineX,
+            y2: boundingBox.bottom,
+        });
 
-        return Promise.resolve();
+        return Promise.all([
+            line,
+            this.reconcileTicks(boundingBox),
+            title,
+        ]);
     }
 
 }

@@ -6,6 +6,7 @@ import {
 
 import {
     mockCanvasContext,
+    mockTextMetrics,
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -136,7 +137,7 @@ function createDualAxisLineChart() {
                 id: 'large',
                 label: 'Large',
                 value: 'large',
-                axis: 1,
+                yAxis: 1,
             },
         ],
     });
@@ -439,6 +440,92 @@ describe('legend series toggling (stacked area)', () => {
         const domain = internals(chart).yAxis.scale.domain;
 
         expect(domain.every(Number.isFinite)).toBe(true);
+    });
+
+});
+
+describe('legend position', () => {
+
+    interface SwatchInternals {
+        x: number;
+        y: number;
+    }
+
+    function createChart() {
+        polyfillPath2D();
+        mockTextMetrics(mockCanvasContext());
+
+        const chart = createLineChart(document.createElement('div'), {
+            autoRender: false,
+            animation: false,
+            data: [
+                {
+                    k: 'a',
+                    v: 10,
+                    w: 20,
+                },
+                {
+                    k: 'b',
+                    v: 30,
+                    w: 40,
+                },
+            ],
+            key: 'k',
+            series: [
+                {
+                    id: 'first',
+                    label: 'First',
+                    value: 'v',
+                },
+                {
+                    id: 'second',
+                    label: 'Second',
+                    value: 'w',
+                },
+            ],
+            legend: { position: 'bottom' },
+        });
+
+        (chart as unknown as { scene: { context: { rescale(w: number, h: number): void } } })
+            .scene.context.rescale(600, 400);
+
+        return chart;
+    }
+
+    // The legend renders one swatch per item into the scene, so a swatch's position is where the
+    // legend band currently sits.
+    function swatch(chart: unknown): SwatchInternals {
+        const element = (chart as {
+            scene: { getElementById(id: string): SwatchInternals | null };
+        }).scene.getElementById('legend-swatch-first');
+
+        expect(element).toBeTruthy();
+
+        return element!;
+    }
+
+    it('moves the live legend through update() without recreating the chart', async () => {
+        const chart = createChart();
+
+        await chart.render();
+
+        const bottom = swatch(chart);
+        const bottomY = bottom.y;
+        const bottomX = bottom.x;
+
+        chart.update({ legend: { position: 'top' } });
+        await chart.render();
+
+        // `Legend.setOptions` relocates the band, so a demo does not need to rebuild the chart for a
+        // position change — and a rebuild is destructive for a chart that holds state, such as the
+        // realtime chart's sliding window.
+        expect(swatch(chart).y).toBeLessThan(bottomY);
+
+        chart.update({ legend: { position: 'left' } });
+        await chart.render();
+
+        // A side legend re-lays-out vertically against the left edge rather than staying a strip.
+        expect(swatch(chart).x).toBeLessThan(bottomX);
     });
 
 });

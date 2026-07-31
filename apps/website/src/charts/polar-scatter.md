@@ -17,19 +17,19 @@ The **Polar Scatter Chart** plots points on a circular grid, where each point's 
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Polar Scatter" :extras-reset="reset">
-            <RiplField label="Max value">
-                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+            <RiplField label="Max value" option="max">
+                <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
-            <RiplField label="Value rings">
+            <RiplField label="Value rings" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Angle spokes">
-                <RiplInputRange v-model="extras.angleTicks" :min="4" :max="16" :step="1" />
+            <RiplField label="Angle spokes" option="sectors">
+                <RiplInputRange v-model="extras.sectors" :min="4" :max="16" :step="1" />
             </RiplField>
-            <RiplField label="Min marker">
+            <RiplField label="Min marker" option="minRadius">
                 <RiplInputRange v-model="extras.minRadius" :min="2" :max="12" :step="1" />
             </RiplField>
-            <RiplField label="Max marker">
+            <RiplField label="Max marker" option="maxRadius">
                 <RiplInputRange v-model="extras.maxRadius" :min="8" :max="30" :step="1" />
             </RiplField>
         </RiplChartConfig>
@@ -63,9 +63,9 @@ const seriesMeta = [
 ];
 
 const { extras, reset } = useChartExtras({
-    maxValue: 100 as number | undefined,
+    max: 100 as number | undefined,
     levels: 4,
-    angleTicks: 8,
+    sectors: 8,
     minRadius: 4,
     maxRadius: 14,
 });
@@ -77,6 +77,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        dataLabels: true,
     },
     title: 'Wind Samples',
     colors: seedColors(seriesMeta.map(s => s.id)),
@@ -102,8 +103,8 @@ function getSeries() {
         {
             id: 'morning',
             label: 'Morning',
-            angle: 'morningAngle',
-            radius: 'morningSpeed',
+            angleBy: 'morningAngle',
+            radiusBy: 'morningSpeed',
             sizeBy: 'morningGust',
             minRadius: extras.minRadius,
             maxRadius: extras.maxRadius,
@@ -112,8 +113,8 @@ function getSeries() {
         {
             id: 'evening',
             label: 'Evening',
-            angle: 'eveningAngle',
-            radius: 'eveningSpeed',
+            angleBy: 'eveningAngle',
+            radiusBy: 'eveningSpeed',
             sizeBy: 'eveningGust',
             minRadius: extras.minRadius,
             maxRadius: extras.maxRadius,
@@ -125,9 +126,9 @@ function getSeries() {
 function buildOptions() {
     const options = {
         series: getSeries(),
-        maxValue: extras.maxValue,
+        max: extras.max,
         levels: extras.levels,
-        angleTicks: extras.angleTicks,
+        sectors: extras.sectors,
         ...buildCommonOptions(config),
     };
 
@@ -199,12 +200,12 @@ const chart = createPolarScatterChart('#container', {
         {
             id: 'wind',
             label: 'Wind',
-            angle: 'angle',
-            radius: 'speed',
+            angleBy: 'angle',
+            radiusBy: 'speed',
             sizeBy: 'gust',
         },
     ],
-    maxValue: 100,
+    max: 100,
 });
 ```
 
@@ -244,14 +245,14 @@ const series = [
     {
         id: 'morning',
         label: 'Morning',
-        angle: 'morningAngle',
-        radius: 'morningSpeed',
+        angleBy: 'morningAngle',
+        radiusBy: 'morningSpeed',
     },
     {
         id: 'evening',
         label: 'Evening',
-        angle: 'eveningAngle',
-        radius: 'eveningSpeed',
+        angleBy: 'eveningAngle',
+        radiusBy: 'eveningSpeed',
     },
 ];
 ```
@@ -259,10 +260,10 @@ const series = [
 ## Options
 
 - **`data`**: the data array
-- **`series`**: array of series with `id`, `label`, `angle` (degrees accessor), `radius` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
-- **`maxValue`**: value mapped to the outer ring (defaults to the data maximum)
+- **`series`**: array of series with `id`, `label`, `angleBy` (degrees accessor), `radiusBy` (value accessor), optional `color`, `sizeBy`, `minRadius`, `maxRadius`
+- **`max`**: value mapped to the outer ring (defaults to the data maximum)
 - **`levels`**: number of concentric value rings (default `4`)
-- **`angleTicks`**: number of angular spokes/labels (default `8`)
+- **`sectors`**: number of angular spokes/labels (default `8`)
 - **`legend`** (`boolean | ChartLegendOptions`): series legend (shown by default for multiple series)
 - **`format`**: value formatter for tooltips and ring labels
 - **`padding`**: chart padding

@@ -10,7 +10,24 @@ import type {
 
 import {
     arePointsEqual,
+    Box,
+    getContainingBox,
+    isPointInBox,
+    matrixIdentity,
+    matrixRotate,
+    matrixScale,
+    matrixTranslate,
+    transformBox,
 } from '../../src';
+
+function edgesOf(box: Box) {
+    return [
+        box.left,
+        box.top,
+        box.right,
+        box.bottom,
+    ].map(value => Math.round(value * 1e6) / 1e6);
+}
 
 describe('Math', () => {
 
@@ -21,6 +38,89 @@ describe('Math', () => {
             const point2 = point1.slice() as Point;
 
             expect(arePointsEqual(point1, point2)).toBe(true);
+        });
+
+        describe('transformBox', () => {
+
+            test('Should return the box unchanged for a null matrix', () => {
+                const box = new Box(20, 10, 60, 40);
+
+                expect(transformBox(box, null)).toBe(box);
+            });
+
+            test('Should return an equivalent box for the identity matrix', () => {
+                const box = new Box(20, 10, 60, 40);
+
+                expect(edgesOf(transformBox(box, matrixIdentity()))).toEqual([10, 20, 40, 60]);
+            });
+
+            test('Should translate every edge', () => {
+                const box = new Box(20, 10, 60, 40);
+
+                expect(edgesOf(transformBox(box, matrixTranslate(100, 5)))).toEqual([110, 25, 140, 65]);
+            });
+
+            test('Should scale every edge about the origin', () => {
+                const box = new Box(20, 10, 60, 40);
+
+                expect(edgesOf(transformBox(box, matrixScale(2, 3)))).toEqual([20, 60, 80, 180]);
+            });
+
+            test('Should refit the box around a 90 degree rotation', () => {
+                const box = new Box(0, 0, 10, 40);
+
+                // Rotating 90deg about the origin maps (x, y) -> (-y, x), so a 40x10 box
+                // becomes a 10x40 box spanning x in [-10, 0] and y in [0, 40].
+                expect(edgesOf(transformBox(box, matrixRotate(Math.PI / 2)))).toEqual([-10, 0, 0, 40]);
+            });
+
+            test('Should return a conservative axis-aligned box for a 45 degree rotation', () => {
+                const box = new Box(-10, -10, 10, 10);
+                const result = transformBox(box, matrixRotate(Math.PI / 4));
+                const diagonal = Math.sqrt(box.width ** 2 + box.height ** 2);
+
+                // A rotated square no longer fits its original AABB; the refit box grows to the
+                // square's diagonal.
+                expect(result.width).toBeCloseTo(diagonal);
+                expect(result.height).toBeCloseTo(diagonal);
+                expect(result.width).toBeGreaterThan(box.width);
+            });
+
+        });
+
+        describe('getContainingBox', () => {
+
+            test('Should union every box in the collection', () => {
+                const boxes = [
+                    new Box(20, 10, 40, 30),
+                    new Box(5, 50, 25, 90),
+                ];
+
+                expect(edgesOf(getContainingBox(boxes, box => box))).toEqual([10, 5, 90, 40]);
+            });
+
+            test('Should return an empty box for an empty collection', () => {
+                expect(edgesOf(getContainingBox([], box => box as Box))).toEqual([0, 0, 0, 0]);
+            });
+
+        });
+
+        describe('isPointInBox', () => {
+
+            test('Should include points inside the box', () => {
+                expect(isPointInBox([20, 30], new Box(20, 10, 60, 40))).toBe(true);
+            });
+
+            test('Should include points on the boundary', () => {
+                expect(isPointInBox([10, 20], new Box(20, 10, 60, 40))).toBe(true);
+                expect(isPointInBox([40, 60], new Box(20, 10, 60, 40))).toBe(true);
+            });
+
+            test('Should exclude points outside the box', () => {
+                expect(isPointInBox([9, 30], new Box(20, 10, 60, 40))).toBe(false);
+                expect(isPointInBox([20, 61], new Box(20, 10, 60, 40))).toBe(false);
+            });
+
         });
 
     });

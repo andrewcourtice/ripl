@@ -15,10 +15,10 @@ The **Funnel Chart** displays data as progressively narrowing horizontal bars, i
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Funnel" :extras-reset="reset">
-            <RiplField label="Segment gap">
+            <RiplField label="Segment gap" option="gap">
                 <RiplInputRange v-model="extras.gap" :min="0" :max="16" :step="1" />
             </RiplField>
-            <RiplField label="Corner radius">
+            <RiplField label="Corner radius" option="borderRadius">
                 <RiplInputRange v-model="extras.borderRadius" :min="0" :max="12" :step="1" />
             </RiplField>
         </RiplChartConfig>
@@ -59,6 +59,10 @@ const config = useChartConfig({
         theme: true,
     },
     title: 'Conversion Funnel',
+    // The funnel is a single centred shape, so it reads better inset from the edges than filling
+    // them. Seeded through the config rather than passed as a literal, so the Layout control starts
+    // here and still drives the chart.
+    padding: 40,
 });
 
 function generateData() {
@@ -88,10 +92,6 @@ const { contextChanged, chart } = useRiplChart(context => {
         key: 'stage',
         value: 'value',
         label: 'stage',
-        padding: {
-            left: 40,
-            right: 40,
-        },
         ...buildOptions(),
     });
 });

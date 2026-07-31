@@ -17,13 +17,13 @@ The **Radar Chart** displays multivariate data on a radial grid, ideal for compa
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Radar" :extras-reset="reset">
-            <RiplField label="Grid levels">
+            <RiplField label="Grid levels" option="levels">
                 <RiplInputRange v-model="extras.levels" :min="3" :max="8" :step="1" />
             </RiplField>
-            <RiplField label="Max value">
-                <RiplInputNumber v-model="extras.maxValue" placeholder="auto" />
+            <RiplField label="Max value" option="max">
+                <RiplInputNumber v-model="extras.max" placeholder="auto" />
             </RiplField>
-            <RiplField label="Fill opacity">
+            <RiplField label="Fill opacity" option="fillOpacity">
                 <RiplInputRange v-model="extras.fillOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
         </RiplChartConfig>
@@ -62,7 +62,7 @@ let axisCount = 6;
 
 const { extras, reset } = useChartExtras({
     levels: 5,
-    maxValue: undefined as number | undefined,
+    max: undefined as number | undefined,
     fillOpacity: 0.25,
 });
 
@@ -73,6 +73,7 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        dataLabels: true,
     },
     title: 'Player Comparison',
     colors: seedColors(seriesMeta.map(s => s.id)),
@@ -110,9 +111,9 @@ function buildOptions() {
         ...buildCommonOptions(config),
     };
 
-    // maxValue is optional (blank = auto-computed from the data); only pass it when set.
-    if (extras.maxValue !== undefined) {
-        options.maxValue = extras.maxValue;
+    // max is optional (blank = auto-computed from the data); only pass it when set.
+    if (extras.max !== undefined) {
+        options.max = extras.max;
     }
 
     return options;
@@ -219,7 +220,7 @@ createRadarChart('#container', {
     data,
     categories: ['Speed', 'Strength', 'Defense', 'Magic', 'Luck'],
     levels: 10,
-    maxValue: 100,
+    max: 100,
     series: [
         {
             id: 'player1',
@@ -242,6 +243,6 @@ createRadarChart('#container', {
 - **`data`**: the data array (one item per axis)
 - **`categories`**: array of axis labels
 - **`series`**: array of series with `id`, `value`, `label`, optional `color` and `fillOpacity`
-- **`maxValue`**: maximum value for the scale (auto-computed if omitted)
+- **`max`**: maximum value for the scale (auto-computed if omitted)
 - **`levels`**: number of concentric grid levels (default `5`)
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend

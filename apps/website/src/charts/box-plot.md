@@ -15,9 +15,11 @@ The **Box Plot Chart** summarizes the distribution of a numeric field per catego
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Box Plot" :extras-reset="reset">
-            <RiplField label="Box color" inline>
-                <RiplColorInput v-model="extras.color" />
-            </RiplField>
+            <template #colors>
+                <RiplField label="Box color" inline option="color">
+                    <RiplColorInput v-model="extras.color" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -56,6 +58,8 @@ const config = useChartConfig({
         format: true,
         animation: true,
         theme: true,
+        axes: true,
+        crosshair: true,
     },
     title: 'Latency by Region',
 });
@@ -87,7 +91,7 @@ const { contextChanged, chart } = useRiplChart(context => {
         data,
         key: 'region',
         value: 'latency',
-        categories: REGIONS,
+        categoryOrder: REGIONS,
         axis: {
             x: { title: 'Region' },
             y: { title: 'Latency (ms)' },
@@ -128,6 +132,6 @@ accessor and summarizes the `value` accessor per group, so no pre-aggregation is
 - **`data`**: the data array
 - **`key`**: accessor for the category (field name or function)
 - **`value`**: accessor for the numeric value (field name or function)
-- **`categories`**: explicit category order (default: first-seen order)
+- **`categoryOrder`**: explicit category order (default: first-seen order)
 - **`color`**: box color (default: first palette color)
 - **`format`**: format applied to summary values in tooltips

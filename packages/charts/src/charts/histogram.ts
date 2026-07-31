@@ -51,7 +51,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
     createRect,
     easeOutCubic,
     scaleContinuous,
@@ -132,6 +131,7 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 horizontal: true,
                 vertical: false,
             },
+            crosshair: true,
         });
 
         this.init();
@@ -207,45 +207,29 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
             this.reserveTitle(layout);
 
             const area = layout.area;
-            const left = area.x;
-            const top = area.y;
-            const right = area.x + area.width;
-            const bottom = area.y + area.height;
 
-            const countScale = scaleContinuous([0, maxCount], [bottom, top], {
-                nice: true,
+            let countScale!: ReturnType<typeof scaleContinuous>;
+            let valueScale!: ReturnType<typeof scaleContinuous>;
+
+            // Resolve the plot outside-in so the bin geometry below is derived from the same bounds
+            // the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                countScale = scaleContinuous([0, maxCount], [candidate.y + candidate.height, candidate.y], {
+                    nice: true,
+                });
+
+                this.yAxis.scale = countScale;
+
+                valueScale = scaleContinuous(valueExtent, [candidate.x, candidate.x + candidate.width]);
+                this.xAxis.scale = valueScale;
             });
-
-            this.yAxis.scale = countScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
-
-            const yAxisBox = this.yAxis.getBoundingBox();
-
-            const valueScale = scaleContinuous(valueExtent, [yAxisBox.right, right]);
-            this.xAxis.scale = valueScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            const adjustedCountScale = scaleContinuous([0, maxCount], [xAxisBox.top, top], {
-                nice: true,
-            });
-            this.yAxis.scale = adjustedCountScale;
-            this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
 
             // Rescale both continuous axes to the navigator view (no-op at rest) so bins and axes pan
             // and zoom in 2D together.
             const viewedValueScale = this.applyView(valueScale, 'x');
-            const viewedCountScale = this.applyView(adjustedCountScale, 'y');
+            const viewedCountScale = this.applyView(countScale, 'y');
             this.xAxis.scale = viewedValueScale;
             this.yAxis.scale = viewedCountScale;
-
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
 
@@ -255,9 +239,11 @@ export class HistogramChart<TData = unknown> extends CartesianChart<HistogramCha
                 plot
             );
 
+            this.setupCrosshair(plot);
+
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawBins(histogram, viewedValueScale, viewedCountScale, color),
             ]);
         });

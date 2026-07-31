@@ -119,6 +119,13 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         svg.style.width = '100%';
         svg.style.height = '100%';
 
+        // A context is a drawing surface, so its `<text>` is graphics rather than document content —
+        // and unlike a canvas, an SVG's is selectable. Dragging to pan, brush or track a crosshair
+        // would otherwise sweep a text selection across the chart's own labels. Suppressing it here
+        // rather than in the interaction code covers every drag, and matches the canvas backend,
+        // which has nothing to select in the first place.
+        svg.style.userSelect = 'none';
+
         super('svg', target, svg, options);
 
         this.buffer = true;

@@ -73,10 +73,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
-} from '@ripl/core';
-
-import {
     functionIdentity,
     numberExtent,
     typeIsFunction,
@@ -112,7 +108,7 @@ export interface LineChartSeriesOptions<TData> {
     /** Marker symbol shape: `'circle'` (default), `'square'`, `'diamond'`, or `'triangle'`. Non-circle symbols are sized to the same visual area as the circle. */
     marker?: SymbolType;
     /** Which y-axis this series binds to: an index into `axis.y` or a y-axis `id`. Defaults to the primary axis. */
-    axis?: number | string;
+    yAxis?: number | string;
 }
 
 /** Options for configuring a {@link LineChart}. */
@@ -335,34 +331,20 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
                 });
             }
 
-            // Provisional value scale to measure the y-axis width.
-            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
+            // Resolve the plot outside-in: the axes are measured and the plot recomputed until both
+            // settle, so the series geometry below is derived from bounds the axes will actually draw.
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                this._yScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
+                this.yAxis.scale = this._yScale;
 
-            const yAxisBox = this.yAxis.getBoundingBox();
-
-            this._xScale = this.categoryScale(keys, yAxisBox.right, right);
-            this.xAxis.scale = this._xScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds.bottom = xAxisBox.top;
+                this._xScale = this.categoryScale(keys, candidate.x, candidate.x + candidate.width);
+                this.xAxis.scale = this._xScale;
+            });
 
             // The navigator windows the x (category) axis only; the value axis stays at the full
             // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
-
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
 
@@ -384,8 +366,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 seriesRender,
             ]);
         });
@@ -420,46 +402,41 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         } = ctx;
 
         // Independent value extent per axis, over the active series bound to it.
-        const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
+        const extents = this.groupSeriesByAxis(series).map(group => numberExtent(group
+            .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
+            .concat(0), functionIdentity));
 
-            return numberExtent(group
-                .flatMap(srs => numberExtent(this.options.data, resolveAccessor<TData, number>(srs.value)))
-                .concat(0), functionIdentity);
-        });
+        // Before the plot is resolved, so an axis nothing binds to reserves no band either.
+        this.hideUnboundAxes(series);
 
-        // Pack the axis bands against the chart edges; the plot sits between them.
-        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+        let scales: Scale[] = [];
 
-        this._xScale = this.categoryScale(keys, plotLeft, plotRight);
-        this.xAxis.scale = this._xScale;
-        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
+        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
+        const plot = this.resolveCartesianPlot({
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        }, candidate => {
+            scales = this.yAxes.map((axis, index) => {
+                const scale = createValueScale(this.yAxesOptions[index], extents[index], [candidate.y + candidate.height, candidate.y]);
 
-        const xAxisBox = this.xAxis.getBoundingBox();
+                axis.scale = scale;
 
-        // Final scales over the plot height; clamp each axis band above the x-axis labels.
-        const scales = this.yAxes.map((axis, index) => {
-            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+                return scale;
+            });
 
-            axis.scale = scale;
-            axis.bounds.bottom = xAxisBox.top;
-
-            return scale;
+            this._xScale = this.categoryScale(keys, candidate.x, candidate.x + candidate.width);
+            this.xAxis.scale = this._xScale;
         });
 
         this._xScale = this.applyViewToScale(this._xScale, 'x');
         this.xAxis.scale = this._xScale;
 
-        const plot = {
-            x: plotLeft,
-            y: top,
-            width: plotRight - plotLeft,
-            height: xAxisBox.top - top,
-        };
-
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
         // agnostic; the renderer passes the series through as its shared `LineSeriesLike`).
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 
         this.clipPlot(plot);
@@ -477,8 +454,8 @@ export class LineChart<TData = unknown> extends CartesianChart<LineChartOptions<
         this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]]);
 
         return Promise.all([
-            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : axis.hide()),
             seriesRender,
         ]);
     }

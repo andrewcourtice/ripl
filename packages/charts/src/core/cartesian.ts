@@ -22,6 +22,12 @@ import type {
 } from './layout';
 
 import {
+    AXIS_STACK_GAP,
+    ELEMENT_GAP,
+    LAYOUT_EPSILON,
+} from '../constants/layout';
+
+import {
     ANIMATION_REFERENCE,
     resolveAnimation,
 } from './animation';
@@ -151,7 +157,7 @@ const NO_ANIMATION = normalizeAnimation(false);
 /** Default size (height for a bottom strip, width for a side strip) of the overview navigator, in pixels. */
 const DEFAULT_OVERVIEW_SIZE = 48;
 /** Gap between the plot/axis and the overview strip, in pixels. */
-const OVERVIEW_GAP = 14;
+const OVERVIEW_GAP = ELEMENT_GAP;
 /** Minimum visible window width, as a fraction of the domain (bounds the maximum zoom). */
 const MIN_WINDOW = 0.02;
 /** Maximum zoom factor `k`. You can zoom in to this, and out only to the full-data identity view (`k = 1`). */
@@ -976,7 +982,10 @@ export abstract class CartesianChart<
     protected prepareAxes() {
         this._syncCartesianOptions();
 
-        const animation = this.resolveAnimation(ANIMATION_REFERENCE.axis);
+        // Axis and grid geometry move in lockstep with the marks they frame, so they share the
+        // series' update duration. Running the axis faster (as it once did) left the labels settled
+        // while the data they label was still travelling.
+        const animation = this.resolveAnimation(ANIMATION_REFERENCE.update);
 
         this.xAxis.animation = animation;
         this.yAxes.forEach(axis => {
@@ -991,6 +1000,132 @@ export abstract class CartesianChart<
     /** Reserves and renders the legend using the chart's `legend` option. */
     protected reserveLegend(layout: ChartLayout, items: LegendItem[]): void {
         super.reserveLegend(layout, items, this.options.legend);
+    }
+
+    /** Shrinks `area` by the band each visible axis currently measures, honoring axis alignment. */
+    private _shrinkByAxisBands(area: ChartArea): ChartArea {
+        const left = area.x;
+        const top = area.y;
+        const right = area.x + area.width;
+        const bottom = area.y + area.height;
+
+        const xBand = this.xAxis.measure();
+
+        // Same-side y-axes stack outward from the plot with a gap between each band. Hidden axes are
+        // excluded outright rather than measured at zero, so they leave no gap behind either.
+        const yBandFor = (alignment: ChartYAxisAlignment) => {
+            const group = this.yAxes.filter(axis => axis.visible && axis.alignment === alignment);
+
+            return group.reduce((sum, axis) => sum + axis.measure(), 0)
+                + AXIS_STACK_GAP * Math.max(0, group.length - 1);
+        };
+
+        const plotLeft = left + yBandFor('left');
+        const plotRight = right - yBandFor('right');
+        const plotTop = this.xAxis.alignment === 'top' ? top + xBand : top;
+        const plotBottom = this.xAxis.alignment === 'bottom' ? bottom - xBand : bottom;
+
+        return {
+            x: plotLeft,
+            y: plotTop,
+            width: Math.max(0, plotRight - plotLeft),
+            height: Math.max(0, plotBottom - plotTop),
+        };
+    }
+
+    /**
+     * Assigns each axis the bounds its band is carved from.
+     *
+     * The x-axis spans the plot horizontally and the full area vertically, so its band lands against
+     * the area's top or bottom edge. Each y-axis is given its own slot: the first axis on a side sits
+     * innermost, adjacent to the plot, and further same-side axes stack outward separated by
+     * {@link AXIS_STACK_GAP}. Vertically the y-axis bands are clamped to the plot, so they stop clear
+     * of the x-axis labels.
+     */
+    private _assignAxisBounds(area: ChartArea, plot: ChartArea): void {
+        const top = area.y;
+        const right = area.x + area.width;
+        const bottom = area.y + area.height;
+        const plotTop = plot.y;
+        const plotBottom = plot.y + plot.height;
+
+        this.xAxis.bounds = new Box(top, plot.x, bottom, plot.x + plot.width);
+
+        // A left axis's band runs rightward from `bounds.left`, a right axis's band leftward from
+        // `bounds.right`, so encoding the slot in that edge places the band exactly.
+        let leftCursor = plot.x;
+        let rightCursor = plot.x + plot.width;
+
+        this.yAxes.forEach(axis => {
+            // A hidden axis occupies no slot, so it must not advance the cursor past a stack gap.
+            if (!axis.visible) {
+                return;
+            }
+
+            const width = axis.measure();
+
+            // The slot is carried entirely by `bounds`, so clear any offset a previous layout left.
+            axis.offset = 0;
+
+            if (axis.alignment === 'left') {
+                axis.bounds = new Box(plotTop, leftCursor - width, plotBottom, right);
+                leftCursor -= width + AXIS_STACK_GAP;
+                return;
+            }
+
+            axis.bounds = new Box(plotTop, area.x, plotBottom, rightCursor + width);
+            rightCursor += width + AXIS_STACK_GAP;
+        });
+    }
+
+    /**
+     * Resolves the plot rectangle outside-in, so the plot's bounds already account for whatever the
+     * axes need before any series geometry is derived from them.
+     *
+     * The axis bands and the plot are mutually dependent: a band's thickness comes from its tick
+     * labels, the surviving ticks depend on the scale's range, and that range is the plot's extent
+     * minus the *other* axis's band. Measuring once therefore sizes the plot from labels that a
+     * later rescale invalidates — which is how a chart ended up drawing its first data point off
+     * the axis line whenever the longest label changed width. This iterates instead: `applyScales`
+     * is called with the current best guess at the plot, the axes are re-measured, and the plot is
+     * recomputed until it stops moving (normally two passes). On settling, the scales the series are
+     * built from and the bands the axes draw are derived from the same measurement, so the axis line
+     * always lands exactly on the plot edge.
+     *
+     * @param area - The drawable area remaining after the title, legend and navigator are reserved.
+     * @param applyScales - Assigns every axis's `scale` for a candidate plot rectangle. Called once
+     * per pass, and once more with the settled plot.
+     * @param maxPasses - Safety bound on the iteration. Defaults to 4.
+     * @returns The settled plot rectangle.
+     */
+    protected resolveCartesianPlot(
+        area: ChartArea,
+        applyScales: (plot: ChartArea) => void,
+        maxPasses: number = 4
+    ): ChartArea {
+        let plot = area;
+
+        for (let pass = 0; pass < maxPasses; pass++) {
+            applyScales(plot);
+
+            const next = this._shrinkByAxisBands(area);
+            const settled = Math.abs(next.x - plot.x) < LAYOUT_EPSILON
+                && Math.abs(next.y - plot.y) < LAYOUT_EPSILON
+                && Math.abs(next.width - plot.width) < LAYOUT_EPSILON
+                && Math.abs(next.height - plot.height) < LAYOUT_EPSILON;
+
+            plot = next;
+
+            if (settled) {
+                break;
+            }
+        }
+
+        // Re-apply so every scale's range matches the settled plot exactly.
+        applyScales(plot);
+        this._assignAxisBounds(area, plot);
+
+        return plot;
     }
 
     /** Renders the grid within the given plot area at the supplied tick positions. */
@@ -1045,10 +1180,10 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Resolves a series `axis` binding (a y-axis index or a y-axis `id`) to an index into
+     * Resolves a series `yAxis` binding (a y-axis index or a y-axis `id`) to an index into
      * {@link CartesianChart.yAxes}, clamped to the available axes. Defaults to the primary axis (0).
      *
-     * @param axis - The series' `axis` option (index, id, or undefined).
+     * @param axis - The series' `yAxis` option (index, id, or undefined).
      * @returns The resolved y-axis index.
      */
     protected resolveSeriesAxisIndex(axis?: number | string): number {
@@ -1066,77 +1201,43 @@ export abstract class CartesianChart<
     }
 
     /**
-     * Lays out every y-axis for a multi-axis render and returns the horizontal plot bounds that clear
-     * their label bands. Each axis is given a provisional scale over `extents[i]` (spanning
-     * `[bottom, top]`) so it can measure its own band, then the axes are partitioned by
-     * {@link ChartYAxis.alignment}, preserving their configured order, and packed against the two
-     * chart edges: the first axis on each side sits innermost (adjacent to the plot) and any further
-     * same-side axes stack outward with an 8px gap. Each axis's {@link ChartYAxis.offset} and
-     * {@link ChartYAxis.bounds} are set so its band lands in the right slot; the caller then computes
-     * final value scales over the plot height and sets each `bounds.bottom` below the x-axis labels.
+     * Partitions `series` by the y-axis each one binds to: one group per entry in
+     * {@link CartesianChart.yAxes}, in axis order. Charts derive an independent value extent per axis
+     * from these groups, so every axis scales to the series it actually labels.
      *
-     * @param chartLeft - The left edge of the drawable area (axes + plot).
-     * @param chartRight - The right edge of the drawable area.
-     * @param top - The top edge of the plot/axis range.
-     * @param bottom - The provisional bottom edge (before the x-axis band is measured).
-     * @param extents - The value extent for each y-axis, parallel to {@link CartesianChart.yAxes}.
-     * @returns The plot's left and right pixel bounds between the packed axis bands.
+     * @param series - The series to partition, typically the legend-active ones.
+     * @returns One group per y-axis; a group is empty when nothing binds to that axis.
      */
-    protected layoutYAxes(
-        chartLeft: number,
-        chartRight: number,
-        top: number,
-        bottom: number,
-        extents: number[][]
-    ): { plotLeft: number;
-        plotRight: number; } {
-        const GAP = 8;
+    protected groupSeriesByAxis<TSeries extends { yAxis?: number | string }>(series: TSeries[]): TSeries[][] {
+        return this.yAxes.map((_, index) => series.filter(srs => this.resolveSeriesAxisIndex(srs.yAxis) === index));
+    }
 
-        // Provisional full-width bounds (offset reset) so each axis measures its own label band width.
-        const widths = this.yAxes.map((axis, index) => {
-            axis.offset = 0;
-            axis.scale = createValueScale(this.yAxesOptions[index], extents[index], [bottom, top]);
-            axis.bounds = new Box(top, chartLeft, bottom, chartRight);
+    /**
+     * Hides every secondary y-axis that has no series bound to it for this render.
+     *
+     * An axis with nothing bound resolves to a zero-width extent, which is a single tick at the range
+     * start — an axis labelled `0` against the baseline, describing data that is not on the plot. Not
+     * drawing it at all is both honest and self-diagnosing: a mis-bound series shows up as a missing
+     * axis rather than as a misleading one. The band goes with it, so the plot reclaims the space
+     * through the usual outside-in pass.
+     *
+     * The primary axis always draws: it frames the plot and carries the grid and the annotation
+     * scales, so it stays even when every series is hidden via the legend.
+     *
+     * Call this after {@link CartesianChart.prepareAxes} and before resolving the plot. The hidden
+     * state lasts one render — `prepareAxes` re-applies the configured visibility at the top of the
+     * next one — so an axis comes back as soon as something binds to it again.
+     *
+     * @param series - The legend-active series whose bindings decide which axes have something to draw.
+     */
+    protected hideUnboundAxes(series: { yAxis?: number | string }[]): void {
+        const bound = new Set(series.map(srs => this.resolveSeriesAxisIndex(srs.yAxis)));
 
-            return axis.getBoundingBox().width;
+        this.yAxes.forEach((axis, index) => {
+            if (index > 0 && !bound.has(index)) {
+                axis.visible = false;
+            }
         });
-
-        const indices = this.yAxes.map((_, index) => index);
-        const leftIndices = indices.filter(index => this.yAxes[index].alignment === 'left');
-        const rightIndices = indices.filter(index => this.yAxes[index].alignment === 'right');
-
-        const bandTotal = (group: number[]) => group.reduce((sum, index) => sum + widths[index], 0)
-            + GAP * Math.max(0, group.length - 1);
-
-        const plotLeft = chartLeft + bandTotal(leftIndices);
-        const plotRight = chartRight - bandTotal(rightIndices);
-
-        // Left axes: first innermost (band's right edge at plotLeft), each further one stacked outward.
-        let leftCursor = 0;
-
-        leftIndices.forEach(index => {
-            const width = widths[index];
-
-            this.yAxes[index].bounds = new Box(top, plotLeft - width, bottom, plotLeft);
-            this.yAxes[index].offset = leftCursor;
-            leftCursor += width + GAP;
-        });
-
-        // Right axes mirror the left: first innermost (band's left edge at plotRight), rest stack out.
-        let rightCursor = 0;
-
-        rightIndices.forEach(index => {
-            const width = widths[index];
-
-            this.yAxes[index].bounds = new Box(top, plotRight, bottom, plotRight + width);
-            this.yAxes[index].offset = rightCursor;
-            rightCursor += width + GAP;
-        });
-
-        return {
-            plotLeft,
-            plotRight,
-        };
     }
 
     /** Sets up the crosshair to track within the given plot area. */

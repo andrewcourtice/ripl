@@ -68,7 +68,10 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
+    SPACING,
+} from '../constants/spacing';
+
+import {
     createCircle,
     createGroup,
     createLine,
@@ -84,6 +87,9 @@ import {
 /** The opacity applied to a box's fill at rest (full opacity on hover). */
 const REST_ALPHA = 0.25;
 
+/** Inset, in pixels, applied to each end of the category range so the outermost boxes clear the axes. */
+const CATEGORY_INSET = SPACING.xl;
+
 /** Options for configuring a {@link BoxPlotChart}. */
 export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOptions<TData> {
     /** The dataset summarized by the chart. */
@@ -93,7 +99,7 @@ export interface BoxPlotChartOptions<TData = unknown> extends CartesianChartOpti
     /** Accessor for the numeric value to summarize. */
     value: NumericAccessor<TData>;
     /** Explicit category order (defaults to first-seen order in the data). */
-    categories?: string[];
+    categoryOrder?: string[];
     /** Color used for every box; falls back to the first palette color when omitted. */
     color?: string;
     /** Background grid configuration (`true`/`false` or detailed grid options). */
@@ -147,6 +153,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 horizontal: true,
                 vertical: false,
             },
+            crosshair: true,
         });
 
         this.init();
@@ -353,7 +360,7 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 data,
                 key,
                 value,
-                categories,
+                categoryOrder,
             } = this.options;
 
             this.resolveSeriesColors([
@@ -369,48 +376,34 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
             const color = this.getSeriesColor('boxplot');
 
             const grouped = rollup(data, getGroup, items => boxplotStats(items.map(getValue)));
-            const keys = categories ?? [...new Set(data.map(getGroup))];
+            const keys = categoryOrder ?? [...new Set(data.map(getGroup))];
             const valueExtent = numberExtent(data, getValue);
 
             const layout = this.createLayout();
             this.reserveTitle(layout);
 
             const area = layout.area;
-            const left = area.x;
-            const top = area.y;
-            const right = area.x + area.width;
-            const bottom = area.y + area.height;
 
-            const valueScale = createValueScale(this.yAxisOptions, valueExtent, [bottom, top]);
+            let valueScale!: Scale;
+            let categoryScale!: Scale<string>;
 
-            this.yAxis.scale = valueScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
+            // Resolve the plot outside-in so the box geometry below is derived from the same bounds
+            // the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                valueScale = createValueScale(this.yAxisOptions, valueExtent, [candidate.y + candidate.height, candidate.y]);
+                this.yAxis.scale = valueScale;
 
-            const yAxisBox = this.yAxis.getBoundingBox();
-
-            const categoryScale = this.pointScale(keys, yAxisBox.right + 30, right - 30);
-            this.xAxis.scale = categoryScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            const adjustedValueScale = createValueScale(this.yAxisOptions, valueExtent, [xAxisBox.top, top]);
-            this.yAxis.scale = adjustedValueScale;
-            this.yAxis.bounds = new Box(top, left, xAxisBox.top, right);
+                // Inset the category range so the outermost boxes keep clear of the axes.
+                categoryScale = this.pointScale(keys, candidate.x + CATEGORY_INSET, candidate.x + candidate.width - CATEGORY_INSET);
+                this.xAxis.scale = categoryScale;
+            });
 
             // Rescale to the navigator view (no-op at rest): value (y) via domain rescale, category
             // (x) via a pixel-space transform, so boxes and axes track the pan/zoom together.
-            const viewedValueScale = this.applyView(adjustedValueScale, 'y');
+            const viewedValueScale = this.applyView(valueScale, 'y');
             const viewedCategoryScale = this.applyViewToScale(categoryScale, 'x');
             this.yAxis.scale = viewedValueScale;
             this.xAxis.scale = viewedCategoryScale;
-
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
 
@@ -420,14 +413,16 @@ export class BoxPlotChart<TData = unknown> extends CartesianChart<BoxPlotChartOp
                 plot
             );
 
+            this.setupCrosshair(plot);
+
             const step = keys.length > 1
                 ? viewedCategoryScale(keys[1]) - viewedCategoryScale(keys[0])
-                : right - yAxisBox.right;
+                : plot.width;
             const boxWidth = Math.min(Math.abs(step) * 0.6, 60);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 this._drawBoxes(keys, grouped, viewedCategoryScale, viewedValueScale, boxWidth, color),
             ]);
         });

@@ -45,6 +45,10 @@ import {
 } from '../components/crosshair';
 
 import {
+    SPACING,
+} from '../constants/spacing';
+
+import {
     anchoredAreaRenderer,
 } from '../core/fill';
 
@@ -510,7 +514,7 @@ export class RealtimeChart extends Chart<RealtimeChartOptions> {
                 );
 
                 const yAxisBoundingBox = this._yAxis.getBoundingBox();
-                chartLeft = yAxisBoundingBox.right + 10;
+                chartLeft = yAxisBoundingBox.right + SPACING.sm;
             }
 
             // Render grid

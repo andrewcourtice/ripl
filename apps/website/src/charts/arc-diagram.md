@@ -15,13 +15,13 @@ The **Arc Diagram** is a cartesian axis whose points are nodes, connected by sem
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Arc Diagram" :extras-reset="reset">
-            <RiplField label="Vertical" inline>
+            <RiplField label="Vertical" inline option="orientation">
                 <RiplSwitch v-model="extras.orientation" />
             </RiplField>
-            <RiplField label="Size by connections" inline>
+            <RiplField label="Size by connections" inline option="sizeByConnections">
                 <RiplSwitch v-model="extras.sizeByConnections" />
             </RiplField>
-            <RiplField label="Node radius">
+            <RiplField label="Node radius" option="nodeRadius">
                 <RiplInputRange v-model="extras.nodeRadius" :min="4" :max="16" :step="1" />
             </RiplField>
         </RiplChartConfig>

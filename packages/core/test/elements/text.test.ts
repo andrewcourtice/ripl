@@ -7,6 +7,7 @@ import {
 } from 'vitest';
 
 import {
+    createGroup,
     createText,
     elementIsText,
     factory,
@@ -194,6 +195,58 @@ describe('Text getBoundingBox', () => {
 
         expect(box.left).toBe(80);
         expect(box.right).toBe(100);
+    });
+
+    test('Should rotate the world box about the transform origin while the local box stays raw', () => {
+        const text = createText({
+            x: 100,
+            y: 100,
+            content: 'ab',
+            textAlign: 'center',
+            textBaseline: 'middle',
+            rotation: -Math.PI / 2,
+            transformOriginX: 100,
+            transformOriginY: 100,
+        });
+
+        const local = text.getBoundingBox(true);
+        const world = text.getBoundingBox();
+
+        // Unrotated: 20 wide x 12 tall, centered on the anchor.
+        expect(local.right - local.left).toBe(20);
+        expect(local.bottom - local.top).toBe(12);
+
+        // Rotated a quarter turn about the anchor, so the extents swap.
+        expect(world.right - world.left).toBeCloseTo(12);
+        expect(world.bottom - world.top).toBeCloseTo(20);
+        expect(world.left).toBeCloseTo(94);
+        expect(world.top).toBeCloseTo(90);
+    });
+
+    test('Should measure with an inherited font rather than the default', () => {
+        const fonts: (string | undefined)[] = [];
+
+        factory.set({
+            measureText: (value: string, options?: MeasureTextOptions) => {
+                fonts.push(options?.font);
+                return fakeMeasureText(value, options);
+            },
+        });
+
+        const text = createText({
+            x: 0,
+            y: 0,
+            content: 'ab',
+        });
+
+        createGroup({
+            children: [text],
+            font: '20px serif',
+        });
+
+        text.getBoundingBox();
+
+        expect(fonts).toContain('20px serif');
     });
 
 });

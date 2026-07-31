@@ -90,7 +90,7 @@ function createRadialBar(labels?: boolean) {
         ],
         key: 'team',
         value: 'progress',
-        maxValue: 100,
+        max: 100,
     });
 }
 
@@ -116,8 +116,8 @@ function createPolarScatter(labels?: boolean) {
             {
                 id: 'readings',
                 label: 'Readings',
-                angle: 'bearing',
-                radius: 'distance',
+                angleBy: 'bearing',
+                radiusBy: 'distance',
             },
         ],
     });

@@ -71,10 +71,6 @@ import type {
 } from '@ripl/core';
 
 import {
-    Box,
-} from '@ripl/core';
-
-import {
     functionIdentity,
     numberExtent,
 } from '@ripl/utilities';
@@ -111,7 +107,7 @@ export interface AreaChartSeriesOptions<TData> {
      * primary axis. When the chart is stacked, series stack only with other series bound to the
      * same axis.
      */
-    axis?: number | string;
+    yAxis?: number | string;
 }
 
 /** Options for configuring an {@link AreaChart}. */
@@ -392,33 +388,20 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 });
             }
 
-            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [bottom, top]);
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds = new Box(top, left, bottom, right);
+            // Resolve the plot outside-in so the series geometry below is derived from the same
+            // bounds the axes draw (see `resolveCartesianPlot`).
+            const plot = this.resolveCartesianPlot(area, candidate => {
+                this._yScale = createValueScale(this.yAxisOptions, dataExtent, [candidate.y + candidate.height, candidate.y]);
+                this.yAxis.scale = this._yScale;
 
-            const yAxisBox = this.yAxis.getBoundingBox();
-
-            this._xScale = this.categoryScale(keys, yAxisBox.right, right);
-            this.xAxis.scale = this._xScale;
-            this.xAxis.bounds = new Box(top, yAxisBox.right, bottom, right);
-
-            const xAxisBox = this.xAxis.getBoundingBox();
-
-            this._yScale = createValueScale(this.yAxisOptions, dataExtent, [xAxisBox.top, top]);
-            this.yAxis.scale = this._yScale;
-            this.yAxis.bounds.bottom = xAxisBox.top;
+                this._xScale = this.categoryScale(keys, candidate.x, candidate.x + candidate.width);
+                this.xAxis.scale = this._xScale;
+            });
 
             // The navigator windows the x (category) axis only; the value axis stays at the full
             // extent, so the strip scrubs horizontally without rescaling the y domain.
             this._xScale = this.applyViewToScale(this._xScale, 'x');
             this.xAxis.scale = this._xScale;
-
-            const plot = {
-                x: yAxisBox.right,
-                y: top,
-                width: right - yAxisBox.right,
-                height: xAxisBox.top - top,
-            };
 
             this.clipPlot(plot);
             this.renderGrid([], this.gridTicks(this._yScale, axisTickCount(this.yAxisOptions)), plot);
@@ -434,8 +417,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
             this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], !!stacked);
 
             return Promise.all([
-                this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-                this.yAxis.visible ? this.yAxis.render() : Promise.resolve(),
+                this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+                this.yAxis.visible ? this.yAxis.render() : this.yAxis.hide(),
                 seriesRender,
             ]);
         });
@@ -473,9 +456,7 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         const stacked = !!this.options.stacked;
 
         // Independent value extent per axis; stacked series cumulate within their axis group only.
-        const extents = this.yAxes.map((_, index) => {
-            const group = series.filter(srs => this.resolveSeriesAxisIndex(srs.axis) === index);
-
+        const extents = this.groupSeriesByAxis(series).map(group => {
             if (stacked) {
                 return cumulativeExtent(group, this.options.data, (srs, item) => this._seriesValue(srs, item));
             }
@@ -485,38 +466,37 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
                 .concat(0), functionIdentity);
         });
 
-        // Pack the axis bands against the chart edges; the plot sits between them.
-        const { plotLeft, plotRight } = this.layoutYAxes(left, right, top, bottom, extents);
+        // Before the plot is resolved, so an axis nothing binds to reserves no band either.
+        this.hideUnboundAxes(series);
 
-        this._xScale = this.categoryScale(keys, plotLeft, plotRight);
-        this.xAxis.scale = this._xScale;
-        this.xAxis.bounds = new Box(top, plotLeft, bottom, plotRight);
+        let scales: Scale[] = [];
 
-        const xAxisBox = this.xAxis.getBoundingBox();
+        // Resolve the plot outside-in; the helper packs each axis band into its slot against the
+        // chart edges and the plot settles between them (see `resolveCartesianPlot`).
+        const plot = this.resolveCartesianPlot({
+            x: left,
+            y: top,
+            width: right - left,
+            height: bottom - top,
+        }, candidate => {
+            scales = this.yAxes.map((axis, index) => {
+                const scale = createValueScale(this.yAxesOptions[index], extents[index], [candidate.y + candidate.height, candidate.y]);
 
-        // Final scales over the plot height; clamp each axis band above the x-axis labels.
-        const scales = this.yAxes.map((axis, index) => {
-            const scale = createValueScale(this.yAxesOptions[index], extents[index], [xAxisBox.top, top]);
+                axis.scale = scale;
 
-            axis.scale = scale;
-            axis.bounds.bottom = xAxisBox.top;
+                return scale;
+            });
 
-            return scale;
+            this._xScale = this.categoryScale(keys, candidate.x, candidate.x + candidate.width);
+            this.xAxis.scale = this._xScale;
         });
 
         this._xScale = this.applyViewToScale(this._xScale, 'x');
         this.xAxis.scale = this._xScale;
 
-        const plot = {
-            x: plotLeft,
-            y: top,
-            width: plotRight - plotLeft,
-            height: xAxisBox.top - top,
-        };
-
         // Map each series to its bound axis's scale (keyed by id so the resolver stays series-shape
         // agnostic; the renderer passes the series through as its shared `AreaSeriesLike`).
-        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.axis)] ?? scales[0]]));
+        const scaleBySeries = new Map(series.map(srs => [srs.id, scales[this.resolveSeriesAxisIndex(srs.yAxis)] ?? scales[0]]));
         const scaleFor = (srs: { id: string }) => scaleBySeries.get(srs.id) ?? scales[0];
 
         this.clipPlot(plot);
@@ -534,8 +514,8 @@ export class AreaChart<TData = unknown> extends CartesianChart<AreaChartOptions<
         this.renderNavigator(navBand, navBand ? this._overviewSeries() : [], [dataExtent[0], dataExtent[1]], stacked);
 
         return Promise.all([
-            this.xAxis.visible ? this.xAxis.render() : Promise.resolve(),
-            ...this.yAxes.map(axis => axis.visible ? axis.render() : Promise.resolve()),
+            this.xAxis.visible ? this.xAxis.render() : this.xAxis.hide(),
+            ...this.yAxes.map(axis => axis.visible ? axis.render() : axis.hide()),
             seriesRender,
         ]);
     }

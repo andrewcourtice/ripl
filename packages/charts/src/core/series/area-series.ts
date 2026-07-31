@@ -384,7 +384,12 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
             ...keys.slice().reverse().map(key => `b:${key}`),
         ];
 
+        // Paint travels with the points. It used to be applied only when the series was built, so a
+        // color, width or fill-opacity change did nothing until the series was recreated — which is
+        // exactly what a live control changes. All three interpolate, so they ride the same transition.
         line.data = {
+            stroke: color,
+            lineWidth: series.lineWidth ?? 2,
             points: keyed
                 ? interpolatePoints(line.points, linePoints, {
                     resolveKeys: () => correspondence(prevKeys!, newKeys),
@@ -393,6 +398,7 @@ export class AreaSeriesRenderer<TData> extends SeriesRenderer<AreaSeriesLike<TDa
         };
 
         areaFill.data = {
+            fill: setColorAlpha(color, series.fillOpacity ?? 0.3),
             points: keyed
                 ? interpolatePoints(areaFill.points, areaPoints, {
                     resolveKeys: () => correspondence(fillKeys(prevKeys!), fillKeys(newKeys)),

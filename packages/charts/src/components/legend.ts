@@ -14,8 +14,16 @@ import type {
     ChartArea,
 } from '../core/layout';
 
+import {
+    SPACING,
+} from '../constants/spacing';
+
 import type {
     ResolvedAnimation,
+} from '../core/animation';
+
+import {
+    exitElement,
 } from '../core/animation';
 
 import type {
@@ -32,6 +40,7 @@ import {
 
 import {
     arrayJoin,
+    stringUniqueId,
 } from '@ripl/utilities';
 
 /** A single legend entry with id, label, color, and active state. */
@@ -68,11 +77,11 @@ export interface LegendOptions extends ChartComponentOptions {
 
 const SWATCH_SIZE = 10;
 const SWATCH_RADIUS = 2;
-const ITEM_GAP_X = 16;
-const ROW_GAP = 8;
-const LABEL_GAP = 6;
+const ITEM_GAP_X = SPACING.md;
+const ROW_GAP = SPACING.sm;
+const LABEL_GAP = SPACING.sm;
 const DEFAULT_FONT_SIZE = 11;
-const DEFAULT_PADDING = 12;
+const DEFAULT_PADDING = SPACING.md;
 const INACTIVE_COLOR = '#cccccc';
 const INACTIVE_LABEL_COLOR = '#999999';
 
@@ -290,12 +299,25 @@ export class Legend extends ChartComponent {
             right: exits,
         } = arrayJoin(placements, swatches, (placement, swatch) => swatch.id === `legend-swatch-${placement.item.id}`);
 
-        // Exit removed items.
+        // Exit removed items, fading them out to match how entries fade in.
         exits.forEach(swatch => {
             const item = swatch.data as LegendItem;
             const label = this._group?.query(`#legend-label-${item.id}`) as Text | undefined;
-            swatch.destroy();
-            label?.destroy();
+
+            if (!animation?.enabled || animation.duration <= 0) {
+                swatch.destroy();
+                label?.destroy();
+                return;
+            }
+
+            // Retag first so a re-entering item of the same id can't collide with the fading pair.
+            swatch.id = `${swatch.id}:exit:${stringUniqueId()}`;
+            void exitElement(this.renderer, swatch, animation);
+
+            if (label) {
+                label.id = `${label.id}:exit:${stringUniqueId()}`;
+                void exitElement(this.renderer, label, animation);
+            }
         });
 
         // Enter new items.

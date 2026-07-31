@@ -17,13 +17,7 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Line" :extras-reset="reset">
-            <RiplField label="Time axis" inline>
-                <RiplSwitch v-model="extras.timeAxis" />
-            </RiplField>
-            <RiplField label="Multiple axes" inline>
-                <RiplSwitch v-model="extras.multiAxis" />
-            </RiplField>
-            <RiplField label="Line type">
+            <RiplField label="Line type" option="lineType">
                 <RiplSelect v-model="extras.lineType">
                     <option value="linear">Linear</option>
                     <option value="spline">Spline</option>
@@ -40,20 +34,29 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="stepAfter">Step After</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Line style">
+            <RiplField label="Line style" option="lineStyle">
                 <RiplSelect v-model="extras.lineStyle">
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField label="Line width">
-                <RiplInputRange v-model="extras.lineWidth" :min="1" :max="5" :step="0.5" />
+            <RiplField label="Line width" option="lineWidth">
+                <RiplInputRange
+                    v-model="extras.lineWidth"
+                    :min="1"
+                    :max="5"
+                    :step="0.5"
+                />
             </RiplField>
-            <RiplField label="Markers" inline>
+            <RiplField label="Markers" option="markers" inline>
                 <RiplSwitch v-model="extras.markers" />
             </RiplField>
-            <RiplField v-if="extras.markers" label="Marker symbol">
+            <RiplField
+                v-if="extras.markers"
+                label="Marker symbol"
+                option="marker"
+            >
                 <RiplSelect v-model="extras.markerSymbol">
                     <option value="mixed">Mixed (per series)</option>
                     <option value="circle">Circle</option>
@@ -62,9 +65,26 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="triangle">Triangle</option>
                 </RiplSelect>
             </RiplField>
-            <RiplField v-if="extras.markers" label="Marker radius">
-                <RiplInputRange v-model="extras.markerRadius" :min="1" :max="8" :step="1" />
+            <RiplField
+                v-if="extras.markers"
+                label="Marker radius"
+                option="markerRadius"
+            >
+                <RiplInputRange
+                    v-model="extras.markerRadius"
+                    :min="1"
+                    :max="8"
+                    :step="1"
+                />
             </RiplField>
+            <template #axes>
+                <RiplField label="Time axis" option="axis" inline>
+                    <RiplSwitch v-model="extras.timeAxis" />
+                </RiplField>
+                <RiplField label="Multiple axes" option="yAxis" inline>
+                    <RiplSwitch v-model="extras.multiAxis" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -141,6 +161,7 @@ const config = useChartConfig({
         grid: true,
         tooltip: true,
         crosshair: true,
+        dataLabels: true,
         format: true,
         animation: true,
         theme: true,
@@ -234,7 +255,7 @@ function getSeries() {
         markerRadius: extras.markerRadius,
         color: config.colors[s.id],
         // Bind each series to its own y-axis when multiple axes are enabled.
-        axis: extras.multiAxis ? index : undefined,
+        yAxis: extras.multiAxis ? index : undefined,
     }));
 }
 
@@ -497,7 +518,7 @@ createLineChart('#container', {
 
 ### Multiple y-axes
 
-Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `axis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
+Supply an array of `axis.y` entries to render any number of y-axes, and bind each series to one with its `yAxis` option (an array index or the axis `id`). Every axis scales independently to the extent of the series bound to it, so metrics with very different units and magnitudes stay readable on one plot. Axes with `position: 'right'` sit on the right of the plot; the rest default to the left, and axes on the same side stack outward in array order:
 
 ```ts
 createLineChart('#container', {
@@ -508,19 +529,19 @@ createLineChart('#container', {
             id: 'revenue',
             value: 'revenue',
             label: 'Revenue',
-            axis: 0,
+            yAxis: 0,
         },
         {
             id: 'margin',
             value: 'margin',
             label: 'Margin',
-            axis: 1,
+            yAxis: 1,
         },
         {
             id: 'units',
             value: 'units',
             label: 'Units',
-            axis: 2,
+            yAxis: 2,
         },
     ],
     axis: {
@@ -549,5 +570,6 @@ createLineChart('#container', {
 - **`legend`** (`boolean | ChartLegendOptions`): show/configure legend (shown by default for multiple series, at the bottom)
 - **`tooltip`** (`boolean | ChartTooltipOptions`): show/configure tooltips (default `true`)
 - **`axis`** (`boolean | ChartAxisOptions`): configure x/y axes (`x.scale: 'time'` positions date keys continuously; `y` accepts an array for multiple y-axes)
+- **`series[].yAxis`**: binds a series to a secondary y-axis by index or id (defaults to the primary axis)
 - **`overview`** (`boolean | { size }`): show the navigator scrub bar beneath the plot; enabling it also turns on category-axis (horizontal) pan/zoom on the plot
 - **`padding`**: chart padding

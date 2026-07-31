@@ -41,11 +41,18 @@ function barHeight(chart: unknown, id: string): number {
     return bar ? bar.height : 0;
 }
 
+// jsdom provides no layout, so the scene starts 0x0 and the plot resolves to zero height — leaving
+// every bar zero-high, which cannot express a share of a category total. Size the context so the
+// heights being asserted are real pixels.
+function rescaleContext(chart: unknown): void {
+    (chart as { scene: { context: { rescale(width: number, height: number): void } } }).scene.context.rescale(600, 400);
+}
+
 function createPercentChart() {
     polyfillPath2D();
     mockCanvasContext();
 
-    return createBarChart(document.createElement('div'), {
+    const chart = createBarChart(document.createElement('div'), {
         autoRender: false,
         animation: false,
         stacked: 'percent',
@@ -75,6 +82,10 @@ function createPercentChart() {
             },
         ],
     });
+
+    rescaleContext(chart);
+
+    return chart;
 }
 
 describe('100%-stacked bars', () => {

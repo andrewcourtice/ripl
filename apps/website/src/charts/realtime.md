@@ -21,30 +21,57 @@ The **Realtime Chart** smoothly visualizes data streaming in over time. It maint
     </template>
     <template #config>
         <RiplChartConfig :config="config" :series="seriesMeta" extra-title="Stream" :extras-reset="resetExtras">
-            <RiplField label="Window size">
+            <RiplField label="Window size" option="windowSize">
                 <RiplInputRange v-model="extras.windowSize" :min="20" :max="120" :step="5" />
             </RiplField>
-            <RiplField label="Transition (ms)">
+            <RiplField label="Transition (ms)" option="transitionDuration">
                 <RiplInputRange v-model="extras.transitionDuration" :min="100" :max="1000" :step="50" />
             </RiplField>
-            <RiplField label="CPU area" inline>
+            <RiplField label="CPU area" inline option="showArea">
                 <RiplSwitch v-model="extras.cpuArea" />
             </RiplField>
-            <RiplField v-if="extras.cpuArea" label="CPU fill">
+            <RiplField v-if="extras.cpuArea" label="CPU fill" option="fillOpacity">
                 <RiplInputRange v-model="extras.cpuOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
-            <RiplField label="Memory area" inline>
+            <RiplField label="Memory area" inline option="showArea">
                 <RiplSwitch v-model="extras.memoryArea" />
             </RiplField>
-            <RiplField v-if="extras.memoryArea" label="Memory fill">
+            <RiplField v-if="extras.memoryArea" label="Memory fill" option="fillOpacity">
                 <RiplInputRange v-model="extras.memoryOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
-            <RiplField label="Network area" inline>
+            <RiplField label="Network area" inline option="showArea">
                 <RiplSwitch v-model="extras.networkArea" />
             </RiplField>
-            <RiplField v-if="extras.networkArea" label="Network fill">
+            <RiplField v-if="extras.networkArea" label="Network fill" option="fillOpacity">
                 <RiplInputRange v-model="extras.networkOpacity" :min="0" :max="1" :step="0.05" />
             </RiplField>
+            <RiplField label="Line type" option="lineType">
+                <RiplSelect v-model="extras.lineType">
+                    <option value="linear">Linear</option>
+                    <option value="monotoneX">Monotone X</option>
+                    <option value="step">Step</option>
+                    <option value="stepAfter">Step After</option>
+                </RiplSelect>
+            </RiplField>
+            <RiplField label="Line width" option="lineWidth">
+                <RiplInputRange
+                    v-model="extras.lineWidth"
+                    :min="1"
+                    :max="5"
+                    :step="0.5"
+                />
+            </RiplField>
+            <template #axes>
+                <RiplField label="Show y axis" option="showYAxis" inline>
+                    <RiplSwitch v-model="extras.showYAxis" />
+                </RiplField>
+                <RiplField label="Y min" option="yMin">
+                    <RiplInputNumber v-model="extras.yMin" placeholder="auto" />
+                </RiplField>
+                <RiplField label="Y max" option="yMax">
+                    <RiplInputNumber v-model="extras.yMax" placeholder="auto" />
+                </RiplField>
+            </template>
         </RiplChartConfig>
     </template>
 </ripl-example>
@@ -64,6 +91,10 @@ import {
 import {
     createRealtimeChart,
 } from '@ripl/charts';
+
+import type {
+    PolylineRenderer,
+} from '@ripl/web';
 
 import {
     onUnmounted,
@@ -90,6 +121,11 @@ const { extras, reset: resetExtras } = useChartExtras({
     memoryOpacity: 0.15,
     networkArea: false,
     networkOpacity: 0.15,
+    lineType: 'monotoneX' as PolylineRenderer,
+    lineWidth: 2,
+    showYAxis: true,
+    yMin: undefined as number | undefined,
+    yMax: undefined as number | undefined,
 });
 
 const config = useChartConfig({
@@ -124,6 +160,8 @@ function getSeries() {
             showArea: extras.cpuArea,
             fillOpacity: extras.cpuOpacity,
             color: config.colors.cpu,
+            lineType: extras.lineType,
+            lineWidth: extras.lineWidth,
         },
         {
             id: 'memory',
@@ -131,14 +169,17 @@ function getSeries() {
             showArea: extras.memoryArea,
             fillOpacity: extras.memoryOpacity,
             color: config.colors.memory,
+            lineType: extras.lineType,
+            lineWidth: extras.lineWidth,
         },
         {
             id: 'network',
             label: 'Network MB/s',
             showArea: extras.networkArea,
             fillOpacity: extras.networkOpacity,
-            lineWidth: 1.5,
             color: config.colors.network,
+            lineType: extras.lineType,
+            lineWidth: extras.lineWidth,
         },
     ];
 }
@@ -147,6 +188,9 @@ function buildOptions() {
     const options = {
         windowSize: extras.windowSize,
         transitionDuration: extras.transitionDuration,
+        showYAxis: extras.showYAxis,
+        yMin: extras.yMin,
+        yMax: extras.yMax,
         series: getSeries(),
         ...buildCommonOptions(config),
     };
@@ -170,12 +214,13 @@ const { contextChanged, chart } = useRiplChart(context => {
 
 watch([config, extras], () => chart.value?.update(buildOptions()), { deep: true });
 
-// The crosshair and y-axis label format are only read at construction, and legend orientation is
-// fixed when the legend is created, so rebuild the chart for those. The stream loop below always
-// feeds the current chart via `chart.value`, so it keeps running after a rebuild; the sliding window
-// restarts empty and refills as data arrives.
+// The crosshair and the y-axis label format are read only in the constructor — realtime builds its
+// own axis and crosshair rather than reconciling them per render — so those two still need a rebuild.
+// Legend position does not: `Legend.setOptions` relocates the live legend, so rebuilding for it only
+// threw the sliding window away. The stream loop always feeds the current chart via `chart.value`, so
+// it keeps running across a rebuild; the window restarts empty and refills as data arrives.
 watch(
-    () => [config.crosshairVisible, config.crosshairAxis, config.valueFormat, config.legendPosition],
+    () => [config.crosshairVisible, config.crosshairAxis, config.valueFormat],
     () => example.value?.recreate()
 );
 

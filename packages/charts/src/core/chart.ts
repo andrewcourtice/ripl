@@ -22,6 +22,10 @@ import {
     getColorGenerator,
 } from '../constants/colors';
 
+import {
+    ELEMENT_GAP,
+} from '../constants/layout';
+
 import type {
     ChartAnimationOptions,
     ChartLegendInput,
@@ -33,6 +37,7 @@ import type {
 import {
     normalizeAnimation,
     normalizeLegend,
+    normalizePadding,
     normalizeTitle,
     normalizeTooltip,
 } from './options';
@@ -322,7 +327,10 @@ export class Chart<
         }
 
         const thickness = this.title.measure();
-        const region = layout.reserve(this.title.position, thickness);
+        // Separate the title band from whatever is reserved next (legend, axis, or the plot itself),
+        // so the title never sits flush against its neighbour.
+        const region = layout.reserve(this.title.position, thickness, ELEMENT_GAP);
+
         this.title.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
     }
 
@@ -372,6 +380,16 @@ export class Chart<
             return;
         }
 
+        // `padding` resolves to a per-edge box, but the legend lays its entries out symmetrically
+        // within its band, so take the largest edge as the uniform inset.
+        const legendPadding = normalizePadding(legendOpts.padding);
+        const itemPadding = legendPadding && Math.max(
+            legendPadding.top,
+            legendPadding.right,
+            legendPadding.bottom,
+            legendPadding.left
+        );
+
         if (!this.legend) {
             this.legend = new Legend({
                 scene: this.scene,
@@ -380,6 +398,7 @@ export class Chart<
                 position: legendOpts.position,
                 font: legendOpts.font,
                 fontColor: legendOpts.fontColor,
+                itemPadding,
                 highlight: legendOpts.highlight,
                 onToggle: (item, active) => this.setItemActive(item.id, active),
                 onHighlight: id => this.highlightSeries(id),
@@ -389,13 +408,14 @@ export class Chart<
                 position: legendOpts.position,
                 font: legendOpts.font,
                 fontColor: legendOpts.fontColor,
+                itemPadding,
                 highlight: legendOpts.highlight,
             });
             this.legend.update(items);
         }
 
         const thickness = this.legend.measure(layout.area);
-        const region = layout.reserve(legendOpts.position, thickness);
+        const region = layout.reserve(legendOpts.position, thickness, ELEMENT_GAP);
 
         this.legend.render(region, this.resolveAnimation(ANIMATION_REFERENCE.enter));
     }

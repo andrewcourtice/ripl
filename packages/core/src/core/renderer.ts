@@ -125,7 +125,12 @@ export interface RendererDebugOptions {
     fps?: boolean;
     /** Whether to overlay the number of elements in the scene buffer. */
     elementCount?: boolean;
-    /** Whether to draw each element's bounding box. */
+    /**
+     * Whether to draw each element's bounding box. Boxes are drawn as a post-pass over the
+     * scene buffer in world space, so a transformed element's outline follows its rendered
+     * position (a rotated element yields a conservative axis-aligned box). Only leaf elements
+     * are outlined; groups are not.
+     */
     boundingBoxes?: boolean;
 }
 
@@ -288,18 +293,30 @@ export class Renderer extends EventBus<RendererEventMap> {
         this._handle = factory.requestAnimationFrame(() => this._tick());
     }
 
-    private _renderBoundingBoxes(element: Element) {
-        // Drawn within the element's current transform context, so use the local (untransformed) box.
-        const box = element._getLocalBoundingBox();
+    /**
+     * Outlines every buffered element's bounding box. Runs as a post-pass, after `_renderBuffer`
+     * has popped every group and reset the root, so the context transform is back at identity and
+     * the boxes can be drawn in world space (which is the space `getBoundingBox` reports). Drawing
+     * them inline per element would instead land them in the parent's space, missing the element's
+     * own translate/rotate/scale entirely.
+     *
+     * A `clip: true` shape renders with `skipRestore`, so a clip it opened is still in effect here
+     * and will mask the outlines — the same pre-existing caveat applies to the fps badge.
+     */
+    private _renderBoundingBoxes() {
         const context = this._scene.context;
-        const path = context.createPath();
 
         context.layer(() => {
             context.stroke = '#FF0000';
             context.lineWidth = 1;
 
-            path.rect(box.left, box.top, box.width, box.height);
-            context.applyStroke(path);
+            this._scene.buffer.forEach(element => {
+                const box = element.getBoundingBox();
+                const path = context.createPath();
+
+                path.rect(box.left, box.top, box.width, box.height);
+                context.applyStroke(path);
+            });
         });
     }
 
@@ -360,14 +377,14 @@ export class Renderer extends EventBus<RendererEventMap> {
             }
 
             element.render(context);
-
-            if (this._debugOptions.boundingBoxes) {
-                this._renderBoundingBoxes(element);
-            }
         });
 
         // Leaves reset themselves in `Element.render` and groups at their `pop`; reset the root.
         this._scene.$reset();
+
+        if (this._debugOptions.boundingBoxes) {
+            this._renderBoundingBoxes();
+        }
     }
 
     private _renderDebugOverlay(deltaTime: number) {

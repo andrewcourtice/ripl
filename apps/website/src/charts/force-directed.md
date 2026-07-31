@@ -15,19 +15,27 @@ The **Force-Directed Network** lays out a graph of nodes and links using a physi
     </template>
     <template #config>
         <RiplChartConfig :config="config" extra-title="Force-Directed" :extras-reset="reset">
-            <RiplField label="Node radius">
+            <RiplField label="Node radius" option="nodeRadius">
                 <RiplInputRange v-model="extras.nodeRadius" :min="4" :max="16" :step="1" />
             </RiplField>
-            <RiplField label="Charge">
+            <RiplField label="Charge" option="charge">
                 <RiplInputRange v-model="extras.charge" :min="-500" :max="-60" :step="10" />
             </RiplField>
-            <RiplField label="Link distance">
+            <RiplField label="Link distance" option="linkDistance">
                 <RiplInputRange v-model="extras.linkDistance" :min="30" :max="120" :step="5" />
             </RiplField>
-            <RiplField label="Link strength">
+            <RiplField label="Link strength" option="linkStrength">
                 <RiplInputRange v-model="extras.linkStrength" :min="0" :max="1" :step="0.05" />
             </RiplField>
-            <RiplField label="Center strength">
+            <RiplField label="Iterations" option="iterations">
+                <RiplInputRange
+                    v-model="extras.iterations"
+                    :min="50"
+                    :max="600"
+                    :step="50"
+                />
+            </RiplField>
+            <RiplField label="Center strength" option="centerStrength">
                 <RiplInputRange v-model="extras.centerStrength" :min="0" :max="0.3" :step="0.01" />
             </RiplField>
         </RiplChartConfig>
@@ -60,6 +68,7 @@ const { extras, reset } = useChartExtras({
     linkDistance: 34,
     linkStrength: 0.5,
     centerStrength: 0.05,
+    iterations: 300,
 });
 
 const config = useChartConfig({
@@ -121,6 +130,7 @@ function buildOptions() {
         linkDistance: extras.linkDistance,
         linkStrength: extras.linkStrength,
         centerStrength: extras.centerStrength,
+        iterations: extras.iterations,
         ...buildCommonOptions(config),
     };
 

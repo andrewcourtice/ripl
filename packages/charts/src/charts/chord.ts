@@ -79,12 +79,12 @@ const RIBBON_STROKE_ALPHA = 0.4;
 
 /** Options for configuring a {@link ChordChart}. */
 export interface ChordChartOptions extends BaseChartOptions {
-    /** Group labels, one per row/column of the matrix, rendered as outer arcs. */
-    labels: string[];
+    /** Group names, one per row/column of the matrix, rendered as outer arcs. */
+    groups: string[];
     /** Square flow matrix where `matrix[i][j]` is the flow from group `i` to group `j`. */
     matrix: number[][];
     /** Explicit color per group; falls back to the generated palette when omitted. */
-    colors?: string[];
+    palette?: string[];
     /** Angular gap (in radians) between adjacent outer arcs. Defaults to 0.04. */
     padAngle?: number;
     /** Legend configuration (`true`/`false`, a position, or detailed legend options). */
@@ -94,7 +94,7 @@ export interface ChordChartOptions extends BaseChartOptions {
 }
 
 /** Payload emitted for chord outer-arc interaction events. */
-export interface ChordChartArcEvent {
+export interface ChordChartSegmentEvent {
     /** The x coordinate (in chart pixels) of the arc's centroid. */
     x: number;
     /** The y coordinate (in chart pixels) of the arc's centroid. */
@@ -108,7 +108,7 @@ export interface ChordChartArcEvent {
 }
 
 /** Payload emitted for chord ribbon interaction events. */
-export interface ChordChartRibbonEvent {
+export interface ChordChartLinkEvent {
     /** The x coordinate (in chart pixels) of the ribbon anchor. */
     x: number;
     /** The y coordinate (in chart pixels) of the ribbon anchor. */
@@ -126,17 +126,17 @@ export interface ChordChartRibbonEvent {
 /** Events emitted by a {@link ChordChart} that consumers can subscribe to via `chart.on(...)`. */
 export interface ChordChartEventMap extends EventMap {
     /** Emitted when an outer arc is clicked. */
-    arcclick: ChordChartArcEvent;
+    segmentclick: ChordChartSegmentEvent;
     /** Emitted when the pointer enters an outer arc. */
-    arcenter: ChordChartArcEvent;
+    segmententer: ChordChartSegmentEvent;
     /** Emitted when the pointer leaves an outer arc. */
-    arcleave: ChordChartArcEvent;
+    segmentleave: ChordChartSegmentEvent;
     /** Emitted when a ribbon is clicked. */
-    ribbonclick: ChordChartRibbonEvent;
+    linkclick: ChordChartLinkEvent;
     /** Emitted when the pointer enters a ribbon. */
-    ribbonenter: ChordChartRibbonEvent;
+    linkenter: ChordChartLinkEvent;
     /** Emitted when the pointer leaves a ribbon. */
-    ribbonleave: ChordChartRibbonEvent;
+    linkleave: ChordChartLinkEvent;
 }
 
 interface ChordArc {
@@ -297,9 +297,9 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
     public async render() {
         return super.render(async (scene, renderer) => {
             const {
-                labels,
+                groups: labels,
                 matrix,
-                colors,
+                palette: colors,
                 padAngle = 0.04,
             } = this.options;
 
@@ -526,7 +526,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): ChordChartArcEvent => ({
+            y: number; }): ChordChartSegmentEvent => ({
             x: point.x,
             y: point.y,
             id: arc.id,
@@ -548,9 +548,9 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
             highlight: { fill: arc.color },
             restore: { fill: setColorAlpha(arc.color, ARC_REST_ALPHA) },
-            onEnter: point => this.emit('arcenter', payload(point)),
-            onLeave: point => this.emit('arcleave', payload(point)),
-            onClick: point => this.emit('arcclick', payload(point)),
+            onEnter: point => this.emit('segmententer', payload(point)),
+            onLeave: point => this.emit('segmentleave', payload(point)),
+            onClick: point => this.emit('segmentclick', payload(point)),
         });
     }
 
@@ -558,7 +558,7 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
         const formatValue = resolveValueFormat(this.options.format);
 
         const payload = (point: { x: number;
-            y: number; }): ChordChartRibbonEvent => ({
+            y: number; }): ChordChartLinkEvent => ({
             x: point.x,
             y: point.y,
             id: ribbon.id,
@@ -578,9 +578,9 @@ export class ChordChart extends Chart<ChordChartOptions, ChordChartEventMap> {
             content: () => `${ribbon.sourceLabel} → ${ribbon.targetLabel}: ${formatValue(ribbon.value)}`,
             highlight: { fill: setColorAlpha(ribbon.color, RIBBON_HOVER_ALPHA) },
             restore: { fill: setColorAlpha(ribbon.color, RIBBON_REST_ALPHA) },
-            onEnter: point => this.emit('ribbonenter', payload(point)),
-            onLeave: point => this.emit('ribbonleave', payload(point)),
-            onClick: point => this.emit('ribbonclick', payload(point)),
+            onEnter: point => this.emit('linkenter', payload(point)),
+            onLeave: point => this.emit('linkleave', payload(point)),
+            onClick: point => this.emit('linkclick', payload(point)),
         });
     }
 

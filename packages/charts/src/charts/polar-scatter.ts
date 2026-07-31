@@ -93,9 +93,9 @@ export interface PolarScatterSeriesOptions<TData> {
     /** Display label for the series (shown in the legend and tooltips). */
     label: string;
     /** Angular position in degrees (0° at the top, increasing clockwise). */
-    angle: NumericAccessor<TData>;
+    angleBy: NumericAccessor<TData>;
     /** Radial position (distance from the center), on the radial value scale. */
-    radius: NumericAccessor<TData>;
+    radiusBy: NumericAccessor<TData>;
     /** Optional accessor whose value scales each marker's size between `minRadius` and `maxRadius`. */
     sizeBy?: NumericAccessor<TData> | number;
     /** Smallest marker radius in pixels when `sizeBy` is set. Defaults to 4. */
@@ -111,11 +111,11 @@ export interface PolarScatterChartOptions<TData = unknown> extends BaseChartOpti
     /** The series to render, each mapping the data to angle/radius positions. */
     series: PolarScatterSeriesOptions<TData>[];
     /** The value mapped to the outer radius (defaults to the largest radius value in the data). */
-    maxValue?: number;
+    max?: number;
     /** Number of concentric value rings. Defaults to 4. */
     levels?: number;
     /** Number of angular spokes/labels around the circle. Defaults to 8. */
-    angleTicks?: number;
+    sectors?: number;
     /** Legend configuration. Shown by default when there is more than one series. */
     legend?: ChartLegendInput;
     /** Format applied to radial values shown as text (tooltips + ring labels). */
@@ -183,7 +183,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         return [cx + radius * Math.cos(theta), cy + radius * Math.sin(theta)];
     }
 
-    private _drawGrid(cx: number, cy: number, gridRadius: number, levels: number, angleTicks: number) {
+    private _drawGrid(cx: number, cy: number, gridRadius: number, levels: number, sectors: number) {
         const formatValue = resolveValueFormat(this.options.format);
 
         if (!this._gridGroup) {
@@ -263,8 +263,8 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
         });
 
         // Angular spokes + degree labels.
-        const spokeIndices = Array.from({ length: angleTicks }).map((_, i) => i);
-        const spokeStep = 360 / angleTicks;
+        const spokeIndices = Array.from({ length: sectors }).map((_, i) => i);
+        const spokeStep = 360 / sectors;
         const spokeLines = this._gridGroup.getElementsByType<Line>('line');
 
         const {
@@ -382,7 +382,7 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
                 data,
                 series,
                 levels = 4,
-                angleTicks = 8,
+                sectors = 8,
             } = this.options;
 
             this.resolveSeriesColors(series);
@@ -414,13 +414,13 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
             const activeSeries = this.filterActive(series);
 
             // Radial value scale: 0 at the center, the data max (or override) at the outer ring.
-            const radiusValues = activeSeries.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radius)));
+            const radiusValues = activeSeries.flatMap(srs => data.map(resolveAccessor<TData, number>(srs.radiusBy)));
             const [, dataMax] = radiusValues.length ? numberExtent(radiusValues, functionIdentity) : [0, 1];
-            const maxValue = this.options.maxValue ?? (dataMax > 0 ? dataMax : 1);
+            const max = this.options.max ?? (dataMax > 0 ? dataMax : 1);
 
-            this._radialScale = scaleRadial([0, maxValue], [0, gridRadius]);
+            this._radialScale = scaleRadial([0, max], [0, gridRadius]);
 
-            this._drawGrid(cx, cy, gridRadius, levels, angleTicks);
+            this._drawGrid(cx, cy, gridRadius, levels, sectors);
 
             const enter = this.resolveAnimation(ANIMATION_REFERENCE.enter);
 
@@ -434,8 +434,8 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
 
             // Computes a marker's target state, tooltip content, and event payload (no element).
             const computeMarker = (srs: PolarScatterSeriesOptions<TData>, item: TData, index: number) => {
-                const getAngle = resolveAccessor<TData, number>(srs.angle);
-                const getRadius = resolveAccessor<TData, number>(srs.radius);
+                const getAngle = resolveAccessor<TData, number>(srs.angleBy);
+                const getRadius = resolveAccessor<TData, number>(srs.radiusBy);
                 const color = srs.color ?? this.getSeriesColor(srs.id);
                 const minRadius = srs.minRadius ?? 4;
                 const maxRadius = srs.maxRadius ?? 14;
@@ -664,8 +664,8 @@ export class PolarScatterChart<TData = unknown> extends Chart<PolarScatterChartO
  *     series: [{
  *         id: 'readings',
  *         label: 'Readings',
- *         angle: 'bearing',
- *         radius: 'distance',
+ *         angleBy: 'bearing',
+ *         radiusBy: 'distance',
  *         sizeBy: 'magnitude',
  *     }],
  * });
