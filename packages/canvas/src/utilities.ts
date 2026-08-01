@@ -10,14 +10,12 @@ import {
     parseColor,
     parseGradient,
     parsePattern,
-    resolveGradientBounds,
     samplePathPoint,
     scaleContinuous,
     serializeRGBA,
 } from '@ripl/core';
 
 import type {
-    Box,
     FillRule,
     Gradient,
     GradientBounds,
@@ -31,8 +29,6 @@ import {
 import type {
     CanvasPath,
 } from './path';
-
-export type { GradientBounds };
 
 type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
 
@@ -82,11 +78,6 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     });
 
     return canvasGradient;
-}
-
-/** Resolves gradient bounds from a bounding box or falls back to context dimensions. Alias of {@link resolveGradientBounds}, which every backend shares. */
-export function getCanvasGradientBounds(box: Box | undefined, width: number, height: number): GradientBounds {
-    return resolveGradientBounds(box, width, height);
 }
 
 // Parsing is expensive and repeats per element per frame, so memoize by string; bounded for animated gradients.

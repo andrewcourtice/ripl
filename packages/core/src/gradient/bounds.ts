@@ -27,7 +27,7 @@ export type GradientBounds = {
  * @param height - Height of the rendering surface, used as the fallback.
  * @returns The rectangle to resolve gradient coordinates against.
  */
-export function resolveGradientBounds(box: Box | undefined, width: number, height: number): GradientBounds {
+export function getGradientBounds(box: Box | undefined, width: number, height: number): GradientBounds {
     if (box && box.width > 0 && box.height > 0) {
         return {
             x: box.left,
