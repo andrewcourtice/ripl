@@ -86,7 +86,7 @@ One shape per property name, across every chart:
 | `legend` | `ChartLegendInput` — `boolean \| LegendPosition \| Partial<ChartLegendOptions>` |
 | `format` | `ValueFormatInput` — formats **values** |
 | `tickFormat` | `ValueFormatInput` — formats **tick labels** |
-| `lineStyle` | `LineStyle` — the single dash property; no raw `lineDash` |
+| `lineStyle` | `LineStyleInput` — a `LineStyle` for the whole line, or key-anchored style segments; no raw `lineDash` |
 | `stacked` | `boolean \| 'percent'` (`boolean` only where percent is meaningless — see below) |
 | `palette` | `string[]` — a positional series palette |
 | `gradient` | `string[]` — sequential color stops, low to high |

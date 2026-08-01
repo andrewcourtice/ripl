@@ -23,7 +23,7 @@ import type {
 
 import type {
     ChartDataLabelsOptions,
-    LineStyle,
+    LineStyleInput,
 } from '../options';
 
 import type {
@@ -152,8 +152,8 @@ export interface LineSeriesLike<TData> {
     lineType?: PolylineRenderer;
     /** Width in pixels of the series line. */
     lineWidth?: number;
-    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
-    lineStyle?: LineStyle;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, a custom dash array, or key-anchored spans each with their own style. */
+    lineStyle?: LineStyleInput<TData>;
     /** Show point markers along the line. Defaults to `true`. */
     markers?: boolean;
     /** Radius in pixels of each point marker. Defaults to 3. */

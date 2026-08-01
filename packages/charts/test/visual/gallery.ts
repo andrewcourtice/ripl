@@ -136,6 +136,37 @@ createLineChart(mount('line'), {
     },
 });
 
+createLineChart(mount('line-segmented'), {
+    animation: false,
+    title: 'Line — Segmented Style',
+    legend: true,
+    data: DATA,
+    key: 'month',
+    series: baseSeries.map(s => ({
+        ...s,
+        markers: true,
+        lineType: 'monotoneX' as const,
+        lineStyle: {
+            default: 'solid' as const,
+            segments: [
+                {
+                    from: 'Feb',
+                    to: 'Apr',
+                    style: 'dashed' as const,
+                },
+                {
+                    from: 'May',
+                    style: 'dotted' as const,
+                },
+            ],
+        },
+    })),
+    axis: {
+        x: true,
+        y: { title: 'Amount ($)' },
+    },
+});
+
 createAreaChart(mount('area'), {
     animation: false,
     title: 'Area — Stacked',

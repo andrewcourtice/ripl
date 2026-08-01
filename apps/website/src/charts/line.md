@@ -39,6 +39,7 @@ The **Line Chart** renders one or more data series as smooth or straight lines w
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
+                    <option value="segmented">Segmented</option>
                 </RiplSelect>
             </RiplField>
             <RiplField label="Line width" option="lineWidth">
@@ -149,7 +150,7 @@ const { extras, reset } = useChartExtras({
     timeAxis: false,
     multiAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
-    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted' | 'segmented',
     lineWidth: 2,
     markers: true,
     markerSymbol: 'mixed' as 'mixed' | 'circle' | 'square' | 'diamond' | 'triangle',
@@ -230,13 +231,34 @@ function resolveMarker(index: number) {
     return extras.markerSymbol;
 }
 
+// Bounds are read off the live dataset so the demo survives adding, removing and the time axis.
+function resolveLineStyle() {
+    if (extras.lineStyle !== 'segmented') {
+        return extras.lineStyle;
+    }
+
+    const key = activeKey();
+
+    return [
+        {
+            from: (data: any[]) => data[Math.floor(data.length * 0.25)]?.[key],
+            to: (data: any[]) => data[Math.floor(data.length * 0.5)]?.[key],
+            style: 'dashed',
+        },
+        {
+            from: (data: any[]) => data[Math.floor(data.length * 0.75)]?.[key],
+            style: 'dotted',
+        },
+    ];
+}
+
 function getSeries() {
     return seriesMeta.map((s, index) => ({
         id: s.id,
         value: s.id,
         label: s.label,
         lineType: extras.lineType,
-        lineStyle: extras.lineStyle,
+        lineStyle: resolveLineStyle(),
         lineWidth: extras.lineWidth,
         markers: extras.markers,
         marker: resolveMarker(index),
@@ -451,6 +473,75 @@ createLineChart('#container', {
     ],
 });
 ```
+
+### Segmented line styles
+
+`lineStyle` also accepts spans anchored to data keys, so one line can change style along its
+length — actuals solid and a forecast dashed, say. The line is still a single polyline, so the
+draw-on animation and point morphing are unaffected.
+
+Pass an array of segments and everything they do not cover stays solid:
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            lineStyle: [
+                {
+                    from: 'Feb',
+                    to: 'Jun',
+                    style: 'dashed',
+                },
+                {
+                    // A function receives the dataset and returns the key to anchor to.
+                    from: data => data[data.length - 3].month,
+                    style: 'dotted',
+                },
+            ],
+        },
+    ],
+});
+```
+
+Or name the fallback explicitly with the object form:
+
+```ts
+createLineChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            lineStyle: {
+                default: 'solid',
+                segments: [
+                    {
+                        from: 'Feb',
+                        to: 'Jun',
+                        style: 'dashed',
+                    },
+                ],
+            },
+        },
+    ],
+});
+```
+
+`from` defaults to the start of the line and `to` — which is inclusive — to its end. Segments apply
+in order, so a later one wins where two overlap, and a segment whose key is not in the data is
+skipped rather than throwing, leaving that span at the default style.
+
+> [!NOTE]
+> A `basis` line is a B-spline that passes through none of its points, so there is no point at which
+> to split it: a segmented `basis` line falls back to a single style. On a `cardinal` line a boundary
+> on the second point resolves to the third, because its curve skips that point.
 
 ### Time x-axis
 

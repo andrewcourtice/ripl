@@ -46,6 +46,7 @@ The **Area Chart** renders filled areas beneath lines, making it easy to compare
                     <option value="solid">Solid</option>
                     <option value="dashed">Dashed</option>
                     <option value="dotted">Dotted</option>
+                    <option value="segmented">Segmented</option>
                 </RiplSelect>
             </RiplField>
             <RiplField label="Line width" option="lineWidth">
@@ -124,7 +125,7 @@ const { extras, reset } = useChartExtras({
     stackMode: 'overlaid' as keyof typeof STACK_MODE_VALUES,
     multiAxis: false,
     lineType: 'monotoneX' as PolylineRenderer,
-    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted',
+    lineStyle: 'solid' as 'solid' | 'dashed' | 'dotted' | 'segmented',
     lineWidth: 2,
     fillOpacity: 0.3,
     markers: false,
@@ -180,6 +181,25 @@ function activeData() {
     }));
 }
 
+// Bounds are read off the live dataset so the demo survives adding and removing points.
+function resolveLineStyle() {
+    if (extras.lineStyle !== 'segmented') {
+        return extras.lineStyle;
+    }
+
+    return [
+        {
+            from: (data: any[]) => data[Math.floor(data.length * 0.25)]?.month,
+            to: (data: any[]) => data[Math.floor(data.length * 0.5)]?.month,
+            style: 'dashed',
+        },
+        {
+            from: (data: any[]) => data[Math.floor(data.length * 0.75)]?.month,
+            style: 'dotted',
+        },
+    ];
+}
+
 function getSeries() {
     const multiAxis = multiAxisActive();
 
@@ -189,7 +209,7 @@ function getSeries() {
         label: s.label,
         fillOpacity: extras.fillOpacity,
         lineType: extras.lineType,
-        lineStyle: extras.lineStyle,
+        lineStyle: resolveLineStyle(),
         lineWidth: extras.lineWidth,
         markers: extras.markers,
         color: config.colors[s.id],
@@ -432,6 +452,67 @@ createAreaChart('#container', {
     ],
 });
 ```
+
+### Segmented line styles
+
+`lineStyle` also accepts spans anchored to data keys, so one line can change style along its
+length — actuals solid and a forecast dashed, say. The line is still a single polyline, so the
+draw-on animation and point morphing are unaffected.
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            lineStyle: [
+                {
+                    from: 'Feb',
+                    to: 'Jun',
+                    style: 'dashed',
+                },
+                {
+                    // A function receives the dataset and returns the key to anchor to.
+                    from: data => data[data.length - 3].month,
+                    style: 'dotted',
+                },
+            ],
+        },
+    ],
+});
+```
+
+`from` defaults to the start of the line and `to` — which is inclusive — to its end. Use the object
+form to name the fallback style explicitly:
+
+```ts
+createAreaChart('#container', {
+    data,
+    key: 'month',
+    series: [
+        {
+            id: 'revenue',
+            value: 'revenue',
+            label: 'Revenue',
+            lineStyle: {
+                default: 'solid',
+                segments: [
+                    {
+                        from: 'Feb',
+                        to: 'Jun',
+                        style: 'dashed',
+                    },
+                ],
+            },
+        },
+    ],
+});
+```
+
+See the [line chart](/charts/line#segmented-line-styles) for the full rules.
 
 ## Options
 

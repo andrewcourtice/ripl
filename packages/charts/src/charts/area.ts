@@ -23,7 +23,7 @@ import {
 } from '../core/options';
 
 import type {
-    LineStyle,
+    LineStyleInput,
 } from '../core/options';
 
 import {
@@ -89,8 +89,8 @@ export interface AreaChartSeriesOptions<TData> {
     label: string;
     /** Renderer used to draw the line/area top edge (e.g. straight or curved); defaults to straight segments. */
     lineType?: PolylineRenderer;
-    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, or a custom dash array. */
-    lineStyle?: LineStyle;
+    /** Line dash style: `'solid'` (default), `'dashed'`, `'dotted'`, a custom dash array, or key-anchored spans each with their own style. */
+    lineStyle?: LineStyleInput<TData>;
     /** Width in pixels of the series line. */
     lineWidth?: number;
     /** Fill opacity of the area band. Defaults to 0.3. */

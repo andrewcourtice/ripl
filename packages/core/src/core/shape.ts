@@ -82,20 +82,33 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         this.cachePath = cachePath;
     }
 
+    protected get hitPaths(): ContextPath[] {
+        return this.path
+            ? [this.path]
+            : [];
+    }
+
+    protected strokePath(context: Context, path: ContextPath): void {
+        context.applyStroke(path);
+    }
+
     /** Tests whether a point intersects this shape using path-based fill and stroke hit testing. */
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        if (!this.context || !this.path) {
+        const context = this.context;
+        const paths = this.hitPaths;
+
+        if (!context || !paths.length) {
             return super.intersectsWith(x, y, options);
         }
 
         // The path is local-space, so backends that don't honor transforms need the point mapped back.
-        if (!this.context.hitTestHonorsTransform) {
+        if (!context.hitTestHonorsTransform) {
             const worldTransform = (this as unknown as Element).getWorldTransform();
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
                 // The point is in device pixels but the world transform is logical, so scale by DPR.
-                const dpr = this.context.scaleDPR(1);
+                const dpr = context.scaleDPR(1);
                 const [localX, localY] = matrixApplyToPoint(inverse, [x / dpr, y / dpr]);
 
                 x = localX * dpr;
@@ -107,10 +120,10 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             isPointer = false,
         } = options || {};
 
-        const isAnyIntersecting = () => !!(this.path && this.context) && (
-            this.context.isPointInStroke(this.path, x, y) ||
-            this.context.isPointInPath(this.path, x, y)
-        );
+        const isAnyIntersecting = () => paths.some(path => (
+            context.isPointInStroke(path, x, y) ||
+            context.isPointInPath(path, x, y)
+        ));
 
         if (!isPointer) {
             return isAnyIntersecting();
@@ -119,7 +132,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
 
         return hitTest
-            ? hitTest(this.context, this.path, x, y)
+            ? paths.some(path => hitTest(context, path, x, y))
             : isAnyIntersecting();
     }
 
@@ -152,7 +165,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             }
 
             if (this.path && this.autoStroke && this.getComputedValue('stroke')) {
-                context.applyStroke(this.path);
+                this.strokePath(context, this.path);
             }
         }, this.clip);
     }
