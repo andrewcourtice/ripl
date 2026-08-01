@@ -3,7 +3,7 @@
         <input
             type="range"
             class="ripl-input-range__slider"
-            :value="modelValue"
+            :value="display"
             :min="min"
             :max="max"
             :step="step"
@@ -14,6 +14,10 @@
 </template>
 
 <script lang="ts" setup>
+import {
+    createFrameBuffer,
+} from '@ripl/web';
+
 import {
     computed,
     onBeforeUnmount,
@@ -26,66 +30,51 @@ const props = withDefaults(defineProps<{
     min?: number;
     max?: number;
     step?: number;
-    /**
-     * Milliseconds to hold back `update:modelValue` while the slider is being dragged. The first
-     * change in a gesture is emitted immediately, so a click or a keyboard step still applies at
-     * once; subsequent changes coalesce onto the trailing edge. Set `0` to emit every step.
-     */
-    debounce?: number;
 }>(), {
     min: undefined,
     max: undefined,
     step: undefined,
-    debounce: 120,
 });
 
 const emit = defineEmits<{
     'update:modelValue': [value: number];
 }>();
 
-// Each `input` costs a `chart.update()` and a full render, so throttle the emit; the thumb and readout stay live.
+// The input is bound to this, not the model, so a slow consumer can't drag the thumb back mid-gesture.
 const dragged = ref<number>();
 const display = computed(() => dragged.value ?? props.modelValue);
 
-let timer: ReturnType<typeof setTimeout> | undefined;
+// An emit only ever drives a render, which can't outpace the display, so coalesce onto the frame.
+const scheduleFlush = createFrameBuffer();
 
-function flush(value: number): void {
-    timer = undefined;
-    emit('update:modelValue', value);
-}
+let pending = false;
+let unmounted = false;
 
 function onInput(event: Event): void {
     const value = Number((event.target as HTMLInputElement).value);
 
     dragged.value = value;
+    pending = true;
 
-    if (!props.debounce) {
-        flush(value);
-        return;
-    }
+    scheduleFlush(() => {
+        pending = false;
 
-    // Leading edge: apply immediately when idle; values inside the window replace the pending one.
-    if (!timer) {
-        flush(value);
-        timer = setTimeout(() => {
-            timer = undefined;
-        }, props.debounce);
-
-        return;
-    }
-
-    clearTimeout(timer);
-    timer = setTimeout(() => flush(value), props.debounce);
+        if (!unmounted) {
+            emit('update:modelValue', value);
+        }
+    });
 }
 
 // Once the model catches up (or is reset externally) the readout goes back to tracking it.
 watch(() => props.modelValue, value => {
-    if (!timer || value === dragged.value) {
+    if (!pending || value === dragged.value) {
         dragged.value = undefined;
     }
 });
 
-onBeforeUnmount(() => clearTimeout(timer));
+onBeforeUnmount(() => {
+    unmounted = true;
+});
 </script>
 
 <style scoped>
