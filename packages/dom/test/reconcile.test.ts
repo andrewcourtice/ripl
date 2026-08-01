@@ -732,4 +732,25 @@ describe('reconcileNode - cache eviction', () => {
         expect(cache.size).toBe(0);
     });
 
+    // Two independent audits found this: the pass that empties a group used to skip its own subtree.
+    test('Should remove every child of a group that empties', () => {
+        const parent = createDOMElement('div');
+        const cache = new Map<string, Element>();
+        const options = createTestOptions();
+
+        reconcileNode(parent, group('root', [
+            group('outer', [leaf('a'), leaf('b')]),
+        ]), cache, options);
+
+        const outer = parent.children[0];
+
+        expect(outer.children).toHaveLength(2);
+
+        reconcileNode(parent, group('root', [group('outer', [])]), cache, options);
+
+        expect(outer.children).toHaveLength(0);
+        expect(cache.has('a')).toBe(false);
+        expect(cache.has('b')).toBe(false);
+    });
+
 });

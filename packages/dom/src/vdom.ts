@@ -165,7 +165,8 @@ function reconcileChildren<TElement = unknown>(
             }
         }
 
-        if (childVNode.children.length > 0) {
+        // Also when the vnode has no children but the node does: that pass is what empties it.
+        if (childVNode.children.length > 0 || domChild.children.length > 0) {
             reconcileChildren(domChild, childVNode, domCache, options, state);
         }
     }
