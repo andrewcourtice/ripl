@@ -75,6 +75,7 @@ createText({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -95,46 +96,95 @@ const fontSize = ref(28);
 const textAlign = ref('center');
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const guide = createLine({
+        stroke: '#e9ecef',
+        lineWidth: 1,
+        lineDash: [4, 4],
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+    });
+
+    const filled = createText({
+        fill: '#3a86ff',
+        x: 0,
+        y: 0,
+        content: 'Filled Text',
+        textBaseline: 'middle',
+    });
+
+    const stroked = createText({
+        stroke: '#ff006e',
+        lineWidth: 1,
+        x: 0,
+        y: 0,
+        content: 'Stroked Text',
+        textBaseline: 'middle',
+    });
+
+    const label = createText({
+        fill: '#666',
+        x: 0,
+        y: 0,
+        content: '',
+        font: '13px sans-serif',
+        textAlign: 'center',
+        textBaseline: 'middle',
+    });
+
+    return {
+        guide,
+        filled,
+        stroked,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        guide,
+        filled,
+        stroked,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
 
+    const anchorX = textAlign.value === 'left' ? w * 0.1
+        : textAlign.value === 'right' ? w * 0.9
+            : w / 2;
+
+    const font = `bold ${fontSize.value}px sans-serif`;
+    const align = textAlign.value as CanvasTextAlign;
+
+    guide.x1 = anchorX;
+    guide.y1 = 0;
+    guide.x2 = anchorX;
+    guide.y2 = h;
+
+    filled.x = anchorX;
+    filled.y = h * 0.3;
+    filled.font = font;
+    filled.textAlign = align;
+
+    stroked.x = anchorX;
+    stroked.y = h * 0.55;
+    stroked.font = font;
+    stroked.textAlign = align;
+
+    label.x = w / 2;
+    label.y = h * 0.8;
+    label.content = `font: ${fontSize.value}px  align: ${textAlign.value}`;
+
     context.batch(() => {
-        const anchorX = textAlign.value === 'left' ? w * 0.1
-            : textAlign.value === 'right' ? w * 0.9
-                : w / 2;
-
-        createLine({
-            stroke: '#e9ecef', lineWidth: 1, lineDash: [4, 4],
-            x1: anchorX, y1: 0, x2: anchorX, y2: h,
-        }).render(context);
-
-        createText({
-            fill: '#3a86ff',
-            x: anchorX, y: h * 0.3,
-            content: 'Filled Text',
-            font: `bold ${fontSize.value}px sans-serif`,
-            textAlign: textAlign.value as CanvasTextAlign,
-            textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            stroke: '#ff006e',
-            lineWidth: 1,
-            x: anchorX, y: h * 0.55,
-            content: 'Stroked Text',
-            font: `bold ${fontSize.value}px sans-serif`,
-            textAlign: textAlign.value as CanvasTextAlign,
-            textBaseline: 'middle',
-        }).render(context);
-
-        createText({
-            fill: '#666',
-            x: w / 2, y: h * 0.8,
-            content: `font: ${fontSize.value}px  align: ${textAlign.value}`,
-            font: '13px sans-serif',
-            textAlign: 'center', textBaseline: 'middle',
-        }).render(context);
+        guide.render(context);
+        filled.render(context);
+        stroked.render(context);
+        label.render(context);
     });
 }
 
@@ -150,30 +200,36 @@ function redraw() {
     if (currentContext) renderDemo(currentContext);
 }
 
+const curvedText = createText({
+    fill: '#3a86ff',
+    x: 0,
+    y: 0,
+    content: 'Text along a curved path!',
+    font: 'bold 20px sans-serif',
+});
+
+const arcText = createText({
+    stroke: '#ff006e',
+    lineWidth: 1,
+    x: 0,
+    y: 0,
+    content: 'Stroked text on an arc',
+    font: 'bold 18px sans-serif',
+});
+
 const {
     contextChanged: pathContextChanged
 } = useRiplExample(context => {
-    const w = context.width;
-    const h = context.height;
-
     const render = () => {
-        context.batch(() => {
-            createText({
-                fill: '#3a86ff',
-                x: 0, y: 0,
-                content: 'Text along a curved path!',
-                font: 'bold 20px sans-serif',
-                pathData: `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`,
-            }).render(context);
+        const w = context.width;
+        const h = context.height;
 
-            createText({
-                stroke: '#ff006e',
-                lineWidth: 1,
-                x: 0, y: 0,
-                content: 'Stroked text on an arc',
-                font: 'bold 18px sans-serif',
-                pathData: `M ${w * 0.1},${h * 0.85} A ${w * 0.4},${w * 0.4} 0 0 1 ${w * 0.9},${h * 0.85}`,
-            }).render(context);
+        curvedText.pathData = `M ${w * 0.05},${h * 0.5} C ${w * 0.3},${h * 0.1} ${w * 0.7},${h * 0.9} ${w * 0.95},${h * 0.5}`;
+        arcText.pathData = `M ${w * 0.1},${h * 0.85} A ${w * 0.4},${w * 0.4} 0 0 1 ${w * 0.9},${h * 0.85}`;
+
+        context.batch(() => {
+            curvedText.render(context);
+            arcText.render(context);
         });
     };
 

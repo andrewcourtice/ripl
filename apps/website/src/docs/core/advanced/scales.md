@@ -54,6 +54,7 @@ sqrt(25); // 200
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -92,7 +93,91 @@ function getScale(type: string, range: number[]): Scale<number> {
     }
 }
 
+const TICK_STEP = 20;
+const TICK_COUNT = 100 / TICK_STEP + 1;
+
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const plot = createRect({
+        fill: '#f8f9fa',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const ticks = Array.from({ length: TICK_COUNT }, () => createLine({
+        stroke: '#e9ecef',
+        lineWidth: 1,
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+    }));
+
+    const tickLabels = Array.from({ length: TICK_COUNT }, () => createText({
+        fill: '#999',
+        x: 0,
+        y: 0,
+        content: '',
+        textAlign: 'center',
+        font: '11px sans-serif',
+    }));
+
+    const curve = createPolyline({
+        stroke: '#3a86ff',
+        lineWidth: 2,
+        points: [],
+        renderer: 'linear',
+    });
+
+    const marker = createCircle({
+        fill: '#ff006e',
+        cx: 0,
+        cy: 0,
+        radius: 6,
+    });
+
+    const markerLabel = createText({
+        fill: '#333',
+        x: 0,
+        y: 0,
+        content: '',
+        textAlign: 'center',
+        font: 'bold 12px sans-serif',
+    });
+
+    const caption = createText({
+        fill: '#666',
+        x: 0,
+        y: 0,
+        content: '',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        plot,
+        ticks,
+        tickLabels,
+        curve,
+        marker,
+        markerLabel,
+        caption,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        plot,
+        ticks,
+        tickLabels,
+        curve,
+        marker,
+        markerLabel,
+        caption,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const pad = 50;
@@ -102,57 +187,57 @@ function renderDemo(context: Context) {
     const scale = getScale(currentScale.value, [0, chartW]);
     const yScale = scaleContinuous([0, chartW], [chartH, 0]);
 
+    const axisScale = scaleContinuous([0, 100], [0, chartW]);
+
+    plot.x = pad;
+    plot.y = pad;
+    plot.width = chartW;
+    plot.height = chartH;
+
+    ticks.forEach((tick, index) => {
+        const x = pad + axisScale(index * TICK_STEP);
+
+        tick.x1 = x;
+        tick.y1 = pad;
+        tick.x2 = x;
+        tick.y2 = pad + chartH;
+
+        tickLabels[index].x = x;
+        tickLabels[index].y = pad + chartH + 16;
+        tickLabels[index].content = String(index * TICK_STEP);
+    });
+
+    const points: [number, number][] = [];
+    const domainMin = currentScale.value === 'logarithmic' ? 1 : 0;
+
+    for (let i = domainMin; i <= 100; i += 1) {
+        points.push([pad + axisScale(i), pad + yScale(scale(i))]);
+    }
+
+    curve.points = points;
+
+    const val = Math.max(domainMin, inputValue.value);
+    const mapped = scale(val);
+
+    marker.cx = pad + axisScale(val);
+    marker.cy = pad + yScale(mapped);
+
+    markerLabel.x = marker.cx;
+    markerLabel.y = marker.cy - 14;
+    markerLabel.content = `${val} → ${Math.round(mapped)}`;
+
+    caption.x = w / 2;
+    caption.y = h - 6;
+    caption.content = `Scale: ${currentScale.value}`;
+
     context.batch(() => {
-        createRect({
-            fill: '#f8f9fa', x: pad, y: pad, width: chartW, height: chartH,
-        }).render(context);
-
-        for (let i = 0; i <= 100; i += 20) {
-            const x = pad + scaleContinuous([0, 100], [0, chartW])(i);
-            createLine({
-                stroke: '#e9ecef',
-                lineWidth: 1,
-                x1: x,
-                y1: pad,
-                x2: x,
-                y2: pad + chartH,
-            }).render(context);
-            createText({
-                fill: '#999',
-                x,
-                y: pad + chartH + 16,
-                content: String(i),
-                textAlign: 'center',
-                font: '11px sans-serif',
-            }).render(context);
-        }
-
-        const points: [number, number][] = [];
-        const domainMin = currentScale.value === 'logarithmic' ? 1 : 0;
-        for (let i = domainMin; i <= 100; i += 1) {
-            const sx = scale(i);
-            points.push([pad + scaleContinuous([0, 100], [0, chartW])(i), pad + yScale(sx)]);
-        }
-
-        createPolyline({ stroke: '#3a86ff', lineWidth: 2, points, renderer: 'linear' }).render(context);
-
-        const val = Math.max(domainMin, inputValue.value);
-        const mapped = scale(val);
-        const px = pad + scaleContinuous([0, 100], [0, chartW])(val);
-        const py = pad + yScale(mapped);
-
-        createCircle({ fill: '#ff006e', cx: px, cy: py, radius: 6 }).render(context);
-        createText({
-            fill: '#333', x: px, y: py - 14,
-            content: `${val} → ${Math.round(mapped)}`,
-            textAlign: 'center', font: 'bold 12px sans-serif',
-        }).render(context);
-
-        createText({
-            fill: '#666', x: w / 2, y: h - 6,
-            content: `Scale: ${currentScale.value}`,
-            textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+        plot.render(context);
+        ticks.forEach(tick => tick.render(context));
+        tickLabels.forEach(tickLabel => tickLabel.render(context));
+        curve.render(context);
+        marker.render(context);
+        markerLabel.render(context);
+        caption.render(context);
     });
 }
 

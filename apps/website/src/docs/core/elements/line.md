@@ -44,6 +44,7 @@ createLine({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -65,7 +66,37 @@ const dashGap = ref(0);
 const angleDeg = ref(45);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const line = createLine({
+        stroke: '#3a86ff',
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        line,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        line,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const cx = w / 2;
@@ -74,22 +105,20 @@ function renderDemo(context: Context) {
     const angle = angleDeg.value * Math.PI / 180;
     const dash = dashGap.value > 0 ? [dashGap.value, dashGap.value] : [];
 
-    context.batch(() => {
-        createLine({
-            stroke: '#3a86ff',
-            lineWidth: lineWidthVal.value,
-            lineDash: dash,
-            x1: cx - Math.cos(angle) * len,
-            y1: cy - Math.sin(angle) * len,
-            x2: cx + Math.cos(angle) * len,
-            y2: cy + Math.sin(angle) * len,
-        }).render(context);
+    line.lineWidth = lineWidthVal.value;
+    line.lineDash = dash;
+    line.x1 = cx - Math.cos(angle) * len;
+    line.y1 = cy - Math.sin(angle) * len;
+    line.x2 = cx + Math.cos(angle) * len;
+    line.y2 = cy + Math.sin(angle) * len;
 
-        createText({
-            x: w / 2, y: h - 16,
-            content: `width: ${lineWidthVal.value}  dash: ${dashGap.value}  angle: ${angleDeg.value}°`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h - 16;
+    label.content = `width: ${lineWidthVal.value}  dash: ${dashGap.value}  angle: ${angleDeg.value}°`;
+
+    context.batch(() => {
+        line.render(context);
+        label.render(context);
     });
 }
 

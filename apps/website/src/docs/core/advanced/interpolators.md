@@ -366,6 +366,7 @@ polygon.points = interp(t); // smoothly morphs between shapes
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -400,7 +401,36 @@ import {
 const numberT = ref(0);
 let numberCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements1 = useDemoElements(() => {
+    const numberCircle = createCircle({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radius: 0,
+    });
+
+    const numberLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        numberCircle,
+        numberLabel,
+    };
+});
+
 function renderNumber(ctx: Context) {
+    const {
+        numberCircle,
+        numberLabel,
+    } = getElements1();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = numberT.value / 100;
@@ -409,13 +439,17 @@ function renderNumber(ctx: Context) {
     const interp = interpolateNumber(minR, maxR);
     const r = interp(t);
 
+    numberCircle.cx = w / 2;
+    numberCircle.cy = h / 2;
+    numberCircle.radius = r;
+
+    numberLabel.x = w / 2;
+    numberLabel.y = h - 16;
+    numberLabel.content = `t = ${t.toFixed(2)}  radius = ${Math.round(r)}`;
+
     ctx.batch(() => {
-        createCircle({ fill: '#3a86ff', cx: w / 2, cy: h / 2, radius: r }).render(ctx);
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}  radius = ${Math.round(r)}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        numberCircle.render(ctx);
+        numberLabel.render(ctx);
     });
 }
 
@@ -433,7 +467,37 @@ function numberRedraw() { if (numberCtx) renderNumber(numberCtx); }
 const colorT = ref(0);
 let colorCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements2 = useDemoElements(() => {
+    const colorRect = createRect({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 8,
+    });
+
+    const colorLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        colorRect,
+        colorLabel,
+    };
+});
+
 function renderColor(ctx: Context) {
+    const {
+        colorRect,
+        colorLabel,
+    } = getElements2();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = colorT.value / 100;
@@ -441,20 +505,19 @@ function renderColor(ctx: Context) {
     const color = interp(t);
     const pad = 20;
 
+    colorRect.fill = color;
+    colorRect.x = pad;
+    colorRect.y = pad;
+    colorRect.width = w - pad * 2;
+    colorRect.height = h - 50;
+
+    colorLabel.x = w / 2;
+    colorLabel.y = h - 16;
+    colorLabel.content = `t = ${t.toFixed(2)}  color = ${color}`;
+
     ctx.batch(() => {
-        createRect({
-            fill: color,
-            x: pad,
-            y: pad,
-            width: w - pad * 2,
-            height: h - 50,
-            borderRadius: 8,
-        }).render(ctx);
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}  color = ${color}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        colorRect.render(ctx);
+        colorLabel.render(ctx);
     });
 }
 
@@ -472,7 +535,37 @@ function colorRedraw() { if (colorCtx) renderColor(colorCtx); }
 const gradientT = ref(0);
 let gradientCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements3 = useDemoElements(() => {
+    const gradientRect = createRect({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 8,
+    });
+
+    const gradientLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        gradientRect,
+        gradientLabel,
+    };
+});
+
 function renderGradient(ctx: Context) {
+    const {
+        gradientRect,
+        gradientLabel,
+    } = getElements3();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = gradientT.value / 100;
@@ -483,20 +576,19 @@ function renderGradient(ctx: Context) {
     const grad = interp(t);
     const pad = 20;
 
+    gradientRect.fill = grad;
+    gradientRect.x = pad;
+    gradientRect.y = pad;
+    gradientRect.width = w - pad * 2;
+    gradientRect.height = h - 50;
+
+    gradientLabel.x = w / 2;
+    gradientLabel.y = h - 16;
+    gradientLabel.content = `t = ${t.toFixed(2)}`;
+
     ctx.batch(() => {
-        createRect({
-            fill: grad,
-            x: pad,
-            y: pad,
-            width: w - pad * 2,
-            height: h - 50,
-            borderRadius: 8,
-        }).render(ctx);
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        gradientRect.render(ctx);
+        gradientLabel.render(ctx);
     });
 }
 
@@ -514,7 +606,37 @@ function gradientRedraw() { if (gradientCtx) renderGradient(gradientCtx); }
 const patternT = ref(0);
 let patternCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements4 = useDemoElements(() => {
+    const patternRect = createRect({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 8,
+    });
+
+    const patternLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        patternRect,
+        patternLabel,
+    };
+});
+
 function renderPattern(ctx: Context) {
+    const {
+        patternRect,
+        patternLabel,
+    } = getElements4();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = patternT.value / 100;
@@ -525,20 +647,19 @@ function renderPattern(ctx: Context) {
     const fill = interp(t);
     const pad = 20;
 
+    patternRect.fill = fill;
+    patternRect.x = pad;
+    patternRect.y = pad;
+    patternRect.width = w - pad * 2;
+    patternRect.height = h - 50;
+
+    patternLabel.x = w / 2;
+    patternLabel.y = h - 16;
+    patternLabel.content = `t = ${t.toFixed(2)}`;
+
     ctx.batch(() => {
-        createRect({
-            fill,
-            x: pad,
-            y: pad,
-            width: w - pad * 2,
-            height: h - 50,
-            borderRadius: 8,
-        }).render(ctx);
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        patternRect.render(ctx);
+        patternLabel.render(ctx);
     });
 }
 
@@ -556,7 +677,40 @@ function patternRedraw() { if (patternCtx) renderPattern(patternCtx); }
 const rotationT = ref(0);
 let rotationCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements5 = useDemoElements(() => {
+    const rotationRect = createRect({
+        fill: '#3a86ff',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 4,
+        transformOriginX: '50%',
+        transformOriginY: '50%',
+    });
+
+    const rotationLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        rotationRect,
+        rotationLabel,
+    };
+});
+
 function renderRotation(ctx: Context) {
+    const {
+        rotationRect,
+        rotationLabel,
+    } = getElements5();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = rotationT.value / 100;
@@ -564,24 +718,19 @@ function renderRotation(ctx: Context) {
     const angle = interp(t) as number;
     const size = Math.min(w, h) * 0.3;
 
-    ctx.batch(() => {
-        createRect({
-            fill: '#3a86ff',
-            x: w / 2 - size / 2,
-            y: h / 2 - size / 2,
-            width: size,
-            height: size,
-            borderRadius: 4,
-            rotation: angle,
-            transformOriginX: '50%',
-            transformOriginY: '50%',
-        }).render(ctx);
+    rotationRect.x = w / 2 - size / 2;
+    rotationRect.y = h / 2 - size / 2;
+    rotationRect.width = size;
+    rotationRect.height = size;
+    rotationRect.rotation = angle;
 
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}  angle = ${Math.round(angle * 180 / Math.PI)}°`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+    rotationLabel.x = w / 2;
+    rotationLabel.y = h - 16;
+    rotationLabel.content = `t = ${t.toFixed(2)}  angle = ${Math.round(angle * 180 / Math.PI)}°`;
+
+    ctx.batch(() => {
+        rotationRect.render(ctx);
+        rotationLabel.render(ctx);
     });
 }
 
@@ -599,7 +748,53 @@ function rotationRedraw() { if (rotationCtx) renderRotation(rotationCtx); }
 const pathT = ref(0);
 let pathCtx: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements6 = useDemoElements(() => {
+    const pathGuide = createPolyline({
+        points: [],
+        stroke: '#e9ecef',
+        lineWidth: 2,
+        lineDash: [4, 4],
+    });
+
+    const pathRevealed = createPolyline({
+        points: [],
+        stroke: '#3a86ff',
+        lineWidth: 3,
+    });
+
+    const pathTip = createCircle({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radius: 4,
+    });
+
+    const pathLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        pathGuide,
+        pathRevealed,
+        pathTip,
+        pathLabel,
+    };
+});
+
 function renderPath(ctx: Context) {
+    const {
+        pathGuide,
+        pathRevealed,
+        pathTip,
+        pathLabel,
+    } = getElements6();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = pathT.value / 100;
@@ -608,28 +803,23 @@ function renderPath(ctx: Context) {
     const interp = interpolatePath(points);
     const revealed = interp(t);
 
+    const tip = revealed[revealed.length - 1];
+
+    pathGuide.points = points;
+    pathRevealed.points = revealed;
+
+    pathTip.cx = tip[0];
+    pathTip.cy = tip[1];
+
+    pathLabel.x = w / 2;
+    pathLabel.y = h - 16;
+    pathLabel.content = `t = ${t.toFixed(2)}  points revealed = ${revealed.length}/${points.length}`;
+
     ctx.batch(() => {
-        createPolyline({
-            points,
-            stroke: '#e9ecef',
-            lineWidth: 2,
-            lineDash: [4, 4],
-        }).render(ctx);
-
-        createPolyline({
-            points: revealed,
-            stroke: '#3a86ff',
-            lineWidth: 3,
-        }).render(ctx);
-
-        const tip = revealed[revealed.length - 1];
-        createCircle({ fill: '#3a86ff', cx: tip[0], cy: tip[1], radius: 4 }).render(ctx);
-
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}  points revealed = ${revealed.length}/${points.length}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        pathGuide.render(ctx);
+        pathRevealed.render(ctx);
+        pathTip.render(ctx);
+        pathLabel.render(ctx);
     });
 }
 
@@ -649,7 +839,66 @@ const morphFrom = ref('3');
 const morphTo = ref('8');
 let morphCtx: Context | undefined;
 
+// The morph resamples to the larger polygon, so the marker pool matches the largest selectable option.
+const MAX_MORPH_POINTS = 8;
+
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements7 = useDemoElements(() => {
+    const morphFromOutline = createPolyline({
+        points: [],
+        stroke: '#e9ecef',
+        lineWidth: 1,
+        lineDash: [4, 4],
+    });
+
+    const morphToOutline = createPolyline({
+        points: [],
+        stroke: '#e9ecef',
+        lineWidth: 1,
+        lineDash: [4, 4],
+    });
+
+    const morphShape = createPolyline({
+        points: [],
+        stroke: '#3a86ff',
+        lineWidth: 2,
+        fill: 'rgba(58, 134, 255, 0.15)',
+    });
+
+    const morphVertices = Array.from({ length: MAX_MORPH_POINTS }, () => createCircle({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radius: 3,
+    }));
+
+    const morphLabel = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        morphFromOutline,
+        morphToOutline,
+        morphShape,
+        morphVertices,
+        morphLabel,
+    };
+});
+
 function renderMorph(ctx: Context) {
+    const {
+        morphFromOutline,
+        morphToOutline,
+        morphShape,
+        morphVertices,
+        morphLabel,
+    } = getElements7();
+
     const w = ctx.width;
     const h = ctx.height;
     const t = morphT.value / 100;
@@ -662,38 +911,27 @@ function renderMorph(ctx: Context) {
     const interp = interpolatePoints(fromPts, toPts);
     const morphed = interp(t) as Point[];
 
+    const closePts = (pts: Point[]) => pts.length > 0 ? [...pts, pts[0]] : pts;
+
+    morphFromOutline.points = closePts(fromPts);
+    morphToOutline.points = closePts(toPts);
+    morphShape.points = closePts(morphed);
+
+    morphed.forEach((pt, index) => {
+        morphVertices[index].cx = pt[0];
+        morphVertices[index].cy = pt[1];
+    });
+
+    morphLabel.x = w / 2;
+    morphLabel.y = h - 16;
+    morphLabel.content = `t = ${t.toFixed(2)}  points = ${morphed.length} (${morphFrom.value}-gon → ${morphTo.value}-gon)`;
+
     ctx.batch(() => {
-        const closePts = (pts: Point[]) => pts.length > 0 ? [...pts, pts[0]] : pts;
-
-        createPolyline({
-            points: closePts(fromPts),
-            stroke: '#e9ecef',
-            lineWidth: 1,
-            lineDash: [4, 4],
-        }).render(ctx);
-        createPolyline({
-            points: closePts(toPts),
-            stroke: '#e9ecef',
-            lineWidth: 1,
-            lineDash: [4, 4],
-        }).render(ctx);
-
-        createPolyline({
-            points: closePts(morphed),
-            stroke: '#3a86ff',
-            lineWidth: 2,
-            fill: 'rgba(58, 134, 255, 0.15)',
-        }).render(ctx);
-
-        morphed.forEach(pt => {
-            createCircle({ fill: '#3a86ff', cx: pt[0], cy: pt[1], radius: 3 }).render(ctx);
-        });
-
-        createText({
-            x: w / 2, y: h - 16,
-            content: `t = ${t.toFixed(2)}  points = ${morphed.length} (${morphFrom.value}-gon → ${morphTo.value}-gon)`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(ctx);
+        morphFromOutline.render(ctx);
+        morphToOutline.render(ctx);
+        morphShape.render(ctx);
+        morphed.forEach((_, index) => morphVertices[index].render(ctx));
+        morphLabel.render(ctx);
     });
 }
 

@@ -61,6 +61,7 @@ const star = createPath({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -162,26 +163,57 @@ const colors: Record<string, string> = {
     cross: '#8338ec',
 };
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const shape = createPath({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        pathRenderer: starRenderer,
+        // The renderer is swapped from outside element state, so a cached path would go stale.
+        cachePath: false,
+    });
+
+    const label = createText({
+        fill: '#666',
+        x: 0,
+        y: 0,
+        content: '',
+        textAlign: 'center',
+        font: '13px sans-serif',
+    });
+
+    return {
+        shape,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        shape,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const s = size.value;
 
-    context.batch(() => {
-        createPath({
-            fill: colors[currentShape.value],
-            x: w / 2 - s / 2,
-            y: h / 2 - s / 2,
-            width: s,
-            height: s,
-            pathRenderer: renderers[currentShape.value],
-        }).render(context);
+    shape.fill = colors[currentShape.value];
+    shape.x = w / 2 - s / 2;
+    shape.y = h / 2 - s / 2;
+    shape.width = s;
+    shape.height = s;
+    shape.setPathRenderer(renderers[currentShape.value]);
 
-        createText({
-            fill: '#666', x: w / 2, y: h / 2 + s / 2 + 24,
-            content: `Path: ${currentShape.value} (${s}×${s})`,
-            textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + s / 2 + 24;
+    label.content = `Path: ${currentShape.value} (${s}×${s})`;
+
+    context.batch(() => {
+        shape.render(context);
+        label.render(context);
     });
 }
 

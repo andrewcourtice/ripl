@@ -48,6 +48,7 @@ createArc({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -71,31 +72,58 @@ const padAngleVal = ref(2);
 const borderRadiusVal = ref(4);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const arc = createArc({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radius: 0,
+        innerRadius: 0,
+        startAngle: 0,
+        endAngle: 0,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        arc,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        arc,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 3;
 
+    arc.cx = w / 2;
+    arc.cy = h / 2;
+    arc.radius = r;
+    arc.innerRadius = r * (innerRadiusPct.value / 100);
+    arc.endAngle = TAU * (endAnglePct.value / 100);
+    arc.padAngle = padAngleVal.value * 0.01;
+    arc.borderRadius = borderRadiusVal.value;
+
+    label.x = w / 2;
+    label.y = h / 2 + r + 24;
+    label.content = `endAngle: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  pad: ${padAngleVal.value}  radius: ${borderRadiusVal.value}`;
+
     context.batch(() => {
-        const endAngle = TAU * (endAnglePct.value / 100);
-        const innerRadius = r * (innerRadiusPct.value / 100);
-        const padAngle = padAngleVal.value * 0.01;
-
-        createArc({
-            fill: '#3a86ff',
-            cx: w / 2, cy: h / 2, radius: r,
-            innerRadius,
-            startAngle: 0,
-            endAngle,
-            padAngle,
-            borderRadius: borderRadiusVal.value,
-        }).render(context);
-
-        createText({
-            x: w / 2, y: h / 2 + r + 24,
-            content: `endAngle: ${Math.round(endAnglePct.value)}%  inner: ${innerRadiusPct.value}%  pad: ${padAngleVal.value}  radius: ${borderRadiusVal.value}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+        arc.render(context);
+        label.render(context);
     });
 }
 

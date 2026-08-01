@@ -52,6 +52,7 @@ navigator.fitBounds({ x0: 0, y0: 0, x1: 1800, y1: 1100 }, { padding: 24 });
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -100,56 +101,116 @@ const nodes = Array.from({ length: NODE_COUNT }, (_, index) => {
 
 let currentNavigator: DOMNavigator | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const backdrop = createRect({
+        fill: '#0d1117',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const worldOutline = createRect({
+        stroke: '#30363d',
+        lineWidth: 1,
+        autoFill: false,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const nodeMarkers = nodes.map(node => createCircle({
+        fill: swatch(node.index),
+        cx: 0,
+        cy: 0,
+        radius: 0,
+    }));
+
+    const brushRect = createRect({
+        fill: setColorAlpha('#3a86ff', 0.15),
+        stroke: '#3a86ff',
+        lineWidth: 1,
+        lineDash: [4, 4],
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const hint = createText({
+        fill: '#8b949e',
+        x: 12,
+        y: 0,
+        content: '',
+        font: '12px sans-serif',
+    });
+
+    return {
+        backdrop,
+        worldOutline,
+        nodeMarkers,
+        brushRect,
+        hint,
+    };
+});
+
 function renderDemo(context: Context, navigator: DOMNavigator) {
+    const {
+        backdrop,
+        worldOutline,
+        nodeMarkers,
+        brushRect,
+        hint,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const transform = navigator.transform;
 
+    const [ox, oy] = navigator.applyPoint([0, 0]);
+    const brush = navigator.brush;
+
+    backdrop.width = w;
+    backdrop.height = h;
+
+    worldOutline.x = ox;
+    worldOutline.y = oy;
+    worldOutline.width = WORLD.width * transform.k;
+    worldOutline.height = WORLD.height * transform.k;
+
+    const visible = nodes.filter((node, index) => {
+        const [cx, cy] = navigator.applyPoint([node.x, node.y]);
+        const radius = node.radius * transform.k;
+
+        nodeMarkers[index].cx = cx;
+        nodeMarkers[index].cy = cy;
+        nodeMarkers[index].radius = radius;
+
+        return cx + radius >= 0 && cx - radius <= w && cy + radius >= 0 && cy - radius <= h;
+    });
+
+    if (brush) {
+        brushRect.x = brush.x0;
+        brushRect.y = brush.y0;
+        brushRect.width = brush.x1 - brush.x0;
+        brushRect.height = brush.y1 - brush.y0;
+    }
+
+    hint.y = h - 14;
+    hint.content = `zoom ${transform.k.toFixed(2)}× · drag to pan · wheel to zoom · shift-drag to zoom to region`;
+
     context.batch(() => {
-        createRect({
-            fill: '#0d1117', x: 0, y: 0, width: w, height: h,
-        }).render(context);
-
-        const [ox, oy] = navigator.applyPoint([0, 0]);
-
-        createRect({
-            stroke: '#30363d', lineWidth: 1,
-            x: ox, y: oy,
-            width: WORLD.width * transform.k,
-            height: WORLD.height * transform.k,
-        }).render(context);
-
-        nodes.forEach(node => {
-            const [cx, cy] = navigator.applyPoint([node.x, node.y]);
-            const radius = node.radius * transform.k;
-
-            if (cx + radius < 0 || cx - radius > w || cy + radius < 0 || cy - radius > h) {
-                return;
-            }
-
-            createCircle({
-                fill: swatch(node.index),
-                cx, cy, radius,
-            }).render(context);
-        });
-
-        const brush = navigator.brush;
+        backdrop.render(context);
+        worldOutline.render(context);
+        visible.forEach(node => nodeMarkers[node.index].render(context));
 
         if (brush) {
-            createRect({
-                fill: setColorAlpha('#3a86ff', 0.15),
-                stroke: '#3a86ff', lineWidth: 1, lineDash: [4, 4],
-                x: brush.x0, y: brush.y0,
-                width: brush.x1 - brush.x0,
-                height: brush.y1 - brush.y0,
-            }).render(context);
+            brushRect.render(context);
         }
 
-        createText({
-            fill: '#8b949e', x: 12, y: h - 14,
-            content: `zoom ${transform.k.toFixed(2)}× · drag to pan · wheel to zoom · shift-drag to zoom to region`,
-            font: '12px sans-serif',
-        }).render(context);
+        hint.render(context);
     });
 }
 

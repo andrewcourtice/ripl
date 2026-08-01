@@ -41,6 +41,7 @@ createPolygon({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -74,25 +75,55 @@ const sides = ref(6);
 const radiusPct = ref(70);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const polygon = createPolygon({
+        fill: '#3a86ff',
+        stroke: '#1a56db',
+        lineWidth: 2,
+        cx: 0,
+        cy: 0,
+        radius: 0,
+        sides: 3,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        polygon,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        polygon,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 3 * (radiusPct.value / 100);
 
-    context.batch(() => {
-        createPolygon({
-            fill: '#3a86ff',
-            stroke: '#1a56db',
-            lineWidth: 2,
-            cx: w / 2, cy: h / 2,
-            radius: r, sides: sides.value,
-        }).render(context);
+    polygon.cx = w / 2;
+    polygon.cy = h / 2;
+    polygon.radius = r;
+    polygon.sides = sides.value;
 
-        createText({
-            x: w / 2, y: h / 2 + r + 24,
-            content: `${NAMES[sides.value] || sides.value + '-gon'}  (${sides.value} sides, r=${Math.round(r)})`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + r + 24;
+    label.content = `${NAMES[sides.value] || sides.value + '-gon'}  (${sides.value} sides, r=${Math.round(r)})`;
+
+    context.batch(() => {
+        polygon.render(context);
+        label.render(context);
     });
 }
 

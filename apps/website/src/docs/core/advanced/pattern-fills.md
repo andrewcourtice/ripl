@@ -179,6 +179,7 @@ Custom contexts can call `getPatternTileGeometry(pattern)` to obtain the rendere
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -221,7 +222,39 @@ const swatches = [
     },
 ];
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const tiles = swatches.map(() => createRect({
+        stroke: '#d0d0d0',
+        lineWidth: 1,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 8,
+    }));
+
+    const labels = swatches.map(swatch => createText({
+        content: swatch.label,
+        fill: '#666',
+        font: '13px sans-serif',
+        textAlign: 'center',
+        x: 0,
+        y: 0,
+    }));
+
+    return {
+        tiles,
+        labels,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        tiles,
+        labels,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const gap = w * 0.03;
@@ -230,30 +263,22 @@ function renderDemo(context: Context) {
     const left = (w - (width * swatches.length + gap * (swatches.length - 1))) / 2;
     const top = h / 2 - height / 2;
 
+    swatches.forEach((swatch, index) => {
+        const x = left + index * (width + gap);
+
+        tiles[index].fill = swatch.fill(tileSize.value);
+        tiles[index].x = x;
+        tiles[index].y = top;
+        tiles[index].width = width;
+        tiles[index].height = height;
+
+        labels[index].x = x + width / 2;
+        labels[index].y = top + height + 20;
+    });
+
     context.batch(() => {
-        swatches.forEach((swatch, index) => {
-            const x = left + index * (width + gap);
-
-            createRect({
-                fill: swatch.fill(tileSize.value),
-                stroke: '#d0d0d0',
-                lineWidth: 1,
-                x,
-                y: top,
-                width,
-                height,
-                borderRadius: 8,
-            }).render(context);
-
-            createText({
-                content: swatch.label,
-                fill: '#666',
-                font: '13px sans-serif',
-                textAlign: 'center',
-                x: x + width / 2,
-                y: top + height + 20,
-            }).render(context);
-        });
+        tiles.forEach(tile => tile.render(context));
+        labels.forEach(label => label.render(context));
     });
 }
 

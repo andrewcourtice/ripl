@@ -133,6 +133,7 @@ Clip paths work identically with both the **Canvas** and **SVG** contexts:
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -155,7 +156,74 @@ import {
 const clipRadiusPct = ref(100);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const clipCircle = createCircle({
+        clip: true,
+        cx: 0,
+        cy: 0,
+        radius: 0,
+    });
+
+    const backdrop = createRect({
+        fill: '#3a86ff',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const hatching = Array.from({ length: 20 }, () => createLine({
+        stroke: '#ffffff44',
+        lineWidth: 2,
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+    }));
+
+    const clippedGroup = createGroup({
+        children: [clipCircle, backdrop, ...hatching],
+    });
+
+    const outline = createCircle({
+        stroke: '#1a56db',
+        lineWidth: 3,
+        autoFill: false,
+        cx: 0,
+        cy: 0,
+        radius: 0,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '13px sans-serif',
+    });
+
+    return {
+        clipCircle,
+        backdrop,
+        hatching,
+        clippedGroup,
+        outline,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        clipCircle,
+        backdrop,
+        hatching,
+        clippedGroup,
+        outline,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const cx = w / 2;
@@ -163,41 +231,36 @@ function renderDemo(context: Context) {
     const maxR = Math.min(w, h) / 3;
     const r = maxR * (clipRadiusPct.value / 100);
 
+    clipCircle.cx = cx;
+    clipCircle.cy = cy;
+    clipCircle.radius = r;
+
+    backdrop.x = cx - maxR;
+    backdrop.y = cy - maxR;
+    backdrop.width = maxR * 2;
+    backdrop.height = maxR * 2;
+
+    hatching.forEach((line, index) => {
+        const offset = (index - 10) * (maxR / 5);
+
+        line.x1 = cx - maxR + offset;
+        line.y1 = cy - maxR;
+        line.x2 = cx + maxR + offset;
+        line.y2 = cy + maxR;
+    });
+
+    outline.cx = cx;
+    outline.cy = cy;
+    outline.radius = r;
+
+    label.x = cx;
+    label.y = cy + maxR + 24;
+    label.content = `Clip radius: ${Math.round(r)}px`;
+
     context.batch(() => {
-        const clippedGroup = createGroup({
-            children: [
-                createCircle({ clip: true, cx, cy, radius: r }),
-                createRect({
-                    fill: '#3a86ff',
-                    x: cx - maxR, y: cy - maxR,
-                    width: maxR * 2, height: maxR * 2,
-                }),
-                ...Array.from({ length: 20 }, (_, i) => {
-                    const offset = (i - 10) * (maxR / 5);
-                    return createLine({
-                        stroke: '#ffffff44',
-                        lineWidth: 2,
-                        x1: cx - maxR + offset, y1: cy - maxR,
-                        x2: cx + maxR + offset, y2: cy + maxR,
-                    });
-                }),
-            ],
-        });
-
         clippedGroup.render(context);
-
-        createCircle({
-            stroke: '#1a56db',
-            lineWidth: 3,
-            cx, cy, radius: r,
-            autoFill: false,
-        }).render(context);
-
-        createText({
-            x: cx, y: cy + maxR + 24,
-            content: `Clip radius: ${Math.round(r)}px`,
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
+        outline.render(context);
+        label.render(context);
     });
 }
 

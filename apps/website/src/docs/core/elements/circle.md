@@ -42,6 +42,7 @@ createCircle({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -63,26 +64,54 @@ const lineWidth = ref(3);
 const opacity = ref(100);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const circle = createCircle({
+        fill: '#3a86ff',
+        stroke: '#1a56db',
+        cx: 0,
+        cy: 0,
+        radius: 0,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        circle,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        circle,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 3 * (radius.value / 100 + 0.4);
 
-    context.batch(() => {
-        createCircle({
-            fill: '#3a86ff',
-            stroke: '#1a56db',
-            lineWidth: lineWidth.value,
-            opacity: opacity.value / 100,
-            cx: w / 2, cy: h / 2,
-            radius: r,
-        }).render(context);
+    circle.lineWidth = lineWidth.value;
+    circle.opacity = opacity.value / 100;
+    circle.cx = w / 2;
+    circle.cy = h / 2;
+    circle.radius = r;
 
-        createText({
-            x: w / 2, y: h / 2 + r + 24,
-            content: `radius: ${Math.round(r)}  stroke: ${lineWidth.value}  opacity: ${opacity.value}%`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + r + 24;
+    label.content = `radius: ${Math.round(r)}  stroke: ${lineWidth.value}  opacity: ${opacity.value}%`;
+
+    context.batch(() => {
+        circle.render(context);
+        label.render(context);
     });
 }
 

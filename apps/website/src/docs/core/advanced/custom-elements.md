@@ -273,6 +273,7 @@ await renderer.transition(star, {
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -337,25 +338,55 @@ const starPoints = ref(5);
 const innerPct = ref(40);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const star = new Star({
+        fill: '#ff006e',
+        cx: 0,
+        cy: 0,
+        outerRadius: 0,
+        innerRadius: 0,
+        points: 5,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        star,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        star,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const r = Math.min(w, h) / 4;
 
-    context.batch(() => {
-        new Star({
-            fill: '#ff006e',
-            cx: w / 2, cy: h / 2,
-            outerRadius: r,
-            innerRadius: r * (innerPct.value / 100),
-            points: starPoints.value,
-        }).render(context);
+    star.cx = w / 2;
+    star.cy = h / 2;
+    star.outerRadius = r;
+    star.innerRadius = r * (innerPct.value / 100);
+    star.points = starPoints.value;
 
-        createText({
-            x: w / 2, y: h / 2 + r + 24,
-            content: `${starPoints.value} points  inner: ${innerPct.value}%`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + r + 24;
+    label.content = `${starPoints.value} points  inner: ${innerPct.value}%`;
+
+    context.batch(() => {
+        star.render(context);
+        label.render(context);
     });
 }
 

@@ -39,6 +39,20 @@ type AdvancedExampleState = {
     renderer: Renderer;
 };
 
+/**
+ * Builds a demo's elements once, on first render.
+ *
+ * A demo that rebuilds its elements every redraw gives each one a fresh id, so every id-keyed
+ * cache misses by construction and the SVG reconciler tears down and recreates the whole tree.
+ * Building at module scope instead would run during the static build, where the browser platform
+ * bindings are not installed yet, so construction is deferred to the first call.
+ */
+export function useDemoElements<TElements>(build: () => TElements): () => TElements {
+    let elements: TElements | undefined;
+
+    return () => elements ??= build();
+}
+
 export function useRiplExample(onContextChanged?: (context: Context) => void, bindDevtools: boolean = true) {
     const context = shallowRef<Context>();
 

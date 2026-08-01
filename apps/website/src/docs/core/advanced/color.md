@@ -49,6 +49,7 @@ setColorAlpha('#3a86ff', 0.5); // 'rgba(58, 134, 255, 0.5)'
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -76,47 +77,86 @@ const pickedColor = ref('#3a86ff');
 const alpha = ref(100);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const backdrop = createRect({
+        fill: '#e9ecef',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const swatch = createRect({
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+        borderRadius: 12,
+    });
+
+    const readouts = Array.from({ length: 4 }, () => createText({
+        fill: '#333',
+        x: 0,
+        y: 0,
+        content: '',
+        font: '13px monospace',
+        textBaseline: 'middle',
+    }));
+
+    return {
+        backdrop,
+        swatch,
+        readouts,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        backdrop,
+        swatch,
+        readouts,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
 
     const color = setColorAlpha(pickedColor.value, alpha.value / 100);
     const rgba = parseColor(color);
 
+    const swatchSize = Math.min(w * 0.25, h * 0.6);
+
+    backdrop.width = w;
+    backdrop.height = h;
+
+    swatch.fill = color;
+    swatch.x = w * 0.08;
+    swatch.y = h / 2 - swatchSize / 2;
+    swatch.width = swatchSize;
+    swatch.height = swatchSize;
+
+    const lines = rgba
+        ? [
+            `RGBA: ${rgba.join(', ')}`,
+            `HEX: ${serializeHEX(...rgba)}`,
+            `RGB: ${serializeRGBA(...rgba)}`,
+            `HSL: ${serializeHSL(...rgba)}`,
+        ]
+        : [];
+
+    const startX = w * 0.08 + swatchSize + 24;
+    const startY = h / 2 - (readouts.length - 1) * 12;
+
+    readouts.forEach((readout, index) => {
+        readout.x = startX;
+        readout.y = startY + index * 24;
+        readout.content = lines[index] ?? '';
+    });
+
     context.batch(() => {
-        const swatchSize = Math.min(w * 0.25, h * 0.6);
-
-        createRect({
-            fill: '#e9ecef',
-            x: 0, y: 0, width: w, height: h,
-        }).render(context);
-
-        createRect({
-            fill: color,
-            x: w * 0.08, y: h / 2 - swatchSize / 2,
-            width: swatchSize, height: swatchSize,
-            borderRadius: 12,
-        }).render(context);
-
-        if (rgba) {
-            const lines = [
-                `RGBA: ${rgba.join(', ')}`,
-                `HEX: ${serializeHEX(...rgba)}`,
-                `RGB: ${serializeRGBA(...rgba)}`,
-                `HSL: ${serializeHSL(...rgba)}`,
-            ];
-
-            const startX = w * 0.08 + swatchSize + 24;
-            const startY = h / 2 - (lines.length - 1) * 12;
-
-            lines.forEach((line, i) => {
-                createText({
-                    fill: '#333', x: startX, y: startY + i * 24,
-                    content: line, font: '13px monospace',
-                    textBaseline: 'middle',
-                }).render(context);
-            });
-        }
+        backdrop.render(context);
+        swatch.render(context);
+        readouts.forEach(readout => readout.render(context));
     });
 }
 
