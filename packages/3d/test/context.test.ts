@@ -164,3 +164,49 @@ describe('Context3D', () => {
     });
 
 });
+
+describe('Context3D surface sizing', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    function sizeHost(width: number, height: number) {
+        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+            left: 0,
+            top: 0,
+            right: width,
+            bottom: height,
+            width,
+            height,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        }) as DOMRect);
+    }
+
+    // A fresh <canvas> backing store is exactly 300x150, which the old backing-store check read as
+    // "already the right size", so the surface never took its logical dimensions or projection.
+    test('Should size a context whose host is exactly the default canvas size', () => {
+        sizeHost(300, 150);
+
+        const ctx = createContext(document.createElement('div'));
+
+        expect(ctx.width).toBe(300);
+        expect(ctx.height).toBe(150);
+    });
+
+    test('Should size a context of any other dimensions', () => {
+        sizeHost(640, 480);
+
+        const ctx = createContext(document.createElement('div'));
+
+        expect(ctx.width).toBe(640);
+        expect(ctx.height).toBe(480);
+    });
+
+});
