@@ -10,12 +10,13 @@ import {
 
 import type {
     Gradient,
+    GradientBounds,
     GradientColorStop,
     Pattern,
 } from '@ripl/core';
 
 type GradientElementFactory = (gradient: Gradient) => SVGElement;
-type GradientElementUpdater = (element: SVGElement, gradient: Gradient) => void;
+type GradientElementUpdater = (element: SVGElement, gradient: Gradient, bounds: GradientBounds) => void;
 
 /** Cache entry for a gradient definition living in `<defs>`. */
 /** A cached `<pattern>` definition: its referenced id and the live defs element. */
@@ -72,28 +73,33 @@ function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) 
     });
 }
 
-function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient): void {
+function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient, bounds: GradientBounds): void {
     const angleRad = degreesToRadians((gradient as { angle: number }).angle - 90);
-    const x1 = 0.5 - Math.cos(angleRad) * 0.5;
-    const y1 = 0.5 - Math.sin(angleRad) * 0.5;
-    const x2 = 0.5 + Math.cos(angleRad) * 0.5;
-    const y2 = 0.5 + Math.sin(angleRad) * 0.5;
+    const cos = Math.cos(angleRad) * 0.5;
+    const sin = Math.sin(angleRad) * 0.5;
 
-    element.setAttribute('x1', x1.toFixed(4));
-    element.setAttribute('y1', y1.toFixed(4));
-    element.setAttribute('x2', x2.toFixed(4));
-    element.setAttribute('y2', y2.toFixed(4));
+    element.setAttribute('x1', (bounds.x + (0.5 - cos) * bounds.width).toFixed(4));
+    element.setAttribute('y1', (bounds.y + (0.5 - sin) * bounds.height).toFixed(4));
+    element.setAttribute('x2', (bounds.x + (0.5 + cos) * bounds.width).toFixed(4));
+    element.setAttribute('y2', (bounds.y + (0.5 + sin) * bounds.height).toFixed(4));
 }
 
-function applyRadialGradientAttributes(element: SVGElement, gradient: Gradient): void {
-    const cx = (gradient as { position: [number, number] }).position[0] / 100;
-    const cy = (gradient as { position: [number, number] }).position[1] / 100;
+function applyRadialGradientAttributes(element: SVGElement, gradient: Gradient, bounds: GradientBounds): void {
+    const position = (gradient as { position: [number, number] }).position;
+    const cx = bounds.x + (position[0] / 100) * bounds.width;
+    const cy = bounds.y + (position[1] / 100) * bounds.height;
+    const radius = bounds.width / 2;
 
     element.setAttribute('cx', cx.toFixed(4));
     element.setAttribute('cy', cy.toFixed(4));
-    element.setAttribute('r', '0.5');
+    element.setAttribute('r', radius.toFixed(4));
     element.setAttribute('fx', cx.toFixed(4));
     element.setAttribute('fy', cy.toFixed(4));
+
+    // A user-space radial gradient is a circle; scaling about the centre restores the ellipse the bounding box gave it.
+    const scaleY = bounds.height / bounds.width;
+
+    element.setAttribute('gradientTransform', `translate(${cx.toFixed(4)},${cy.toFixed(4)}) scale(1,${scaleY.toFixed(4)}) translate(${(-cx).toFixed(4)},${(-cy).toFixed(4)})`);
 }
 
 const GRADIENT_ELEMENT_FACTORIES: Record<string, GradientElementFactory> = {
@@ -111,8 +117,16 @@ export function isSupportedSVGGradient(gradient: Gradient): boolean {
     return !!GRADIENT_ELEMENT_FACTORIES[gradient.type];
 }
 
-/** Creates a gradient element for `<defs>` from a parsed gradient, or `undefined` when the gradient type has no SVG primitive. */
-export function createSVGGradientElement(gradient: Gradient, gradientId: string): SVGElement | undefined {
+/**
+ * Creates a gradient element for `<defs>` from a parsed gradient, or `undefined` when the gradient
+ * type has no SVG primitive.
+ *
+ * @param gradient - The parsed gradient to render.
+ * @param gradientId - The id the gradient is referenced by.
+ * @param bounds - The rectangle the gradient's coordinates resolve against.
+ * @returns The `<linearGradient>` or `<radialGradient>` element, or `undefined` for an unsupported type.
+ */
+export function createSVGGradientElement(gradient: Gradient, gradientId: string, bounds: GradientBounds): SVGElement | undefined {
     const factory = GRADIENT_ELEMENT_FACTORIES[gradient.type];
 
     if (!factory) {
@@ -122,21 +136,32 @@ export function createSVGGradientElement(gradient: Gradient, gradientId: string)
     const element = factory(gradient);
 
     element.setAttribute('id', gradientId);
-    element.setAttribute('gradientUnits', 'objectBoundingBox');
 
     if (gradient.repeating) {
         element.setAttribute('spreadMethod', 'repeat');
     }
 
-    GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient);
-    applyGradientStops(element, gradient.stops);
+    updateSVGGradientElement(element, gradient, bounds);
 
     return element;
 }
 
-/** Updates an existing gradient `<defs>` element in place from a parsed gradient. */
-export function updateSVGGradientElement(element: SVGElement, gradient: Gradient): void {
-    GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient);
+/**
+ * Updates an existing gradient `<defs>` element in place from a parsed gradient.
+ *
+ * Coordinates are written in user space against the element's own bounding box rather than SVG's
+ * per-node `objectBoundingBox`, so an element that paints as several paths ramps once across all of
+ * them and matches what the canvas backend draws. They are rewritten every render because they move
+ * with the element.
+ *
+ * @param element - The live gradient element in `<defs>`.
+ * @param gradient - The parsed gradient to render.
+ * @param bounds - The rectangle the gradient's coordinates resolve against.
+ */
+export function updateSVGGradientElement(element: SVGElement, gradient: Gradient, bounds: GradientBounds): void {
+    element.setAttribute('gradientUnits', 'userSpaceOnUse');
+
+    GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient, bounds);
     applyGradientStops(element, gradient.stops);
 }
 

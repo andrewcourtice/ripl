@@ -52,6 +52,7 @@ import type {
 
 import {
     createFrameBuffer,
+    getGradientBounds,
     isGradientString,
     isPatternString,
     isTransparentColor,
@@ -216,15 +217,17 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         this._usedDefs.add(`gradient:${cacheKey}`);
 
+        // The element's own box, not the path node's, so a multi-path element ramps once across all of them.
+        const bounds = getGradientBounds(this.currentRenderElement?.getBoundingBox?.(true), this.width, this.height);
         const cached = this._gradientCache.get(cacheKey);
 
         if (cached) {
-            updateSVGGradientElement(cached.element, gradient);
+            updateSVGGradientElement(cached.element, gradient, bounds);
             return `url(#${cached.gradientId})`;
         }
 
         const gradientId = `gradient-${stringUniqueId()}`;
-        const gradientEl = createSVGGradientElement(gradient, gradientId);
+        const gradientEl = createSVGGradientElement(gradient, gradientId, bounds);
 
         if (!gradientEl) {
             return value;
@@ -371,6 +374,12 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         reconcileNode(this.element, this._vtree, this._domCache, this._reconcilerOptions);
     }
 
+    // Sweeping after the reconcile, never before: a def removed while a live node still references it paints as a dangling `url(#…)`.
+    private _commit() {
+        this._render();
+        this._sweepDefs();
+    }
+
     /** Signals the start of a render pass; resets the virtual DOM tree, group-nesting pointer, and `<defs>` usage tracking at the outermost depth. */
     public markRenderStart(): void {
         if (this.renderDepth === 0) {
@@ -387,7 +396,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         super.markRenderStart();
     }
 
-    /** Signals the end of a render pass, sweeping `<defs>` entries unused during the pass and reconciling the virtual DOM tree to the SVG surface at the outermost depth. */
+    /** Signals the end of a render pass, reconciling the virtual DOM tree to the SVG surface and then sweeping the `<defs>` entries the pass left unused, at the outermost depth. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
@@ -395,19 +404,17 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return;
         }
 
-        this._sweepDefs();
-
         if (this.buffer) {
-            this._requestFrame(() => this._render());
+            this._requestFrame(() => this._commit());
         } else {
-            this._render();
+            this._commit();
         }
     }
 
     /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
     public export(): ContextExport {
-        // Buffered rendering defers to rAF, so reconcile synchronously for markup to reflect the latest scene.
-        this._render();
+        // Buffered rendering defers to rAF, so commit synchronously for markup to reflect the latest scene.
+        this._commit();
 
         const markup = new XMLSerializer().serializeToString(this.element);
         const width = this.width;

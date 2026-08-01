@@ -11,12 +11,7 @@ import {
     mockCanvasContext,
 } from '@ripl/test-utils';
 
-import type {
-    Box,
-} from '@ripl/core';
-
 import {
-    getCanvasGradientBounds,
     rescaleCanvas,
     setCanvasFill,
     setCanvasStroke,
@@ -35,45 +30,6 @@ const LINEAR = 'linear-gradient(90deg, #ff0000, #0000ff)';
 function context() {
     return document.createElement('canvas').getContext('2d')!;
 }
-
-describe('getCanvasGradientBounds', () => {
-
-    test('uses the box when it has a positive size', () => {
-        const box = {
-            left: 10,
-            top: 20,
-            width: 30,
-            height: 40,
-        } as Box;
-
-        expect(getCanvasGradientBounds(box, 100, 200)).toEqual({
-            x: 10,
-            y: 20,
-            width: 30,
-            height: 40,
-        });
-    });
-
-    test('falls back to context dimensions for a missing or empty box', () => {
-        expect(getCanvasGradientBounds(undefined, 100, 200)).toEqual({
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 200,
-        });
-
-        expect(getCanvasGradientBounds({
-            width: 0,
-            height: 0,
-        } as Box, 100, 200)).toEqual({
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 200,
-        });
-    });
-
-});
 
 describe('setCanvasFill / setCanvasStroke', () => {
 

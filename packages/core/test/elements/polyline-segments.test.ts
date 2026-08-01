@@ -279,6 +279,22 @@ describe('Segmented polyline rendering', () => {
         expect(strokes.map(stroke => stroke.lineDash)).toEqual([[], DASHED, []]);
     });
 
+    // `cardinal` used to skip point 1 entirely, so a boundary there could not be honoured.
+    test.each(SPLITTABLE)('Should split a %s line on its second point', renderer => {
+        const strokes = renderStrokes({
+            stroke: '#000000',
+            points: POINTS,
+            renderer,
+            segments: [{
+                from: 1,
+                to: 2,
+                lineDash: DASHED,
+            }],
+        });
+
+        expect(strokes.map(stroke => stroke.lineDash)).toEqual([[], DASHED, []]);
+    });
+
     // A B-spline's commands land on none of its points, so no span of it can be identified.
     test('Should fall back to a single stroke for a basis line', () => {
         const strokes = renderStrokes({

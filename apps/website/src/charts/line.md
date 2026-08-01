@@ -540,8 +540,8 @@ skipped rather than throwing, leaving that span at the default style.
 
 > [!NOTE]
 > A `basis` line is a B-spline that passes through none of its points, so there is no point at which
-> to split it: a segmented `basis` line falls back to a single style. On a `cardinal` line a boundary
-> on the second point resolves to the third, because its curve skips that point.
+> to split it: a segmented `basis` line falls back to a single style. Every other `lineType` splits
+> exactly on the point you name.
 
 ### Time x-axis
 

@@ -5,7 +5,6 @@ import {
     canvasIsPointInPath,
     canvasIsPointInStroke,
     canvasMeasureText,
-    getCanvasGradientBounds,
     setCanvasFill,
     setCanvasStroke,
 } from './utilities';
@@ -15,6 +14,7 @@ import {
 } from './path';
 
 import {
+    getGradientBounds,
     isGradientString,
     isPatternString,
 } from '@ripl/core';
@@ -161,7 +161,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
 
             // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid fill.
             if (isGradientString(value) || isPatternString(value)) {
-                const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
+                const bounds = getGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasFill(this.context, value, bounds);
             } else {
                 this.context.fillStyle = value;
@@ -305,7 +305,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
 
             // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid stroke.
             if (isGradientString(value) || isPatternString(value)) {
-                const bounds = getCanvasGradientBounds(this.gradientBounds(), this.width, this.height);
+                const bounds = getGradientBounds(this.gradientBounds(), this.width, this.height);
                 setCanvasStroke(this.context, value, bounds);
             } else {
                 this.context.strokeStyle = value;
