@@ -24,6 +24,10 @@ import {
     useData,
 } from 'vitepress';
 
+import {
+    inject as injectAnalytics,
+} from '@vercel/analytics';
+
 import Example from '../components/example.vue';
 
 import TradingDashboard from '../../demos/trading-dashboard/trading-dashboard.vue';
@@ -117,5 +121,8 @@ export default {
         app.component('example-terminal-interactive', ExampleTerminalInteractive);
 
         enhanceAppWithTabs(app);
+
+        // Initialize Vercel Web Analytics
+        injectAnalytics();
     },
 } satisfies Theme;
