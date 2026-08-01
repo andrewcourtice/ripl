@@ -135,8 +135,6 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             throw new Error('Scene requires a Context instance or factory.createContext to be set. Use @ripl/web or call factory.set() with a createContext implementation.');
         }
 
-        context.buffer = false;
-
         const font = !typeIsNil(globalThis.HTMLElement) && context.element instanceof globalThis.HTMLElement
             ? factory.getComputedStyle(context.element).font
             : undefined;

@@ -55,7 +55,6 @@ describe('SVG pattern defs', () => {
         body();
         ctx.markRenderEnd();
         ctx.restore();
-        ctx.export();
     }
 
     function drawRect(id: string) {

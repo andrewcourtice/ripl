@@ -58,7 +58,6 @@ describe('SVG defs lifecycle', () => {
         body();
         ctx.markRenderEnd();
         ctx.restore();
-        ctx.export();
     }
 
     function drawRect(id: string) {

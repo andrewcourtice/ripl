@@ -638,3 +638,98 @@ describe('VDOM', () => {
     });
 
 });
+
+describe('reconcileNode - cache eviction', () => {
+
+    function group(id: string, children: VNode<TestElement>[]) {
+        return createVNode<TestElement>(id, 'div', children);
+    }
+
+    function leaf(id: string) {
+        return createVNode<TestElement>(id, 'span', [], {
+            tag: 'span',
+            attributes: {},
+        });
+    }
+
+    // A removed group used to leave its descendants' entries in the cache, pinning detached nodes.
+    test('Should evict every descendant of a removed subtree', () => {
+        const parent = createDOMElement('div');
+        const cache = new Map<string, Element>();
+        const options = createTestOptions();
+
+        reconcileNode(parent, group('root', [
+            group('outer', [
+                leaf('a'),
+                group('inner', [leaf('b')]),
+            ]),
+        ]), cache, options);
+
+        expect(cache.size).toBe(4);
+
+        reconcileNode(parent, group('root', []), cache, options);
+
+        expect(cache.size).toBe(0);
+    });
+
+    test('Should leave a surviving sibling subtree cached', () => {
+        const parent = createDOMElement('div');
+        const cache = new Map<string, Element>();
+        const options = createTestOptions();
+
+        reconcileNode(parent, group('root', [
+            group('doomed', [leaf('a')]),
+            group('kept', [leaf('b')]),
+        ]), cache, options);
+
+        reconcileNode(parent, group('root', [
+            group('kept', [leaf('b')]),
+        ]), cache, options);
+
+        expect(cache.has('doomed')).toBe(false);
+        expect(cache.has('a')).toBe(false);
+        expect(cache.has('kept')).toBe(true);
+        expect(cache.has('b')).toBe(true);
+    });
+
+    // The cache doubles as the reparenting mechanism, so an id that moved must keep its node.
+    test('Should keep a node that moved out of a removed subtree', () => {
+        const parent = createDOMElement('div');
+        const cache = new Map<string, Element>();
+        const options = createTestOptions();
+
+        reconcileNode(parent, group('root', [
+            group('doomed', [leaf('mover')]),
+        ]), cache, options);
+
+        const moved = cache.get('mover');
+
+        reconcileNode(parent, group('root', [
+            group('kept', [leaf('mover')]),
+        ]), cache, options);
+
+        expect(cache.get('mover')).toBe(moved);
+        expect(cache.has('doomed')).toBe(false);
+    });
+
+    test('Should return the cache to its baseline size across repeated add and remove cycles', () => {
+        const parent = createDOMElement('div');
+        const cache = new Map<string, Element>();
+        const options = createTestOptions();
+
+        const populated = group('root', [
+            group('outer', [
+                leaf('a'),
+                group('inner', [leaf('b')]),
+            ]),
+        ]);
+
+        for (let i = 0; i < 50; i++) {
+            reconcileNode(parent, populated, cache, options);
+            reconcileNode(parent, group('root', []), cache, options);
+        }
+
+        expect(cache.size).toBe(0);
+    });
+
+});
