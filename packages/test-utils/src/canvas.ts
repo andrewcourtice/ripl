@@ -172,3 +172,56 @@ export function mockCanvasContext() {
 
     return stub;
 }
+
+/** Drawing-state properties a real `CanvasRenderingContext2D` saves and restores. */
+const STATEFUL_CANVAS_PROPERTIES = [
+    'fillStyle',
+    'strokeStyle',
+    'filter',
+    'direction',
+    'font',
+    'fontKerning',
+    'globalAlpha',
+    'globalCompositeOperation',
+    'lineCap',
+    'lineDashOffset',
+    'lineJoin',
+    'lineWidth',
+    'miterLimit',
+    'shadowBlur',
+    'shadowColor',
+    'shadowOffsetX',
+    'shadowOffsetY',
+    'textAlign',
+    'textBaseline',
+] as const;
+
+/**
+ * Upgrades a {@link mockCanvasContext} stub so `save`/`restore` actually push and pop the drawing
+ * state, the way a real `CanvasRenderingContext2D` does.
+ *
+ * The default stub's `save`/`restore` are no-ops, which structurally hides every state-stack defect:
+ * a test cannot tell a context that correctly restores its paint from one that never restores
+ * anything. Use this whenever a test asserts what the drawing state is *after* a scope closes.
+ *
+ * @param stub - The context stub returned by {@link mockCanvasContext}.
+ * @returns The same stub, for chaining.
+ */
+export function mockCanvasState<TStub extends object>(stub: TStub): TStub {
+    const target = stub as Record<string, unknown>;
+    const stack: Record<string, unknown>[] = [];
+
+    target.save = vi.fn(() => {
+        stack.push(Object.fromEntries(STATEFUL_CANVAS_PROPERTIES.map(key => [key, target[key]])));
+    });
+
+    target.restore = vi.fn(() => {
+        const state = stack.pop();
+
+        if (state) {
+            Object.assign(target, state);
+        }
+    });
+
+    return stub;
+}
