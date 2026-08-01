@@ -77,6 +77,7 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
     private _groupDepthStack: number[] = [];
+    private _renderElementStack: (RenderElement | undefined)[] = [];
 
     protected states: BaseState[];
     protected currentState: BaseState;
@@ -525,7 +526,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      */
     public pushGroup(group: RiplElement): void {
         this._groupDepthStack.push(this.saveDepth);
+        this._renderElementStack.push(this.renderElement);
         this.save();
+
+        // A group's paint resolves against a box, so it has to be the current element before applying it.
+        this.currentRenderElement = group as unknown as RenderElement;
+
         applyElementTransform(this, group);
         this.applyGroupPaint(group);
 
@@ -568,6 +574,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         while (this.saveDepth > depth) {
             this.restore();
         }
+
+        this.renderElement = this._renderElementStack.pop();
     }
 
     /** Applies a rotation transformation. */
