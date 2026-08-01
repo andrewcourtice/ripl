@@ -132,8 +132,8 @@ export function normalizePolylineRuns(pointCount: number, segments?: PolylineSeg
  * Every command is forwarded to the full path unconditionally, and additionally to each run
  * overlapping the point interval the command spans, prefixed with a `moveTo` the first time that
  * run receives one. A command's interval is tracked by matching its endpoint against the upcoming
- * points; the two-point lookahead covers the one index `cardinal` skips without letting degenerate
- * data trigger a runaway jump.
+ * points; the lookahead spans two points so a custom renderer that covers an interval in one
+ * command still attributes, without letting degenerate data trigger a runaway jump.
  */
 class SegmentedPathTracer extends ContextPath {
 

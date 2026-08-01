@@ -59,6 +59,7 @@ import {
     parseGradient,
     parsePattern,
     radiansToDegrees,
+    resolveGradientBounds,
 } from '@ripl/core';
 
 import type {
@@ -216,15 +217,17 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         this._usedDefs.add(`gradient:${cacheKey}`);
 
+        // The element's own box, not the path node's, so a multi-path element ramps once across all of them.
+        const bounds = resolveGradientBounds(this.currentRenderElement?.getBoundingBox?.(true), this.width, this.height);
         const cached = this._gradientCache.get(cacheKey);
 
         if (cached) {
-            updateSVGGradientElement(cached.element, gradient);
+            updateSVGGradientElement(cached.element, gradient, bounds);
             return `url(#${cached.gradientId})`;
         }
 
         const gradientId = `gradient-${stringUniqueId()}`;
-        const gradientEl = createSVGGradientElement(gradient, gradientId);
+        const gradientEl = createSVGGradientElement(gradient, gradientId, bounds);
 
         if (!gradientEl) {
             return value;

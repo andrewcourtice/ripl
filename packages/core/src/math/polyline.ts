@@ -258,41 +258,24 @@ export function polylineCardinalRenderer(tension: number = 0): PolylineRenderFun
         }
 
         const pointCount = points.length;
-        const tensionFactor = (1 - tension) / 2;
+        // The Hermite tangent is (1 - tension) * (p2 - p0) / 2, and converting it to a Bézier control point divides by 3.
+        const tensionFactor = (1 - tension) / 6;
 
-        for (let index = 1; index < pointCount - 1; index++) {
-            const [x0, y0] = points[index - 1];
+        for (let index = 0; index < pointCount - 1; index++) {
+            // The end tangents mirror their own point, matching the endpoint clamping every cardinal spline uses.
+            const [x0, y0] = points[index - 1] ?? points[index];
             const [x1, y1] = points[index];
             const [x2, y2] = points[index + 1];
+            const [x3, y3] = points[index + 2] ?? points[index + 1];
 
-            const cpx1 = x1 + (x2 - x0) * tensionFactor;
-            const cpy1 = y1 + (y2 - y0) * tensionFactor;
-
-            let cpx2: number;
-            let cpy2: number;
-            let endX: number;
-            let endY: number;
-
-            if (index === pointCount - 2) {
-                endX = x2;
-                endY = y2;
-                cpx2 = x2 - (x2 - x1) * tensionFactor;
-                cpy2 = y2 - (y2 - y1) * tensionFactor;
-            } else {
-                const [x3, y3] = points[index + 2];
-                endX = x2;
-                endY = y2;
-                cpx2 = x2 - (x3 - x1) * tensionFactor;
-                cpy2 = y2 - (y3 - y1) * tensionFactor;
-            }
-
-            path.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, endX, endY);
-        }
-
-        if (pointCount > 2) {
-            const [xn1, yn1] = points[pointCount - 1];
-
-            path.lineTo(xn1, yn1);
+            path.bezierCurveTo(
+                x1 + (x2 - x0) * tensionFactor,
+                y1 + (y2 - y0) * tensionFactor,
+                x2 - (x3 - x1) * tensionFactor,
+                y2 - (y3 - y1) * tensionFactor,
+                x2,
+                y2
+            );
         }
     };
 }
