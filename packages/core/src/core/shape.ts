@@ -139,12 +139,12 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
     /** Renders this shape, reusing its cached path while unchanged (else creating and tracing a new one), then automatically applying fill/stroke or clipping. */
     public render(context: Context, callback?: (path: ContextPath) => void) {
         return super.render(context, () => {
-            // Paths are local-space, so only this element's own state change forces a re-trace.
+            // Paths are local-space, so only a change to this element's own geometry forces a re-trace.
             const canReuse = this.cachePath
                 && context.supportsPathCaching
                 && this._cachedContext === context
                 && !!this.path
-                && !this.$dirty;
+                && !this.$geometryDirty;
 
             if (!canReuse) {
                 this.path = context.createPath(this.id);
