@@ -396,10 +396,6 @@
           {
             "text": "AbstractConstructor",
             "link": "/docs/api/@ripl/canvas/type-aliases/AbstractConstructor.md"
-          },
-          {
-            "text": "GradientBounds",
-            "link": "/docs/api/@ripl/canvas/type-aliases/GradientBounds.md"
           }
         ]
       },
@@ -438,10 +434,6 @@
           {
             "text": "createContext",
             "link": "/docs/api/@ripl/canvas/functions/createContext.md"
-          },
-          {
-            "text": "getCanvasGradientBounds",
-            "link": "/docs/api/@ripl/canvas/functions/getCanvasGradientBounds.md"
           },
           {
             "text": "renderTextAlongPath",
@@ -947,6 +939,14 @@
             "link": "/docs/api/@ripl/charts/interfaces/LineChartSeriesOptions.md"
           },
           {
+            "text": "LineStyleSegment",
+            "link": "/docs/api/@ripl/charts/interfaces/LineStyleSegment.md"
+          },
+          {
+            "text": "LineStyleSegments",
+            "link": "/docs/api/@ripl/charts/interfaces/LineStyleSegments.md"
+          },
+          {
             "text": "PackedCircleChartEventMap",
             "link": "/docs/api/@ripl/charts/interfaces/PackedCircleChartEventMap.md"
           },
@@ -1049,6 +1049,10 @@
           {
             "text": "ResolvedAnimation",
             "link": "/docs/api/@ripl/charts/interfaces/ResolvedAnimation.md"
+          },
+          {
+            "text": "ResolvedLineStyle",
+            "link": "/docs/api/@ripl/charts/interfaces/ResolvedLineStyle.md"
           },
           {
             "text": "RibbonState",
@@ -1299,6 +1303,14 @@
           {
             "text": "LineStyle",
             "link": "/docs/api/@ripl/charts/type-aliases/LineStyle.md"
+          },
+          {
+            "text": "LineStyleBound",
+            "link": "/docs/api/@ripl/charts/type-aliases/LineStyleBound.md"
+          },
+          {
+            "text": "LineStyleInput",
+            "link": "/docs/api/@ripl/charts/type-aliases/LineStyleInput.md"
           },
           {
             "text": "NumericAccessor",
@@ -1695,6 +1707,10 @@
           {
             "text": "resolveLineDash",
             "link": "/docs/api/@ripl/charts/functions/resolveLineDash.md"
+          },
+          {
+            "text": "resolveLineStyle",
+            "link": "/docs/api/@ripl/charts/functions/resolveLineStyle.md"
           },
           {
             "text": "resolveRadialLabel",
@@ -2200,6 +2216,10 @@
             "link": "/docs/api/@ripl/core/interfaces/PolygonState.md"
           },
           {
+            "text": "PolylineSegment",
+            "link": "/docs/api/@ripl/core/interfaces/PolylineSegment.md"
+          },
+          {
             "text": "PolylineState",
             "link": "/docs/api/@ripl/core/interfaces/PolylineState.md"
           },
@@ -2408,6 +2428,10 @@
           {
             "text": "Gradient",
             "link": "/docs/api/@ripl/core/type-aliases/Gradient.md"
+          },
+          {
+            "text": "GradientBounds",
+            "link": "/docs/api/@ripl/core/type-aliases/GradientBounds.md"
           },
           {
             "text": "GradientType",
@@ -2962,6 +2986,10 @@
             "link": "/docs/api/@ripl/core/functions/getEuclideanDistance.md"
           },
           {
+            "text": "getGradientBounds",
+            "link": "/docs/api/@ripl/core/functions/getGradientBounds.md"
+          },
+          {
             "text": "getLinearScaleMethod",
             "link": "/docs/api/@ripl/core/functions/getLinearScaleMethod.md"
           },
@@ -3096,6 +3124,10 @@
           {
             "text": "normalizeBorderRadius",
             "link": "/docs/api/@ripl/core/functions/normalizeBorderRadius.md"
+          },
+          {
+            "text": "normalizePolylineRuns",
+            "link": "/docs/api/@ripl/core/functions/normalizePolylineRuns.md"
           },
           {
             "text": "padDomain",

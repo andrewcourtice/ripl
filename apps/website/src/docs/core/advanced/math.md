@@ -42,6 +42,7 @@ const wp = getWaypoint(points[0], points[3], 0.75);
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -72,82 +73,220 @@ const sides = ref(6);
 const waypoint = ref(50);
 let currentContext: Context | undefined;
 
+// The slider caps the polygon at this many sides, so the marker pool is sized once to match.
+const MAX_SIDES = 12;
+
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const polygon = createPolygon({
+        fill: 'rgba(58, 134, 255, 0.15)',
+        stroke: '#3a86ff',
+        lineWidth: 2,
+        cx: 0,
+        cy: 0,
+        radius: 0,
+        sides: 3,
+    });
+
+    const vertices = Array.from({ length: MAX_SIDES }, () => createCircle({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radius: 4,
+    }));
+
+    const vertexLabels = Array.from({ length: MAX_SIDES }, () => createText({
+        fill: '#666',
+        x: 0,
+        y: 0,
+        content: '',
+        font: '11px sans-serif',
+        textAlign: 'center',
+    }));
+
+    const chord = createLine({
+        stroke: '#999',
+        lineWidth: 1,
+        lineDash: [4, 4],
+        x1: 0,
+        y1: 0,
+        x2: 0,
+        y2: 0,
+    });
+
+    const midpoint = createCircle({
+        fill: '#ff006e',
+        cx: 0,
+        cy: 0,
+        radius: 5,
+    });
+
+    const midpointLabel = createText({
+        fill: '#ff006e',
+        x: 0,
+        y: 0,
+        content: 'midpoint',
+        font: '11px sans-serif',
+    });
+
+    const waypointMarker = createCircle({
+        fill: '#8338ec',
+        cx: 0,
+        cy: 0,
+        radius: 5,
+    });
+
+    const waypointLabel = createText({
+        fill: '#8338ec',
+        x: 0,
+        y: 0,
+        content: '',
+        font: '11px sans-serif',
+    });
+
+    const boundingBox = createRect({
+        stroke: '#fb5607',
+        lineWidth: 1,
+        lineDash: [4, 4],
+        autoFill: false,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const boundingBoxLabel = createText({
+        fill: '#fb5607',
+        x: 0,
+        y: 0,
+        content: 'bounding box',
+        font: '11px sans-serif',
+    });
+
+    const readouts = Array.from({ length: 3 }, () => createText({
+        fill: '#333',
+        x: 0,
+        y: 0,
+        content: '',
+        font: '13px sans-serif',
+    }));
+
+    return {
+        polygon,
+        vertices,
+        vertexLabels,
+        chord,
+        midpoint,
+        midpointLabel,
+        waypointMarker,
+        waypointLabel,
+        boundingBox,
+        boundingBoxLabel,
+        readouts,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        polygon,
+        vertices,
+        vertexLabels,
+        chord,
+        midpoint,
+        midpointLabel,
+        waypointMarker,
+        waypointLabel,
+        boundingBox,
+        boundingBoxLabel,
+        readouts,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const cx = w * 0.35;
     const cy = h / 2;
     const r = Math.min(w * 0.25, h * 0.35);
 
-    context.batch(() => {
-        const points = getPolygonPoints(sides.value, cx, cy, r, false);
+    const points = getPolygonPoints(sides.value, cx, cy, r, false);
 
-        createPolygon({
-            fill: 'rgba(58, 134, 255, 0.15)',
-            stroke: '#3a86ff',
-            lineWidth: 2,
-            cx, cy, radius: r, sides: sides.value,
-        }).render(context);
+    polygon.cx = cx;
+    polygon.cy = cy;
+    polygon.radius = r;
+    polygon.sides = sides.value;
 
-        points.forEach(([px, py], i) => {
-            createCircle({ fill: '#3a86ff', cx: px, cy: py, radius: 4 }).render(context);
-            createText({
-                fill: '#666', x: px, y: py - 10,
-                content: `P${i}`, font: '11px sans-serif', textAlign: 'center',
-            }).render(context);
-        });
+    vertices.forEach((vertex, index) => {
+        const point = points[index];
 
-        if (points.length >= 2) {
-            const p0 = points[0];
-            const pLast = points[Math.floor(points.length / 2)];
+        vertex.opacity = point ? 1 : 0;
+        vertexLabels[index].opacity = point ? 1 : 0;
 
-            createLine({
-                stroke: '#999', lineWidth: 1, lineDash: [4, 4],
-                x1: p0[0], y1: p0[1], x2: pLast[0], y2: pLast[1],
-            }).render(context);
-
-            const mid = getMidpoint(p0, pLast);
-            createCircle({ fill: '#ff006e', cx: mid[0], cy: mid[1], radius: 5 }).render(context);
-            createText({
-                fill: '#ff006e', x: mid[0] + 10, y: mid[1] - 8,
-                content: 'midpoint', font: '11px sans-serif',
-            }).render(context);
-
-            const wp = getWaypoint(p0, pLast, waypoint.value / 100);
-            createCircle({ fill: '#8338ec', cx: wp[0], cy: wp[1], radius: 5 }).render(context);
-            createText({
-                fill: '#8338ec', x: wp[0] + 10, y: wp[1] + 14,
-                content: `waypoint(${waypoint.value}%)`, font: '11px sans-serif',
-            }).render(context);
+        if (!point) {
+            return;
         }
 
-        const bbox = getContainingBox(points, ([x, y]) => new Box(y, x, y, x));
-        createRect({
-            stroke: '#fb5607', lineWidth: 1, lineDash: [4, 4],
-            autoFill: false,
-            x: bbox.left, y: bbox.top,
-            width: bbox.width, height: bbox.height,
-        }).render(context);
+        vertex.cx = point[0];
+        vertex.cy = point[1];
 
-        createText({
-            fill: '#fb5607', x: bbox.left, y: bbox.top - 6,
-            content: 'bounding box', font: '11px sans-serif',
-        }).render(context);
+        vertexLabels[index].x = point[0];
+        vertexLabels[index].y = point[1] - 10;
+        vertexLabels[index].content = `P${index}`;
+    });
 
-        const infoX = w * 0.68;
-        const infoY = h * 0.2;
-        const info = [
-            `Sides: ${sides.value}`,
-            `Vertices: ${points.length}`,
-            `Box: ${Math.round(bbox.width)}×${Math.round(bbox.height)}`,
-        ];
+    const p0 = points[0];
+    const pLast = points[Math.floor(points.length / 2)];
+    const mid = getMidpoint(p0, pLast);
+    const wp = getWaypoint(p0, pLast, waypoint.value / 100);
 
-        info.forEach((line, i) => {
-            createText({
-                fill: '#333', x: infoX, y: infoY + i * 22,
-                content: line, font: '13px sans-serif',
-            }).render(context);
-        });
+    chord.x1 = p0[0];
+    chord.y1 = p0[1];
+    chord.x2 = pLast[0];
+    chord.y2 = pLast[1];
+
+    midpoint.cx = mid[0];
+    midpoint.cy = mid[1];
+    midpointLabel.x = mid[0] + 10;
+    midpointLabel.y = mid[1] - 8;
+
+    waypointMarker.cx = wp[0];
+    waypointMarker.cy = wp[1];
+    waypointLabel.x = wp[0] + 10;
+    waypointLabel.y = wp[1] + 14;
+    waypointLabel.content = `waypoint(${waypoint.value}%)`;
+
+    const bbox = getContainingBox(points, ([x, y]) => new Box(y, x, y, x));
+
+    boundingBox.x = bbox.left;
+    boundingBox.y = bbox.top;
+    boundingBox.width = bbox.width;
+    boundingBox.height = bbox.height;
+
+    boundingBoxLabel.x = bbox.left;
+    boundingBoxLabel.y = bbox.top - 6;
+
+    const info = [
+        `Sides: ${sides.value}`,
+        `Vertices: ${points.length}`,
+        `Box: ${Math.round(bbox.width)}×${Math.round(bbox.height)}`,
+    ];
+
+    readouts.forEach((readout, index) => {
+        readout.x = w * 0.68;
+        readout.y = h * 0.2 + index * 22;
+        readout.content = info[index];
+    });
+
+    context.batch(() => {
+        polygon.render(context);
+        vertices.forEach(vertex => vertex.render(context));
+        vertexLabels.forEach(vertexLabel => vertexLabel.render(context));
+        chord.render(context);
+        midpoint.render(context);
+        midpointLabel.render(context);
+        waypointMarker.render(context);
+        waypointLabel.render(context);
+        boundingBox.render(context);
+        boundingBoxLabel.render(context);
+        readouts.forEach(readout => readout.render(context));
     });
 }
 

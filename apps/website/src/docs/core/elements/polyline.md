@@ -42,6 +42,7 @@ createPolyline({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -77,7 +78,44 @@ const currentRenderer = ref<PolylineRenderer>('spline');
 
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const polyline = createPolyline({
+        stroke: '#3a86ff',
+        lineWidth: 3,
+        points: [],
+    });
+
+    const markers = Array.from({ length: 7 }, () => createCircle({
+        fill: '#ff006e',
+        cx: 0,
+        cy: 0,
+        radius: 4,
+    }));
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '13px sans-serif',
+    });
+
+    return {
+        polyline,
+        markers,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        polyline,
+        markers,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const pad = 40;
@@ -92,26 +130,22 @@ function renderDemo(context: Context) {
         [w - pad, h * 0.5],
     ];
 
+    polyline.points = points;
+    polyline.renderer = currentRenderer.value;
+
+    points.forEach(([x, y], index) => {
+        markers[index].cx = x;
+        markers[index].cy = y;
+    });
+
+    label.x = w / 2;
+    label.y = h - 12;
+    label.content = `renderer: '${currentRenderer.value}'`;
+
     context.batch(() => {
-        createPolyline({
-            stroke: '#3a86ff',
-            lineWidth: 3,
-            points,
-            renderer: currentRenderer.value,
-        }).render(context);
-
-        points.forEach(([x, y]) => {
-            createCircle({
-                fill: '#ff006e',
-                cx: x, cy: y, radius: 4,
-            }).render(context);
-        });
-
-        createText({
-            x: w / 2, y: h - 12,
-            content: `renderer: '${currentRenderer.value}'`,
-            fill: '#666', textAlign: 'center', font: '13px sans-serif',
-        }).render(context);
+        polyline.render(context);
+        markers.forEach(marker => marker.render(context));
+        label.render(context);
     });
 }
 

@@ -44,6 +44,7 @@ createRect({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -65,27 +66,55 @@ const heightPct = ref(50);
 const borderRadiusVal = ref(8);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const rect = createRect({
+        fill: '#3a86ff',
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        rect,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        rect,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const rw = w * 0.7 * (widthPct.value / 100);
     const rh = h * 0.6 * (heightPct.value / 100);
 
-    context.batch(() => {
-        createRect({
-            fill: '#3a86ff',
-            x: w / 2 - rw / 2,
-            y: h / 2 - rh / 2,
-            width: rw,
-            height: rh,
-            borderRadius: borderRadiusVal.value,
-        }).render(context);
+    rect.x = w / 2 - rw / 2;
+    rect.y = h / 2 - rh / 2;
+    rect.width = rw;
+    rect.height = rh;
+    rect.borderRadius = borderRadiusVal.value;
 
-        createText({
-            x: w / 2, y: h / 2 + rh / 2 + 22,
-            content: `${Math.round(rw)}×${Math.round(rh)}  radius: ${borderRadiusVal.value}`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + rh / 2 + 22;
+    label.content = `${Math.round(rw)}×${Math.round(rh)}  radius: ${borderRadiusVal.value}`;
+
+    context.batch(() => {
+        rect.render(context);
+        label.render(context);
     });
 }
 

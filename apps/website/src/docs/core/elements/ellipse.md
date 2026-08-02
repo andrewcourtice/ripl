@@ -46,6 +46,7 @@ createEllipse({
 
 <script lang="ts" setup>
 import {
+    useDemoElements,
     useRiplExample,
 } from '../../../.vitepress/compositions/example';
 
@@ -68,27 +69,58 @@ const ryPct = ref(45);
 const rotationDeg = ref(0);
 let currentContext: Context | undefined;
 
+// Built once, on first render, so ids stay stable and every id-keyed cache hits.
+const getElements = useDemoElements(() => {
+    const ellipse = createEllipse({
+        fill: '#3a86ff',
+        cx: 0,
+        cy: 0,
+        radiusX: 0,
+        radiusY: 0,
+        startAngle: 0,
+        endAngle: TAU,
+    });
+
+    const label = createText({
+        x: 0,
+        y: 0,
+        content: '',
+        fill: '#666',
+        textAlign: 'center',
+        font: '12px sans-serif',
+    });
+
+    return {
+        ellipse,
+        label,
+    };
+});
+
 function renderDemo(context: Context) {
+    const {
+        ellipse,
+        label,
+    } = getElements();
+
     const w = context.width;
     const h = context.height;
     const maxR = Math.min(w, h) / 3;
     const rx = maxR * (rxPct.value / 100);
     const ry = maxR * (ryPct.value / 100);
 
-    context.batch(() => {
-        createEllipse({
-            fill: '#3a86ff',
-            cx: w / 2, cy: h / 2,
-            radiusX: rx, radiusY: ry,
-            rotation: rotationDeg.value * Math.PI / 180,
-            startAngle: 0, endAngle: TAU,
-        }).render(context);
+    ellipse.cx = w / 2;
+    ellipse.cy = h / 2;
+    ellipse.radiusX = rx;
+    ellipse.radiusY = ry;
+    ellipse.rotation = rotationDeg.value * Math.PI / 180;
 
-        createText({
-            x: w / 2, y: h / 2 + maxR + 24,
-            content: `rx: ${Math.round(rx)}  ry: ${Math.round(ry)}  rotation: ${rotationDeg.value}°`,
-            fill: '#666', textAlign: 'center', font: '12px sans-serif',
-        }).render(context);
+    label.x = w / 2;
+    label.y = h / 2 + maxR + 24;
+    label.content = `rx: ${Math.round(rx)}  ry: ${Math.round(ry)}  rotation: ${rotationDeg.value}°`;
+
+    context.batch(() => {
+        ellipse.render(context);
+        label.render(context);
     });
 }
 
