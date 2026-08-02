@@ -55,16 +55,28 @@ describe('setCanvasFill / setCanvasStroke', () => {
         expect(typeof ctx.fillStyle).toBe('object');
     });
 
-    test('memoizes gradient parsing across repeated calls', () => {
+    test('reuses the native gradient across repeated calls with the same bounds', () => {
         const ctx = context();
         const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
 
         setCanvasFill(ctx, LINEAR, BOUNDS);
         setCanvasFill(ctx, LINEAR, BOUNDS);
 
-        // Both calls build a native gradient (bounds change per frame), but parsing is cached.
-        expect(createLinearGradient).toHaveBeenCalledTimes(2);
+        expect(createLinearGradient).toHaveBeenCalledTimes(1);
         expect(typeof ctx.fillStyle).toBe('object');
+    });
+
+    test('builds a new native gradient when the bounds move', () => {
+        const ctx = context();
+        const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
+
+        setCanvasFill(ctx, LINEAR, BOUNDS);
+        setCanvasFill(ctx, LINEAR, {
+            ...BOUNDS,
+            width: 200,
+        });
+
+        expect(createLinearGradient).toHaveBeenCalledTimes(2);
     });
 
 });

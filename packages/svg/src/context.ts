@@ -1,9 +1,12 @@
 import {
+    applyGradientStops,
     createSVGClipPathElement,
     createSVGGradientElement,
     createSVGPatternElement,
     createSVGShadowFilterElement,
     createSVGTextPathDefElement,
+    getGradientStopSignature,
+    isSameGradientBounds,
     isSupportedSVGGradient,
     resolveConicGradientFallback,
     sweepDefsCache,
@@ -68,6 +71,8 @@ import type {
     ContextOptions,
     ContextText,
     FillRule,
+    Gradient,
+    GradientBounds,
     Element as RiplElement,
     TextOptions,
 } from '@ripl/core';
@@ -221,8 +226,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         const bounds = getGradientBounds(this.currentRenderElement?.getBoundingBox?.(true), this.width, this.height);
         const cached = this._gradientCache.get(cacheKey);
 
-        if (cached) {
-            updateSVGGradientElement(cached.element, gradient, bounds);
+        // A linear gradient can't be updated into a radial one; the primitive itself has to change.
+        if (cached && cached.type === gradient.type) {
+            this._updateGradientEntry(cached, value, gradient, bounds);
             return `url(#${cached.gradientId})`;
         }
 
@@ -233,13 +239,35 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return value;
         }
 
+        cached?.element.remove();
+
         this._defs.appendChild(gradientEl);
         this._gradientCache.set(cacheKey, {
             gradientId,
             element: gradientEl,
+            type: gradient.type,
+            stopSignature: getGradientStopSignature(gradient.stops),
+            appliedValue: value,
+            appliedBounds: bounds,
         });
 
         return `url(#${gradientId})`;
+    }
+
+    // Every write to a live `<defs>` paint server re-rasterizes everything painted with it, so write nothing that hasn't changed.
+    private _updateGradientEntry(entry: GradientCacheEntry, value: string, gradient: Gradient, bounds: GradientBounds): void {
+        if (entry.appliedValue !== value || !isSameGradientBounds(entry.appliedBounds, bounds)) {
+            updateSVGGradientElement(entry.element, gradient, bounds);
+            entry.appliedValue = value;
+            entry.appliedBounds = bounds;
+        }
+
+        const stopSignature = getGradientStopSignature(gradient.stops);
+
+        if (entry.stopSignature !== stopSignature) {
+            applyGradientStops(entry.element, gradient.stops);
+            entry.stopSignature = stopSignature;
+        }
     }
 
     private _resolveShadowFilter(element: SVGContextElement): string | undefined {

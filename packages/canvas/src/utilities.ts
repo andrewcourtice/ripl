@@ -19,11 +19,17 @@ import type {
     FillRule,
     Gradient,
     GradientBounds,
+    Pattern,
     Scale,
 } from '@ripl/core';
 
 import {
+    createLRUCache,
     numberClamp,
+} from '@ripl/utilities';
+
+import type {
+    LRUCache,
 } from '@ripl/utilities';
 
 import type {
@@ -80,37 +86,36 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     return canvasGradient;
 }
 
-// Pattern tiles are position-independent, so one `CanvasPattern` per string serves every element and frame.
-const PATTERN_CACHE_LIMIT = 256;
-const patternCache = new Map<string, CanvasPattern | null>();
+const PAINT_CACHE_LIMIT = 64;
+const TILE_CACHE_LIMIT = 64;
 
-/**
- * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
- * tile geometry into an offscreen canvas. Results (including parse failures) are cached per
- * string.
- *
- * @param ctx - The context the pattern will paint into.
- * @param value - The `pattern(...)` paint string.
- * @returns The repeating pattern, or `null` when the string or environment can't produce one.
- */
-export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
-    const cached = patternCache.get(value);
+// A tile is plain pixels, independent of position and of the surface it ends up on, so one serves every context.
+const patternTileCache = createLRUCache<string, HTMLCanvasElement | null>(TILE_CACHE_LIMIT);
 
-    if (cached !== undefined) {
-        return cached;
+// `CanvasGradient`/`CanvasPattern` belong to the surface that minted them, so each context gets its own cache.
+const gradientCaches = new WeakMap<CanvasRenderingContext2D, LRUCache<string, CanvasGradient>>();
+const patternCaches = new WeakMap<CanvasRenderingContext2D, LRUCache<string, CanvasPattern | null>>();
+
+function getPaintCache<TValue>(caches: WeakMap<CanvasRenderingContext2D, LRUCache<string, TValue>>, ctx: CanvasRenderingContext2D): LRUCache<string, TValue> {
+    const existing = caches.get(ctx);
+
+    if (existing) {
+        return existing;
     }
 
-    if (patternCache.size >= PATTERN_CACHE_LIMIT) {
-        patternCache.clear();
-    }
+    const cache = createLRUCache<string, TValue>(PAINT_CACHE_LIMIT);
 
-    const pattern = parsePatternCached(value);
+    caches.set(ctx, cache);
 
-    if (!pattern) {
-        patternCache.set(value, null);
-        return null;
-    }
+    return cache;
+}
 
+// Rounded, so sub-pixel drift on an animating element doesn't miss the cache on every frame.
+function getGradientCacheKey(value: string, { x, y, width, height }: GradientBounds): string {
+    return `${value}|${x.toFixed(2)}|${y.toFixed(2)}|${width.toFixed(2)}|${height.toFixed(2)}`;
+}
+
+function renderPatternTile(pattern: Pattern): HTMLCanvasElement | null {
     const geometry = getPatternTileGeometry(pattern);
     const tile = document.createElement('canvas');
 
@@ -120,7 +125,6 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
     const tileContext = tile.getContext('2d');
 
     if (!tileContext) {
-        patternCache.set(value, null);
         return null;
     }
 
@@ -146,11 +150,81 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
         tileContext.fill();
     });
 
-    const canvasPattern = ctx.createPattern(tile, 'repeat');
+    return tile;
+}
 
-    patternCache.set(value, canvasPattern);
+function getPatternTile(value: string): HTMLCanvasElement | null {
+    if (patternTileCache.has(value)) {
+        return patternTileCache.get(value)!;
+    }
+
+    const pattern = parsePatternCached(value);
+    const tile = pattern && renderPatternTile(pattern);
+
+    patternTileCache.set(value, tile);
+
+    return tile;
+}
+
+/**
+ * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
+ * tile geometry into an offscreen canvas. The tile is cached across every context; the resulting
+ * pattern (including parse failures) is cached per context, since a `CanvasPattern` belongs to the
+ * surface that created it.
+ *
+ * @param ctx - The context the pattern will paint into.
+ * @param value - The `pattern(...)` paint string.
+ * @returns The repeating pattern, or `null` when the string or environment can't produce one.
+ */
+export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
+    const cache = getPaintCache(patternCaches, ctx);
+
+    if (cache.has(value)) {
+        return cache.get(value)!;
+    }
+
+    const tile = getPatternTile(value);
+    const canvasPattern = tile && ctx.createPattern(tile, 'repeat');
+
+    cache.set(value, canvasPattern);
 
     return canvasPattern;
+}
+
+/**
+ * Resolves a CSS gradient string to a `CanvasGradient` for the given bounds, caching the result per
+ * context.
+ *
+ * The fill and stroke setters run per element per frame, so a completely static gradient would
+ * otherwise be rebuilt (and every stop color re-parsed) on every one of them. Bounds are part of the
+ * key because, unlike a pattern tile, a gradient's coordinates are resolved against the element it
+ * paints.
+ *
+ * @param ctx - The context the gradient will paint into.
+ * @param value - The CSS gradient string.
+ * @param bounds - The rectangle the gradient's coordinates resolve against.
+ * @returns The gradient, or `undefined` when the string is not a recognized gradient.
+ */
+export function resolveCanvasGradient(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): CanvasGradient | undefined {
+    const cache = getPaintCache(gradientCaches, ctx);
+    const key = getGradientCacheKey(value, bounds);
+    const cached = cache.get(key);
+
+    if (cached) {
+        return cached;
+    }
+
+    const gradient = parseGradientCached(value);
+
+    if (!gradient) {
+        return undefined;
+    }
+
+    const canvasGradient = toCanvasGradient(ctx, gradient, bounds);
+
+    cache.set(key, canvasGradient);
+
+    return canvasGradient;
 }
 
 /** Sets the fill style on a native canvas context, resolving gradient and pattern strings when applicable. */
@@ -165,10 +239,10 @@ export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, boun
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientCached(value);
+        const gradient = resolveCanvasGradient(ctx, value, bounds);
 
         if (gradient) {
-            ctx.fillStyle = toCanvasGradient(ctx, gradient, bounds);
+            ctx.fillStyle = gradient;
             return;
         }
     }
@@ -188,10 +262,10 @@ export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bo
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientCached(value);
+        const gradient = resolveCanvasGradient(ctx, value, bounds);
 
         if (gradient) {
-            ctx.strokeStyle = toCanvasGradient(ctx, gradient, bounds);
+            ctx.strokeStyle = gradient;
             return;
         }
     }

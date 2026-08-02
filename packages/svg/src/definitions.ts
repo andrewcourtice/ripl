@@ -32,6 +32,14 @@ export interface GradientCacheEntry {
     gradientId: string;
     /** The live gradient element in `<defs>`. */
     element: SVGElement;
+    /** Gradient type the live element was created for; a change to it needs a different SVG primitive. */
+    type: string;
+    /** Signature of the color stops currently in the element, so unchanged stops are not rebuilt. */
+    stopSignature: string;
+    /** The paint string whose coordinates were last written to the element. */
+    appliedValue: string;
+    /** The bounds the element's coordinates were last resolved against. */
+    appliedBounds: GradientBounds;
 }
 
 /** Cache entry for a text-path geometry definition living in `<defs>`. */
@@ -62,7 +70,17 @@ export interface ShadowCacheEntry {
     shadowElement: SVGElement;
 }
 
-function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) {
+/**
+ * Rebuilds a gradient element's `<stop>` children from a parsed gradient's color stops.
+ *
+ * Mutating a live `<defs>` paint server forces the browser to re-rasterize everything painted with
+ * it, so callers should first compare {@link getGradientStopSignature} against the signature of the
+ * stops already applied and skip this entirely when it is unchanged.
+ *
+ * @param gradientEl - The live gradient element in `<defs>`.
+ * @param stops - The color stops to render.
+ */
+export function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]): void {
     gradientEl.replaceChildren();
 
     stops.forEach((stop) => {
@@ -71,6 +89,34 @@ function applyGradientStops(gradientEl: SVGElement, stops: GradientColorStop[]) 
         stopEl.setAttribute('stop-color', normalizeGradientColor(stop.color));
         gradientEl.appendChild(stopEl);
     });
+}
+
+/**
+ * Builds a cheap discriminant for a set of gradient color stops, used to skip rebuilding
+ * `<stop>` elements that have not changed.
+ *
+ * Colors are compared as authored rather than normalized: normalization is deterministic, so the
+ * raw string discriminates just as well without running a color parse per stop per frame.
+ *
+ * @param stops - The color stops to summarize.
+ * @returns A signature that differs whenever any stop's offset or color differs.
+ */
+export function getGradientStopSignature(stops: GradientColorStop[]): string {
+    let signature = '';
+
+    for (let i = 0; i < stops.length; i++) {
+        signature += `${stops[i].offset ?? 0}:${stops[i].color};`;
+    }
+
+    return signature;
+}
+
+/** Tests whether two gradient bounds resolve to the same rectangle. */
+export function isSameGradientBounds(left: GradientBounds, right: GradientBounds): boolean {
+    return left.x === right.x
+        && left.y === right.y
+        && left.width === right.width
+        && left.height === right.height;
 }
 
 function applyLinearGradientAttributes(element: SVGElement, gradient: Gradient, bounds: GradientBounds): void {
@@ -136,33 +182,34 @@ export function createSVGGradientElement(gradient: Gradient, gradientId: string,
     const element = factory(gradient);
 
     element.setAttribute('id', gradientId);
-
-    if (gradient.repeating) {
-        element.setAttribute('spreadMethod', 'repeat');
-    }
+    element.setAttribute('gradientUnits', 'userSpaceOnUse');
 
     updateSVGGradientElement(element, gradient, bounds);
+    applyGradientStops(element, gradient.stops);
 
     return element;
 }
 
 /**
- * Updates an existing gradient `<defs>` element in place from a parsed gradient.
+ * Updates an existing gradient `<defs>` element's coordinates in place from a parsed gradient.
  *
  * Coordinates are written in user space against the element's own bounding box rather than SVG's
  * per-node `objectBoundingBox`, so an element that paints as several paths ramps once across all of
- * them and matches what the canvas backend draws. They are rewritten every render because they move
- * with the element.
+ * them and matches what the canvas backend draws. Color stops are left alone — apply those with
+ * {@link applyGradientStops}, which callers should skip while the stops are unchanged.
  *
  * @param element - The live gradient element in `<defs>`.
  * @param gradient - The parsed gradient to render.
  * @param bounds - The rectangle the gradient's coordinates resolve against.
  */
 export function updateSVGGradientElement(element: SVGElement, gradient: Gradient, bounds: GradientBounds): void {
-    element.setAttribute('gradientUnits', 'userSpaceOnUse');
+    if (gradient.repeating) {
+        element.setAttribute('spreadMethod', 'repeat');
+    } else {
+        element.removeAttribute('spreadMethod');
+    }
 
     GRADIENT_ELEMENT_UPDATERS[gradient.type]?.(element, gradient, bounds);
-    applyGradientStops(element, gradient.stops);
 }
 
 /** Resolves a solid paint fallback for a gradient with no SVG primitive, using the color stop nearest the middle of the gradient. */
