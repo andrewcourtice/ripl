@@ -628,3 +628,15 @@ The playground (`apps/website/src/.vitepress/components/playground/`) provides a
 6. Document **every** public API member with JSDoc per [Public API Documentation](#public-api-documentation) — new or changed public methods, config options, properties, accessors, factories, and type-guards must all carry doc comments (verify with the TypeDoc `notDocumented` check). An undocumented public member is an incomplete change.
 7. Do not add runtime dependencies without explicit approval
 8. Keep `//` comments to one line and to the non-obvious per [Comments](#comments) — JSDoc is required, prose in bodies is not
+
+### Pull requests
+
+Commit messages use conventional commits. **Pull request titles do not** — a PR title is a sentence
+describing the change (capitalised, imperative, no `type(scope):` prefix, no trailing period):
+
+> Size the canvas surface from the host, not the backing store
+
+`main` takes merge commits rather than squashes, so a PR title never becomes a commit subject; the
+history stays machine-parseable while the PR list stays readable. The
+[`ripl-pull-requests`](.claude/skills/ripl-pull-requests/SKILL.md) skill carries the full convention:
+title rules, what belongs in a description, and how to report verification honestly.
