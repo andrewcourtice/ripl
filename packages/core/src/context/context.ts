@@ -90,8 +90,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /** Arbitrary metadata attached to the context. */
     public readonly meta: TMeta;
 
-    /** Whether drawing is buffered rather than committed to the surface immediately. */
-    public buffer = false;
     /**
      * Whether this context's hit testing natively accounts for element and ancestor group
      * transforms (as SVG does, via the DOM). When `false` (e.g. canvas), callers map the hit
