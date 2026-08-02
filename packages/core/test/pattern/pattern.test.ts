@@ -8,6 +8,7 @@ import {
     getPatternTileGeometry,
     isPatternString,
     parsePattern,
+    parsePatternCached,
     serializePattern,
 } from '../../src';
 
@@ -86,6 +87,40 @@ describe('Pattern tile geometry', () => {
         const geometry = getPatternTileGeometry(parsePattern('pattern(cross-hatch)')!);
 
         expect(geometry.shapes).toHaveLength(2);
+    });
+
+});
+
+describe('parsePatternCached', () => {
+
+    it('Should parse identically to parsePattern', () => {
+        const value = 'pattern(diagonal, #1a6, #fff0, 8)';
+
+        expect(parsePatternCached(value)).toEqual(parsePattern(value));
+    });
+
+    it('Should return a reference-identical result for the same string', () => {
+        const value = 'pattern(dots, red, transparent, 12)';
+
+        expect(parsePatternCached(value)).toBe(parsePatternCached(value));
+    });
+
+    it('Should memoize an invalid pattern string as null', () => {
+        expect(parsePatternCached('not-a-pattern')).toBeNull();
+        expect(parsePatternCached('not-a-pattern')).toBeNull();
+    });
+
+    // A wipe-at-threshold cache would drop the hot entry here; the bounded LRU keeps it.
+    it('Should retain a recently used entry after the limit is exceeded', () => {
+        const hot = 'pattern(cross-hatch, #123456, transparent, 9)';
+        const first = parsePatternCached(hot);
+
+        for (let i = 1; i <= 300; i++) {
+            parsePatternCached(`pattern(dots, red, transparent, ${i})`);
+            parsePatternCached(hot);
+        }
+
+        expect(parsePatternCached(hot)).toBe(first);
     });
 
 });

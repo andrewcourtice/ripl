@@ -56,8 +56,8 @@ import {
     isPatternString,
     isTransparentColor,
     measureText,
-    parseGradient,
-    parsePattern,
+    parseGradientCached,
+    parsePatternCached,
     radiansToDegrees,
 } from '@ripl/core';
 
@@ -160,7 +160,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     }
 
     private _resolvePatternStyle(value: string, cacheKey: string): string {
-        const pattern = parsePattern(value);
+        const pattern = parsePatternCached(value);
 
         if (!pattern) {
             return value;
@@ -196,7 +196,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return value;
         }
 
-        const gradient = parseGradient(value);
+        const gradient = parseGradientCached(value);
 
         if (!gradient) {
             return value;
