@@ -249,12 +249,13 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         return this.currentRenderElement?.getBoundingBox?.();
     }
 
+    // Gated on the logical size, never the backing store: a fresh canvas is already 300x150.
     protected rescale(width: number, height: number) {
-        const result = rescaleCanvas(this.element, this.context, width, height);
-
-        if (!result) {
+        if (width === this.width && height === this.height) {
             return;
         }
+
+        const result = rescaleCanvas(this.element, this.context, width, height);
 
         super.rescale(width, height);
 

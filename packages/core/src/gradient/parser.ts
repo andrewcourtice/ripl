@@ -6,8 +6,15 @@ import type {
     RadialGradient,
 } from './types';
 
+import {
+    createLRUCache,
+} from '@ripl/utilities';
+
 
 const GRADIENT_PATTERN = /^(repeating-)?(linear|radial|conic)-gradient\((.+)\)$/is;
+const GRADIENT_CACHE_LIMIT = 256;
+
+const gradientCache = createLRUCache<string, Gradient | undefined>(GRADIENT_CACHE_LIMIT);
 
 const DIRECTION_MAP: Record<string, number> = {
     'to top': 0,
@@ -252,6 +259,31 @@ export function parseGradient(value: string): Gradient | undefined {
     return parse
         ? parse(args, repeating)
         : undefined;
+}
+
+/**
+ * Parses a CSS gradient string via {@link parseGradient}, memoizing the result in a bounded LRU
+ * cache shared by every rendering backend.
+ *
+ * Parsing is pure but not cheap, and the same handful of paint strings resolve for every element on
+ * every frame, so backends should prefer this over {@link parseGradient} on any render path.
+ *
+ * The returned object is **shared between callers and must not be mutated**; parse it yourself with
+ * {@link parseGradient} when a private, mutable copy is required.
+ *
+ * @param value - The CSS gradient string to parse.
+ * @returns The parsed gradient, or `undefined` if the string is not a recognized gradient.
+ */
+export function parseGradientCached(value: string): Gradient | undefined {
+    if (gradientCache.has(value)) {
+        return gradientCache.get(value);
+    }
+
+    const gradient = parseGradient(value);
+
+    gradientCache.set(value, gradient);
+
+    return gradient;
 }
 
 /** Tests whether a string looks like a CSS gradient (starts with a recognized gradient function name). */

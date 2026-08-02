@@ -10,10 +10,17 @@ import type {
     PatternType,
 } from './types';
 
+import {
+    createLRUCache,
+} from '@ripl/utilities';
+
 
 const PATTERN_REGEX = /^pattern\((.+)\)$/is;
 const SIZE_REGEX = /^(\d*\.?\d+)(px)?$/i;
 const MAX_PATTERN_ARGS = 4;
+const PATTERN_CACHE_LIMIT = 256;
+
+const patternCache = createLRUCache<string, Pattern | null>(PATTERN_CACHE_LIMIT);
 
 function splitPatternArgs(input: string): string[] {
     const args: string[] = [];
@@ -109,6 +116,31 @@ export function parsePattern(value: string): Pattern | null {
         background: args[2] ?? DEFAULT_PATTERN_BACKGROUND,
         size,
     };
+}
+
+/**
+ * Parses a `pattern(...)` paint string via {@link parsePattern}, memoizing the result in a bounded
+ * LRU cache shared by every rendering backend.
+ *
+ * Backends should prefer this over {@link parsePattern} on any render path, where the same paint
+ * string resolves for every element on every frame.
+ *
+ * The returned object is **shared between callers and must not be mutated**; parse it yourself with
+ * {@link parsePattern} when a private, mutable copy is required.
+ *
+ * @param value - The paint string to parse, e.g. `pattern(diagonal, #1a6, #fff0, 8)`.
+ * @returns The parsed pattern, or `null` when the string is not a valid pattern.
+ */
+export function parsePatternCached(value: string): Pattern | null {
+    if (patternCache.has(value)) {
+        return patternCache.get(value)!;
+    }
+
+    const pattern = parsePattern(value);
+
+    patternCache.set(value, pattern);
+
+    return pattern;
 }
 
 /** Tests whether a string looks like a `pattern(...)` paint value (cheap shape check; use {@link parsePattern} to validate fully). */

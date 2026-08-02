@@ -1,3 +1,4 @@
+export * from './cache';
 export * from './collection';
 export * from './comparitors';
 export * from './function';
