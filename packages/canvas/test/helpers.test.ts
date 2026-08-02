@@ -108,19 +108,48 @@ describe('rescaleCanvas', () => {
 
         const result = rescaleCanvas(canvas, ctx, 120, 80);
 
-        expect(result).toBeDefined();
         expect(canvas.width).toBeGreaterThan(0);
         expect(canvas.height).toBeGreaterThan(0);
-        expect(result!.scaleX(0)).toBe(0);
+        expect(result.scaleX(0)).toBe(0);
     });
 
-    test('returns undefined when no resize is needed', () => {
+    // Assigning either dimension clears the surface, so an unchanged size must not touch it.
+    test('leaves the backing store alone when it already matches', () => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d')!;
 
         rescaleCanvas(canvas, ctx, 120, 80);
 
-        expect(rescaleCanvas(canvas, ctx, 120, 80)).toBeUndefined();
+        // `spyOn` returns the stub's existing mock, so drop the call the first rescale recorded.
+        const setTransform = vi.spyOn(ctx, 'setTransform').mockClear();
+        const { width, height } = canvas;
+
+        rescaleCanvas(canvas, ctx, 120, 80);
+
+        // The transform is only reset after a write, so an untouched transform means an untouched store.
+        expect(setTransform).not.toHaveBeenCalled();
+        expect(canvas.width).toBe(width);
+        expect(canvas.height).toBe(height);
+    });
+
+    test('returns scales even when the backing store already matches', () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        rescaleCanvas(canvas, ctx, 120, 80);
+
+        expect(rescaleCanvas(canvas, ctx, 120, 80).scaleX(120)).toBe(canvas.width);
+    });
+
+    // A fresh canvas backing store is already exactly 300x150, which used to read as "no resize needed".
+    test('returns scales for a surface the size of a default canvas', () => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        const result = rescaleCanvas(canvas, ctx, canvas.width, canvas.height);
+
+        expect(result.scaleX(canvas.width)).toBe(canvas.width);
+        expect(result.scaleY(canvas.height)).toBe(canvas.height);
     });
 
 });

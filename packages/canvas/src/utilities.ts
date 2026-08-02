@@ -207,25 +207,36 @@ export interface RescaleResult {
     scaleY: Scale<number, number>;
 }
 
-/** Rescales a canvas element for the device pixel ratio and returns updated coordinate scales. Returns `undefined` if no rescale was needed. */
+/**
+ * Sizes a canvas element's backing store for the device pixel ratio and returns the coordinate
+ * scales mapping logical pixels onto it.
+ *
+ * The scales are returned whether or not the backing store needed resizing: they describe the
+ * requested logical size, which can change without the scaled integer dimensions changing.
+ *
+ * @param canvas - The canvas whose backing store is sized.
+ * @param ctx - The canvas's 2D context, whose transform is reset when the backing store changes.
+ * @param width - Requested width, in logical pixels.
+ * @param height - Requested height, in logical pixels.
+ * @returns The updated coordinate scales.
+ */
 export function rescaleCanvas(
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     width: number,
     height: number
-): RescaleResult | undefined {
+): RescaleResult {
     const dpr = factory.devicePixelRatio;
     const scaledWidth = Math.floor(width * dpr);
     const scaledHeight = Math.floor(height * dpr);
 
-    if (scaledWidth === canvas.width && scaledHeight === canvas.height) {
-        return undefined;
+    // Assigning either dimension clears the surface and resets its transform, so only write on a change.
+    if (scaledWidth !== canvas.width || scaledHeight !== canvas.height) {
+        canvas.width = scaledWidth;
+        canvas.height = scaledHeight;
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
-
-    canvas.width = scaledWidth;
-    canvas.height = scaledHeight;
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     return {
         scaleX: scaleContinuous([0, width], [0, scaledWidth]),
