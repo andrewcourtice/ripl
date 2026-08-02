@@ -15,6 +15,7 @@ import {
 } from '@ripl/utilities';
 
 import {
+    hasWindow,
     onDOMElementResize,
     onDOMEvent,
 } from './dom';
@@ -49,6 +50,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     private _activeElements = new Set<RenderElement>();
     private _dragThreshold: number;
     private _interactionState?: InteractionState;
+    private _originDirty = true;
 
     constructor(
         type: string,
@@ -86,7 +88,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         this.rescale(width, height);
 
-        this.retain(onDOMElementResize(this.root, ({ width, height }) => this.rescale(width, height)));
+        this.retain(onDOMElementResize(this.root, ({ width, height }) => {
+            this._originDirty = true;
+            this.rescale(width, height);
+        }));
 
         if (this._interactive) {
             this.enableInteraction();
@@ -97,7 +102,19 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this.retain(onDOMEvent(this.element as unknown as HTMLElement, event, handler), INTERACTION_KEY);
     }
 
-    private _handleMouseEnter(): void {
+    /**
+     * Re-reads where the surface sits in the viewport, at most once per invalidation.
+     *
+     * Pointer coordinates are `clientX/Y` minus this origin, so a stale origin offsets every event.
+     * It goes stale two ways: the page scrolls or the layout shifts under a pointer that never
+     * leaves, and a surface mounted under a stationary pointer never fires the `mouseenter` that
+     * would first record it.
+     */
+    private _refreshOrigin(force?: boolean): void {
+        if (!this._originDirty && !force) {
+            return;
+        }
+
         const state = this._interactionState!;
 
         ({
@@ -105,6 +122,11 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             top: state.top,
         } = this.element.getBoundingClientRect());
 
+        this._originDirty = false;
+    }
+
+    private _handleMouseEnter(): void {
+        this._refreshOrigin(true);
         this.emit('mouseenter', null);
     }
 
@@ -113,6 +135,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseDown(event: MouseEvent): void {
+        this._refreshOrigin();
+
         const state = this._interactionState!;
         const rx = event.clientX - state.left;
         const ry = event.clientY - state.top;
@@ -130,6 +154,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseMove(event: MouseEvent): void {
+        this._refreshOrigin();
+
         const state = this._interactionState!;
         const x = event.clientX - state.left;
         const y = event.clientY - state.top;
@@ -220,6 +246,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleMouseUp(event: MouseEvent): void {
+        this._refreshOrigin();
+
         const state = this._interactionState!;
 
         if (state.dragElement && state.dragStarted) {
@@ -246,6 +274,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleClick(event: MouseEvent): void {
+        this._refreshOrigin();
+
         const state = this._interactionState!;
         const x = this.scaleX(event.clientX - state.left);
         const y = this.scaleY(event.clientY - state.top);
@@ -286,6 +316,19 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._attachInteractionEvent('mousemove', event => this._handleMouseMove(event));
         this._attachInteractionEvent('mouseup', event => this._handleMouseUp(event));
         this._attachInteractionEvent('click', event => this._handleClick(event));
+
+        if (hasWindow) {
+            // Capture phase: a scroll event doesn't bubble, so an ancestor scroll container is only visible here.
+            this.retain(onDOMEvent(window, 'scroll', () => this._originDirty = true, {
+                capture: true,
+                passive: true,
+            }), INTERACTION_KEY);
+
+            this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), INTERACTION_KEY);
+        }
+
+        // Seeded now rather than on the first `mouseenter`, which never fires for a surface mounted under the pointer.
+        this._refreshOrigin(true);
     }
 
     /** Disables DOM interaction events and clears the active element set. */

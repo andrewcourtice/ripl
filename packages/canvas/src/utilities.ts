@@ -8,8 +8,8 @@ import {
     isPatternString,
     measureText,
     parseColor,
-    parseGradient,
-    parsePattern,
+    parseGradientCached,
+    parsePatternCached,
     samplePathPoint,
     scaleContinuous,
     serializeRGBA,
@@ -80,26 +80,6 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     return canvasGradient;
 }
 
-// Parsing is expensive and repeats per element per frame, so memoize by string; bounded for animated gradients.
-const GRADIENT_CACHE_LIMIT = 256;
-const gradientCache = new Map<string, Gradient | undefined>();
-
-/** Parses a CSS gradient string, memoizing the result within a bounded cache. */
-function parseGradientMemoized(value: string): Gradient | undefined {
-    if (gradientCache.has(value)) {
-        return gradientCache.get(value);
-    }
-
-    if (gradientCache.size >= GRADIENT_CACHE_LIMIT) {
-        gradientCache.clear();
-    }
-
-    const gradient = parseGradient(value);
-    gradientCache.set(value, gradient);
-
-    return gradient;
-}
-
 // Pattern tiles are position-independent, so one `CanvasPattern` per string serves every element and frame.
 const PATTERN_CACHE_LIMIT = 256;
 const patternCache = new Map<string, CanvasPattern | null>();
@@ -124,7 +104,7 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
         patternCache.clear();
     }
 
-    const pattern = parsePattern(value);
+    const pattern = parsePatternCached(value);
 
     if (!pattern) {
         patternCache.set(value, null);
@@ -185,7 +165,7 @@ export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, boun
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientMemoized(value);
+        const gradient = parseGradientCached(value);
 
         if (gradient) {
             ctx.fillStyle = toCanvasGradient(ctx, gradient, bounds);
@@ -208,7 +188,7 @@ export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bo
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientMemoized(value);
+        const gradient = parseGradientCached(value);
 
         if (gradient) {
             ctx.strokeStyle = toCanvasGradient(ctx, gradient, bounds);
