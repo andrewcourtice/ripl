@@ -26,12 +26,20 @@ export interface DOMElementResizeEvent {
 /** Whether the current environment has a `window` object (i.e. is a browser context). */
 export const hasWindow = typeof window !== 'undefined';
 
-/** Attaches a strongly-typed event listener to a DOM element and returns a disposable for cleanup. */
-export function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>): Disposable {
-    element.addEventListener(event, handler as EventListener);
+/**
+ * Attaches a strongly-typed event listener to a DOM element and returns a disposable for cleanup.
+ *
+ * @param element - The target to listen on.
+ * @param event - The event type to listen for.
+ * @param handler - The listener to invoke.
+ * @param options - Native `addEventListener` options, e.g. `{ capture: true, passive: true }`.
+ * @returns A disposable that removes the listener.
+ */
+export function onDOMEvent<TElement extends EventTarget, TEvent extends string & keyof DOMElementEventMap<TElement>>(element: TElement, event: TEvent, handler: DOMEventHandler<TElement, TEvent>, options?: AddEventListenerOptions): Disposable {
+    element.addEventListener(event, handler as EventListener, options);
 
     return {
-        dispose: () => element.removeEventListener(event, handler as EventListener),
+        dispose: () => element.removeEventListener(event, handler as EventListener, options),
     };
 }
 
