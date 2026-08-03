@@ -112,6 +112,26 @@ each digit doubled, as CSS specifies. `#f00` previously matched no parser at all
 nothing on every backend, so a shorthand fill silently painted the inherited or default colour.
 Colours that used to fall through to a default now resolve.
 
+**`PATTERNS.rgba`**, **`PATTERNS.hsla`** and **`PATTERNS.hsva`** — **behaviour**. An integer `0`
+alpha is accepted. The alternation matched `1`, `.5`, `0.5` and `50%` but had no integer branch, so
+`rgba(255, 0, 0, 0)` — the idiomatic fully-transparent form — matched no parser and resolved to
+nothing. Canvas hid it by falling through to a raw `fillStyle` assignment; the terminal painted it
+opaque. Fully-transparent paints that used to render now correctly render nothing.
+
+### Runtime
+
+**`Factory.set`** — **behaviour**. Copies property descriptors instead of spreading, so an accessor
+passed in stays an accessor. `@ripl/web` supplies `devicePixelRatio` as a live getter over
+`window.devicePixelRatio`; the spread invoked it once and froze the number, so no surface ever
+re-rasterised after a browser zoom or a move to a monitor with a different ratio. A platform layer
+can now supply any option as a getter and have it read live.
+
+**`interpolateImage`** and **`ImageElement.getBoundingBox`** — **behaviour**. Image sources are
+sized by naming each DOM constructor and skipping runtimes that never declare it. Only
+`OffscreenCanvas` was guarded before, so the first `instanceof HTMLImageElement` threw a
+`ReferenceError` on any runtime without the DOM globals — `@ripl/node` hit it immediately. Sizing an
+unrecognised source still yields `[0, 0]`.
+
 ### Lifecycle
 
 **`Context.destroy`** — **behaviour**. Clears `renderedElements`, `renderElement`, and the
