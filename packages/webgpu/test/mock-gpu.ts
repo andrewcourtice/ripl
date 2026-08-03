@@ -45,6 +45,15 @@ export const GPU_BUFFER_USAGE = {
     QUERY_RESOLVE: 0x0200,
 } as const;
 
+/** `GPUTextureUsage` flag values, installed globally for source modules under test. */
+export const GPU_TEXTURE_USAGE = {
+    COPY_SRC: 0x01,
+    COPY_DST: 0x02,
+    TEXTURE_BINDING: 0x04,
+    STORAGE_BINDING: 0x08,
+    RENDER_ATTACHMENT: 0x10,
+} as const;
+
 function extractWriteBytes(data: ArrayBuffer | ArrayBufferView, dataOffset: number, size?: number): Uint8Array {
     if (data instanceof ArrayBuffer) {
         const byteLength = size ?? (data.byteLength - dataOffset);
@@ -100,6 +109,127 @@ export class MockGPUBuffer {
     /** Views the backing store as unsigned 32-bit integers, optionally limited to the first `count` values. */
     public asUint32(count?: number): Uint32Array {
         return new Uint32Array(this.data.buffer, 0, count ?? Math.floor(this.size / 4));
+    }
+
+}
+
+/** Minimal stand-in for a `GPUTexture` that records every view it hands out. */
+export class MockGPUTexture {
+
+    /** The descriptor passed to `createTexture`. */
+    public readonly descriptor: GPUTextureDescriptor;
+
+    /** Every view handed out by `createView`, in call order — a per-frame allocation shows up as unbounded growth. */
+    public readonly views: GPUTextureView[] = [];
+
+    /** Whether `destroy` has been called on this texture. */
+    public destroyed = false;
+
+    /** Texel width, from the descriptor's size. */
+    public readonly width: number;
+
+    /** Texel height, from the descriptor's size. */
+    public readonly height: number;
+
+    constructor(descriptor: GPUTextureDescriptor) {
+        const size = descriptor.size as number[];
+
+        this.descriptor = descriptor;
+        this.width = size[0] ?? 0;
+        this.height = size[1] ?? 0;
+    }
+
+    /** The texel format, as passed to `createTexture`. */
+    public get format(): GPUTextureFormat {
+        return this.descriptor.format;
+    }
+
+    /** The MSAA sample count, as passed to `createTexture`. */
+    public get sampleCount(): number {
+        return this.descriptor.sampleCount ?? 1;
+    }
+
+    /** Usage flags, as passed to `createTexture`. */
+    public get usage(): number {
+        return this.descriptor.usage;
+    }
+
+    /** Creates and records an opaque view token. */
+    public createView(): GPUTextureView {
+        const view = { label: `mock-texture-view-${this.views.length + 1}` } as unknown as GPUTextureView;
+
+        this.views.push(view);
+
+        return view;
+    }
+
+    /** Marks the texture as destroyed. */
+    public destroy(): void {
+        this.destroyed = true;
+    }
+
+}
+
+/**
+ * Minimal stand-in for a `GPUCanvasContext`, recording configuration and handing out a swap-chain
+ * texture. `getCurrentTexture` returns the same texture for the lifetime of a configuration, as a
+ * real swap chain does within a frame, so a test can count `createView` calls against it.
+ */
+export class MockGPUCanvasContext {
+
+    /** Every configuration passed to `configure`, in call order. */
+    public readonly configurations: GPUCanvasConfiguration[] = [];
+
+    /** Number of `unconfigure` calls — a `destroy` that leaves the swap chain configured reads as `0`. */
+    public unconfigureCount = 0;
+
+    /** Number of `getCurrentTexture` calls, in call order. */
+    public getCurrentTextureCount = 0;
+
+    private _canvas: HTMLCanvasElement | undefined;
+    private _currentTexture: MockGPUTexture | null = null;
+
+    constructor(canvas?: HTMLCanvasElement) {
+        this._canvas = canvas;
+    }
+
+    /** Whether the swap chain is currently configured. */
+    public get configured(): boolean {
+        return this.configurations.length > this.unconfigureCount;
+    }
+
+    /** This mock viewed through the real `GPUCanvasContext` type, for passing to source code under test. */
+    public get handle(): GPUCanvasContext {
+        return this as unknown as GPUCanvasContext;
+    }
+
+    /** Records the configuration and drops any texture from the previous one. */
+    public configure(configuration: GPUCanvasConfiguration): void {
+        this.configurations.push(configuration);
+        this._currentTexture = null;
+    }
+
+    /** Records an unconfigure and drops the current texture. */
+    public unconfigure(): void {
+        this.unconfigureCount += 1;
+        this._currentTexture = null;
+    }
+
+    /** Returns the swap-chain texture, sized from the backing canvas when one was supplied. */
+    public getCurrentTexture(): MockGPUTexture {
+        this.getCurrentTextureCount += 1;
+
+        if (!this._currentTexture) {
+            const format = this.configurations.at(-1)?.format ?? 'bgra8unorm';
+
+            this._currentTexture = new MockGPUTexture({
+                size: [this._canvas?.width ?? 0, this._canvas?.height ?? 0],
+                format,
+                usage: GPU_TEXTURE_USAGE.RENDER_ATTACHMENT,
+            });
+        }
+
+        return this._currentTexture;
     }
 
 }
@@ -179,6 +309,9 @@ export class MockGPURenderPassEncoder {
     /** Whether `end` has been called on this pass. */
     public ended = false;
 
+    /** The descriptor the pass was begun with, when one was supplied. */
+    public descriptor: GPURenderPassDescriptor | undefined;
+
     /** Records the active pipeline. */
     public setPipeline(pipeline: unknown): void {
         this.pipeline = pipeline;
@@ -230,10 +363,11 @@ export class MockGPUCommandEncoder {
     /** Every render pass begun on this encoder, in encode order. */
     public readonly renderPasses: MockGPURenderPassEncoder[] = [];
 
-    /** Begins and records a new mock render pass. */
-    public beginRenderPass(_descriptor?: GPURenderPassDescriptor): MockGPURenderPassEncoder {
+    /** Begins and records a new mock render pass, retaining its descriptor. */
+    public beginRenderPass(descriptor?: GPURenderPassDescriptor): MockGPURenderPassEncoder {
         const pass = new MockGPURenderPassEncoder();
 
+        pass.descriptor = descriptor;
         this.renderPasses.push(pass);
 
         return pass;
@@ -260,6 +394,9 @@ export class MockGPUDevice {
 
     /** Every command encoder created via `createCommandEncoder`, in creation order. */
     public readonly commandEncoders: MockGPUCommandEncoder[] = [];
+
+    /** Every texture created via `createTexture`, in creation order. */
+    public readonly textures: MockGPUTexture[] = [];
 
     /** This mock viewed through the real `GPUDevice` type, for passing to source code under test. */
     public get handle(): GPUDevice {
@@ -296,18 +433,43 @@ export class MockGPUDevice {
         return encoder;
     }
 
+    /** Creates and records a {@link MockGPUTexture}. */
+    public createTexture(descriptor: GPUTextureDescriptor): MockGPUTexture {
+        const texture = new MockGPUTexture(descriptor);
+
+        this.textures.push(texture);
+
+        return texture;
+    }
+
     /** Returns every created buffer whose usage includes the given flag. */
     public buffersWithUsage(usage: number): MockGPUBuffer[] {
         return this.buffers.filter(buffer => (buffer.usage & usage) !== 0);
     }
 
+    /** Every created texture that has not been destroyed — a leak reads as a non-empty list after teardown. */
+    public liveTextures(): MockGPUTexture[] {
+        return this.textures.filter(texture => !texture.destroyed);
+    }
+
 }
 
-/** Installs the `GPUBufferUsage` constants globally so GPU source modules can run outside a browser. */
+/** Installs the `GPUBufferUsage` and `GPUTextureUsage` constants globally so GPU source modules can run outside a browser. */
 export function installMockGPUGlobals(): void {
     if (typeof globalThis.GPUBufferUsage === 'undefined') {
         (globalThis as Record<string, unknown>).GPUBufferUsage = GPU_BUFFER_USAGE;
     }
+
+    if (typeof globalThis.GPUTextureUsage === 'undefined') {
+        (globalThis as Record<string, unknown>).GPUTextureUsage = GPU_TEXTURE_USAGE;
+    }
+}
+
+/** Creates a mock canvas context bound to `canvas`, installing the WebGPU constant globals alongside it. */
+export function createMockGPUCanvasContext(canvas?: HTMLCanvasElement): MockGPUCanvasContext {
+    installMockGPUGlobals();
+
+    return new MockGPUCanvasContext(canvas);
 }
 
 /** Creates a mock GPU device, installing the WebGPU constant globals the source under test depends on. */
@@ -333,4 +495,9 @@ export function createMockPipelineState(device: MockGPUDevice): PipelineState {
 /** Views a `GPUBuffer` produced by the mock device as its underlying {@link MockGPUBuffer}. */
 export function asMockBuffer(buffer: GPUBuffer): MockGPUBuffer {
     return buffer as unknown as MockGPUBuffer;
+}
+
+/** Views a `GPUTexture` produced by the mock device as its underlying {@link MockGPUTexture}. */
+export function asMockTexture(texture: GPUTexture): MockGPUTexture {
+    return texture as unknown as MockGPUTexture;
 }

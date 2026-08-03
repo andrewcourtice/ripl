@@ -139,4 +139,102 @@ describe('Camera', () => {
         expect(setCameraSpy).toHaveBeenCalledTimes(1);
     });
 
+    describe('Interaction attachment', () => {
+
+        // 3D-12: the touch block and `touch-action: none` were unconditional, and every handler
+        // called `preventDefault` before consulting the per-interaction flags — so a chart with
+        // interactions off still stopped a phone from scrolling past it, and did nothing else.
+        test('Should attach no touch listeners when every interaction is disabled', () => {
+            const context = createMockContext();
+            const element = context.element as unknown as HTMLElement;
+            const spy = vi.spyOn(element, 'addEventListener');
+
+            createCamera(context, {
+                interactions: {
+                    zoom: false,
+                    pivot: false,
+                    pan: false,
+                },
+            });
+
+            expect(spy.mock.calls.filter(([event]) => String(event).startsWith('touch'))).toHaveLength(0);
+        });
+
+        test('Should leave touch-action alone when every interaction is disabled', () => {
+            const context = createMockContext();
+            const element = context.element as unknown as HTMLElement;
+
+            createCamera(context, {
+                interactions: {
+                    zoom: false,
+                    pivot: false,
+                    pan: false,
+                },
+            });
+
+            expect(element.style.touchAction).toBe('');
+        });
+
+        test('Should attach touch listeners when an interaction is enabled', () => {
+            const context = createMockContext();
+            const element = context.element as unknown as HTMLElement;
+            const spy = vi.spyOn(element, 'addEventListener');
+
+            createCamera(context, {
+                interactions: {
+                    pivot: true,
+                },
+            });
+
+            expect(spy.mock.calls.filter(([event]) => String(event).startsWith('touch')).length).toBeGreaterThan(0);
+        });
+
+        test('Should claim touch-action when an interaction is enabled', () => {
+            const context = createMockContext();
+            const element = context.element as unknown as HTMLElement;
+
+            createCamera(context, {
+                interactions: true,
+            });
+
+            expect(element.style.touchAction).toBe('none');
+        });
+
+    });
+
+    describe('Degenerate inputs', () => {
+
+        // 3D-17: `orbit` divides by the eye-to-target distance, and a camera sitting on its target
+        // produced an all-NaN view matrix that blanked the scene permanently, with no error.
+        test('Should not produce a NaN position when orbiting a camera on its target', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                position: [0, 0, 0],
+                target: [0, 0, 0],
+            });
+
+            camera.orbit(0.2, 0.1);
+            camera.flush();
+
+            for (const value of camera.position) {
+                expect(Number.isNaN(value)).toBe(false);
+            }
+        });
+
+        test('Should not clip the target through the near plane on a full zoom-in', () => {
+            const context = createMockContext();
+            const camera = createCamera(context, {
+                position: [0, 0, 5],
+                target: [0, 0, 0],
+                near: 0.1,
+            });
+
+            camera.zoom(1000);
+            camera.flush();
+
+            expect(camera.position[2]).toBeCloseTo(0.1);
+        });
+
+    });
+
 });

@@ -46,6 +46,7 @@ export class GeometryManager {
     private _modelBindGroups: GPUBindGroup[] = [];
     private _modelUniformData = new Float32Array(MODEL_UNIFORM_SIZE / 4);
     private _poolIndex = 0;
+    private _destroyed = false;
 
     constructor(device: GPUDevice, pipelineState: PipelineState) {
         this._device = device;
@@ -69,9 +70,12 @@ export class GeometryManager {
      * Staging arrays and GPU buffers are reused between frames and only grow
      * (in powers of two) when the frame's geometry exceeds current capacity;
      * uploads and draw commands cover the used lengths, never the capacity.
+     *
+     * Returns `null` once {@link GeometryManager.destroy} has run: a destroyed manager allocates
+     * nothing, rather than quietly recreating buffers on a device it has already released.
      */
     public flush(): FlushResult | null {
-        if (this._submissions.length === 0) {
+        if (this._destroyed || this._submissions.length === 0) {
             return null;
         }
 
@@ -131,8 +135,9 @@ export class GeometryManager {
         };
     }
 
-    /** Releases all GPU buffers and pooled CPU staging arrays. */
+    /** Releases all GPU buffers and pooled CPU staging arrays, leaving the manager permanently inert. */
     public destroy(): void {
+        this._destroyed = true;
         this._vertexBuffer?.destroy();
         this._indexBuffer?.destroy();
 
@@ -146,6 +151,7 @@ export class GeometryManager {
         this._indexData = new Uint32Array(0);
         this._modelUniformBuffers.length = 0;
         this._modelBindGroups.length = 0;
+        this._submissions.length = 0;
     }
 
     private _ensureVertexCapacity(floatCount: number): void {

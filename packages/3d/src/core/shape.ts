@@ -1,3 +1,7 @@
+import {
+    contextIsContext3D,
+} from './context';
+
 import type {
     Context3D,
 } from './context';
@@ -7,6 +11,7 @@ import {
     mat4RotateX,
     mat4RotateY,
     mat4RotateZ,
+    mat4TransformDirection,
     mat4TransformPoint,
     mat4Translate,
     vec3Normalize,
@@ -35,8 +40,14 @@ import type {
     ColorRGBA,
     Context,
     ContextPath,
+    ElementInterpolationState,
+    ElementInterpolators,
     ElementIntersectionOptions,
     ElementOptions,
+    Interpolator,
+    LineCap,
+    LineJoin,
+    Matrix,
 } from '@ripl/core';
 
 import {
@@ -56,6 +67,41 @@ export interface Face3D {
     normal?: Vector3;
 }
 
+/**
+ * The 2D drawing state resolved for an element at the moment its faces were projected.
+ *
+ * A CPU-rendered face is buffered and painted at the end of the frame, long after the element's
+ * own `restore()` has unwound everything it applied, so the state has to travel with the face.
+ */
+export interface ProjectedFaceState3D {
+    /** The accumulated alpha: the element's own opacity composited under every ancestor group's. */
+    opacity: number;
+    /** The compositing operation in effect. */
+    globalCompositeOperation: unknown;
+    /** The filter in effect. */
+    filter: string;
+    /** The shadow blur radius in effect. */
+    shadowBlur: number;
+    /** The shadow color in effect. */
+    shadowColor: string;
+    /** The horizontal shadow offset in effect. */
+    shadowOffsetX: number;
+    /** The vertical shadow offset in effect. */
+    shadowOffsetY: number;
+    /** The line cap in effect for stroked face edges. */
+    lineCap: LineCap;
+    /** The line join in effect for stroked face edges. */
+    lineJoin: LineJoin;
+    /** The line dash pattern in effect for stroked face edges. */
+    lineDash: number[];
+    /** The line dash offset in effect for stroked face edges. */
+    lineDashOffset: number;
+    /** The miter limit in effect for stroked face edges. */
+    miterLimit: number;
+    /** The element's composed 2D world transform, or `null` when it is the identity. */
+    transform: Matrix | null;
+}
+
 /** A projected face ready for 2D rendering with screen-space points, fill/stroke styles, and depth. */
 export interface ProjectedFace3D {
     /** The face's screen-space points, each carrying a depth component. */
@@ -68,6 +114,12 @@ export interface ProjectedFace3D {
     lineWidth: number | undefined;
     /** The average projected depth of the face, used for back-to-front sorting. */
     depth: number;
+    /**
+     * The drawing state to paint the face with, captured when it was projected. Faces sharing one
+     * state object are painted in a single scope, so identity matters. Absent when the context
+     * does not defer its face drawing.
+     */
+    state?: ProjectedFaceState3D;
 }
 
 /** State interface for a 3D shape, defining position and rotation around each axis. */
@@ -88,6 +140,11 @@ export interface Shape3DState extends BaseElementState {
 
 /** Options for constructing a 3D shape, with all state properties optional. */
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
+
+const DEFAULT_FILL_STYLE = '#888888';
+
+// The GPU mesh needs numeric channels, so an unparseable fill degrades to the default grey there.
+const DEFAULT_MESH_COLOR: ColorRGBA = [136, 136, 136, 1];
 
 /**
  * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
@@ -161,7 +218,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationZ', value);
     }
 
-    /** The stacking order, derived from the shape's projected depth (nearer shapes sort above farther ones). Not settable on 3D shapes. */
+    /**
+     * The stacking order, derived from the depth of the shape's **nearest projected face** — the
+     * one the painter's algorithm draws last, so a hit test resolves to the shape whose geometry is
+     * actually on top. Not settable on 3D shapes.
+     */
     public override get zIndex(): number {
         return -this._depth;
     }
@@ -189,6 +250,27 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this._getCachedFaces.invalidate();
     }
 
+    /**
+     * Creates an interpolator that transitions from the current state towards the target state,
+     * invalidating this shape's cached geometry on every tick.
+     *
+     * The base tick writes straight to the state bag, which is the one path that bypasses
+     * {@link Shape3D}'s `setStateValue` override — the face cache's only invalidation hook. Without
+     * this a transition on a geometry property (`size`, `radius`, `segments`, …) finished with the
+     * new state value but the mesh still built from the old one.
+     */
+    public override interpolate(
+        newState: Partial<ElementInterpolationState<TState>>,
+        interpolators: Partial<ElementInterpolators<TState>> = {}
+    ): Interpolator<void> {
+        const tick = super.interpolate(newState, interpolators);
+
+        return time => {
+            tick(time);
+            this._getCachedFaces.invalidate();
+        };
+    }
+
     protected computeFaces(): Face3D[] {
         return [];
     }
@@ -213,6 +295,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     /** Returns the projected depth of this shape's origin in the given 3D context. */
     public getDepth(context: Context3D): number {
         return context.project([this.x, this.y, this.z])[2];
+    }
+
+    // The box is projected through the context's camera, which no element state version can see.
+    protected override get _boundsCacheable(): boolean {
+        return false;
     }
 
     public _getLocalBoundingBox(): Box {
@@ -251,46 +338,57 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     public render(context: Context): void {
+        if (!contextIsContext3D(context)) {
+            throw new Error(`Cannot render <${this.type}> into a "${context.type}" context: a Shape3D needs a Context3D for projection, lighting and mesh submission. Create the scene with createContext from @ripl/3d or @ripl/webgpu.`);
+        }
+
         super.render(context, () => {
-            const ctx = context as Context3D;
             const faces = this._getCachedFaces();
-            const baseFillStyle = this.fill || '#888888';
-            const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
+            const baseFillStyle = this.fill || DEFAULT_FILL_STYLE;
+            const baseRGBA = parseColor(baseFillStyle);
             const matrix = this.getModelMatrix();
 
             this.hitPath = undefined;
 
-            // This is noop for CPU render strategies. Safe to call on all paths.
-            ctx.submitMesh({
-                vertices: triangulateFacesFlat(faces, baseRGBA),
+            if (context.renderStrategy !== 'gpu') {
+                return this._renderCPU(context, faces, baseRGBA, baseFillStyle, matrix);
+            }
+
+            context.submitMesh({
+                vertices: triangulateFacesFlat(faces, baseRGBA ?? DEFAULT_MESH_COLOR),
                 indices: triangulateFacesIndices(faces),
                 modelMatrix: matrix,
                 normalMatrix: matrix, // Valid when model has no non-uniform scale
             });
 
-            if (ctx.renderStrategy === 'gpu') {
-                this._renderGPU(ctx, faces, matrix);
-            } else {
-                this._renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
-            }
+            this._renderGPU(context, faces, matrix);
         });
     }
 
-    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
+    // No back-face culling, matching the GPU pipeline's `cullMode: 'none'`: a face's winding is
+    // whatever the element author emitted, and rejecting on it would silently drop geometry from
+    // any shape that is not a closed, consistently wound solid. The cost is that every face of a
+    // closed shape is filled, and with `fill` alpha below 1 the hidden ones bleed through.
+    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
 
-        let totalDepth = 0;
+        // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
+        const state = context.captureFaceState(this.getWorldTransform());
+
+        let nearestDepth = Infinity;
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
-            const normal = face.normal ?? computeFaceNormal(transformed);
+            const normal = face.normal
+                ? vec3Normalize(mat4TransformDirection(matrix, face.normal))
+                : computeFaceNormal(transformed);
             const brightness = computeFaceBrightness(normal, normalizedLight, true);
             const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
             const points = transformed.map(vertex => context.project(vertex));
             const depth = numberSum(points, p => p[2]) / points.length;
 
-            totalDepth += depth;
+            nearestDepth = Math.min(nearestDepth, depth);
 
             context.faceBuffer.push({
                 points,
@@ -298,29 +396,32 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 strokeStyle: this.stroke,
                 lineWidth: this.lineWidth,
                 depth,
+                state,
             });
 
             this._traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
-        this._depth = faces.length > 0
-            ? totalDepth / faces.length
-            : 0;
+        this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
     private _renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
 
+        let nearestDepth = Infinity;
+
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
             const points = transformed.map(vertex => context.project(vertex));
+
+            nearestDepth = Math.min(nearestDepth, numberSum(points, p => p[2]) / points.length);
 
             this._traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
-        this._depth = context.project([this.x, this.y, this.z])[2];
+        this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
     private _traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {
