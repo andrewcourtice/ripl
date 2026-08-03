@@ -173,6 +173,12 @@ export interface ContextExport {
      * asynchronously (e.g. SVG) share one signature; pixel-backed contexts resolve immediately.
      */
     toImage(): Promise<ImageData>;
+    /**
+     * Releases anything the export is still holding — above all the object URL handed out by
+     * {@link ContextExport.toURL}, which is otherwise pinned for the document's lifetime. Optional,
+     * so an export that holds nothing may omit it; implementations must be safe to call repeatedly.
+     */
+    release?(): void;
 }
 
 /** Options for creating a text element within the context. */
@@ -261,8 +267,6 @@ export interface BaseState {
 
 /** Options for measuring text dimensions. */
 export type MeasureTextOptions = {
-    /** Canvas 2D context used to perform the measurement. */
-    context?: CanvasRenderingContext2D;
     /** CSS font shorthand applied before measuring. */
     font?: CanvasRenderingContext2D['font'];
     /** Horizontal text alignment used while measuring. */

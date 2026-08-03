@@ -21,6 +21,7 @@ import {
 
 import {
     mockCanvasContext,
+    mockCanvasState,
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -85,7 +86,7 @@ describe('Shape2D', () => {
         expect(rect.intersectsWith(200, 200)).toBe(false);
     });
 
-    test('Should map a device-space hit point into local space using the device pixel ratio', () => {
+    test('Should map a surface-space hit point into local space using the context scale', () => {
         const rect = createRect({
             x: 0,
             y: 0,
@@ -97,12 +98,16 @@ describe('Shape2D', () => {
 
         const recorded: [number, number][] = [];
 
-        // dpr = 2: scaleDPR maps logical → device (×2); invert maps device → logical (÷2).
-        const scaleDPR = Object.assign((value: number) => value * 2, { invert: (value: number) => value / 2 });
+        // A 2x surface: scaleX/scaleY map logical onto device pixels, as rescaleCanvas does.
+        const scale = (value: number) => value * 2;
 
         (rect as unknown as { context: unknown }).context = {
             hitTestHonorsTransform: false,
-            scaleDPR,
+            scaleX: scale,
+            scaleY: scale,
+            toLogicalPoint: (x: number, y: number) => [x / 2, y / 2],
+            toSurfacePoint: (x: number, y: number) => [x * 2, y * 2],
+            layer: (body: () => unknown) => body(),
             isPointInStroke: () => false,
             isPointInPath: (_path: unknown, x: number, y: number) => {
                 recorded.push([x, y]);
@@ -111,11 +116,76 @@ describe('Shape2D', () => {
         };
         (rect as unknown as { path: unknown }).path = {};
 
-        // Device point for logical (60, 20) at dpr 2 → (120, 40).
+        // Surface point for logical (60, 20) at 2x → (120, 40).
         rect.intersectsWith(120, 40);
 
-        // device (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → device (20,40).
+        // surface (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → surface (20,40).
         expect(recorded.at(-1)).toEqual([20, 40]);
+    });
+
+    // A hit test runs after the frame's trailing restore, so the backend stroked at the default width of 1.
+    test('Should apply the element line style before a stroke hit test', () => {
+        const stub = mockCanvasState(mockCanvasContext());
+        const host = document.createElement('div');
+
+        document.body.appendChild(host);
+
+        const context = createContext(host);
+        const widths: number[] = [];
+
+        stub.isPointInStroke.mockImplementation(() => {
+            widths.push(stub.lineWidth);
+            return false;
+        });
+
+        const rect = createRect({
+            x: 10,
+            y: 10,
+            width: 100,
+            height: 100,
+            stroke: '#ff0000',
+            lineWidth: 24,
+            pointerEvents: 'stroke',
+        });
+
+        rect.render(context);
+
+        expect(stub.lineWidth).toBe(1);
+
+        rect.intersectsWith(10, 10, { isPointer: true });
+
+        // jsdom's isPointInStroke is a constant false: this pins the width reaching the backend, not the hit.
+        expect(widths[0]).toBe(24);
+
+        context.destroy();
+        host.remove();
+    });
+
+    test('Should restore the line style after a stroke hit test', () => {
+        const stub = mockCanvasState(mockCanvasContext());
+        const host = document.createElement('div');
+
+        document.body.appendChild(host);
+
+        const context = createContext(host);
+
+        const rect = createRect({
+            x: 10,
+            y: 10,
+            width: 100,
+            height: 100,
+            stroke: '#ff0000',
+            lineWidth: 24,
+            pointerEvents: 'stroke',
+        });
+
+        rect.render(context);
+        rect.intersectsWith(10, 10, { isPointer: true });
+
+        expect(stub.lineWidth).toBe(1);
+
+        context.destroy();
+        host.remove();
     });
 
     test('Should return false for pointerEvents "none" with isPointer', () => {

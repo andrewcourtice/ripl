@@ -142,6 +142,11 @@ export default tseslint.config(
     eslint.configs.recommended,
     ...tseslint.configs.recommended,
     includeIgnoreFile(gitignorePath),
+
+    // Audit reports quote reproductions and test sketches verbatim; they are findings, not source.
+    {
+        ignores: ['docs/audits/**'],
+    },
     {
         name: 'ripl/main',
         plugins: {

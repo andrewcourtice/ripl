@@ -30,14 +30,25 @@ function basicContextSetter<TKey extends GetMutableKeys<Context>>(key: TKey) {
     };
 }
 
-/** Maps element state properties to their corresponding context setter functions. */
+function multiplicativeOpacitySetter(context: Context, value: number) {
+    context.opacity *= value;
+}
+
+/**
+ * Maps element state properties to their corresponding context setter functions.
+ *
+ * Every property assigns except `opacity`, which composites **multiplicatively**: an element's
+ * own alpha stacks under whatever its ancestor groups already accumulated rather than replacing
+ * it, matching how the DOM composites nested `opacity`. Note this is the *operation*'s contract,
+ * not {@link Context.opacity}'s — assigning that property still replaces.
+ */
 export const CONTEXT_OPERATIONS = {
     direction: basicContextSetter('direction'),
     fill: basicContextSetter('fill'),
     filter: basicContextSetter('filter'),
     font: basicContextSetter('font'),
     fontKerning: basicContextSetter('fontKerning'),
-    opacity: basicContextSetter('opacity'),
+    opacity: multiplicativeOpacitySetter,
     globalCompositeOperation: basicContextSetter('globalCompositeOperation'),
     lineCap: basicContextSetter('lineCap'),
     lineDash: basicContextSetter('lineDash'),

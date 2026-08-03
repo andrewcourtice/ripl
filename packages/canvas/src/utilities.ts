@@ -310,11 +310,12 @@ export function canvasDrawImage(ctx: CanvasRenderingContext2D, image: CanvasImag
     return ctx.drawImage(image, x, y);
 }
 
-/** Measures text dimensions using an optional font override. */
+/** Measures text dimensions using the context's alignment and baseline, and an optional font override. */
 export function canvasMeasureText(ctx: CanvasRenderingContext2D, text: string, font?: string): TextMetrics {
     return measureText(text, {
-        context: ctx,
         font: font ?? ctx.font,
+        textAlign: ctx.textAlign,
+        textBaseline: ctx.textBaseline,
     });
 }
 

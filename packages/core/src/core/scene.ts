@@ -135,7 +135,8 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
             throw new Error('Scene requires a Context instance or factory.createContext to be set. Use @ripl/web or call factory.set() with a createContext implementation.');
         }
 
-        const font = !typeIsNil(globalThis.HTMLElement) && context.element instanceof globalThis.HTMLElement
+        // `Element`, not `HTMLElement`: an SVGSVGElement is not one, so SVG scenes inherited nothing.
+        const font = !typeIsNil(globalThis.Element) && context.element instanceof globalThis.Element
             ? factory.getComputedStyle(context.element).font
             : undefined;
 
@@ -148,6 +149,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this._rebuild();
 
         const requestFrame = createFrameBuffer();
+
+        // A rebuild scheduled by the last mutation must not run against a destroyed scene.
+        this.retain({ dispose: requestFrame.cancel });
 
         const rebuild = () => {
             this._rebuild();

@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+    parseColor,
     parseHEX,
     parseHSL,
     parseHSLA,
@@ -48,6 +49,43 @@ describe('Color', () => {
             expect(green).toBe(0);
             expect(blue).toBe(255);
             expect(alpha).toBe(2 / 3);
+        });
+
+        test('Should parse a 3 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(1);
+        });
+
+        test('Should parse a 4 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c8');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(136 / 255);
+        });
+
+        test('Should resolve a shorthand HEX color through parseColor', () => {
+            expect(parseColor('#f00')).toEqual([255, 0, 0, 1]);
+        });
+
+        test('Should reject a HEX color of an unsupported length', () => {
+            expect(parseColor('#ff000')).toBeUndefined();
+            expect(parseColor('#ff')).toBeUndefined();
         });
 
         test('Should parse an RGB color to RGBA', () => {
@@ -292,6 +330,22 @@ describe('Color', () => {
             const hsl = serializeHSL(0, 0, 0, 1);
 
             expect(hsl).toBe('hsl(0, 0%, 0%)');
+        });
+
+    });
+
+    describe('Zero alpha', () => {
+
+        // The alpha alternation had no integer branch, so the idiomatic fully-transparent form
+        // parsed as nothing at all and every backend painted it opaque.
+        test('Should parse an integer zero alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0)')).toEqual([255, 0, 0, 0]);
+            expect(parseColor('hsla(0, 100%, 50%, 0)')).toEqual([255, 0, 0, 0]);
+        });
+
+        test('Should still parse a fractional and a percentage alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0.5)')).toEqual([255, 0, 0, 0.5]);
+            expect(parseColor('rgba(255, 0, 0, 50%)')).toEqual([255, 0, 0, 0.5]);
         });
 
     });

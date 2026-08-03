@@ -264,27 +264,30 @@ export class Renderer extends EventBus<RendererEventMap> {
 
         const deltaTime = this._currentTime - this._previousTime;
 
-        // Tick fires every frame, even skipped-paint ones, so time-based consumers stay live.
-        this.emit('tick', {
-            time: this._currentTime,
-            deltaTime,
-        });
+        try {
+            // Tick fires every frame, even skipped-paint ones, so time-based consumers stay live.
+            this.emit('tick', {
+                time: this._currentTime,
+                deltaTime,
+            });
 
-        this._previousTime = this._currentTime;
+            this._previousTime = this._currentTime;
 
-        // Skip the paint but keep the loop; the context is untouched so the previous frame persists.
-        if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
+            // Skip the paint but keep the loop; the context is untouched so the previous frame persists.
+            if (!this._scene.needsRender && this._transitionMap.size === 0 && !this._debugOptions.fps) {
+                return;
+            }
+
+            this._scene.context.batch(() => {
+                this._renderBuffer();
+                this._renderDebugOverlay(deltaTime);
+            });
+
+            this._scene.$consumeRender();
+        } finally {
+            // One throwing element must not freeze every surface for the rest of the session.
             this._handle = factory.requestAnimationFrame(() => this._tick());
-            return;
         }
-
-        this._scene.context.batch(() => {
-            this._renderBuffer();
-            this._renderDebugOverlay(deltaTime);
-        });
-
-        this._scene.$consumeRender();
-        this._handle = factory.requestAnimationFrame(() => this._tick());
     }
 
     /**
