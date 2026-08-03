@@ -813,10 +813,10 @@ export class Element<
     /** Tests whether a point intersects this element’s bounding box. Override for custom hit testing. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public intersectsWith(x: number, y: number, options?: Partial<ElementIntersectionOptions>) {
-        // The point arrives in device pixels; the bounding box is logical, so map it back first.
-        const dpr = this.context?.scaleDPR(1) ?? 1;
+        // The point arrives in the context's surface space; the box is logical, so map it back.
+        const point: [number, number] = this.context?.toLogicalPoint(x, y) ?? [x, y];
 
-        return isPointInBox([x / dpr, y / dpr], this.getBoundingBox());
+        return isPointInBox(point, this.getBoundingBox());
     }
 
     /** Creates an interpolator that transitions from the current state towards the target state, supporting keyframes and custom interpolator overrides. */

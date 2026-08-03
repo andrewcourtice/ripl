@@ -85,7 +85,7 @@ describe('Shape2D', () => {
         expect(rect.intersectsWith(200, 200)).toBe(false);
     });
 
-    test('Should map a device-space hit point into local space using the device pixel ratio', () => {
+    test('Should map a surface-space hit point into local space using the context scale', () => {
         const rect = createRect({
             x: 0,
             y: 0,
@@ -97,12 +97,15 @@ describe('Shape2D', () => {
 
         const recorded: [number, number][] = [];
 
-        // dpr = 2: scaleDPR maps logical → device (×2); invert maps device → logical (÷2).
-        const scaleDPR = Object.assign((value: number) => value * 2, { invert: (value: number) => value / 2 });
+        // A 2x surface: scaleX/scaleY map logical onto device pixels, as rescaleCanvas does.
+        const scale = (value: number) => value * 2;
 
         (rect as unknown as { context: unknown }).context = {
             hitTestHonorsTransform: false,
-            scaleDPR,
+            scaleX: scale,
+            scaleY: scale,
+            toLogicalPoint: (x: number, y: number) => [x / 2, y / 2],
+            toSurfacePoint: (x: number, y: number) => [x * 2, y * 2],
             isPointInStroke: () => false,
             isPointInPath: (_path: unknown, x: number, y: number) => {
                 recorded.push([x, y]);
@@ -111,10 +114,10 @@ describe('Shape2D', () => {
         };
         (rect as unknown as { path: unknown }).path = {};
 
-        // Device point for logical (60, 20) at dpr 2 → (120, 40).
+        // Surface point for logical (60, 20) at 2x → (120, 40).
         rect.intersectsWith(120, 40);
 
-        // device (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → device (20,40).
+        // surface (120,40) → logical (60,20) → inverse translate(-50) → local (10,20) → surface (20,40).
         expect(recorded.at(-1)).toEqual([20, 40]);
     });
 

@@ -1,4 +1,6 @@
 import {
+    afterEach,
+    beforeEach,
     describe,
     expect,
     test,
@@ -6,10 +8,31 @@ import {
 } from 'vitest';
 
 import {
+    Box,
+    Context,
     createElement,
     createGroup,
+    factory,
+    scaleContinuous,
     typeIsElement,
 } from '../../src';
+
+import {
+    mockCanvasContext,
+} from '@ripl/test-utils';
+
+/** Concrete base context whose surface scale is settable, so both backend conventions are testable. */
+class TestContext extends Context {
+
+    constructor(width: number, height: number, surfaceScale: number) {
+        super('test', document.createElement('div'));
+
+        this.rescale(width, height);
+        this.scaleX = scaleContinuous([0, width], [0, width * surfaceScale]);
+        this.scaleY = scaleContinuous([0, height], [0, height * surfaceScale]);
+    }
+
+}
 
 describe('Element', () => {
 
@@ -217,6 +240,49 @@ describe('Element', () => {
         expect(group.children).toHaveLength(1);
         el.destroy();
         expect(group.children).toHaveLength(0);
+    });
+
+});
+
+describe('Element.intersectsWith', () => {
+
+    const dpr = 2;
+
+    function boxedElement(context: Context) {
+        const el = createElement('rect', {});
+
+        vi.spyOn(el, 'getBoundingBox').mockReturnValue(new Box(42, 100, 52, 150));
+        (el as unknown as { context: Context }).context = context;
+
+        return el;
+    }
+
+    beforeEach(() => {
+        mockCanvasContext();
+        factory.set({ devicePixelRatio: dpr });
+    });
+
+    afterEach(() => {
+        factory.set({ devicePixelRatio: 1 });
+        vi.restoreAllMocks();
+    });
+
+    // A context that leaves scaleX/scaleY identity (SVG) never scales the point up, so dividing
+    // by the device pixel ratio put every hit at half coordinates.
+    test('Should hit an unscaled surface at the point it was given', () => {
+        const context = new TestContext(400, 300, 1);
+        const el = boxedElement(context);
+
+        expect(el.intersectsWith(125, 47)).toBe(true);
+        expect(el.intersectsWith(250, 94)).toBe(false);
+    });
+
+    test('Should map the point back through the surface scale on a device-scaled surface', () => {
+        const context = new TestContext(400, 300, dpr);
+        const el = boxedElement(context);
+
+        expect(el.intersectsWith(250, 94)).toBe(true);
+        expect(el.intersectsWith(125, 47)).toBe(false);
     });
 
 });

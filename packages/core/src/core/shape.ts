@@ -107,12 +107,10 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             const inverse = worldTransform && matrixInvert(worldTransform);
 
             if (inverse) {
-                // The point is in device pixels but the world transform is logical, so scale by DPR.
-                const dpr = context.scaleDPR(1);
-                const [localX, localY] = matrixApplyToPoint(inverse, [x / dpr, y / dpr]);
+                // The point is in surface space but the world transform is logical, so round-trip it.
+                const local = matrixApplyToPoint(inverse, context.toLogicalPoint(x, y));
 
-                x = localX * dpr;
-                y = localY * dpr;
+                [x, y] = context.toSurfacePoint(local[0], local[1]);
             }
         }
 

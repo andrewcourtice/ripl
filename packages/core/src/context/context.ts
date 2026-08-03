@@ -74,6 +74,15 @@ interface GroupScope {
     element?: RenderElement;
 }
 
+function getAxisScale(scale: Scale<number, number>): number {
+    const factor = scale(1) - scale(0);
+
+    // An unsized context maps every input onto 0, which would collapse the point onto the origin.
+    return Number.isFinite(factor) && factor !== 0
+        ? factor
+        : 1;
+}
+
 /** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     return factory.measureText(value, options);
@@ -641,6 +650,35 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     // eslint-disable-next-line id-length
     public transform(a: number, b: number, c: number, d: number, e: number, f: number): void {
         // noop
+    }
+
+    /**
+     * Maps a point from surface space — the space pointer coordinates arrive in, as produced by
+     * {@link Context.scaleX} and {@link Context.scaleY} — into the logical space elements are
+     * authored in.
+     *
+     * Backends disagree on what surface space is: canvas maps logical coordinates onto device
+     * pixels while SVG leaves them identity, so hit testing has to invert what *this* context
+     * actually does rather than assume the device pixel ratio.
+     *
+     * @param x - X coordinate in surface space.
+     * @param y - Y coordinate in surface space.
+     * @returns The `[x, y]` pair in logical space.
+     */
+    public toLogicalPoint(x: number, y: number): [number, number] {
+        return [x / getAxisScale(this.scaleX), y / getAxisScale(this.scaleY)];
+    }
+
+    /**
+     * Maps a point from the logical space elements are authored in back into surface space.
+     * The inverse of {@link Context.toLogicalPoint}.
+     *
+     * @param x - X coordinate in logical space.
+     * @param y - Y coordinate in logical space.
+     * @returns The `[x, y]` pair in surface space.
+     */
+    public toSurfacePoint(x: number, y: number): [number, number] {
+        return [x * getAxisScale(this.scaleX), y * getAxisScale(this.scaleY)];
     }
 
     /** Measures text dimensions using the context's current font or an optional override. */
