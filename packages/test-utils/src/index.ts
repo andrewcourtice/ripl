@@ -5,4 +5,8 @@ export {
     polyfillPath2D,
 } from './canvas';
 
-export type { MockTextMetricsOptions } from './canvas';
+export type {
+    MockCanvasMatrix,
+    MockCanvasStateStub,
+    MockTextMetricsOptions,
+} from './canvas';

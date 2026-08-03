@@ -196,23 +196,63 @@ const STATEFUL_CANVAS_PROPERTIES = [
     'textBaseline',
 ] as const;
 
+/** A 2D affine transform as the `[a, b, c, d, e, f]` tuple every canvas transform call composes into. */
+export type MockCanvasMatrix = [number, number, number, number, number, number];
+
+/** The transform and state-stack readouts {@link mockCanvasState} adds to a canvas stub. */
+export interface MockCanvasStateStub {
+    /**
+     * The current transformation matrix as `[a, b, c, d, e, f]`, composed from every
+     * `translate`/`scale`/`rotate`/`transform`/`setTransform`/`resetTransform` call and saved and
+     * restored alongside the drawing state.
+     */
+    getMatrix(): MockCanvasMatrix;
+    /** The number of `save()` calls not yet matched by a `restore()` — a state leak is a non-zero reading between frames. */
+    getSaveDepth(): number;
+}
+
+const IDENTITY_MATRIX: MockCanvasMatrix = [1, 0, 0, 1, 0, 0];
+
+/** Post-multiplies `matrix` by `operand`, matching how a canvas accumulates its CTM. */
+function multiplyMatrix(matrix: MockCanvasMatrix, operand: MockCanvasMatrix): MockCanvasMatrix {
+    return [
+        matrix[0] * operand[0] + matrix[2] * operand[1],
+        matrix[1] * operand[0] + matrix[3] * operand[1],
+        matrix[0] * operand[2] + matrix[2] * operand[3],
+        matrix[1] * operand[2] + matrix[3] * operand[3],
+        matrix[0] * operand[4] + matrix[2] * operand[5] + matrix[4],
+        matrix[1] * operand[4] + matrix[3] * operand[5] + matrix[5],
+    ];
+}
+
 /**
  * Upgrades a {@link mockCanvasContext} stub so `save`/`restore` actually push and pop the drawing
- * state, the way a real `CanvasRenderingContext2D` does.
+ * state and the transformation matrix, the way a real `CanvasRenderingContext2D` does, and adds
+ * {@link MockCanvasStateStub.getMatrix} / {@link MockCanvasStateStub.getSaveDepth} readouts.
  *
- * The default stub's `save`/`restore` are no-ops, which structurally hides every state-stack defect:
- * a test cannot tell a context that correctly restores its paint from one that never restores
- * anything. Use this whenever a test asserts what the drawing state is *after* a scope closes.
+ * The default stub's `save`/`restore` are no-ops and it has no CTM, which structurally hides every
+ * state-stack and transform defect: a test cannot tell a context that correctly restores its paint
+ * from one that never restores anything, nor observe where a draw call actually landed. Use this
+ * whenever a test asserts the drawing state *after* a scope closes, the transform in force at a
+ * draw call, or that a frame left no save outstanding.
  *
  * @param stub - The context stub returned by {@link mockCanvasContext}.
- * @returns The same stub, for chaining.
+ * @returns The same stub, widened with the transform and state-stack readouts, for chaining.
  */
-export function mockCanvasState<TStub extends object>(stub: TStub): TStub {
+export function mockCanvasState<TStub extends object>(stub: TStub): TStub & MockCanvasStateStub {
     const target = stub as Record<string, unknown>;
     const stack: Record<string, unknown>[] = [];
+    const matrices: MockCanvasMatrix[] = [];
+
+    let matrix: MockCanvasMatrix = [...IDENTITY_MATRIX];
+
+    const compose = (operand: MockCanvasMatrix) => {
+        matrix = multiplyMatrix(matrix, operand);
+    };
 
     target.save = vi.fn(() => {
         stack.push(Object.fromEntries(STATEFUL_CANVAS_PROPERTIES.map(key => [key, target[key]])));
+        matrices.push([...matrix]);
     });
 
     target.restore = vi.fn(() => {
@@ -221,7 +261,34 @@ export function mockCanvasState<TStub extends object>(stub: TStub): TStub {
         if (state) {
             Object.assign(target, state);
         }
+
+        matrix = matrices.pop() ?? matrix;
     });
 
-    return stub;
+    target.translate = vi.fn((x: number, y: number) => compose([1, 0, 0, 1, x, y]));
+    target.scale = vi.fn((x: number, y: number) => compose([x, 0, 0, y, 0, 0]));
+
+    target.rotate = vi.fn((angle: number) => {
+        const sin = Math.sin(angle);
+        const cos = Math.cos(angle);
+
+        compose([cos, sin, -sin, cos, 0, 0]);
+    });
+
+    // eslint-disable-next-line id-length
+    target.transform = vi.fn((a: number, b: number, c: number, d: number, e: number, f: number) => compose([a, b, c, d, e, f]));
+
+    // eslint-disable-next-line id-length
+    target.setTransform = vi.fn((a: number, b: number, c: number, d: number, e: number, f: number) => {
+        matrix = [a, b, c, d, e, f];
+    });
+
+    target.resetTransform = vi.fn(() => {
+        matrix = [...IDENTITY_MATRIX];
+    });
+
+    target.getMatrix = () => [...matrix] as MockCanvasMatrix;
+    target.getSaveDepth = () => stack.length;
+
+    return stub as TStub & MockCanvasStateStub;
 }
