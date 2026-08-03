@@ -6,8 +6,9 @@ factory.set({
     requestAnimationFrame: (cb: FrameRequestCallback) => window.requestAnimationFrame(cb),
     cancelAnimationFrame: (handle: number) => window.cancelAnimationFrame(handle),
     now: () => performance.now(),
+    // Read eagerly by the spread in `factory.set`, so it has to survive a `// @vitest-environment node` file.
     get devicePixelRatio() {
-        return window.devicePixelRatio ?? 1;
+        return typeof window === 'undefined' ? 1 : window.devicePixelRatio ?? 1;
     },
     getComputedStyle: (el: unknown) => window.getComputedStyle(el as Element),
     createElement: (tagName: string) => document.createElement(tagName),
