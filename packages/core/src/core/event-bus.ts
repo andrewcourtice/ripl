@@ -85,7 +85,8 @@ export class Event<TData = undefined> {
 /** A typed pub/sub event system with parent-chain bubbling, disposable subscriptions, and self-filtering. */
 export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
-    #destroyed = false;
+    // Not a `#private` field: those throw when accessed through a Proxy, which breaks Vue's `reactive()`.
+    private _isDestroyed = false;
 
     private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
@@ -174,11 +175,11 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
     /** Emits a `destroyed` event, clears all listeners, and disposes retained resources. Idempotent: a second call is a no-op, so a listener registered after teardown is not woken by it. */
     public destroy() {
-        if (this.#destroyed) {
+        if (this._isDestroyed) {
             return;
         }
 
-        this.#destroyed = true;
+        this._isDestroyed = true;
 
         this.emit('destroyed', null);
         this._listeners.clear();
