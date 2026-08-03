@@ -163,7 +163,152 @@ _No entries yet._
 
 ## @ripl/terminal
 
-_No entries yet._
+Almost every entry here changes the **bytes written to the terminal**. If you snapshot terminal
+output, expect to re-record.
+
+### Paint resolution
+
+**`colorToAnsiFg`** and **`colorToAnsiBg`** — **API**, return type widened to `string | undefined`,
+and **behaviour**. `''` used to mean both "transparent" and "unparseable", and `applyFill` painted
+for both, so a `transparent` fill drew solid braille. The two are now distinct: `undefined` means
+*do not paint* (`''`, `none`, `transparent`, or zero effective alpha) and `''` means *paint, but
+uncolored* (a real color this backend cannot resolve, e.g. `currentColor`). Both take an optional
+second `opacity` argument. A caller that assigned the result straight into a `string` must handle
+`undefined` — treat it as "skip this paint".
+
+**`colorToAnsiFg`** / **`colorToAnsiBg`** — **behaviour**. Resolution now covers the 148 CSS named
+colors, and follows a gradient to its first stop and a `pattern(...)` to its foreground. `red`,
+`#888`, `white` and `linear-gradient(...)` previously resolved to no color at all, so the geometry
+was rasterized uncolored and inherited whatever color the *previous, unrelated* element had left in
+that cell. Terminal output gains color everywhere those values are used, including this repo's own
+terminal demo.
+
+**`colorToAnsiFg`** / **`colorToAnsiBg`** — **behaviour**. Alpha is no longer discarded. A paint's
+own alpha, multiplied by `Context.opacity`, attenuates the emitted color toward the background. A
+character cell cannot composite, and the terminal background is unknowable, so the conventional dark
+one is assumed — the same assumption the rasterizer's light default foreground already encoded.
+`rgba(255, 0, 0, 0.5)` now emits a darker red than `#ff0000`.
+
+**`TerminalContext.applyFill`** / **`TerminalContext.applyStroke`** — **behaviour**. Read
+`Context.opacity`. It was maintained by the pipeline (element alpha via `CONTEXT_OPERATIONS`, group
+alpha composited at the boundary) and read by nobody, so `opacity: 0` rendered identically to
+`opacity: 1`. `@ripl/charts` parks crosshair lines at `opacity: 0` until hover and fades axis and
+legend elements in from `0`, so terminal charts drew that chrome permanently. Anything that relied
+on a zero-opacity element still being visible must set an explicit opacity.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Handles `ContextText`, drawing the glyphs in the
+stroke color. `Text.render` prefers stroke over fill, so text with a `stroke` set took the stroke
+branch and produced **no output at all** — an outlined label vanished rather than degrading.
+
+**`TerminalContext.applyFill`** — **behaviour**. Fills only; it no longer also rasterizes the path
+outline in the fill color. That painted one pixel beyond the even-odd interior (so adjacent filled
+shapes bled into each other) and painted something for a degenerate, zero-area fill, where canvas
+paints nothing. Fill-only shapes lose roughly a pixel of outline; set a `stroke` to keep it.
+
+### Rasterizer output
+
+**`BrailleRasterizer.serialize`** — **behaviour**. A cell with no color emits an SGR reset rather
+than nothing. An uncolored glyph previously inherited the preceding cell's color and suppressed the
+row's trailing reset, so a single stale color leaked across the rest of the row, the rest of the
+frame, and every frame after it.
+
+**`BrailleRasterizer.serialize`** — **behaviour**. The ANSI form appends `\x1b[K` to every row and
+`\x1b[J` below the last one. Nothing erased the display, so shrinking the terminal left the previous
+frame's rows and columns stranded on screen until something else scrolled. The plain-text form
+(`{ ansi: false }`) is unchanged.
+
+**`BrailleRasterizer.setPixel`** — **behaviour**. Ignores non-finite coordinates. `NaN` passes every
+bounds comparison, so a malformed element (one missing a required coordinate) indexed the braille dot
+map out of range and threw, taking the whole frame down.
+
+**`BrailleRasterizer.toImageData`** — **behaviour**. Character cells are rasterized as filled
+blocks. The loop read only the dot grid, so every glyph placed by `setChar` — axis labels, legend
+labels, titles — was absent from `export().toImage()` and from the exported PNG while
+`export().toString()` showed them. A 2×4-pixel cell cannot carry a letterform, so a block is the
+honest rasterization; whitespace glyphs stay transparent.
+
+### Geometry
+
+**`rasterizeEllipse`** — **API**, signature changed. Now
+`(cx, cy, rx, ry, rotation, startAngle, endAngle, counterclockwise, plot)`, matching
+`rasterizeArc`'s shape. Callers passing `(cx, cy, rx, ry, plot)` must insert `0, 0, TAU, false`
+before `plot`.
+
+**`flattenEllipse`** — **API**, additive. Takes optional `rotation`, `startAngle`, `endAngle` and
+`counterclockwise`. A full sweep samples as before (no duplicate closing point); a partial sweep
+includes both endpoints, so filling it closes with a chord exactly as canvas does.
+
+**`TerminalContext`** ellipse rendering — **behaviour**. Both command passes read only the first
+four recorded arguments, so an `Ellipse` element's `rotation`/`startAngle`/`endAngle`/direction were
+dropped and every ellipse drew whole and upright. They are honored now, so a partial or rotated
+ellipse renders different geometry than before — the geometry that was asked for.
+
+**`dashPixels`** — **API**, additive. Gates a plot callback on a dash pattern.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Honors `lineDash`/`lineDashOffset`. Dashed grid
+lines and zero-lines were indistinguishable from solid data lines. Arc length is approximated by
+counting plotted pixels, which is exact for axis-aligned runs and up to √2 short on a diagonal.
+`lineWidth`, `lineCap`, `lineJoin` and `miterLimit` remain ignored — a 1-bit raster has no form for
+them.
+
+**`TerminalPath.arcTo`** — **behaviour**. Constructs the real tangent arc instead of two straight
+lines through the corner. Canvas `arcTo` never passes through `(x1, y1)`; the old approximation was
+the `radius === 0` degenerate case and was visibly wrong for large radii. Degenerate inputs (zero
+radius, collinear points) still fall back to a line.
+
+**`TerminalPath.arc`** / **`ellipse`** / **`lineTo`** / **`bezierCurveTo`** / **`quadraticCurveTo`**
+— **behaviour**. These open a subpath when none is current, so a `closePath()` after a bare
+`circle()` closes back to the arc's own start rather than the previous subpath's start (or the
+origin).
+
+**`TerminalPath.addPath`** — **behaviour**. Warns when handed a path from another backend instead of
+dropping it silently, which yielded an empty composed path with no indication why.
+
+### Sizing and lifecycle
+
+**`TerminalContext`** resize handling — **behaviour**. An explicit `width`/`height` survives a
+terminal resize. The handler forwarded the terminal's new dimensions unconditionally, so a
+deliberately fixed-size viewport silently became full-screen on the first `SIGWINCH`.
+
+**`TerminalContext.rescale`** — **behaviour**. The letterbox mapping is installed before `resize` is
+emitted. The base `rescale` resets `scaleX`/`scaleY` to identity and *then* emits, and a bound
+`Scene` repaints synchronously on that event, so the repaint placed points with identity scales and
+extents with the new raster scale. Under a running `Renderer` the next tick corrected it; a static
+scene kept the mis-placed frame.
+
+**`TerminalContext.reset`** — **API**, additive override. Calls `super.reset()` and clears the
+character grid. It was inherited as a no-op, so `reset()` left the previous frame on screen.
+
+**`TerminalContext.destroy`** — **behaviour**. Writes an SGR reset, shows the cursor, and parks it
+below the grid before tearing down. Nothing restored terminal state, so a colored final frame could
+leave the user's shell colored after the process exited.
+
+**`TerminalContext.export`** — **API**, additive. Implements `ContextExport.release()`, and mints the
+URL once so repeated `toURL()` calls no longer leak a new `Blob` URL each time.
+
+**`TerminalContext.supportsPathCaching`** — **behaviour**, now `true`. `createPath` is a plain
+`new TerminalPath(id)` with no per-frame registration, so cached paths stay valid and shapes stop
+re-tracing their whole command list every frame.
+
+**`TerminalContext.hitTestHonorsTransform`** — **behaviour**, now `true`. `Shape2D.intersectsWith`
+reads `false` as "the transform was applied at draw time, so map the point into local space". This
+backend applies no transform, so the point is already in the space it drew in. Latent today
+(`isPointInPath` always returns `false`), correct the moment hit testing exists.
+
+### Transforms and compositing
+
+**`TerminalContext.rotate`** / **`scale`** / **`translate`** / **`transform`** / **`setTransform`** —
+**behaviour**. Still no-ops, but a non-identity call now warns once per context. Transforms remain
+**unimplemented by decision**: a real matrix stack would have to run through the whole command
+pipeline, and rotation into a 2×4 braille lattice is lossy regardless. The class JSDoc previously
+claimed elements are "positioned through the context's own `scaleX`/`scaleY`/`rasterScale` mapping
+instead"; that mapping is a single global letterbox and never was a substitute. The docs now say
+transforms are *discarded* and name the casualties.
+
+**`TerminalContext.applyFill`** / **`applyStroke`** — **behaviour**. Warn once when
+`globalCompositeOperation` is `'destination-out'`. Shadows, filters and other composite modes stay
+silently ignored, but `destination-out` means canvas *erases* where the terminal *draws*, so the
+output is inverted rather than degraded.
 
 ## @ripl/3d
 
