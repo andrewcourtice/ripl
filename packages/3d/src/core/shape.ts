@@ -365,6 +365,10 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         });
     }
 
+    // No back-face culling, matching the GPU pipeline's `cullMode: 'none'`: a face's winding is
+    // whatever the element author emitted, and rejecting on it would silently drop geometry from
+    // any shape that is not a closed, consistently wound solid. The cost is that every face of a
+    // closed shape is filled, and with `fill` alpha below 1 the hidden ones bleed through.
     private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());

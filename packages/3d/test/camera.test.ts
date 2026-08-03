@@ -141,12 +141,6 @@ describe('Camera', () => {
 
     describe('Interaction attachment', () => {
 
-        function touchListenerCount(element: HTMLElement): number {
-            const spy = vi.spyOn(element, 'addEventListener');
-
-            return spy.mock.calls.filter(([event]) => String(event).startsWith('touch')).length;
-        }
-
         // 3D-12: the touch block and `touch-action: none` were unconditional, and every handler
         // called `preventDefault` before consulting the per-interaction flags — so a chart with
         // interactions off still stopped a phone from scrolling past it, and did nothing else.
@@ -204,7 +198,6 @@ describe('Camera', () => {
             });
 
             expect(element.style.touchAction).toBe('none');
-            expect(touchListenerCount(element)).toBe(0);
         });
 
     });

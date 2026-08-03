@@ -254,7 +254,15 @@ export function mat4TransformDirectionInverse(m: Matrix4, v: Vector3): Vector3 {
     ];
 }
 
-/** Transforms a 3D point by a 4×4 matrix, performing the perspective divide. */
+/**
+ * Transforms a 3D point by a 4×4 matrix, performing the perspective divide.
+ *
+ * There is deliberately **no near-plane clipping**: a point behind the eye has `w < 0` and comes
+ * back mirrored through the origin, and a point on the eye plane (`w === 0`) is returned
+ * undivided. Clipping is a rasteriser's job — the GPU backend does it in hardware — and doing it
+ * here would mean returning something other than a point. The CPU painter's renderer therefore
+ * draws geometry straddling the camera inside-out; keep the near plane in front of the scene.
+ */
 export function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3 {
     const x = v[0];
     const y = v[1];

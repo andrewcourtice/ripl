@@ -31,6 +31,10 @@ import {
 } from '@ripl/core';
 
 import {
+    createContext as createCanvasContext,
+} from '@ripl/canvas';
+
+import {
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -180,6 +184,81 @@ describe('Shape3D', () => {
             scene.render();
 
             expect(faceFills().map(record => record.fillStyle).sort()).toEqual(before);
+        });
+
+    });
+
+    describe('Mesh submission', () => {
+
+        // 3D-14: `submitMesh` is a no-op on a CPU context, but the interleaved mesh was still
+        // built and thrown away — 29 KB of vertices per sphere per frame, immediately garbage.
+        test('Should not build a GPU mesh on a CPU context', () => {
+            const context = createFixture();
+            const submitMesh = vi.spyOn(context, 'submitMesh');
+
+            createScene(context, {
+                children: [
+                    createCube({
+                        size: 1,
+                        fill: '#ff0000',
+                    }),
+                ],
+            }).render();
+
+            expect(submitMesh).not.toHaveBeenCalled();
+        });
+
+    });
+
+    describe('Context requirements', () => {
+
+        // 3D-20: `Shape3D.render` cast the context and called `submitMesh`, so a 3D element in a
+        // plain 2D scene died on `ctx.submitMesh is not a function`.
+        test('Should reject a plain 2D context with a diagnostic error', () => {
+            const canvasHost = document.createElement('div');
+
+            document.body.appendChild(canvasHost);
+
+            const scene = createScene(createCanvasContext(canvasHost), {
+                children: [
+                    createCube({
+                        size: 1,
+                        fill: '#ff0000',
+                    }),
+                ],
+            });
+
+            expect(() => scene.render()).toThrow(/Shape3D needs a Context3D/);
+
+            canvasHost.remove();
+        });
+
+    });
+
+    describe('Picking depth', () => {
+
+        // 3D-11: painting sorts per face but `_depth` was the shape's mean, so a shape whose
+        // nearest face was in front of another could still lose the hit test to it.
+        test('Should rank a shape by its nearest face, not its mean depth', () => {
+            const context = createFixture();
+
+            const slab = createCube({
+                size: 4,
+                rotationX: 1.2,
+                fill: '#ff0000',
+            });
+
+            const chip = createCube({
+                size: 0.2,
+                z: 1.6,
+                fill: '#00ff00',
+            });
+
+            createScene(context, {
+                children: [slab, chip],
+            }).render();
+
+            expect(slab.zIndex).toBeGreaterThan(chip.zIndex);
         });
 
     });

@@ -167,8 +167,217 @@ _No entries yet._
 
 ## @ripl/3d
 
-_No entries yet._
+### Projection
+
+**`mat4Perspective`** and **`mat4Orthographic`** — **behaviour**, breaking. Depth maps to the
+WebGPU convention: near → `0`, far → `1`, instead of the OpenGL `[-1, 1]`. WebGPU clips to
+`0 ≤ z ≤ w`, so under the old matrices everything between `near` and roughly
+`2·near·far/(near+far)` fell outside the clip volume and was discarded — with the default
+60°/0.1/1000 frustum, anything closer than ~0.2 units vanished on `WebGPUContext3D` while still
+rendering on `CanvasContext3D` — and what survived was compressed into the upper half of the depth
+buffer, costing about a factor of two in depth resolution. `out[10]` and `out[14]` therefore hold
+different values, and **`Context3D.project(...)[2]` (and so `Shape3D.zIndex` on the CPU path) now
+spans `[0, 1]` rather than `[-1, 1]`**. Depth is still monotonic with distance, so painter's
+sorting and picking are unaffected; rescale any code comparing a projected depth against a literal.
+
+**`Context3D.setOrthographic`** / **`Context3D.updateProjectionMatrix`** — **behaviour**. The
+orthographic frustum is retained and replayed whenever the projection is rebuilt.
+`updateProjectionMatrix` built a perspective matrix unconditionally and `rescale` calls it on every
+size change, so an orthographic chart silently gained perspective distortion on the first window
+resize while `camera.projection` still reported `'orthographic'`. It does **not** re-fit the
+frustum to the new aspect ratio — the caller owns that, and `Camera` recomputes it on its next
+flush. New **`Context3D.projectionMode`** accessor (**API**, additive) reports which projection is
+live.
+
+**`mat4LookAt`** — **behaviour**. An `up` parallel to the view direction falls back to a
+perpendicular axis instead of yielding `xAxis = [0, 0, 0]`, and an `eye` equal to `target` returns
+the identity instead of a matrix of NaN. `setCamera([0, 5, 0], [0, 0, 0], [0, 1, 0])` used to
+project every point in the scene onto the viewport centre.
+
+**`mat4TransformDirectionInverse`** — **API**, additive. Transforms a direction by a matrix's
+transposed upper-3×3, i.e. the inverse rotation for a rigid transform.
+
+### Face rendering
+
+**`CanvasContext3D`'s deferred face draw** — **behaviour**. Faces are painted with the drawing
+state they were projected under: element and group opacity (composited multiplicatively),
+compositing operation, filter, shadow, line style, and the element's composed **2D transform**.
+The flush ran inside `markRenderEnd` at render depth 0, after every element `restore()` and
+`popGroup()`, so a face was painted with none of it. `group{opacity: 0.2} > Cube` rendered fully
+opaque, and a 3D chart inside a `group{translateX: 40}` stayed put while the 2D axes moved — even
+though `cube.getBoundingBox()` did include the translate. **Scenes that were compensating for the
+missing transform or opacity will now double-apply it.**
+
+**`ProjectedFace3D.state`** and **`ProjectedFaceState3D`** — **API**, additive. The captured state
+each face is painted with. The property is optional, so a hand-built `ProjectedFace3D` still
+compiles and still paints — just with no state applied. Faces sharing one state object are painted
+in a single save/restore scope, so **object identity is load-bearing**: build one state per shape,
+not one per face.
+
+**`Context3D.captureFaceState`** — **API**, additive. Snapshots the drawing state for a face.
+
+**`CanvasContext3D.flushFaces`** — **API**, additive — and **behaviour**. Faces depth-sort within a
+flush rather than globally across the frame, and the buffer is drained as it is painted. Every 2D
+paint operation (`applyFill`, `applyStroke`, `drawImage`, `applyClip`) flushes first, so a `Text`
+label or legend added after a 3D series paints **on top of** it rather than underneath, and so do
+the renderer's debug overlays. A 2D element or a clip sitting between two 3D shapes now separates
+them into different sorting runs, so they no longer interleave by depth. `popGroup` also flushes
+when a clip was installed inside the group, which it is about to unwind — a group-scoped clip and
+an identical root-level clip now mask 3D geometry the same way.
+
+**`Context3D.faceBuffer`** — **behaviour**. Reset at the start of every render pass by the base
+class, and drained as faces are painted. Only `CanvasContext3D` used to clear it, so any other
+`Context3D` accumulated faces across frames without bound. Do not read it after a frame; it is
+empty.
+
+**`CanvasContext3D.gradientBounds`** — **API**, removed (the override; the mixin hook remains).
+It resolved gradients against `getBoundingBox()` (the world box), but a canvas gradient resolves in
+user space where the CTM already carries the element's and its groups' transforms — so they were
+counted twice and a hosted 2D element's gradient was offset by exactly its own transform. It was
+dead for 3D shapes either way, since `_drawFace` assigns `fillStyle` per face.
+
+**`CanvasContext3D.supportsPathCaching`** — **behaviour**. Returns `true`, matching
+`CanvasContext`. Hosted `Shape2D`s re-traced their path every frame.
+
+**`Shape3D`'s face shading** — **behaviour**. A declared `face.normal` is transformed into world
+space by the model matrix. The `??` fallback was world-space and the declared branch model-space,
+so every element that hard-codes normals — `Cube`, `Plane`, `Cylinder` caps, `Cone` base — kept
+byte-identical face colours through a full rotation while a `Sphere` re-shaded correctly. The GPU
+shader already did this, so the two backends painted the same scene differently.
+
+**`Shape3D.render`** — **behaviour**. A `fill` that `parseColor` cannot read (a named colour like
+`'red'`, a gradient, `currentColor`) no longer throws. It degrades to the raw style string on the
+CPU path — as `_renderCPU` always intended — and to the default grey in the GPU mesh, which needs
+numeric channels. The unguarded `triangulateFacesFlat` used to read channel 0 off `undefined` and
+throw out of the whole render pass.
+
+**`Shape3D.render`** — **behaviour**, breaking. Throws a diagnostic error when the context is not a
+`Context3D`, instead of `TypeError: ctx.submitMesh is not a function`. New
+**`contextIsContext3D`** type guard (**API**, additive).
+
+**`Shape3D.render`** — **behaviour**. `submitMesh` is only called on a `'gpu'` context. It is a
+no-op on the CPU path, but the interleaved mesh was still built and discarded every frame — about
+33 KB per 16×12 sphere.
+
+### Element state
+
+**`Shape3D.interpolate`** — **behaviour**. The returned tick invalidates the cached face geometry.
+`Element.interpolate` writes `state[key]` directly, the one path that bypasses `setStateValue` —
+the face cache's only invalidation hook — so a transition on `size`, `radius`, `segments`, `width`,
+`tube` or any other geometry property finished with the new state value and a mesh still built from
+the old one. `x`/`y`/`z` and the rotations animated fine, because `getModelMatrix` reads the live
+accessors, so a transition on `{ x, size }` moved but did not grow.
+
+**`Shape3D.getBoundingBox`** — **behaviour**. No longer cached (`_boundsCacheable` is `false`). The
+box is projected through the context's camera, which no element state version can see, so it froze
+at the first camera position until an unrelated state write happened to bust it — poisoning
+gradient bounds, the renderer's debug outlines, and `intersectsWith`'s fallback box test.
+
+**`Shape3D.zIndex`** — **behaviour**, breaking. Derived from the depth of the shape's **nearest
+projected face**, on both render strategies. The CPU path used the mean of the shape's face depths
+and the GPU path the shape's origin, while painting sorts per face — so a shape spanning depth
+could have its nearest face painted in front of another shape while its mean sat behind, and a
+click reported the wrong element. The two strategies did not agree with each other either.
+**Hit-test ordering between overlapping 3D shapes changes.**
+
+### Lighting
+
+**`Context3D.getLightDirectionForRender`** — **behaviour**, breaking. `lightMode: 'world'` and
+`'camera'` were exchanged: both consumers dot the result against a **world-space** normal, so
+pushing the light through the view matrix is exactly what makes it follow the camera. The
+documented default `'world'` re-lit every face as the camera orbited a static scene, and `'camera'`
+froze the lighting in world space. `'world'` is now the identity, and `'camera'` reads
+`lightDirection` as camera-relative and carries it into world space through the inverse view
+rotation — note the old formula was not even correct for camera mode; it aimed the lamp backwards.
+**A scene that selected `'camera'` to get world-fixed lighting must now say `'world'`, and vice
+versa.**
+
+### Camera
+
+**`Camera`** (constructor) — **behaviour**. Attaches no touch listeners and does not set
+`touch-action: none` when every interaction is disabled, and a touch gesture is only
+`preventDefault`ed when the enabled interactions can act on that finger count. It used to attach
+`touchstart`/`touchmove`/`touchend` unconditionally and `preventDefault` before consulting the
+flags, so a chart built with `interactions: { zoom: false, pivot: false, pan: false }` stopped a
+phone scrolling past it and moved the camera not at all.
+
+**`Camera.orbit`** — **behaviour**. A no-op when the camera sits on its target, rather than
+dividing by zero into an all-NaN view matrix that blanked the scene permanently with no error.
+
+**`Camera.zoom`** — **behaviour**. Clamps so the target cannot cross the near plane. It clamped to
+`dist - 0.01` while `near` defaults to `0.1`, so a full zoom-in emptied the frustum.
+
+### Context construction
+
+**`Context3D`** (constructor) — **API**, additive, and **behaviour**. Takes a trailing
+`renderStrategy` argument, applied **after** the caller's `meta`. It is the backend's invariant,
+not a preference: `new WebGPUContext3D(…, { meta: { renderStrategy: 'cpu' } })` used to route every
+shape into the CPU painter, which that class neither draws nor clears — a blank canvas plus a face
+buffer growing without bound. A `meta.renderStrategy` supplied by a caller is now ignored.
+
+### Known gaps (decided, not fixed)
+
+**No back-face culling on the CPU path.** Every face of a closed shape is transformed, shaded,
+projected, sorted and filled — roughly double the work, and with `fill` alpha below 1 the hidden
+back faces visibly bleed through. Left as-is deliberately: a face's winding is whatever the element
+author emitted, and rejecting on `dot(normal, viewDir)` would silently drop geometry from any shape
+that is not a closed, consistently wound solid. The GPU pipeline makes the same call
+(`cullMode: 'none'`). Recorded at `Shape3D._renderCPU`.
+
+**No near-plane clipping on the CPU path.** `mat4TransformPoint` performs the perspective divide
+with no `w` sign test, so a point behind the eye comes back mirrored through the origin and
+geometry straddling the camera renders inside-out. Clipping is a rasteriser's job — the GPU backend
+does it in hardware — and doing it in a point transform would mean returning something other than a
+point. Keep the near plane in front of the scene. Recorded at `mat4TransformPoint`.
+
+**A group-scoped clip fragments the depth sort.** Confining a clip to its group requires flushing at
+the group boundary, so 3D shapes in different clipped groups no longer inter-sort by depth. That is
+the same trade every 2D compositing boundary makes, and the alternative was a clip that silently
+did not apply.
 
 ## @ripl/webgpu
 
-_No entries yet._
+**`WebGPUContext3D.rescale`** — **behaviour**. Reads `factory.devicePixelRatio` rather than
+`window.devicePixelRatio`, like every other backend. `scaleX`/`scaleY`/`scaleDPR` were derived from
+the factory while the canvas backing store and the hit-canvas transform came from `window`, so any
+consumer overriding the factory value (tests, offscreen or server rendering, a DPR cap) had pointer
+coordinates scaled by one ratio and hit paths by the other and picking silently missed by that
+factor. `window` may also be absent outside the DOM, which yielded `element.width = NaN`.
+
+**`WebGPUContext3D.rescale`** — **behaviour**. Gates on the logical size instead of the canvas
+backing store. A fresh `<canvas>` is 300 × 150, so a host measuring exactly 300 × 150 CSS px at DPR
+1 returned early forever: `width`/`height` stayed `0`, the depth texture was never created, and the
+canvas was permanently blank. It also bails when the context is destroyed, so a late resize cannot
+allocate textures nothing will free.
+
+**`WebGPUContext3D.applyFill`** / **`applyStroke`** / **`applyClip`** / **`drawImage`** /
+**`createText`** — **behaviour**. Still no-ops, but they now `console.warn` once. `createPath`
+returns a real `CanvasPath`, so a `Shape2D` traced its path, painted nothing, and stayed
+hit-testable with no diagnostic at all — invisible but clickable. A warning rather than a throw:
+a mixed 2D/3D scene should lose its labels, not its geometry. **2D elements remain unsupported on
+this backend**; render them on a separate canvas layer, or use `createContext` from `@ripl/3d`.
+
+**`WebGPUContextOptions.clearColor`** — **behaviour**, breaking. Documented and treated as
+**straight** (non-premultiplied) RGBA, and premultiplied on the way in. The surface is configured
+`alphaMode: 'premultiplied'`, so `[1, 0, 0, 0.5]` was out of gamut and implementation-defined. A
+caller already passing premultiplied values must stop. The default `[0, 0, 0, 0]` is unaffected.
+
+**`WebGPUContext3D.destroy`** — **behaviour**. Calls `gpuContext.unconfigure()` and nulls the depth
+and MSAA textures. The swap chain was left configured against a canvas about to detach.
+
+**`WebGPUContext3D`'s render pass** — **behaviour**. Depth and MSAA texture views are created with
+their textures rather than twice per frame. Views are immutable, so the per-frame pair was pure
+garbage.
+
+**`GeometryManager.flush`** — **behaviour**, breaking. Returns `null` once `destroy()` has run
+instead of recreating GPU buffers on a device it has already released (which raises validation
+errors on real hardware). **The existing test `'Should create fresh buffers after destroy'` asserted
+the defect** and has been rewritten as `'Should allocate nothing after destroy'`.
+`GeometryManager` is a public export, so this is reachable directly even though `WebGPUContext3D`
+guards every call site.
+
+**`GeometryManager.destroy`** — **behaviour**. Clears `_submissions`, which retained the last
+frame's vertex and index typed arrays from a destroyed manager.
+
+**`WebGPUContext3D`** — inherits the `@ripl/3d` projection, orthographic-resize and
+`renderStrategy` changes above.
