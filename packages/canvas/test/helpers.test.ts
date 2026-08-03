@@ -59,16 +59,42 @@ describe('setCanvasFill / setCanvasStroke', () => {
         expect(typeof ctx.fillStyle).toBe('object');
     });
 
-    test('memoizes gradient parsing across repeated calls', () => {
+    // Canvas bakes gradient geometry at set time, so one native object serves a string and box.
+    test('reuses the native gradient across repeated calls', () => {
         const ctx = context();
         const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
 
         setCanvasFill(ctx, LINEAR, BOUNDS);
         setCanvasFill(ctx, LINEAR, BOUNDS);
 
-        // Both calls build a native gradient (bounds change per frame), but parsing is cached.
-        expect(createLinearGradient).toHaveBeenCalledTimes(2);
+        expect(createLinearGradient).toHaveBeenCalledTimes(1);
         expect(typeof ctx.fillStyle).toBe('object');
+    });
+
+    test('rebuilds the native gradient when the bounds change', () => {
+        const ctx = context();
+        const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
+
+        setCanvasFill(ctx, LINEAR, BOUNDS);
+        setCanvasFill(ctx, LINEAR, {
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 100,
+        });
+
+        expect(createLinearGradient).toHaveBeenCalledTimes(2);
+    });
+
+    test('shares one native gradient between fill and stroke', () => {
+        const ctx = context();
+        const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
+
+        setCanvasFill(ctx, LINEAR, BOUNDS);
+        setCanvasStroke(ctx, LINEAR, BOUNDS);
+
+        expect(createLinearGradient).toHaveBeenCalledTimes(1);
+        expect(ctx.strokeStyle).toBe(ctx.fillStyle);
     });
 
 });

@@ -19,6 +19,7 @@ import type {
     FillRule,
     Gradient,
     GradientBounds,
+    PathPoint,
     Scale,
     TextAlignment,
 } from '@ripl/core';
@@ -84,6 +85,64 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
 // Pattern tiles are position-independent, so one `CanvasPattern` per string serves every element and frame.
 const PATTERN_CACHE_LIMIT = 256;
 const patternCache = new Map<string, CanvasPattern | null>();
+
+const PAINT_CACHE_LIMIT = 256;
+const PATH_CACHE_LIMIT = 1024;
+
+// Canvas bakes gradient geometry at set time, so one native object serves a paint string and box.
+const gradientCaches = new WeakMap<CanvasRenderingContext2D, Map<string, CanvasGradient>>();
+
+// Path geometry is a pure function of the `d` string, and text on a path re-samples the same
+// distances every frame; without this each glyph re-parses the whole path once per frame.
+const pathLengthCache = new Map<string, number>();
+const pathPointCache = new Map<string, PathPoint>();
+
+/** Reads through a bounded cache, dropping the whole map on overflow rather than tracking recency. */
+function resolveCached<TValue>(cache: Map<string, TValue>, limit: number, key: string, produce: () => TValue): TValue {
+    const cached = cache.get(key);
+
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    if (cache.size >= limit) {
+        cache.clear();
+    }
+
+    const value = produce();
+
+    cache.set(key, value);
+
+    return value;
+}
+
+function getPaintCache<TValue>(caches: WeakMap<CanvasRenderingContext2D, Map<string, TValue>>, ctx: CanvasRenderingContext2D): Map<string, TValue> {
+    const cache = caches.get(ctx) || new Map<string, TValue>();
+
+    caches.set(ctx, cache);
+
+    return cache;
+}
+
+function toCanvasGradientCached(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): CanvasGradient | null {
+    const gradient = parseGradientCached(value);
+
+    if (!gradient) {
+        return null;
+    }
+
+    const key = `${value}|${bounds.x},${bounds.y},${bounds.width},${bounds.height}`;
+
+    return resolveCached(getPaintCache(gradientCaches, ctx), PAINT_CACHE_LIMIT, key, () => toCanvasGradient(ctx, gradient, bounds));
+}
+
+function getPathLengthCached(pathData: string): number {
+    return resolveCached(pathLengthCache, PATH_CACHE_LIMIT, pathData, () => getPathLength(pathData));
+}
+
+function samplePathPointCached(pathData: string, distance: number): PathPoint {
+    return resolveCached(pathPointCache, PATH_CACHE_LIMIT, `${pathData}|${distance}`, () => samplePathPoint(pathData, distance));
+}
 
 /**
  * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
@@ -166,10 +225,10 @@ export function setCanvasFill(ctx: CanvasRenderingContext2D, value: string, boun
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientCached(value);
+        const gradient = toCanvasGradientCached(ctx, value, bounds);
 
         if (gradient) {
-            ctx.fillStyle = toCanvasGradient(ctx, gradient, bounds);
+            ctx.fillStyle = gradient;
             return;
         }
     }
@@ -189,10 +248,10 @@ export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bo
     }
 
     if (isGradientString(value)) {
-        const gradient = parseGradientCached(value);
+        const gradient = toCanvasGradientCached(ctx, value, bounds);
 
         if (gradient) {
-            ctx.strokeStyle = toCanvasGradient(ctx, gradient, bounds);
+            ctx.strokeStyle = gradient;
             return;
         }
     }
@@ -269,7 +328,7 @@ const TEXT_PATH_ANCHORS: Record<TextAlignment, (advance: number) => number> = {
  */
 export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: ContextText, method: 'fill' | 'stroke'): void {
     const pathData = element.pathData!;
-    const totalLength = getPathLength(pathData);
+    const totalLength = getPathLengthCached(pathData);
     const anchorOffset = TEXT_PATH_ANCHORS[ctx.textAlign] || TEXT_PATH_ANCHORS.start;
     const startDistance = numberClamp(element.startOffset ?? 0, 0, 1) * totalLength;
     const limit = Math.min(totalLength, startDistance + (element.maxWidth ?? Infinity));
@@ -284,7 +343,7 @@ export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: Cont
             break;
         }
 
-        const { x, y, angle } = samplePathPoint(pathData, distance + anchorOffset(advance));
+        const { x, y, angle } = samplePathPointCached(pathData, distance + anchorOffset(advance));
 
         ctx.save();
         ctx.translate(x, y);

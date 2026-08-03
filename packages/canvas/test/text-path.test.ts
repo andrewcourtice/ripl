@@ -18,6 +18,8 @@ import {
 
 import {
     ContextText,
+    getPathLength,
+    samplePathPoint,
 } from '@ripl/core';
 
 import type * as Core from '@ripl/core';
@@ -137,6 +139,24 @@ describe('Canvas text along a path', () => {
         const calls = render('ABCD', 'M0,0 L25,0');
 
         expect(calls).toEqual([[0, 0], [10, 0], [20, 0]]);
+    });
+
+    // CANVAS-15: every glyph re-parsed the whole `d` attribute, once per element per frame.
+    test('Should not re-measure the path on the next frame', () => {
+        render('ABCD', 'M0,0 L500,0');
+        render('ABCD', 'M0,0 L500,0');
+
+        expect(vi.mocked(getPathLength)).toHaveBeenCalledTimes(1);
+    });
+
+    test('Should not re-sample a glyph position on the next frame', () => {
+        render('ABCD', 'M0,0 L501,0');
+
+        const sampled = vi.mocked(samplePathPoint).mock.calls.length;
+
+        render('ABCD', 'M0,0 L501,0');
+
+        expect(vi.mocked(samplePathPoint)).toHaveBeenCalledTimes(sampled);
     });
 
 });
