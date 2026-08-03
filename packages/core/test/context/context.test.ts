@@ -10,6 +10,7 @@ import {
 import {
     ContextPath,
     ContextText,
+    createElement,
 } from '../../src';
 
 import {
@@ -1211,6 +1212,70 @@ describe('Context', () => {
             const result = callHitTest(ctx, ['click'], 0, 0);
 
             expect(result.map((el: { id: string }) => el.id)).toEqual(['third', 'second', 'first']);
+
+            ctx.destroy();
+        });
+
+        // The memo snapshots renderedElements per event; off(), a spent once(), and destroy() all
+        // bypass its only invalidation path, leaving a dead element shadowing the one beneath it.
+        test('hitTest should drop an element whose listener went away after the memo was primed', () => {
+            const ctx = create();
+            const events = new Set(['click']);
+
+            const element = {
+                id: 'stale',
+                abstract: false,
+                pointerEvents: 'all' as const,
+                zIndex: 0,
+                has: vi.fn((event: string) => events.has(event)),
+                intersectsWith: vi.fn(() => true),
+                emit: vi.fn(),
+            };
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            events.delete('click');
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should drop an element after off removes its last listener', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+            const handler = vi.fn();
+
+            element.on('click', handler);
+            vi.spyOn(element, 'intersectsWith').mockReturnValue(true);
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            element.off('click', handler);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
+
+            ctx.destroy();
+        });
+
+        test('hitTest should drop a destroyed element in the same tick', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+
+            element.on('click', vi.fn());
+            vi.spyOn(element, 'intersectsWith').mockReturnValue(true);
+
+            registerElements(ctx, [element]);
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(1);
+
+            element.destroy();
+
+            expect(callHitTest(ctx, ['click'], 0, 0)).toHaveLength(0);
 
             ctx.destroy();
         });
