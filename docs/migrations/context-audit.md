@@ -147,7 +147,81 @@ set `font` explicitly on the scene or the host.
 
 ## @ripl/canvas
 
-_No entries yet._
+### Paint state
+
+**`Context.fill`** and **`Context.stroke`** — **behaviour**. The resolved paint strings are pushed and
+popped alongside the native drawing state by `save()`/`restore()`, so the getters report the paint the
+context is actually painting with. They were plain instance fields outside the stack, so once a paint
+had been assigned inside any scope the getter reported that value for the life of the context — a
+lying getter, not a wrong pixel, since nothing in the render pipeline reads them back.
+
+**`Context.fill`** and **`Context.stroke`** — **behaviour**. Assigning an empty string is ignored.
+Native canvas rejects an invalid colour, so `fill = ''` neither cleared the paint nor reported the
+failure; it only blanked the tracked value and unmasked whatever the native context still held. To
+clear a paint, assign a transparent colour (`'transparent'`, `'rgba(0, 0, 0, 0)'`).
+
+### Sizing
+
+**`rescaleCanvas`** — **behaviour**. The returned scales map logical coordinates onto `width * dpr` —
+the exact transform drawing goes through — instead of the floored backing-store size. The backing
+store is still floored to whole device pixels. Pointer mapping and drawing disagreed by up to a device
+pixel at the far edge of a surface whose scaled size is not an integer.
+
+**`CanvasContext.rescale`** — **behaviour**. Assigns the DPR-aware scales *before* emitting `resize`,
+and no longer delegates to `Context.rescale`, which installs identity scales and emits from inside
+that window. Any `resize` handler reading `context.scaleX`/`scaleY` — including `Scene`'s own
+synchronous re-render — saw the identity mapping. A `Context` subclass that overrides `rescale` to
+install its own scales has to do the same.
+
+### Text and images
+
+**`renderTextAlongPath`** — **behaviour**. Each glyph is placed at the point its own `textAlign`
+anchors it to rather than always at its mid-point, which was only correct for `center`; under the
+canvas default of `start` every glyph slid forward by half its own advance. `startOffset` is clamped
+to `[0, 1]` (a negative value stacked the leading glyphs on the path start, because the sampler
+clamps but the layout kept advancing from a negative distance) and `maxWidth` caps the run's advance
+instead of being ignored. Text on a path moves back by half a glyph wherever `pathData` is used.
+
+**`canvasDrawImage`** — **behaviour**. A width supplied without a height (or the reverse) is honoured,
+with the missing dimension taken from the image's intrinsic size; it used to fall through to the
+three-argument form and draw at natural size. A `0` is honoured too and draws nothing, rather than
+reading as "no size given".
+
+### Lifecycle
+
+**`Context.reset`** — **behaviour**. Calls `super.reset()` and re-installs the
+`setTransform(dpr, 0, 0, dpr, 0, 0)` matrix the surface is drawn through. Native `reset()` clears the
+state stack, the clip **and** the transform, so on a 2× display everything after a `reset()` rendered
+at half size in the top-left quadrant, while `Context.saveDepth` kept counting saves the native stack
+no longer held and a later `popGroup()` unwound to the wrong depth.
+
+**`CanvasContext.destroy`** — **API**, additive override. Releases the gradients and patterns cached
+against the context, together with the offscreen tile canvases the patterns hold, and zeroes the
+canvas backing store (`width × height × 4` bytes, otherwise held until collection). Do not draw into a
+context after `destroy()`.
+
+**`toCanvasPattern`** — **behaviour**. Cached per context *and* string rather than in one module-global
+map. A destroyed context's `CanvasPattern` was handed to the next context that asked for the same
+string, and neither it nor its tile canvas was ever released.
+
+**`releaseCanvasPaintCache`** — **API**, additive. Drops every `CanvasGradient` and `CanvasPattern`
+cached against a native context. Call it from the teardown of a backend that composes
+`canvas2DStateMixin` itself.
+
+### Performance
+
+**`setCanvasFill`** and **`setCanvasStroke`** — **behaviour**. The native `CanvasGradient` is cached
+per context, paint string and bounds instead of rebuilt on every assignment — 500 gradient elements at
+60 fps allocated 30 000 gradients a second. **`renderTextAlongPath`** caches path length and glyph
+sample points per `d` string and distance, so a text element parses its path once rather than once per
+glyph per frame. Both are pure functions of their inputs; no output changes.
+
+### Known limitation
+
+**Group `globalCompositeOperation`** — unchanged. A group's blend mode is still applied to each
+descendant independently rather than to the subtree as a unit, so it does not match SVG's
+`<g mix-blend-mode>`. True group compositing needs an offscreen layer and real blending, neither of
+which the jsdom stub can express; left for the pixel harness.
 
 ## @ripl/svg
 
