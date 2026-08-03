@@ -127,7 +127,7 @@ export interface Canvas2DState {
     createPath(id?: string): CanvasPath;
     /** Clips subsequent drawing operations to the given path. */
     applyClip(path: CanvasPath, fillRule?: FillRule): void;
-    /** Draws an image onto the canvas at the given position and optional size. */
+    /** Draws an image onto the canvas at the given position, sized to the given width and height; a dimension given on its own is taken with the image's intrinsic size for the other. */
     drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void;
     /** Fills the given path or text element using the current fill style. */
     applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void;

@@ -12,6 +12,7 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    canvasDrawImage,
     rescaleCanvas,
     setCanvasFill,
     setCanvasStroke,
@@ -95,6 +96,59 @@ describe('setCanvasFill / setCanvasStroke', () => {
 
         expect(createLinearGradient).toHaveBeenCalledTimes(1);
         expect(ctx.strokeStyle).toBe(ctx.fillStyle);
+    });
+
+});
+
+describe('canvasDrawImage', () => {
+
+    beforeEach(() => mockCanvasContext());
+    afterEach(() => vi.restoreAllMocks());
+
+    function image(width: number, height: number) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = width;
+        canvas.height = height;
+
+        return canvas;
+    }
+
+    test('draws at intrinsic size when neither dimension is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5);
+    });
+
+    // The destination-rectangle form needs both dimensions, so a lone width used to be dropped.
+    test('takes the intrinsic height when only a width is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5, 200);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5, 200, 50);
+    });
+
+    test('takes the intrinsic width when only a height is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5, undefined, 200);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5, 100, 200);
+    });
+
+    test('honours a zero dimension rather than falling back to the intrinsic size', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 0, 0, 0, 40);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 0, 0, 0, 40);
     });
 
 });

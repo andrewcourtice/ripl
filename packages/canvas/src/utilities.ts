@@ -26,6 +26,8 @@ import type {
 
 import {
     numberClamp,
+    typeIsNil,
+    typeIsNumber,
 } from '@ripl/utilities';
 
 import type {
@@ -33,6 +35,18 @@ import type {
 } from './path';
 
 type CanvasGradientFactory = (context: CanvasRenderingContext2D, gradient: Gradient, bounds: GradientBounds) => CanvasGradient;
+
+/** Anything with an intrinsic pixel size `drawImage` can fall back to, across the `CanvasImageSource` union. */
+interface IntrinsicallySized {
+    naturalWidth?: number;
+    naturalHeight?: number;
+    videoWidth?: number;
+    videoHeight?: number;
+    codedWidth?: number;
+    codedHeight?: number;
+    width?: unknown;
+    height?: unknown;
+}
 
 const CANVAS_GRADIENT_FACTORIES: Record<string, CanvasGradientFactory> = {
     linear: (context, gradient, { x, y, width, height }) => {
@@ -383,13 +397,42 @@ export function applyCanvasStroke(ctx: CanvasRenderingContext2D, element: Canvas
     return ctx.stroke(element.ref);
 }
 
-/** Draws an image onto a canvas context with optional width and height. */
+function getIntrinsicSize(image: CanvasImageSource): [number, number] {
+    const source = image as IntrinsicallySized;
+    const width = typeIsNumber(source.width) ? source.width : 0;
+    const height = typeIsNumber(source.height) ? source.height : 0;
+
+    return [
+        source.naturalWidth ?? source.videoWidth ?? source.codedWidth ?? width,
+        source.naturalHeight ?? source.videoHeight ?? source.codedHeight ?? height,
+    ];
+}
+
+/**
+ * Draws an image onto a canvas context, sizing it to the given width and height.
+ *
+ * A dimension given on its own is honoured and the other taken from the image's intrinsic size —
+ * the destination-rectangle form of `drawImage` needs both. Supplying neither draws at intrinsic
+ * size; supplying `0` draws nothing, which is what a zero-sized element asks for.
+ *
+ * @param ctx - The native context to draw into.
+ * @param image - The image source to draw.
+ * @param x - Destination x coordinate.
+ * @param y - Destination y coordinate.
+ * @param width - Destination width, defaulting to the image's intrinsic width.
+ * @param height - Destination height, defaulting to the image's intrinsic height.
+ */
 export function canvasDrawImage(ctx: CanvasRenderingContext2D, image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
-    if (width && height) {
-        return ctx.drawImage(image, x, y, width, height);
+    if (typeIsNil(width) && typeIsNil(height)) {
+        return ctx.drawImage(image, x, y);
     }
 
-    return ctx.drawImage(image, x, y);
+    const [
+        intrinsicWidth,
+        intrinsicHeight,
+    ] = getIntrinsicSize(image);
+
+    return ctx.drawImage(image, x, y, width ?? intrinsicWidth, height ?? intrinsicHeight);
 }
 
 /** Measures text dimensions using the context's alignment and baseline, and an optional font override. */
