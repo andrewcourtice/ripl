@@ -36,7 +36,10 @@ import type {
     Context,
     ContextPath,
     ElementIntersectionOptions,
+    ElementInterpolationState,
+    ElementInterpolators,
     ElementOptions,
+    Interpolator,
 } from '@ripl/core';
 
 import {
@@ -192,6 +195,27 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     protected override setStateValue<TKey extends keyof TState>(key: TKey, value: TState[TKey]) {
         super.setStateValue(key, value);
         this._getCachedFaces.invalidate();
+    }
+
+    /**
+     * Creates an interpolator that transitions from the current state towards the target state,
+     * invalidating this shape's cached geometry on every tick.
+     *
+     * The base tick writes straight to the state bag, which is the one path that bypasses
+     * {@link Shape3D}'s `setStateValue` override — the face cache's only invalidation hook. Without
+     * this a transition on a geometry property (`size`, `radius`, `segments`, …) finished with the
+     * new state value but the mesh still built from the old one.
+     */
+    public override interpolate(
+        newState: Partial<ElementInterpolationState<TState>>,
+        interpolators: Partial<ElementInterpolators<TState>> = {}
+    ): Interpolator<void> {
+        const tick = super.interpolate(newState, interpolators);
+
+        return time => {
+            tick(time);
+            this._getCachedFaces.invalidate();
+        };
     }
 
     protected computeFaces(): Face3D[] {

@@ -130,4 +130,102 @@ describe('Shape3D', () => {
 
     });
 
+    describe('Geometry transitions', () => {
+
+        function projectedSpan(context: CanvasContext3D): number {
+            const xs = context.faceBuffer.flatMap(face => face.points.map(point => point[0]));
+
+            return Math.max(...xs) - Math.min(...xs);
+        }
+
+        // 3D-4: the interpolate tick writes `state[key]` directly, bypassing the `setStateValue`
+        // override that is the face cache's only invalidation path.
+        test('Should grow the rendered mesh as a size transition ticks', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const before = projectedSpan(context);
+
+            const tick = cube.interpolate({
+                size: 3,
+            });
+
+            tick(1);
+            scene.render();
+
+            expect(projectedSpan(context)).toBeGreaterThan(before * 2);
+        });
+
+        // A completed transition leaves `state.size === 3`, so the setter short-circuits and cannot
+        // recover the stale cache. Only a cube authored at 3 gives an independent reference span.
+        test('Should match a natively sized shape after a completed size transition', () => {
+            const grown = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const grownScene = createScene(grown, {
+                children: [cube],
+            });
+
+            // Warm the face cache at the start value; a cold cache hides the defect entirely.
+            grownScene.render();
+
+            cube.interpolate({
+                size: 3,
+            })(1);
+
+            grownScene.render();
+
+            const reference = createFixture();
+            const referenceScene = createScene(reference, {
+                children: [
+                    createCube({
+                        size: 3,
+                        fill: '#ff0000',
+                    }),
+                ],
+            });
+
+            referenceScene.render();
+
+            expect(projectedSpan(grown)).toBeCloseTo(projectedSpan(reference));
+        });
+
+        test('Should refresh the bounding box after a size transition', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const before = cube.getBoundingBox().width;
+
+            cube.interpolate({
+                size: 3,
+            })(1);
+
+            scene.render();
+
+            expect(cube.getBoundingBox().width).toBeGreaterThan(before * 2);
+        });
+
+    });
+
 });
