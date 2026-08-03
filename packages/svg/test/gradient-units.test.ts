@@ -16,6 +16,7 @@ import {
 } from '../src';
 
 import {
+    createGroup,
     createPolyline,
     createRect,
 } from '@ripl/core';
@@ -151,21 +152,70 @@ describe('SVG gradient units', () => {
     });
 
     test('Should fall back to the surface when there is no render element', () => {
-        ctx.save();
-        ctx.markRenderStart();
-        ctx.fill = 'linear-gradient(90deg, red, blue)';
+        vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => ({
+            left: 0,
+            top: 0,
+            right: 400,
+            bottom: 200,
+            width: 400,
+            height: 200,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+        }) as DOMRect);
 
-        const path = ctx.createPath('bare');
+        const sized = createContext(el) as SVGContext;
+
+        sized.save();
+        sized.markRenderStart();
+        sized.fill = 'linear-gradient(90deg, red, blue)';
+
+        const path = sized.createPath('bare');
 
         path.rect(0, 0, 10, 10);
-        ctx.applyFill(path);
-        ctx.markRenderEnd();
-        ctx.restore();
+        sized.applyFill(path);
+        sized.markRenderEnd();
+        sized.restore();
 
-        const [gradient] = gradients();
+        const [gradient] = Array.from(sized.element.querySelectorAll('linearGradient'));
 
-        expect(path.definition.styles.fill).toMatch(/^url\(#gradient-/);
+        // The path's own 10x10 rect is not a render element, so the box is the whole surface.
         expect(gradient.getAttribute('gradientUnits')).toBe('userSpaceOnUse');
+        expect(Number(gradient.getAttribute('x1'))).toBeCloseTo(0, 3);
+        expect(Number(gradient.getAttribute('x2'))).toBeCloseTo(400, 3);
+
+        sized.destroy();
+    });
+
+    test('Should resolve a group gradient against the group box, not a leaf box', () => {
+        renderPass(createGroup({
+            id: 'G',
+            fill: 'linear-gradient(90deg, red, blue)',
+            children: [
+                createRect({
+                    id: 'A',
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 40,
+                }),
+                createRect({
+                    id: 'B',
+                    x: 100,
+                    y: 0,
+                    width: 100,
+                    height: 40,
+                }),
+            ],
+        }));
+
+        const spans = gradients().map(gradient => [
+            Number(gradient.getAttribute('x1')),
+            Number(gradient.getAttribute('x2')),
+        ]);
+
+        // One def spanning the group, not one per leaf restarting the ramp over its own box.
+        expect(spans).toEqual([[0, 200]]);
     });
 
 });
