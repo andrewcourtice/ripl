@@ -67,7 +67,8 @@ function getImageDataURLKey(image: CanvasImageSource, width: number, height: num
         return `${image.src}|${width}|${height}`;
     }
 
-    if (image instanceof SVGImageElement) {
+    // Guarded: a runtime with a partial DOM (jsdom, a worker) may not declare these at all.
+    if (typeof SVGImageElement !== 'undefined' && image instanceof SVGImageElement) {
         return `${image.href.baseVal}|${width}|${height}`;
     }
 

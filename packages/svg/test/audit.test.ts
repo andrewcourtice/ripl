@@ -70,6 +70,7 @@ describe('SVG audit findings', () => {
         factory.set({
             devicePixelRatio: 1,
         });
+        vi.unstubAllGlobals();
         vi.restoreAllMocks();
     });
 
@@ -102,6 +103,18 @@ describe('SVG audit findings', () => {
         body();
         ctx.markRenderEnd();
         ctx.restore();
+    }
+
+    // jsdom never loads a blob URL, so the decode has to be driven by hand.
+    function stubImageDecode(succeeds: boolean) {
+        vi.stubGlobal('Image', class {
+            public onload?: () => void;
+            public onerror?: () => void;
+
+            public set src(_value: string) {
+                queueMicrotask(() => (succeeds ? this.onload : this.onerror)?.());
+            }
+        });
     }
 
     // Two leaves at disjoint boxes, so a per-leaf resolve and a group-box resolve cannot coincide.
@@ -217,6 +230,48 @@ describe('SVG audit findings', () => {
             expect(gradients).toHaveLength(1);
             expect(Number(gradients[0].getAttribute('x1'))).toBeCloseTo(100, 3);
             expect(Number(gradients[0].getAttribute('x2'))).toBeCloseTo(150, 3);
+
+            ctx.destroy();
+        });
+
+        test('Should resolve a group stroke gradient against the group box too', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+            const scene = createScene(ctx, {
+                children: [
+                    createGroup({
+                        id: 'G',
+                        stroke: GROUP_GRADIENT,
+                        lineWidth: 2,
+                        children: [
+                            createRect({
+                                id: 'A',
+                                x: 0,
+                                y: 0,
+                                width: 50,
+                                height: 50,
+                            }),
+                            createRect({
+                                id: 'B',
+                                x: 100,
+                                y: 0,
+                                width: 100,
+                                height: 50,
+                            }),
+                        ],
+                    }),
+                ],
+            });
+
+            scene.render();
+
+            const gradients = Array.from(ctx.element.querySelectorAll('linearGradient'));
+            const group = ctx.element.querySelector('#G') as SVGElement;
+
+            expect(gradients).toHaveLength(1);
+            expect(Number(gradients[0].getAttribute('x2'))).toBeCloseTo(200, 3);
+            expect(group.style.stroke).toMatch(GRADIENT_REFERENCE);
 
             ctx.destroy();
         });
@@ -648,6 +703,24 @@ describe('SVG audit findings', () => {
             ctx.destroy();
         });
 
+        test('Should re-encode a canvas source, whose pixels move under a stable identity', () => {
+            sizeHost(400, 300);
+
+            const toDataURL = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,AAAA');
+            const ctx = create();
+            const source = document.createElement('canvas');
+
+            source.width = 32;
+            source.height = 32;
+
+            renderPass(ctx, () => ctx.drawImage(source, 0, 0, 32, 32));
+            renderPass(ctx, () => ctx.drawImage(source, 0, 0, 32, 32));
+
+            expect(toDataURL).toHaveBeenCalledTimes(2);
+
+            ctx.destroy();
+        });
+
     });
 
     // ── S-10 · destroy releases every retained cache ─────────────────────
@@ -698,6 +771,32 @@ describe('SVG audit findings', () => {
             expect(internals._shadowCache.size).toBe(0);
         });
 
+        test('Should drop the transform and clip scopes on reset', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            ctx.save();
+            ctx.markRenderStart();
+            ctx.translate(10, 20);
+
+            const clipPath = ctx.createPath('clip');
+
+            clipPath.rect(0, 0, 5, 5);
+            ctx.applyClip(clipPath);
+            ctx.reset();
+
+            const path = ctx.createPath('after');
+
+            ctx.applyFill(path);
+            ctx.markRenderEnd();
+
+            expect(getInternals(ctx)._currentTransforms).toEqual([]);
+            expect(ctx.element.querySelector(':scope > #after')).not.toBeNull();
+
+            ctx.destroy();
+        });
+
     });
 
     // ── S-17 · the export carries an intrinsic size ──────────────────────
@@ -732,6 +831,39 @@ describe('SVG audit findings', () => {
             expect(createObjectURL).toHaveBeenCalledTimes(1);
             expect(revokeObjectURL).toHaveBeenCalledTimes(1);
             expect(revokeObjectURL).toHaveBeenCalledWith('blob:svg');
+
+            ctx.destroy();
+        });
+
+        test('Should rasterize the export at the surface size', async () => {
+            sizeHost(200, 100);
+
+            const stub = mockCanvasContext();
+
+            vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:svg');
+            vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+            stubImageDecode(true);
+
+            const ctx = create();
+
+            await ctx.export().toImage();
+
+            expect(stub.drawImage).toHaveBeenCalledWith(expect.anything(), 0, 0, 200, 100);
+            expect(stub.getImageData).toHaveBeenCalledWith(0, 0, 200, 100);
+
+            ctx.destroy();
+        });
+
+        test('Should reject when the export cannot be decoded', async () => {
+            sizeHost(200, 100);
+
+            vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:svg');
+            vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+            stubImageDecode(false);
+
+            const ctx = create();
+
+            await expect(ctx.export().toImage()).rejects.toThrow('Failed to rasterize SVG for export');
 
             ctx.destroy();
         });
