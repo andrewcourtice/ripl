@@ -138,7 +138,7 @@ describe('Canvas audit findings', () => {
 
     // CANVAS-3: `_fillCSS`/`_strokeCSS` are plain fields outside the save/restore stack, so the
     // public getters report a paint the underlying context is no longer using.
-    test.skip('Should report the restored paint from the fill and stroke getters', () => {
+    test('Should report the restored paint from the fill and stroke getters', () => {
         mockCanvasState(mockCanvasContext());
         sizeHost(400, 300);
 
@@ -164,6 +164,46 @@ describe('Canvas audit findings', () => {
         context.fill = '#ff0000';
 
         expect(context.fill).toBe('#ff0000');
+    });
+
+    // A paint written only inside a scope must not outlive it, or the getter reports a value the
+    // outer scope never held.
+    test('Should fall back to the native default for a paint set only inside a scope', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.save();
+        context.fill = '#123456';
+        context.restore();
+
+        expect(context.fill).toBe('#000000');
+    });
+
+    // Native canvas rejects an invalid colour, so recording one unmasked the stale native value.
+    test('Should ignore an empty fill and keep reporting the paint in force', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.fill = '#ff0000';
+        context.fill = '';
+
+        expect(context.fill).toBe('#ff0000');
+    });
+
+    test('Should ignore an empty stroke and keep reporting the paint in force', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.stroke = '#00ff00';
+        context.stroke = '';
+
+        expect(context.stroke).toBe('#00ff00');
     });
 
 });

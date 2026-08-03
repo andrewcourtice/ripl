@@ -33,6 +33,9 @@ import type {
     TextBaseline,
 } from '@ripl/core';
 
+/** The `[fill, stroke]` paint strings a save/restore pair has to put back alongside the native state. */
+type PaintScope = [string, string];
+
 /** Constructor type for (possibly abstract) classes, used to compose mixins over a `Context` base. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AbstractConstructor<TInstance = object> = abstract new (...args: any[]) => TInstance;
@@ -43,7 +46,7 @@ export type AbstractConstructor<TInstance = object> = abstract new (...args: any
  * drawing, transform, measurement, and hit-testing operations common to every canvas-backed context.
  */
 export interface Canvas2DState {
-    /** The current fill style: a color or CSS gradient string. */
+    /** The current fill style: a color or CSS gradient string. Assigning an empty value is ignored, because native canvas rejects it and the paint already in force stays in use. */
     fill: string;
     /** The current filter applied to drawing operations. */
     filter: string;
@@ -77,13 +80,13 @@ export interface Canvas2DState {
     shadowOffsetX: number;
     /** The current vertical shadow offset. */
     shadowOffsetY: number;
-    /** The current stroke style: a color or CSS gradient string. */
+    /** The current stroke style: a color or CSS gradient string. Assigning an empty value is ignored, because native canvas rejects it and the paint already in force stays in use. */
     stroke: string;
     /** The current horizontal text alignment. */
     textAlign: TextAlignment;
     /** The current vertical text baseline. */
     textBaseline: TextBaseline;
-    /** Saves the current drawing state onto the state stack. */
+    /** Saves the current drawing state, including the resolved {@link Canvas2DState.fill} and {@link Canvas2DState.stroke} strings, onto the state stack. */
     save(): void;
     /** Restores the most recently saved drawing state from the stack; a no-op when the stack is empty. */
     restore(): void;
@@ -149,6 +152,7 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
     abstract class Canvas2DStateContext extends Base {
 
         declare protected context: CanvasRenderingContext2D;
+        private _paintScopes: PaintScope[] = [];
         private _fillCSS: string = '';
         private _strokeCSS: string = '';
 
@@ -157,6 +161,11 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         }
 
         public set fill(value) {
+            // Native canvas ignores an invalid colour, so recording one would report a paint it never took.
+            if (!value) {
+                return;
+            }
+
             this._fillCSS = value;
 
             // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid fill.
@@ -301,6 +310,10 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         }
 
         public set stroke(value) {
+            if (!value) {
+                return;
+            }
+
             this._strokeCSS = value;
 
             // Fast path: plain colors skip bounds resolution and parsing; a raw pattern is not a valid stroke.
@@ -334,7 +347,9 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         }
 
         public save(): void {
+            this._paintScopes.push([this._fillCSS, this._strokeCSS]);
             this.saveDepth += 1;
+
             return this.context.save();
         }
 
@@ -343,7 +358,15 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
                 return;
             }
 
+            const [
+                fill,
+                stroke,
+            ] = this._paintScopes.pop() || ['', ''];
+
+            this._fillCSS = fill;
+            this._strokeCSS = stroke;
             this.saveDepth -= 1;
+
             return this.context.restore();
         }
 
