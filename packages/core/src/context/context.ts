@@ -548,8 +548,8 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Opens a group boundary: saves the current drawing state and applies the group's own
-     * transform and inherited paint (see {@link Context.applyGroupPaint} for the opacity and
-     * gradient-bounds semantics every backend must honour), so that descendant elements render
+     * transform and inherited paint (see `applyGroupPaint` for the opacity and gradient-bounds
+     * semantics every backend must honour), so that descendant elements render
      * within the group's coordinate system, inherit its paint through the copied state (the
      * render-tree cascade), and composite under its opacity. Any group-scoped clip is confined to
      * the group. Every {@link Context.pushGroup} must be balanced by a matching
