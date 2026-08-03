@@ -20,6 +20,7 @@ import {
 import {
     createCircle,
     createScene,
+    factory,
 } from '@ripl/core';
 
 polyfillPath2D();
@@ -40,6 +41,9 @@ describe('Canvas audit findings', () => {
 
     afterEach(() => {
         el.remove();
+        factory.set({
+            devicePixelRatio: 1,
+        });
         vi.restoreAllMocks();
     });
 
@@ -204,6 +208,52 @@ describe('Canvas audit findings', () => {
         context.stroke = '';
 
         expect(context.stroke).toBe('#00ff00');
+    });
+
+    // CANVAS-8: native `reset()` drops the transform, taking the DPR matrix the surface draws through.
+    test('Should re-install the device pixel ratio transform on reset', () => {
+        factory.set({
+            devicePixelRatio: 2,
+        });
+
+        const stub = mockCanvasState(mockCanvasContext());
+
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.translate(30, 40);
+        context.reset();
+
+        expect(stub.getMatrix()).toEqual([2, 0, 0, 2, 0, 0]);
+    });
+
+    test('Should resynchronise the save depth on reset', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.save();
+        context.save();
+        context.reset();
+
+        expect((context as unknown as { saveDepth: number }).saveDepth).toBe(0);
+    });
+
+    test('Should not unwind past a reset on a later restore', () => {
+        mockCanvasState(mockCanvasContext());
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+
+        context.lineWidth = 2;
+        context.save();
+        context.lineWidth = 8;
+        context.reset();
+        context.restore();
+
+        expect(context.lineWidth).toBe(8);
     });
 
 });

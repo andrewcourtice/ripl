@@ -14,6 +14,7 @@ import {
 } from './path';
 
 import {
+    factory,
     getGradientBounds,
     isGradientString,
     isPatternString,
@@ -92,7 +93,7 @@ export interface Canvas2DState {
     restore(): void;
     /** Clears the entire canvas surface. */
     clear(): void;
-    /** Resets the canvas context to its default state. */
+    /** Resets the context to its default state, dropping the saved-state stack and re-installing the device-pixel-ratio transform the surface is drawn through. */
     reset(): void;
     /** Applies a rotation transformation, in radians. */
     rotate(angle: number): void;
@@ -375,7 +376,17 @@ export function canvas2DStateMixin<TBase extends AbstractConstructor<Context>>(B
         }
 
         public reset(): void {
-            return this.context.reset();
+            super.reset();
+
+            this._paintScopes = [];
+            this._fillCSS = '';
+            this._strokeCSS = '';
+            this.context.reset();
+
+            // Native `reset()` drops the transform too, taking the DPR matrix `rescaleCanvas` installed.
+            const dpr = factory.devicePixelRatio ?? 1;
+
+            this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
 
         public rotate(angle: number): void {
