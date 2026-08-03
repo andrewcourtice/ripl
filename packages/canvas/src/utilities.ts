@@ -20,6 +20,7 @@ import type {
     Gradient,
     GradientBounds,
     Scale,
+    TextAlignment,
 } from '@ripl/core';
 
 import {
@@ -245,21 +246,45 @@ export function rescaleCanvas(
     };
 }
 
-/** Renders text character-by-character along a path using fill or stroke. */
+// Where a glyph's anchor sits within its own advance, per the alignment `fillText` will draw it with.
+const TEXT_PATH_ANCHORS: Record<TextAlignment, (advance: number) => number> = {
+    start: () => 0,
+    left: () => 0,
+    center: advance => advance / 2,
+    right: advance => advance,
+    end: advance => advance,
+};
+
+/**
+ * Renders text character-by-character along a path using fill or stroke.
+ *
+ * Each glyph is drawn at the origin of a frame translated to the path, so it is placed at the
+ * point its own `textAlign` anchors it to — the mid-point only for `center`. Glyphs are laid out
+ * from `startOffset` (clamped into the path) up to `maxWidth` of advance, and one whose mid-point
+ * falls past the end of the run is dropped, as SVG `<textPath>` does.
+ *
+ * @param ctx - The native context to draw into.
+ * @param element - The text element, whose `pathData` describes the path to lay the text along.
+ * @param method - Whether to fill or stroke each glyph.
+ */
 export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: ContextText, method: 'fill' | 'stroke'): void {
     const pathData = element.pathData!;
     const totalLength = getPathLength(pathData);
-    let distance = (element.startOffset ?? 0) * totalLength;
+    const anchorOffset = TEXT_PATH_ANCHORS[ctx.textAlign] || TEXT_PATH_ANCHORS.start;
+    const startDistance = numberClamp(element.startOffset ?? 0, 0, 1) * totalLength;
+    const limit = Math.min(totalLength, startDistance + (element.maxWidth ?? Infinity));
+
+    let distance = startDistance;
 
     for (const char of element.content) {
-        const charWidth = ctx.measureText(char).width;
-        const midDistance = distance + charWidth / 2;
+        const advance = ctx.measureText(char).width;
 
-        if (midDistance > totalLength) {
+        // Advance only grows, so the first glyph past the end of the run is also the last that fits.
+        if (distance + advance / 2 > limit) {
             break;
         }
 
-        const { x, y, angle } = samplePathPoint(pathData, midDistance);
+        const { x, y, angle } = samplePathPoint(pathData, distance + anchorOffset(advance));
 
         ctx.save();
         ctx.translate(x, y);
@@ -272,7 +297,7 @@ export function renderTextAlongPath(ctx: CanvasRenderingContext2D, element: Cont
         }
 
         ctx.restore();
-        distance += charWidth;
+        distance += advance;
     }
 }
 
