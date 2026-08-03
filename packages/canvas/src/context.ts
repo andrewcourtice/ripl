@@ -3,6 +3,7 @@ import {
 } from './mixins';
 
 import {
+    releaseCanvasPaintCache,
     rescaleCanvas,
 } from './utilities';
 
@@ -54,17 +55,34 @@ export class CanvasContext extends canvas2DStateMixin(CanvasDOMBase) {
             return;
         }
 
-        const result = rescaleCanvas(this.element, this.context, width, height);
+        const {
+            scaleX,
+            scaleY,
+        } = rescaleCanvas(this.element, this.context, width, height);
 
-        super.rescale(width, height);
+        this.width = width;
+        this.height = height;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
 
-        this.scaleX = result.scaleX;
-        this.scaleY = result.scaleY;
+        // Not `super.rescale`: it installs identity scales and emits before the DPR-aware ones land.
+        this.emit('resize', null);
     }
 
     /** Captures a snapshot of the canvas and returns format-specific exporters (see {@link ContextExport}). */
     public export(): ContextExport {
         return createCanvasExport(this.element);
+    }
+
+    /** Destroys the context, releasing its cached paint and the canvas backing store on top of the base teardown. */
+    public destroy(): void {
+        releaseCanvasPaintCache(this.context);
+
+        // A detached canvas holds width*height*4 bytes until it is collected; zeroing frees it now.
+        this.element.width = 0;
+        this.element.height = 0;
+
+        super.destroy();
     }
 
 }

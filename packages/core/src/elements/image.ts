@@ -25,6 +25,7 @@ import type {
 
 import {
     functionCache,
+    typeIsFunction,
 } from '@ripl/utilities';
 
 /** State interface for an image element, defining position, optional size, and image source. */
@@ -55,24 +56,27 @@ const getRefCanvas = functionCache(() => {
     };
 });
 
+// Naming the constructor keeps the check off runtimes that never declare it, rather than throwing a ReferenceError.
+function sourceIs<TSource extends CanvasImageSource>(image: CanvasImageSource, constructor: string): image is TSource {
+    const ref = (globalThis as Record<string, unknown>)[constructor];
+
+    return typeIsFunction(ref) && image instanceof ref;
+}
+
 function getSourceSize(image: CanvasImageSource): [number, number] {
-    if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
+    if (sourceIs<HTMLImageElement>(image, 'HTMLImageElement') || sourceIs<HTMLCanvasElement>(image, 'HTMLCanvasElement')) {
         return [image.width, image.height];
     }
 
-    if (image instanceof SVGImageElement) {
+    if (sourceIs<SVGImageElement>(image, 'SVGImageElement')) {
         return [image.width.baseVal.value, image.height.baseVal.value];
     }
 
-    if (image instanceof HTMLVideoElement) {
+    if (sourceIs<HTMLVideoElement>(image, 'HTMLVideoElement')) {
         return [image.videoWidth, image.videoHeight];
     }
 
-    if (image instanceof ImageBitmap) {
-        return [image.width, image.height];
-    }
-
-    if (typeof OffscreenCanvas !== 'undefined' && image instanceof OffscreenCanvas) {
+    if (sourceIs<ImageBitmap>(image, 'ImageBitmap') || sourceIs<OffscreenCanvas>(image, 'OffscreenCanvas')) {
         return [image.width, image.height];
     }
 
