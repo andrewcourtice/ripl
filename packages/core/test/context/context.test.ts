@@ -12,6 +12,7 @@ import {
     ContextPath,
     ContextText,
     createElement,
+    createGroup,
     factory,
 } from '../../src';
 
@@ -1070,6 +1071,23 @@ describe('Context', () => {
             expect(destroySpy).toHaveBeenCalledTimes(1);
         });
 
+        // renderedElements retains the whole element graph, and each element retains the context.
+        test('Should release the rendered element graph', () => {
+            const ctx = create();
+            const element = createElement('rect', {});
+
+            ctx.markRenderStart();
+            ctx.currentRenderElement = element;
+            ctx.markRenderEnd();
+
+            expect(ctx.renderedElements).toHaveLength(1);
+
+            ctx.destroy();
+
+            expect(ctx.renderedElements).toEqual([]);
+            expect(ctx.currentRenderElement).toBeUndefined();
+        });
+
     });
 
     // ── enableInteraction / disableInteraction ────────────────────
@@ -1343,16 +1361,53 @@ describe('Context', () => {
 
 });
 
-describe('Context.measureText', () => {
+/** Concrete base context, so the base implementations are exercised without a backend override. */
+class TestContext extends Context {
 
-    /** Concrete base context, so the base measurement path is exercised without a backend override. */
-    class TestContext extends Context {
-
-        constructor() {
-            super('test', document.createElement('div'));
-        }
-
+    constructor() {
+        super('test', document.createElement('div'));
     }
+
+}
+
+describe('Context.reset', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should drop the saved-state stack and restore the default state', () => {
+        const ctx = new TestContext();
+        const font = ctx.font;
+
+        ctx.save();
+        ctx.font = '30px monospace';
+        ctx.save();
+
+        ctx.reset();
+
+        expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+        expect((ctx as unknown as { states: unknown[] }).states).toEqual([]);
+        expect(ctx.font).toBe(font);
+    });
+
+    test('Should close an open group boundary', () => {
+        const ctx = new TestContext();
+
+        ctx.pushGroup(createGroup());
+        ctx.reset();
+        ctx.popGroup();
+
+        expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+    });
+
+});
+
+describe('Context.measureText', () => {
 
     let measureText: typeof factory.measureText;
 

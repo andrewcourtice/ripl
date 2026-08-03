@@ -856,9 +856,11 @@ export class Element<
     /** Renders this element by applying transforms and context state, then invoking the optional callback. */
     public render(context: Context, callback?: AnyFunction, skipRestore?: boolean) {
         this.context = context;
+
+        // Register after the start: at depth 0 markRenderStart wipes the list this element joins.
+        context.markRenderStart();
         context.currentRenderElement = this;
 
-        context.markRenderStart();
         context.save();
 
         try {

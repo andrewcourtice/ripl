@@ -478,9 +478,12 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // noop
     }
 
-    /** Resets the context to its initial state. */
+    /** Resets the context to its initial state: drops the saved-state stack, restores the default drawing state, and closes any open group boundary. */
     public reset(): void {
-        // noop
+        this.states = [];
+        this.currentState = this.getDefaultState();
+        this.saveDepth = 0;
+        this._groupStack = [];
     }
 
     /** Clears the cached list of tracked elements for interaction, forcing a rebuild on the next hit test. */
@@ -792,8 +795,14 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         throw new Error(`export() is not supported by the "${this.type}" context`);
     }
 
-    /** Destroys the context and disposes all resources. */
+    /** Destroys the context and disposes all resources, releasing the element graph it retains for hit testing. */
     public destroy(): void {
+        // Every rendered element is retained here, and each element retains the context back.
+        this.renderedElements = [];
+        this.renderElement = undefined;
+        this._groupStack = [];
+
+        this.invalidateTrackedElements();
         this.dispose();
         super.destroy();
     }

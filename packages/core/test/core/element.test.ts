@@ -244,6 +244,29 @@ describe('Element', () => {
 
 });
 
+describe('Element.render', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    // The element registered itself and markRenderStart then wiped the list it had just joined,
+    // so a direct render(ctx) drew an element that could never be hit-tested.
+    test('Should register the element when rendered at depth 0', () => {
+        const context = new TestContext(400, 300, 1);
+        const element = createElement('rect', { id: 'solo' });
+
+        element.render(context);
+
+        expect(context.renderedElements.map(entry => entry.id)).toEqual(['solo']);
+    });
+
+});
+
 describe('Element.intersectsWith', () => {
 
     const dpr = 2;

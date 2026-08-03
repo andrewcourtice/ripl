@@ -85,6 +85,8 @@ export class Event<TData = undefined> {
 /** A typed pub/sub event system with parent-chain bubbling, disposable subscriptions, and self-filtering. */
 export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
 
+    #destroyed = false;
+
     private _listeners = new Map<keyof TEventMap, Set<EventHandler>>();
 
     /** The parent event bus that emitted events bubble up to, if any. */
@@ -170,8 +172,14 @@ export class EventBus<TEventMap extends EventMap = EventMap> extends Disposer {
         return event;
     }
 
-    /** Emits a `destroyed` event, clears all listeners, and disposes retained resources. */
+    /** Emits a `destroyed` event, clears all listeners, and disposes retained resources. Idempotent: a second call is a no-op, so a listener registered after teardown is not woken by it. */
     public destroy() {
+        if (this.#destroyed) {
+            return;
+        }
+
+        this.#destroyed = true;
+
         this.emit('destroyed', null);
         this._listeners.clear();
         this.dispose();
