@@ -43,7 +43,7 @@ import {
 
 polyfillPath2D();
 
-/** Regression tests for the deferred face-draw findings in `docs/audits/3d-webgpu.md`. */
+/** Regression tests for the deferred face-draw findings of the rendering-context audit. */
 describe('CanvasContext3D deferred face draw', () => {
 
     let host: HTMLDivElement;

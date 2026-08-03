@@ -402,9 +402,7 @@ describe('Context conformance', () => {
                 expect(context.renderedElements.map(element => element.id)).toEqual([CLIP_ID, LEAF_A_ID, PROBE_ID, LEAF_B_ID]);
             });
 
-            // Pins the one gap this suite uncovered: `Context.batch` unwinds the save stack a
-            // throwing frame leaves behind, but never the group stack. Un-skip with the fix.
-            test.skip('Should leave the group stack balanced when a child throws out of its render', () => {
+            test('Should leave the group stack balanced when a child throws out of its render', () => {
                 const context = backend.create();
                 const probe = createRenderProbe();
                 const scene = createConformanceScene(context, probe);
