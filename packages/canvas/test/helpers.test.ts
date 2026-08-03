@@ -18,6 +18,10 @@ import {
     toCanvasGradient,
 } from '../src';
 
+import {
+    factory,
+} from '@ripl/core';
+
 const BOUNDS = {
     x: 0,
     y: 0,
@@ -150,6 +154,44 @@ describe('rescaleCanvas', () => {
 
         expect(result.scaleX(canvas.width)).toBe(canvas.width);
         expect(result.scaleY(canvas.height)).toBe(canvas.height);
+    });
+
+    // Drawing goes through an exact `dpr` transform, so scaling pointers by the floored backing
+    // store disagreed with it by up to a device pixel at the far edge.
+    test('scales by the exact device pixel ratio, not the floored backing store', () => {
+        factory.set({
+            devicePixelRatio: 1.5,
+        });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        const result = rescaleCanvas(canvas, ctx, 301, 151);
+
+        expect(result.scaleX(301)).toBe(451.5);
+        expect(result.scaleY(151)).toBe(226.5);
+
+        factory.set({
+            devicePixelRatio: 1,
+        });
+    });
+
+    test('floors the backing store to whole device pixels', () => {
+        factory.set({
+            devicePixelRatio: 1.5,
+        });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        rescaleCanvas(canvas, ctx, 301, 151);
+
+        expect(canvas.width).toBe(451);
+        expect(canvas.height).toBe(226);
+
+        factory.set({
+            devicePixelRatio: 1,
+        });
     });
 
 });

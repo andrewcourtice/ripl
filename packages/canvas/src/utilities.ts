@@ -238,9 +238,10 @@ export function rescaleCanvas(
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
+    // The scales describe the transform drawing actually uses (an exact `dpr`), not the floored store.
     return {
-        scaleX: scaleContinuous([0, width], [0, scaledWidth]),
-        scaleY: scaleContinuous([0, height], [0, scaledHeight]),
+        scaleX: scaleContinuous([0, width], [0, width * dpr]),
+        scaleY: scaleContinuous([0, height], [0, height * dpr]),
     };
 }
 
