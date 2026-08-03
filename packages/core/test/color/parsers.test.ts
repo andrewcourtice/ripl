@@ -5,6 +5,7 @@ import {
 } from 'vitest';
 
 import {
+    parseColor,
     parseHEX,
     parseHSL,
     parseHSLA,
@@ -48,6 +49,43 @@ describe('Color', () => {
             expect(green).toBe(0);
             expect(blue).toBe(255);
             expect(alpha).toBe(2 / 3);
+        });
+
+        test('Should parse a 3 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(1);
+        });
+
+        test('Should parse a 4 char HEX color to RGBA', () => {
+            const [
+                red,
+                green,
+                blue,
+                alpha,
+            ] = parseHEX('#f0c8');
+
+            expect(red).toBe(255);
+            expect(green).toBe(0);
+            expect(blue).toBe(204);
+            expect(alpha).toBe(136 / 255);
+        });
+
+        test('Should resolve a shorthand HEX color through parseColor', () => {
+            expect(parseColor('#f00')).toEqual([255, 0, 0, 1]);
+        });
+
+        test('Should reject a HEX color of an unsupported length', () => {
+            expect(parseColor('#ff000')).toBeUndefined();
+            expect(parseColor('#ff')).toBeUndefined();
         });
 
         test('Should parse an RGB color to RGBA', () => {
