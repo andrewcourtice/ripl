@@ -195,7 +195,8 @@ that used to render as plain `source-over` on SVG now blends.
 **`SVGContext`** (element styles) — **behaviour**. `alignment-baseline` is no longer written.
 It was set on **every** element, `<path>` and `<image>` included; browsers ignore it on `<text>`,
 `SVGTextPath` never received it, and its `middle` mapping disagreed with `dominant-baseline`'s
-`central`. `SVG_STYLE_MAP.alignmentBaseline` is gone with it — read `dominantBaseline` instead.
+`central`. The mapping is dropped from the package-internal `SVG_STYLE_MAP` too; `dominantBaseline`
+is the one that was ever reaching a node.
 
 ### Text
 
