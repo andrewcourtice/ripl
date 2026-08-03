@@ -608,4 +608,134 @@ describe('SVG audit findings', () => {
 
     });
 
+    // ── S-7 · the image encode is memoized across frames ─────────────────
+
+    describe('S-7 · image encoding', () => {
+
+        test('Should encode an unchanged image once across repeated frames', () => {
+            sizeHost(400, 300);
+
+            const toDataURL = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,AAAA');
+            const ctx = create();
+            const image = new Image(64, 64);
+
+            image.src = 'https://example.test/logo.png';
+
+            for (let frame = 0; frame < 3; frame++) {
+                renderPass(ctx, () => ctx.drawImage(image, 0, 0, 64, 64));
+            }
+
+            expect(toDataURL).toHaveBeenCalledTimes(1);
+            expect(ctx.element.querySelector('image')!.getAttribute('href')).toBe('data:image/png;base64,AAAA');
+
+            ctx.destroy();
+        });
+
+        test('Should re-encode when the image is drawn at a new size', () => {
+            sizeHost(400, 300);
+
+            const toDataURL = vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,AAAA');
+            const ctx = create();
+            const image = new Image(64, 64);
+
+            image.src = 'https://example.test/logo.png';
+
+            renderPass(ctx, () => ctx.drawImage(image, 0, 0, 64, 64));
+            renderPass(ctx, () => ctx.drawImage(image, 0, 0, 32, 32));
+
+            expect(toDataURL).toHaveBeenCalledTimes(2);
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-10 · destroy releases every retained cache ─────────────────────
+
+    describe('S-10 · teardown', () => {
+
+        test('Should release every cache on destroy', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => {
+                ctx.fill = 'linear-gradient(180deg, red, blue)';
+                ctx.shadowColor = '#000000';
+                ctx.shadowBlur = 4;
+
+                const clipPath = ctx.createPath('clip');
+
+                clipPath.rect(0, 0, 5, 5);
+                ctx.applyClip(clipPath);
+
+                const path = ctx.createPath('shape');
+
+                path.rect(0, 0, 10, 10);
+                ctx.applyFill(path);
+
+                ctx.createText({
+                    id: 'label',
+                    x: 0,
+                    y: 0,
+                    content: 'Hello',
+                    pathData: 'M0,0 L10,10',
+                });
+            });
+
+            const internals = getInternals(ctx);
+
+            expect(internals._domCache.size).toBeGreaterThan(0);
+            expect(internals._gradientCache.size).toBeGreaterThan(0);
+
+            ctx.destroy();
+
+            expect(internals._domCache.size).toBe(0);
+            expect(internals._gradientCache.size).toBe(0);
+            expect(internals._patternCache.size).toBe(0);
+            expect(internals._textPathCache.size).toBe(0);
+            expect(internals._clipCache.size).toBe(0);
+            expect(internals._shadowCache.size).toBe(0);
+        });
+
+    });
+
+    // ── S-17 · the export carries an intrinsic size ──────────────────────
+
+    describe('S-17 · export', () => {
+
+        test('Should size the exported markup', () => {
+            sizeHost(200, 100);
+
+            const ctx = create();
+            const markup = ctx.export().toString();
+
+            expect(markup).toContain('width="200"');
+            expect(markup).toContain('height="100"');
+
+            ctx.destroy();
+        });
+
+        test('Should revoke the object URLs it handed out when released', () => {
+            sizeHost(200, 100);
+
+            const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:svg');
+            const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+            const ctx = create();
+            const contextExport = ctx.export();
+
+            contextExport.toURL();
+            contextExport.release?.();
+            contextExport.release?.();
+
+            expect(createObjectURL).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURL).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURL).toHaveBeenCalledWith('blob:svg');
+
+            ctx.destroy();
+        });
+
+    });
+
 });

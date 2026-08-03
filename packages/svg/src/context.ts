@@ -302,8 +302,11 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         sweepDefsCache(this._patternCache, 'pattern', this._usedDefs, entry => entry.element);
     }
 
+    // `width`/`height` are the exported document's only intrinsic size: the inline `100%` has no containing block once the markup stands alone.
     protected rescale(width: number, height: number) {
         this.element.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        this.element.setAttribute('width', width.toString());
+        this.element.setAttribute('height', height.toString());
         super.rescale(width, height);
     }
 
@@ -433,18 +436,33 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._commit();
     }
 
-    /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
+    /**
+     * Captures a snapshot of the SVG surface and returns format-specific exporters (see
+     * {@link ContextExport}). Every object URL handed out by `toURL()` is tracked and revoked by
+     * `release()`.
+     */
     public export(): ContextExport {
         const markup = new XMLSerializer().serializeToString(this.element);
         const width = this.width;
         const height = this.height;
+        const urls = new Set<string>();
 
         return {
             toString: () => markup,
-            toURL: () => URL.createObjectURL(new Blob([markup], {
-                type: 'image/svg+xml',
-            })),
+            toURL: () => {
+                const url = URL.createObjectURL(new Blob([markup], {
+                    type: 'image/svg+xml',
+                }));
+
+                urls.add(url);
+
+                return url;
+            },
             toImage: () => svgMarkupToImageData(markup, width, height),
+            release: () => {
+                urls.forEach(url => URL.revokeObjectURL(url));
+                urls.clear();
+            },
         };
     }
 
@@ -731,6 +749,39 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     /** Tests whether a point lies on the stroked outline of a path. */
     public isPointInStroke(path: SVGPath, x: number, y: number): boolean {
         return this._isPointIn('stroke', path, x, y);
+    }
+
+    /** Resets the context to its initial state, dropping the accumulated transform, the open clip scopes, and the group nesting alongside the base drawing state. */
+    public reset(): void {
+        super.reset();
+
+        this._currentTransforms = [];
+        this._transformStack = [];
+        this._clipScopeStack = [];
+        this._vnodeStack = [];
+        this._currentParentVNode = this._vtree;
+    }
+
+    /** Destroys the context, releasing the reconciler's node cache, every `<defs>` cache, and the virtual tree it retained. */
+    public destroy(): void {
+        super.destroy();
+
+        this._defs.replaceChildren();
+        this._domCache.clear();
+        this._gradientCache.clear();
+        this._patternCache.clear();
+        this._textPathCache.clear();
+        this._clipCache.clear();
+        this._shadowCache.clear();
+        this._usedDefs.clear();
+
+        this._vtree = {
+            id: '__root__',
+            tag: 'svg',
+            children: [],
+        };
+
+        this.reset();
     }
 
 }
