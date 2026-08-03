@@ -518,11 +518,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * a root-level `clip: true` shape deliberately skips its own `restore()` so the clip persists
      * to later siblings, and with no enclosing group to absorb it that save would otherwise leak
      * one state per frame, unbounded.
+     *
+     * The surface is only cleared at render depth 0: a pass entered while an outer one is open
+     * continues it (matching {@link Context.markRenderStart}) rather than wiping what it drew.
      */
     public batch<TResult = void>(body: () => TResult): TResult {
         const depth = this.saveDepth;
 
-        this.clear();
+        if (this.renderDepth === 0) {
+            this.clear();
+        }
+
         this.save();
         this.markRenderStart();
 

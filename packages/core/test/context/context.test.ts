@@ -492,6 +492,21 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        // A nested pass previously wiped everything the outer pass had already painted.
+        test('Should not clear the surface for a nested batch', () => {
+            const ctx = create();
+
+            canvasStub.clearRect.mockClear();
+
+            ctx.batch(() => {
+                ctx.batch(() => {});
+            });
+
+            expect(canvasStub.clearRect).toHaveBeenCalledTimes(1);
+
+            ctx.destroy();
+        });
+
         test('Should unwind a save the callback left outstanding', () => {
             const ctx = create();
 
