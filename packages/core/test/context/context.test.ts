@@ -572,6 +572,22 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        test('Should clamp the render depth at zero for an unbalanced markRenderEnd', () => {
+            const ctx = create();
+
+            ctx.markRenderEnd();
+            ctx.markRenderEnd();
+
+            expect((ctx as unknown as { renderDepth: number }).renderDepth).toBe(0);
+
+            ctx.markRenderStart();
+
+            expect((ctx as unknown as { renderDepth: number }).renderDepth).toBe(1);
+
+            ctx.markRenderEnd();
+            ctx.destroy();
+        });
+
     });
 
     // ── currentRenderElement ──────────────────────────────────────

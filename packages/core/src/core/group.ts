@@ -195,15 +195,17 @@ export class Group<TEventMap extends ElementEventMap = ElementEventMap> extends 
         context.markRenderStart();
         context.pushGroup(this as unknown as Element);
 
-        // `children` returns a fresh array so the sort is safe, and stable, so ties keep insertion order.
-        this.children
-            .sort((ea, eb) => ea.zIndex - eb.zIndex)
-            .forEach(element => element.render(context));
+        try {
+            // `children` returns a fresh array so the sort is safe, and stable, so ties keep insertion order.
+            this.children
+                .sort((ea, eb) => ea.zIndex - eb.zIndex)
+                .forEach(element => element.render(context));
+        } finally {
+            context.popGroup();
+            context.markRenderEnd();
 
-        context.popGroup();
-        context.markRenderEnd();
-
-        this.$reset();
+            this.$reset();
+        }
     }
 
 }

@@ -491,9 +491,9 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.renderDepth += 1;
     }
 
-    /** Signals the end of a render pass. */
+    /** Signals the end of a render pass. Clamped at zero, so an unbalanced call cannot drive the depth negative and make backends that gate their flush on depth 0 fire mid-frame. */
     public markRenderEnd(): void {
-        this.renderDepth -= 1;
+        this.renderDepth = Math.max(0, this.renderDepth - 1);
     }
 
     /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */

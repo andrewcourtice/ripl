@@ -92,4 +92,19 @@ describe('Group.render (scene-less)', () => {
         expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
     });
 
+    test('Should close the group boundary when a child render throws', () => {
+        const context = fakeContext();
+        const child = createElement('rect', {});
+
+        vi.spyOn(child, 'render').mockImplementation(() => {
+            throw new Error('render failed');
+        });
+
+        const group = createGroup({ children: [child] });
+
+        expect(() => group.render(context)).toThrow('render failed');
+        expect(context.popGroup).toHaveBeenCalledTimes(1);
+        expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
+    });
+
 });
