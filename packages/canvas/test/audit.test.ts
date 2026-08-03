@@ -256,4 +256,21 @@ describe('Canvas audit findings', () => {
         expect(context.lineWidth).toBe(8);
     });
 
+    // CANVAS-9: `Context.rescale` installs identity scales and emits before the DPR ones land.
+    test('Should emit resize with the device pixel ratio scales already applied', () => {
+        factory.set({
+            devicePixelRatio: 2,
+        });
+
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const scales: number[] = [];
+
+        context.on('resize', () => scales.push(context.scaleX(100)));
+        context['rescale'](800, 600);
+
+        expect(scales).toEqual([200]);
+    });
+
 });

@@ -54,12 +54,18 @@ export class CanvasContext extends canvas2DStateMixin(CanvasDOMBase) {
             return;
         }
 
-        const result = rescaleCanvas(this.element, this.context, width, height);
+        const {
+            scaleX,
+            scaleY,
+        } = rescaleCanvas(this.element, this.context, width, height);
 
-        super.rescale(width, height);
+        this.width = width;
+        this.height = height;
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
 
-        this.scaleX = result.scaleX;
-        this.scaleY = result.scaleY;
+        // Not `super.rescale`: it installs identity scales and emits before the DPR-aware ones land.
+        this.emit('resize', null);
     }
 
     /** Captures a snapshot of the canvas and returns format-specific exporters (see {@link ContextExport}). */
