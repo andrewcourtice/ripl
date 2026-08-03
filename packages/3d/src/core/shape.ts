@@ -89,6 +89,11 @@ export interface Shape3DState extends BaseElementState {
 /** Options for constructing a 3D shape, with all state properties optional. */
 export type Shape3DOptions<TState extends Shape3DState = Shape3DState> = Partial<Omit<ElementOptions<TState>, 'zIndex'>>;
 
+const DEFAULT_FILL_STYLE = '#888888';
+
+// The GPU mesh needs numeric channels, so an unparseable fill degrades to the default grey there.
+const DEFAULT_MESH_COLOR: ColorRGBA = [136, 136, 136, 1];
+
 /**
  * Pointer hit-test strategy per `pointerEvents` mode. Modes not listed here (e.g. `all`) fall back
  * to testing both fill and stroke.
@@ -254,15 +259,15 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         super.render(context, () => {
             const ctx = context as Context3D;
             const faces = this._getCachedFaces();
-            const baseFillStyle = this.fill || '#888888';
-            const baseRGBA = parseColor(baseFillStyle) as ColorRGBA;
+            const baseFillStyle = this.fill || DEFAULT_FILL_STYLE;
+            const baseRGBA = parseColor(baseFillStyle);
             const matrix = this.getModelMatrix();
 
             this.hitPath = undefined;
 
             // This is noop for CPU render strategies. Safe to call on all paths.
             ctx.submitMesh({
-                vertices: triangulateFacesFlat(faces, baseRGBA),
+                vertices: triangulateFacesFlat(faces, baseRGBA ?? DEFAULT_MESH_COLOR),
                 indices: triangulateFacesIndices(faces),
                 modelMatrix: matrix,
                 normalMatrix: matrix, // Valid when model has no non-uniform scale
@@ -276,7 +281,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         });
     }
 
-    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA, baseFillStyle: string, matrix: Matrix4): void {
+    private _renderCPU(context: Context3D, faces: Face3D[], baseRGBA: ColorRGBA | undefined, baseFillStyle: string, matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
 
