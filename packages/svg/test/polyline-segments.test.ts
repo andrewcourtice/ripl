@@ -70,8 +70,6 @@ describe('Segmented polylines on SVG', () => {
         ctx.markRenderEnd();
         ctx.restore();
 
-        // Rendering is buffered to rAF; export forces a synchronous reconcile.
-        ctx.export();
     }
 
     function paths() {

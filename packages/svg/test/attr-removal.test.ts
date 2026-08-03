@@ -44,8 +44,6 @@ describe('SVG attribute/style removal', () => {
         ctx.markRenderEnd();
         ctx.restore();
 
-        // Rendering is buffered to rAF; export forces a synchronous reconcile.
-        ctx.export();
     }
 
     function drawRect(id: string) {

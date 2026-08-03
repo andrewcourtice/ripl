@@ -592,9 +592,6 @@ describe('SVG', () => {
             // The leaf must NOT carry the group transform (it is supplied once by the <g>).
             expect(leaf.definition.attributes.transform).toBeUndefined();
 
-            // Force a synchronous reconcile and inspect the DOM.
-            ctx.export();
-
             const groupEl = ctx.element.querySelector('g');
             expect(groupEl).not.toBeNull();
             expect(groupEl?.getAttribute('id')).toBe(group.id);

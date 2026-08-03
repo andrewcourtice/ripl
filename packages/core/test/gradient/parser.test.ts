@@ -7,6 +7,7 @@ import {
 import {
     isGradientString,
     parseGradient,
+    parseGradientCached,
 } from '../../src';
 
 describe('Gradient', () => {
@@ -242,6 +243,40 @@ describe('Gradient', () => {
             expect(gradient!.stops).toHaveLength(2);
             expect(gradient!.stops[0].color).toBe('rgba(255, 0, 0, 0.5)');
             expect(gradient!.stops[1].color).toBe('rgba(0, 0, 255, 0.5)');
+        });
+
+    });
+
+    describe('parseGradientCached', () => {
+
+        test('Should parse identically to parseGradient', () => {
+            const value = 'linear-gradient(45deg, red 10%, blue 90%)';
+
+            expect(parseGradientCached(value)).toEqual(parseGradient(value));
+        });
+
+        test('Should return a reference-identical result for the same string', () => {
+            const value = 'radial-gradient(circle at 25% 75%, #fff, #000)';
+
+            expect(parseGradientCached(value)).toBe(parseGradientCached(value));
+        });
+
+        test('Should memoize a non-gradient string as undefined without re-parsing', () => {
+            expect(parseGradientCached('#FF0000')).toBeUndefined();
+            expect(parseGradientCached('#FF0000')).toBeUndefined();
+        });
+
+        // A wipe-at-threshold cache would drop the hot entry here; the bounded LRU keeps it.
+        test('Should retain a recently used entry after the limit is exceeded', () => {
+            const hot = 'linear-gradient(to right, #010203, #040506)';
+            const first = parseGradientCached(hot);
+
+            for (let i = 0; i < 300; i++) {
+                parseGradientCached(`linear-gradient(${i}deg, red, blue)`);
+                parseGradientCached(hot);
+            }
+
+            expect(parseGradientCached(hot)).toBe(first);
         });
 
     });

@@ -50,7 +50,6 @@ describe('SVG element reordering', () => {
 
         ctx.markRenderEnd();
         ctx.restore();
-        ctx.export();
     }
 
     function getPathNodes() {

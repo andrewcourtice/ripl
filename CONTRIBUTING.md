@@ -190,6 +190,20 @@ describe('Scale', () => {
 6. **Document public API** with JSDoc comments (parameters, return values, examples)
 7. **Do not add runtime dependencies** — zero runtime dependencies is a core promise of the project
 
+### Titles
+
+Commit messages use conventional commits (`type(scope): subject`, `!` for a breaking change).
+
+**Pull request titles do not.** A PR title is a sentence describing the change — capitalised,
+imperative, no `type(scope):` prefix, no trailing period:
+
+> Size the canvas surface from the host, not the backing store
+
+The two conventions coexist because `main` takes merge commits rather than squashes, so a PR title
+never becomes a commit subject: the history stays machine-parseable while the PR list stays
+readable. See [`.claude/skills/ripl-pull-requests`](.claude/skills/ripl-pull-requests/SKILL.md) for
+the full convention, including what belongs in a description.
+
 ## CI
 
 Pull requests to `main` trigger the test workflow:

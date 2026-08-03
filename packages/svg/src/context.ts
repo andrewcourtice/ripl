@@ -51,14 +51,13 @@ import type {
 } from './types';
 
 import {
-    createFrameBuffer,
     getGradientBounds,
     isGradientString,
     isPatternString,
     isTransparentColor,
     measureText,
-    parseGradient,
-    parsePattern,
+    parseGradientCached,
+    parsePatternCached,
     radiansToDegrees,
 } from '@ripl/core';
 
@@ -86,10 +85,6 @@ import {
     stringUniqueId,
 } from '@ripl/utilities';
 
-import type {
-    AnyFunction,
-} from '@ripl/utilities';
-
 type SVGVNode = VNode<SVGContextElement>;
 
 /** SVG rendering context implementation, mapping the unified API to SVG DOM elements via virtual-DOM reconciliation. */
@@ -98,7 +93,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     private _vtree: SVGVNode;
     private _domCache: Map<string, Element>;
     private _reconcilerOptions: ReconcilerOptions<SVGContextElement>;
-    private _requestFrame: (callback: AnyFunction) => void;
     private _defs: SVGDefsElement;
     private _gradientCache: Map<string, GradientCacheEntry>;
     private _patternCache: Map<string, PatternCacheEntry>;
@@ -125,7 +119,6 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         super('svg', target, svg, options);
 
-        this.buffer = true;
         // SVG hit testing runs against live DOM geometry, which already composes ancestor `<g>` transforms.
         this.hitTestHonorsTransform = true;
         this._vtree = {
@@ -162,13 +155,12 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._currentClipId = undefined;
         this._defs = createSVGElement('defs');
         this.element.appendChild(this._defs);
-        this._requestFrame = createFrameBuffer();
 
         this.init();
     }
 
     private _resolvePatternStyle(value: string, cacheKey: string): string {
-        const pattern = parsePattern(value);
+        const pattern = parsePatternCached(value);
 
         if (!pattern) {
             return value;
@@ -204,7 +196,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return value;
         }
 
-        const gradient = parseGradient(value);
+        const gradient = parseGradientCached(value);
 
         if (!gradient) {
             return value;
@@ -340,8 +332,17 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         }
     }
 
+    // The reconciler already holds every node it created, so prefer it over a document-scoped id lookup.
+    private _resolveHitNode(id: string): Element | null {
+        const cached = this._domCache.get(id);
+
+        return cached && this.element.contains(cached)
+            ? cached
+            : this.element.getElementById(id);
+    }
+
     private _isPointIn(method: 'stroke' | 'fill', path: SVGPath, x: number, y: number) {
-        const element = this.element.getElementById(path.id);
+        const element = this._resolveHitNode(path.id);
         const point = this.element.createSVGPoint();
 
         point.x = x;
@@ -404,18 +405,11 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
             return;
         }
 
-        if (this.buffer) {
-            this._requestFrame(() => this._commit());
-        } else {
-            this._commit();
-        }
+        this._commit();
     }
 
     /** Captures a snapshot of the SVG surface and returns format-specific exporters (see {@link ContextExport}). */
     public export(): ContextExport {
-        // Buffered rendering defers to rAF, so commit synchronously for markup to reflect the latest scene.
-        this._commit();
-
         const markup = new XMLSerializer().serializeToString(this.element);
         const width = this.width;
         const height = this.height;

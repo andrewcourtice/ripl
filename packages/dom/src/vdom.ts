@@ -71,6 +71,25 @@ export function ensureGroupPath<TElement = unknown>(root: VNode<TElement>, group
     return parent;
 }
 
+/**
+ * Drops cache entries whose node is no longer under the reconciled root.
+ *
+ * Removing a node only ever deletes its own entry, so a removed group used to leave every
+ * descendant's entry behind holding a detached node. Sweeping after the tree is reconciled catches
+ * those without ordering hazards: a node reparented out of a removed subtree has already been
+ * re-attached by the time this runs, so it survives.
+ *
+ * Containment is tested against the root rather than the document, so a surface that has not been
+ * mounted still reconciles normally.
+ */
+function evictDetachedNodes(root: Element, domCache: Map<string, Element>): void {
+    domCache.forEach((node, id) => {
+        if (!root.contains(node)) {
+            domCache.delete(id);
+        }
+    });
+}
+
 function isExcluded(element: Element, selectors: string[]): boolean {
     for (let i = 0; i < selectors.length; i++) {
         if (element.matches(selectors[i])) {
@@ -81,12 +100,12 @@ function isExcluded(element: Element, selectors: string[]): boolean {
     return false;
 }
 
-/** Reconciles a virtual node tree against the live DOM, creating, updating, reordering, and removing child elements as needed. */
-export function reconcileNode<TElement = unknown>(
+function reconcileChildren<TElement = unknown>(
     domParent: Element,
     vnode: VNode<TElement>,
     domCache: Map<string, Element>,
-    options: ReconcilerOptions<TElement>
+    options: ReconcilerOptions<TElement>,
+    state: { removed: boolean }
 ): void {
     const {
         createElement,
@@ -112,7 +131,9 @@ export function reconcileNode<TElement = unknown>(
             existingChildren.set(childId, child);
         } else {
             child.remove();
-            if (childId) {
+            state.removed = true;
+
+            if (childId && domCache.get(childId) === child) {
                 domCache.delete(childId);
             }
         }
@@ -144,9 +165,38 @@ export function reconcileNode<TElement = unknown>(
             }
         }
 
-        if (childVNode.children.length > 0) {
-            reconcileNode(domChild, childVNode, domCache, options);
+        // Also when the vnode has no children but the node does: that pass is what empties it.
+        if (childVNode.children.length > 0 || domChild.children.length > 0) {
+            reconcileChildren(domChild, childVNode, domCache, options, state);
         }
+    }
+}
+
+/**
+ * Reconciles a virtual node tree against the live DOM, creating, updating, reordering, and removing
+ * child elements as needed.
+ *
+ * @param domParent - The live element whose children are reconciled.
+ * @param vnode - The virtual node describing the desired children.
+ * @param domCache - Node cache keyed by reconciliation id, reused across passes so a node that moves
+ * between parents is re-attached rather than re-created. Entries left detached by this pass are
+ * swept before returning.
+ * @param options - Element lifecycle callbacks and filtering.
+ */
+export function reconcileNode<TElement = unknown>(
+    domParent: Element,
+    vnode: VNode<TElement>,
+    domCache: Map<string, Element>,
+    options: ReconcilerOptions<TElement>
+): void {
+    const state = {
+        removed: false,
+    };
+
+    reconcileChildren(domParent, vnode, domCache, options, state);
+
+    if (state.removed) {
+        evictDetachedNodes(domParent, domCache);
     }
 }
 

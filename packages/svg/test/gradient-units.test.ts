@@ -63,8 +63,6 @@ describe('SVG gradient units', () => {
         ctx.markRenderEnd();
         ctx.restore();
 
-        // Rendering is buffered to rAF; export forces a synchronous reconcile.
-        ctx.export();
     }
 
     function gradients() {
@@ -163,7 +161,6 @@ describe('SVG gradient units', () => {
         ctx.applyFill(path);
         ctx.markRenderEnd();
         ctx.restore();
-        ctx.export();
 
         const [gradient] = gradients();
 

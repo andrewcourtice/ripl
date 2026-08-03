@@ -40,9 +40,7 @@ import type {
 class MyContext extends Context {
 
     constructor(target: string | HTMLElement) {
-        super('my-context', target, {
-            buffer: false,
-        });
+        super('my-context', target);
     }
 
     // --- Abstract methods to implement ---
