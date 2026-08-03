@@ -85,21 +85,40 @@ export class Text extends Element<TextState> {
         super('text', options);
     }
 
+    // The bound context is the authority on its own metrics: a terminal cell is not a canvas glyph,
+    // so the platform factory alone reports a box up to 4x wider than what the backend draws.
+    private _measure(text: string): TextMetrics {
+        const font = this.getComputedValue('font');
+        const textAlign = this.getComputedValue('textAlign');
+        const textBaseline = this.getComputedValue('textBaseline');
+        const context = this.context;
+
+        if (!context) {
+            return measureText(text, {
+                font,
+                textAlign,
+                textBaseline,
+            });
+        }
+
+        return context.layer(() => {
+            context.font = font ?? context.font;
+            context.textAlign = textAlign ?? context.textAlign;
+            context.textBaseline = textBaseline ?? context.textBaseline;
+
+            return context.measureText(text);
+        });
+    }
+
     /** @internal Local-space bounding box of the text, measured with its current alignment. */
     public _getLocalBoundingBox(): Box {
-        const text = this.content.toString();
-
         // Measure with the computed font/alignment so anchor-relative metrics and cascade fonts apply.
         const {
             actualBoundingBoxAscent,
             actualBoundingBoxLeft,
             actualBoundingBoxDescent,
             actualBoundingBoxRight,
-        } = measureText(text, {
-            font: this.getComputedValue('font'),
-            textAlign: this.getComputedValue('textAlign'),
-            textBaseline: this.getComputedValue('textBaseline'),
-        });
+        } = this._measure(this.content.toString());
 
         return new Box(
             this.y - actualBoundingBoxAscent,

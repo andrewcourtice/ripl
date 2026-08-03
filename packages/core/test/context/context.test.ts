@@ -8,9 +8,11 @@ import {
 } from 'vitest';
 
 import {
+    Context,
     ContextPath,
     ContextText,
     createElement,
+    factory,
 } from '../../src';
 
 import {
@@ -1337,6 +1339,66 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+    });
+
+});
+
+describe('Context.measureText', () => {
+
+    /** Concrete base context, so the base measurement path is exercised without a backend override. */
+    class TestContext extends Context {
+
+        constructor() {
+            super('test', document.createElement('div'));
+        }
+
+    }
+
+    let measureText: typeof factory.measureText;
+
+    beforeEach(() => {
+        mockCanvasContext();
+        measureText = factory.measureText;
+    });
+
+    afterEach(() => {
+        factory.set({ measureText });
+        vi.restoreAllMocks();
+    });
+
+    // actualBoundingBox* is anchor-relative, so dropping the alignment anchors the reported box
+    // at the wrong corner for every consumer of context.measureText.
+    test('Should forward the context font, alignment and baseline', () => {
+        const measure = vi.fn(() => ({}) as TextMetrics);
+
+        factory.set({ measureText: measure });
+
+        const ctx = new TestContext();
+
+        ctx.font = '20px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        ctx.measureText('hello');
+
+        expect(measure).toHaveBeenCalledWith('hello', {
+            font: '20px serif',
+            textAlign: 'center',
+            textBaseline: 'middle',
+        });
+    });
+
+    test('Should prefer an explicit font override', () => {
+        const measure = vi.fn(() => ({}) as TextMetrics);
+
+        factory.set({ measureText: measure });
+
+        const ctx = new TestContext();
+
+        ctx.font = '20px serif';
+        ctx.measureText('hello', '30px monospace');
+
+        expect(measure.mock.calls[0][1]).toMatchObject({ font: '30px monospace' });
     });
 
 });

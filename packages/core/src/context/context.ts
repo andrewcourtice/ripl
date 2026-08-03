@@ -687,9 +687,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return [x * getAxisScale(this.scaleX), y * getAxisScale(this.scaleY)];
     }
 
-    /** Measures text dimensions using the context's current font or an optional override. */
+    /**
+     * Measures text dimensions using the context's current font, text alignment, and baseline,
+     * or an optional font override. `actualBoundingBox*` is anchor-relative, so the alignment and
+     * baseline have to be forwarded or the reported box is anchored at the wrong corner.
+     */
     public measureText(text: string, font?: string): TextMetrics {
-        return measureText(text, { font });
+        return measureText(text, {
+            font: font ?? this.font,
+            textAlign: this.textAlign,
+            textBaseline: this.textBaseline,
+        });
     }
 
     /**

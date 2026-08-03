@@ -261,8 +261,6 @@ export interface BaseState {
 
 /** Options for measuring text dimensions. */
 export type MeasureTextOptions = {
-    /** Canvas 2D context used to perform the measurement. */
-    context?: CanvasRenderingContext2D;
     /** CSS font shorthand applied before measuring. */
     font?: CanvasRenderingContext2D['font'];
     /** Horizontal text alignment used while measuring. */

@@ -645,10 +645,12 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         });
     }
 
-    /** Measures text dimensions using the context's current font or an optional override. */
+    /** Measures text dimensions using the context's current font, alignment, and baseline, or an optional font override. */
     public measureText(text: string, font?: string): TextMetrics {
         return measureText(text, {
             font: font ?? this.currentState.font,
+            textAlign: this.currentState.textAlign,
+            textBaseline: this.currentState.textBaseline,
         });
     }
 
