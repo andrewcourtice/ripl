@@ -9,6 +9,7 @@ import {
 
 import {
     mockCanvasContext,
+    mockCanvasState,
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -129,14 +130,32 @@ describe('CanvasContext', () => {
         expect(ctx.supportsPathCaching).toBe(true);
     });
 
-    test('save and restore delegate without throwing', () => {
+    test('save and restore round-trip the drawing state', () => {
+        const stub = mockCanvasState(mockCanvasContext());
         const ctx = context();
 
-        expect(() => {
-            ctx.save();
-            ctx.lineWidth = 8;
-            ctx.restore();
-        }).not.toThrow();
+        ctx.lineWidth = 2;
+        ctx.save();
+        ctx.lineWidth = 8;
+
+        expect(ctx.lineWidth).toBe(8);
+        expect(stub.getSaveDepth()).toBe(1);
+
+        ctx.restore();
+
+        expect(ctx.lineWidth).toBe(2);
+        expect(stub.getSaveDepth()).toBe(0);
+    });
+
+    test('restore is a no-op with nothing on the stack', () => {
+        const stub = mockCanvasState(mockCanvasContext());
+        const ctx = context();
+
+        ctx.lineWidth = 3;
+        ctx.restore();
+
+        expect(ctx.lineWidth).toBe(3);
+        expect(stub.getSaveDepth()).toBe(0);
     });
 
     test('isPointInPath returns a boolean from the native context', () => {

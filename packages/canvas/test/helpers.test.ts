@@ -12,11 +12,16 @@ import {
 } from '@ripl/test-utils';
 
 import {
+    canvasDrawImage,
     rescaleCanvas,
     setCanvasFill,
     setCanvasStroke,
     toCanvasGradient,
 } from '../src';
+
+import {
+    factory,
+} from '@ripl/core';
 
 const BOUNDS = {
     x: 0,
@@ -55,16 +60,95 @@ describe('setCanvasFill / setCanvasStroke', () => {
         expect(typeof ctx.fillStyle).toBe('object');
     });
 
-    test('memoizes gradient parsing across repeated calls', () => {
+    // Canvas bakes gradient geometry at set time, so one native object serves a string and box.
+    test('reuses the native gradient across repeated calls', () => {
         const ctx = context();
         const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
 
         setCanvasFill(ctx, LINEAR, BOUNDS);
         setCanvasFill(ctx, LINEAR, BOUNDS);
 
-        // Both calls build a native gradient (bounds change per frame), but parsing is cached.
-        expect(createLinearGradient).toHaveBeenCalledTimes(2);
+        expect(createLinearGradient).toHaveBeenCalledTimes(1);
         expect(typeof ctx.fillStyle).toBe('object');
+    });
+
+    test('rebuilds the native gradient when the bounds change', () => {
+        const ctx = context();
+        const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
+
+        setCanvasFill(ctx, LINEAR, BOUNDS);
+        setCanvasFill(ctx, LINEAR, {
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 100,
+        });
+
+        expect(createLinearGradient).toHaveBeenCalledTimes(2);
+    });
+
+    test('shares one native gradient between fill and stroke', () => {
+        const ctx = context();
+        const createLinearGradient = vi.spyOn(ctx, 'createLinearGradient');
+
+        setCanvasFill(ctx, LINEAR, BOUNDS);
+        setCanvasStroke(ctx, LINEAR, BOUNDS);
+
+        expect(createLinearGradient).toHaveBeenCalledTimes(1);
+        expect(ctx.strokeStyle).toBe(ctx.fillStyle);
+    });
+
+});
+
+describe('canvasDrawImage', () => {
+
+    beforeEach(() => mockCanvasContext());
+    afterEach(() => vi.restoreAllMocks());
+
+    function image(width: number, height: number) {
+        const canvas = document.createElement('canvas');
+
+        canvas.width = width;
+        canvas.height = height;
+
+        return canvas;
+    }
+
+    test('draws at intrinsic size when neither dimension is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5);
+    });
+
+    // The destination-rectangle form needs both dimensions, so a lone width used to be dropped.
+    test('takes the intrinsic height when only a width is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5, 200);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5, 200, 50);
+    });
+
+    test('takes the intrinsic width when only a height is given', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 5, 5, undefined, 200);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 5, 5, 100, 200);
+    });
+
+    test('honours a zero dimension rather than falling back to the intrinsic size', () => {
+        const ctx = context();
+        const source = image(100, 50);
+
+        canvasDrawImage(ctx, source, 0, 0, 0, 40);
+
+        expect(ctx.drawImage).toHaveBeenCalledWith(source, 0, 0, 0, 40);
     });
 
 });
@@ -150,6 +234,44 @@ describe('rescaleCanvas', () => {
 
         expect(result.scaleX(canvas.width)).toBe(canvas.width);
         expect(result.scaleY(canvas.height)).toBe(canvas.height);
+    });
+
+    // Drawing goes through an exact `dpr` transform, so scaling pointers by the floored backing
+    // store disagreed with it by up to a device pixel at the far edge.
+    test('scales by the exact device pixel ratio, not the floored backing store', () => {
+        factory.set({
+            devicePixelRatio: 1.5,
+        });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        const result = rescaleCanvas(canvas, ctx, 301, 151);
+
+        expect(result.scaleX(301)).toBe(451.5);
+        expect(result.scaleY(151)).toBe(226.5);
+
+        factory.set({
+            devicePixelRatio: 1,
+        });
+    });
+
+    test('floors the backing store to whole device pixels', () => {
+        factory.set({
+            devicePixelRatio: 1.5,
+        });
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d')!;
+
+        rescaleCanvas(canvas, ctx, 301, 151);
+
+        expect(canvas.width).toBe(451);
+        expect(canvas.height).toBe(226);
+
+        factory.set({
+            devicePixelRatio: 1,
+        });
     });
 
 });
