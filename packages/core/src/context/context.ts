@@ -68,6 +68,12 @@ export {
     resolveTransformOrigin,
 } from './transform';
 
+/** What an open group boundary has to put back when it closes. */
+interface GroupScope {
+    depth: number;
+    element?: RenderElement;
+}
+
 /** Measures the dimensions of a text string using an optional font and context override. */
 export function measureText(value: string, options?: MeasureTextOptions): TextMetrics {
     return factory.measureText(value, options);
@@ -76,7 +82,7 @@ export function measureText(value: string, options?: MeasureTextOptions): TextMe
 /** Abstract rendering context providing a unified API for Canvas and SVG, with state management and coordinate scaling. */
 export abstract class Context<TElement extends Element = Element, TMeta extends Record<string, unknown> = Record<string, unknown>> extends EventBus<ContextEventMap> implements BaseState {
 
-    private _groupDepthStack: number[] = [];
+    private _groupStack: GroupScope[] = [];
 
     protected states: BaseState[];
     protected currentState: BaseState;
@@ -535,8 +541,16 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * @param group - The group element whose boundary is being entered.
      */
     public pushGroup(group: RiplElement): void {
-        this._groupDepthStack.push(this.saveDepth);
+        this._groupStack.push({
+            depth: this.saveDepth,
+            element: this.renderElement,
+        });
+
         this.save();
+
+        // A group is abstract, so the setter records it as the current element without listing it.
+        this.currentRenderElement = group;
+
         applyElementTransform(this, group);
         this.applyGroupPaint(group);
     }
@@ -568,15 +582,21 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Closes the most recently opened group boundary, unwinding the state stack back to the
-     * depth captured at {@link Context.pushGroup}. This absorbs any dangling `save()` left by
-     * a group-scoped clip (which deliberately skips its own `restore` so the clip persists to
-     * later siblings), confining the clip to the group rather than leaking it to the scene.
+     * depth captured at {@link Context.pushGroup} and restoring the render element that was
+     * current before it. This absorbs any dangling `save()` left by a group-scoped clip (which
+     * deliberately skips its own `restore` so the clip persists to later siblings), confining
+     * the clip to the group rather than leaking it to the scene.
      */
     public popGroup(): void {
-        const depth = this._groupDepthStack.pop() ?? Math.max(0, this.saveDepth - 1);
+        const scope = this._groupStack.pop();
+        const depth = scope?.depth ?? Math.max(0, this.saveDepth - 1);
 
         while (this.saveDepth > depth) {
             this.restore();
+        }
+
+        if (scope) {
+            this.renderElement = scope.element;
         }
     }
 

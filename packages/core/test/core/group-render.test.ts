@@ -182,6 +182,75 @@ describe('Group paint boundary', () => {
         context.destroy();
     });
 
+    test('Should resolve a group gradient against the group box, not the previously painted leaf', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const root = createGroup({
+            children: [
+                createRect({
+                    id: 'leaf',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#000000',
+                    zIndex: 0,
+                }),
+                createGroup({
+                    zIndex: 1,
+                    fill: 'linear-gradient(90deg, #ff0000 0%, #0000ff 100%)',
+                    children: [
+                        createRect({
+                            x: 200,
+                            y: 100,
+                            width: 100,
+                            height: 50,
+                        }),
+                    ],
+                }),
+            ],
+        });
+
+        stub.createLinearGradient.mockClear();
+
+        root.render(context);
+
+        expect(stub.createLinearGradient).toHaveBeenCalledTimes(1);
+        expect(stub.createLinearGradient.mock.calls[0]).toEqual([200, 125, 300, 125]);
+
+        context.destroy();
+    });
+
+    test('Should restore the previous render element when a group boundary closes', () => {
+        const {
+            context,
+        } = statefulCanvasContext();
+
+        const leaf = createRect({
+            id: 'leaf',
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            fill: '#000000',
+        });
+
+        const group = createGroup({ children: [leaf] });
+
+        context.pushGroup(group);
+
+        expect(context.currentRenderElement).toBe(group);
+
+        context.popGroup();
+
+        expect(context.currentRenderElement).toBeUndefined();
+
+        context.destroy();
+    });
+
     test('Should restore the accumulated alpha for a sibling that sets no opacity', () => {
         const {
             stub,
