@@ -496,6 +496,30 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        // Scene.render walks a flat instruction stream, so a throw skips the pops that match its
+        // pushes; Group.render's own finally never sees them.
+        test('Should close open group boundaries when the callback throws', () => {
+            const ctx = create();
+            const group = createGroup({ children: [] });
+            const stack = () => (ctx as unknown as { _groupStack: unknown[] })._groupStack;
+
+            for (let frame = 0; frame < 4; frame++) {
+                expect(() => {
+                    ctx.batch(() => {
+                        ctx.pushGroup(group);
+                        ctx.pushGroup(group);
+                        throw new Error('test');
+                    });
+                }).toThrow('test');
+
+                expect(stack()).toHaveLength(0);
+            }
+
+            expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+
+            ctx.destroy();
+        });
+
         // A nested pass previously wiped everything the outer pass had already painted.
         test('Should not clear the surface for a nested batch', () => {
             const ctx = create();
