@@ -334,4 +334,20 @@ describe('Color', () => {
 
     });
 
+    describe('Zero alpha', () => {
+
+        // The alpha alternation had no integer branch, so the idiomatic fully-transparent form
+        // parsed as nothing at all and every backend painted it opaque.
+        test('Should parse an integer zero alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0)')).toEqual([255, 0, 0, 0]);
+            expect(parseColor('hsla(0, 100%, 50%, 0)')).toEqual([255, 0, 0, 0]);
+        });
+
+        test('Should still parse a fractional and a percentage alpha', () => {
+            expect(parseColor('rgba(255, 0, 0, 0.5)')).toEqual([255, 0, 0, 0.5]);
+            expect(parseColor('rgba(255, 0, 0, 50%)')).toEqual([255, 0, 0, 0.5]);
+        });
+
+    });
+
 });

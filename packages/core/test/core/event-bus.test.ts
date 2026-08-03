@@ -168,6 +168,21 @@ describe('EventBus', () => {
         expect(handler).not.toHaveBeenCalled();
     });
 
+    // A `#private` field throws when `this` is a Proxy, so Vue's `reactive()` broke every subclass.
+    test('Should tear down through a proxy', () => {
+        const bus = new Proxy(new EventBus<TestEventMap>(), {});
+        const handler = vi.fn();
+
+        bus.on('destroyed', handler);
+
+        expect(() => bus.destroy()).not.toThrow();
+        expect(handler).toHaveBeenCalledTimes(1);
+
+        bus.destroy();
+
+        expect(handler).toHaveBeenCalledTimes(1);
+    });
+
     test('Event should have correct timestamp and type', () => {
         const bus = new EventBus<TestEventMap>();
         let capturedEvent: Event<number> | undefined;
