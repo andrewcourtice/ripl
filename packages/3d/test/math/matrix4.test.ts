@@ -111,12 +111,59 @@ describe('Matrix4', () => {
         expect(proj[11]).toBe(-1);
     });
 
+    // WGPU-1: `proj[11] === -1` holds under both the GL and the WebGPU depth conventions, which is
+    // exactly why a GL matrix rendered against WebGPU's [0, 1] clip volume went unnoticed. Pin the
+    // plane mapping instead of the matrix shape.
+    test('Should map the perspective near plane to a depth of 0', () => {
+        const proj = mat4Perspective(Math.PI / 3, 1, 0.1, 1000);
+
+        expect(mat4TransformPoint(proj, [0, 0, -0.1])[2]).toBeCloseTo(0, 6);
+    });
+
+    test('Should map the perspective far plane to a depth of 1', () => {
+        const proj = mat4Perspective(Math.PI / 3, 1, 0.1, 1000);
+
+        expect(mat4TransformPoint(proj, [0, 0, -1000])[2]).toBeCloseTo(1, 6);
+    });
+
+    test('Should keep perspective depth monotonic and inside [0, 1] across the frustum', () => {
+        const proj = mat4Perspective(Math.PI / 3, 1, 0.1, 1000);
+        const depths = [0.1, 0.15, 0.2, 1, 5, 100, 1000].map(distance => mat4TransformPoint(proj, [0, 0, -distance])[2]);
+
+        for (const depth of depths) {
+            expect(depth).toBeGreaterThanOrEqual(0);
+            expect(depth).toBeLessThanOrEqual(1);
+        }
+
+        for (let idx = 1; idx < depths.length; idx++) {
+            expect(depths[idx]).toBeGreaterThan(depths[idx - 1]);
+        }
+    });
+
     test('mat4Orthographic produces valid projection', () => {
         const proj = mat4Orthographic(-1, 1, -1, 1, 0.1, 100);
 
         expect(proj[0]).not.toBe(0);
         expect(proj[5]).not.toBe(0);
         expect(proj[15]).toBe(1);
+    });
+
+    test('Should map the orthographic near plane to a depth of 0', () => {
+        const proj = mat4Orthographic(-1, 1, -1, 1, 0.1, 100);
+
+        expect(mat4TransformPoint(proj, [0, 0, -0.1])[2]).toBeCloseTo(0, 6);
+    });
+
+    test('Should map the orthographic far plane to a depth of 1', () => {
+        const proj = mat4Orthographic(-1, 1, -1, 1, 0.1, 100);
+
+        expect(mat4TransformPoint(proj, [0, 0, -100])[2]).toBeCloseTo(1, 6);
+    });
+
+    test('Should map orthographic depth linearly through the frustum', () => {
+        const proj = mat4Orthographic(-1, 1, -1, 1, 0, 100);
+
+        expect(mat4TransformPoint(proj, [0, 0, -50])[2]).toBeCloseTo(0.5, 6);
     });
 
     test('mat4TransformPoint with combined transform', () => {

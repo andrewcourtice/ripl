@@ -144,7 +144,13 @@ export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 
     return out;
 }
 
-/** Constructs a perspective projection matrix. */
+/**
+ * Constructs a perspective projection matrix.
+ *
+ * Depth maps to the WebGPU convention: the near plane projects to `0` and the far plane to `1`,
+ * matching the `0 ≤ z ≤ w` clip volume the GPU backend rasterises against. The CPU painter reads
+ * the projected depth only as a sort key, and it stays monotonic with distance.
+ */
 export function mat4Perspective(fovRadians: number, aspect: number, near: number, far: number): Matrix4 {
     // eslint-disable-next-line id-length
     const f = 1.0 / Math.tan(fovRadians / 2);
@@ -154,14 +160,19 @@ export function mat4Perspective(fovRadians: number, aspect: number, near: number
 
     out[0] = f / aspect;
     out[5] = f;
-    out[10] = (near + far) * rangeInv;
+    out[10] = far * rangeInv;
     out[11] = -1;
-    out[14] = 2 * near * far * rangeInv;
+    out[14] = far * near * rangeInv;
 
     return out;
 }
 
-/** Constructs an orthographic projection matrix. */
+/**
+ * Constructs an orthographic projection matrix.
+ *
+ * Depth maps to the WebGPU convention: the near plane projects to `0` and the far plane to `1`.
+ * See {@link mat4Perspective}.
+ */
 export function mat4Orthographic(
     left: number,
     right: number,
@@ -178,10 +189,10 @@ export function mat4Orthographic(
 
     out[0] = -2 * lr;
     out[5] = -2 * bt;
-    out[10] = 2 * nf;
+    out[10] = nf;
     out[12] = (left + right) * lr;
     out[13] = (top + bottom) * bt;
-    out[14] = (near + far) * nf;
+    out[14] = near * nf;
     out[15] = 1;
 
     return out;
