@@ -90,6 +90,25 @@ describe('terminal path command dispatch', () => {
         expect(output.written.join('')).toMatch(BRAILLE);
     });
 
+    // arcTo now emits a partial arc, so this branch is on the path of every rounded corner.
+    test('a partial arc rasterizes as an arc', () => {
+        const output = createMockOutput();
+        const ctx = createContext(output);
+
+        ctx.stroke = '#ffffff';
+
+        const path = ctx.createPath();
+
+        path.moveTo(2, 2);
+        path.arcTo(20, 2, 20, 18, 6);
+
+        ctx.markRenderStart();
+        ctx.applyStroke(path);
+        ctx.markRenderEnd();
+
+        expect(output.written.join('')).toMatch(BRAILLE);
+    });
+
     test('a full-circle arc rasterizes as a circle', () => {
         const output = createMockOutput();
         const ctx = createContext(output);

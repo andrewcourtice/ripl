@@ -92,6 +92,11 @@ describe('colorToAnsiFg', () => {
         expect(colorToAnsiFg('pattern(diagonal, #ff0000, #ffffff, 8)')).toBe('\x1b[38;2;255;0;0m');
     });
 
+    test('Should fall back to no color for a malformed gradient or pattern', () => {
+        expect(colorToAnsiFg('linear-gradient()')).toBe('');
+        expect(colorToAnsiFg('pattern()')).toBe('');
+    });
+
     test('Should attenuate a color by its own alpha', () => {
         expect(colorToAnsiFg('rgba(200, 100, 50, 0.5)')).toBe('\x1b[38;2;100;50;25m');
     });
