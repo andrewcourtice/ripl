@@ -151,7 +151,99 @@ _No entries yet._
 
 ## @ripl/svg
 
-_No entries yet._
+### Clipping
+
+**`SVGContext.applyClip`** — **behaviour**, and the one change likely to break a snapshot. A clip no
+longer stamps `clip-path` on each leaf; it opens a `<g clip-path="url(#…)" id="${pathId}:clip">` and
+nests everything drawn after it, until the enclosing `restore()`/`popGroup()`, inside that group.
+Two defects fall out of the same mechanism. `<clipPath>` defaults to `userSpaceOnUse`, which is the
+user space of the *referencing* element, so a clip stamped on a leaf was displaced by every
+intervening `<g transform>` — 20px per nested translate, growing with depth, where canvas bakes the
+region into device space at `clip()` time and is immune to later transforms. And `_currentClipId`
+was a single scalar, so a second `applyClip` **replaced** the active clip instead of intersecting
+it: descendants of an inner brush/zoom clip escaped the outer plot-area clip entirely. Nested
+scopes intersect, matching `ctx.clip()`. **Markup assertions and CSS selectors that walked straight
+from the surface to a clipped node must account for the scope element**; nothing else changes, since
+a `<g>` carrying only `clip-path` establishes no new user space.
+
+**`SVGContext.applyClip`** — **behaviour**. A clipped multi-path element drops *all* of its paths.
+A `Polyline` with `segments` mints run paths keyed `${id}:${index}`; only the primary was removed,
+so the runs stayed in the tree as stray (invisible) `<path>` nodes bloating the DOM and the node
+cache.
+
+### Paint
+
+**`SVGContext.pushGroup`** — **behaviour**. A gradient or pattern on a `Group` resolves **once at the
+boundary**, against `group.getBoundingBox(true)`, keyed by the group's id and stamped on the `<g>`;
+descendants inherit the resolved `url(#…)` instead of re-resolving the paint against their own box.
+Every leaf used to get its own def showing the **full** ramp restarted over its own geometry, where
+canvas painted one ramp across the whole group — the same scene, two pictures. A leaf that sets its
+own gradient still resolves against its own box, unchanged. See the `Context.pushGroup` entry under
+`@ripl/core` for the other half.
+
+**`SVGContext.applyFill`** — **behaviour**. The `fillRule` argument is honoured and emitted as
+`fill-rule`. It was accepted and discarded (while `applyClip` honoured it), so an `evenodd` fill
+silently rendered `nonzero` — a donut path was solid on SVG and holed on canvas.
+
+**`SVGContext`** (element styles) — **behaviour**. `globalCompositeOperation` maps to
+`mix-blend-mode` for the operations that have a CSS equivalent (`lighter` maps to `plus-lighter`;
+`source-over`, `destination-out`, `xor` and `copy` have none and are left alone). The surface also
+carries `isolation: isolate`, so a blend composites against the surface's own content the way canvas
+does rather than against the page behind it. An element with `globalCompositeOperation: 'multiply'`
+that used to render as plain `source-over` on SVG now blends.
+
+**`SVGContext`** (element styles) — **behaviour**. `alignment-baseline` is no longer written.
+It was set on **every** element, `<path>` and `<image>` included; browsers ignore it on `<text>`,
+`SVGTextPath` never received it, and its `middle` mapping disagreed with `dominant-baseline`'s
+`central`. `SVG_STYLE_MAP.alignmentBaseline` is gone with it — read `dominantBaseline` instead.
+
+### Text
+
+**`SVGText`** — **behaviour**. `TextOptions.maxWidth` emits `textLength` plus
+`lengthAdjust="spacingAndGlyphs"`. Canvas has honoured it via `fillText`'s third argument all along,
+so a label sized to fit a heatmap cell or a truncated axis tick overflowed on SVG only. **SVG text
+with a `maxWidth` now compresses**; drop the option to get the old overflow.
+
+### Lifecycle
+
+**`SVGContext.destroy`** — **API**, additive (there was no override). Clears the reconciler's node
+cache, all five `<defs>` caches, the `<defs>` element itself and the virtual tree. Anything holding
+the context alive — a devtools panel, a registry — used to retain every cached DOM node with it.
+Do not render through a context after destroying it.
+
+**`SVGContext.reset`** — **API**, additive. Drops the accumulated transform, the open clip scopes
+and the group nesting alongside `super.reset()`'s base state. `Context.reset()` is no longer a
+no-op, and the SVG-side stacks have to unwind with it or they point into a tree the base class has
+already dropped.
+
+**`SVGContext.export`** — **behaviour**. The returned export implements the optional
+{@link ContextExport.release}: it tracks every object URL `toURL()` hands out and revokes them.
+Call `release()` when done with an export; the URLs were previously pinned for the document's
+lifetime.
+
+**`SVGContext.export`** — **behaviour**. The serialized markup carries `width`/`height` attributes.
+As a standalone document — exactly how `toURL()` and `toImage()` consume it — the inline
+`width: 100%` has no containing block, so the intrinsic size was browser-dependent. The attributes
+are written on the live `<svg>` at every `rescale`; the inline style still wins for on-page layout,
+so nothing about how the surface renders in the host changes.
+
+**`canvasImageSourceToDataURL`** — **behaviour**. The result is memoized per source and size. It was
+called on every render pass by `drawImage`: a fresh `<canvas>`, a synchronous full PNG encode and a
+base64 pass per frame, whose result was then written to the live `<image>` href, forcing the browser
+to re-decode too — one image element made a 60fps scene unusable. Sources whose pixels change
+without their identity changing (`HTMLCanvasElement`, `OffscreenCanvas`, `HTMLVideoElement`) are
+deliberately **not** memoized and still re-encode per call. An `HTMLImageElement` is keyed by `src`,
+so swapping the source re-encodes; mutating a canvas source's pixels was never observable through
+this function's identity and still is not.
+
+### Known gaps
+
+Three findings need a real browser and are left for the Playwright harness: `<feDropShadow>`
+geometry scales with ancestor transforms where canvas shadows do not (**S-18**); `isPointInFill` is
+fed a root-space point but is specified in the element's own local space, so hit testing on a
+transformed element is wrong — the reconciler-cache lookup was fixed, the coordinate space was not
+(**S-19**, HIGH); and `filter="url(#shadow-…) blur(…)"` blurs the drop shadow along with the shape,
+where canvas derives the shadow from the filtered result (**S-20**).
 
 ## @ripl/dom
 
