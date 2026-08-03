@@ -14,6 +14,7 @@ import {
     createElement,
     createGroup,
     factory,
+    scaleContinuous,
 } from '../../src';
 
 import {
@@ -1220,8 +1221,7 @@ describe('Context', () => {
             return (ctx as any).hitTest(events, x, y);
         }
 
-        // Additive zIndex cannot compare descendants of different groups; renderedElements is
-        // already the resolved stacking order, so the last element painted is the topmost.
+        // Additive zIndex cannot compare descendants of different groups; paint order can.
         test('hitTest should return elements in reverse paint order, ignoring zIndex', () => {
             const ctx = create();
             const under = createMockElement('under', 10, ['click']);
@@ -1251,8 +1251,7 @@ describe('Context', () => {
             ctx.destroy();
         });
 
-        // The memo snapshots renderedElements per event; off(), a spent once(), and destroy() all
-        // bypass its only invalidation path, leaving a dead element shadowing the one beneath it.
+        // off(), a spent once() and destroy() all bypass the memo's only invalidation path.
         test('hitTest should drop an element whose listener went away after the memo was primed', () => {
             const ctx = create();
             const events = new Set(['click']);
@@ -1364,11 +1363,49 @@ describe('Context', () => {
 /** Concrete base context, so the base implementations are exercised without a backend override. */
 class TestContext extends Context {
 
-    constructor() {
+    constructor(surfaceScale = 1, size = 400) {
         super('test', document.createElement('div'));
+
+        this.rescale(size, size);
+        this.scaleX = scaleContinuous([0, size], [0, size * surfaceScale]);
+        this.scaleY = scaleContinuous([0, size], [0, size * surfaceScale]);
     }
 
 }
+
+describe('Context surface mapping', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    test('Should round-trip a point through the surface scale', () => {
+        const ctx = new TestContext(2);
+
+        expect(ctx.toLogicalPoint(250, 94)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([250, 94]);
+    });
+
+    test('Should leave a point unchanged on an identity surface', () => {
+        const ctx = new TestContext();
+
+        expect(ctx.toLogicalPoint(125, 47)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([125, 47]);
+    });
+
+    // An unsized context maps every input onto 0, which would collapse the point onto the origin.
+    test('Should leave a point unchanged on an unsized surface', () => {
+        const ctx = new TestContext(1, 0);
+
+        expect(ctx.toLogicalPoint(125, 47)).toEqual([125, 47]);
+        expect(ctx.toSurfacePoint(125, 47)).toEqual([125, 47]);
+    });
+
+});
 
 describe('Context.reset', () => {
 
@@ -1421,8 +1458,7 @@ describe('Context.measureText', () => {
         vi.restoreAllMocks();
     });
 
-    // actualBoundingBox* is anchor-relative, so dropping the alignment anchors the reported box
-    // at the wrong corner for every consumer of context.measureText.
+    // actualBoundingBox* is anchor-relative, so dropping the alignment anchors the box wrongly.
     test('Should forward the context font, alignment and baseline', () => {
         const measure = vi.fn(() => ({}) as TextMetrics);
 

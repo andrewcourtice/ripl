@@ -767,8 +767,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
      * two descendants of different groups; sorting by it discarded correct information.
      */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
-        // The memo is a snapshot: `off`, a spent `once`, and `destroy` all leave it stale, and a
-        // destroyed element outlives it by a frame, so re-check the listener before trusting it.
+        // The memo is a snapshot; `off`, a spent `once` and `destroy` all leave it stale.
         const tracked = events.flatMap(event => this._getTrackedElements(event).filter(element => element.has(event)));
 
         const hits = arrayDedupe(tracked)

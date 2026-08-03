@@ -461,8 +461,7 @@ describe('Scene font inheritance', () => {
         vi.restoreAllMocks();
     });
 
-    // An SVGSVGElement extends SVGElement, not HTMLElement, so SVG scenes inherited nothing and
-    // every text element fell back to the context default.
+    // An SVGSVGElement extends SVGElement, not HTMLElement, so SVG scenes inherited nothing.
     test('Should inherit the host font from an SVG surface', () => {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         const scene = createScene(new HostContext(svg));

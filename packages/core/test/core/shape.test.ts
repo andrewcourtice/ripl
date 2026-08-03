@@ -123,8 +123,7 @@ describe('Shape2D', () => {
         expect(recorded.at(-1)).toEqual([20, 40]);
     });
 
-    // A hit test runs after the frame's trailing restore, so the backend was stroking the path
-    // with the default lineWidth of 1 rather than the element's.
+    // A hit test runs after the frame's trailing restore, so the backend stroked at the default width of 1.
     test('Should apply the element line style before a stroke hit test', () => {
         const stub = mockCanvasState(mockCanvasContext());
         const host = document.createElement('div');
@@ -155,8 +154,7 @@ describe('Shape2D', () => {
 
         rect.intersectsWith(10, 10, { isPointer: true });
 
-        // jsdom's isPointInStroke is a constant `false`, so the recorded width is the only
-        // observable: it pins that the element's line style reached the backend, not the hit.
+        // jsdom's isPointInStroke is a constant false: this pins the width reaching the backend, not the hit.
         expect(widths[0]).toBe(24);
 
         context.destroy();

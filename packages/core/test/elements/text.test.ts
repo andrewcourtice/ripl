@@ -312,8 +312,7 @@ describe('Text metrics source', () => {
         vi.restoreAllMocks();
     });
 
-    // The platform factory and the backend disagree — 10 units per char here against the
-    // context's 2 — so a box measured off the factory is nothing like what the backend draws.
+    // The factory reports 10 units per char here against the context's 2, as node does against terminal.
     test('Should measure through the bound context rather than the platform factory', () => {
         const text = createText({
             x: 0,

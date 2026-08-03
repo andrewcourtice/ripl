@@ -155,8 +155,7 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             ? POINTER_EVENT_HIT_TESTS[this.pointerEvents]
             : undefined;
 
-        // `isPointInStroke` strokes with the context's *current* line style, and a hit test runs
-        // after the frame's trailing restore has rolled that back to the backend default.
+        // `isPointInStroke` strokes with the current line style, which the frame's trailing restore rolled back.
         return this._withStrokeStyle(context, () => (hitTest
             ? paths.some(path => hitTest(context, path, x, y))
             : isAnyIntersecting()));

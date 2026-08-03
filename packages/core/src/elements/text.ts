@@ -85,8 +85,7 @@ export class Text extends Element<TextState> {
         super('text', options);
     }
 
-    // The bound context is the authority on its own metrics: a terminal cell is not a canvas glyph,
-    // so the platform factory alone reports a box up to 4x wider than what the backend draws.
+    // The bound context is the authority on its own metrics: a terminal cell is not a canvas glyph.
     private _measure(text: string): TextMetrics {
         const font = this.getComputedValue('font');
         const textAlign = this.getComputedValue('textAlign');

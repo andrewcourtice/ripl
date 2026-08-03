@@ -254,8 +254,7 @@ describe('Element.render', () => {
         vi.restoreAllMocks();
     });
 
-    // The element registered itself and markRenderStart then wiped the list it had just joined,
-    // so a direct render(ctx) drew an element that could never be hit-tested.
+    // markRenderStart wiped the list the element had just joined, so a direct render never registered.
     test('Should register the element when rendered at depth 0', () => {
         const context = new TestContext(400, 300, 1);
         const element = createElement('rect', { id: 'solo' });
@@ -290,8 +289,7 @@ describe('Element.intersectsWith', () => {
         vi.restoreAllMocks();
     });
 
-    // A context that leaves scaleX/scaleY identity (SVG) never scales the point up, so dividing
-    // by the device pixel ratio put every hit at half coordinates.
+    // An identity-scale surface (SVG) never scales the point up, so dividing by the DPR halved every hit.
     test('Should hit an unscaled surface at the point it was given', () => {
         const context = new TestContext(400, 300, 1);
         const el = boxedElement(context);
