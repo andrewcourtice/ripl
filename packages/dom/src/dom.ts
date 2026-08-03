@@ -43,8 +43,54 @@ export function onDOMEvent<TElement extends EventTarget, TEvent extends string &
     };
 }
 
-/** Observes an element for size changes using `ResizeObserver` (with a `window.resize` fallback) and returns a disposable. */
+const HORIZONTAL_EDGES = [
+    'left',
+    'right',
+];
+
+const VERTICAL_EDGES = [
+    'top',
+    'bottom',
+];
+
+function getEdgeSize(style: CSSStyleDeclaration, edges: string[]): number {
+    return edges.reduce((total, edge) => {
+        // A `none` border still resolves `medium` in some engines; CSS says it contributes nothing.
+        const border = style.getPropertyValue(`border-${edge}-style`) === 'none'
+            ? 0
+            : parseFloat(style.getPropertyValue(`border-${edge}-width`)) || 0;
+
+        return total + border + (parseFloat(style.getPropertyValue(`padding-${edge}`)) || 0);
+    }, 0);
+}
+
+/** Measures an element's content box, which is what `ResizeObserver` reports and `getBoundingClientRect` does not. */
+function getContentBoxSize(element: HTMLElement): DOMElementResizeEvent {
+    const {
+        width,
+        height,
+    } = element.getBoundingClientRect();
+
+    const style = window.getComputedStyle(element);
+
+    return {
+        width: width - getEdgeSize(style, HORIZONTAL_EDGES),
+        height: height - getEdgeSize(style, VERTICAL_EDGES),
+    };
+}
+
+/**
+ * Observes an element for size changes using `ResizeObserver` (with a `window.resize` fallback) and
+ * returns a disposable. Degrades to an inert disposable outside a browser, so an SSR or Node
+ * consumer of this module gets a no-op rather than a `ReferenceError`.
+ */
 export function onDOMElementResize(element: HTMLElement, handler: DOMElementResizeHandler): Disposable {
+    if (!hasWindow) {
+        return {
+            dispose: () => undefined,
+        };
+    }
+
     let disposer: Disposable;
 
     if ('ResizeObserver' in window) {
@@ -67,17 +113,7 @@ export function onDOMElementResize(element: HTMLElement, handler: DOMElementResi
             dispose: () => observer.disconnect(),
         };
     } else {
-        disposer = onDOMEvent(window, 'resize', () => {
-            const {
-                width,
-                height,
-            } = element.getBoundingClientRect();
-
-            handler({
-                width,
-                height,
-            });
-        });
+        disposer = onDOMEvent(window, 'resize', () => handler(getContentBoxSize(element)));
     }
 
     return disposer;

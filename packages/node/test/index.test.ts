@@ -9,7 +9,25 @@ import '../src/index';
 
 import {
     factory,
+    getPathLength,
+    samplePathPoint,
 } from '@ripl/core';
+
+import {
+    createContext,
+} from '@ripl/terminal';
+
+import type {
+    TerminalOutput,
+} from '@ripl/terminal';
+
+function terminalContext() {
+    return createContext({
+        write: () => undefined,
+        columns: 80,
+        rows: 24,
+    } as TerminalOutput);
+}
 
 describe('Node factory bindings', () => {
 
@@ -64,6 +82,70 @@ describe('Node factory bindings', () => {
         const long = factory.measureText('abcd');
 
         expect(long.width).toBe(short.width * 2);
+    });
+
+    // Core falls back to this before an element's first paint, so a disagreement makes boxes jump.
+    test('measureText should agree with the terminal context it feeds', () => {
+        const context = terminalContext();
+        const metrics = factory.measureText('hello');
+        const painted = context.measureText('hello');
+
+        expect(metrics.width).toBe(painted.width);
+        expect(metrics.actualBoundingBoxAscent).toBe(painted.actualBoundingBoxAscent);
+        expect(metrics.actualBoundingBoxDescent).toBe(painted.actualBoundingBoxDescent);
+
+        context.destroy();
+    });
+
+    test('measureText should scale with the requested font size', () => {
+        const small = factory.measureText('hello', {
+            font: '10px monospace',
+        });
+
+        const large = factory.measureText('hello', {
+            font: '40px monospace',
+        });
+
+        expect(large.width).toBe(small.width * 4);
+        expect(large.actualBoundingBoxAscent).toBe(small.actualBoundingBoxAscent * 4);
+    });
+
+    test('measureText should anchor the box on the requested text alignment', () => {
+        const start = factory.measureText('hello', {
+            textAlign: 'start',
+        });
+
+        const centre = factory.measureText('hello', {
+            textAlign: 'center',
+        });
+
+        const end = factory.measureText('hello', {
+            textAlign: 'right',
+        });
+
+        expect(start.actualBoundingBoxLeft).toBe(0);
+        expect(start.actualBoundingBoxRight).toBe(start.width);
+        expect(centre.actualBoundingBoxLeft).toBe(centre.width / 2);
+        expect(centre.actualBoundingBoxRight).toBe(centre.width / 2);
+        expect(end.actualBoundingBoxLeft).toBe(end.width);
+        expect(end.actualBoundingBoxRight).toBe(0);
+    });
+
+    // `{}` threw a raw TypeError on the first property access, so core's guards never ran.
+    test('createElementNS should return a path stub the geometry helpers can degrade against', () => {
+        expect(getPathLength('M0,0 L10,10')).toBe(0);
+        expect(samplePathPoint('M0,0 L10,10', 5)).toEqual({
+            x: 0,
+            y: 0,
+            angle: 0,
+        });
+    });
+
+    // `image.ts` guards on a null 2D context; the old `{}` threw before the guard could run.
+    test('createElement should return a canvas stub whose getContext degrades to null', () => {
+        const canvas = factory.createElement('canvas') as HTMLCanvasElement;
+
+        expect(canvas.getContext('2d')).toBeNull();
     });
 
     test('requestAnimationFrame should be defined', () => {
