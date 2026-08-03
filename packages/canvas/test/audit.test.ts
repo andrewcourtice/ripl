@@ -23,6 +23,10 @@ import {
     factory,
 } from '@ripl/core';
 
+import type {
+    MeasureTextOptions,
+} from '@ripl/core';
+
 polyfillPath2D();
 
 const PATTERN = 'pattern(diagonal, #1a6, #fff, 8)';
@@ -302,6 +306,33 @@ describe('Canvas audit findings', () => {
         second.fill = PATTERN;
 
         expect(stub.createPattern).toHaveBeenCalledTimes(1);
+    });
+
+    // CANVAS-14: `actualBoundingBox*` is anchor-relative, so the alignment has to reach the measurer.
+    test('Should measure text through the context alignment and baseline', () => {
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const measured: (MeasureTextOptions | undefined)[] = [];
+        const measurer = factory.measureText;
+
+        factory.set({
+            measureText: (text, options) => {
+                measured.push(options);
+                return measurer(text, options);
+            },
+        });
+
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.measureText('hello');
+
+        factory.set({
+            measureText: measurer,
+        });
+
+        expect(measured[0]?.textAlign).toBe('center');
+        expect(measured[0]?.textBaseline).toBe('middle');
     });
 
 });

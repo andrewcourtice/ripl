@@ -121,7 +121,7 @@ export interface Canvas2DState {
      * @param f Vertical translation.
      */
     transform(a: number, b: number, c: number, d: number, e: number, f: number): void;
-    /** Measures text dimensions using the canvas context's current font or an optional override. */
+    /** Measures text dimensions using the canvas context's current font, text alignment, and baseline, or an optional font override. */
     measureText(text: string, font?: string): TextMetrics;
     /** Creates a new {@link CanvasPath}, optionally reusing an id for diffing efficiency. */
     createPath(id?: string): CanvasPath;
