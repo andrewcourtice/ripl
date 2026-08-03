@@ -8,6 +8,16 @@ import {
 } from 'vitest';
 
 import {
+    mockHostSize,
+    mockPaintLog,
+} from './paint-log';
+
+import type {
+    PaintLogStub,
+    PaintRecord,
+} from './paint-log';
+
+import {
     createContext,
     createCube,
 } from '../src';
@@ -21,7 +31,6 @@ import {
 } from '@ripl/core';
 
 import {
-    mockCanvasContext,
     polyfillPath2D,
 } from '@ripl/test-utils';
 
@@ -30,23 +39,14 @@ polyfillPath2D();
 describe('Shape3D', () => {
 
     let host: HTMLDivElement;
+    let paint: PaintLogStub;
 
     beforeEach(() => {
-        mockCanvasContext();
+        paint = mockPaintLog();
         host = document.createElement('div');
         document.body.appendChild(host);
 
-        vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(() => ({
-            left: 0,
-            top: 0,
-            right: 400,
-            bottom: 300,
-            width: 400,
-            height: 300,
-            x: 0,
-            y: 0,
-            toJSON: () => ({}),
-        }) as DOMRect);
+        mockHostSize(400, 300);
     });
 
     afterEach(() => {
@@ -54,12 +54,16 @@ describe('Shape3D', () => {
         vi.restoreAllMocks();
     });
 
-    function createFixture() {
-        const context = createContext(host) as CanvasContext3D;
+    function createFixture(): CanvasContext3D {
+        const context = createContext(host);
 
         context.setCamera([0, 0, 5], [0, 0, 0], [0, 1, 0]);
 
         return context;
+    }
+
+    function faceFills(): PaintRecord[] {
+        return paint.records.filter(record => record.op === 'face-fill');
     }
 
     describe('Fill parsing', () => {
@@ -78,7 +82,7 @@ describe('Shape3D', () => {
             });
 
             expect(() => scene.render()).not.toThrow();
-            expect(context.faceBuffer).toHaveLength(6);
+            expect(faceFills()).toHaveLength(6);
         });
 
         test('Should degrade an unparseable fill to the raw style string', () => {
@@ -94,7 +98,7 @@ describe('Shape3D', () => {
 
             scene.render();
 
-            expect(context.faceBuffer[0].fillColor).toBe('red');
+            expect(faceFills()[0].fillStyle).toBe('red');
         });
 
         test('Should render a shape whose fill is a gradient', () => {
@@ -109,7 +113,7 @@ describe('Shape3D', () => {
             });
 
             expect(() => scene.render()).not.toThrow();
-            expect(context.faceBuffer).toHaveLength(6);
+            expect(faceFills()).toHaveLength(6);
         });
 
         test('Should still shade a parseable fill', () => {
@@ -125,7 +129,7 @@ describe('Shape3D', () => {
 
             scene.render();
 
-            expect(context.faceBuffer[0].fillColor).toMatch(/^rgba\(/);
+            expect(faceFills()[0].fillStyle).toMatch(/^rgba\(/);
         });
 
     });
@@ -147,14 +151,13 @@ describe('Shape3D', () => {
 
             scene.render();
 
-            const before = context.faceBuffer.map(face => face.fillColor).sort();
+            const before = faceFills().map(record => record.fillStyle).sort();
 
+            paint.records.length = 0;
             cube.rotationY = Math.PI / 4;
             scene.render();
 
-            const after = context.faceBuffer.map(face => face.fillColor).sort();
-
-            expect(after).not.toEqual(before);
+            expect(faceFills().map(record => record.fillStyle).sort()).not.toEqual(before);
         });
 
         test('Should leave shading unchanged when the shape does not rotate', () => {
@@ -170,20 +173,21 @@ describe('Shape3D', () => {
 
             scene.render();
 
-            const before = context.faceBuffer.map(face => face.fillColor).sort();
+            const before = faceFills().map(record => record.fillStyle).sort();
 
+            paint.records.length = 0;
             cube.x = 0.5;
             scene.render();
 
-            expect(context.faceBuffer.map(face => face.fillColor).sort()).toEqual(before);
+            expect(faceFills().map(record => record.fillStyle).sort()).toEqual(before);
         });
 
     });
 
     describe('Geometry transitions', () => {
 
-        function projectedSpan(context: CanvasContext3D): number {
-            const xs = context.faceBuffer.flatMap(face => face.points.map(point => point[0]));
+        function paintedSpan(): number {
+            const xs = faceFills().flatMap(record => record.points.map(point => point[0]));
 
             return Math.max(...xs) - Math.min(...xs);
         }
@@ -203,16 +207,15 @@ describe('Shape3D', () => {
 
             scene.render();
 
-            const before = projectedSpan(context);
+            const before = paintedSpan();
 
-            const tick = cube.interpolate({
+            paint.records.length = 0;
+            cube.interpolate({
                 size: 3,
-            });
-
-            tick(1);
+            })(1);
             scene.render();
 
-            expect(projectedSpan(context)).toBeGreaterThan(before * 2);
+            expect(paintedSpan()).toBeGreaterThan(before * 2);
         });
 
         // A completed transition leaves `state.size === 3`, so the setter short-circuits and cannot
@@ -231,11 +234,15 @@ describe('Shape3D', () => {
             // Warm the face cache at the start value; a cold cache hides the defect entirely.
             grownScene.render();
 
+            paint.records.length = 0;
             cube.interpolate({
                 size: 3,
             })(1);
-
             grownScene.render();
+
+            const grownSpan = paintedSpan();
+
+            paint.records.length = 0;
 
             const reference = createFixture();
             const referenceScene = createScene(reference, {
@@ -249,7 +256,7 @@ describe('Shape3D', () => {
 
             referenceScene.render();
 
-            expect(projectedSpan(grown)).toBeCloseTo(projectedSpan(reference));
+            expect(grownSpan).toBeCloseTo(paintedSpan());
         });
 
         test('Should refresh the bounding box after a size transition', () => {

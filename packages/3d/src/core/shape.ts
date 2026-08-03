@@ -36,11 +36,14 @@ import type {
     ColorRGBA,
     Context,
     ContextPath,
-    ElementIntersectionOptions,
     ElementInterpolationState,
     ElementInterpolators,
+    ElementIntersectionOptions,
     ElementOptions,
     Interpolator,
+    LineCap,
+    LineJoin,
+    Matrix,
 } from '@ripl/core';
 
 import {
@@ -60,6 +63,41 @@ export interface Face3D {
     normal?: Vector3;
 }
 
+/**
+ * The 2D drawing state resolved for an element at the moment its faces were projected.
+ *
+ * A CPU-rendered face is buffered and painted at the end of the frame, long after the element's
+ * own `restore()` has unwound everything it applied, so the state has to travel with the face.
+ */
+export interface ProjectedFaceState3D {
+    /** The accumulated alpha: the element's own opacity composited under every ancestor group's. */
+    opacity: number;
+    /** The compositing operation in effect. */
+    globalCompositeOperation: unknown;
+    /** The filter in effect. */
+    filter: string;
+    /** The shadow blur radius in effect. */
+    shadowBlur: number;
+    /** The shadow color in effect. */
+    shadowColor: string;
+    /** The horizontal shadow offset in effect. */
+    shadowOffsetX: number;
+    /** The vertical shadow offset in effect. */
+    shadowOffsetY: number;
+    /** The line cap in effect for stroked face edges. */
+    lineCap: LineCap;
+    /** The line join in effect for stroked face edges. */
+    lineJoin: LineJoin;
+    /** The line dash pattern in effect for stroked face edges. */
+    lineDash: number[];
+    /** The line dash offset in effect for stroked face edges. */
+    lineDashOffset: number;
+    /** The miter limit in effect for stroked face edges. */
+    miterLimit: number;
+    /** The element's composed 2D world transform, or `null` when it is the identity. */
+    transform: Matrix | null;
+}
+
 /** A projected face ready for 2D rendering with screen-space points, fill/stroke styles, and depth. */
 export interface ProjectedFace3D {
     /** The face's screen-space points, each carrying a depth component. */
@@ -72,6 +110,12 @@ export interface ProjectedFace3D {
     lineWidth: number | undefined;
     /** The average projected depth of the face, used for back-to-front sorting. */
     depth: number;
+    /**
+     * The drawing state to paint the face with, captured when it was projected. Faces sharing one
+     * state object are painted in a single scope, so identity matters. Absent when the context
+     * does not defer its face drawing.
+     */
+    state?: ProjectedFaceState3D;
 }
 
 /** State interface for a 3D shape, defining position and rotation around each axis. */
@@ -310,6 +354,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         const hitPath = context.createPath(`${this.id}:hit`);
         const normalizedLight = vec3Normalize(context.getLightDirectionForRender());
 
+        // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
+        const state = context.captureFaceState(this.getWorldTransform());
+
         let totalDepth = 0;
 
         for (const face of faces) {
@@ -330,6 +377,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
                 strokeStyle: this.stroke,
                 lineWidth: this.lineWidth,
                 depth,
+                state,
             });
 
             this._traceFaceHitPath(hitPath, points);

@@ -4,6 +4,7 @@ import {
 
 import type {
     ProjectedFace3D,
+    ProjectedFaceState3D,
 } from './shape';
 
 import {
@@ -27,10 +28,12 @@ import {
 } from '@ripl/core';
 
 import type {
-    Box,
     ContextExport,
     ContextFactory,
     ContextOptions,
+    ContextText,
+    FillRule,
+    Matrix,
 } from '@ripl/core';
 
 import {
@@ -41,6 +44,10 @@ import {
 import {
     canvas2DStateMixin,
     rescaleCanvas,
+} from '@ripl/canvas';
+
+import type {
+    CanvasPath,
 } from '@ripl/canvas';
 
 /** The rendering strategy used by a 3D context. */
@@ -96,7 +103,11 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     public lightDirection: Vector3;
     /** Whether {@link lightDirection} is fixed in world space or follows the camera. */
     public lightMode: LightMode;
-    /** Faces accumulated during the current frame, sorted back-to-front before drawing (painter's algorithm). */
+    /**
+     * Faces accumulated since the last flush, sorted back-to-front and drained when they are drawn
+     * (painter's algorithm). A backend that never draws them — the base class, or a GPU context —
+     * leaves this empty by clearing it at the start of each pass.
+     */
     public faceBuffer: ProjectedFace3D[] = [];
 
     protected fov: number;
@@ -208,6 +219,34 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         ];
     }
 
+    /**
+     * Snapshots the drawing state a face must be painted with.
+     *
+     * The CPU painter buffers faces and flushes them at the end of the frame, by which point every
+     * element `restore()` and `popGroup()` has already unwound the state the face was projected
+     * under. Capturing it here is what lets {@link CanvasContext3D} re-apply it at draw time.
+     *
+     * @param transform - The element's composed 2D world transform, or `null` for the identity.
+     * @returns The resolved drawing state to store on each of the element's faces.
+     */
+    public captureFaceState(transform: Matrix | null): ProjectedFaceState3D {
+        return {
+            opacity: this.opacity,
+            globalCompositeOperation: this.globalCompositeOperation,
+            filter: this.filter,
+            shadowBlur: this.shadowBlur,
+            shadowColor: this.shadowColor,
+            shadowOffsetX: this.shadowOffsetX,
+            shadowOffsetY: this.shadowOffsetY,
+            lineCap: this.lineCap,
+            lineJoin: this.lineJoin,
+            lineDash: this.lineDash,
+            lineDashOffset: this.lineDashOffset,
+            miterLimit: this.miterLimit,
+            transform,
+        };
+    }
+
     /** Submits a mesh for rendering this frame. Noop in the base class; overridden by GPU-backed contexts. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public submitMesh(submission: MeshSubmission): void {
@@ -224,10 +263,19 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
 
 }
 
+/** Style values already assigned to the native context, so the diff only skips what it really applied. */
+interface AppliedFaceStyle {
+    fill: string;
+    stroke: string;
+    lineWidth: number;
+}
+
 /** Canvas 2D–backed 3D rendering context with face buffer and painter's algorithm sorting. */
 export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
     declare protected context: CanvasRenderingContext2D;
+
+    private _clipPending = false;
 
     constructor(target: string | HTMLElement, options?: Context3DOptions) {
         const canvas = document.createElement('canvas');
@@ -244,9 +292,9 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         this.init();
     }
 
-    // 3D faces project into screen space, so gradients resolve against the world box, not the local box.
-    protected gradientBounds(): Box | undefined {
-        return this.currentRenderElement?.getBoundingBox?.();
+    /** Whether traced paths may be reused across frames; the 2D elements this context hosts trace side-effect-free paths. */
+    public override get supportsPathCaching(): boolean {
+        return true;
     }
 
     // Gated on the logical size, never the backing store: a fresh canvas is already 300x150.
@@ -273,43 +321,100 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
         if (this.renderDepth === 1) {
             this.faceBuffer.length = 0;
+            this._clipPending = false;
         }
     }
 
-    /** Ends the render pass and, at the outermost depth, sorts and draws the accumulated faces back-to-front. */
+    /** Ends the render pass and, at the outermost depth, flushes any faces still buffered. */
     public markRenderEnd(): void {
         super.markRenderEnd();
 
-        if (this.renderDepth > 0 || this.faceBuffer.length === 0) {
+        if (this.renderDepth > 0) {
             return;
         }
 
+        this.flushFaces();
+    }
+
+    /**
+     * Sorts the buffered faces back-to-front and paints them, then empties the buffer.
+     *
+     * Called at the end of the frame and again whenever something else is about to paint — a 2D
+     * element, an image, or a clip — so that 3D geometry composites in scene order rather than
+     * always landing on top. Faces depth-sort against each other within a flush, not across flushes.
+     */
+    public flushFaces(): void {
         const faces = this.faceBuffer;
 
-        // Global painter's algorithm: sort back-to-front
+        if (faces.length === 0) {
+            return;
+        }
+
+        // Painter's algorithm: back-to-front within this flush.
         faces.sort((a, b) => b.depth - a.depth);
 
+        let index = 0;
+
+        while (index < faces.length) {
+            const start = index;
+            const state = faces[start].state;
+
+            while (index < faces.length && faces[index].state === state) {
+                index++;
+            }
+
+            this._paintFaceScope(faces, start, index, state);
+        }
+
+        faces.length = 0;
+    }
+
+    /** Paints `faces[start, end)`, all of which share `state`, inside a single save/restore scope. */
+    private _paintFaceScope(
+        faces: ProjectedFace3D[],
+        start: number,
+        end: number,
+        state: ProjectedFaceState3D | undefined
+    ): void {
         this.layer(() => {
-            let lastFill = '';
-            let lastStroke = '';
-            let lastLineWidth = -1;
+            if (state) {
+                this._applyFaceState(state);
+            }
 
-            for (const face of faces) {
-                this._drawFace(face, lastFill, lastStroke, lastLineWidth);
+            const applied: AppliedFaceStyle = {
+                fill: '',
+                stroke: '',
+                lineWidth: -1,
+            };
 
-                lastFill = face.fillColor;
-                lastStroke = face.strokeStyle ?? '';
-                lastLineWidth = face.lineWidth ?? -1;
+            for (let idx = start; idx < end; idx++) {
+                this._drawFace(faces[idx], applied);
             }
         });
     }
 
-    private _drawFace(
-        face: ProjectedFace3D,
-        lastFill: string,
-        lastStroke: string,
-        lastLineWidth: number
-    ): void {
+    private _applyFaceState(state: ProjectedFaceState3D): void {
+        const ctx = this.context;
+
+        ctx.globalAlpha = state.opacity;
+        ctx.globalCompositeOperation = state.globalCompositeOperation as GlobalCompositeOperation;
+        ctx.filter = state.filter;
+        ctx.shadowBlur = state.shadowBlur;
+        ctx.shadowColor = state.shadowColor;
+        ctx.shadowOffsetX = state.shadowOffsetX;
+        ctx.shadowOffsetY = state.shadowOffsetY;
+        ctx.lineCap = state.lineCap;
+        ctx.lineJoin = state.lineJoin;
+        ctx.lineDashOffset = state.lineDashOffset;
+        ctx.setLineDash(state.lineDash);
+        ctx.miterLimit = state.miterLimit;
+
+        if (state.transform) {
+            ctx.transform(...state.transform);
+        }
+    }
+
+    private _drawFace(face: ProjectedFace3D, applied: AppliedFaceStyle): void {
         const points = face.points;
         const ctx = this.context;
 
@@ -322,8 +427,9 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
 
         ctx.closePath();
 
-        if (face.fillColor !== lastFill) {
+        if (face.fillColor !== applied.fill) {
             ctx.fillStyle = face.fillColor;
+            applied.fill = face.fillColor;
         }
 
         ctx.fill();
@@ -332,15 +438,60 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
             return;
         }
 
-        if (face.strokeStyle !== lastStroke) {
+        if (face.strokeStyle !== applied.stroke) {
             ctx.strokeStyle = face.strokeStyle;
+            applied.stroke = face.strokeStyle;
         }
 
-        if (face.lineWidth !== undefined && face.lineWidth !== lastLineWidth) {
+        if (face.lineWidth !== undefined && face.lineWidth !== applied.lineWidth) {
             ctx.lineWidth = face.lineWidth;
+            applied.lineWidth = face.lineWidth;
         }
 
         ctx.stroke();
+    }
+
+    /** Fills a path or text, flushing any buffered 3D faces first so paint order follows scene order. */
+    public override applyFill(element: CanvasPath | ContextText, fillRule?: FillRule): void {
+        this.flushFaces();
+
+        return super.applyFill(element, fillRule);
+    }
+
+    /** Strokes a path or text, flushing any buffered 3D faces first so paint order follows scene order. */
+    public override applyStroke(element: CanvasPath | ContextText): void {
+        this.flushFaces();
+
+        return super.applyStroke(element);
+    }
+
+    /** Draws an image, flushing any buffered 3D faces first so paint order follows scene order. */
+    public override drawImage(image: CanvasImageSource, x: number, y: number, width?: number, height?: number): void {
+        this.flushFaces();
+
+        return super.drawImage(image, x, y, width, height);
+    }
+
+    /** Clips subsequent drawing, flushing any buffered 3D faces first so the clip cannot reach back over them. */
+    public override applyClip(path: CanvasPath, fillRule?: FillRule): void {
+        this.flushFaces();
+        this._clipPending = true;
+
+        return super.applyClip(path, fillRule);
+    }
+
+    /**
+     * Closes a group boundary, flushing any faces buffered under a clip installed within it.
+     * `popGroup` unwinds that clip, so a group-scoped clip would otherwise be gone by the time the
+     * faces were painted while an identical root-level clip still masked them.
+     */
+    public override popGroup(): void {
+        if (this._clipPending) {
+            this.flushFaces();
+            this._clipPending = false;
+        }
+
+        super.popGroup();
     }
 
 }
