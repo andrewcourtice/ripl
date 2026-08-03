@@ -414,6 +414,25 @@ describe('Scene', () => {
         scene.destroy();
     });
 
+    test('Should cancel a pending graph rebuild on destroy', async () => {
+        const scene = createScene(el);
+        const invalidate = vi.spyOn(scene.context, 'invalidateTrackedElements');
+
+        scene.add(createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+        }));
+
+        scene.destroy();
+        invalidate.mockClear();
+
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        expect(invalidate).not.toHaveBeenCalled();
+    });
+
 });
 
 describe('Scene font inheritance', () => {

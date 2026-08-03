@@ -150,6 +150,9 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
         const requestFrame = createFrameBuffer();
 
+        // A rebuild scheduled by the last mutation must not run against a destroyed scene.
+        this.retain({ dispose: requestFrame.cancel });
+
         const rebuild = () => {
             this._rebuild();
             context.invalidateTrackedElements();
