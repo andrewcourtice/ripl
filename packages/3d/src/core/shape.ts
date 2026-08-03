@@ -289,6 +289,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         return context.project([this.x, this.y, this.z])[2];
     }
 
+    // The box is projected through the context's camera, which no element state version can see.
+    protected override get _boundsCacheable(): boolean {
+        return false;
+    }
+
     public _getLocalBoundingBox(): Box {
         const context = this.context as Context3D | undefined;
 

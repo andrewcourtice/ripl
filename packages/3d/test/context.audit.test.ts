@@ -470,6 +470,70 @@ describe('CanvasContext3D deferred face draw', () => {
 
     });
 
+    describe('Lighting', () => {
+
+        function lightUnderCamera(mode: 'world' | 'camera', eye: [number, number, number]) {
+            const context = createContext(host);
+
+            context.lightMode = mode;
+            context.lightDirection = [0, 0, -1];
+            context.setCamera(eye, [0, 0, 0], [0, 1, 0]);
+
+            return context.getLightDirectionForRender().map(value => Math.round(value * 1000) / 1000);
+        }
+
+        // 3D-5: both consumers dot this against a world-space normal, so transforming the light
+        // into view space is what makes it follow the camera — the two modes were exchanged.
+        test('Should keep a world-mode light fixed as the camera orbits', () => {
+            expect(lightUnderCamera('world', [0, 0, 5])).toEqual([0, 0, -1]);
+            expect(lightUnderCamera('world', [5, 0, 0])).toEqual([0, 0, -1]);
+        });
+
+        test('Should rotate a camera-mode light with the camera', () => {
+            expect(lightUnderCamera('camera', [0, 0, 5])).toEqual([0, 0, -1]);
+            expect(lightUnderCamera('camera', [5, 0, 0])).toEqual([-1, 0, 0]);
+        });
+
+        test('Should aim a camera-mode light along the view direction', () => {
+            const context = createContext(host);
+
+            context.lightMode = 'camera';
+            context.lightDirection = [0, 0, -1];
+            context.setCamera([0, 4, 0], [0, 0, 0], [0, 0, -1]);
+
+            // The lamp points where the camera looks: down the -Y axis, from above.
+            expect(context.getLightDirectionForRender()[1]).toBeCloseTo(-1);
+        });
+
+    });
+
+    describe('Bounding box', () => {
+
+        // 3D-6: `_getLocalBoundingBox` projects through the camera, but `Element.getBoundingBox`
+        // caches against the element's own state version, which no camera move touches.
+        test('Should shrink the bounding box when the camera pulls back', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const near = cube.getBoundingBox().width;
+
+            context.setCamera([0, 0, 40], [0, 0, 0], [0, 1, 0]);
+            scene.render();
+
+            expect(cube.getBoundingBox().width).toBeLessThan(near / 2);
+        });
+
+    });
+
     describe('Path caching', () => {
 
         // 3D-15: `CanvasContext.supportsPathCaching` is true because `createPath` is side-effect

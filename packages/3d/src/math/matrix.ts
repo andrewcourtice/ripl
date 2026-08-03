@@ -196,6 +196,20 @@ export function mat4TransformDirection(m: Matrix4, v: Vector3): Vector3 {
     ];
 }
 
+/**
+ * Transforms a direction vector by the **transposed** upper-3×3 of a 4×4 matrix, ignoring
+ * translation. For a rigid transform (rotation plus translation, such as a view matrix) the
+ * transposed rotation is its inverse, so this undoes {@link mat4TransformDirection} — use it to
+ * carry a direction from view space back into world space.
+ */
+export function mat4TransformDirectionInverse(m: Matrix4, v: Vector3): Vector3 {
+    return [
+        m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+        m[4] * v[0] + m[5] * v[1] + m[6] * v[2],
+        m[8] * v[0] + m[9] * v[1] + m[10] * v[2],
+    ];
+}
+
 /** Transforms a 3D point by a 4×4 matrix, performing the perspective divide. */
 export function mat4TransformPoint(m: Matrix4, v: Vector3): Vector3 {
     const x = v[0];

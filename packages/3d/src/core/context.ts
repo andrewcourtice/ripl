@@ -13,7 +13,7 @@ import {
     mat4Multiply,
     mat4Orthographic,
     mat4Perspective,
-    mat4TransformDirection,
+    mat4TransformDirectionInverse,
     mat4TransformPoint,
 } from '../math/matrix';
 
@@ -199,10 +199,16 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         this.requestRender();
     }
 
-    /** Returns the effective light direction for the current render, accounting for the light mode. */
+    /**
+     * Returns the effective light direction for the current render, accounting for the light mode.
+     *
+     * Both consumers dot this against a **world-space** normal, so `'world'` is the identity and
+     * `'camera'` reads {@link lightDirection} as camera-relative and carries it into world space
+     * through the inverse of the view rotation.
+     */
     public getLightDirectionForRender(): Vector3 {
-        if (this.lightMode === 'world') {
-            return mat4TransformDirection(this.viewMatrix, this.lightDirection);
+        if (this.lightMode === 'camera') {
+            return mat4TransformDirectionInverse(this.viewMatrix, this.lightDirection);
         }
 
         return this.lightDirection;
