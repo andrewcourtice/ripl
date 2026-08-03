@@ -57,9 +57,7 @@ describe('Canvas audit findings', () => {
         }) as DOMRect);
     }
 
-    // CANVAS-1: `rescaleCanvas` compares against the backing store, which a fresh <canvas> already
-    // sets to 300x150, so the early return skips `super.rescale` and the context stays 0x0.
-    test.skip('Should scale a context whose host is exactly the default canvas size', () => {
+    test('Should scale a context whose host is exactly the default canvas size', () => {
         sizeHost(300, 150);
 
         const context = createContext(el);
