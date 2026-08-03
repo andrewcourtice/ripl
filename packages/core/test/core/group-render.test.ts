@@ -1,4 +1,5 @@
 import {
+    afterEach,
     describe,
     expect,
     test,
@@ -12,7 +13,20 @@ import type {
 import {
     createElement,
     createGroup,
+    createRect,
 } from '../../src';
+
+import {
+    createContext,
+} from '@ripl/canvas';
+
+import {
+    mockCanvasContext,
+    mockCanvasState,
+    polyfillPath2D,
+} from '@ripl/test-utils';
+
+polyfillPath2D();
 
 /** Minimal context that records the group/render bracketing without a real backend. */
 function fakeContext() {
@@ -24,6 +38,20 @@ function fakeContext() {
         markRenderStart: vi.fn(),
         markRenderEnd: vi.fn(),
     } as unknown as Context;
+}
+
+/** A real canvas context over a stateful stub, so save/restore actually push and pop the paint. */
+function statefulCanvasContext() {
+    const stub = mockCanvasState(mockCanvasContext());
+    const host = document.createElement('div');
+
+    document.body.appendChild(host);
+
+    return {
+        stub,
+        host,
+        context: createContext(host),
+    };
 }
 
 describe('Group.render (scene-less)', () => {
@@ -105,6 +133,97 @@ describe('Group.render (scene-less)', () => {
         expect(() => group.render(context)).toThrow('render failed');
         expect(context.popGroup).toHaveBeenCalledTimes(1);
         expect(context.markRenderEnd).toHaveBeenCalledTimes(1);
+    });
+
+});
+
+describe('Group paint boundary', () => {
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+        vi.restoreAllMocks();
+    });
+
+    test('Should composite a leaf opacity under every ancestor group opacity', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const alphas: number[] = [];
+
+        stub.fill.mockImplementation(() => {
+            alphas.push(stub.globalAlpha);
+        });
+
+        const leaf = createRect({
+            x: 0,
+            y: 0,
+            width: 10,
+            height: 10,
+            fill: '#ff0000',
+            opacity: 0.5,
+        });
+
+        const outer = createGroup({
+            opacity: 0.5,
+            children: [
+                createGroup({
+                    opacity: 0.5,
+                    children: [leaf],
+                }),
+            ],
+        });
+
+        outer.render(context);
+
+        expect(alphas).toEqual([0.125]);
+
+        context.destroy();
+    });
+
+    test('Should restore the accumulated alpha for a sibling that sets no opacity', () => {
+        const {
+            stub,
+            context,
+        } = statefulCanvasContext();
+
+        const alphas: number[] = [];
+
+        stub.fill.mockImplementation(() => {
+            alphas.push(stub.globalAlpha);
+        });
+
+        const group = createGroup({
+            opacity: 0.5,
+            children: [
+                createRect({
+                    id: 'own',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#ff0000',
+                    opacity: 0.5,
+                    zIndex: 0,
+                }),
+                createRect({
+                    id: 'none',
+                    x: 0,
+                    y: 0,
+                    width: 10,
+                    height: 10,
+                    fill: '#00ff00',
+                    zIndex: 1,
+                }),
+            ],
+        });
+
+        group.render(context);
+
+        expect(alphas).toEqual([0.25, 0.5]);
+
+        context.destroy();
     });
 
 });

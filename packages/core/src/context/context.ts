@@ -185,7 +185,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState.fontKerning = value;
     }
 
-    /** Global alpha applied to everything drawn, from 0 to 1. */
+    /** Global alpha applied to everything drawn, from 0 to 1. Assignment **replaces** the current alpha; element and group opacity instead composite multiplicatively through {@link CONTEXT_OPERATIONS}. */
     public get opacity(): number {
         return this.currentState.opacity;
     }
@@ -524,12 +524,13 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
 
     /**
      * Opens a group boundary: saves the current drawing state and applies the group's own
-     * transform, inherited paint, and opacity, so that descendant elements render within the
-     * group's coordinate system, inherit its paint through the copied state (the render-tree
-     * cascade), and composite under its opacity. Any group-scoped clip is confined to the group.
-     * Every {@link Context.pushGroup} must be balanced by a matching {@link Context.popGroup}.
-     * Backends that render hierarchy structurally (such as SVG) override this to nest descendants
-     * under a group node.
+     * transform and inherited paint (see {@link Context.applyGroupPaint} for the opacity and
+     * gradient-bounds semantics every backend must honour), so that descendant elements render
+     * within the group's coordinate system, inherit its paint through the copied state (the
+     * render-tree cascade), and composite under its opacity. Any group-scoped clip is confined to
+     * the group. Every {@link Context.pushGroup} must be balanced by a matching
+     * {@link Context.popGroup}. Backends that render hierarchy structurally (such as SVG)
+     * override this to nest descendants under a group node.
      *
      * @param group - The group element whose boundary is being entered.
      */
@@ -538,26 +539,25 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.save();
         applyElementTransform(this, group);
         this.applyGroupPaint(group);
-
-        // Opacity composites the group as a unit (multiplicative); nested groups compound via `save()`.
-        const opacity = group.opacity;
-
-        if (!typeIsNil(opacity) && opacity !== 1) {
-            this.opacity *= opacity;
-        }
     }
 
     /**
-     * Applies a group's own inherited paint (fill, stroke, font, line, shadow, text) to the
-     * context so descendants pick it up from the copied state. Transforms are applied separately
-     * and opacity is composited at the boundary, so both are skipped here.
+     * Applies a group's own inherited paint (fill, stroke, opacity, font, line, shadow, text) to
+     * the context so descendants pick it up from the copied state. Transforms are applied
+     * separately, so they are skipped here.
+     *
+     * Two boundary semantics are fixed here and every backend must honour them:
+     *
+     * - **Opacity composites multiplicatively.** {@link CONTEXT_OPERATIONS} multiplies rather
+     *   than assigns, so nested groups compound and a leaf's own alpha stacks under its
+     *   ancestors' instead of replacing it.
+     * - **A group's gradient or pattern resolves against the group's own box.** The group is the
+     *   {@link Context.currentRenderElement} for the duration of the boundary, so a paint that
+     *   bakes geometry at set time (canvas) and one that resolves it per leaf (SVG) agree on the
+     *   same reference box: `group.getBoundingBox(true)`, never a sibling's and never the surface.
      */
     protected applyGroupPaint(group: RiplElement): void {
         objectForEach(CONTEXT_OPERATIONS, (key, operation) => {
-            if (key === 'opacity') {
-                return;
-            }
-
             const value = (group as unknown as Record<string, unknown>)[key];
 
             if (!typeIsNil(value)) {

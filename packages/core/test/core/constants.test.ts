@@ -9,6 +9,10 @@ import {
     TRANSFORM_DEFAULTS,
 } from '../../src';
 
+import type {
+    Context,
+} from '../../src';
+
 describe('Core Constants', () => {
 
     // ── CONTEXT_OPERATIONS ───────────────────────────────────────
@@ -51,6 +55,22 @@ describe('Core Constants', () => {
                 expect(CONTEXT_OPERATIONS).toHaveProperty(key);
                 expect(typeof CONTEXT_OPERATIONS[key as keyof typeof CONTEXT_OPERATIONS]).toBe('function');
             });
+        });
+
+        test('Should composite opacity multiplicatively rather than assigning it', () => {
+            const context = { opacity: 0.5 } as Context;
+
+            CONTEXT_OPERATIONS.opacity(context, 0.5);
+
+            expect(context.opacity).toBe(0.25);
+        });
+
+        test('Should assign non-opacity properties', () => {
+            const context = { fill: '#000000' } as Context;
+
+            CONTEXT_OPERATIONS.fill(context, '#ff0000');
+
+            expect(context.fill).toBe('#ff0000');
         });
 
     });
