@@ -130,6 +130,56 @@ describe('Shape3D', () => {
 
     });
 
+    describe('Face shading', () => {
+
+        // 3D-3: a declared `face.normal` is model-space and was never multiplied by the model
+        // matrix, so CPU shading froze under rotation while the GPU shader kept transforming it.
+        test('Should re-shade declared face normals under rotation', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const before = context.faceBuffer.map(face => face.fillColor).sort();
+
+            cube.rotationY = Math.PI / 4;
+            scene.render();
+
+            const after = context.faceBuffer.map(face => face.fillColor).sort();
+
+            expect(after).not.toEqual(before);
+        });
+
+        test('Should leave shading unchanged when the shape does not rotate', () => {
+            const context = createFixture();
+            const cube = createCube({
+                size: 1,
+                fill: '#ff0000',
+            });
+
+            const scene = createScene(context, {
+                children: [cube],
+            });
+
+            scene.render();
+
+            const before = context.faceBuffer.map(face => face.fillColor).sort();
+
+            cube.x = 0.5;
+            scene.render();
+
+            expect(context.faceBuffer.map(face => face.fillColor).sort()).toEqual(before);
+        });
+
+    });
+
     describe('Geometry transitions', () => {
 
         function projectedSpan(context: CanvasContext3D): number {

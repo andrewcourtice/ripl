@@ -7,6 +7,7 @@ import {
     mat4RotateX,
     mat4RotateY,
     mat4RotateZ,
+    mat4TransformDirection,
     mat4TransformPoint,
     mat4Translate,
     vec3Normalize,
@@ -313,7 +314,9 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
-            const normal = face.normal ?? computeFaceNormal(transformed);
+            const normal = face.normal
+                ? vec3Normalize(mat4TransformDirection(matrix, face.normal))
+                : computeFaceNormal(transformed);
             const brightness = computeFaceBrightness(normal, normalizedLight, true);
             const fillColor = baseRGBA ? shadeFaceColor(baseRGBA, 0.3 + brightness * 0.7) : baseFillStyle;
             const points = transformed.map(vertex => context.project(vertex));
