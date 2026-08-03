@@ -18,6 +18,10 @@ import {
     matrixInvert,
 } from '../math';
 
+import {
+    typeIsNil,
+} from '@ripl/utilities';
+
 /** Abstract base class for renderable shapes, extending `Element` with a type-constrained constructor. */
 export abstract class Shape<TState extends BaseElementState = BaseElementState> extends Element<TState> {
 
@@ -48,6 +52,16 @@ const POINTER_EVENT_HIT_TESTS: Record<string, (context: Context, path: ContextPa
     stroke: (context, path, x, y) => !!context.isPointInStroke(path, x, y),
     fill: (context, path, x, y) => !!context.isPointInPath(path, x, y),
 };
+
+/** Line style a backend's `isPointInStroke` reads off the context to decide the stroke's extent. */
+const STROKE_HIT_PROPERTIES = [
+    'lineCap',
+    'lineDash',
+    'lineDashOffset',
+    'lineJoin',
+    'lineWidth',
+    'miterLimit',
+] as const;
 
 /** A concrete 2D shape with path management, automatic fill/stroke rendering, clipping support, and path-based hit testing. */
 export class Shape2D<TState extends BaseElementState = BaseElementState> extends Shape<TState> {
@@ -80,6 +94,20 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
         this.autoStroke = autoStroke;
         this.clip = clip;
         this.cachePath = cachePath;
+    }
+
+    private _withStrokeStyle<TResult>(context: Context, body: () => TResult): TResult {
+        return context.layer(() => {
+            STROKE_HIT_PROPERTIES.forEach(key => {
+                const value = this.getComputedValue(key as unknown as keyof TState);
+
+                if (!typeIsNil(value)) {
+                    (context as unknown as Record<string, unknown>)[key] = value;
+                }
+            });
+
+            return body();
+        });
     }
 
     protected get hitPaths(): ContextPath[] {
@@ -123,15 +151,15 @@ export class Shape2D<TState extends BaseElementState = BaseElementState> extends
             context.isPointInPath(path, x, y)
         ));
 
-        if (!isPointer) {
-            return isAnyIntersecting();
-        }
+        const hitTest = isPointer
+            ? POINTER_EVENT_HIT_TESTS[this.pointerEvents]
+            : undefined;
 
-        const hitTest = POINTER_EVENT_HIT_TESTS[this.pointerEvents];
-
-        return hitTest
+        // `isPointInStroke` strokes with the context's *current* line style, and a hit test runs
+        // after the frame's trailing restore has rolled that back to the backend default.
+        return this._withStrokeStyle(context, () => (hitTest
             ? paths.some(path => hitTest(context, path, x, y))
-            : isAnyIntersecting();
+            : isAnyIntersecting()));
     }
 
     /** Renders this shape, reusing its cached path while unchanged (else creating and tracing a new one), then automatically applying fill/stroke or clipping. */
