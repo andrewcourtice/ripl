@@ -682,7 +682,15 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return this.renderedElements.filter(element => element.has(event));
     });
 
-    /** Tests which rendered elements intersect the given point for the given event types, returning them sorted by zIndex (highest first). */
+    /**
+     * Tests which rendered elements intersect the given point for the given event types,
+     * returning them topmost-first — the exact reverse of the order they were painted in.
+     *
+     * Paint order is the sole key. {@link Context.renderedElements} already records the resolved
+     * stacking order (groups paint as contiguous stacking contexts), whereas
+     * {@link RenderElement.zIndex} is additive across the parent chain and so says nothing about
+     * two descendants of different groups; sorting by it discarded correct information.
+     */
     protected hitTest(events: string[], x: number, y: number): RenderElement[] {
         const hits = arrayDedupe(events.flatMap(event => this._getTrackedElements(event)))
             .filter(element => element.intersectsWith(x, y, {
@@ -696,13 +704,7 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         // One-pass index map; an `indexOf` in the comparator would rescan the list per comparison.
         const paintOrder = new Map(this.renderedElements.map((element, index) => [element, index]));
 
-        return hits.sort((ea, eb) => {
-            const zDiff = eb.zIndex - ea.zIndex;
-
-            return zDiff !== 0
-                ? zDiff
-                : (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1);
-        });
+        return hits.sort((ea, eb) => (paintOrder.get(eb) ?? -1) - (paintOrder.get(ea) ?? -1));
     }
 
     /**

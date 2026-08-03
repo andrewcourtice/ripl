@@ -1184,17 +1184,18 @@ describe('Context', () => {
             return (ctx as any).hitTest(events, x, y);
         }
 
-        test('hitTest should return elements sorted by zIndex (highest first)', () => {
+        // Additive zIndex cannot compare descendants of different groups; renderedElements is
+        // already the resolved stacking order, so the last element painted is the topmost.
+        test('hitTest should return elements in reverse paint order, ignoring zIndex', () => {
             const ctx = create();
-            const low = createMockElement('low', 1, ['click']);
-            const mid = createMockElement('mid', 5, ['click']);
-            const high = createMockElement('high', 10, ['click']);
+            const under = createMockElement('under', 10, ['click']);
+            const over = createMockElement('over', 1, ['click']);
 
-            registerElements(ctx, [low, mid, high]);
+            registerElements(ctx, [under, over]);
 
             const result = callHitTest(ctx, ['click'], 0, 0);
 
-            expect(result.map((el: { id: string }) => el.id)).toEqual(['high', 'mid', 'low']);
+            expect(result.map((el: { id: string }) => el.id)).toEqual(['over', 'under']);
 
             ctx.destroy();
         });
