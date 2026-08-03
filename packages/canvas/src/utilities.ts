@@ -82,14 +82,12 @@ export function toCanvasGradient(context: CanvasRenderingContext2D, gradient: Gr
     return canvasGradient;
 }
 
-// Pattern tiles are position-independent, so one `CanvasPattern` per string serves every element and frame.
-const PATTERN_CACHE_LIMIT = 256;
-const patternCache = new Map<string, CanvasPattern | null>();
-
 const PAINT_CACHE_LIMIT = 256;
 const PATH_CACHE_LIMIT = 1024;
 
-// Canvas bakes gradient geometry at set time, so one native object serves a paint string and box.
+// Paint is cached per context: a `CanvasPattern`/`CanvasGradient` outlives the context that built it,
+// so a module-global cache handed a destroyed context's objects — and their tiles — to the next one.
+const patternCaches = new WeakMap<CanvasRenderingContext2D, Map<string, CanvasPattern | null>>();
 const gradientCaches = new WeakMap<CanvasRenderingContext2D, Map<string, CanvasGradient>>();
 
 // Path geometry is a pure function of the `d` string, and text on a path re-samples the same
@@ -124,50 +122,10 @@ function getPaintCache<TValue>(caches: WeakMap<CanvasRenderingContext2D, Map<str
     return cache;
 }
 
-function toCanvasGradientCached(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): CanvasGradient | null {
-    const gradient = parseGradientCached(value);
-
-    if (!gradient) {
-        return null;
-    }
-
-    const key = `${value}|${bounds.x},${bounds.y},${bounds.width},${bounds.height}`;
-
-    return resolveCached(getPaintCache(gradientCaches, ctx), PAINT_CACHE_LIMIT, key, () => toCanvasGradient(ctx, gradient, bounds));
-}
-
-function getPathLengthCached(pathData: string): number {
-    return resolveCached(pathLengthCache, PATH_CACHE_LIMIT, pathData, () => getPathLength(pathData));
-}
-
-function samplePathPointCached(pathData: string, distance: number): PathPoint {
-    return resolveCached(pathPointCache, PATH_CACHE_LIMIT, `${pathData}|${distance}`, () => samplePathPoint(pathData, distance));
-}
-
-/**
- * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
- * tile geometry into an offscreen canvas. Results (including parse failures) are cached per
- * string.
- *
- * @param ctx - The context the pattern will paint into.
- * @param value - The `pattern(...)` paint string.
- * @returns The repeating pattern, or `null` when the string or environment can't produce one.
- */
-export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
-    const cached = patternCache.get(value);
-
-    if (cached !== undefined) {
-        return cached;
-    }
-
-    if (patternCache.size >= PATTERN_CACHE_LIMIT) {
-        patternCache.clear();
-    }
-
+function createCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
     const pattern = parsePatternCached(value);
 
     if (!pattern) {
-        patternCache.set(value, null);
         return null;
     }
 
@@ -180,7 +138,6 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
     const tileContext = tile.getContext('2d');
 
     if (!tileContext) {
-        patternCache.set(value, null);
         return null;
     }
 
@@ -206,11 +163,51 @@ export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): C
         tileContext.fill();
     });
 
-    const canvasPattern = ctx.createPattern(tile, 'repeat');
+    return ctx.createPattern(tile, 'repeat');
+}
 
-    patternCache.set(value, canvasPattern);
+function toCanvasGradientCached(ctx: CanvasRenderingContext2D, value: string, bounds: GradientBounds): CanvasGradient | null {
+    const gradient = parseGradientCached(value);
 
-    return canvasPattern;
+    if (!gradient) {
+        return null;
+    }
+
+    const key = `${value}|${bounds.x},${bounds.y},${bounds.width},${bounds.height}`;
+
+    return resolveCached(getPaintCache(gradientCaches, ctx), PAINT_CACHE_LIMIT, key, () => toCanvasGradient(ctx, gradient, bounds));
+}
+
+function getPathLengthCached(pathData: string): number {
+    return resolveCached(pathLengthCache, PATH_CACHE_LIMIT, pathData, () => getPathLength(pathData));
+}
+
+function samplePathPointCached(pathData: string, distance: number): PathPoint {
+    return resolveCached(pathPointCache, PATH_CACHE_LIMIT, `${pathData}|${distance}`, () => samplePathPoint(pathData, distance));
+}
+
+/**
+ * Materializes a `pattern(...)` paint string as a repeating `CanvasPattern`, drawing the shared
+ * tile geometry into an offscreen canvas. Results (including parse failures) are cached per
+ * context and string, and released by {@link releaseCanvasPaintCache}.
+ *
+ * @param ctx - The context the pattern will paint into.
+ * @param value - The `pattern(...)` paint string.
+ * @returns The repeating pattern, or `null` when the string or environment can't produce one.
+ */
+export function toCanvasPattern(ctx: CanvasRenderingContext2D, value: string): CanvasPattern | null {
+    return resolveCached(getPaintCache(patternCaches, ctx), PAINT_CACHE_LIMIT, value, () => createCanvasPattern(ctx, value));
+}
+
+/**
+ * Drops every `CanvasGradient` and `CanvasPattern` cached against a context, together with the
+ * offscreen tile canvases the patterns hold. Call it when the context is torn down.
+ *
+ * @param ctx - The native context whose cached paint is released.
+ */
+export function releaseCanvasPaintCache(ctx: CanvasRenderingContext2D): void {
+    patternCaches.delete(ctx);
+    gradientCaches.delete(ctx);
 }
 
 /** Sets the fill style on a native canvas context, resolving gradient and pattern strings when applicable. */

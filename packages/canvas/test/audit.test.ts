@@ -25,6 +25,8 @@ import {
 
 polyfillPath2D();
 
+const PATTERN = 'pattern(diagonal, #1a6, #fff, 8)';
+
 /**
  * Regression tests for the context audit (see `docs/audits/`). A skipped test pins a confirmed
  * defect that is not fixed yet: un-skip it with the fix.
@@ -271,6 +273,35 @@ describe('Canvas audit findings', () => {
         context['rescale'](800, 600);
 
         expect(scales).toEqual([200]);
+    });
+
+    // CANVAS-16: the pattern cache was module-global, so it outlived the context that built it.
+    test('Should release the canvas backing store on destroy', () => {
+        sizeHost(400, 300);
+
+        const context = createContext(el);
+        const canvas = context.element;
+
+        context.destroy();
+
+        expect(canvas.width).toBe(0);
+        expect(canvas.height).toBe(0);
+    });
+
+    test('Should not hand a destroyed context cached paint to the next context', () => {
+        sizeHost(400, 300);
+
+        const first = createContext(el);
+
+        first.fill = PATTERN;
+        first.destroy();
+
+        const stub = mockCanvasContext();
+        const second = createContext(el);
+
+        second.fill = PATTERN;
+
+        expect(stub.createPattern).toHaveBeenCalledTimes(1);
     });
 
 });
