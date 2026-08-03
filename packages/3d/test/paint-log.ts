@@ -47,6 +47,8 @@ export interface PaintLogStub {
     getMatrix(): MockCanvasMatrix;
     /** The number of `save()` calls not yet matched by a `restore()`. */
     getSaveDepth(): number;
+    /** The underlying stub, which every canvas in the test shares. */
+    stub: CanvasRenderingContext2D;
 }
 
 /**
@@ -133,6 +135,7 @@ export function mockPaintLog(): PaintLogStub {
         clipCount: () => clipCalls,
         getMatrix: () => stub.getMatrix(),
         getSaveDepth: () => stub.getSaveDepth(),
+        stub: stub as unknown as CanvasRenderingContext2D,
     };
 }
 

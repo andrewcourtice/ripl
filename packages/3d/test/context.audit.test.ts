@@ -34,6 +34,7 @@ import {
 
 import {
     createContext as createCanvasContext,
+    releaseCanvasPaintCache,
 } from '@ripl/canvas';
 
 import {
@@ -453,6 +454,9 @@ describe('CanvasContext3D deferred face draw', () => {
             const canvasHost = document.createElement('div');
 
             document.body.appendChild(canvasHost);
+
+            // Both contexts share one stub, so the reference render would otherwise hit the first one's paint cache.
+            releaseCanvasPaintCache(paint.stub);
 
             const referenceScene = createScene(createCanvasContext(canvasHost), {
                 children: [graph()],
