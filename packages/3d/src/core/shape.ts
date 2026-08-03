@@ -1,3 +1,7 @@
+import {
+    contextIsContext3D,
+} from './context';
+
 import type {
     Context3D,
 } from './context';
@@ -214,7 +218,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         this.setStateValue('rotationZ', value);
     }
 
-    /** The stacking order, derived from the shape's projected depth (nearer shapes sort above farther ones). Not settable on 3D shapes. */
+    /**
+     * The stacking order, derived from the depth of the shape's **nearest projected face** — the
+     * one the painter's algorithm draws last, so a hit test resolves to the shape whose geometry is
+     * actually on top. Not settable on 3D shapes.
+     */
     public override get zIndex(): number {
         return -this._depth;
     }
@@ -330,8 +338,11 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
     }
 
     public render(context: Context): void {
+        if (!contextIsContext3D(context)) {
+            throw new Error(`Cannot render <${this.type}> into a "${context.type}" context: a Shape3D needs a Context3D for projection, lighting and mesh submission. Create the scene with createContext from @ripl/3d or @ripl/webgpu.`);
+        }
+
         super.render(context, () => {
-            const ctx = context as Context3D;
             const faces = this._getCachedFaces();
             const baseFillStyle = this.fill || DEFAULT_FILL_STYLE;
             const baseRGBA = parseColor(baseFillStyle);
@@ -339,19 +350,18 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
 
             this.hitPath = undefined;
 
-            // This is noop for CPU render strategies. Safe to call on all paths.
-            ctx.submitMesh({
+            if (context.renderStrategy !== 'gpu') {
+                return this._renderCPU(context, faces, baseRGBA, baseFillStyle, matrix);
+            }
+
+            context.submitMesh({
                 vertices: triangulateFacesFlat(faces, baseRGBA ?? DEFAULT_MESH_COLOR),
                 indices: triangulateFacesIndices(faces),
                 modelMatrix: matrix,
                 normalMatrix: matrix, // Valid when model has no non-uniform scale
             });
 
-            if (ctx.renderStrategy === 'gpu') {
-                this._renderGPU(ctx, faces, matrix);
-            } else {
-                this._renderCPU(ctx, faces, baseRGBA, baseFillStyle, matrix);
-            }
+            this._renderGPU(context, faces, matrix);
         });
     }
 
@@ -362,7 +372,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         // One capture per shape: the flush groups faces by state identity, so sharing it is load-bearing.
         const state = context.captureFaceState(this.getWorldTransform());
 
-        let totalDepth = 0;
+        let nearestDepth = Infinity;
 
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
@@ -374,7 +384,7 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
             const points = transformed.map(vertex => context.project(vertex));
             const depth = numberSum(points, p => p[2]) / points.length;
 
-            totalDepth += depth;
+            nearestDepth = Math.min(nearestDepth, depth);
 
             context.faceBuffer.push({
                 points,
@@ -389,23 +399,25 @@ export class Shape3D<TState extends Shape3DState = Shape3DState> extends Shape<T
         }
 
         this.hitPath = hitPath;
-        this._depth = faces.length > 0
-            ? totalDepth / faces.length
-            : 0;
+        this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
     private _renderGPU(context: Context3D, faces: Face3D[], matrix: Matrix4): void {
         const hitPath = context.createPath(`${this.id}:hit`);
 
+        let nearestDepth = Infinity;
+
         for (const face of faces) {
             const transformed = this.transformVertices(face.vertices, matrix);
             const points = transformed.map(vertex => context.project(vertex));
+
+            nearestDepth = Math.min(nearestDepth, numberSum(points, p => p[2]) / points.length);
 
             this._traceFaceHitPath(hitPath, points);
         }
 
         this.hitPath = hitPath;
-        this._depth = context.project([this.x, this.y, this.z])[2];
+        this._depth = isFinite(nearestDepth) ? nearestDepth : 0;
     }
 
     private _traceFaceHitPath(hitPath: ContextPath, points: ProjectedPoint[]): void {

@@ -309,6 +309,9 @@ export class MockGPURenderPassEncoder {
     /** Whether `end` has been called on this pass. */
     public ended = false;
 
+    /** The descriptor the pass was begun with, when one was supplied. */
+    public descriptor: GPURenderPassDescriptor | undefined;
+
     /** Records the active pipeline. */
     public setPipeline(pipeline: unknown): void {
         this.pipeline = pipeline;
@@ -360,10 +363,11 @@ export class MockGPUCommandEncoder {
     /** Every render pass begun on this encoder, in encode order. */
     public readonly renderPasses: MockGPURenderPassEncoder[] = [];
 
-    /** Begins and records a new mock render pass. */
-    public beginRenderPass(_descriptor?: GPURenderPassDescriptor): MockGPURenderPassEncoder {
+    /** Begins and records a new mock render pass, retaining its descriptor. */
+    public beginRenderPass(descriptor?: GPURenderPassDescriptor): MockGPURenderPassEncoder {
         const pass = new MockGPURenderPassEncoder();
 
+        pass.descriptor = descriptor;
         this.renderPasses.push(pass);
 
         return pass;

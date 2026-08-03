@@ -114,16 +114,34 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     protected near: number;
     protected far: number;
 
+    private _orthographicFrustum: [number, number, number, number, number, number] | null = null;
+
+    /** The projection currently in effect, which a resize preserves. */
+    public get projectionMode(): 'perspective' | 'orthographic' {
+        return this._orthographicFrustum ? 'orthographic' : 'perspective';
+    }
+
     /** The active rendering strategy (`cpu` or `gpu`) for this context. */
     public get renderStrategy(): RenderStrategy {
         return this.meta.renderStrategy;
     }
 
+    /**
+     * @param type - The context type name.
+     * @param target - The host element or selector the surface mounts into.
+     * @param element - The canvas backing the surface.
+     * @param options - Camera, lighting and base context options.
+     * @param renderStrategy - The strategy this backend renders with. Applied **after** the
+     * caller's `meta`, because it is the subclass's invariant rather than a preference: a
+     * caller-supplied `renderStrategy` used to be able to downgrade a GPU context to `'cpu'`,
+     * routing every shape into a CPU painter the backend never draws.
+     */
     constructor(
         type: string,
         target: string | HTMLElement,
         element: HTMLCanvasElement,
-        options?: Context3DOptions
+        options?: Context3DOptions,
+        renderStrategy: RenderStrategy = 'cpu'
     ) {
         element.style.display = 'block';
         element.style.width = '100%';
@@ -132,8 +150,8 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         super(type, target, element, {
             ...options,
             meta: {
-                renderStrategy: 'cpu',
                 ...options?.meta,
+                renderStrategy,
             },
         });
 
@@ -158,6 +176,14 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
     }
 
     protected updateProjectionMatrix(): void {
+        // A rebuild must preserve the projection type: rescale calls this on every size change.
+        if (this._orthographicFrustum) {
+            this.projectionMatrix = mat4Orthographic(...this._orthographicFrustum);
+            this.updateViewProjectionMatrix();
+
+            return;
+        }
+
         if (this.width > 0 && this.height > 0) {
             this.projectionMatrix = mat4Perspective(
                 degreesToRadians(this.fov),
@@ -176,16 +202,23 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         this.requestRender();
     }
 
-    /** Updates the perspective projection with the given field of view, near, and far planes. */
+    /** Updates the perspective projection with the given field of view, near, and far planes, replacing any orthographic projection. */
     public setPerspective(fov: number, near: number, far: number): void {
         this.fov = fov;
         this.near = near;
         this.far = far;
+        this._orthographicFrustum = null;
         this.updateProjectionMatrix();
         this.requestRender();
     }
 
-    /** Sets an orthographic projection with explicit frustum bounds. */
+    /**
+     * Sets an orthographic projection with explicit frustum bounds.
+     *
+     * The bounds are retained and replayed verbatim whenever the projection is rebuilt, so a
+     * resize keeps the projection orthographic. It does not re-fit the frustum to the new aspect
+     * ratio — the caller owns that, and {@link Camera} recomputes it on its next flush.
+     */
     public setOrthographic(
         left: number,
         right: number,
@@ -194,6 +227,7 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         near: number,
         far: number
     ): void {
+        this._orthographicFrustum = [left, right, bottom, top, near, far];
         this.projectionMatrix = mat4Orthographic(left, right, bottom, top, near, far);
         this.updateViewProjectionMatrix();
         this.requestRender();
@@ -253,6 +287,20 @@ export class Context3D extends DOMContext<HTMLCanvasElement, Context3DMeta> {
         };
     }
 
+    /**
+     * Begins a render pass, emptying the frame's face buffer at the outermost depth.
+     *
+     * Every 3D context accumulates faces, but only a backend that paints them drains the buffer —
+     * so the reset belongs here, or a context that never draws them grows it without bound.
+     */
+    public markRenderStart(): void {
+        super.markRenderStart();
+
+        if (this.renderDepth === 1) {
+            this.faceBuffer.length = 0;
+        }
+    }
+
     /** Submits a mesh for rendering this frame. Noop in the base class; overridden by GPU-backed contexts. */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public submitMesh(submission: MeshSubmission): void {
@@ -274,6 +322,11 @@ interface AppliedFaceStyle {
     fill: string;
     stroke: string;
     lineWidth: number;
+}
+
+/** Type guard that checks whether a rendering context is a `Context3D`. */
+export function contextIsContext3D(value: unknown): value is Context3D {
+    return value instanceof Context3D;
 }
 
 /** Canvas 2D–backed 3D rendering context with face buffer and painter's algorithm sorting. */
@@ -321,18 +374,17 @@ export class CanvasContext3D extends canvas2DStateMixin(Context3D) {
         }
     }
 
-    /** Begins a render pass, resetting the frame's face buffer at the outermost depth. */
-    public markRenderStart(): void {
+    /** Begins a render pass, resetting the frame's face buffer and clip tracking at the outermost depth. */
+    public override markRenderStart(): void {
         super.markRenderStart();
 
         if (this.renderDepth === 1) {
-            this.faceBuffer.length = 0;
             this._clipPending = false;
         }
     }
 
     /** Ends the render pass and, at the outermost depth, flushes any faces still buffered. */
-    public markRenderEnd(): void {
+    public override markRenderEnd(): void {
         super.markRenderEnd();
 
         if (this.renderDepth > 0) {
