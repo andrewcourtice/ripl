@@ -448,221 +448,6 @@ describe('SVG audit findings', () => {
 
     });
 
-    // ── S-14 · restore is a no-op at depth zero ──────────────────────────
-
-    describe('S-14 · unbalanced restore', () => {
-
-        test('Should keep the current transform when restoring at depth zero', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            ctx.translate(10, 20);
-            ctx.restore();
-
-            expect(getInternals(ctx)._currentTransforms).toEqual(['translate(10,20)']);
-
-            ctx.destroy();
-        });
-
-    });
-
-    // ── S-16 · a clipped multi-path element leaves no stray nodes ────────
-
-    describe('S-16 · clipped multi-path element', () => {
-
-        test('Should remove every run path of a clipped segmented polyline', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-            const scene = createScene(ctx, {
-                children: [
-                    createPolyline({
-                        id: 'PL',
-                        clip: true,
-                        lineWidth: 3,
-                        points: [[0, 0], [10, 20], [20, 10], [30, 30]],
-                        segments: [{
-                            from: 1,
-                            to: 3,
-                            lineDash: [6, 4],
-                        }],
-                    }),
-                ],
-            });
-
-            scene.render();
-
-            expect(ctx.element.querySelectorAll('path[id^="PL"]')).toHaveLength(0);
-
-            ctx.destroy();
-        });
-
-    });
-
-    // ── S-11 · maxWidth reaches the SVG surface ──────────────────────────
-
-    describe('S-11 · text maxWidth', () => {
-
-        test('Should emit textLength for a text with a maxWidth', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            renderPass(ctx, () => ctx.createText({
-                id: 'label',
-                x: 5,
-                y: 6,
-                content: 'hello',
-                maxWidth: 40,
-            }));
-
-            const node = ctx.element.querySelector('#label')!;
-
-            expect(node.getAttribute('textLength')).toBe('40');
-            expect(node.getAttribute('lengthAdjust')).toBe('spacingAndGlyphs');
-
-            ctx.destroy();
-        });
-
-        test('Should drop textLength when the maxWidth is removed', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            renderPass(ctx, () => ctx.createText({
-                id: 'label',
-                x: 5,
-                y: 6,
-                content: 'hello',
-                maxWidth: 40,
-            }));
-
-            renderPass(ctx, () => ctx.createText({
-                id: 'label',
-                x: 5,
-                y: 6,
-                content: 'hello',
-            }));
-
-            const node = ctx.element.querySelector('#label')!;
-
-            expect(node.getAttribute('textLength')).toBeNull();
-            expect(node.getAttribute('lengthAdjust')).toBeNull();
-
-            ctx.destroy();
-        });
-
-    });
-
-    // ── S-12 · composite operations map to mix-blend-mode ────────────────
-
-    describe('S-12 · blend mode', () => {
-
-        test('Should map a composite operation to mix-blend-mode', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            renderPass(ctx, () => {
-                ctx.globalCompositeOperation = 'multiply';
-
-                const path = ctx.createPath('shape');
-
-                path.rect(0, 0, 10, 10);
-                ctx.applyFill(path);
-            });
-
-            const node = ctx.element.querySelector('#shape') as SVGElement;
-
-            expect(node.style.mixBlendMode).toBe('multiply');
-
-            ctx.destroy();
-        });
-
-        test('Should leave a composite operation with no blend equivalent alone', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            renderPass(ctx, () => {
-                const path = ctx.createPath('shape');
-
-                path.rect(0, 0, 10, 10);
-                ctx.applyFill(path);
-            });
-
-            const node = ctx.element.querySelector('#shape') as SVGElement;
-
-            expect(node.style.mixBlendMode).toBe('');
-
-            ctx.destroy();
-        });
-
-        test('Should isolate the surface so a blend does not reach the page behind it', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            expect(ctx.element.style.getPropertyValue('isolation')).toBe('isolate');
-
-            ctx.destroy();
-        });
-
-    });
-
-    // ── S-15 · applyFill honours the fill rule ───────────────────────────
-
-    describe('S-15 · fill rule', () => {
-
-        test('Should emit the fill rule passed to applyFill', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            renderPass(ctx, () => {
-                const path = ctx.createPath('shape');
-
-                path.rect(0, 0, 10, 10);
-                ctx.applyFill(path, 'evenodd');
-            });
-
-            const node = ctx.element.querySelector('#shape') as SVGElement;
-
-            expect(node.style.fillRule).toBe('evenodd');
-
-            ctx.destroy();
-        });
-
-    });
-
-    // ── S-21 · alignment-baseline is not written ─────────────────────────
-
-    describe('S-21 · dead baseline config', () => {
-
-        test('Should not write alignment-baseline onto rendered nodes', () => {
-            sizeHost(400, 300);
-
-            const ctx = create();
-
-            let shape!: ReturnType<SVGContext['createPath']>;
-
-            renderPass(ctx, () => {
-                shape = ctx.createPath('shape');
-
-                shape.rect(0, 0, 10, 10);
-                ctx.applyFill(shape);
-            });
-
-            // jsdom's CSSOM drops both baseline properties, so the definition is the only observable surface.
-            expect(shape.definition.styles).not.toHaveProperty('alignmentBaseline');
-            expect(shape.definition.styles).toHaveProperty('dominantBaseline');
-
-            ctx.destroy();
-        });
-
-    });
-
     // ── S-7 · the image encode is memoized across frames ─────────────────
 
     describe('S-7 · image encoding', () => {
@@ -799,6 +584,194 @@ describe('SVG audit findings', () => {
 
     });
 
+    // ── S-11 · maxWidth reaches the SVG surface ──────────────────────────
+
+    describe('S-11 · text maxWidth', () => {
+
+        test('Should emit textLength for a text with a maxWidth', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => ctx.createText({
+                id: 'label',
+                x: 5,
+                y: 6,
+                content: 'hello',
+                maxWidth: 40,
+            }));
+
+            const node = ctx.element.querySelector('#label')!;
+
+            expect(node.getAttribute('textLength')).toBe('40');
+            expect(node.getAttribute('lengthAdjust')).toBe('spacingAndGlyphs');
+
+            ctx.destroy();
+        });
+
+        test('Should drop textLength when the maxWidth is removed', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => ctx.createText({
+                id: 'label',
+                x: 5,
+                y: 6,
+                content: 'hello',
+                maxWidth: 40,
+            }));
+
+            renderPass(ctx, () => ctx.createText({
+                id: 'label',
+                x: 5,
+                y: 6,
+                content: 'hello',
+            }));
+
+            const node = ctx.element.querySelector('#label')!;
+
+            expect(node.getAttribute('textLength')).toBeNull();
+            expect(node.getAttribute('lengthAdjust')).toBeNull();
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-12 · composite operations map to mix-blend-mode ────────────────
+
+    describe('S-12 · blend mode', () => {
+
+        test('Should map a composite operation to mix-blend-mode', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => {
+                ctx.globalCompositeOperation = 'multiply';
+
+                const path = ctx.createPath('shape');
+
+                path.rect(0, 0, 10, 10);
+                ctx.applyFill(path);
+            });
+
+            const node = ctx.element.querySelector('#shape') as SVGElement;
+
+            expect(node.style.mixBlendMode).toBe('multiply');
+
+            ctx.destroy();
+        });
+
+        test('Should leave a composite operation with no blend equivalent alone', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => {
+                const path = ctx.createPath('shape');
+
+                path.rect(0, 0, 10, 10);
+                ctx.applyFill(path);
+            });
+
+            const node = ctx.element.querySelector('#shape') as SVGElement;
+
+            expect(node.style.mixBlendMode).toBe('');
+
+            ctx.destroy();
+        });
+
+        test('Should isolate the surface so a blend does not reach the page behind it', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            expect(ctx.element.style.getPropertyValue('isolation')).toBe('isolate');
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-14 · restore is a no-op at depth zero ──────────────────────────
+
+    describe('S-14 · unbalanced restore', () => {
+
+        test('Should keep the current transform when restoring at depth zero', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            ctx.translate(10, 20);
+            ctx.restore();
+
+            expect(getInternals(ctx)._currentTransforms).toEqual(['translate(10,20)']);
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-15 · applyFill honours the fill rule ───────────────────────────
+
+    describe('S-15 · fill rule', () => {
+
+        test('Should emit the fill rule passed to applyFill', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            renderPass(ctx, () => {
+                const path = ctx.createPath('shape');
+
+                path.rect(0, 0, 10, 10);
+                ctx.applyFill(path, 'evenodd');
+            });
+
+            const node = ctx.element.querySelector('#shape') as SVGElement;
+
+            expect(node.style.fillRule).toBe('evenodd');
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-16 · a clipped multi-path element leaves no stray nodes ────────
+
+    describe('S-16 · clipped multi-path element', () => {
+
+        test('Should remove every run path of a clipped segmented polyline', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+            const scene = createScene(ctx, {
+                children: [
+                    createPolyline({
+                        id: 'PL',
+                        clip: true,
+                        lineWidth: 3,
+                        points: [[0, 0], [10, 20], [20, 10], [30, 30]],
+                        segments: [{
+                            from: 1,
+                            to: 3,
+                            lineDash: [6, 4],
+                        }],
+                    }),
+                ],
+            });
+
+            scene.render();
+
+            expect(ctx.element.querySelectorAll('path[id^="PL"]')).toHaveLength(0);
+
+            ctx.destroy();
+        });
+
+    });
+
     // ── S-17 · the export carries an intrinsic size ──────────────────────
 
     describe('S-17 · export', () => {
@@ -864,6 +837,33 @@ describe('SVG audit findings', () => {
             const ctx = create();
 
             await expect(ctx.export().toImage()).rejects.toThrow('Failed to rasterize SVG for export');
+
+            ctx.destroy();
+        });
+
+    });
+
+    // ── S-21 · alignment-baseline is not written ─────────────────────────
+
+    describe('S-21 · dead baseline config', () => {
+
+        test('Should not write alignment-baseline onto rendered nodes', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+
+            let shape!: ReturnType<SVGContext['createPath']>;
+
+            renderPass(ctx, () => {
+                shape = ctx.createPath('shape');
+
+                shape.rect(0, 0, 10, 10);
+                ctx.applyFill(shape);
+            });
+
+            // jsdom's CSSOM drops both baseline properties, so the definition is the only observable surface.
+            expect(shape.definition.styles).not.toHaveProperty('alignmentBaseline');
+            expect(shape.definition.styles).toHaveProperty('dominantBaseline');
 
             ctx.destroy();
         });
