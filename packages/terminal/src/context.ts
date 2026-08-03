@@ -309,7 +309,8 @@ const TERMINAL_COMMAND_HANDLERS: Record<TerminalPathCommandType, TerminalCommand
  */
 export class TerminalContext extends Context<Element> {
 
-    #warned = new Set<string>();
+    // Not a `#private` field: those throw when accessed through a Proxy, which breaks Vue's `reactive()`.
+    private _warned = new Set<string>();
 
     private _output: TerminalOutput;
     private _rasterizer: Rasterizer;
@@ -371,11 +372,11 @@ export class TerminalContext extends Context<Element> {
 
     /** Emits a one-off warning per context for a constraint a scene has just run into. */
     private _warnOnce(key: string, message: string): void {
-        if (this.#warned.has(key)) {
+        if (this._warned.has(key)) {
             return;
         }
 
-        this.#warned.add(key);
+        this._warned.add(key);
         console.warn(message);
     }
 
