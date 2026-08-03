@@ -2,6 +2,7 @@ import {
     describe,
     expect,
     test,
+    vi,
 } from 'vitest';
 
 import {
@@ -235,15 +236,60 @@ describe('TerminalPath', () => {
 
     // ── arcTo ─────────────────────────────────────────────────────
 
-    test('arcTo should approximate as two lineTo commands', () => {
+    // Was two straight lines through the corner point, which canvas never visits.
+    test('arcTo should emit a line to the tangent point followed by an arc', () => {
         const path = new TerminalPath();
 
         path.moveTo(0, 0);
-        path.arcTo(10, 10, 20, 0, 5);
+        path.arcTo(10, 0, 10, 10, 5);
 
         expect(path.commands).toHaveLength(3);
         expect(path.commands[1].type).toBe('lineTo');
-        expect(path.commands[2].type).toBe('lineTo');
+        expect(path.commands[2].type).toBe('arc');
+    });
+
+    test('arcTo should stop the leading line at the tangent point, not the corner', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(0, 0);
+        path.arcTo(10, 0, 10, 10, 5);
+
+        expect(path.commands[1].args[2]).toBeCloseTo(5, 6);
+        expect(path.commands[1].args[3]).toBeCloseTo(0, 6);
+    });
+
+    test('arcTo should center the arc a radius away from both lines', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(0, 0);
+        path.arcTo(10, 0, 10, 10, 5);
+
+        const [cx, cy, radius] = path.commands[2].args;
+
+        expect(cx).toBeCloseTo(5, 6);
+        expect(cy).toBeCloseTo(5, 6);
+        expect(radius).toBe(5);
+    });
+
+    test('arcTo should fall back to a line for a zero radius', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(0, 0);
+        path.arcTo(10, 0, 10, 10, 0);
+
+        expect(path.commands).toHaveLength(2);
+        expect(path.commands[1].type).toBe('lineTo');
+        expect(path.commands[1].args[2]).toBe(10);
+    });
+
+    test('arcTo should fall back to a line for collinear points', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(0, 0);
+        path.arcTo(10, 0, 20, 0, 5);
+
+        expect(path.commands).toHaveLength(2);
+        expect(path.commands[1].type).toBe('lineTo');
     });
 
     // ── addPath ───────────────────────────────────────────────────
@@ -265,15 +311,60 @@ describe('TerminalPath', () => {
         expect(path1.commands[3].type).toBe('lineTo');
     });
 
-    test('addPath should ignore non-TerminalPath instances', () => {
+    // Composing a foreign path yielded a silently empty result; it now says so.
+    test('addPath should warn and skip non-TerminalPath instances', () => {
         const path = new TerminalPath();
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         path.moveTo(0, 0);
-
-
         path.addPath({} as any);
 
         expect(path.commands).toHaveLength(1);
+        expect(warn).toHaveBeenCalledOnce();
+
+        warn.mockRestore();
+    });
+
+    // ── subpath tracking ──────────────────────────────────────────
+
+    test('closePath after a bare circle should close back to the arc start', () => {
+        const path = new TerminalPath();
+
+        path.circle(10, 5, 5);
+        path.closePath();
+
+        const [, , startX, startY] = path.commands[1].args;
+
+        expect(startX).toBeCloseTo(15, 6);
+        expect(startY).toBeCloseTo(5, 6);
+    });
+
+    test('closePath after a moveTo should close back to the moveTo', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(2, 3);
+        path.arc(10, 5, 5, 0, Math.PI);
+        path.closePath();
+
+        const [, , startX, startY] = path.commands[2].args;
+
+        expect(startX).toBe(2);
+        expect(startY).toBe(3);
+    });
+
+    test('a subpath started by lineTo should close back to its origin', () => {
+        const path = new TerminalPath();
+
+        path.moveTo(4, 4);
+        path.lineTo(9, 4);
+        path.closePath();
+        path.lineTo(20, 20);
+        path.closePath();
+
+        const [, , startX, startY] = path.commands[4].args;
+
+        expect(startX).toBe(4);
+        expect(startY).toBe(4);
     });
 
     // ── ellipse ───────────────────────────────────────────────────

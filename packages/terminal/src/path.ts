@@ -36,9 +36,21 @@ export class TerminalPath extends ContextPath {
     private _cursorY = 0;
     private _startX = 0;
     private _startY = 0;
+    private _hasSubpath = false;
 
     constructor(id?: string) {
         super(id);
+    }
+
+    /** Anchors the subpath start at the given point unless one is already open. */
+    private _openSubpath(x: number, y: number): void {
+        if (this._hasSubpath) {
+            return;
+        }
+
+        this._startX = x;
+        this._startY = y;
+        this._hasSubpath = true;
     }
 
     /** Records an arc centered at (x, y) sweeping from `startAngle` to `endAngle`. */
@@ -47,6 +59,8 @@ export class TerminalPath extends ContextPath {
             type: 'arc',
             args: [x, y, radius, startAngle, endAngle, counterclockwise ? 1 : 0],
         });
+
+        this._openSubpath(x + radius * Math.cos(startAngle), y + radius * Math.sin(startAngle));
 
         this._cursorX = x + radius * Math.cos(endAngle);
         this._cursorY = y + radius * Math.sin(endAngle);
@@ -57,12 +71,47 @@ export class TerminalPath extends ContextPath {
         this.arc(x, y, radius, 0, TAU);
     }
 
-    /** Records an arc approximated as two line segments to the tangent points. */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    /**
+     * Records the arc of the given radius tangent to both the line from the current point to
+     * (x1, y1) and the line from (x1, y1) to (x2, y2), preceded by a line to the first tangent
+     * point — the same construction canvas performs, so the corner point itself is not visited.
+     * Degenerate cases (a zero radius, or three collinear points) fall back to a line to (x1, y1).
+     */
     public arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void {
-        // Approximate arcTo as two line segments to the tangent points
-        this.lineTo(x1, y1);
-        this.lineTo(x2, y2);
+        const fromX = this._cursorX - x1;
+        const fromY = this._cursorY - y1;
+        const toX = x2 - x1;
+        const toY = y2 - y1;
+        const fromLength = Math.hypot(fromX, fromY);
+        const toLength = Math.hypot(toX, toY);
+        const cross = fromX * toY - fromY * toX;
+
+        if (radius <= 0 || !fromLength || !toLength || !cross) {
+            this.lineTo(x1, y1);
+            return;
+        }
+
+        const fromAngle = Math.atan2(fromY, fromX);
+        const toAngle = Math.atan2(toY, toX);
+        const half = Math.abs(Math.atan2(cross, fromX * toX + fromY * toY)) / 2;
+        const tangent = radius / Math.tan(half);
+        const bisector = fromAngle + (cross < 0 ? -half : half);
+        const centerX = x1 + (radius / Math.sin(half)) * Math.cos(bisector);
+        const centerY = y1 + (radius / Math.sin(half)) * Math.sin(bisector);
+        const enterX = x1 + tangent * Math.cos(fromAngle);
+        const enterY = y1 + tangent * Math.sin(fromAngle);
+        const exitX = x1 + tangent * Math.cos(toAngle);
+        const exitY = y1 + tangent * Math.sin(toAngle);
+
+        this.lineTo(enterX, enterY);
+        this.arc(
+            centerX,
+            centerY,
+            radius,
+            Math.atan2(enterY - centerY, enterX - centerX),
+            Math.atan2(exitY - centerY, exitX - centerX),
+            cross > 0
+        );
     }
 
     /** Records a cubic bezier curve from the current point to (x, y). */
@@ -71,6 +120,8 @@ export class TerminalPath extends ContextPath {
             type: 'bezierCurveTo',
             args: [this._cursorX, this._cursorY, cp1x, cp1y, cp2x, cp2y, x, y],
         });
+
+        this._openSubpath(this._cursorX, this._cursorY);
 
         this._cursorX = x;
         this._cursorY = y;
@@ -85,14 +136,17 @@ export class TerminalPath extends ContextPath {
 
         this._cursorX = this._startX;
         this._cursorY = this._startY;
+        this._hasSubpath = false;
     }
 
-    /** Records an ellipse centered at (x, y) with the given radii. */
+    /** Records an ellipse centered at (x, y) with the given radii, sweep, and rotation. */
     public ellipse(x: number, y: number, radiusX: number, radiusY: number, rotation: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void {
         this.commands.push({
             type: 'ellipse',
             args: [x, y, radiusX, radiusY, rotation, startAngle, endAngle, counterclockwise ? 1 : 0],
         });
+
+        this._openSubpath(x + radiusX * Math.cos(startAngle), y + radiusY * Math.sin(startAngle));
 
         this._cursorX = x + radiusX * Math.cos(endAngle);
         this._cursorY = y + radiusY * Math.sin(endAngle);
@@ -104,6 +158,8 @@ export class TerminalPath extends ContextPath {
             type: 'lineTo',
             args: [this._cursorX, this._cursorY, x, y],
         });
+
+        this._openSubpath(this._cursorX, this._cursorY);
 
         this._cursorX = x;
         this._cursorY = y;
@@ -120,17 +176,7 @@ export class TerminalPath extends ContextPath {
         this._cursorY = y;
         this._startX = x;
         this._startY = y;
-    }
-
-    /** Records a quadratic bezier curve from the current point to (x, y). */
-    public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
-        this.commands.push({
-            type: 'quadraticCurveTo',
-            args: [this._cursorX, this._cursorY, cpx, cpy, x, y],
-        });
-
-        this._cursorX = x;
-        this._cursorY = y;
+        this._hasSubpath = true;
     }
 
     /** Records an axis-aligned rectangle with its top-left corner at (x, y). */
@@ -144,6 +190,20 @@ export class TerminalPath extends ContextPath {
         this._cursorY = y;
         this._startX = x;
         this._startY = y;
+        this._hasSubpath = true;
+    }
+
+    /** Records a quadratic bezier curve from the current point to (x, y). */
+    public quadraticCurveTo(cpx: number, cpy: number, x: number, y: number): void {
+        this.commands.push({
+            type: 'quadraticCurveTo',
+            args: [this._cursorX, this._cursorY, cpx, cpy, x, y],
+        });
+
+        this._openSubpath(this._cursorX, this._cursorY);
+
+        this._cursorX = x;
+        this._cursorY = y;
     }
 
     /** Records a rounded rectangle, approximated as a plain rectangle for terminal rendering. */
@@ -153,11 +213,18 @@ export class TerminalPath extends ContextPath {
         this.rect(x, y, width, height);
     }
 
-    /** Appends the recorded commands of another {@link TerminalPath} to this path. */
+    /**
+     * Appends the recorded commands of another {@link TerminalPath} to this path. A path from
+     * another backend carries no terminal commands to replay, so it is skipped with a warning
+     * rather than composing into a silently empty result.
+     */
     public addPath(path: ContextPath): void {
-        if (path instanceof TerminalPath) {
-            this.commands.push(...path.commands);
+        if (!(path instanceof TerminalPath)) {
+            console.warn('TerminalPath.addPath: ignoring a path created by another rendering context; only a TerminalPath can be composed.');
+            return;
         }
+
+        this.commands.push(...path.commands);
     }
 
 }
