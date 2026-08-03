@@ -1,4 +1,8 @@
 import {
+    SVG_BLEND_MODES,
+} from './constants';
+
+import {
     createSVGClipPathElement,
     createSVGGradientElement,
     createSVGPatternElement,
@@ -115,6 +119,9 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
 
         // Unlike a canvas, SVG `<text>` is selectable: a drag to pan or brush would sweep a selection over labels.
         svg.style.userSelect = 'none';
+
+        // Canvas composites against its own pixels only; without this a `mix-blend-mode` leaf would blend with the page behind the surface.
+        svg.style.setProperty('isolation', 'isolate');
 
         super('svg', target, svg, options);
 
@@ -301,15 +308,17 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
     }
 
     private _setElementStyles(element: SVGContextElement, styles: Partial<Styles>) {
+        const blendMode = SVG_BLEND_MODES[this.currentState.globalCompositeOperation as string];
+
         Object.assign(element.definition.styles, mapSVGStyles({
             direction: this.currentState.direction,
             font: this.currentState.font,
             fontKerning: this.currentState.fontKerning,
             textAnchor: this.currentState.textAlign,
-            alignmentBaseline: this.currentState.textBaseline,
             dominantBaseline: this.currentState.textBaseline,
             opacity: this.currentState.opacity.toString(),
             zIndex: (this.currentState.zIndex || '').toString(),
+            ...(blendMode ? { mixBlendMode: blendMode } : {}),
             ...styles,
         }));
 
@@ -676,11 +685,14 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
      * Fills the given element using the current fill style, resolving linear and radial
      * gradients into `<defs>`. Conic gradients have no SVG equivalent and degrade to a solid
      * fill using the color stop nearest the middle of the gradient.
+     *
+     * @param element - The element to stamp the resolved fill onto.
+     * @param fillRule - Winding rule the fill is evaluated with; emitted as `fill-rule`.
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public applyFill(element: SVGContextElement, fillRule?: FillRule): void {
         this._setElementStyles(element, {
             fill: this._resolveGradientStyle(this.currentState.fill, `${element.id}:fill`),
+            ...(fillRule ? { fillRule } : {}),
         });
     }
 
