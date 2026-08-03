@@ -36,6 +36,7 @@ interface InteractionState {
     dragPrevX: number;
     dragPrevY: number;
     dragStarted: boolean;
+    suppressClick: boolean;
     scheduleHitTest: ReturnType<typeof createFrameBuffer>;
 }
 
@@ -125,12 +126,27 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._originDirty = false;
     }
 
+    /**
+     * Unwinds every hovered element, emitting the `mouseleave` each one is owed.
+     *
+     * The pending hover frame is dropped first: it re-enters whatever the pointer was last over,
+     * so flushing before cancelling would hand a `mouseenter` back to an element a frame later —
+     * on a context that may by then be torn down.
+     */
+    private _flushActiveElements(): void {
+        this._interactionState?.scheduleHitTest.cancel();
+
+        this._activeElements.forEach(element => element.emit('mouseleave', null));
+        this._activeElements.clear();
+    }
+
     private _handleMouseEnter(): void {
         this._refreshOrigin(true);
         this.emit('mouseenter', null);
     }
 
     private _handleMouseLeave(): void {
+        this._flushActiveElements();
         this.emit('mouseleave', null);
     }
 
@@ -145,12 +161,12 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
 
         const hitElements = this.hitTest(['dragstart', 'drag', 'dragend'], x, y);
 
-        if (hitElements.length > 0) {
-            state.dragElement = hitElements[0];
-            state.dragStartX = rx;
-            state.dragStartY = ry;
-            state.dragStarted = false;
-        }
+        // Assigned unconditionally: a press that hits nothing must not inherit the last gesture's origin.
+        state.dragElement = hitElements[0];
+        state.dragStartX = rx;
+        state.dragStartY = ry;
+        state.dragStarted = false;
+        state.suppressClick = false;
     }
 
     private _handleMouseMove(event: MouseEvent): void {
@@ -184,8 +200,8 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
                 state.dragPrevY = state.dragStartY;
 
                 const payload = {
-                    x: this.scaleX(state.dragStartX),
-                    y: this.scaleY(state.dragStartY),
+                    x: state.dragStartX,
+                    y: state.dragStartY,
                 };
 
                 this.emit('dragstart', payload);
@@ -202,10 +218,10 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         state.dragPrevY = ry;
 
         const payload = {
-            x: this.scaleX(rx),
-            y: this.scaleY(ry),
-            startX: this.scaleX(state.dragStartX),
-            startY: this.scaleY(state.dragStartY),
+            x: rx,
+            y: ry,
+            startX: state.dragStartX,
+            startY: state.dragStartY,
             deltaX,
             deltaY,
         };
@@ -245,28 +261,39 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         }));
     }
 
-    private _handleMouseUp(event: MouseEvent): void {
-        this._refreshOrigin();
+    /**
+     * Closes out the gesture in flight, wherever the button was released.
+     *
+     * Bound at the window as well as the surface, so this can arrive against a state that
+     * {@link DOMContext.disableInteraction} has already dropped — hence the null check rather than
+     * the non-null assertion the surface-bound handlers use.
+     */
+    private _endDrag(event: MouseEvent): void {
+        const state = this._interactionState;
 
-        const state = this._interactionState!;
+        if (!state?.dragElement) {
+            return;
+        }
 
-        if (state.dragElement && state.dragStarted) {
+        if (state.dragStarted) {
+            this._refreshOrigin();
+
             const rx = event.clientX - state.left;
             const ry = event.clientY - state.top;
-            const deltaX = rx - state.dragPrevX;
-            const deltaY = ry - state.dragPrevY;
 
             const payload = {
-                x: this.scaleX(rx),
-                y: this.scaleY(ry),
-                startX: this.scaleX(state.dragStartX),
-                startY: this.scaleY(state.dragStartY),
-                deltaX,
-                deltaY,
+                x: rx,
+                y: ry,
+                startX: state.dragStartX,
+                startY: state.dragStartY,
+                deltaX: rx - state.dragPrevX,
+                deltaY: ry - state.dragPrevY,
             };
 
             this.emit('dragend', payload);
             state.dragElement.emit('dragend', payload);
+
+            state.suppressClick = true;
         }
 
         state.dragElement = undefined;
@@ -274,18 +301,25 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
     }
 
     private _handleClick(event: MouseEvent): void {
+        const state = this._interactionState!;
+
+        // The DOM fires `click` after the `mouseup` that ended the drag; the gesture was not a click.
+        if (state.suppressClick) {
+            state.suppressClick = false;
+            return;
+        }
+
         this._refreshOrigin();
 
-        const state = this._interactionState!;
-        const x = this.scaleX(event.clientX - state.left);
-        const y = this.scaleY(event.clientY - state.top);
+        const rx = event.clientX - state.left;
+        const ry = event.clientY - state.top;
 
-        const hitElements = this.hitTest(['click'], x, y);
+        const hitElements = this.hitTest(['click'], this.scaleX(rx), this.scaleY(ry));
 
         if (hitElements.length > 0) {
             hitElements[0].emit('click', {
-                x,
-                y,
+                x: rx,
+                y: ry,
             });
         }
     }
@@ -307,6 +341,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             dragPrevX: 0,
             dragPrevY: 0,
             dragStarted: false,
+            suppressClick: false,
             scheduleHitTest: createFrameBuffer(),
         };
 
@@ -314,7 +349,7 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
         this._attachInteractionEvent('mouseleave', () => this._handleMouseLeave());
         this._attachInteractionEvent('mousedown', event => this._handleMouseDown(event));
         this._attachInteractionEvent('mousemove', event => this._handleMouseMove(event));
-        this._attachInteractionEvent('mouseup', event => this._handleMouseUp(event));
+        this._attachInteractionEvent('mouseup', event => this._endDrag(event));
         this._attachInteractionEvent('click', event => this._handleClick(event));
 
         if (hasWindow) {
@@ -325,22 +360,28 @@ export abstract class DOMContext<TElement extends Element = Element, TMeta exten
             }), INTERACTION_KEY);
 
             this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), INTERACTION_KEY);
+
+            // A release outside the surface never reaches the element, stranding the drag with no `dragend`.
+            this.retain(onDOMEvent(window, 'mouseup', event => this._endDrag(event)), INTERACTION_KEY);
         }
 
         // Seeded now rather than on the first `mouseenter`, which never fires for a surface mounted under the pointer.
         this._refreshOrigin(true);
     }
 
-    /** Disables DOM interaction events and clears the active element set. */
+    /** Disables DOM interaction events, unwinding any hover with a final `mouseleave` per element. */
     public disableInteraction(): void {
         if (!this._interactionEnabled) {
             return;
         }
 
         this._interactionEnabled = false;
+
+        // Ahead of dropping the state, which holds the frame buffer the flush has to cancel.
+        this._flushActiveElements();
+
         this._interactionState = undefined;
         this.dispose(INTERACTION_KEY);
-        this._activeElements.clear();
     }
 
     /** Destroys the context, removing the DOM element and disposing all resources. */
