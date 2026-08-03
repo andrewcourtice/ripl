@@ -78,7 +78,7 @@ describe('Canvas audit findings', () => {
 
     // CANVAS-2: a clip shape skips its own restore so the clip persists to later siblings, and
     // `popGroup` is what absorbs the dangling save. At scene root there is no group to absorb it.
-    test.skip('Should not accumulate save depth across frames for a scene-root clip', () => {
+    test('Should not accumulate save depth across frames for a scene-root clip', () => {
         sizeHost(400, 300);
 
         const context = createContext(el);

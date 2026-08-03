@@ -491,6 +491,16 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        test('Should unwind a save the callback left outstanding', () => {
+            const ctx = create();
+
+            ctx.batch(() => ctx.save());
+
+            expect((ctx as unknown as { saveDepth: number }).saveDepth).toBe(0);
+
+            ctx.destroy();
+        });
+
         test('Should reset renderedElements at start', () => {
             const ctx = create();
 

@@ -496,8 +496,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.renderDepth = Math.max(0, this.renderDepth - 1);
     }
 
-    /** Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd, returning the callback's result. */
+    /**
+     * Clears the rendering surface and brackets the callback in markRenderStart/markRenderEnd,
+     * returning the callback's result. On exit the state stack is unwound to the depth captured
+     * on entry, giving the scene root the same guarantee {@link Context.popGroup} gives a group:
+     * a root-level `clip: true` shape deliberately skips its own `restore()` so the clip persists
+     * to later siblings, and with no enclosing group to absorb it that save would otherwise leak
+     * one state per frame, unbounded.
+     */
     public batch<TResult = void>(body: () => TResult): TResult {
+        const depth = this.saveDepth;
+
         this.clear();
         this.save();
         this.markRenderStart();
@@ -506,7 +515,10 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
             return body();
         } finally {
             this.markRenderEnd();
-            this.restore();
+
+            while (this.saveDepth > depth) {
+                this.restore();
+            }
         }
     }
 
