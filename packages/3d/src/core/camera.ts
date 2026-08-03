@@ -255,6 +255,11 @@ export class Camera extends Disposer {
         const offset = vec3Sub(this._position, this._target);
         const dist = vec3Distance(this._position, this._target);
 
+        // A camera sitting on its target has no orbit sphere; dividing by 0 gives an all-NaN view.
+        if (dist === 0) {
+            return;
+        }
+
         // Convert to spherical coordinates
         const theta = Math.atan2(offset[0], offset[2]) + deltaTheta;
         let phi = Math.acos(numberClamp(offset[1] / dist, -1, 1)) + deltaPhi;
@@ -294,12 +299,15 @@ export class Camera extends Disposer {
 
     /**
      * Dollies the camera toward or away from its target along the view direction.
-     * @param delta - The distance to move toward the target, in world units. Clamped so the camera never passes the target.
+     * @param delta - The distance to move toward the target, in world units. Clamped so the target never crosses the near plane, which would empty the frustum.
      */
     public zoom(delta: number): void {
         const direction = vec3Normalize(vec3Sub(this._target, this._position));
         const dist = vec3Distance(this._position, this._target);
-        const clampedDelta = Math.min(delta, dist - 0.01);
+
+        // Clamping to `dist - 0.01` let the eye reach 0.01 units of a target the near plane
+        // starts clipping at 0.1, so a full zoom-in emptied the view.
+        const clampedDelta = Math.min(delta, Math.max(0, dist - this._near));
 
         this._position = vec3Add(this._position, vec3Scale(direction, clampedDelta));
 
@@ -325,6 +333,12 @@ export class Camera extends Disposer {
         const panConfig = resolveInteraction(config.pan, fallback);
 
         const element = this._context.element as unknown as HTMLElement;
+
+        // Nothing enabled means nothing to attach: claiming `touch-action: none` and
+        // `preventDefault`ing anyway left a phone unable to scroll past the chart for no gain.
+        if (!zoomConfig.enabled && !pivotConfig.enabled && !panConfig.enabled) {
+            return;
+        }
 
         this._previousTouchAction = element.style.touchAction;
         element.style.touchAction = 'none';
@@ -414,7 +428,17 @@ export class Camera extends Disposer {
             return Math.sqrt(dx * dx + dy * dy);
         };
 
+        // A one-finger gesture orbits, a two-finger gesture pans and pinches; only claim the
+        // gesture the enabled interactions can actually act on.
+        const handlesTouchCount = (count: number) => count >= 2
+            ? (panConfig.enabled || zoomConfig.enabled)
+            : pivotConfig.enabled;
+
         const touchStartListener = onDOMEvent(element, 'touchstart', (event) => {
+            if (!handlesTouchCount(event.touches.length)) {
+                return;
+            }
+
             event.preventDefault();
             touchCount = event.touches.length;
 
@@ -429,6 +453,10 @@ export class Camera extends Disposer {
         });
 
         const touchMoveListener = onDOMEvent(element, 'touchmove', (event) => {
+            if (!handlesTouchCount(event.touches.length)) {
+                return;
+            }
+
             event.preventDefault();
 
             const [cx, cy] = getTouchCenter(event.touches);
@@ -469,7 +497,6 @@ export class Camera extends Disposer {
         });
 
         const touchEndListener = onDOMEvent(element, 'touchend', (event) => {
-            event.preventDefault();
             touchCount = event.touches.length;
 
             if (touchCount > 0) {

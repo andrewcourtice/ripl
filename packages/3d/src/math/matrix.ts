@@ -113,10 +113,43 @@ export function mat4RotateZ(m: Matrix4, angle: number): Matrix4 {
     return mat4Multiply(m, r);
 }
 
-/** Constructs a view matrix looking from `eye` toward `target` with the given `up` direction. */
+// Tried in order when `up` is parallel to the view direction and the cross product collapses.
+const FALLBACK_UP_AXES: Vector3[] = [
+    [0, 0, 1],
+    [1, 0, 0],
+];
+
+function vec3IsZero(v: Vector3): boolean {
+    return v[0] === 0 && v[1] === 0 && v[2] === 0;
+}
+
+function resolveBasisX(up: Vector3, zAxis: Vector3): Vector3 {
+    for (const candidate of [up, ...FALLBACK_UP_AXES]) {
+        const axis = vec3Normalize(vec3Cross(candidate, zAxis));
+
+        if (!vec3IsZero(axis)) {
+            return axis;
+        }
+    }
+
+    return [1, 0, 0];
+}
+
+/**
+ * Constructs a view matrix looking from `eye` toward `target` with the given `up` direction.
+ *
+ * Degenerate inputs are defended rather than silently collapsed: an `eye` equal to `target` yields
+ * the identity, and an `up` parallel to the view direction falls back to a perpendicular axis. Both
+ * previously produced a rank-deficient matrix that projected every point to the viewport centre.
+ */
 export function mat4LookAt(eye: Vector3, target: Vector3, up: Vector3): Matrix4 {
     const zAxis = vec3Normalize(vec3Sub(eye, target));
-    const xAxis = vec3Normalize(vec3Cross(up, zAxis));
+
+    if (vec3IsZero(zAxis)) {
+        return mat4Identity();
+    }
+
+    const xAxis = resolveBasisX(up, zAxis);
     const yAxis = vec3Cross(zAxis, xAxis);
 
     const out = mat4Create();

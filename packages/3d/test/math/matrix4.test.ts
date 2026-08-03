@@ -102,6 +102,22 @@ describe('Matrix4', () => {
         expect(result[2]).toBeCloseTo(-5);
     });
 
+    // 3D-17: `up` parallel to the view direction gave `xAxis = [0, 0, 0]` and a rank-deficient view
+    // matrix, so every point in the scene projected to the same place.
+    test('Should build a usable view matrix when up is parallel to the view direction', () => {
+        const view = mat4LookAt([0, 5, 0], [0, 0, 0], [0, 1, 0]);
+
+        const origin = mat4TransformPoint(view, [0, 0, 0]);
+        const offset = mat4TransformPoint(view, [1, 0, 0]);
+
+        expect(origin[2]).toBeCloseTo(-5);
+        expect(offset).not.toEqual(origin);
+    });
+
+    test('Should return the identity when the eye sits on the target', () => {
+        expect(Array.from(mat4LookAt([2, 2, 2], [2, 2, 2], [0, 1, 0]))).toEqual(Array.from(mat4Identity()));
+    });
+
     test('mat4Perspective produces valid projection', () => {
         const proj = mat4Perspective(Math.PI / 3, 1, 0.1, 100);
 
