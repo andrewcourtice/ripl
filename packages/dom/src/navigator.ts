@@ -16,10 +16,17 @@ import {
 } from '@ripl/utilities';
 
 import {
-    hasWindow,
     onDOMElementResize,
     onDOMEvent,
 } from './dom';
+
+import {
+    createSurfaceOrigin,
+} from './surface';
+
+import type {
+    SurfaceOrigin,
+} from './surface';
 
 /** Options for constructing a {@link DOMNavigator}, adding interaction wiring to the base options. */
 export interface DOMNavigatorOptions extends NavigatorOptions {
@@ -86,6 +93,7 @@ function resolveInteraction(option: NavigatorInteractionOption | undefined, fall
 export class DOMNavigator extends Navigator {
 
     private _element: HTMLElement;
+    private _origin?: SurfaceOrigin;
     private _previousTouchAction = '';
     private _previousCursor = '';
     private _panCursorEnabled = false;
@@ -95,9 +103,6 @@ export class DOMNavigator extends Navigator {
     private _brushing = false;
     private _panning = false;
     private _pinchDistance = 0;
-    private _originDirty = true;
-    private _originLeft = 0;
-    private _originTop = 0;
 
     constructor(context: Context, options?: DOMNavigatorOptions) {
         super(options);
@@ -110,62 +115,40 @@ export class DOMNavigator extends Navigator {
             return;
         }
 
+        this._origin = createSurfaceOrigin(context);
+        this.retain(this._origin, VIEWPORT_KEY);
+
         this._syncViewport();
 
         this.retain(onDOMElementResize(this._element, () => {
-            this._originDirty = true;
+            this._origin?.invalidate();
             this._syncViewport();
         }), VIEWPORT_KEY);
-
-        if (hasWindow) {
-            // Capture phase: a scroll event doesn't bubble, so an ancestor scroll container is only visible here.
-            this.retain(onDOMEvent(window, 'scroll', () => this._originDirty = true, {
-                capture: true,
-                passive: true,
-            }), VIEWPORT_KEY);
-
-            this.retain(onDOMEvent(window, 'resize', () => this._originDirty = true), VIEWPORT_KEY);
-        }
 
         if (options?.interactions) {
             this._attachInteractions(options.interactions);
         }
     }
 
+    /**
+     * The viewport is the surface's *logical* size, matching the space {@link DOMNavigator} reports
+     * gestures in — a CSS-scaled surface must not hand `centerOn`/`fitBounds` a different unit from
+     * the one its points arrive in.
+     */
     private _syncViewport(): void {
-        const rect = this._element.getBoundingClientRect();
+        const rect = this._origin!.rect;
 
         this.viewport = {
-            width: rect.width,
-            height: rect.height,
+            width: rect.width / rect.scaleX,
+            height: rect.height / rect.scaleY,
         };
-    }
-
-    /** Re-reads where the element sits in the viewport, at most once per invalidation. */
-    private _refreshOrigin(): void {
-        if (!this._originDirty) {
-            return;
-        }
-
-        ({
-            left: this._originLeft,
-            top: this._originTop,
-        } = this._element.getBoundingClientRect());
-
-        this._originDirty = false;
     }
 
     private _localPoint(event: {
         clientX: number;
         clientY: number;
     }): Point {
-        // A rect read per `pointermove` flushes layout mid-gesture, which is the frame budget gone.
-        this._refreshOrigin();
-
-        return [
-            event.clientX - this._originLeft,
-            event.clientY - this._originTop,
-        ];
+        return this._origin!.toLogicalPoint(event);
     }
 
     private _setCursor(cursor: string): void {

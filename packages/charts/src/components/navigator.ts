@@ -50,7 +50,12 @@ import {
 } from '@ripl/utilities';
 
 import {
+    createSurfaceOrigin,
     onDOMEvent,
+} from '@ripl/dom';
+
+import type {
+    SurfaceOrigin,
 } from '@ripl/dom';
 
 /** Retention key for the strip's DOM pointer listeners. */
@@ -136,6 +141,7 @@ export class ChartNavigator extends ChartComponent {
 
     private _group?: Group;
     private _element?: HTMLElement;
+    private _origin?: SurfaceOrigin;
     private _orientation: ChartNavigatorOrientation = 'horizontal';
     private _area?: ChartArea;
     private _window: ChartNavigatorWindow = {
@@ -167,6 +173,9 @@ export class ChartNavigator extends ChartComponent {
         }
 
         this._element = element;
+        this._origin = createSurfaceOrigin(this.context);
+
+        this.retain(this._origin, LISTENER_KEY);
         this.retain(onDOMEvent(element, 'pointerdown', this._onPointerDown), LISTENER_KEY);
         this.retain(onDOMEvent(element, 'pointermove', this._onPointerMove), LISTENER_KEY);
         this.retain(onDOMEvent(element, 'pointerup', this._onPointerUp), LISTENER_KEY);
@@ -217,6 +226,7 @@ export class ChartNavigator extends ChartComponent {
         this.dispose(LISTENER_KEY);
         this._group?.destroy();
         this._group = undefined;
+        this._origin = undefined;
         this._attached = false;
         super.destroy();
     }
@@ -526,12 +536,7 @@ export class ChartNavigator extends ChartComponent {
     }
 
     private _localPoint(event: PointerEvent): Point {
-        const rect = this._element!.getBoundingClientRect();
-
-        return [
-            event.clientX - rect.left,
-            event.clientY - rect.top,
-        ];
+        return this._origin!.toLogicalPoint(event);
     }
 
     /** The pointer coordinate along the main (window) axis. */

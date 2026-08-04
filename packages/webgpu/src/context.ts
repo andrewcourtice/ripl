@@ -20,11 +20,6 @@ import type {
     MeshSubmission,
 } from '@ripl/3d';
 
-import {
-    factory,
-    scaleContinuous,
-} from '@ripl/core';
-
 import type {
     ContextPath,
     ContextText,
@@ -35,6 +30,7 @@ import type {
 import {
     canvasMeasureText,
     CanvasPath,
+    rescaleCanvas,
 } from '@ripl/canvas';
 
 import {
@@ -131,28 +127,26 @@ export class WebGPUContext3D extends Context3D {
             return;
         }
 
-        // Through the factory, like every other backend: `window` desynchronises the hit canvas from the surface scales and is absent outside the DOM.
-        const dpr = factory.devicePixelRatio;
-        const scaledWidth = Math.floor(width * dpr);
-        const scaledHeight = Math.floor(height * dpr);
-
         // Gated on the logical size, never the backing store: a fresh canvas is already 300x150.
         if (width === this.width && height === this.height) {
             return;
         }
 
+        // The hit canvas is a plain 2D surface, so the canvas backend owns its DPR sizing and transform.
+        const {
+            scaleX,
+            scaleY,
+            scaledWidth,
+            scaledHeight,
+        } = rescaleCanvas(this._hitCanvas, this._hitContext, width, height);
+
         this.element.width = scaledWidth;
         this.element.height = scaledHeight;
 
-        // Resize hit canvas to match
-        this._hitCanvas.width = scaledWidth;
-        this._hitCanvas.height = scaledHeight;
-        this._hitContext.setTransform(dpr, 0, 0, dpr, 0, 0);
-
         super.rescale(width, height);
 
-        this.scaleX = scaleContinuous([0, width], [0, scaledWidth]);
-        this.scaleY = scaleContinuous([0, height], [0, scaledHeight]);
+        this.scaleX = scaleX;
+        this.scaleY = scaleY;
 
         this._recreateDepthTexture(scaledWidth, scaledHeight);
         this._recreateMSAATexture(scaledWidth, scaledHeight);

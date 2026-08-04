@@ -270,12 +270,16 @@ export function setCanvasStroke(ctx: CanvasRenderingContext2D, value: string, bo
     ctx.strokeStyle = value;
 }
 
-/** Result of a canvas rescale operation containing the updated coordinate scales. */
+/** Result of a canvas rescale operation containing the updated coordinate scales and backing-store size. */
 export interface RescaleResult {
     /** Scale mapping logical x coordinates to device pixels. */
     scaleX: Scale<number, number>;
     /** Scale mapping logical y coordinates to device pixels. */
     scaleY: Scale<number, number>;
+    /** Width of the backing store, in device pixels, floored to a whole pixel. */
+    scaledWidth: number;
+    /** Height of the backing store, in device pixels, floored to a whole pixel. */
+    scaledHeight: number;
 }
 
 /**
@@ -311,6 +315,8 @@ export function rescaleCanvas(
 
     // The scales describe the transform drawing actually uses (an exact `dpr`), not the floored store.
     return {
+        scaledWidth,
+        scaledHeight,
         scaleX: scaleContinuous([0, width], [0, width * dpr]),
         scaleY: scaleContinuous([0, height], [0, height * dpr]),
     };
