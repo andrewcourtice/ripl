@@ -34,6 +34,7 @@ import {
 
 import {
     createContext as createCanvasContext,
+    releaseCanvasPaintCache,
 } from '@ripl/canvas';
 
 import {
@@ -42,7 +43,7 @@ import {
 
 polyfillPath2D();
 
-/** Regression tests for the deferred face-draw findings in `docs/audits/3d-webgpu.md`. */
+/** Regression tests for the deferred face-draw findings of the rendering-context audit. */
 describe('CanvasContext3D deferred face draw', () => {
 
     let host: HTMLDivElement;
@@ -458,6 +459,9 @@ describe('CanvasContext3D deferred face draw', () => {
             const canvasHost = document.createElement('div');
 
             document.body.appendChild(canvasHost);
+
+            // Both contexts share one stub, so the reference render would otherwise hit the first one's paint cache.
+            releaseCanvasPaintCache(paint.stub);
 
             const referenceScene = createScene(createCanvasContext(canvasHost), {
                 children: [graph()],

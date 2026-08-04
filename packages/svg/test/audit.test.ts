@@ -51,7 +51,7 @@ const GROUP_GRADIENT = 'linear-gradient(90deg, rgb(255, 0, 0), rgb(0, 0, 255))';
 const GRADIENT_REFERENCE = /^url\(["']?#gradient-/;
 
 /**
- * Regression tests for the SVG rendering-context audit (see `docs/audits/svg.md`). Findings whose
+ * Regression tests for the SVG rendering-context audit. Findings whose
  * failure mode is purely visual (S-18, S-19, S-20) are not represented here: jsdom rasterizes
  * nothing and implements no `SVGGeometryElement`, so they are deferred to the Playwright harness.
  */

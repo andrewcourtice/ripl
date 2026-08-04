@@ -32,8 +32,8 @@ polyfillPath2D();
 const PATTERN = 'pattern(diagonal, #1a6, #fff, 8)';
 
 /**
- * Regression tests for the context audit (see `docs/audits/`). A skipped test pins a confirmed
- * defect that is not fixed yet: un-skip it with the fix.
+ * Regression tests for the rendering-context audit. A skipped test pins a confirmed defect that is
+ * not fixed yet: un-skip it with the fix.
  */
 describe('Canvas audit findings', () => {
 

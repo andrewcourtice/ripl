@@ -331,14 +331,45 @@ deliberately **not** memoized and still re-encode per call. An `HTMLImageElement
 so swapping the source re-encodes; mutating a canvas source's pixels was never observable through
 this function's identity and still is not.
 
+### Hit testing
+
+**`SVGContext.isPointInPath`** and **`SVGContext.isPointInStroke`** — **behaviour**, and the one
+change that can move which element receives a click. The hit point is mapped into the target's own
+coordinate space through the live DOM's `getCTM()` before it reaches
+`isPointInFill`/`isPointInStroke`. Those methods are specified to read the point in the **element's
+own** space, but a hit arrives in the SVG root's, and `_setElementStyles` stamps a `transform` on
+the element while its ancestors are transformed `<g>`s — so **hit testing was wrong for every
+transformed element**, and increasingly wrong the further the transform moved it. Canvas was always
+correct: it leaves `hitTestHonorsTransform` false and maps the point through
+`Element.getWorldTransform`.
+
+A scene with no transforms is unaffected. A scene that compensated for the old behaviour — offsetting
+a hit target, or relying on a transformed element never being hit — changes, and should drop the
+compensation. `hitTestHonorsTransform` stays `true` on SVG: the context now genuinely handles the
+mapping, so a caller must still not pre-map the point.
+
+The inverse CTM is cached per element and cleared on every commit, because `getCTM()` flushes layout
+and a hit test runs against every rendered element on each pointer move.
+
 ### Known gaps
 
-Three findings need a real browser and are left for the Playwright harness: `<feDropShadow>`
-geometry scales with ancestor transforms where canvas shadows do not (**S-18**); `isPointInFill` is
-fed a root-space point but is specified in the element's own local space, so hit testing on a
-transformed element is wrong — the reconciler-cache lookup was fixed, the coordinate space was not
-(**S-19**, HIGH); and `filter="url(#shadow-…) blur(…)"` blurs the drop shadow along with the shape,
-where canvas derives the shadow from the filtered result (**S-20**).
+**S-18** and **S-20** are now **measured and pinned** rather than untested. Both are real, both are
+LOW-to-LOW-MEDIUM, and both are left as-is with a guard rather than partially fixed:
+
+- **S-18** — `<feDropShadow>` writes `dx`/`dy`/`stdDeviation` in the filter's user space, which
+  inherits every ancestor `<g>` transform; canvas shadow geometry is CTM-independent. Inside a
+  `scale(2)` group SVG casts the shadow at twice the offset and blur — a **14.3%** pixel divergence.
+  Not fixed because `<feDropShadow>` takes one scalar `stdDeviation` and an axis-aligned offset, so
+  counter-transforming closes the uniform-scale case and still cannot reproduce canvas under
+  rotation or a non-uniform scale.
+- **S-20** — `filter="url(#shadow-…) blur(…)"` blurs the drop shadow along with the shape, where
+  canvas derives the shadow from the filtered result — a **9.1%** divergence. Not fixed because
+  correcting the order means composing both into one `<filter>` chain rather than concatenating two
+  `filter` list entries.
+
+Both are asserted in `packages/charts/test/visual/parity.spec.ts` to stay inside a band around those
+measurements, from both sides: a regression that widens the gap fails, and so does a fix that closes
+it without updating the record.
 
 ## @ripl/dom
 
