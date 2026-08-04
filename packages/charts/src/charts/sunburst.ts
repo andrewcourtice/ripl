@@ -324,8 +324,11 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
                 node.children?.forEach(child => assignRoot(child, rootId));
             };
             data.forEach(node => assignRoot(node, node.id));
-            // Owning its own id as well lets a segment hover isolate that one ring, not the whole subtree.
-            this.registerHighlightGroups(this._groups, group => [rootOf.get(group.id) ?? group.id, group.id]);
+            // Namespaced so a root segment's own owner cannot collide with the series owner of its subtree.
+            this.registerHighlightGroups(this._groups, group => [
+                `series:${rootOf.get(group.id) ?? group.id}`,
+                `node:${group.id}`,
+            ]);
 
             // Animate entries
             const entryArcs = entryGroups.flatMap(g => g.getElementsByType('arc')) as Arc[];
@@ -348,6 +351,11 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
 
             return Promise.all([entriesTransition, updatesTransition]);
         });
+    }
+
+    /** Legend items are top-level nodes, so a legend hover addresses the whole branch by its series owner. */
+    protected override highlightSeries(id: string | null) {
+        super.highlightSeries(id === null ? null : `series:${id}`);
     }
 
     private _attachSegmentHover(segment: Arc, arc: FlattenedArc<TData>) {
@@ -376,11 +384,11 @@ export class SunburstChart<TData = unknown> extends Chart<SunburstChartOptions<T
             },
             content: () => `${arc.label}: ${formatValue(arc.value)}`,
             onEnter: point => {
-                this.highlightSeries(arc.id);
+                super.highlightSeries(`node:${arc.id}`);
                 this.emit('nodeenter', payload(point));
             },
             onLeave: point => {
-                this.highlightSeries(null);
+                super.highlightSeries(null);
                 this.emit('nodeleave', payload(point));
             },
             onClick: point => this.emit('nodeclick', payload(point)),
