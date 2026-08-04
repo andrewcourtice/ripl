@@ -836,6 +836,7 @@ export class SVGContext extends DOMContext<SVGSVGElement> {
         this._shadowCache.clear();
         this._usedDefs.clear();
         this._inverseCTMCache.clear();
+        this._gradientBounds = undefined;
 
         this._vtree = {
             id: '__root__',

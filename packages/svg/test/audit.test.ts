@@ -43,6 +43,7 @@ interface ContextInternals {
     _clipCache: Map<string, unknown>;
     _shadowCache: Map<string, unknown>;
     _currentTransforms: string[];
+    _gradientBounds?: unknown;
 }
 
 const GROUP_GRADIENT = 'linear-gradient(90deg, rgb(255, 0, 0), rgb(0, 0, 255))';
@@ -554,6 +555,36 @@ describe('SVG audit findings', () => {
             expect(internals._textPathCache.size).toBe(0);
             expect(internals._clipCache.size).toBe(0);
             expect(internals._shadowCache.size).toBe(0);
+        });
+
+        // The memo holds a strong element reference, so a destroyed context would pin the last thing it painted.
+        test('Should drop the gradient bounds memo on destroy', () => {
+            sizeHost(400, 300);
+
+            const ctx = create();
+            const rect = createRect({
+                id: 'gradient-rect',
+                x: 0,
+                y: 0,
+                width: 10,
+                height: 10,
+            });
+
+            renderPass(ctx, () => {
+                ctx.currentRenderElement = rect;
+                ctx.fill = GROUP_GRADIENT;
+
+                const path = ctx.createPath('shape');
+
+                path.rect(0, 0, 10, 10);
+                ctx.applyFill(path);
+            });
+
+            expect(getInternals(ctx)._gradientBounds).toBeDefined();
+
+            ctx.destroy();
+
+            expect(getInternals(ctx)._gradientBounds).toBeUndefined();
         });
 
         test('Should drop the transform and clip scopes on reset', () => {
