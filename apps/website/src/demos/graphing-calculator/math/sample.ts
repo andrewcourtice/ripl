@@ -202,8 +202,7 @@ function runSweep(plan: SweepPlan, limits: SweepLimits): SampledBranch[] {
         const mx = point[0];
         const my = point[1];
 
-        // The chord test is not redundant: deviation vanishes on a near-vertical chord, so a step or
-        // a pole would otherwise read as resolved and be stroked straight through.
+        // Deviation vanishes on a near-vertical chord, so a step or a pole reads as resolved without this.
         if (chord < JUMP_THRESHOLD_PX && deviation(ax, ay, mx, my, bx, by) <= limits.tolerance) {
             emit(bx, by);
             return;

@@ -86,6 +86,13 @@ describe('Graphing calculator implicit tracing', () => {
         expect(branches).toHaveLength(2);
     });
 
+    // An unresolved saddle drops the ambiguous cell's two segments and leaves four stubs instead.
+    test('Should resolve an ambiguous saddle cell into two crossing runs', () => {
+        expect(trace('x*y = 0', 9)).toHaveLength(2);
+        expect(trace('x*y = 0', 11)).toHaveLength(2);
+        expect(trace('x*y = 0', 13)).toHaveLength(2);
+    });
+
     test('Should coarsen the grid when the cell size grows', () => {
         const fine = trace('x^2 + y^2 = 1', 8);
         const coarse = trace('x^2 + y^2 = 1', 32);
