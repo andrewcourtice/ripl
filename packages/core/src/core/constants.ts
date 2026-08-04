@@ -97,6 +97,8 @@ export const TRANSFORM_DEFAULTS: Record<string, number> = {
 /** DOM event types that are tracked and forwarded to elements for hit testing and interaction. */
 export const TRACKED_EVENTS = [
     'click',
+    'mousedown',
+    'mouseup',
     'mousemove',
     'mouseenter',
     'mouseleave',

@@ -62,7 +62,7 @@ export interface RenderElement {
     getBoundingBox?(local?: boolean): Box;
     /** Returns whether the element has any listeners registered for the given event. */
     has(event: string): boolean;
-    /** Tests whether the point `(x, y)` lies within the element, honoring its pointer-event region. */
+    /** Tests whether the point `(x, y)`, in surface space (see {@link Context.toSurfacePoint}), lies within the element, honoring its pointer-event region. */
     intersectsWith(x: number, y: number, options?: Partial<RenderElementIntersectionOptions>): boolean;
     /** Emits an event of the given type carrying the given data on this element. */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,53 +81,67 @@ export interface ContextEventMap extends EventMap {
     mouseleave: null;
     /** Emitted as the pointer moves over the surface, carrying its position. */
     mousemove: {
-        /** X coordinate of the pointer, in surface pixel space. */
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate of the pointer, in surface pixel space. */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
-    /** Emitted when the surface is clicked, carrying the pointer position. */
-    click: {
-        /** X coordinate of the pointer, in surface pixel space. */
+    /** Emitted when a pointer button is pressed over the surface, carrying the pointer position. */
+    mousedown: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate of the pointer, in surface pixel space. */
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        y: number;
+    };
+    /** Emitted when a pointer button is released, carrying the release position; fires once per press, even when the release lands outside the surface. */
+    mouseup: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        x: number;
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        y: number;
+    };
+    /** Emitted when the surface is clicked, carrying the pointer position; suppressed for the release that ended a drag. */
+    click: {
+        /** X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
+        x: number;
+        /** Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
     /** Emitted when a drag gesture begins, carrying the start position. */
     dragstart: {
-        /** X coordinate at which the drag started, in surface pixel space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Y coordinate at which the drag started, in surface pixel space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         y: number;
     };
     /** Emitted continuously during a drag, carrying the current position, drag start, and delta from the start. */
     drag: {
-        /** Current X coordinate of the pointer, in surface pixel space. */
+        /** Current X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Current Y coordinate of the pointer, in surface pixel space. */
+        /** Current Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
-        /** X coordinate at which the drag started, in surface pixel space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startX: number;
-        /** Y coordinate at which the drag started, in surface pixel space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startY: number;
-        /** Horizontal distance moved since the drag started, in pixels. */
+        /** Horizontal distance moved since the drag started, in logical pixels. */
         deltaX: number;
-        /** Vertical distance moved since the drag started, in pixels. */
+        /** Vertical distance moved since the drag started, in logical pixels. */
         deltaY: number;
     };
     /** Emitted when a drag gesture ends, carrying the final position, drag start, and total delta. */
     dragend: {
-        /** Final X coordinate of the pointer, in surface pixel space. */
+        /** Final X coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         x: number;
-        /** Final Y coordinate of the pointer, in surface pixel space. */
+        /** Final Y coordinate of the pointer, in logical space (CSS pixels relative to the surface origin). */
         y: number;
-        /** X coordinate at which the drag started, in surface pixel space. */
+        /** X coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startX: number;
-        /** Y coordinate at which the drag started, in surface pixel space. */
+        /** Y coordinate at which the drag started, in logical space (CSS pixels relative to the surface origin). */
         startY: number;
-        /** Total horizontal distance moved over the drag, in pixels. */
+        /** Total horizontal distance moved over the drag, in logical pixels. */
         deltaX: number;
-        /** Total vertical distance moved over the drag, in pixels. */
+        /** Total vertical distance moved over the drag, in logical pixels. */
         deltaY: number;
     };
 }
