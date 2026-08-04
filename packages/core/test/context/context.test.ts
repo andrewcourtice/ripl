@@ -1281,6 +1281,27 @@ describe('Context', () => {
             ctx.destroy();
         });
 
+        // A hit test from an onComplete handler or a custom element's render runs mid-frame.
+        test('hitTest should not memoize the partial list a mid-frame hit test walks', () => {
+            const ctx = create();
+            const first = createMockElement('first', 0, ['click']);
+            const second = createMockElement('second', 0, ['click']);
+
+            paintFrame(ctx, [first, second]);
+
+            ctx.markRenderStart();
+            ctx.currentRenderElement = first;
+
+            expect(callHitTest(ctx, ['click'], 0, 0).map((el: { id: string }) => el.id)).toEqual(['first']);
+
+            ctx.currentRenderElement = second;
+            ctx.markRenderEnd();
+
+            expect(callHitTest(ctx, ['click'], 0, 0).map((el: { id: string }) => el.id)).toEqual(['second', 'first']);
+
+            ctx.destroy();
+        });
+
         // Additive zIndex cannot compare descendants of different groups; paint order can.
         test('hitTest should return elements in reverse paint order, ignoring zIndex', () => {
             const ctx = create();

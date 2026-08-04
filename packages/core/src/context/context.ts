@@ -512,9 +512,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         if (this.renderDepth === 0) {
             this.renderedElements = [];
             this._paintOrder = undefined;
-
-            // The tracked-element memo filters this list, so it belongs to the frame that built it.
-            this.invalidateTrackedElements();
         }
 
         this.renderDepth += 1;
@@ -523,6 +520,11 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     /** Signals the end of a render pass. Clamped at zero, so an unbalanced call cannot drive the depth negative and make backends that gate their flush on depth 0 fire mid-frame. */
     public markRenderEnd(): void {
         this.renderDepth = Math.max(0, this.renderDepth - 1);
+
+        if (this.renderDepth === 0) {
+            // The tracked-element memo filters this frame's rendered list, so it dies with the frame that built it.
+            this.invalidateTrackedElements();
+        }
     }
 
     /**
@@ -788,10 +790,17 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         return paintOrder;
     }
 
+    /** Elements tracking `event`, memoized per frame; mid-frame the list is still growing, so caching it would serve a truncated hit test for the rest of the frame. */
+    private _resolveTrackedElements(event: string): RenderElement[] {
+        return this.renderDepth > 0
+            ? this.renderedElements.filter(element => element.has(event))
+            : this._getTrackedElements(event);
+    }
+
     /** Appends every element tracking `event` that the point intersects, skipping ones already collected. */
     private _collectHits(event: string, x: number, y: number, seen: Set<RenderElement>, hits: RenderElement[]): void {
         // The memo is a snapshot; `off`, a spent `once` and `destroy` all leave it stale within a frame.
-        this._getTrackedElements(event).forEach(element => {
+        this._resolveTrackedElements(event).forEach(element => {
             if (seen.has(element) || !element.has(event)) {
                 return;
             }
