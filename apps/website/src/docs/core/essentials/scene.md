@@ -92,11 +92,13 @@ Call `render()` with no arguments, and the scene uses its bound context:
 scene.render();
 ```
 
-This clears the context, marks the render start, renders all buffered elements in z-index order, and marks the render end. You don't need to manage any of this yourself.
+This clears the context, marks the render start, renders the instruction stream in paint order, and marks the render end. You don't need to manage any of this yourself.
 
 ### Render Buffer
 
-When elements are added to or removed from the scene (or any nested group), the scene automatically rebuilds a **flat render buffer**. This buffer is a sorted array of all leaf elements in the scene graph, ordered by `zIndex`. This hoisting converts rendering from a recursive tree walk (O(n^c)) to a simple flat iteration (O(n)).
+When elements are added to or removed from the scene (or any nested group), the scene automatically rebuilds a **flat instruction stream** (`scene.instructions`). Each group's children are sorted by `zIndex` as the stream is built, and each group is bracketed by a `push`/`pop` pair around the `draw` entries for its leaves, so a group paints as one contiguous stacking context. This hoisting converts rendering from a recursive tree walk (O(n^c)) to a simple flat iteration (O(n)).
+
+`scene.buffer` is a read-only **view** of that stream — the `draw` targets, in paint order — materialized on first access after each rebuild rather than stored alongside it. Read it to inspect what the scene will paint; the render path itself walks `instructions`.
 
 ## Events
 

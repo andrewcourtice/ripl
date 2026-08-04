@@ -8,20 +8,20 @@ Ripl is designed to be performant out of the box, but understanding how the rend
 
 ## Scene Hoisting
 
-The single most impactful optimization in Ripl is **scene hoisting**. When elements are placed into a Scene, the scene flattens the entire element tree into a single sorted array called the **render buffer**.
+The single most impactful optimization in Ripl is **scene hoisting**. When elements are placed into a Scene, the scene flattens the entire element tree into a single z-sorted **instruction stream** (`scene.instructions`), with each group bracketed by a `push`/`pop` pair around its leaves' `draw` entries.
 
-Without a scene, rendering a deeply nested group structure requires a recursive tree walk, an O(n^c) operation where `c` is the depth of the tree. With a scene, the render buffer converts this to a flat O(n) iteration:
+Without a scene, rendering a deeply nested group structure requires a recursive tree walk, an O(n^c) operation where `c` is the depth of the tree. With a scene, the instruction stream converts this to a flat O(n) iteration:
 
 ```ts
 // Without scene: recursive tree walk each frame
 group.render(context); // O(n^c)
 
-// With scene: flat buffer iteration each frame
+// With scene: flat instruction iteration each frame
 const scene = createScene(context, { children: [group] });
 scene.render(); // O(n)
 ```
 
-The cost of maintaining the buffer is shifted to add/remove operations on groups, which happen far less frequently than rendering.
+The cost of building the stream is shifted to add/remove operations on groups, which happen far less frequently than rendering. `scene.buffer` — the leaf elements the stream draws — is a derived view of it, built on demand rather than maintained as a second copy.
 
 ### When to Use Scenes
 
@@ -90,13 +90,13 @@ The SVG context automatically uses **buffered rendering**. Instead of applying D
 
 ## Tips Summary
 
-1. **Use a Scene + Renderer** for anything beyond trivial rendering. The flat render buffer and automatic start/stop provide significant performance gains.
+1. **Use a Scene + Renderer** for anything beyond trivial rendering. The flat instruction stream and automatic start/stop provide significant performance gains.
 2. **Use Canvas** for large element counts or complex animations.
 3. **Use persistent path keys** in custom elements for efficient SVG reconciliation.
 4. **Let autoStop work**: don't disable it unless you have continuous animations.
 5. **Minimize group depth**: while scenes flatten the tree for rendering, shallower trees are faster to modify.
 6. **Batch property changes** by setting multiple properties before triggering a render, rather than rendering after each change.
-7. **Use `zIndex`** instead of render order when possible, since the scene buffer sorts by zIndex automatically.
+7. **Use `zIndex`** instead of render order when possible, since the scene sorts each group's children by zIndex automatically.
 
 ## Stress Test
 

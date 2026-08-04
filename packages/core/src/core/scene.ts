@@ -75,7 +75,7 @@ export interface SceneOptions extends GroupOptions {
 export class Scene<TContext extends Context = Context> extends Group<SceneEventMap> {
 
     private _needsRender = true;
-    private _buffer: Element[] = [];
+    private _buffer?: Element[];
     private _instructions: RenderInstruction[] = [];
 
     /** The rendering {@link Context} this scene draws to. */
@@ -93,11 +93,12 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
 
     /**
      * The flat list of renderable leaf descendants in paint order: the `draw` targets of
-     * {@link Scene.instructions}. The array is materialized once per graph rebuild and cached,
-     * so treat it as read-only.
+     * {@link Scene.instructions}, which are the single store this projects. The array is
+     * materialized on first access after a graph rebuild and cached until the next one, so treat
+     * it as read-only.
      */
     public get buffer(): Element[] {
-        return this._buffer;
+        return this._buffer ??= this._collectBuffer();
     }
 
     /**
@@ -196,9 +197,19 @@ export class Scene<TContext extends Context = Context> extends Group<SceneEventM
         this._collectInstructions(this, instructions);
 
         this._instructions = instructions;
-        this._buffer = instructions
-            .filter(instruction => instruction.type === 'draw')
-            .map(instruction => instruction.element);
+        this._buffer = undefined;
+    }
+
+    private _collectBuffer(): Element[] {
+        const elements: Element[] = [];
+
+        this._instructions.forEach(instruction => {
+            if (instruction.type === 'draw') {
+                elements.push(instruction.element);
+            }
+        });
+
+        return elements;
     }
 
     /**
