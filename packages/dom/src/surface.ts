@@ -116,25 +116,29 @@ export function getSurfaceRect(context: Context): SurfaceRect {
 }
 
 /**
- * Creates a {@link SurfaceOrigin} for a context: one shared origin cache and point mapping for
- * every DOM consumer that turns pointer events into scene coordinates.
+ * Creates a {@link SurfaceOrigin} for a context: the one origin cache and point mapping every DOM
+ * consumer turning pointer events into scene coordinates should go through. Each call owns its own
+ * cache and listeners, so a consumer holds one for as long as it handles pointer events and
+ * disposes it with the rest of its wiring.
  *
  * A `getBoundingClientRect()` per `pointermove` flushes layout mid-gesture, which is the frame
- * budget gone, so the measurement is cached and re-taken only when a page scroll or a window
- * resize can have moved the surface — plus whenever a caller invalidates it explicitly.
+ * budget gone, so the measurement is cached and re-taken only when a page scroll, a window resize,
+ * a context resize or the pointer entering the surface can have moved it — plus whenever a caller
+ * invalidates it explicitly.
  *
  * Points cross into logical space (the space public pointer payloads and element geometry use),
  * never surface space: a caller that needs surface coordinates — `Context.hitTest` and
  * `Element.intersectsWith` take them — maps on through {@link Context.toSurfacePoint}.
  *
  * @param context - The context whose surface is tracked.
- * @returns The origin tracker; dispose it to detach the scroll and resize listeners.
+ * @returns The origin tracker; dispose it to detach the scroll, resize and pointer listeners.
  * @example
  * const origin = createSurfaceOrigin(context);
  * element.addEventListener('pointermove', event => console.log(origin.toLogicalPoint(event)));
  */
 export function createSurfaceOrigin(context: Context): SurfaceOrigin {
     const disposables: Disposable[] = [];
+    const element = context.element as unknown;
 
     let rect: SurfaceRect | undefined;
 
@@ -153,6 +157,12 @@ export function createSurfaceOrigin(context: Context): SurfaceOrigin {
     // A container resize moves and rescales the surface without the window ever resizing.
     if (typeIsFunction(context.on)) {
         disposables.push(context.on('resize', invalidate));
+    }
+
+    // A layout shift elsewhere on the page translates the surface with nothing else firing; the pointer arriving is the last cue before it is used.
+    if (isMeasurable(element) && typeIsFunction(element.addEventListener)) {
+        disposables.push(onDOMEvent(element, 'pointerenter', invalidate));
+        disposables.push(onDOMEvent(element, 'mouseenter', invalidate));
     }
 
     const origin: SurfaceOrigin = {
