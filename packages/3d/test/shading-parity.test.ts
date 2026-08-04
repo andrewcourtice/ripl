@@ -124,7 +124,7 @@ function shadeSubmission(submission: MeshSubmission, lightDirection: Vector3): s
     return colors;
 }
 
-/** Regression tests for the CPU/WebGPU shading divergence in `docs/audits/3d-webgpu.md`. */
+/** Regression tests for the CPU/WebGPU shading divergence: an exchanged light mode and an untransformed declared normal. */
 describe('CPU and WebGPU shading parity', () => {
 
     let host: HTMLDivElement;
