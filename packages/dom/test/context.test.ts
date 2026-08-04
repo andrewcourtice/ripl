@@ -396,6 +396,51 @@ describe('DOMContext pointer state machine', () => {
         expect(typesOf(element)).toEqual(['dragstart', 'drag', 'dragend']);
     });
 
+    // The payload reports the step, not the accumulated total; the docs said "since the drag
+    // started" and a consumer following them would have written `x = startX + deltaX`.
+    test('Should report drag deltas relative to the previous event', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+
+        register(context, [element]);
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mousemove', 140, 140);
+        mouse(context, 'mousemove', 160, 160);
+
+        const drags = element.events.filter(event => event.type === 'drag');
+
+        expect(drags[0].data).toMatchObject({
+            deltaX: 130,
+            deltaY: 130,
+        });
+
+        expect(drags[1].data).toMatchObject({
+            deltaX: 20,
+            deltaY: 20,
+        });
+    });
+
+    test('Should report the dragend delta relative to the previous event', () => {
+        const context = create();
+        const element = createMockElement('a', DRAG_EVENTS);
+
+        register(context, [element]);
+
+        mouse(context, 'mousedown', 10, 10);
+        mouse(context, 'mousemove', 100, 100);
+        mouse(context, 'mousemove', 140, 140);
+        mouse(context, 'mouseup', 160, 160);
+
+        const dragend = element.events.find(event => event.type === 'dragend');
+
+        expect(dragend?.data).toMatchObject({
+            startX: 10,
+            deltaX: 20,
+        });
+    });
+
     test('Should not resume a stranded drag once the button is released', () => {
         const context = create();
         const element = createMockElement('a', DRAG_EVENTS);

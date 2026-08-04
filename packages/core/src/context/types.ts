@@ -100,7 +100,7 @@ export interface ContextEventMap extends EventMap {
         /** Y coordinate at which the drag started, in surface pixel space. */
         y: number;
     };
-    /** Emitted continuously during a drag, carrying the current position, drag start, and delta from the start. */
+    /** Emitted continuously during a drag, carrying the current position, drag start, and the movement since the previous event. */
     drag: {
         /** Current X coordinate of the pointer, in surface pixel space. */
         x: number;
@@ -110,12 +110,12 @@ export interface ContextEventMap extends EventMap {
         startX: number;
         /** Y coordinate at which the drag started, in surface pixel space. */
         startY: number;
-        /** Horizontal distance moved since the drag started, in pixels. */
+        /** Horizontal distance moved since the previous drag event, in pixels. */
         deltaX: number;
-        /** Vertical distance moved since the drag started, in pixels. */
+        /** Vertical distance moved since the previous drag event, in pixels. */
         deltaY: number;
     };
-    /** Emitted when a drag gesture ends, carrying the final position, drag start, and total delta. */
+    /** Emitted when a drag gesture ends, carrying the final position, drag start, and the movement since the previous event. */
     dragend: {
         /** Final X coordinate of the pointer, in surface pixel space. */
         x: number;
@@ -125,9 +125,9 @@ export interface ContextEventMap extends EventMap {
         startX: number;
         /** Y coordinate at which the drag started, in surface pixel space. */
         startY: number;
-        /** Total horizontal distance moved over the drag, in pixels. */
+        /** Horizontal distance moved since the previous drag event, in pixels. */
         deltaX: number;
-        /** Total vertical distance moved over the drag, in pixels. */
+        /** Vertical distance moved since the previous drag event, in pixels. */
         deltaY: number;
     };
 }

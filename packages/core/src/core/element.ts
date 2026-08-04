@@ -130,7 +130,7 @@ export interface ElementEventMap extends EventMap {
         /** Y coordinate at which the drag started, in element-local space. */
         y: number;
     };
-    /** Emitted continuously while dragging the element, carrying the current position, drag start, and delta from the start. */
+    /** Emitted continuously while dragging the element, carrying the current position, drag start, and the movement since the previous event. */
     drag: {
         /** Current X coordinate of the pointer, in element-local space. */
         x: number;
@@ -140,12 +140,12 @@ export interface ElementEventMap extends EventMap {
         startX: number;
         /** Y coordinate at which the drag started, in element-local space. */
         startY: number;
-        /** Horizontal distance moved since the drag started, in pixels. */
+        /** Horizontal distance moved since the previous drag event, in pixels. */
         deltaX: number;
-        /** Vertical distance moved since the drag started, in pixels. */
+        /** Vertical distance moved since the previous drag event, in pixels. */
         deltaY: number;
     };
-    /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and total delta. */
+    /** Emitted when a drag gesture on the element ends, carrying the final position, drag start, and the movement since the previous event. */
     dragend: {
         /** Final X coordinate of the pointer, in element-local space. */
         x: number;
@@ -155,9 +155,9 @@ export interface ElementEventMap extends EventMap {
         startX: number;
         /** Y coordinate at which the drag started, in element-local space. */
         startY: number;
-        /** Total horizontal distance moved over the drag, in pixels. */
+        /** Horizontal distance moved since the previous drag event, in pixels. */
         deltaX: number;
-        /** Total vertical distance moved over the drag, in pixels. */
+        /** Vertical distance moved since the previous drag event, in pixels. */
         deltaY: number;
     };
     /** Emitted when the element is destroyed; carries no payload. */
