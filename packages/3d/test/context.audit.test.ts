@@ -450,6 +450,11 @@ describe('CanvasContext3D deferred face draw', () => {
 
             const deferred = paint.gradients.splice(0);
 
+            // Each canvas owns its native 2D context in a browser, and the paint cache is keyed by
+            // that object. The shared stub would otherwise hand the reference render the deferred
+            // render's cache entry — which now matches, because both resolve the same bounds.
+            paint = mockPaintLog();
+
             const canvasHost = document.createElement('div');
 
             document.body.appendChild(canvasHost);

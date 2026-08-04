@@ -747,6 +747,25 @@ rotation — note the old formula was not even correct for camera mode; it aimed
 **A scene that selected `'camera'` to get world-fixed lighting must now say `'world'`, and vice
 versa.**
 
+### Every 3D scene renders differently
+
+The two shading fixes above are the only changes to what a 3D scene looks like, and between them
+they touch every scene that moves. Nothing about the diffuse or ambient maths changed —
+`computeFaceBrightness`, `shadeFaceColor` and the `0.3` ambient term are untouched on both the CPU
+and GPU paths. What changed is the two inputs that were wrong, so **expect a visible difference and
+treat it as the fix arriving, not as a regression**:
+
+- **A camera that orbits** now sweeps highlights across static geometry instead of carrying the
+  lighting with it, because the default `lightMode: 'world'` finally means what it says. Every
+  shape page under `apps/website/src/docs/3d/shapes/` calls `startRotation`, so all of them change.
+- **Geometry that spins** now re-shades as it turns. Anything built from elements that hard-code
+  normals — `Cube`, `Plane`, `Cylinder` caps, `Cone` base — previously held byte-identical face
+  colours through a full rotation. `apps/website/src/demos/jet-engine`, `jet-engine-webgpu` and
+  `piston-mechanism` all spin such parts.
+
+To keep the old appearance on a specific scene, set `lightMode: 'camera'` — which now genuinely
+means "headlight" — rather than reverting anything.
+
 ### Camera
 
 **`Camera`** (constructor) — **behaviour**. Attaches no touch listeners and does not set
