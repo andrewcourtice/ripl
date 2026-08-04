@@ -11,6 +11,10 @@ import {
 } from '@ripl/core';
 
 import {
+    comparitorNumeric,
+} from '@ripl/utilities';
+
+import {
     mockCanvasContext,
     polyfillPath2D,
 } from '@ripl/test-utils';
@@ -744,6 +748,113 @@ describe('TerminalContext line dash', () => {
         const row = rasterizer.pixels.filter(([, y]) => y === 3).map(([x]) => x);
 
         expect(row).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    });
+
+});
+
+describe('TerminalContext line width', () => {
+
+    beforeEach(() => {
+        mockCanvasContext();
+    });
+
+    /** Strokes a horizontal line through a spy rasterizer and returns its de-duplicated dots. */
+    function strokeLine(configure: (ctx: TerminalContext) => void): [number, number][] {
+        const rasterizer = createSpyRasterizer(20, 5);
+        const ctx = createContext(createMockOutput(20, 5), {
+            rasterizer,
+        });
+
+        ctx.stroke = '#ffffff';
+        configure(ctx);
+
+        const path = ctx.createPath();
+
+        path.moveTo(0, 10);
+        path.lineTo(19, 10);
+
+        ctx.markRenderStart();
+        ctx.applyStroke(path);
+        ctx.markRenderEnd();
+
+        // The spy records every call; the real rasterizer ORs repeats into one dot.
+        const seen = new Set(rasterizer.pixels.map(([x, y]) => `${x},${y}`));
+
+        return [...seen].map(key => key.split(',').map(Number) as [number, number]);
+    }
+
+    /** Counts the distinct rows the stroke occupies in a column clear of its round caps. */
+    function thicknessAt(dots: [number, number][], x: number): number {
+        return dots.filter(dot => dot[0] === x).length;
+    }
+
+    // A Sankey link encodes its flow magnitude entirely in lineWidth, so a hairline loses the data.
+    test('Should stroke wider than one dot when lineWidth asks for it', () => {
+        expect(thicknessAt(strokeLine(() => {}), 10)).toBe(1);
+
+        expect(thicknessAt(strokeLine(ctx => {
+            ctx.lineWidth = 3;
+        }), 10)).toBe(3);
+
+        expect(thicknessAt(strokeLine(ctx => {
+            ctx.lineWidth = 5;
+        }), 10)).toBe(5);
+    });
+
+    test('Should keep a thick stroke centred on its path', () => {
+        const rows = strokeLine(ctx => {
+            ctx.lineWidth = 5;
+        }).filter(dot => dot[0] === 10).map(dot => dot[1]);
+
+        expect(Math.min(...rows)).toBe(8);
+        expect(Math.max(...rows)).toBe(12);
+    });
+
+    // Thickening inside the dash gate would advance the pattern once per stamped dot rather than
+    // per centreline dot, shredding the pattern into far more, far shorter runs. The gap is wider
+    // than the widest brush here, since round caps legitimately bridge a gap narrower than they are.
+    test('Should keep the dash pattern at the same period for any width', () => {
+        const runs = (width: number) => {
+            const columns = [...new Set(strokeLine(ctx => {
+                ctx.lineDash = [4, 8];
+                ctx.lineWidth = width;
+            }).map(dot => dot[0]))].sort(comparitorNumeric);
+
+            return columns.filter((column, index) => index === 0 || column !== columns[index - 1] + 1).length;
+        };
+
+        expect(runs(1)).toBe(2);
+        expect(runs(3)).toBe(2);
+        expect(runs(5)).toBe(2);
+    });
+
+    test('Should thicken a dashed stroke within each dash', () => {
+        const dashed = strokeLine(ctx => {
+            ctx.lineDash = [4, 8];
+            ctx.lineWidth = 3;
+        });
+
+        expect(thicknessAt(dashed, 1)).toBe(3);
+    });
+
+    test('Should leave fills at their traced geometry', () => {
+        const rasterizer = createSpyRasterizer(20, 5);
+        const ctx = createContext(createMockOutput(20, 5), {
+            rasterizer,
+        });
+
+        ctx.fill = '#ffffff';
+        ctx.lineWidth = 9;
+
+        const path = ctx.createPath();
+
+        path.rect(2, 2, 6, 6);
+
+        ctx.markRenderStart();
+        ctx.applyFill(path);
+        ctx.markRenderEnd();
+
+        expect(rasterizer.pixels.every(([x]) => x >= 2 && x <= 8)).toBe(true);
     });
 
 });

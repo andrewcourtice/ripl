@@ -452,11 +452,21 @@ ellipse renders different geometry than before — the geometry that was asked f
 
 **`dashPixels`** — **API**, additive. Gates a plot callback on a dash pattern.
 
+**`thickenPixels`** — **API**, additive. Widens a plot callback by stamping a round brush at every
+pixel it plots.
+
 **`TerminalContext.applyStroke`** — **behaviour**. Honors `lineDash`/`lineDashOffset`. Dashed grid
 lines and zero-lines were indistinguishable from solid data lines. Arc length is approximated by
 counting plotted pixels, which is exact for axis-aligned runs and up to √2 short on a diagonal.
-`lineWidth`, `lineCap`, `lineJoin` and `miterLimit` remain ignored — a 1-bit raster has no form for
-them.
+
+**`TerminalContext.applyStroke`** — **behaviour**. Honors `lineWidth`. Every stroke was one dot
+wide regardless of width, which erased the encoding of any chart carrying its data in stroke
+thickness — a Sankey's links (`lineWidth` *is* the flow magnitude, 20–200px) all collapsed to
+identical hairline curves, and a radial bar's rings to concentric hairlines. Thickness quantises to
+an odd number of dots because the brush centres on one: widths of 1, 2, 3, 4 and 5 give strokes 1,
+3, 3, 5 and 5 dots across. **A scene that strokes anything wider than 1 now emits different bytes.**
+`lineCap`, `lineJoin` and `miterLimit` are still ignored — the round brush shapes every cap and
+join — so a gap narrower than the stroke is wide gets bridged by its caps, as it is on canvas.
 
 **`TerminalPath.arcTo`** — **behaviour**. Constructs the real tangent arc instead of two straight
 lines through the corner. Canvas `arcTo` never passes through `(x1, y1)`; the old approximation was
