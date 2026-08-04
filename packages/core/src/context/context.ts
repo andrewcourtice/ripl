@@ -126,8 +126,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
     public scaleX: Scale<number, number>;
     /** {@link Scale} mapping domain y coordinates to surface y coordinates. */
     public scaleY: Scale<number, number>;
-    /** {@link Scale} mapping logical pixels to device pixels using the device pixel ratio. */
-    public scaleDPR: Scale<number, number>;
     /** The element currently being rendered, if any. */
     public renderElement?: RenderElement;
     /** Elements rendered during the current pass, used for hit testing. */
@@ -431,7 +429,6 @@ export abstract class Context<TElement extends Element = Element, TMeta extends 
         this.currentState = this.getDefaultState();
         this.width = 0;
         this.height = 0;
-        this.scaleDPR = scaleContinuous([0, 1], [0, factory.devicePixelRatio ?? 1]);
         this.scaleX = scaleContinuous([0, this.width], [0, this.width]);
         this.scaleY = scaleContinuous([0, this.height], [0, this.height]);
     }

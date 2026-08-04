@@ -84,7 +84,6 @@ describe('Context', () => {
 
             expect(ctx.scaleX).toBeDefined();
             expect(ctx.scaleY).toBeDefined();
-            expect(ctx.scaleDPR).toBeDefined();
 
             ctx.destroy();
         });
