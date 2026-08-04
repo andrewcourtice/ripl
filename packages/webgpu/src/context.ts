@@ -21,12 +21,15 @@ import type {
 } from '@ripl/3d';
 
 import {
+    factory,
     scaleContinuous,
 } from '@ripl/core';
 
 import type {
     ContextPath,
+    ContextText,
     FillRule,
+    TextOptions,
 } from '@ripl/core';
 
 import {
@@ -42,7 +45,11 @@ import {
 export interface WebGPUContextOptions extends Context3DOptions {
     /** MSAA sample count for the render pipeline. Defaults to 4. */
     sampleCount?: number;
-    /** RGBA clear color (0–1 per channel) applied at the start of each frame. Defaults to transparent. */
+    /**
+     * Straight (non-premultiplied) RGBA clear color, 0–1 per channel, applied at the start of each
+     * frame. Defaults to transparent. The surface is configured `alphaMode: 'premultiplied'`, so
+     * the channels are multiplied by the alpha on the way in.
+     */
     clearColor?: [number, number, number, number];
 }
 
@@ -56,9 +63,12 @@ export class WebGPUContext3D extends Context3D {
     private _sceneUniformData = new Float32Array(SCENE_UNIFORM_SIZE / 4);
     private _sceneBindGroup: GPUBindGroup;
     private _depthTexture: GPUTexture | null = null;
+    private _depthView: GPUTextureView | null = null;
     private _msaaTexture: GPUTexture | null = null;
+    private _msaaView: GPUTextureView | null = null;
     private _clearColor: [number, number, number, number];
     private _destroyed = false;
+    private _warned2D = false;
 
     // Offscreen canvas for CPU-side hit testing
     private _hitCanvas: HTMLCanvasElement;
@@ -72,13 +82,7 @@ export class WebGPUContext3D extends Context3D {
         pipelineState: PipelineState,
         options?: WebGPUContextOptions
     ) {
-        super('webgpu', target, canvas, {
-            ...options,
-            meta: {
-                renderStrategy: 'gpu',
-                ...options?.meta,
-            },
-        });
+        super('webgpu', target, canvas, options, 'gpu');
 
         const {
             clearColor = [0, 0, 0, 0],
@@ -86,7 +90,14 @@ export class WebGPUContext3D extends Context3D {
 
         this._gpuContext = gpuContext;
         this._pipelineState = pipelineState;
-        this._clearColor = clearColor;
+
+        // The surface is premultiplied, so a straight colour with r > a is out of gamut for it.
+        this._clearColor = [
+            clearColor[0] * clearColor[3],
+            clearColor[1] * clearColor[3],
+            clearColor[2] * clearColor[3],
+            clearColor[3],
+        ];
 
         this._sceneUniformBuffer = device.createBuffer({
             size: SCENE_UNIFORM_SIZE,
@@ -116,11 +127,18 @@ export class WebGPUContext3D extends Context3D {
     }
 
     protected rescale(width: number, height: number) {
-        const dpr = window.devicePixelRatio;
+        if (this._destroyed) {
+            return;
+        }
+
+        // Through the factory, like every other backend: `window` desynchronises the hit canvas
+        // from `scaleDPR` and is absent outside the DOM.
+        const dpr = factory.devicePixelRatio;
         const scaledWidth = Math.floor(width * dpr);
         const scaledHeight = Math.floor(height * dpr);
 
-        if (scaledWidth === this.element.width && scaledHeight === this.element.height) {
+        // Gated on the logical size, never the backing store: a fresh canvas is already 300x150.
+        if (width === this.width && height === this.height) {
             return;
         }
 
@@ -145,11 +163,13 @@ export class WebGPUContext3D extends Context3D {
         }
     }
 
+    // Views are immutable, so they are cached with the texture rather than rebuilt every frame.
     private _recreateDepthTexture(width: number, height: number): void {
         this._depthTexture?.destroy();
+        this._depthTexture = null;
+        this._depthView = null;
 
         if (width <= 0 || height <= 0) {
-            this._depthTexture = null;
             return;
         }
 
@@ -159,13 +179,16 @@ export class WebGPUContext3D extends Context3D {
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
             sampleCount: this._pipelineState.sampleCount,
         });
+
+        this._depthView = this._depthTexture.createView();
     }
 
     private _recreateMSAATexture(width: number, height: number): void {
         this._msaaTexture?.destroy();
+        this._msaaTexture = null;
+        this._msaaView = null;
 
         if (width <= 0 || height <= 0 || this._pipelineState.sampleCount <= 1) {
-            this._msaaTexture = null;
             return;
         }
 
@@ -175,6 +198,8 @@ export class WebGPUContext3D extends Context3D {
             usage: GPUTextureUsage.RENDER_ATTACHMENT,
             sampleCount: this._pipelineState.sampleCount,
         });
+
+        this._msaaView = this._msaaTexture.createView();
     }
 
     /** Submits a mesh for GPU rendering this frame. */
@@ -211,9 +236,54 @@ export class WebGPUContext3D extends Context3D {
         // WebGPU clears as part of the render pass (loadOp: 'clear')
     }
 
+    /**
+     * Warns once that a 2D drawing operation does nothing on this backend.
+     *
+     * The pipeline only rasterises submitted meshes, so the base no-op `applyFill`/`applyStroke`/
+     * `applyClip`/`drawImage`/`createText` stand — but `createPath` returns a real `CanvasPath`, so
+     * a `Shape2D` traced its path, painted nothing, and stayed hit-testable with no diagnostic. A
+     * warning rather than a throw: a mixed 2D/3D scene should lose its labels, not its geometry.
+     */
+    private _warnUnsupported2D(operation: string): void {
+        if (this._warned2D) {
+            return;
+        }
+
+        this._warned2D = true;
+
+        console.warn(`WebGPUContext3D cannot draw 2D elements: ${operation} is a no-op, so 2D shapes and text render nothing (they remain hit-testable). Render 2D content on a separate canvas layer, or use createContext from @ripl/3d.`);
+    }
+
     /** Creates a {@link CanvasPath} used for CPU-side hit testing. */
     public createPath(id?: string): CanvasPath {
         return new CanvasPath(id);
+    }
+
+    /** No-op; the WebGPU pipeline rasterises submitted meshes only. Warns once. */
+    public override applyFill(): void {
+        this._warnUnsupported2D('applyFill');
+    }
+
+    /** No-op; the WebGPU pipeline rasterises submitted meshes only. Warns once. */
+    public override applyStroke(): void {
+        this._warnUnsupported2D('applyStroke');
+    }
+
+    /** No-op; the WebGPU pipeline rasterises submitted meshes only. Warns once. */
+    public override applyClip(): void {
+        this._warnUnsupported2D('applyClip');
+    }
+
+    /** No-op; the WebGPU pipeline rasterises submitted meshes only. Warns once. */
+    public override drawImage(): void {
+        this._warnUnsupported2D('drawImage');
+    }
+
+    /** Creates a text element that this backend cannot paint. Warns once. */
+    public override createText(options: TextOptions): ContextText {
+        this._warnUnsupported2D('createText');
+
+        return super.createText(options);
     }
 
     /** Tests whether (x, y) lies inside the given path's fill, using an offscreen 2D canvas. */
@@ -279,9 +349,9 @@ export class WebGPUContext3D extends Context3D {
         const commandEncoder = device.createCommandEncoder();
         const textureView = this._gpuContext.getCurrentTexture().createView();
 
-        const colorAttachment: GPURenderPassColorAttachment = this._msaaTexture
+        const colorAttachment: GPURenderPassColorAttachment = this._msaaView
             ? {
-                view: this._msaaTexture.createView(),
+                view: this._msaaView,
                 resolveTarget: textureView,
                 clearValue: {
                     r: this._clearColor[0],
@@ -307,7 +377,7 @@ export class WebGPUContext3D extends Context3D {
         const renderPass = commandEncoder.beginRenderPass({
             colorAttachments: [colorAttachment],
             depthStencilAttachment: {
-                view: this._depthTexture.createView(),
+                view: this._depthView!,
                 depthClearValue: 1.0,
                 depthLoadOp: 'clear',
                 depthStoreOp: 'store',
@@ -335,13 +405,22 @@ export class WebGPUContext3D extends Context3D {
         return canvasMeasureText(this._hitContext, text, font);
     }
 
-    /** Destroys the WebGPU context and releases GPU resources. */
+    /** Destroys the WebGPU context, unconfigures the swap chain, and releases every GPU resource. */
     public override destroy(): void {
         this._destroyed = true;
         this._geometryManager.destroy();
         this._sceneUniformBuffer.destroy();
         this._depthTexture?.destroy();
         this._msaaTexture?.destroy();
+
+        this._depthTexture = null;
+        this._depthView = null;
+        this._msaaTexture = null;
+        this._msaaView = null;
+
+        // Without this the swap chain stays configured against a canvas that is about to detach.
+        this._gpuContext.unconfigure();
+
         super.destroy();
     }
 

@@ -27,6 +27,7 @@ interface SetupCode {
 }
 
 function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: PlaygroundSettings): SetupCode {
+    // Both 3D branches orbit a camera around static geometry, which a world-fixed light leaves looking frozen.
     if (mode === '3d' && contextType === 'webgpu') {
         return {
             imports: [
@@ -36,7 +37,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
             ].join('\n'),
             body: [
                 '(async () => {',
-                'const context = await createContext(\'#root\');',
+                'const context = await createContext(\'#root\', { lightMode: \'camera\' });',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,
@@ -65,7 +66,7 @@ function getSetupCode(mode: PlaygroundMode, contextType: ContextType, settings: 
                 'import { createContext, createCamera } from \'@ripl/3d\';',
             ].join('\n'),
             body: [
-                'const context = createContext(\'#root\');',
+                'const context = createContext(\'#root\', { lightMode: \'camera\' });',
                 'const scene = createScene(context);',
                 'const renderer = createRenderer(scene, {',
                 `    autoStop: ${settings.autoStop},`,

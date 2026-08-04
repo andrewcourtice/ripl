@@ -557,8 +557,11 @@ describe('GeometryManager', () => {
         expect(pass.ended).toBe(true);
     });
 
-    test('Should create fresh buffers after destroy', () => {
-        const { manager } = createManager();
+    // WGPU-5: this test used to assert the opposite — that a destroyed manager happily recreated
+    // GPU buffers on a device it had already released. On real hardware those calls raise
+    // validation errors; the mock cannot, which is exactly how the defect got pinned as behaviour.
+    test('Should allocate nothing after destroy', () => {
+        const { device, manager } = createManager();
 
         const first = renderFrame(manager, [createSubmission(3)])!;
 
@@ -567,12 +570,19 @@ describe('GeometryManager', () => {
         expect(asMockBuffer(first.vertexBuffer).destroyed).toBe(true);
         expect(asMockBuffer(first.indexBuffer).destroyed).toBe(true);
 
-        const second = renderFrame(manager, [createSubmission(3)])!;
+        const bufferCount = device.buffers.length;
 
-        expect(second.vertexBuffer).not.toBe(first.vertexBuffer);
-        expect(second.indexBuffer).not.toBe(first.indexBuffer);
-        expect(asMockBuffer(second.vertexBuffer).destroyed).toBe(false);
-        expect(asMockBuffer(second.indexBuffer).destroyed).toBe(false);
+        expect(renderFrame(manager, [createSubmission(3)])).toBeNull();
+        expect(device.buffers).toHaveLength(bufferCount);
+    });
+
+    test('Should release the last frame submissions on destroy', () => {
+        const { manager } = createManager();
+
+        renderFrame(manager, [createSubmission(3)]);
+        manager.destroy();
+
+        expect((manager as unknown as { _submissions: unknown[] })._submissions).toHaveLength(0);
     });
 
 });

@@ -38,6 +38,9 @@ export function useRipl3DExample(onReady?: (scene: Scene<Context3D>, camera: Cam
         currentScene?.destroy();
         context.value = ctx;
 
+        // Every demo here moves the camera around static geometry, which a world-fixed light leaves looking frozen.
+        ctx.lightMode = 'camera';
+
         const scene = createScene(ctx) as Scene<Context3D>;
         currentScene = scene;
 
