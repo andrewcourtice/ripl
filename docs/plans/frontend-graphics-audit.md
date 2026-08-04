@@ -8,9 +8,11 @@ colors relocation, arc-diagram hover hit-testing, arc `borderRadius`, radial-cha
 segment styling, a scatter demo default, DRY/utilities adoption, and public-export
 pruning. Exploration is complete — the Appendix carries verified findings with
 `file:line` refs against `main` at the time of writing (post context-audit merges).
-This plan groups the work into **8 PRs across 4 waves**, each with scope, success
-criteria, and subagent decomposition, for an orchestrator to execute with a team of
-subagents. Re-verify each `file:line` before editing; line numbers drift.
+This plan groups the work into **9 PRs across 4 waves** — 8 code PRs plus a
+documentation stream (per-PR doc gates and a closing docs-sweep PR with a migration
+doc) — each with scope, success criteria, and subagent decomposition, for an
+orchestrator to execute with a team of subagents. Re-verify each `file:line` before
+editing; line numbers drift.
 
 ## Decision points
 
@@ -47,10 +49,13 @@ One branch + PR per group. Commits conventional; PR titles sentence-style (use t
 | 6 | `claude/audit-hot-path-perf` | core/dom/svg perf | 2 | main after PR1 |
 | 7 | `claude/audit-charts-dry` | charts DRY + O(n²) | 3 | PR5 branch |
 | 8 | `claude/audit-export-pruning` | export pruning | 4 | main after all |
+| 9 | `claude/audit-docs-sweep` | docs sweep + migration doc | 4 | main after PR8 |
 
 Waves: 1–4 in parallel; PR5 stacks on PR4 immediately (retarget main when PR4
-merges); PR6 starts after PR1 merges; PR7 stacks on PR5; PR8 goes last and re-greps
-every pruning candidate first (earlier PRs may have added/removed consumers).
+merges); PR6 starts after PR1 merges; PR7 stacks on PR5; PR8 goes last among the
+code PRs and re-greps every pruning candidate first (earlier PRs may have
+added/removed consumers); PR9 closes the program after PR8 (see Documentation
+stream).
 
 Known overlaps (trivial rebases): `AGENTS.md` (PR1 adds a Coordinate Spaces section,
 PR2 strengthens the constants rule — different sections); `dom/src/context.ts` (PR1
@@ -317,7 +322,10 @@ PRs 1–7 may have changed consumers (especially `TRACKED_EVENTS` and canvas mix
   context.ts:66-69 double export path.
 - **canvas**: the ~12 internal-only helpers (utilities.ts, mixins.ts:42). Keep
   `canvasMeasureText`, `rescaleCanvas`, `canvas2DStateMixin` — webgpu/3d consume.
-- **terminal**: all of `algorithms.ts`, `BrailleRasterizer`, `TerminalPath`.
+- **terminal**: all of `algorithms.ts` and `TerminalPath`. **Keep `BrailleRasterizer`
+  and the `Rasterizer` interface exported** — `docs/core/contexts/terminal.md:62,76`
+  constructs it in a runnable xterm.js snippet and :118 documents it as the
+  swap-in extension point, so it is public surface by documentation.
 - **svg**: the `SVGPath`/`SVGText`/`SVGTextPath`/`SVGImage` classes.
 - **webgpu**: shader/pipeline constants, `GeometryManager`, `triangulatefaces`.
 - **charts**: `labels.ts` internals, `computeStackOffset`/`positiveNegativeExtent`/
@@ -334,6 +342,147 @@ agent.
 
 ---
 
+## Documentation stream
+
+No PR may leave a documented claim false. The stream has two layers: **per-PR doc
+gates**, where each PR updates the surfaces its own changes invalidate (added to that
+PR's scope and success criteria), and a **closing PR9 sweep** for cross-cutting
+surfaces and the migration doc.
+
+Two standing policies:
+
+- `docs/audits/*` are frozen historical records — never edit them, even where a
+  finding they report has since been fixed. `docs/migrations/*` and every consumer-
+  facing doc are live.
+- Root `README.md` is byte-mirrored by `apps/website/src/docs/api/index.md` (only
+  image and package-link paths differ). Every root-README edit must be mirrored.
+
+### Per-PR doc gates
+
+**PR1 — events + coordinates.** Six website pages enumerate the tracked pointer
+events and will omit the new ones: `docs/core/essentials/context.md:116`,
+`docs/core/advanced/events.md:127`, `docs/core/essentials/element.md:141`,
+`docs/core/essentials/scene.md:141` (its list also omits `click`, which now fires on
+the context), `docs/core/getting-started/tutorial.md:185`, and
+`docs/core/troubleshooting/faq.md:104` — the last also claims pointer events only
+work inside a `Scene`, which `context.md` already contradicts; fix both. The
+coordinate doctrine needs a consumer-facing home too: the drag-payload prose in
+`advanced/events.md:152-176` names no space, and `advanced/custom-contexts.md` is the
+contract page for context authors — document `toLogicalPoint`/`toSurfacePoint` there.
+Keep the wording consistent with `docs/core/contexts/terminal.md:93-111`, which
+already uses "logical" for its letterbox mapping. `scaleDPR` appears on no website
+page, so its removal needs no edit there.
+
+**PR3 — named colors.** `packages/core/README.md:19` lists color features without
+keywords. On the website, `docs/core/advanced/color.md` needs a named-color row in
+the Supported Color Spaces table (:138-148) and a `parseColor('red')` example
+(:150-161); its opening claim that any CSS color string is parsed (:7) becomes true
+for the first time. `docs/core/advanced/interpolators.md:46,195` should note that
+named colors now tween rather than hard-step.
+
+**PR4 — arc geometry.** `docs/core/elements/arc.md` prose (:7, :134) needs `padWidth`,
+and its existing `borderRadius` slider (:21-23, :43-44) starts actually working —
+verify the demo and add a `padWidth` control. `packages/charts/OPTIONS.md` needs a
+`padWidth` vocabulary entry per its own rule at :65-69 ("if nothing fits, add the new
+concept here in the same pass"); note there (:84) and in
+`apps/website/src/charts/shared-options.md:256` that Arc's `borderRadius` is scalar,
+unlike the Rect-family `number | [tl,tr,br,bl]` shape. `.claude/skills/ripl-charts/SKILL.md`
+carries the only two "borderRadius does nothing" claims in the repo (:159, :266) plus
+the stroked-arc rounded-bar workaround it recommends instead (:157-159) — all three
+go stale the moment this PR merges, so they change here, not later; the `createArc`
+signature line (:153) gains `padWidth`.
+
+**PR5 — radial visuals. This PR has a hard build gate.** `apps/website`'s `build`
+runs `check-chart-options` and `check-config-coverage` before TypeDoc, and they
+require every chart option to have both a `<RiplField option="…">` control and a
+mention on its page. So `pie.md` must gain a `padWidth` control and Options entry in
+this PR (config panel :8-150, options sample :237-256) or the website build fails.
+`polar-area.md`'s "Segment gap" control (:26-27) switches to `padWidth` with
+`padAngle` documented as deprecated (:72, :110, :256-257) — neither script
+understands `@deprecated`, so add a minimal exemption to `check-config-coverage.mjs`
+and note the script change in the PR. `chord.md` (:3, :18-19, :63, :94, :168-169) and
+`sunburst.md` (:185-199) get the same treatment; `arc-diagram.md` and `radial-bar.md`
+gain a one-line note that small links and arcs are now hoverable.
+`packages/charts/test/visual/README.md:3-5` needs a baseline-regeneration note. Check
+`apps/website/src/demos/product-analytics/components/browser-share-chart.vue:53`
+(a `createPieChart` with `innerRadius: 0.55`) — it inherits the new defaults, so
+eyeball it in the build. In the skill file, the highlight guidance (:135-139, fill vs
+stroke) and the exemplar pointer (:22) reflect the old rest-fill model.
+
+**PR6 — perf.** `docs/core/essentials/scene.md` (:9, :95, :99) and
+`docs/core/troubleshooting/performance.md` (:11-24, :93, :99) describe the render
+buffer as a maintained sorted array; update only if the observable story changes when
+the buffer becomes derived, and keep the O(n) claim accurate.
+`EFFICIENCY_REPORT.md`'s Summary and Remaining lists (:58-63) go stale on merge.
+
+**PR8 — export pruning.** `packages/dom/README.md:15-31` has headed API sections for
+three of the pruned symbols (`ensureGroupPath`, `getAncestorGroupIds`, `createVNode`)
+— remove them, keep `reconcileNode`. `docs/core/contexts/terminal.md` has a runnable
+xterm.js snippet importing `BrailleRasterizer` (:62, :76) and prose about swapping the
+rasterizer via the `Rasterizer` interface (:118): this is a documented extension
+point, so **keep `BrailleRasterizer` and `Rasterizer` exported** and prune the rest of
+the terminal internals — amend the PR8 scope accordingly.
+`apps/website/src/charts/advanced/custom-charts.md:7` claims "all of it is exported
+from `@ripl/charts`" and needs a boundary statement naming the supported custom-chart
+surface. `packages/charts/ROADMAP.md:129` references `exitElement`. The same
+`CONTEXT_OPERATIONS`/`TRACKED_EVENTS` import example appears three times —
+`AGENTS.md:269-270`, `CONTRIBUTING.md:99-103`,
+`.github/copilot-instructions.md:46-47` — swap all three to still-public names in one
+pass. In the skill file, the infra map (:29-30) and the `exitElement` sample (:99)
+change. TypeDoc regenerates the API pages and sidebar automatically
+(`entryPointStrategy: "packages"`, `autoConfiguration: true`), so pruned symbols
+vanish on their own — just confirm no dangling `{@link}` remains.
+
+### PR9 — Documentation sweep + migration doc
+
+**Files**: new `docs/migrations/frontend-graphics-audit.md`, root `README.md`,
+`apps/website/src/docs/api/index.md`, `.claude/skills/ripl-charts/SKILL.md`,
+`docs/plans/frontend-graphics-audit.md`.
+
+**Scope**
+- Author the migration doc following `docs/migrations/context-audit.md` exactly — its
+  preamble distinguishes **behaviour** entries (output moves, code still compiles)
+  from **API** entries (surface as compile errors), then groups by
+  `## @ripl/<package>` → `### <concern>`, each entry naming the symbol, the kind, what
+  changed, why the old behavior was wrong, and what the consumer must do. Source
+  material is the migration-notes section each breaking PR carries in its description.
+  Cover: the new `mousedown`/`mouseup`/`click` emissions, payload coordinate spaces,
+  the `_endDrag` rename and `scaleDPR` removal (PR1); named colors in `parseColor` and
+  the resulting interpolation change (PR3); the pie/polar-area/sunburst/chord visual
+  and option changes plus the `pointerEvents: 'stroke'` hit-test change (PR5); and
+  every removed export (PR8). Extend and cross-reference that doc's existing
+  "Pointer payloads" and "Pointer lifecycle" sections (:345-380) rather than
+  contradicting them — they already document the payload space and the `mouseup`
+  window binding.
+- Root `README.md`: the features list needs touch-ups for events (:32) and color
+  (:49); mirror every edit into `apps/website/src/docs/api/index.md`.
+- Skill file: final consistency pass — the per-PR gates above should have covered it,
+  so verify rather than duplicate.
+- Mark this plan completed with a status header pointing at the migration doc.
+- Final stale-claim sweep: grep all `**/*.md` except `docs/audits/` for `_endDrag`,
+  `scaleDPR`, every pruned symbol, `padAngle` (only deprecated references should
+  remain), and "borderRadius … not implemented"; fix what it finds.
+
+**Success criteria**: `yarn workspace @ripl/website build` green through all its
+gates (`check-chart-options`, `check-config-coverage`, TypeDoc generation with no
+dangling links); the stale-claim grep returns zero hits outside `docs/audits/`; the
+migration doc covers every breaking change listed in the PR 1/3/5/8 descriptions; the
+README ↔ `api/index.md` mirror verified equivalent modulo path rewrites.
+
+**Subagents**: (A) migration doc, (B) README + website sweep — parallel; then
+(C) verification (grep sweep + website build).
+
+### Notes for the orchestrator
+
+- `@example` blocks in `packages/*/src` were audited and are all safe — none
+  reference `padAngle`, `padWidth`, `maxRadius`, `borderRadius`, or context events.
+  JSDoc property docs on changed members are already mandated per-PR.
+- `AGENTS.md:328` and `CLAUDE.md:26-27` name `arc.ts` and `scene.ts` as JSDoc
+  exemplars. PR4 and PR6 change both files and must leave them exemplar-quality —
+  check this in their reviews.
+
+---
+
 ## Verification protocol (all PRs)
 
 - Attempt `yarn install` first; if the sandbox cannot, fall back to the
@@ -347,6 +496,10 @@ agent.
 - Every new or changed public member gets JSDoc (hard gate). No multi-line `//`
   comments. No runtime dependencies. Report verification honestly per the
   `ripl-pull-requests` skill.
+- Every PR satisfies its doc gate (see Documentation stream) before merge, and PRs
+  touching website pages run `yarn workspace @ripl/website build` — its
+  `check-chart-options` / `check-config-coverage` gates fail on an undocumented
+  chart option.
 
 ---
 
